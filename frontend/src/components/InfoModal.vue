@@ -1,0 +1,831 @@
+<template>
+  <div class="info-outer-container">
+    <div class="info-container" :class="{ 'mobile-font': isMobile }" v-if="isShow" @click.stop="">
+      <div v-if="type == INFO_TYPE.Card" @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
+        <div class="name">{{ (info as Card).name }}</div>
+        <div>
+          <div class="info-card-cost">
+            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[(info as Card).costType])" />
+            <span>{{ (info as Card).cost }}</span>
+          </div>
+          <div class="info-card-anydice" v-if="(info as Card).anydice > 0">
+            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" />
+            <span>{{ (info as Card).anydice }}</span>
+          </div>
+          <div class="info-card-energy" v-if="(info as Card).energy > 0">
+            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
+            <span>{{ (info as Card).energy }}</span>
+          </div>
+        </div>
+        <div class="info-card-type">{{ CARD_TYPE[(info as Card).type] }}</div>
+        <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
+          {{ CARD_SUBTYPE[subtype] }}
+        </div>
+        <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
+          {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
+        </div>
+        <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
+        </div>
+        <div class="info-card-explain" v-for="(expl, eidx) in skillExplain" :key="eidx" style="margin-top: 5px">
+          <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+        </div>
+      </div>
+      <div v-if="type == INFO_TYPE.Hero || type == INFO_TYPE.Skill">
+        <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
+        <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
+          <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
+          <span>{{ WEAPON_TYPE_NAME[(info as Hero).weaponType] }}</span>
+          <span v-for="(tag, tidx) in (info as Hero).tags" :key="tidx">{{
+            HERO_TAG_NAME[tag]
+          }}</span>
+        </div>
+        <div class="info-hero-skill" v-for="(skill, sidx) in skills.filter(
+          (_, i) => type == INFO_TYPE.Skill || i == skidx)" :key="sidx">
+          <div class="info-hero-skill-title" @click.stop="showDesc(isShowSkill, sidx)">
+            <div style="display: flex; flex-direction: row; align-items: center">
+              <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0"
+                :alt="SKILL_TYPE_ABBR[skill.type]" />
+              <span v-else class="skill-img"
+                style=" border-radius: 50%; text-align: center; line-height: 35px; border: 1px solid black; ">
+                {{ SKILL_TYPE_ABBR[skill.type] }}
+              </span>
+              <span class="info-skill-costs">
+                <div>{{ skill.name }}</div>
+                <div>
+                  <div class="skill-cost" v-for="(cost, cidx) in (skill as Skill).cost.filter(c => c.cnt > 0)"
+                    :key="cidx" :style="{
+                      color: cidx < 2 && (skill.costChange[cidx] as number) > 0 ?
+                        CHANGE_GOOD_COLOR : cidx < 2 && (skill.costChange[cidx] as number) < 0 ?
+                          CHANGE_BAD_COLOR : 'white'
+                    }">
+                    <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[cost.type])" />
+                    <span>{{ Math.max(cost.cnt - (cidx < 2 ? (skill.costChange[cidx] as number) : 0), 0) }}</span>
+                  </div>
+                </div>
+              </span>
+            </div>
+            <span>{{ isShowSkill[sidx] ? "▲" : "▼" }}</span>
+          </div>
+          <div class="info-hero-skill-desc" v-if="isShowSkill[sidx]"
+            @click.stop="showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
+            <div class="skill-type">{{ SKILL_TYPE_NAME[skill.type] }}</div>
+            <div v-for="(desc, didx) in skill.UI.descriptions" :key="didx" v-html="desc"></div>
+          </div>
+          <div v-if="isShowSkill[sidx] && skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].length > 0"
+            @click.stop=" showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
+            <div class="info-hero-skill-explain"
+              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx]" :key="eidx">
+              <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+            </div>
+          </div>
+        </div>
+        <div v-if="type == INFO_TYPE.Skill">
+          <div class="info-equipment"
+            v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot">
+            <div class="title">- 角色装备 -</div>
+            <div class="equipment"
+              v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot].filter(s => s != null)"
+              :key="slidx">
+              <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
+                <span class="equipment-title-left">
+                  <img
+                    :src="getIcon((slot as Card).hasSubtype(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).hasSubtype(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
+                  <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
+                    {{ Math.floor((slot as Card).useCnt) }}
+                  </div>
+                  <span>{{ (slot as Card).name }}</span>
+                </span>
+                <span>{{ isEquipment[slidx] ? "▲" : "▼" }}</span>
+              </div>
+              <div v-if="isEquipment[slidx]"
+                @click.stop="showRule((slot as Card).UI.description, ...slotExplain[slidx].flat(2))">
+                <div class="equipment-desc" v-for="(desc, didx) in (slot as Card).UI.descriptions" :key="didx"
+                  v-html="desc">
+                </div>
+                <div class="info-card-explain" v-for="(expl, eidx) in slotExplain[slidx]" :key="eidx">
+                  <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
+            <div class="title">- 角色状态 -</div>
+            <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))"
+              :key="ist.id" class="status">
+              <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
+                <span class="status-title-left">
+                  <div class="status-icon">
+                    <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
+                    <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
+                      filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ist.UI.iconBg]})` : ''
+                    }" />
+                    <div v-else style="color: white;">{{ ist.name[0] }}</div>
+                    <div class="status-cnt"
+                      v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                      {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
+                    </div>
+                    <span>{{ ist.name }}</span>
+                </span>
+                <span>{{ isHeroStatus[idx] ? "▲" : "▼" }}</span>
+              </div>
+              <div v-if="isHeroStatus[idx]"
+                @click.stop=" showRule(ist.UI.description, ...heroStatusExplain[idx].flat(2))">
+                <div class="status-desc" v-for="(desc, didx) in ist.UI.descriptions" :key="didx" v-html="desc"></div>
+                <div v-if="heroStatusExplain[idx].length > 0">
+                  <div class="info-hero-status-explain" v-for="(expl, eidx) in heroStatusExplain[idx]" :key="eidx">
+                    <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="combatStatus.length > 0" class="info-status">
+            <div class="title">- 阵营出战状态 -</div>
+            <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
+              class="status">
+              <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
+                <span class="status-title-left">
+                  <div class="status-icon">
+                    <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
+                    <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
+                      :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
+                    <div v-else style="color: white;">{{ ost.name[0] }}</div>
+                    <div class="status-cnt"
+                      v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                      {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
+                    </div>
+                    <span>{{ ost.name }}</span>
+                </span>
+                <span>{{ isCombatStatus[idx] ? "▲" : "▼" }}</span>
+              </div>
+              <div v-if="isCombatStatus[idx]"
+                @click.stop="showRule(ost.UI.description, ...combatStatusExplain[idx].flat(2))">
+                <div class="status-desc" v-for="(desc, didx) in ost.UI.descriptions" :key="didx" v-html="desc"></div>
+                <div v-if="combatStatusExplain[idx].length > 0">
+                  <div class="info-hero-status-explain" v-for="(expl, eidx) in combatStatusExplain[idx]" :key="eidx">
+                    <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-if="type == INFO_TYPE.Summon" @click.stop="showRule((info as Summon).UI.description)">
+        <div class="name">{{ (info as Summon).name }}</div>
+        <div class="summon-desc" v-for="(desc, didx) in (info as Summon).UI.descriptions" :key="didx" v-html="desc">
+        </div>
+        <div class="info-summon-explain" v-for="(expl, eidx) in smnExplain" :key="eidx" style="margin-top: 5px">
+          <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+        </div>
+      </div>
+    </div>
+    <div class="info-container" :class="{ 'mobile-font': isMobile }" @click.stop=""
+      v-if="isShow && (type == INFO_TYPE.Hero || type == INFO_TYPE.Skill) && ((info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
+      <div class="info-equipment"
+        v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot">
+        <div class="title">- 角色装备 -</div>
+        <div class="equipment"
+          v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot].filter(s => s != null)"
+          :key="slidx">
+          <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
+            <span class="equipment-title-left">
+              <img
+                :src="getIcon((slot as Card).hasSubtype(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).hasSubtype(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
+              <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
+                {{ Math.floor((slot as Card).useCnt) }}
+                <!-- {{ (slot as Card).useCnt.toFixed(2) }} -->
+              </div>
+              <span>{{ (slot as Card).name }}</span>
+            </span>
+            <span>{{ isEquipment[slidx] ? "▲" : "▼" }}</span>
+          </div>
+          <div v-if="isEquipment[slidx]"
+            @click.stop="showRule((slot as Card).UI.description, ...slotExplain[slidx].flat(2))">
+            <div class="equipment-desc" v-for="(desc, didx) in (slot as Card).UI.descriptions" :key="didx"
+              v-html="desc">
+            </div>
+            <div v-if="slotExplain[slidx].length > 0">
+              <div class="info-card-explain" v-for="(expl, eidx) in slotExplain[slidx]" :key="eidx">
+                <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
+        <div class="title">- 角色状态 -</div>
+        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ist.id"
+          class="status">
+          <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
+            <span class="status-title-left">
+              <div class="status-icon">
+                <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
+                <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)"
+                  :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ist.UI.iconBg]})` : '' }" />
+                <div v-else style="color: white;">{{ ist.name[0] }}</div>
+                <div class="status-cnt" v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                  {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
+                </div>
+                <span>{{ ist.name }}</span>
+            </span>
+            <span>{{ isHeroStatus[idx] ? "▲" : "▼" }}</span>
+          </div>
+          <div v-if="isHeroStatus[idx]" @click.stop="showRule(ist.UI.description, ...heroStatusExplain[idx].flat(2))">
+            <div class="status-desc" v-for="(desc, didx) in ist.UI.descriptions" :key="didx" v-html="desc"></div>
+            <div v-if="heroStatusExplain[idx].length > 0">
+              <div class="info-hero-status-explain" v-for="(expl, eidx) in heroStatusExplain[idx]" :key="eidx">
+                <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-if="combatStatus.length > 0" class="info-status">
+        <div class="title">- 阵营出战状态 -</div>
+        <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
+          class="status">
+          <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
+            <span class="status-title-left">
+              <div class="status-icon">
+                <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
+                <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
+                  :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
+                <div v-else style="color: white;">{{ ost.name[0] }}</div>
+                <div class="status-cnt" v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                  {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
+                </div>
+                <span>{{ ost.name }}</span>
+            </span>
+            <span>{{ isCombatStatus[idx] ? "▲" : "▼" }}</span>
+          </div>
+          <div v-if="isCombatStatus[idx]"
+            @click.stop="showRule(ost.UI.description, ...combatStatusExplain[idx].flat(2))">
+            <div class="status-desc" v-for="(desc, didx) in ost.UI.descriptions" :key="didx" v-html="desc"></div>
+            <div v-if="combatStatusExplain[idx].length > 0">
+              <div class="info-hero-status-explain" v-for="(expl, eidx) in combatStatusExplain[idx]" :key="eidx">
+                <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="info-container info-rule" :class="{ 'mobile-font': isMobile }"
+      v-if="isShow && isShowRule && ruleExplain.length > 0">
+      <div class="title">- 规则解释 -</div>
+      <div class="rule-desc" v-for="(rule, ridx) in ruleExplain" :key="ridx" v-html="rule"></div>
+    </div>
+  </div>
+</template>
+
+<script setup lang='ts'>
+import { computed, ref, watchEffect } from 'vue';
+
+import {
+  ELEMENT_NAME, ELEMENT_COLOR, CHANGE_GOOD_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, RULE_EXPLAIN, STATUS_BG_COLOR_KEY,
+  CARD_SUBTYPE_URL, WEAPON_TYPE_URL, ELEMENT_URL, HERO_TAG_NAME, CHANGE_BAD_COLOR, WEAPON_TYPE_NAME, SKILL_TYPE_NAME,
+  CARD_SUBTYPE_NAME, HERO_TAG_URL, ElementColorKey,
+} from '@@@/constant/UIconst';
+import {
+  CARD_TYPE, CARD_SUBTYPE, DICE_TYPE, COST_TYPE, WeaponType, InfoType, INFO_TYPE, STATUS_TYPE, Version, ELEMENT_CODE_KEY,
+  ElementCode, DAMAGE_TYPE,
+  ELEMENT_TYPE,
+  ElementType,
+} from '@@@/constant/enum';
+import { newCard } from '@@@/data/cards';
+import { newStatus } from '@@@/data/statuses';
+import { newHero, readySkill } from '@@@/data/heros';
+import { newSummon } from '@@@/data/summons';
+import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
+import { objToArr } from '@@@/utils/utils';
+
+const props = defineProps(['info', 'isMobile']);
+
+const isMobile = computed<boolean>(() => props.isMobile);
+const version = computed<Version>(() => props.info.version); // 版本
+const isShow = computed<boolean>(() => props.info.isShow); // 是否显示
+const type = computed<InfoType>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物
+const info = computed<Hero | Card | Summon>(() => props.info.info); // 展示信息
+const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
+const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
+const skills = ref<Skill[]>([]); // 展示技能
+const isShowSkill = ref<boolean[]>([]); // 是否展示技能
+const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态
+const isCombatStatus = ref<boolean[]>([]); // 是否展示阵营出战状态
+const isEquipment = ref<boolean[]>([]); // 是否展示装备
+const skillExplain = ref<(string[][] | string[])[]>([]); // 技能/卡牌解释
+const heroStatusExplain = ref<any[]>([]); // 状态技能解释
+const combatStatusExplain = ref<any[]>([]); // 状态技能解释
+const slotExplain = ref<any[]>([]); // 装备解释
+const smnExplain = ref<any[]>([]); // 召唤物解释
+const ruleExplain = ref<any[]>([]); // 规则解释
+const isShowRule = ref<boolean>(false); // 是否显示规则
+
+const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
+  if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == STATUS_TYPE.Shield || el == 'Heal') return '';
+  const url = Object.values(ELEMENT_TYPE).some(v => v == el) ? isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] : getPngIcon(ELEMENT_ICON[el]);
+  return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
+}
+const wrapExplCtt = (content: string) => {
+  if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
+  const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
+  const type = content.slice(0, 3);
+  return type == 'crd' ? newCard(version.value)(a1) :
+    type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
+      type == 'rsk' ? readySkill(a1, version.value) :
+        type == 'smn' ? newSummon(version.value)(a1, a2, a3) :
+          type == 'ski' ? newHero(version.value)(a1).skills[a2] :
+            type == 'hro' ? newHero(version.value)(a1) :
+              { name: content, default: true };
+}
+const wrapDesc = (desc: string, obj?: ExplainContent): string => {
+  let res = desc.slice()
+    .replace(/(?<!\\)〖(.*?)〗/g, (_, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`)
+    .replace(/(?<!\\)【(.*?)】/g, (_, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`)
+    .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
+      let icon = '';
+      const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == word) ?? [];
+      const [weapon] = objToArr(WEAPON_TYPE_NAME).find(([, name]) => name == word) ?? [];
+      const [tag] = objToArr(HERO_TAG_NAME).find(([, name]) => name == word) ?? [];
+      const iconUrl = subtype != undefined ? CARD_SUBTYPE_URL[subtype] :
+        weapon != undefined ? WEAPON_TYPE_URL[weapon] :
+          tag != undefined && !!HERO_TAG_URL[tag] ? HERO_TAG_URL[tag] : '';
+      if (iconUrl != '') {
+        icon = `<img style='width:18px;transform:translateY(20%);' src='${iconUrl}'/>`;
+      }
+      return `<span style='color:white;'>${prefix}${icon}${word}${suffix}</span>`;
+    })
+    .replace(/(?<!\\)‹(\d+)(.*?)›/g, (_, c: string, v: string) => {
+      const color = ELEMENT_CODE_KEY[+c as ElementCode];
+      return `${wrapedIcon(color)}<span style='color:${ELEMENT_COLOR[color]};'>${v}</span>`;
+    }).replace(/(?<!\\)(\*?)\[(.*?)\]/g, (_, isUnderline: string, ctt: string) => {
+      // const el = ELEMENT.findIndex((v, vi) => v != '' && ((vi < 11 && ctt.includes(v)) || (vi > 11 && ctt == v)));
+      const [el] = objToArr(ELEMENT_NAME).find(([, v]) => ['伤害', '骰'].some(v => ctt.includes(v)) ? ctt.includes(v) : ctt == v) ?? [];
+      const color = el == undefined ? 'white' : ELEMENT_COLOR[el];
+      let wpicon = wrapedIcon(el, ctt.includes('骰'));
+      const elSplit = ctt.indexOf('元素') - 1;
+      if (elSplit > 0 && !ctt.includes('骰')) {
+        const ctt1 = ctt.slice(0, elSplit);
+        const ctt2 = ctt.slice(elSplit);
+        ctt = ctt1 + wpicon + ctt2;
+        wpicon = '';
+      }
+      const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
+      const marginLeft = el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same ? 'margin-left:2px;' : '';
+      return `${wpicon}<span style='color:${color};${underline}margin-right:2px;${marginLeft}'>${ctt}</span>`;
+    })
+    .replace(/\\/g, '');
+  if (obj && typeof obj != 'string') {
+    if ('dmgChange' in obj) { // Skill
+      const isChange = obj.dmgChange > 0;
+      const dmg = Number(res.match(/{dmg\+?(\d*)}/)?.[1]) || 0;
+      res = res.replace(/{dmg\+?\d*}/g, `${isChange ? `<span style='color:${CHANGE_GOOD_COLOR};'>` : ''}${Math.abs(obj.damage + obj.dmgChange + dmg)}${isChange ? '</span>' : ''}`);
+    }
+    if ('damage' in obj) { // Summon | Skill
+      const dmg = Number(res.match(/{dmg\+?(\d*)}/)?.[1]) || 0;
+      res = res.replace(/{dmg\+?\d*}/g, `${Math.abs(obj.damage + dmg)}`);
+    }
+    if ('useCnt' in obj) res = res.replace('{useCnt}', `${obj.useCnt}`);
+    if ('roundCnt' in obj) res = res.replace('{roundCnt}', `${obj.roundCnt}`); // Status
+    if ('shieldOrHeal' in obj) { // Summon
+      res = res.replace('{shield}', `${Math.abs(obj.shieldOrHeal)}`).replace('{heal}', `${obj.shieldOrHeal}`);
+    }
+  }
+  return res;
+}
+// 变白色：【】｢｣
+// 下划线（有规则解释，如果可能前面会有图标）：[]
+// 解析名字并加入解释：〖〗【】
+// 有某些特殊颜色（如 冰/水/火/雷）：‹nxxx› n为字体元素颜色 + 前面的图标 xxx为内容
+// 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
+
+const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {
+  const container: string[][] = [];
+  if (!Array.isArray(memo)) memo = [];
+  for (let expl of expls) {
+    const explains: string[] = [];
+    if (typeof expl == 'string') {
+      const nctt = wrapExplCtt(expl);
+      if (nctt.name == '' || 'skills' in nctt || 'default' in nctt) continue;
+      expl = nctt;
+    }
+    if (memo.includes(expl.name)) continue;
+    memo.push(expl.name);
+    const nameEl = `<span style="font-weight:bold;color:white;">${expl.name}</span>`;
+    if ('costType' in expl) { // Card
+      explains.push(`
+        <div style="display:flex;align-items:flex-end;">
+            ${nameEl}
+            <div data-v-c8bc3e29 class="skill-cost" style="margin-left:5px;">
+          <img data-v-c8bc3e29 class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}" />
+          <span data-v-c8bc3e29>${expl.cost}</span>
+            </div>
+        </div>
+      `);
+    } else {
+      explains.push(nameEl);
+    }
+    explains.push(...expl.UI.description.split('；').map(desc => wrapDesc(desc, expl)));
+    container.push(explains);
+    if (expl.UI.explains.length > 0) {
+      container.push(...wrapExpl(expl.UI.explains, memo));
+    }
+  }
+  return container;
+}
+
+const wrapRule = (...desc: string[]) => {
+  ruleExplain.value = [];
+  [...new Set(desc.join('').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
+    if (title in RULE_EXPLAIN) {
+      ruleExplain.value.push(`<div style='font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`)}</div>`);
+      ruleExplain.value.push(...RULE_EXPLAIN[title].split('；').map(desc => wrapDesc(desc)));
+    }
+  });
+}
+
+// 获取骰子背景
+const getDiceIcon = (name: string) => {
+  return `/image/${name}-dice-bg.png`;
+}
+
+// 获取png图片
+const getPngIcon = (name: string) => {
+  if (name.startsWith('http') || name == '') return name;
+  if (name.endsWith('-dice')) return getSvgIcon(name);
+  if (name.startsWith('ski')) {
+    const [hid, skidx] = name.slice(3).split(',').map(v => JSON.parse(v));
+    return newHero(version.value)(hid).skills?.[skidx].UI.src ?? '';
+  }
+  if (name == 'energy') name += '-dice-bg';
+  return `/image/${name}.png`;
+}
+
+// 获取svg filter
+const getSvgIcon = (name: string) => {
+  return `/svg/${name}.svg`;
+}
+
+watchEffect(() => {
+  ruleExplain.value = [];
+  if (info.value && 'costType' in info.value) {
+    info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc));
+    skillExplain.value = wrapExpl(info.value.UI.explains, info.value.name);
+  }
+  // if (info.value && 'card' in info.value) {
+  //   info.value.card.UI.descriptions = info.value.card.UI.description.split('；').map(desc => wrapDesc(desc));
+  // }
+  if (info.value && 'maxUse' in info.value) {
+    smnExplain.value = wrapExpl(info.value.UI.explains, info.value.name);
+  }
+  if (info.value && 'heroStatus' in info.value) {
+    heroStatusExplain.value = [];
+    combatStatusExplain.value = [];
+    info.value.heroStatus.forEach(ist => {
+      ist.UI.descriptions = ist.UI.description.split('；').map(desc => wrapDesc(desc, ist));
+      heroStatusExplain.value.push(wrapExpl(ist.UI.explains, ist.name));
+    });
+    combatStatus.value.forEach(ost => {
+      ost.UI.descriptions = ost.UI.description.split('；').map(desc => wrapDesc(desc, ost));
+      combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.name));
+    });
+    slotExplain.value = [];
+    [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].forEach(slot => {
+      if (slot != null) {
+        const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc));
+        const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Action].every(v => slot.hasSubtype(v));
+        slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
+        const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
+        if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
+        slotExplain.value.push(wrapExpl(slot.UI.explains, slot.name).slice(isActionTalent ? 1 : 0));
+      }
+    });
+    skills.value = [];
+    isShowSkill.value = [];
+    skillExplain.value = [];
+    for (const skill of info.value.skills) {
+      skills.value.push(skill);
+      isShowSkill.value.push(type.value == INFO_TYPE.Skill);
+    }
+    skills.value.forEach(skill => {
+      skill.UI.descriptions = skill.UI.description.split('；').map(desc => wrapDesc(desc, skill));
+      skillExplain.value.push(wrapExpl(skill.UI.explains, skill.name));
+    });
+    isHeroStatus.value = new Array(info.value.heroStatus.length).fill(false);
+    isCombatStatus.value = new Array(combatStatus.value.length).fill(false);
+    isEquipment.value = new Array([info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].filter(s => s != null).length).fill(false);
+  }
+  if (info.value && 'isDestroy' in info.value) {
+    info.value.UI.descriptions = (info.value.UI.description as string).split('；').map(desc => wrapDesc(desc, info.value as Summon));
+  }
+});
+
+// 获取图片
+const getIcon = (name: string) => {
+  return `/svg/${name}.svg`;
+}
+
+// 是否显示描述
+const showDesc = (obj: boolean[], sidx: number) => {
+  isShowRule.value = false;
+  obj[sidx] = !obj[sidx];
+}
+
+// 是否显示规则
+const showRule = (...desc: string[]) => {
+  isShowRule.value = !isShowRule.value;
+  if (isShowRule.value) wrapRule(...desc);
+}
+</script>
+
+<style scoped>
+.info-outer-container {
+  position: absolute;
+  top: 40px;
+  left: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  user-select: none;
+  pointer-events: none;
+}
+
+.info-container {
+  position: relative;
+  width: 25vw;
+  max-height: 50vh;
+  border: 2px solid black;
+  border-radius: 10px;
+  background-color: #3e4d69e7;
+  padding: 10px 5px;
+  margin-right: 2px;
+  overflow: auto;
+  pointer-events: all;
+}
+
+.name {
+  font-weight: bolder;
+  margin-bottom: 3px;
+  color: #93aed4;
+  padding-left: 3px;
+}
+
+.info-card-cost {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 5px;
+  line-height: 20px;
+  color: white;
+  font-weight: bolder;
+  font-size: medium;
+  display: inline-block;
+  -webkit-text-stroke: 1px black;
+}
+
+.cost-img {
+  position: absolute;
+  width: 25px;
+  height: 25px;
+}
+
+.info-card-cost>span {
+  position: absolute;
+  left: 8px;
+  top: 3px;
+}
+
+.info-card-energy,
+.info-card-anydice {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  line-height: 20px;
+  margin-bottom: 5px;
+  margin-left: -5px;
+  font-size: medium;
+  color: white;
+  font-weight: bolder;
+  display: inline-block;
+  -webkit-text-stroke: 1px black;
+}
+
+.info-card-energy>span,
+.info-card-anydice>span {
+  position: absolute;
+  left: 18px;
+  top: 3px;
+}
+
+.info-card-type {
+  display: inline-block;
+  border: 2px solid black;
+  border-radius: 5px;
+  background-color: #898989dd;
+  padding: 0 5px;
+  margin-bottom: 3px;
+}
+
+.info-card-type.sub {
+  background-color: #5787dfdd;
+  margin-left: 3px;
+}
+
+.info-hero-tag {
+  margin: 5px 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.info-hero-tag>span {
+  border: 2px solid black;
+  border-radius: 5px;
+  margin: 1px;
+  padding: 0 3px;
+  background-color: #5786dfdd;
+}
+
+.info-hero-skill,
+.info-status>.status,
+.info-equipment>.equipment {
+  border: 2px solid black;
+  margin-top: 3px;
+  transition: 1s;
+  border-radius: 4px;
+}
+
+.info-hero-skill-title,
+.status-title,
+.equipment-title {
+  border: 2px solid black;
+  margin: 1px;
+  padding: 1px 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #bdd5ff;
+  background: #272f3be7;
+}
+
+.equipment-title-left,
+.status-title-left {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 25px;
+}
+
+.equipment-title-left>img {
+  width: 25px;
+  height: 25px;
+  border: 2px solid #525252;
+  border-radius: 50%;
+  background: #d2d493;
+  margin-right: 3px;
+}
+
+.status-icon {
+  position: relative;
+  width: 25px;
+  height: 25px;
+  margin: 2px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-icon>img {
+  width: 100%;
+  border-radius: 50%;
+}
+
+.status-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.25;
+}
+
+.status-cnt {
+  position: absolute;
+  left: 15px;
+  bottom: 0;
+  font-size: 12px;
+  height: 12px;
+  width: 12px;
+  line-height: 12px;
+  text-align: center;
+  color: white;
+  background: #000000ae;
+  border-radius: 50%;
+}
+
+.info-hero-skill-desc,
+.info-card-desc,
+.status-desc,
+.summon-desc,
+.equipment-desc,
+.rule-desc {
+  color: #c8c8c8;
+  margin: 2px;
+  padding: 3px;
+}
+
+.info-hero-skill-explain,
+.info-hero-status-explain,
+.info-card-explain,
+.info-summon-explain {
+  margin: 3px;
+  margin-right: 0;
+  margin-top: 5px;
+  padding: 3px;
+  padding-top: 0;
+  font-size: smaller;
+  border-left: 3px #8f8f8f solid;
+  box-sizing: border-box;
+  color: #c8c8c8;
+}
+
+.skill-img {
+  width: 35px;
+  height: 35px;
+  margin-right: 5px;
+}
+
+.info-skill-costs {
+  display: flex;
+  flex-direction: column;
+}
+
+.skill-type {
+  color: #bfba83;
+  font-weight: bold;
+}
+
+.skill-cost {
+  width: 17px;
+  height: 17px;
+  margin: 0 2px;
+  margin-top: 5px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bolder;
+  -webkit-text-stroke: 1px black;
+}
+
+.skill-cost>.cost-img {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.skill-cost>span {
+  position: absolute;
+}
+
+.info-status,
+.info-equipment {
+  margin-top: 2px;
+}
+
+.info-status>.title,
+.info-equipment>.title,
+.info-rule>.title {
+  text-align: center;
+  font-weight: bold;
+  color: #93aed4;
+}
+
+.mobile-font {
+  font-size: small;
+}
+
+svg {
+  display: none;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: #335c99d0;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+</style>

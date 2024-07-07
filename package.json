@@ -1,0 +1,11 @@
+{
+  "name": "gi-tcg",
+  "version": "1.0.0",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.2"
+  }
+}
