@@ -1,4 +1,4 @@
-import { swapKeysAndValues } from "../utils/utils";
+import { swapKeysAndValues } from "../utils/utils.js";
 
 export type TypeConst<T> = T[keyof T];
 
@@ -135,6 +135,17 @@ export const WEAPON_TYPE = {
 
 export type WeaponType = TypeConst<typeof WEAPON_TYPE>;
 
+export const WEAPON_TYPE_CODE = {
+    [WEAPON_TYPE.Other]: 0,
+    [WEAPON_TYPE.Catalyst]: 1,
+    [WEAPON_TYPE.Bow]: 2,
+    [WEAPON_TYPE.Claymore]: 3,
+    [WEAPON_TYPE.Polearm]: 4,
+    [WEAPON_TYPE.Sword]: 5,
+} as const;
+
+export const WEAPON_TYPE_CODE_KEY = swapKeysAndValues(WEAPON_TYPE_CODE);
+
 export const STATUS_GROUP = {
     heroStatus: 0, // 角色状态
     combatStatus: 1, // 出战状态
@@ -185,6 +196,22 @@ export const HERO_LOCAL = {
 } as const;
 
 export type HeroLocal = TypeConst<typeof HERO_LOCAL>;
+
+export const HERO_LOCAL_CODE = {
+    [HERO_LOCAL.Monster]: 0,
+    [HERO_LOCAL.Mondstadt]: 1,
+    [HERO_LOCAL.Liyue]: 2,
+    [HERO_LOCAL.Inazuma]: 3,
+    [HERO_LOCAL.Sumeru]: 4,
+    [HERO_LOCAL.Fontaine]: 5,
+    [HERO_LOCAL.Natlan]: 6,
+    [HERO_LOCAL.Snezhnaya]: 7,
+    [HERO_LOCAL.Fatui]: 8,
+} as const;
+
+export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
+
+export const HERO_LOCAL_CODE_KEY = swapKeysAndValues(HERO_LOCAL_CODE);
 
 export const HERO_TAG = {
     ...HERO_LOCAL,

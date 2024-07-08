@@ -480,7 +480,7 @@ const selectHero = (pos: number, hid: number) => {
 const MoveHero = (pos: number, dir: number) => {
     cancel();
     if (dir == 0) {
-        herosDeck.value[pos] = clone(NULL_HERO);
+        herosDeck.value[pos] = NULL_HERO();
         updateInfo();
     } else {
         const npos = (pos + dir + 3) % 3;

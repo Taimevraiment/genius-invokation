@@ -1,4 +1,4 @@
-import CODE_IDX_LIST from "../constant/codeIdxList";
+import CODE_IDX_LIST from "../constant/codeIdxList.js";
 
 // 深拷贝函数
 export function clone<T>(obj: T): T {

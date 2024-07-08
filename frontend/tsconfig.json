@@ -50,7 +50,7 @@
   ],
   "files": [
     "./typing.d.ts",
-    "../typing.d.ts",
+    "../typing.d.ts"
   ],
   "references": [
     {

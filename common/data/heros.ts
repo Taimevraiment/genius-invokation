@@ -1,18 +1,16 @@
-import {
-    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DamageType, DiceType, ELEMENT_TYPE, ElementType,
-    HERO_TAG,
-    HeroTag, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, VERSION, Version, WEAPON_TYPE, WeaponType
-} from '../constant/enum';
-import { newStatus } from './statuses';
-import { newSummon } from './summons';
-import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil';
-import { isCdt, clone, getLast } from '../utils/utils';
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Skill, Status, Summon, Trigger } from '../../typing';
-import { ELEMENT_NAME } from '../constant/UIconst'
+import {
+    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_TAG,
+    HeroTag, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
+} from '../constant/enum.js';
+import { newStatus } from './statuses.js';
+import { newSummon } from './summons.js';
+import { clone, getLast } from '../utils/utils.js';
+import { ELEMENT_NAME } from '../constant/UIconst.js'
 
 export class GIHero {
     id: number; // 唯一id
-    entityId: number; // 实体id
+    entityId: number = -1; // 实体id
     name: string; // 角色名
     version: Version; // 加入的版本
     tags: HeroTag[]; // 所属
@@ -21,17 +19,17 @@ export class GIHero {
     element: ElementType; // 角色元素
     weaponType: WeaponType; // 武器类型
     maxEnergy: number; // 最大充能
-    energy: number; // 当前充能
-    hidx: number; // 角色序号
-    skills: Skill[]; // 技能组
-    weaponSlot: Card | null; // 武器栏
-    artifactSlot: Card | null; // 圣遗物栏
-    talentSlot: Card | null; // 天赋栏
-    heroStatus: Status[]; // 角色状态
-    isFront: boolean; // 是否为前台角色
-    attachElement: PureElementType[]; // 附着元素
-    canSelect: boolean; // 是否能被选择
-    isSelected: number; // 是否被选择 0未被选择 1被选为一号位 2被选为二号位
+    energy: number = 0; // 当前充能
+    hidx: number = -1; // 角色序号
+    skills: Skill[] = []; // 技能组
+    weaponSlot: Card | null = null; // 武器栏
+    artifactSlot: Card | null = null; // 圣遗物栏
+    talentSlot: Card | null = null; // 天赋栏
+    heroStatus: Status[] = []; // 角色状态
+    isFront: boolean = false; // 是否为前台角色
+    attachElement: PureElementType[] = []; // 附着元素
+    canSelect: boolean = false; // 是否能被选择
+    isSelected: number = 0; // 是否被选择 0未被选择 1被选为一号位 2被选为二号位
     UI: {
         src: string, // 立绘url
         srcs: string[], // 所有立绘url
@@ -52,12 +50,14 @@ export class GIHero {
         this.hp = maxHp;
         this.element = element;
         this.weaponType = weaponType;
-        if (Array.isArray(src)) this.UI.srcs = src;
-        else this.UI.srcs = [src];
-        [this.UI.src] = this.UI.srcs;
-        if (Array.isArray(avatar)) this.UI.avatars = avatar;
-        else this.UI.avatars = [avatar];
-        [this.UI.avatar] = this.UI.avatars;
+        src = Array.isArray(src) ? src : [src];
+        avatar = Array.isArray(avatar) ? avatar : [avatar];
+        this.UI = {
+            src: src[0],
+            srcs: src,
+            avatar: avatar[0],
+            avatars: avatar,
+        }
         const sk1 = skill1?.(id, element, weaponType);
         if (sk1) this.skills.push(sk1);
         this.skills.push(...skills.map((sk, ski) => (sk.id = id * 10 + ski + +!!sk1, sk)));
@@ -66,15 +66,15 @@ export class GIHero {
 }
 
 export class GISkill {
-    id: number; // 唯一id
+    id: number = -1; // 唯一id
     name: string; // 技能名
     type: SkillType; // 技能类型：1普通攻击 2元素战技 3元素爆发 4被动技能
     damage: number; // 伤害量
     dmgElement: ElementType; // 伤害元素
     cost: [ // 费用列表 [元素骰, 任意骰, 充能]
-        { cnt: number, type: DiceType },
-        { cnt: number, type: DiceType },
-        { cnt: number, type: CostType },
+        { cnt: number, type: Exclude<DiceType, 'Any'> },
+        { cnt: number, type: Extract<DiceType, 'Any'> },
+        { cnt: number, type: Extract<CostType, 'Energy'> },
     ];
     attachElement: ElementType = ELEMENT_TYPE.Physical; // 附魔属性
     handle: (event: SkillHandleEvent) => SkillHandleRes; // 处理函数
@@ -92,24 +92,25 @@ export class GISkill {
         explains: string[], // 要解释的文本
     };
     constructor(
-        name: string, description: string, type: SkillType, damage: number, cost: number,
-        costElement: DiceType, options: { id?: number, ac?: number, ec?: number, de?: ElementType, rskid?: number, pct?: number, expl?: string[] } = {},
+        name: string, description: string, type: SkillType, damage: number, cost: number, costElement: Exclude<DiceType, 'Any'>,
+        options: { id?: number, ac?: number, ec?: number, de?: ElementType, rskid?: number, pct?: number, expl?: string[] } = {},
         src?: string | string[], handle?: (hevent: SkillHandleEvent) => SkillHandleRes | undefined
     ) {
         this.name = name;
-        this.UI.description = description;
         this.type = type;
         this.damage = damage;
         const { id = -1, ac = 0, ec = 0, de, rskid = -1, pct = 0, expl = [] } = options;
+        this.UI = {
+            description,
+            src: (Array.isArray(src) ? src : [src]).filter(v => v != '')[0] ?? '',
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+            descriptions: [],
+        };
         if (id > -1) this.id = id;
-        this.dmgElement = de ?? (costElement == DICE_TYPE.Any || costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
+        this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         this.rskid = rskid;
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
-        if (typeof src == 'string') src = [src];
-        src = src?.filter(s => s != '');
-        this.UI.src = src?.[0] ?? '';
-        this.UI.explains = [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl];
         this.handle = hevent => {
             const { reset = false, heros = [], hero, skidx, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent) ?? {};
@@ -205,25 +206,26 @@ const skill1 = (
         const sdescription = '造成{dmg}点' + `[${ELEMENT_NAME[sdmgElement]}伤害]。` + description;
         const sdamage = wptype == WEAPON_TYPE.Catalyst ? 1 : 2;
         const cost = +(costElement != ELEMENT_TYPE.Physical);
-        const costEl = costElement == ELEMENT_TYPE.Physical ? DICE_TYPE.Any : costElement;
+        const costEl = costElement == ELEMENT_TYPE.Physical ? DICE_TYPE.Same : costElement;
         const src = [
             'https://patchwiki.biligame.com/images/ys/9/9c/occv1a1p5dow2oo7ge2mrnx3wkeuwls.png',
-            'https://patchwiki.biligame.com/images/ys/f/f1/96gt1watdz1lcoqqgqsv0qio44wo50h.png',
-            'https://patchwiki.biligame.com/images/ys/9/9c/sd9tso1r747k73jkpljqos0ahy03pow.png',
-            'https://patchwiki.biligame.com/images/ys/4/4b/9lnhohp6ls5szxul5egwal8mlegq64w.png',
             'https://patchwiki.biligame.com/images/ys/a/a8/brgaa29n63j4fkh74sc2vx8ja8qvzhp.png',
+            'https://patchwiki.biligame.com/images/ys/4/4b/9lnhohp6ls5szxul5egwal8mlegq64w.png',
+            'https://patchwiki.biligame.com/images/ys/9/9c/sd9tso1r747k73jkpljqos0ahy03pow.png',
             'https://patchwiki.biligame.com/images/ys/6/63/ow012uhlpkdmn4rflhm1avvbf3cjvpu.png',
+            'https://patchwiki.biligame.com/images/ys/f/f1/96gt1watdz1lcoqqgqsv0qio44wo50h.png',
         ];
         const src2 = [
             'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/726f23517c8595c477dd65c987b42482_2398074192370829528.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/2bfbf024135461849666339c43d60b2c_1257931966790216673.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/fc4695c7947675242718788122db81d3_5540544149749295930.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/949d07ba4f72b33b739fb0ed413a7fa2_29820066415359915.png',
             'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/54dd31a9c0a4417ca4b5463532d7f5e8_811908281150698503.png',
+            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/949d07ba4f72b33b739fb0ed413a7fa2_29820066415359915.png',
+            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/fc4695c7947675242718788122db81d3_5540544149749295930.png',
             'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/0cd68ecb1a011d94e2b4be1b99ac3302_8062496215333431665.png',
+            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/2bfbf024135461849666339c43d60b2c_1257931966790216673.png',
         ];
         return new GISkill(name, sdescription, SKILL_TYPE.Normal, sdamage, cost, costEl,
-            { ac: 2, de: sdmgElement, id: hid * 10 + 1, ...options }, [src[wptype], src2[wptype]], handle);
+            { ac: 2, de: sdmgElement, id: hid * 10 + 1, ...options },
+            [src[WEAPON_TYPE_CODE[wptype]], src2[WEAPON_TYPE_CODE[wptype]]], handle);
     }
 }
 

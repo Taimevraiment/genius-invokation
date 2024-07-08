@@ -1,11 +1,6 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Summon, Support, Trigger } from '../../typing';
-import { DICE_COST_TYPE, DICE_TYPE, DiceCostType, SupportType, VERSION, Version } from '../constant/enum';
-import { cardsTotal } from './cards';
-import { ELEMENT_ICON } from '../constant/UIconst';
-import { newStatus } from './statuses';
-import { newSummon } from './summons';
-import { allHidxs, getBackHidxs } from '../utils/gameUtil';
-import { arrToObj, getLast, isCdt, objToArr } from '../utils/utils';
+import { DiceCostType, SupportType, VERSION, Version } from '../constant/enum.js';
+import { getLast } from '../utils/utils.js';
 
 export class GISupport {
     id: number; // 唯一id 从4000开始
@@ -16,8 +11,8 @@ export class GISupport {
     hpCnt: number; // 回血数
     type: SupportType; // 类型 1轮次 2收集物 3常驻
     handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes; // 处理效果函数
-    isSelected: boolean; // 是否被选择
-    canSelect: boolean; // 能否被选择    
+    isSelected: boolean = false; // 是否被选择
+    canSelect: boolean = false; // 能否被选择    
     constructor(
         id: number, card: Card, cnt: number, perCnt: number, type: SupportType,
         handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes | undefined, hpCnt = 0
@@ -95,24 +90,24 @@ export type SupportExecRes = {
     summon?: Summon[],
 }
 
-const DICE_WEIGHT = [ // 吃骰子的优先级权重(越低越优先)
-    DICE_COST_TYPE.Omni,
-    DICE_COST_TYPE.Cryo,
-    DICE_COST_TYPE.Hydro,
-    DICE_COST_TYPE.Pyro,
-    DICE_COST_TYPE.Electro,
-    DICE_COST_TYPE.Geo,
-    DICE_COST_TYPE.Dendro,
-    DICE_COST_TYPE.Anemo,
-];
+// const DICE_WEIGHT = [ // 吃骰子的优先级权重(越低越优先)
+//     DICE_COST_TYPE.Omni,
+//     DICE_COST_TYPE.Cryo,
+//     DICE_COST_TYPE.Hydro,
+//     DICE_COST_TYPE.Pyro,
+//     DICE_COST_TYPE.Electro,
+//     DICE_COST_TYPE.Geo,
+//     DICE_COST_TYPE.Dendro,
+//     DICE_COST_TYPE.Anemo,
+// ];
 
-const getSortedDices = (dices: DiceCostType[]) => {
-    const diceCnt = arrToObj(DICE_WEIGHT, 0);
-    dices.forEach(d => ++diceCnt[d]);
-    return objToArr(diceCnt)
-        .sort((a, b) => b[1] * (b[0] == DICE_COST_TYPE.Omni ? 0 : 1) - a[1] * (a[0] == DICE_COST_TYPE.Omni ? 0 : 1) || DICE_WEIGHT[a[0]] - DICE_WEIGHT[b[0]])
-        .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
-}
+// const getSortedDices = (dices: DiceCostType[]) => {
+//     const diceCnt = arrToObj(DICE_WEIGHT, 0);
+//     dices.forEach(d => ++diceCnt[d]);
+//     return objToArr(diceCnt)
+//         .sort((a, b) => b[1] * (b[0] == DICE_COST_TYPE.Omni ? 0 : 1) - a[1] * (a[0] == DICE_COST_TYPE.Omni ? 0 : 1) || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
+//         .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
+// }
 
 const supportTotal: Record<number, (...args: any) => Support> = {
     // 4000: () => new GISupport(4000, 0, 0, 0, 0, () => ({})),

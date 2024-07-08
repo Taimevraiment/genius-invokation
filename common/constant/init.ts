@@ -1,7 +1,9 @@
-import { Card, Hero, InfoVO, Player, Skill } from '../../typing';
-import { getLast } from '../utils/utils';
-import { CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum';
-import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE } from './gameOption';
+import { InfoVO, Player } from '../../typing';
+import { GICard } from '../data/cards.js';
+import { GIHero, GISkill } from '../data/heros.js';
+import { getLast } from '../utils/utils.js';
+import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
+import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE } from './gameOption.js';
 
 export const INIT_PLAYER: Player = {
     id: -1,
@@ -52,103 +54,11 @@ export const INIT_PLAYER: Player = {
     },
 };
 
-export const NULL_SKILL: Skill = {
-    id: -1,
-    name: '无',
-    type: SKILL_TYPE.Passive,
-    damage: 0,
-    dmgElement: DAMAGE_TYPE.Physical,
-    cost: [{
-        cnt: 0,
-        type: DICE_TYPE.Same,
-    }, {
-        cnt: 0,
-        type: DICE_TYPE.Any,
-    }, {
-        cnt: 0,
-        type: COST_TYPE.Energy,
-    }],
-    attachElement: ELEMENT_TYPE.Physical,
-    handle: () => ({}),
-    isForbidden: true,
-    dmgChange: 0,
-    costChange: [0, 0, []],
-    useCntPerRound: 0,
-    perCnt: 0,
-    useCnt: 0,
-    rskid: -1,
-    UI: {
-        description: '',
-        descriptions: [],
-        explains: [],
-        src: '',
-    },
-}
+export const NULL_SKILL = () => new GISkill('无', '', SKILL_TYPE.Passive, 0, 0, DICE_TYPE.Same);
 
-export const NULL_HERO: Hero = {
-    id: 0,
-    entityId: -1,
-    name: '无',
-    version: getLast(VERSION.slice()),
-    tags: [],
-    maxHp: 0,
-    hp: 0,
-    element: ELEMENT_TYPE.Physical,
-    weaponType: WEAPON_TYPE.Other,
-    maxEnergy: 0,
-    energy: 0,
-    hidx: -1,
-    skills: [],
-    weaponSlot: null,
-    artifactSlot: null,
-    talentSlot: null,
-    heroStatus: [],
-    isFront: false,
-    attachElement: [],
-    canSelect: false,
-    isSelected: 0,
-    UI: {
-        src: '',
-        srcs: [],
-        avatar: '',
-        avatars: [],
-    },
-}
+export const NULL_HERO = () => new GIHero(-1, '无', getLast(VERSION.slice()), [], 0, ELEMENT_TYPE.Physical, WEAPON_TYPE.Other, '', '');
 
-export const NULL_CARD: Card = {
-    id: -1,
-    cidx: -1,
-    entityId: -1,
-    name: '无',
-    version: getLast(VERSION.slice()),
-    cost: 0,
-    costChange: 0,
-    costType: DICE_TYPE.Any,
-    type: CARD_TYPE.Equipment,
-    subType: [],
-    tag: [],
-    userType: 0,
-    useCnt: 0,
-    perCnt: 0,
-    energy: 0,
-    anydice: 0,
-    selected: false,
-    handle: () => ({}),
-    canSelectHero: 0,
-    canSelectSummon: -1,
-    canSelectSupport: -1,
-    UI: {
-        src: '',
-        description: '',
-        cnt: 0,
-        descriptions: [],
-        explains: [],
-    },
-    hasSubtype: () => false,
-    hasTag: () => false,
-    setEntityId() { return this },
-    setCnt: () => this,
-}
+export const NULL_CARD = () => new GICard(-1, '无', getLast(VERSION.slice()), '', '', 0, DICE_TYPE.Any, CARD_TYPE.Event);
 
 export const NULL_MODAL: InfoVO = {
     version: getLast(VERSION.slice()),

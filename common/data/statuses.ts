@@ -1,10 +1,11 @@
-import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR, ELEMENT_ICON, StatusBgColor, ELEMENT_NAME_KEY } from "../constant/UIconst";
-import { newSummon } from "./summons";
-import { allHidxs, getAtkHidx, getBackHidxs, getMaxHertHidxs, getMinHertHidxs } from "../utils/gameUtil";
-import { clone, getLast, isCdt } from "../utils/utils";
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SkillType, StatusGroup, StatusType, VERSION, Version } from "../constant/enum";
-import { newHero } from "./heros";
+import { STATUS_BG_COLOR, StatusBgColor, ELEMENT_NAME_KEY, ELEMENT_NAME, STATUS_BG_COLOR_KEY, ElementNameKey } from "../constant/UIconst.js";
+import { getLast, isCdt } from "../utils/utils.js";
+import {
+    CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PureElementType, STATUS_GROUP, STATUS_TYPE, SkillType,
+    StatusGroup, StatusType, VERSION, Version,
+} from "../constant/enum.js";
+import { newHero } from "./heros.js";
 
 export class GIStatus {
     id: number; // 唯一id
@@ -39,8 +40,6 @@ export class GIStatus {
     ) {
         this.id = id;
         this.name = name;
-        this.UI.description = description;
-        this.UI.icon = icon ?? '';
         this.group = group;
         this.type = type;
         this.useCnt = useCnt;
@@ -48,11 +47,17 @@ export class GIStatus {
         this.roundCnt = roundCnt;
         const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = Math.max(useCnt, roundCnt),
             isTalent = false, isReset = true, adt = [] } = options;
+        this.UI = {
+            description,
+            icon,
+            iconBg: icbg,
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+            descriptions: [],
+            isSelected: false,
+        }
         this.addCnt = act;
         this.summonId = smnId;
         this.perCnt = pct;
-        this.UI.iconBg = icbg;
-        this.UI.explains = [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl];
         this.isTalent = isTalent;
         this.addition = adt;
         let thandle = handle ?? (() => ({}));
@@ -79,8 +84,8 @@ export class GIStatus {
             this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp';
         }
         if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
-            if (id == 2008) {
-                this.UI.iconBg = STATUS_BG_COLOR[ELEMENT_NAME_KEY[name.slice(0, 3)]];
+            if (id == 111052) {
+                this.UI.iconBg = STATUS_BG_COLOR[ELEMENT_NAME_KEY[name.slice(0, 3) as ElementNameKey] as PureElementType];
             } else if (icon.startsWith('buff')) {
                 if (icon == 'buff2') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Buff.webp';
                 if (icon == 'buff3') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Special.webp';
@@ -145,6 +150,7 @@ export type StatusHandleEvent = {
     pile?: Card[],
     playerInfo?: GameInfo,
     isSummon?: number,
+    source?: number,
 }
 
 export type StatusHandleRes = {
@@ -243,13 +249,13 @@ const shieldStatus = (id: number, name: string, cnt = 2, mcnt = 0) =>
     new GIStatus(id, name, `为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `(可叠加，最多到${mcnt})` : ''}`,
         '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], cnt, mcnt, -1);
 
-const readySkillShieldStatus = (id: number, name: string) =>
-    new GIStatus(id, name, '准备技能期间，提供2点[护盾]，保护所附属角色。',
-        '', STATUS_GROUP.heroStatus, [STATUS_TYPE.Shield], 2, 0, -1);
+// const readySkillShieldStatus = (id: number, name: string) =>
+//     new GIStatus(id, name, '准备技能期间，提供2点[护盾]，保护所附属角色。',
+//         '', STATUS_GROUP.heroStatus, [STATUS_TYPE.Shield], 2, 0, -1);
 
-const oncePerRound = (id: number, name: string) =>
-    new GIStatus(id, `${name}(冷却中)`, `本回合无法再打出【${name}】。`,
-        'debuff', STATUS_GROUP.combatStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign], -1, 0, 1);
+// const oncePerRound = (id: number, name: string) =>
+//     new GIStatus(id, `${name}(冷却中)`, `本回合无法再打出【${name}】。`,
+//         'debuff', STATUS_GROUP.combatStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign], -1, 0, 1);
 
 
 const statusTotal: Record<number, (version: Version, ...args: any) => Status> = {
@@ -316,11 +322,12 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
 
     111: () => shieldStatus(111, '结晶', 1, 2),
 
-    // 2008: (el = 0, rcnt = 1, addDmg = 0) => new GIStatus(2008, `${ELEMENT[el]}附魔`, `所附属角色造成的[物理伤害]变为[${ELEMENT[el]}伤害]${addDmg > 0 ? `，且造成的[${ELEMENT[el]}伤害]+${addDmg}` : ''}。；【[持续回合]：{roundCnt}】`,
-    //     `buff${addDmg > 0 ? '4' : ''}`, 0, [8], -1, 0, rcnt, status => ({
-    //         attachEl: STATUS_BG_COLOR.indexOf(status.iconBg),
-    //         addDmg: -status.perCnt,
-    //     }), { pct: -addDmg }),
+    111052: (_, el: PureElementType, rcnt = 1, addDmg = 0) =>
+        new GIStatus(111052, `${ELEMENT_NAME[el]}附魔`, `所附属角色造成的[物理伤害]变为[${ELEMENT_NAME[el]}伤害]${addDmg > 0 ? `，且造成的[${ELEMENT_NAME[el]}伤害]+${addDmg}` : ''}。；【[持续回合]：{roundCnt}】`,
+            `buff${addDmg > 0 ? '4' : ''}`, STATUS_GROUP.heroStatus, [STATUS_TYPE.Enchant], -1, 0, rcnt, status => ({
+                attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType,
+                addDmg: -status.perCnt,
+            }), { pct: -addDmg }),
 
     303300: () => new GIStatus(303300, '饱腹', '本回合无法食用更多的｢料理｣。',
         'satiety', STATUS_GROUP.heroStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign], -1, 0, 1),
@@ -526,7 +533,7 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //     })),
 
     111021: (_, isTalent = false) => new GIStatus(111021, '猫爪护盾', '为我方出战角色提供1点[护盾]。',
-        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], isTalent ? 2 : 1, 0, -1, null, { isTalent }),
+        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], isTalent ? 2 : 1, 0, -1, undefined, { isTalent }),
 
     // 2034: (isTalent = false) => new GIStatus(2034, '鼓舞领域', '【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】',
     //     'ski1203,2', 1, [1, 4, 6], -1, 0, 2, (status, event = {}) => {

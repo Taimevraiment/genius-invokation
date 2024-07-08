@@ -1,20 +1,21 @@
-import { newSupport } from './supports';
-import { newStatus } from './statuses';
-import { CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_COST_TYPE, DICE_TYPE, DiceCostType, DiceType, ELEMENT_TYPE, PureElementType, SKILL_TYPE, VERSION, WEAPON_TYPE, WeaponType } from '../constant/enum';
-import { ELEMENT_NAME, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME } from '../constant/UIconst';
-import { newSummon } from './summons';
-import { allHidxs, getBackHidxs } from '../utils/gameUtil';
-import { getLast, isCdt } from '../utils/utils';
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { Version } from '../constant/enum';
+import { newStatus } from './statuses.js';
+import {
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_COST_TYPE, DICE_TYPE, DiceCostType,
+    DiceType, ELEMENT_TYPE, HERO_LOCAL_CODE_KEY, HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, PureElementType,
+    VERSION, WEAPON_TYPE, WeaponType,
+} from '../constant/enum.js';
+import { ELEMENT_NAME, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME } from '../constant/UIconst.js';
+import { getLast, isCdt } from '../utils/utils.js';
+import { Version } from '../constant/enum.js';
 
 export class GICard {
     id: number; // 唯一id
-    entityId: number; // 实体id
+    entityId: number = -1; // 实体id
     name: string; // 卡牌名
     version: Version; // 加入的版本
     cost: number; // 费用
-    costChange: number; // 费用变化
+    costChange: number = 0; // 费用变化
     costType: DiceType; // 费用类型
     type: CardType; // 牌类型
     subType: CardSubtype[]; // 副类型
@@ -24,7 +25,7 @@ export class GICard {
     perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
-    selected: boolean; // 是否被选择
+    selected: boolean = false; // 是否被选择
     handle: (card: Card, event: CardHandleEvent) => CardHandleRes; // 卡牌发动的效果函数
     canSelectHero: number; // 能选择角色的数量
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
@@ -48,15 +49,20 @@ export class GICard {
         this.id = id;
         this.name = name;
         this.version = version;
-        this.UI.description = description ?? '';
         subType ??= [];
         if (typeof subType !== 'object') subType = [subType];
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2,
             isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1 } = options;
-        this.UI.cnt = cnt;
+        this.UI = {
+            description,
+            src,
+            cnt,
+            descriptions: [],
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+        }
         if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；(每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣)`;
-        else if (tag?.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[id % 10]}｣角色，才能加入牌组)`;
-        else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；(｢${WEAPON_TYPE_NAME[userType]}｣【角色】才能装备。角色最多装备1件｢武器｣)`;
+        else if (tag?.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
+        else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；(｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；(角色最多装备1件｢圣遗物｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Food)) {
             this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
@@ -89,10 +95,9 @@ export class GICard {
             this.UI.description += `；(整局游戏只能打出一张｢秘传｣卡牌; 这张牌一定在你的起始手牌中)`;
             this.UI.cnt = 1;
         } else if (subType?.includes(CARD_SUBTYPE.ElementResonance)) {
-            const el = Math.floor((id % 1000) / 100);
-            this.UI.description += `；(牌组中包含至少2个‹${el}${ELEMENT_NAME[el]}›角色，才能加入牌组)`;
+            const elCode = Math.floor(id / 100) % 10 as PureElementCode;
+            this.UI.description += `；(牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组)`;
         }
-        this.UI.src = src;
         this.cost = cost;
         this.costType = costType;
         this.type = type;
@@ -111,7 +116,6 @@ export class GICard {
         }
         this.useCnt = uct;
         this.perCnt = pct;
-        this.UI.explains = [...(this.UI.description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl];
         this.energy = energy;
         this.anydice = anydice;
         this.canSelectSummon = canSelectSummon;
@@ -165,6 +169,7 @@ export type CardHandleEvent = {
     slotUse?: boolean,
     isExecTask?: boolean,
     isElStatus?: boolean[],
+    selectSummon?: number,
 }
 
 export type CardHandleRes = {
@@ -233,29 +238,29 @@ const senlin1Weapon = (id: number, name: string, version: Version, userType: Wea
         src, 3, DICE_TYPE.Same, CARD_TYPE.Equipment, CARD_SUBTYPE.Weapon, userType, 1, () => ({ addDmg: 1, status: [newStatus(version)(stsId, name)] }));
 }
 
-const senlin2Weapon = (id: number, name: string, version: Version, userType: number, stsId: number, src: string) => {
-    return () => new GICard(id, name, version, '【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次使用｢普通攻击｣后：生成2个此角色类型的元素骰。',
-        src, 3, DICE_TYPE.Any, CARD_TYPE.Equipment, CARD_SUBTYPE.Weapon, userType, 1, () => ({ addDmg: 1, status: [newStatus(version)(stsId, name)] }));
-}
+// const senlin2Weapon = (id: number, name: string, version: Version, userType: number, stsId: number, src: string) => {
+//     return () => new GICard(id, name, version, '【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次使用｢普通攻击｣后：生成2个此角色类型的元素骰。',
+//         src, 3, DICE_TYPE.Any, CARD_TYPE.Equipment, CARD_SUBTYPE.Weapon, userType, 1, () => ({ addDmg: 1, status: [newStatus(version)(stsId, name)] }));
+// }
 
-const normalElArtifact = (id: number, name: string, element: PureElementType, src: string) => {
-    return () => new GICard(id, name, 'v3.3.0', `【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。(每回合1次)`,
-        src, 2, DICE_TYPE.Any, CARD_TYPE.Equipment, CARD_SUBTYPE.Artifact, 0, 1, (card, event) => {
-            const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', minusDiceCard: mdc = 0, isMinusDiceSkill = false } = event;
-            const isCardMinus = hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
-            return {
-                minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
-                minusDiceCard: isCdt(isCardMinus, 1),
-                trigger: ['skill', 'card'],
-                exec: () => {
-                    if (card.perCnt <= 0) return;
-                    if (trigger == 'card' && !isCardMinus) return;
-                    if (trigger == 'skill' && !isMinusDiceSkill) return;
-                    --card.perCnt;
-                }
-            }
-        }, { pct: 1 });
-}
+// const normalElArtifact = (id: number, name: string, element: PureElementType, src: string) => {
+//     return () => new GICard(id, name, 'v3.3.0', `【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。(每回合1次)`,
+//         src, 2, DICE_TYPE.Any, CARD_TYPE.Equipment, CARD_SUBTYPE.Artifact, 0, 1, (card, event) => {
+//             const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', minusDiceCard: mdc = 0, isMinusDiceSkill = false } = event;
+//             const isCardMinus = hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
+//             return {
+//                 minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
+//                 minusDiceCard: isCdt(isCardMinus, 1),
+//                 trigger: ['skill', 'card'],
+//                 exec: () => {
+//                     if (card.perCnt <= 0) return;
+//                     if (trigger == 'card' && !isCardMinus) return;
+//                     if (trigger == 'skill' && !isMinusDiceSkill) return;
+//                     --card.perCnt;
+//                 }
+//             }
+//         }, { pct: 1 });
+// }
 
 // const advancedElArtifact = (id: number, name: string, element: number, src: string) => {
 //     return () => new GICard(id, name, `【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT[element]}骰]。(每回合1次)；【投掷阶段：】2个元素骰初始总是投出[${ELEMENT[element]}骰]。`, src, 2, 8, 0, [1], 0, 1,

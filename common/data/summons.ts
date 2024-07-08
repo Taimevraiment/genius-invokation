@@ -1,9 +1,7 @@
-import { ELEMENT_ICON } from "../constant/UIconst";
-import { newStatus } from "./statuses";
-import { allHidxs, getAtkHidx, getMaxHertHidxs, getMinHertHidxs, getNearestHidx } from "../utils/gameUtil";
-import { getLast, isCdt } from '../utils/utils';
+
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { ELEMENT_TYPE, ElementType, SummonDestroyType, VERSION, Version } from "../constant/enum";
+import { getLast } from '../utils/utils.js';
+import { ELEMENT_TYPE, ElementType, SummonDestroyType, VERSION, Version } from "../constant/enum.js";
 
 export class GISummon {
     id: number; // 唯一id 从3000开始
@@ -21,8 +19,8 @@ export class GISummon {
     statusId: number; // 可能对应的状态 -1不存在
     addition: string[]; // 额外信息
     handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
-    isSelected: boolean; // 是否被选择
-    canSelect: boolean; // 是否能被选择
+    isSelected: boolean = false; // 是否被选择
+    canSelect: boolean = false; // 是否能被选择
     UI: {
         src: string; // 图片url
         description: string; // 描述
@@ -41,8 +39,6 @@ export class GISummon {
     ) {
         this.id = id;
         this.name = name;
-        this.UI.description = description;
-        this.UI.src = src;
         this.useCnt = useCnt;
         this.maxUse = maxUse;
         this.shieldOrHeal = shieldOrHeal;
@@ -52,21 +48,27 @@ export class GISummon {
             pct = 0, isTalent = false, adt = [], pdmg = 0, isDestroy = 0, stsId = -1,
             spReset = false, expl = [], pls = false,
         } = options;
+        this.UI = {
+            description,
+            src,
+            hasPlus: pls,
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+            isWill: false,
+            descriptions: [],
+        }
         this.perCnt = pct;
         this.isTalent = isTalent;
         this.addition = adt;
         this.pdmg = pdmg;
         this.isDestroy = isDestroy;
         this.statusId = stsId;
-        this.UI.hasPlus = pls;
-        this.UI.explains = [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl];
-        this.handle = (summon, event) => {
+        this.handle = (summon, event = {}) => {
             const { reset = false } = event;
             if (reset) {
                 summon.perCnt = pct;
                 if (!spReset) return {}
             }
-            if (handle) return handle(summon, event) ?? {}
+            if (handle) return handle(summon, event) ?? {};
             return {
                 trigger: ['phase-end'],
                 exec: execEvent => phaseEndAtk(execEvent.summon ?? summon),
@@ -147,7 +149,7 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
 
     111011: () => new GISummon(111011, '冰灵珠', '【结束阶段：】造成{dmg}点[冰元素伤害]，对所有后台敌人造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/07c346ef7197c24c76a25d3b47ed5e66_3626039813983519562.png',
-        2, 2, 0, 1, ELEMENT_TYPE.Cryo, null, { pdmg: 1 }),
+        2, 2, 0, 1, ELEMENT_TYPE.Cryo, undefined, { pdmg: 1 }),
 
     115: () => new GISummon(115, '燃烧烈焰', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
         'https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png',
@@ -258,7 +260,7 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
     //         exec: execEvent => {
     //             const { summon: smn = summon } = execEvent;
     //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             return { cmds: [{ cmd: 'heal', hidxs: allHidxs(event.heros), isAttach: true }] }
+    //             return { cmds: [{ cmd: 'heal', hidxs: allHidxs(event.heros) }, { cmd: 'attach' }] }
     //         }
     //     })),
 

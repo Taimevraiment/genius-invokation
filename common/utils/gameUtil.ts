@@ -1,6 +1,6 @@
 import { Card, Hero, Skill } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType } from "../constant/enum";
-import { arrToObj, objToArr } from "./utils";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType } from "../constant/enum.js";
+import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
 export const allHidxs = (heros?: Hero[], options: { isDie?: boolean, exclude?: number, isAll?: boolean } = {}): number[] => {

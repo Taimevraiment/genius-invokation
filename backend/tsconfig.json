@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "ES2020",
+        "target": "ES6",
         "useDefineForClassFields": true,
-        "module": "ESNext",
+        "module": "ES2020",
         "lib": [
             "ES2020",
             "DOM",
@@ -10,17 +10,15 @@
         ],
         "skipLibCheck": true,
         /* Bundler mode */
-        "moduleResolution": "bundler",
-        "allowImportingTsExtensions": true,
-        "resolveJsonModule": true,
+        // "allowImportingTsExtensions": true,
+        // "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
         "isolatedModules": true,
-        "noEmit": true,
-        "jsx": "preserve",
+        "removeComments": true,
         /* Linting */
         "strict": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noFallthroughCasesInSwitch": true,
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
         "baseUrl": ".",
         "ignoreDeprecations": "5.0",
         "typeRoots": [
@@ -29,7 +27,12 @@
         "types": [
             "node"
         ],
-        "outDir": "dist"
+        "outDir": "dist",
+        "paths": {
+            "socket.io": [
+                "./node_modules/socket.io/dist/index"
+            ]
+        }
     },
     "include": [
         "src/**/*.ts",

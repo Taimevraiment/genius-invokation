@@ -1,5 +1,5 @@
-import { delay } from "../../common/utils/utils";
 import { StatusTask } from "../../typing";
+import { delay } from "../../common/utils/utils.js";
 
 export default class TaskQueue {
     queue: [string, any[] | StatusTask][] = [];

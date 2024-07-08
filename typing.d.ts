@@ -151,6 +151,13 @@ type InfoVO = {
 
 type ExplainContent = Card | Summon | Status | Skill | string;
 
+type DamageVO = {
+    willHeals?: number[],
+    willDamages?: number[][],
+    dmgElements?: DamageType[],
+    elTips?: [string, PureElementType, PureElementType][],
+}
+
 type TrgElRe = Exclude<keyof typeof PURE_ELEMENT_TYPE, 'Geo' | 'Dendro' | 'Anemo'>;
 type TrgSkType = Exclude<SkillType, 4>;
 type TrgEl = keyof typeof PURE_ELEMENT_TYPE;
@@ -198,6 +205,7 @@ type ServerData = Readonly<{
     isStart: boolean,
     round: number,
     currCountdown: number,
+    damageVO: DamageVO | null,
     log: string[],
     pileCnt: number[],
     diceCnt: number[],

@@ -3,12 +3,15 @@ import type { Socket } from "socket.io-client";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import { checkDices } from "@@@/utils/gameUtil";
 import {
-    Card, Countdown, Hero, Player, ServerData, Skill, Summon, ActionData, Preview, InfoVO
+    Card, Countdown, Hero, Player, ServerData, Skill, Summon, ActionData, Preview, InfoVO,
 } from "../../typing";
 import { ACTION_TYPE, CARD_SUBTYPE, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
 import { INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_SKILL, NULL_CARD, NULL_MODAL } from "@@@/constant/init"
-import { CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC } from "@@@/constant/UIconst";
+import {
+    CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
+    HANDCARDS_OFFSET_PC,
+} from "@@@/constant/UIconst";
 
 export default class GeniusInvokationClient {
     socket: Socket;
@@ -46,8 +49,8 @@ export default class GeniusInvokationClient {
     modalInfo: InfoVO = { ...NULL_MODAL }; // 展示信息
     tip: string = ''; // 提示信息
     actionInfo: string = ''; // 行动信息
-    currCard: Card = clone(NULL_CARD); // 当前选择的卡
-    currSkill: Skill = { ...NULL_SKILL }; // 当前选择的技能
+    currCard: Card = NULL_CARD(); // 当前选择的卡
+    currSkill: Skill = NULL_SKILL(); // 当前选择的技能
     currHero: Hero | {} = {}; // 当前选择的角色
     decks: { name: string, shareCode: string, version: Version }[] = [];
     deckIdx: number; // 出战卡组id
@@ -178,8 +181,8 @@ export default class GeniusInvokationClient {
         }
         if (onlyCard) return;
         this.modalInfo = clone(NULL_MODAL);
-        this.currCard = clone(NULL_CARD);
-        this.currSkill = clone(NULL_SKILL);
+        this.currCard = NULL_CARD();
+        this.currSkill = NULL_SKILL();
         this.willSummons = [[], []];
         this.willSwitch = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(false);
         this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
@@ -215,7 +218,7 @@ export default class GeniusInvokationClient {
     selectCard(cardIdx: number) {
         if (this.phase < PHASE.CHANGE_CARD) return;
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
-        this.currSkill = { ...NULL_SKILL };
+        this.currSkill = NULL_SKILL();
         this.willSummons = [[], []];
         this.isShowChangeHero = 0;
         this.handcardsSelect.forEach((cs, csi, csa) => {
@@ -384,7 +387,7 @@ export default class GeniusInvokationClient {
     selectHero(pidx: number, hidx: number, force = false) {
         this.cancel({ onlySupportAndSummon: true });
         if (this.currCard.canSelectHero == 0 || ([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase) || force) {
-            this.currCard = clone(NULL_CARD);
+            this.currCard = NULL_CARD();
             const sidx = this.handcardsSelect.indexOf(true);
             this.handcardsSelect.forEach((_, i, a) => a[i] = false);
             if (this.isMobile && sidx > -1) this.mouseleave(sidx, true);
@@ -399,7 +402,7 @@ export default class GeniusInvokationClient {
         }
         if (this.isLookon > -1) return;
         if (!this.currCard.hasSubtype(CARD_SUBTYPE.Action) || this.currCard.canSelectHero == 0) {
-            this.currSkill = { ...NULL_SKILL };
+            this.currSkill = NULL_SKILL();
         }
         this.willSummons = [[], []];
         this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
@@ -549,7 +552,7 @@ export default class GeniusInvokationClient {
             };
         }
         if (skidx > -1 && (!this.currCard.hasSubtype(CARD_SUBTYPE.Action) || !isCard)) {
-            this.currCard = clone(NULL_CARD);
+            this.currCard = NULL_CARD();
             this.cancel({ onlyCard: true });
         }
         if (skidx == -1) return;
