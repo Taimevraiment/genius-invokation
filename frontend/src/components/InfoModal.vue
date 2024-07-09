@@ -17,9 +17,9 @@
             <span>{{ (info as Card).energy }}</span>
           </div>
         </div>
-        <div class="info-card-type">{{ CARD_TYPE[(info as Card).type] }}</div>
+        <div class="info-card-type">{{ CARD_TYPE_NAME[(info as Card).type] }}</div>
         <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
-          {{ CARD_SUBTYPE[subtype] }}
+          {{ CARD_SUBTYPE_NAME[subtype] }}
         </div>
         <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
           {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
@@ -285,13 +285,11 @@ import { computed, ref, watchEffect } from 'vue';
 import {
   ELEMENT_NAME, ELEMENT_COLOR, CHANGE_GOOD_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, RULE_EXPLAIN, STATUS_BG_COLOR_KEY,
   CARD_SUBTYPE_URL, WEAPON_TYPE_URL, ELEMENT_URL, HERO_TAG_NAME, CHANGE_BAD_COLOR, WEAPON_TYPE_NAME, SKILL_TYPE_NAME,
-  CARD_SUBTYPE_NAME, HERO_TAG_URL, ElementColorKey,
+  CARD_SUBTYPE_NAME, HERO_TAG_URL, ElementColorKey, CARD_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import {
-  CARD_TYPE, CARD_SUBTYPE, DICE_TYPE, COST_TYPE, WeaponType, InfoType, INFO_TYPE, STATUS_TYPE, Version, ELEMENT_CODE_KEY,
-  ElementCode, DAMAGE_TYPE,
-  ELEMENT_TYPE,
-  ElementType,
+  CARD_SUBTYPE, DICE_TYPE, COST_TYPE, WeaponType, InfoType, INFO_TYPE, STATUS_TYPE, Version, ELEMENT_CODE_KEY,
+  ElementCode, DAMAGE_TYPE, ELEMENT_TYPE, ElementType,
 } from '@@@/constant/enum';
 import { newCard } from '@@@/data/cards';
 import { newStatus } from '@@@/data/statuses';

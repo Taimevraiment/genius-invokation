@@ -75,7 +75,7 @@ export class GISummon {
             }
         };
     }
-    setEntityId(id: number) {
+    setEntityId = function (id: number): Summon {
         if (this.entityId == -1) this.entityId = id;
         return this;
     }

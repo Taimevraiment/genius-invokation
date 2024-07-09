@@ -1,8 +1,9 @@
-import { DiceCostType, DiceType, ElementType, HeroTag, InfoType } from "@@@/constant/enum"
+import { DiceCostType, DiceType, ElementType, HeroTag, InfoType, Version } from "@@@/constant/enum"
 import { Card } from "../typing"
 
 type DeckVO = {
     name: string,
+    version: Version,
     heroIds: {
         id: number,
         name: string,
@@ -15,6 +16,7 @@ type DeckVO = {
 
 type OriDeck = {
     name: string,
+    version: Version,
     shareCode: string,
 }
 

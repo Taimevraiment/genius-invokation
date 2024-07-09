@@ -46,7 +46,7 @@ export default class GeniusInvokationClient {
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     playerIdx: number = -1; // 该玩家序号
-    modalInfo: InfoVO = { ...NULL_MODAL }; // 展示信息
+    modalInfo: InfoVO = NULL_MODAL(); // 展示信息
     tip: string = ''; // 提示信息
     actionInfo: string = ''; // 行动信息
     currCard: Card = NULL_CARD(); // 当前选择的卡
@@ -98,10 +98,10 @@ export default class GeniusInvokationClient {
         this.summonSelect = this.players.map(() => new Array(MAX_SUMMON_COUNT).fill(false));
     }
     get player() { // 本玩家
-        return this.players[this.playerIdx] ?? INIT_PLAYER;
+        return this.players[this.playerIdx] ?? INIT_PLAYER();
     }
     get opponent() { // 敌方玩家
-        return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER;
+        return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER();
     }
     get heroSwitchDiceColor() { // 切换角色骰子颜色
         return this.heroSwitchDice > INIT_SWITCH_HERO_DICE ? CHANGE_BAD_COLOR :
@@ -169,7 +169,7 @@ export default class GeniusInvokationClient {
             }
         }
         if (this.currCard.canSelectSupport > -1 && this.modalInfo.type != null) {
-            this.modalInfo = { ...NULL_MODAL }
+            this.modalInfo = NULL_MODAL()
             return;
         }
         const sidx = this.handcardsSelect.indexOf(true);
@@ -180,7 +180,7 @@ export default class GeniusInvokationClient {
             this.mouseleave(sidx, true);
         }
         if (onlyCard) return;
-        this.modalInfo = clone(NULL_MODAL);
+        this.modalInfo = NULL_MODAL();
         this.currCard = NULL_CARD();
         this.currSkill = NULL_SKILL();
         this.willSummons = [[], []];
@@ -346,7 +346,7 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.rollCnt = rollCnt[this.playerIdx];
         this.log = log;
-        this.modalInfo = { ...NULL_MODAL };
+        this.modalInfo = NULL_MODAL();
     }
     /**
      * 游戏开始时换卡
@@ -418,7 +418,7 @@ export default class GeniusInvokationClient {
             if (this.isShowChangeHero > 1 && pidx == 1 && this.player.heros[hidx].canSelect) {
                 this.heroSelect.forEach((_, hi, ha) => ha[hi] = +(hi == hidx));
                 this.chooseHero();
-                this.modalInfo = { ...NULL_MODAL };
+                this.modalInfo = NULL_MODAL();
             } else {
                 this.cancel({ onlyHeros: true });
                 this.isValid = true;
@@ -559,7 +559,7 @@ export default class GeniusInvokationClient {
 
         if (!isOnlyRead || isReadySkill) {
             // if (!this.isValid) return this._sendTip('骰子不符合要求');
-            this.modalInfo = { ...NULL_MODAL };
+            this.modalInfo = NULL_MODAL();
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
@@ -629,7 +629,7 @@ export default class GeniusInvokationClient {
      */
     showSupportInfo(pidx: number, siidx: number) {
         if (this.player.supports.some(s => s.canSelect)) {
-            this.modalInfo = { ...NULL_MODAL };
+            this.modalInfo = NULL_MODAL();
         } else {
             const supports = [this.opponent.supports, this.player.supports];
             this.modalInfo = {

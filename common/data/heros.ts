@@ -7,9 +7,11 @@ import { newStatus } from './statuses.js';
 import { newSummon } from './summons.js';
 import { clone, getLast } from '../utils/utils.js';
 import { ELEMENT_NAME } from '../constant/UIconst.js'
+import { NULL_HERO } from '../constant/init';
 
 export class GIHero {
     id: number; // 唯一id
+    shareId: number; // 分享码id
     entityId: number = -1; // 实体id
     name: string; // 角色名
     version: Version; // 加入的版本
@@ -37,11 +39,12 @@ export class GIHero {
         avatars: string[], // 所有头像url
     };
     constructor(
-        id: number, name: string, version: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType, weaponType: WeaponType,
+        id: number, shareId: number, name: string, version: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType, weaponType: WeaponType,
         src: string | string[], avatar: string | string[], skill1?: ((id: number, costElement: ElementType, weaponType2: WeaponType) => GISkill) | null,
         skills: GISkill[] = [],
     ) {
         this.id = id;
+        this.shareId = shareId;
         this.name = name;
         this.version = version;
         if (Array.isArray(tags)) this.tags = tags;
@@ -327,7 +330,7 @@ export const readySkill = (rskid: number, version: Version) => readySkillTotal[r
 const allHeros: Record<number, (ver: Version) => Hero> = {
     // 1000: () => new GIHero(1000, '无', 'v0.0.0', [], 0, 0, 0, ''),
 
-    1101: ver => new GIHero(1101, '甘雨', 'v3.3.0', HERO_TAG.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Bow,
+    1101: ver => new GIHero(1101, 1, '甘雨', 'v3.3.0', HERO_TAG.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Bow,
         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png',
         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png',
         skill1('流天射术'), [
@@ -350,7 +353,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
         ], () => ({ summon: [newSummon(ver)(111011)], pdmg: 1 }))
     ]),
 
-    1102: ver => new GIHero(1102, '迪奥娜', 'v3.3.0', HERO_TAG.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Bow,
+    1102: ver => new GIHero(1102, 2, '迪奥娜', 'v3.3.0', HERO_TAG.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Bow,
         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png',
         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png',
         skill1('猎人射术'), [
@@ -367,7 +370,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
         ], () => ({ summon: [newSummon(ver)(111023)], heal: 2 }))
     ]),
 
-    1103: ver => new GIHero(1103, '凯亚', 'v3.3.0', HERO_TAG.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
+    1103: ver => new GIHero(1103, 3, '凯亚', 'v3.3.0', HERO_TAG.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png',
         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png',
         skill1('仪典剑术'), [
@@ -491,7 +494,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     ], () => ({ summon: [newSummon(ver)(3047)] }))
     // ]),
 
-    // 1110: () => new GIHero(1110, '夏洛蒂', [5, 12], 10, 4, 4,
+    // 1110: () => new GIHero(1110, 334, '夏洛蒂', [5, 12], 10, 4, 4,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0bad00e61b01e543de83347130cab711_7623245668285687441.png',
     //     skill1('冷色摄影律'), [
     //     new GISkill('取景·冰点构图法', '造成{dmg}点[冰元素伤害]，目标角色附属【sts2163】。', 2, 1, 3, 4, {}, [
@@ -699,7 +702,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     ], () => ({ trigger: ['game-start', 'revive'], status: [newStatus(2130)] }))
     // ]),
 
-    // 1010: () => new GIHero(1010, '那维莱特', [5, 12], 10, 1, 4,
+    // 1010: () => new GIHero(1010, 335, '那维莱特', [5, 12], 10, 1, 4,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/86e0474f40841fbc5faff7870fe9cd0c_8511334021456599978.png',
     //     skill1('如水从平'), [
     //     new GISkill('泪水啊，我必偿还', '造成{dmg}点[水元素伤害]，角色附属【sts2164】。', 2, 2, 3, 1, {}, [
@@ -906,7 +909,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     ], () => ({ summon: [newSummon(ver)(3048)], status: [newStatus(2132)] }))
     // ]),
 
-    // 1211: () => new GIHero(1211, '托马', 3, 10, 2, 5,
+    // 1211: () => new GIHero(1211, 319, '托马', 3, 10, 2, 5,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/a21241c40833d2aee5336ae8fdd58c41_7254789917363324478.png',
     //     skill1('迅破枪势'), [
     //     new GISkill('烈烧佑命之侍护', '造成{dmg}点[火元素伤害]，生成【sts2106】。', 2, 2, 3, 2, {}, [
@@ -1576,7 +1579,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     })
     // ]),
 
-    // 1607: () => new GIHero(1607, '绮良良', 3, 10, 7, 1,
+    // 1607: () => new GIHero(1607, 336, '绮良良', 3, 10, 7, 1,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/650f884967057168a0b9b4025a032c11_2097188456727270580.png',
     //     skill1('箱纸切削术'), [
     //     new GISkill('呜喵町飞足', '生成【sts2167】和【sts2168】。', 2, 0, 3, 7, {}, [
@@ -1619,7 +1622,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     })
     // ]),
 
-    // 1702: () => new GIHero(1702, '「女士」', 8, 10, 4, 0,
+    // 1702: () => new GIHero(1702, 277, '「女士」', 8, 10, 4, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/f5904898779c5de0fd9cf2f207f5d2f8_1917054016449064269.png',
     //     skill1('霜锋霰舞', 4), [
     //     new GISkill('凛冽之刺', '造成{dmg}点[冰元素伤害]，目标角色附属【sts2137】。', 2, 2, 3, 4, {}, [
@@ -1635,7 +1638,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //         () => ({ trigger: ['game-start'], status: [newStatus(2138)] }))
     // ]),
 
-    // 1703: () => new GIHero(1703, '无相之冰', 0, 8, 4, 0,
+    // 1703: () => new GIHero(1703, 321, '无相之冰', 0, 8, 4, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/452f63cf4e88b83a99bb781e8ae34122_3507980204838910528.png',
     //     skill1('冰锥迸射', 4), [
     //     new GISkill('圆舞冰环', '造成{dmg}点[冰元素伤害]，本角色附属【sts2156】。', 2, 3, 3, 4, {}, [
@@ -1825,7 +1828,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     ], () => ({ trigger: ['game-start'], status: [newStatus(2092)] }))
     // ]),
 
-    // 1743: () => new GIHero(1743, '镀金旅团·炽沙叙事人', 10, 10, 2, 0,
+    // 1743: () => new GIHero(1743, 285, '镀金旅团·炽沙叙事人', 10, 10, 2, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/ccc5db5ede1a2303cc018e18995fbab1_2557032699772032384.png',
     //     skill1('烧蚀之光', 4), [
     //     new GISkill('炎晶迸击', '造成{dmg}点[火元素伤害]。', 2, 3, 3, 2, {}, [
@@ -1940,7 +1943,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     ], () => ({ trigger: ['game-start'], statusOppo: [newStatus(2140)] }))
     // ]),
 
-    // 1763: () => new GIHero(1763, '千年珍珠骏麟', 0, 8, 3, 0,
+    // 1763: () => new GIHero(1763, 322, '千年珍珠骏麟', 0, 8, 3, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/6ea12823806de2c2c7fe62d839410c8b_8031642621604475811.png',
     //     skill1('旋尾扇击'), [
     //     new GISkill('霞舞鱼群', '造成{dmg}点[雷元素伤害]。；【每回合1次：】如果本角色已附属【sts2158】，则使其[可用次数]+1。', 2, 3, 3, 3, {}, [
@@ -1963,7 +1966,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
     //     ], () => ({ trigger: ['game-start'], status: [newStatus(2158)] }))
     // ]),
 
-    // 1764: () => new GIHero(1764, '愚人众·雷萤术士', 8, 10, 3, 0,
+    // 1764: () => new GIHero(1764, 337, '愚人众·雷萤术士', 8, 10, 3, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/e7e0e8c1cab4d08764f95d14345c4eef_4303268682366227358.png',
     //     skill1('轰闪落雷', 4), [
     //     new GISkill('雾虚之召', '召唤【smn3057】。', 2, 0, 3, 3, {}, [
@@ -2187,7 +2190,7 @@ export const herosTotal = (version: Version = getLast(VERSION.slice())) => {
 }
 
 export const newHero = (version: Version = getLast(VERSION.slice())) => (id: number, hidx?: number) => {
-    const hero = allHeros[id](version);
+    const hero = allHeros[id]?.(version) ?? NULL_HERO();
     if (hidx != undefined) hero.hidx = hidx;
     return hero;
 }

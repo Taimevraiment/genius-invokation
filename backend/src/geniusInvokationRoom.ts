@@ -165,7 +165,7 @@ export default class GeniusInvokationRoom {
     init(newPlayer: Pick<Player, 'id' | 'name'>) {
         const pidx = this.players.length + this.watchers.length;
         const player: Player = {
-            ...INIT_PLAYER,
+            ...INIT_PLAYER(),
             id: newPlayer.id,
             name: newPlayer.name,
             rid: this.id,

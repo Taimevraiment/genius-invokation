@@ -15,12 +15,13 @@
 <script setup lang='ts'>
 import { ref } from 'vue';
 import { VERSION, Version } from '@@@/constant/enum';
+import { getLast } from '@@@/utils/utils';
 
 const emit = defineEmits(['create-room', 'create-room-cancel']);
 
 const roomName = ref<string>(''); // 房间名
 const roomPassword = ref<string>(''); // 房间密码
-const version = ref<Version>(getLast(VERSION.slice())!); // 版本
+const version = ref<Version>(getLast(VERSION.slice())); // 版本
 const countdown = ref<number | string>(''); // 倒计时
 
 const create = () => emit('create-room', roomName.value, roomPassword.value, version.value, +countdown.value || 0);

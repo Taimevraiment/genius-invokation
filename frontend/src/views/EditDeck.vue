@@ -4,10 +4,11 @@
         <div v-if="editDeckIdx == -1" class="edit-deck-list">
             <div v-for="(deck, did) in decks" :key="'deckid:' + did" class="deck"
                 :class="{ 'curr-deck': deckIdx == did }" @click="toEditDeck(did)">
-                {{ deck.name }}
+                <div>{{ deck.name }}</div>
+                <div style="height: 1.2rem;">{{ deck.version }}</div>
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero"
-                    :style="{ backgroundColor: ELEMENT_COLOR[hero?.element ?? 0] }">
-                    {{ hero?.name || '无' }}
+                    :style="{ backgroundColor: ELEMENT_COLOR[hero.element] }">
+                    {{ hero.name }}
                 </div>
                 <div class="edit-btn-group">
                     <span v-for="( icon, cidx ) in deckListEditIcon" :key="cidx" class="edit-list-icon"
@@ -27,6 +28,9 @@
                 <button @click.stop="{ currIdx = 1; updateInfo(); }" :class="{ active: currIdx == 1 }">
                     卡组
                 </button>
+                <select name="version" id="version" v-model="version">
+                    <option v-for="ver in VERSION" :key="ver" :value="ver">{{ ver }}</option>
+                </select>
             </div>
             <input v-model="deckName" class="deck-name" />
             <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
@@ -169,6 +173,7 @@ import {
     CARD_SUBTYPE, HERO_LOCAL, Version, ELEMENT_TYPE, TypeConst, CARD_TAG, HeroLocal, CardSubtype, HeroTag, ElementType,
     WeaponType, CardType, DiceType, PURE_ELEMENT_CODE, DICE_TYPE, COST_TYPE, INFO_TYPE, PURE_ELEMENT_TYPE, WEAPON_TYPE,
     CARD_TYPE,
+    VERSION,
 } from '@@@/constant/enum';
 import {
     ELEMENT_COLOR, ELEMENT_ICON, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME, CARD_TYPE_NAME,
@@ -177,11 +182,11 @@ import {
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, newHero } from '../../../common/data/heros';
 import InfoModal from '@/components/InfoModal.vue';
-import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
+import { arrToObj, clone, genShareCode, getLast, objToArr, parseShareCode } from '../../../common/utils/utils';
 import { useRouter } from 'vue-router';
 import { Card, Hero, InfoVO } from '../../../typing';
 import { DeckVO, OriDeck } from 'typing';
-import { NULL_HERO, NULL_MODAL } from '@@@/constant/init';
+import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 
 type Filter<T> = {
@@ -202,13 +207,13 @@ const TAG_INDEX = { // 标签页
 type TagIndex = TypeConst<typeof TAG_INDEX>;
 const router = useRouter();
 
-// todo 要加入选择版本的下拉框
-const version = ref<Version>('v4.7.0');
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)); // 是否为手机
 
+const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
+const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
+const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? getLast(VERSION.slice()));
 const herosPool = computed<Hero[]>(() => herosTotal(version.value).filter(h => h.id < 3000)); // 选择的角色池
 const cardsPool = computed<Card[]>(() => cardsTotal(version.value).filter(c => c.UI.cnt > 0)); // 选择的卡组池
-const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 
 const currIdx = ref<TagIndex>(TAG_INDEX.Hero); // 当前选择的标签页：0角色 1卡组
 const allHeros = ref<Hero[]>([...herosPool.value]); // 可选择角色池
@@ -219,6 +224,7 @@ const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => {
     const { heroIds, cardIds } = parseShareCode(deck.shareCode);
     return {
         name: deck.name,
+        version: deck.version,
         heroIds: heroIds.map(hid => {
             const hero = newHero(version.value)(hid);
             return {
@@ -232,12 +238,11 @@ const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => {
         cardIds,
     }
 })); // 卡组列表
-const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
 const deckName = ref<string>(''); // 卡组名字
 const editDeck = ref<{ heroIds: number[], cardIds: number[] }>({ heroIds: [], cardIds: [] }); // 当前编辑卡组
 const deckIdx = ref<number>(Number(localStorage.getItem('GIdeckIdx') || 0)); // 出战卡组id
-const cardsDeckLen = ref<number>(0); // 卡组数量
-const modalInfo = ref<InfoVO>({ ...NULL_MODAL });
+const cardsDeckLen = computed<number>(() => cardsDeck.value.map(v => v.UI.cnt).reduce((a, b) => a + b, 0)); // 卡组数量
+const modalInfo = ref<InfoVO>(NULL_MODAL());
 const deckListEditIcon = ref([
     { name: '战', handle: (idx: number) => selectDeck(idx) },
     { name: '删', handle: (idx: number) => deleteDeck(idx) },
@@ -277,6 +282,7 @@ const saveDeck = () => {
     updateShareCode();
     oriDecks.value[editDeckIdx.value] = {
         name: deckName.value || '默认卡组',
+        version: version.value,
         shareCode: shareCode.value,
     }
     localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
@@ -289,9 +295,10 @@ const deleteDeck = (did: number) => {
     if (isConfirm) {
         oriDecks.value[did] = {
             name: '默认卡组',
+            version: getLast(VERSION.slice()),
             shareCode: genShareCode([0, 0, 0]),
         };
-        localStorage.setItem('GIdecks', JSON.stringify(decks));
+        localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
     }
 }
 
@@ -369,6 +376,7 @@ const updateInfo = (init = false) => {
         });
     });
     cardsDeck.value = cardsDeck.value.filter(c => {
+        if (c.version > version.value) return false;
         if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
             return herosDeck.value.map(h => h.id).includes(c.userType as number);
         }
@@ -410,19 +418,19 @@ const updateInfo = (init = false) => {
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
         return t && st && co && ct;
     }).sort((a, b) => {
-        if (a.UI.cnt * b.UI.cnt > 0) return 0;
+        if (a.UI.cnt * b.UI.cnt >= 0) return 0;
         return b.UI.cnt - a.UI.cnt;
     });
     const heroFilterRes: [HeroTag[], ElementType[], WeaponType[]] = heroFilter.value?.map(ftype => {
         return ftype.value.filter(v => v.tap).map(v => v.val);
     }) as [HeroTag[], ElementType[], WeaponType[]];
     allHeros.value = allHeros.value.filter(h => {
+        if (h.version > version.value) return false;
         const tag = heroFilterRes[0].length == 0 || heroFilterRes[0].every(hl => h.tags.includes(hl));
         const element = heroFilterRes[1].length == 0 || heroFilterRes[1].includes(h.element);
         const weapon = heroFilterRes[2].length == 0 || heroFilterRes[2].includes(h.weaponType);
         return tag && element && weapon;
     });
-    cardsDeckLen.value = cardsDeck.value.map(v => v.UI.cnt).reduce((a, b) => a + b, 0);
     filterSelected.value = [heroFilter, cardFilter][currIdx.value].value
         ?.filter(ftype => ftype.value.filter(v => v.tap).length > 0)
         .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => v.name)) ?? [];
@@ -437,19 +445,21 @@ const getDiceIcon = (name: string) => {
 // 进入编辑卡组界面
 const toEditDeck = (did: number) => {
     editDeckIdx.value = did;
-    currIdx.value = 0;
+    version.value = oriDecks.value[did]?.version ?? getLast(VERSION.slice());
+    currIdx.value = TAG_INDEX.Hero;
     deckName.value = oriDecks.value[did].name;
     editDeck.value = parseShareCode(oriDecks.value[did].shareCode);
     herosDeck.value = editDeck.value.heroIds.map(hid => {
-        return clone(herosPool.value.find(v => v.id == hid)!);
+        return clone(herosPool.value.find(v => v.id == hid)) ?? NULL_HERO();
     });
     cardsDeck.value = [];
-    editDeck.value.cardIds.forEach((cid: number) => {
-        const card = clone(cardsPool.value.find(v => v.id == cid)!).setCnt(1);
+    for (const cid of editDeck.value.cardIds) {
+        const card = clone(cardsPool.value.find(v => v.id == cid))?.setCnt(1);
+        if (card == undefined) continue;
         const dCard = cardsDeck.value.find(c => c.id == card.id);
         if (dCard == undefined) cardsDeck.value.push(card);
         else ++dCard.UI.cnt;
-    });
+    };
     resetCardFilter();
     resetHeroFilter();
     updateInfo(true);
@@ -457,7 +467,7 @@ const toEditDeck = (did: number) => {
 
 // 更新分享码
 const updateShareCode = () => {
-    shareCode.value = genShareCode((herosDeck.value.map(v => v.id).concat(cardsDeck.value.flatMap(v => new Array(v.UI.cnt).fill(v.id)))));
+    shareCode.value = genShareCode(herosDeck.value.map(v => v.shareId).concat(cardsDeck.value.flatMap(v => new Array(v.UI.cnt).fill(v.shareId))));
 }
 
 // 返回
@@ -493,7 +503,7 @@ const MoveHero = (pos: number, dir: number) => {
 const selectCard = (cid: number) => {
     cancel();
     if (cardsDeckLen.value >= DECK_CARD_COUNT) return alert('卡组已满');
-    const card = allCards.value.find(c => c.id == cid) ?? allCards.value[0];
+    const card = allCards.value.find(c => c.id == cid) ?? NULL_CARD();
     --card.UI.cnt;
     const curCard = cardsDeck.value.find(cd => cd.id == card.id);
     if (curCard == undefined) cardsDeck.value.push(clone(card).setCnt(1));
@@ -601,7 +611,7 @@ const reset = () => {
 const cancel = () => {
     isShowFilter.value = false;
     isShowShareCode.value = false;
-    modalInfo.value = { ...NULL_MODAL }
+    modalInfo.value = NULL_MODAL();
 }
 
 
@@ -622,6 +632,7 @@ body div {
 
 .edit-deck-list {
     width: 100%;
+    height: min(80%, 300px);
     background-color: #db8803;
     position: absolute;
     top: 50%;
@@ -631,6 +642,8 @@ body div {
     border-top: 10px solid #572e00;
     border-bottom: 10px solid #572e00;
     padding: 5px 10px;
+    display: flex;
+    align-items: center;
     box-sizing: border-box;
 }
 
@@ -639,13 +652,14 @@ body div {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 200px;
+    height: 90%;
     width: 100px;
     background-color: #ddba54;
     margin: 5px;
     padding: 5px;
     border-radius: 10px;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .deck:hover,
@@ -790,6 +804,14 @@ body div {
 }
 
 .edit-deck-btn-group button.active {
+    background-color: #ffcf77;
+}
+
+#version {
+    margin: 5px;
+    padding: 5px 0;
+    border-radius: 5px;
+    border: 3px solid #583a01;
     background-color: #ffcf77;
 }
 

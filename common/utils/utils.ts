@@ -9,7 +9,7 @@ export function clone<T>(obj: T): T {
         return obj.map(item => clone(item)) as unknown as T;
     }
     const cloneObj = {} as T;
-    for (const key in obj) {
+    for (const key of Object.keys(obj)) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             cloneObj[key] = clone(obj[key]);
         }
@@ -26,7 +26,7 @@ export const isCdt = <T>(cdt: boolean | null | undefined, res: T, elres?: T): T 
 
 // 生成分享码
 export const genShareCode = (ids: number[], salt = 0): string => {
-    const ostr = ids.map(id => (CODE_IDX_LIST.indexOf(id)).toString(2).padStart(12, '0')).join('').padEnd(400, '0');
+    const ostr = ids.map(id => id.toString(2).padStart(12, '0')).join('').padEnd(400, '0');
     const farr: number[] = [];
     for (let i = 0; i < 25; ++i) {
         farr.push((parseInt(ostr.slice(i * 8, (i + 1) * 8), 2) + salt) % 256);
@@ -118,5 +118,5 @@ export const swapKeysAndValues = <K extends string | number | symbol, V extends 
 }
 
 // 获取数组最后一项
-export const getLast = <T>(arr: T[]) => arr[arr.length - 1];
+export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
 

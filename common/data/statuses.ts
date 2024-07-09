@@ -112,12 +112,12 @@ export class GIStatus {
             return thandle(status, event) ?? {};
         }
     }
-    setEntityId(id: number) {
+    setEntityId = function (id: number): Status {
         if (this.entityId == -1) this.entityId = id;
         return this;
     }
-    hasType(...types: StatusType[]) {
-        return this.type.some(v => types.includes(v));
+    hasType = function (...types: StatusType[]): boolean {
+        return this.type.some((v: StatusType) => types.includes(v));
     }
 }
 

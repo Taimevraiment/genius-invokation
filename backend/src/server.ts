@@ -1,35 +1,36 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import cors from 'cors';
+// import cors from 'cors';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
 const app = express();
-app.use(cors({
-    origin: [
-        'http://127.0.0.1:5500',
-        'http://taim.site',
-        'http://gi-tcg.taim.site',
-        'http://7szh.taim.site',
-        'http://localhost:5500',
-    ],
-    methods: ['GET', 'POST']
-}));
+// app.use(cors({
+//     origin: [
+//         'http://127.0.0.1:5500',
+//         'http://taim.site',
+//         'http://gi-tcg.taim.site',
+//         'http://7szh.taim.site',
+//         'http://localhost:5500',
+//     ],
+//     methods: ['GET', 'POST']
+// }));
 
 const httpServer = createServer(app);
 const PORT = 7000;
 const io = new Server(httpServer, {
-    // cors: {
-    //     origin: [
-    //         'http://127.0.0.1:5500',
-    //         'http://taim.site',
-    //         'http://gi-tcg.taim.site',
-    //         'http://7szh.taim.site',
-    //         'http://localhost:5500',
-    //     ],
-    //     methods: ['GET', 'POST']
-    // }
+    // @ts-ignore
+    cors: {
+        origin: [
+            'http://127.0.0.1:5500',
+            'http://taim.site',
+            'http://gi-tcg.taim.site',
+            'http://7szh.taim.site',
+            'http://localhost:5500',
+        ],
+        methods: ['GET', 'POST']
+    }
 });
 
 process.on('uncaughtException', err => console.error(err));

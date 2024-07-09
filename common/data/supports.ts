@@ -32,7 +32,7 @@ export class GISupport {
             return handle(support, event) ?? {};
         };
     }
-    setEntityId(id: number) {
+    setEntityId = function (id: number): Support {
         if (this.entityId == -1) this.entityId = id;
         return this;
     }
