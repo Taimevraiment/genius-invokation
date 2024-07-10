@@ -1,7 +1,6 @@
 import { InfoVO, Player } from '../../typing';
 import { GICard } from '../data/cards.js';
 import { GIHero, GISkill } from '../data/heros.js';
-import { getLast } from '../utils/utils.js';
 import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
 import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE } from './gameOption.js';
 
@@ -56,12 +55,12 @@ export const INIT_PLAYER: () => Player = () => ({
 
 export const NULL_SKILL = () => new GISkill('无', '', SKILL_TYPE.Passive, 0, 0, DICE_TYPE.Same);
 
-export const NULL_HERO = () => new GIHero(-1, -1, '无', getLast(VERSION.slice()), [], 0, ELEMENT_TYPE.Physical, WEAPON_TYPE.Other, '', '');
+export const NULL_HERO = () => new GIHero(0, -1, '无', VERSION[0], [], 0, ELEMENT_TYPE.Physical, WEAPON_TYPE.Other, '', '');
 
-export const NULL_CARD = () => new GICard(-1, -1, '无', getLast(VERSION.slice()), '', '', 0, DICE_TYPE.Any, CARD_TYPE.Event);
+export const NULL_CARD = () => new GICard(0, -1, '无', VERSION[0], '', '', 0, DICE_TYPE.Any, CARD_TYPE.Event);
 
 export const NULL_MODAL: () => InfoVO = () => ({
-    version: getLast(VERSION.slice()),
+    version: VERSION[0],
     isShow: false,
     type: null,
     info: null,

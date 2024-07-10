@@ -1,13 +1,13 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Skill, Status, Summon, Trigger } from '../../typing';
 import {
-    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_TAG,
+    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG,
     HeroTag, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from '../constant/enum.js';
 import { newStatus } from './statuses.js';
 import { newSummon } from './summons.js';
-import { clone, getLast } from '../utils/utils.js';
+import { clone } from '../utils/utils.js';
 import { ELEMENT_NAME } from '../constant/UIconst.js'
-import { NULL_HERO } from '../constant/init';
+import { NULL_HERO } from '../constant/init.js';
 
 export class GIHero {
     id: number; // 唯一id
@@ -343,7 +343,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
             'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/a4c1f60fc2461f2853edb4e765ba4262_6013693059397455292.png',
         ], event => {
             const { hero: { skills, talentSlot }, card } = event;
-            const isTalent = skills[2].useCnt && (!!talentSlot || card?.id == 701);
+            const isTalent = skills[2].useCnt && (!!talentSlot || card?.id == 211011);
             return { pdmg: isTalent ? 3 : 2 }
         }),
         new GISkill('降众天华', '造成{dmg}点[冰元素伤害]，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn111011】。',
@@ -362,7 +362,8 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
             'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/fc7cc8ae1d95bc094e69b8f3c1c270f8_1908586115904037757.png',
         ], event => {
             const { hero: { talentSlot }, card } = event;
-            return { status: [newStatus(ver)(111021, talentSlot != null || card?.id == 712)] };
+            const isTalent = !!talentSlot || card?.id == 211021;
+            return { status: [newStatus(ver)(111021, isTalent)] };
         }),
         new GISkill('最烈特调', '造成{dmg}点[冰元素伤害]，治疗此角色2点，召唤【smn111023】。', SKILL_TYPE.Burst, 1, 3, DICE_TYPE.Cryo, { ec: 3 }, [
             'https://patchwiki.biligame.com/images/ys/3/3a/gltxegl17e1mwhv3z3xdakycst8h5sg.png',
@@ -383,21 +384,22 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
         ], () => ({ status: [newStatus(ver)(111031)] })),
     ]),
 
-    // 1104: () => new GIHero(1104, '重云', 2, 10, 4, 2,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png',
-    //     skill1('灭邪四式'), [
-    //     new GISkill('重华叠霜', '造成{dmg}点[冰元素伤害]，生成【sts2039】。', 2, 3, 3, 4, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/90fe50a43ea7905773df4433d385e4d9_8501818730448316824.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 718;
-    //         return { status: [newStatus(2039, isTalent)] }
-    //     }),
-    //     new GISkill('云开星落', '造成{dmg}点[冰元素伤害]。', 3, 7, 3, 4, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/0/01/5vyck7f9rpns92tfop3r41xr1aats4u.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0bddb45b9d91fb892ddaf2e8eb1e04a8_1565971516954358022.png'])
-    // ]),
+    1104: ver => new GIHero(1104, 4, '重云', 'v3.3.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png',
+        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png',
+        skill1('灭邪四式'), [
+        new GISkill('重华叠霜', '造成{dmg}点[冰元素伤害]，生成【sts2039】。', SKILL_TYPE.Elemental, 3, 3, DICE_TYPE.Cryo, {}, [
+            'https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
+            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/90fe50a43ea7905773df4433d385e4d9_8501818730448316824.png',
+        ], event => {
+            const { hero: { talentSlot }, card } = event;
+            const isTalent = !!talentSlot || card?.id == 211041;
+            return { status: [newStatus(ver)(2039, isTalent)] }
+        }),
+        new GISkill('云开星落', '造成{dmg}点[冰元素伤害]。', SKILL_TYPE.Burst, 7, 3, DICE_TYPE.Cryo, { ec: 3 }, [
+            'https://patchwiki.biligame.com/images/ys/0/01/5vyck7f9rpns92tfop3r41xr1aats4u.png',
+            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0bddb45b9d91fb892ddaf2e8eb1e04a8_1565971516954358022.png'])
+    ]),
 
     // 1105: () => new GIHero(1105, '神里绫华', 3, 10, 4, 1,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png',
@@ -2178,7 +2180,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
 
 }
 
-export const herosTotal = (version: Version = getLast(VERSION.slice())) => {
+export const herosTotal = (version: Version = VERSION[0]) => {
     const heros: Hero[] = [];
     for (const idx in allHeros) {
         const hero = allHeros[idx](version);
@@ -2189,7 +2191,7 @@ export const herosTotal = (version: Version = getLast(VERSION.slice())) => {
     return heros;
 }
 
-export const newHero = (version: Version = getLast(VERSION.slice())) => (id: number, hidx?: number) => {
+export const newHero = (version: Version = VERSION[0]) => (id: number, hidx?: number) => {
     const hero = allHeros[id]?.(version) ?? NULL_HERO();
     if (hidx != undefined) hero.hidx = hidx;
     return hero;

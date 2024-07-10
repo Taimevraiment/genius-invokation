@@ -1,8 +1,6 @@
 import {
     ActionType, CardSubtype, DiceCostType, Phase, PlayerStatus, SkillType, PURE_ELEMENT_TYPE,
-    DAMAGE_TYPE, ELEMENT_REACTION, StatusGroup, PureElementType, ElementType, DamageType,
-    InfoType, INFO_TYPE,
-    Version,
+    DAMAGE_TYPE, ELEMENT_REACTION, StatusGroup, PureElementType, DamageType, InfoType, Version,
 } from "./common/constant/enum"
 import { type GICard } from "./common/data/cards"
 import { type GIStatus } from "./common/data/statuses"
@@ -14,6 +12,7 @@ type RoomList = {
     id: number,
     name: string,
     isStart: boolean,
+    version: Version,
     playerCnt: number,
     hasPassWord: boolean,
 }[]

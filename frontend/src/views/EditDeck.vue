@@ -182,7 +182,7 @@ import {
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, newHero } from '../../../common/data/heros';
 import InfoModal from '@/components/InfoModal.vue';
-import { arrToObj, clone, genShareCode, getLast, objToArr, parseShareCode } from '../../../common/utils/utils';
+import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
 import { useRouter } from 'vue-router';
 import { Card, Hero, InfoVO } from '../../../typing';
 import { DeckVO, OriDeck } from 'typing';
@@ -211,7 +211,7 @@ const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera M
 
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
-const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? getLast(VERSION.slice()));
+const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? VERSION[0]);
 const herosPool = computed<Hero[]>(() => herosTotal(version.value).filter(h => h.id < 3000)); // 选择的角色池
 const cardsPool = computed<Card[]>(() => cardsTotal(version.value).filter(c => c.UI.cnt > 0)); // 选择的卡组池
 
@@ -295,7 +295,7 @@ const deleteDeck = (did: number) => {
     if (isConfirm) {
         oriDecks.value[did] = {
             name: '默认卡组',
-            version: getLast(VERSION.slice()),
+            version: VERSION[0],
             shareCode: genShareCode([0, 0, 0]),
         };
         localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
@@ -445,7 +445,7 @@ const getDiceIcon = (name: string) => {
 // 进入编辑卡组界面
 const toEditDeck = (did: number) => {
     editDeckIdx.value = did;
-    version.value = oriDecks.value[did]?.version ?? getLast(VERSION.slice());
+    version.value = oriDecks.value[did]?.version ?? VERSION[0];
     currIdx.value = TAG_INDEX.Hero;
     deckName.value = oriDecks.value[did].name;
     editDeck.value = parseShareCode(oriDecks.value[did].shareCode);

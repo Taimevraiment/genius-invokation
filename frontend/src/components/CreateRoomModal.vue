@@ -1,11 +1,11 @@
 <template>
   <div class="create-room-dialogue" @click="cancel">
     <div class="create-room-main" @click.stop="" @keyup.enter="create">
-      <input type="text" placeholder="房间名(选填)" v-model="roomName" />
-      <input type="text" placeholder="密码(选填)" v-model="roomPassword" />
-      版本：<select name="version" id="version" v-model="version">
+      <select name="version" id="version" v-model="version">
         <option v-for="ver in VERSION" :key="ver" :value="ver">{{ ver }}</option>
       </select>
+      <input type="text" placeholder="房间名(选填)" v-model="roomName" />
+      <input type="text" placeholder="密码(选填)" v-model="roomPassword" />
       <input type="number" placeholder="倒计时(秒)(选填)" v-model="countdown" />
       <button style="margin: 5% 0" @click="create">创建</button>
     </div>
@@ -15,16 +15,15 @@
 <script setup lang='ts'>
 import { ref } from 'vue';
 import { VERSION, Version } from '@@@/constant/enum';
-import { getLast } from '@@@/utils/utils';
 
 const emit = defineEmits(['create-room', 'create-room-cancel']);
 
 const roomName = ref<string>(''); // 房间名
 const roomPassword = ref<string>(''); // 房间密码
-const version = ref<Version>(getLast(VERSION.slice())); // 版本
+const version = ref<Version>(VERSION[0]); // 版本
 const countdown = ref<number | string>(''); // 倒计时
 
-const create = () => emit('create-room', roomName.value, roomPassword.value, version.value, +countdown.value || 0);
+const create = () => emit('create-room', roomName.value, version.value, roomPassword.value, +countdown.value || 0);
 const cancel = () => emit('create-room-cancel');
 </script>
 
@@ -53,6 +52,13 @@ const cancel = () => emit('create-room-cancel');
 
 input {
   width: 80%;
+  height: 5vh;
+  margin-top: 5%;
+  padding: 0 2%;
+  border-radius: 5px;
+}
+
+select {
   height: 5vh;
   margin-top: 5%;
   padding: 0 2%;

@@ -13,6 +13,7 @@
           <div class="game-list-title">
             <span class="game-room-id">房间号</span>
             <span class="game-room-name">房间名</span>
+            <span class="game-room-version">版本</span>
             <span class="game-room-status">状态</span>
           </div>
           <div class="game-list">
@@ -20,8 +21,9 @@
               @click="enterRoom(room.id.toString())">
               <span class="game-room-id">{{ room.id }}</span>
               <span class="game-room-name">{{ room.name }}</span>
+              <span class="game-room-version">{{ room.version }}</span>
               <span class="game-room-status">
-                {{ room.isStart ? "游戏中" : "等待中" }}({{ room.playerCnt }}/2)
+                {{ room.isStart ? "游戏中" : "等待中" }}({{ room.playerCnt }}/{{ PLAYER_COUNT }})
               </span>
             </div>
           </div>
@@ -65,7 +67,8 @@ import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import { getSocket } from '@/store/socket';
 import { genShareCode } from '@@@/utils/utils';
 import { Player, PlayerList, RoomList } from '../../../typing';
-import { MAX_DECK_COUNT } from '@@@/constant/gameOption';
+import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import { Version } from '@@@/constant/enum';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -139,9 +142,9 @@ const cancelCreateRoom = () => {
 };
 
 // 创建房间
-const createRoom = (roomName: string, roomPassword: string, countdown: number) => {
+const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, roomPassword, countdown });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown });
 };
 
 // 打开加入房间界面
@@ -347,6 +350,10 @@ button:active {
 
 .game-room-name {
   flex: 3;
+}
+
+.game-room-version {
+  flex: 1;
 }
 
 .game-room-status {

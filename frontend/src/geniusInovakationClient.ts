@@ -6,7 +6,7 @@ import {
     Card, Countdown, Hero, Player, ServerData, Skill, Summon, ActionData, Preview, InfoVO,
 } from "../../typing";
 import { ACTION_TYPE, CARD_SUBTYPE, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
-import { INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
+import { DECK_CARD_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_SKILL, NULL_CARD, NULL_MODAL } from "@@@/constant/init"
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
@@ -288,7 +288,7 @@ export default class GeniusInvokationClient {
         const { shareCode = 'null', version } = this.decks[this.deckIdx] ?? {};
         if (shareCode == 'null') return console.error('卡组未找到');
         const { heroIds, cardIds } = parseShareCode(shareCode);
-        if (heroIds.includes(0) || cardIds.length < 30) return alert('当前出战卡组不完整');
+        if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return alert('当前出战卡组不完整');
         if (version != this.version) return alert('当前卡组版本不匹配');
         console.info(`player[${this.player.name}]:${this.isStart ? 'cancelReady' : 'startGame'}-${this.playerIdx}`);
         this.isStart = !this.isStart;
@@ -298,7 +298,6 @@ export default class GeniusInvokationClient {
             cpidx: this.playerIdx,
             deckIdx: this.deckIdx,
             shareCode,
-            version,
             flag: 'startGame',
         } as ActionData);
     }
@@ -344,7 +343,7 @@ export default class GeniusInvokationClient {
         this.countdown.curr = currCountdown;
         this.pileCnt = pileCnt;
         this.diceCnt = diceCnt;
-        this.rollCnt = rollCnt[this.playerIdx];
+        this.rollCnt = rollCnt?.[this.playerIdx] ?? INIT_ROLL_COUNT;
         this.log = log;
         this.modalInfo = NULL_MODAL();
     }

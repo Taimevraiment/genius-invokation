@@ -1,6 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Summon, Support, Trigger } from '../../typing';
 import { DiceCostType, SupportType, VERSION, Version } from '../constant/enum.js';
-import { getLast } from '../utils/utils.js';
 
 export class GISupport {
     id: number; // 唯一id 从4000开始
@@ -32,7 +31,7 @@ export class GISupport {
             return handle(support, event) ?? {};
         };
     }
-    setEntityId = function (id: number): Support {
+    setEntityId(id: number): Support {
         if (this.entityId == -1) this.entityId = id;
         return this;
     }
@@ -922,4 +921,4 @@ const supportTotal: Record<number, (...args: any) => Support> = {
     // })),
 }
 
-export const newSupport = (version: Version = getLast(VERSION.slice())) => (id: number, ...args: any) => supportTotal[id](version, ...args);
+export const newSupport = (version: Version = VERSION[0]) => (id: number, ...args: any) => supportTotal[id](version, ...args);

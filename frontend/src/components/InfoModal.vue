@@ -35,12 +35,12 @@
         <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
           <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
           <span>{{ WEAPON_TYPE_NAME[(info as Hero).weaponType] }}</span>
-          <span v-for="(tag, tidx) in (info as Hero).tags" :key="tidx">{{
-            HERO_TAG_NAME[tag]
-          }}</span>
+          <span v-for="(tag, tidx) in (info as Hero).tags" :key="tidx">
+            {{ HERO_TAG_NAME[tag] }}
+          </span>
         </div>
         <div class="info-hero-skill" v-for="(skill, sidx) in skills.filter(
-          (_, i) => type == INFO_TYPE.Skill || i == skidx)" :key="sidx">
+          (_, i) => type == INFO_TYPE.Hero || type == INFO_TYPE.Skill && i == skidx)" :key="sidx">
           <div class="info-hero-skill-title" @click.stop="showDesc(isShowSkill, sidx)">
             <div style="display: flex; flex-direction: row; align-items: center">
               <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0"
@@ -282,20 +282,20 @@
 <script setup lang='ts'>
 import { computed, ref, watchEffect } from 'vue';
 
+import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
 import {
   ELEMENT_NAME, ELEMENT_COLOR, CHANGE_GOOD_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, RULE_EXPLAIN, STATUS_BG_COLOR_KEY,
   CARD_SUBTYPE_URL, WEAPON_TYPE_URL, ELEMENT_URL, HERO_TAG_NAME, CHANGE_BAD_COLOR, WEAPON_TYPE_NAME, SKILL_TYPE_NAME,
-  CARD_SUBTYPE_NAME, HERO_TAG_URL, ElementColorKey, CARD_TYPE_NAME,
+  CARD_SUBTYPE_NAME, HERO_TAG_URL, ElementColorKey, CARD_TYPE_NAME, DICE_COLOR, SHIELD_ICON_URL,
 } from '@@@/constant/UIconst';
 import {
   CARD_SUBTYPE, DICE_TYPE, COST_TYPE, WeaponType, InfoType, INFO_TYPE, STATUS_TYPE, Version, ELEMENT_CODE_KEY,
-  ElementCode, DAMAGE_TYPE, ELEMENT_TYPE, ElementType,
+  ElementCode, DAMAGE_TYPE, ElementType, DICE_COST_TYPE,
 } from '@@@/constant/enum';
 import { newCard } from '@@@/data/cards';
 import { newStatus } from '@@@/data/statuses';
 import { newHero, readySkill } from '@@@/data/heros';
 import { newSummon } from '@@@/data/summons';
-import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
 import { objToArr } from '@@@/utils/utils';
 
 const props = defineProps(['info', 'isMobile']);
@@ -321,8 +321,11 @@ const ruleExplain = ref<any[]>([]); // 规则解释
 const isShowRule = ref<boolean>(false); // 是否显示规则
 
 const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
-  if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == STATUS_TYPE.Shield || el == 'Heal') return '';
-  const url = Object.values(ELEMENT_TYPE).some(v => v == el) ? isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] : getPngIcon(ELEMENT_ICON[el]);
+  if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == 'Heal') return '';
+  let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni].some(v => v == el) ?
+    isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] :
+    getPngIcon(ELEMENT_ICON[el]);
+  if (el == STATUS_TYPE.Shield) url = SHIELD_ICON_URL;
   return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
@@ -358,7 +361,6 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
       const color = ELEMENT_CODE_KEY[+c as ElementCode];
       return `${wrapedIcon(color)}<span style='color:${ELEMENT_COLOR[color]};'>${v}</span>`;
     }).replace(/(?<!\\)(\*?)\[(.*?)\]/g, (_, isUnderline: string, ctt: string) => {
-      // const el = ELEMENT.findIndex((v, vi) => v != '' && ((vi < 11 && ctt.includes(v)) || (vi > 11 && ctt == v)));
       const [el] = objToArr(ELEMENT_NAME).find(([, v]) => ['伤害', '骰'].some(v => ctt.includes(v)) ? ctt.includes(v) : ctt == v) ?? [];
       const color = el == undefined ? 'white' : ELEMENT_COLOR[el];
       let wpicon = wrapedIcon(el, ctt.includes('骰'));

@@ -1,6 +1,5 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { getLast } from '../utils/utils.js';
 import { ELEMENT_TYPE, ElementType, SummonDestroyType, VERSION, Version } from "../constant/enum.js";
 
 export class GISummon {
@@ -75,7 +74,7 @@ export class GISummon {
             }
         };
     }
-    setEntityId = function (id: number): Summon {
+    setEntityId(id: number): Summon {
         if (this.entityId == -1) this.entityId = id;
         return this;
     }
@@ -970,4 +969,4 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
 
 }
 
-export const newSummon = (version: Version = getLast(VERSION.slice())) => (id: number, ...args: any) => summonTotal[id](version, ...args);
+export const newSummon = (version: Version = VERSION[0]) => (id: number, ...args: any) => summonTotal[id](version, ...args);

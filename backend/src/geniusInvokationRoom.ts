@@ -126,7 +126,7 @@ export default class GeniusInvokationRoom {
     }
     private _emit(flag: string, pidx: number, options: { socket?: Socket, tip?: string | string[], damageVO?: DamageVO } = {}) {
         const { socket, tip = '', damageVO = null } = options;
-        const previews: Preview[][] = [];
+        const previews: Preview[][] = [[], []];
         this._clacCardChange(pidx);
         if (this.phase == PHASE.ACTION) { // 计算预测行动的所有情况
             this.players.forEach(p => previews[p.pidx] = this._getPreview(p.pidx));
@@ -178,6 +178,7 @@ export default class GeniusInvokationRoom {
         }
         this.players.forEach((p, pi) => p.pidx = pi);
         console.info(`init-rid:${this.id}-pid:${newPlayer.id}-pidx:${pidx}`);
+        this._emit(`player[${player.name}] enter room.`, pidx);
         return player;
     }
     start(pidx: number, flag: string) {
@@ -231,12 +232,14 @@ export default class GeniusInvokationRoom {
                 player.deckIdx = deckIdx;
                 const { heroIds, cardIds } = parseShareCode(shareCode);
                 if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) throw new Error('@getAction-StartGame: 当前出战卡组不完整');
-                player.heros = heroIds.map((hid, hidx) => this.newHero(hid, hidx));
+                player.heros = heroIds.map(this.newHero);
                 player.pile = cardIds.map(cid => this.newCard(cid));
                 if (player.heros.some(h => h.version > this.version) || player.pile.some(c => c.version > this.version)) throw new Error('@getAction-StartGame: 当前卡组版本不匹配');
                 player.phase = (player.phase ^ 1) as Phase;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
                     this.start(cpidx, flag);
+                } else {
+                    this._emit(flag, cpidx, { socket });
                 }
                 break;
             case ACTION_TYPE.ChangeCard:
@@ -267,7 +270,7 @@ export default class GeniusInvokationRoom {
                 this._giveup(cpidx);
                 break;
             default:
-                throw new Error(`未知的ActionType: ${actionData.type}`);
+                throw new Error(`@getACtion-未知的ActionType: ${actionData.type}`);
         }
     }
     /**
@@ -3126,7 +3129,7 @@ export default class GeniusInvokationRoom {
                     const exclude = cmds[i].hidxs ?? [];
                     let restCnt = cnt;
                     while (restCnt-- > 0) {
-                        let wcard = null;
+                        let wcard: Card | null = null;
                         if (cards[restCnt]) { // 摸指定卡
                             if (isAttach) { // 从牌库摸
                                 const cid = cards[restCnt].id;

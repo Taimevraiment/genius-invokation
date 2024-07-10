@@ -1,6 +1,6 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { STATUS_BG_COLOR, StatusBgColor, ELEMENT_NAME_KEY, ELEMENT_NAME, STATUS_BG_COLOR_KEY, ElementNameKey } from "../constant/UIconst.js";
-import { getLast, isCdt } from "../utils/utils.js";
+import { STATUS_BG_COLOR, StatusBgColor, ELEMENT_NAME_KEY, ELEMENT_NAME, STATUS_BG_COLOR_KEY, ElementNameKey, SHIELD_ICON_URL } from "../constant/UIconst.js";
+import { isCdt } from "../utils/utils.js";
 import {
     CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PureElementType, STATUS_GROUP, STATUS_TYPE, SkillType,
     StatusGroup, StatusType, VERSION, Version,
@@ -63,7 +63,7 @@ export class GIStatus {
         let thandle = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
             // this.icon = 'shield2';
-            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp';
+            this.UI.icon = SHIELD_ICON_URL;
             this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
             thandle = (status, event = {}) => {
                 let { restDmg = 0 } = event;
@@ -112,12 +112,12 @@ export class GIStatus {
             return thandle(status, event) ?? {};
         }
     }
-    setEntityId = function (id: number): Status {
+    setEntityId(id: number): Status {
         if (this.entityId == -1) this.entityId = id;
         return this;
     }
-    hasType = function (...types: StatusType[]): boolean {
-        return this.type.some((v: StatusType) => types.includes(v));
+    hasType(...types: StatusType[]): boolean {
+        return this.type.some(v => types.includes(v));
     }
 }
 
@@ -2583,4 +2583,4 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
 
 };
 
-export const newStatus = (version: Version = getLast(VERSION.slice())) => (id: number, ...args: any) => statusTotal[id](version, ...args);
+export const newStatus = (version: Version = VERSION[0]) => (id: number, ...args: any) => statusTotal[id](version, ...args);

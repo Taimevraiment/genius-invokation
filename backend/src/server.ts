@@ -110,6 +110,7 @@ io.on('connection', socket => {
                 id: r.id,
                 name: r.name,
                 isStart: r.isStart,
+                version: r.version,
                 playerCnt: r.players.length,
                 hasPassWord: r.password != '',
             })),

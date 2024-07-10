@@ -9,8 +9,9 @@ export function clone<T>(obj: T): T {
         return obj.map(item => clone(item)) as unknown as T;
     }
     const cloneObj = {} as T;
-    for (const key of Object.keys(obj)) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    Object.setPrototypeOf(cloneObj, Object.getPrototypeOf(obj));
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
             cloneObj[key] = clone(obj[key]);
         }
     }

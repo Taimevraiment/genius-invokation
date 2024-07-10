@@ -6,9 +6,9 @@ import {
     VERSION, WEAPON_TYPE, WeaponType,
 } from '../constant/enum.js';
 import { ELEMENT_NAME, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME } from '../constant/UIconst.js';
-import { getLast, isCdt } from '../utils/utils.js';
+import { isCdt } from '../utils/utils.js';
 import { Version } from '../constant/enum.js';
-import { NULL_CARD } from '../constant/init';
+import { NULL_CARD } from '../constant/init.js';
 
 export class GICard {
     id: number; // 唯一id
@@ -124,19 +124,19 @@ export class GICard {
         this.canSelectSummon = canSelectSummon;
         this.canSelectSupport = canSelectSupport;
     }
-    setEntityId = function (entityId: number): Card {
+    setEntityId(entityId: number): Card {
         if (this.entityId == -1) this.entityId = entityId;
         return this;
     }
-    setCnt = function (cnt: number): Card {
+    setCnt(cnt: number): Card {
         this.UI.cnt = cnt;
         return this;
     }
-    hasSubtype = function (...subtypes: CardSubtype[]): boolean {
-        return this.subType.some((v: CardSubtype) => subtypes.includes(v));
+    hasSubtype(...subtypes: CardSubtype[]): boolean {
+        return this.subType.some(v => subtypes.includes(v));
     }
-    hasTag = function (...tags: CardTag[]): boolean {
-        return this.tag.some((v: CardTag) => tags.includes(v));
+    hasTag(...tags: CardTag[]): boolean {
+        return this.tag.some(v => tags.includes(v));
     }
 }
 
@@ -2008,9 +2008,32 @@ const allCards: Record<number, (ver: Version) => Card> = {
     //         return { cmds: [{ cmd: 'heal', cnt: 1 }], status: [newStatus(2186)], canSelectHero }
     //     }),
 
-    // 701: () => new GICard(701, '唯此一心', '{action}；装备有此牌的【{hro}】使用【{ski}】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/15a100ee0285878fc5749663031fa05a_7762319984393418259.png',
-    //     5, 4, 0, [6, 7], 1001, 2),
+    211011: () => new GICard(211011, 61, '唯此一心', 'v3.3.0',
+        '{action}；装备有此牌的【{hro}】使用【{ski}】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。',
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/15a100ee0285878fc5749663031fa05a_7762319984393418259.png',
+        5, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1101, 2),
+
+    211021: () => new GICard(211021, 62, '猫爪冰摇', 'v3.3.0',
+        '{action}；装备有此牌的【{hro}】生成的【sts2033】，所提供的[护盾]值+1。',
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/cb37f02217bcd8ae5f6e4a6eb9bae539_3357631204660850476.png',
+        3, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1102, 1),
+
+    211031: () => new GICard(211031, 63, '冷血之剑', 'v3.3.0',
+        '{action}；装备有此牌的【{hro}】使用【{ski}】后：治疗自身2点。(每回合1次)',
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png',
+        4, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1103, 1, (card, event) => {
+            if (card.perCnt <= 0) return;
+            const { hidxs } = event;
+            return {
+                execmds: [{ cmd: 'heal', cnt: 2, hidxs }],
+                exec: () => { --card.perCnt },
+            }
+        }, { pct: 1 }),
+
+    211041: () => new GICard(211041, 64, '吐纳真定', 'v3.3.0',
+        '{action}；装备有此牌的【{hro}】生成的【sts2039】获得以下效果：；使我方单手剑、双手剑或长柄武器角色的｢普通攻击｣伤害+1。',
+        'https://patchwiki.biligame.com/images/ys/e/e6/qfsltpvntkjxioew81iehfhy5xvl7v6.png',
+        3, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1104, 1),
 
     // 702: () => new GICard(702, '寒天宣命祝词', '装备有此牌的【{hro}】生成的【sts2008,4】会使所附魔角色造成的[冰元素伤害]+1。；切换到装备有此牌的【{hro}】时：少花费1个元素骰。(每回合1次)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7d706fd25ab0b3c4f8cca3af08d8a07b_2913232629544868049.png',
@@ -2069,10 +2092,6 @@ const allCards: Record<number, (ver: Version) => Card> = {
     //     'https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png',
     //     4, 7, 0, [6, 7], 1601, 1),
 
-    // 712: () => new GICard(712, '猫爪冰摇', '{action}；装备有此牌的【{hro}】生成的【sts2033】，所提供的[护盾]值+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/cb37f02217bcd8ae5f6e4a6eb9bae539_3357631204660850476.png',
-    //     3, 4, 0, [6, 7], 1002, 1),
-
     // 713: () => new GICard(713, '冒险憧憬', '{action}；装备有此牌的【{hro}】生成的【sts2034】，其伤害提升效果改为总是生效，不再具有生命值限制。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/044617980be5a70980f7826036963e74_8167452876830335549.png',
     //     4, 2, 0, [6, 7], 1203, 2, undefined, { energy: 2 }),
@@ -2130,21 +2149,6 @@ const allCards: Record<number, (ver: Version) => Card> = {
     //             }
     //         }
     //     }, { pct: 1 }),
-
-    // 717: () => new GICard(717, '冷血之剑', '{action}；装备有此牌的【{hro}】使用【{ski}】后：治疗自身2点。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png',
-    //     4, 4, 0, [6, 7], 1003, 1, (card, event) => {
-    //         if (card.perCnt <= 0) return;
-    //         const { hidxs } = event;
-    //         return {
-    //             execmds: [{ cmd: 'heal', cnt: 2, hidxs }],
-    //             exec: () => { --card.perCnt },
-    //         }
-    //     }, { pct: 1 }),
-
-    // 718: () => new GICard(718, '吐纳真定', '{action}；装备有此牌的【{hro}】生成的【sts2039】获得以下效果：；使我方单手剑、双手剑或长柄武器角色的｢普通攻击｣伤害+1。',
-    //     'https://patchwiki.biligame.com/images/ys/e/e6/qfsltpvntkjxioew81iehfhy5xvl7v6.png',
-    //     3, 4, 0, [6, 7], 1004, 1),
 
     // 719: () => new GICard(719, '长野原龙势流星群', '{action}；装备有此牌的【{hro}】生成的【sts2040】触发后：额外造成1点[火元素伤害]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/126c63df7d92e7d9c0a815a7a54558fc_6536428182837399330.png',
@@ -2774,7 +2778,7 @@ const allCards: Record<number, (ver: Version) => Card> = {
 
 }
 
-export const cardsTotal = (version: Version = getLast(VERSION.slice())) => {
+export const cardsTotal = (version: Version = VERSION[0]) => {
     const cards: Card[] = [];
     for (const idx in allCards) {
         const card = allCards[idx](version);
@@ -2785,4 +2789,4 @@ export const cardsTotal = (version: Version = getLast(VERSION.slice())) => {
     return cards;
 }
 
-export const newCard = (version: Version = getLast(VERSION.slice())) => (id: number) => allCards[id]?.(version) ?? NULL_CARD();
+export const newCard = (version: Version = VERSION[0]) => (id: number) => allCards[id]?.(version) ?? NULL_CARD();

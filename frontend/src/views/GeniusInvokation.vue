@@ -3,7 +3,7 @@
     <button v-if="!client.isStart || isLookon > -1 || hasAI" class="exit" @click.stop="exit">
       返回
     </button>
-    <div style="position: absolute;left: 60px;color: white;">房间号{{ roomId }}</div>
+    <div style="position: absolute;left: 60px;color: white;">[{{ version }}] 房间号{{ roomId }}</div>
     <button v-if="client.isStart && isLookon == -1 && client.phase >= PHASE.ACTION" class="exit" @click.stop="giveup">
       投降
     </button>
