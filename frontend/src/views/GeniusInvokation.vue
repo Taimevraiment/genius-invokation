@@ -65,7 +65,8 @@
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
         <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-        <img class="lengend-border" v-if="card.hasSubtype(CARD_SUBTYPE.Legend)" :src="getPngIcon('lengend-border')" />
+        <img class="lengend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
+          :src="getPngIcon('lengend-border')" />
         <div class="card-content">
           <span v-if="card?.UI.src?.length == 0">{{ card.name }}</span>
           <div class="card-cost" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
@@ -82,7 +83,7 @@
             <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
             <span>{{ card.energy }}</span>
           </div>
-          <div class="card-energy" v-if="card.hasSubtype(CARD_SUBTYPE.Legend)">
+          <div class="card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
             <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
           </div>
         </div>

@@ -78,7 +78,7 @@
         }" v-for="(support, siidx) in supportArea" :key="siidx" @click.stop="showSupportInfo(saidx, siidx)">
           <div class="support-img-content">
             <img class="support-img"
-              :style="{ top: support.card.hasSubtype(CARD_SUBTYPE.Ally) && isMobile ? '100%' : '60%' }"
+              :style="{ top: support.card.subType.includes(CARD_SUBTYPE.Ally) && isMobile ? '100%' : '60%' }"
               :src="support.card.UI.src" v-if="support.card.UI.src.length > 0" :alt="support.card.name" />
             <span v-else>{{ support.card.name }}</span>
             <div style="position: absolute; width: 100%; height: 100%"
@@ -373,7 +373,7 @@
               <div class="init-card-content">
                 <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
                 <span v-else>{{ card.name }}</span>
-                <img class="lengend-border" v-if="card.hasSubtype(CARD_SUBTYPE.Legend)"
+                <img class="lengend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
                   :src="getPngIcon('lengend-border')" />
               </div>
               <div class="init-card-cost">
@@ -388,7 +388,7 @@
                 <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
                 <span>{{ card.energy }}</span>
               </div>
-              <div class="init-card-energy" v-if="card.hasSubtype(CARD_SUBTYPE.Legend)">
+              <div class="init-card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
                 <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
               </div>
               <img src="@@/svg/initSelect.svg" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
@@ -426,7 +426,7 @@ const hpCurcnt = ref<Curcnt[]>([]);
 const getGroup = (idx: number) => idx ^ playerIdx.value ^ 1;
 const wrapArr = <T>(arr: T[]) => {
   if (playerIdx.value == 1) return arr;
-  const h0 = props.client.players.value[0].heros.length;
+  const h0 = props.client.players[0].heros.length;
   const a0 = arr.slice(0, h0);
   const a1 = arr.slice(h0);
   return a1.concat(a0);

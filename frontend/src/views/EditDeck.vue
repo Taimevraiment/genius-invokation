@@ -180,7 +180,7 @@ import {
     CARD_SUBTYPE_NAME, HERO_LOCAL_CODE,
 } from '@@@/constant/UIconst';
 import { cardsTotal } from '../../../common/data/cards';
-import { herosTotal, newHero } from '../../../common/data/heros';
+import { herosTotal, newHero, parseHero } from '../../../common/data/heros';
 import InfoModal from '@/components/InfoModal.vue';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
 import { useRouter } from 'vue-router';
@@ -226,13 +226,13 @@ const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => {
         name: deck.name,
         version: deck.version,
         heroIds: heroIds.map(hid => {
-            const hero = newHero(version.value)(hid);
+            const hero = parseHero(hid);
             return {
-                id: hero?.id ?? 1000,
-                name: hero?.name ?? '无',
-                element: hero?.element ?? ELEMENT_TYPE.Physical,
-                tags: hero?.tags ?? [],
-                src: hero?.UI.src ?? '',
+                id: hero.id,
+                name: hero.name,
+                element: hero.element,
+                tags: hero.tags,
+                src: hero.UI.src,
             }
         }),
         cardIds,
@@ -418,8 +418,9 @@ const updateInfo = (init = false) => {
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
         return t && st && co && ct;
     }).sort((a, b) => {
-        if (a.UI.cnt * b.UI.cnt >= 0) return 0;
-        return b.UI.cnt - a.UI.cnt;
+        if (a.UI.cnt == -1 && b.UI.cnt != -1) return 1;
+        if (a.UI.cnt != -1 && b.UI.cnt == -1) return -1;
+        return 0;
     });
     const heroFilterRes: [HeroTag[], ElementType[], WeaponType[]] = heroFilter.value?.map(ftype => {
         return ftype.value.filter(v => v.tap).map(v => v.val);
@@ -450,11 +451,11 @@ const toEditDeck = (did: number) => {
     deckName.value = oriDecks.value[did].name;
     editDeck.value = parseShareCode(oriDecks.value[did].shareCode);
     herosDeck.value = editDeck.value.heroIds.map(hid => {
-        return clone(herosPool.value.find(v => v.id == hid)) ?? NULL_HERO();
+        return clone(herosPool.value.find(v => v.shareId == hid)) ?? NULL_HERO();
     });
     cardsDeck.value = [];
     for (const cid of editDeck.value.cardIds) {
-        const card = clone(cardsPool.value.find(v => v.id == cid))?.setCnt(1);
+        const card = clone(cardsPool.value.find(v => v.shareId == cid))?.setCnt(1);
         if (card == undefined) continue;
         const dCard = cardsDeck.value.find(c => c.id == card.id);
         if (dCard == undefined) cardsDeck.value.push(card);
@@ -590,13 +591,13 @@ const showShareCode = () => {
 const pasteShareCode = () => {
     const { heroIds, cardIds } = parseShareCode(pShareCode.value);
     herosDeck.value.forEach((_, hi, ha) => {
-        ha[hi] = herosPool.value.find(v => v.id == heroIds[hi])!;
+        ha[hi] = herosPool.value.find(v => v.shareId == heroIds[hi])!;
     });
     cardsDeck.value = [];
     for (const cid of cardIds) {
-        const card = cardsDeck.value.find(c => c.id == cid);
-        if (card == undefined) cardsDeck.value.push(clone(cardsPool.value.find(c => c.id == cid)!).setCnt(1));
-        else ++card.UI.cnt;
+        const card = cardsDeck.value.find(c => c.shareId == cid);
+        if (card) ++card.UI.cnt;
+        else cardsDeck.value.push(clone(cardsPool.value.find(c => c.id == cid)!).setCnt(1));
     }
     updateShareCode();
     pShareCode.value = '';

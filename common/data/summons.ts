@@ -1,6 +1,8 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { ELEMENT_TYPE, ElementType, SummonDestroyType, VERSION, Version } from "../constant/enum.js";
+import { ELEMENT_NAME } from "../constant/UIconst.js";
+import { getAtkHidx } from "../utils/gameUtil.js";
 
 export class GISummon {
     id: number; // 唯一id 从3000开始
@@ -48,7 +50,7 @@ export class GISummon {
             spReset = false, expl = [], pls = false,
         } = options;
         this.UI = {
-            description,
+            description: description.replace(/elDmg/g, ELEMENT_NAME[element] + '伤害'),
             src,
             hasPlus: pls,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
@@ -146,17 +148,39 @@ const phaseEndAtk = (summon: Summon, healHidxs?: number[]): SummonHandleRes => {
 const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = {
     // 3000: () => new GISummon(3000, '', '', '', -1, -1, -1, 0, 0, () => ({})),
 
-    111011: () => new GISummon(111011, '冰灵珠', '【结束阶段：】造成{dmg}点[冰元素伤害]，对所有后台敌人造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/07c346ef7197c24c76a25d3b47ed5e66_3626039813983519562.png',
-        2, 2, 0, 1, ELEMENT_TYPE.Cryo, undefined, { pdmg: 1 }),
-
-    115: () => new GISummon(115, '燃烧烈焰', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
+    115: () => new GISummon(115, '燃烧烈焰', '【结束阶段：】造成{dmg}点[elDmg]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
         'https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png',
         1, 2, 0, 1, ELEMENT_TYPE.Pyro),
 
-    // 3003: () => new GISummon(3003, '霜见雪关扉', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png',
-    //     2, 2, 0, 2, 4),
+    111011: () => new GISummon(111011, '冰灵珠', '【结束阶段：】造成{dmg}点[elDmg]，对所有后台敌人造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/07c346ef7197c24c76a25d3b47ed5e66_3626039813983519562.png',
+        2, 2, 0, 1, ELEMENT_TYPE.Cryo, undefined, { pdmg: 1 }),
+
+    111051: () => new GISummon(111051, '霜见雪关扉', '【结束阶段：】造成{dmg}点[elDmg]。；【[可用次数]：{useCnt}】',
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png',
+        2, 2, 0, 2, ELEMENT_TYPE.Cryo),
+
+    111062: () => new GISummon(111062, '光降之剑', '【〖hro1106〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。造成{dmg}点[物理伤害]; 每有1点｢能量层数｣，都使次伤害+1。(影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。)',
+        'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png',
+        0, 1000, 0, 3, ELEMENT_TYPE.Physical, (summon, event) => {
+            const { heros = [], trigger = '' } = event;
+            return {
+                trigger: ['phase-end', 'skilltype1', 'skilltype2'],
+                isNotAddTask: trigger != 'phase-end',
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') {
+                        return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
+                    }
+                    const hero = heros[getAtkHidx(heros)];
+                    if (hero?.id == 1106) {
+                        const cnt = !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
+                        smn.useCnt += cnt;
+                        return { cmds: [{ cmd: 'getEnergy', cnt: -1 }] }
+                    }
+                },
+            }
+        }, { pls: true, isDestroy: 2 }),
 
     // 3004: () => new GISummon(3004, '虚影', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，造成{dmg}点[水元素伤害]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png',
@@ -361,28 +385,6 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
     //             }
     //         }
     //     })),
-
-    // 3024: () => new GISummon(3024, '光降之剑', '【〖hro1006〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1006】不会获得[充能]。；【结束阶段：】弃置此牌。造成{dmg}点[物理伤害]; 每有1点｢能量层数｣，都使次伤害+1。(影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png',
-    //     0, 100, 0, 3, 0, (summon, event) => {
-    //         const { heros = [], trigger = '' } = event;
-    //         return {
-    //             trigger: ['phase-end', 'skilltype1', 'skilltype2'],
-    //             isNotAddTask: trigger != 'phase-end',
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') {
-    //                     return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] };
-    //                 }
-    //                 const hero = heros[getAtkHidx(heros)];
-    //                 if (hero?.id == 1006) {
-    //                     const cnt = hero.talentSlot != null && trigger == 'skilltype2' ? 3 : 2
-    //                     smn.useCnt += cnt;
-    //                     return { cmds: [{ cmd: 'getEnergy', cnt: -1 }] }
-    //                 }
-    //             },
-    //         }
-    //     }, { pls: true, isDestroy: 2 }),
 
     // 3025: () => new GISummon(3025, '清净之园囿', '【结束阶段：】造成{dmg}点[水元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色｢普通攻击｣造成的伤害+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/ef32ccb60a38cb7bfa31372dd5953970_1908841666370199656.png',

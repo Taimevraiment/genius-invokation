@@ -6,7 +6,7 @@ import {
     ActionData, Card, Cmds, Countdown, DamageVO, Hero, MinuDiceSkill, Player, Preview, ServerData, Status, StatusTask,
     Summon, Support, TrgSkType, Trigger,
 } from '../../typing';
-import { newHero, readySkill } from '../../common/data/heros.js';
+import { newHero, parseHero, readySkill } from '../../common/data/heros.js';
 import { INIT_PLAYER } from '../../common/constant/init.js';
 import {
     ACTION_TYPE, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
@@ -20,7 +20,7 @@ import {
 import { arrToObj, clone, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import { allHidxs, getAtkHidx, getBackHidxs, getNearestHidx } from '../../common/utils/gameUtil.js'
 import TaskQueue from './taskQueue.js';
-import { CardHandleRes, newCard } from '../../common/data/cards.js';
+import { CardHandleRes, newCard, parseCard } from '../../common/data/cards.js';
 import { ELEMENT_NAME } from '../../common/constant/UIconst.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
@@ -52,6 +52,7 @@ export default class GeniusInvokationRoom {
     newHero: (id: number, hidx?: number) => Hero;
     newSummon: (id: number, ...args: any) => Summon;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
+    private _random: number = 0; // 随机数
 
     constructor(io: Server, id: number, name: string, version: Version, password: string, countdown: number) {
         this.io = io;
@@ -81,6 +82,7 @@ export default class GeniusInvokationRoom {
      */
     setSeed(rt: number) {
         this.seed = rt;
+        this._random = rt;
         return this;
     }
     /**
@@ -89,8 +91,8 @@ export default class GeniusInvokationRoom {
      * @returns 随机整数
      */
     private _randomInt(len: number = 1) {
-        this.seed = (this.seed * 13 + 29) % 1e10;
-        return Math.floor(this.seed % 1e6 / 1e6 * len);
+        this._random = (this._random * 13 + 29) % 1e10;
+        return Math.floor(this._random % 1e6 / 1e6 * (len + 1));
     }
     /**
      * 获取数组中随机一项
@@ -98,7 +100,7 @@ export default class GeniusInvokationRoom {
      * @returns 数组中随机一项
      */
     private _randomInArr<T>(arr: T[]) {
-        return arr[this._randomInt(arr.length)];
+        return arr[this._randomInt(arr.length - 1)];
     }
     /**
      * 生成一个实体id
@@ -109,7 +111,7 @@ export default class GeniusInvokationRoom {
     }
     private _writeLog(str: string, isOnlySystem = false) {
         if (!isOnlySystem) this.log.push(str);
-        fs.appendFile(`${__dirname}/logs/${this.seed}.log`, str + '\n', err => {
+        fs.appendFile(`${__dirname}/../../../logs/${this.seed}.log`, str + '\n', err => {
             if (err) return console.error('err:', err);
         });
     }
@@ -153,7 +155,7 @@ export default class GeniusInvokationRoom {
             this.io.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze(serverData));
             this.players.forEach(p => {
                 this.io.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
-                    serverData,
+                    ...serverData,
                     previews: previews[p.pidx],
                     players: Object.freeze(this.playersVO.map(pvo => pvo.pidx == p.pidx ? pvo : (pvo.dice = [], pvo.handCards = [], pvo))),
                     ...(typeof tip != 'string' ? { tip: tip[p.pidx] } :
@@ -183,6 +185,7 @@ export default class GeniusInvokationRoom {
     }
     start(pidx: number, flag: string) {
         this.seed = Math.floor(Math.random() * 1e10);
+        this._random = this.seed;
         this.entityIdIdx = -500000;
         console.info(`[${this.id}]start-seed:${this.seed}`);
         this.isStart = true;
@@ -232,8 +235,8 @@ export default class GeniusInvokationRoom {
                 player.deckIdx = deckIdx;
                 const { heroIds, cardIds } = parseShareCode(shareCode);
                 if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) throw new Error('@getAction-StartGame: 当前出战卡组不完整');
-                player.heros = heroIds.map(this.newHero);
-                player.pile = cardIds.map(cid => this.newCard(cid));
+                player.heros = heroIds.map(parseHero);
+                player.pile = cardIds.map(parseCard);
                 if (player.heros.some(h => h.version > this.version) || player.pile.some(c => c.version > this.version)) throw new Error('@getAction-StartGame: 当前卡组版本不匹配');
                 player.phase = (player.phase ^ 1) as Phase;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
@@ -296,7 +299,7 @@ export default class GeniusInvokationRoom {
         const player = this.players[pidx];
         const idxPool: number[] = [];
         const genRanIdx = () => {
-            let idx;
+            let idx = -1;
             while (true) {
                 idx = this._randomInt(player.pile.length);
                 if (!idxPool.includes(idx)) {
@@ -316,7 +319,7 @@ export default class GeniusInvokationRoom {
                 this._emit(flag + '-action', pidx);
             }, 1e3);
         } else {
-            this.log.push(player.handCards.reduce((a, c) => a + `[${c.name}]`, `[${player.name}]换牌后手牌为`));
+            this._writeLog(player.handCards.reduce((a, c) => a + `[${c.name}]`, `[${player.name}]换牌后手牌为`));
             player.UI.info = `${this.startIdx == player.pidx ? '我方' : '对方'}先手，等待对方选择......`;
             setTimeout(() => {
                 player.phase = PHASE.CHOOSE_HERO;

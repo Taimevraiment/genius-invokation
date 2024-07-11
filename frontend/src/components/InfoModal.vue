@@ -322,22 +322,22 @@ const isShowRule = ref<boolean>(false); // 是否显示规则
 
 const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
   if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == 'Heal') return '';
-  let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni].some(v => v == el) ?
+  let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni, DAMAGE_TYPE.Physical].some(v => v == el) ?
     isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] :
     getPngIcon(ELEMENT_ICON[el]);
   if (el == STATUS_TYPE.Shield) url = SHIELD_ICON_URL;
   return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
-  if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
-  const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
+  if (!/^[a-z,0-9,A-Z]+$/.test(content)) return { name: content, default: true }
+  const [a1, a2, a3] = content.slice(3).split(',').map(v => isNaN(+v) ? v : +v);
   const type = content.slice(0, 3);
-  return type == 'crd' ? newCard(version.value)(a1) :
-    type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
-      type == 'rsk' ? readySkill(a1, version.value) :
-        type == 'smn' ? newSummon(version.value)(a1, a2, a3) :
-          type == 'ski' ? newHero(version.value)(a1).skills[a2] :
-            type == 'hro' ? newHero(version.value)(a1) :
+  return type == 'crd' ? newCard(version.value)(+a1) :
+    type == 'sts' ? newStatus(version.value)(+a1, a2, a3) :
+      type == 'rsk' ? readySkill(+a1, version.value) :
+        type == 'smn' ? newSummon(version.value)(+a1, a2, a3) :
+          type == 'ski' ? newHero(version.value)(+a1).skills[+a2] :
+            type == 'hro' ? newHero(version.value)(+a1) :
               { name: content, default: true };
 }
 const wrapDesc = (desc: string, obj?: ExplainContent): string => {

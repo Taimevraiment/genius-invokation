@@ -2014,7 +2014,7 @@ const allCards: Record<number, (ver: Version) => Card> = {
         5, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1101, 2),
 
     211021: () => new GICard(211021, 62, '猫爪冰摇', 'v3.3.0',
-        '{action}；装备有此牌的【{hro}】生成的【sts2033】，所提供的[护盾]值+1。',
+        '{action}；装备有此牌的【{hro}】生成的【sts111021】，所提供的[护盾]值+1。',
         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/cb37f02217bcd8ae5f6e4a6eb9bae539_3357631204660850476.png',
         3, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1102, 1),
 
@@ -2031,24 +2031,25 @@ const allCards: Record<number, (ver: Version) => Card> = {
         }, { pct: 1 }),
 
     211041: () => new GICard(211041, 64, '吐纳真定', 'v3.3.0',
-        '{action}；装备有此牌的【{hro}】生成的【sts2039】获得以下效果：；使我方单手剑、双手剑或长柄武器角色的｢普通攻击｣伤害+1。',
+        '{action}；装备有此牌的【{hro}】生成的【sts111041】获得以下效果：；使我方单手剑、双手剑或长柄武器角色的｢普通攻击｣伤害+1。',
         'https://patchwiki.biligame.com/images/ys/e/e6/qfsltpvntkjxioew81iehfhy5xvl7v6.png',
         3, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent, CARD_SUBTYPE.Action], 1104, 1),
 
-    // 702: () => new GICard(702, '寒天宣命祝词', '装备有此牌的【{hro}】生成的【sts2008,4】会使所附魔角色造成的[冰元素伤害]+1。；切换到装备有此牌的【{hro}】时：少花费1个元素骰。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7d706fd25ab0b3c4f8cca3af08d8a07b_2913232629544868049.png',
-    //     2, 4, 0, [6], 1005, 1, (card, event) => ({
-    //         trigger: ['change-to'],
-    //         minusDiceHero: card.perCnt,
-    //         exec: () => {
-    //             let { switchHeroDiceCnt = 0 } = event;
-    //             if (card.perCnt > 0 && switchHeroDiceCnt > 0) {
-    //                 --card.perCnt;
-    //                 --switchHeroDiceCnt;
-    //             }
-    //             return { switchHeroDiceCnt }
-    //         },
-    //     }), { pct: 1 }),
+    211051: () => new GICard(211051, 65, '寒天宣命祝词', 'v3.3.0',
+        '装备有此牌的【{hro}】生成的【sts111052,4】会使所附魔角色造成的[冰元素伤害]+1。；切换到装备有此牌的【{hro}】时：少花费1个元素骰。(每回合1次)',
+        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7d706fd25ab0b3c4f8cca3af08d8a07b_2913232629544868049.png',
+        2, DICE_TYPE.Cryo, CARD_TYPE.Equipment, [CARD_SUBTYPE.Talent], 1105, 1, (card, event) => ({
+            trigger: ['change-to'],
+            minusDiceHero: card.perCnt,
+            exec: () => {
+                let { switchHeroDiceCnt = 0 } = event;
+                if (card.perCnt > 0 && switchHeroDiceCnt > 0) {
+                    --card.perCnt;
+                    --switchHeroDiceCnt;
+                }
+                return { switchHeroDiceCnt }
+            },
+        }), { pct: 1 }),
 
     // 703: () => new GICard(703, '重帘留香', '{action}；装备有此牌的【{hro}】生成的【sts2002】，会在我方出战角色受到至少为2的伤害时抵消伤害，并且初始[可用次数]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/eb3cd31f7a2c433499221b5664a264f3_3086723857644931388.png',
@@ -2790,3 +2791,5 @@ export const cardsTotal = (version: Version = VERSION[0]) => {
 }
 
 export const newCard = (version: Version = VERSION[0]) => (id: number) => allCards[id]?.(version) ?? NULL_CARD();
+
+export const parseCard = (shareId: number) => cardsTotal().find(c => c.shareId == shareId) ?? NULL_CARD();

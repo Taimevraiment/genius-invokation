@@ -2,8 +2,8 @@ import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon
 import { STATUS_BG_COLOR, StatusBgColor, ELEMENT_NAME_KEY, ELEMENT_NAME, STATUS_BG_COLOR_KEY, ElementNameKey, SHIELD_ICON_URL } from "../constant/UIconst.js";
 import { isCdt } from "../utils/utils.js";
 import {
-    CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PureElementType, STATUS_GROUP, STATUS_TYPE, SkillType,
-    StatusGroup, StatusType, VERSION, Version,
+    CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PURE_ELEMENT_TYPE, PureElementType, STATUS_GROUP, STATUS_TYPE, SkillType,
+    StatusGroup, StatusType, VERSION, Version, WEAPON_TYPE, WeaponType,
 } from "../constant/enum.js";
 import { newHero } from "./heros.js";
 
@@ -259,15 +259,6 @@ const shieldStatus = (id: number, name: string, cnt = 2, mcnt = 0) =>
 
 
 const statusTotal: Record<number, (version: Version, ...args: any) => Status> = {
-    // 2000: () => new GIStatus(2000, '', '', '', -1, [], 0, 0, 0),
-
-    111012: () => new GIStatus(111012, '冰莲', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
-        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Barrier], 2, 0, -1, (status, event = {}) => {
-            const { restDmg = 0 } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
 
     // 2002: (isTalent = false) => new GIStatus(2002, '雨帘剑', `【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`,
     //     '', 1, [2], isTalent ? 3 : 2, 0, -1, (status, event = {}) => {
@@ -322,12 +313,52 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
 
     111: () => shieldStatus(111, '结晶', 1, 2),
 
-    111052: (_, el: PureElementType, rcnt = 1, addDmg = 0) =>
+    111012: () => new GIStatus(111012, '冰莲', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
+        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Barrier], 2, 0, -1, (status, event = {}) => {
+            const { restDmg = 0 } = event;
+            if (restDmg <= 0) return { restDmg }
+            --status.useCnt;
+            return { restDmg: restDmg - 1 }
+        }),
+
+    111021: (_, isTalent = false) => new GIStatus(111021, '猫爪护盾', '为我方出战角色提供1点[护盾]。',
+        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], isTalent ? 2 : 1, 0, -1, undefined, { isTalent }),
+
+    111031: () => new GIStatus(111031, '寒冰之棱', '【我方切换角色后：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】',
+        'ski1003,2', STATUS_GROUP.combatStatus, [STATUS_TYPE.Attack], 3, 0, -1, () => ({
+            damage: 2,
+            element: ELEMENT_TYPE.Cryo,
+            trigger: ['change-from'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    111041: (_, isTalent = false) => new GIStatus(111041, '重华叠霜领域',
+        `我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`,
+        'buff', STATUS_GROUP.combatStatus, isTalent ? [STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant] : [STATUS_TYPE.Enchant], -1, 0, 2, (status, event = {}) => {
+            const { heros = [], hidx = -1 } = event;
+            const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx].weaponType);
+            return {
+                trigger: ['skilltype1'],
+                addDmgType1: isCdt(status.isTalent && isWeapon, 1),
+                attachEl: isCdt(isWeapon, PURE_ELEMENT_TYPE.Cryo),
+            }
+        }, { icbg: STATUS_BG_COLOR[ELEMENT_TYPE.Cryo], isTalent }),
+
+    111052: (_, el: PureElementType, rcnt: number = 1, addDmg: number = 0) =>
         new GIStatus(111052, `${ELEMENT_NAME[el]}附魔`, `所附属角色造成的[物理伤害]变为[${ELEMENT_NAME[el]}伤害]${addDmg > 0 ? `，且造成的[${ELEMENT_NAME[el]}伤害]+${addDmg}` : ''}。；【[持续回合]：{roundCnt}】`,
             `buff${addDmg > 0 ? '4' : ''}`, STATUS_GROUP.heroStatus, [STATUS_TYPE.Enchant], -1, 0, rcnt, status => ({
                 attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType,
                 addDmg: -status.perCnt,
             }), { pct: -addDmg }),
+
+    111061: () => new GIStatus(111061, '冷酷之心', '【所附属角色使用〖ski1106,1〗时：】移除此状态，使本次伤害+3。',
+        'buff4', STATUS_GROUP.heroStatus, [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign], 1, 0, -1, status => ({
+            trigger: ['skilltype2'],
+            addDmgCdt: 3,
+            exec: () => { --status.useCnt },
+        }), { icbg: STATUS_BG_COLOR[ELEMENT_TYPE.Cryo] }),
 
     303300: () => new GIStatus(303300, '饱腹', '本回合无法食用更多的｢料理｣。',
         'satiety', STATUS_GROUP.heroStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign], -1, 0, 1),
@@ -532,9 +563,6 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //         exec: () => { --status.useCnt },
     //     })),
 
-    111021: (_, isTalent = false) => new GIStatus(111021, '猫爪护盾', '为我方出战角色提供1点[护盾]。',
-        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], isTalent ? 2 : 1, 0, -1, undefined, { isTalent }),
-
     // 2034: (isTalent = false) => new GIStatus(2034, '鼓舞领域', '【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】',
     //     'ski1203,2', 1, [1, 4, 6], -1, 0, 2, (status, event = {}) => {
     //         const { heros = [], hidx = -1, trigger = '' } = event;
@@ -574,27 +602,6 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //             },
     //         }
     //     }, { pct: 1, icbg: STATUS_BG_COLOR[6] }),
-
-    111031: () => new GIStatus(111031, '寒冰之棱', '【我方切换角色后：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】',
-        'ski1003,2', STATUS_GROUP.combatStatus, [STATUS_TYPE.Attack], 3, 0, -1, () => ({
-            damage: 2,
-            element: ELEMENT_TYPE.Cryo,
-            trigger: ['change-from'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
-        })),
-
-    // 2039: (isTalent = false) => new GIStatus(2039, '重华叠霜领域', `我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`,
-    //     'buff', 1, isTalent ? [6, 8] : [8], -1, 0, 2, (status, event = {}) => {
-    //         const { heros = [], hidx = -1 } = event;
-    //         const isWeapon = hidx > -1 && [1, 2, 5].includes(heros[hidx]?.weaponType ?? 0);
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             addDmgType1: isCdt(status.isTalent && isWeapon, 1),
-    //             attachEl: isCdt(isWeapon, 4),
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[4], isTalent }),
 
     // 2040: (isTalent = false) => new GIStatus(2040, '庭火焰硝', `所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；【[可用次数]：{useCnt}】`,
     //     'buff4', 0, [1, 6, 8], 3, 0, -1, (status, event = {}) => {
@@ -865,13 +872,6 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //             hidxs: allHidxs(heros),
     //         }
     //     }, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2066: () => new GIStatus(2066, '冷酷之心', '【所附属角色使用〖ski1006,1〗时：】移除此状态，使本次伤害+3。',
-    //     'buff4', 0, [4, 6, 10], 1, 0, -1, status => ({
-    //         trigger: ['skilltype2'],
-    //         addDmgCdt: 3,
-    //         exec: () => { --status.useCnt },
-    //     }), { icbg: STATUS_BG_COLOR[4] }),
 
     // 2067: () => new GIStatus(2067, '泷廻鉴花', '所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[水元素伤害]。；【[可用次数]：{useCnt}】',
     //     'buff4', 0, [6, 8], 3, 0, -1, status => {

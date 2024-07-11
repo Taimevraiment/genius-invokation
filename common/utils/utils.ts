@@ -1,4 +1,3 @@
-import CODE_IDX_LIST from "../constant/codeIdxList.js";
 
 // 深拷贝函数
 export function clone<T>(obj: T): T {
@@ -50,11 +49,12 @@ export const parseShareCode = (code: string): { heroIds: number[], cardIds: numb
     const str = str1 + str2;
     const res: number[] = [];
     for (let i = 0; i < 33; ++i) {
-        res.push(CODE_IDX_LIST[parseInt(str.slice(i * 12, (i + 1) * 12), 2)]);
+        res.push(parseInt(str.slice(i * 12, (i + 1) * 12), 2));
     }
-    const heroIds = res.slice(0, 3);
-    const cardIds = res.slice(3).filter(v => v > 0);
-    return { heroIds, cardIds }
+    return {
+        heroIds: res.slice(0, 3),
+        cardIds: res.slice(3).filter(v => v > 0),
+    }
 }
 
 // 延迟函数

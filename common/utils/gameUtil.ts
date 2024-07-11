@@ -1,4 +1,4 @@
-import { Card, Hero, Skill } from "../../typing";
+import { Card, Hero, Skill, Status } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
@@ -99,4 +99,9 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
         return diceLen == heroSwitchDice;
     }
     return false;
+}
+
+// 是否含有某状态
+export const hasStatus = (statuses: Status[], id: number) => {
+    return statuses.some(s => s.id == id);
 }
