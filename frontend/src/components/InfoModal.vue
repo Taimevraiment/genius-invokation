@@ -21,7 +21,7 @@
         <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
           {{ CARD_SUBTYPE_NAME[subtype] }}
         </div>
-        <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
+        <div v-if="(info as Card).subType.includes(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
           {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
         </div>
         <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
@@ -89,7 +89,7 @@
               <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
                 <span class="equipment-title-left">
                   <img
-                    :src="getIcon((slot as Card).hasSubtype(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).hasSubtype(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
+                    :src="getIcon((slot as Card).subType.includes(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).subType.includes(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
                   <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                     {{ Math.floor((slot as Card).useCnt) }}
                   </div>
@@ -191,7 +191,7 @@
           <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
             <span class="equipment-title-left">
               <img
-                :src="getIcon((slot as Card).hasSubtype(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).hasSubtype(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
+                :src="getIcon((slot as Card).subType.includes(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).subType.includes(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
               <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                 {{ Math.floor((slot as Card).useCnt) }}
                 <!-- {{ (slot as Card).useCnt.toFixed(2) }} -->
@@ -329,21 +329,23 @@ const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
   return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
-  if (!/^[a-z,0-9,A-Z]+$/.test(content)) return { name: content, default: true }
-  const [a1, a2, a3] = content.slice(3).split(',').map(v => isNaN(+v) ? v : +v);
+  if(content.startsWith('ski,')) console.trace(content);
+  if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
+  const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
   const type = content.slice(0, 3);
-  return type == 'crd' ? newCard(version.value)(+a1) :
-    type == 'sts' ? newStatus(version.value)(+a1, a2, a3) :
-      type == 'rsk' ? readySkill(+a1, version.value) :
-        type == 'smn' ? newSummon(version.value)(+a1, a2, a3) :
-          type == 'ski' ? newHero(version.value)(+a1).skills[+a2] :
-            type == 'hro' ? newHero(version.value)(+a1) :
+  return type == 'crd' ? newCard(version.value)(a1) :
+    type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
+      type == 'rsk' ? readySkill(a1, version.value) :
+        type == 'smn' ? newSummon(version.value)(a1, a2, a3) :
+          type == 'ski' ? newHero(version.value)(a1).skills[a2] :
+            type == 'hro' ? newHero(version.value)(a1) :
               { name: content, default: true };
 }
 const wrapDesc = (desc: string, obj?: ExplainContent): string => {
+  const wrapName = (_: string, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`;
   let res = desc.slice()
-    .replace(/(?<!\\)〖(.*?)〗/g, (_, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`)
-    .replace(/(?<!\\)【(.*?)】/g, (_, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`)
+    .replace(/(?<!\\)〖(.*?)〗/g, wrapName)
+    .replace(/(?<!\\)【(.*?)】/g, wrapName)
     .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
       let icon = '';
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == word) ?? [];
@@ -494,7 +496,7 @@ watchEffect(() => {
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].forEach(slot => {
       if (slot != null) {
         const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc));
-        const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Action].every(v => slot.hasSubtype(v));
+        const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Action].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);

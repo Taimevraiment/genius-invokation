@@ -49,7 +49,7 @@ export default class GeniusInvokationRoom {
     countdown: Countdown = { limit: 0, curr: 0, timer: undefined }; // 倒计时
     newStatus: (id: number, ...args: any) => Status;
     newCard: (id: number, ...args: any) => Card;
-    newHero: (id: number, hidx?: number) => Hero;
+    newHero: (id: number) => Hero;
     newSummon: (id: number, ...args: any) => Summon;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
@@ -196,7 +196,10 @@ export default class GeniusInvokationRoom {
         this.log = [];
         this.players.forEach(p => {
             p.phase = this.phase;
-            p.heros.forEach(h => h.entityId = this._genEntityId());
+            p.heros.forEach((h, hidx) => {
+                h.entityId = this._genEntityId();
+                h.hidx = hidx;
+            });
             p.supports = [];
             p.summons = [];
             p.dice = [];
@@ -336,10 +339,14 @@ export default class GeniusInvokationRoom {
      * @param flag flag
      */
     private _chooseInitHero(pidx: number, hidx: number, socket: Socket, flag: string) {
-        this.players[pidx].hidx = hidx;
-        this.players[pidx].heros.forEach((h, idx) => h.isFront = idx == hidx);
-        this.players[pidx].phase = PHASE.DICE;
-        this.log.push(`[${this.players[pidx].name}]选择[${this.players[pidx].heros[hidx].name}]出战`);
+        const player = this.players[pidx];
+        player.hidx = hidx;
+        if (player.heros[hidx].isFront) { // 确认选择
+            player.phase = PHASE.DICE;
+            this._writeLog(`[${player.name}]选择[${player.heros[hidx].name}]出战`);
+        } else { // 预选
+            player.heros.forEach(h => h.isFront = h.hidx == hidx);
+        }
         if (this.players.every(p => p.phase == PHASE.DICE)) { // 双方都选完出战角色
             this.phase = PHASE.DICE;
             this.players.forEach(player => player.dice = this._rollDice(player.pidx));
@@ -3349,12 +3356,13 @@ export default class GeniusInvokationRoom {
                 changedEl = element as ElementType;
             } else if (cmd == 'changePattern') {
                 if (hidxs == undefined) throw new Error('hidxs is undefined');
-                const newPattern = this.newHero(cnt, cheros[hidxs[0]].hidx);
-                const { heroStatus, hp, isFront, talentSlot, artifactSlot, weaponSlot, energy } = cheros[hidxs[0]];
+                const newPattern = this.newHero(cnt);
+                const { heroStatus, hp, isFront, hidx, talentSlot, artifactSlot, weaponSlot, energy } = cheros[hidxs[0]];
                 cheros[hidxs[0]] = newPattern;
                 cheros[hidxs[0]].heroStatus = [...heroStatus];
                 cheros[hidxs[0]].hp = hp;
                 cheros[hidxs[0]].isFront = isFront;
+                cheros[hidxs[0]].hidx = hidx;
                 cheros[hidxs[0]].talentSlot = talentSlot;
                 cheros[hidxs[0]].artifactSlot = artifactSlot;
                 cheros[hidxs[0]].weaponSlot = weaponSlot;

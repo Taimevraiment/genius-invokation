@@ -391,7 +391,7 @@
               <div class="init-card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
                 <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
               </div>
-              <img src="@@/svg/initSelect.svg" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
+              <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
             </div>
           </div>
           <button @click="changeCard" v-if="showChangeCardBtn">
@@ -587,6 +587,7 @@ watchEffect(() => {
 // 选择要换的卡
 const selectChangeCard = (idx: number) => {
   initCardsSelect.value[idx] = !initCardsSelect.value[idx];
+  emits('selectChangeCard', idx, initCardsSelect.value[idx]);
 };
 // 换卡
 const changeCard = () => {
@@ -1535,7 +1536,7 @@ button:active {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 50%;
+  width: 80%;
 }
 
 .will-getcard-my {

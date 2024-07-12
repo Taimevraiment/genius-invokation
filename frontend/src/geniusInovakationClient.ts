@@ -168,7 +168,7 @@ export default class GeniusInvokationClient {
                 if (onlySupportAndSummon) return;
             }
         }
-        if (this.currCard.canSelectSupport > -1 && this.modalInfo.type != null) {
+        if (this.currCard.canSelectSupport != -1 && this.modalInfo.type != null) {
             this.modalInfo = NULL_MODAL()
             return;
         }
@@ -202,13 +202,18 @@ export default class GeniusInvokationClient {
     /**
      * 展示选择卡的信息
      * @param idx 选择卡的索引idx
+     * @param val 是否为选中
      */
-    selectChangeCard(idx: number) {
-        this.modalInfo = {
-            version: this.version,
-            isShow: true,
-            type: INFO_TYPE.Card,
-            info: this.player.handCards[idx],
+    selectChangeCard(idx: number, val: boolean) {
+        if (val) {
+            this.modalInfo = {
+                version: this.version,
+                isShow: true,
+                type: INFO_TYPE.Card,
+                info: this.player.handCards[idx],
+            }
+        } else {
+            this.modalInfo = NULL_MODAL();
         }
     }
     /**
@@ -345,7 +350,6 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.rollCnt = rollCnt?.[this.playerIdx] ?? INIT_ROLL_COUNT;
         this.log = log;
-        this.modalInfo = NULL_MODAL();
     }
     /**
      * 游戏开始时换卡
@@ -367,11 +371,13 @@ export default class GeniusInvokationClient {
         if (this.isLookon > -1) return;
         const hidx = this.player.heros.findIndex(h => this.heroSelect[h.hidx] > 0 || h.id == this.modalInfo.info?.id);
         if (this.player.phase == PHASE.CHOOSE_HERO) { // 选择初始出战角色
-            this.selectHero(1, hidx);
-        } else if (([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase)) { // 阵亡选择角色
+            return this.selectHero(1, hidx);
+        }
+        if (([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase)) { // 阵亡选择角色
             this.isValid = true;
-            this.changeHero();
-        } else if (this.player.phase >= PHASE.ACTION_START && this.isShowChangeHero > 0) { // 准备切换角色
+            return this.changeHero();
+        }
+        if (this.player.phase >= PHASE.ACTION_START && this.isShowChangeHero > 0) { // 准备切换角色
             const hidx = this.player.heros.findIndex(h => this.heroSelect[h.hidx] || h.id == this.modalInfo.info?.id);
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && pre.heroIdxs![0] == hidx);
             if (preview == undefined) throw new Error('未找到切换角色预览');
@@ -407,6 +413,8 @@ export default class GeniusInvokationClient {
         this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
         if (this.player.phase == PHASE.CHOOSE_HERO && pidx == 1) { // 选择初始出战角色
             this.cancel({ onlyCard: true, notHeros: true });
+            if (this.player.heros[hidx].isFront) this.modalInfo = NULL_MODAL();
+            else this.isShowChangeHero = 1;
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.ChooseInitHero,
                 cpidx: this.playerIdx,

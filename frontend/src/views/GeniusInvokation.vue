@@ -57,7 +57,7 @@
       @select-use-dice="selectUseDice" @select-support="selectCardSupport" @select-summon="selectCardSummon"
       @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect" />
 
-    <div class="hand-card" v-if="(client.player?.phase ?? PHASE.NOT_READY) >= PHASE.NOT_BEGIN || client.isWin > -1"
+    <div class="hand-card" v-if="(client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
       <div v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`" class="card"
@@ -247,8 +247,8 @@ const cancel = () => {
   client.value.cancel();
 };
 // 选择要换的卡牌
-const selectChangeCard = (idx: number) => {
-  client.value.selectChangeCard(idx);
+const selectChangeCard = (idx: number, val: boolean) => {
+  client.value.selectChangeCard(idx, val);
 };
 // 选择卡牌
 const selectCard = (cardIdx: number) => {

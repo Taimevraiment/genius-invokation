@@ -63,6 +63,7 @@ select {
   margin-top: 5%;
   padding: 0 2%;
   border-radius: 5px;
+  border: 2px inset black;
 }
 
 button {

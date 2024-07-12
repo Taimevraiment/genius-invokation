@@ -180,7 +180,7 @@ import {
     CARD_SUBTYPE_NAME, HERO_LOCAL_CODE,
 } from '@@@/constant/UIconst';
 import { cardsTotal } from '../../../common/data/cards';
-import { herosTotal, newHero, parseHero } from '../../../common/data/heros';
+import { herosTotal, parseHero } from '../../../common/data/heros';
 import InfoModal from '@/components/InfoModal.vue';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
 import { useRouter } from 'vue-router';

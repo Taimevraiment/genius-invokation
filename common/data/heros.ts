@@ -8,7 +8,7 @@ import { newSummon } from './summons.js';
 import { clone, isCdt } from '../utils/utils.js';
 import { ELEMENT_NAME } from '../constant/UIconst.js'
 import { NULL_HERO } from '../constant/init.js';
-import { hasStatus } from '../utils/gameUtil.js';
+import { allHidxs, hasStatus } from '../utils/gameUtil.js';
 
 export class GIHero {
     id: number; // 唯一id
@@ -423,7 +423,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
             'https://patchwiki.biligame.com/images/ys/5/58/mcbp6hjwbi9pi7ux0cag1qrhtcod2oi.png',
             'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/e590d8ed5ffda912275916a7885793e2_4175761153899718840.png',
         ], () => ({ summon: [newSummon(ver)(111051)] })),
-        new GISkill('神里流·霰步', `此角色被切换为｢出战角色｣时，附属【sts111052,${PURE_ELEMENT_TYPE.Cryo}】。`,
+        new GISkill('神里流·霰步', '此角色被切换为｢出战角色｣时，附属【sts111052】。',
             SKILL_TYPE.Passive, 0, 0, DICE_TYPE.Same, {}, [
             'https://patchwiki.biligame.com/images/ys/b/bf/35ci2ri2f4j1n844qgcfu6mltipvy6o.png',
             'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png',
@@ -431,12 +431,12 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
             const { hero: { talentSlot } } = event;
             return {
                 trigger: ['change-to'],
-                status: [newStatus(ver)(111052, ELEMENT_CODE[PURE_ELEMENT_TYPE.Cryo], 1, +!!talentSlot)],
+                status: [newStatus(ver)(111052, 1, +!!talentSlot)],
             }
         })
     ]),
 
-    1106: ver => new GIHero(1106, 6, '优菈', 'v3.3.0', HERO_LOCAL.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
+    1106: ver => new GIHero(1106, 6, '优菈', 'v3.5.0', HERO_LOCAL.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
         'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png',
         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png',
         skill1('西风剑术·宗室'), [
@@ -455,48 +455,54 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
         ], () => ({ summon: [newSummon(ver)(111062)] }))
     ]),
 
-    // 1107: () => new GIHero(1107, '申鹤', 2, 10, 4, 5,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png',
-    //     skill1('踏辰摄斗'), [
-    //     new GISkill('仰灵威召将役咒', '造成{dmg}点[冰元素伤害]，生成【sts2073】。', 2, 2, 3, 4, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c7750c7dbf76e9e3dffa7df162028a4d_5325191736377199101.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 736;
-    //         return { status: [newStatus(2073, isTalent)] }
-    //     }),
-    //     new GISkill('神女遣灵真诀', '造成{dmg}点[冰元素伤害]，召唤【smn3028】。', 3, 1, 3, 4, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/4/49/cquyhtfdkpk25f0sk3afsnb5j502yhk.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/89e2ed92b6352a5925652f421aaddbaa_7169125488313816137.png',
-    //     ], () => ({ summon: [newSummon(ver)(3028)] }))
-    // ]),
+    1107: ver => new GIHero(1107, 7, '申鹤', 'v3.7.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Polearm,
+        'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png',
+        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png',
+        skill1('踏辰摄斗'), [
+        new GISkill('仰灵威召将役咒', '{dealDmg}，生成【sts111071】。',
+            SKILL_TYPE.Elemental, 2, 3, DICE_TYPE.Cryo, {}, [
+            'https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
+            'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c7750c7dbf76e9e3dffa7df162028a4d_5325191736377199101.png',
+        ], event => {
+            const { hero: { talentSlot }, card } = event;
+            const isTalent = !!talentSlot || card?.id == 211071;
+            return { status: [newStatus(ver)(111071, isTalent)] }
+        }),
+        new GISkill('神女遣灵真诀', '{dealDmg}，召唤【smn111073】。',
+            SKILL_TYPE.Burst, 1, 3, DICE_TYPE.Cryo, { ec: 2 }, [
+            'https://patchwiki.biligame.com/images/ys/4/49/cquyhtfdkpk25f0sk3afsnb5j502yhk.png',
+            'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/89e2ed92b6352a5925652f421aaddbaa_7169125488313816137.png',
+        ], () => ({ summon: [newSummon(ver)(111073)] }))
+    ]),
 
-    // 1108: () => new GIHero(1108, '七七', 2, 10, 4, 1,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png',
-    //     skill1('云来古剑法'), [
-    //     new GISkill('仙法·寒病鬼差', '召唤【smn3039】。', 2, 0, 3, 4, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/2/26/jd1wryrgs25urbr57sq2xnqd4ftpziw.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/8ef482a027dfd52ec96e07ce452c38ce_2112371814644076808.jpg',
-    //     ], () => ({ summon: [newSummon(ver)(3039)] })),
-    //     new GISkill('仙法·救苦度厄', '造成{dmg}点[冰元素伤害]，生成【sts2100】。', 3, 3, 3, 4, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/6/6c/p0xq33l7riqu49e0oryu8p1pjg6vzyb.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/fbf260ac04da9e7eafa3967cd9bed42c_824806426983130530.jpg',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card, heros = [] } = event;
-    //         const talent = talentSlot ?? isCdt(card?.id == 753, card);
-    //         const hidxs = allHidxs(heros, { isDie: true });
-    //         const isExecTalent = hidxs.length > 0 && talent && talent.perCnt > 0;
-    //         return {
-    //             status: [newStatus(2100)],
-    //             cmds: isCdt<Cmds[]>(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
-    //             ...(isExecTalent ? { heal: 1.7, hidxs } : {}),
-    //             exec: () => {
-    //                 if (isExecTalent) --talent.perCnt;
-    //             }
-    //         }
-    //     })
-    // ]),
+    1108: ver => new GIHero(1108, 8, '七七', 'v4.0.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
+        'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png',
+        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png',
+        skill1('云来古剑法'), [
+        new GISkill('仙法·寒病鬼差', '召唤【smn111081】。',
+            SKILL_TYPE.Elemental, 0, 3, DICE_TYPE.Cryo, {}, [
+            'https://patchwiki.biligame.com/images/ys/2/26/jd1wryrgs25urbr57sq2xnqd4ftpziw.png',
+            'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/8ef482a027dfd52ec96e07ce452c38ce_2112371814644076808.jpg',
+        ], () => ({ summon: [newSummon(ver)(111081)] })),
+        new GISkill('仙法·救苦度厄', '造成{dmg}点[冰元素伤害]，生成【sts111082】。',
+            SKILL_TYPE.Burst, 3, 3, DICE_TYPE.Cryo, { ec: 3 }, [
+            'https://patchwiki.biligame.com/images/ys/6/6c/p0xq33l7riqu49e0oryu8p1pjg6vzyb.png',
+            'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/fbf260ac04da9e7eafa3967cd9bed42c_824806426983130530.jpg',
+        ], event => {
+            const { hero: { talentSlot }, card, heros = [] } = event;
+            const talent = talentSlot ?? isCdt(card?.id == 211081, card);
+            const hidxs = allHidxs(heros, { isDie: true });
+            const isExecTalent = hidxs.length > 0 && talent && talent.perCnt > 0;
+            return {
+                status: [newStatus(ver)(111082)],
+                cmds: isCdt<Cmds[]>(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
+                ...(isExecTalent ? { heal: 1.7, hidxs } : {}),
+                exec: () => {
+                    if (isExecTalent) --talent.perCnt;
+                }
+            }
+        })
+    ]),
 
     // 1109: () => new GIHero(1109, '莱依拉', 4, 10, 4, 1,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/94b1677048ddaa84ab735bb8f90c209d_3451890112016676238.png',
@@ -2206,10 +2212,6 @@ export const herosTotal = (version: Version = VERSION[0]) => {
     return heros;
 }
 
-export const newHero = (version: Version = VERSION[0]) => (id: number, hidx?: number) => {
-    const hero = allHeros[id]?.(version) ?? NULL_HERO();
-    if (hidx != undefined) hero.hidx = hidx;
-    return hero;
-}
+export const newHero = (version: Version = VERSION[0]) => (id: number) => allHeros[id]?.(version) ?? NULL_HERO();
 
 export const parseHero = (shareId: number) => herosTotal().find(h => h.shareId == shareId) ?? NULL_HERO();

@@ -1,5 +1,5 @@
 import { Card, Hero, Skill, Status } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType } from "../constant/enum.js";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementType } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -68,7 +68,7 @@ export const getBackHidxs = (heros: Hero[], frontIdx: number = -1): number[] => 
 }
 
 // 检查骰子是否合法
-export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?: Skill, heroSwitchDice?: number } = {}) => {
+export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?: Skill, heroSwitchDice?: number } = {}): boolean => {
     const { card, skill, heroSwitchDice = -1 } = options;
     const diceLen = dices.length;
     const diceCnt = arrToObj<DiceCostType, number>(Object.values(DICE_COST_TYPE), 0);
@@ -102,6 +102,12 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
 }
 
 // 是否含有某状态
-export const hasStatus = (statuses: Status[], id: number) => {
+export const hasStatus = (statuses: Status[], id: number): boolean => {
     return statuses.some(s => s.id == id);
 }
+
+// 根据id提取角色id
+export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
+
+// 根据角色id获取元素
+export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10];
