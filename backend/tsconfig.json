@@ -18,8 +18,8 @@
         "noImplicitAny": false,
         /* Linting */
         "strict": true,
-        // "noUnusedLocals": true,
-        // "noUnusedParameters": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
         "baseUrl": ".",
         "ignoreDeprecations": "5.0",
         "typeRoots": [

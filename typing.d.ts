@@ -1,6 +1,7 @@
 import {
     ActionType, CardSubtype, DiceCostType, Phase, PlayerStatus, SkillType, PURE_ELEMENT_TYPE,
     DAMAGE_TYPE, ELEMENT_REACTION, StatusGroup, PureElementType, DamageType, InfoType, Version,
+    ElementType,
 } from "./common/constant/enum"
 import { type GICard } from "./common/data/cards"
 import { type GIStatus } from "./common/data/statuses"
@@ -208,7 +209,6 @@ type ServerData = Readonly<{
     log: string[],
     pileCnt: number[],
     diceCnt: number[],
-    rollCnt: number[],
     handCardsCnt: number[],
     isWin: number,
     tip: string,
@@ -218,8 +218,8 @@ type ServerData = Readonly<{
 type Preview = Readonly<ActionData & {
     players: Player[],
     isValid: boolean,
-    willDamage?: number[][],
-    willHeal?: number[][],
+    willHp?: (number | undefined)[][],
+    willAttach?: ElementType[][],
     willSwitch?: boolean[][],
     willSummon?: Summon[][],
     willGetCard?: Card[],

@@ -1,7 +1,7 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Skill, Status, Summon, Trigger } from '../../typing';
 import {
-    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DiceType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG,
-    HeroTag, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
+    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG,
+    HeroTag, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from '../constant/enum.js';
 import { newStatus } from './statuses.js';
 import { newSummon } from './summons.js';

@@ -7,9 +7,9 @@
       </div>
       <div class="pile">
         <span>
-          <div>{{ opponent?.dice.length }}</div>
+          <div>{{ diceCnt[playerIdx ^ 1] }}</div>
         </span>
-        {{ opponent?.pile.length }}
+        {{ pileCnt[playerIdx ^ 1] }}
         <div class="will-getcard-oppo" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willGetCard"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(_, cidx) in opponent?.UI.willGetCard" :key="cidx"></div>
         <div class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willAddCard"
@@ -36,9 +36,9 @@
       </div>
       <div class="pile">
         <span>
-          <div>{{ player.dice.length }}</div>
+          <div>{{ diceCnt[playerIdx] }}</div>
         </span>
-        {{ player.pile.length }}
+        {{ pileCnt[playerIdx] }}
         <div class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :style="{ left: `${cidx * 70 - 70}px` }"
           v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
           <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
@@ -125,7 +125,7 @@
       }" v-for="(hero, hidx) in heros" :key="hidx">
         <div class="hero-img-content" :class="{
           'hero-select': heroSelect[hidx],
-          'hero-can-select': hero.canSelect && player.status == PLAYER_STATUS.PLAYING,
+          'hero-can-select': heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
           'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[getPidx(hidx)] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0),
         }">
           <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
@@ -495,6 +495,8 @@ const opponent = computed<Player>(() => props.client.players[playerIdx.value ^ 1
 const currCard = computed<Card>(() => props.client.currCard);
 const currSkill = computed<Skill>(() => props.client.currSkill);
 const isMobile = computed<boolean>(() => props.isMobile);
+const pileCnt = computed<number[]>(() => props.client.pileCnt);
+const diceCnt = computed<number[]>(() => props.client.diceCnt);
 const rollCnt = computed<number>(() => props.client.rollCnt);
 const showRerollBtn = computed<boolean>(() => props.client.showRerollBtn);
 const isReconcile = computed<boolean>(() => props.client.isReconcile);
@@ -515,6 +517,7 @@ const supportCnt = computed<number[][]>(() => props.client.supportCnt);
 const summonCnt = computed<number[][]>(() => props.client.summonCnt);
 const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).fill(false));
 const heroSelect = computed<number[]>(() => props.client.heroSelect);
+const heroCanSelect = computed<boolean[][]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
 const isLookon = computed<number>(() => props.isLookon);
@@ -529,7 +532,7 @@ const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime
 const isShowHistory = computed<boolean>(() => props.client.isShowHistory);
 const historyInfo = computed<string[]>(() => props.client.log.slice(4));
 const initCards = computed<Card[]>(() => player.value.handCards);
-const dices = ref<DiceCostType[]>(player.value.dice);
+const dices = computed<DiceCostType[]>(() => player.value.dice);
 const diceSelect = computed<boolean[]>(() => props.client.diceSelect);
 const showChangeCardBtn = ref<boolean>(true);
 
@@ -586,6 +589,7 @@ watchEffect(() => {
 
 // 选择要换的卡
 const selectChangeCard = (idx: number) => {
+  if (!showChangeCardBtn.value) return;
   initCardsSelect.value[idx] = !initCardsSelect.value[idx];
   emits('selectChangeCard', idx, initCardsSelect.value[idx]);
 };
@@ -602,7 +606,7 @@ const selectHero = (pidx: number, hidx: number) => {
 };
 // 选择要重掷的骰子
 const selectRerollDice = (didx: number) => {
-  if (!isMouseDown) return;
+  if (!isMouseDown || !showRerollBtn.value) return;
   if (diceChangeEnter == -1) diceChangeEnter = !diceSelect.value[didx];
   emits('update:diceSelect', didx, diceChangeEnter);
 };

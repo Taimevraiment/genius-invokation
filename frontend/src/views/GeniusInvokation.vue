@@ -24,7 +24,7 @@
       <span v-if="isLookon > -1">旁观中......</span>
       <p>{{ client.player?.name }}</p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
-        {{ client.player?.handCards?.length ?? 0 }}
+        {{ handCardsCnt[client.playerIdx] }}
       </div>
       <img class="lengend" :src="getDiceBgIcon('lengend-empty')" />
       <img v-if="!client.player?.isUsedLengend" class="lengend" :src="getDiceBgIcon('lengend')" />
@@ -42,7 +42,7 @@
         -删除bot
       </p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
-        {{ client.opponent?.handCards?.length ?? 0 }}
+        {{ handCardsCnt[client.playerIdx ^ 1] }}
       </div>
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
       <img v-if="isLookon > -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
@@ -145,34 +145,35 @@
         <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop=" useSkill(sidx, true)"></div>
       </div>
     </div>
-  </div>
 
-  <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile"
-    style="z-index: 10" />
+    <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile"
+      style="z-index: 10" />
 
-  <h1 v-if="client.isWin > 1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
-    :class="{ 'mobile-win-banner': isMobile }">
-    {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！
-  </h1>
+    <h1 v-if="client.isWin > 1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
+      :class="{ 'mobile-win-banner': isMobile }">
+      {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！
+    </h1>
 
-  <h1 v-if="client.error != '' && isDev" class="error">{{ client.error }}</h1>
+    <h1 v-if="client.error != '' && isDev" class="error">{{ client.error }}</h1>
 
-  <div class="tip" :class="{ 'tip-enter': client.tip != '', 'tip-leave': client.tip == '' }">
-    {{ client.tip }}
-  </div>
+    <div class="tip" :class="{ 'tip-enter': client.tip != '', 'tip-leave': client.tip == '' }">
+      {{ client.tip }}
+    </div>
 
-  <div class="modal-action" :class="{
-    'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING,
-    'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING,
-    'modal-action-enter-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
-    'modal-action-enter-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
-    'modal-action-leave': client.actionInfo == '',
-  }">
-    {{ client.actionInfo }}
-  </div>
-  <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
-  <div class="willskill-mask"
-    v-if="client.player.status == PLAYER_STATUS.PLAYING && (client.currSkill.type > 0 || client.isShowChangeHero >= 2)">
+    <div class="modal-action" :class="{
+      'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING,
+      'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING,
+      'modal-action-enter-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
+      'modal-action-enter-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
+      'modal-action-leave': client.actionInfo == '',
+    }">
+      {{ client.actionInfo }}
+    </div>
+    <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
+    <div class="willskill-mask"
+      v-if="client.player.status == PLAYER_STATUS.PLAYING && (client.currSkill.type != SKILL_TYPE.Passive || client.isShowChangeHero >= 2)">
+    </div>
+
   </div>
 </template>
 
@@ -192,7 +193,7 @@ import { herosTotal } from '@@@/data/heros';
 import { debounce, genShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 import {
-  CARD_SUBTYPE, DiceCostType, Version, ELEMENT_TYPE, PLAYER_STATUS, PHASE, COST_TYPE,
+  CARD_SUBTYPE, DiceCostType, Version, ELEMENT_TYPE, PLAYER_STATUS, PHASE, COST_TYPE, SKILL_TYPE,
   PURE_ELEMENT_CODE_KEY, PureElementCode, DICE_COST_TYPE_CODE_KEY, DiceCostTypeCode,
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
@@ -211,6 +212,7 @@ const version = ref<Version>(cversion); // 版本
 const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * 2) : -1); // 是否旁观
 const client = ref(new GeniusInvokationClient(socket, userid, version.value, cplayers, isMobile.value, countdown, JSON.parse(localStorage.getItem('GIdecks') || '[]'), Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value));
 
+const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt);
 const canAction = computed<boolean>(() => client.value.canAction && client.value.tip == '' && client.value.actionInfo == ''); // 是否可以操作
 const afterWinHeros = ref<Hero[][]>([]); // 游戏结束后显示的角色信息
 const hasAI = ref<boolean>(false); // 是否有AI
