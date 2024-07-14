@@ -245,7 +245,7 @@ const mouseleave = (idx: number) => {
 };
 // 取消选择
 const cancel = () => {
-  if (client.value.player.phase < 2) return;
+  if (client.value.player.phase <= PHASE.NOT_BEGIN) return;
   client.value.cancel();
 };
 // 选择要换的卡牌
@@ -357,10 +357,6 @@ const getPlayerList = ({ plist }: { plist: Player[] }) => {
 };
 onMounted(() => {
   socket.emit('roomInfoUpdate', { roomId });
-  socket.on('roomInfoUpdate', data => {
-    const isFlag = data.isStart && !client.value.isStart;
-    client.value.roomInfoUpdate({ isFlag, ...data });
-  });
   socket.on('getServerInfo', data => {
     client.value.getServerInfo(data);
     if (clientAI != null) clientAI.getServerInfo(data);

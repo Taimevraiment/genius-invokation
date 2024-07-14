@@ -3,6 +3,7 @@ import Index from '@/views/Index.vue'
 // import { useStore } from 'vuex'
 
 const router = createRouter({
+  //@ts-ignore
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [{
     path: '/',
@@ -35,7 +36,7 @@ router.beforeEach((_to, _from, next) => {
     next({ path: '/' });
     return;
   }
-  next()
+  next();
 })
 
 export default router

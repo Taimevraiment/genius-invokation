@@ -194,10 +194,11 @@
           }">
             {{ elTips[hidx][0] }}
           </div>
-          <img v-for="(el, eidx) in hero.attachElement.filter(() => hero?.hp > 0)" :key="eidx" :src="ELEMENT_URL[el]"
-            style="width: 20px" />
-          <img class="will-attach" v-for="(attach, waidx) in willAttachs[hidx].filter(() => hero?.hp > 0)" :key="waidx"
-            :src="ELEMENT_URL[attach]" />
+          <template v-if="hero.hp > 0">
+            <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
+            <img class="will-attach" v-for="(attach, waidx) in willAttachs[hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
+              :key="waidx" :src="ELEMENT_URL[attach]" />
+          </template>
         </div>
         <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
           <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': ists.UI.isSelected }"
@@ -269,7 +270,7 @@
                 {{ (willHp[hidx] ?? 0) > 0 ? "+" : "-" }}{{ Math.abs(Math.ceil(willHp[hidx] ?? 0) % 100) }}
               </span>
             </div>
-            <div class="damages">
+            <div class="damages" v-if="willDamages[hidx] != undefined">
               <div class="damage" :class="{ 'show-damage': isShowDmg && willDamages[hidx][0] >= 0 && hero.hp >= 0 }"
                 :style="{ color: ELEMENT_COLOR[dmgElements[hidx]] }">
                 -{{ willDamages[hidx][0] }}
@@ -408,7 +409,7 @@ import { newHero } from '@@@/data/heros';
 import { Card, Hero, Player, Skill, Summon } from '../../../typing';
 import {
   CARD_TAG, DamageType, PureElementType, STATUS_TYPE, DAMAGE_TYPE, Version, SKILL_TYPE, PHASE, PLAYER_STATUS, CARD_SUBTYPE,
-  SUPPORT_TYPE, ELEMENT_TYPE, SUMMON_DESTROY_TYPE, Phase, COST_TYPE, DICE_COST_TYPE, DiceCostType,
+  SUPPORT_TYPE, ELEMENT_TYPE, SUMMON_DESTROY_TYPE, Phase, COST_TYPE, DICE_COST_TYPE, DiceCostType, ElementType,
 } from '@@@/constant/enum';
 
 const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
@@ -500,7 +501,7 @@ const diceCnt = computed<number[]>(() => props.client.diceCnt);
 const rollCnt = computed<number>(() => props.client.rollCnt);
 const showRerollBtn = computed<boolean>(() => props.client.showRerollBtn);
 const isReconcile = computed<boolean>(() => props.client.isReconcile);
-const willAttachs = computed<PureElementType[][]>(() => wrapArr(props.client.willAttachs));
+const willAttachs = computed<ElementType[][]>(() => wrapArr(props.client.willAttachs));
 const willDamages = computed<number[][]>(() => wrapArr(props.client.willDamages));
 const dmgElements = computed<DamageType[]>(() => wrapArr(props.client.dmgElements));
 const willHeals = computed<number[]>(() => wrapArr(props.client.willHeals));

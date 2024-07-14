@@ -84,17 +84,6 @@ const removePlayer = (pid: number) => {
         }
     });
 }
-// 更新房间信息
-const roomInfoUpdate = (roomId: number) => {
-    const room = getRoom(roomId);
-    if (!room) return console.error(`ERROR@roomInfoUpdate:房间${roomId}不存在`);
-    io.to(`7szh-${room.id}`).emit('roomInfoUpdate', {
-        players: room.playersVO,
-        isStart: room.isStart,
-        phase: room.phase,
-        countdown: room.countdown.curr,
-    });
-}
 
 io.on('connection', socket => {
     let pid = -1;
@@ -145,7 +134,7 @@ io.on('connection', socket => {
                 if (room.countdown.timer != null) clearInterval(room.countdown.timer);
                 removeById(room.id, roomList);
             } else {
-                roomInfoUpdate(room.id);
+                room.emit('leaveRoom', pidx);
             }
         }
         if (eventName == 'disconnect') removePlayer(me.id);
@@ -210,6 +199,9 @@ io.on('connection', socket => {
         if (room.isStart && isInGame) {
             ++room.onlinePlayersCnt;
             room.players[pidx].isOffline = false;
+            setTimeout(() => {
+                room.emit('continueGame', (me as Player).pidx, { socket });
+            }, 500);
         } else {
             me = room.init(me);
             playerList[getPlayerIdx(pid)] = me;
@@ -225,7 +217,11 @@ io.on('connection', socket => {
     // 退出房间
     socket.on('exitRoom', () => leaveRoom('exitRoom'));
     // 房间信息更新
-    socket.on('roomInfoUpdate', data => roomInfoUpdate(data.roomId));
+    socket.on('roomInfoUpdate', data => {
+        const room = getRoom(data.roomId);
+        if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
+        room.emit('roomInfoUpdate', 0);
+    });
     // 发送数据到服务器
     socket.on('sendToServer', (actionData: ActionData) => {
         const me = getPlayer(pid);
@@ -259,7 +255,7 @@ io.on('connection', socket => {
         const me = getPlayer(pid)!;
         const room = getRoom(me.rid)!;
         removeById(1, room.players);
-        roomInfoUpdate(room.id);
+        room.emit('removeAI', 0);
         emitPlayerAndRoomList();
     });
 

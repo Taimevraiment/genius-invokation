@@ -5,7 +5,7 @@ import { checkDices } from "@@@/utils/gameUtil";
 import {
     Card, Countdown, Hero, Player, ServerData, Skill, Summon, ActionData, Preview, InfoVO,
 } from "../../typing";
-import { ACTION_TYPE, CARD_SUBTYPE, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
+import { ACTION_TYPE, CARD_SUBTYPE, DamageType, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, PureElementType, SKILL_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_SKILL, NULL_CARD, NULL_MODAL } from "@@@/constant/init"
 import {
@@ -23,23 +23,23 @@ export default class GeniusInvokationClient {
     isValid: boolean = false; // 是否合法
     isStart: boolean = false; // 是否开始游戏
     isDeckEdit: boolean = false; // 是否进入编辑卡组界面
-    phase: number = PHASE.NOT_BEGIN; // 阶段
+    phase: Phase = PHASE.NOT_BEGIN; // 阶段
     showRerollBtn: boolean = true; // 是否显示重投按钮
     isReconcile: boolean = false; // 是否进入调和模式
-    willAttachs: number[][] = []; // 将要附着的元素
+    willAttachs: ElementType[][] = []; // 将要附着的元素
     willDamages: number[][] = []; // 将要受到的伤害
-    dmgElements: number[] = []; // 造成伤害元素
+    dmgElements: DamageType[] = []; // 造成伤害元素
     willHeals: number[][] = []; // 回血量
-    willHp: (number | undefined)[][] = []; // 总共的血量变化
-    elTips: [string, number, number][] = new Array(6).fill(['', 0, 0]); // 元素反应提示
+    willHp: (number | undefined)[] = []; // 总共的血量变化
+    elTips: [string, PureElementType, PureElementType][] = new Array(6).fill(['', 0, 0]); // 元素反应提示
     isShowDmg: boolean = false; // 是否显示伤害数
     isShowHeal: boolean = false; // 是否显示加血数
     isShowChangeHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
-    willSummons: Summon[][] = [[], []]; // 将要召唤的召唤物
+    willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
     willSwitch: boolean[] = []; // 是否将要切换角色
-    supportCnt = [[0, 0, 0, 0], [0, 0, 0, 0]]; // 支援物变化数
-    summonCnt = [[0, 0, 0, 0], [0, 0, 0, 0]]; // 召唤物变化数
+    supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0)); // 支援物变化数
+    summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0)); // 召唤物变化数
     canSelectHero: number = 0; // 可以选择角色的数量
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
@@ -53,9 +53,9 @@ export default class GeniusInvokationClient {
     editDeckIdx: number; // 当前编辑卡组idx
     countdown: Countdown = { curr: 0, limit: 0, timer: undefined }; // 倒计时配置
     log: string[] = []; // 当局游戏日志
-    pileCnt: number[] = [0, 0]; // 牌库数量
-    diceCnt: number[] = [0, 0]; // 骰子数量
-    handCardsCnt: number[] = [0, 0]; // 手牌数量
+    pileCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 牌库数量
+    diceCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 骰子数量
+    handCardsCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 手牌数量
     isMobile: boolean; // 是否为手机
     diceSelect: boolean[]; // 骰子是否选中
     handcardsGap: number; // 手牌间隔
@@ -66,9 +66,10 @@ export default class GeniusInvokationClient {
     heroSelect: number[] = []; // 角色是否选中
     heroCanSelect: boolean[] = []; // 角色是否可选
     heroSwitchDice: number = INIT_SWITCH_HERO_DICE; // 切换角色所需骰子数
-    supportSelect: boolean[]; // 支援物是否选中
-    summonSelect: boolean[][]; // 召唤物是否选中
+    supportSelect: boolean[] = new Array(MAX_SUPPORT_COUNT).fill(false);; // 支援物是否选中
+    summonSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false));; // 召唤物是否选中
     error: string = ''; // 服务器发生的错误信息
+
     constructor(
         socket: Socket, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number,
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
@@ -87,8 +88,6 @@ export default class GeniusInvokationClient {
         this.handcardsGap = isMobile ? HANDCARDS_GAP_MOBILE : HANDCARDS_GAP_PC;
         this.handcardsOffset = isMobile ? HANDCARDS_OFFSET_MOBILE : HANDCARDS_OFFSET_PC;
         this.handcardsPos = this.player.handCards.map((_, ci) => ci * this.handcardsGap);
-        this.supportSelect = new Array(MAX_SUPPORT_COUNT).fill(false);
-        this.summonSelect = this.players.map(() => new Array(MAX_SUMMON_COUNT).fill(false));
     }
     get playerIdx() { // 该玩家序号
         return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userid);
@@ -186,11 +185,12 @@ export default class GeniusInvokationClient {
         this.modalInfo = NULL_MODAL();
         this.currCard = NULL_CARD();
         this.currSkill = NULL_SKILL();
-        this.willSummons = [[], []];
         this.willSwitch = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(false);
-        this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
-        this.supportCnt = [new Array(MAX_SUPPORT_COUNT).fill(0), new Array(MAX_SUPPORT_COUNT).fill(0)];
-        this.summonCnt = [new Array(MAX_SUMMON_COUNT).fill(0), new Array(MAX_SUMMON_COUNT).fill(0)];
+        this._resetWillSummons();
+        this._resetWillAttachs();
+        if (this.phase == PHASE.ACTION) this.resetDiceSelect();
+        this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
+        this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
         this.isValid = false;
         this.isShowChangeHero = 0;
         this.isShowHistory = false;
@@ -227,7 +227,7 @@ export default class GeniusInvokationClient {
         if (this.phase < PHASE.CHANGE_CARD) return;
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
         this.currSkill = NULL_SKILL();
-        this.willSummons = [[], []];
+        this._resetWillSummons();
         this.isShowChangeHero = 0;
         this.handcardsSelect.forEach((cs, csi, csa) => {
             if (csi == cardIdx) {
@@ -300,6 +300,8 @@ export default class GeniusInvokationClient {
         if (version != this.version) return alert('当前卡组版本不匹配');
         console.info(`player[${this.player.name}]:${this.isStart ? 'cancelReady' : 'startGame'}-${this.playerIdx}`);
         this.isStart = !this.isStart;
+        this._resetWillAttachs();
+        this._resetWillDamages();
         this.isWin = -1;
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.StartGame,
@@ -318,17 +320,6 @@ export default class GeniusInvokationClient {
             cpidx: this.playerIdx,
             flag: 'giveup',
         } as ActionData);
-    }
-    /**
-     * 获取玩家信息
-     * @param data 一些数据
-     */
-    roomInfoUpdate(data: any) {
-        this.players = [...(data?.players ?? this.players)];
-        this.isStart = data.isStart ?? this.isStart;
-        this.phase = data.phase ?? this.phase;
-        this.log = data.log ?? this.log;
-        if (data.isFlag) this.socket.emit('sendToServer');
     }
     /**
      * 从服务器获取数据
@@ -414,8 +405,8 @@ export default class GeniusInvokationClient {
         if (!this.currCard.subType.includes(CARD_SUBTYPE.Action) || this.currCard.canSelectHero == 0) {
             this.currSkill = NULL_SKILL();
         }
-        this.willSummons = [[], []];
-        this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
+        this._resetWillSummons();
+        this._resetWillAttachs();
         if (this.player.phase == PHASE.CHOOSE_HERO && pidx == 1) { // 选择初始出战角色
             this.cancel({ onlyCard: true, notHeros: true });
             if (this.player.heros[hidx].isFront) this.modalInfo = NULL_MODAL();
@@ -554,6 +545,7 @@ export default class GeniusInvokationClient {
     async useSkill(skidx: number, options: { isOnlyRead?: boolean, isCard?: boolean, isSwitch?: number, isReadySkill?: boolean } = {}) {
         const { isOnlyRead = false, isCard = false, isReadySkill = false } = options;
         const isExec = !isOnlyRead && this.modalInfo.skidx == skidx || isReadySkill;
+        this.currSkill = this.skills[skidx];
         if (this.currCard.id <= 0 && skidx > -1) {
             if (!isExec) {
                 this.modalInfo = {
@@ -578,20 +570,23 @@ export default class GeniusInvokationClient {
             // if (!this.isValid) return this._sendTip('骰子不符合要求');
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
+                skillIdx: skidx,
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
             } as ActionData);
+            this.currSkill = NULL_SKILL();
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
             if (!preview) throw new Error('预览未找到！');
-            this.diceSelect = preview.diceSelect!;
+            this.diceSelect = [...preview.diceSelect!];
             this.willHp = preview.willHp!;
+            this.willAttachs = preview.willAttachs!;
         }
         if (!isCard) {
             if (!isOnlyRead) {
                 this.isValid = true;
             } else {
-                this.diceSelect = this.diceSelect.map(() => false);
+                this.resetDiceSelect();
             }
         }
     }
@@ -626,7 +621,7 @@ export default class GeniusInvokationClient {
             diceSelect: this.diceSelect,
             flag: 'reroll',
         } as ActionData);
-        this.diceSelect.forEach((_, i, a) => a[i] = false);
+        this.resetDiceSelect();
     }
     /**
      * 展示召唤物信息
@@ -680,7 +675,7 @@ export default class GeniusInvokationClient {
     lookonTo(idx: number) {
         if (this.isLookon == -1) return;
         this.isLookon = idx;
-        this.roomInfoUpdate({ isFlag: true });
+        this.socket.emit('roomInfoUpdate',);
     }
     /**
      * 重置角色选择
@@ -693,6 +688,24 @@ export default class GeniusInvokationClient {
      */
     private _resetHeroCanSelect() {
         this.heroCanSelect.forEach((_, i, a) => a[i] = false);
+    }
+    /**
+     * 重置附着预览
+     */
+    private _resetWillAttachs(): ElementType[][] {
+        return this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
+    }
+    /**
+     * 重置伤害
+     */
+    private _resetWillDamages(): number[][] {
+        return this.willDamages = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => [-1, 0]);
+    }
+    /**
+     * 重置召唤物预览
+     */
+    private _resetWillSummons(): Summon[][] {
+        return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
     }
     /**
      * 重置骰子选择

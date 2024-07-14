@@ -41,7 +41,7 @@ export class GIHero {
     };
     constructor(
         id: number, shareId: number, name: string, version: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType, weaponType: WeaponType,
-        src: string | string[], avatar: string | string[], skill1?: ((id: number, costElement: ElementType, weaponType2: WeaponType) => GISkill) | null,
+        src: string | string[], avatar: string | string[], skill1?: (id: number, costElement: ElementType, weaponType2: WeaponType) => GISkill,
         skills: GISkill[] = [],
     ) {
         this.id = id;
@@ -64,7 +64,7 @@ export class GIHero {
         }
         const sk1 = skill1?.(id, element, weaponType);
         if (sk1) this.skills.push(sk1);
-        this.skills.push(...skills.map((sk, ski) => (sk.id = id * 10 + ski + +!!sk1, sk)));
+        this.skills.push(...skills.map((sk, ski) => (sk.id = id * 10 + ski + 1 + +!!sk1, sk)));
         this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
     }
 }

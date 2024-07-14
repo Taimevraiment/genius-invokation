@@ -218,8 +218,8 @@ type ServerData = Readonly<{
 type Preview = Readonly<ActionData & {
     players: Player[],
     isValid: boolean,
-    willHp?: (number | undefined)[][],
-    willAttach?: ElementType[][],
+    willHp?: (number | undefined)[],
+    willAttachs?: ElementType[][],
     willSwitch?: boolean[][],
     willSummon?: Summon[][],
     willGetCard?: Card[],
