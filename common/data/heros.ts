@@ -1,154 +1,14 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Skill, Status, Summon, Trigger } from '../../typing';
 import {
-    COST_TYPE, CostType, DAMAGE_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG,
-    HeroTag, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
+    ElementType,
+    PureElementType,
+    VERSION, Version
 } from '../constant/enum.js';
+import { NULL_HERO } from '../constant/init.js';
+import { HeroBuilder } from './builder/HeroBuilder.js';
+import { Skill1Builder, SkillBuilder } from './builder/SkillBuilder';
 import { newStatus } from './statuses.js';
 import { newSummon } from './summons.js';
-import { clone, isCdt } from '../utils/utils.js';
-import { ELEMENT_NAME } from '../constant/UIconst.js'
-import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, hasStatus } from '../utils/gameUtil.js';
-
-export class GIHero {
-    id: number; // 唯一id
-    shareId: number; // 分享码id
-    entityId: number = -1; // 实体id
-    name: string; // 角色名
-    version: Version; // 加入的版本
-    tags: HeroTag[]; // 所属
-    maxHp: number; // 最大血量
-    hp: number; // 当前血量
-    element: ElementType; // 角色元素
-    weaponType: WeaponType; // 武器类型
-    maxEnergy: number; // 最大充能
-    energy: number = 0; // 当前充能
-    hidx: number = -1; // 角色序号
-    skills: Skill[] = []; // 技能组
-    weaponSlot: Card | null = null; // 武器栏
-    artifactSlot: Card | null = null; // 圣遗物栏
-    talentSlot: Card | null = null; // 天赋栏
-    heroStatus: Status[] = []; // 角色状态
-    isFront: boolean = false; // 是否为前台角色
-    attachElement: PureElementType[] = []; // 附着元素
-    canSelect: boolean = false; // 是否能被选择
-    isSelected: number = 0; // 是否被选择 0未被选择 1被选为一号位 2被选为二号位
-    UI: {
-        src: string, // 立绘url
-        srcs: string[], // 所有立绘url
-        avatar: string, // 头像url
-        avatars: string[], // 所有头像url
-    };
-    constructor(
-        id: number, shareId: number, name: string, version: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType, weaponType: WeaponType,
-        src: string | string[], avatar: string | string[], skill1?: (id: number, costElement: ElementType, weaponType2: WeaponType) => GISkill,
-        skills: GISkill[] = [],
-    ) {
-        this.id = id;
-        this.shareId = shareId;
-        this.name = name;
-        this.version = version;
-        if (Array.isArray(tags)) this.tags = tags;
-        else this.tags = [tags];
-        this.maxHp = maxHp;
-        this.hp = maxHp;
-        this.element = element;
-        this.weaponType = weaponType;
-        src = Array.isArray(src) ? src : [src];
-        avatar = Array.isArray(avatar) ? avatar : [avatar];
-        this.UI = {
-            src: src[0],
-            srcs: src,
-            avatar: avatar[0],
-            avatars: avatar,
-        }
-        const sk1 = skill1?.(id, element, weaponType);
-        if (sk1) this.skills.push(sk1);
-        this.skills.push(...skills.map((sk, ski) => (sk.id = id * 10 + ski + 1 + +!!sk1, sk)));
-        this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
-    }
-}
-
-export class GISkill {
-    id: number = -1; // 唯一id
-    name: string; // 技能名
-    type: SkillType; // 技能类型：1普通攻击 2元素战技 3元素爆发 4被动技能
-    damage: number; // 伤害量
-    dmgElement: ElementType; // 伤害元素
-    cost: [ // 费用列表 [元素骰, 任意骰, 充能]
-        { cnt: number, type: Exclude<DiceType, 'Any'> },
-        { cnt: number, type: Extract<DiceType, 'Any'> },
-        { cnt: number, type: Extract<CostType, 'Energy'> },
-    ];
-    attachElement: ElementType = ELEMENT_TYPE.Physical; // 附魔属性
-    handle: (event: SkillHandleEvent) => SkillHandleRes; // 处理函数
-    isForbidden: boolean = false; // 是否禁用
-    dmgChange: number = 0; // 伤害变化
-    costChange: [number, number, number[]] = [0, 0, []]; // 费用变化 [元素骰, 任意骰, 生效的entityId组]
-    useCntPerRound: number = 0; // 本回合技能已使用次数
-    perCnt: number = 0; // 每回合使用次数
-    useCnt: number = 0; // 整局技能使用次数
-    rskid: number = -1; // 准备技能的id
-    UI: {
-        src: string, // 图片url
-        description: string; // 技能描述
-        descriptions: string[], // 处理后的技能描述
-        explains: string[], // 要解释的文本
-    };
-    constructor(
-        name: string, description: string, type: SkillType, damage: number, cost: number, costElement: Exclude<DiceType, 'Any'>,
-        options: { id?: number, ac?: number, ec?: number, de?: ElementType, rskid?: number, pct?: number, expl?: string[] } = {},
-        src?: string | string[], handle?: (hevent: SkillHandleEvent) => SkillHandleRes | undefined
-    ) {
-        this.name = name;
-        this.type = type;
-        this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, rskid = -1, pct = 0, expl = [] } = options;
-        this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
-        this.UI = {
-            description: description.replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害'),
-            src: (Array.isArray(src) ? src : [src]).filter(v => v != '')[0] ?? '',
-            explains: [...(description.match(/(?<=【)[^【】]+(?=】)/g) ?? []), ...expl],
-            descriptions: [],
-        };
-        if (id > -1) this.id = id;
-        this.rskid = rskid;
-        this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
-        this.perCnt = pct;
-        this.handle = hevent => {
-            const { reset = false, heros = [], hero, skidx, isReadySkill = false } = hevent;
-            const handleres = handle?.(hevent) ?? {};
-            if (isReadySkill) return handleres;
-            const curskill = hero.skills[skidx];
-            if (reset) {
-                curskill.useCntPerRound = 0;
-                curskill.perCnt = pct;
-                return {}
-            }
-            let dmgElement = handleres.dmgElement;
-            let atkOffset = handleres.atkOffset;
-            for (const ist of hero.heroStatus) {
-                const event = { ...clone(hevent), hidx: heros.findIndex(h => h.id == hero.id) };
-                delete event.minusDiceSkill;
-                const stsres = ist.handle(ist, event) ?? {};
-                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && dmgElement == DAMAGE_TYPE.Physical) {
-                    dmgElement = stsres.attachEl;
-                }
-                if (stsres.atkOffset) atkOffset = stsres.atkOffset;
-            }
-            return {
-                ...handleres,
-                dmgElement,
-                atkOffset,
-                exec: () => {
-                    handleres.exec?.();
-                    ++curskill.useCnt;
-                    ++curskill.useCntPerRound;
-                }
-            }
-        }
-    }
-}
 
 export type SkillHandleEvent = {
     hero: Hero,
@@ -198,39 +58,6 @@ export type SkillHandleRes = {
     minusDiceSkill?: MinuDiceSkill,
     isNotAddTask?: boolean,
     exec?: () => void,
-}
-
-const skill1 = (
-    name: string, weaponType?: WeaponType, handle?: (event: SkillHandleEvent) => SkillHandleRes | undefined,
-    description: string = '', options: { pct?: number, expl?: string[] } = {}
-) => {
-    return (hid: number, costElement: ElementType, weaponType2: WeaponType) => {
-        const wptype = weaponType ?? weaponType2;
-        const sdmgElement = wptype == WEAPON_TYPE.Catalyst ? costElement : DAMAGE_TYPE.Physical;
-        const sdescription = '造成{dmg}点' + `[${ELEMENT_NAME[sdmgElement]}伤害]。` + description;
-        const sdamage = wptype == WEAPON_TYPE.Catalyst ? 1 : 2;
-        const cost = +(costElement != ELEMENT_TYPE.Physical);
-        const costEl = costElement == ELEMENT_TYPE.Physical ? DICE_TYPE.Same : costElement;
-        const src = [
-            'https://patchwiki.biligame.com/images/ys/9/9c/occv1a1p5dow2oo7ge2mrnx3wkeuwls.png',
-            'https://patchwiki.biligame.com/images/ys/a/a8/brgaa29n63j4fkh74sc2vx8ja8qvzhp.png',
-            'https://patchwiki.biligame.com/images/ys/4/4b/9lnhohp6ls5szxul5egwal8mlegq64w.png',
-            'https://patchwiki.biligame.com/images/ys/9/9c/sd9tso1r747k73jkpljqos0ahy03pow.png',
-            'https://patchwiki.biligame.com/images/ys/6/63/ow012uhlpkdmn4rflhm1avvbf3cjvpu.png',
-            'https://patchwiki.biligame.com/images/ys/f/f1/96gt1watdz1lcoqqgqsv0qio44wo50h.png',
-        ];
-        const src2 = [
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/726f23517c8595c477dd65c987b42482_2398074192370829528.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/54dd31a9c0a4417ca4b5463532d7f5e8_811908281150698503.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/949d07ba4f72b33b739fb0ed413a7fa2_29820066415359915.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/fc4695c7947675242718788122db81d3_5540544149749295930.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/0cd68ecb1a011d94e2b4be1b99ac3302_8062496215333431665.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/2bfbf024135461849666339c43d60b2c_1257931966790216673.png',
-        ];
-        return new GISkill(name, sdescription, SKILL_TYPE.Normal, sdamage, cost, costEl,
-            { ac: 2, de: sdmgElement, id: hid * 10 + 1, ...options },
-            [src[WEAPON_TYPE_CODE[wptype]], src2[WEAPON_TYPE_CODE[wptype]]], handle);
-    }
 }
 
 // 11xx：冰
@@ -328,181 +155,179 @@ const readySkillTotal: Record<number, (ver: Version) => Skill> = {
 
 export const readySkill = (rskid: number, version: Version) => readySkillTotal[rskid](version);
 
-const allHeros: Record<number, (ver: Version) => Hero> = {
+const allHeros: Record<number, () => HeroBuilder> = {
     // 1000: () => new GIHero(1000, '无', 'v0.0.0', [], 0, 0, 0, ''),
 
-    1101: ver => new GIHero(1101, 1, '甘雨', 'v3.3.0', HERO_TAG.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Bow,
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png',
-        skill1('流天射术'), [
-        new GISkill('山泽麟迹', '{dealDmg}，生成【sts111012】。',
-            SKILL_TYPE.Elemental, 1, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/f/f8/0pge9o51iepqfdd3n8zu9uxfmo08t4u.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/6e5de97b92327dc32895d68abb2f74ea_9018514544637920379.png',
-        ], () => ({ status: [newStatus(ver)(111012)] })),
-        new GISkill('霜华矢', '{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。',
-            SKILL_TYPE.Normal, 2, 5, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/d/de/d7vartodjuo8s7k0fkp6qsl09brzcvy.png',
-            'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/a4c1f60fc2461f2853edb4e765ba4262_6013693059397455292.png',
-        ], event => {
-            const { hero: { skills, talentSlot }, card } = event;
-            const isTalent = skills[2].useCnt && (!!talentSlot || card?.id == 211011);
-            return { pdmg: isTalent ? 3 : 2 }
-        }),
-        new GISkill('降众天华', '{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn111011】。',
-            SKILL_TYPE.Burst, ver < 'v3.7.0' ? 1 : 2, 3, DICE_TYPE.Cryo, { ec: ver < 'v3.7.0' ? 2 : 3 }, [
-            'https://patchwiki.biligame.com/images/ys/f/fc/jwj2u3ksefltv5hz9y5zjz3p1p7f8n7.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/c6917b506b4c303677c6246ee11049f3_937074104802749278.png',
-        ], () => ({ summon: [newSummon(ver)(111011)], pdmg: 1 }))
-    ]),
+    1101: () => new HeroBuilder(1101, 1).name('甘雨').liyue().cryo().bow()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
+        .skill1(new Skill1Builder('流天射术'))
+        .skills(
+            new SkillBuilder('山泽麟迹').description('{dealDmg}，生成【sts111012】。')
+                .src('https://patchwiki.biligame.com/images/ys/f/f8/0pge9o51iepqfdd3n8zu9uxfmo08t4u.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/6e5de97b92327dc32895d68abb2f74ea_9018514544637920379.png')
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(111012)] })),
+            new SkillBuilder('霜华矢').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
+                .src('https://patchwiki.biligame.com/images/ys/d/de/d7vartodjuo8s7k0fkp6qsl09brzcvy.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/a4c1f60fc2461f2853edb4e765ba4262_6013693059397455292.png')
+                .normal().damage(2).cost(5).handle(event => {
+                    const { hero: { skills, talentSlot }, card } = event;
+                    const isTalent = skills[2].useCnt && (!!talentSlot || card?.id == 211011);
+                    return { pdmg: isTalent ? 3 : 2 }
+                }),
+            new SkillBuilder('降众天华').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn111011】。')
+                .src('https://patchwiki.biligame.com/images/ys/f/fc/jwj2u3ksefltv5hz9y5zjz3p1p7f8n7.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/12109492/c6917b506b4c303677c6246ee11049f3_937074104802749278.png')
+                .burst(3).burst(2, 'v3.7.0').damage(2).damage(1, 'v3.7.0').cost(3)
+                .handle((_, ver) => ({ summon: [newSummon(ver)(111011)], pdmg: 1 }))
+        ),
 
-    1102: ver => new GIHero(1102, 2, '迪奥娜', 'v3.3.0', HERO_TAG.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Bow,
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png',
-        skill1('猎人射术'), [
-        new GISkill('猫爪冻冻', '{dealDmg}，生成【sts111021】。',
-            SKILL_TYPE.Elemental, 2, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/1/1e/293bqkk7gcer933p14viqh445sdwqzf.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/fc7cc8ae1d95bc094e69b8f3c1c270f8_1908586115904037757.png',
-        ], event => {
-            const { hero: { talentSlot }, card } = event;
-            const isTalent = !!talentSlot || card?.id == 211021;
-            return { status: [newStatus(ver)(111021, isTalent)] };
-        }),
-        new GISkill('最烈特调', '{dealDmg}，治疗此角色2点，召唤【smn111023】。',
-            SKILL_TYPE.Burst, 1, 3, DICE_TYPE.Cryo, { ec: 3 }, [
-            'https://patchwiki.biligame.com/images/ys/3/3a/gltxegl17e1mwhv3z3xdakycst8h5sg.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/d749ae8a4ce1c2693106ef4a39430ff7_1792825158969730188.png',
-        ], () => ({ summon: [newSummon(ver)(111023)], heal: 2 }))
-    ]),
+    1102: () => new HeroBuilder(1102, 2).name('迪奥娜').mondstadt().cryo().bow()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
+        .skill1(new Skill1Builder('猎人射术'))
+        .skills(
+            new SkillBuilder('猫爪冻冻').description('{dealDmg}，生成【sts111021】。')
+                .src('https://patchwiki.biligame.com/images/ys/1/1e/293bqkk7gcer933p14viqh445sdwqzf.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/fc7cc8ae1d95bc094e69b8f3c1c270f8_1908586115904037757.png')
+                .elemental().damage(2).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const isTalent = !!talentSlot || card?.id == 211021;
+                    return { status: [newStatus(ver)(111021, isTalent)] };
+                }),
+            new SkillBuilder('最烈特调').description('{dealDmg}，治疗此角色2点，召唤【smn111023】。')
+                .src('https://patchwiki.biligame.com/images/ys/3/3a/gltxegl17e1mwhv3z3xdakycst8h5sg.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/d749ae8a4ce1c2693106ef4a39430ff7_1792825158969730188.png')
+                .burst(3).damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(111023)], heal: 2 }))
+        ),
 
-    1103: ver => new GIHero(1103, 3, '凯亚', 'v3.3.0', HERO_TAG.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png',
-        skill1('仪典剑术'), [
-        new GISkill('霜袭', '{dealDmg}。',
-            SKILL_TYPE.Elemental, 3, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/f/f6/bsd6rp5bwuwttd0pyo0ysn1dn39nesz.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/dbbef9e9d85229f503075f7b4ec5595a_1136270246875604440.png']),
-        new GISkill('凛冽轮舞', '{dealDmg}，生成【sts111031】。',
-            SKILL_TYPE.Burst, 1, 4, DICE_TYPE.Cryo, { ec: 2 }, [
-            'https://patchwiki.biligame.com/images/ys/b/b0/ozcnrn13ft9p6pe7tsamhik8lnp1dbk.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/250999f269669660e4fd24bdf510a507_2074342926999471449.png',
-        ], () => ({ status: [newStatus(ver)(111031)] })),
-    ]),
+    1103: () => new HeroBuilder(1103, 3).name('凯亚').mondstadt().cryo().sword()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png')
+        .skill1(new Skill1Builder('仪典剑术'))
+        .skills(
+            new SkillBuilder('霜袭').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/f/f6/bsd6rp5bwuwttd0pyo0ysn1dn39nesz.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/dbbef9e9d85229f503075f7b4ec5595a_1136270246875604440.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('凛冽轮舞').description('{dealDmg}，生成【sts111031】。')
+                .src('https://patchwiki.biligame.com/images/ys/b/b0/ozcnrn13ft9p6pe7tsamhik8lnp1dbk.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/250999f269669660e4fd24bdf510a507_2074342926999471449.png')
+                .burst(2).damage(1).cost(4).handle((_, ver) => ({ status: [newStatus(ver)(111031)] }))
+        ),
 
-    1104: ver => new GIHero(1104, 4, '重云', 'v3.3.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png',
-        skill1('灭邪四式'), [
-        new GISkill('重华叠霜', '{dealDmg}，生成【sts111041】。',
-            SKILL_TYPE.Elemental, 3, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/90fe50a43ea7905773df4433d385e4d9_8501818730448316824.png',
-        ], event => {
-            const { hero: { talentSlot }, card } = event;
-            const isTalent = !!talentSlot || card?.id == 211041;
-            return { status: [newStatus(ver)(111041, isTalent)] }
-        }),
-        new GISkill('云开星落', '{dealDmg}。',
-            SKILL_TYPE.Burst, 7, 3, DICE_TYPE.Cryo, { ec: 3 }, [
-            'https://patchwiki.biligame.com/images/ys/0/01/5vyck7f9rpns92tfop3r41xr1aats4u.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0bddb45b9d91fb892ddaf2e8eb1e04a8_1565971516954358022.png'])
-    ]),
+    // 1104: ver => new GIHero(1104, 4, '重云', 'v3.3.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
+    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png',
+    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png',
+    //     skill1('灭邪四式'), [
+    //     new GISkill('重华叠霜', '{dealDmg}，生成【sts111041】。',
+    //         SKILL_TYPE.Elemental, 3, 3, DICE_TYPE.Cryo, {}, [
+    //         'https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/90fe50a43ea7905773df4433d385e4d9_8501818730448316824.png',
+    //     ], event => {
+    //         const { hero: { talentSlot }, card } = event;
+    //         const isTalent = !!talentSlot || card?.id == 211041;
+    //         return { status: [newStatus(ver)(111041, isTalent)] }
+    //     }),
+    //     new GISkill('云开星落', '{dealDmg}。',
+    //         SKILL_TYPE.Burst, 7, 3, DICE_TYPE.Cryo, { ec: 3 }, [
+    //         'https://patchwiki.biligame.com/images/ys/0/01/5vyck7f9rpns92tfop3r41xr1aats4u.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0bddb45b9d91fb892ddaf2e8eb1e04a8_1565971516954358022.png'])
+    // ]),
 
-    1105: ver => new GIHero(1105, 5, '神里绫华', 'v3.3.0', HERO_LOCAL.Inazuma, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/ede96c5aba784f50bc86dc66e5b16b12.png',
-        skill1('神里流·倾'), [
-        new GISkill('神里流·冰华', '{dealDmg}。',
-            SKILL_TYPE.Elemental, 3, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/2/2b/loq6n32a0wpbs8cu4vji5iiyr5pxsui.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/da5da3bfc8c50c570b12b5410d0366d5_4795744347782351925.png']),
-        new GISkill('神里流·霜灭', '{dealDmg}，召唤【smn111051】。',
-            SKILL_TYPE.Burst, 4, 3, DICE_TYPE.Cryo, { ec: 3 }, [
-            'https://patchwiki.biligame.com/images/ys/5/58/mcbp6hjwbi9pi7ux0cag1qrhtcod2oi.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/e590d8ed5ffda912275916a7885793e2_4175761153899718840.png',
-        ], () => ({ summon: [newSummon(ver)(111051)] })),
-        new GISkill('神里流·霰步', '此角色被切换为｢出战角色｣时，附属【sts111052】。',
-            SKILL_TYPE.Passive, 0, 0, DICE_TYPE.Same, {}, [
-            'https://patchwiki.biligame.com/images/ys/b/bf/35ci2ri2f4j1n844qgcfu6mltipvy6o.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png',
-        ], event => {
-            const { hero: { talentSlot } } = event;
-            return {
-                trigger: ['change-to'],
-                status: [newStatus(ver)(111052, 1, +!!talentSlot)],
-            }
-        })
-    ]),
+    // 1105: ver => new GIHero(1105, 5, '神里绫华', 'v3.3.0', HERO_LOCAL.Inazuma, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
+    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png',
+    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/ede96c5aba784f50bc86dc66e5b16b12.png',
+    //     skill1('神里流·倾'), [
+    //     new GISkill('神里流·冰华', '{dealDmg}。',
+    //         SKILL_TYPE.Elemental, 3, 3, DICE_TYPE.Cryo, {}, [
+    //         'https://patchwiki.biligame.com/images/ys/2/2b/loq6n32a0wpbs8cu4vji5iiyr5pxsui.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/da5da3bfc8c50c570b12b5410d0366d5_4795744347782351925.png']),
+    //     new GISkill('神里流·霜灭', '{dealDmg}，召唤【smn111051】。',
+    //         SKILL_TYPE.Burst, 4, 3, DICE_TYPE.Cryo, { ec: 3 }, [
+    //         'https://patchwiki.biligame.com/images/ys/5/58/mcbp6hjwbi9pi7ux0cag1qrhtcod2oi.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/e590d8ed5ffda912275916a7885793e2_4175761153899718840.png',
+    //     ], () => ({ summon: [newSummon(ver)(111051)] })),
+    //     new GISkill('神里流·霰步', '此角色被切换为｢出战角色｣时，附属【sts111052】。',
+    //         SKILL_TYPE.Passive, 0, 0, DICE_TYPE.Same, {}, [
+    //         'https://patchwiki.biligame.com/images/ys/b/bf/35ci2ri2f4j1n844qgcfu6mltipvy6o.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png',
+    //     ], event => {
+    //         const { hero: { talentSlot } } = event;
+    //         return {
+    //             trigger: ['change-to'],
+    //             status: [newStatus(ver)(111052, 1, +!!talentSlot)],
+    //         }
+    //     })
+    // ]),
 
-    1106: ver => new GIHero(1106, 6, '优菈', 'v3.5.0', HERO_LOCAL.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
-        'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png',
-        skill1('西风剑术·宗室'), [
-        new GISkill('冰潮的涡旋', '{dealDmg}，如果角色未附属【sts111061】，则使其附属【sts111061】。',
-            SKILL_TYPE.Elemental, 2, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/8/8a/q921jjp73rov2uov6hzuhh1ncxzluew.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/7cd81d9357655d9c620f961bb8d80b59_6750120717511006729.png',
-        ], event => {
-            const { hero: { heroStatus } } = event;
-            return { status: isCdt(!hasStatus(heroStatus, 111061), [newStatus(ver)(111061)]) }
-        }),
-        new GISkill('凝浪之光剑', '{dealDmg}，召唤【smn111062】。',
-            SKILL_TYPE.Burst, 2, 3, DICE_TYPE.Cryo, { ec: 2 }, [
-            'https://patchwiki.biligame.com/images/ys/a/aa/1qme7ho5ktg0yglv8mv7a2xf0i7w6fu.png',
-            'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/c17312b62a4b4cf7a5d3cfe0cccceb9c_3754080379232773644.png',
-        ], () => ({ summon: [newSummon(ver)(111062)] }))
-    ]),
+    // 1106: ver => new GIHero(1106, 6, '优菈', 'v3.5.0', HERO_LOCAL.Mondstadt, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Claymore,
+    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png',
+    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png',
+    //     skill1('西风剑术·宗室'), [
+    //     new GISkill('冰潮的涡旋', '{dealDmg}，如果角色未附属【sts111061】，则使其附属【sts111061】。',
+    //         SKILL_TYPE.Elemental, 2, 3, DICE_TYPE.Cryo, {}, [
+    //         'https://patchwiki.biligame.com/images/ys/8/8a/q921jjp73rov2uov6hzuhh1ncxzluew.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/7cd81d9357655d9c620f961bb8d80b59_6750120717511006729.png',
+    //     ], event => {
+    //         const { hero: { heroStatus } } = event;
+    //         return { status: isCdt(!hasStatus(heroStatus, 111061), [newStatus(ver)(111061)]) }
+    //     }),
+    //     new GISkill('凝浪之光剑', '{dealDmg}，召唤【smn111062】。',
+    //         SKILL_TYPE.Burst, 2, 3, DICE_TYPE.Cryo, { ec: 2 }, [
+    //         'https://patchwiki.biligame.com/images/ys/a/aa/1qme7ho5ktg0yglv8mv7a2xf0i7w6fu.png',
+    //         'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/c17312b62a4b4cf7a5d3cfe0cccceb9c_3754080379232773644.png',
+    //     ], () => ({ summon: [newSummon(ver)(111062)] }))
+    // ]),
 
-    1107: ver => new GIHero(1107, 7, '申鹤', 'v3.7.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Polearm,
-        'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png',
-        skill1('踏辰摄斗'), [
-        new GISkill('仰灵威召将役咒', '{dealDmg}，生成【sts111071】。',
-            SKILL_TYPE.Elemental, 2, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
-            'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c7750c7dbf76e9e3dffa7df162028a4d_5325191736377199101.png',
-        ], event => {
-            const { hero: { talentSlot }, card } = event;
-            const isTalent = !!talentSlot || card?.id == 211071;
-            return { status: [newStatus(ver)(111071, isTalent)] }
-        }),
-        new GISkill('神女遣灵真诀', '{dealDmg}，召唤【smn111073】。',
-            SKILL_TYPE.Burst, 1, 3, DICE_TYPE.Cryo, { ec: 2 }, [
-            'https://patchwiki.biligame.com/images/ys/4/49/cquyhtfdkpk25f0sk3afsnb5j502yhk.png',
-            'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/89e2ed92b6352a5925652f421aaddbaa_7169125488313816137.png',
-        ], () => ({ summon: [newSummon(ver)(111073)] }))
-    ]),
+    // 1107: ver => new GIHero(1107, 7, '申鹤', 'v3.7.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Polearm,
+    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png',
+    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png',
+    //     skill1('踏辰摄斗'), [
+    //     new GISkill('仰灵威召将役咒', '{dealDmg}，生成【sts111071】。',
+    //         SKILL_TYPE.Elemental, 2, 3, DICE_TYPE.Cryo, {}, [
+    //         'https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
+    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c7750c7dbf76e9e3dffa7df162028a4d_5325191736377199101.png',
+    //     ], event => {
+    //         const { hero: { talentSlot }, card } = event;
+    //         const isTalent = !!talentSlot || card?.id == 211071;
+    //         return { status: [newStatus(ver)(111071, isTalent)] }
+    //     }),
+    //     new GISkill('神女遣灵真诀', '{dealDmg}，召唤【smn111073】。',
+    //         SKILL_TYPE.Burst, 1, 3, DICE_TYPE.Cryo, { ec: 2 }, [
+    //         'https://patchwiki.biligame.com/images/ys/4/49/cquyhtfdkpk25f0sk3afsnb5j502yhk.png',
+    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/89e2ed92b6352a5925652f421aaddbaa_7169125488313816137.png',
+    //     ], () => ({ summon: [newSummon(ver)(111073)] }))
+    // ]),
 
-    1108: ver => new GIHero(1108, 8, '七七', 'v4.0.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
-        'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png',
-        'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png',
-        skill1('云来古剑法'), [
-        new GISkill('仙法·寒病鬼差', '召唤【smn111081】。',
-            SKILL_TYPE.Elemental, 0, 3, DICE_TYPE.Cryo, {}, [
-            'https://patchwiki.biligame.com/images/ys/2/26/jd1wryrgs25urbr57sq2xnqd4ftpziw.png',
-            'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/8ef482a027dfd52ec96e07ce452c38ce_2112371814644076808.jpg',
-        ], () => ({ summon: [newSummon(ver)(111081)] })),
-        new GISkill('仙法·救苦度厄', '造成{dmg}点[冰元素伤害]，生成【sts111082】。',
-            SKILL_TYPE.Burst, 3, 3, DICE_TYPE.Cryo, { ec: 3 }, [
-            'https://patchwiki.biligame.com/images/ys/6/6c/p0xq33l7riqu49e0oryu8p1pjg6vzyb.png',
-            'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/fbf260ac04da9e7eafa3967cd9bed42c_824806426983130530.jpg',
-        ], event => {
-            const { hero: { talentSlot }, card, heros = [] } = event;
-            const talent = talentSlot ?? isCdt(card?.id == 211081, card);
-            const hidxs = allHidxs(heros, { isDie: true });
-            const isExecTalent = hidxs.length > 0 && talent && talent.perCnt > 0;
-            return {
-                status: [newStatus(ver)(111082)],
-                cmds: isCdt<Cmds[]>(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
-                ...(isExecTalent ? { heal: 1.7, hidxs } : {}),
-                exec: () => {
-                    if (isExecTalent) --talent.perCnt;
-                }
-            }
-        })
-    ]),
+    // 1108: ver => new GIHero(1108, 8, '七七', 'v4.0.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
+    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png',
+    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png',
+    //     skill1('云来古剑法'), [
+    //     new GISkill('仙法·寒病鬼差', '召唤【smn111081】。',
+    //         SKILL_TYPE.Elemental, 0, 3, DICE_TYPE.Cryo, {}, [
+    //         'https://patchwiki.biligame.com/images/ys/2/26/jd1wryrgs25urbr57sq2xnqd4ftpziw.png',
+    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/8ef482a027dfd52ec96e07ce452c38ce_2112371814644076808.jpg',
+    //     ], () => ({ summon: [newSummon(ver)(111081)] })),
+    //     new GISkill('仙法·救苦度厄', '造成{dmg}点[冰元素伤害]，生成【sts111082】。',
+    //         SKILL_TYPE.Burst, 3, 3, DICE_TYPE.Cryo, { ec: 3 }, [
+    //         'https://patchwiki.biligame.com/images/ys/6/6c/p0xq33l7riqu49e0oryu8p1pjg6vzyb.png',
+    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/fbf260ac04da9e7eafa3967cd9bed42c_824806426983130530.jpg',
+    //     ], event => {
+    //         const { hero: { talentSlot }, card, heros = [] } = event;
+    //         const talent = talentSlot ?? isCdt(card?.id == 211081, card);
+    //         const hidxs = allHidxs(heros, { isDie: true });
+    //         const isExecTalent = hidxs.length > 0 && talent && talent.perCnt > 0;
+    //         return {
+    //             status: [newStatus(ver)(111082)],
+    //             cmds: isCdt<Cmds[]>(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
+    //             ...(isExecTalent ? { heal: 1.7, hidxs } : {}),
+    //             exec: () => {
+    //                 if (isExecTalent) --talent.perCnt;
+    //             }
+    //         }
+    //     })
+    // ]),
 
     // 1109: () => new GIHero(1109, '莱依拉', 4, 10, 4, 1,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/94b1677048ddaa84ab735bb8f90c209d_3451890112016676238.png',
@@ -2204,7 +2029,7 @@ const allHeros: Record<number, (ver: Version) => Hero> = {
 export const herosTotal = (version: Version = VERSION[0]) => {
     const heros: Hero[] = [];
     for (const idx in allHeros) {
-        const hero = allHeros[idx](version);
+        const hero = allHeros[idx]().version(version).done();
         if (hero.version > version) continue;
         if (hero.id > 6000) continue;
         heros.push(hero);
@@ -2212,6 +2037,6 @@ export const herosTotal = (version: Version = VERSION[0]) => {
     return heros;
 }
 
-export const newHero = (version: Version = VERSION[0]) => (id: number) => allHeros[id]?.(version) ?? NULL_HERO();
+export const newHero = (version: Version = VERSION[0]) => (id: number) => allHeros[id]?.().version(version).done() ?? NULL_HERO();
 
 export const parseHero = (shareId: number) => herosTotal().find(h => h.shareId == shareId) ?? NULL_HERO();

@@ -1,11 +1,11 @@
 import {
-    ActionType, CardSubtype, DiceCostType, Phase, PlayerStatus, SkillType, PURE_ELEMENT_TYPE,
-    DAMAGE_TYPE, ELEMENT_REACTION, StatusGroup, PureElementType, DamageType, InfoType, Version,
-    ElementType,
+    ActionType, CardSubtype, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
+    Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType, StatusGroup, SWIRL_ELEMENT, Version,
 } from "./common/constant/enum"
-import { type GICard } from "./common/data/cards"
+import { type GICard } from "./common/data/builder/CardBuilder"
+import { type GIHero } from "./common/data/builder/HeroBuilder"
+import { type GISkill } from "./common/data/builder/SkillBuilder"
 import { type GIStatus } from "./common/data/statuses"
-import { type GIHero, type GISkill } from "./common/data/heros"
 import { type GISummon } from "./common/data/summons"
 import { type GISupport } from "./common/data/supports"
 
@@ -158,7 +158,7 @@ type DamageVO = {
     elTips?: [string, PureElementType, PureElementType][],
 }
 
-type TrgElRe = Exclude<keyof typeof PURE_ELEMENT_TYPE, 'Geo' | 'Dendro' | 'Anemo'>;
+type TrgElRe = keyof typeof SWIRL_ELEMENT;
 type TrgSkType = Exclude<SkillType, 4>;
 type TrgEl = keyof typeof PURE_ELEMENT_TYPE;
 type TrgDmg = 'el' | keyof typeof DAMAGE_TYPE;

@@ -59,10 +59,17 @@ export const DAMAGE_TYPE = {
 
 export type DamageType = TypeConst<typeof DAMAGE_TYPE>;
 
-export const DICE_TYPE = {
-    Any: 'Any', // 无色 0
+export const SKILL_COST_TYPE = {
     ...PURE_ELEMENT_TYPE,
     Same: 'Same', // 同色 8
+} as const;
+
+export type SkillCostType = TypeConst<typeof SKILL_COST_TYPE>;
+
+export const DICE_TYPE = {
+    Any: 'Any', // 无色 0
+    ...SKILL_COST_TYPE,
+
 } as const;
 
 export type DiceType = TypeConst<typeof DICE_TYPE>;
@@ -99,12 +106,18 @@ export type DiceCostTypeCode = TypeConst<typeof DICE_COST_TYPE_CODE>;
 
 export const DICE_COST_TYPE_CODE_KEY = swapKeysAndValues(DICE_COST_TYPE_CODE);
 
-export const CARD_SUBTYPE = {
-    Weapon: 'Weapon', // 武器 0
-    Artifact: 'Artifact', // 圣遗物 1
+export const CARD_SUBTYPE_SUPPORT = {
     Place: 'Place', // 场地 2
     Ally: 'Ally', // 伙伴 3
     Item: 'Item', // 道具 4
+} as const;
+
+export type CardSubtypeSupport = TypeConst<typeof CARD_SUBTYPE_SUPPORT>;
+
+export const CARD_SUBTYPE = {
+    Weapon: 'Weapon', // 武器 0
+    Artifact: 'Artifact', // 圣遗物 1
+    ...CARD_SUBTYPE_SUPPORT,
     Food: 'Food', // 料理 5
     Talent: 'Talent', // 天赋 6
     Action: 'Action', // 战斗行动 7
