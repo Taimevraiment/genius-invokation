@@ -2,13 +2,18 @@ import { DICE_TYPE, DiceType, VERSION, Version } from "../../constant/enum.js";
 
 export class BaseVersionBuilder {
     protected _version: Version = VERSION[0];
-    protected _getValByVersion<T>(vals: [Version, T][], defaultVal?: T) {
+    protected _getValByVersion<T>(vals: [Version, T][], defaultVal: T) {
         const [, val = defaultVal] = vals.sort(([a], [b]) => a < b ? 1 : -1).find(([ver]) => ver <= this._version) ?? [];
         return val;
+    }
+    version(version: Version | undefined) {
+        if (version != undefined) this._version = version;
+        return this;
     }
 }
 
 export class BaseBuilder extends BaseVersionBuilder {
+    _version: Version;
     protected _id: number;
     protected _shareId: number;
     protected _name: string = '无';

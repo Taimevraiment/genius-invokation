@@ -1,29 +1,29 @@
 import * as fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
 import {
-    ActionData, Card, Cmds, Countdown, DamageVO, Hero, MinuDiceSkill, Player, Preview, ServerData, Status, StatusTask,
-    Summon, Support, TrgSkType, Trigger,
-} from '../../typing';
-import { newHero, parseHero, readySkill } from '../../common/data/heros.js';
-import { INIT_PLAYER } from '../../common/constant/init.js';
-import {
     ACTION_TYPE, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
-    ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY, Phase,
-    PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup, StatusType, Version, DiceCostType,
+    DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY,
+    Phase, PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup, StatusType, Version,
 } from '../../common/constant/enum.js';
 import {
     DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
     MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT, SHUFFLE_COUNT,
 } from '../../common/constant/gameOption.js';
-import { arrToObj, clone, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
-import { allHidxs, getAtkHidx, getBackHidxs, getNearestHidx } from '../../common/utils/gameUtil.js'
-import TaskQueue from './taskQueue.js';
-import { CardHandleRes, newCard, parseCard } from '../../common/data/cards.js';
+import { INIT_PLAYER } from '../../common/constant/init.js';
 import { ELEMENT_NAME } from '../../common/constant/UIconst.js';
+import { CardHandleRes, newCard, parseCard } from '../../common/data/cards.js';
+import { newHero, parseHero, readySkill } from '../../common/data/heros.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
+import { allHidxs, checkDices, getAtkHidx, getBackHidxs, getNearestHidx } from '../../common/utils/gameUtil.js';
+import { arrToObj, clone, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
+import {
+    ActionData, Card, Cmds, Countdown, DamageVO, Hero, MinuDiceSkill, Player, Preview, ServerData, Status, StatusTask,
+    Summon, Support, TrgSkType, Trigger,
+} from '../../typing';
+import TaskQueue from './taskQueue.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -144,11 +144,11 @@ export default class GeniusInvokationRoom {
         previews.push(...this._previewSwitch(pidx));
         return previews;
     }
-    emit(flag: string, pidx: number, options: { socket?: Socket, tip?: string | string[], damageVO?: DamageVO } = {}) {
-        const { socket, tip = '', damageVO = null } = options;
+    emit(flag: string, pidx: number, options: { socket?: Socket, tip?: string | string[], damageVO?: DamageVO, notPreview?: boolean } = {}) {
+        const { socket, tip = '', damageVO = null, notPreview = false } = options;
         const previews: Preview[][] = new Array(PLAYER_COUNT).fill(0).map(() => []);
         this._clacCardChange(pidx);
-        if (this.phase == PHASE.ACTION) { // 计算预测行动的所有情况
+        if (this.phase == PHASE.ACTION && !notPreview) { // 计算预测行动的所有情况
             this.players.forEach(p => previews[p.pidx] = this._getPreview(p.pidx));
         }
         const serverData: ServerData = {
@@ -283,6 +283,10 @@ export default class GeniusInvokationRoom {
                 this._switchHero(cpidx, hidx, flag, diceSelect);
                 break;
             case ACTION_TYPE.UseSkill:
+                const useDices = player.dice.filter((_, di) => diceSelect[di]);
+                const isValid = checkDices(useDices, { skill: player.heros[player.hidx].skills[skillIdx] });
+                if (!isValid) this.emit('useSkillDiceInvalid', cpidx, { socket, tip: '骰子不符合要求', notPreview: true });
+                else player.dice = player.dice.filter((_, di) => !diceSelect[di]);
                 this._useSkill(cpidx, skillIdx);
                 break;
             case ACTION_TYPE.UseCard:
@@ -298,7 +302,8 @@ export default class GeniusInvokationRoom {
                 this._giveup(cpidx);
                 break;
             default:
-                throw new Error(`@getACtion-未知的ActionType: ${actionData.type}`);
+                const a: never = actionData.type;
+                throw new Error(`@getACtion-未知的ActionType: ${a}`);
         }
     }
     /**
@@ -496,8 +501,8 @@ export default class GeniusInvokationRoom {
             }
         }
         for (let i = 0; i < diceLen - scnt; ++i) {
-            if (process.env.NODE_ENV == 'development') ++tmpDice[DICE_COST_TYPE.Omni];
-            else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))];
+            ++tmpDice[DICE_COST_TYPE.Omni]; // dev
+            // ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))];
         }
         const heroEle: DiceCostType[] = [...player.heros]
             .filter(h => h.element != ELEMENT_TYPE.Physical)
@@ -1100,7 +1105,8 @@ export default class GeniusInvokationRoom {
             if (isSwitchAtk) {
                 // todo 先等待？
             }
-            this._doDamage(pidx, { willDamages: aWillDamages, dmgElements, elTips: aElTips }, isSwitch);
+            this.players.forEach((_, i, a) => a[i] = players[i]);
+            this._doDamage(pidx, aWillAttach, { willDamages: aWillDamages, dmgElements, elTips: aElTips }, isSwitch);
         }
         return { willHp, willAttachs: bWillAttach, summonCnt, supportCnt }
     }
@@ -1215,7 +1221,7 @@ export default class GeniusInvokationRoom {
                 efhero.attachElement.length == 0 ||
                 (efhero.attachElement as ElementType[]).includes(dmgElement)
             ) {
-                if (efhero.attachElement.length == 0) {
+                if (efhero.attachElement.length == 0 && dmgElement != ELEMENT_TYPE.Physical) {
                     efhero.attachElement.push(dmgElement as PureElementType);
                 }
             } else if (dmgElement != ELEMENT_TYPE.Physical) {
@@ -2187,17 +2193,19 @@ export default class GeniusInvokationRoom {
     /**
      * 进行伤害
      * @param pidx 造成伤害的角色
+     * @param willAttachs 附着元素
      * @param willDamages 伤害
      * @param isSwitch 是否切换角色
      */
-    private _doDamage(pidx: number, damageVO: DamageVO, isSwitch: number = -1) {
+    private _doDamage(pidx: number, willAttachs: ElementType[][], damageVO: DamageVO, isSwitch: number = -1) {
         let isDie = -1;
         const { willDamages = [] } = damageVO;
+        willAttachs;
         win: for (const p of this.players) {
             let heroDie = -1;
             for (const h of p.heros) {
                 if (h.hp > 0) {
-                    h.hp = Math.max(0, h.hp - willDamages[h.hidx + (p.pidx ^ 1) * this.players[p.pidx ^ 1].heros.length].reduce((a, b) => a + Math.max(0, b), 0));
+                    h.hp = Math.max(0, h.hp - willDamages[h.hidx + p.pidx * this.players[0].heros.length].reduce((a, b) => a + Math.max(0, b), 0));
                     // 被击倒
                     if (h.hp <= 0 && h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) && !h.talentSlot?.hasTag(CARD_TAG.NonDefeat)) {
                         h.heroStatus.forEach(sts => {
@@ -4023,6 +4031,7 @@ export default class GeniusInvokationRoom {
      */
     private _clacCardChange(pidx: number) {
         const player = this.players[pidx];
+        if (!player) return;
         const costChange = player.handCards.map(() => 0);
         const curHero = this._getFrontHero(pidx);
         if (!curHero) return;

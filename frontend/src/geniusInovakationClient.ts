@@ -1,17 +1,22 @@
 import type { Socket } from "socket.io-client";
 
-import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
-import { checkDices } from "@@@/utils/gameUtil";
-import {
-    Card, Countdown, Hero, Player, ServerData, Skill, Summon, ActionData, Preview, InfoVO,
-} from "../../typing";
 import { ACTION_TYPE, CARD_SUBTYPE, DamageType, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, PureElementType, SKILL_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
-import { INIT_PLAYER, NULL_SKILL, NULL_CARD, NULL_MODAL } from "@@@/constant/init"
+import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
     HANDCARDS_OFFSET_PC,
 } from "@@@/constant/UIconst";
+import { checkDices } from "@@@/utils/gameUtil";
+import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
+import {
+    ActionData,
+    Card, Countdown, Hero,
+    InfoVO,
+    Player,
+    Preview,
+    ServerData, Skill, Summon,
+} from "../../typing";
 
 export default class GeniusInvokationClient {
     socket: Socket;
@@ -567,13 +572,17 @@ export default class GeniusInvokationClient {
         if (skidx == -1) return;
 
         if (isExec) {
-            // if (!this.isValid) return this._sendTip('骰子不符合要求');
+            this.isValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
+            if (!this.isValid) return; // this._sendTip('骰子不符合要求');
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
                 skillIdx: skidx,
+                diceSelect: this.diceSelect,
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
             } as ActionData);
             this.currSkill = NULL_SKILL();
+            this.resetDiceSelect();
+            this._resetWillAttachs();
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
@@ -585,8 +594,6 @@ export default class GeniusInvokationClient {
         if (!isCard) {
             if (!isOnlyRead) {
                 this.isValid = true;
-            } else {
-                this.resetDiceSelect();
             }
         }
     }

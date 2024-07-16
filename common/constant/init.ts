@@ -1,6 +1,7 @@
 import { InfoVO, Player } from '../../typing';
-import { GICard } from '../data/cards.js';
-import { GIHero, GISkill } from '../data/heros.js';
+import { GICard } from '../data/builder/cardBuilder.js';
+import { GIHero } from '../data/builder/heroBuilder.js';
+import { GISkill } from '../data/builder/skillBuilder.js';
 import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
 import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE } from './gameOption.js';
 

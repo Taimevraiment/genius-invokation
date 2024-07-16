@@ -1,7 +1,7 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementType, HERO_LOCAL, HeroTag, PureElementType, SKILL_TYPE, VERSION, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
-import { BaseBuilder } from "./BaseBuilder.js";
-import { GISkill, Skill1Builder, SkillBuilder } from "./SkillBuilder";
+import { BaseBuilder } from "./baseBuilder.js";
+import { GISkill, Skill1Builder, SkillBuilder } from "./skillBuilder";
 
 export class GIHero {
     id: number; // 唯一id
@@ -60,12 +60,12 @@ export class GIHero {
 }
 
 export class HeroBuilder extends BaseBuilder {
-    protected _version: Version = VERSION[0];
+    private _curVersion: Version = VERSION[0];
     private _tags: HeroTag[] = [];
     private _maxHp: number = 10;
     private _element: ElementType | undefined;
     private _weaponType: WeaponType = WEAPON_TYPE.Other;
-    private _skills: (SkillBuilder | Skill1Builder)[] = [];
+    private _skills: SkillBuilder[] = [];
     private _src: string[] = [];
     private _avatar: string[] = [];
     private _skill1: Skill1Builder | undefined;
@@ -73,7 +73,7 @@ export class HeroBuilder extends BaseBuilder {
         super(id, shareId);
     }
     version(version: Version) {
-        this._version = version;
+        this._curVersion = version;
         return this;
     }
     tags(...tags: HeroTag[]) {
@@ -177,13 +177,7 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     skills(...skills: SkillBuilder[]) {
-        this._skills.push(
-            ...skills.map(skill => skill
-                .version(this._version)
-                .costElement(this._element)
-                .dmgElement(this._element)
-            )
-        );
+        this._skills.push(...skills);
         return this;
     }
     src(...src: string[]) {
@@ -195,11 +189,11 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     done() {
-        if (this._element == undefined) this._element = ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10];
-        if (this._skill1 != undefined) {
-            this._skills.unshift(this._skill1);
-        }
-        return new GIHero(this._id, this._shareId, this._name, this._version, this._tags, this._maxHp,
-            this._element, this._weaponType, this._src, this._avatar, this._skills.map(skill => skill.done()));
+        const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10];
+        const skills: (SkillBuilder | Skill1Builder)[] = this._skills.map(skill => skill.dmgElement(element));
+        if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType));
+        return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
+            this._maxHp, element, this._weaponType, this._src, this._avatar,
+            skills.map(skill => skill.costElement(element).version(this._curVersion).done()));
     }
 }

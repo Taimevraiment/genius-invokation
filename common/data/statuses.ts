@@ -1,131 +1,12 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { STATUS_BG_COLOR, StatusBgColor, ELEMENT_NAME_KEY, ELEMENT_NAME, STATUS_BG_COLOR_KEY, ElementNameKey, SHIELD_ICON_URL } from "../constant/UIconst.js";
-import { isCdt } from "../utils/utils.js";
 import {
-    CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PURE_ELEMENT_TYPE, PureElementType, STATUS_GROUP, STATUS_TYPE, SkillType,
-    StatusGroup, StatusType, VERSION, Version, WEAPON_TYPE, WeaponType,
+    CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PureElementType,
+    STATUS_TYPE, SkillType,
+    Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { getElByHid, getHidById } from "../utils/gameUtil.js";
-
-export class GIStatus {
-    id: number; // 唯一id
-    entityId: number = -1; // 实体id
-    name: string; // 名字
-    group: StatusGroup; // 0角色状态 1阵营状态
-    type: StatusType[]; // 类型: 0隐藏 1攻击 2挡伤 3回合 4使用 5翻倍伤害 6条件加伤 7护盾 8元素附魔 9累积 10标记 11准备技能 12死后不删除 13免击倒 14无法行动 15暂时不消失 16条件附魔
-    useCnt: number; // 剩余使用次数: -1为无次数限制
-    maxCnt: number; // 最多叠加的次数: 0为不能叠加
-    addCnt: number; // 叠加时次数
-    perCnt: number; // 每回合使用次数
-    roundCnt: number; // 剩余轮次数: -1为无轮次限制
-    isTalent: boolean; // 是否有天赋
-    handle: (status: Status, event: StatusHandleEvent) => StatusHandleRes; // 处理函数
-    summonId: number; // 可能对应的召唤物 -1不存在
-    addition: string[]; // 额外信息
-    UI: {
-        icon: string, // 图标
-        description: string, // 描述
-        descriptions: string[], // 处理后的技能描述
-        explains: string[], // 要解释的文本
-        isSelected: boolean, // 是否正在发动
-        iconBg: StatusBgColor, // 图标背景
-    };
-    constructor(
-        id: number, name: string, description: string, icon: string, group: StatusGroup, type: StatusType[],
-        useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event?: StatusHandleEvent) => StatusHandleRes | undefined,
-        options: {
-            smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, adt?: string[]
-        } = {}
-    ) {
-        this.id = id;
-        this.name = name;
-        this.group = group;
-        this.type = type;
-        this.useCnt = useCnt;
-        this.maxCnt = maxCnt;
-        this.roundCnt = roundCnt;
-        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = Math.max(useCnt, roundCnt),
-            isTalent = false, isReset = true, adt = [] } = options;
-        const hid = getHidById(id);
-        const el = getElByHid(hid);
-        description = description
-            .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
-            .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`)
-            .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`);
-        this.UI = {
-            description,
-            icon: icon.replace(/ski,(\d)/, `ski${hid},$1`),
-            iconBg: icbg,
-            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
-            descriptions: [],
-            isSelected: false,
-        }
-        this.addCnt = act;
-        this.summonId = smnId;
-        this.perCnt = pct;
-        this.isTalent = isTalent;
-        this.addition = adt;
-        let thandle = handle ?? (() => ({}));
-        if (type.includes(STATUS_TYPE.Shield)) {
-            // this.icon = 'shield2';
-            this.UI.icon = SHIELD_ICON_URL;
-            this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
-            thandle = (status, event = {}) => {
-                let { restDmg = 0 } = event;
-                let rest: StatusHandleRes = {};
-                if (handle) {
-                    const { restDmg: dmg = -1, ...other } = handle(status, event) ?? {};
-                    if (dmg > -1) restDmg = dmg;
-                    rest = { ...other };
-                }
-                if (restDmg <= 0) return { restDmg, ...rest };
-                const shieldDmg = Math.min(restDmg, status.useCnt);
-                status.useCnt -= shieldDmg;
-                return { restDmg: restDmg - shieldDmg, ...rest };
-            }
-        } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
-            // this.icon = 'shield';
-            // this.iconBg = '#9268db';
-            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp';
-        }
-        if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
-            if (id == 111052) {
-                this.UI.iconBg = STATUS_BG_COLOR[ELEMENT_NAME_KEY[name.slice(0, 3) as ElementNameKey] as PureElementType];
-            } else if (icon.startsWith('buff')) {
-                if (icon == 'buff2') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Buff.webp';
-                if (icon == 'buff3') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Special.webp';
-                if (icon == 'buff' || icon == 'buff4') this.UI.iconBg = STATUS_BG_COLOR[el];
-                else this.UI.iconBg = STATUS_BG_COLOR.Buff;
-            } else if (['satiety', 'debuff'].includes(icon)) {
-                if (icon == 'satiety') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Food.webp';
-                if (icon == 'debuff') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Debuff.webp';
-                // this.iconBg = DEBUFF_BG_COLOR;
-            } else if (icon.includes('heal')) {
-                if (icon == 'heal') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Heal.webp';
-                if (icon == 'heal2') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp';
-                // this.iconBg = '#95ff7a';
-            } else if (icon.startsWith('ski')) {
-                this.UI.iconBg = STATUS_BG_COLOR[el];
-            }
-        }
-        this.handle = (status, event = {}) => {
-            const { reset = false } = event;
-            if (reset) {
-                if (isReset) status.perCnt = pct;
-                return {}
-            }
-            return thandle(status, event) ?? {};
-        }
-    }
-    setEntityId(id: number): Status {
-        if (this.entityId == -1) this.entityId = id;
-        return this;
-    }
-    hasType(...types: StatusType[]): boolean {
-        return this.type.some(v => types.includes(v));
-    }
-}
+import { ELEMENT_NAME, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
+import { isCdt } from "../utils/utils.js";
+import { StatusBuilder } from "./builder/statusBuilder.js";
 
 export type StatusHandleEvent = {
     restDmg?: number,
@@ -192,7 +73,7 @@ export type StatusHandleRes = {
     atkOffset?: number,
     isAddTask?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => StatusExecRes | void,
-}
+};
 
 export type StatusExecEvent = {
     switchHeroDiceCnt?: number,
@@ -207,17 +88,22 @@ export type StatusExecRes = {
     hidxs?: number[],
 }
 
-const enchantStatus = (id: number, el: PureElementType, rcnt: number = 1, addDmg: number = 0) =>
-    new GIStatus(id, `${ELEMENT_NAME[el]}附魔`,
-        `所附属角色造成的[物理伤害]变为[${ELEMENT_NAME[el]}伤害]${addDmg > 0 ? `，且造成的[${ELEMENT_NAME[el]}伤害]+${addDmg}` : ''}。；【[持续回合]：{roundCnt}】`,
-        `buff${addDmg > 0 ? '4' : ''}`, STATUS_GROUP.heroStatus, [STATUS_TYPE.Enchant], -1, 0, rcnt, status => ({
+const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
+    const elName = ELEMENT_NAME[el];
+    const hasAddDmgDesc = addDmg > 0 ? `，且造成的[${elName}伤害]+${addDmg}` : '';
+    return new StatusBuilder(`${elName}附魔`).heroStatus().type(STATUS_TYPE.Enchant)
+        .description(`所附属角色造成的[物理伤害]变为[${elName}伤害]${hasAddDmgDesc}。；【[持续回合]：{roundCnt}】`)
+        .handle(status => ({
             attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType,
-            addDmg: -status.perCnt,
-        }), { pct: -addDmg });
+            addDmg,
+        }));
+}
 
-const senlin1Sts = (id: number, name: string) => {
-    return new GIStatus(id, name + '(生效中)', '【角色在本回合中，下次对角色打出｢天赋｣或使用｢元素战技｣时：】少花费2个元素骰。',
-        'buff2', STATUS_GROUP.heroStatus, [STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign], 1, 0, 1, (status, event = {}) => {
+const senlin1Sts = (name: string) => {
+    return new StatusBuilder(name + '(生效中)').heroStatus().icon('buff2').roundCnt(1)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【角色在本回合中，下次对角色打出｢天赋｣或使用｢元素战技｣时：】少花费2个元素骰。')
+        .handle((status, event = {}) => {
             const { card, heros = [], hidx = -1, trigger = '', minusDiceCard: mdc = 0, isMinusDiceSkill = false } = event;
             const isMinusCard = card && card.hasSubtype(CARD_SUBTYPE.Talent) && card.userType == heros[hidx]?.id && card.cost + card.anydice > mdc;
             return {
@@ -227,7 +113,7 @@ const senlin1Sts = (id: number, name: string) => {
                 exec: () => {
                     if (trigger == 'card' && !isMinusCard) return;
                     if (trigger == 'skilltype2' && !isMinusDiceSkill) return;
-                    --status.useCnt;
+                    --status.roundCnt;
                 }
             }
         });
@@ -259,9 +145,10 @@ const senlin1Sts = (id: number, name: string) => {
 //         }), { icbg: STATUS_BG_COLOR[windEl] })
 // }
 
-const shieldStatus = (id: number, name: string, cnt = 2, mcnt = 0) =>
-    new GIStatus(id, name, `为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `(可叠加，最多到${mcnt})` : ''}`,
-        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], cnt, mcnt, -1);
+const shieldStatus = (name: string, cnt = 2, mcnt = 0) => {
+    return new StatusBuilder(name).combatStatus().type(STATUS_TYPE.Shield).useCnt(cnt).maxCnt(mcnt)
+        .description(`为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `(可叠加，最多到${mcnt})` : ''}`);
+}
 
 // const readySkillShieldStatus = (id: number, name: string) =>
 //     new GIStatus(id, name, '准备技能期间，提供2点[护盾]，保护所附属角色。',
@@ -272,20 +159,25 @@ const shieldStatus = (id: number, name: string, cnt = 2, mcnt = 0) =>
 //         'debuff', STATUS_GROUP.combatStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign], -1, 0, 1);
 
 
-const statusTotal: Record<number, (version: Version, ...args: any) => Status> = {
+const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
-    106: () => new GIStatus(106, '冻结', '角色无法使用技能持续到回合结束。；角色受到[火元素伤害]或[物理伤害]时，移除此效果，使该伤害+2',
-        'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Frozen.webp',
-        STATUS_GROUP.heroStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction], -1, 0, 1, (status, event = {}) => {
+    106: () => new StatusBuilder('冻结').heroStatus().roundCnt(1)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction)
+        .description('角色无法使用技能持续到回合结束。；角色受到[火元素伤害]或[物理伤害]时，移除此效果，使该伤害+2')
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Frozen.webp')
+        .handle((status, event = {}) => {
             const { trigger = '' } = event;
             if (['Physical-getdmg', 'Pyro-getdmg'].includes(trigger)) {
                 return { addDmgCdt: 2, exec: () => { --status.roundCnt } }
             }
         }),
 
-    116: () => new GIStatus(116, '草原核', '【我方对敌方出战角色造成[火元素伤害]或[雷元素伤害]时，】伤害值+2。；【[可用次数]：{useCnt}】',
-        'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_116.webp',
-        STATUS_GROUP.combatStatus, [STATUS_TYPE.AddDamage], 1, 0, -1, (status, event = {}) => {
+    111: () => shieldStatus('结晶', 1, 2),
+
+    116: () => new StatusBuilder('草原核').combatStatus().type(STATUS_TYPE.AddDamage).useCnt(1)
+        .description('【我方对敌方出战角色造成[火元素伤害]或[雷元素伤害]时，】伤害值+2。；【[可用次数]：{useCnt}】')
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_116.webp')
+        .handle((status, event = {}) => {
             const { eheros = [], getDmgIdx = -1 } = event;
             if (!eheros[getDmgIdx]?.isFront) return;
             return {
@@ -295,9 +187,10 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
             }
         }),
 
-    117: () => new GIStatus(117, '激化领域', '【我方对敌方出战角色造成[雷元素伤害]或[草元素伤害]时，】伤害值+1。；【[可用次数]：{useCnt}】',
-        'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_117.webp',
-        STATUS_GROUP.combatStatus, [STATUS_TYPE.AddDamage], 2, 0, -1, (status, event = {}) => {
+    117: () => new StatusBuilder('激化领域').combatStatus().type(STATUS_TYPE.AddDamage).useCnt(2)
+        .description('【我方对敌方出战角色造成[雷元素伤害]或[草元素伤害]时，】伤害值+1。；【[可用次数]：{useCnt}】')
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_117.webp')
+        .handle((status, event = {}) => {
             const { eheros = [], getDmgIdx = -1 } = event;
             if (!eheros[getDmgIdx]?.isFront) return;
             return {
@@ -307,21 +200,21 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
             }
         }),
 
-    111: () => shieldStatus(111, '结晶', 1, 2),
-
-    111012: () => new GIStatus(111012, '冰莲', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
-        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Barrier], 2, 0, -1, (status, event = {}) => {
+    111012: () => new StatusBuilder('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
             const { restDmg = 0 } = event;
             if (restDmg <= 0) return { restDmg }
             --status.useCnt;
             return { restDmg: restDmg - 1 }
         }),
 
-    111021: (_, isTalent = false) => new GIStatus(111021, '猫爪护盾', '为我方出战角色提供1点[护盾]。',
-        '', STATUS_GROUP.combatStatus, [STATUS_TYPE.Shield], isTalent ? 2 : 1, 0, -1, undefined, { isTalent }),
+    111021: (isTalent = false) => new StatusBuilder('猫爪护盾').combatStatus().type(STATUS_TYPE.Shield)
+        .useCnt(isTalent ? 2 : 1).description('为我方出战角色提供1点[护盾]。').talent(isTalent),
 
-    111031: () => new GIStatus(111031, '寒冰之棱', '【我方切换角色后：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】',
-        'ski,2', STATUS_GROUP.combatStatus, [STATUS_TYPE.Attack], 3, 0, -1, () => ({
+    111031: () => new StatusBuilder('寒冰之棱').combatStatus().type(STATUS_TYPE.Attack).useCnt(3)
+        .description('【我方切换角色后：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】').icon('ski,2')
+        .handle(() => ({
             damage: 2,
             element: ELEMENT_TYPE.Cryo,
             trigger: ['change-from'],
@@ -330,55 +223,59 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
             },
         })),
 
-    111041: (_, isTalent = false) => new GIStatus(111041, '重华叠霜领域', `我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`,
-        'buff', STATUS_GROUP.combatStatus, isTalent ? [STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant] : [STATUS_TYPE.Enchant], -1, 0, 2, (status, event = {}) => {
+    111041: (isTalent = false) => new StatusBuilder('重华叠霜领域').combatStatus().roundCnt(2).talent(isTalent).icon('buff')
+        .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`)
+        .type(STATUS_TYPE.AddDamage).type(STATUS_TYPE.Enchant, isTalent)
+        .handle((status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx].weaponType);
             return {
                 trigger: ['skilltype1'],
                 addDmgType1: isCdt(status.isTalent && isWeapon, 1),
-                attachEl: isCdt(isWeapon, PURE_ELEMENT_TYPE.Cryo),
+                attachEl: isCdt(isWeapon, ELEMENT_TYPE.Cryo),
             }
-        }, { isTalent }),
+        }),
 
-    111052: (_, rcnt = 1, addDmg = 0) => enchantStatus(111052, PURE_ELEMENT_TYPE.Cryo, rcnt, addDmg),
+    111052: (_, rcnt = 1, addDmg = 0) => enchantStatus(ELEMENT_TYPE.Cryo, addDmg).roundCnt(rcnt),
 
-    111061: () => new GIStatus(111061, '冷酷之心', '【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。',
-        'buff4', STATUS_GROUP.heroStatus, [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign], 1, 0, -1, status => ({
+    111061: () => new StatusBuilder('冷酷之心').heroStatus().icon('buff4').useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。')
+        .handle(status => ({
             trigger: ['skilltype2'],
             addDmgCdt: 3,
             exec: () => { --status.useCnt },
         })),
 
-    111071: (_, isTalent = false) => new GIStatus(111071, '冰翎', `我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`,
-        'buff4', STATUS_GROUP.combatStatus, [STATUS_TYPE.AddDamage], 2, 0, -1, (status, event = {}) => {
-            const { skilltype = -1 } = event;
-            return {
-                addDmgCdt: 1,
-                trigger: isCdt(skilltype > -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
-                exec: () => {
-                    if (status.perCnt == 1 && skilltype == 1) {
-                        --status.perCnt;
-                    } else {
-                        --status.useCnt;
-                    }
-                }
-            }
-        }, { pct: isCdt(isTalent, 1), isTalent }),
+    // 111071: (_, isTalent = false) => new GIStatus(111071, '冰翎', `我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`,
+    //     'buff4', STATUS_GROUP.combatStatus, [STATUS_TYPE.AddDamage], 2, 0, -1, (status, event = {}) => {
+    //         const { skilltype = -1 } = event;
+    //         return {
+    //             addDmgCdt: 1,
+    //             trigger: isCdt(skilltype > -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
+    //             exec: () => {
+    //                 if (status.perCnt == 1 && skilltype == 1) {
+    //                     --status.perCnt;
+    //                 } else {
+    //                     --status.useCnt;
+    //                 }
+    //             }
+    //         }
+    //     }, { pct: isCdt(isTalent, 1), isTalent }),
 
-    111082: () => new GIStatus(111082, '度厄真符', '【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；【[可用次数]：{useCnt}】',
-        'ski,2', STATUS_GROUP.combatStatus, [STATUS_TYPE.Attack], 3, 0, -1, (_status, event = {}) => {
-            const { heros = [], hidx = -1 } = event;
-            const fhero = heros[hidx];
-            const isHeal = (fhero?.hp ?? 0) < (fhero?.maxHp ?? 0);
-            return {
-                trigger: ['after-skill'],
-                heal: isCdt(isHeal, 2),
-                exec: eStatus => {
-                    if (isHeal && eStatus) --eStatus.useCnt;
-                }
-            }
-        }),
+    // 111082: () => new GIStatus(111082, '度厄真符', '【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；【[可用次数]：{useCnt}】',
+    //     'ski,2', STATUS_GROUP.combatStatus, [STATUS_TYPE.Attack], 3, 0, -1, (_status, event = {}) => {
+    //         const { heros = [], hidx = -1 } = event;
+    //         const fhero = heros[hidx];
+    //         const isHeal = (fhero?.hp ?? 0) < (fhero?.maxHp ?? 0);
+    //         return {
+    //             trigger: ['after-skill'],
+    //             heal: isCdt(isHeal, 2),
+    //             exec: eStatus => {
+    //                 if (isHeal && eStatus) --eStatus.useCnt;
+    //             }
+    //         }
+    //     }),
 
     // 2002: (isTalent = false) => new GIStatus(2002, '雨帘剑', `【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`,
     //     '', 1, [2], isTalent ? 3 : 2, 0, -1, (status, event = {}) => {
@@ -398,8 +295,8 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //         },
     //     }), { icbg: STATUS_BG_COLOR[1] }),
 
-    303300: () => new GIStatus(303300, '饱腹', '本回合无法食用更多的｢料理｣。',
-        'satiety', STATUS_GROUP.heroStatus, [STATUS_TYPE.Round, STATUS_TYPE.Sign], -1, 0, 1),
+    303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
 
     // 2010: () => new GIStatus(2010, '换班时间(生效中)', '【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。',
     //     'buff2', 1, [4, 10], 1, 0, -1, status => ({
@@ -746,8 +643,9 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //         }
     //     }),
 
-    301102: () => new GIStatus(301102, '千年的大乐章·别离之歌', '我方角色造成的伤害+1。；【[持续回合]：{roundCnt}】',
-        'buff5', STATUS_GROUP.heroStatus, [STATUS_TYPE.Round, STATUS_TYPE.AddDamage], -1, 0, 2, () => ({ addDmg: 1 })),
+    301102: () => new StatusBuilder('千年的大乐章·别离之歌').heroStatus().icon('buff5').roundCnt(2)
+        .description('我方角色造成的伤害+1。；【[持续回合]：{roundCnt}】')
+        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage).handle(() => ({ addDmg: 1 })),
 
     // 2049: () => shieldStatus(2049, '叛逆的守护', 1, 2),
 
@@ -868,9 +766,9 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //         }
     //     }, { icbg: STATUS_BG_COLOR[3] }),
 
-    301103: (name: string) => senlin1Sts(301103, name),
+    301103: (name: string) => senlin1Sts(name),
 
-    301104: (name: string) => senlin1Sts(301104, name),
+    301104: (name: string) => senlin1Sts(name),
 
     // 2062: () => readySkillShieldStatus(2062, '捉浪·涛拥之守'),
 
@@ -2018,11 +1916,13 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //         exec: () => { --status.useCnt },
     //     })),
 
-    301108: () => new GIStatus(301108, '万世的浪涛', '角色在本回合中，下次造成的伤害+2。',
-        'buff5', STATUS_GROUP.heroStatus, [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign], 1, 0, 1, status => ({
+    301108: () => new StatusBuilder('万世的浪涛').heroStatus().icon('buff5').roundCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('角色在本回合中，下次造成的伤害+2。')
+        .handle(status => ({
             addDmg: 2,
             trigger: ['skill'],
-            exec: () => { --status.useCnt },
+            exec: () => { --status.roundCnt },
         })),
 
     // 2173: () => new GIStatus(2173, '抗争之日·碎梦之时(生效中)', '本回合中，所附属角色受到的伤害-1。；【[可用次数]：{useCnt}】',
@@ -2495,12 +2395,13 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
     //         return { restDmg: restDmg - 1 }
     //     }, { smnId: summonId }),
 
-    301111: () => new GIStatus(301111, '金流监督(生效中)', '本回合中，角色下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。',
-        'buff5', STATUS_GROUP.heroStatus, [STATUS_TYPE.Usage], 1, 2, 1, status => ({
+    301111: () => new StatusBuilder('金流监督(生效中)').heroStatus().icon('buff5').roundCnt(1).type(STATUS_TYPE.Usage)
+        .description('本回合中，角色下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。')
+        .handle(status => ({
             trigger: ['skilltype1'],
             addDmgType1: 1,
             minusDiceSkill: { skilltype1: [0, 1, 0] },
-            exec: () => { --status.useCnt },
+            exec: () => { --status.roundCnt },
         })),
 
     // 2214: () => new GIStatus(2214, '赤王陵(生效中)', '直到本回合结束前，所在阵营每摸1张牌，就立刻生成1张【crd908】，随机地置入我方牌库中。',
@@ -2591,4 +2492,4 @@ const statusTotal: Record<number, (version: Version, ...args: any) => Status> = 
 
 };
 
-export const newStatus = (version: Version = VERSION[0]) => (id: number, ...args: any) => statusTotal[id](version, ...args);
+export const newStatus = (version?: Version) => (id: number, ...args: any) => statusTotal[id](...args).id(id).version(version).done();

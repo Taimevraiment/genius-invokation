@@ -7,7 +7,7 @@ import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/
 import { getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { newStatus } from "../statuses.js";
-import { BaseBuilder } from "./BaseBuilder.js";
+import { BaseBuilder } from "./baseBuilder.js";
 
 export class GICard {
     id: number; // 唯一id
@@ -159,7 +159,7 @@ export class CardBuilder extends BaseBuilder {
     private _perCnt: number = 0;
     private _energy: number = 0;
     private _anydice: number = 0;
-    private _handle: ((card: Card, event: CardHandleEvent) => CardHandleRes) | undefined;
+    private _handle: ((card: Card, event: CardHandleEvent) => CardHandleRes | undefined) | undefined;
     private _canSelectHero: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
@@ -196,8 +196,7 @@ export class CardBuilder extends BaseBuilder {
     }
     weapon(weaponType?: WeaponType) {
         this._subtype.push(CARD_SUBTYPE.Weapon);
-        weaponType ??= WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10];
-        this._userType = weaponType;
+        this._userType = weaponType ?? WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10];
         return this.equipment();
     }
     artifact() {
@@ -269,7 +268,7 @@ export class CardBuilder extends BaseBuilder {
         this._canSelectSupport = canSelectSupport;
         return this;
     }
-    handle(handle: (card: Card, event: CardHandleEvent) => CardHandleRes) {
+    handle(handle: (card: Card, event: CardHandleEvent) => CardHandleRes | undefined) {
         this._handle = handle;
         return this;
     }

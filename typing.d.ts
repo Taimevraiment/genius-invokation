@@ -2,10 +2,10 @@ import {
     ActionType, CardSubtype, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType, StatusGroup, SWIRL_ELEMENT, Version,
 } from "./common/constant/enum"
-import { type GICard } from "./common/data/builder/CardBuilder"
-import { type GIHero } from "./common/data/builder/HeroBuilder"
-import { type GISkill } from "./common/data/builder/SkillBuilder"
-import { type GIStatus } from "./common/data/statuses"
+import { type GICard } from "./common/data/builder/cardBuilder"
+import { type GIHero } from "./common/data/builder/heroBuilder"
+import { type GISkill } from "./common/data/builder/skillBuilder"
+import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/summons"
 import { type GISupport } from "./common/data/supports"
 

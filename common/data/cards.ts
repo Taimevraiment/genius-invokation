@@ -3,7 +3,7 @@ import { CARD_SUBTYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_T
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { isCdt } from '../utils/utils.js';
-import { CardBuilder } from './builder/CardBuilder.js';
+import { CardBuilder } from './builder/cardBuilder.js';
 import { newStatus } from './statuses.js';
 
 export type CardHandleEvent = {
@@ -67,7 +67,7 @@ export type CardHandleRes = {
     restDmg?: number,
     isAddTask?: boolean,
     exec?: () => CardExecRes | void,
-}
+};
 
 export type CardExecRes = {
     hidxs?: number[],
@@ -191,7 +191,6 @@ const elCard = (id: number, shareId: number) => {
 // 2xxxx1：天赋
 
 const allCards: Record<number, (ver: Version) => CardBuilder> = {
-    // 0: ()=> new GICard(0, '无', ''),
 
     311101: () => normalWeapon(311101, 121).name('魔导绪论')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/1abc432f853c6fa24624a92646c62237_7336928583967273301.png'),

@@ -2,7 +2,7 @@ import { COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYP
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { clone } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../heros.js";
-import { BaseVersionBuilder } from "./BaseBuilder.js";
+import { BaseVersionBuilder } from "./baseBuilder.js";
 
 export class GISkill {
     id: number = -1; // 唯一id
@@ -31,14 +31,15 @@ export class GISkill {
         explains: string[], // 要解释的文本
     };
     constructor(
-        name: string, description: string, type: SkillType, damage: number, cost: number, costElement: SkillCostType,
+        name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
         options: { id?: number, ac?: number, ec?: number, de?: ElementType, rskid?: number, pct?: number, expl?: string[], ver?: Version } = {},
         src?: string | string[], handle?: (hevent: SkillHandleEvent, version: Version) => SkillHandleRes | undefined
     ) {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, rskid = -1, pct = 0, expl = [], ver } = options;
+        const { id = -1, ac = 0, ec = 0, de, rskid = -1, pct = 0, expl = [], ver = VERSION[0] } = options;
+        costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         this.UI = {
             description: description.replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害'),
@@ -104,10 +105,6 @@ export class SkillBuilder extends BaseVersionBuilder {
         super();
         this._name = name;
     }
-    version(version: Version) {
-        this._version = version;
-        return this;
-    }
     normal() {
         this._type = SKILL_TYPE.Normal;
         return this;
@@ -126,7 +123,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         return this;
     }
     dmgElement(element: ElementType) {
-        if (this._dmgElement != undefined) this._dmgElement = element;
+        if (this._dmgElement == undefined) this._dmgElement = element;
         return this;
     }
     cost(cost: number, element?: SkillCostType) {
@@ -135,7 +132,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         return this;
     }
     costElement(element: ElementType) {
-        if (this._costElement != undefined) {
+        if (this._costElement == undefined) {
             if (element == ELEMENT_TYPE.Physical) this._costElement = DICE_TYPE.Same;
             else this._costElement = element;
         }
@@ -212,7 +209,6 @@ export class SkillBuilder extends BaseVersionBuilder {
 }
 
 export class Skill1Builder {
-    private _version: Version;
     private _weaponType: WeaponType | undefined;
     private _handle: ((event: SkillHandleEvent) => SkillHandleRes) | undefined;
     private _description: string = '';
@@ -237,10 +233,10 @@ export class Skill1Builder {
         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/2bfbf024135461849666339c43d60b2c_1257931966790216673.png',
     ];
     constructor(name: string) {
-        this._builder = new SkillBuilder(name).version(this._version).normal().costAny(2);
+        this._builder = new SkillBuilder(name).normal().costAny(2);
     }
     version(version: Version) {
-        this._version = version;
+        this._builder.version(version);
         return this;
     }
     weaponType(weaponType: WeaponType) {
@@ -268,14 +264,16 @@ export class Skill1Builder {
         return this;
     }
     done() {
+        this._weaponType ??= WEAPON_TYPE.Other;
         const costElement = this._costElement == ELEMENT_TYPE.Physical ? DICE_TYPE.Same : this._costElement;
         const isCatalyst = this._weaponType == WEAPON_TYPE.Catalyst;
+        const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
         return this._builder
-            .description(`造成{dmg}点[${ELEMENT_NAME[this._costElement]}伤害]。${this._description}`)
+            .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${this._description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])
             .cost(1, costElement)
             .damage(isCatalyst ? 1 : 2)
-            .dmgElement(isCatalyst ? this._costElement : ELEMENT_TYPE.Physical)
+            .dmgElement(dmgElement)
             .perCnt(this._perCnt)
             .explain(this._explains)
             .handle(this._handle)
