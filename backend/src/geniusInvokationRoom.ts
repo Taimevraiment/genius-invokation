@@ -1107,6 +1107,7 @@ export default class GeniusInvokationRoom {
             }
             this.players.forEach((_, i, a) => a[i] = players[i]);
             this._doDamage(pidx, aWillAttach, { willDamages: aWillDamages, dmgElements, elTips: aElTips }, isSwitch);
+            this._changeTurn(pidx, isQuickAction, 'useSkill');
         }
         return { willHp, willAttachs: bWillAttach, summonCnt, supportCnt }
     }
@@ -1973,11 +1974,11 @@ export default class GeniusInvokationRoom {
                     this.players[this.currentPlayerIdx].canAction = true;
                 }
             }
-            // this._emit('changeTurn-' + type + '-canChange:' + canChange, pidx, { tip: '{p}回合开始' });
+            this.emit('changeTurn-' + type + '-canChange:' + canChange, pidx, { tip: '{p}回合开始' });
             // todo 上面对于canAction的判断放到下面的函数中
             // this._doActionBefore(this.currentPlayerIdx);
-            this._detectStatus(this.currentPlayerIdx, STATUS_TYPE.ReadySkill, 'useReadySkill', { isOnlyFront: true, isOnlyHeroStatus: true });
-            await this._execTask();
+            // this._detectStatus(this.currentPlayerIdx, STATUS_TYPE.ReadySkill, 'useReadySkill', { isOnlyFront: true, isOnlyHeroStatus: true });
+            // await this._execTask();
         }, timeout);
     }
     /**

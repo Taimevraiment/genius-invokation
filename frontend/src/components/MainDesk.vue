@@ -184,7 +184,7 @@
           </div>
         </div>
         <div class="attach-element">
-          <div class="el-tip" :class="{
+          <div class="el-tip" v-if="elTips[hidx] != undefined" :class="{
             'el-tip-enter': elTips[hidx][0] != '',
             'el-tip-leave': elTips[hidx][0] == '',
           }" :style="{
@@ -196,8 +196,9 @@
           </div>
           <template v-if="hero.hp > 0">
             <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
-            <img class="will-attach" v-for="(attach, waidx) in willAttachs[hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
-              :key="waidx" :src="ELEMENT_URL[attach]" />
+            <img class="will-attach"
+              v-for="(attach, waidx) in willAttachs[hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)" :key="waidx"
+              :src="ELEMENT_URL[attach]" />
           </template>
         </div>
         <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
@@ -279,8 +280,8 @@
                 :style="{ color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce] }">
                 -{{ willDamages[hidx][1] }}
               </div>
-              <div class="heal" :class="{ 'show-heal': isShowHeal && willHeals[hidx] >= 0 }"
-                :style="{ color: ELEMENT_COLOR.Heal }">
+              <div class="heal" v-if="willHeals[hidx] != undefined"
+                :class="{ 'show-heal': isShowHeal && willHeals[hidx] >= 0 }" :style="{ color: ELEMENT_COLOR.Heal }">
                 +{{ willHeals[hidx] }}
               </div>
             </div>
@@ -403,14 +404,14 @@
 </template>
 
 <script setup lang='ts'>
-import { computed, ref, watchEffect } from 'vue';
+import {
+  CARD_SUBTYPE, CARD_TAG, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+  PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version,
+} from '@@@/constant/enum';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_KEY } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
+import { computed, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Summon } from '../../../typing';
-import {
-  CARD_TAG, DamageType, PureElementType, STATUS_TYPE, DAMAGE_TYPE, Version, SKILL_TYPE, PHASE, PLAYER_STATUS, CARD_SUBTYPE,
-  SUPPORT_TYPE, ELEMENT_TYPE, SUMMON_DESTROY_TYPE, Phase, COST_TYPE, DICE_COST_TYPE, DiceCostType, ElementType,
-} from '@@@/constant/enum';
 
 const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
 const emits = defineEmits([
@@ -435,7 +436,7 @@ const wrapArr = <T>(arr: T[]) => {
 
 const playerIdx = computed<number>(() => Math.max(props.isLookon, props.client.playerIdx));
 const player = computed<Player>(() => {
-  const players = props.client.players as Player[];
+  const players: Player[] = props.client.players;
   if (statusCurcnt.value.length == 0) statusCurcnt.value = players.flatMap(p => p.heros.map(() => [genChangeProxy(12), genChangeProxy(12)]));
   if (hpCurcnt.value.length == 0) hpCurcnt.value = players.flatMap(p => genChangeProxy(p.heros.length));
   players.forEach((p, pi) => {
@@ -503,7 +504,7 @@ const showRerollBtn = computed<boolean>(() => props.client.showRerollBtn);
 const isReconcile = computed<boolean>(() => props.client.isReconcile);
 const willAttachs = computed<ElementType[][]>(() => wrapArr(props.client.willAttachs));
 const willDamages = computed<number[][]>(() => wrapArr(props.client.willDamages));
-const dmgElements = computed<DamageType[]>(() => wrapArr(props.client.dmgElements));
+const dmgElements = computed<ElementType[]>(() => wrapArr(props.client.dmgElements));
 const willHeals = computed<number[]>(() => wrapArr(props.client.willHeals));
 const willHp = computed<(number | undefined)[]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
@@ -803,21 +804,21 @@ button:active {
 
 .hero-hp-bg {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  width: 100%;
+  height: 100%;
 }
 
 .hero-hp {
   position: absolute;
   left: -10px;
   top: -10px;
-  width: 28px;
-  height: 28px;
+  width: 45%;
+  aspect-ratio: 1/1;
   display: flex;
   justify-content: center;
   align-items: center;
   letter-spacing: -2px;
-  font-size: medium;
+  font-size: max(16px, 2vw);
 }
 
 .hero-hp-cnt {
@@ -1004,9 +1005,9 @@ button:active {
   justify-content: center;
   background: #ffef60;
   border-radius: 50%;
+  /* background: url('/public/image/Attack.png'); */
   transition: 0.5s;
   font-size: 0;
-  opacity: 0;
   box-sizing: border-box;
   -webkit-text-stroke: 0.5px black;
 }
@@ -1017,7 +1018,6 @@ button:active {
   height: 40px;
   font-size: large;
   font-weight: bold;
-  opacity: 1;
   border: 3px solid #9e9978;
 }
 

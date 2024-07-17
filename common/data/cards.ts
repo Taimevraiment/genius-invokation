@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, PureElementType, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, PureElementType, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { isCdt } from '../utils/utils.js';
@@ -74,14 +74,14 @@ export type CardExecRes = {
     switchHeroDiceCnt?: number,
 }
 
-const normalWeapon = (id: number, shareId: number) => {
-    return new CardBuilder(id, shareId)
+const normalWeapon = (shareId: number) => {
+    return new CardBuilder(shareId)
         .description('【角色造成的伤害+1】。')
         .weapon().costSame(2).handle(() => ({ addDmg: 1 }));
 }
 
-const jiliWeapon = (id: number, shareId: number) => {
-    return new CardBuilder(id, shareId)
+const jiliWeapon = (shareId: number) => {
+    return new CardBuilder(shareId)
         .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】生成1个此角色类型的元素骰(每回合1次)。')
         .weapon().costSame(3).perCnt(1).handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
@@ -95,8 +95,8 @@ const jiliWeapon = (id: number, shareId: number) => {
         });
 }
 
-const tiankongWeapon = (id: number, shareId: number) => {
-    return new CardBuilder(id, shareId)
+const tiankongWeapon = (shareId: number) => {
+    return new CardBuilder(shareId)
         .description('【角色造成的伤害+1】。；【每回合1次：】角色使用｢普通攻击｣造成的伤害额外+1。')
         .weapon().costSame(3).perCnt(1).handle(card => ({
             addDmg: 1,
@@ -106,10 +106,10 @@ const tiankongWeapon = (id: number, shareId: number) => {
         }));
 }
 
-const senlin1Weapon = (id: number, shareId: number, name: string, version: Version, stsId: number) => {
-    return new CardBuilder(id, shareId).name(name)
+const senlin1Weapon = (shareId: number, name: string, stsId: number) => {
+    return new CardBuilder(shareId).name(name)
         .description('【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次对角色打出｢天赋｣或使用｢元素战技｣时少花费2个元素骰。')
-        .weapon().costSame(3).handle(() => ({ addDmg: 1, status: [newStatus(version)(stsId, name)] }));
+        .weapon().costSame(3).handle((_c, _e, ver) => ({ addDmg: 1, status: [newStatus(ver)(stsId, name)] }));
 }
 
 // const senlin2Weapon = (id: number, name: string, version: Version, userType: number, stsId: number, src: string) => {
@@ -157,10 +157,9 @@ const senlin1Weapon = (id: number, shareId: number, name: string, version: Versi
 //         }, { pct: 1 });
 // }
 
-const elCard = (id: number, shareId: number) => {
-    const element: PureElementType = ELEMENT_CODE_KEY[Math.floor(id / 100) % 10];
+const elCard = (shareId: number, element: PureElementType) => {
     const elName = PURE_ELEMENT_NAME[element];
-    return new CardBuilder(id, shareId).name('元素共鸣：交织之' + elName[0])
+    return new CardBuilder(shareId).name('元素共鸣：交织之' + elName[0])
         .description(`生成1个[${elName}骰]。`)
         .subtype(CARD_SUBTYPE.ElementResonance)
         .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 1, element }] }));
@@ -190,18 +189,18 @@ const elCard = (id: number, shareId: number) => {
 // 333xxx：料理
 // 2xxxx1：天赋
 
-const allCards: Record<number, (ver: Version) => CardBuilder> = {
+const allCards: Record<number, () => CardBuilder> = {
 
-    311101: () => normalWeapon(311101, 121).name('魔导绪论')
+    311101: () => normalWeapon(121).name('魔导绪论')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/1abc432f853c6fa24624a92646c62237_7336928583967273301.png'),
 
-    311102: () => jiliWeapon(311102, 122).name('祭礼残章')
+    311102: () => jiliWeapon(122).name('祭礼残章')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/35a99ec73d99ed979a915e9a10a33a1e_5761287146349681281.png'),
 
-    311103: () => tiankongWeapon(311103, 123).name('天空之卷')
+    311103: () => tiankongWeapon(123).name('天空之卷')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/347336161ab1d81f0b5bf1508a392f64_4021839086739887808.png'),
 
-    311104: () => new CardBuilder(311104, 124).name('千夜浮梦').since('v3.7.0')
+    311104: () => new CardBuilder(124).name('千夜浮梦').since('v3.7.0')
         .description('【角色造成的伤害+1】。；【我方角色引发元素反应时：】造成的伤害+1。(每回合最多触发2次)')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a56d5cf80b505c42a3643534d3dc2821_8758750260465224130.png')
         .weapon().costSame(3).perCnt(2).handle(card => ({
@@ -211,12 +210,12 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
             exec: () => { --card.perCnt }
         })),
 
-    311105: () => new CardBuilder(311105, 125).name('盈满之实').since('v3.8.0')
+    311105: () => new CardBuilder(125).name('盈满之实').since('v3.8.0')
         .description('【角色造成的伤害+1】。；【入场时：】摸2张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/f396d3f86aecfc992feb76ed44485171_1252924063800768441.png')
         .weapon().costAny(3).handle(() => ({ addDmg: 1, cmds: [{ cmd: 'getCard', cnt: 2 }] })),
 
-    311106: () => new CardBuilder(311106, 299).name('四风原典').since('v4.3.0')
+    311106: () => new CardBuilder(299).name('四风原典').since('v4.3.0')
         .description('【此牌每有1点｢伤害加成｣，角色造成的伤害+1】。；【结束阶段：】此牌累积1点｢伤害加成｣。(最多累积到2点)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/c2774faa0cd618dddb0b7a641eede205_6906642161037931045.png')
         .weapon().costSame(3).useCnt(0).handle(card => ({
@@ -225,7 +224,7 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
             exec: () => { ++card.useCnt }
         })),
 
-    311107: () => new CardBuilder(311107, 300).name('图莱杜拉的回忆').since('v4.3.0')
+    311107: () => new CardBuilder(300).name('图莱杜拉的回忆').since('v4.3.0')
         .description('【角色造成的伤害+1】。；【角色进行[重击]时：】少花费1个[无色元素骰]。(每回合最多触发2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/8f3cd8f38e2c411713f9b5e6dc826653_5506358063099958204.png')
         .weapon().costSame(3).perCnt(2).handle((card, event) => {
@@ -238,10 +237,10 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
             }
         }),
 
-    311108: ver => new CardBuilder(311108, 342).name('万世流涌大典').since('v4.5.0')
+    311108: () => new CardBuilder(342).name('万世流涌大典').since('v4.5.0')
         .description('【角色造成的伤害+1】。；【角色受到伤害或治疗后：】如果本回合已受到伤害或治疗累积2次，则角色本回合中下次造成的伤害+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/9a6794d76b3ea150a101e354f9f5a162_9095966637954555968.png')
-        .weapon().costSame(3).perCnt(1).useCnt(0).isResetUseCnt().handle((card, event) => {
+        .weapon().costSame(3).perCnt(1).useCnt(0).isResetUseCnt().handle((card, event, ver) => {
             const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
             const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) && card.perCnt > 0;
             return {
@@ -255,10 +254,10 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
             }
         }),
 
-    311109: ver => new CardBuilder(311109, 379).name('金流监督').since('v4.7.0')
+    311109: () => new CardBuilder(379).name('金流监督').since('v4.7.0')
         .description('【角色受到伤害或治疗后：】使角色本回合中下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。(每回合至多2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/83ab325be102a71a7df848546e7eacbb_2193569914822395358.png')
-        .weapon().costSame(2).perCnt(2).handle((card, event) => {
+        .weapon().costSame(2).perCnt(2).handle((card, event, ver) => {
             const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
             const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) && card.perCnt > 0;
             if (!isMinus) return;
@@ -270,16 +269,16 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
         }),
 
 
-    311201: () => normalWeapon(311201, 126).name('鸦羽弓')
+    311201: () => normalWeapon(126).name('鸦羽弓')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/e20881692f9c3dcb128e3768347af4c0_5029781426547880539.png'),
 
-    311202: () => jiliWeapon(311202, 127).name('祭礼弓')
+    311202: () => jiliWeapon(127).name('祭礼弓')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/4adb0666f4e171943739e4baa0863b48_5457536750893996771.png'),
 
-    311203: () => tiankongWeapon(311203, 128).name('天空之翼')
+    311203: () => tiankongWeapon(128).name('天空之翼')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/b50f747817c941c6ea72a56b4501a99c_2147958904876284896.png'),
 
-    311204: () => new CardBuilder(311204, 129).name('阿莫斯之弓').since('v3.7.0')
+    311204: () => new CardBuilder(129).name('阿莫斯之弓').since('v3.7.0')
         .description('【角色造成的伤害+1】。；【角色使用原本元素骰费用+充能费用至少为5的技能时，】伤害额外+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d974aa6b36205d2c4ee83900f6383f40_5244142374562514025.png')
         .weapon().costSame(3).perCnt(1).handle((card, event) => {
@@ -297,19 +296,19 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
             }
         }),
 
-    311205: ver => new CardBuilder(311205, 130).name('终末嗟叹之诗').since('v3.7.0')
+    311205: () => new CardBuilder(130).name('终末嗟叹之诗').since('v3.7.0')
         .description('【角色造成的伤害+1】。；【角色使用｢元素爆发｣后：】生成【sts301102】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fc5f899e61c9236a1319ea0f3c8b7a64_3821389462721294816.png')
-        .weapon().costSame(3).handle(() => ({
+        .weapon().costSame(3).handle((_c, _e, ver) => ({
             addDmg: 1,
             trigger: ['skilltype3'],
             execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301102)] }],
         })),
 
-    311206: ver => senlin1Weapon(311206, 131, '王下近侍', ver, 301103).since('v4.0.0')
+    311206: () => senlin1Weapon(131, '王下近侍', 301103).since('v4.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/c667e01fa50b448958eff1d077a7ce1b_1806864451648421284.png'),
 
-    311207: () => new CardBuilder(311207, 380).name('竭泽').since('v4.7.0')
+    311207: () => new CardBuilder(380).name('竭泽').since('v4.7.0')
         .description('【我方打出名称不存在于初始牌组中的行动牌后：】此牌累积1点｢渔猎｣。(最多累积2点，每回合最多累积2点)；【角色使用技能时：】如果此牌已有｢渔猎｣，则消耗所有｢渔猎｣，使此技能伤害+1，并且每消耗1点｢渔猎｣就摸1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ea03edad3c81f49bddc24a5689f278d2_6229118249248157024.png')
         .weapon().costSame(2).perCnt(2).useCnt(0).handle((card, event) => {
@@ -1706,14 +1705,14 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
     //         return { statusOppo: [newStatus(stsIds[Math.floor(Math.random() * stsIds.length)])] }
     //     }, { expl: ['sts2124', 'sts2125', 'sts2126', 'sts2127'] }),
 
-    331101: () => elCard(331101, 225)
+    331101: () => elCard(225, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
 
     // 588: () => new GICard(588, '元素共鸣：粉碎之冰', '本回合中，我方当前出战角色下一次造成的伤害+2。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75833613/4bbbf27e898aeace567039c5c2bb2a7c_4533106343661611310.png',
     //     1, 4, 2, [9], 0, 0, (_card, { hidxs }) => ({ status: [newStatus(2030)], hidxs })),
 
-    331201: () => elCard(331201, 227)
+    331201: () => elCard(227, ELEMENT_TYPE.Hydro)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/4111a176d3936db8220047ff52e37c40_264497451263620555.png'),
 
     // 582: () => new GICard(582, '元素共鸣：愈疗之水', '治疗我方出战角色2点。然后，治疗我方所有后台角色1点。',
@@ -1729,14 +1728,14 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
     //         }
     //     }),
 
-    331301: () => elCard(331301, 229)
+    331301: () => elCard(229, ELEMENT_TYPE.Pyro)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/a37ec2ccbb719551f14586a51609a049_6190862804933467057.png'),
 
     // 584: () => new GICard(584, '元素共鸣：热诚之火', '本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/82515ce0a16de7f3fba6e02232545230_5475039957819136120.png',
     //     1, 2, 2, [9], 0, 0, (_card, { hidxs }) => ({ status: [newStatus(2029)], hidxs })),
 
-    331401: () => elCard(331401, 231)
+    331401: () => elCard(231, ELEMENT_TYPE.Electro)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/d7a7653168cd80943a50578aa1251f7a_1527724411934371635.png'),
 
     // 586: () => new GICard(586, '元素共鸣：强能之雷', '我方一名充能未满的角色获得1点[充能]。(出战角色优先)',
@@ -1753,7 +1752,7 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
     //         return { cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }], hidxs }
     //     }),
 
-    331501: () => elCard(331501, 233)
+    331501: () => elCard(233, ELEMENT_TYPE.Anemo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f3fdbb9e308bfd69c04aa4e6681ad71d_7543590216853591638.png'),
 
     // 590: () => new GICard(590, '元素共鸣：迅捷之风', '切换到目标角色，并生成1点[万能元素骰]。',
@@ -1766,14 +1765,14 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
     //         }
     //     }),
 
-    331604: () => elCard(331604, 235)
+    331601: () => elCard(235, ELEMENT_TYPE.Geo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/cdd36a350467dd02ab79a4c49f07ba7f_4199152511760822055.png'),
 
     // 592: () => new GICard(592, '元素共鸣：坚定之岩', '本回合中，我方角色下一次造成[岩元素伤害]后：如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/504be5406c58bbc3e269ceb8780eaa54_8358329092517997158.png',
     //     1, 6, 2, [9], 0, 0, () => ({ status: [newStatus(2031)] })),
 
-    331701: () => elCard(331701, 237)
+    331701: () => elCard(237, ELEMENT_TYPE.Dendro)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f6109c65a24602b1ad921d5bd5f94d97_2028353267602639806.png'),
 
     // 594: () => new GICard(594, '元素共鸣：蔓生之草', '本回合中，我方角色下一次引发元素反应时，造成的伤害+2。；使我方场上的｢燃烧烈焰｣、｢草原核｣和｢激化领域｣[可用次数]+1。',
@@ -1895,17 +1894,17 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
     //         return { cmds: [{ cmd: 'heal', cnt: 1 }], status: [newStatus(2186)], canSelectHero }
     //     }),
 
-    211011: () => new CardBuilder(211011, 61).name('唯此一心')
+    211011: () => new CardBuilder(61).name('唯此一心')
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/15a100ee0285878fc5749663031fa05a_7762319984393418259.png')
         .talent(2).costCryo(3),
 
-    211021: () => new CardBuilder(211021, 62).name('猫爪冰摇')
+    211021: () => new CardBuilder(62).name('猫爪冰摇')
         .description('{action}；装备有此牌的【hro】生成的【sts111021】，所提供的[护盾]值+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/cb37f02217bcd8ae5f6e4a6eb9bae539_3357631204660850476.png')
         .talent(1).costCryo(3),
 
-    211031: () => new CardBuilder(211031, 63).name('冷血之剑')
+    211031: () => new CardBuilder(63).name('冷血之剑')
         .description('{action}；装备有此牌的【hro】使用【ski】后：治疗自身2点。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png')
         .talent(1).costCryo(4).perCnt(1).handle((card, event) => {
@@ -1918,12 +1917,12 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
         }),
 
 
-    211041: () => new CardBuilder(211041, 64).name('吐纳真定')
+    211041: () => new CardBuilder(64).name('吐纳真定')
         .description('{action}；装备有此牌的【hro】生成的【sts111041】获得以下效果：；使我方单手剑、双手剑或长柄武器角色的｢普通攻击｣伤害+1。')
         .src('https://patchwiki.biligame.com/images/ys/e/e6/qfsltpvntkjxioew81iehfhy5xvl7v6.png')
         .talent(1).costCryo(3),
 
-    211051: () => new CardBuilder(211051, 65).name('寒天宣命祝词')
+    211051: () => new CardBuilder(65).name('寒天宣命祝词')
         .description('装备有此牌的【hro】生成的【sts111052】会使所附魔角色造成的[冰元素伤害]+1。；切换到装备有此牌的【hro】时：少花费1个元素骰。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7d706fd25ab0b3c4f8cca3af08d8a07b_2913232629544868049.png')
         .talent().costCryo(2).perCnt(1).handle((card, event) => ({
@@ -1940,17 +1939,17 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
         })),
 
 
-    211061: () => new CardBuilder(211061, 66).name('战欲涌现').since('v3.5.0')
+    211061: () => new CardBuilder(66).name('战欲涌现').since('v3.5.0')
         .description('{action}。；装备有此牌的【hro】使用【ski,1】时，会额外为【smn111062】累积1点｢能量层数｣。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/54bfba5d0eb40f38a0b679808dbf3941_5181344457570733816.png')
         .talent(2).costCryo(3).energy(2),
 
-    211071: () => new CardBuilder(211071, 67).name('忘玄').since('v3.7.0')
+    211071: () => new CardBuilder(67).name('忘玄').since('v3.7.0')
         .description('{action}；装备有此牌的【hro】生成的【sts111071】被我方角色的｢普通攻击｣触发时：不消耗[可用次数]。(每回合1次)。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/9df7f8bf2b97688d9a8fae220b4ff799_2381296963104605530.png')
         .talent(1).costCryo(3),
 
-    211081: () => new CardBuilder(211081, 68).name('起死回骸').since('v4.0.0')
+    211081: () => new CardBuilder(68).name('起死回骸').since('v4.0.0')
         .description('{action}；装备有此牌的【hro】使用【ski】时，复苏我方所有倒下角色，并治疗其2点。(整场牌局限制2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/258999284/d5ef496771a846af08ec05fff036bf17_8628795343837772161.png')
         .talent(2).costCryo(4).energy(3).perCnt(2).isResetPerCnt(),
@@ -2673,15 +2672,14 @@ const allCards: Record<number, (ver: Version) => CardBuilder> = {
 
 export const cardsTotal = (version: Version = VERSION[0]) => {
     const cards: Card[] = [];
-    for (const idx in allCards) {
-        const card = allCards[idx](version).done();
-        if (card.version > version) continue;
-        if (card.UI.cnt == -2) continue; // 不在选牌库展示
-        cards.push(card);
+    for (const id in allCards) {
+        const cardBuilder = allCards[id]().version(version);
+        if (cardBuilder.notExist || cardBuilder.notInCardPool) continue;
+        cards.push(cardBuilder.id(+id).done()!);
     }
     return cards;
 }
 
-export const newCard = (version: Version = VERSION[0]) => (id: number) => allCards[id]?.(version).done() ?? NULL_CARD();
+export const newCard = (version?: Version) => (id: number) => allCards[id]?.().id(id).version(version).done() ?? NULL_CARD();
 
 export const parseCard = (shareId: number) => cardsTotal().find(c => c.shareId == shareId) ?? NULL_CARD();

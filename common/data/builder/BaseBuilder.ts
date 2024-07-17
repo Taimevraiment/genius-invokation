@@ -13,17 +13,19 @@ export class BaseVersionBuilder {
 }
 
 export class BaseBuilder extends BaseVersionBuilder {
-    _version: Version;
-    protected _id: number;
+    protected _id: number = -1;
     protected _shareId: number;
     protected _name: string = '无';
     protected _cost: number = 0;
     protected _costType: DiceType = DICE_TYPE.Same;
-    constructor(id: number, shareId: number) {
+    constructor(shareId: number) {
         super();
-        this._id = id;
         this._shareId = shareId;
         this._version = 'v3.3.0';
+    }
+    id(id: number) {
+        this._id = id;
+        return this;
     }
     name(name: string) {
         this._name = name;

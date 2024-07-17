@@ -209,7 +209,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return { restDmg: restDmg - 1 }
         }),
 
-    111021: (isTalent = false) => new StatusBuilder('猫爪护盾').combatStatus().type(STATUS_TYPE.Shield)
+    111021: (isTalent: boolean = false) => new StatusBuilder('猫爪护盾').combatStatus().type(STATUS_TYPE.Shield)
         .useCnt(isTalent ? 2 : 1).description('为我方出战角色提供1点[护盾]。').talent(isTalent),
 
     111031: () => new StatusBuilder('寒冰之棱').combatStatus().type(STATUS_TYPE.Attack).useCnt(3)
@@ -223,7 +223,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    111041: (isTalent = false) => new StatusBuilder('重华叠霜领域').combatStatus().roundCnt(2).talent(isTalent).icon('buff')
+    111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus().roundCnt(2).talent(isTalent).icon('buff')
         .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`)
         .type(STATUS_TYPE.AddDamage).type(STATUS_TYPE.Enchant, isTalent)
         .handle((status, event = {}) => {
@@ -236,7 +236,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    111052: (_, rcnt = 1, addDmg = 0) => enchantStatus(ELEMENT_TYPE.Cryo, addDmg).roundCnt(rcnt),
+    111052: (rcnt: number = 1, addDmg: number = 0) => enchantStatus(ELEMENT_TYPE.Cryo, addDmg).roundCnt(rcnt),
 
     111061: () => new StatusBuilder('冷酷之心').heroStatus().icon('buff4').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
@@ -247,7 +247,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.useCnt },
         })),
 
-    // 111071: (_, isTalent = false) => new GIStatus(111071, '冰翎', `我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`,
+    // 111071: (isTalent:boolean = false) => new GIStatus(111071, '冰翎', `我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`,
     //     'buff4', STATUS_GROUP.combatStatus, [STATUS_TYPE.AddDamage], 2, 0, -1, (status, event = {}) => {
     //         const { skilltype = -1 } = event;
     //         return {
@@ -277,7 +277,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2002: (isTalent = false) => new GIStatus(2002, '雨帘剑', `【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`,
+    // 2002: (isTalent:boolean = false) => new GIStatus(2002, '雨帘剑', `【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`,
     //     '', 1, [2], isTalent ? 3 : 2, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0 } = event;
     //         if (restDmg < 3 - +status.isTalent) return { restDmg }
@@ -498,7 +498,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: () => { --status.useCnt },
     //     })),
 
-    // 2034: (isTalent = false) => new GIStatus(2034, '鼓舞领域', '【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】',
+    // 2034: (isTalent:boolean = false) => new GIStatus(2034, '鼓舞领域', '【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】',
     //     'ski1203,2', 1, [1, 4, 6], -1, 0, 2, (status, event = {}) => {
     //         const { heros = [], hidx = -1, trigger = '' } = event;
     //         if (hidx == -1) return;
@@ -538,7 +538,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { pct: 1, icbg: STATUS_BG_COLOR[6] }),
 
-    // 2040: (isTalent = false) => new GIStatus(2040, '庭火焰硝', `所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；【[可用次数]：{useCnt}】`,
+    // 2040: (isTalent:boolean = false) => new GIStatus(2040, '庭火焰硝', `所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；【[可用次数]：{useCnt}】`,
     //     'buff4', 0, [1, 6, 8], 3, 0, -1, (status, event = {}) => {
     //         const { trigger = '' } = event;
     //         return {
@@ -573,7 +573,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         return { restDmg: restDmg - 1 }
     //     }, { smnId: summonId }),
 
-    // 2043: (isTalent = false) => new GIStatus(2043, '水光破镜', '所附属角色受到的[水元素伤害]+1。；【[持续回合]：{roundCnt}】；(同一方场上最多存在一个此状态)',
+    // 2043: (isTalent:boolean = false) => new GIStatus(2043, '水光破镜', '所附属角色受到的[水元素伤害]+1。；【[持续回合]：{roundCnt}】；(同一方场上最多存在一个此状态)',
     //     'debuff', 0, isTalent ? [4, 6] : [6], -1, 0, isTalent ? 3 : 2, status => {
     //         const trigger: Trigger[] = ['water-getdmg'];
     //         if (status.isTalent) trigger.push('change-from');
@@ -585,7 +585,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { isTalent }),
 
-    // 2044: (isTalent = false) => new GIStatus(2044, '潜行', '所附属角色受到的伤害-1，造成的伤害+1。；【[可用次数]：{useCnt}】',
+    // 2044: (isTalent:boolean = false) => new GIStatus(2044, '潜行', '所附属角色受到的伤害-1，造成的伤害+1。；【[可用次数]：{useCnt}】',
     //     '', 0, isTalent ? [2, 6, 8] : [2, 6], isTalent ? 3 : 2, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0 } = event;
     //         if (restDmg > 0) --status.useCnt;
@@ -726,7 +726,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         },
     //     })),
 
-    // 2058: (isTalent = false) => new GIStatus(2058, '爆裂火花', '【所附属角色进行[重击]时：】少花费1个[火元素骰]，并且伤害+1。；【[可用次数]：{useCnt}】',
+    // 2058: (isTalent:boolean = false) => new GIStatus(2058, '爆裂火花', '【所附属角色进行[重击]时：】少花费1个[火元素骰]，并且伤害+1。；【[可用次数]：{useCnt}】',
     //     'buff5', 0, [4, 6], isTalent ? 2 : 1, 0, -1, (status, event = {}) => {
     //         if (!event.isChargedAtk) return;
     //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] });
@@ -975,7 +975,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         },
     //     }), { icbg: STATUS_BG_COLOR[3] }),
 
-    // 2082: (isTalent = false) => new GIStatus(2082, '风域', `【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；【[可用次数]：{useCnt}】`,
+    // 2082: (isTalent:boolean = false) => new GIStatus(2082, '风域', `【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；【[可用次数]：{useCnt}】`,
     //     'buff3', 1, [4], 2, 0, -1, status => ({
     //         minusDiceHero: 1,
     //         trigger: ['change-from'],
@@ -1068,7 +1068,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2089: (isTalent = false) => new GIStatus(2089, '摩耶之殿', '【我方引发元素反应时：】伤害额外+1。；【[持续回合]：{roundCnt}】',
+    // 2089: (isTalent:boolean = false) => new GIStatus(2089, '摩耶之殿', '【我方引发元素反应时：】伤害额外+1。；【[持续回合]：{roundCnt}】',
     //     'ski1603,3', 1, [6], -1, 0, isTalent ? 3 : 2, () => ({
     //         addDmgCdt: 1,
     //         trigger: ['elReaction'],
@@ -1118,7 +1118,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2094: () => readySkillShieldStatus(2094, '苍鹭护盾'),
 
-    // 2095: (isTalent = false) => new GIStatus(2095, '赤冕祝祷', `我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}【[持续回合]：{roundCnt}】`,
+    // 2095: (isTalent:boolean = false) => new GIStatus(2095, '赤冕祝祷', `我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}【[持续回合]：{roundCnt}】`,
     //     'ski1107,2', 1, [1, 6, 8], -1, 0, 2, (status, event = {}) => {
     //         const { heros = [], hidx = -1, trigger = '' } = event;
     //         const isWeapon = hidx > -1 && [1, 2, 5].includes(heros[hidx]?.weaponType ?? 0);
@@ -1721,7 +1721,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }), { expl: ['rsk8', 'rsk9', 'rsk10', 'rsk11'] }),
 
-    // 2154: (isTalent = false) => new GIStatus(2154, '炽火大铠', '【我方角色｢普通攻击｣后：】造成1点[火元素伤害]，生成【sts2106】。；【[可用次数]：{useCnt}】',
+    // 2154: (isTalent:boolean = false) => new GIStatus(2154, '炽火大铠', '【我方角色｢普通攻击｣后：】造成1点[火元素伤害]，生成【sts2106】。；【[可用次数]：{useCnt}】',
     //     'ski1211,2', 1, [1], isTalent ? 3 : 2, 0, -1, (_status: Status) => ({
     //         damage: 1,
     //         element: 2,
@@ -1761,7 +1761,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     })),
 
-    // 2158: (isTalent = false, useCnt = 2, addCnt?: number) => new GIStatus(2158, '原海明珠', `【所附属角色受到伤害时：】抵消1点伤害。；【每回合${isTalent ? 2 : 1}次：】抵消来自召唤物的伤害时不消耗[可用次数]。；【[可用次数]：{useCnt}】；【我方宣布结束时：】如果所附属角色为｢出战角色｣，则摸1张牌。`,
+    // 2158: (isTalent:boolean = false, useCnt = 2, addCnt?: number) => new GIStatus(2158, '原海明珠', `【所附属角色受到伤害时：】抵消1点伤害。；【每回合${isTalent ? 2 : 1}次：】抵消来自召唤物的伤害时不消耗[可用次数]。；【[可用次数]：{useCnt}】；【我方宣布结束时：】如果所附属角色为｢出战角色｣，则摸1张牌。`,
     //     '', 0, [2, 4], useCnt, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0, heros = [], hidx = -1, dmgSource = -1 } = event;
     //         if (restDmg > 0) {

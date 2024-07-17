@@ -1,7 +1,7 @@
 import { Card } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardSubtypeSupport, CardTag, CardType, DiceType, HERO_LOCAL_CODE_KEY,
-    HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, Version, WEAPON_TYPE_CODE_KEY, WeaponType
+    HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import { getHidById } from "../../utils/gameUtil.js";
@@ -42,11 +42,11 @@ export class GICard {
     constructor(
         id: number, shareId: number, name: string, version: Version, description: string, src: string, cost: number, costType: DiceType,
         type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0,
-        handle?: (card: Card, event: CardHandleEvent) => CardHandleRes | undefined,
+        handle?: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number,
-            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean,
+            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version
         } = {}
     ) {
         this.id = id;
@@ -56,7 +56,7 @@ export class GICard {
         subType ??= [];
         if (typeof subType !== 'object') subType = [subType];
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2,
-            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1 } = options;
+            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0] } = options;
         let { canSelectHero = 0 } = options;
         const hid = getHidById(id);
         description = description
@@ -77,10 +77,10 @@ export class GICard {
             this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
             const ohandle = handle;
             handle = (card, event) => {
-                const res = ohandle?.(card, event) ?? {};
+                const res = ohandle?.(card, event, ver) ?? {};
                 return {
                     ...res,
-                    status: [...(res?.status ?? []), newStatus(version)(303300)],
+                    status: [...(res?.status ?? []), newStatus(ver)(303300)],
                 }
             }
         } else if (subType?.includes(CARD_SUBTYPE.Talent)) {
@@ -93,7 +93,7 @@ export class GICard {
                 handle = (card, event) => {
                     const { slotUse = false } = event;
                     if (slotUse) return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }
-                    return ohandle?.(card, event);
+                    return ohandle?.(card, event, ver);
                 }
             }
             this.UI.description = this.UI.description
@@ -125,7 +125,7 @@ export class GICard {
                 if (isResetUct) card.useCnt = uct;
                 if (!spReset) return {}
             }
-            return handle?.(card, event) ?? {};
+            return handle?.(card, event, ver) ?? {};
         }
         this.useCnt = uct;
         this.perCnt = pct;
@@ -151,6 +151,7 @@ export class GICard {
 }
 
 export class CardBuilder extends BaseBuilder {
+    private _curVersion: Version = VERSION[0];
     private _type: CardType = CARD_TYPE.Event;
     private _subtype: CardSubtype[] = [];
     private _tag: CardTag[] = [];
@@ -159,7 +160,7 @@ export class CardBuilder extends BaseBuilder {
     private _perCnt: number = 0;
     private _energy: number = 0;
     private _anydice: number = 0;
-    private _handle: ((card: Card, event: CardHandleEvent) => CardHandleRes | undefined) | undefined;
+    private _handle: ((card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined) | undefined;
     private _canSelectHero: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
@@ -168,10 +169,20 @@ export class CardBuilder extends BaseBuilder {
     private _isSpReset: boolean = false;
     private _src: string = '';
     private _description: string = '';
-    private _cnt: number = 2;
     private _explains: string[] = [];
-    constructor(id: number, shareId: number) {
-        super(id, shareId);
+    private _cnt: number = 2;
+    constructor(shareId: number) {
+        super(shareId);
+    }
+    get notInCardPool() {
+        return this._cnt == -2;
+    }
+    get notExist() {
+        return this._version > this._curVersion;
+    }
+    version(version?: Version) {
+        if (version != undefined) this._curVersion = version;
+        return this;
     }
     description(description: string) {
         this._description = description;
@@ -196,7 +207,7 @@ export class CardBuilder extends BaseBuilder {
     }
     weapon(weaponType?: WeaponType) {
         this._subtype.push(CARD_SUBTYPE.Weapon);
-        this._userType = weaponType ?? WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10];
+        if (weaponType != undefined) this._userType = weaponType;
         return this.equipment();
     }
     artifact() {
@@ -208,8 +219,6 @@ export class CardBuilder extends BaseBuilder {
         if (skillIdx != -1) {
             this._subtype.push(CARD_SUBTYPE.Action);
             this._userType = skillIdx;
-        } else {
-            this._userType = getHidById(this._id);
         }
         return this.equipment();
     }
@@ -268,7 +277,7 @@ export class CardBuilder extends BaseBuilder {
         this._canSelectSupport = canSelectSupport;
         return this;
     }
-    handle(handle: (card: Card, event: CardHandleEvent) => CardHandleRes | undefined) {
+    handle(handle: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined) {
         this._handle = handle;
         return this;
     }
@@ -285,6 +294,13 @@ export class CardBuilder extends BaseBuilder {
         return this;
     }
     done() {
+        if (this.notExist) return;
+        if (this._subtype.includes(CARD_SUBTYPE.Weapon)) {
+            this._userType ||= WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10];
+        }
+        if (this._subtype.includes(CARD_SUBTYPE.Talent) && !this._subtype.includes(CARD_SUBTYPE.Action)) {
+            this._userType = getHidById(this._id);
+        }
         return new GICard(this._id, this._shareId, this._name, this._version, this._description, this._src,
             this._cost, this._costType, this._type, this._subtype, this._userType, this._handle,
             {
@@ -301,6 +317,7 @@ export class CardBuilder extends BaseBuilder {
                 isResetUct: this._isResetUseCnt,
                 isResetPct: this._isResetPerCnt,
                 spReset: this._isSpReset,
+                ver: this._curVersion,
             });
     }
 }

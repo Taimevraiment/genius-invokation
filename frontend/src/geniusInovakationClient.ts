@@ -34,7 +34,7 @@ export default class GeniusInvokationClient {
     willAttachs: ElementType[][] = []; // 将要附着的元素
     willDamages: number[][] = []; // 将要受到的伤害
     dmgElements: DamageType[] = []; // 造成伤害元素
-    willHeals: number[][] = []; // 回血量
+    willHeals: number[] = []; // 回血量
     willHp: (number | undefined)[] = []; // 总共的血量变化
     elTips: [string, PureElementType, PureElementType][] = new Array(6).fill(['', 0, 0]); // 元素反应提示
     isShowDmg: boolean = false; // 是否显示伤害数
@@ -331,7 +331,7 @@ export default class GeniusInvokationClient {
      * @param data
      */
     getServerInfo(data: Readonly<ServerData>) {
-        const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, log, isWin, flag } = data;
+        const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO, log, isWin, flag } = data;
         console.info(flag);
         this.players = players;
         this.updateHandCardsPos();
@@ -347,7 +347,25 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
         this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
+        this.dmgElements = damageVO?.dmgElements ?? [];
+        this.elTips = damageVO?.elTips ?? [];
         this.log = log;
+        if ((damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0) {
+            this.isShowDmg = true;
+            setTimeout(() => {
+                this.willDamages = damageVO?.willDamages ?? [];
+                this.willHeals = damageVO?.willHeals ?? [];
+                setTimeout(() => {
+                    this.isShowDmg = false;
+                    setTimeout(() => {
+                        this._resetWillDamages();
+                        this.dmgElements = [];
+                        this.elTips = [];
+                        this.willHeals = [];
+                    }, 500);
+                }, 1100);
+            }, 300);
+        }
     }
     /**
      * 游戏开始时换卡

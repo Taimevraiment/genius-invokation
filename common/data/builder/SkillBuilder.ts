@@ -265,13 +265,13 @@ export class Skill1Builder {
     }
     done() {
         this._weaponType ??= WEAPON_TYPE.Other;
-        const costElement = this._costElement == ELEMENT_TYPE.Physical ? DICE_TYPE.Same : this._costElement;
         const isCatalyst = this._weaponType == WEAPON_TYPE.Catalyst;
         const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
         return this._builder
             .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${this._description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])
-            .cost(1, costElement)
+            .cost(1)
+            .costElement(this._costElement)
             .damage(isCatalyst ? 1 : 2)
             .dmgElement(dmgElement)
             .perCnt(this._perCnt)

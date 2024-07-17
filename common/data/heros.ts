@@ -155,7 +155,7 @@ export const readySkill = (rskid: number, version: Version) => readySkillTotal[r
 
 const allHeros: Record<number, () => HeroBuilder> = {
 
-    1101: () => new HeroBuilder(1101, 1).name('甘雨').liyue().cryo().bow()
+    1101: () => new HeroBuilder(1).name('甘雨').liyue().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
         .skill1(new Skill1Builder('流天射术'))
@@ -179,7 +179,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle((_, ver) => ({ summon: [newSummon(ver)(111011)], pdmg: 1 }))
         ),
 
-    1102: () => new HeroBuilder(1102, 2).name('迪奥娜').mondstadt().cryo().bow()
+    1102: () => new HeroBuilder(2).name('迪奥娜').mondstadt().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
         .skill1(new Skill1Builder('猎人射术'))
@@ -198,7 +198,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(111023)], heal: 2 }))
         ),
 
-    1103: () => new HeroBuilder(1103, 3).name('凯亚').mondstadt().cryo().sword()
+    1103: () => new HeroBuilder(3).name('凯亚').mondstadt().cryo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png')
         .skill1(new Skill1Builder('仪典剑术'))
@@ -213,7 +213,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(4).handle((_, ver) => ({ status: [newStatus(ver)(111031)] }))
         ),
 
-    1104: () => new HeroBuilder(1104, 4).name('重云').liyue().cryo().claymore()
+    1104: () => new HeroBuilder(4).name('重云').liyue().cryo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png')
         .skill1(new Skill1Builder('灭邪四式'))
@@ -232,7 +232,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(7).cost(3)
         ),
 
-    1105: () => new HeroBuilder(1105, 5).name('神里绫华').inazuma().cryo().sword()
+    1105: () => new HeroBuilder(5).name('神里绫华').inazuma().cryo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/ede96c5aba784f50bc86dc66e5b16b12.png')
         .skill1(new Skill1Builder('神里流·倾'))
@@ -257,7 +257,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1106: () => new HeroBuilder(1106, 6).name('优菈').since('v3.5.0').mondstadt().cryo().claymore()
+    1106: () => new HeroBuilder(6).name('优菈').since('v3.5.0').mondstadt().cryo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png')
         .skill1(new Skill1Builder('西风剑术·宗室'))
@@ -275,7 +275,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(111062)] }))
         ),
 
-    // 1107: ver => new GIHero(1107, 7, '申鹤', 'v3.7.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Polearm,
+    // 1107: ver => new GIHero(7, '申鹤', 'v3.7.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Polearm,
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png',
     //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png',
     //     skill1('踏辰摄斗'), [
@@ -295,7 +295,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //     ], () => ({ summon: [newSummon(ver)(111073)] }))
     // ]),
 
-    // 1108: ver => new GIHero(1108, 8, '七七', 'v4.0.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
+    // 1108: ver => new GIHero(8, '七七', 'v4.0.0', HERO_LOCAL.Liyue, 10, ELEMENT_TYPE.Cryo, WEAPON_TYPE.Sword,
     //     'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png',
     //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png',
     //     skill1('云来古剑法'), [
@@ -324,7 +324,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //     })
     // ]),
 
-    // 1109: () => new GIHero(1109, '莱依拉', 4, 10, 4, 1,
+    // 1109: () => new GIHero('莱依拉', 4, 10, 4, 1,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/94b1677048ddaa84ab735bb8f90c209d_3451890112016676238.png',
     //     skill1('熠辉轨度剑'), [
     //     new GISkill('垂裳端凝之夜', '生成【sts2128】和【sts2129】。', 2, 0, 3, 4, {}, [
@@ -2024,14 +2024,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
 export const herosTotal = (version: Version = VERSION[0]) => {
     const heros: Hero[] = [];
     for (const idx in allHeros) {
-        const heroBuilder = allHeros[idx]();
-        if (heroBuilder._version > version) continue;
-        if (+idx > 6000) continue;
-        heros.push(heroBuilder.version(version).done());
+        const heroBuilder = allHeros[idx]().version(version);
+        if (!heroBuilder.inVersion || +idx > 6000) continue;
+        heros.push(heroBuilder.id(+idx).done());
     }
     return heros;
 }
 
-export const newHero = (version: Version = VERSION[0]) => (id: number) => allHeros[id]?.().version(version).done() ?? NULL_HERO();
+export const newHero = (version?: Version) => (id: number) => allHeros[id]?.().id(id).version(version).done() ?? NULL_HERO();
 
 export const parseHero = (shareId: number) => herosTotal().find(h => h.shareId == shareId) ?? NULL_HERO();

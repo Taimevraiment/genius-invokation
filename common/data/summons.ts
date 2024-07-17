@@ -1,92 +1,9 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { ELEMENT_TYPE, ElementType, SummonDestroyType, VERSION, Version } from "../constant/enum.js";
-import { ELEMENT_NAME } from "../constant/UIconst.js";
+import { Version } from "../constant/enum.js";
 import { getAtkHidx, getHidById, getMaxHertHidxs } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
-
-export class GISummon {
-    id: number; // 唯一id 从3000开始
-    entityId: number = -1; // 实体id
-    name: string; // 名字
-    useCnt: number; // 可用次数
-    maxUse: number; // 最大次数
-    shieldOrHeal: number; // 挡伤量(<0)/回复量(>0)
-    damage: number; // 伤害量
-    pdmg: number; // 穿透伤害
-    element: ElementType; // 伤害元素：0物理 1水 2火 3雷 4冰 5风 6岩 7草
-    isDestroy: SummonDestroyType; // 是否销毁：0次数用完销毁 1次数用完回合结束时销毁 2回合结束时强制销毁
-    perCnt: number; // 每回合次数
-    isTalent: boolean; // 是否有天赋
-    statusId: number; // 可能对应的状态 -1不存在
-    addition: string[]; // 额外信息
-    handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
-    isSelected: boolean = false; // 是否被选择
-    canSelect: boolean = false; // 是否能被选择
-    UI: {
-        src: string; // 图片url
-        description: string; // 描述
-        descriptions: string[], // 处理后的技能描述
-        hasPlus: boolean, // 是否有加号
-        isWill: boolean, // 是否为将要生成的召唤物
-        explains: string[], // 要解释的文本
-    };
-    constructor(
-        id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
-        shieldOrHeal: number, damage: number, element: ElementType, handle?: (summon: Summon, event: SummonHandleEvent) => SummonHandleRes | undefined,
-        options: {
-            pct?: number, isTalent?: boolean, adt?: string[], pdmg?: number, isDestroy?: SummonDestroyType,
-            stsId?: number, spReset?: boolean, expl?: string[], pls?: boolean,
-        } = {}
-    ) {
-        this.id = id;
-        this.name = name;
-        this.useCnt = useCnt;
-        this.maxUse = maxUse;
-        this.shieldOrHeal = shieldOrHeal;
-        this.damage = damage;
-        this.element = element;
-        const {
-            pct = 0, isTalent = false, adt = [], pdmg = 0, isDestroy = 0, stsId = -1,
-            spReset = false, expl = [], pls = false,
-        } = options;
-        const hid = getHidById(id);
-        this.UI = {
-            description: description
-                .replace(/{defaultAtk}/, '【结束阶段：】{dealDmg}。；【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `(可叠加，最多叠加到${maxUse}次)` : ''))
-                .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
-                .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
-                .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`),
-            src,
-            hasPlus: pls,
-            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
-            isWill: false,
-            descriptions: [],
-        }
-        this.perCnt = pct;
-        this.isTalent = isTalent;
-        this.addition = adt;
-        this.pdmg = pdmg;
-        this.isDestroy = isDestroy;
-        this.statusId = stsId;
-        this.handle = (summon, event = {}) => {
-            const { reset = false } = event;
-            if (reset) {
-                summon.perCnt = pct;
-                if (!spReset) return {}
-            }
-            if (handle) return handle(summon, event) ?? {};
-            return {
-                trigger: ['phase-end'],
-                exec: execEvent => phaseEndAtk(execEvent.summon ?? summon),
-            }
-        };
-    }
-    setEntityId(id: number): Summon {
-        if (this.entityId == -1) this.entityId = id;
-        return this;
-    }
-}
+import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 
 export type SummonHandleEvent = {
     trigger?: Trigger,
@@ -137,38 +54,34 @@ export type SummonExecRes = {
     switchHeroDiceCnt?: number,
 }
 
-const phaseEndAtk = (summon: Summon, healHidxs?: number[]): SummonHandleRes => {
-    if (summon.isDestroy == 0) summon.useCnt = Math.max(0, summon.useCnt - 1);
-    const cmds: Cmds[] = [];
-    if (summon.damage > 0) cmds.push({ cmd: 'attack' });
-    if (summon.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });
-    return { cmds }
-}
-
 // const crd907summon = (id: number) => {
 //     return new GISummon(id, '增殖生命体', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】',
 //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_2475050287145431617.png',
 //         1, 1, 0, 1, 7);
 // }
 
-const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = {
-    // 3000: () => new GISummon(3000, '', '', '', -1, -1, -1, 0, 0, () => ({})),
+const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
-    115: () => new GISummon(115, '燃烧烈焰', '{defaultAtk}',
-        'https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png',
-        1, 2, 0, 1, ELEMENT_TYPE.Pyro),
+    115: () => new SummonBuilder('燃烧烈焰').useCnt(1).maxUse(2).damage(1).pyro()
+        .description('{defaultAtk}')
+        .src('https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png'),
 
-    111011: () => new GISummon(111011, '冰灵珠', '【结束阶段：】{dealDmg}，对所有后台敌人造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/07c346ef7197c24c76a25d3b47ed5e66_3626039813983519562.png',
-        2, 2, 0, 1, ELEMENT_TYPE.Cryo, undefined, { pdmg: 1 }),
+    111011: () => new SummonBuilder('冰灵珠').useCnt(2).damage(1).pdmg(1)
+        .description('【结束阶段：】{dealDmg}，对所有后台敌人造成1点[穿透伤害]。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/07c346ef7197c24c76a25d3b47ed5e66_3626039813983519562.png'),
 
-    111051: () => new GISummon(111051, '霜见雪关扉', '{defaultAtk}',
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png',
-        2, 2, 0, 2, ELEMENT_TYPE.Cryo),
+    111023: () => new SummonBuilder('酒雾领域').useCnt(2).damage(1).heal(2)
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a8a7cc75353c6df3921b63e42f46fe7d_3484731987232379289.png'),
 
-    111062: () => new GISummon(111062, '光降之剑', '【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}; 每有1点｢能量层数｣，都使次伤害+1。(影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。)',
-        'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png',
-        0, 1000, 0, 3, ELEMENT_TYPE.Physical, (summon, event) => {
+    111051: () => new SummonBuilder('霜见雪关扉').useCnt(2).damage(2)
+        .description('{defaultAtk}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
+
+    111062: () => new SummonBuilder('光降之剑').maxUse(1000).damage(3).physical().plus().roundEnd()
+        .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}; 每有1点｢能量层数｣，都使次伤害+1。(影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
+        .handle((summon, event = {}) => {
             const { heros = [], trigger = '' } = event;
             return {
                 trigger: ['phase-end', 'skilltype1', 'skilltype2'],
@@ -186,11 +99,12 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
                     }
                 },
             }
-        }, { pls: true, isDestroy: 2 }),
+        }),
 
-    111073: () => new GISummon(111073, '箓灵', '{defaultAtk}；【召唤物在场时：】敌方角色受到的[冰元素伤害]和[物理伤害]+1。',
-        'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/7deee3f26916cf28fd145b110f81d852_4270139379454156566.png',
-        2, 2, 0, 1, ELEMENT_TYPE.Cryo, (summon, event) => {
+    111073: () => new SummonBuilder('箓灵').useCnt(2).damage(1)
+        .description('{defaultAtk}；【召唤物在场时：】敌方角色受到的[冰元素伤害]和[物理伤害]+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/7deee3f26916cf28fd145b110f81d852_4270139379454156566.png')
+        .handle((summon, event = {}) => {
             const { trigger = '' } = event;
             return {
                 addDmgCdt: 1,
@@ -202,9 +116,10 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
             }
         }),
 
-    111081: () => new GISummon(111081, '寒病鬼差', '{defaultAtk}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点; 【每回合1次：】再治疗我方出战角色1点。',
-        'https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png',
-        3, 3, 0, 1, ELEMENT_TYPE.Cryo, (summon, event) => {
+    111081: () => new SummonBuilder('寒病鬼差').useCnt(3).perCnt(1).damage(1)
+        .description('{defaultAtk}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点; 【每回合1次：】再治疗我方出战角色1点。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
+        .handle((summon, event = {}) => {
             const { heros = [], trigger = '', tround = 0, isExec = false } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = getMaxHertHidxs(heros);
@@ -228,7 +143,7 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
                     if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
                 },
             }
-        }, { pct: 1 }),
+        }),
 
     // 3004: () => new GISummon(3004, '虚影', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，造成{dmg}点[水元素伤害]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png',
@@ -319,10 +234,6 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
     // 3013: () => new GISummon(3013, '冰箭丘丘人', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png',
     //     2, 2, 0, 1, 4),
-
-    111023: () => new GISummon(111023, '酒雾领域', '【结束阶段：】造成{dmg}点[冰元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
-        'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a8a7cc75353c6df3921b63e42f46fe7d_3484731987232379289.png',
-        2, 2, 2, 1, ELEMENT_TYPE.Cryo),
 
     // 3015: () => new GISummon(3015, '歌声之环', '【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png',
@@ -977,4 +888,4 @@ const summonTotal: Record<number, (version: Version, ...args: any) => Summon> = 
 
 }
 
-export const newSummon = (version: Version = VERSION[0]) => (id: number, ...args: any) => summonTotal[id](version, ...args);
+export const newSummon = (version?: Version) => (id: number, ...args: any) => summonTotal[id](...args).id(id).version(version).done();
