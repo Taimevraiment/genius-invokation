@@ -577,6 +577,7 @@ export default class GeniusInvokationClient {
                     type: INFO_TYPE.Skill,
                     skidx,
                     info: this.getFrontHero(),
+                    combatStatus: this.player.combatStatus,
                 };
             } else {
                 this.modalInfo = NULL_MODAL();

@@ -5,6 +5,7 @@ import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { isCdt } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newStatus } from './statuses.js';
+import { newSupport } from './supports.js';
 
 export type CardHandleEvent = {
     heros?: Hero[],
@@ -165,7 +166,7 @@ const elCard = (shareId: number, element: PureElementType) => {
         .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 1, element }] }));
 }
 
-// const magicCount = (cnt: number, id?: number) => () => new GICard(id ?? (909 + 2 - cnt), `幻戏${cnt > 0 ? `倒计时：${cnt}` : '开始！'}`, `将我方所有元素骰转换为[万能元素骰]，摸4张牌。${cnt > 0 ? '；此牌在手牌或牌库中被[舍弃]后：将1张元素骰费用比此卡少1个的｢幻戏倒计时｣放置到你的牌库顶。' : ''}`,
+// const magicCount = (cnt: number, id?: number) => () => new GICard(id ?? (909 + 2 - cnt), `幻戏${cnt > 0 ? `倒计时：${cnt}` : '开始！'}`, `将我方所有元素骰转换为[万能元素骰]，抓4张牌。${cnt > 0 ? '；此牌在手牌或牌库中被[舍弃]后：将1张元素骰费用比此卡少1个的｢幻戏倒计时｣放置到你的牌库顶。' : ''}`,
 //     id ? 'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/9c032dc20cdd269e79296d893806b112_6984839959914845407.png' :
 //         `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Event_Event_MagicCount${cnt}.webp`,
 //     //  `/image/crd${909 + 2 - cnt}.png`,
@@ -200,34 +201,34 @@ const allCards: Record<number, () => CardBuilder> = {
     311103: () => tiankongWeapon(123).name('天空之卷')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/347336161ab1d81f0b5bf1508a392f64_4021839086739887808.png'),
 
-    311104: () => new CardBuilder(124).name('千夜浮梦').since('v3.7.0')
+    311104: () => new CardBuilder(124).name('千夜浮梦').since('v3.7.0').weapon().costSame(3).perCnt(2)
         .description('【角色造成的伤害+1】。；【我方角色引发元素反应时：】造成的伤害+1。(每回合最多触发2次)')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a56d5cf80b505c42a3643534d3dc2821_8758750260465224130.png')
-        .weapon().costSame(3).perCnt(2).handle(card => ({
+        .handle(card => ({
             addDmg: 1,
             addDmgCdt: isCdt(card.perCnt > 0, 1),
             trigger: isCdt<Trigger[]>(card.perCnt > 0, ['elReaction']),
             exec: () => { --card.perCnt }
         })),
 
-    311105: () => new CardBuilder(125).name('盈满之实').since('v3.8.0')
-        .description('【角色造成的伤害+1】。；【入场时：】摸2张牌。')
+    311105: () => new CardBuilder(125).name('盈满之实').since('v3.8.0').weapon().costAny(3)
+        .description('【角色造成的伤害+1】。；【入场时：】抓2张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/f396d3f86aecfc992feb76ed44485171_1252924063800768441.png')
-        .weapon().costAny(3).handle(() => ({ addDmg: 1, cmds: [{ cmd: 'getCard', cnt: 2 }] })),
+        .handle(() => ({ addDmg: 1, cmds: [{ cmd: 'getCard', cnt: 2 }] })),
 
-    311106: () => new CardBuilder(299).name('四风原典').since('v4.3.0')
+    311106: () => new CardBuilder(299).name('四风原典').since('v4.3.0').weapon().costSame(3).useCnt(0)
         .description('【此牌每有1点｢伤害加成｣，角色造成的伤害+1】。；【结束阶段：】此牌累积1点｢伤害加成｣。(最多累积到2点)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/c2774faa0cd618dddb0b7a641eede205_6906642161037931045.png')
-        .weapon().costSame(3).useCnt(0).handle(card => ({
+        .handle(card => ({
             addDmg: card.useCnt,
             trigger: isCdt(card.useCnt < 2, ['phase-end']),
             exec: () => { ++card.useCnt }
         })),
 
-    311107: () => new CardBuilder(300).name('图莱杜拉的回忆').since('v4.3.0')
+    311107: () => new CardBuilder(300).name('图莱杜拉的回忆').since('v4.3.0').weapon().costSame(3).perCnt(2)
         .description('【角色造成的伤害+1】。；【角色进行[重击]时：】少花费1个[无色元素骰]。(每回合最多触发2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/8f3cd8f38e2c411713f9b5e6dc826653_5506358063099958204.png')
-        .weapon().costSame(3).perCnt(2).handle((card, event) => {
+        .handle((card, event) => {
             const { isChargedAtk = false, isMinusDiceSkill = false } = event;
             return {
                 addDmg: 1,
@@ -237,10 +238,10 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311108: () => new CardBuilder(342).name('万世流涌大典').since('v4.5.0')
+    311108: () => new CardBuilder(342).name('万世流涌大典').since('v4.5.0').weapon().costSame(3).perCnt(1).useCnt(0).isResetUseCnt()
         .description('【角色造成的伤害+1】。；【角色受到伤害或治疗后：】如果本回合已受到伤害或治疗累积2次，则角色本回合中下次造成的伤害+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/9a6794d76b3ea150a101e354f9f5a162_9095966637954555968.png')
-        .weapon().costSame(3).perCnt(1).useCnt(0).isResetUseCnt().handle((card, event, ver) => {
+        .handle((card, event, ver) => {
             const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
             const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) && card.perCnt > 0;
             return {
@@ -254,10 +255,10 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311109: () => new CardBuilder(379).name('金流监督').since('v4.7.0')
+    311109: () => new CardBuilder(379).name('金流监督').since('v4.7.0').weapon().costSame(2).perCnt(2)
         .description('【角色受到伤害或治疗后：】使角色本回合中下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。(每回合至多2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/83ab325be102a71a7df848546e7eacbb_2193569914822395358.png')
-        .weapon().costSame(2).perCnt(2).handle((card, event, ver) => {
+        .handle((card, event, ver) => {
             const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
             const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) && card.perCnt > 0;
             if (!isMinus) return;
@@ -278,10 +279,10 @@ const allCards: Record<number, () => CardBuilder> = {
     311203: () => tiankongWeapon(128).name('天空之翼')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/b50f747817c941c6ea72a56b4501a99c_2147958904876284896.png'),
 
-    311204: () => new CardBuilder(129).name('阿莫斯之弓').since('v3.7.0')
+    311204: () => new CardBuilder(129).name('阿莫斯之弓').since('v3.7.0').weapon().costSame(3).perCnt(1)
         .description('【角色造成的伤害+1】。；【角色使用原本元素骰费用+充能费用至少为5的技能时，】伤害额外+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d974aa6b36205d2c4ee83900f6383f40_5244142374562514025.png')
-        .weapon().costSame(3).perCnt(1).handle((card, event) => {
+        .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], isSkill = -1 } = event;
             let isAddDmg = card.perCnt > 0 && isSkill > -1;
             if (isAddDmg) {
@@ -296,10 +297,10 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311205: () => new CardBuilder(130).name('终末嗟叹之诗').since('v3.7.0')
+    311205: () => new CardBuilder(130).name('终末嗟叹之诗').since('v3.7.0').weapon().costSame(3)
         .description('【角色造成的伤害+1】。；【角色使用｢元素爆发｣后：】生成【sts301102】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fc5f899e61c9236a1319ea0f3c8b7a64_3821389462721294816.png')
-        .weapon().costSame(3).handle((_c, _e, ver) => ({
+        .handle((_c, _e, ver) => ({
             addDmg: 1,
             trigger: ['skilltype3'],
             execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301102)] }],
@@ -308,10 +309,10 @@ const allCards: Record<number, () => CardBuilder> = {
     311206: () => senlin1Weapon(131, '王下近侍', 301103).since('v4.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/c667e01fa50b448958eff1d077a7ce1b_1806864451648421284.png'),
 
-    311207: () => new CardBuilder(380).name('竭泽').since('v4.7.0')
-        .description('【我方打出名称不存在于初始牌组中的行动牌后：】此牌累积1点｢渔猎｣。(最多累积2点，每回合最多累积2点)；【角色使用技能时：】如果此牌已有｢渔猎｣，则消耗所有｢渔猎｣，使此技能伤害+1，并且每消耗1点｢渔猎｣就摸1张牌。')
+    311207: () => new CardBuilder(380).name('竭泽').since('v4.7.0').weapon().costSame(2).perCnt(2).useCnt(0)
+        .description('【我方打出名称不存在于初始牌组中的行动牌后：】此牌累积1点｢渔猎｣。(最多累积2点，每回合最多累积2点)；【角色使用技能时：】如果此牌已有｢渔猎｣，则消耗所有｢渔猎｣，使此技能伤害+1，并且每消耗1点｢渔猎｣就抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ea03edad3c81f49bddc24a5689f278d2_6229118249248157024.png')
-        .weapon().costSame(2).perCnt(2).useCnt(0).handle((card, event) => {
+        .handle((card, event) => {
             const { playerInfo: { initCardIds = [] } = {}, hcard, trigger = '' } = event;
             const triggers: Trigger[] = [];
             if (card.useCnt > 0) triggers.push('skill');
@@ -469,7 +470,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { uct: 0 }),
 
-    // 69: () => new GICard(69, '勘探钻机', '【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就摸1张牌。',
+    // 69: () => new GICard(69, '勘探钻机', '【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_KanTanQiang.webp',
     //     2, 8, 0, [-1, 0], 5, 1, (card, event) => {
     //         const { restDmg = -1, hcards: { length: hcardsCnt } = [] } = event;
@@ -793,7 +794,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { uct: 0.681 }),
 
-    // 117: () => new GICard(117, '沙王的投影', '【入场时：】摸1张牌。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】摸1张牌。(每回合1次)',
+    // 117: () => new GICard(117, '沙王的投影', '【入场时：】抓1张牌。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/fe25340f51936207ac2a9e71a8cad87e_3874053549243035788.png',
     //     1, 8, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [] } = event;
@@ -808,7 +809,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 118: () => new GICard(118, '饰金之梦', '【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则改为生成2个。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】摸1张牌。(每回合1次)',
+    // 118: () => new GICard(118, '饰金之梦', '【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则改为生成2个。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/b0f1283d8fec75259495c4ef24cc768a_277942760294951822.png',
     //     3, 8, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [] } = event;
@@ -824,7 +825,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 119: () => new GICard(119, '浮溯之珏', '【角色使用｢普通攻击｣后：】摸1张牌。(每回合1次)',
+    // 119: () => new GICard(119, '浮溯之珏', '【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8ac2175960ea0dace83f9bd76efb70ef_3923530911851671969.png',
     //     0, 8, 0, [1], 0, 1, card => ({
     //         trigger: ['skilltype1'],
@@ -834,7 +835,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }), { pct: 1 }),
 
-    // 120: () => new GICard(120, '来歆余响', '【角色使用｢普通攻击｣后：】摸1张牌。(每回合1次)；【角色使用技能后：】如果我方元素骰数量不多于手牌数量，则生成1个所附属角色类型的元素骰。(每回合1次)',
+    // 120: () => new GICard(120, '来歆余响', '【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)；【角色使用技能后：】如果我方元素骰数量不多于手牌数量，则生成1个所附属角色类型的元素骰。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/d9db70a7475940b91d63699e1276678d_8473736559088406285.png',
     //     2, 8, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [], dicesCnt = 0, trigger = '' } = event;
@@ -853,7 +854,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 3 }),
 
-    // 121: () => new GICard(121, 307, '灵光明烁之心', '【角色受到伤害后：】如果所附属角色为｢出战角色｣，则摸1张牌。(每回合1次)',
+    // 121: () => new GICard(121, 307, '灵光明烁之心', '【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/3a2b86994907366639498965934b1d99_16804113149239958.png',
     //     0, 8, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [] } = event;
@@ -868,7 +869,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 122: () => new GICard(122, '花海甘露之光', '【角色受到伤害后：】如果所附属角色为｢出战角色｣，则摸1张牌，并且在本回合结束阶段中治疗所附属角色1点。(每回合1次)',
+    // 122: () => new GICard(122, '花海甘露之光', '【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌，并且在本回合结束阶段中治疗所附属角色1点。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/aaaf307c3c9725d0c8f0be7d264e04bd_9827908420304255.png',
     //     1, 8, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs = [], trigger = '' } = event;
@@ -884,7 +885,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 123: () => new GICard(123, '老兵的容颜', '【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】摸1张牌。',
+    // 123: () => new GICard(123, '老兵的容颜', '【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/166e56c3c68e531c97f4fdfde1adde06_4511818010196081435.png',
     //     2, 0, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
@@ -900,7 +901,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { uct: 0, pct: 1, isResetUct: true }),
 
-    // 124: () => new GICard(124, '逐影猎人', '【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】摸1张牌。；【第四次触发：】生成1个此角色类型的元素骰。',
+    // 124: () => new GICard(124, '逐影猎人', '【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。；【第四次触发：】生成1个此角色类型的元素骰。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/8d877f34a6ce748ac2f474d83fa05785_4045703223333362794.png',
     //     3, 0, 0, [1], 0, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
@@ -1042,9 +1043,10 @@ const allCards: Record<number, () => CardBuilder> = {
 
     // 193: advancedElArtifact(193, '深林的记忆', 7, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/8c84639efb7e6a9fb445daafdee873fe_8494733884893501982.png'),
 
-    // 201: ver => new GICard(201, '璃月港口', ver, '【结束阶段：】摸2张牌。；[可用次数]：2。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/c9f669c64195790d3ca31ee6559360ab_669337352006808767.png',
-    //     2, 8, 1, [2], 0, 0, card => ({ support: [newSupport(4003, card)] })),
+    321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
+        .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/c9f669c64195790d3ca31ee6559360ab_669337352006808767.png')
+        .handle((card, _, ver) => ({ support: [newSupport(ver)(card)] })),
 
     // 202: () => new GICard(202, '骑士团图书馆', '【入场时：】选择任意元素骰重投。；【投掷阶段：】获得额外一次重投机会。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/cedc39cd65a6fde9ec51971973328b74_5542237863639059092.png',
@@ -1118,7 +1120,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/2bfc84b730feaf6a350373080d97c255_2788497572764739451.png',
     //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4049, 219)] })),
 
-    // 220: () => new GICard(220, '赤王陵', '【对方累积摸4张牌后：】弃置此牌，在对方牌库顶生成2张【crd908】。然后直到本回合结束前，对方每摸1张牌，就立刻生成1张【crd908】随机地置入对方牌库中。',
+    // 220: () => new GICard(220, '赤王陵', '【对方累积抓4张牌后：】弃置此牌，在对方牌库顶生成2张【crd908】。然后直到本回合结束前，对方每抓1张牌，就立刻生成1张【crd908】随机地置入对方牌库中。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ad50dbbd94e8a1e52add8ad5efa5d61f_7946928210268600604.png',
     //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4052, 220)] })),
 
@@ -1162,15 +1164,15 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/0fa92f9ea49deff80274c1c4702e46e3_5650398579643580888.png',
     //     2, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4015, 306)] })),
 
-    // 307: () => new GICard(307, '提米', '【每回合自动触发1次：】此牌累积1只｢鸽子｣。；如果此牌已累积3只｢鸽子｣，则弃置此牌，摸1张牌，并生成1点[万能元素骰]。',
+    // 307: () => new GICard(307, '提米', '【每回合自动触发1次：】此牌累积1只｢鸽子｣。；如果此牌已累积3只｢鸽子｣，则弃置此牌，抓1张牌，并生成1点[万能元素骰]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/638d754606562a2ff5aa768e9e0008a9_2604997534782710176.png',
     //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4016, 307)] })),
 
-    // 308: () => new GICard(308, '立本', '【结束阶段：】收集我方未使用的元素骰(每种最多1个)。；【行动阶段开始时：】如果此牌已收集3个元素骰，则摸2张牌，生成2点[万能元素骰]，然后弃置此牌。',
+    // 308: () => new GICard(308, '立本', '【结束阶段：】收集我方未使用的元素骰(每种最多1个)。；【行动阶段开始时：】如果此牌已收集3个元素骰，则抓2张牌，生成2点[万能元素骰]，然后弃置此牌。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/dbe203124b2b61d17f0c46523679ee52_7625356549640398540.png',
     //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4005, 308)] })),
 
-    // 309: () => new GICard(309, '常九爷', '【双方角色使用技能后：】如果造成了[物理伤害]、[穿透伤害]或引发了【元素反应】，此牌积累1个｢灵感｣。；如果此牌已积累3个｢灵感｣，弃置此牌并摸2张牌。',
+    // 309: () => new GICard(309, '常九爷', '【双方角色使用技能后：】如果造成了[物理伤害]、[穿透伤害]或引发了【元素反应】，此牌积累1个｢灵感｣。；如果此牌已积累3个｢灵感｣，弃置此牌并抓2张牌。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/df918cc6348b04d9f287c9b2f429c35c_3616287504640722699.png',
     //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4004, 309)] })),
 
@@ -1210,7 +1212,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/c332425d700b588ed93ae01f9817e568_3896726709346713005.png',
     //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4034, 318)] })),
 
-    // 319: () => new GICard(319, '塞塔蕾', '【双方执行任何行动后，手牌数量为0时：】摸1张牌。；[可用次数]：3',
+    // 319: () => new GICard(319, '塞塔蕾', '【双方执行任何行动后，手牌数量为0时：】抓1张牌。；[可用次数]：3',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/b4a9b32d9ff26697821d3cf0f2444ef7_7283838166930329300.png',
     //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4035, 319)] })),
 
@@ -1229,7 +1231,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { support: [newSupport(4045, 322, destroyedSupport)] }
     //     }),
 
-    // 323: () => new GICard(323, '西尔弗和迈勒斯', '此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为｢侍从的周到｣。(最多4点)；【结束阶段：】如果｢侍从的周到｣至少为3，则弃置此牌，然后摸｢侍从的周到｣点数的牌。',
+    // 323: () => new GICard(323, '西尔弗和迈勒斯', '此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为｢侍从的周到｣。(最多4点)；【结束阶段：】如果｢侍从的周到｣至少为3，则弃置此牌，然后抓｢侍从的周到｣点数的牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/e160832e6337e402fc01d5f89c042aa3_8868205734801507533.png',
     //     1, 8, 1, [3], 0, 0, (_card, event) => {
     //         const { playerInfo: { oppoGetElDmgType = 0 } = {} } = event;
@@ -1246,7 +1248,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png',
     //     2, 0, 1, [3], 0, 0, () => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 902, element: 1 }], support: [newSupport(4050, 324)] })),
 
-    // 325: () => new GICard(325, '白手套和渔夫', '【结束阶段：】生成1张【crd903】，随机将其置入我方牌库顶部5张牌之中。；如果此牌的[可用次数]仅剩1次，则摸1张牌。；[可用次数]：2',
+    // 325: () => new GICard(325, '白手套和渔夫', '【结束阶段：】生成1张【crd903】，随机将其置入我方牌库顶部5张牌之中。；如果此牌的[可用次数]仅剩1次，则抓1张牌。；[可用次数]：2',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/08e6d818575b52bd4459ec98798a799a_2502234583603653928.png',
     //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4051, 325)] })),
 
@@ -1270,7 +1272,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e48e87cff7b902011afa232be419b12a_7174729288626413060.png',
     //     2, 8, 1, [4], 0, 0, () => ({ support: [newSupport(4037, 403)] })),
 
-    // 404: () => new GICard(404, '寻宝仙灵', '【我方角色使用技能后：】此牌累积1个｢寻宝线索｣。；当此牌已累积3个｢寻宝线索｣时，弃置此牌并摸3张牌。',
+    // 404: () => new GICard(404, '寻宝仙灵', '【我方角色使用技能后：】此牌累积1个｢寻宝线索｣。；当此牌已累积3个｢寻宝线索｣时，弃置此牌并抓3张牌。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/4321ae941ccf75069eb630547df61e3c_1672242083656433331.png',
     //     1, 8, 1, [4], 0, 0, () => ({ support: [newSupport(4038, 404)] })),
 
@@ -1282,7 +1284,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/aa32049459ce38daffbfe5dc82eb9303_2738230079920133028.png',
     //     1, 8, 1, [4], 0, 0, () => ({ support: [newSupport(4044, 406)] })),
 
-    // 407: () => new GICard(407, '流明石触媒', '【我方打出行动牌后：】如果此牌在场期间本回合中我方已打出3张行动牌，则摸1张牌并生成1个[万能元素骰]。(每回合1次)；[可用次数]：3',
+    // 407: () => new GICard(407, '流明石触媒', '【我方打出行动牌后：】如果此牌在场期间本回合中我方已打出3张行动牌，则抓1张牌并生成1个[万能元素骰]。(每回合1次)；[可用次数]：3',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/f705b86904d8413be39df62741a8c81e_885257763287819413.png',
     //     2, 8, 1, [4], 0, 0, () => ({ support: [newSupport(4048, 407)] })),
 
@@ -1305,7 +1307,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/524d3e5c5e6f3fad28a931abd9c7bb92_2495658906309226331.png',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'reroll', cnt: 2 }] })),
 
-    // 504: () => new GICard(504, '运筹帷幄', '摸2张牌。',
+    // 504: () => new GICard(504, '运筹帷幄', '抓2张牌。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/88a4ec8b97063fad015a9112ee352a88_3657371852718944273.png',
     //     1, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }] })),
 
@@ -1470,7 +1472,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/e8473742fd9e3966ccba393f52a1915a_7280949762836305617.png',
     //     3, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getDice', cnt: 4, element: -1 }] })),
 
-    // 518: () => new GICard(518, '永远的友谊', '牌数小于4的牌手摸牌，直到手牌数各为4张。',
+    // 518: () => new GICard(518, '永远的友谊', '牌数小于4的牌手抓牌，直到手牌数各为4张。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/31/183046623/d5a778eb85b98892156d269044c54147_5022722922597227063.png',
     //     2, 8, 2, [], 0, 0, (_card, event) => {
     //         const { hcards: { length: hcardsCnt } = [], ehcardsCnt = 0 } = event;
@@ -1497,7 +1499,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }),
 
-    // 521: () => new GICard(521, '拳力斗技！', '【我方至少剩余8个元素骰，且对方未宣布结束时，才能打出：】本回合中一位牌手先宣布结束时，未宣布结束的牌手摸2张牌。',
+    // 521: () => new GICard(521, '拳力斗技！', '【我方至少剩余8个元素骰，且对方未宣布结束时，才能打出：】本回合中一位牌手先宣布结束时，未宣布结束的牌手抓2张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/fa58de973ea4811ffe1812487dfb51c4_1089814927914226900.png',
     //     0, 8, 2, [], 0, 0, (_card, event) => {
     //         const { dicesCnt = 0, ephase = -1 } = event;
@@ -1580,7 +1582,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ZhuanQian.webp',
     //     0, 8, 2, [], 0, 0, () => ({ status: [newStatus(2223)] })),
 
-    // 532: () => new GICard(532, '噔噔！', '对我方｢出战角色｣造成1点[物理伤害]。本回合的结束阶段时，摸2张牌。',
+    // 532: () => new GICard(532, '噔噔！', '对我方｢出战角色｣造成1点[物理伤害]。本回合的结束阶段时，抓2张牌。',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_DengDeng.webp',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'attack', element: 0, cnt: 1, isOppo: true }], status: [newStatus(2222)] })),
 
@@ -1611,7 +1613,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { cmds: [{ cmd: 'attach', hidxs, element: -1 }], isValid }
     //     }),
 
-    // 565: () => new GICard(565, '万家灶火', '【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的｢天赋｣牌，则摸1张｢天赋｣牌。；【第2回合及以后打出此牌时：】我方摸【当前回合数-1】数量的牌。(最多摸4张)',
+    // 565: () => new GICard(565, '万家灶火', '【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的｢天赋｣牌，则抓1张｢天赋｣牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。(最多抓4张)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/4c214784418f974b6b3fa294b415cdb4_8205569284186975732.png',
     //     0, 8, 2, [8], 0, 0, (_card, event) => {
     //         const { round = 1, playerInfo: { talentTypeCnt = 0 } = {} } = event;
@@ -1654,7 +1656,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { isValid: allHidxs(heros).length > 1, status: [newStatus(2056)] }
     //     }),
 
-    // 572: () => new GICard(572, '岩与契约', '【下回合行动阶段开始时：】生成3点[万能元素骰]，并摸1张牌。',
+    // 572: () => new GICard(572, '岩与契约', '【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/7ffbf85a7089e25fc48f6a48826e1fa4_183114830191275147.png',
     //     3, 0, 2, [-3], 0, 0, () => ({ status: [newStatus(2057)] })),
 
@@ -1662,7 +1664,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/760c101ed6ef3b500a830ae430458d89_4230653799114143139.png',
     //     0, 8, 2, [-3], 0, 0, () => ({ cmds: [{ cmd: 'changeDice', element: 0 }] })),
 
-    // 574: () => new GICard(574, '草与智慧', '摸1张牌。然后，选择任意手牌替换。',
+    // 574: () => new GICard(574, '草与智慧', '抓1张牌。然后，选择任意手牌替换。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/1c656067801c6beb53803faefedd0a47_7333316108362576471.png',
     //     1, 8, 2, [-3], 0, 0, () => ({ cmds: [{ cmd: 'getCard', cnt: 1 }, { cmd: 'changeCard', cnt: 2500 }] })),
 
@@ -2213,7 +2215,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/64b78d95471e27f99a8cf1cf2a946537_1864982310212941599.png',
     //     3, 1, 0, [6, 7], 1107, 2, undefined, { energy: 2 }),
 
-    // 750: () => new GICard(750, '最终解释权', '{action}；装备有此牌的【hro】进行[重击]时：对生命值不多于6的敌人造成的伤害+1。；如果触发了【sts2096】，则在技能结算后摸1张牌。',
+    // 750: () => new GICard(750, '最终解释权', '{action}；装备有此牌的【hro】进行[重击]时：对生命值不多于6的敌人造成的伤害+1。；如果触发了【sts2096】，则在技能结算后抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/ad8a2130c54da3c3f25d094b7019cb69_4536540887547691720.png',
     //     1, 2, 0, [6, 7], 1208, 0, (_card, event) => {
     //         const { isChargedAtk = false, heros = [], hidxs: [hidx] = [], eheros = [], ehidx = -1 } = event;
@@ -2285,7 +2287,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png',
     //     4, 7, 0, [6, 7], 1605, 2, undefined, { energy: 2 }),
 
-    // 761: () => new GICard(761, '归芒携信', '{action}；装备有此牌的【hro】在场时，每当【sts2129】造成伤害，就摸1张牌。',
+    // 761: () => new GICard(761, '归芒携信', '{action}；装备有此牌的【hro】在场时，每当【sts2129】造成伤害，就抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/bf34b0aa7f7664582ddb7eacaf1bd9ca_8982816839843813094.png',
     //     3, 4, 0, [6, 7], 1009, 1),
 
@@ -2314,7 +2316,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/09214e6eaeb5399f4f1dd78e7a9fcf66_5441065129648025265.png',
     //     3, 5, 0, [6, 7], 1407, 1),
 
-    // 765: () => new GICard(765, '犬奔·疾如风', '{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts2135】，摸1张牌。(每回合1次)',
+    // 765: () => new GICard(765, '犬奔·疾如风', '{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts2135】，抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png',
     //     3, 6, 0, [6, 7], 1506, 1, (card, event) => {
     //         const { heros = [], isSkill = -1 } = event;
@@ -2327,7 +2329,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 766: () => new GICard(766, '正理', '{action}；装备有此牌的【hro】使用【ski】时，如果消耗了持续回合至少为1的【sts2136】，则总是附属持续回合为3的【sts2136】，并且摸1张牌。',
+    // 766: () => new GICard(766, '正理', '{action}；装备有此牌的【hro】使用【ski】时，如果消耗了持续回合至少为1的【sts2136】，则总是附属持续回合为3的【sts2136】，并且抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png',
     //     3, 7, 0, [6, 7], 1606, 2, undefined, { energy: 2 }),
 
@@ -2349,7 +2351,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png',
     //     3, 2, 0, [6, 7], 1743, 2, undefined, { energy: 2 }),
 
-    // 769: () => new GICard(769, '悲号回唱', '{action}；装备有此牌的【hro】在场，附属有【sts2141】的敌方角色受到伤害时：我方摸1张牌。(每回合1次)',
+    // 769: () => new GICard(769, '悲号回唱', '{action}；装备有此牌的【hro】在场，附属有【sts2141】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png',
     //     3, 3, 0, [6, 7], 1762, 1, undefined, { pct: 1 }),
 
@@ -2369,7 +2371,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/d1ba5d6f1a7bdb24e95ca829357df03a_6674733466390586160.png',
     //     3, 2, 0, [6, 7], 1211, 2, undefined, { energy: 2 }),
 
-    // 773: () => new GICard(773, '偷懒的新方法', '{action}；装备有此牌的【hro】为出战角色期间，我方引发扩散反应时：摸2张牌。(每回合1次)',
+    // 773: () => new GICard(773, '偷懒的新方法', '{action}；装备有此牌的【hro】为出战角色期间，我方引发扩散反应时：抓2张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8399149d2618f3566580df22b153579a_4849308244790424730.png',
     //     3, 5, 0, [6, 7], 1408, 1, (card, event) => {
     //         const { heros = [], hidxs: [hidx] = [] } = event;
@@ -2533,7 +2535,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 790: () => new GICard(790, '亡雷凝蓄', '【入场时：】生成1张【crd906】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd906】后：摸1张牌，然后生成1张【crd906】，随机置入我方牌库中。',
+    // 790: () => new GICard(790, '亡雷凝蓄', '【入场时：】生成1张【crd906】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd906】后：抓1张牌，然后生成1张【crd906】，随机置入我方牌库中。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5138e59de35ef8ede3a26540a7b883e0_5065992084832534424.png',
     //     1, 3, 0, [6], 1765, 1, (_card, { hcard }) => ({
     //         trigger: ['card'],
@@ -2566,7 +2568,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }),
 
-    // 794: () => new GICard(794, '不明流通渠道', '{action}；【装备有此牌的〖hro〗使用技能后：】摸2张【crd913】。(每回合1次)',
+    // 794: () => new GICard(794, '不明流通渠道', '{action}；【装备有此牌的〖hro〗使用技能后：】抓2张【crd913】。(每回合1次)',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Navia.webp',
     //     3, 6, 0, [6, 7], 1508, 1, card => {
     //         if (card.perCnt <= 0) return;
@@ -2601,7 +2603,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     0, 8, 2, [], 0, 0, () => ({ status: [newStatus(2185)] })),
 
     // 904: () => new GICard(904, '海底宝藏', '治疗我方出战角色1点，生成1个随机基础元素骰。',
-    //     'https://gi-tcg-assets.guyutongxue.support/assets/UI_Gcg_CardFace_Summon_Xunbao.webp',
+    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'heal', cnt: 1 }, { cmd: 'getDice', cnt: 1, element: -1 }] })),
 
     // 905: () => new GICard(905, '圣俗杂座', '在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【芙宁娜】的形态。；如果我方场上存在【沙龙成员】或【众水的歌者】，也切换其形态。',
@@ -2643,7 +2645,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { trigger: ['discard'], summon: [newSummon(smnid)] }
     //     }),
 
-    // 908: () => new GICard(908, '禁忌知识', '无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，摸1张牌。',
+    // 908: () => new GICard(908, '禁忌知识', '无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/fe20720734d5041d50cf6eab08689916_6711209992824489498.png',
     //     0, 8, 2, [-5], 0, 0, (_card, event) => {
     //         const { heros = [], hidxs = [] } = event;
@@ -2664,7 +2666,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     '',
     //     2, 2, 2, [7], 0, 0, () => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: 2, cnt: 1 }] })),
 
-    // 913: () => new GICard(913, '裂晶弹片', '对敌方｢出战角色｣造成1点物理伤害，摸1张牌。',
+    // 913: () => new GICard(913, '裂晶弹片', '对敌方｢出战角色｣造成1点物理伤害，抓1张牌。',
     //     '',
     //     1, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'attack', element: 0, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
 

@@ -241,9 +241,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111061: () => new StatusBuilder('冷酷之心').heroStatus().icon('buff4').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。')
-        .handle(status => ({
+        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+2。', 'v3.8.0')
+        .handle((status, _, ver) => ({
             trigger: ['skilltype2'],
-            addDmgCdt: 3,
+            addDmgCdt: ver < 'v3.8.0' ? 2 : 3,
             exec: () => { --status.useCnt },
         })),
 

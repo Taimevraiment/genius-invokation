@@ -28,13 +28,14 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
-import { ELEMENT_ICON, CHANGE_GOOD_COLOR } from '@@@/constant/UIconst';
+import { CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
 import { CARD_SUBTYPE, COST_TYPE } from '@@@/constant/enum';
 import { Card } from '../../../typing';
 
-const props = defineProps(['card']);
+const props = defineProps(['card', 'isMobile']);
 
 const card = computed<Card>(() => props.card);
+// const isMobile = computed<boolean>(() => props.isMobile);
 
 // 获取骰子背景
 const getDiceBgIcon = (name: string) => {

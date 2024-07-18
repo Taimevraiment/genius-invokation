@@ -178,25 +178,32 @@
 </template>
 
 <script setup lang='ts'>
-import { computed, ref, watchEffect, onUnmounted, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
 import type { Socket } from 'socket.io-client';
+import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import InfoModal from '@/components/InfoModal.vue';
 import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
-import { ELEMENT_COLOR, SKILL_TYPE_ABBR, CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
-import { cardsTotal } from '@@@/data/cards';
 import { getSocket } from '@/store/socket';
-import { newStatus } from '@@@/data/statuses';
+import {
+  CARD_SUBTYPE,
+  COST_TYPE,
+  DICE_COST_TYPE_CODE_KEY,
+  DiceCostType,
+  DiceCostTypeCode,
+  ELEMENT_TYPE,
+  PHASE,
+  PLAYER_STATUS,
+  SKILL_TYPE,
+  Version
+} from '@@@/constant/enum';
+import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import { CHANGE_GOOD_COLOR, ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
+import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { debounce, genShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
-import {
-  CARD_SUBTYPE, DiceCostType, Version, ELEMENT_TYPE, PLAYER_STATUS, PHASE, COST_TYPE, SKILL_TYPE,
-  PURE_ELEMENT_CODE_KEY, PureElementCode, DICE_COST_TYPE_CODE_KEY, DiceCostTypeCode,
-} from '@@@/constant/enum';
-import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 
 const router = useRouter();
 const route = useRoute();
@@ -428,11 +435,15 @@ const devOps = (cidx = 0) => {
   if (!opses) return;
   const ops = opses.trim().split(/[,，\.\/、]+/).filter(v => v != '');
   const cpidx = client.value.playerIdx ^ cidx;
-  let heros = client.value.players[cpidx].heros;
+  const heros = client.value.players[cpidx].heros;
   let dices: DiceCostType[] | undefined;
   let flag = new Set<string>();
-  let handCards: Card[] | undefined;
+  let disCardCnt = 0;
   const cmds: Cmds[] = [];
+  const attachs: { hidx: number, el: number, isAdd: boolean }[] = [];
+  const hps: { hidx: number, hp: number }[] = [];
+  const clearSts: { hidx: number, stsid: number }[] = [];
+  const getSts: { hidxs: number[], stsid: number }[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
   for (let op of ops) {
     const index = op.indexOf(' ');
@@ -443,19 +454,11 @@ const devOps = (cidx = 0) => {
     if (op.startsWith('&')) { // 附着
       const isAdd = op[1] == '+';
       const [el = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(isAdd ? 2 : 1).split(/[:：]+/).map(h);
-      if (!isAdd || el == 0) {
-        if (hidx >= heros.length) heros.forEach(h => (h.attachElement = []));
-        else heros[hidx].attachElement = [];
-      }
-      if (el > 0 && el < 8) {
-        if (hidx >= heros.length) heros.forEach(h => h.attachElement.push(PURE_ELEMENT_CODE_KEY[el as PureElementCode]));
-        else heros[hidx].attachElement.push(PURE_ELEMENT_CODE_KEY[el as PureElementCode]);
-      }
+      attachs.push({ hidx, el, isAdd });
       flag.add('setEl');
     } else if (op.startsWith('%')) { // 血量
       const [hp = 10, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
-      if (hidx >= heros.length) heros.forEach(h => h.hp = hp);
-      else heros[hidx].hp = hp;
+      hps.push({ hidx, hp });
       flag.add('setHp');
     } else if (op.startsWith('@')) { // 充能
       const [cnt = 3, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
@@ -484,22 +487,15 @@ const devOps = (cidx = 0) => {
         const dcmds: Cmds[] = [{ cmd: 'discard', mode, cnt, card, hidxs }];
         cmds.push(...dcmds);
       } else {
-        handCards = client.value.player.handCards.slice(0, +op);
+        disCardCnt = +op;
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态
       const [stsid = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
       if (stsid <= 0) {
-        if (stsid == 0 || stsid == -1) {
-          if (hidx >= heros.length) heros.forEach(h => h.heroStatus = []);
-          else heros[hidx].heroStatus = [];
-        }
-        if (stsid == 0 || stsid == -2) {
-          client.value.players[cpidx].combatStatus = [];
-        }
+        clearSts.push({ hidx, stsid });
       } else {
-        const sts = newStatus(version.value)(stsid);
-        cmds.push({ cmd: 'getStatus', status: [sts], hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx] });
+        getSts.push({ hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx], stsid });
       }
       flag.add('setStatus');
     } else if (op.startsWith('+')) { // 在牌库中加牌
@@ -518,14 +514,14 @@ const devOps = (cidx = 0) => {
       const isAttach = op.endsWith('~');
       const [cid = 0, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
       if (cid == 0) {
-        cards.push(cardsTotal(version.value).find(c => c.userType == heros[client.value.players[cpidx].hidx].id)?.id ?? 0);
+        cards.push(+`2${heros[client.value.players[cpidx].hidx].id}1`);
       }
       if (cid > 0) cards.push(...new Array(cnt).fill(cid));
       cmds.push({ cmd: 'getCard', cnt, card: cards, isAttach });
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { cpidx, heros, dices, cmds, handCards, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, getSts, disCardCnt, flag: 'dev-' + [...flag].join('&') });
 };
 </script>
 

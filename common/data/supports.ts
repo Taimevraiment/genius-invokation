@@ -1,41 +1,6 @@
-import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Summon, Support, Trigger } from '../../typing';
-import { DiceCostType, SupportType, VERSION, Version } from '../constant/enum.js';
-
-export class GISupport {
-    id: number; // 唯一id 从4000开始
-    entityId: number = -1; // 实体id
-    card: Card; // 场地卡
-    cnt: number; // 次数
-    perCnt: number; // 每回合x次
-    hpCnt: number; // 回血数
-    type: SupportType; // 类型 1轮次 2收集物 3常驻
-    handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes; // 处理效果函数
-    isSelected: boolean = false; // 是否被选择
-    canSelect: boolean = false; // 能否被选择    
-    constructor(
-        id: number, card: Card, cnt: number, perCnt: number, type: SupportType,
-        handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes | undefined, hpCnt = 0
-    ) {
-        this.id = id;
-        this.card = card;
-        this.cnt = cnt;
-        this.perCnt = perCnt;
-        this.type = type;
-        this.hpCnt = hpCnt;
-        this.handle = (support, event = {}) => {
-            const { reset = false } = event;
-            if (reset && perCnt > 0) {
-                support.perCnt = perCnt;
-                return {}
-            }
-            return handle(support, event) ?? {};
-        };
-    }
-    setEntityId(id: number): Support {
-        if (this.entityId == -1) this.entityId = id;
-        return this;
-    }
-}
+import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Summon, Trigger } from '../../typing';
+import { DiceCostType, Version } from '../constant/enum.js';
+import { SupportBuilder } from './builder/supportBuilder.js';
 
 export type SupportHandleEvent = {
     dices?: DiceCostType[],
@@ -108,8 +73,7 @@ export type SupportExecRes = {
 //         .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
 // }
 
-const supportTotal: Record<number, (...args: any) => Support> = {
-    // 4000: () => new GISupport(4000, 0, 0, 0, 0, () => ({})),
+const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
     // // 派蒙
     // 4001: (card: Card) => new GISupport(4001, card, 2, 0, 1, support => ({
@@ -129,11 +93,11 @@ const supportTotal: Record<number, (...args: any) => Support> = {
     //         }
     //     }
     // }),
-    // // 璃月港口
-    // 4003: (card: Card) => new GISupport(4003, card, 2, 0, 1, support => ({
-    //     trigger: ['phase-end'],
-    //     exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: --support.cnt == 0 })
-    // })),
+    // 璃月港口
+    321001: () => new SupportBuilder().round(2).handle(support => ({
+        trigger: ['phase-end'],
+        exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: --support.cnt == 0 })
+    })),
     // // 常九爷
     // 4004: (card: Card) => new GISupport(4004, card, 0, 0, 2, (support, event = {}) => {
     //     const { isSkill = -1 } = event;
@@ -921,4 +885,8 @@ const supportTotal: Record<number, (...args: any) => Support> = {
     // })),
 }
 
-export const newSupport = (version: Version = VERSION[0]) => (id: number, ...args: any) => supportTotal[id](version, ...args);
+export const newSupport = (version: Version) => {
+    return (card: Card, ...args: any[]) => {
+        return supportTotal[card.id](...args).card(card).version(version).done();
+    }
+}

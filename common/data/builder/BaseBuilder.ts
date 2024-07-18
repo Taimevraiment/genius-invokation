@@ -3,8 +3,8 @@ import { DICE_TYPE, DiceType, VERSION, Version } from "../../constant/enum.js";
 export class BaseVersionBuilder {
     protected _version: Version = VERSION[0];
     protected _getValByVersion<T>(vals: [Version, T][], defaultVal: T) {
-        const [, val = defaultVal] = vals.sort(([a], [b]) => a < b ? 1 : -1).find(([ver]) => ver <= this._version) ?? [];
-        return val;
+        if (this._version == VERSION[0]) return vals.find(([ver]) => ver == this._version)?.[1] ?? defaultVal;
+        return vals.sort(([a], [b]) => a < b ? -1 : 1).find(([ver]) => ver > this._version)?.[1] ?? defaultVal;
     }
     version(version: Version | undefined) {
         if (version != undefined) this._version = version;

@@ -110,7 +110,7 @@
           </div>
           <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
             <div class="title">- 角色状态 -</div>
-            <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))"
+            <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))"
               :key="ist.id" class="status">
               <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
                 <span class="status-title-left">
@@ -121,7 +121,7 @@
                     }" />
                     <div v-else style="color: white;">{{ ist.name[0] }}</div>
                     <div class="status-cnt"
-                      v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                      v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
                       {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
                     </div>
                     <span>{{ ist.name }}</span>
@@ -141,7 +141,7 @@
           </div>
           <div v-if="combatStatus.length > 0" class="info-status">
             <div class="title">- 阵营出战状态 -</div>
-            <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
+            <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ost.id"
               class="status">
               <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
                 <span class="status-title-left">
@@ -151,7 +151,7 @@
                       :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
                     <div v-else style="color: white;">{{ ost.name[0] }}</div>
                     <div class="status-cnt"
-                      v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                      v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
                       {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
                     </div>
                     <span>{{ ost.name }}</span>
@@ -181,7 +181,7 @@
       </div>
     </div>
     <div class="info-container" :class="{ 'mobile-font': isMobile }" @click.stop=""
-      v-if="isShow && (type == INFO_TYPE.Hero || type == INFO_TYPE.Skill) && ((info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
+      v-if="isShow && type == INFO_TYPE.Hero && ((info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
       <div class="info-equipment"
         v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot">
         <div class="title">- 角色装备 -</div>
@@ -215,7 +215,7 @@
       </div>
       <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
         <div class="title">- 角色状态 -</div>
-        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ist.id"
+        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ist.id"
           class="status">
           <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
             <span class="status-title-left">
@@ -224,7 +224,7 @@
                 <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)"
                   :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ist.UI.iconBg]})` : '' }" />
                 <div v-else style="color: white;">{{ ist.name[0] }}</div>
-                <div class="status-cnt" v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                <div class="status-cnt" v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
                   {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
                 </div>
                 <span>{{ ist.name }}</span>
@@ -243,7 +243,7 @@
       </div>
       <div v-if="combatStatus.length > 0" class="info-status">
         <div class="title">- 阵营出战状态 -</div>
-        <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
+        <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ost.id"
           class="status">
           <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
             <span class="status-title-left">
@@ -252,7 +252,7 @@
                 <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
                   :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
                 <div v-else style="color: white;">{{ ost.name[0] }}</div>
-                <div class="status-cnt" v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                <div class="status-cnt" v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
                   {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
                 </div>
                 <span>{{ ost.name }}</span>
@@ -282,21 +282,48 @@
 <script setup lang='ts'>
 import { computed, ref, watchEffect } from 'vue';
 
-import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
 import {
-  ELEMENT_NAME, ELEMENT_COLOR, CHANGE_GOOD_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, RULE_EXPLAIN, STATUS_BG_COLOR_KEY,
-  CARD_SUBTYPE_URL, WEAPON_TYPE_URL, ELEMENT_URL, HERO_TAG_NAME, CHANGE_BAD_COLOR, WEAPON_TYPE_NAME, SKILL_TYPE_NAME,
-  CARD_SUBTYPE_NAME, HERO_TAG_URL, ElementColorKey, CARD_TYPE_NAME, DICE_COLOR, SHIELD_ICON_URL,
+  CARD_SUBTYPE_NAME,
+  CARD_SUBTYPE_URL,
+  CARD_TYPE_NAME,
+  CHANGE_BAD_COLOR,
+  CHANGE_GOOD_COLOR,
+  DICE_COLOR,
+  ELEMENT_COLOR,
+  ELEMENT_ICON,
+  ELEMENT_NAME,
+  ELEMENT_URL,
+  ElementColorKey,
+  HERO_TAG_NAME,
+  HERO_TAG_URL,
+  RULE_EXPLAIN,
+  SHIELD_ICON_URL,
+  SKILL_TYPE_ABBR,
+  SKILL_TYPE_NAME,
+  STATUS_BG_COLOR_KEY,
+  WEAPON_TYPE_NAME,
+  WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
-  CARD_SUBTYPE, DICE_TYPE, COST_TYPE, WeaponType, InfoType, INFO_TYPE, STATUS_TYPE, Version, ELEMENT_CODE_KEY,
-  ElementCode, DAMAGE_TYPE, ElementType, DICE_COST_TYPE,
+  CARD_SUBTYPE,
+  COST_TYPE,
+  DAMAGE_TYPE,
+  DICE_COST_TYPE,
+  DICE_TYPE,
+  ELEMENT_CODE_KEY,
+  ElementCode,
+  ElementType,
+  INFO_TYPE,
+  InfoType,
+  STATUS_TYPE, Version,
+  WeaponType,
 } from '@@@/constant/enum';
 import { newCard } from '@@@/data/cards';
-import { newStatus } from '@@@/data/statuses';
 import { newHero, readySkill } from '@@@/data/heros';
+import { newStatus } from '@@@/data/statuses';
 import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
+import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
 
 const props = defineProps(['info', 'isMobile']);
 

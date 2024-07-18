@@ -1,6 +1,7 @@
 import { Card } from "../../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardSubtypeSupport, CardTag, CardType, DiceType, HERO_LOCAL_CODE_KEY,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype,
+    CardTag, CardType, DiceType, HERO_LOCAL_CODE_KEY,
     HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
@@ -222,9 +223,20 @@ export class CardBuilder extends BaseBuilder {
         }
         return this.equipment();
     }
-    support(supportType: CardSubtypeSupport) {
+    place() {
+        this._subtype.push(CARD_SUBTYPE.Place);
+        return this.support();
+    }
+    ally() {
+        this._subtype.push(CARD_SUBTYPE.Ally);
+        return this.support();
+    }
+    item() {
+        this._subtype.push(CARD_SUBTYPE.Item);
+        return this.support();
+    }
+    support() {
         this._type = CARD_TYPE.Support;
-        this._subtype.push(supportType);
         return this;
     }
     event(isAction: boolean = false) {

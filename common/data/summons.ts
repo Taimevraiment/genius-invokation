@@ -78,7 +78,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
-    111062: () => new SummonBuilder('光降之剑').maxUse(1000).damage(3).physical().plus().roundEnd()
+    111062: () => new SummonBuilder('光降之剑').maxUse(1000).damage(3).damage(2, 'v3.8.0').physical().plus().roundEnd()
         .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}; 每有1点｢能量层数｣，都使次伤害+1。(影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {

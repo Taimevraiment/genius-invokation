@@ -1,5 +1,5 @@
 import { Status } from "../../../typing";
-import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType } from "../../constant/enum.js";
+import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
@@ -17,7 +17,7 @@ export class GIStatus {
     perCnt: number; // 每回合使用次数
     roundCnt: number; // 剩余轮次数: -1为无轮次限制
     isTalent: boolean; // 是否有天赋
-    handle: (status: Status, event: StatusHandleEvent) => StatusHandleRes; // 处理函数
+    handle: (status: Status, event?: StatusHandleEvent) => StatusHandleRes; // 处理函数
     summonId: number; // 可能对应的召唤物 -1不存在
     addition: string[]; // 额外信息
     UI: {
@@ -30,10 +30,10 @@ export class GIStatus {
     };
     constructor(
         id: number, name: string, description: string, icon: string, group: StatusGroup, type: StatusType[],
-        useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event?: StatusHandleEvent) => StatusHandleRes | undefined,
+        useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, adt?: string[]
+            isTalent?: boolean, isReset?: boolean, adt?: string[], ver?: Version,
         } = {}
     ) {
         this.id = id;
@@ -44,7 +44,7 @@ export class GIStatus {
         this.maxCnt = maxCnt;
         this.roundCnt = roundCnt;
         const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = Math.max(useCnt, roundCnt),
-            isTalent = false, isReset = true, adt = [] } = options;
+            isTalent = false, isReset = true, adt = [], ver = VERSION[0] } = options;
         const hid = getHidById(id);
         const el = getElByHid(hid);
         description = description
@@ -73,7 +73,7 @@ export class GIStatus {
                 let { restDmg = 0 } = event;
                 let rest: StatusHandleRes = {};
                 if (handle) {
-                    const { restDmg: dmg = -1, ...other } = handle(status, event) ?? {};
+                    const { restDmg: dmg = -1, ...other } = handle(status, event, ver) ?? {};
                     if (dmg > -1) restDmg = dmg;
                     rest = { ...other };
                 }
@@ -111,7 +111,7 @@ export class GIStatus {
                 if (isReset) status.perCnt = pct;
                 return {}
             }
-            return thandle(status, event) ?? {};
+            return thandle(status, event, ver) ?? {};
         }
     }
     setEntityId(id: number): Status {
@@ -126,7 +126,7 @@ export class GIStatus {
 export class StatusBuilder extends BaseVersionBuilder {
     private _id: number = -1;
     private _name: string = '无';
-    private _description: string = '';
+    private _description: [Version, string][] = [];
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
     private _useCnt: number = -1;
@@ -141,7 +141,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _summonId: number = -1;
     private _addition: string[] = [];
     private _isReset: boolean = false;
-    private _handle: ((status: Status, event?: StatusHandleEvent) => StatusHandleRes | undefined) | undefined;
+    private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
         this._name = name;
@@ -150,8 +150,8 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._id = id;
         return this;
     }
-    description(description: string) {
-        this._description = description;
+    description(description: string, version: Version = VERSION[0]) {
+        this._description.push([version, description]);
         return this;
     }
     heroStatus() {
@@ -162,10 +162,10 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._group = STATUS_GROUP.combatStatus;
         return this;
     }
-    type(type: StatusType, valid?: boolean): StatusBuilder;
+    type(type: StatusType, valid: boolean): StatusBuilder;
     type(...types: StatusType[]): StatusBuilder;
-    type(type: StatusType, valid: boolean | StatusType | undefined, ...types: StatusType[]) {
-        if (typeof valid == 'boolean' || valid == undefined) {
+    type(type: StatusType, valid: boolean | StatusType, ...types: StatusType[]) {
+        if (typeof valid == 'boolean') {
             if (valid) this._type.push(type);
             return this;
         }
@@ -220,12 +220,13 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._isReset = true;
         return this;
     }
-    handle(handle: (status: Status, event?: StatusHandleEvent) => StatusHandleRes | undefined) {
+    handle(handle: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) {
         this._handle = handle;
         return this;
     }
     done() {
-        return new GIStatus(this._id, this._name, this._description, this._icon, this._group, this._type,
+        const description = this._getValByVersion(this._description, '');
+        return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
             this._useCnt, this._maxCnt, this._roundCnt, this._handle,
             {
                 pct: this._perCnt,
@@ -236,6 +237,7 @@ export class StatusBuilder extends BaseVersionBuilder {
                 adt: this._addition,
                 expl: this._explains,
                 isReset: this._isReset,
+                ver: this._version,
             }
         );
     }

@@ -7,7 +7,7 @@ import { type GIHero } from "./common/data/builder/heroBuilder"
 import { type GISkill } from "./common/data/builder/skillBuilder"
 import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
-import { type GISupport } from "./common/data/supports"
+import { type GISupport } from "./common/data/builder/supportBuilder"
 
 type RoomList = {
     id: number,

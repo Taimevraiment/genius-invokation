@@ -42,10 +42,8 @@ export type SkillHandleRes = {
     addDmgCdt?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
-    inStatusOppoPre?: Status[],
-    outStatusOppoPre?: Status[],
-    inStatusPre?: Status[],
-    outStatusPre?: Status[],
+    statusOppoPre?: Status[],
+    statusPre?: Status[],
     summonPre?: Summon[],
     cmds?: Cmds[],
     heal?: number,
@@ -1286,7 +1284,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1508: () => new GIHero(1508, '娜维娅', [5, 11], 10, 6, 2,
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Navia.webp',
     //     skill1('直率的辞绝'), [
-    //     new GISkill('典仪式晶火', '造成{dmg}点[岩元素伤害]，本角色附属【sts2008,6】; 从手牌中[舍弃]至多5张【crd913】，每[舍弃]1张都使此伤害+1并摸1张牌。', 2, 3, 3, 6, {}, [
+    //     new GISkill('典仪式晶火', '造成{dmg}点[岩元素伤害]，本角色附属【sts2008,6】; 从手牌中[舍弃]至多5张【crd913】，每[舍弃]1张都使此伤害+1并抓1张牌。', 2, 3, 3, 6, {}, [
     //         '',
     //         '',
     //     ], event => {
@@ -1897,7 +1895,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1783: () => new GIHero(1783, '圣骸飞蛇', [0, 13], 10, 5, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/39bdf909aff15f061d4d9ea3d4c2b2ab_472359532850721936.png',
     //     skill1('旋尾迅击'), [
-    //     new GISkill('盘绕风引', '造成{dmg}点[风元素伤害]，摸1张【crd906】; 然后，手牌中每有1张【crd906】，摸1张牌(每回合最多摸2张)。', 2, 2, 3, 5, { pct: 2 }, [
+    //     new GISkill('盘绕风引', '造成{dmg}点[风元素伤害]，抓1张【crd906】; 然后，手牌中每有1张【crd906】，抓1张牌(每回合最多抓2张)。', 2, 2, 3, 5, { pct: 2 }, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/8c6ea09bfd6308bb23bf32d96d640487.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/20afc68783ad98f1da36cc3a5286bee6_5169119727722449200.png',
     //     ], event => {
@@ -1992,11 +1990,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1822: () => new GIHero(1822, '阿佩普的绿洲守望者', 0, 10, 7, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/59b3a5744a5e0cef3a742cf97ee1a48e_9222353554920937369.png',
     //     skill1('失乡重击'), [
-    //     new GISkill('生命流束', '造成{dmg}点[草元素伤害]，摸1张【crd907】，生成1层【sts2209】。', 2, 2, 3, 7, {}, [
+    //     new GISkill('生命流束', '造成{dmg}点[草元素伤害]，抓1张【crd907】，生成1层【sts2209】。', 2, 2, 3, 7, {}, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a2598b6377145054026356571e3494d6.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6b6af66686864e881e180633491577b7_1337053029698647969.png',
     //     ], () => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 907, isAttach: true }], status: [newStatus(2209)] })),
-    //     new GISkill('终景迸落', '造成{dmg}点[草元素伤害]，摸1张【crd907】，生成2层【sts2209】。', 3, 2, 3, 7, { ec: 2 }, [
+    //     new GISkill('终景迸落', '造成{dmg}点[草元素伤害]，抓1张【crd907】，生成2层【sts2209】。', 3, 2, 3, 7, { ec: 2 }, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e2b183c009d60ca57023829db15c23fb.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/67a564cb356fc0cfddb1f98658d35573_3718187889744663164.png',
     //     ], () => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 907, isAttach: true }], status: [newStatus(2209, 2)] })),

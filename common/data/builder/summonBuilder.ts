@@ -105,7 +105,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _useCnt: number = 0;
     private _maxUse: number = 0;
     private _shieldOrHeal: number = 0;
-    private _damage: number = 0;
+    private _damage: [Version, number][] = [];
     private _pdmg: number = 0;
     private _element: ElementType | undefined;
     private _perCnt: number = 0;
@@ -116,7 +116,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
-    private _handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes | undefined = () => ({});
+    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: Version) => SummonHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
         this._name = name;
@@ -149,8 +149,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._shieldOrHeal = heal;
         return this;
     }
-    damage(damage: number) {
-        this._damage = damage;
+    damage(damage: number, version: Version = VERSION[0]) {
+        this._damage.push([version, damage]);
         return this;
     }
     physical() {
@@ -229,15 +229,16 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._isDestroy = SUMMON_DESTROY_TYPE.UsedRoundEnd;
         return this;
     }
-    handle(handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes) {
+    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: Version) => SummonHandleRes) {
         this._handle = handle;
         return this;
     }
     done() {
         const maxUse = this._maxUse || this._useCnt;
         const element = this._element ?? getElByHid(getHidById(this._id));
+        const damage = this._getValByVersion(this._damage, 0);
         return new GISummon(this._id, this._name, this._description, this._src, this._useCnt, maxUse,
-            this._shieldOrHeal, this._damage, element, this._handle,
+            this._shieldOrHeal, damage, element, this._handle,
             {
                 pct: this._perCnt,
                 isTalent: this._isTalent,

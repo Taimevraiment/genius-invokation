@@ -126,7 +126,7 @@
         <div class="hero-img-content" :class="{
           'hero-select': heroSelect[hidx],
           'hero-can-select': heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
-          'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[getPidx(hidx)] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0),
+          'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[getPidx(hidx)] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
         }">
           <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
           <div v-else class="hero-name">{{ hero?.name }}</div>
@@ -137,7 +137,7 @@
         <div class="hero-freeze" style="background-color: #716446de"
           v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 2087)"></div>
         <div class="hero-shield2" v-if="hero.hp > 0 &&
-          (hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier) && ist.useCnt > 0) ||
+          (hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier) && ist.useCnt > 0) ||
             // todo 迪希雅的特殊情况要在js里处理
             hero.isFront && combatStatuses[getPidx(hidx)].some(ost => ost.type.some(t => t == STATUS_TYPE.Barrier && (ost.id != 2105 || hero.id != 1209) && ost.useCnt > 0)) ||
             (hero.talentSlot?.hasTag(CARD_TAG.Barrier) && (hero.talentSlot?.useCnt ?? 0) > 0))">
@@ -203,7 +203,7 @@
         </div>
         <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
           <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': ists.UI.isSelected }"
-            v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => hero.heroStatus.length <= 4 ? !sts.hasType(STATUS_TYPE.Hide) : stsi < 4)"
+            v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => hero.heroStatus.length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 4)"
             :key="ists.id">
             <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
             </div>
@@ -216,7 +216,7 @@
               :class="{ 'status-can-use': ists.perCnt > 0 }"></div>
             <div class="status-cnt"
               :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hidx][0][isti].isChange }"
-              v-if="!ists.hasType(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
+              v-if="!ists.type.includes(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
               {{ ists.useCnt < 0 ? ists.roundCnt : ists.useCnt }} </div>
             </div>
             <div v-if="hero.heroStatus.length > 4" :class="{ status: true, 'mobile-status': isMobile }"
@@ -230,7 +230,7 @@
           <div class="outstatus" :class="{ 'mobile-outstatus': isMobile }"
             v-if="phase >= PHASE.DICE && hero.hp > 0 && hero.isFront">
             <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': osts.UI.isSelected }"
-              v-for="(osts, osti) in combatStatuses[getPidx(hidx)].filter((sts, stsi) => combatStatuses[getPidx(hidx)].length <= 4 ? !sts.hasType(STATUS_TYPE.Hide) : stsi < 3)"
+              v-for="(osts, osti) in combatStatuses[getPidx(hidx)].filter((sts, stsi) => combatStatuses[getPidx(hidx)].length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 3)"
               :key="osts.id">
               <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: osts.UI.iconBg }">
               </div>
@@ -243,7 +243,7 @@
                 :class="{ 'status-can-use': osts.perCnt > 0 }"></div>
               <div class="status-cnt"
                 :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hidx][1][osti].isChange }"
-                v-if="!osts.hasType(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
+                v-if="!osts.type.includes(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
                 {{ osts.useCnt < 0 ? osts.roundCnt : osts.useCnt }} </div>
               </div>
               <div v-if="combatStatuses[getPidx(hidx)].length > 4" :class="{ status: true, 'mobile-status': isMobile }"
@@ -411,7 +411,7 @@ import {
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_KEY } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { computed, ref, watchEffect } from 'vue';
-import { Card, Hero, Player, Skill, Summon } from '../../../typing';
+import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
 
 const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
 const emits = defineEmits([
@@ -528,7 +528,7 @@ const heros = computed<Hero[]>(() => {
   if (playerIdx.value == 0) return [...props.afterWinHeros[1], ...props.afterWinHeros[0]];
   return props.afterWinHeros.flat();
 });
-const combatStatuses = [opponent.value.combatStatus, player.value.combatStatus];
+const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, player.value.combatStatus]);
 const currTime = computed<number>(() => ((props.client.countdown.limit - props.client.countdown.curr) / props.client.countdown.limit) * 100);
 const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value.status == PLAYER_STATUS.WAITING ? '#2b6aff' : '#ffb36d'} ${currTime.value + 5}%)`);
 const isShowHistory = computed<boolean>(() => props.client.isShowHistory);
@@ -818,7 +818,7 @@ button:active {
   justify-content: center;
   align-items: center;
   letter-spacing: -2px;
-  font-size: max(16px, 2vw);
+  font-size: min(23px, max(16px, 2vw));
 }
 
 .hero-hp-cnt {
@@ -1043,8 +1043,9 @@ button:active {
 
 .status {
   position: relative;
-  width: 18px;
-  height: 18px;
+  width: 23%;
+  /* height: 18px; */
+  aspect-ratio: 1/1;
   text-align: center;
   line-height: 18px;
   border-radius: 50%;
