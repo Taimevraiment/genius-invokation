@@ -169,7 +169,7 @@ export class CardBuilder extends BaseBuilder {
     private _isResetPerCnt: boolean = true;
     private _isSpReset: boolean = false;
     private _src: string = '';
-    private _description: string = '';
+    private _description: [Version, string][] = [];
     private _explains: string[] = [];
     private _cnt: number = 2;
     constructor(shareId: number) {
@@ -185,8 +185,8 @@ export class CardBuilder extends BaseBuilder {
         if (version != undefined) this._curVersion = version;
         return this;
     }
-    description(description: string) {
-        this._description = description;
+    description(description: string, version: Version = VERSION[0]) {
+        this._description.push([version, description]);
         return this;
     }
     src(src: string) {
@@ -313,8 +313,10 @@ export class CardBuilder extends BaseBuilder {
         if (this._subtype.includes(CARD_SUBTYPE.Talent) && !this._subtype.includes(CARD_SUBTYPE.Action)) {
             this._userType = getHidById(this._id);
         }
-        return new GICard(this._id, this._shareId, this._name, this._version, this._description, this._src,
-            this._cost, this._costType, this._type, this._subtype, this._userType, this._handle,
+        const description = this._getValByVersion(this._description, '');
+        const cost = this._getValByVersion(this._cost, 0);
+        return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
+            cost, this._costType, this._type, this._subtype, this._userType, this._handle,
             {
                 tag: this._tag,
                 uct: this._useCnt,

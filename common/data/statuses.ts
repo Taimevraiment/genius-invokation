@@ -1,10 +1,9 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, ELEMENT_TYPE, ElementType, PureElementType,
-    STATUS_TYPE, SkillType,
-    Version, WEAPON_TYPE, WeaponType
+    CARD_SUBTYPE, DAMAGE_TYPE, ELEMENT_TYPE, ElementType, PureElementType, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { ELEMENT_NAME, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
+import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
+import { getHidById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 
@@ -223,7 +222,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus().roundCnt(2).talent(isTalent).icon('buff')
+    111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus()
+        .roundCnt(2).roundCnt(3, 'v4.2.0', isTalent).talent(isTalent).icon('buff')
         .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`)
         .type(STATUS_TYPE.AddDamage).type(STATUS_TYPE.Enchant, isTalent)
         .handle((status, event = {}) => {
@@ -248,53 +248,148 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.useCnt },
         })),
 
-    // 111071: (isTalent:boolean = false) => new GIStatus(111071, '冰翎', `我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`,
-    //     'buff4', STATUS_GROUP.combatStatus, [STATUS_TYPE.AddDamage], 2, 0, -1, (status, event = {}) => {
-    //         const { skilltype = -1 } = event;
-    //         return {
-    //             addDmgCdt: 1,
-    //             trigger: isCdt(skilltype > -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
-    //             exec: () => {
-    //                 if (status.perCnt == 1 && skilltype == 1) {
-    //                     --status.perCnt;
-    //                 } else {
-    //                     --status.useCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { pct: isCdt(isTalent, 1), isTalent }),
+    111071: (isTalent: boolean = false) => new StatusBuilder('冰翎').combatStatus().icon('buff4').useCnt(2).useCnt(3, 'v4.2.0').perCnt(1, isTalent)
+        .type(STATUS_TYPE.AddDamage).talent(isTalent)
+        .description(`我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`)
+        .handle((status, event = {}) => {
+            const { skilltype = -1 } = event;
+            return {
+                addDmgCdt: 1,
+                trigger: isCdt(skilltype > -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
+                exec: () => {
+                    if (status.perCnt == 1 && skilltype == 1) {
+                        --status.perCnt;
+                    } else {
+                        --status.useCnt;
+                    }
+                }
+            }
+        }),
 
-    // 111082: () => new GIStatus(111082, '度厄真符', '【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；【[可用次数]：{useCnt}】',
-    //     'ski,2', STATUS_GROUP.combatStatus, [STATUS_TYPE.Attack], 3, 0, -1, (_status, event = {}) => {
-    //         const { heros = [], hidx = -1 } = event;
-    //         const fhero = heros[hidx];
-    //         const isHeal = (fhero?.hp ?? 0) < (fhero?.maxHp ?? 0);
-    //         return {
-    //             trigger: ['after-skill'],
-    //             heal: isCdt(isHeal, 2),
-    //             exec: eStatus => {
-    //                 if (isHeal && eStatus) --eStatus.useCnt;
-    //             }
-    //         }
-    //     }),
+    111082: () => new StatusBuilder('度厄真符').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
+        .description('【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；【[可用次数]：{useCnt}】')
+        .handle((_, event = {}) => {
+            const { heros = [], hidx = -1 } = event;
+            const fhero = heros[hidx];
+            const isHeal = (fhero?.hp ?? 0) < (fhero?.maxHp ?? 0);
+            return {
+                trigger: ['after-skill'],
+                heal: isCdt(isHeal, 2),
+                exec: eStatus => {
+                    if (isHeal && eStatus) --eStatus.useCnt;
+                }
+            }
+        }),
 
-    // 2002: (isTalent:boolean = false) => new GIStatus(2002, '雨帘剑', `【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`,
-    //     '', 1, [2], isTalent ? 3 : 2, 0, -1, (status, event = {}) => {
-    //         const { restDmg = 0 } = event;
-    //         if (restDmg < 3 - +status.isTalent) return { restDmg }
-    //         --status.useCnt;
-    //         return { restDmg: restDmg - 1 }
-    //     }, { isTalent }),
+    111091: () => shieldStatus('安眠帷幕护盾'),
 
-    // 2003: () => new GIStatus(2003, '虹剑势', '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1102,2', 1, [1], 3, 0, -1, () => ({
-    //         damage: 1,
-    //         element: 1,
-    //         trigger: ['after-skilltype1'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     }), { icbg: STATUS_BG_COLOR[1] }),
+    111092: () => new StatusBuilder('飞星').combatStatus().icon('ski,1').useCnt(1).maxCnt(16).addCnt(2)
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.Accumulate)
+        .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。(生成此出战状态的技能，也会触发此效果)；【重复生成此出战状态时：】累积2枚｢晚星｣。')
+        .handle((status, event = {}) => {
+            const { heros = [], hidx = -1, trigger = '', card } = event;
+            const addCnt = heros[hidx]?.id == 1009 && trigger == 'skilltype2' ? 2 : 0;
+            const isDmg = status.useCnt + addCnt >= 4;
+            const isTalent = !!heros?.find(h => h.id == getHidById(status.id))?.talentSlot || card?.id == 211091;
+            return {
+                trigger: [`${isDmg ? 'after-' : ''}skill`],
+                damage: isCdt(isDmg, 1),
+                element: DAMAGE_TYPE.Cryo,
+                cmds: isCdt(isTalent, [{ cmd: 'getCard', cnt: 1 }]),
+                exec: eStatus => {
+                    ++status.useCnt;
+                    if (eStatus) eStatus.useCnt -= 4;
+                }
+            }
+        }),
+
+    111101: () => new StatusBuilder('瞬时剪影').heroStatus().icon('ice-dice').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
+        .description(`【结束阶段：】对所附属角色造成1点[冰元素伤害]; 如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；【[可用次数]：{useCnt}】`)
+        .handle((status, event = {}) => {
+            const { heros = [], hidx = -1 } = event;
+            const isAddDmg = heros[hidx]?.attachElement.includes(ELEMENT_TYPE.Cryo) && status.useCnt == 1;
+            return {
+                damage: isCdt(isAddDmg, 2, 1),
+                element: DAMAGE_TYPE.Cryo,
+                isSelf: true,
+                trigger: ['phase-end'],
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt;
+                },
+            }
+        }),
+
+    111111: () => new StatusBuilder('寒烈的惩裁').heroStatus().icon('ski,1').useCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
+        .description('【角色进行｢普通攻击｣时：】如果角色生命至少为6，则此技能少花费1个[冰元素骰]，伤害+1，且对自身造成1点[穿透伤害]。；如果角色生命不多于5，则使此伤害+1，并且技能结算后治疗角色2点。；【[可用次数]：{useCnt}】')
+        .handle((_, event = {}) => {
+            const { heros = [], hidx = -1 } = event;
+            if (hidx == -1) return;
+            let res: StatusHandleRes = {};
+            const curHp = heros[hidx]?.hp ?? 0;
+            if (curHp >= 6) res = { addDmgCdt: 1, pdmg: 1, hidxs: [hidx], isSelf: true };
+            else res = { addDmgCdt: 1, heal: 2 };
+            return {
+                trigger: ['after-skilltype1', 'skilltype1'],
+                minusDiceSkill: isCdt(curHp < 6, { skilltype1: [0, 0, 1] }),
+                ...res,
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt
+                }
+            }
+        }),
+
+    111112: () => new StatusBuilder('余威冰锥').combatStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack)
+        .description('【我方选择行动前：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 2,
+            element: DAMAGE_TYPE.Cryo,
+            trigger: ['action-start'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
+        .type(STATUS_TYPE.Barrier).talent(isTalent)
+        .description(`【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`)
+        .description(`【我方出战角色受到至少为3的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`, 'v4.2.0')
+        .handle((status, event = {}, ver) => {
+            const { restDmg = 0 } = event;
+            if (restDmg < 3 - +(status.isTalent && ver >= 'v4.2.0')) return { restDmg }
+            --status.useCnt;
+            return { restDmg: restDmg - 1 }
+        }),
+
+    112022: () => new StatusBuilder('虹剑势').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
+        .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；【[可用次数]：{useCnt}】', 'v3.6.0')
+        .handle((_s, _e, ver) => ({
+            damage: ver < 'v3.6.0' ? 2 : 1,
+            element: DAMAGE_TYPE.Hydro,
+            trigger: ['after-skilltype1'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    112031: () => new StatusBuilder('虚影').combatStatus().roundCnt(1).type(STATUS_TYPE.Barrier).summonId()
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
+            const { restDmg = 0, summon } = event;
+            if (restDmg <= 0) return { restDmg }
+            --status.roundCnt;
+            if (summon) --summon.useCnt;
+            return { restDmg: restDmg - 1 }
+        }),
+
+    112032: () => new StatusBuilder('泡影').combatStatus().icon('ski,2').useCnt(1)
+        .type(STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
+        .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
+        .handle((status, event) => ({
+            multiDmgCdt: 2,
+            trigger: isCdt(event.hasDmg, ['skill']),
+            exec: () => { --status.useCnt }
+        })),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
@@ -322,21 +417,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             if (isQuickAction) --status.useCnt
     //         },
     //     })),
-
-    // 2012: () => new GIStatus(2012, '泡影', '【我方造成技能伤害时：】移除此状态，使本次伤害加倍。',
-    //     'ski1103,2', 1, [5, 10], 1, 0, -1, status => {
-    //         --status.useCnt;
-    //         return { multiDmgCdt: 2 }
-    //     }, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2013: (summonId: number) => new GIStatus(2013, '虚影', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
-    //     '', 1, [2], 1, 0, 1, (status, event = {}) => {
-    //         const { restDmg = 0, summon } = event;
-    //         if (restDmg <= 0) return { restDmg }
-    //         --status.useCnt;
-    //         if (summon) --summon.useCnt;
-    //         return { restDmg: restDmg - 1 }
-    //     }, { smnId: summonId }),
 
     // 2014: () => new GIStatus(2014, '绝云锅巴(生效中)', '本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。',
     //     'buff5', 0, [4, 6, 10], 1, 0, 1, status => ({
@@ -872,7 +952,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         trigger: ['skilltype1'],
     //         exec: () => {
     //             const { isChargedAtk = false } = event;
-    //             return { cmds: isCdt<Cmds[]>(isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2076)], isOppo: true }]) }
+    //             return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2076)], isOppo: true }]) }
     //         }
     //     }), { icbg: STATUS_BG_COLOR[1] }),
 
@@ -896,7 +976,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //                     return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2074)] }] }
     //                 }
     //                 if (isPenDmg) --status.perCnt;
-    //                 return { cmds: isCdt<Cmds[]>(isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2076)], isOppo: true }]) }
+    //                 return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2076)], isOppo: true }]) }
     //             },
     //         }
     //     }, { icbg: STATUS_BG_COLOR[1], pct: 2 }),
@@ -936,7 +1016,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         addDmg: 1,
     //         attachEl: 2,
     //         trigger: ['skill'],
-    //         exec: () => ({ cmds: isCdt<Cmds[]>(event.isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2079)], isOppo: true }]) })
+    //         exec: () => ({ cmds: isCdt(event.isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2079)], isOppo: true }]) })
     //     })),
 
     // 2079: () => new GIStatus(2079, '血梅香', '【结束阶段：】对所附属角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】',
@@ -1407,25 +1487,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2127: () => card587sts(4),
 
-    // 2128: () => shieldStatus(2128, '安眠帷幕护盾'),
-
-    // 2129: () => new GIStatus(2129, '飞星', '【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。(生成此出战状态的技能，也会触发此效果)；【重复生成此出战状态时：】累积2枚｢晚星｣。',
-    //     'ski1009,1', 1, [1, 9], 1, 16, -1, (status, event = {}) => {
-    //         const { heros = [], hidx = -1, trigger = '', card } = event;
-    //         const addCnt = heros[hidx]?.id == 1009 && trigger == 'skilltype2' ? 2 : 0;
-    //         const isDmg = status.useCnt + addCnt >= 4;
-    //         return {
-    //             trigger: [`${isDmg ? 'after-' : ''}skill`],
-    //             damage: isCdt(isDmg, 1),
-    //             element: 4,
-    //             cmds: isCdt(!!heros?.find(h => h.id == 1009)?.talentSlot || card?.id == 761, [{ cmd: 'getCard', cnt: 1 }]),
-    //             exec: eStatus => {
-    //                 ++status.useCnt;
-    //                 if (eStatus) eStatus.useCnt -= 4;
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[4], act: 2 }),
-
     // 2130: (act = 1) => new GIStatus(2130, '破局', '此状态初始具有1层｢破局｣; 重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并摸1张牌。',
     //     'buff', 0, [9, 16], 1, 3, -1, (status, event = {}) => {
     //         const { trigger = '' } = event;
@@ -1828,21 +1889,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2163: () => new GIStatus(2163, '瞬时剪影', `【结束阶段：】对所附属角色造成1点[冰元素伤害]; 如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；【[可用次数]：{useCnt}】`,
-    //     'ice-dice', 0, [1], 2, 0, -1, (status, event = {}) => {
-    //         const { heros = [], hidx = -1 } = event;
-    //         const isAddDmg = heros[hidx]?.attachElement.includes(4) && status.useCnt == 1;
-    //         return {
-    //             damage: isCdt(isAddDmg, 2, 1),
-    //             element: 4,
-    //             isSelf: true,
-    //             trigger: ['phase-end'],
-    //             exec: eStatus => {
-    //                 if (eStatus) --eStatus.useCnt;
-    //             },
-    //         }
-    //     }, { icbg: DEBUFF_BG_COLOR }),
-
     // 2164: (cnt = 1) => new GIStatus(2164, '源水之滴', `【〖hro1110〗进行｢普通攻击｣后：】治疗【hro1110】2点，然后如果【hro1110】是我方｢出战角色｣，则[准备技能]：【rsk17】。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)`,
     //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Neuvillette_S.webp', 1, [1], cnt, 3, -1, (_status, event = {}) => {
     //         const { heros = [], hidx = -1 } = event;
@@ -2120,37 +2166,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //     })),
 
     // 2191: () => new GIStatus(2191, '火之新生·锐势', '角色造成的[火元素伤害]+1。', 'buff4', 0, [6, 10], 1, 0, -1, () => ({ addDmg: 1 }), { icbg: STATUS_BG_COLOR[2] }),
-
-    // 2192: () => new GIStatus(2192, '寒烈的惩裁', '【角色进行｢普通攻击｣时：】如果角色生命至少为6，则此技能少花费1个[冰元素骰]，伤害+1，且对自身造成1点[穿透伤害]。；如果角色生命不多于5，则使此伤害+1，并且技能结算后治疗角色2点。；【[可用次数]：{useCnt}】',
-    //     'ski1011,1', 0, [1, 6], 2, 0, -1, (_status, event = {}) => {
-    //         const { heros = [], hidx = -1, trigger = '' } = event;
-    //         if (hidx == -1) return;
-    //         if (trigger == 'calc') {
-    //             if ((heros[hidx]?.hp ?? 0) < 6) return;
-    //             const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] });
-    //             return { ...minusSkillRes }
-    //         }
-    //         let res: StatusHandleRes = {};
-    //         if ((heros[hidx]?.hp ?? 0) >= 6) res = { addDmgCdt: 1, pdmg: 1, hidxs: [hidx], isSelf: true };
-    //         else res = { addDmgCdt: 1, heal: 2 };
-    //         return {
-    //             trigger: ['after-skilltype1', 'skilltype1'],
-    //             ...res,
-    //             exec: eStatus => {
-    //                 if (eStatus) --eStatus.useCnt
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[4] }),
-
-    // 2193: () => new GIStatus(2193, '余威冰锥', '【我方选择行动前：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1011,2', 1, [1], 1, 0, -1, () => ({
-    //         damage: 2,
-    //         element: 4,
-    //         trigger: ['action-start'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     }), { icbg: STATUS_BG_COLOR[4] }),
 
     // 2194: () => new GIStatus(2194, '普世欢腾', '【我方出战角色受到伤害或治疗后：】叠加1点【sts2195】。；【[持续回合]：{roundCnt}】',
     //     'ski1111,2', 1, [4], -1, 0, 2, (_status, event = {}) => {

@@ -12,7 +12,7 @@ import {
     MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT, SHUFFLE_COUNT,
 } from '../../common/constant/gameOption.js';
 import { INIT_PLAYER } from '../../common/constant/init.js';
-import { ELEMENT_NAME } from '../../common/constant/UIconst.js';
+import { ELEMENT_NAME, SKILL_TYPE_NAME } from '../../common/constant/UIconst.js';
 import { CardHandleRes, newCard, parseCard } from '../../common/data/cards.js';
 import { newHero, parseHero, readySkill } from '../../common/data/heros.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
@@ -1137,6 +1137,7 @@ export default class GeniusInvokationRoom {
                 // todo 先等待？
             }
             this.players.forEach((_, i, a) => a[i] = players[i]);
+            this._writeLog(`[${player().name}][${aHeros()[player().hidx].name}]使用了[${SKILL_TYPE_NAME[skill.type]}][${skill.name}]`);
             this._doDamage(pidx, aWillAttach, { willDamages: aWillDamages, dmgElements, elTips: aElTips }, isSwitch);
             this._changeTurn(pidx, isQuickAction, 'useSkill');
         }
@@ -1983,6 +1984,7 @@ export default class GeniusInvokationRoom {
         });
         setTimeout(async () => {
             if (canChange) {
+                this.players[this.currentPlayerIdx].canAction = false;
                 this.players[this.currentPlayerIdx].status = PLAYER_STATUS.WAITING;
                 ++this.currentPlayerIdx;
                 this.players[this.currentPlayerIdx].status = PLAYER_STATUS.PLAYING;
@@ -3547,7 +3549,7 @@ export default class GeniusInvokationRoom {
                 players,
                 isValid: !skill.isForbidden,
                 skillIdx: +sidx,
-                diceSelect: this._checkSkill(pidx, +sidx),
+                diceSelect: this._checkSkill(pidx, +sidx).map(v => skill.isForbidden ? false : v),
                 willHp,
                 willAttachs,
                 willSummonChange: summonCnt,

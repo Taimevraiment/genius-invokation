@@ -1,4 +1,4 @@
-import { Card, Hero, Skill, Status } from "../../typing";
+import { Card, Hero, Skill, Status, Summon } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementType } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
@@ -104,6 +104,16 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
 // 是否含有某状态
 export const hasStatus = (statuses: Status[], id: number): boolean => {
     return statuses.some(s => s.id == id);
+}
+
+// 找出某状态
+export const getStatus = (statuses: Status[], id: number): Status | undefined => {
+    return statuses.find(s => s.id == id);
+}
+
+// 是否有某召唤物
+export const hasSummon = (summons: Summon[], id: number): boolean => {
+    return summons.some(s => s.id == id);
 }
 
 // 根据id提取角色id

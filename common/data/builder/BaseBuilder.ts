@@ -16,7 +16,7 @@ export class BaseBuilder extends BaseVersionBuilder {
     protected _id: number = -1;
     protected _shareId: number;
     protected _name: string = '无';
-    protected _cost: number = 0;
+    protected _cost: [Version, number][] = [];
     protected _costType: DiceType = DICE_TYPE.Same;
     constructor(shareId: number) {
         super();
@@ -35,16 +35,16 @@ export class BaseBuilder extends BaseVersionBuilder {
         this._version = version;
         return this;
     }
-    cost(cost: number, type: DiceType) {
-        this._cost = cost;
+    cost(cost: number, type: DiceType, version: Version = VERSION[0]) {
+        this._cost.push([version, cost]);
         this._costType = type;
         return this;
     }
-    costCryo(cost: number) {
-        return this.cost(cost, DICE_TYPE.Cryo);
+    costCryo(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Cryo, version);
     }
-    costHydor(cost: number) {
-        return this.cost(cost, DICE_TYPE.Hydro);
+    costHydro(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Hydro, version);
     }
     costPyro(cost: number) {
         return this.cost(cost, DICE_TYPE.Pyro);

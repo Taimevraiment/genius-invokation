@@ -100,7 +100,7 @@ export const phaseEndAtk = (summon: Summon, healHidxs?: number[]): SummonHandleR
 export class SummonBuilder extends BaseVersionBuilder {
     private _id: number = -1;
     private _name: string;
-    private _description: string = '';
+    private _description: [Version, string][] = [];
     private _src: string = '';
     private _useCnt: number = 0;
     private _maxUse: number = 0;
@@ -112,7 +112,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _isTalent: boolean = false;
     private _addition: string[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
-    private _statusId: number = -1;
+    private _statusId: boolean = false;
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
@@ -125,8 +125,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._id = id;
         return this;
     }
-    description(description: string) {
-        this._description = description;
+    description(description: string, version: Version = VERSION[0]) {
+        this._description.push([version, description]);
         return this;
     }
     src(src: string) {
@@ -201,8 +201,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._addition.push(...addition);
         return this;
     }
-    statusId(statusId: number) {
-        this._statusId = statusId;
+    statusId() {
+        this._statusId = true;
         return this;
     }
     plus() {
@@ -235,9 +235,11 @@ export class SummonBuilder extends BaseVersionBuilder {
     }
     done() {
         const maxUse = this._maxUse || this._useCnt;
+        const description = this._getValByVersion(this._description, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
         const damage = this._getValByVersion(this._damage, 0);
-        return new GISummon(this._id, this._name, this._description, this._src, this._useCnt, maxUse,
+        const stsId = this._statusId ? this._id : -1;
+        return new GISummon(this._id, this._name, description, this._src, this._useCnt, maxUse,
             this._shieldOrHeal, damage, element, this._handle,
             {
                 pct: this._perCnt,
@@ -245,7 +247,7 @@ export class SummonBuilder extends BaseVersionBuilder {
                 adt: this._addition,
                 pdmg: this._pdmg,
                 isDestroy: this._isDestroy,
-                stsId: this._statusId,
+                stsId,
                 spReset: this._spReset,
                 expl: this._explains,
                 pls: this._hasPlus,

@@ -588,7 +588,7 @@ export default class GeniusInvokationClient {
             this.currCard = NULL_CARD();
             this.cancel({ onlyCard: true });
         }
-        if (skidx == -1) return;
+        if (skidx == -1 || !this.canAction) return;
 
         if (isExec) {
             this.isValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });

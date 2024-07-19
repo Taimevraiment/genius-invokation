@@ -129,16 +129,16 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _description: [Version, string][] = [];
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
-    private _useCnt: number = -1;
+    private _useCnt: [Version, number][] = [];
     private _maxCnt: number = 0;
     private _addCnt: number = 0;
     private _perCnt: number = 0;
-    private _roundCnt: number = -1;
+    private _roundCnt: [Version, number][] = [];
     private _icon: string = '';
     private _explains: string[] = [];
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
-    private _summonId: number = -1;
+    private _summonId: boolean = false;
     private _addition: string[] = [];
     private _isReset: boolean = false;
     private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
@@ -172,8 +172,14 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._type.push(type, valid, ...types);
         return this;
     }
-    useCnt(useCnt: number) {
-        this._useCnt = useCnt;
+    useCnt(useCnt: number, cdt: boolean): StatusBuilder;
+    useCnt(useCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
+    useCnt(useCnt: number, version: Version | boolean = VERSION[0], cdt: boolean = true) {
+        if (typeof version == 'boolean') {
+            if (version) this._useCnt.push([VERSION[0], useCnt]);
+        } else if (cdt) {
+            this._useCnt.push([version, useCnt]);
+        }
         return this;
     }
     maxCnt(maxCnt: number) {
@@ -184,12 +190,12 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._addCnt = addCnt;
         return this;
     }
-    perCnt(perCnt: number) {
-        this._perCnt = perCnt;
+    perCnt(perCnt: number, cdt: boolean) {
+        if (cdt) this._perCnt = perCnt;
         return this;
     }
-    roundCnt(roundCnt: number) {
-        this._roundCnt = roundCnt;
+    roundCnt(roundCnt: number, version: Version = VERSION[0], cdt: boolean = true) {
+        if (cdt) this._roundCnt.push([version, roundCnt]);
         return this;
     }
     icon(icon: string) {
@@ -208,8 +214,8 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._isTalent = isTalent;
         return this;
     }
-    summonId(summonId: number) {
-        this._summonId = summonId;
+    summonId() {
+        this._summonId = true;
         return this;
     }
     addition(...addition: string[]) {
@@ -226,14 +232,17 @@ export class StatusBuilder extends BaseVersionBuilder {
     }
     done() {
         const description = this._getValByVersion(this._description, '');
+        const useCnt = this._getValByVersion(this._useCnt, -1);
+        const roundCnt = this._getValByVersion(this._roundCnt, -1);
+        const smnId = this._summonId ? this._id : -1;
         return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
-            this._useCnt, this._maxCnt, this._roundCnt, this._handle,
+            useCnt, this._maxCnt, roundCnt, this._handle,
             {
                 pct: this._perCnt,
-                act: this._addCnt || Math.max(this._useCnt, this._roundCnt),
+                act: this._addCnt || Math.max(useCnt, roundCnt),
                 icbg: this._iconBg,
                 isTalent: this._isTalent,
-                smnId: this._summonId,
+                smnId,
                 adt: this._addition,
                 expl: this._explains,
                 isReset: this._isReset,

@@ -999,26 +999,28 @@ button:active {
 .damage,
 .heal {
   width: 0;
-  height: 0;
+  /* height: 0; */
+  aspect-ratio: 1/1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffef60;
-  border-radius: 50%;
-  /* background: url('/public/image/Attack.png'); */
+  /* background-color: #ffef60; */
+  /* border-radius: 50%; */
   transition: 0.5s;
   font-size: 0;
   box-sizing: border-box;
   -webkit-text-stroke: 0.5px black;
+  font-weight: bold;
+  background-image: url(/public/image/Attack.png);
+  background-size: 100%;
 }
 
 .show-damage,
 .show-heal {
-  width: 40px;
-  height: 40px;
-  font-size: large;
-  font-weight: bold;
-  border: 3px solid #9e9978;
+  width: 80%;
+  aspect-ratio: 1/1;
+  font-size: max(18px, min(24px, 2vw));
+  /* border: 3px solid #9e9978; */
 }
 
 .instatus {

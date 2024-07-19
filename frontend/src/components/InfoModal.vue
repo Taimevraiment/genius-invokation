@@ -215,8 +215,8 @@
       </div>
       <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
         <div class="title">- 角色状态 -</div>
-        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ist.id"
-          class="status">
+        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))"
+          :key="ist.id" class="status">
           <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
             <span class="status-title-left">
               <div class="status-icon">
@@ -224,7 +224,8 @@
                 <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)"
                   :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ist.UI.iconBg]})` : '' }" />
                 <div v-else style="color: white;">{{ ist.name[0] }}</div>
-                <div class="status-cnt" v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                <div class="status-cnt"
+                  v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
                   {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
                 </div>
                 <span>{{ ist.name }}</span>
@@ -252,7 +253,8 @@
                 <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
                   :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
                 <div v-else style="color: white;">{{ ost.name[0] }}</div>
-                <div class="status-cnt" v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                <div class="status-cnt"
+                  v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
                   {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
                 </div>
                 <span>{{ ost.name }}</span>
@@ -283,40 +285,13 @@
 import { computed, ref, watchEffect } from 'vue';
 
 import {
-  CARD_SUBTYPE_NAME,
-  CARD_SUBTYPE_URL,
-  CARD_TYPE_NAME,
-  CHANGE_BAD_COLOR,
-  CHANGE_GOOD_COLOR,
-  DICE_COLOR,
-  ELEMENT_COLOR,
-  ELEMENT_ICON,
-  ELEMENT_NAME,
-  ELEMENT_URL,
-  ElementColorKey,
-  HERO_TAG_NAME,
-  HERO_TAG_URL,
-  RULE_EXPLAIN,
-  SHIELD_ICON_URL,
-  SKILL_TYPE_ABBR,
-  SKILL_TYPE_NAME,
-  STATUS_BG_COLOR_KEY,
-  WEAPON_TYPE_NAME,
-  WEAPON_TYPE_URL,
+  CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
+  ELEMENT_NAME, ELEMENT_URL, ElementColorKey, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SHIELD_ICON_URL, SKILL_TYPE_ABBR,
+  SKILL_TYPE_NAME, STATUS_BG_COLOR_KEY, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
-  CARD_SUBTYPE,
-  COST_TYPE,
-  DAMAGE_TYPE,
-  DICE_COST_TYPE,
-  DICE_TYPE,
-  ELEMENT_CODE_KEY,
-  ElementCode,
-  ElementType,
-  INFO_TYPE,
-  InfoType,
-  STATUS_TYPE, Version,
-  WeaponType,
+  CARD_SUBTYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
+  InfoType, STATUS_TYPE, Version, WeaponType,
 } from '@@@/constant/enum';
 import { newCard } from '@@@/data/cards';
 import { newHero, readySkill } from '@@@/data/heros';
@@ -356,7 +331,7 @@ const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
   return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
-  if(content.startsWith('ski,')) console.trace(content);
+  if (content.startsWith('ski,')) console.trace(content);
   if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
   const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
   const type = content.slice(0, 3);
@@ -390,7 +365,7 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
       const color = ELEMENT_CODE_KEY[+c as ElementCode];
       return `${wrapedIcon(color)}<span style='color:${ELEMENT_COLOR[color]};'>${v}</span>`;
     }).replace(/(?<!\\)(\*?)\[(.*?)\]/g, (_, isUnderline: string, ctt: string) => {
-      const [el] = objToArr(ELEMENT_NAME).find(([, v]) => ['伤害', '骰'].some(v => ctt.includes(v)) ? ctt.includes(v) : ctt == v) ?? [];
+      const [el] = objToArr(ELEMENT_NAME).find(([, v]) => ['元素', '伤害', '骰'].some(v => ctt.includes(v)) ? ctt.includes(v) : ctt == v) ?? [];
       const color = el == undefined ? 'white' : ELEMENT_COLOR[el];
       let wpicon = wrapedIcon(el, ctt.includes('骰'));
       const elSplit = ctt.indexOf('元素') - 1;
@@ -447,8 +422,8 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
         <div style="display:flex;align-items:flex-end;">
             ${nameEl}
             <div data-v-c8bc3e29 class="skill-cost" style="margin-left:5px;">
-          <img data-v-c8bc3e29 class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}" />
-          <span data-v-c8bc3e29>${expl.cost}</span>
+              <img data-v-c8bc3e29 class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}" />
+              <span data-v-c8bc3e29>${expl.cost}</span>
             </div>
         </div>
       `);
@@ -466,7 +441,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
 
 const wrapRule = (...desc: string[]) => {
   ruleExplain.value = [];
-  [...new Set(desc.join('').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
+  [...new Set(desc.join('').replace(/<img[^<>]+>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
     if (title in RULE_EXPLAIN) {
       ruleExplain.value.push(`<div style='font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`)}</div>`);
       ruleExplain.value.push(...RULE_EXPLAIN[title].split('；').map(desc => wrapDesc(desc)));

@@ -1,7 +1,7 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { Version } from "../constant/enum.js";
-import { getAtkHidx, getHidById, getMaxHertHidxs } from "../utils/gameUtil.js";
+import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getStatus } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -13,6 +13,7 @@ export type SummonHandleEvent = {
     reset?: boolean,
     isChargedAtk?: boolean,
     isFallAtk?: boolean,
+    combatStatus?: Status[],
     hcard?: Card,
     isExec?: boolean,
     isSkill?: number,
@@ -118,14 +119,15 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     111081: () => new SummonBuilder('寒病鬼差').useCnt(3).perCnt(1).damage(1)
         .description('{defaultAtk}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点; 【每回合1次：】再治疗我方出战角色1点。')
+        .description('{defaultAtk}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
-        .handle((summon, event = {}) => {
+        .handle((summon, event = {}, ver) => {
             const { heros = [], trigger = '', tround = 0, isExec = false } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = getMaxHertHidxs(heros);
             const fhero = heros[getAtkHidx(heros)];
             const isHeal = fhero?.id == getHidById(summon.id) && trigger == 'skilltype1' && hidxs.length > 0;
-            const hasTround = trigger == 'skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
+            const hasTround = trigger == 'skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp && ver >= 'v4.7.0';
             if (isHeal) triggers.push('skilltype1');
             const skcmds: Cmds[] = [{ cmd: 'heal', cnt: 1, hidxs }];
             const trdcmds: Cmds[] = [];
@@ -145,9 +147,40 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    // 3004: () => new GISummon(3004, '虚影', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，造成{dmg}点[水元素伤害]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png',
-    //     1, 1, -1, 1, 1, undefined, { isDestroy: 2, stsId: 2013 }),
+    111093: () => new SummonBuilder('饰梦天球').useCnt(2).damage(1)
+        .description('【结束阶段：】{dealDmg}。如果【sts111092】在场，则使其累积1枚｢晚星｣。；【[可用次数]：{useCnt}】')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/1b86f1cb97411b77d51cc22bb5622ff7_2462971599599504312.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                const { combatStatus = [] } = event;
+                const sts111092 = getStatus(combatStatus, 111092);
+                if (sts111092) ++sts111092.useCnt;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                return { cmds: [{ cmd: 'attack' }] }
+            }
+        })),
+
+    111102: () => new SummonBuilder('临事场域').useCnt(2).damage(1).heal(1)
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/a4249ebb8a68e2843cdd2fa78937912c_2796631322062911422.png'),
+
+    112011: () => new SummonBuilder('歌声之环').useCnt(2).heal(1)
+        .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                return { cmds: [{ cmd: 'heal', hidxs: allHidxs(event.heros) }, { cmd: 'attach' }] }
+            },
+        })),
+
+    112031: () => new SummonBuilder('虚影').useCnt(1).damage(1).shield(1).statusId().roundEnd()
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，造成{dmg}点[水元素伤害]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png'),
 
     // 3005: (_, isTalent = false) => new GISummon(3005, '大型风灵', `【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png',
@@ -234,17 +267,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3013: () => new GISummon(3013, '冰箭丘丘人', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png',
     //     2, 2, 0, 1, 4),
-
-    // 3015: () => new GISummon(3015, '歌声之环', '【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png',
-    //     2, 2, 1, 0, 1, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { summon: smn = summon } = execEvent;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             return { cmds: [{ cmd: 'heal', hidxs: allHidxs(event.heros) }, { cmd: 'attach' }] }
-    //         }
-    //     })),
 
     // 3016: () => new GISummon(3016, '纯水幻形·花鼠', '【结束阶段：】造成{dmg}点[水元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png',
@@ -632,20 +654,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png',
     //     1, 1, 1, 1, 7),
 
-    // 3047: () => new GISummon(3047, '饰梦天球', '【结束阶段：】造成{dmg}点[冰元素伤害]。如果【sts2129】在场，则使其累积1枚｢晚星｣。；【[可用次数]：{useCnt}】',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/1b86f1cb97411b77d51cc22bb5622ff7_2462971599599504312.png',
-    //     2, 2, 0, 1, 4, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { summon: smn = summon } = execEvent;
-    //             const { heros = [] } = event;
-    //             const sts2129 = heros.find(h => h.isFront)?.outStatus?.find(ost => ost.id == 2129);
-    //             if (sts2129) ++sts2129.useCnt;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             return { cmds: [{ cmd: 'attack' }] }
-    //         }
-    //     })),
-
     // 3048: () => new GISummon(3048, '怪笑猫猫帽', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png',
     //     1, 2, 0, 1, 2, (summon, event) => ({
@@ -768,10 +776,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3055: () => new GISummon(3055, '共鸣珊瑚珠', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/5776f31ac915874cb7eadd77a0098839_1777069343038822943.png',
     //     2, 2, 0, 1, 3),
-
-    // 3056: () => new GISummon(3056, '临事场域', '【结束阶段：】造成{dmg}点[冰元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/a4249ebb8a68e2843cdd2fa78937912c_2796631322062911422.png',
-    //     2, 2, 1, 1, 4),
 
     // 3057: () => new GISummon(3057, '雷萤', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。(最多叠加到3)；【愚人众·雷萤术士受到元素反应伤害后：】此牌[可用次数]-1。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png',
