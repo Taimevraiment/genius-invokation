@@ -152,10 +152,14 @@ type InfoVO = {
 type ExplainContent = Card | Summon | Status | Skill | string;
 
 type DamageVO = {
-    willHeals?: number[],
-    willDamages?: number[][],
-    dmgElements?: DamageType[],
-    elTips?: [string, PureElementType, PureElementType][],
+    dmgSource: 'skill' | 'status' | 'summon' | 'card' | 'null', // 造成伤害来源
+    atkPidx: number, // 攻击者玩家序号
+    atkHidx: number, // 攻击者角色序号
+    tarHidx: number, // 受攻击角色序号
+    willHeals: number[], // 回血量
+    willDamages: number[][], // 造成伤害
+    dmgElements: DamageType[], // 元素伤害类型
+    elTips: [string, PureElementType, PureElementType][], // 元素反应提示
 }
 
 type TrgElRe = keyof typeof SWIRL_ELEMENT;
@@ -221,7 +225,7 @@ type Preview = Readonly<ActionData & {
     willHp?: (number | undefined)[],
     willAttachs?: ElementType[][],
     willSwitch?: boolean[][],
-    willSummon?: Summon[][],
+    willSummons?: Summon[][],
     willGetCard?: Card[],
     willDiscard?: Card[],
     willSummonChange?: number[][],

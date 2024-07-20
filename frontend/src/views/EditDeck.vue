@@ -28,8 +28,8 @@
                 <button @click.stop="{ currIdx = 1; updateInfo(); }" :class="{ active: currIdx == 1 }">
                     卡组
                 </button>
-                <select name="version" id="version" v-model="version">
-                    <option v-for="ver in VERSION" :key="ver" :value="ver">{{ ver }}</option>
+                <select name="version" id="version" v-model="version" @change="updateInfo()">
+                    <option v-for=" ver in VERSION" :key="ver" :value="ver">{{ ver }}</option>
                 </select>
             </div>
             <input v-model="deckName" class="deck-name" />
@@ -168,26 +168,46 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import InfoModal from '@/components/InfoModal.vue';
 import {
-    CARD_SUBTYPE, HERO_LOCAL, Version, ELEMENT_TYPE, TypeConst, CARD_TAG, HeroLocal, CardSubtype, HeroTag, ElementType,
-    WeaponType, CardType, DiceType, PURE_ELEMENT_CODE, DICE_TYPE, COST_TYPE, INFO_TYPE, PURE_ELEMENT_TYPE, WEAPON_TYPE,
+    CARD_SUBTYPE,
+    CARD_TAG,
     CARD_TYPE,
+    CardSubtype,
+    CardType,
+    COST_TYPE,
+    DICE_TYPE,
+    DiceType,
+    ELEMENT_TYPE,
+    ElementType,
+    HERO_LOCAL,
+    HeroLocal,
+    HeroTag,
+    INFO_TYPE,
+    PURE_ELEMENT_CODE,
+    PURE_ELEMENT_TYPE,
+    TypeConst,
+    Version,
     VERSION,
+    WEAPON_TYPE,
+    WeaponType,
 } from '@@@/constant/enum';
+import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
+import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
-    ELEMENT_COLOR, ELEMENT_ICON, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME, CARD_TYPE_NAME,
-    CARD_SUBTYPE_NAME, HERO_LOCAL_CODE,
+    CARD_SUBTYPE_NAME,
+    CARD_TYPE_NAME,
+    ELEMENT_COLOR, ELEMENT_ICON,
+    HERO_LOCAL_CODE,
+    HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
+import { DeckVO, OriDeck } from 'typing';
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, parseHero } from '../../../common/data/heros';
-import InfoModal from '@/components/InfoModal.vue';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
-import { useRouter } from 'vue-router';
 import { Card, Hero, InfoVO } from '../../../typing';
-import { DeckVO, OriDeck } from 'typing';
-import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
-import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 
 type Filter<T> = {
     name: string,
@@ -211,7 +231,7 @@ const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera M
 
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
-const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? VERSION[0]);
+const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? VERSION[0]); // 当前版本
 const herosPool = computed<Hero[]>(() => herosTotal(version.value).filter(h => h.id < 3000)); // 选择的角色池
 const cardsPool = computed<Card[]>(() => cardsTotal(version.value).filter(c => c.UI.cnt > 0)); // 选择的卡组池
 
@@ -350,6 +370,7 @@ const resetCardFilter = () => {
 
 const updateInfo = (init = false) => {
     if (currIdx.value == TAG_INDEX.Hero || init) {
+        herosDeck.value = herosDeck.value.map(h => h.version <= version.value ? h : NULL_HERO());
         allHeros.value = [];
         const heroIds = herosDeck.value.map(v => v.id);
         herosPool.value.forEach(h => {
@@ -360,6 +381,7 @@ const updateInfo = (init = false) => {
         });
     }
     if (currIdx.value == TAG_INDEX.Card || init) {
+        cardsDeck.value = cardsDeck.value.filter(c => c.version <= version.value);
         allCards.value = [];
         cardsPool.value.forEach(c => {
             const cnt = c.UI.cnt - (cardsDeck.value.find(cd => cd.id == c.id)?.UI.cnt ?? 0);

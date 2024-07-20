@@ -154,8 +154,8 @@ export const readySkill = (rskid: number, version: Version) => readySkillTotal[r
 const allHeros: Record<number, () => HeroBuilder> = {
 
     1101: () => new HeroBuilder(1).name('甘雨').liyue().cryo().bow()
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
         .skill1(new Skill1Builder('流天射术'))
         .skills(
             new SkillBuilder('山泽麟迹').description('{dealDmg}，生成【sts111012】。')
@@ -178,8 +178,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1102: () => new HeroBuilder(2).name('迪奥娜').mondstadt().cryo().bow()
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
         .skill1(new Skill1Builder('猎人射术'))
         .skills(
             new SkillBuilder('猫爪冻冻').description('{dealDmg}，生成【sts111021】。')
@@ -197,8 +197,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1103: () => new HeroBuilder(3).name('凯亚').mondstadt().cryo().sword()
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png')
         .skill1(new Skill1Builder('仪典剑术'))
         .skills(
             new SkillBuilder('霜袭').description('{dealDmg}。')
@@ -212,8 +212,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1104: () => new HeroBuilder(4).name('重云').liyue().cryo().claymore()
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png')
         .skill1(new Skill1Builder('灭邪四式'))
         .skills(
             new SkillBuilder('重华叠霜').description('{dealDmg}，生成【sts111041】。')
@@ -231,8 +231,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1105: () => new HeroBuilder(5).name('神里绫华').inazuma().cryo().sword()
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/ede96c5aba784f50bc86dc66e5b16b12.png')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/ede96c5aba784f50bc86dc66e5b16b12.png')
         .skill1(new Skill1Builder('神里流·倾'))
         .skills(
             new SkillBuilder('神里流·冰华').description('{dealDmg}。')
@@ -256,8 +256,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1106: () => new HeroBuilder(6).name('优菈').since('v3.5.0').mondstadt().cryo().claymore()
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png')
         .skill1(new Skill1Builder('西风剑术·宗室'))
         .skills(
             new SkillBuilder('冰潮的涡旋').description('{dealDmg}，如果角色未附属【sts111061】，则使其附属【sts111061】。')
@@ -274,8 +274,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1107: () => new HeroBuilder(7).name('申鹤').since('v3.7.0').liyue().cryo().polearm()
-        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png')
         .skill1(new Skill1Builder('踏辰摄斗'))
         .skills(
             new SkillBuilder('仰灵威召将役咒').description('{dealDmg}，生成【sts111071】。')
@@ -293,8 +293,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1108: () => new HeroBuilder(8).name('七七').since('v4.0.0').liyue().cryo().sword()
-        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png',
-            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png')
         .skill1(new Skill1Builder('云来古剑法'))
         .skills(
             new SkillBuilder('仙法·寒病鬼差').description('召唤【smn111081】。')
@@ -322,6 +322,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1109: () => new HeroBuilder(279).name('莱依拉').since('v4.3.0').sumeru().cryo().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/94b1677048ddaa84ab735bb8f90c209d_3451890112016676238.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/8f522e8496dfdb2636a6eb273fa153b7.png')
         .skill1(new Skill1Builder('熠辉轨度剑'))
         .skills(
             new SkillBuilder('垂裳端凝之夜').description('生成【sts111091】和【sts111092】。')
@@ -336,6 +337,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1110: () => new HeroBuilder(334).name('夏洛蒂').since('v4.5.0').fontaine().tags(HERO_TAG.ArkhePneuma).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0bad00e61b01e543de83347130cab711_7623245668285687441.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f8260dca225e3d4def208ce068673d7c.png')
         .skill1(new Skill1Builder('冷色摄影律'))
         .skills(
             new SkillBuilder('取景·冰点构图法').description('{dealDmg}，目标角色附属【sts111101】。')
@@ -350,6 +352,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1111: () => new HeroBuilder(364).name('莱欧斯利').since('v4.7.0').fontaine().tags(HERO_TAG.ArkheOusia).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/064e881b99d30a1ce455d16a11768a24_8173906534678189661.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a9641995fd67126ff2b1e0d0294db57.png')
         .skill1(new Skill1Builder('迅烈倾霜拳'))
         .skills(
             new SkillBuilder('冰牙突驰').description('{dealDmg}，本角色附属【sts111111】。')
@@ -374,6 +377,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1201: () => new HeroBuilder(9).name('芭芭拉').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e92854385a3584dbbbd087ee5c49c69d.png')
         .skill1(new Skill1Builder('水之浅唱'))
         .skills(
             new SkillBuilder('演唱，开始♪').description('{dealDmg}，召唤【smn112011】。')
@@ -388,6 +392,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1202: () => new HeroBuilder(10).name('行秋').liyue().hydro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e522e3d11a6de75d38264655a531adf2_137376333068857031.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/dcec68115a5ccddf72741a1d1cac0e0e.png')
         .skill1(new Skill1Builder('古华剑法'))
         .skills(
             new SkillBuilder('画雨笼山').description('{dealDmg}，本角色[附着水元素]，生成【sts112021】。')
@@ -406,6 +411,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1203: () => new HeroBuilder(11).name('莫娜').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/b48dbc3857d34dac326ae26c8c6cf779_954386122796941241.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0962d5ea36a7216959bd0becb32e8761.png')
         .skill1(new Skill1Builder('因果点破'))
         .skills(
             new SkillBuilder('水中幻愿').description('{dealDmg}，召唤【smn112031】。')

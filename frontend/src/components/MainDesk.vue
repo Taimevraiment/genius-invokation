@@ -2,7 +2,7 @@
   <div class="main-container">
     <div class="side" :style="{ opacity: +(player.phase >= PHASE.CHOOSE_HERO) }">
       <div class="round" @click.stop="showHistory">
-        <img src="@@/svg/round.svg" alt="回合" />
+        <img src="@@/image/TimeState.png" alt="回合" />
         <span>{{ client.round }}</span>
       </div>
       <div class="pile">
@@ -86,7 +86,7 @@
             </div>
           </div>
           <img class="support-top-icon" v-if="support.type != SUPPORT_TYPE.Permanent"
-            :src="getSvgIcon(support.type == SUPPORT_TYPE.Round ? 'round' : 'bag')" />
+            :src="getPngIcon(support.type == SUPPORT_TYPE.Round ? 'TimeState' : 'Counter')" />
           <div class="support-top-num" :class="{ 'is-change': supportCurcnt[saidx][siidx].isChange }"
             v-if="support.type != SUPPORT_TYPE.Permanent">
             {{ support.cnt }}
@@ -114,175 +114,186 @@
     </div>
 
     <div class="heros">
-      <div class="hero" @click.stop="selectHero(getPidx(hidx), getHidx(hidx))" v-if="!!opponent" :style="{
-        'background-color': hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
-      }" :class="{
-        'mobile-hero': isMobile,
-        'my': hidx >= eLen,
-        'is-front-oppo': hero?.isFront && player.phase >= PHASE.DICE && opponent?.phase >= PHASE.DICE && hidx < eLen,
-        'is-front-my': hero?.isFront && hidx >= eLen,
-        'active-willhp': canAction && (willHp[hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || client.isShowChangeHero >= 2) && hidx >= eLen || willSwitch[hidx]),
-      }" v-for="(hero, hidx) in heros" :key="hidx">
-        <div class="hero-img-content" :class="{
-          'hero-select': heroSelect[hidx],
-          'hero-can-select': heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
-          'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[getPidx(hidx)] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
-        }">
-          <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
-          <div v-else class="hero-name">{{ hero?.name }}</div>
-        </div>
-        <div class="hero-freeze" v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 106)">
-          <img :src="getPngIcon('freeze-bg')" />
-        </div>
-        <div class="hero-freeze" style="background-color: #716446de"
-          v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 2087)"></div>
-        <div class="hero-shield2" v-if="hero.hp > 0 &&
-          (hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier) && ist.useCnt > 0) ||
-            // todo 迪希雅的特殊情况要在js里处理
-            hero.isFront && combatStatuses[getPidx(hidx)].some(ost => ost.type.some(t => t == STATUS_TYPE.Barrier && (ost.id != 2105 || hero.id != 1209) && ost.useCnt > 0)) ||
-            (hero.talentSlot?.hasTag(CARD_TAG.Barrier) && (hero.talentSlot?.useCnt ?? 0) > 0))">
-        </div>
-        <img class="switch-icon" v-if="willSwitch[hidx]" :src="getSvgIcon('switch')" />
-        <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">
-          <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
-          <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hidx].isChange }">
-            {{ Math.max(0, hpCurcnt[hidx].val) }}
-          </div>
-        </div>
-        <div class="hero-energys" v-if="(hero?.hp ?? 0) > 0">
-          <img v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
-            :class="{ 'mobile-energy': isMobile }" :src="getEnergyIcon((hero?.energy ?? 0) - 1 >= eidx)" />
-        </div>
-        <div class="hero-equipment">
-          <div class="hero-weapon" v-if="hero.weaponSlot != null" :class="{ 'slot-select': hero.weaponSlot.selected }">
-            <img :src="getSvgIcon('weapon')" />
-            <div :style="{
-              position: 'absolute',
-              width: '100%',
-              height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot)}%`,
-              borderRadius: '50%',
-            }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
-          </div>
-          <div class="hero-artifact" v-if="hero.artifactSlot != null"
-            :class="{ 'slot-select': hero.artifactSlot.selected }">
-            <img :src="getSvgIcon('artifact')" />
-            <div :style="{
-              position: 'absolute',
-              width: '100%',
-              height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
-              borderRadius: '50%',
-            }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
-          </div>
-          <div class="hero-talent" v-if="hero.talentSlot != null" :class="{ 'slot-select': hero.talentSlot.selected }">
-            <img :src="getSvgIcon('talent')" />
-            <div :style="{
-              position: 'absolute',
-              width: '100%',
-              height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot)}%`,
-              borderRadius: '50%',
-            }" :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
-          </div>
-        </div>
-        <div class="attach-element">
-          <div class="el-tip" v-if="elTips[hidx] != undefined" :class="{
-            'el-tip-enter': elTips[hidx][0] != '',
-            'el-tip-leave': elTips[hidx][0] == '',
-          }" :style="{
-            color: ELEMENT_COLOR[elTips[hidx][1]],
-            fontWeight: 'bolder',
-            '-webkit-text-stroke': `0.5px${ELEMENT_COLOR[elTips[hidx][2]]}`,
+      <div class="hero-group" v-for="(hgroup, hgi) in heros" :key="hgi">
+        <div class="hero" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
+          'background-color': hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
+        }" :class="{
+          'mobile-hero': isMobile,
+          'my': hgi == 1,
+          'is-front-oppo': hero?.isFront && player.phase >= PHASE.DICE && opponent?.phase >= PHASE.DICE && hgi == 0,
+          'is-front-my': hero?.isFront && hgi == 1,
+          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || client.isShowChangeHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
+        }" v-for="(hero, hidx) in hgroup" :key="hidx">
+          <div class="card-border"></div>
+          <div class="hero-img-content" :class="{
+            'hero-select': hgi == 1 && heroSelect[hidx],
+            'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
+            'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
           }">
-            {{ elTips[hidx][0] }}
+            <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
+            <div v-else class="hero-name">{{ hero?.name }}</div>
           </div>
-          <template v-if="hero.hp > 0">
-            <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
-            <img class="will-attach"
-              v-for="(attach, waidx) in willAttachs[hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)" :key="waidx"
-              :src="ELEMENT_URL[attach]" />
-          </template>
-        </div>
-        <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
-          <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': ists.UI.isSelected }"
-            v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => hero.heroStatus.length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 4)"
-            :key="ists.id">
-            <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
-            </div>
-            <img v-if="getPngIcon(ists.UI.icon) != ''" class="status-icon" :style="{
-              filter: getPngIcon(ists.UI.icon).startsWith('https') || ists.UI.icon.startsWith('buff') || ists.UI.icon.endsWith('dice')
-                ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ists.UI.iconBg]})` : '',
-            }" :src="getPngIcon(ists.UI.icon)" />
-            <div v-else style="color: white;">{{ ists.name[0] }}</div>
-            <div :style="{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%' }"
-              :class="{ 'status-can-use': ists.perCnt > 0 }"></div>
-            <div class="status-cnt"
-              :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hidx][0][isti].isChange }"
-              v-if="!ists.type.includes(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
-              {{ ists.useCnt < 0 ? ists.roundCnt : ists.useCnt }} </div>
-            </div>
-            <div v-if="hero.heroStatus.length > 4" :class="{ status: true, 'mobile-status': isMobile }"
-              style="background-color: #faebd767">
-              <span>···</span>
-              <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
-                {{ hero.heroStatus.length - 3 }}
-              </div>
+          <div class="hero-freeze" v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 106)">
+            <img :src="getPngIcon('freeze-bg')" />
+          </div>
+          <div class="hero-freeze" style="background-color: #716446de"
+            v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 2087)"></div>
+          <div class="hero-shield2" v-if="hero.hp > 0 &&
+            (hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier) && ist.useCnt > 0) ||
+              // todo 迪希雅的特殊情况要在js里处理
+              hero.isFront && combatStatuses[hgi].some(ost => ost.type.some(t => t == STATUS_TYPE.Barrier && (ost.id != 2105 || hero.id != 1209) && ost.useCnt > 0)) ||
+              (hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.useCnt ?? 0) > 0))">
+          </div>
+          <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getSvgIcon('switch')" />
+          <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">
+            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
+            <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
+              {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
             </div>
           </div>
-          <div class="outstatus" :class="{ 'mobile-outstatus': isMobile }"
-            v-if="phase >= PHASE.DICE && hero.hp > 0 && hero.isFront">
-            <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': osts.UI.isSelected }"
-              v-for="(osts, osti) in combatStatuses[getPidx(hidx)].filter((sts, stsi) => combatStatuses[getPidx(hidx)].length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 3)"
-              :key="osts.id">
-              <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: osts.UI.iconBg }">
+          <div class="hero-energys" v-if="(hero?.hp ?? 0) > 0">
+            <img v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
+              :class="{ 'mobile-energy': isMobile }" :src="getEnergyIcon((hero?.energy ?? 0) - 1 >= eidx)" />
+          </div>
+          <div class="hero-equipment">
+            <div class="hero-weapon" v-if="hero.weaponSlot != null"
+              :class="{ 'slot-select': hero.weaponSlot.selected }">
+              <img :src="getSvgIcon('weapon')" />
+              <div :style="{
+                position: 'absolute',
+                width: '100%',
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot)}%`,
+                borderRadius: '50%',
+              }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
+            </div>
+            <div class="hero-artifact" v-if="hero.artifactSlot != null"
+              :class="{ 'slot-select': hero.artifactSlot.selected }">
+              <img :src="getSvgIcon('artifact')" />
+              <div :style="{
+                position: 'absolute',
+                width: '100%',
+                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
+                borderRadius: '50%',
+              }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
+            </div>
+            <div class="hero-talent" v-if="hero.talentSlot != null"
+              :class="{ 'slot-select': hero.talentSlot.selected }">
+              <img :src="getSvgIcon('talent')" />
+              <div :style="{
+                position: 'absolute',
+                width: '100%',
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot)}%`,
+                borderRadius: '50%',
+              }" :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
+            </div>
+          </div>
+          <div class="attach-element">
+            <div class="el-tip" v-if="elTips[hgi][hidx] != undefined" :class="{
+              'el-tip-enter': elTips[hgi][hidx][0] != '',
+              'el-tip-leave': elTips[hgi][hidx][0] == '',
+            }" :style="{
+              color: ELEMENT_COLOR[elTips[hgi][hidx][1]],
+              fontWeight: 'bolder',
+              '-webkit-text-stroke': `0.5px${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`,
+            }">
+              {{ elTips[hgi][hidx][0] }}
+            </div>
+            <template v-if="hero.hp > 0">
+              <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
+              <img class="will-attach"
+                v-for="(attach, waidx) in willAttachs[hgi][hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
+                :key="waidx" :src="ELEMENT_URL[attach]" />
+            </template>
+          </div>
+          <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
+            <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': ists.UI.isSelected }"
+              v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => hero.heroStatus.length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 4)"
+              :key="ists.id">
+              <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
               </div>
-              <img v-if="getPngIcon(osts.UI.icon) != ''" class="status-icon" :style="{
-                filter: getPngIcon(osts.UI.icon).startsWith('https') || osts.UI.icon.startsWith('buff') || osts.UI.icon.endsWith('dice')
-                  ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[osts.UI.iconBg]})` : '',
-              }" :src="getPngIcon(osts.UI.icon)" />
-              <div v-else style="color: white;">{{ osts.name[0] }}</div>
+              <img v-if="getPngIcon(ists.UI.icon) != ''" class="status-icon" :style="{
+                filter: getPngIcon(ists.UI.icon).startsWith('https') || ists.UI.icon.startsWith('buff') || ists.UI.icon.endsWith('dice')
+                  ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ists.UI.iconBg]})` : '',
+              }" :src="getPngIcon(ists.UI.icon)" />
+              <div v-else style="color: white;">{{ ists.name[0] }}</div>
               <div :style="{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%' }"
-                :class="{ 'status-can-use': osts.perCnt > 0 }"></div>
+                :class="{ 'status-can-use': ists.perCnt > 0 }"></div>
               <div class="status-cnt"
-                :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hidx][1][osti].isChange }"
-                v-if="!osts.type.includes(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
-                {{ osts.useCnt < 0 ? osts.roundCnt : osts.useCnt }} </div>
+                :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hgi][hidx][0][isti].isChange }"
+                v-if="!ists.type.includes(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
+                {{ ists.useCnt < 0 ? ists.roundCnt : ists.useCnt }} </div>
               </div>
-              <div v-if="combatStatuses[getPidx(hidx)].length > 4" :class="{ status: true, 'mobile-status': isMobile }"
+              <div v-if="hero.heroStatus.length > 4" :class="{ status: true, 'mobile-status': isMobile }"
                 style="background-color: #faebd767">
                 <span>···</span>
                 <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
-                  {{ combatStatuses[getPidx(hidx)].length - 3 }}
+                  {{ hero.heroStatus.length - 3 }}
                 </div>
               </div>
             </div>
-            <div class="hero-die" v-if="hero.hp <= 0">
-              <img :src="getSvgIcon('die')" style="width: 40px" />
-            </div>
-            <div :class="{
-              'will-damage': (willHp[hidx] ?? 0) <= 0,
-              'will-heal': (willHp[hidx] ?? 0) > 0,
-            }" :style="{ paddingLeft: `${hero.hp + (willHp[hidx] ?? 0) <= 0 ? '0' : '3px'}` }"
-              v-if="willHp[hidx] != undefined">
-              <img v-if="(willHp[hidx] ?? 0) % 1 != 0"
-                :src="getPngIcon('https://gi-tcg-assets.guyutongxue.support/assets/UI_Gcg_Buff_Common_Revive.webp')"
-                style="height: 16px" />
-              <img v-else-if="hero.hp + (willHp[hidx] ?? 0) <= 0" :src="getSvgIcon('die')"
-                style="height: 16px; padding-left: 3px" />
-              <span :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hidx] ?? 0) > 0 ? '5px' : '0'}` }">
-                {{ (willHp[hidx] ?? 0) > 0 ? "+" : "-" }}{{ Math.abs(Math.ceil(willHp[hidx] ?? 0) % 100) }}
-              </span>
-            </div>
-            <div class="damages" v-if="willDamages[hidx] != undefined">
-              <div class="damage" :class="{ 'show-damage': isShowDmg && willDamages[hidx][0] >= 0 && hero.hp >= 0 }"
-                :style="{ color: ELEMENT_COLOR[dmgElements[hidx]] }">
-                -{{ willDamages[hidx][0] }}
+            <div class="outstatus" :class="{ 'mobile-outstatus': isMobile }"
+              v-if="phase >= PHASE.DICE && hero.hp > 0 && hero.isFront">
+              <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': osts.UI.isSelected }"
+                v-for="(osts, osti) in combatStatuses[hgi].filter((sts, stsi) => combatStatuses[hgi].length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 3)"
+                :key="osts.id">
+                <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }"
+                  :style="{ background: osts.UI.iconBg }">
+                </div>
+                <img v-if="getPngIcon(osts.UI.icon) != ''" class="status-icon" :style="{
+                  filter: getPngIcon(osts.UI.icon).startsWith('https') || osts.UI.icon.startsWith('buff') || osts.UI.icon.endsWith('dice')
+                    ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[osts.UI.iconBg]})` : '',
+                }" :src="getPngIcon(osts.UI.icon)" />
+                <div v-else style="color: white;">{{ osts.name[0] }}</div>
+                <div :style="{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%' }"
+                  :class="{ 'status-can-use': osts.perCnt > 0 }"></div>
+                <div class="status-cnt"
+                  :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hgi][hidx][1][osti].isChange }"
+                  v-if="!osts.type.includes(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
+                  {{ osts.useCnt < 0 ? osts.roundCnt : osts.useCnt }} </div>
+                </div>
+                <div v-if="combatStatuses[hgi].length > 4" :class="{ status: true, 'mobile-status': isMobile }"
+                  style="background-color: #faebd767">
+                  <span>···</span>
+                  <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
+                    {{ combatStatuses[hgi].length - 3 }}
+                  </div>
+                </div>
               </div>
-              <div class="damage" :class="{ 'show-damage': isShowDmg && willDamages[hidx][1] > 0 && hero.hp >= 0 }"
-                :style="{ color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce] }">
-                -{{ willDamages[hidx][1] }}
+              <div class="hero-die" v-if="hero.hp <= 0">
+                <img :src="getSvgIcon('die')" style="width: 40px" />
               </div>
-              <div class="heal" v-if="willHeals[hidx] != undefined"
-                :class="{ 'show-heal': isShowHeal && willHeals[hidx] >= 0 }" :style="{ color: ELEMENT_COLOR.Heal }">
-                +{{ willHeals[hidx] }}
+              <div :class="{
+                'will-damage': (willHp[hgi][hidx] ?? 0) <= 0,
+                'will-heal': (willHp[hgi][hidx] ?? 0) > 0,
+              }" :style="{
+                paddingLeft: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
+                backgroundImage: `url(${getPngIcon('Preview2')})`,
+              }" v-if="willHp[hgi][hidx] != undefined">
+                <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
+                  :src="getPngIcon('https://gi-tcg-assets.guyutongxue.support/assets/UI_Gcg_Buff_Common_Revive.webp')"
+                  style="height: 16px" />
+                <img v-else-if="hero.hp + (willHp[hgi][hidx] ?? 0) <= 0" :src="getSvgIcon('die')"
+                  style="height: 16px; padding-left: 3px" />
+                <span :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hgi][hidx] ?? 0) > 0 ? '5px' : '0'}` }">
+                  {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{ Math.abs(Math.ceil(willHp[hgi][hidx] ?? 0) % 100) }}
+                </span>
+              </div>
+              <div class="damages" v-if="willDamages[hgi][hidx] != undefined">
+                <div class="damage" v-if="dmgElements[hgi] != undefined"
+                  :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][0] >= 0 && hero.hp >= 0 }"
+                  :style="{ color: ELEMENT_COLOR[dmgElements[hgi][hidx]] }">
+                  -{{ willDamages[hgi][hidx][0] }}
+                </div>
+                <div class="damage"
+                  :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][1] > 0 && hero.hp >= 0 }"
+                  :style="{ color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce] }">
+                  -{{ willDamages[hgi][hidx][1] }}
+                </div>
+                <div class="heal" v-if="willHeals[hgi][hidx] != undefined"
+                  :class="{ 'show-heal': isShowHeal && willHeals[hgi][hidx] >= 0 }"
+                  :style="{ color: ELEMENT_COLOR.Heal }">
+                  +{{ willHeals[hgi][hidx] }}
+                </div>
               </div>
             </div>
           </div>
@@ -306,7 +317,7 @@
                   :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
               </div>
               <img class="summon-top-icon" v-if="!summon?.UI.isWill"
-                :src="getSvgIcon(summon.maxUse > 10 ? 'bag' : summon.shieldOrHeal < 0 ? 'shield' : 'round')" />
+                :src="getPngIcon(summon.maxUse > 10 ? 'Counter' : summon.shieldOrHeal < 0 ? 'Barrier' : 'TimeState')" />
               <div class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
                 v-if="!summon?.UI.isWill">
                 {{ summon.useCnt }}
@@ -410,7 +421,7 @@ import {
 } from '@@@/constant/enum';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_KEY } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
 
 const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
@@ -423,44 +434,44 @@ type Curcnt = { sid: number, val: number, isChange: boolean };
 const genChangeProxy = (length: number) => Array.from({ length }, () => ({ sid: 0, val: 0, isChange: false }));
 const supportCurcnt = ref<Curcnt[][]>([genChangeProxy(4), genChangeProxy(4)]);
 const summonCurcnt = ref<Curcnt[][]>([genChangeProxy(4), genChangeProxy(4)]);
-const statusCurcnt = ref<Curcnt[][][]>([]);
-const hpCurcnt = ref<Curcnt[]>([]);
+const statusCurcnt = ref<Curcnt[][][][]>([]);
+const hpCurcnt = ref<Curcnt[][]>([]);
 const getGroup = (idx: number) => idx ^ playerIdx.value ^ 1;
 const wrapArr = <T>(arr: T[]) => {
-  if (playerIdx.value == 1) return arr;
   const h0 = props.client.players[0].heros.length;
   const a0 = arr.slice(0, h0);
   const a1 = arr.slice(h0);
-  return a1.concat(a0);
+  if (playerIdx.value == 1) return [a0, a1];
+  return [a1, a0];
 }
 
 const playerIdx = computed<number>(() => Math.max(props.isLookon, props.client.playerIdx));
 const player = computed<Player>(() => {
   const players: Player[] = props.client.players;
-  if (statusCurcnt.value.length == 0) statusCurcnt.value = players.flatMap(p => p.heros.map(() => [genChangeProxy(12), genChangeProxy(12)]));
-  if (hpCurcnt.value.length == 0) hpCurcnt.value = players.flatMap(p => genChangeProxy(p.heros.length));
-  players.forEach((p, pi) => {
+  if (statusCurcnt.value.length == 0) statusCurcnt.value = players.map(p => p.heros.map(() => [genChangeProxy(12), genChangeProxy(12)]));
+  if (hpCurcnt.value.length == 0) hpCurcnt.value = players.map(p => genChangeProxy(p.heros.length));
+  players.forEach((p, pidx) => {
+    const pi = pidx ^ playerIdx.value ^ 1;
     p.heros.forEach((h, hi) => {
-      const hidx = +(pi == playerIdx.value) * players[playerIdx.value ^ 1].heros.length + hi;
-      if (hpCurcnt.value[hidx].val != h.hp) {
-        if (hpCurcnt.value[hidx].sid == h.id) {
+      if (hpCurcnt.value[pi][hi].val != h.hp) {
+        if (hpCurcnt.value[pi][hi].sid == h.id) {
           setTimeout(() => {
-            hpCurcnt.value[hidx] = { sid: h.id, val: h.hp, isChange: true };
-            setTimeout(() => hpCurcnt.value[hidx].isChange = false, 300);
+            hpCurcnt.value[pi][hi] = { sid: h.id, val: h.hp, isChange: true };
+            setTimeout(() => hpCurcnt.value[pi][hi].isChange = false, 300);
           }, 200);
         } else {
-          hpCurcnt.value[hidx] = { sid: h.id, val: h.hp, isChange: false };
+          hpCurcnt.value[pi][hi] = { sid: h.id, val: h.hp, isChange: false };
         }
       }
       [h.heroStatus, (p.hidx == hi ? p.combatStatus : [])].forEach((hst, hsti) => {
         hst.forEach((s, si) => {
           const val = Math.max(s.roundCnt, s.useCnt);
-          if (statusCurcnt.value[hidx][hsti][si].val != val) {
-            if (statusCurcnt.value[hidx][hsti][si].sid == s.id) {
-              statusCurcnt.value[hidx][hsti][si] = { sid: s.id, val, isChange: true };
-              setTimeout(() => statusCurcnt.value[hidx][hsti][si].isChange = false, 300);
+          if (statusCurcnt.value[pi][hi][hsti][si].val != val) {
+            if (statusCurcnt.value[pi][hi][hsti][si].sid == s.id) {
+              statusCurcnt.value[pi][hi][hsti][si] = { sid: s.id, val, isChange: true };
+              setTimeout(() => statusCurcnt.value[pi][hi][hsti][si].isChange = false, 300);
             } else {
-              statusCurcnt.value[hidx][hsti][si] = { sid: s.id, val, isChange: false };
+              statusCurcnt.value[pi][hi][hsti][si] = { sid: s.id, val, isChange: false };
             }
           }
         });
@@ -488,7 +499,7 @@ const player = computed<Player>(() => {
         }
       }
     });
-  })
+  });
   return players[playerIdx.value];
 });
 const version = computed<Version>(() => props.version);
@@ -502,30 +513,73 @@ const diceCnt = computed<number[]>(() => props.client.diceCnt);
 const rollCnt = computed<number>(() => props.client.rollCnt);
 const showRerollBtn = computed<boolean>(() => props.client.showRerollBtn);
 const isReconcile = computed<boolean>(() => props.client.isReconcile);
-const willAttachs = computed<ElementType[][]>(() => wrapArr(props.client.willAttachs));
-const willDamages = computed<number[][]>(() => wrapArr(props.client.willDamages));
-const dmgElements = computed<ElementType[]>(() => wrapArr(props.client.dmgElements));
-const willHeals = computed<number[]>(() => wrapArr(props.client.willHeals));
-const willHp = computed<(number | undefined)[]>(() => wrapArr(props.client.willHp));
+const heroDOMs = ref<NodeListOf<Element>>();
+const atkPidx = computed<number>(() => props.client.damageVO.atkPidx ?? -1);
+const atkHidx = computed<number>(() => props.client.damageVO.atkHidx ?? -1);
+const tarHidx = computed<number>(() => props.client.damageVO.tarHidx ?? -1);
+const willAttachs = computed<ElementType[][][]>(() => wrapArr(props.client.willAttachs ?? []));
+let isAnimating = false;
+const willDamages = computed<number[][][]>(() => {
+  const dmgs: number[][][] = wrapArr(props.client.damageVO.willDamages ?? []);
+  if (dmgs.length > 0 && props.client.damageVO.dmgSource == 'skill' && atkHidx.value >= 0 && heroDOMs.value != undefined && !isAnimating) {
+    isAnimating = true;
+    const isAtker = playerIdx.value == atkPidx.value;
+    const atkHeroDOM = heroDOMs.value[+isAtker * props.client.players[playerIdx.value ^ 1].heros.length + atkHidx.value];
+    const { width: parentWidth = 0 } = atkHeroDOM.parentElement?.getBoundingClientRect() ?? {};
+    const { width, height } = atkHeroDOM.getBoundingClientRect();
+    const widthDiff = (tarHidx.value - atkHidx.value) * (width + 0.1 * parentWidth);
+    const heightDiff = height / 0.35 * 0.5 * (isAtker ? -1 : 1);
+    const deg = Math.atan2(widthDiff, -heightDiff) * (180 / Math.PI) - (isAtker ? 0 : 180);
+    const anime = atkHeroDOM.animate([{
+      offset: 0.3,
+      transform: `rotate(${deg}deg) scale(1.3)`,
+      zIndex: 5,
+    }, {
+      offset: 0.5,
+      transform: `rotate(${deg}deg) scale(1.3)`,
+      zIndex: 5,
+    }, {
+      offset: 0.75,
+      transform: `translate(${widthDiff}px, ${heightDiff}px) rotate(${deg}deg) scale(0.7)`,
+      zIndex: 5,
+    }, {
+      offset: 0.95,
+      transform: `rotate(${deg}deg)`,
+      zIndex: 5,
+    }], { duration: 700 });
+    setTimeout(() => {
+      anime.cancel();
+      isAnimating = false;
+    }, 700);
+  }
+  return dmgs;
+});
+const dmgElements = computed<ElementType[][]>(() => {
+  const dmgels = props.client.damageVO.dmgElements ?? [];
+  if (atkPidx.value == playerIdx.value) return [dmgels, []];
+  return [[], dmgels];
+});
+const willHeals = computed<number[][]>(() => wrapArr(props.client.damageVO.willHeals ?? []));
+const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wrapArr(props.client.damageVO.elTips ?? []));
+const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
-const willSwitch = computed<boolean[]>(() => wrapArr(props.client.willSwitch));
+const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch));
 const isShowChangeHero = computed<number>(() => props.client.isShowChangeHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
 const isShowHeal = computed<boolean>(() => props.client.isShowHeal);
 const canAction = computed<boolean>(() => props.canAction);
-const elTips = computed<[string, PureElementType, PureElementType][]>(() => wrapArr(props.client.elTips));
 const heroChangeDice = computed<number>(() => props.client.heroChangeDice);
 const supportCnt = computed<number[][]>(() => props.client.supportCnt);
 const summonCnt = computed<number[][]>(() => props.client.summonCnt);
 const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).fill(false));
 const heroSelect = computed<number[]>(() => props.client.heroSelect);
-const heroCanSelect = computed<boolean[][]>(() => props.client.heroCanSelect);
+const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
 const isLookon = computed<number>(() => props.isLookon);
-const heros = computed<Hero[]>(() => {
-  if (props.client.isWin < 2) return [...opponent?.value.heros, ...player.value.heros];
-  if (playerIdx.value == 0) return [...props.afterWinHeros[1], ...props.afterWinHeros[0]];
+const heros = computed<Hero[][]>(() => {
+  if (props.client.isWin < 2) return [opponent?.value.heros, player.value.heros];
+  if (playerIdx.value == 0) return [props.afterWinHeros[1], props.afterWinHeros[0]];
   return props.afterWinHeros.flat();
 });
 const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, player.value.combatStatus]);
@@ -538,19 +592,8 @@ const dices = computed<DiceCostType[]>(() => player.value.dice);
 const diceSelect = computed<boolean[]>(() => props.client.diceSelect);
 const showChangeCardBtn = ref<boolean>(true);
 
-const eLen = opponent.value.heros.length;
-let diceChangeEnter: number | boolean = -1;
+let diceChangeEnter: -1 | boolean = -1;
 let isMouseDown: boolean = false;
-
-// 获得标识号
-const getPidx = (hidx: number) => {
-  return Math.floor(hidx / eLen);
-}
-
-// 获得角色序号
-const getHidx = (hidx: number) => {
-  return hidx < eLen ? hidx : hidx - eLen;
-}
 
 // 获取png图片
 const getPngIcon = (name: string) => {
@@ -587,6 +630,10 @@ watchEffect(() => {
   if (phase.value == PHASE.DICE) {
     initCardsSelect.value = player.value.handCards.map(() => false);
   }
+});
+
+onMounted(() => {
+  heroDOMs.value = document.querySelectorAll('.hero');
 });
 
 // 选择要换的卡
@@ -693,7 +740,7 @@ const mouseup = () => {
 .round {
   position: relative;
   width: 50%;
-  aspect-ratio: 1;
+  aspect-ratio: 1/1;
   color: white;
   font-weight: bolder;
   -webkit-text-stroke: 1px black;
@@ -773,10 +820,15 @@ button:active {
   max-width: 400px;
   min-height: 250px;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-around;
+  flex-direction: column;
   align-self: self-end;
+}
+
+.hero-group {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
 }
 
 @property --front-val {
@@ -788,8 +840,8 @@ button:active {
 .hero {
   --scale-val-will: 1;
   position: relative;
-  width: 23%;
-  height: 35%;
+  width: 100%;
+  height: 70%;
   border-radius: 10px;
   margin: 0 5%;
   cursor: pointer;
@@ -802,10 +854,18 @@ button:active {
   align-self: flex-end;
 }
 
-.hero-hp-bg {
+.hero-hp-bg,
+.card-border {
   position: absolute;
   width: 100%;
   height: 100%;
+  z-index: 1;
+}
+
+.card-border {
+  border: min(15px, 1.5vw) solid transparent;
+  border-image: url(/public/image/Gold.png) 75 stretch;
+  box-sizing: border-box;
 }
 
 .hero-hp {
@@ -843,6 +903,7 @@ button:active {
   top: 15px;
   display: flex;
   flex-direction: column;
+  z-index: 1;
 }
 
 .hero-energy {
@@ -891,15 +952,19 @@ button:active {
   position: absolute;
   top: 5px;
   left: 20%;
-  height: 20px;
+  height: 23px;
   line-height: 20px;
-  border-radius: 10px;
+  /* border-radius: 10px; */
   color: #a80000;
   font-weight: bold;
-  background-color: #c67b7b;
+  /* background-color: #c67b7b; */
   display: flex;
   justify-content: center;
   align-items: center;
+  background-position: center center;
+  background-size: 100% 23px;
+  background-repeat: no-repeat;
+  z-index: 1;
 }
 
 .will-heal {
@@ -1340,7 +1405,7 @@ button:active {
 
 .dice {
   width: min(60px, 100%);
-  aspect-ratio: 1;
+  aspect-ratio: 1/1;
   border-radius: 50%;
   cursor: pointer;
 }
@@ -1717,7 +1782,7 @@ button:active {
 
 .timer {
   width: 90%;
-  aspect-ratio: 1;
+  aspect-ratio: 1/1;
   margin: 10px 0;
   display: flex;
   justify-content: center;
@@ -1899,208 +1964,6 @@ svg {
 @keyframes dmgchange {
   50% {
     font-size: larger;
-  }
-}
-</style>
-
-<style>
-@keyframes attack0-1 {
-  30% {
-    transform: rotate(-60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(-60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(-300%, -170%) rotate(-60deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(-60deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack1-1 {
-  30% {
-    transform: rotate(-35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(-35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(-150%, -170%) rotate(-35deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(-35deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack2-1 {
-  70% {
-    transform: translate(0, 0) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(0%, -170%) scale(0.7);
-    z-index: 5;
-  }
-}
-
-@keyframes attack3-1 {
-  30% {
-    transform: rotate(35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(150%, -170%) rotate(35deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(35deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack4-1 {
-  30% {
-    transform: rotate(60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(300%, -170%) rotate(60deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(60deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack0-0 {
-  30% {
-    transform: rotate(-60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(-60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(300%, 170%) rotate(-60deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(-60deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack1-0 {
-  30% {
-    transform: rotate(-35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(-35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(150%, 170%) rotate(-35deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(-35deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack2-0 {
-  70% {
-    transform: translate(0, 0) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(0%, 170%) scale(0.7);
-    z-index: 5;
-  }
-}
-
-@keyframes attack3-0 {
-  30% {
-    transform: rotate(35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(35deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(-150%, 170%) rotate(35deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(35deg);
-    z-index: 5;
-  }
-}
-
-@keyframes attack4-0 {
-  30% {
-    transform: rotate(60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  70% {
-    transform: rotate(60deg) scale(1.3);
-    z-index: 5;
-  }
-
-  85% {
-    transform: translate(-300%, 170%) rotate(60deg) scale(0.7);
-    z-index: 5;
-  }
-
-  95% {
-    transform: rotate(60deg);
-    z-index: 5;
   }
 }
 </style>

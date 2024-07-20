@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io-client";
 
-import { ACTION_TYPE, CARD_SUBTYPE, DamageType, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, PureElementType, SKILL_TYPE, Version } from "@@@/constant/enum";
+import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
@@ -11,7 +11,7 @@ import { checkDices } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData,
-    Card, Countdown, Hero,
+    Card, Countdown, DamageVO, Hero,
     InfoVO,
     Player,
     Preview,
@@ -32,11 +32,8 @@ export default class GeniusInvokationClient {
     showRerollBtn: boolean = true; // 是否显示重投按钮
     isReconcile: boolean = false; // 是否进入调和模式
     willAttachs: ElementType[][] = []; // 将要附着的元素
-    willDamages: number[][] = []; // 将要受到的伤害
-    dmgElements: DamageType[] = []; // 造成伤害元素
-    willHeals: number[] = []; // 回血量
     willHp: (number | undefined)[] = []; // 总共的血量变化
-    elTips: [string, PureElementType, PureElementType][] = new Array(6).fill(['', 0, 0]); // 元素反应提示
+    damageVO: DamageVO = this.resetDamageVO(); // 显示伤害
     isShowDmg: boolean = false; // 是否显示伤害数
     isShowHeal: boolean = false; // 是否显示加血数
     isShowChangeHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
@@ -306,7 +303,6 @@ export default class GeniusInvokationClient {
         console.info(`player[${this.player.name}]:${this.isStart ? 'cancelReady' : 'startGame'}-${this.playerIdx}`);
         this.isStart = !this.isStart;
         this._resetWillAttachs();
-        this._resetWillDamages();
         this.isWin = -1;
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.StartGame,
@@ -333,8 +329,7 @@ export default class GeniusInvokationClient {
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO, log, isWin, flag } = data;
         console.info(flag);
-        this.players = players;
-        this.updateHandCardsPos();
+        const hasDmg = (damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0;
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
         this.previews = previews;
@@ -347,25 +342,29 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
         this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
-        this.dmgElements = damageVO?.dmgElements ?? [];
-        this.elTips = damageVO?.elTips ?? [];
-        this.log = log;
-        if ((damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0) {
+        this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
+        this.damageVO.dmgElements = damageVO?.dmgElements ?? [];
+        this.damageVO.elTips = damageVO?.elTips ?? [];
+        this.damageVO.atkPidx = damageVO?.atkPidx ?? -1;
+        this.damageVO.atkHidx = damageVO?.atkHidx ?? -1;
+        this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
+        if (hasDmg) {
             this.isShowDmg = true;
             setTimeout(() => {
-                this.willDamages = damageVO?.willDamages ?? [];
-                this.willHeals = damageVO?.willHeals ?? [];
+                this.players = players;
+                this.updateHandCardsPos();
+                this.damageVO.willDamages = damageVO?.willDamages ?? [];
+                this.damageVO.willHeals = damageVO?.willHeals ?? [];
                 setTimeout(() => {
                     this.isShowDmg = false;
-                    setTimeout(() => {
-                        this._resetWillDamages();
-                        this.dmgElements = [];
-                        this.elTips = [];
-                        this.willHeals = [];
-                    }, 500);
+                    setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);
-            }, 300);
+            }, 600);
+        } else {
+            this.players = players;
         }
+        this.updateHandCardsPos();
+        this.log = log;
     }
     /**
      * 游戏开始时换卡
@@ -602,6 +601,7 @@ export default class GeniusInvokationClient {
             this.currSkill = NULL_SKILL();
             this.resetDiceSelect();
             this._resetWillAttachs();
+            this._resetWillSummons();
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
@@ -609,6 +609,7 @@ export default class GeniusInvokationClient {
             this.diceSelect = [...preview.diceSelect!];
             this.willHp = preview.willHp!;
             this.willAttachs = preview.willAttachs!;
+            this.willSummons = preview.willSummons!;
         }
         if (!isCard) {
             if (!isOnlyRead) {
@@ -722,12 +723,6 @@ export default class GeniusInvokationClient {
         return this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
     }
     /**
-     * 重置伤害
-     */
-    private _resetWillDamages(): number[][] {
-        return this.willDamages = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => [-1, 0]);
-    }
-    /**
      * 重置召唤物预览
      */
     private _resetWillSummons(): Summon[][] {
@@ -738,6 +733,21 @@ export default class GeniusInvokationClient {
      */
     resetDiceSelect() {
         this.diceSelect.forEach((_, i, a) => a[i] = false);
+    }
+    /**
+     * 重置damageVO
+     */
+    resetDamageVO() {
+        return this.damageVO = {
+            dmgSource: 'null',
+            atkPidx: -1,
+            atkHidx: -1,
+            tarHidx: -1,
+            willDamages: [],
+            dmgElements: [],
+            willHeals: [],
+            elTips: [],
+        }
     }
     /**
      * 获取当前出战角色信息

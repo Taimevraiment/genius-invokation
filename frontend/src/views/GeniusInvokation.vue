@@ -533,7 +533,7 @@ body {
 .container {
   width: 100%;
   height: 95vh;
-  /* background-color: #aed1c8; */
+  background-color: #aed1c8;
   background: url('@@/image/desk-bg.png');
   background-size: cover;
   background-position: center center;
