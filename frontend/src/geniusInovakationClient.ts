@@ -33,7 +33,7 @@ export default class GeniusInvokationClient {
     isReconcile: boolean = false; // 是否进入调和模式
     willAttachs: ElementType[][] = []; // 将要附着的元素
     willHp: (number | undefined)[] = []; // 总共的血量变化
-    damageVO: DamageVO = this.resetDamageVO(); // 显示伤害
+    damageVO: Exclude<DamageVO, -1> = this.resetDamageVO(); // 显示伤害
     isShowDmg: boolean = false; // 是否显示伤害数
     isShowHeal: boolean = false; // 是否显示加血数
     isShowChangeHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
@@ -327,9 +327,10 @@ export default class GeniusInvokationClient {
      * @param data
      */
     getServerInfo(data: Readonly<ServerData>) {
-        const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO, log, isWin, flag } = data;
+        const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt,
+            handCardsCnt, damageVO, tip, actionInfo, log, isWin, flag } = data;
         console.info(flag);
-        const hasDmg = (damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0;
+        const hasDmg = damageVO != -1 && ((damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0);
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
         this.previews = previews;
@@ -342,12 +343,19 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
         this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
-        this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
-        this.damageVO.dmgElements = damageVO?.dmgElements ?? [];
-        this.damageVO.elTips = damageVO?.elTips ?? [];
-        this.damageVO.atkPidx = damageVO?.atkPidx ?? -1;
-        this.damageVO.atkHidx = damageVO?.atkHidx ?? -1;
-        this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
+        this._sendTip(tip);
+        if (actionInfo != '') {
+            this.actionInfo = actionInfo;
+            setTimeout(() => this.actionInfo = '', 1000);
+        }
+        if (damageVO != -1) {
+            this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
+            this.damageVO.dmgElements = damageVO?.dmgElements ?? [];
+            this.damageVO.elTips = damageVO?.elTips ?? [];
+            this.damageVO.atkPidx = damageVO?.atkPidx ?? -1;
+            this.damageVO.atkHidx = damageVO?.atkHidx ?? -1;
+            this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
+        }
         if (hasDmg) {
             this.isShowDmg = true;
             setTimeout(() => {
@@ -359,12 +367,12 @@ export default class GeniusInvokationClient {
                     this.isShowDmg = false;
                     setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);
-            }, 600);
+            }, 550);
         } else {
             this.players = players;
         }
         this.updateHandCardsPos();
-        this.log = log;
+        this.log = [...log];
     }
     /**
      * 游戏开始时换卡
@@ -399,7 +407,11 @@ export default class GeniusInvokationClient {
             const hidx = this.player.heros.findIndex(h => this.heroSelect[h.hidx] || h.id == this.modalInfo.info?.id);
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && pre.heroIdxs![0] == hidx);
             if (preview == undefined) throw new Error('未找到切换角色预览');
-            this.heroSwitchDice = preview.diceSelect!.filter(v => v).length;
+            this.heroSwitchDice = preview.switchHeroDiceCnt!;
+            this.diceSelect = [...preview.diceSelect!];
+            this.heroCanSelect = [...preview.heroCanSelect!];
+            this.heroSelect = this.player.heros.map(h => +preview.heroIdxs!.includes(h.hidx));
+            this.isShowChangeHero = 2 + +!!preview.isQuickAction;
         }
     }
     /**
@@ -407,7 +419,7 @@ export default class GeniusInvokationClient {
      * @param pidx 玩家识别符: 0对方 1我方
      * @param hidx 角色索引idx
      */
-    selectHero(pidx: number, hidx: number, force = false) {
+    selectHero(pidx: number, hidx: number, force: boolean = false) {
         this.cancel({ onlySupportAndSummon: true });
         if (this.currCard.canSelectHero == 0 || ([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase) || force) {
             this.currCard = NULL_CARD();
@@ -440,7 +452,7 @@ export default class GeniusInvokationClient {
                 flag: 'chooseInitHero',
             } as ActionData);
         } else {
-            if (this.isShowChangeHero > 1 && pidx == 1 && this.player.heros[hidx].canSelect) {
+            if (this.isShowChangeHero > 1 && pidx == 1 && this.heroCanSelect[hidx]) {
                 this.heroSelect.forEach((_, hi, ha) => ha[hi] = +(hi == hidx));
                 this.chooseHero();
                 this.modalInfo = NULL_MODAL();
@@ -537,14 +549,16 @@ export default class GeniusInvokationClient {
      * @returns 是否调和成功
      */
     reconcile(bool: boolean, cardIdx: number) {
-        const { isValid } = this.previews.find(pr => pr.type == ACTION_TYPE.Reconcile && pr.cardIdxs![0] == cardIdx) ?? {};
+        const { isValid, diceSelect } = this.previews.find(pr => pr.type == ACTION_TYPE.Reconcile && pr.cardIdxs![0] == cardIdx) ?? {};
         if (!isValid) return false;
         if (bool) {
             if (!this.isReconcile) {
                 this.isReconcile = true;
+                this.diceSelect = [...diceSelect!];
                 this._resetHeroSelect();
                 this._resetHeroCanSelect();
             } else {
+                if (this.diceSelect.indexOf(true) == -1) return this._sendTip('骰子不符合要求');
                 this.socket.emit('sendToServer', {
                     type: ACTION_TYPE.Reconcile,
                     cpidx: this.playerIdx,
@@ -591,7 +605,10 @@ export default class GeniusInvokationClient {
 
         if (isExec) {
             this.isValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
-            if (!this.isValid) return; // this._sendTip('骰子不符合要求');
+            if (!this.isValid) {
+                this.cancel();
+                return this._sendTip('骰子不符合要求');
+            }
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
                 skillIdx: skidx,
@@ -611,11 +628,11 @@ export default class GeniusInvokationClient {
             this.willAttachs = preview.willAttachs!;
             this.willSummons = preview.willSummons!;
         }
-        if (!isCard) {
-            if (!isOnlyRead) {
-                this.isValid = true;
-            }
-        }
+        // if (!isCard) {
+        //     if (!isOnlyRead) {
+        //         this.isValid = true;
+        //     }
+        // }
     }
     /**
      * 切换角色
@@ -703,6 +720,14 @@ export default class GeniusInvokationClient {
         if (this.isLookon == -1) return;
         this.isLookon = idx;
         this.socket.emit('roomInfoUpdate',);
+    }
+    _sendTip(tip: string) {
+        if (tip == '') return;
+        if (this.tip != '') this.tip = '';
+        setTimeout(() => {
+            this.tip = tip;
+            setTimeout(() => this.tip = '', 1200);
+        }, 100);
     }
     /**
      * 重置角色选择

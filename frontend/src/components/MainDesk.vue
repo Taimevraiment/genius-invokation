@@ -213,7 +213,7 @@
               </div>
               <img v-if="getPngIcon(ists.UI.icon) != ''" class="status-icon" :style="{
                 filter: getPngIcon(ists.UI.icon).startsWith('https') || ists.UI.icon.startsWith('buff') || ists.UI.icon.endsWith('dice')
-                  ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ists.UI.iconBg]})` : '',
+                  ? getSvgFilter(ists.UI.iconBg) : '',
               }" :src="getPngIcon(ists.UI.icon)" />
               <div v-else style="color: white;">{{ ists.name[0] }}</div>
               <div :style="{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%' }"
@@ -241,7 +241,7 @@
                 </div>
                 <img v-if="getPngIcon(osts.UI.icon) != ''" class="status-icon" :style="{
                   filter: getPngIcon(osts.UI.icon).startsWith('https') || osts.UI.icon.startsWith('buff') || osts.UI.icon.endsWith('dice')
-                    ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[osts.UI.iconBg]})` : '',
+                    ? getSvgFilter(osts.UI.iconBg) : '',
                 }" :src="getPngIcon(osts.UI.icon)" />
                 <div v-else style="color: white;">{{ osts.name[0] }}</div>
                 <div :style="{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%' }"
@@ -266,8 +266,9 @@
                 'will-damage': (willHp[hgi][hidx] ?? 0) <= 0,
                 'will-heal': (willHp[hgi][hidx] ?? 0) > 0,
               }" :style="{
-                paddingLeft: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
-                backgroundImage: `url(${getPngIcon('Preview2')})`,
+                'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
+                // 'background-image': `url(${getPngIcon('Preview2')})`,
+                'border-image-source': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
                   :src="getPngIcon('https://gi-tcg-assets.guyutongxue.support/assets/UI_Gcg_Buff_Common_Revive.webp')"
@@ -411,6 +412,7 @@
             {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
           </button>
         </div>
+        <img src="@@/image/Attack.png" style="display: none;" />
       </div>
 </template>
 
@@ -419,7 +421,7 @@ import {
   CARD_SUBTYPE, CARD_TAG, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version,
 } from '@@@/constant/enum';
-import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_KEY } from '@@@/constant/UIconst';
+import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
@@ -586,7 +588,7 @@ const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, 
 const currTime = computed<number>(() => ((props.client.countdown.limit - props.client.countdown.curr) / props.client.countdown.limit) * 100);
 const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value.status == PLAYER_STATUS.WAITING ? '#2b6aff' : '#ffb36d'} ${currTime.value + 5}%)`);
 const isShowHistory = computed<boolean>(() => props.client.isShowHistory);
-const historyInfo = computed<string[]>(() => props.client.log.slice(4));
+const historyInfo = computed<string[]>(() => props.client.log);
 const initCards = computed<Card[]>(() => player.value.handCards);
 const dices = computed<DiceCostType[]>(() => player.value.dice);
 const diceSelect = computed<boolean[]>(() => props.client.diceSelect);
@@ -625,6 +627,11 @@ const getDiceIcon = (name: string) => {
 const getEnergyIcon = (isCharged: boolean = false) => {
   return `/image/energy-${isCharged ? 'charged' : 'empty'}.png`;
 };
+
+// 获取过滤器
+const getSvgFilter = (statusColor: StatusBgColor) => {
+  return `url(/svg/filter.svg#status-color-${STATUS_BG_COLOR_CODE[STATUS_BG_COLOR_KEY[statusColor]]})`;
+}
 
 watchEffect(() => {
   if (phase.value == PHASE.DICE) {
@@ -864,7 +871,7 @@ button:active {
 
 .card-border {
   border: min(15px, 1.5vw) solid transparent;
-  border-image: url(/public/image/Gold.png) 75 stretch;
+  border-image: url(@@/image/Gold.png) 75 stretch;
   box-sizing: border-box;
 }
 
@@ -951,20 +958,23 @@ button:active {
 .will-damage {
   position: absolute;
   top: 5px;
-  left: 20%;
+  left: 30%;
   height: 23px;
   line-height: 20px;
   /* border-radius: 10px; */
-  color: #a80000;
-  font-weight: bold;
+  /* color: #a80000; */
   /* background-color: #c67b7b; */
+  color: white;
+  -webkit-text-stroke: 0.5px black;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-position: center center;
+  /* background-position: center center;
   background-size: 100% 23px;
-  background-repeat: no-repeat;
-  z-index: 1;
+  background-repeat: no-repeat; */
+  border-image-slice: 20 25 fill;
+  border-image-width: 7px;
 }
 
 .will-heal {
@@ -974,9 +984,9 @@ button:active {
   height: 20px;
   line-height: 20px;
   border-radius: 10px;
-  color: #22a800;
+  /* color: #22a800;
   font-weight: bold;
-  background-color: #7bc67c;
+  background-color: #7bc67c; */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1076,7 +1086,7 @@ button:active {
   box-sizing: border-box;
   -webkit-text-stroke: 0.5px black;
   font-weight: bold;
-  background-image: url(/public/image/Attack.png);
+  background-image: url(@@/image/Attack.png);
   background-size: 100%;
 }
 
@@ -1632,7 +1642,7 @@ button:active {
   border: 2px solid black;
   border-radius: 10px;
   background-color: #14408c;
-  background-image: url('https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png');
+  background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
   background-size: 100% 100%;
   color: black;
   text-align: center;
@@ -1663,7 +1673,7 @@ button:active {
   border: 2px solid black;
   border-radius: 10px;
   background-color: #14408c;
-  background-image: url('https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png');
+  background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
   background-size: 100% 100%;
   color: black;
   text-align: center;

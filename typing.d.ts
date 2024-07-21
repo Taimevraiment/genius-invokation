@@ -160,7 +160,7 @@ type DamageVO = {
     willDamages: number[][], // 造成伤害
     dmgElements: DamageType[], // 元素伤害类型
     elTips: [string, PureElementType, PureElementType][], // 元素反应提示
-}
+} | -1;
 
 type TrgElRe = keyof typeof SWIRL_ELEMENT;
 type TrgSkType = Exclude<SkillType, 4>;
@@ -216,6 +216,7 @@ type ServerData = Readonly<{
     handCardsCnt: number[],
     isWin: number,
     tip: string,
+    actionInfo: string,
     flag: string,
 }>
 
@@ -230,6 +231,7 @@ type Preview = Readonly<ActionData & {
     willDiscard?: Card[],
     willSummonChange?: number[][],
     willSupportChange?: number[][],
+    heroCanSelect?: boolean[],
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
 }>

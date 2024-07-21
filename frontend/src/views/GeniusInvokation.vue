@@ -97,7 +97,7 @@
       </button>
       <button v-if="client.currCard.id > 0 && canAction" @click.stop="reconcile(true)"
         :style="{ backgroundColor: ELEMENT_COLOR[client.getFrontHero()?.element ?? ELEMENT_TYPE.Physical] }"
-        :class="{ forbidden: client.reconcileValid[client.currCard.cidx] }">
+        :class="{ forbidden: !client.reconcileValid[client.currCard.cidx] }">
         调和
       </button>
       <button v-if="client.isReconcile && client.currCard.id > 0" @click.stop="reconcile(false)">
@@ -109,14 +109,17 @@
         <div class="quick-action" v-if="client.isShowChangeHero == 3">
           快速行动
         </div>
-        <button :class="{ forbidden: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO }"
+        <!-- <button :class="{ forbidden: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO }"
           v-if="client.isShowChangeHero < 2" @click.stop="chooseHero">
           {{ client.player.phase == PHASE.CHOOSE_HERO || client.player.phase >= PHASE.ACTION_END ? "出战" : "切换" }}
-        </button>
-        <button v-else :class="{ forbidden: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO }"
+        </button> -->
+        <div class="switch-button" @click.stop="client.isShowChangeHero < 2 ? chooseHero() : changeHero()"
+          :style="{ filter: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO ? `url(${getSvgIcon('filter')}#status-color-10)` : '' }">
+        </div>
+        <!-- <button v-else :class="{ forbidden: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO }"
           @click.stop="changeHero">
           确定
-        </button>
+        </button> -->
         <div class="skill-cost" v-if="client.player.phase == PHASE.ACTION"
           :style="{ marginTop: '10px', opacity: +(client.isShowChangeHero >= 2) }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
@@ -234,6 +237,11 @@ const getDiceBgIcon = (name: string) => {
 const getPngIcon = (name: string) => {
   if (name.startsWith('http')) return name;
   return `/image/${name}.png`;
+};
+
+// 获取svg图片
+const getSvgIcon = (name: string) => {
+  return `/svg/${name}.svg`;
 };
 
 watchEffect(() => {
@@ -534,7 +542,7 @@ body {
   width: 100%;
   height: 95vh;
   background-color: #aed1c8;
-  background: url('@@/image/desk-bg.png');
+  background: url(@@/image/desk-bg.png);
   background-size: cover;
   background-position: center center;
   position: relative;
@@ -703,6 +711,21 @@ body {
   height: 45px;
   border-radius: 50%;
   background-color: #7e5f2ab9;
+}
+
+.switch-button {
+  width: 55px;
+  height: 55px;
+  background-image: url(@@/image/Select_Replace.png);
+  background-size: cover;
+}
+
+.switch-button:hover {
+  cursor: pointer;
+}
+
+.switch-button:active {
+  transform: translateY(2px);
 }
 
 .quick-action {
@@ -877,6 +900,7 @@ body {
   text-align: center;
   line-height: 30px;
   font-weight: bolder;
+  font-size: medium;
   z-index: 20;
 }
 

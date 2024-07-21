@@ -1,11 +1,13 @@
-import { StatusTask } from "../../typing";
 import { delay } from "../../common/utils/utils.js";
+import { StatusTask } from "../../typing";
 
 export default class TaskQueue {
     queue: [string, any[] | StatusTask][] = [];
     isExecuting: boolean = false;
     constructor() { }
-    addTask(taskType: string, args: any[], isUnshift = false) {
+    addTask(taskType: string, args: any[], isUnshift?: boolean): void;
+    addTask(taskType: string, task: [() => void, number][]): void;
+    addTask(taskType: string, args: any[], isUnshift: boolean = false) {
         if (this.queue.some(([tpn]) => tpn == taskType)) return;
         if (isUnshift) this.queue.unshift([taskType, args]);
         else this.queue.push([taskType, args]);

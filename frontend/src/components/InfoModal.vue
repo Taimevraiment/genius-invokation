@@ -117,7 +117,7 @@
                   <div class="status-icon">
                     <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
                     <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
-                      filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ist.UI.iconBg]})` : ''
+                      filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? getSvgFilter(ist.UI.iconBg) : ''
                     }" />
                     <div v-else style="color: white;">{{ ist.name[0] }}</div>
                     <div class="status-cnt"
@@ -148,7 +148,7 @@
                   <div class="status-icon">
                     <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
                     <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
-                      :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
+                      :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? getSvgFilter(ost.UI.iconBg) : '' }" />
                     <div v-else style="color: white;">{{ ost.name[0] }}</div>
                     <div class="status-cnt"
                       v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
@@ -222,7 +222,7 @@
               <div class="status-icon">
                 <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
                 <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)"
-                  :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ist.UI.iconBg]})` : '' }" />
+                  :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? getSvgFilter(ist.UI.iconBg) : '' }" />
                 <div v-else style="color: white;">{{ ist.name[0] }}</div>
                 <div class="status-cnt"
                   v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
@@ -251,7 +251,7 @@
               <div class="status-icon">
                 <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
                 <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
-                  :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? `url(${getSvgIcon('filter')}#status-color-${STATUS_BG_COLOR_KEY[ost.UI.iconBg]})` : '' }" />
+                  :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? getSvgFilter(ost.UI.iconBg) : '' }" />
                 <div v-else style="color: white;">{{ ost.name[0] }}</div>
                 <div class="status-cnt"
                   v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
@@ -287,7 +287,7 @@ import { computed, ref, watchEffect } from 'vue';
 import {
   CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
   ELEMENT_NAME, ELEMENT_URL, ElementColorKey, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SHIELD_ICON_URL, SKILL_TYPE_ABBR,
-  SKILL_TYPE_NAME, STATUS_BG_COLOR_KEY, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
+  SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
   CARD_SUBTYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
@@ -466,9 +466,14 @@ const getPngIcon = (name: string) => {
   return `/image/${name}.png`;
 }
 
-// 获取svg filter
+// 获取svg
 const getSvgIcon = (name: string) => {
   return `/svg/${name}.svg`;
+}
+
+// 获取过滤器
+const getSvgFilter = (statusColor: StatusBgColor) => {
+  return `url(/svg/filter.svg#status-color-${STATUS_BG_COLOR_CODE[STATUS_BG_COLOR_KEY[statusColor]]})`;
 }
 
 watchEffect(() => {

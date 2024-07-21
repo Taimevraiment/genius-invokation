@@ -68,7 +68,7 @@ export class GIStatus {
         if (type.includes(STATUS_TYPE.Shield)) {
             // this.icon = 'shield2';
             this.UI.icon = SHIELD_ICON_URL;
-            this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
+            // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
             thandle = (status, event = {}) => {
                 let { restDmg = 0 } = event;
                 let rest: StatusHandleRes = {};

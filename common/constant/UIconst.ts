@@ -1,8 +1,8 @@
+import { swapKeysAndValues } from "../utils/utils.js";
 import {
-    CARD_SUBTYPE, CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_TYPE,
+    CARD_SUBTYPE, CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE,
     HERO_LOCAL, HERO_TAG, SKILL_TYPE, STATUS_TYPE, TypeConst, WEAPON_TYPE,
 } from "./enum.js";
-import { swapKeysAndValues } from "../utils/utils.js";
 
 export const HANDCARDS_GAP_PC = 48; // 电脑端手牌间隔(px)
 
@@ -149,7 +149,7 @@ export const CHANGE_GOOD_COLOR = '#4dff00'; // 减骰绿色
 
 export const CHANGE_BAD_COLOR = '#ff7575'; // 增骰红色
 
-export const DEBUFF_BG_COLOR = '#ff7575'; // debuff红色
+export const DEBUFF_BG_COLOR = CHANGE_BAD_COLOR; // debuff红色
 
 export const STATUS_BG_COLOR = {
     [ELEMENT_TYPE.Physical]: '#848484',
@@ -160,15 +160,23 @@ export const STATUS_BG_COLOR = {
     [ELEMENT_TYPE.Anemo]: '#62c8b3',
     [ELEMENT_TYPE.Geo]: '#c39c26',
     [ELEMENT_TYPE.Dendro]: '#869c17',
-    [STATUS_TYPE.Shield]: '#b79b00',
     Debuff: DEBUFF_BG_COLOR,
-    Transparent: '#00000000',
     Buff: '#b9a11a',
+    Transparent: '#00000000',
+    // [STATUS_TYPE.Shield]: '#b79b00',
 } as const;
 
 export type StatusBgColor = TypeConst<typeof STATUS_BG_COLOR>;
 
 export const STATUS_BG_COLOR_KEY = swapKeysAndValues(STATUS_BG_COLOR);
+
+export const STATUS_BG_COLOR_CODE = {
+    Transparent: -1,
+    ...ELEMENT_CODE,
+    Debuff: 8,
+    Buff: 9,
+    Forbidden: 10,
+} as const;
 
 export const HERO_LOCAL_NAME = {
     [HERO_LOCAL.Monster]: '魔物',
