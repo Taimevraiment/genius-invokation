@@ -1,7 +1,7 @@
 import type { Socket } from "socket.io-client";
 
 import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
-import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
+import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_HANDCARDS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
@@ -63,7 +63,7 @@ export default class GeniusInvokationClient {
     handcardsGap: number; // 手牌间隔
     handcardsOffset: number; // 手牌偏移
     handcardsPos: number[]; // 手牌位置
-    handcardsSelect: boolean[] = []; // 手牌是否选中
+    handcardsSelect: boolean[] = new Array(MAX_HANDCARDS_COUNT).fill(false); // 手牌是否选中
     reconcileValid: boolean[] = []; // 是否允许调和
     heroSelect: number[] = []; // 角色是否选中
     heroCanSelect: boolean[] = []; // 角色是否可选
@@ -178,7 +178,7 @@ export default class GeniusInvokationClient {
         }
         const sidx = this.handcardsSelect.indexOf(true);
         if (!notCard) {
-            this.handcardsSelect.forEach((_, i, a) => a[i] = false);
+            this.handcardsSelect.fill(false);
         }
         if (this.isMobile && sidx > -1) {
             this.mouseleave(sidx, true);
@@ -226,6 +226,7 @@ export default class GeniusInvokationClient {
      * @param cardIdx 选择的卡牌序号
      */
     selectCard(cardIdx: number) {
+        console.log('selectcard');
         if (this.phase < PHASE.CHANGE_CARD) return;
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
         this.currSkill = NULL_SKILL();
@@ -245,6 +246,9 @@ export default class GeniusInvokationClient {
                         type: INFO_TYPE.Card,
                         info: this.currCard,
                     }
+                    const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
+                    if (!preview) throw new Error('预览未找到');
+
                 }
                 if (this.isMobile && this.phase == PHASE.ACTION) {
                     if (cs) this.mouseleave(cardIdx, true);
@@ -379,7 +383,6 @@ export default class GeniusInvokationClient {
      * @param cardIdxs 要换的卡的索引数组
      */
     changeCard(cardIdxs: number[]) {
-        this.handcardsSelect = this.player.handCards.map(() => false);
         this.heroSelect = this.player.heros.map(() => 0);
         this.heroCanSelect = this.player.heros.map(() => false);
         this.socket.emit('sendToServer', {
@@ -424,7 +427,7 @@ export default class GeniusInvokationClient {
         if (this.currCard.canSelectHero == 0 || ([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase) || force) {
             this.currCard = NULL_CARD();
             const sidx = this.handcardsSelect.indexOf(true);
-            this.handcardsSelect.forEach((_, i, a) => a[i] = false);
+            this.handcardsSelect.fill(false);
             if (this.isMobile && sidx > -1) this.mouseleave(sidx, true);
             const hero = this.players[this.playerIdx ^ pidx ^ 1].heros[hidx];
             this.modalInfo = {
@@ -622,7 +625,7 @@ export default class GeniusInvokationClient {
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
-            if (!preview) throw new Error('预览未找到！');
+            if (!preview) throw new Error('预览未找到');
             this.diceSelect = [...preview.diceSelect!];
             this.willHp = preview.willHp!;
             this.willAttachs = preview.willAttachs!;
@@ -651,7 +654,7 @@ export default class GeniusInvokationClient {
             cpidx: this.playerIdx,
             heroIdxs: [hidx],
             diceSelect: this.diceSelect,
-            flag: 'changeHero-' + this.playerIdx,
+            flag: 'changeHero',
         } as ActionData);
         this.cancel();
     }

@@ -20,7 +20,7 @@ import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { allHidxs, checkDices, getAtkHidx, getBackHidxs, getNearestHidx } from '../../common/utils/gameUtil.js';
 import { arrToObj, clone, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import {
-    ActionData, Card, Cmds, Countdown, DamageVO, Hero, MinuDiceSkill, Player, Preview, ServerData, Status, StatusTask,
+    ActionData, Card, Cmds, Countdown, DamageVO, Hero, MinuDiceSkill, Player, Preview, ServerData, Skill, Status, StatusTask,
     Summon, Support, TrgSkType, Trigger,
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
@@ -52,6 +52,7 @@ export default class GeniusInvokationRoom {
     newCard: (id: number, ...args: any) => Card;
     newHero: (id: number) => Hero;
     newSummon: (id: number, ...args: any) => Summon;
+    readySkill: (id: number) => Skill;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
 
@@ -66,6 +67,7 @@ export default class GeniusInvokationRoom {
         this.newCard = newCard(version);
         this.newHero = newHero(version);
         this.newSummon = newSummon(version);
+        this.readySkill = readySkill(version);
     }
     get currentPlayerIdx() {
         return this._currentPlayerIdx;
@@ -430,8 +432,6 @@ export default class GeniusInvokationRoom {
      * @param diceSelect 骰子数组, 如果为undefined则为被动切换
      */
     private _switchHero(pidx: number, hidx: number, socket: Socket | undefined, flag: string, diceSelect?: boolean[]) {
-        // todo 切换角色要加入任务队列执行！！！
-        this.taskQueue.addTask('switchHero', [() => { }, 1000])
         const player = this.players[pidx];
         const opponent = this.players[pidx ^ 1];
         const dieChangeBack = ([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(player.phase);
@@ -476,8 +476,10 @@ export default class GeniusInvokationRoom {
         this._doActionAfter(pidx);
         this._changeTurn(pidx, isQuickAction, 'switchHero', dieChangeBack);
         this._writeLog(`[${player.name}]切换为[${player.heros[hidx].name}]出战${isQuickAction && !dieChangeBack ? '(快速行动)' : ''}`);
-        this.emit(flag, pidx, { tip: isCdt(isQuickAction, '继续{p}回合') });
         this._doSwitchHeroAfter(pidx, hidx, player.hidx);
+        if (!isQuickAction) player.canAction = false;
+        this.taskQueue.addTask('switchHero', [[() => { this.emit(flag, pidx, { tip: isCdt(isQuickAction, '继续{p}回合') }) }, 0]], true);
+        this._execTask();
         // if (phase > PHASE.ACTION) {
         //     heros[hidx].inStatus.forEach(ist => {
         //         if (ist.roundCnt > 0) ++ist.roundCnt;
@@ -1997,6 +1999,7 @@ export default class GeniusInvokationRoom {
             canChange = isEndAtk && (!dieChangeBack && !isOppoActionEnd && !isQuickAction ||
                 dieChangeBack && this.players[pidx]?.phase < PHASE.ACTION_END);
             if (isOppoActionEnd) timeout = 2000;
+            else timeout = 800;
         } else if (['useSkill', 'doSlot', 'doSummon', 'doSite', 'getDamage-status', 'useCard', 'doStatus', 'doSkill'].includes(type)) { // 如果对方已经结束则不转变
             canChange = !isOppoActionEnd && isEndAtk && !isQuickAction;
             if (['doSummon', 'doStatus', 'doSlot', 'doSkill'].includes(type)) timeout = 0;
@@ -2083,7 +2086,7 @@ export default class GeniusInvokationRoom {
             player.heros.forEach(h => { // 重置技能
                 for (let i = 0; i < h.skills.length; ++i) {
                     const skill = h.skills[i];
-                    (skill.rskid == -1 ? h.skills[i] : readySkill(skill.rskid, this.version)).handle({ reset: true, hero: h, skidx: i });
+                    (skill.rskid == -1 ? h.skills[i] : this.readySkill(skill.rskid)).handle({ reset: true, hero: h, skidx: i });
                 }
             });
             player.supports.forEach(spt => spt.handle(spt, { reset: true })); // 重置支援区
@@ -2493,7 +2496,7 @@ export default class GeniusInvokationRoom {
         let isTriggered = false;
         let isQuickAction = false;
         const cmds: Cmds[] = [];
-        const task: [() => void, number][] = [];
+        const task: [() => void, number?][] = [];
         if (!Array.isArray(hidxs)) hidxs = [hidxs];
         for (const hidx of hidxs ?? allHidxs(heros)) {
             const hero = heros[hidx];
@@ -2590,7 +2593,7 @@ export default class GeniusInvokationRoom {
         let nsummons: Summon[] = [];
         const cmds: Cmds[] = [];
         let minusDiceHero = 0;
-        const task: [() => void, number][] = [];
+        const task: [() => void, number?][] = [];
         const ahidx = player.hidx;
         if (Array.isArray(hidxs)) {
             hidxs = hidxs.map(hi => (hi - ahidx + heros.length) % heros.length).sort().map(hi => (hi + ahidx) % heros.length);
@@ -2733,7 +2736,7 @@ export default class GeniusInvokationRoom {
         const statusAtksPre: StatusTask[] = [];
         let readySkill = -1;
         let iqa = false;
-        const task: [() => void, number][] = [];
+        const task: [() => void, number?][] = [];
         let addDmg = 0;
         let getDmg = 0;
         let addDmgSummon = 0;
@@ -2910,7 +2913,7 @@ export default class GeniusInvokationRoom {
         let addDmg = 0;
         let addDiceHero = 0;
         let switchHeroDiceCnt = 0;
-        const task: [() => void, number][] = [];
+        const task: [() => void, number?][] = [];
         const summons: Summon[] = tsummon ?? csummon ?? [...player.summons];
         for (const state of states) {
             for (const summon of summons) {
@@ -3040,7 +3043,7 @@ export default class GeniusInvokationRoom {
         const cmds: Cmds[] = [];
         let minusDiceHero = 0;
         const supportCnt = players.map(() => new Array<number>(MAX_SUPPORT_COUNT).fill(0));
-        const task: [() => void, number][] = [];
+        const task: [() => void, number?][] = [];
         const player = players[pidx];
         const imdices = [...players[pidx].dice];
         const destroys: number[] = [];
@@ -3502,7 +3505,7 @@ export default class GeniusInvokationRoom {
                 cheros[hidxs[0]].energy = energy;
             } else if (cmd == 'getSkill') {
                 if (hidxs == undefined) throw new Error('@_doCmds-getSkill: hidxs is undefined');
-                cheros[hidxs[0]].skills.splice(mode, 0, readySkill(cnt, this.version));
+                cheros[hidxs[0]].skills.splice(mode, 0, this.readySkill(cnt));
             } else if (cmd == 'loseSkill') {
                 if (hidxs == undefined) throw new Error('@_doCmds-loseSkill: hidxs is undefined');
                 cheros[hidxs[0]].skills.splice(mode, 1);
@@ -3629,7 +3632,7 @@ export default class GeniusInvokationRoom {
         const previews: Preview[] = [];
         for (const cidx in handCards) {
             const { canSelectHero, canSelectSummon, canSelectSupport, type } = handCards[cidx];
-            const cases = Math.min(1, canSelectHero);
+            const cases = Math.max(1, canSelectHero);
             // todo 这里要考虑可选择的人数和能选择的人/支援物的所有情况
             for (let i = 0; i < cases; ++i) {
                 const players = clone(this.players);
@@ -3936,13 +3939,14 @@ export default class GeniusInvokationRoom {
             while (this._hasNotDieChange() && !this.taskQueue.isTaskEmpty() && this.taskQueue.isExecuting) {
                 const [taskType, args] = this.taskQueue.getTask() ?? [];
                 if (taskType == undefined || args == undefined) break;
-                let task: [() => void, number][] | undefined;
+                let task: [() => void, number?][] | undefined;
                 if (taskType.startsWith('status-')) task = this._detectStatus(...(args as Parameters<typeof this._detectStatus>)).task;
                 else if (taskType.startsWith('support-')) task = this._detectSupport(...(args as Parameters<typeof this._detectSupport>)).task;
                 else if (taskType.startsWith('summon-')) task = this._detectSummon(...(args as Parameters<typeof this._detectSummon>)).task;
                 else if (taskType.startsWith('slot-')) task = this._detectSlot(...(args as Parameters<typeof this._detectSlot>)).task;
                 else if (taskType.startsWith('skill-')) task = this._detectSkill(...(args as Parameters<typeof this._detectSkill>)).task;
-                else if (taskType.startsWith('statusAtk-')) {
+                else if (taskType == 'switchHero') task = args as [() => void, number?][];
+                if (taskType.startsWith('statusAtk-')) {
                     const isExeced = await this._doStatusAtk(args as StatusTask);
                     if (!isExeced) {
                         this.taskQueue.addStatusAtk([args as StatusTask], true);
@@ -3978,7 +3982,7 @@ export default class GeniusInvokationRoom {
         }
         const curHero = heros[hidx];
         if (!curHero) throw new Error('@_calcSkillChange: hero not found');
-        const rskill = readySkillId > -1 ? readySkill(readySkillId, this.version) : null;
+        const rskill = readySkillId > -1 ? this.readySkill(readySkillId) : null;
         const dmgChange = curHero.skills.filter(sk => sk.type != SKILL_TYPE.Passive).map(() => 0);
         const costChange: [number, number, number[]][] = curHero.skills.filter(sk => sk.type != SKILL_TYPE.Passive).map(() => [0, 0, []]);
         let mds: number[][] = [];

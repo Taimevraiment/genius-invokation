@@ -54,7 +54,7 @@ export class GIHero {
             avatar: avatar[0],
             avatars: avatar,
         }
-        this.skills.push(...skills.map((sk, ski) => (sk.id = id * 10 + ski + 1, sk)));
+        this.skills.push(...skills);
         this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
     }
 }
@@ -197,6 +197,6 @@ export class HeroBuilder extends BaseBuilder {
         if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
             this._maxHp, element, this._weaponType, this._src, this._avatar,
-            skills.map(skill => skill.costElement(element).version(this._curVersion).done()));
+            skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).costElement(element).version(this._curVersion).done()));
     }
 }

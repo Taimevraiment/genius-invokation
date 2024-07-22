@@ -1,7 +1,7 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { Version } from "../constant/enum.js";
-import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getStatus } from "../utils/gameUtil.js";
+import { DAMAGE_TYPE, Version } from "../constant/enum.js";
+import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getStatus, hasStatus } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -182,6 +182,92 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，造成{dmg}点[水元素伤害]。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png'),
 
+    112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(2).damage(1).heal(1)
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/4608304a2a01f7f33b59b731543a761b_3713077215425832494.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                const { heros = [] } = event;
+                const hero = heros.find(h => h.id == getHidById(smn.id));
+                const isTalent = !!hero?.talentSlot && hasStatus(hero?.heroStatus, 112052);
+                return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }, { cmd: 'heal' }] }
+            }
+        })),
+
+    112062: () => new SummonBuilder('清净之园囿').useCnt(2).damage(2)
+        .description('{defaultAtk}；【此召唤物在场时：】我方角色｢普通攻击｣造成的伤害+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/ef32ccb60a38cb7bfa31372dd5953970_1908841666370199656.png')
+        .handle((summon, event) => ({
+            addDmgType1: 1,
+            trigger: ['phase-end', 'skilltype1'],
+            exec: execEvent => {
+                if (event?.trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
+            },
+        })),
+
+    112082: () => new SummonBuilder('丰穰之核').useCnt(1).maxUse(3).damage(2)
+        .description('{defaultAtk}；【我方宣布结束时：】如果此牌的[可用次数]至少为2，则造成2点[草元素伤害]。(需消耗[可用次数])')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/865915f8734cdc641df43198eb728497_5603461429712047360.png')
+        .handle((summon, event) => {
+            const { heros = [] } = event;
+            const hero = heros.find(h => h.id == getHidById(summon.id));
+            const isTalent = !!hero?.talentSlot;
+            const triggers: Trigger[] = ['phase-end'];
+            if (summon.useCnt >= 2) triggers.push('end-phase');
+            return {
+                trigger: triggers,
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }] };
+                },
+            }
+        }),
+
+    112111: (useCnt: number = 2) => new SummonBuilder('沙龙成员').useCnt(useCnt).maxUse(4).damage(1)
+        .description('【结束阶段：】{dealDmg}。如果我方存在生命值至少为6的角色，则对一位受伤最少的我方角色造成1点[穿透伤害]，然后再造成1点[水元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到4次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/8cfed9e54e85d3bd44fc7e7e3aa9564a_6917287984925848695.png')
+        .handle((summon, event) => {
+            const { tround = 0, heros = [] } = event;
+            const hasTround = tround == 0 && heros.some(h => h.hp >= 6);
+            return {
+                trigger: ['phase-end'],
+                tround: isCdt(hasTround, 1),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    if (tround == 0) return { cmds: [{ cmd: 'attack' }] }
+                    return {
+                        cmds: [
+                            { cmd: 'attack', cnt: 1 },
+                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(heros), cnt: 1, isOppo: true },
+                        ]
+                    }
+                },
+            }
+        }),
+
+    112112: (useCnt: number = 2) => new SummonBuilder('众水的歌者').useCnt(useCnt).maxUse(4).heal(1)
+        .description('【结束阶段：】治疗所有我方角色1点。如果我方存在生命值不多于5的角色，则再治疗一位受伤最多的角色1点。；【[可用次数]：{useCnt}】(可叠加，最多叠加到4次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/e223897c5723dcc6b6ea50fcdf966232_9198406692148038444.png')
+        .handle((summon, event) => {
+            const { tround = 0, heros = [] } = event;
+            const hasTround = tround == 0 && heros.some(h => h.hp <= 4);
+            return {
+                trigger: ['phase-end'],
+                tround: isCdt(hasTround, 1),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    if (tround == 0) return { cmds: [{ cmd: 'heal', hidxs: allHidxs(heros) }] }
+                    return { cmds: [{ cmd: 'heal', hidxs: getMaxHertHidxs(heros) }] }
+                },
+            }
+        }),
+
     // 3005: (_, isTalent = false) => new GISummon(3005, '大型风灵', `【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png',
     //     3, 3, 0, 2, 5, (summon, event) => {
@@ -346,35 +432,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //                 cmds: [...cmds, { cmd: 'getStatus', status: [heroStatus(2064)] }],
     //             }
     //         }
-    //     })),
-
-    // 3023: (useCnt = 2) => new GISummon(3023, '化海月', '【结束阶段：】造成{dmg}点[水元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/4608304a2a01f7f33b59b731543a761b_3713077215425832494.png',
-    //     useCnt, 2, 1, 1, 1, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { summon: smn = summon } = execEvent;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             const { heros = [] } = event;
-    //             const hero = heros.find(h => h.id == 1104);
-    //             const isTalent = !!hero?.talentSlot && hero?.inStatus?.some(ist => ist.id == 2065);
-    //             return {
-    //                 cmds: [
-    //                     { cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) },
-    //                     { cmd: 'heal' }
-    //                 ]
-    //             }
-    //         }
-    //     })),
-
-    // 3025: () => new GISummon(3025, '清净之园囿', '【结束阶段：】造成{dmg}点[水元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色｢普通攻击｣造成的伤害+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/ef32ccb60a38cb7bfa31372dd5953970_1908841666370199656.png',
-    //     2, 2, 0, 2, 1, (summon, event) => ({
-    //         addDmgType1: 1,
-    //         trigger: ['phase-end', 'skilltype1'],
-    //         exec: execEvent => {
-    //             if (event?.trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
-    //         },
     //     })),
 
     // 3026: () => new GISummon(3026, '阿丑', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro1503】附属【sts2068】。；【结束阶段：】弃置此牌，造成{dmg}点[岩元素伤害]。',
@@ -609,24 +666,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }), { isTalent }),
 
-    // 3043: () => new GISummon(3043, '丰穰之核', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)；【我方宣布结束时：】如果此牌的[可用次数]至少为2，则造成2点[草元素伤害]。(需消耗[可用次数])',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/865915f8734cdc641df43198eb728497_5603461429712047360.png',
-    //     1, 3, 0, 2, 7, (summon, event) => {
-    //         const { heros = [] } = event;
-    //         const hero = heros.find(h => h.id == 1108);
-    //         const isTalent = !!hero?.talentSlot;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (summon.useCnt >= 2) triggers.push('end-phase');
-    //         return {
-    //             trigger: triggers,
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }] };
-    //             },
-    //         }
-    //     }),
-
     // 3044: () => new GISummon(3044, '售后服务弹', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/fe4516935ffa9eb9b193411113fa823f_372775257521707079.png',
     //     1, 1, 0, 1, 3),
@@ -829,40 +868,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     }, { isTalent }),
 
     // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；【[可用次数]：{useCnt}】', src, 2, 2, 0, 2, 0),
-
-    // 3060: (useCnt = 2) => new GISummon(3060, '沙龙成员', '【结束阶段：】造成{dmg}点[水元素伤害]。如果我方存在生命值至少为6的角色，则对一位受伤最少的我方角色造成1点[穿透伤害]，然后再造成1点[水元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到4次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/8cfed9e54e85d3bd44fc7e7e3aa9564a_6917287984925848695.png',
-    //     useCnt, 4, 0, 1, 1, (summon, event) => {
-    //         const { tround = 0, heros = [] } = event;
-    //         const hasTround = tround == 0 && heros.some(h => h.hp >= 6);
-    //         return {
-    //             trigger: ['phase-end'],
-    //             tround: isCdt(hasTround, 1),
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 if (tround == 0) return { cmds: [{ cmd: 'attack' }] }
-    //                 return { cmds: [{ cmd: 'attack', element: -1, hidxs: getMinHertHidxs(heros), cnt: 1, isOppo: true }, { cmd: 'attack', cnt: 1 }] }
-    //             },
-    //         }
-    //     }),
-
-    // 3061: (useCnt = 2) => new GISummon(3061, '众水的歌者', '【结束阶段：】治疗所有我方角色1点。如果我方存在生命值不多于5的角色，则再治疗一位受伤最多的角色1点。；【[可用次数]：{useCnt}】(可叠加，最多叠加到4次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/e223897c5723dcc6b6ea50fcdf966232_9198406692148038444.png',
-    //     useCnt, 4, 1, 0, 0, (summon, event) => {
-    //         const { tround = 0, heros = [] } = event;
-    //         const hasTround = tround == 0 && heros.some(h => h.hp <= 4);
-    //         return {
-    //             trigger: ['phase-end'],
-    //             tround: isCdt(hasTround, 1),
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 if (tround == 0) return { cmds: [{ cmd: 'heal', hidxs: allHidxs(heros) }] }
-    //                 return { cmds: [{ cmd: 'heal', hidxs: getMaxHertHidxs(heros) }] }
-    //             },
-    //         }
-    //     }),
 
     // 3062: (dmg = -1, useCnt = -1) => new GISummon(3062, '黑色幻影', `【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成${dmg == -1 ? '此牌｢攻击力｣值的' : '{dmg}点'}[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。${useCnt == -1 ? '' : '；【[可用次数]：{useCnt}】'}`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png',

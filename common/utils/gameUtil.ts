@@ -59,12 +59,13 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
 }
 
 // 获得所有后台角色hidx
-export const getBackHidxs = (heros: Hero[], frontIdx: number = -1): number[] => {
-    const hidxs = heros.filter(h => {
-        if (frontIdx == -1 && h.isFront) frontIdx = h.hidx;
-        return h.hp > 0 && (frontIdx == -1 ? !h.isFront : h.hidx != frontIdx)
-    }).map(h => h.hidx) ?? [];
-    return hidxs.slice(frontIdx).concat(hidxs.slice(0, frontIdx));
+export const getBackHidxs = (heros: Hero[], frontIdx: number = heros.findIndex(h => h.isFront)): number[] => {
+    const hidxs: number[] = [];
+    for (let i = 1; i < heros.length; ++i) {
+        const hidx = (frontIdx + i) % heros.length;
+        if (heros[hidx].hp > 0) hidxs.push(hidx);
+    }
+    return hidxs;
 }
 
 // 检查骰子是否合法
@@ -102,18 +103,23 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
 }
 
 // 是否含有某状态
-export const hasStatus = (statuses: Status[], id: number): boolean => {
-    return statuses.some(s => s.id == id);
+export const hasStatus = (statuses: Status[] | undefined, id: number): boolean => {
+    return !!statuses?.some(s => s.id == id);
 }
 
 // 找出某状态
 export const getStatus = (statuses: Status[], id: number): Status | undefined => {
-    return statuses.find(s => s.id == id);
+    return statuses?.find(s => s.id == id);
 }
 
 // 是否有某召唤物
 export const hasSummon = (summons: Summon[], id: number): boolean => {
     return summons.some(s => s.id == id);
+}
+
+// 找出某召唤物
+export const getSummon = (summons: Summon[], id: number): Summon | undefined => {
+    return summons.find(s => s.id == id);
 }
 
 // 根据id提取角色id

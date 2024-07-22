@@ -232,6 +232,7 @@ type Preview = Readonly<ActionData & {
     willSummonChange?: number[][],
     willSupportChange?: number[][],
     heroCanSelect?: boolean[],
+    heroSelect?: boolean[],
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
 }>

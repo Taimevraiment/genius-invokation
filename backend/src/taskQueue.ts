@@ -5,18 +5,16 @@ export default class TaskQueue {
     queue: [string, any[] | StatusTask][] = [];
     isExecuting: boolean = false;
     constructor() { }
-    addTask(taskType: string, args: any[], isUnshift?: boolean): void;
-    addTask(taskType: string, task: [() => void, number][]): void;
     addTask(taskType: string, args: any[], isUnshift: boolean = false) {
         if (this.queue.some(([tpn]) => tpn == taskType)) return;
         if (isUnshift) this.queue.unshift([taskType, args]);
         else this.queue.push([taskType, args]);
         console.info((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + `(queue=[${this.queue.map(v => v[0])}])`);
     }
-    execTask(taskType: string, funcs: [() => void, number][]) {
+    execTask(taskType: string, funcs: [() => void, number?][]) {
         return new Promise<void>(async resolve => {
-            await delay(800);
-            for (const [func, intvl] of funcs) {
+            // await delay(800);
+            for (const [func, intvl = 0] of funcs) {
                 func();
                 await delay(intvl);
             }

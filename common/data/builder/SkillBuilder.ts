@@ -88,6 +88,7 @@ export class GISkill {
 
 export class SkillBuilder extends BaseVersionBuilder {
     private _name: string = '';
+    private _id: number = -1;
     private _type: SkillType = SKILL_TYPE.Passive;
     private _damage: [Version, number][] = [];
     private _dmgElement: ElementType | undefined;
@@ -95,15 +96,19 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _costElement: SkillCostType | undefined;
     private _anyCost: number = 0;
     private _energyCost: [Version, number][] = [];
-    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes) | undefined;
+    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;
     private _perCnt: number = 0;
     private _rskidx: number = -1;
     private _src: string[] = [];
-    private _description: string = '';
+    private _description: [Version, string][] = [];
     private _explains: string[] = [];
     constructor(name: string) {
         super();
         this._name = name;
+    }
+    id(id: number) {
+        if (this._id == -1) this._id = id;
+        return this;
     }
     normal() {
         this._type = SKILL_TYPE.Normal;
@@ -116,6 +121,10 @@ export class SkillBuilder extends BaseVersionBuilder {
     burst(energy: number, version: Version = VERSION[0]) {
         this._type = SKILL_TYPE.Burst;
         this._energyCost.push([version, energy]);
+        return this;
+    }
+    readySkill() {
+        this._energyCost.push([VERSION[0], -2]);
         return this;
     }
     damage(damage: number, version: Version = VERSION[0]) {
@@ -141,7 +150,7 @@ export class SkillBuilder extends BaseVersionBuilder {
     costCryo(cost: number) {
         return this.cost(cost).costElement(DICE_TYPE.Cryo);
     }
-    costHydor(cost: number) {
+    costHydro(cost: number) {
         return this.cost(cost).costElement(DICE_TYPE.Hydro);
     }
     costPyro(cost: number) {
@@ -166,7 +175,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._anyCost = cost;
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes) | undefined) {
+    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined) {
         this._handle = handle;
         return this;
     }
@@ -182,8 +191,8 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._src.push(...srcs.filter(v => v != ''));
         return this;
     }
-    description(description: string) {
-        this._description = description;
+    description(description: string, version: Version = VERSION[0]) {
+        this._description.push([version, description]);
         return this;
     }
     explain(explains: string[]) {
@@ -191,10 +200,14 @@ export class SkillBuilder extends BaseVersionBuilder {
         return this;
     }
     done() {
+        const description = this._getValByVersion(this._description, '')
+            .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)
+            .replace(/(?<=【)hro(?=】)/g, `hro${Math.floor(this._id / 10)}`);
         const ec = this._getValByVersion(this._energyCost, 0);
         const damage = this._getValByVersion(this._damage, 0);
-        return new GISkill(this._name, this._description, this._type, damage, this._cost, this._costElement,
+        return new GISkill(this._name, description, this._type, damage, this._cost, this._costElement,
             {
+                id: this._id,
                 ac: this._anyCost,
                 ec,
                 de: this._dmgElement,
@@ -210,7 +223,7 @@ export class SkillBuilder extends BaseVersionBuilder {
 
 export class Skill1Builder {
     private _weaponType: WeaponType | undefined;
-    private _handle: ((event: SkillHandleEvent) => SkillHandleRes) | undefined;
+    private _handle: ((event: SkillHandleEvent) => SkillHandleRes | undefined) | undefined;
     private _description: string = '';
     private _perCnt: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
@@ -235,6 +248,10 @@ export class Skill1Builder {
     constructor(name: string) {
         this._builder = new SkillBuilder(name).normal().costAny(2);
     }
+    id(id: number) {
+        this._builder.id(id);
+        return this;
+    }
     version(version: Version) {
         this._builder.version(version);
         return this;
@@ -253,6 +270,10 @@ export class Skill1Builder {
     }
     description(description: string) {
         this._description = description;
+        return this;
+    }
+    handle(handle: ((event: SkillHandleEvent) => SkillHandleRes | undefined)) {
+        this._handle = handle;
         return this;
     }
     perCnt(pct: number) {

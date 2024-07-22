@@ -337,7 +337,7 @@ const wrapExplCtt = (content: string) => {
   const type = content.slice(0, 3);
   return type == 'crd' ? newCard(version.value)(a1) :
     type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
-      type == 'rsk' ? readySkill(a1, version.value) :
+      type == 'rsk' ? readySkill(version.value)(a1) :
         type == 'smn' ? newSummon(version.value)(a1, a2, a3) :
           type == 'ski' ? newHero(version.value)(a1).skills[a2] :
             type == 'hro' ? newHero(version.value)(a1) :

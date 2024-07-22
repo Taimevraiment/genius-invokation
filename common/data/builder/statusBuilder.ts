@@ -142,6 +142,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _addition: string[] = [];
     private _isReset: boolean = false;
     private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
+    private _typeCdt: [(ver: Version) => boolean, StatusType[]][] = [];
     constructor(name: string) {
         super();
         this._name = name;
@@ -162,14 +163,14 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._group = STATUS_GROUP.combatStatus;
         return this;
     }
-    type(type: StatusType, valid: boolean): StatusBuilder;
     type(...types: StatusType[]): StatusBuilder;
-    type(type: StatusType, valid: boolean | StatusType, ...types: StatusType[]) {
-        if (typeof valid == 'boolean') {
-            if (valid) this._type.push(type);
+    type(cdt: (ver: Version) => boolean, ...types: StatusType[]): StatusBuilder;
+    type(cdt: StatusType | ((ver: Version) => boolean), ...types: StatusType[]) {
+        if (typeof cdt == 'function') {
+            this._typeCdt.push([cdt, types]);
             return this;
         }
-        this._type.push(type, valid, ...types);
+        this._type.push(cdt, ...types);
         return this;
     }
     useCnt(useCnt: number, cdt: boolean): StatusBuilder;
@@ -190,7 +191,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._addCnt = addCnt;
         return this;
     }
-    perCnt(perCnt: number, cdt: boolean) {
+    perCnt(perCnt: number, cdt: boolean = true) {
         if (cdt) this._perCnt = perCnt;
         return this;
     }
@@ -235,6 +236,9 @@ export class StatusBuilder extends BaseVersionBuilder {
         const useCnt = this._getValByVersion(this._useCnt, -1);
         const roundCnt = this._getValByVersion(this._roundCnt, -1);
         const smnId = this._summonId ? this._id : -1;
+        this._typeCdt.forEach(([cdt, types]) => {
+            if (cdt(this._version)) this._type.push(...types);
+        });
         return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
             useCnt, this._maxCnt, roundCnt, this._handle,
             {

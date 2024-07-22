@@ -99,8 +99,6 @@ export class GICard {
             }
             this.UI.description = this.UI.description
                 .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次【ski】。`)
-                .replace(/(?<=〖)hro(?=〗)/g, hro)
-                .replace(/(?<=【)hro(?=】)/g, hro)
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
                 .replace(/(?<=【)ski(?=】)/g, ski) + `；(牌组中包含【${hro}】，才能加入牌组)`;
             userType = hid;
@@ -111,6 +109,7 @@ export class GICard {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
             this.UI.description += `；(牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组)`;
         }
+        this.UI.description = this.UI.description.replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`).replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         if (type == CARD_TYPE.Equipment) canSelectHero = 1;
         this.cost = cost;
         this.costType = costType;
@@ -174,6 +173,7 @@ export class CardBuilder extends BaseBuilder {
     private _cnt: number = 2;
     constructor(shareId: number) {
         super(shareId);
+        if (shareId == -1) this._cnt = -2;
     }
     get notInCardPool() {
         return this._cnt == -2;

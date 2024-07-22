@@ -1,11 +1,12 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, DAMAGE_TYPE, ELEMENT_TYPE, ElementType, PureElementType, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
+    CARD_SUBTYPE, DAMAGE_TYPE, ELEMENT_TYPE, ElementType, HERO_TAG, PureElementType, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
-import { getHidById } from "../utils/gameUtil.js";
+import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
+import { allHidxs, getBackHidxs, getHidById, getMinHertHidxs, getStatus, hasStatus } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
+import { newSummon } from "./summons.js";
 
 export type StatusHandleEvent = {
     restDmg?: number,
@@ -149,9 +150,10 @@ const shieldStatus = (name: string, cnt = 2, mcnt = 0) => {
         .description(`为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `(可叠加，最多到${mcnt})` : ''}`);
 }
 
-// const readySkillShieldStatus = (id: number, name: string) =>
-//     new GIStatus(id, name, '准备技能期间，提供2点[护盾]，保护所附属角色。',
-//         '', STATUS_GROUP.heroStatus, [STATUS_TYPE.Shield], 2, 0, -1);
+const readySkillShieldStatus = (name: string) => {
+    return new StatusBuilder(name).heroStatus().type(STATUS_TYPE.Shield).useCnt(2)
+        .description(`准备技能期间，提供2点[护盾]，保护所附属角色。`)
+}
 
 // const oncePerRound = (id: number, name: string) =>
 //     new GIStatus(id, `${name}(冷却中)`, `本回合无法再打出【${name}】。`,
@@ -225,7 +227,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus()
         .roundCnt(2).roundCnt(3, 'v4.2.0', isTalent).talent(isTalent).icon('buff')
         .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`)
-        .type(STATUS_TYPE.AddDamage).type(STATUS_TYPE.Enchant, isTalent)
+        .type(STATUS_TYPE.AddDamage).type(() => isTalent, STATUS_TYPE.Enchant)
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx].weaponType);
@@ -390,6 +392,252 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: isCdt(event.hasDmg, ['skill']),
             exec: () => { --status.useCnt }
         })),
+
+    112041: () => new StatusBuilder('远程状态').heroStatus().icon('ski,3').type(STATUS_TYPE.Sign)
+        .description('【所附属角色进行[重击]后：】目标角色附属【sts112043】。')
+        .handle((_, event = {}, ver) => ({
+            trigger: ['skilltype1'],
+            exec: () => {
+                const { isChargedAtk = false } = event;
+                return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: [newStatus(ver)(112043)], isOppo: true }]) }
+            }
+        })),
+
+    112042: () => new StatusBuilder('近战状态').heroStatus().icon('ski,1').roundCnt(2).perCnt(2)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
+        .description('角色造成的[物理伤害]转换为[水元素伤害]。；【角色进行[重击]后：】目标角色附属【sts112043】。；角色对附属有【sts112043】的角色造成的伤害+1;；【角色对已附属有断流的角色使用技能后：】对下一个敌方后台角色造成1点[穿透伤害]。(每回合至多2次)；【[持续回合]：{roundCnt}】')
+        .handle((status, event = {}, ver) => {
+            const { isChargedAtk, eheros = [], trigger = '' } = event;
+            const efHero = eheros.find(h => h.isFront);
+            const isDuanliu = hasStatus(efHero?.heroStatus, 112043);
+            const [afterIdx = -1] = getBackHidxs(eheros);
+            const isPenDmg = status.perCnt > 0 && isDuanliu && afterIdx > -1 && trigger == 'skill';
+            return {
+                trigger: ['phase-end', 'skill'],
+                pdmg: isCdt(isPenDmg, 1),
+                hidxs: isCdt(isPenDmg, [afterIdx]),
+                addDmgCdt: isCdt(isDuanliu, 1),
+                attachEl: ELEMENT_TYPE.Hydro,
+                exec: () => {
+                    if (trigger == 'phase-end' && status.roundCnt == 1) {
+                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(112041)] }] }
+                    }
+                    if (isPenDmg) --status.perCnt;
+                    return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: [newStatus(ver)(112043)], isOppo: true }]) }
+                },
+            }
+        }),
+
+    112043: () => new StatusBuilder('断流').heroStatus().icon('ski,2').iconBg(DEBUFF_BG_COLOR).roundCnt(2, 'v4.1.0')
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy).type(ver => ver >= 'v4.1.0', STATUS_TYPE.Sign)
+        .description('【所附属角色被击倒后：】对所在阵营的出战角色附属【断流】。')
+        .handle((status, event = {}, ver) => {
+            const { heros = [], hidx = -1, eheros = [], hidxs, trigger = '' } = event;
+            const triggers: Trigger[] = ['killed'];
+            const isTalent = trigger == 'phase-end' && !!eheros.find(h => h.id == 1106)?.talentSlot && (ver < 'v4.1.0' || heros[hidx].isFront);
+            if (isTalent) triggers.push('phase-end');
+            return {
+                trigger: triggers,
+                pdmg: isCdt(isTalent, 1),
+                hidxs: isCdt(isTalent, [hidx]),
+                isSelf: isCdt(isTalent, true),
+                exec: () => {
+                    if (trigger == 'killed') {
+                        const nonDestroy = status.type.indexOf(STATUS_TYPE.NonDestroy);
+                        if (nonDestroy > -1) status.type.splice(nonDestroy, 1);
+                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(112043)], hidxs }] }
+                    }
+                }
+            }
+        }),
+
+    112052: () => new StatusBuilder('仪来羽衣').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
+        .description('所附属角色｢普通攻击｣造成的伤害+1。；【所附属角色｢普通攻击｣后：】治疗所有我方角色1点。；【[持续回合]：{roundCnt}】')
+        .handle((_status, event = {}) => {
+            const { heros = [], trigger = '' } = event;
+            return {
+                addDmgType1: 1,
+                trigger: ['skilltype1', 'after-skilltype1'],
+                heal: isCdt(trigger == 'after-skilltype1', 1),
+                hidxs: allHidxs(heros),
+            }
+        }),
+
+    112061: () => new StatusBuilder('泷廻鉴花').heroStatus().icon('buff4').useCnt(3).useCnt(2, 'v4.1.0')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
+        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[水元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(status => ({
+            addDmgType1: 1,
+            trigger: ['skilltype1'],
+            attachEl: ELEMENT_TYPE.Hydro,
+            exec: () => { --status.useCnt },
+        })),
+
+    112071: () => readySkillShieldStatus('苍鹭护盾'),
+
+    112072: (isTalent: boolean = false) => new StatusBuilder('赤冕祝祷').combatStatus().icon('ski,2').roundCnt(2).perCnt(1).perCnt(3, isTalent)
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).talent(isTalent)
+        .description(`我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}【[持续回合]：{roundCnt}】`)
+        .handle((status, event = {}) => {
+            const { heros = [], hidx = -1, trigger = '' } = event;
+            const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx]?.weaponType);
+            let isDmg = true;
+            const triggers: Trigger[] = ['skilltype1'];
+            if (trigger == 'change-from') {
+                isDmg = (status.perCnt >> 0 & 1) == 1;
+                if (isDmg) triggers.push('change-from');
+            } else if (trigger == 'after-skilltype1' && status.isTalent) {
+                isDmg = (status.perCnt >> 1 & 1) == 1;
+                if (isDmg) triggers.push('after-skilltype1');
+            }
+            return {
+                trigger: triggers,
+                addDmgType1: 1,
+                damage: isCdt(isDmg, 1),
+                element: ELEMENT_TYPE.Hydro,
+                attachEl: isCdt(isWeapon, ELEMENT_TYPE.Hydro),
+                exec: eStatus => {
+                    const trg = ['change-from', 'after-skilltype1'].indexOf(trigger);
+                    if (eStatus && trg > -1) eStatus.perCnt &= ~(1 << trg);
+                },
+            }
+        }),
+
+    112074: () => new StatusBuilder('苍鹭震击').heroStatus().icon('buff3').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+        .description('本角色将在下次行动时，直接使用技能：【rsk12074】。')
+        .handle((status, event = {}) => ({
+            trigger: ['change-from', 'useReadySkill'],
+            skill: 12074,
+            exec: () => {
+                --status.useCnt;
+                const { heros = [], hidx = -1 } = event;
+                const sts112071 = getStatus(heros[hidx].heroStatus, 112071);
+                if (sts112071) sts112071.useCnt = 0;
+            }
+        })),
+
+    112081: () => new StatusBuilder('金杯的丰馈').combatStatus().icon('ski,1').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【敌方角色受到绽放反应时：】我方不再生成【sts116】，而是改为召唤【smn112082】。')
+        .handle((_s, _e, ver) => ({ trigger: ['Bloom'], summon: [newSummon(ver)(3043)] })),
+
+    112083: () => new StatusBuilder('永世流沔').heroStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
+        .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 3,
+            element: ELEMENT_TYPE.Hydro,
+            isSelf: true,
+            trigger: ['phase-end'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    112091: (act: number = 1) => new StatusBuilder('破局').heroStatus().useCnt(1).maxCnt(3).addCnt(act)
+        .type(STATUS_TYPE.Accumulate, STATUS_TYPE.ConditionalEnchant).icon('buff').iconBg(STATUS_BG_COLOR[ELEMENT_TYPE.Hydro])
+        .description('此状态初始具有1层｢破局｣; 重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并摸1张牌。')
+        .handle((status, event = {}) => {
+            const { trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (status.useCnt >= 2) triggers.push('skilltype1');
+            return {
+                trigger: triggers,
+                attachEl: isCdt(status.useCnt >= 2 && trigger == 'skilltype1', ELEMENT_TYPE.Hydro),
+                cmds: isCdt(trigger == 'skilltype1', [{ cmd: 'getCard', cnt: 1 }]),
+                exec: () => {
+                    if (trigger == 'skilltype1') status.useCnt -= 2;
+                    else if (trigger == 'phase-end') status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
+                }
+            }
+        }),
+
+    112092: () => new StatusBuilder('玄掷玲珑').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
+        .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；【[持续回合]：{roundCnt}】')
+        .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；【[持续回合]：{roundCnt}】', 'v4.6.1')
+        .handle((_s, _e, ver) => ({
+            damage: ver < 'v4.6.1' ? 2 : 1,
+            element: ELEMENT_TYPE.Hydro,
+            trigger: ['after-skilltype1'],
+        })),
+
+    112101: (cnt: number = 1) => new StatusBuilder('源水之滴').combatStatus().useCnt(cnt).maxCnt(3).type(STATUS_TYPE.Attack)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Neuvillette_S.webp')
+        .description(`【〖hro〗进行｢普通攻击｣后：】治疗【hro】2点，然后如果【hro】是我方｢出战角色｣，则[准备技能]：【rsk12104】。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)`)
+        .handle((status, event = {}, ver) => {
+            const { heros = [], hidx = -1 } = event;
+            const hid = getHidById(status.id);
+            if (heros[hidx]?.id != hid) return;
+            return {
+                heal: 2,
+                hidxs: [heros.findIndex(h => h.id = hid)],
+                trigger: ['after-skilltype1'],
+                exec: (eStatus, execEvent = {}) => {
+                    const { heros: hs = [] } = execEvent;
+                    if (eStatus) --eStatus.useCnt;
+                    if (hs.find(h => h.id == hid)?.isFront) {
+                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(112102)] }] }
+                    }
+                },
+            }
+        }),
+
+    112102: () => new StatusBuilder('衡平推裁').heroStatus().icon('buff3').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+        .description('本角色将在下次行动时，直接使用技能：【rsk12104】。')
+        .handle(status => ({
+            trigger: ['change-from', 'useReadySkill'],
+            skill: 12104,
+            exec: () => { --status.useCnt },
+        })),
+
+
+    112103: () => new StatusBuilder('遗龙之荣').heroStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .description('角色造成的伤害+1。【[可用次数]:{useCnt}】')
+        .handle(status => ({
+            addDmg: 1,
+            trigger: ['skill'],
+            exec: () => { --status.useCnt },
+        })),
+
+    112114: () => new StatusBuilder('普世欢腾').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage)
+        .description('【我方出战角色受到伤害或治疗后：】叠加1点【sts112115】。；【[持续回合]：{roundCnt}】')
+        .handle((_status, event = {}, ver) => {
+            const { heal = [], hidx = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['getdmg'];
+            if (trigger == 'heal' && (heal[hidx] ?? 0) > 0) triggers.push('heal');
+            return {
+                trigger: triggers,
+                exec: () => ({ cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(112115)] }] }),
+            }
+        }),
+
+    112115: () => new StatusBuilder('狂欢值').combatStatus().useCnt(1).maxCnt(1000).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
+        .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}(可叠加，没有上限)】')
+        .handle((status, { trigger } = {}) => ({
+            trigger: ['dmg', 'dmg-Swirl'],
+            addDmg: 1,
+            exec: () => {
+                if (trigger == 'dmg') --status.useCnt
+            },
+        })),
+
+    112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff4').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Enchant)
+        .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】')
+        .handle((_status, event = {}) => {
+            const { heros = [], hidx = -1 } = event;
+            if (hidx == -1) return;
+            const { tags } = heros[hidx];
+            let res: StatusHandleRes = {};
+            if (tags.includes(HERO_TAG.ArkheOusia)) res = { heal: 1, hidxs: getBackHidxs(heros) };
+            else res = { addDmgCdt: 2, pdmg: 1, hidxs: getMinHertHidxs(heros), isSelf: true };
+            return {
+                attachEl: ELEMENT_TYPE.Hydro,
+                trigger: ['after-skilltype1', 'skilltype1'],
+                ...res,
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt
+                }
+            }
+        }),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
@@ -879,27 +1127,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2065: () => new GIStatus(2065, '仪来羽衣', '所附属角色｢普通攻击｣造成的伤害+1。；【所附属角色｢普通攻击｣后：】治疗所有我方角色1点。；【[持续回合]：{roundCnt}】',
-    //     'ski1104,2', 0, [1, 6], -1, 0, 2, (_status, event = {}) => {
-    //         const { heros = [], trigger = '' } = event;
-    //         return {
-    //             addDmgType1: 1,
-    //             trigger: ['skilltype1', 'after-skilltype1'],
-    //             heal: isCdt(trigger == 'after-skilltype1', 1),
-    //             hidxs: allHidxs(heros),
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2067: () => new GIStatus(2067, '泷廻鉴花', '所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[水元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'buff4', 0, [6, 8], 3, 0, -1, status => {
-    //         return {
-    //             addDmgType1: 1,
-    //             trigger: ['skilltype1'],
-    //             attachEl: 1,
-    //             exec: () => { --status.useCnt },
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1] }),
-
     // 2068: () => new GIStatus(2068, '乱神之怪力', '【所附属角色进行[重击]时：】造成的伤害+1。如果[可用次数]至少为2，则还会使本技能少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)',
     //     'buff4', 0, [6], 1, 3, -1, (status, event = {}) => {
     //         if (!event.isChargedAtk) return;
@@ -946,61 +1173,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2072: () => new GIStatus(2072, '辰砂往生录(生效中)', '本回合中，角色｢普通攻击｣造成的伤害+1。',
     //     'buff5', 0, [6, 10], -1, 0, 1, () => ({ addDmgType1: 1 })),
-
-    // 2074: () => new GIStatus(2074, '远程状态', '【所附属角色进行[重击]后：】目标角色附属【sts2076】。',
-    //     'ski1106,3', 0, [10], -1, 0, -1, (_status, event = {}) => ({
-    //         trigger: ['skilltype1'],
-    //         exec: () => {
-    //             const { isChargedAtk = false } = event;
-    //             return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2076)], isOppo: true }]) }
-    //         }
-    //     }), { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2075: () => new GIStatus(2075, '近战状态', '角色造成的[物理伤害]转换为[水元素伤害]。；【角色进行[重击]后：】目标角色附属【sts2076】。；角色对附属有【sts2076】的角色造成的伤害+1;；【角色对已附属有断流的角色使用技能后：】对下一个敌方后台角色造成1点[穿透伤害]。(每回合至多2次)；【[持续回合]：{roundCnt}】',
-    //     'ski1106,1', 0, [3, 6, 8], -1, 0, 2, (status, event = {}) => {
-    //         const { isChargedAtk, eheros = [], trigger = '' } = event;
-    //         const efHero = eheros.find(h => h.isFront);
-    //         const isDuanliu = efHero?.inStatus.some(ist => ist.id == 2076);
-    //         let afterIdx = (eheros.findIndex(h => h.isFront) + 1) % eheros.length;
-    //         if ((eheros[afterIdx]?.hp ?? 0) <= 0) afterIdx = (eheros.findIndex(h => h.isFront) - 1 + eheros.length) % eheros.length;
-    //         if ((eheros[afterIdx]?.hp ?? 0) <= 0) afterIdx = -1;
-    //         const isPenDmg = status.perCnt > 0 && isDuanliu && afterIdx > -1 && trigger == 'skill';
-    //         return {
-    //             trigger: ['phase-end', 'skill'],
-    //             pdmg: isCdt(isPenDmg, 1),
-    //             hidxs: isCdt(isPenDmg, [afterIdx]),
-    //             addDmgCdt: isCdt(isDuanliu, 1),
-    //             attachEl: 1,
-    //             exec: () => {
-    //                 if (trigger == 'phase-end' && status.roundCnt == 1) {
-    //                     return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2074)] }] }
-    //                 }
-    //                 if (isPenDmg) --status.perCnt;
-    //                 return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2076)], isOppo: true }]) }
-    //             },
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1], pct: 2 }),
-
-    // 2076: () => new GIStatus(2076, '断流', '【所附属角色被击倒后：】对所在阵营的出战角色附属【断流】。',
-    //     'ski1106,2', 0, [1, 4, 10, 12], -1, 0, -1, (status, event = {}) => {
-    //         const { heros = [], hidx = -1, eheros = [], hidxs, trigger = '' } = event;
-    //         const triggers: Trigger[] = ['killed'];
-    //         const isTalent = trigger == 'phase-end' && !!eheros.find(h => h.id == 1106)?.talentSlot && heros[hidx].isFront;
-    //         if (isTalent) triggers.push('phase-end');
-    //         return {
-    //             trigger: triggers,
-    //             pdmg: isCdt(isTalent, 1),
-    //             hidxs: isCdt(isTalent, [hidx]),
-    //             isSelf: isCdt(isTalent, true),
-    //             exec: () => {
-    //                 if (trigger == 'killed') {
-    //                     const type12 = status.type.indexOf(12);
-    //                     if (type12 > -1) status.type.splice(type12, 1);
-    //                     return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2076, status.icon)], hidxs }] }
-    //                 }
-    //             }
-    //         }
-    //     }, { icbg: DEBUFF_BG_COLOR }),
 
     // 2077: (summonId: number) => new GIStatus(2077, '兔兔伯爵', '【我方出战角色受到伤害时：】抵消2点伤害。；【[可用次数]：{useCnt}】',
     //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
@@ -1197,34 +1369,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2094: () => readySkillShieldStatus(2094, '苍鹭护盾'),
-
-    // 2095: (isTalent:boolean = false) => new GIStatus(2095, '赤冕祝祷', `我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}【[持续回合]：{roundCnt}】`,
-    //     'ski1107,2', 1, [1, 6, 8], -1, 0, 2, (status, event = {}) => {
-    //         const { heros = [], hidx = -1, trigger = '' } = event;
-    //         const isWeapon = hidx > -1 && [1, 2, 5].includes(heros[hidx]?.weaponType ?? 0);
-    //         let isDmg = true;
-    //         const triggers: Trigger[] = ['skilltype1'];
-    //         if (trigger == 'change-from') {
-    //             isDmg = (status.perCnt >> 0 & 1) == 1;
-    //             if (isDmg) triggers.push('change-from');
-    //         } else if (trigger == 'after-skilltype1' && status.isTalent) {
-    //             isDmg = (status.perCnt >> 1 & 1) == 1;
-    //             if (isDmg) triggers.push('after-skilltype1');
-    //         }
-    //         return {
-    //             trigger: triggers,
-    //             addDmgType1: 1,
-    //             damage: isCdt(isDmg, 1),
-    //             element: 1,
-    //             attachEl: isCdt(isWeapon, 1),
-    //             exec: eStatus => {
-    //                 const trg = ['change-from', 'after-skilltype1'].indexOf(trigger);
-    //                 if (eStatus && trg > -1) eStatus.perCnt &= ~(1 << trg);
-    //             },
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1], pct: isTalent ? 3 : 1, isTalent }),
-
     // 2096: () => new GIStatus(2096, '丹火印', '【角色进行[重击]时：】造成的伤害+2。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
     //     'buff5', 0, [6], 1, 2, -1, (status, event = {}) => {
     //         if (!event.isChargedAtk) return;
@@ -1378,26 +1522,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 112081: () => new GIStatus(112081, '金杯的丰馈', '【敌方角色受到绽放反应时：】我方不再生成【sts2005】，而是改为召唤【smn3043】。',
-    //     'ski1108,1', 1, [4, 10], -1, 0, -1, (_status, event = {}) => {
-    //         const { isElStatus = [] } = event;
-    //         return {
-    //             trigger: ['get-elReaction-oppo'],
-    //             summon: isCdt(isElStatus[0], [newSummonee(3043)]),
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2112: () => new GIStatus(2112, '永世流沔', '【结束阶段：】对所附属角色造成3点[水元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1108,2', 0, [1], 1, 0, -1, () => ({
-    //         damage: 3,
-    //         element: 1,
-    //         isSelf: true,
-    //         trigger: ['phase-end'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     }), { icbg: DEBUFF_BG_COLOR }),
-
     // 2113: () => new GIStatus(2113, '脉摄宣明', '【行动阶段开始时：】生成【sts2114】。；【[可用次数]：{useCnt}】',
     //     'ski1605,2', 1, [4], 2, 0, -1, (_status) => ({
     //         trigger: ['phase-start'],
@@ -1486,29 +1610,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     // 2126: () => card587sts(3),
 
     // 2127: () => card587sts(4),
-
-    // 2130: (act = 1) => new GIStatus(2130, '破局', '此状态初始具有1层｢破局｣; 重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并摸1张牌。',
-    //     'buff', 0, [9, 16], 1, 3, -1, (status, event = {}) => {
-    //         const { trigger = '' } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (status.useCnt >= 2) triggers.push('skilltype1');
-    //         return {
-    //             trigger: triggers,
-    //             attachEl: isCdt(status.useCnt >= 2 && trigger == 'skilltype1', 1),
-    //             cmds: isCdt(trigger == 'skilltype1', [{ cmd: 'getCard', cnt: 1 }]),
-    //             exec: () => {
-    //                 if (trigger == 'skilltype1') status.useCnt -= 2;
-    //                 else if (trigger == 'phase-end') status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1], act }),
-
-    // 2131: () => new GIStatus(2131, '玄掷玲珑', '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；【[持续回合]：{roundCnt}】',
-    //     'ski1109,2', 1, [1], -1, 0, 2, () => ({
-    //         damage: 1,
-    //         element: 1,
-    //         trigger: ['after-skilltype1'],
-    //     }), { icbg: STATUS_BG_COLOR[1] }),
 
     // 2132: () => new GIStatus(2132, '隐具余数', '｢隐具余数｣最多可以叠加到3层。；【角色使用〖ski1210,2〗时：】每层｢隐具余数｣使伤害+1。技能结算后，耗尽｢隐具余数｣，每层治疗角色1点。',
     //     'buff2', 0, [1, 6], 1, 3, -1, (status, event = {}) => ({
@@ -1889,38 +1990,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2164: (cnt = 1) => new GIStatus(2164, '源水之滴', `【〖hro1110〗进行｢普通攻击｣后：】治疗【hro1110】2点，然后如果【hro1110】是我方｢出战角色｣，则[准备技能]：【rsk17】。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)`,
-    //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Neuvillette_S.webp', 1, [1], cnt, 3, -1, (_status, event = {}) => {
-    //         const { heros = [], hidx = -1 } = event;
-    //         if (heros[hidx]?.id != 1110) return;
-    //         return {
-    //             heal: 2,
-    //             hidxs: [heros.findIndex(h => h.id = 1110)],
-    //             trigger: ['after-skilltype1'],
-    //             exec: (eStatus, execEvent = {}) => {
-    //                 const { heros: hs = [] } = execEvent;
-    //                 if (eStatus) --eStatus.useCnt;
-    //                 if (hs.find(h => h.id == 1110)?.isFront) {
-    //                     return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2165)] }] }
-    //                 }
-    //             },
-    //         }
-    //     }),
-
-    // 2165: () => new GIStatus(2165, '衡平推裁', `本角色将在下次行动时，直接使用技能：【rsk17】。`,
-    //     'buff3', 0, [10, 11], 1, 0, -1, status => ({
-    //         trigger: ['change-from', 'useReadySkill'],
-    //         skill: 17,
-    //         exec: () => { --status.useCnt },
-    //     })),
-
-    // 2166: () => new GIStatus(2166, '遗龙之荣', '角色造成的伤害+1。【[可用次数]:{useCnt}】',
-    //     'buff2', 0, [4, 6], 2, 0, -1, status => ({
-    //         addDmg: 1,
-    //         trigger: ['skill'],
-    //         exec: () => { --status.useCnt },
-    //     })),
-
     // 2167: () => new GIStatus(2167, '猫箱急件', '【绮良良为出战角色时，我方切换角色后：】造成1点[草元素伤害]，摸1张牌。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
     //     'ski1607,1', 1, [1], 1, 2, -1, (_status, event = {}) => {
     //         const { heros = [], force = false } = event;
@@ -2153,59 +2222,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     })),
 
-    // 2190: () => new GIStatus(2190, '苍鹭震击', '本角色将在下次行动时，直接使用技能：【rsk4】。',
-    //     'buff3', 0, [10, 11], 1, 0, -1, (status, event = {}) => ({
-    //         trigger: ['change-from', 'useReadySkill'],
-    //         skill: 4,
-    //         exec: () => {
-    //             --status.useCnt;
-    //             const { heros = [], hidx = -1 } = event;
-    //             const sts2094 = heros[hidx].inStatus.find(ist => ist.id == 2094);
-    //             if (sts2094) sts2094.useCnt = 0;
-    //         }
-    //     })),
-
     // 2191: () => new GIStatus(2191, '火之新生·锐势', '角色造成的[火元素伤害]+1。', 'buff4', 0, [6, 10], 1, 0, -1, () => ({ addDmg: 1 }), { icbg: STATUS_BG_COLOR[2] }),
-
-    // 2194: () => new GIStatus(2194, '普世欢腾', '【我方出战角色受到伤害或治疗后：】叠加1点【sts2195】。；【[持续回合]：{roundCnt}】',
-    //     'ski1111,2', 1, [4], -1, 0, 2, (_status, event = {}) => {
-    //         const { heal = [], hidx = -1, trigger = '' } = event;
-    //         const triggers: Trigger[] = ['getdmg'];
-    //         if (trigger == 'heal' && (heal[hidx] ?? 0) > 0) triggers.push('heal');
-    //         return {
-    //             trigger: triggers,
-    //             exec: () => ({ cmds: [{ cmd: 'getStatus', status: [heroStatus(2195)] }] }),
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2195: () => new GIStatus(2195, '狂欢值', '我方造成的伤害+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}(可叠加，没有上限)】',
-    //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp',
-    //     1, [4, 6], 1, 1000, 1, (status, { trigger } = {}) => ({
-    //         trigger: ['dmg', 'dmg-wind'],
-    //         addDmg: 1,
-    //         exec: () => {
-    //             if (trigger == 'dmg') --status.useCnt
-    //         },
-    //     })),
-
-    // 2196: () => new GIStatus(2196, '万众瞩目', '【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
-    //     'buff4', 0, [1, 8], 1, 0, -1, (_status, event = {}) => {
-    //         const { heros = [], hidx = -1 } = event;
-    //         if (hidx == -1) return;
-    //         const { local } = heros[hidx];
-    //         let res: StatusHandleRes = {};
-    //         if (local.includes(11)) res = { heal: 1, hidxs: getBackHidxs(heros) };
-    //         else res = { addDmgCdt: 2, pdmg: 1, hidxs: getMinHertHidxs(heros), isSelf: true };
-    //         return {
-    //             attachEl: 1,
-    //             trigger: ['after-skilltype1', 'skilltype1'],
-    //             ...res,
-    //             exec: eStatus => {
-    //                 if (eStatus) --eStatus.useCnt
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[1] }),
-
 
     // 2197: () => shieldStatus(2197, '热情护盾'),
 
