@@ -2080,13 +2080,70 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时，会对自身附属【sts112116】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/fb5f84b550dcdcfcff9197573aee45a8_1289322499384647153.png'),
 
+    213011: () => new CardBuilder(77).name('流火焦灼').talent(1).costPyro(3)
+        .description('{action}；装备有此牌的【hro】每回合第2次与第3次使用【ski】时，少花费1个[火元素骰]。')
+        .description('{action}；装备有此牌的【hro】每回合第2次使用【ski】时，少花费1个[火元素骰]。', 'v4.7.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/5d72a776e175c52de3c4ebb113f2b9e7_2138984540269318755.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const { skills: [, { useCnt = 0 }] } = heros[hidx];
+            const isMinus = useCnt == 1 || (ver >= 'v4.7.0' && useCnt == 2);
+            return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0] }) }
+        }),
 
-    // 705: () => new GICard(705, '流火焦灼', '{action}；装备有此牌的【hro】每回合第2次与第3次使用【ski】时，少花费1个[火元素骰]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/5d72a776e175c52de3c4ebb113f2b9e7_2138984540269318755.png',
-    //     3, 2, 0, [6, 7], 1201, 1, (_card, event) => {
-    //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype2: [0, 0, 1] }, skill => [1, 2].includes(skill.useCnt));
-    //         return { trigger: ['skill'], ...minusSkillRes }
-    //     }),
+    213021: () => new CardBuilder(78).name('交叉火力').talent(1).costPyro(3).costPyro(4, 'v4.2.0')
+        .description('{action}；装备有此牌的【hro】施放【ski】时，自身也会造成1点[火元素伤害]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/101e8ef859847643178755f3bcacbad5_4705629747924939707.png'),
+
+    213031: () => new CardBuilder(79).name('冒险憧憬').talent(2).costPyro(4).energy(2)
+        .description('{action}；装备有此牌的【hro】生成的【sts113031】，其伤害提升效果改为总是生效，不再具有生命值限制。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/044617980be5a70980f7826036963e74_8167452876830335549.png'),
+
+    213041: () => new CardBuilder(80).name('一触即发').since('v3.7.0').talent(1).costPyro(3)
+        .description('{action}；【〖hro〗｢普通攻击｣后：】如果此牌和【smn113041】仍在场，则引爆【smn113041】，造成4点[火元素伤害]。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2a48f2862634d319b9165838de944561_3946596064567874908.png'),
+
+    213051: () => new CardBuilder(81).name('长野原龙势流星群').talent(1).costPyro(1).costPyro(2, 'v4.7.0')
+        .description('{action}；装备有此牌的【hro】生成的【sts113051】触发后：额外造成1点[火元素伤害]。')
+        .description('{action}；装备有此牌的【hro】生成的【sts113051】初始[可用次数]+1，且触发后：额外造成1点[火元素伤害]。', 'v4.7.0')
+        .description('{action}；装备有此牌的【hro】生成的【sts113051】触发后：额外造成1点[火元素伤害]。', 'v4.2.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/126c63df7d92e7d9c0a815a7a54558fc_6536428182837399330.png'),
+
+    213061: () => new CardBuilder(82).name('砰砰礼物').since('v3.4.0').talent(1).costPyro(3)
+        .description('{action}；装备有此牌的【hro】生成的【sts113061】的[可用次数]+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/0cca153cadfef3f9ccfd37fd2b306b61_8853740768385239334.png'),
+
+    213071: () => new CardBuilder(83).name('血之灶火').since('v3.7.0').talent(1).costPyro(2)
+        .description('{action}；装备有此牌的【hro】在生命值不多于6时，造成的[火元素伤害]+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/950a1fe6fcb977429942fcf0db1a6cc6_4713651560561730973.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            if ((heros[hidx]?.hp ?? 10) > 6) return;
+            return { trigger: ['Pyro-dmg'], addDmgCdt: 1 }
+        }),
+
+    213081: () => new CardBuilder(84).name('最终解释权').since('v3.8.0').talent(0).costPyro(1).anydice(2)
+        .description('{action}；装备有此牌的【hro】进行[重击]时：对生命值不多于6的敌人造成的伤害+1。；如果触发了【sts113081】，则在技能结算后抓1张牌。')
+        .description('{action}；装备有此牌的【hro】进行[重击]时：对生命值不多于6的敌人造成的伤害+1。', 'v4.2.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/ad8a2130c54da3c3f25d094b7019cb69_4536540887547691720.png')
+        .handle((_, event, ver) => {
+            const { isChargedAtk = false, heros = [], hidxs: [hidx] = [], eheros = [], ehidx = -1 } = event;
+            if (!isChargedAtk) return;
+            return {
+                trigger: ['skilltype1'],
+                addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 1),
+                execmds: isCdt(ver >= 'v4.2.0' && hasStatus(heros[hidx]?.heroStatus, 113081), [{ cmd: 'getCard', cnt: 1 }])
+            }
+        }),
+
+    213091: () => new CardBuilder(85).name('崇诚之真').since('v4.1.0').talent(1).costPyro(4)
+        .description('{action}；【结束阶段：】如果装备有此牌的【hro】生命值不多于6，则治疗该角色2点。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/161a55bb8e3e5141557f38536579e897_3725263134237782114.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs = [] } = event;
+            if ((heros[hidxs[0]]?.hp ?? 10) <= 6) return { trigger: ['phase-end'], execmds: [{ cmd: 'heal', cnt: 2, hidxs }] }
+        }),
+
 
     // 706: () => new GICard(706, '混元熵增论', '{action}；装备有此牌的【hro】生成的【smn3005】已转换成另一种元素后：我方造成的此类元素伤害+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/93fb13495601c24680e2299f9ed4f582_2499309288429565866.png',
@@ -2095,10 +2152,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 707: () => new GICard(707, '蒲公英的国土', '{action}；装备有此牌的【hro】在场时，【smn3006】会使我方造成的[风元素伤害]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4e162cfa636a6db51f166d7d82fbad4f_6452993893511545582.png',
     //     4, 5, 0, [6, 7], 1402, 2, undefined, { energy: 2 }),
-
-    // 708: () => new GICard(708, '交叉火力', '{action}；装备有此牌的【hro】施放【ski】时，自身也会造成1点[火元素伤害]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/101e8ef859847643178755f3bcacbad5_4705629747924939707.png',
-    //     3, 2, 0, [6, 7], 1202, 1),
 
     // 709: () => new GICard(709, '噬星魔鸦', '{action}；装备有此牌的【hro】生成的【smn3008】，会在【hro】｢普通攻击｣后造成2点[雷元素伤害]。(需消耗[可用次数])',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png',
@@ -2111,10 +2164,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 711: () => new GICard(711, '飞叶迴斜', '{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。(每回合1次)',
     //     'https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png',
     //     4, 7, 0, [6, 7], 1601, 1),
-
-    // 713: () => new GICard(713, '冒险憧憬', '{action}；装备有此牌的【hro】生成的【sts2034】，其伤害提升效果改为总是生效，不再具有生命值限制。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/044617980be5a70980f7826036963e74_8167452876830335549.png',
-    //     4, 2, 0, [6, 7], 1203, 2, undefined, { energy: 2 }),
 
     // 714: () => new GICard(714, '觉醒', '{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹3雷元素›角色获得1点[充能]。(出战角色优先，每回合1次)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7b07468873ea01ee319208a3e1f608e3_1769364352128477547.png',
@@ -2151,10 +2200,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 719: () => new GICard(719, '长野原龙势流星群', '{action}；装备有此牌的【hro】生成的【sts2040】触发后：额外造成1点[火元素伤害]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/126c63df7d92e7d9c0a815a7a54558fc_6536428182837399330.png',
-    //     1, 2, 0, [6, 7], 1204, 1),
-
     // 720: () => new GICard(720, '抵天雷罚', '{action}；装备有此牌的【hro】生成的【sts2008,3】获得以下效果：初始[持续回合]+1，并且会使所附属角色造成的[雷元素伤害]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/58e4a4eca066cc26e6547f590def46ad_1659079510132865575.png',
     //     3, 3, 0, [6, 7], 1303, 1),
@@ -2185,10 +2230,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 726: () => new GICard(726, '孢子增殖', '{action}；装备有此牌的【hro】可累积的｢【sts2047】｣层数+1。',
     //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
     //     3, 7, 0, [6, 7], 1821, 1),
-
-    // 727: () => new GICard(727, '砰砰礼物', '{action}；装备有此牌的【hro】生成的【sts2058】的[可用次数]+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/0cca153cadfef3f9ccfd37fd2b306b61_8853740768385239334.png',
-    //     3, 2, 0, [6, 7], 1205, 1),
 
     // 728: () => new GICard(728, '落羽的裁择', '{action}；装备有此牌的【hro】在【sts2060】的｢凭依｣级数为偶数时使用【ski】时，造成的伤害额外+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png',
@@ -2228,18 +2269,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] },
     //             () => isChargedAtk && heros[hidx].inStatus.some(ist => ist.id == 2071));
     //         return { trigger: ['skilltype1'], ...minusSkillRes }
-    //     }),
-
-    // 738: () => new GICard(738, '一触即发', '{action}；【〖hro〗｢普通攻击｣后：】如果此牌和【smn3029】仍在场，则引爆【smn3029】，造成4点[火元素伤害]。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2a48f2862634d319b9165838de944561_3946596064567874908.png',
-    //     3, 2, 0, [6, 7], 1206, 1),
-
-    // 739: () => new GICard(739, '血之灶火', '{action}；装备有此牌的【hro】在生命值不多于6时，造成的[火元素伤害]+1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/950a1fe6fcb977429942fcf0db1a6cc6_4713651560561730973.png',
-    //     2, 2, 0, [6, 7], 1207, 1, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         if ((heros[hidx]?.hp ?? 10) > 6) return;
-    //         return { trigger: ['fire-dmg'], addDmgCdt: 1 }
     //     }),
 
     // 740: () => new GICard(740, '万千的愿望', '{action}；装备有此牌的【hro】使用【ski】时每消耗1点｢愿力｣，都使造成的伤害额外+1。',
@@ -2289,18 +2318,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }),
 
-    // 750: () => new GICard(750, '最终解释权', '{action}；装备有此牌的【hro】进行[重击]时：对生命值不多于6的敌人造成的伤害+1。；如果触发了【sts2096】，则在技能结算后抓1张牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/ad8a2130c54da3c3f25d094b7019cb69_4536540887547691720.png',
-    //     1, 2, 0, [6, 7], 1208, 0, (_card, event) => {
-    //         const { isChargedAtk = false, heros = [], hidxs: [hidx] = [], eheros = [], ehidx = -1 } = event;
-    //         if (!isChargedAtk) return;
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 1),
-    //             execmds: isCdt(heros[hidx]?.inStatus.some(ist => ist.id == 2096), [{ cmd: 'getCard', cnt: 1 }])
-    //         }
-    //     }, { anydice: 2 }),
-
     // 751: () => new GICard(751, '风物之诗咏', '{action}；装备有此牌的【hro】引发扩散反应后：使我方角色和召唤物接下来2次所造成的的被扩散元素类型的伤害+1。(每种元素类型分别计算次数)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/dd06fa7b0ec63f3e60534a634ebd6fd2_9125107885461849882.png',
     //     3, 5, 0, [6, 7], 1405, 1, (_card, event) => {
@@ -2336,13 +2353,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
     //         const hasSts2102 = heros[hidx]?.inStatus.some(ist => ist.id == 2102);
     //         if (isChargedAtk && hasSts2102) return { trigger: ['skilltype1'], execmds: [{ cmd: 'getStatus', status: [newStatus(2103)] }] }
-    //     }),
-
-    // 756: () => new GICard(756, '崇诚之真', '{action}；【结束阶段：】如果装备有此牌的【hro】生命值不多于6，则治疗该角色2点。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/161a55bb8e3e5141557f38536579e897_3725263134237782114.png',
-    //     4, 2, 0, [6, 7], 1209, 1, (_card, event) => {
-    //         const { heros = [], hidxs = [] } = event;
-    //         if ((heros[hidxs[0]]?.hp ?? 10) <= 6) return { trigger: ['phase-end'], execmds: [{ cmd: 'heal', cnt: 2, hidxs }] }
     //     }),
 
     // 757: () => new GICard(757, '慈惠仁心', '{action}；装备有此牌的【hro】生成的【smn3042】，在[可用次数]仅剩余最后1次时造成的伤害和治疗各+1。',

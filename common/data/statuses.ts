@@ -92,6 +92,7 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
     const elName = ELEMENT_NAME[el];
     const hasAddDmgDesc = addDmg > 0 ? `，且造成的[${elName}伤害]+${addDmg}` : '';
     return new StatusBuilder(`${elName}附魔`).heroStatus().type(STATUS_TYPE.Enchant)
+        .icon(`buff${addDmg > 0 ? '4' : ''}`).iconBg(STATUS_BG_COLOR[el])
         .description(`所附属角色造成的[物理伤害]变为[${elName}伤害]${hasAddDmgDesc}。；【[持续回合]：{roundCnt}】`)
         .handle(status => ({
             attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType,
@@ -639,6 +640,170 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
+
+    113022: () => new StatusBuilder('旋火轮').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
+        .description('【我方角色使用技能后：】造成2点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 2,
+            element: ELEMENT_TYPE.Pyro,
+            trigger: ['after-skill'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    113031: (isTalent: boolean = false) => new StatusBuilder('鼓舞领域').combatStatus().icon('ski,2').roundCnt(2)
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
+        .description('【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】')
+        .handle((status, event = {}) => {
+            const { heros = [], hidx = -1, trigger = '' } = event;
+            if (hidx == -1) return;
+            const fHero = heros[hidx];
+            return {
+                trigger: ['skill', 'after-skill'],
+                addDmgCdt: isCdt(fHero.hp >= 7 || status.isTalent, 2),
+                heal: isCdt(fHero.hp <= 6 && trigger == 'after-skill', Math.min(2, fHero.maxHp - fHero.hp)),
+            }
+        }),
+
+    113051: (isTalent: boolean = false) => new StatusBuilder('庭火焰硝').heroStatus().icon('buff4')
+        .useCnt(3).useCnt(2, 'v4.7.0').useCnt(3, 'v4.7.0', isTalent).useCnt(2, 'v4.2.0')
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).talent(isTalent)
+        .description(`所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；【[可用次数]：{useCnt}】`)
+        .handle((status, event = {}) => {
+            const { trigger = '' } = event;
+            return {
+                trigger: ['skilltype1', 'after-skilltype1'],
+                addDmgType1: 1,
+                damage: isCdt(status.isTalent && trigger.endsWith('skilltype1'), 1),
+                element: ELEMENT_TYPE.Pyro,
+                attachEl: ELEMENT_TYPE.Pyro,
+                exec: eStatus => {
+                    if (!status.isTalent) --status.useCnt;
+                    else if (eStatus) --eStatus.useCnt;
+                },
+            }
+        }),
+
+    113052: () => new StatusBuilder('琉金火光').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
+        .description('【hro】以外的我方角色使用技能后：造成1点[火元素伤害]。；【[持续回合]：{roundCnt}】')
+        .handle((status, event = {}) => {
+            const { heros = [], hidx = -1 } = event;
+            return {
+                damage: 1,
+                element: ELEMENT_TYPE.Pyro,
+                trigger: isCdt(hidx > -1 && heros[hidx].id != getHidById(status.id), ['after-skill']),
+            }
+        }),
+
+    113041: () => new StatusBuilder('兔兔伯爵').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
+        .description('【我方出战角色受到伤害时：】抵消2点伤害。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
+            const { restDmg = 0, summon } = event;
+            if (restDmg <= 0) return { restDmg }
+            --status.useCnt;
+            if (summon) --summon.useCnt;
+            return { restDmg: Math.max(0, restDmg - 2) }
+        }),
+
+    113061: (isTalent: boolean = false) => new StatusBuilder('爆裂火花').heroStatus().icon('buff5').useCnt(1).useCnt(2, isTalent)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
+        .description('【所附属角色进行[重击]时：】少花费1个[火元素骰]，并且伤害+1。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
+            if (!event.isChargedAtk) return;
+            return {
+                trigger: ['skilltype1'],
+                addDmgCdt: 1,
+                minusDiceSkill: { skilltype1: [1, 0, 0] },
+                exec: () => { --status.useCnt },
+            }
+        }),
+
+    113063: () => new StatusBuilder('轰轰火花').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
+        .description('【所在阵营的角色使用技能后：】对所在阵营的出战角色造成2点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 2,
+            element: ELEMENT_TYPE.Pyro,
+            isSelf: true,
+            trigger: ['after-skill'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            }
+        })),
+
+    113071: () => new StatusBuilder('彼岸蝶舞').heroStatus().icon('buff5').roundCnt(2).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
+        .description('所附属角色造成的[物理伤害]变为[火元素伤害]，且角色造成的[火元素伤害]+1。；【所附属角色进行[重击]时：】目标角色附属【sts113072】。；【[持续回合]：{roundCnt}】')
+        .handle((_, event = {}, ver) => ({
+            addDmg: 1,
+            attachEl: ELEMENT_TYPE.Pyro,
+            trigger: ['skill'],
+            exec: () => ({ cmds: isCdt(event.isChargedAtk, [{ cmd: 'getStatus', status: [newStatus(ver)(113072)], isOppo: true }]) })
+        })),
+
+    113072: () => new StatusBuilder('血梅香').combatStatus().useCnt(1).type(STATUS_TYPE.Attack)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp')
+        .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 1,
+            element: ELEMENT_TYPE.Pyro,
+            isSelf: true,
+            trigger: ['phase-end'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    113081: () => new StatusBuilder('丹火印').heroStatus().icon('buff5').useCnt(1).maxCnt(2).maxCnt(0, 'v4.2.0').type(STATUS_TYPE.AddDamage)
+        .description('【角色进行[重击]时：】造成的伤害+2。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)')
+        .description('【角色进行[重击]时：】造成的伤害+2。；【[可用次数]：{useCnt}】', 'v4.2.0')
+        .handle((status, event = {}) => {
+            if (!event.isChargedAtk) return;
+            return {
+                trigger: ['skilltype1'],
+                addDmgCdt: 2,
+                exec: () => { --status.useCnt },
+            }
+        }),
+
+    113082: () => new StatusBuilder('灼灼').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
+        .description('【角色进行[重击]时：】少花费1个[火元素骰]。(每回合1次)；【结束阶段：】角色附属【sts113081】。；【[持续回合]：{roundCnt}】')
+        .handle((status, event = {}, ver) => {
+            const { isChargedAtk = false, isMinusDiceSkill = false, trigger = '' } = event;
+            return {
+                trigger: ['skilltype1', 'phase-end'],
+                minusDiceSkill: isCdt(isChargedAtk && status.perCnt > 0, { skilltype1: [1, 0, 0] }),
+                exec: () => {
+                    if (trigger == 'phase-end') return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(113081)] }] }
+                    if (trigger == 'skilltype1' && isMinusDiceSkill) --status.perCnt;
+                }
+            }
+        }),
+
+    113092: () => new StatusBuilder('焚落踢').heroStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+        .description('本角色将在下次行动时，直接使用技能：【rsk13095】。')
+        .handle(status => ({
+            trigger: ['change-from', 'useReadySkill'],
+            skill: 13095,
+            exec: () => { --status.useCnt },
+        })),
+
+    113094: () => new StatusBuilder('净焰剑狱之护').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId(113093)
+        .description('【〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。')
+        .handle((status, event = {}) => {
+            const { restDmg = 0, heros = [] } = event;
+            const hid = getHidById(status.id);
+            const hero = heros.find(h => h.id == hid);
+            if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
+            --status.useCnt;
+            return {
+                pdmg: isCdt(hero.hp >= 7, 1),
+                hidxs: isCdt(hero.hp >= 7, [heros.findIndex(h => h.id == hid)]),
+                restDmg: restDmg - 1,
+            }
+        }),
+
+
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
 
@@ -718,16 +883,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             },
     //         }
     //     }),
-
-    // 2020: () => new GIStatus(2020, '旋火轮', '【我方角色使用技能后：】造成2点[火元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1202,2', 1, [1], 2, 0, -1, () => ({
-    //         damage: 2,
-    //         element: 2,
-    //         trigger: ['after-skill'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     }), { icbg: STATUS_BG_COLOR[2] }),
 
     // 2021: () => new GIStatus(2021, '北地烟熏鸡(生效中)', '本回合中，目标角色下一次｢普通攻击｣少花费1个[无色元素骰]。',
     //     'buff2', 0, [4, 10], 1, 0, 1, (status, event = {}) => {
@@ -827,18 +982,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: () => { --status.useCnt },
     //     })),
 
-    // 2034: (isTalent:boolean = false) => new GIStatus(2034, '鼓舞领域', '【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】',
-    //     'ski1203,2', 1, [1, 4, 6], -1, 0, 2, (status, event = {}) => {
-    //         const { heros = [], hidx = -1, trigger = '' } = event;
-    //         if (hidx == -1) return;
-    //         const fHero = heros[hidx];
-    //         return {
-    //             trigger: ['skill', 'after-skill'],
-    //             addDmgCdt: isCdt(fHero.hp >= 7 || status.isTalent, 2),
-    //             heal: isCdt(fHero.hp <= 6 && trigger == 'after-skill', Math.min(2, fHero.maxhp - fHero.hp)),
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[2], isTalent }),
-
     // 2035: () => new GIStatus(2035, '雷狼', '【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；【[持续回合]：{roundCnt}】',
     //     'ski1302,2', 0, [1], -1, 0, 2, () => ({
     //         damage: 2,
@@ -866,32 +1009,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             },
     //         }
     //     }, { pct: 1, icbg: STATUS_BG_COLOR[6] }),
-
-    // 2040: (isTalent:boolean = false) => new GIStatus(2040, '庭火焰硝', `所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；【[可用次数]：{useCnt}】`,
-    //     'buff4', 0, [1, 6, 8], 3, 0, -1, (status, event = {}) => {
-    //         const { trigger = '' } = event;
-    //         return {
-    //             trigger: ['skilltype1', 'after-skilltype1'],
-    //             addDmgType1: 1,
-    //             damage: isCdt(status.isTalent && trigger.endsWith('skilltype1'), 1),
-    //             element: 2,
-    //             attachEl: 2,
-    //             exec: eStatus => {
-    //                 if (!status.isTalent) --status.useCnt;
-    //                 else if (eStatus) --eStatus.useCnt;
-    //             },
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[2], isTalent }),
-
-    // 2041: () => new GIStatus(2041, '琉金火光', '【hro1204】以外的我方角色使用技能后：造成1点[火元素伤害]。；【[持续回合]：{roundCnt}】',
-    //     'ski1204,2', 1, [1], -1, 0, 2, (_status, event = {}) => {
-    //         const { heros = [], hidx = -1 } = event;
-    //         return {
-    //             damage: 1,
-    //             element: 2,
-    //             trigger: isCdt(hidx > -1 && heros[hidx].id != 1204, ['after-skill']),
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[2] }),
 
     // 2042: (summonId: number) => new GIStatus(2042, '纯水幻形·蛙', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
     //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
@@ -1055,29 +1172,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         },
     //     })),
 
-    // 2058: (isTalent:boolean = false) => new GIStatus(2058, '爆裂火花', '【所附属角色进行[重击]时：】少花费1个[火元素骰]，并且伤害+1。；【[可用次数]：{useCnt}】',
-    //     'buff5', 0, [4, 6], isTalent ? 2 : 1, 0, -1, (status, event = {}) => {
-    //         if (!event.isChargedAtk) return;
-    //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] });
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             addDmgCdt: 1,
-    //             ...minusSkillRes,
-    //             exec: () => { --status.useCnt },
-    //         }
-    //     }, { isTalent }),
-
-    // 2059: () => new GIStatus(2059, '轰轰火花', '【所在阵营的角色使用技能后：】对所在阵营的出战角色造成2点[火元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1205,2', 1, [1], 2, 0, -1, () => ({
-    //         damage: 2,
-    //         element: 2,
-    //         isSelf: true,
-    //         trigger: ['after-skill'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         }
-    //     }), { icbg: DEBUFF_BG_COLOR }),
-
     // 2060: () => new GIStatus(2060, '启途誓使', '【结束阶段：】累积1级｢凭依｣。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2;；大于等于6级：｢凭依｣级数-4。',
     //     'ski1304,2', 0, [8, 9], 0, 6, -1, (status, event = {}) => {
     //         const { trigger = '' } = event;
@@ -1173,35 +1267,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2072: () => new GIStatus(2072, '辰砂往生录(生效中)', '本回合中，角色｢普通攻击｣造成的伤害+1。',
     //     'buff5', 0, [6, 10], -1, 0, 1, () => ({ addDmgType1: 1 })),
-
-    // 2077: (summonId: number) => new GIStatus(2077, '兔兔伯爵', '【我方出战角色受到伤害时：】抵消2点伤害。；【[可用次数]：{useCnt}】',
-    //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
-    //         const { restDmg = 0, summon } = event;
-    //         if (restDmg <= 0) return { restDmg }
-    //         --status.useCnt;
-    //         if (summon) --summon.useCnt;
-    //         return { restDmg: Math.max(0, restDmg - 2) }
-    //     }, { smnId: summonId }),
-
-    // 2078: () => new GIStatus(2078, '彼岸蝶舞', '所附属角色造成的[物理伤害]变为[火元素伤害]，且角色造成的[火元素伤害]+1。；【所附属角色进行[重击]时：】目标角色附属【sts2079】。；【[持续回合]：{roundCnt}】',
-    //     'buff5', 0, [8], -1, 0, 2, (_status, event = {}) => ({
-    //         addDmg: 1,
-    //         attachEl: 2,
-    //         trigger: ['skill'],
-    //         exec: () => ({ cmds: isCdt(event.isChargedAtk, [{ cmd: 'getStatus', status: [heroStatus(2079)], isOppo: true }]) })
-    //     })),
-
-    // 2079: () => new GIStatus(2079, '血梅香', '【结束阶段：】对所附属角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp',
-    //     0, [1], 1, 0, -1, () => ({
-    //         damage: 1,
-    //         element: 2,
-    //         isSelf: true,
-    //         trigger: ['phase-end'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     })),
 
     // 2080: () => new GIStatus(2080, '诸愿百眼之轮', '【其他我方角色使用｢元素爆发｣后：】累积1点｢愿力｣。(最多累积3点)；【所附属角色使用〖ski1307,2〗时：】消耗所有｢愿力｣，每点｢愿力｣使造成的伤害+1。',
     //     'ski1307,2', 0, [6, 9], 0, 3, -1, (status, event = {}) => {
@@ -1369,31 +1434,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2096: () => new GIStatus(2096, '丹火印', '【角色进行[重击]时：】造成的伤害+2。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
-    //     'buff5', 0, [6], 1, 2, -1, (status, event = {}) => {
-    //         if (!event.isChargedAtk) return;
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             addDmgCdt: 2,
-    //             exec: () => { --status.useCnt },
-    //         }
-    //     }),
-
-    // 2097: () => new GIStatus(2097, '灼灼', '【角色进行[重击]时：】少花费1个[火元素骰]。(每回合1次)；【结束阶段：】角色附属【sts2096】。；【[持续回合]：{roundCnt}】',
-    //     'ski1208,2', 0, [3, 4], -1, 0, 2, (status, event = {}) => {
-    //         const { isChargedAtk = false, trigger = '' } = event;
-    //         const isMinus = isChargedAtk && status.perCnt > 0;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] }, () => isMinus);
-    //         return {
-    //             trigger: ['skilltype1', 'phase-end'],
-    //             ...minusSkillRes,
-    //             exec: () => {
-    //                 if (trigger == 'phase-end') return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2096)] }] }
-    //                 if (trigger == 'skilltype1' && isMinus && isMinusSkill) --status.perCnt;
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[2], pct: 1 }),
-
     // 2098: (windEl = 5) => new GIStatus(2098, '乱岚拨止' + `${windEl < 5 ? '·' + ELEMENT[windEl][0] : ''}`,
     //     `【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT[windEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`,
     //     'buff', 0, [6, 10, 16], 1, 0, -1, (status, event = {}) => {
@@ -1458,19 +1498,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             if (eStatus) --eStatus.useCnt;
     //         }
     //     }), { icbg: STATUS_BG_COLOR[7] }),
-
-    // 2105: (summonId: number) => new GIStatus(2105, '净焰剑狱之护', '【〖hro1209〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro1209】生命值至少为7，则对其造成1点[穿透伤害]。',
-    //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
-    //         const { restDmg = 0, heros = [] } = event;
-    //         const hero = heros.find(h => h.id == 1209);
-    //         if (restDmg <= 0 || !hero || heros[getAtkHidx(heros)]?.id == 1209) return { restDmg }
-    //         --status.useCnt;
-    //         return {
-    //             pdmg: isCdt(hero.hp >= 7, 1),
-    //             hidxs: isCdt(hero.hp >= 7, [heros.findIndex(h => h.id == 1209)]),
-    //             restDmg: restDmg - 1,
-    //         }
-    //     }, { smnId: summonId }),
 
     // 2106: () => shieldStatus(2106, '烈烧佑命护盾', 1, 3),
 
@@ -1595,13 +1622,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     // 2121: () => card751sts(3),
 
     // 2122: () => card751sts(4),
-
-    // 2123: () => new GIStatus(2123, '焚落踢', '本角色将在下次行动时，直接使用技能：【rsk5】。',
-    //     'ski1209,2', 0, [10, 11], 1, 0, -1, status => ({
-    //         trigger: ['change-from', 'useReadySkill'],
-    //         skill: 5,
-    //         exec: () => { --status.useCnt },
-    //     }), { icbg: STATUS_BG_COLOR[2] }),
 
     // 2124: () => card587sts(1),
 

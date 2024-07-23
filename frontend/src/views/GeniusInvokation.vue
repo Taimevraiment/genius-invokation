@@ -316,7 +316,7 @@ const selectCardSummon = (pidx: number, suidx: number, isNotShow: boolean) => {
 };
 // 选择支援物
 const selectCardSupport = (pidx: number, siidx: number) => {
-  client.value.selectCardSupport(siidx);
+  client.value.selectCardSupport(pidx, siidx);
   client.value.showSupportInfo(pidx, siidx);
 };
 // 选择要消费的骰子

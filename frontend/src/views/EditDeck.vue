@@ -59,7 +59,7 @@
                         <span class="hero-img">{{ dthero.name }}</span>
                         <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
                             draggable="false" />
-                        <div class="icon-group" v-if="!dthero.isSelected">
+                        <div class="icon-group" v-if="!dthero.UI.isActive">
                             <span v-for="(icon, cidx) in heroSelectIcon" :key="cidx" class="edit-icon"
                                 @click.stop="icon.handle(dthero.id)">
                                 {{ icon.name }}
@@ -375,7 +375,7 @@ const updateInfo = (init = false) => {
         const heroIds = herosDeck.value.map(v => v.id);
         herosPool.value.forEach(h => {
             if (h.id > 1000) {
-                h.isSelected = +heroIds.includes(h.id);
+                h.UI.isActive = heroIds.includes(h.id);
                 allHeros.value.push(h);
             }
         });

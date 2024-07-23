@@ -130,7 +130,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
     private _useCnt: [Version, number][] = [];
-    private _maxCnt: number = 0;
+    private _maxCnt: [Version, number][] = [];
     private _addCnt: number = 0;
     private _perCnt: number = 0;
     private _roundCnt: [Version, number][] = [];
@@ -138,7 +138,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _explains: string[] = [];
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
-    private _summonId: boolean = false;
+    private _summonId: number = -1;
     private _addition: string[] = [];
     private _isReset: boolean = false;
     private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
@@ -177,14 +177,18 @@ export class StatusBuilder extends BaseVersionBuilder {
     useCnt(useCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
     useCnt(useCnt: number, version: Version | boolean = VERSION[0], cdt: boolean = true) {
         if (typeof version == 'boolean') {
-            if (version) this._useCnt.push([VERSION[0], useCnt]);
+            if (version) {
+                const unt = this._useCnt.find(([ver]) => ver == VERSION[0]);
+                if (unt) unt[1] = useCnt;
+                else this._useCnt.push([VERSION[0], useCnt]);
+            }
         } else if (cdt) {
             this._useCnt.push([version, useCnt]);
         }
         return this;
     }
-    maxCnt(maxCnt: number) {
-        this._maxCnt = maxCnt;
+    maxCnt(maxCnt: number, version: Version = VERSION[0]) {
+        this._maxCnt.push([version, maxCnt]);
         return this;
     }
     addCnt(addCnt: number) {
@@ -215,8 +219,8 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._isTalent = isTalent;
         return this;
     }
-    summonId() {
-        this._summonId = true;
+    summonId(smnId?: number) {
+        this._summonId = smnId ?? -2;
         return this;
     }
     addition(...addition: string[]) {
@@ -235,12 +239,13 @@ export class StatusBuilder extends BaseVersionBuilder {
         const description = this._getValByVersion(this._description, '');
         const useCnt = this._getValByVersion(this._useCnt, -1);
         const roundCnt = this._getValByVersion(this._roundCnt, -1);
-        const smnId = this._summonId ? this._id : -1;
+        const smnId = this._summonId == -2 ? this._id : this._summonId;
+        const maxCnt = this._getValByVersion(this._maxCnt, 0);
         this._typeCdt.forEach(([cdt, types]) => {
             if (cdt(this._version)) this._type.push(...types);
         });
         return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
-            useCnt, this._maxCnt, roundCnt, this._handle,
+            useCnt, maxCnt, roundCnt, this._handle,
             {
                 pct: this._perCnt,
                 act: this._addCnt || Math.max(useCnt, roundCnt),

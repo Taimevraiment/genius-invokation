@@ -112,7 +112,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _isTalent: boolean = false;
     private _addition: string[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
-    private _statusId: boolean = false;
+    private _statusId: number = -1;
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
@@ -201,8 +201,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._addition.push(...addition);
         return this;
     }
-    statusId() {
-        this._statusId = true;
+    statusId(stsId?: number) {
+        this._statusId = stsId ?? -2;
         return this;
     }
     plus() {
@@ -238,7 +238,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         const description = this._getValByVersion(this._description, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
         const damage = this._getValByVersion(this._damage, 0);
-        const stsId = this._statusId ? this._id : -1;
+        const stsId = this._statusId == -2 ? this._id : this._statusId;
         return new GISummon(this._id, this._name, description, this._src, this._useCnt, maxUse,
             this._shieldOrHeal, damage, element, this._handle,
             {

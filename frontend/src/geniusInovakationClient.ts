@@ -68,8 +68,10 @@ export default class GeniusInvokationClient {
     heroSelect: number[] = []; // 角色是否选中
     heroCanSelect: boolean[] = []; // 角色是否可选
     heroSwitchDice: number = INIT_SWITCH_HERO_DICE; // 切换角色所需骰子数
-    supportSelect: boolean[] = new Array(MAX_SUPPORT_COUNT).fill(false);; // 支援物是否选中
-    summonSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false));; // 召唤物是否选中
+    supportSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否选中
+    supportCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否可选
+    summonSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否选中
+    summonCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否可选
     error: string = ''; // 服务器发生的错误信息
 
     constructor(
@@ -161,14 +163,10 @@ export default class GeniusInvokationClient {
                 if (onlyHeros) return;
             }
             if (onlySupportAndSummon) {
-                this.players.forEach(p => p.summons.forEach(smn => {
-                    smn.canSelect = false;
-                    smn.isSelected = false;
-                }));
-                this.player.supports.forEach(spt => {
-                    spt.canSelect = false;
-                    spt.isSelected = false;
-                });
+                this._resetSummonSelect();
+                this._resetSummonCanSelect();
+                this._resetSupportSelect();
+                this._resetSupportCanSelect();
                 if (onlySupportAndSummon) return;
             }
         }
@@ -226,7 +224,6 @@ export default class GeniusInvokationClient {
      * @param cardIdx 选择的卡牌序号
      */
     selectCard(cardIdx: number) {
-        console.log('selectcard');
         if (this.phase < PHASE.CHANGE_CARD) return;
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
         this.currSkill = NULL_SKILL();
@@ -248,7 +245,27 @@ export default class GeniusInvokationClient {
                     }
                     const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
                     if (!preview) throw new Error('预览未找到');
-
+                    this.heroCanSelect = [...preview.heroCanSelect!];
+                    this.summonCanSelect = [...preview.summonCanSelect!.slice()];
+                    this.supportCanSelect = [...preview.supportCanSelect!.slice()];
+                    const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
+                    if (canSelectHero == 0 ||
+                        canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
+                        canSelectSummon != -1 && this.summonCanSelect[canSelectSummon].filter(v => v).length == 1 ||
+                        canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1) {
+                        this.isValid = preview.isValid;
+                        if (this.isValid) {
+                            if (canSelectHero == 1) {
+                                this.heroSelect[this.heroCanSelect.indexOf(true)] = 1;
+                            }
+                            if (canSelectSummon != -1) {
+                                this.summonSelect[canSelectSummon][this.summonCanSelect[canSelectSummon].indexOf(true)] = true;
+                            }
+                            if (canSelectSupport != -1) {
+                                this.supportSelect[canSelectSupport][this.supportCanSelect[canSelectSupport].indexOf(true)] = true;
+                            }
+                        }
+                    }
                 }
                 if (this.isMobile && this.phase == PHASE.ACTION) {
                     if (cs) this.mouseleave(cardIdx, true);
@@ -475,11 +492,9 @@ export default class GeniusInvokationClient {
      * @returns 是否执行接下来的selectHero
      */
     selectCardHero(pidx: number, hidx: number) {
-        const heros = this.player.heros;
         if (this.phase != PHASE.ACTION || this.isShowChangeHero > 1) return true;
-        const selectHero = heros[hidx];
         const { id, canSelectHero } = this.currCard;
-        if (pidx == 0 || id <= 0 || !selectHero.canSelect) {
+        if (pidx == 0 || id <= 0 || !this.heroCanSelect[hidx]) {
             this.cancel();
             return true;
         }
@@ -510,8 +525,7 @@ export default class GeniusInvokationClient {
      * @param suidx 召唤物索引idx
      */
     selectCardSummon(pidx: number, suidx: number) {
-        const curPlayer = this.players[this.playerIdx ^ pidx ^ 1];
-        if (this.currCard.id <= 0 || !curPlayer.summons[suidx].canSelect) return this.cancel();
+        if (this.currCard.id <= 0 || !this.summonCanSelect[pidx][suidx]) return this.cancel();
         const newVal = !this.summonSelect[pidx][suidx];
         this.summonSelect[pidx][suidx] = newVal;
         if (newVal) this.summonSelect[pidx].forEach((_, i, a) => a[i] = i == suidx);
@@ -523,12 +537,11 @@ export default class GeniusInvokationClient {
      * @param pidx 玩家识别符: 0对方 1我方
      * @param suidx 场地索引idx
      */
-    selectCardSupport(siidx: number) {
-        const curPlayer = this.player;
-        if (this.currCard.id <= 0 || curPlayer.supports[siidx].canSelect) return this.cancel();
+    selectCardSupport(pidx: number, siidx: number) {
+        if (this.currCard.id <= 0 || !this.supportCanSelect[pidx][siidx]) return this.cancel();
         const newVal = !this.supportSelect[siidx];
-        this.supportSelect[siidx] = newVal;
-        if (newVal) this.supportSelect.forEach((_, i, a) => a[i] = i == siidx);
+        this.supportSelect[pidx][siidx] = newVal;
+        if (newVal) this.supportSelect[pidx].forEach((_, i, a) => a[i] = i == siidx);
         const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.supportIdx == siidx);
         this.isValid = !!preview?.isValid;
     }
@@ -736,13 +749,37 @@ export default class GeniusInvokationClient {
      * 重置角色选择
      */
     private _resetHeroSelect() {
-        this.heroSelect.forEach((_, i, a) => a[i] = 0);
+        return this.heroSelect.fill(0);
     }
     /**
      * 重置角色可选
      */
     private _resetHeroCanSelect() {
-        this.heroCanSelect.forEach((_, i, a) => a[i] = false);
+        return this.heroCanSelect.fill(false);
+    }
+    /**
+     * 重置支援物选择
+     */
+    private _resetSupportSelect() {
+        return this.supportSelect.forEach(v => v.fill(false));
+    }
+    /**
+     * 重置支援物可选
+     */
+    private _resetSupportCanSelect() {
+        return this.supportCanSelect.forEach(v => v.fill(false));
+    }
+    /**
+     * 重置召唤物选择
+     */
+    private _resetSummonSelect() {
+        return this.summonSelect.forEach(v => v.fill(false));
+    }
+    /**
+     * 重置召唤物可选
+     */
+    private _resetSummonCanSelect() {
+        return this.summonCanSelect.forEach(v => v.fill(false));
     }
     /**
      * 重置附着预览

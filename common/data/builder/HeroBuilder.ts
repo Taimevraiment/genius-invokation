@@ -24,13 +24,14 @@ export class GIHero {
     heroStatus: Status[] = []; // 角色状态
     isFront: boolean = false; // 是否为前台角色
     attachElement: PureElementType[] = []; // 附着元素
-    canSelect: boolean = false; // 是否能被选择
-    isSelected: number = 0; // 是否被选择 0未被选择 1被选为一号位 2被选为二号位
+    // canSelect: boolean = false; // 是否能被选择
+    // isSelected: number = 0; // 是否被选择 0未被选择 1被选为一号位 2被选为二号位
     UI: {
         src: string, // 立绘url
         srcs: string[], // 所有立绘url
         avatar: string, // 头像url
         avatars: string[], // 所有头像url
+        isActive: boolean, // 是否发光
     };
     constructor(
         id: number, shareId: number, name: string, version: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
@@ -53,6 +54,7 @@ export class GIHero {
             srcs: src,
             avatar: avatar[0],
             avatars: avatar,
+            isActive: false,
         }
         this.skills.push(...skills);
         this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
@@ -197,6 +199,6 @@ export class HeroBuilder extends BaseBuilder {
         if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
             this._maxHp, element, this._weaponType, this._src, this._avatar,
-            skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).costElement(element).version(this._curVersion).done()));
+            skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
     }
 }

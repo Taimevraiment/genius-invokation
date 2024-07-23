@@ -44,7 +44,8 @@ export const getMinHertHidxs = (heros: Hero[], fhidx?: number): number[] => {
 
 // 获取攻击角色hidx
 export const getAtkHidx = (heros: Hero[]): number => {
-    return heros.some(h => h.isSelected > 0) ? heros.findIndex(h => h.isSelected) : heros.findIndex(h => h.isFront);
+    return heros.findIndex(h => h.isFront);
+    // return heros.some(h => h.isSelected > 0) ? heros.findIndex(h => h.isSelected) : heros.findIndex(h => h.isFront);
 }
 
 // 获得距离出战角色最近的hidx

@@ -1,9 +1,10 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, Version } from "../constant/enum.js";
+import { DAMAGE_TYPE, ElementType, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
 import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getStatus, hasStatus } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
+import { newStatus } from "./statuses.js";
 
 export type SummonHandleEvent = {
     trigger?: Trigger,
@@ -34,7 +35,7 @@ export type SummonHandleRes = {
     rCombatStatus?: Status[],
     isNotAddTask?: boolean,
     damage?: number,
-    element?: number,
+    element?: ElementType,
     addDiceHero?: number,
     minusDiceCard?: number,
     minusDiceSkill?: MinuDiceSkill,
@@ -268,6 +269,53 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    113021: () => new SummonBuilder('锅巴').useCnt(2).damage(2)
+        .description('{defaultAtk}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),
+
+    113041: () => new SummonBuilder('兔兔伯爵').useCnt(1).shield(2).damage(2).usedRoundEnd().statusId()
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png')
+        .handle((summon, event, ver) => {
+            const { heros = [], trigger = '', isExec = true } = event;
+            const triggers: Trigger[] = [];
+            if (summon.useCnt == 0) triggers.push('phase-end');
+            const hero = heros[getAtkHidx(heros)];
+            const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver < 'v4.2.0' ? 3 : 4);
+            if (cnt) {
+                triggers.push('after-skilltype1');
+                if (!isExec) {
+                    summon.isDestroy = SUMMON_DESTROY_TYPE.Used;
+                    summon.useCnt = 0;
+                }
+            }
+            return {
+                trigger: triggers,
+                damage: cnt,
+                element: summon.element,
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'after-skilltype1') {
+                        smn.isDestroy = SUMMON_DESTROY_TYPE.Used;
+                        smn.useCnt = 0;
+                    }
+                    return { cmds: [{ cmd: 'attack', cnt }] }
+                },
+            }
+        }),
+
+    113093: () => new SummonBuilder('净焰剑狱领域').useCnt(3).damage(1).spReset()
+        .description('{defaultAtk}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
+        .handle((summon, event, ver) => {
+            const { reset = false } = event;
+            if (reset) return { rOutStatus: [newStatus(ver)(113094)] }
+            return {
+                trigger: ['phase-end'],
+                exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
+            }
+        }),
+
     // 3005: (_, isTalent = false) => new GISummon(3005, '大型风灵', `【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png',
     //     3, 3, 0, 2, 5, (summon, event) => {
@@ -307,10 +355,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //             }
     //         }
     //     }),
-
-    // 3007: () => new GISummon(3007, '锅巴', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png',
-    //     2, 2, 0, 2, 2),
 
     // 3008: (isTalent = false) => new GISummon(3008, '奥兹', `【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】${isTalent ? '；【hro1301】｢普通攻击｣后：造成2点[雷元素伤害]。(需消耗[可用次数])' : ''}`,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png',
@@ -455,36 +499,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3027: () => new GISummon(3027, '藏蕴花矢', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/dc8e548704ca0e52d1c6669fac469b3d_5168805556784249785.png',
     //     1, 2, 0, 1, 7),
-
-    // 3029: () => new GISummon(3029, '兔兔伯爵', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以造成{dmg}点[火元素伤害]。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png',
-    //     1, 1, -2, 2, 2, (summon, event) => {
-    //         const { heros = [], trigger = '', isExec = true } = event;
-    //         const triggers: Trigger[] = [];
-    //         if (summon.useCnt == 0) triggers.push('phase-end');
-    //         const hero = heros[getAtkHidx(heros)];
-    //         const cnt = isCdt(hero?.id == 1206 && trigger == 'after-skilltype1' && !!hero?.talentSlot, 4);
-    //         if (cnt) {
-    //             triggers.push('after-skilltype1');
-    //             if (!isExec) {
-    //                 summon.isDestroy = 0;
-    //                 summon.useCnt = 0;
-    //             }
-    //         }
-    //         return {
-    //             trigger: triggers,
-    //             damage: cnt,
-    //             element: summon.element,
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'after-skilltype1') {
-    //                     smn.isDestroy = 0;
-    //                     smn.useCnt = 0;
-    //                 }
-    //                 return { cmds: [{ cmd: 'attack', cnt }] }
-    //             },
-    //         }
-    //     }, { isDestroy: 1, stsId: 2077 }),
 
     // 3030: () => new GISummon(3030, '雷罚恶曜之眼', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色｢元素爆发｣造成的伤害+1。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/a27cfa39a258ff4b80f01b1964e6faac_1649452858766133852.png',
@@ -638,17 +652,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //             }
     //         }
     //     }, { pct: 1 }),
-
-    // 3041: () => new GISummon(3041, '净焰剑狱领域', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】；【当此召唤物在场且〖hro1209〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro1209】生命值至少为7，则对其造成1点[穿透伤害]。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png',
-    //     3, 3, 0, 1, 2, (summon, event) => {
-    //         const { reset = false } = event;
-    //         if (reset) return { rOutStatus: [heroStatus(2105, 3041)] }
-    //         return {
-    //             trigger: ['phase-end'],
-    //             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
-    //         }
-    //     }, { spReset: true }),
 
     // 3042: (isTalent = false) => new GISummon(3042, '月桂·抛掷型', `【结束阶段：】造成{dmg}点[草元素伤害]，治疗我方受伤最多的角色{shield}点。${isTalent ? '；如果可用次数仅剩余1，则此效果造成的伤害和治疗各+1。' : ''}；【[可用次数]：{useCnt}】`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/7bc79d56afd059a2f88d45ae0c500923_7487275599868058123.png',
