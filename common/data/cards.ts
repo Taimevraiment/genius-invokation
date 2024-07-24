@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, HERO_TAG, PureElementType, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, HERO_TAG, PureElementType, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { getHidById, hasStatus, hasSummon } from '../utils/gameUtil.js';
@@ -40,8 +40,9 @@ export type CardHandleEvent = {
     getdmg?: number[],
     slotUse?: boolean,
     isExecTask?: boolean,
-    isElStatus?: boolean[],
+    selectHeros?: number[],
     selectSummon?: number,
+    selectSupport?: number,
 }
 
 export type CardHandleRes = {
@@ -1898,7 +1899,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { cmds: [{ cmd: 'heal', cnt: 1 }], status: [newStatus(2186)], canSelectHero }
     //     }),
 
-    211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(3)
+    211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其造成的[冰元素伤害]+1，并且改为对敌方后台角色造成3点[穿透伤害]。', 'v3.7.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/15a100ee0285878fc5749663031fa05a_7762319984393418259.png')
@@ -2018,8 +2019,8 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     212021: () => new CardBuilder(70).name('重帘留香').talent(1).costHydro(3).costHydro(4, 'v4.2.0')
-        .description('{action}；装备有此牌的【hro】生成的【sts2002】，会在我方出战角色受到至少为2的伤害时抵消伤害，并且初始[可用次数]+1。')
-        .description('{action}；装备有此牌的【hro】生成的【sts2002】初始[可用次数]+1。', 'v4.2.0')
+        .description('{action}；装备有此牌的【hro】生成的【sts112021】，会在我方出战角色受到至少为2的伤害时抵消伤害，并且初始[可用次数]+1。')
+        .description('{action}；装备有此牌的【hro】生成的【sts112021】初始[可用次数]+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/eb3cd31f7a2c433499221b5664a264f3_3086723857644931388.png'),
 
     212031: () => new CardBuilder(71).name('沉没的预言').talent(2).costHydro(3).energy(3)
@@ -2144,6 +2145,75 @@ const allCards: Record<number, () => CardBuilder> = {
             if ((heros[hidxs[0]]?.hp ?? 10) <= 6) return { trigger: ['phase-end'], execmds: [{ cmd: 'heal', cnt: 2, hidxs }] }
         }),
 
+    213101: () => new CardBuilder(290).name('完场喝彩').since('v4.3.0').talent(1).costPyro(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场时，【hro】自身和【smn113101】对具有‹3火元素附着›的角色造成的伤害+2。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/be471c09e294aaf12766ee17b624ddcc_5013564012859422460.png')
+        .handle((card, event) => {
+            const { heros = [], eheros = [], hidxs: [hidx] = [] } = event;
+            const isAttachPyro = eheros.find(h => h.isFront)?.attachElement.includes(ELEMENT_TYPE.Pyro);
+            if (card.perCnt > 0 && heros[hidx]?.isFront && isAttachPyro) {
+                return {
+                    trigger: ['skill'],
+                    addDmgCdt: 2,
+                    exec: () => { --card.perCnt },
+                }
+            }
+        }),
+
+    213111: () => new CardBuilder(323).name('僚佐的才巧').since('v4.4.0').talent(2).costPyro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】生成的【sts113111】，初始[可用次数]+1。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/d1ba5d6f1a7bdb24e95ca829357df03a_6674733466390586160.png'),
+
+    213121: () => new CardBuilder(374).name('地狱里摇摆').since('v4.7.0').talent(0).costPyro(1).anydice(2).perCnt(1)
+        .description('{action}；【装备有此牌的〖hro〗使用技能时：】如果我方手牌数量不多于1，则造成的伤害+2。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/219c7c6843e4ead2ab8ab2ce7044f5c3_8151320593747508491.png')
+        .handle((card, { hcards = [] }) => {
+            if ((hcards.length - +card.selected) > 1 || card.perCnt <= 0) return;
+            return { trigger: ['skill'], addDmgCdt: 2, exec: () => { --card.perCnt } }
+        }),
+
+    213131: () => new CardBuilder(396).name('尖兵协同战法').since('v4.8.0').talent().costPyro(2)
+        .description('【队伍中包含‹3火元素›角色和‹4雷元素›角色且不包含其他元素的角色，才能打出：】将此牌装备给【hro】。；装备有此牌的【hro】在场，敌方角色受到超载反应伤害后：我方接下来造成的2次[火元素伤害]或[雷元素伤害]+1。(包括扩散反应造成的[火元素伤害]或[雷元素伤害])')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/63d30082fb5068d4b847292c999003a4_5250915378710745589.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            const onlyPyroOrElectro = heros.every(h => h.element == ELEMENT_TYPE.Pyro || h.element == ELEMENT_TYPE.Electro);
+            const hasElectro = heros.some(h => h.element == ELEMENT_TYPE.Electro);
+            return {
+                isValid: onlyPyroOrElectro && hasElectro,
+                trigger: ['Vaporize'],
+                execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(113134)] }],
+            }
+        }),
+
+    214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
+        .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】｢普通攻击｣后造成2点[雷元素伤害]。(需消耗[可用次数])')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png'),
+
+    214021: () => new CardBuilder(87).name('觉醒').talent(1).costElectro(3).costElectro(4, 'v4.2.0').perCnt(1).perCnt(0, 'v4.2.0')
+        .description('{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹4雷元素›角色获得1点[充能]。(出战角色优先，每回合1次)')
+        .description('{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹4雷元素›角色获得1点[充能]。(出战角色优先)', 'v4.2.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7b07468873ea01ee319208a3e1f608e3_1769364352128477547.png')
+        .handle((card, event, ver) => {
+            const { heros = [], hidxs: [fhidx] = [], isSkill = -1 } = event;
+            if (isSkill != 1 || (ver >= 'v4.2.0' && card.perCnt <= 0)) return;
+            const nhidxs: number[] = [];
+            for (let i = 0; i < heros.length; ++i) {
+                const hidx = (i + fhidx) % heros.length;
+                const hero = heros[hidx];
+                if (hero.hp > 0 && hero.element == ELEMENT_TYPE.Electro && hero.energy < hero.maxEnergy) {
+                    nhidxs.push(hidx);
+                    break;
+                }
+            }
+            if (nhidxs.length == 0) return;
+            return {
+                trigger: ['skill'],
+                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs }],
+                exec: () => { --card.perCnt },
+            }
+        }),
+
 
     // 706: () => new GICard(706, '混元熵增论', '{action}；装备有此牌的【hro】生成的【smn3005】已转换成另一种元素后：我方造成的此类元素伤害+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/93fb13495601c24680e2299f9ed4f582_2499309288429565866.png',
@@ -2153,10 +2223,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4e162cfa636a6db51f166d7d82fbad4f_6452993893511545582.png',
     //     4, 5, 0, [6, 7], 1402, 2, undefined, { energy: 2 }),
 
-    // 709: () => new GICard(709, '噬星魔鸦', '{action}；装备有此牌的【hro】生成的【smn3008】，会在【hro】｢普通攻击｣后造成2点[雷元素伤害]。(需消耗[可用次数])',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png',
-    //     3, 3, 0, [6, 7], 1301, 1),
-
     // 710: () => new GICard(710, '储之千日，用之一刻', '{action}；装备有此牌的【hro】在场时，【sts2027】会使我方造成的[岩元素伤害]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/8b72e98d01d978567eac5b3ad09d7ec1_7682448375697308965.png',
     //     4, 6, 0, [6, 7], 1501, 1),
@@ -2164,28 +2230,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 711: () => new GICard(711, '飞叶迴斜', '{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。(每回合1次)',
     //     'https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png',
     //     4, 7, 0, [6, 7], 1601, 1),
-
-    // 714: () => new GICard(714, '觉醒', '{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹3雷元素›角色获得1点[充能]。(出战角色优先，每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7b07468873ea01ee319208a3e1f608e3_1769364352128477547.png',
-    //     3, 3, 0, [6, 7], 1302, 1, (card, event) => {
-    //         const { heros = [], hidxs: [fhidx] = [], isSkill = -1 } = event;
-    //         if (isSkill != 1 || card.perCnt <= 0) return;
-    //         const nhidxs: number[] = [];
-    //         for (let i = 0; i < heros.length; ++i) {
-    //             const hidx = (i + fhidx) % heros.length;
-    //             const hero = heros[hidx];
-    //             if (hero.hp > 0 && hero.element == 3 && hero.energy < hero.maxEnergy) {
-    //                 nhidxs.push(hidx);
-    //                 break;
-    //             }
-    //         }
-    //         if (nhidxs.length == 0) return;
-    //         return {
-    //             trigger: ['skill'],
-    //             execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs }],
-    //             exec: () => { --card.perCnt },
-    //         }
-    //     }, { pct: 1 }),
 
     // 715: () => new GICard(715, '支援就交给我吧', '{action}；装备有此牌的【hro】｢普通攻击｣后：如果此牌和【sts2036】仍在场，治疗我方所有角色1点。(每回合1次)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4c6332fd42d6edc64633a44aa900b32f_248861550176006555.png',
@@ -2367,20 +2411,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png',
     //     4, 7, 0, [6, 7], 1605, 2, undefined, { energy: 2 }),
 
-    // 763: () => new GICard(763, 290, '完场喝彩', '{action}；装备有此牌的【hro】在场时，【hro】自身和【smn3048】对具有‹2火元素附着›的角色造成的伤害+2。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/be471c09e294aaf12766ee17b624ddcc_5013564012859422460.png',
-    //     3, 2, 0, [6, 7], 1210, 1, (card, event) => {
-    //         const { heros = [], eheros = [], hidxs: [hidx] = [] } = event;
-    //         const isAttachEl2 = eheros.find(h => h.isFront)?.attachElement.includes(2);
-    //         if (card.perCnt > 0 && heros[hidx]?.isFront && isAttachEl2) {
-    //             return {
-    //                 trigger: ['skill'],
-    //                 addDmgCdt: 2,
-    //                 exec: () => { --card.perCnt },
-    //             }
-    //         }
-    //     }, { pct: 1 }),
-
     // 764: () => new GICard(764, '如影流露的冷刃', '{action}；装备有此牌的【hro】每回合第二次使用【ski】时：伤害+2，并强制敌方切换到前一个角色。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/09214e6eaeb5399f4f1dd78e7a9fcf66_5441065129648025265.png',
     //     3, 5, 0, [6, 7], 1407, 1),
@@ -2435,10 +2465,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         const element = [...new Set(heros.map(h => h.element))];
     //         return { status: [newStatus(2145)], cmds: [{ cmd: 'getDice', cnt: element.length, element }] }
     //     }),
-
-    // 772: () => new GICard(772, '僚佐的才巧', '{action}；装备有此牌的【hro】生成的【sts2154】，初始[可用次数]+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/d1ba5d6f1a7bdb24e95ca829357df03a_6674733466390586160.png',
-    //     3, 2, 0, [6, 7], 1211, 2, undefined, { energy: 2 }),
 
     // 773: () => new GICard(773, '偷懒的新方法', '{action}；装备有此牌的【hro】为出战角色期间，我方引发扩散反应时：抓2张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8399149d2618f3566580df22b153579a_4849308244790424730.png',
@@ -2532,13 +2558,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png',
     //     1, 2, 0, [6], 1744, 1, (_card, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs, element: 2 }] }), { pct: 1 }),
 
-    // 786: () => new GICard(786, '地狱里摇摆', '{action}；【装备有此牌的〖hro〗使用技能时：】如果我方手牌数量不多于1，则造成的伤害+2。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/219c7c6843e4ead2ab8ab2ce7044f5c3_8151320593747508491.png',
-    //     1, 2, 0, [6, 7], 1212, 0, (card, { hcards = [] }) => {
-    //         if ((hcards.length - +card.selected) > 1 || card.perCnt <= 0) return;
-    //         return { trigger: ['skill'], addDmgCdt: 2, exec: () => { --card.perCnt } }
-    //     }, { pct: 1, anydice: 2 }),
-
     // 787: () => new GICard(787, '庄谐并举', '{action}；装备有此牌的【hro】在场时，我方没有手牌，则【sts2198】会使｢普通攻击｣造成的伤害额外+2。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/51cdfbb5318ad7af6ad0eece4ef05423_8606735009174856621.png',
     //     3, 6, 0, [6, 7], 1507, 2, (_card, { hcards = [] }) => {
@@ -2584,16 +2603,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { cmds: [{ cmd: 'addCard', cnt: 4, card: 907 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isSummon == 3063, 1) }
     //     }),
 
-    // 793: () => new GICard(793, '尖兵协同战法', '【队伍中包含‹2火元素›角色和‹3雷元素›角色且不包含其他元素的角色，才能打出：】将此牌装备给【hro】。；装备有此牌的【hro】在场，敌方角色受到超载反应伤害后：我方接下来造成的2次[火元素伤害]或[雷元素伤害]+1。(包括扩散反应造成的[火元素伤害]或[雷元素伤害])',
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chevreuse.webp',
-    //     2, 2, 0, [6], 1213, 1, (_card, event) => {
-    //         const { heros = [], isElStatus = [] } = event;
-    //         return {
-    //             isValid: heros.every(h => [2, 3].includes(h.element)),
-    //             status: isCdt(isElStatus[2], [newStatus(2219)]),
-    //         }
-    //     }),
-
     // 794: () => new GICard(794, '不明流通渠道', '{action}；【装备有此牌的〖hro〗使用技能后：】抓2张【crd913】。(每回合1次)',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Navia.webp',
     //     3, 6, 0, [6, 7], 1508, 1, card => {
@@ -2609,28 +2618,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_EscadronIce.webp',
     //     3, 4, 0, [6, 7], 1704, 1),
 
-
-    // 901: () => new GICard(901, '雷楔', '[战斗行动]：将【hro1303】切换到场上，立刻使用【ski1303,2】。本次【ski1303,2】会为【hro1303】附属【sts2008,3】，但是不会再生成【雷楔】。(【hro1303】使用【ski1303,2】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro1303】附属【sts2008,3】)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png',
-    //     3, 3, 2, [7], 0, 0, (_card, event) => {
-    //         const { heros = [], hidxs: [fhidx] = [] } = event;
-    //         const hidx = heros.findIndex(h => h.id == 1303);
-    //         const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 1 }];
-    //         if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
-    //         return { trigger: ['skilltype2'], cmds }
-    //     }),
-
-    // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png',
-    //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }] })),
-
-    // 903: () => new GICard(903, '｢清洁工作｣', '我方出战角色下次造成伤害+1。(可叠加，最多叠加到+2)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/382849ade5e2cebea6b3a77a92f49f5b_4826032308536650097.png',
-    //     0, 8, 2, [], 0, 0, () => ({ status: [newStatus(2185)] })),
-
-    // 904: () => new GICard(904, '海底宝藏', '治疗我方出战角色1点，生成1个随机基础元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png',
-    //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'heal', cnt: 1 }, { cmd: 'getDice', cnt: 1, element: -1 }] })),
 
     112113: () => new CardBuilder(-1).name('圣俗杂座').event().costSame(0)
         .description('在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
@@ -2663,6 +2650,33 @@ const allCards: Record<number, () => CardBuilder> = {
                 ]
             }
         }),
+
+    113131: () => new CardBuilder(-1).name('超量装药弹头').event(true).costPyro(2)
+        .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9e3f3602c9eb4929bd9713b86c7fc5a1_5877781091007295306.png')
+        .handle(() => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Pyro, cnt: 1 }] }))
+
+    // 901: () => new GICard(901, '雷楔', '[战斗行动]：将【hro1303】切换到场上，立刻使用【ski1303,2】。本次【ski1303,2】会为【hro1303】附属【sts2008,3】，但是不会再生成【雷楔】。(【hro1303】使用【ski1303,2】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro1303】附属【sts2008,3】)',
+    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png',
+    //     3, 3, 2, [7], 0, 0, (_card, event) => {
+    //         const { heros = [], hidxs: [fhidx] = [] } = event;
+    //         const hidx = heros.findIndex(h => h.id == 1303);
+    //         const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 1 }];
+    //         if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
+    //         return { trigger: ['skilltype2'], cmds }
+    //     }),
+
+    // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
+    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png',
+    //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }] })),
+
+    // 903: () => new GICard(903, '｢清洁工作｣', '我方出战角色下次造成伤害+1。(可叠加，最多叠加到+2)',
+    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/382849ade5e2cebea6b3a77a92f49f5b_4826032308536650097.png',
+    //     0, 8, 2, [], 0, 0, () => ({ status: [newStatus(2185)] })),
+
+    // 904: () => new GICard(904, '海底宝藏', '治疗我方出战角色1点，生成1个随机基础元素骰。',
+    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png',
+    //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'heal', cnt: 1 }, { cmd: 'getDice', cnt: 1, element: -1 }] })),
 
     // 906: () => new GICard(906, '噬骸能量块', '随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。如果我方出战角色是｢圣骸兽｣角色，则使其获得1点[充能]。(每回合最多打出1张)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/7cb3ab81a7226897afdff50f4d567c13_7393439119842323642.png',
@@ -2700,10 +2714,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 910: magicCount(1),
 
     // 911: magicCount(0),
-
-    // 912: () => new GICard(912, '超量装药弹头', '[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。',
-    //     '',
-    //     2, 2, 2, [7], 0, 0, () => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: 2, cnt: 1 }] })),
 
     // 913: () => new GICard(913, '裂晶弹片', '对敌方｢出战角色｣造成1点物理伤害，抓1张牌。',
     //     '',

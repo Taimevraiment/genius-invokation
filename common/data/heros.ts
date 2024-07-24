@@ -1,7 +1,7 @@
 import { Cmds, Hero } from '../../typing';
-import { ELEMENT_TYPE, HERO_TAG, VERSION, Version } from '../constant/enum.js';
+import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getSummon, hasStatus, hasSummon } from '../utils/gameUtil.js';
+import { allHidxs, getMaxHertHidxs, getSummon, hasStatus, hasSummon } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { Skill1Builder, SkillBuilder } from './builder/skillBuilder.js';
@@ -634,109 +634,130 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(4).handle((_, ver) => ({ status: [newStatus(ver)(113092)] }))
         ),
 
+    1310: () => new HeroBuilder(281).name('林尼').since('v4.3.0').fontaine().tags(HERO_TAG.ArkhePneuma).fatui().pyro().bow()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/e0cc3a4602a418aaebb0855ad147f91e_261319803814200678.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/45a1a4f44d1f5af987980c5079085392.png')
+        .skill1(new Skill1Builder('迫牌易位式'))
+        .skills(
+            new SkillBuilder('隐具魔术箭').description('{dealDmg}，召唤【smn113101】，累积1层【sts113102】。；如果本角色生命值至少为6，则对自身造成1点[穿透伤害]。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1d65a51c36eca7169247316ff7e14a89.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5e46c170e7ce41c20bf76c27c4a16d89_689217131128119675.png')
+                .normal().damage(2).cost(3).handle((event, ver) => {
+                    const { hero: { hp } } = event;
+                    return { pdmgSelf: isCdt(hp >= 6, 1), summon: [newSummon(ver)(113101)], status: [newStatus(ver)(113102)] }
+                }),
+            new SkillBuilder('眩惑光戏法').description('{dealDmg}。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f86fcf037ad32d9973e84673f33f2b2b.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/22ed66987bb301d836569cf8fd4fc845_378167615829921519.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('大魔术·灵迹巡游').description('{dealDmg}，召唤【smn113101】，累积1层【sts113102】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/9859ed5f65f53d9fb21c11b2a6df50d8.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/6d91a8911290da444b67711806a75a56_5602716403383894799.png')
+                .burst(2).damage(3).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(113101)], status: [newStatus(ver)(113102)] }))
+        ),
 
-    // 1210: () => new GIHero(1210, '林尼', [5, 8, 12], 10, 2, 3,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/e0cc3a4602a418aaebb0855ad147f91e_261319803814200678.png',
-    //     skill1('迫牌易位式'), [
-    //     new GISkill('隐具魔术箭', '造成{dmg}点[火元素伤害]，召唤【smn3048】，累积1层【sts2132】。；如果本角色生命值至少为6，则对自身造成1点[穿透伤害]。', 1, 2, 3, 2, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1d65a51c36eca7169247316ff7e14a89.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5e46c170e7ce41c20bf76c27c4a16d89_689217131128119675.png',
-    //     ], event => {
-    //         const { hero: { hp } } = event;
-    //         return { pdmgSelf: isCdt(hp >= 6, 1), summon: [newSummon(ver)(3048)], status: [newStatus(ver)(2132)] }
-    //     }),
-    //     new GISkill('眩惑光戏法', '造成{dmg}点[火元素伤害]。', 2, 3, 3, 2, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f86fcf037ad32d9973e84673f33f2b2b.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/22ed66987bb301d836569cf8fd4fc845_378167615829921519.png']),
-    //     new GISkill('大魔术·灵迹巡游', '造成{dmg}点[火元素伤害]，召唤【smn3048】，累积1层【sts2132】。', 3, 3, 3, 2, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/9859ed5f65f53d9fb21c11b2a6df50d8.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/6d91a8911290da444b67711806a75a56_5602716403383894799.png',
-    //     ], () => ({ summon: [newSummon(ver)(3048)], status: [newStatus(ver)(2132)] }))
-    // ]),
+    1311: () => new HeroBuilder(319).name('托马').since('v4.4.0').inazuma().pyro().polearm()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/a21241c40833d2aee5336ae8fdd58c41_7254789917363324478.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/23fd1154d3898bf8082c562634250f8d.png')
+        .skill1(new Skill1Builder('迅破枪势'))
+        .skills(
+            new SkillBuilder('烈烧佑命之侍护').description('{dealDmg}，生成【sts113111】。')
+                .src('https://patchwiki.biligame.com/images/ys/6/6a/s3cppco85ykmlq1xuqfqfohdwuk3ogi.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/5943ef23f4dde5b6015a06e67e8332a5_7948056671343155927.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(113111)] })),
+            new SkillBuilder('真红炽火之大铠').description('{dealDmg}，生成【sts113111】和【sts113112】。')
+                .src('https://patchwiki.biligame.com/images/ys/2/21/a47iyqyy205fi0kyn38tmakcinh281j.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/7d6cb477d20cd8b75925ce62d3b73e8e_5295401799072493605.png')
+                .burst(2).damage(2).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const isTalent = !!talentSlot || card?.id == 213111;
+                    return { status: [newStatus(ver)(113111), newStatus(ver)(113112, isTalent)] }
+                })
+        ),
 
-    // 1211: () => new GIHero(1211, 319, '托马', 3, 10, 2, 5,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/a21241c40833d2aee5336ae8fdd58c41_7254789917363324478.png',
-    //     skill1('迅破枪势'), [
-    //     new GISkill('烈烧佑命之侍护', '造成{dmg}点[火元素伤害]，生成【sts2106】。', 2, 2, 3, 2, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/6/6a/s3cppco85ykmlq1xuqfqfohdwuk3ogi.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/5943ef23f4dde5b6015a06e67e8332a5_7948056671343155927.png',
-    //     ], () => ({ status: [newStatus(ver)(2106)] })),
-    //     new GISkill('真红炽火之大铠', '造成{dmg}点[火元素伤害]，生成【sts2106】和【sts2154】。', 3, 2, 3, 2, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/2/21/a47iyqyy205fi0kyn38tmakcinh281j.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/7d6cb477d20cd8b75925ce62d3b73e8e_5295401799072493605.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 772;
-    //         return { status: [newStatus(ver)(2106), newStatus(ver)(2154, isTalent)] }
-    //     })
-    // ]),
+    1312: () => new HeroBuilder(365).name('辛焱').since('v4.7.0').liyue().pyro().claymore()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/2538459953fb12e38da66416bd1db19a_2302423233068754101.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/78f87dda37f211ee6e090ee66503335d.png')
+        .skill1(new Skill1Builder('炎舞'))
+        .skills(
+            new SkillBuilder('热情拂扫').description('{dealDmg}，随机[舍弃]1张元素骰费用最高的手牌，生成【sts113121】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({
+                    cmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }],
+                    status: [newStatus(ver)(113121)],
+                })),
+            new SkillBuilder('叛逆刮弦').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]; [舍弃]我方所有手牌，生成【sts113123】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/0f007a2905436bfbbcc0f286889fea82.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6387793092d6e4fbf598834d1c4735b0_3596019311060413612.png')
+                .burst(2).damage(3).dmgElement(DAMAGE_TYPE.Physical).cost(3).handle((_, ver) => ({
+                    pdmg: 2,
+                    status: [newStatus(ver)(113123)],
+                    cmds: [{ cmd: 'discard', mode: CMD_MODE.AllHandCards }],
+                }))
+        ),
 
-    // 1212: () => new GIHero(1212, '辛焱', 2, 10, 2, 2,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/2538459953fb12e38da66416bd1db19a_2302423233068754101.png',
-    //     skill1('炎舞'), [
-    //     new GISkill('热情拂扫', '造成{dmg}点[火元素伤害]，随机[舍弃]1张元素骰费用最高的手牌，生成【sts2197】。', 2, 2, 3, 2, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png',
-    //     ], () => ({ cmds: [{ cmd: 'discard', element: 0 }], status: [newStatus(ver)(2197)] })),
-    //     new GISkill('叛逆刮弦', '造成{dmg}点[物理伤害]，对所有敌方后台角色造成2点[穿透伤害]; [舍弃]我方所有手牌，生成【sts2199】。', 3, 3, 3, 2, { ec: 2, de: 0 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/0f007a2905436bfbbcc0f286889fea82.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6387793092d6e4fbf598834d1c4735b0_3596019311060413612.png',
-    //     ], () => ({ pdmg: 2, status: [newStatus(ver)(2199)], cmds: [{ cmd: 'discard', element: 1 }] }))
-    // ]),
+    1313: () => new HeroBuilder(393).name('夏沃蕾').since('v4.8.0').fontaine().tags(HERO_TAG.ArkheOusia).pyro().polearm()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/6c91fd059cdcc4f1c068b0a255350433_8349286385786874049.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a428c5149c159454c1ea98b254d80990.png')
+        .skill1(new Skill1Builder('线列枪刺·改'))
+        .skills(
+            new SkillBuilder('近迫式急促拦射').description('{dealDmg}。；【此技能结算后：】如果我方手牌中含有【crd113131】，则[舍弃]1张并治疗我方受伤最多的角色1点。')
+                .src('https://patchwiki.biligame.com/images/ys/7/71/lh98vjaiu8gy537a5k4a3ypm6rde11w.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/550f45fcecc3b2ed7c472f0b5854350e_764894768056545994.png')
+                .elemental().damage(2).cost(3).handle(event => {
+                    const { hcards = [], heros = [] } = event;
+                    if (hcards.every(c => c.id != 113131)) return;
+                    return { cmds: [{ cmd: 'discard', cnt: 1, card: 113131 }, { cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(heros) }] }
+                }),
+            new SkillBuilder('圆阵掷弹爆轰术').description('{dealDmg}，在敌方场上生成【sts113132】。')
+                .src('https://patchwiki.biligame.com/images/ys/2/2c/b0tlvwd776zbom2sewxulwqzyq2fsa6.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/065f5a0ba4fa470e36c730b94862e27e_5007009973065767790.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ statusOppo: [newStatus(ver)(113132)] })),
+            new SkillBuilder('纵阵武力统筹').description('【敌方角色受到超载反应伤害后：】生成手牌【crd113131】。(每回合1次)')
+                .src('https://patchwiki.biligame.com/images/ys/f/fe/etjv39dbype1nvxty7pn43rlczzrf3p.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a5b60cf0ca11cd6359a6c54c815174e1_907488869279933822.png')
+                .handle(event => {
+                    const { hero: { skills: [, , , { useCnt }] } } = event;
+                    if (useCnt > 0) return;
+                    return { trigger: ['Vaporize'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
+                })
+        ),
 
-    // 1213: () => new GIHero(1213, '夏沃蕾', [5, 11], 10, 2, 5,
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Chevreuse.webp',
-    //     skill1('线列枪刺·改'), [
-    //     new GISkill('近迫式急促拦射', '造成{dmg}点[火元素伤害]。；【此技能结算后：】如果我方手牌中含有【crd912】，则[舍弃]1张并治疗我方受伤最多的角色1点。。', 2, 3, 3, 2, {}, [
-    //         '',
-    //         '',
-    //     ], event => {
-    //         const { hcards = [], heros = [] } = event;
-    //         if (hcards.every(c => c.id != 912)) return;
-    //         return { cmds: [{ cmd: 'discard', cnt: 1, card: 912 }, { cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(heros) }] }
-    //     }),
-    //     new GISkill('圆阵掷弹爆轰术', '造成{dmg}点[火元素伤害]，在敌方场上生成【sts2218】。', 3, 3, 3, 2, { ec: 2 }, [
-    //         '',
-    //         '',
-    //     ], () => ({ statusOppo: [newStatus(ver)(2218)] })),
-    //     new GISkill('纵阵武力统筹', '【敌方角色受到超载反应伤害后：】生成手牌【crd912】。(每回合1次)', 4, 0, 0, 0, {}, [
-    //         '',
-    //         '',
-    //     ], event => {
-    //         const { hero: { skills: [, , , { useCnt }] } } = event;
-    //         if (useCnt > 0) return;
-    //         return { trigger: ['Vaporize'], cmds: [{ cmd: 'getCard', cnt: 1, card: 912 }] }
-    //     })
-    // ]),
+    1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/195563531/41fc0a943f93c80bdcf24dbce13a0956_3894833720039304594.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e4166ac0aa3f216c59ff3e8a5e44fa70.png')
+        .skill1(new Skill1Builder('灭罪之矢'))
+        .skills(
+            new SkillBuilder('夜巡影翼').description('{dealDmg}，召唤【smn114011】。')
+                .src('https://patchwiki.biligame.com/images/ys/2/29/9ikuan4r5rhgza5nlxl86m718d3zmtt.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/4ab444ac20da8ea0990ff891600596ed_358383106993654545.png')
+                .elemental().damage(1).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const isTalent = !!talentSlot || card?.id == 214011;
+                    return { summon: [newSummon(ver)(114011, isTalent)] }
+                }),
+            new SkillBuilder('至夜幻现').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
+                .src('https://patchwiki.biligame.com/images/ys/5/5e/oi2xpx4ad1wuo0g4nozm1yqfxzmzrut.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bac9b0ca7056b02ffac854871d7cb0e0_7559183843121315562.png')
+                .burst(3).damage(4).cost(3).handle(() => ({ pdmg: 2 }))
+        ),
 
-    // 1301: () => new GIHero(1301, '菲谢尔', 1, 10, 3, 3,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/02/195563531/41fc0a943f93c80bdcf24dbce13a0956_3894833720039304594.png',
-    //     skill1('灭罪之矢'), [
-    //     new GISkill('夜巡影翼', '造成{dmg}点[雷元素伤害]，召唤【smn3008】。', 2, 1, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/2/29/9ikuan4r5rhgza5nlxl86m718d3zmtt.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/4ab444ac20da8ea0990ff891600596ed_358383106993654545.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 709;
-    //         return { summon: [newSummon(ver)(3008, isTalent)] }
-    //     }),
-    //     new GISkill('至夜幻现', '造成{dmg}点[雷元素伤害]，对所有敌方后台角色造成2点[穿透伤害]。', 3, 4, 3, 3, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/5/5e/oi2xpx4ad1wuo0g4nozm1yqfxzmzrut.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bac9b0ca7056b02ffac854871d7cb0e0_7559183843121315562.png',
-    //     ], () => ({ pdmg: 2 }))
-    // ]),
+    1402: () => new HeroBuilder(27).name('雷泽').mondstadt().electro().claymore()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/52cc6519a87290840830b64f25117070_8992911737218383504.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/04a1d8fdbc395113542897c6ea6f13c5.png')
+        .skill1(new Skill1Builder('钢脊'))
+        .skills(
+            new SkillBuilder('利爪与苍雷').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/0/02/e16tz7kk056z1n3duql87hoj6gxf8z5.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/d9a4f69257c64d52769a6b0a9af8031a_2133845428381568499.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('雷牙').description('{dealDmg}，本角色附属【sts114021】。')
+                .src('https://patchwiki.biligame.com/images/ys/0/04/o12dwfbbsokckmhk1rmuj9i5fekwenv.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2fcead6f24aba2d2595e98615756f175_4684225450339126121.png')
+                .burst(2).burst(3, 'v3.8.0').damage(3).damage(5, 'v3.8.0').cost(3).handle((_, ver) => ({ status: [newStatus(ver)(114021)] }))
+        ),
 
-    // 1302: () => new GIHero(1302, '雷泽', 1, 10, 3, 2,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/52cc6519a87290840830b64f25117070_8992911737218383504.png',
-    //     skill1('钢脊'), [
-    //     new GISkill('利爪与苍雷', '造成{dmg}点[雷元素伤害]。', 2, 3, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/0/02/e16tz7kk056z1n3duql87hoj6gxf8z5.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/d9a4f69257c64d52769a6b0a9af8031a_2133845428381568499.png']),
-    //     new GISkill('雷牙', '造成{dmg}点[雷元素伤害]，本角色附属【sts2035】。', 3, 3, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/0/04/o12dwfbbsokckmhk1rmuj9i5fekwenv.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2fcead6f24aba2d2595e98615756f175_4684225450339126121.png',
-    //     ], () => ({ status: [newStatus(ver)(2035)] }))
-    // ]),
 
     // 1303: () => new GIHero(1303, '刻晴', 2, 10, 3, 1,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/2dd94ec81fda4b55e9d90ae89de4cf80_5019006447640086752.png',

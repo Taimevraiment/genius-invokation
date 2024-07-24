@@ -49,8 +49,8 @@ export class BaseBuilder extends BaseVersionBuilder {
     costPyro(cost: number, version?: Version) {
         return this.cost(cost, DICE_TYPE.Pyro, version);
     }
-    costElectro(cost: number) {
-        return this.cost(cost, DICE_TYPE.Electro);
+    costElectro(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Electro, version);
     }
     costAnemo(cost: number) {
         return this.cost(cost, DICE_TYPE.Anemo);

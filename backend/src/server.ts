@@ -223,7 +223,7 @@ io.on('connection', socket => {
         room.emit('roomInfoUpdate', 0);
     });
     // 发送数据到服务器
-    socket.on('sendToServer', (actionData: ActionData) => {
+    socket.on('sendToServer', async (actionData: ActionData) => {
         const me = getPlayer(pid);
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);

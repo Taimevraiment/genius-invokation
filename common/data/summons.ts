@@ -316,6 +316,47 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    113101: () => new SummonBuilder('怪笑猫猫帽').useCnt(1).maxUse(2).damage(1)
+        .description('{defaultAtk}')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                const { heros = [] } = event;
+                const talent = heros.find(h => h.id == getHidById(summon.id))?.talentSlot;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                if (talent && talent.useCnt > 0) {
+                    --talent.useCnt;
+                    return { cmds: [{ cmd: 'attack', cnt: smn.damage + 2 }] }
+                }
+                return { cmds: [{ cmd: 'attack' }] }
+            }
+        })),
+
+    114011: (isTalent: boolean = false) => new SummonBuilder('奥兹').useCnt(2).damage(1).talent(isTalent)
+        .description(`{defaultAtk}${isTalent ? '；【hro】｢普通攻击｣后：造成2点[雷元素伤害]。(需消耗[可用次数])' : ''}`)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png')
+        .handle((summon, event) => {
+            const { heros = [], trigger = '', isExec = true } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            let cnt = isCdt(trigger != 'phase-end', 2);
+            if (heros[getAtkHidx(heros)]?.id == getHidById(summon.id) && summon.isTalent) {
+                triggers.push('after-skilltype1');
+                if (!isExec && trigger == 'after-skilltype1') --summon.useCnt;
+            }
+            return {
+                trigger: triggers,
+                damage: cnt,
+                element: summon.element,
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    return { cmds: [{ cmd: 'attack', cnt }] };
+                },
+            }
+        }),
+
     // 3005: (_, isTalent = false) => new GISummon(3005, '大型风灵', `【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png',
     //     3, 3, 0, 2, 5, (summon, event) => {
@@ -355,28 +396,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //             }
     //         }
     //     }),
-
-    // 3008: (isTalent = false) => new GISummon(3008, '奥兹', `【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】${isTalent ? '；【hro1301】｢普通攻击｣后：造成2点[雷元素伤害]。(需消耗[可用次数])' : ''}`,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png',
-    //     2, 2, 0, 1, 3, (summon, event) => {
-    //         const { heros = [], trigger = '', isExec = true } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         let cnt = isCdt(trigger != 'phase-end', 2);
-    //         if (heros[getAtkHidx(heros)]?.id == 1301 && summon.isTalent) {
-    //             triggers.push('after-skilltype1');
-    //             if (!isExec && trigger == 'after-skilltype1') --summon.useCnt;
-    //         }
-    //         return {
-    //             trigger: triggers,
-    //             damage: cnt,
-    //             element: summon.element,
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 return { cmds: [{ cmd: 'attack', cnt }] };
-    //             },
-    //         }
-    //     }, { isTalent }),
 
     // 3009: () => new GISummon(3009, '柯里安巴', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png',
@@ -695,23 +714,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3046: () => new GISummon(3046, '游丝徵灵', '【结束阶段：】造成{dmg}点[草元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png',
     //     1, 1, 1, 1, 7),
-
-    // 3048: () => new GISummon(3048, '怪笑猫猫帽', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png',
-    //     1, 2, 0, 1, 2, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { summon: smn = summon } = execEvent;
-    //             const { heros = [] } = event;
-    //             const talent = heros.find(h => h.id == 1210)?.talentSlot;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             if (talent && talent.useCnt > 0) {
-    //                 --talent.useCnt;
-    //                 return { cmds: [{ cmd: 'attack', cnt: smn.damage + 2 }] }
-    //             }
-    //             return { cmds: [{ cmd: 'attack' }] }
-    //         }
-    //     })),
 
     // 3049: () => new GISummon(3049, '惊奇猫猫盒', '【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)；【我方角色受到‹4冰›/‹1水›/‹2火›/‹3雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。（离场前仅限一次）',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png',

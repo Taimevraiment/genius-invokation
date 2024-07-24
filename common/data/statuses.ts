@@ -803,6 +803,78 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    113102: () => new StatusBuilder('隐具余数').heroStatus().icon('buff2').useCnt(1).maxCnt(3).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
+        .description('｢隐具余数｣最多可以叠加到3层。；【角色使用〖ski,2〗时：】每层｢隐具余数｣使伤害+1。技能结算后，耗尽｢隐具余数｣，每层治疗角色1点。')
+        .handle((status, event = {}) => ({
+            trigger: ['skilltype2', 'after-skilltype2'],
+            addDmgCdt: status.useCnt,
+            heal: isCdt(event.trigger == 'after-skilltype2', status.useCnt),
+            exec: eStatus => {
+                if (eStatus) eStatus.useCnt = 0;
+            }
+        })),
+
+    113111: () => shieldStatus('烈烧佑命护盾', 1, 3),
+
+    113112: (isTalent: boolean = false) => new StatusBuilder('炽火大铠').combatStatus().icon('ski,2').type(STATUS_TYPE.Attack)
+        .useCnt(2).useCnt(3, isTalent).talent(isTalent)
+        .description('【我方角色｢普通攻击｣后：】造成1点[火元素伤害]，生成【sts113111】。；【[可用次数]：{useCnt}】')
+        .handle((_s, _e, ver) => ({
+            damage: 1,
+            element: ELEMENT_TYPE.Pyro,
+            trigger: ['after-skilltype1'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+                return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(113111)] }] }
+            },
+        })),
+
+    113121: () => shieldStatus('热情护盾'),
+
+    113123: () => new StatusBuilder('氛围烈焰').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
+        .description('【我方宣布结束时：】如果我方的手牌数量不多于1，则造成1点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle((_, event = {}) => {
+            const { hcardsCnt = 10 } = event;
+            if (hcardsCnt > 1) return;
+            return {
+                trigger: ['end-phase'],
+                damage: 1,
+                element: ELEMENT_TYPE.Pyro,
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt;
+                }
+            }
+        }),
+
+    113132: () => new StatusBuilder('二重毁伤弹').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
+        .description('【所在阵营切换角色后：】对切换到的角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 1,
+            element: ELEMENT_TYPE.Pyro,
+            isSelf: true,
+            trigger: ['change-to'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            }
+        })),
+
+    113134: () => new StatusBuilder('尖兵协同战法(生效中)').combatStatus().icon('buff2').useCnt(2)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .description('我方造成的[火元素伤害]或[雷元素伤害]+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}】')
+        .handle(status => ({
+            trigger: ['Pyro-dmg', 'Electro-dmg', 'Pyro-dmg-Swirl', 'Electro-dmg-Swirl'],
+            addDmgCdt: 1,
+            exec: () => { --status.useCnt },
+        })),
+
+    114021: () => new StatusBuilder('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
+        .description('【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；【[持续回合]：{roundCnt}】')
+        .handle(() => ({
+            damage: 2,
+            element: ELEMENT_TYPE.Electro,
+            trigger: ['after-skilltype1', 'after-skilltype2'],
+        })),
+
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
@@ -981,13 +1053,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         trigger: ['elReaction'],
     //         exec: () => { --status.useCnt },
     //     })),
-
-    // 2035: () => new GIStatus(2035, '雷狼', '【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；【[持续回合]：{roundCnt}】',
-    //     'ski1302,2', 0, [1], -1, 0, 2, () => ({
-    //         damage: 2,
-    //         element: 3,
-    //         trigger: ['after-skilltype1', 'after-skilltype2'],
-    //     }), { icbg: STATUS_BG_COLOR[3] }),
 
     // 2036: () => new GIStatus(2036, '护体岩铠', '为我方出战角色提供2点[护盾]。此[护盾]耗尽前，我方受到的[物理伤害]减半。(向上取整)',
     //     '', 1, [7], 2, 0, -1, (_status, event = {}) => {
@@ -1499,8 +1564,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }), { icbg: STATUS_BG_COLOR[7] }),
 
-    // 2106: () => shieldStatus(2106, '烈烧佑命护盾', 1, 3),
-
     // 2107: () => new GIStatus(2107, '奔潮引电', '本回合内所附属的角色｢普通攻击｣少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】',
     //     'buff3', 0, [3, 4], 2, 0, 1, (status, event = {}) => {
     //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 1, 0] });
@@ -1630,16 +1693,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     // 2126: () => card587sts(3),
 
     // 2127: () => card587sts(4),
-
-    // 2132: () => new GIStatus(2132, '隐具余数', '｢隐具余数｣最多可以叠加到3层。；【角色使用〖ski1210,2〗时：】每层｢隐具余数｣使伤害+1。技能结算后，耗尽｢隐具余数｣，每层治疗角色1点。',
-    //     'buff2', 0, [1, 6], 1, 3, -1, (status, event = {}) => ({
-    //         trigger: ['skilltype2', 'after-skilltype2'],
-    //         addDmgCdt: status.useCnt,
-    //         heal: isCdt(event.trigger == 'after-skilltype2', status.useCnt),
-    //         exec: eStatus => {
-    //             if (eStatus) eStatus.useCnt = 0;
-    //         }
-    //     })),
 
     // 2133: () => new GIStatus(2133, '攻袭余威', '【结束阶段：】如果角色生命值至少为6，则受到2点[穿透伤害]。；【[持续回合]：{roundCnt}】',
     //     'debuff', 0, [1, 3], 1, 0, 1, (_status, event = {}) => {
@@ -1903,17 +1956,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             return { cmds }
     //         }
     //     }), { expl: ['rsk8', 'rsk9', 'rsk10', 'rsk11'] }),
-
-    // 2154: (isTalent:boolean = false) => new GIStatus(2154, '炽火大铠', '【我方角色｢普通攻击｣后：】造成1点[火元素伤害]，生成【sts2106】。；【[可用次数]：{useCnt}】',
-    //     'ski1211,2', 1, [1], isTalent ? 3 : 2, 0, -1, (_status: Status) => ({
-    //         damage: 1,
-    //         element: 2,
-    //         trigger: ['after-skilltype1'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //             return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2106)] }] }
-    //         },
-    //     }), { icbg: STATUS_BG_COLOR[2], isTalent }),
 
     // 2155: (windEl = 0) => new GIStatus(2155, '风风轮', '本角色将在下次行动时，直接使用技能：【rsk12】。',
     //     'buff3', 0, [10, 11], 1, 0, -1, status => ({
@@ -2244,8 +2286,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2191: () => new GIStatus(2191, '火之新生·锐势', '角色造成的[火元素伤害]+1。', 'buff4', 0, [6, 10], 1, 0, -1, () => ({ addDmg: 1 }), { icbg: STATUS_BG_COLOR[2] }),
 
-    // 2197: () => shieldStatus(2197, '热情护盾'),
-
     // 2198: (useCnt = 1) => new GIStatus(2198, '飞云旗阵', '我方角色进行｢普通攻击｣时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加，最多叠加到4次)】',
     //     'ski1507,1', 1, [4, 6], useCnt, 4, -1, (status, event = {}) => {
     //         const { hcardsCnt = 10, heros = [] } = event;
@@ -2258,20 +2298,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             exec: () => { --status.useCnt }
     //         }
     //     }, { icbg: STATUS_BG_COLOR[6] }),
-
-    // 2199: () => new GIStatus(2199, '氛围烈焰', '【我方宣布结束时：】如果我方的手牌数量不多于1，则造成1点[火元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1212,2', 1, [1], 2, 0, -1, (_status, event = {}) => {
-    //         const { hcardsCnt = 10 } = event;
-    //         if (hcardsCnt > 1) return;
-    //         return {
-    //             trigger: ['end-phase'],
-    //             damage: 1,
-    //             element: 2,
-    //             exec: eStatus => {
-    //                 if (eStatus) --eStatus.useCnt;
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[2] }),
 
     // 2200: () => readySkillShieldStatus(2200, '旋云护盾'),
 
@@ -2485,24 +2511,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2217: (cnt = 1) => new GIStatus(2217, '奇异之躯', '每层为【hro1724】提供1点额外最大生命。',
     //     'ski1724,3', 0, [9], cnt, 1000, -1, undefined, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2218: () => new GIStatus(2218, '二重毁伤弹', '【所在阵营切换角色后：】对切换到的角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1213,2', 1, [1], 2, 0, -1, () => ({
-    //         damage: 1,
-    //         element: 2,
-    //         isSelf: true,
-    //         trigger: ['change-to'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         }
-    //     }), { icbg: DEBUFF_BG_COLOR }),
-
-    // 2219: () => new GIStatus(2219, '尖兵协同战法(生效中)', '我方造成的[火元素伤害]或[雷元素伤害]+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}】',
-    //     'buff2', 1, [4, 6], 2, 0, -1, status => ({
-    //         trigger: ['fire-dmg', 'thunder-dmg', 'fire-dmg-wind', 'thunder-dmg-wind'],
-    //         addDmgCdt: 1,
-    //         exec: () => { --status.useCnt },
-    //     })),
 
     // 2220: () => new GIStatus(2220, '掠袭锐势', '【结束阶段：】对所有附属有【sts2221】的敌方角色造成1点[穿透伤害]。；【[持续回合]：{useCnt}】',
     //     'ski1704,2', 0, [1], 2, 0, -1, (status, { heros = [] } = {}) => ({

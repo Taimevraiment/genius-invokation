@@ -924,6 +924,7 @@ button:active {
   top: 20%;
   left: -20%;
   width: 30%;
+  z-index: 1;
 }
 
 .hero-weapon,
