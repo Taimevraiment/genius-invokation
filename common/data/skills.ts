@@ -82,7 +82,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     13095: () => new SkillBuilder('焚落踢').description('(需准备1个行动轮)；{dealDmg}。').burst().readySkill().damage(3),
 
-    // 1: () => new GISkill('踏潮', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 2, 3, 0, 3, { id: 14054, ec: -2, rskid: 1 }),
+    14054: () => new SkillBuilder('踏潮').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3).damage(2, 'v3.8.0'),
 
     // 2: () => new GISkill('猜拳三连击·剪刀', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]，然后[准备技能]：【rsk3】。', 2, 2, 0, 3, { id: 24015, ec: -2, rskid: 2 }),
 

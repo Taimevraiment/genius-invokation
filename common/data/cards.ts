@@ -2,7 +2,7 @@ import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Tri
 import { CARD_SUBTYPE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, HERO_TAG, PureElementType, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { getHidById, hasStatus, hasSummon } from '../utils/gameUtil.js';
+import { getHidById, getStatus, hasStatus, hasSummon } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newStatus } from './statuses.js';
@@ -2214,6 +2214,76 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    214031: () => new CardBuilder(88).name('抵天雷罚').talent(1).costElectro(3)
+        .description('{action}；装备有此牌的【hro】生成的【sts114032】获得以下效果：初始[持续回合]+1，并且会使所附属角色造成的[雷元素伤害]+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/58e4a4eca066cc26e6547f590def46ad_1659079510132865575.png'),
+
+    214041: () => new CardBuilder(89).name('落羽的裁择').talent(1).costElectro(3).perCnt(1).perCnt(0, 'v4.8.0')
+        .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数至少为2时使用【ski】时，造成的伤害额外+2。(每回合1次)')
+        .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数为偶数时使用【ski】时，造成的伤害额外+1。', 'v4.8.0')
+        .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数为3或5时使用【ski】时，造成的伤害额外+1。', 'v4.2.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png')
+        .handle((card, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const { heroStatus } = heros[hidx];
+            const stsCnt = getStatus(heroStatus, 114041)?.useCnt ?? 0;
+            let addDmgCdt = 0;
+            if (ver < 'v4.2.0' && [3, 5].includes(stsCnt) || ver < 'v4.8.0' && stsCnt % 2 == 0) addDmgCdt = 1;
+            if (ver >= 'v4.8.0' && card.perCnt > 0) addDmgCdt = 2;
+            return {
+                trigger: ['skilltype2'],
+                addDmgCdt,
+                exec: () => {
+                    if (ver >= 'v4.8.0') --card.perCnt;
+                }
+            }
+        }),
+
+    214051: () => new CardBuilder(90).name('霹雳连霄').since('v3.4.0').talent(1).costElectro(3)
+        .description('{action}；装备有此牌的【hro】使用【rsk14054】时：使【hro】本回合内｢普通攻击｣少花费1个[无色元素骰]。')
+        .description('{action}；装备有此牌的【hro】在[准备技能]期间受过伤害后：使【hro】本回合内｢普通攻击｣少花费1个[无色元素骰]。', 'v4.2.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/c3004d7c3873556c01124277c58b4b87_6946169426849615589.png'),
+
+    214061: () => new CardBuilder(91).name('我界').since('v3.5.0')
+        .talent(1).talent(2, 'v4.2.0').costElectro(3).costElectro(4, 'v4.2.0').energy(0).energy(2, 'v4.2.0')
+        .description('{action}；装备有此牌的【hro】在场时，我方附属有【sts114063】的‹4雷元素›角色，｢元素战技｣和｢元素爆发｣造成的伤害额外+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/3eb3cbf6779afc39d7812e5dd6e504d9_148906889400555580.png')
+        .handle((_card, event) => {
+            const { heros = [] } = event;
+            const hero = heros.find(h => h.isFront)!;
+            if (hero.element == ELEMENT_TYPE.Electro && hasStatus(hero.heroStatus, 114063)) {
+                return {
+                    addDmgCdt: 1,
+                    trigger: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],
+                }
+            }
+        }),
+
+    214071: () => new CardBuilder(92).name('万千的愿望').since('v3.7.0').talent(2).costElectro(4).energy(2)
+        .description('{action}；装备有此牌的【hro】使用【ski】时每消耗1点｢愿力｣，都使造成的伤害额外+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/bea2df42c6cb8eecf724f2da60554278_2483208280861354828.png'),
+
+    214081: () => new CardBuilder(93).name('神篱之御荫').since('v3.7.0').talent(2).costElectro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】通过【ski】消灭了【smn114081】后，本回合下次使用【ski,1】时少花费2个元素骰。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/bdb47c41b068190b9f0fd7fe1ca46bf3_449350753177106926.png'),
+
+    214091: () => new CardBuilder(94).name('脉冲的魔女').since('v4.0.0').talent().costElectro(1).perCnt(1)
+        .description('切换到装备有此牌的【hro】后：使敌方出战角色附属【sts114091】。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/608b48c391745b8cbae976d971b8b8c0_2956537094434701939.png')
+        .handle((card, event, ver) => {
+            const { ehidx = -1 } = event;
+            if (card.perCnt <= 0) return;
+            return {
+                trigger: ['change-to'],
+                execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(114091)], hidxs: [ehidx], isOppo: true }],
+                exec: () => { --card.perCnt },
+            }
+        }),
+
+    214101: () => new CardBuilder(95).name('酌盈剂虚').since('v4.2.0').talent(2).costElectro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】所召唤的【smn114102】，对生命值不多于6的角色造成的治疗+1，使没有[充能]的角色获得[充能]时获得量+1。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/da73eb59f8fbd54b1c3da24d494108f7_706910708906017594.png'),
+
 
     // 706: () => new GICard(706, '混元熵增论', '{action}；装备有此牌的【hro】生成的【smn3005】已转换成另一种元素后：我方造成的此类元素伤害+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/93fb13495601c24680e2299f9ed4f582_2499309288429565866.png',
@@ -2244,10 +2314,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 720: () => new GICard(720, '抵天雷罚', '{action}；装备有此牌的【hro】生成的【sts2008,3】获得以下效果：初始[持续回合]+1，并且会使所附属角色造成的[雷元素伤害]+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/58e4a4eca066cc26e6547f590def46ad_1659079510132865575.png',
-    //     3, 3, 0, [6, 7], 1303, 1),
-
     // 721: () => new GICard(721, '百川奔流', '{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b1a0f699a2168c60bc338529c3dee38b_3650391807139860687.png',
     //     4, 1, 0, [6, 7], 1721, 3, undefined, { energy: 3 }),
@@ -2275,27 +2341,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
     //     3, 7, 0, [6, 7], 1821, 1),
 
-    // 728: () => new GICard(728, '落羽的裁择', '{action}；装备有此牌的【hro】在【sts2060】的｢凭依｣级数为偶数时使用【ski】时，造成的伤害额外+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png',
-    //     3, 3, 0, [6, 7], 1304, 1),
-
-    // 729: () => new GICard(729, '霹雳连霄', '{action}；装备有此牌的【hro】使用【rsk1】时：使【hro】本回合内｢普通攻击｣少花费1个[无色元素骰]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/c3004d7c3873556c01124277c58b4b87_6946169426849615589.png',
-    //     3, 3, 0, [6, 7], 1305, 1),
-
-    // 730: () => new GICard(730, '我界', '{action}；装备有此牌的【hro】在场时，我方附属有【sts2064】的‹3雷元素›角色，｢元素战技｣和｢元素爆发｣造成的伤害额外+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/3eb3cbf6779afc39d7812e5dd6e504d9_148906889400555580.png',
-    //     3, 3, 0, [6, 7], 1306, 1, (_card, event) => {
-    //         const { heros = [] } = event;
-    //         const hero = heros.find(h => h.isFront)!;
-    //         if (hero.isFront && hero.element == 3 && hero.inStatus.some(ist => ist.id == 2064)) {
-    //             return {
-    //                 trigger: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],
-    //                 addDmgCdt: 1,
-    //             }
-    //         }
-    //     }),
-
     // 734: () => new GICard(734, '荒泷第一', '{action}；装备有此牌的【hro】每回合第2次及以后使用【ski】时：如果触发【sts2068】，伤害额外+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png',
     //     1, 6, 0, [6, 7], 1503, 0, (_card, event) => {
@@ -2314,14 +2359,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //             () => isChargedAtk && heros[hidx].inStatus.some(ist => ist.id == 2071));
     //         return { trigger: ['skilltype1'], ...minusSkillRes }
     //     }),
-
-    // 740: () => new GICard(740, '万千的愿望', '{action}；装备有此牌的【hro】使用【ski】时每消耗1点｢愿力｣，都使造成的伤害额外+1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/bea2df42c6cb8eecf724f2da60554278_2483208280861354828.png',
-    //     4, 3, 0, [6, 7], 1307, 2, undefined, { energy: 2 }),
-
-    // 741: () => new GICard(741, '神篱之御荫', '{action}；装备有此牌的【hro】通过【ski】消灭了【smn3031】后，本回合下次使用【ski1308,1】时少花费2个元素骰。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/bdb47c41b068190b9f0fd7fe1ca46bf3_449350753177106926.png',
-    //     3, 3, 0, [6, 7], 1308, 2, undefined, { energy: 2 }),
 
     // 742: () => new GICard(742, '绪风之拥', '{action}；装备有此牌的【hro】生成的【sts2082】触发后，会使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f46cfa06d1b3ebe29fe8ed2c986b4586_6729812664471389603.png',
@@ -2370,20 +2407,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { trigger: ['el5Reaction'], status: isCdt(windEl < 5, [newStatus(2118 + windEl)]) }
     //     }),
 
-    // 752: () => new GICard(752, '脉冲的魔女', '切换到装备有此牌的【hro】后：使敌方出战角色附属【sts2099】。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/608b48c391745b8cbae976d971b8b8c0_2956537094434701939.png',
-    //     1, 3, 0, [6], 1309, 1, (card, event) => {
-    //         const { ehidx = -1 } = event;
-    //         if (card.perCnt <= 0) return;
-    //         return {
-    //             trigger: ['change-to'],
-    //             exec: () => {
-    //                 --card.perCnt;
-    //                 return { inStatusOppo: [newStatus(2099)], hidxs: [ehidx] }
-    //             },
-    //         }
-    //     }, { pct: 1 }),
-
     // 754: () => new GICard(754, '神性之陨', '{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn3040】，则我方角色进行[下落攻击]时造成的伤害+1。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png',
     //     3, 6, 0, [6, 7], 1505, 1, (_card, event) => {
@@ -2402,10 +2425,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 757: () => new GICard(757, '慈惠仁心', '{action}；装备有此牌的【hro】生成的【smn3042】，在[可用次数]仅剩余最后1次时造成的伤害和治疗各+1。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/2b762e3829ac4a902190fde3e0f5377e_8510806015272134296.png',
     //     3, 7, 0, [6, 7], 1604, 1),
-
-    // 759: () => new GICard(759, '酌盈剂虚', '{action}；装备有此牌的【hro】所召唤的【smn3045】，对生命值不多于6的角色造成的治疗+1，使没有[充能]的角色获得[充能]时获得量+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/da73eb59f8fbd54b1c3da24d494108f7_706910708906017594.png',
-    //     3, 3, 0, [6, 7], 1310, 2, undefined, { energy: 2 }),
 
     // 760: () => new GICard(760, '在地为化', '{action}；装备有此牌的【hro】在场，【sts2114】触发治疗效果时：生成1个出战角色类型的元素骰。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png',
@@ -2619,7 +2638,7 @@ const allCards: Record<number, () => CardBuilder> = {
     //     3, 4, 0, [6, 7], 1704, 1),
 
 
-    112113: () => new CardBuilder(-1).name('圣俗杂座').event().costSame(0)
+    112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0)
         .description('在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6b2b966c07c54e8d86dd0ef057ae5c4a_6986508112474897949.png')
         .handle((card, event, ver) => {
@@ -2651,20 +2670,22 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    113131: () => new CardBuilder(-1).name('超量装药弹头').event(true).costPyro(2)
+    113131: () => new CardBuilder().name('超量装药弹头').event(true).costPyro(2)
         .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9e3f3602c9eb4929bd9713b86c7fc5a1_5877781091007295306.png')
-        .handle(() => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Pyro, cnt: 1 }] }))
+        .handle(() => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Pyro, cnt: 1 }] })),
 
-    // 901: () => new GICard(901, '雷楔', '[战斗行动]：将【hro1303】切换到场上，立刻使用【ski1303,2】。本次【ski1303,2】会为【hro1303】附属【sts2008,3】，但是不会再生成【雷楔】。(【hro1303】使用【ski1303,2】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro1303】附属【sts2008,3】)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png',
-    //     3, 3, 2, [7], 0, 0, (_card, event) => {
-    //         const { heros = [], hidxs: [fhidx] = [] } = event;
-    //         const hidx = heros.findIndex(h => h.id == 1303);
-    //         const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 1 }];
-    //         if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
-    //         return { trigger: ['skilltype2'], cmds }
-    //     }),
+    114031: () => new CardBuilder().name('雷楔').event(true).costElectro(3)
+        .description('[战斗行动]：将【hro】切换到场上，立刻使用【ski,1】。本次【ski,1】会为【hro】附属【sts114032】，但是不会再生成【雷楔】。(【hro】使用【ski,1】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro】附属【sts114032】)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [fhidx] = [] } = event;
+            const hidx = heros.findIndex(h => h.id == getHidById(card.id));
+            const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 1 }];
+            if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
+            return { trigger: ['skilltype2'], cmds }
+        }),
+
 
     // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png',

@@ -1,7 +1,7 @@
-import { Cmds, Hero } from '../../typing';
+import { Cmds, Hero, Status } from '../../typing';
 import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getMaxHertHidxs, getSummon, hasStatus, hasSummon } from '../utils/gameUtil.js';
+import { allHidxs, getMaxHertHidxs, getStatus, getSummon, hasStatus, hasSummon } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { Skill1Builder, SkillBuilder } from './builder/skillBuilder.js';
@@ -758,168 +758,179 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).burst(3, 'v3.8.0').damage(3).damage(5, 'v3.8.0').cost(3).handle((_, ver) => ({ status: [newStatus(ver)(114021)] }))
         ),
 
+    1403: () => new HeroBuilder(28).name('刻晴').liyue().electro().sword()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/2dd94ec81fda4b55e9d90ae89de4cf80_5019006447640086752.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c6196a177b92302347a85c6e51fde46a.png')
+        .skill1(new Skill1Builder('云来剑法'))
+        .skills(
+            new SkillBuilder('星斗归位').description('{dealDmg}，生成手牌【crd114031】')
+                .src('https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c351b44d3163278214f6f9db09c020fd_3304441541356399096.png')
+                .elemental().damage(3).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card, hcards = [] } = event;
+                    const isTalent = +(!!talentSlot || card?.id == 214031);
+                    const hasCard114031 = hcards.some(c => c.id == 114031);
+                    return {
+                        status: isCdt(card?.id == 114031 || hasCard114031, [newStatus(ver)(114032, isTalent)]),
+                        cmds: isCdt(hasCard114031, [{ cmd: 'discard', card: 114031 }], [{ cmd: 'getCard', cnt: 1, card: 114031 }]),
+                    }
+                }),
+            new SkillBuilder('天街巡游').description('{dealDmg}，对所有敌方后台角色造成3点[穿透伤害]。')
+                .src('https://patchwiki.biligame.com/images/ys/a/a0/hl9rfd4cwbif4a7gw3zmep0cdsgn6mu.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a74c053cad9ec216f37e5dc8ab5094d0_6153800052390998584.png')
+                .burst(3).damage(4).cost(4).handle(() => ({ pdmg: 3 }))
+        ),
 
-    // 1303: () => new GIHero(1303, '刻晴', 2, 10, 3, 1,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/2dd94ec81fda4b55e9d90ae89de4cf80_5019006447640086752.png',
-    //     skill1('云来剑法'), [
-    //     new GISkill('星斗归位', '造成{dmg}点[雷元素伤害]，生成手牌【crd901】', 2, 3, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c351b44d3163278214f6f9db09c020fd_3304441541356399096.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card, hcards = [] } = event;
-    //         const isTalent = +(!!talentSlot || card?.id == 720);
-    //         const hasCard901 = hcards.some(c => c.id == 901);
-    //         return {
-    //             status: isCdt(card?.id == 901 || hasCard901, [newStatus(ver)(2008, 3, 2 + isTalent, isTalent)]),
-    //             cmds: isCdt<Cmds[]>(hasCard901, [{ cmd: 'discard', card: 901 }], [{ cmd: 'getCard', cnt: 1, card: 901 }]),
-    //         }
-    //     }),
-    //     new GISkill('天街巡游', '造成{dmg}点[雷元素伤害]，对所有敌方后台角色造成3点[穿透伤害]。', 3, 4, 4, 3, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/a/a0/hl9rfd4cwbif4a7gw3zmep0cdsgn6mu.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a74c053cad9ec216f37e5dc8ab5094d0_6153800052390998584.png',
-    //     ], () => ({ pdmg: 3 }))
-    // ]),
+    1404: () => new HeroBuilder(29).name('赛诺').sumeru().electro().polearm()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/7f62549984cde8b10d694d05c0618a06_5004521367910517162.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/bf685f0e1d6e30d903fb7c9202a4acdc.png')
+        .skill1(new Skill1Builder('七圣枪术'))
+        .skills(
+            new SkillBuilder('秘仪·律渊渡魂').description('{dealDmg}，【sts114041】的｢凭依｣级数+1。').description('{dealDmg}。', 'v4.8.0')
+                .src('https://patchwiki.biligame.com/images/ys/4/4e/07nlgs0ws704oq4zbisr6ocw66qiyxh.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/4158f2729a2812dd54941af53f348acc_440344287585392498.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('圣仪·煟煌随狼行').description('{dealDmg}，【sts114041】的｢凭依｣级数+2。')
+                .src('https://patchwiki.biligame.com/images/ys/4/43/97c3rcihd4xaaxhdqfmjiy5acjtr6xs.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a4c6f2756a7b065b0319bddd5f9d61ee_4163672646150158077.png')
+                .burst(2).damage(4).cost(4),
+            new SkillBuilder('行度誓惩').description('战斗开始时，初始附属【sts114041】。')
+                .src('https://patchwiki.biligame.com/images/ys/7/71/7jaouwue7o0q82ndc0f2da0sw5nxc4d.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c61b597d14d7915b53d8bf462e8ad609_6351825637878214573.png')
+                .handle((_, ver) => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(114041)] }))
+        ),
 
-    // 1304: () => new GIHero(1304, '赛诺', 4, 10, 3, 5,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/7f62549984cde8b10d694d05c0618a06_5004521367910517162.png',
-    //     skill1('七圣枪术'), [
-    //     new GISkill('秘仪·律渊渡魂', '造成{dmg}点[雷元素伤害]。', 2, 3, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/4/4e/07nlgs0ws704oq4zbisr6ocw66qiyxh.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/4158f2729a2812dd54941af53f348acc_440344287585392498.png',
-    //     ], event => {
-    //         const { hero: { talentSlot, inStatus }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 728;
-    //         const sts2060cnt = inStatus.find(ist => ist.id == 2060)?.useCnt ?? -1;
-    //         return { addDmgCdt: isCdt(isTalent && sts2060cnt % 2 == 0, 1) }
-    //     }),
-    //     new GISkill('圣仪·煟煌随狼行', '造成{dmg}点[雷元素伤害]，【sts2060】的｢凭依｣级数+2。', 3, 4, 4, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/4/43/97c3rcihd4xaaxhdqfmjiy5acjtr6xs.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a4c6f2756a7b065b0319bddd5f9d61ee_4163672646150158077.png',
-    //     ]),
-    //     new GISkill('行度誓惩', '战斗开始时，初始附属【sts2060】。', 4, 0, 0, 0, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/7/71/7jaouwue7o0q82ndc0f2da0sw5nxc4d.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c61b597d14d7915b53d8bf462e8ad609_6351825637878214573.png',
-    //     ], () => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(2060)] }))
-    // ]),
+    1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').liyue().electro().claymore()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/20a9053476de0a5b82ae38f678df287b_1479624244948739352.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f68c082b2adf084ad7783776ceb1c334.png')
+        .skill1(new Skill1Builder('征涛'))
+        .skills(
+            new SkillBuilder('捉浪').description('本角色附属【sts114051】，并[准备技能]：【rsk14054】。')
+                .src('https://patchwiki.biligame.com/images/ys/e/e5/k9meeap7ei7ox3q9yx4b6803v79m6om.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/ab87d12b9075094e4ddc0637d3d938ba_5680751413245970029.png')
+                .elemental().cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const status = [newStatus(ver)(114051), newStatus(ver)(114055)];
+                    if (ver >= 'v4.2.0' && (!!talentSlot || card?.id == 214051)) status.push(newStatus(ver)(114052));
+                    return { status }
+                }),
+            new SkillBuilder('斫雷').description('{dealDmg}，生成【sts114053】。')
+                .src('https://patchwiki.biligame.com/images/ys/e/e8/738iv8ypner8eho40gwxipqfr6hzfdg.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/de30554b41553d6c58e6922c47937862_5183453852325935866.png')
+                .burst(3).damage(2).damage(3, 'v3.8.0').cost(3).cost(4, 'v3.8.0').handle((_, ver) => ({ status: [newStatus(ver)(114053)] }))
+        ),
 
-    // 1305: () => new GIHero(1305, '北斗', 2, 10, 3, 2,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/20a9053476de0a5b82ae38f678df287b_1479624244948739352.png',
-    //     skill1('征涛'), [
-    //     new GISkill('捉浪', '本角色附属【sts2062】，并[准备技能]：【rsk1】。', 2, 0, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/e/e5/k9meeap7ei7ox3q9yx4b6803v79m6om.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/ab87d12b9075094e4ddc0637d3d938ba_5680751413245970029.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const status = [newStatus(ver)(2062), newStatus(ver)(2189)];
-    //         if (!!talentSlot || card?.id == 729) status.push(newStatus(ver)(2107));
-    //         return { status }
-    //     }),
-    //     new GISkill('斫雷', '造成{dmg}点[雷元素伤害]，生成【sts2063】。', 3, 2, 3, 3, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/e/e8/738iv8ypner8eho40gwxipqfr6hzfdg.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/de30554b41553d6c58e6922c47937862_5183453852325935866.png',
-    //     ], () => ({ status: [newStatus(ver)(2063)] }))
-    // ]),
+    1406: () => new HeroBuilder(31).name('九条裟罗').since('v3.5.0').inazuma().electro().bow()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/7bef3d1a8bfd273866a62b05ce89c0c2_2441417120175670805.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/668657253155dc79461268e4be2b93b6.png')
+        .skill1(new Skill1Builder('天狗传弓术'))
+        .skills(
+            new SkillBuilder('鸦羽天狗霆雷召咒').description('{dealDmg}，召唤【smn114061】。')
+                .src('https://patchwiki.biligame.com/images/ys/7/7a/0we2peecoitxx412iw1toi30feb7uqz.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/cf253866ef5fd4ae4d19e81afbefd074_689676764945311191.png')
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(114061)] })),
+            new SkillBuilder('煌煌千道镇式').description('{dealDmg}，召唤【smn114062】。')
+                .src('https://patchwiki.biligame.com/images/ys/8/88/a454xedesmgk8h4a9q4f4wddudzzkwq.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/affa346d8b3bdc6281da340c52f5c4a4_394143682255893684.png')
+                .burst(2).damage(1).cost(4).handle((_, ver) => ({ summon: [newSummon(ver)(114062)] }))
+        ),
 
-    // 1306: () => new GIHero(1306, '九条裟罗', 3, 10, 3, 3,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/7bef3d1a8bfd273866a62b05ce89c0c2_2441417120175670805.png',
-    //     skill1('天狗传弓术'), [
-    //     new GISkill('鸦羽天狗霆雷召咒', '造成{dmg}点[雷元素伤害]，召唤【smn3021】。', 2, 1, 3, 3, { expl: ['sts2064'] }, [
-    //         'https://patchwiki.biligame.com/images/ys/7/7a/0we2peecoitxx412iw1toi30feb7uqz.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/cf253866ef5fd4ae4d19e81afbefd074_689676764945311191.png',
-    //     ], () => ({ summon: [newSummon(ver)(3021)] })),
-    //     new GISkill('煌煌千道镇式', '造成{dmg}点[雷元素伤害]，召唤【smn3022】。', 3, 1, 4, 3, { ec: 2, expl: ['sts2064'] }, [
-    //         'https://patchwiki.biligame.com/images/ys/8/88/a454xedesmgk8h4a9q4f4wddudzzkwq.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/affa346d8b3bdc6281da340c52f5c4a4_394143682255893684.png',
-    //     ], () => ({ summon: [newSummon(ver)(3022)] }))
-    // ]),
+    1407: () => new HeroBuilder(32).name('雷电将军').since('v3.7.0').inazuma().electro().polearm()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e9cb40e812da2147e3786f7cc3b2bd7d_208524583698335951.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4069a33a82e3fc1327f97e14de6d16eb.png')
+        .skill1(new Skill1Builder('源流'))
+        .skills(
+            new SkillBuilder('神变·恶曜开眼').description('召唤【smn114071】。')
+                .src('https://patchwiki.biligame.com/images/ys/2/2e/7b213rdcyu4wbzbt2lyz3xge9jur2u6.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ca5a55d164f3a97852b0d7fc59d09875_1236252164045819134.png')
+                .elemental().cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(114071)] })),
+            new SkillBuilder('奥义·梦想真说').description('{dealDmg}，其他我方角色获得2点[充能]。')
+                .src('https://patchwiki.biligame.com/images/ys/8/84/3elwfz4r3jrizlpe5zx9f0vhqzc7aef.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e32265b2715186774b8d4bcf3d918880_1471851977626289486.png')
+                .burst(2).damage(3).cost(4).handle(event => {
+                    const { heros = [], card, hero: { talentSlot, heroStatus } } = event;
+                    const hidxs: number[] = heros.filter(v => !v.isFront).map(v => v.hidx);
+                    const isTalent = talentSlot != null || card?.id == 740;
+                    const sts114072 = getStatus(heroStatus, 114072);
+                    return {
+                        addDmgCdt: (sts114072?.useCnt ?? 0) * (isTalent ? 2 : 1),
+                        cmds: [{ cmd: 'getEnergy', cnt: 2, hidxs }],
+                    }
+                }),
+            new SkillBuilder('诸愿百眼之轮').description('战斗开始时，初始附属【sts114072】。')
+                .src('https://patchwiki.biligame.com/images/ys/0/0f/5ardhper4s2i541lmywmazv31hfn0q9.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2df2771f98519d3d46ad0551977ca99a_7788585308123167206.png')
+                .handle((_, ver) => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(114072)] }))
+        ),
 
-    // 1307: () => new GIHero(1307, '雷电将军', 3, 10, 3, 5,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e9cb40e812da2147e3786f7cc3b2bd7d_208524583698335951.png',
-    //     skill1('源流'), [
-    //     new GISkill('神变·恶曜开眼', '召唤【smn3030】。', 2, 0, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/2/2e/7b213rdcyu4wbzbt2lyz3xge9jur2u6.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ca5a55d164f3a97852b0d7fc59d09875_1236252164045819134.png',
-    //     ], () => ({ summon: [newSummon(ver)(3030)] })),
-    //     new GISkill('奥义·梦想真说', '造成{dmg}点[雷元素伤害]，其他我方角色获得2点[充能]。', 3, 3, 4, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/8/84/3elwfz4r3jrizlpe5zx9f0vhqzc7aef.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e32265b2715186774b8d4bcf3d918880_1471851977626289486.png',
-    //     ], event => {
-    //         const { heros = [], card, hero: { talentSlot, inStatus } } = event;
-    //         const hidxs: number[] = heros.map((h, hi) => ({ val: h.isFront, hi })).filter(v => !v.val).map(v => v.hi);
-    //         const isTalent = talentSlot != null || card?.id == 740;
-    //         const sts2080 = inStatus.find(ist => ist.id == 2080);
-    //         return {
-    //             addDmgCdt: (sts2080?.useCnt ?? 0) * (isTalent ? 2 : 1),
-    //             cmds: [{ cmd: 'getEnergy', cnt: 2, hidxs }],
-    //         }
-    //     }),
-    //     new GISkill('诸愿百眼之轮', '战斗开始时，初始附属【sts2080】。', 4, 0, 0, 0, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/0/0f/5ardhper4s2i541lmywmazv31hfn0q9.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2df2771f98519d3d46ad0551977ca99a_7788585308123167206.png',
-    //     ], () => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(2080)] }))
-    // ]),
+    1408: () => new HeroBuilder(33).name('八重神子').since('v3.7.0').inazuma().electro().catalyst()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7e55525ee5cff216360b46322aa107ee_5470950562732053429.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/82839e50c43ef6d72676e9b6957fadba.png')
+        .skill1(new Skill1Builder('狐灵食罪式'))
+        .skills(
+            new SkillBuilder('野千役咒·杀生樱').description('召唤【smn114081】。')
+                .src('https://patchwiki.biligame.com/images/ys/3/3d/guf5f3kk06kmo3y0uln71jqsovem8yk.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5d52bb5027ee98ea6295c7cbe6f75260_4362138600485261556.png')
+                .elemental().cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(114081)] })),
+            new SkillBuilder('大密法·天狐显真').description('{dealDmg}; 如果我方场上存在【smn114081】，则将其消灭，然后生成【sts114083】。')
+                .src('https://patchwiki.biligame.com/images/ys/e/ea/8y36keriq61eszpx5mm5ph7fvwa07ad.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b5ebdd77cfd7a6e12d1326c08e8f9214_6239158387266355120.png')
+                .burst(2).damage(4).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card, summons = [] } = event;
+                    const status114081Idx = summons.findIndex(smn => smn.id == 114081);
+                    let status: Status[] = [];
+                    if (status114081Idx > -1) {
+                        summons.splice(status114081Idx, 1);
+                        status.push(newStatus(ver)(114083));
+                        if (!!talentSlot || card?.id == 214081) status.push(newStatus(ver)(114082));
+                    }
+                    return { status }
+                })
+        ),
 
-    // 1308: () => new GIHero(1308, '八重神子', 3, 10, 3, 4,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7e55525ee5cff216360b46322aa107ee_5470950562732053429.png',
-    //     skill1('狐灵食罪式'), [
-    //     new GISkill('野千役咒·杀生樱', '召唤【smn3031】。', 2, 0, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/3/3d/guf5f3kk06kmo3y0uln71jqsovem8yk.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5d52bb5027ee98ea6295c7cbe6f75260_4362138600485261556.png',
-    //     ], () => ({ summon: [newSummon(ver)(3031)] })),
-    //     new GISkill('大密法·天狐显真', '造成{dmg}点[雷元素伤害]; 如果我方场上存在【smn3031】，则将其消灭，然后生成【sts2081】。', 3, 4, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/e/ea/8y36keriq61eszpx5mm5ph7fvwa07ad.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b5ebdd77cfd7a6e12d1326c08e8f9214_6239158387266355120.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card, summons = [] } = event;
-    //         const status3031Idx = summons.findIndex(smn => smn.id == 3031);
-    //         let status: Status[] = [];
-    //         if (status3031Idx > -1) {
-    //             summons.splice(status3031Idx, 1);
-    //             status.push(newStatus(ver)(2081));
-    //             if (!!talentSlot || card?.id == 741) status.push(newStatus(ver)(2109));
-    //         }
-    //         return { status }
-    //     })
-    // ]),
+    1409: () => new HeroBuilder(34).name('丽莎').since('v4.0.0').mondstadt().electro().catalyst()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/203927054/129fe37de1bed078b49b9bc79ef2e757_1437470149833493317.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/94c38cd6acf1adb7d0fa8cd4e72636e3.png')
+        .skill1(new Skill1Builder('指尖雷暴').description('；如果此技能为[重击]，则使敌方出战角色附属【sts114091】。')
+            .handle((event, ver) => ({ statusOppo: isCdt(event.isChargedAtk, [newStatus(ver)(114091)]) })))
+        .skills(
+            new SkillBuilder('苍雷').description('{dealDmg}; 如果敌方出战角色未附属【sts114091】，则使其附属【sts114091】。')
+                .src('https://patchwiki.biligame.com/images/ys/1/13/1tkxwb0js8qxi9yi8bm6tpub8f9ba19.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/bb9487283d20c857804988ace8572ebc_971397791433710881.png')
+                .elemental().damage(2).cost(3).handle((event, ver) => {
+                    const { eheros = [] } = event;
+                    const status114091 = getStatus(eheros.find(h => h.isFront)?.heroStatus, 114091);
+                    const addDmgCdt = status114091?.useCnt ?? 0;
+                    if (status114091) status114091.useCnt = 0;
+                    return { statusOppo: isCdt(!status114091, [newStatus(ver)(114091)]), addDmgCdt }
+                }),
+            new SkillBuilder('蔷薇的雷光').description('{dealDmg}，召唤【smn114092】，使敌方出战角色附属【sts114091】。')
+                .src('https://patchwiki.biligame.com/images/ys/0/01/l5uobg3f84vj4x52kanzphba9ype2tw.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/d641396daad417dda3c4f9a26f02bfdc_897742072769166162.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({
+                    summon: [newSummon(ver)(114092)],
+                    status: isCdt(ver >= 'v4.8.0', [newStatus(ver)(114091)]),
+                }))
+        ),
 
-    // 1309: () => new GIHero(1309, '丽莎', 1, 10, 3, 4,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/12/203927054/129fe37de1bed078b49b9bc79ef2e757_1437470149833493317.png',
-    //     skill1('指尖雷暴', undefined, event => {
-    //         const { isChargedAtk = false } = event;
-    //         return { statusOppo: isCdt(isChargedAtk, [newStatus(ver)(2099)]) }
-    //     }, '；如果此技能为[重击]，则使敌方出战角色附属【sts2099】。'), [
-    //     new GISkill('苍雷', '造成{dmg}点[雷元素伤害]; 如果敌方出战角色未附属【sts2099】，则使其附属【sts2099】。', 2, 2, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/1/13/1tkxwb0js8qxi9yi8bm6tpub8f9ba19.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/bb9487283d20c857804988ace8572ebc_971397791433710881.png',
-    //     ], event => {
-    //         const { eheros = [] } = event;
-    //         const status2099 = eheros.find(h => h.isFront)?.inStatus?.find(ist => ist.id == 2099);
-    //         const addDmgCdt = isCdt(!!status2099, status2099?.useCnt ?? 0);
-    //         if (status2099) status2099.useCnt = 0;
-    //         return { statusOppo: isCdt(!status2099, [newStatus(ver)(2099)]), addDmgCdt }
-    //     }),
-    //     new GISkill('蔷薇的雷光', '造成{dmg}点[雷元素伤害]，召唤【smn3038】。', 3, 2, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/0/01/l5uobg3f84vj4x52kanzphba9ype2tw.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/d641396daad417dda3c4f9a26f02bfdc_897742072769166162.png',
-    //     ], () => ({ summon: [newSummon(ver)(3038)] }))
-    // ]),
+    1410: () => new HeroBuilder(35).name('多莉').since('v4.2.0').sumeru().electro().claymore()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/20b47c429b784fac1ef2c80d560c93cc_6932125694251188191.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/871b0b3d06bc11d69f9cb1df72309371.png')
+        .skill1(new Skill1Builder('妙显剑舞·改'))
+        .skills(
+            new SkillBuilder('镇灵之灯·烦恼解决炮').description('{dealDmg}，召唤【smn114101】。')
+                .src('https://patchwiki.biligame.com/images/ys/3/37/1eiismiuis2sxbg937vk1uhz3ge2yr2.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/91280ec7f6956790332305adff93a619_8857314989004908195.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(114101)] })),
+            new SkillBuilder('卡萨扎莱宫的无微不至').description('{dealDmg}，召唤【smn114102】。')
+                .src('https://patchwiki.biligame.com/images/ys/b/b7/pzuxl8ukf3do834omkdzx5p8yfape0u.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/a1870db7855c7037f700f74152d1f28e_1635879084262346523.png')
+                .burst(2).damage(1).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    return { summon: [newSummon(ver)(114102, !!talentSlot || card?.id == 214101)] }
+                })
+        ),
 
-    // 1310: () => new GIHero(1310, '多莉', 4, 10, 3, 2,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/20b47c429b784fac1ef2c80d560c93cc_6932125694251188191.png',
-    //     skill1('妙显剑舞·改'), [
-    //     new GISkill('镇灵之灯·烦恼解决炮', '造成{dmg}点[雷元素伤害]，召唤【smn3044】。', 2, 2, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/3/37/1eiismiuis2sxbg937vk1uhz3ge2yr2.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/91280ec7f6956790332305adff93a619_8857314989004908195.png',
-    //     ], () => ({ summon: [newSummon(ver)(3044)] })),
-    //     new GISkill('卡萨扎莱宫的无微不至', '造成{dmg}点[雷元素伤害]，召唤【smn3045】。', 3, 1, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/b/b7/pzuxl8ukf3do834omkdzx5p8yfape0u.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/a1870db7855c7037f700f74152d1f28e_1635879084262346523.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = talentSlot != null || card?.id == 759;
-    //         return { summon: [newSummon(ver)(3045, isTalent)] }
-    //     })
-    // ]),
 
     // 1311: () => new GIHero(1311, '久岐忍', 3, 10, 3, 1,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/97e8a503ac00ee72817a33b15bc6e971_1406073271702365176.png',

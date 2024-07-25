@@ -309,7 +309,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((summon, event, ver) => {
             const { reset = false } = event;
-            if (reset) return { rOutStatus: [newStatus(ver)(113094)] }
+            if (reset) return { rCombatStatus: [newStatus(ver)(113094)] }
             return {
                 trigger: ['phase-end'],
                 exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
@@ -356,6 +356,82 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 },
             }
         }),
+
+    114061: () => new SummonBuilder('天狗咒雷·伏').useCnt(1).damage(1)
+        .description('【结束阶段：】{dealDmg}，我方出战角色附属【sts114063】。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/aef9cba89ecb16fa0d73ffef53cad44e_6822516960472237055.png')
+        .handle((summon, _, ver) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
+                return {
+                    cmds: [...cmds, { cmd: 'getStatus', status: [newStatus(ver)(114063)] }],
+                }
+            }
+        })),
+
+    114062: () => new SummonBuilder('天狗咒雷·雷砾').useCnt(2).damage(2)
+        .description('【结束阶段：】{dealDmg}，我方出战角色附属【sts114063】。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/51bca1f202172ad60abbace59b96c346_7973049003331786903.png')
+        .handle((summon, _, ver) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
+                return {
+                    cmds: [...cmds, { cmd: 'getStatus', status: [newStatus(ver)(114063)] }],
+                }
+            }
+        })),
+
+    114071: () => new SummonBuilder('雷罚恶曜之眼').useCnt(3).damage(1)
+        .description('{defaultAtk}；【此召唤物在场时：】我方角色｢元素爆发｣造成的伤害+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/a27cfa39a258ff4b80f01b1964e6faac_1649452858766133852.png')
+        .handle(summon => ({
+            addDmgType3: 1,
+            trigger: ['phase-end'],
+            exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
+        })),
+
+    114081: () => new SummonBuilder('杀生樱').useCnt(3).maxUse(6).damage(1)
+        .description('{defaultAtk}；【我方宣布结束时：】如果此牌的[可用次数]至少为4，则造成1点[雷元素伤害]。(需消耗[可用次数])')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/d63267f4388f521b1481a85ace6de257_3147336152102036232.png')
+        .handle(summon => {
+            const triggers: Trigger[] = ['phase-end'];
+            if (summon.useCnt >= 4) triggers.push('end-phase');
+            return {
+                trigger: triggers,
+                exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
+            }
+        }),
+
+    114092: () => new SummonBuilder('蔷薇雷光').useCnt(2).damage(2)
+        .description('{defaultAtk}')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/0ea69a82861d8469ecdbbc78797e9fd8_3713104012683105893.png'),
+
+    114101: () => new SummonBuilder('售后服务弹').useCnt(1).damage(1)
+        .description('{defaultAtk}')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/fe4516935ffa9eb9b193411113fa823f_372775257521707079.png'),
+
+    114102: (isTalent: boolean = false) => new SummonBuilder('灯中幽精').useCnt(2).heal(2).talent(isTalent).plus(isTalent)
+        .description(`【结束阶段：】治疗我方出战角色{shield}点，并使其获得1点[充能]。${isTalent ? '；治疗生命值不多于6的角色时，治疗量+1; 使没有[充能]的角色获得[充能]时，获得量+1。' : ''}；【[可用次数]：{useCnt}】`)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/c8209ff8f2c21e01e4e05203385410d7_8366905551575281519.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                const { heros = [] } = event;
+                const fhero = heros.find(h => h.isFront);
+                if (!fhero) throw new Error('fhero is undefined');
+                return {
+                    cmds: [
+                        { cmd: 'heal', cnt: isCdt(fhero.hp <= 6 && smn.isTalent, smn.shieldOrHeal + 1) },
+                        { cmd: 'getEnergy', cnt: fhero.energy == 0 && smn.isTalent ? 2 : 1 }
+                    ]
+                }
+            }
+        })),
+
 
     // 3005: (_, isTalent = false) => new GISummon(3005, '大型风灵', `【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png',
@@ -473,30 +549,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3021: () => new GISummon(3021, '天狗咒雷·伏', '【结束阶段：】造成{dmg}点[雷元素伤害]，我方出战角色附属【sts2064】。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/aef9cba89ecb16fa0d73ffef53cad44e_6822516960472237055.png',
-    //     1, 1, 0, 1, 3, summon => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
-    //             return {
-    //                 cmds: [...cmds, { cmd: 'getStatus', status: [heroStatus(2064)] }],
-    //             }
-    //         }
-    //     })),
-
-    // 3022: () => new GISummon(3022, '天狗咒雷·雷砾', '【结束阶段：】造成{dmg}点[雷元素伤害]，我方出战角色附属【sts2064】。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/51bca1f202172ad60abbace59b96c346_7973049003331786903.png',
-    //     2, 2, 0, 2, 3, summon => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
-    //             return {
-    //                 cmds: [...cmds, { cmd: 'getStatus', status: [heroStatus(2064)] }],
-    //             }
-    //         }
-    //     })),
-
     // 3026: () => new GISummon(3026, '阿丑', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro1503】附属【sts2068】。；【结束阶段：】弃置此牌，造成{dmg}点[岩元素伤害]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png',
     //     1, 1, -1, 1, 6, (summon, event) => {
@@ -518,25 +570,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3027: () => new GISummon(3027, '藏蕴花矢', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/dc8e548704ca0e52d1c6669fac469b3d_5168805556784249785.png',
     //     1, 2, 0, 1, 7),
-
-    // 3030: () => new GISummon(3030, '雷罚恶曜之眼', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色｢元素爆发｣造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/a27cfa39a258ff4b80f01b1964e6faac_1649452858766133852.png',
-    //     3, 3, 0, 1, 3, summon => ({
-    //         addDmgType3: 1,
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
-    //     })),
-
-    // 3031: () => new GISummon(3031, '杀生樱', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到6次)；【我方宣布结束时：】如果此牌的[可用次数]至少为4，则造成1点[雷元素伤害]。(需消耗[可用次数])',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/d63267f4388f521b1481a85ace6de257_3147336152102036232.png',
-    //     3, 6, 0, 1, 3, summon => {
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (summon.useCnt >= 4) triggers.push('end-phase');
-    //         return {
-    //             trigger: triggers,
-    //             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
-    //         }
-    //     }),
 
     // 3032: () => new GISummon(3032, '暴风之眼', '【结束阶段：】造成{dmg}点[风元素伤害]，对方切换到[距离我方出战角色最近的角色]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/b0b8a8e9a43548bc39fceba101ea0ab6_1760632395524982528.png',
@@ -650,10 +683,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3038: () => new GISummon(3038, '蔷薇雷光', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/0ea69a82861d8469ecdbbc78797e9fd8_3713104012683105893.png',
-    //     2, 2, 0, 2, 3),
-
     // 3040: () => new GISummon(3040, '阳华', '【结束阶段：】造成{dmg}点[岩元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。(每回合1次)',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png',
     //     3, 3, 0, 1, 6, (summon, event) => {
@@ -687,29 +716,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //             return { cmds }
     //         }
     //     }), { isTalent }),
-
-    // 3044: () => new GISummon(3044, '售后服务弹', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/fe4516935ffa9eb9b193411113fa823f_372775257521707079.png',
-    //     1, 1, 0, 1, 3),
-
-    // 3045: (isTalent = false) => new GISummon(3045, '灯中幽精', `【结束阶段：】治疗我方出战角色{shield}点，并使其获得1点[充能]。${isTalent ? '；治疗生命值不多于6的角色时，治疗量+1; 使没有[充能]的角色获得[充能]时，获得量+1。' : ''}；【[可用次数]：{useCnt}】`,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/c8209ff8f2c21e01e4e05203385410d7_8366905551575281519.png',
-    //     2, 2, 2, 0, 0, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { summon: smn = summon } = execEvent;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             const { heros = [] } = event;
-    //             const fhero = heros.find(h => h.isFront);
-    //             if (!fhero) throw new Error('fhero is undefined');
-    //             return {
-    //                 cmds: [
-    //                     { cmd: 'heal', cnt: isCdt(fhero.hp <= 6 && smn.isTalent, smn.shield + 1) },
-    //                     { cmd: 'getEnergy', cnt: fhero.energy == 0 && smn.isTalent ? 2 : 1 }
-    //                 ]
-    //             }
-    //         }
-    //     }), { isTalent, pls: isTalent }),
 
     // 3046: () => new GISummon(3046, '游丝徵灵', '【结束阶段：】造成{dmg}点[草元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png',

@@ -125,7 +125,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._id = id;
         return this;
     }
-    description(description: string, version: Version = VERSION[0]) {
+    description(description: string, version: Version = 'vlatest') {
         this._description.push([version, description]);
         return this;
     }
@@ -149,7 +149,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._shieldOrHeal = heal;
         return this;
     }
-    damage(damage: number, version: Version = VERSION[0]) {
+    damage(damage: number, version: Version = 'vlatest') {
         this._damage.push([version, damage]);
         return this;
     }
@@ -205,8 +205,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._statusId = stsId ?? -2;
         return this;
     }
-    plus() {
-        this._hasPlus = true;
+    plus(plus: boolean = true) {
+        this._hasPlus = plus;
         return this;
     }
     explains(...explains: string[]) {

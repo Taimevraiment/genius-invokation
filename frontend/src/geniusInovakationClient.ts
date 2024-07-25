@@ -251,8 +251,7 @@ export default class GeniusInvokationClient {
                         this.supportCanSelect = [...preview.supportCanSelect!.slice()];
                         const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                         this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
-                        if (canSelectHero == 0 ||
-                            canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
+                        if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
                             canSelectSummon != -1 && this.summonCanSelect[canSelectSummon].filter(v => v).length == 1 ||
                             canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1) {
                             const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0] && pre.heroIdxs?.length == 1);

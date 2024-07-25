@@ -1,5 +1,5 @@
 import { Card, Skill, Status } from "../../../typing";
-import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementType, HERO_LOCAL, HeroTag, PureElementType, SKILL_TYPE, VERSION, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
+import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { BaseBuilder } from "./baseBuilder.js";
 import { GISkill, Skill1Builder, SkillBuilder } from "./skillBuilder";
 
@@ -62,7 +62,6 @@ export class GIHero {
 }
 
 export class HeroBuilder extends BaseBuilder {
-    private _curVersion: Version = VERSION[0];
     private _tags: HeroTag[] = [];
     private _maxHp: number = 10;
     private _element: ElementType | undefined;
@@ -76,10 +75,6 @@ export class HeroBuilder extends BaseBuilder {
     }
     get inVersion() {
         return this._version <= this._curVersion;
-    }
-    version(version?: Version) {
-        if (version != undefined) this._curVersion = version;
-        return this;
     }
     tags(...tags: HeroTag[]) {
         this._tags.push(...tags);
@@ -194,9 +189,9 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     done() {
-        const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10];
-        const skills: (SkillBuilder | Skill1Builder)[] = this._skills.map(skill => skill.dmgElement(element));
-        if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType));
+        const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
+        const skills: (SkillBuilder | Skill1Builder)[] = this._skills.map(skill => skill.costElement(element));
+        if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType).costElement(element));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
             this._maxHp, element, this._weaponType, this._src, this._avatar,
             skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).version(this._curVersion).done()));

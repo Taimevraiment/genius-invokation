@@ -1,5 +1,5 @@
 import { Card, Hero, Skill, Status, Summon } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementType } from "../constant/enum.js";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -109,7 +109,7 @@ export const hasStatus = (statuses: Status[] | undefined, id: number): boolean =
 }
 
 // 找出某状态
-export const getStatus = (statuses: Status[], id: number): Status | undefined => {
+export const getStatus = (statuses: Status[] | undefined, id: number): Status | undefined => {
     return statuses?.find(s => s.id == id);
 }
 
@@ -127,4 +127,4 @@ export const getSummon = (summons: Summon[], id: number): Summon | undefined => 
 export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
 
 // 根据角色id获取元素
-export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10];
+export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];

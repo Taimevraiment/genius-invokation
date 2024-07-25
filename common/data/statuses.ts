@@ -1,6 +1,6 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, DAMAGE_TYPE, ELEMENT_TYPE, ElementType, HERO_TAG, PureElementType, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
+    CARD_SUBTYPE, DAMAGE_TYPE, ELEMENT_TYPE, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMinHertHidxs, getStatus, hasStatus } from "../utils/gameUtil.js";
@@ -875,6 +875,137 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['after-skilltype1', 'after-skilltype2'],
         })),
 
+    114032: (isTalent: boolean = false) => enchantStatus(ELEMENT_TYPE.Electro, +isTalent).roundCnt(2 + +isTalent).talent(isTalent),
+
+    114041: () => new StatusBuilder('启途誓使').heroStatus().icon('ski,2').roundCnt(0).maxCnt(100).type(STATUS_TYPE.Enchant, STATUS_TYPE.Accumulate)
+        .description('【结束阶段：】累积1级｢凭依｣，如果｢凭依｣级数至少为8，则｢凭依｣级数-6。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2。')
+        .description('【结束阶段：】累积1级｢凭依｣。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2;；大于等于6级：｢凭依｣级数-4。', 'v4.8.0')
+        .handle((status, event = {}, ver) => {
+            const { trigger = '' } = event;
+            const isAttachEl = status.useCnt >= 2;
+            const triggers: Trigger[] = ['phase-end', 'skilltype3'];
+            if (ver >= 'v4.8.0') triggers.push('skilltype2');
+            return {
+                trigger: triggers,
+                addDmg: isCdt(status.useCnt >= 4, 2),
+                attachEl: isCdt(isAttachEl, ELEMENT_TYPE.Electro),
+                isUpdateAttachEl: isAttachEl,
+                exec: () => {
+                    if (trigger == 'phase-end' || trigger == 'skilltype2') ++status.useCnt;
+                    else if (trigger == 'skilltype3') status.useCnt += 2;
+                    if (ver < 'v4.8.0') {
+                        if (status.useCnt >= 6) status.useCnt -= 4;
+                    } else {
+                        if (trigger == 'phase-end' && status.useCnt >= 8) status.useCnt -= 6;
+                    }
+                }
+            }
+        }),
+
+    114051: () => readySkillShieldStatus('捉浪·涛拥之守').handle((_s, _e, ver) => {
+        if (ver >= 'v4.2.0') return;
+        return {
+            trigger: ['getdmg'],
+            exec: () => ({ cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(114052)] }] })
+        }
+    }),
+
+    114052: () => new StatusBuilder('奔潮引电').heroStatus().icon('buff3').useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
+        .description('本回合内所附属的角色｢普通攻击｣少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => ({
+            trigger: ['skilltype1'],
+            minusDiceSkill: { skilltype1: [0, 1, 0] },
+            exec: () => {
+                if (event.isMinusDiceSkill) --status.useCnt;
+            }
+        })),
+
+    114053: () => new StatusBuilder('雷兽之盾').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.Barrier)
+        .description('【我方角色｢普通攻击｣后：】造成1点[雷元素伤害]。；【我方角色受到至少为3的伤害时：】抵消其中1点伤害。；【[持续回合]：{roundCnt}】')
+        .handle((_, event = {}) => {
+            const { restDmg = 0 } = event;
+            return {
+                damage: 1,
+                element: ELEMENT_TYPE.Electro,
+                trigger: ['after-skilltype1'],
+                restDmg: restDmg < 3 ? restDmg : restDmg - 1,
+            }
+        }),
+
+    114055: () => new StatusBuilder('踏潮').heroStatus().icon('buff3').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+        .description('本角色将在下次行动时，直接使用技能：【rsk14054】。')
+        .handle((status, event = {}) => ({
+            trigger: ['change-from', 'useReadySkill'],
+            skill: 14054,
+            exec: () => {
+                --status.useCnt;
+                const { heros = [], hidx = -1 } = event;
+                const sts114051 = getStatus(heros[hidx].heroStatus, 114051);
+                if (sts114051) sts114051.useCnt = 0;
+            }
+        })),
+
+    114063: () => new StatusBuilder('鸣煌护持').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
+        .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
+            const { skilltype = 1, hasDmg = false } = event;
+            const trigger: Trigger[] = [];
+            if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(skilltype)) {
+                trigger.push(`skilltype${skilltype}` as Trigger);
+            }
+            return {
+                addDmgType2: 1,
+                addDmgType3: 1,
+                trigger,
+                exec: () => { --status.useCnt },
+            }
+        }),
+
+    114072: () => new StatusBuilder('诸愿百眼之轮').heroStatus().icon('ski,2').useCnt(0).maxCnt(3).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Accumulate)
+        .description('【其他我方角色使用｢元素爆发｣后：】累积1点｢愿力｣。(最多累积3点)；【所附属角色使用〖ski,2〗时：】消耗所有｢愿力｣，每点｢愿力｣使造成的伤害+1。')
+        .handle((status, event = {}) => {
+            const { trigger = '' } = event;
+            return {
+                trigger: ['other-skilltype3', 'skilltype3'],
+                exec: () => {
+                    if (trigger == 'skilltype3') {
+                        status.useCnt = 0;
+                    } else if (trigger == 'other-skilltype3') {
+                        status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
+                    }
+                }
+            }
+        }),
+
+    114082: () => new StatusBuilder('遣役之仪').heroStatus().icon('buff3').roundCnt(1)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('本回合中，所附属角色下次施放【ski,1】时少花费2个元素骰。')
+        .handle((status, event = {}) => ({
+            trigger: ['skilltype2'],
+            minusDiceSkill: { skilltype2: [0, 0, 2] },
+            exec: () => {
+                if (event.isMinusDiceSkill) --status.roundCnt;
+            }
+        })),
+
+    114083: () => new StatusBuilder('天狐霆雷').combatStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign)
+        .description('【我方选择行动前：】造成3点[雷元素伤害]。；【[可用次数]：{useCnt}】')
+        .handle(() => ({
+            damage: 3,
+            element: ELEMENT_TYPE.Electro,
+            trigger: ['action-start'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    114091: () => new StatusBuilder('引雷').heroStatus().icon('debuff').useCnt(2).addCnt(1).maxCnt(4).type(STATUS_TYPE.AddDamage)
+        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
+        .handle(status => ({
+            trigger: ['phase-end'],
+            exec: () => { status.useCnt = Math.min(status.maxCnt, status.useCnt + 1) },
+        })),
+
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
@@ -1237,54 +1368,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         },
     //     })),
 
-    // 2060: () => new GIStatus(2060, '启途誓使', '【结束阶段：】累积1级｢凭依｣。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2;；大于等于6级：｢凭依｣级数-4。',
-    //     'ski1304,2', 0, [8, 9], 0, 6, -1, (status, event = {}) => {
-    //         const { trigger = '' } = event;
-    //         const isAttachEl = status.useCnt >= 2;
-    //         return {
-    //             trigger: ['phase-end', 'skilltype3'],
-    //             addDmg: isCdt(status.useCnt >= 4, 2),
-    //             attachEl: isCdt(isAttachEl, 3),
-    //             isUpdateAttachEl: isAttachEl,
-    //             exec: () => {
-    //                 if (trigger == 'phase-end') ++status.useCnt;
-    //                 else if (trigger == 'skilltype3') status.useCnt += 2;
-    //                 if (status.useCnt >= status.maxCnt) status.useCnt -= 4;
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[3] }),
-
     301103: (name: string) => senlin1Sts(name),
 
     301104: (name: string) => senlin1Sts(name),
-
-    // 2062: () => readySkillShieldStatus(2062, '捉浪·涛拥之守'),
-
-    // 2063: () => new GIStatus(2063, '雷兽之盾', '【我方角色｢普通攻击｣后：】造成1点[雷元素伤害]。；【我方角色受到至少为3的伤害时：】抵消其中1点伤害。；【[持续回合]：{roundCnt}】',
-    //     'ski1305,2', 0, [1, 2], -1, 0, 2, (_status, event = {}) => {
-    //         const { restDmg = 0 } = event;
-    //         return {
-    //             damage: 1,
-    //             element: 3,
-    //             trigger: ['after-skilltype1'],
-    //             restDmg: restDmg < 3 ? restDmg : restDmg - 1,
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[3] }),
-
-    // 2064: () => new GIStatus(2064, '鸣煌护持', '所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；【[可用次数]：{useCnt}】',
-    //     'buff5', 0, [6], 2, 0, -1, (status, event = {}) => {
-    //         const { skilltype, hasDmg = false } = event;
-    //         const trigger: Trigger[] = [];
-    //         if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(skilltype)) {
-    //             trigger.push(`skilltype${skilltype}`);
-    //         }
-    //         return {
-    //             addDmgType2: 1,
-    //             addDmgType3: 1,
-    //             trigger,
-    //             exec: () => { --status.useCnt },
-    //         }
-    //     }),
 
     // 2068: () => new GIStatus(2068, '乱神之怪力', '【所附属角色进行[重击]时：】造成的伤害+1。如果[可用次数]至少为2，则还会使本技能少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)',
     //     'buff4', 0, [6], 1, 3, -1, (status, event = {}) => {
@@ -1332,31 +1418,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2072: () => new GIStatus(2072, '辰砂往生录(生效中)', '本回合中，角色｢普通攻击｣造成的伤害+1。',
     //     'buff5', 0, [6, 10], -1, 0, 1, () => ({ addDmgType1: 1 })),
-
-    // 2080: () => new GIStatus(2080, '诸愿百眼之轮', '【其他我方角色使用｢元素爆发｣后：】累积1点｢愿力｣。(最多累积3点)；【所附属角色使用〖ski1307,2〗时：】消耗所有｢愿力｣，每点｢愿力｣使造成的伤害+1。',
-    //     'ski1307,2', 0, [6, 9], 0, 3, -1, (status, event = {}) => {
-    //         const { trigger = '' } = event;
-    //         return {
-    //             trigger: ['other-skilltype3', 'skilltype3'],
-    //             exec: () => {
-    //                 if (trigger == 'skilltype3') {
-    //                     status.useCnt = 0;
-    //                 } else if (trigger == 'other-skilltype3') {
-    //                     status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
-    //                 }
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[3] }),
-
-    // 2081: () => new GIStatus(2081, '天狐霆雷', '【我方选择行动前：】造成3点[雷元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'ski1308,2', 1, [1, 10], 1, 0, -1, () => ({
-    //         damage: 3,
-    //         element: 3,
-    //         trigger: ['action-start'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     }), { icbg: STATUS_BG_COLOR[3] }),
 
     // 2082: (isTalent:boolean = false) => new GIStatus(2082, '风域', `【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；【[可用次数]：{useCnt}】`,
     //     'buff3', 1, [4], 2, 0, -1, status => ({
@@ -1511,12 +1572,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { icbg: STATUS_BG_COLOR[windEl] }),
 
-    // 2099: () => new GIStatus(2099, '引雷', '此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski1309,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。',
-    //     'debuff', 0, [6], 2, 4, -1, status => ({
-    //         trigger: ['phase-end'],
-    //         exec: () => { status.useCnt = Math.min(status.maxCnt, status.useCnt + 1) },
-    //     }), { act: 1 }),
-
     // 2101: () => new GIStatus(2101, '拳力斗技！(生效中)', '【本回合中，一位牌手先宣布结束时：】未宣布结束的牌手摸2张牌。',
     //     'buff3', 0, [4, 10], 1, 0, -1, (_status, event = {}) => {
     //         const { phase = -1 } = event;
@@ -1564,35 +1619,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }), { icbg: STATUS_BG_COLOR[7] }),
 
-    // 2107: () => new GIStatus(2107, '奔潮引电', '本回合内所附属的角色｢普通攻击｣少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】',
-    //     'buff3', 0, [3, 4], 2, 0, 1, (status, event = {}) => {
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 1, 0] });
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             ...minusSkillRes,
-    //             exec: () => {
-    //                 if (isMinusSkill) --status.useCnt;
-    //             }
-    //         }
-    //     }),
-
     // 2108: () => new GIStatus(2108, '协鸣之风', '本回合中，我方角色下次｢普通攻击｣少花费1个[无色元素骰]。',
     //     'buff3', 0, [3, 4, 10], 1, 0, 1, (status, event = {}) => {
     //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 1, 0] });
     //         return {
     //             trigger: ['skilltype1'],
-    //             ...minusSkillRes,
-    //             exec: () => {
-    //                 if (isMinusSkill) --status.useCnt;
-    //             }
-    //         }
-    //     }),
-
-    // 2109: () => new GIStatus(2109, '遣役之仪', '本回合中，所附属角色下次施放【ski1308,1】时少花费2个元素骰。',
-    //     'buff3', 0, [3, 4, 10], 1, 0, 1, (status, event = {}) => {
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype2: [0, 0, 2] });
-    //         return {
-    //             trigger: ['skilltype2'],
     //             ...minusSkillRes,
     //             exec: () => {
     //                 if (isMinusSkill) --status.useCnt;
@@ -2271,18 +2302,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             },
     //         }
     //     }),
-
-    // 2189: () => new GIStatus(2189, '踏潮', '本角色将在下次行动时，直接使用技能：【rsk1】。',
-    //     'buff3', 0, [10, 11], 1, 0, -1, (status, event = {}) => ({
-    //         trigger: ['change-from', 'useReadySkill'],
-    //         skill: 1,
-    //         exec: () => {
-    //             --status.useCnt;
-    //             const { heros = [], hidx = -1 } = event;
-    //             const sts2062 = heros[hidx].inStatus.find(ist => ist.id == 2062);
-    //             if (sts2062) sts2062.useCnt = 0;
-    //         }
-    //     })),
 
     // 2191: () => new GIStatus(2191, '火之新生·锐势', '角色造成的[火元素伤害]+1。', 'buff4', 0, [6, 10], 1, 0, -1, () => ({ addDmg: 1 }), { icbg: STATUS_BG_COLOR[2] }),
 

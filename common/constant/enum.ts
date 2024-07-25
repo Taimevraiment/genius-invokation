@@ -157,6 +157,8 @@ export const WEAPON_TYPE_CODE = {
     [WEAPON_TYPE.Sword]: 5,
 } as const;
 
+export type WeaponTypeCode = TypeConst<typeof WEAPON_TYPE_CODE>;
+
 export const WEAPON_TYPE_CODE_KEY = swapKeysAndValues(WEAPON_TYPE_CODE);
 
 export const STATUS_GROUP = {
@@ -332,6 +334,6 @@ export const VERSION = [
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',
 ] as const;
 
-export type Version = typeof VERSION[number];
+export type Version = typeof VERSION[number] | 'vlatest';
 
 

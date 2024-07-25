@@ -332,7 +332,6 @@ const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
   return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
-  if (content.startsWith('ski,')) console.trace(content);
   if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
   const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
   const type = content.slice(0, 3);

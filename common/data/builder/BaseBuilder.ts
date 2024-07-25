@@ -2,12 +2,16 @@ import { DICE_TYPE, DiceType, VERSION, Version } from "../../constant/enum.js";
 
 export class BaseVersionBuilder {
     protected _version: Version = VERSION[0];
+    protected _curVersion: Version = VERSION[0];
     protected _getValByVersion<T>(vals: [Version, T][], defaultVal: T) {
-        if (this._version == VERSION[0]) return vals.find(([ver]) => ver == this._version)?.[1] ?? defaultVal;
-        return vals.sort(([a], [b]) => a < b ? -1 : 1).find(([ver]) => ver > this._version)?.[1] ?? defaultVal;
+        return vals.sort(([a], [b]) => a < b ? -1 : 1).find(([ver]) => ver > this._curVersion)?.[1] ?? defaultVal;
+    }
+    since(version: Version) {
+        this._version = version;
+        return this;
     }
     version(version: Version | undefined) {
-        if (version != undefined) this._version = version;
+        if (version != undefined) this._curVersion = version;
         return this;
     }
 }
@@ -31,11 +35,7 @@ export class BaseBuilder extends BaseVersionBuilder {
         this._name = name;
         return this;
     }
-    since(version: Version) {
-        this._version = version;
-        return this;
-    }
-    cost(cost: number, type: DiceType, version: Version = VERSION[0]) {
+    cost(cost: number, type: DiceType, version: Version = 'vlatest') {
         this._cost.push([version, cost]);
         this._costType = type;
         return this;

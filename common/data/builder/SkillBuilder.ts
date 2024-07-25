@@ -1,5 +1,5 @@
 import {
-    COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementType, SKILL_TYPE, SkillCostType,
+    COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, SKILL_TYPE, SkillCostType,
     SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
@@ -121,20 +121,20 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._type = SKILL_TYPE.Elemental;
         return this;
     }
-    burst(energy: number = 0, version: Version = VERSION[0]) {
+    burst(energy: number = 0, version: Version = 'vlatest') {
         this._type = SKILL_TYPE.Burst;
         this._energyCost.push([version, energy]);
         return this;
     }
     readySkill() {
-        this._energyCost.push([VERSION[0], -2]);
+        this._energyCost.push(['vlatest', -2]);
         return this;
     }
     energy(energy: number) {
-        this._energyCost.push([VERSION[0], energy]);
+        this._energyCost.push(['vlatest', energy]);
         return this;
     }
-    damage(damage: number, version: Version = VERSION[0]) {
+    damage(damage: number, version: Version = 'vlatest') {
         this._damage.push([version, damage]);
         return this;
     }
@@ -142,7 +142,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         if (this._dmgElement == undefined) this._dmgElement = element;
         return this;
     }
-    cost(cost: number, version: Version = VERSION[0]) {
+    cost(cost: number, version: Version = 'vlatest') {
         this._cost.push([version, cost]);
         return this;
     }
@@ -197,16 +197,16 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._src.push(...srcs.filter(v => v != ''));
         return this;
     }
-    description(description: string, version: Version = VERSION[0]) {
+    description(description: string, version: Version = 'vlatest') {
         this._description.push([version, description]);
         return this;
     }
-    explain(explains: string[]) {
+    explain(...explains: string[]) {
         this._explains = explains;
         return this;
     }
     done() {
-        const element: ElementType = ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10];
+        const element: ElementType = ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode];
         this.costElement(element);
         const description = this._getValByVersion(this._description, '')
             .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)
@@ -233,7 +233,7 @@ export class SkillBuilder extends BaseVersionBuilder {
 export class Skill1Builder {
     private _id: number = -1;
     private _weaponType: WeaponType | undefined;
-    private _handle: ((event: SkillHandleEvent) => SkillHandleRes | undefined) | undefined;
+    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;
     private _description: string = '';
     private _perCnt: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
@@ -276,14 +276,14 @@ export class Skill1Builder {
         return this;
     }
     costElement(costElement: ElementType) {
-        this._costElement = costElement;
+        if (this._costElement == ELEMENT_TYPE.Physical) this._costElement = costElement;
         return this;
     }
     description(description: string) {
         this._description = description;
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent) => SkillHandleRes | undefined)) {
+    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined)) {
         this._handle = handle;
         return this;
     }
@@ -297,7 +297,7 @@ export class Skill1Builder {
     }
     done() {
         this._weaponType ??= WEAPON_TYPE.Other;
-        this._costElement = ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10];
+        this.costElement(ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode]);
         const isCatalyst = this._weaponType == WEAPON_TYPE.Catalyst;
         const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
         return this._builder
@@ -308,7 +308,7 @@ export class Skill1Builder {
             .damage(isCatalyst ? 1 : 2)
             .dmgElement(dmgElement)
             .perCnt(this._perCnt)
-            .explain(this._explains)
+            .explain(...this._explains)
             .handle(this._handle)
             .done();
     }

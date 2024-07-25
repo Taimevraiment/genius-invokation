@@ -155,11 +155,12 @@ export default class GeniusInvokationRoom {
         this.players.forEach(p => {
             p.heros.forEach(h => h.heroStatus = this._updateStatus(p.pidx, [], h.heroStatus, true, p.heros, h.hidx));
             p.combatStatus = this._updateStatus(p.pidx, [], p.combatStatus, true, p.heros);
+            p.summons = this._updateSummon(p.pidx, [], p.summons, p.combatStatus, true);
             p.canAction = p.canAction && this.taskQueue.isTaskEmpty() && this.isStart && p.phase == PHASE.ACTION &&
                 p.heros.every(h => h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill))) &&
                 p.combatStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill));
         });
-        const { socket, tip = '', actionInfo = '', damageVO = null, notPreview = false } = options;
+        const { socket, tip = '', actionInfo = '', damageVO = -1, notPreview = false } = options;
         const previews: Preview[] = [];
         this._clacCardChange(pidx);
         if (this.phase == PHASE.ACTION && !notPreview) { // 计算预测行动的所有情况
@@ -241,6 +242,7 @@ export default class GeniusInvokationRoom {
             p.supports = [];
             p.summons = [];
             p.dice = [];
+            p.combatStatus = [];
             p.status = PLAYER_STATUS.WAITING;
             p.isUsedLengend = false;
             p.playerInfo.weaponTypeCnt = new Set(p.pile.filter(c => c.subType.includes(CARD_SUBTYPE.Weapon))).size;
@@ -2013,17 +2015,12 @@ export default class GeniusInvokationRoom {
             else timeout = 800;
         } else if (['useSkill', 'doSlot', 'doSummon', 'doSite', 'getDamage-status', 'useCard', 'doStatus', 'doSkill'].includes(type)) { // 如果对方已经结束则不转变
             canChange = !isOppoActionEnd && isEndAtk && !isQuickAction;
-            if (['doSummon', 'doStatus', 'doSlot', 'doSkill'].includes(type)) timeout = 0;
+            if (['doSummon', 'doStatus', 'doSlot', 'doSkill'].includes(type)) timeout = 600;
         } else if (type == 'endPhase') {
             canChange = isEndAtk;
-            timeout = 100;
+            timeout = 600;
         }
-        if (!canChange) timeout = 0;
-        this.players.forEach(p => {
-            const hasReadySkill = this._getFrontHero(pidx ^ 1).heroStatus.some(sts => sts.hasType(STATUS_TYPE.ReadySkill)) &&
-                this._getFrontHero(pidx ^ 1)?.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonAction));
-            p.canAction = !hasReadySkill && p.phase == PHASE.ACTION && this.taskQueue.isTaskEmpty() && this.isStart;
-        });
+        if (!canChange) timeout = 600;
         setTimeout(async () => {
             if (canChange) {
                 this.players[this.currentPlayerIdx].canAction = false;
@@ -2044,12 +2041,12 @@ export default class GeniusInvokationRoom {
                     curPlayer.canAction = true;
                 }
             } else {
-                const ephase = this.players[this.currentPlayerIdx ^ 1]?.phase ?? 0;
+                const ephase = this.players[this.currentPlayerIdx ^ 1]?.phase ?? PHASE.NOT_READY;
                 if ((ephase > PHASE.ACTION || isQuickAction) && isEndAtk) {
                     this.players[this.currentPlayerIdx].canAction = true;
                 }
             }
-            this.emit('changeTurn-' + type + '-canChange:' + canChange, pidx, { tip: '{p}回合开始' });
+            this.emit('changeTurn-' + type + '-canChange:' + canChange, pidx, { tip: canChange ? '{p}回合开始' : '继续{p}回合' });
             // todo 上面对于canAction的判断放到下面的函数中
             // this._doActionBefore(this.currentPlayerIdx);
             // this._detectStatus(this.currentPlayerIdx, STATUS_TYPE.ReadySkill, 'useReadySkill', { isOnlyFront: true, isOnlyHeroStatus: true });
@@ -2233,7 +2230,7 @@ export default class GeniusInvokationRoom {
             else p.UI.info = '对方结束已结束回合...';
         });
         this.players[this.currentPlayerIdx ^ 1].canAction = true;
-        this.log.push(`[${this.players[pidx].name}]结束了回合`);
+        this._writeLog(`[${this.players[pidx].name}]结束了回合`);
         this.emit(flag, pidx);
         if (isActionEnd) { // 双方都结束回合，进入回合结束阶段
             this.phase = PHASE.ACTION_END;

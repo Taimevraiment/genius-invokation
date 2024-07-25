@@ -151,7 +151,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._id = id;
         return this;
     }
-    description(description: string, version: Version = VERSION[0]) {
+    description(description: string, version: Version = 'vlatest') {
         this._description.push([version, description]);
         return this;
     }
@@ -175,19 +175,19 @@ export class StatusBuilder extends BaseVersionBuilder {
     }
     useCnt(useCnt: number, cdt: boolean): StatusBuilder;
     useCnt(useCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
-    useCnt(useCnt: number, version: Version | boolean = VERSION[0], cdt: boolean = true) {
+    useCnt(useCnt: number, version: Version | boolean = 'vlatest', cdt: boolean = true) {
         if (typeof version == 'boolean') {
             if (version) {
-                const unt = this._useCnt.find(([ver]) => ver == VERSION[0]);
+                const unt = this._useCnt.find(([ver]) => ver == 'vlatest');
                 if (unt) unt[1] = useCnt;
-                else this._useCnt.push([VERSION[0], useCnt]);
+                else this._useCnt.push(['vlatest', useCnt]);
             }
         } else if (cdt) {
             this._useCnt.push([version, useCnt]);
         }
         return this;
     }
-    maxCnt(maxCnt: number, version: Version = VERSION[0]) {
+    maxCnt(maxCnt: number, version: Version = 'vlatest') {
         this._maxCnt.push([version, maxCnt]);
         return this;
     }
@@ -199,7 +199,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         if (cdt) this._perCnt = perCnt;
         return this;
     }
-    roundCnt(roundCnt: number, version: Version = VERSION[0], cdt: boolean = true) {
+    roundCnt(roundCnt: number, version: Version = 'vlatest', cdt: boolean = true) {
         if (cdt) this._roundCnt.push([version, roundCnt]);
         return this;
     }
