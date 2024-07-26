@@ -1,7 +1,7 @@
 import type { Socket } from "socket.io-client";
 
 import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
-import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_HANDCARDS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
+import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
@@ -63,7 +63,7 @@ export default class GeniusInvokationClient {
     handcardsGap: number; // 手牌间隔
     handcardsOffset: number; // 手牌偏移
     handcardsPos: number[]; // 手牌位置
-    handcardsSelect: boolean[] = new Array(MAX_HANDCARDS_COUNT).fill(false); // 手牌是否选中
+    handcardsSelect: number = -1; // 被选中的手牌序号
     reconcileValid: boolean[] = []; // 是否允许调和
     heroSelect: number[] = []; // 角色是否选中
     heroCanSelect: boolean[] = []; // 角色是否可选
@@ -106,7 +106,7 @@ export default class GeniusInvokationClient {
         return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER();
     }
     get canAction() {// 是否可以操作
-        return this.player.canAction;
+        return this.player.canAction && this.tip == '';
     }
     get heroSwitchDiceColor() { // 切换角色骰子颜色
         return this.heroSwitchDice > INIT_SWITCH_HERO_DICE ? CHANGE_BAD_COLOR :
@@ -155,7 +155,7 @@ export default class GeniusInvokationClient {
      */
     cancel(options: { onlyCard?: boolean, notCard?: boolean, notHeros?: boolean, onlyHeros?: boolean, onlySupportAndSummon?: boolean } = {}) {
         const { onlyCard = false, notCard = false, notHeros = false, onlyHeros = false, onlySupportAndSummon = false } = options;
-        this.willHp = new Array(this.players.flatMap(p => p.heros).length).fill(undefined);
+        this._resetWillHp();
         if (!onlyCard) {
             if ((!notHeros || onlyHeros) && !onlySupportAndSummon) {
                 this._resetHeroSelect();
@@ -174,12 +174,11 @@ export default class GeniusInvokationClient {
             this.modalInfo = NULL_MODAL()
             return;
         }
-        const sidx = this.handcardsSelect.indexOf(true);
-        if (!notCard) {
-            this.handcardsSelect.fill(false);
+        if (this.isMobile && this.handcardsSelect > -1) {
+            this.mouseleave(this.handcardsSelect, true);
         }
-        if (this.isMobile && sidx > -1) {
-            this.mouseleave(sidx, true);
+        if (!notCard) {
+            this.handcardsSelect = -1;
         }
         if (onlyCard) return;
         this.modalInfo = NULL_MODAL();
@@ -228,59 +227,58 @@ export default class GeniusInvokationClient {
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
         this.currSkill = NULL_SKILL();
         this._resetWillSummons();
+        this._resetHeroSelect();
         this.isShowChangeHero = 0;
-        this.handcardsSelect.forEach((cs, csi, csa) => {
-            if (csi == cardIdx) {
-                if (this.phase == PHASE.ACTION) csa[csi] = !cs;
-                if (cs) {
-                    this.cancel();
-                } else {
-                    this.currCard = clone(this.player.handCards[cardIdx]);
-                    this.currCard.cidx = cardIdx;
-                    this.modalInfo = {
-                        version: this.version,
-                        isShow: true,
-                        type: INFO_TYPE.Card,
-                        info: this.currCard,
-                    }
-                    if (this.player.status == PLAYER_STATUS.PLAYING) {
-                        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
-                        if (!preview) throw new Error('预览未找到');
-                        this.heroCanSelect = [...preview.heroCanSelect!];
-                        this.summonCanSelect = [...preview.summonCanSelect!.slice()];
-                        this.supportCanSelect = [...preview.supportCanSelect!.slice()];
-                        const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
-                        this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
-                        if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
-                            canSelectSummon != -1 && this.summonCanSelect[canSelectSummon].filter(v => v).length == 1 ||
-                            canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1) {
-                            const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0] && pre.heroIdxs?.length == 1);
-                            if (!preview1) throw new Error('预览未找到');
-                            this.isValid = preview1.isValid;
-                            if (this.isValid) {
-                                if (canSelectHero == 1) {
-                                    this.heroSelect[this.heroCanSelect.indexOf(true)] = 1;
-                                }
-                                if (canSelectSummon != -1) {
-                                    this.summonSelect[canSelectSummon][this.summonCanSelect[canSelectSummon].indexOf(true)] = true;
-                                }
-                                if (canSelectSupport != -1) {
-                                    this.supportSelect[canSelectSupport][this.supportCanSelect[canSelectSupport].indexOf(true)] = true;
-                                }
-                            }
-                        }
-                        if (this.isValid) this.diceSelect = [...preview.diceSelect!];
-                    }
-                }
-                if (this.isMobile && this.phase == PHASE.ACTION) {
-                    if (cs) this.mouseleave(cardIdx, true);
-                    else this.mouseenter(cardIdx, true);
-                }
-            } else if (cs) {
-                csa[csi] = false;
-                if (this.isMobile) this.mouseleave(csi, true);
+        if (this.phase == PHASE.ACTION) {
+            if (this.handcardsSelect != -1 && this.handcardsSelect != cardIdx && this.isMobile) this.mouseleave(this.handcardsSelect, true);
+            this.handcardsSelect = this.handcardsSelect == cardIdx ? -1 : cardIdx;
+            if (this.isMobile) {
+                if (this.handcardsSelect == cardIdx) this.mouseenter(cardIdx, true);
+                else this.mouseleave(cardIdx, true);
             }
-        });
+        }
+        if (this.handcardsSelect == -1) this.cancel();
+        else {
+            this.currCard = clone(this.player.handCards[cardIdx]);
+            this.currCard.cidx = cardIdx;
+            this.modalInfo = {
+                version: this.version,
+                isShow: true,
+                type: INFO_TYPE.Card,
+                info: this.currCard,
+            }
+            if (this.player.status == PLAYER_STATUS.PLAYING) {
+                const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
+                if (!preview) throw new Error('预览未找到');
+                this.heroCanSelect = [...preview.heroCanSelect!];
+                this.summonCanSelect = [...preview.summonCanSelect!.slice()];
+                this.supportCanSelect = [...preview.supportCanSelect!.slice()];
+                this.willHp = preview.willHp ?? this._resetWillHp();
+                this.willAttachs = preview.willAttachs ?? this._resetWillAttachs();
+                this.willSummons = preview.willSummons ?? this._resetWillSummons();
+                const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
+                this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
+                if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
+                    canSelectSummon != -1 && this.summonCanSelect[canSelectSummon].filter(v => v).length == 1 ||
+                    canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1) {
+                    const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0] && pre.heroIdxs?.length == 1);
+                    if (!preview1) throw new Error('预览未找到');
+                    this.isValid = preview1.isValid;
+                    if (this.isValid) {
+                        if (canSelectHero == 1) {
+                            this.heroSelect[this.heroCanSelect.indexOf(true)] = 1;
+                        }
+                        if (canSelectSummon != -1) {
+                            this.summonSelect[canSelectSummon][this.summonCanSelect[canSelectSummon].indexOf(true)] = true;
+                        }
+                        if (canSelectSupport != -1) {
+                            this.supportSelect[canSelectSupport][this.supportCanSelect[canSelectSupport].indexOf(true)] = true;
+                        }
+                    }
+                }
+                if (this.isValid) this.diceSelect = [...preview.diceSelect!];
+            }
+        }
         if (this.player.phase < PHASE.ACTION || this.isLookon > -1) return;
     }
     /**
@@ -290,12 +288,15 @@ export default class GeniusInvokationClient {
         if (!this.isValid) return;
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.UseCard,
-            cardIdxs: [this.handcardsSelect.indexOf(true)],
+            cardIdxs: [this.handcardsSelect],
+            diceSelect: this.diceSelect,
             heroIdxs: this.heroSelect.map((v, i) => ({ v, i })).filter(v => v.v).map(v => v.i),
             supportIdx: this.supportSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             summonIdx: this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             flag: 'useCard',
         } as ActionData);
+        this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
+        this.player.handCards = this.player.handCards.filter((_, ci) => ci != this.handcardsSelect);
         this.cancel();
     }
     /**
@@ -452,9 +453,8 @@ export default class GeniusInvokationClient {
         this.cancel({ onlySupportAndSummon: true });
         if (this.currCard.canSelectHero == 0 || ([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase) || force) {
             this.currCard = NULL_CARD();
-            const sidx = this.handcardsSelect.indexOf(true);
-            this.handcardsSelect.fill(false);
-            if (this.isMobile && sidx > -1) this.mouseleave(sidx, true);
+            if (this.isMobile && this.handcardsSelect > -1) this.mouseleave(this.handcardsSelect, true);
+            this.handcardsSelect = -1;
             const hero = this.players[this.playerIdx ^ pidx ^ 1].heros[hidx];
             this.modalInfo = {
                 version: this.version,
@@ -641,6 +641,7 @@ export default class GeniusInvokationClient {
                 diceSelect: this.diceSelect,
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
             } as ActionData);
+            this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
             this.currSkill = NULL_SKILL();
             this.resetDiceSelect();
             this._resetWillAttachs();
@@ -802,6 +803,12 @@ export default class GeniusInvokationClient {
      */
     private _resetWillSummons(): Summon[][] {
         return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
+    }
+    /**
+     * 重置伤害预览
+     */
+    private _resetWillHp() {
+        return this.willHp = new Array(this.players.flatMap(p => p.heros).length).fill(undefined);
     }
     /**
      * 重置骰子选择

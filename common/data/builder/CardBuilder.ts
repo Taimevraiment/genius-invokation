@@ -296,7 +296,7 @@ export class CardBuilder extends BaseBuilder {
         this._isResetPerCnt = isResetPerCnt;
         return this;
     }
-    isSpReset(isSpReset: boolean) {
+    isSpReset(isSpReset: boolean = true) {
         this._isSpReset = isSpReset;
         return this;
     }

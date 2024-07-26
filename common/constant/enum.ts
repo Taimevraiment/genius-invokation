@@ -9,6 +9,8 @@ export const SWIRL_ELEMENT = {
     Electro: 'Electro', // 雷 4
 } as const;
 
+export type SwirlElementType = TypeConst<typeof SWIRL_ELEMENT>;
+
 export const PURE_ELEMENT_TYPE = {
     ...SWIRL_ELEMENT,
     Anemo: 'Anemo', // 风 5

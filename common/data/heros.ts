@@ -931,187 +931,202 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
+    1411: () => new HeroBuilder(348).name('久岐忍').since('v4.6.0').inazuma().electro().sword()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/97e8a503ac00ee72817a33b15bc6e971_1406073271702365176.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a44a309f2d797406a2389655b03234d.png')
+        .skill1(new Skill1Builder('忍流飞刃斩'))
+        .skills(
+            new SkillBuilder('越袚雷草之轮').description('生成【sts114111】。如果本角色生命值至少为6，则对自身造成2点[穿透伤害]。')
+                .src('https://patchwiki.biligame.com/images/ys/3/31/fv5yfpb6wv4qr22o5shuixr9zqnpxcm.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/2c5603069fd6b7e1738de78d8ee13a40_2690219876080442261.png')
+                .elemental().cost(3).handle((event, ver) => ({ status: [newStatus(ver)(114111)], pdmgSelf: isCdt(event.hero.hp >= 6, 2) })),
+            new SkillBuilder('御咏鸣神刈山祭').description('{dealDmg}，治疗本角色2点。')
+                .src('https://patchwiki.biligame.com/images/ys/e/e9/s3ky8ara3d50e1z7ced1wyap6iwmhoi.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/20e4d43aa23679f40e2f3afbdb467a3b_3325226986841086396.png')
+                .burst(2).damage(4).cost(3).handle(() => ({ heal: 2 }))
+        ),
 
-    // 1311: () => new GIHero(1311, '久岐忍', 3, 10, 3, 1,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/97e8a503ac00ee72817a33b15bc6e971_1406073271702365176.png',
-    //     skill1('忍流飞刃斩'), [
-    //     new GISkill('越袚雷草之轮', '生成【sts2176】。如果本角色生命值至少为6，则对自身造成2点[穿透伤害]。', 2, 0, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/3/31/fv5yfpb6wv4qr22o5shuixr9zqnpxcm.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/2c5603069fd6b7e1738de78d8ee13a40_2690219876080442261.png',
-    //     ], event => {
-    //         const { hero: { hp } } = event;
-    //         return { status: [newStatus(ver)(2176)], pdmgSelf: isCdt(hp >= 6, 2) }
-    //     }),
-    //     new GISkill('御咏鸣神刈山祭', '造成{dmg}点[雷元素伤害]，治疗本角色2点。', 3, 4, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/e/e9/s3ky8ara3d50e1z7ced1wyap6iwmhoi.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/20e4d43aa23679f40e2f3afbdb467a3b_3325226986841086396.png',
-    //     ], () => ({ heal: 2 }))
-    // ]),
+    1501: () => new HeroBuilder(36).name('砂糖').mondstadt().anemo().catalyst()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')
+        .skill1(new Skill1Builder('简式风灵作成'))
+        .skills(
+            new SkillBuilder('风灵作成·陆叁零捌').description('{dealDmg}，使对方强制切换到前一个角色。')
+                .src('https://patchwiki.biligame.com/images/ys/6/6a/lu1s5jeliurancx62txk0i7pbgeu07d.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/20e905e459a535c372b1c0eacf6dd9d8_1859277343951133632.png')
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-before', isOppo: true }] })),
+            new SkillBuilder('禁·风灵作成·柒伍同构贰型').description('{dealDmg}，召唤【smn115011】。')
+                .src('https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png')
+                .burst(2).damage(1).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const isTalent = !!talentSlot || card?.id == 215011;
+                    return { summonPre: [newSummon(ver)(115011, isTalent)] }
+                })
+        ),
 
-    // 1401: () => new GIHero(1401, '砂糖', 1, 10, 5, 4,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png',
-    //     skill1('简式风灵作成'), [
-    //     new GISkill('风灵作成·陆叁零捌', '造成{dmg}点[风元素伤害]，使对方强制切换到前一个角色。', 2, 3, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/6/6a/lu1s5jeliurancx62txk0i7pbgeu07d.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/20e905e459a535c372b1c0eacf6dd9d8_1859277343951133632.png',
-    //     ], () => ({ cmds: [{ cmd: 'switch-before', cnt: 2500, isOppo: true }] })),
-    //     new GISkill('禁·风灵作成·柒伍同构贰型', '造成{dmg}点[风元素伤害]，召唤【smn3005】。', 3, 1, 3, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 706;
-    //         return { summonPre: [newSummon(ver)(3005, isTalent)] }
-    //     })
-    // ]),
+    1502: () => new HeroBuilder(37).name('琴').mondstadt().anemo().sword()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/88b869ceca8108bfd6dd14a68d5e9610_2290626250490650584.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9dd710fa45f1d7df996331ca92b2ae3a.png')
+        .skill1(new Skill1Builder('西风剑术'))
+        .skills(
+            new SkillBuilder('风压剑').description('{dealDmg}，使对方强制切换到下一个角色。')
+                .src('https://patchwiki.biligame.com/images/ys/7/76/qzlqexf6zwkkcpxpyevb3m4viwepssv.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/68d6fd8c9815617b0491dd19586ae2f4_2703229586151516906.png')
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-after', isOppo: true }] })),
+            new SkillBuilder('蒲公英之风').description('治疗我方所有角色2点，召唤【smn115021】。')
+                .src('https://patchwiki.biligame.com/images/ys/2/23/gqtjyn7ckzz3g0zbtmska8ws1ry1dqj.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e4d3dd465a4f6026ba923619c1827c94_3960747061292563787.png')
+                .burst(2).burst(3, 'v4.2.0').cost(4).handle((event, ver) => ({ summon: [newSummon(ver)(115021)], heal: 2, hidxs: allHidxs(event.heros) }))
+        ),
 
-    // 1402: () => new GIHero(1402, '琴', 1, 10, 5, 1,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/88b869ceca8108bfd6dd14a68d5e9610_2290626250490650584.png',
-    //     skill1('西风剑术'), [
-    //     new GISkill('风压剑', '造成{dmg}点[风元素伤害]，使对方强制切换到下一个角色。', 2, 3, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/7/76/qzlqexf6zwkkcpxpyevb3m4viwepssv.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/68d6fd8c9815617b0491dd19586ae2f4_2703229586151516906.png',
-    //     ], () => ({ cmds: [{ cmd: 'switch-after', cnt: 2500, isOppo: true }] })),
-    //     new GISkill('蒲公英之风', '治疗我方所有角色2点，召唤【smn3006】。', 3, 0, 4, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/2/23/gqtjyn7ckzz3g0zbtmska8ws1ry1dqj.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e4d3dd465a4f6026ba923619c1827c94_3960747061292563787.png',
-    //     ], event => {
-    //         const { heros = [] } = event;
-    //         return { summon: [newSummon(ver)(3006)], heal: 2, hidxs: allHidxs(heros) }
-    //     })
-    // ]),
+    1503: () => new HeroBuilder(38).name('温迪').since('v3.7.0').mondstadt().anemo().bow()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b8d0f177c157908bbe1ef65774d5a4e5_6672388573788855956.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0ad1fda4450c4aa9949706c37324ee11.png')
+        .skill1(new Skill1Builder('神代射术'))
+        .skills(
+            new SkillBuilder('高天之歌').description('{dealDmg}，生成【sts115031】。')
+                .src('https://patchwiki.biligame.com/images/ys/f/fe/hhb16pe3sq5duv4cu299atxbi78k7ae.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/73d15303525e2658bf60d8336109d92e_404486790465744082.png')
+                .elemental().damage(2).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const isTalent = !!talentSlot || card?.id == 215031;
+                    return { status: [newStatus(ver)(115031, isTalent)] }
+                }),
+            new SkillBuilder('风神之诗').description('{dealDmg}，召唤【smn115034】。')
+                .src('https://patchwiki.biligame.com/images/ys/c/cf/iv3keguj9pqi3blf8j9xk10olca914v.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3e4ec3f94bfd2547b1431d8fa2cd2889_8125698290989309719.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ summonPre: [newSummon(ver)(115034)] }))
+        ),
 
-    // 1403: () => new GIHero(1403, '温迪', 1, 10, 5, 3,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b8d0f177c157908bbe1ef65774d5a4e5_6672388573788855956.png',
-    //     skill1('神代射术'), [
-    //     new GISkill('高天之歌', '造成{dmg}点[风元素伤害]，生成【sts2082】。', 2, 2, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/f/fe/hhb16pe3sq5duv4cu299atxbi78k7ae.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/73d15303525e2658bf60d8336109d92e_404486790465744082.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const isTalent = !!talentSlot || card?.id == 742;
-    //         return { status: [newStatus(ver)(2082, isTalent)] }
-    //     }),
-    //     new GISkill('风神之诗', '造成{dmg}点[风元素伤害]，召唤【smn3032】。', 3, 2, 3, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/c/cf/iv3keguj9pqi3blf8j9xk10olca914v.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3e4ec3f94bfd2547b1431d8fa2cd2889_8125698290989309719.png',
-    //     ], () => ({ summonPre: [newSummon(ver)(3032)] }))
-    // ]),
+    1504: () => new HeroBuilder(39).name('魈').since('v3.7.0').liyue().anemo().polearm()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/cdb6d5f322226b118ce989ed2f02e932_3401048792875977242.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/ac4a8ff803416b736c99096b6a7ff33a.png')
+        .skill1(new Skill1Builder('卷积微尘'))
+        .skills(
+            new SkillBuilder('风轮两立').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/8/82/16jnimrpz65wm0ch1npu1f35j3mbuyy.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/0f23faa9eda436e8d493764afaac9f5a_3023794288508183778.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('靖妖傩舞').description('{dealDmg}，本角色附属【sts115041】。')
+                .src('https://patchwiki.biligame.com/images/ys/9/9f/7dxxr4z59ch7bsg0xaoxxi38meuaeff.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/081c165d08ff75ec2f15215cfc892056_2221900956718137863.png')
+                .burst(2).damage(4).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card } = event;
+                    const status = [newStatus(ver)(115041)];
+                    if (!!talentSlot || card?.id == 215041) status.push(newStatus(ver)(115042));
+                    return { status }
+                })
+        ),
 
-    // 1404: () => new GIHero(1404, '魈', 2, 10, 5, 5,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/cdb6d5f322226b118ce989ed2f02e932_3401048792875977242.png',
-    //     skill1('卷积微尘'), [
-    //     new GISkill('风轮两立', '造成{dmg}点[风元素伤害]。', 2, 3, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/8/82/16jnimrpz65wm0ch1npu1f35j3mbuyy.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/0f23faa9eda436e8d493764afaac9f5a_3023794288508183778.png']),
-    //     new GISkill('靖妖傩舞', '造成{dmg}点[风元素伤害]，本角色附属【sts2085】。', 3, 4, 3, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/9/9f/7dxxr4z59ch7bsg0xaoxxi38meuaeff.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/081c165d08ff75ec2f15215cfc892056_2221900956718137863.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const status = [newStatus(ver)(2085)];
-    //         if (!!talentSlot || card?.id == 743) status.push(newStatus(ver)(2115));
-    //         return { status }
-    //     })
-    // ]),
+    1505: () => new HeroBuilder(40).name('枫原万叶').since('v3.8.0').inazuma().anemo().sword()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/0aedb983698b4d5abcd1a4405a0ed634_7726035612370611710.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/83f16b6621747e630856b4e1a831f750.png')
+        .skill1(new Skill1Builder('我流剑术'))
+        .skills(
+            new SkillBuilder('千早振').description('{dealDmg}，本角色附属【sts115051】。；如果此技能引发了扩散，则将【sts115051】转换为被扩散的元素。；【此技能结算后：】我方切换到后一个角色。')
+                .src('https://patchwiki.biligame.com/images/ys/2/29/f7rwj3qb9kffejm2kt2oq7ltl843nrk.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/c492b46c71485b1377cf8c9f3f5dd6e8_6376046014259793309.png')
+                .elemental().damage(1).damage(3, 'v3.8.0').cost(3).handle((event, ver) => ({
+                    status: [newStatus(ver)(115051, event.swirlEl)],
+                    cmds: [{ cmd: 'switch-after' }],
+                })),
+            new SkillBuilder('万叶之一刀').description('{dealDmg}，召唤【smn115052】。')
+                .src('https://patchwiki.biligame.com/images/ys/4/47/g6cfvzw12ruiclawmxh903fcoowmr9j.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/293efb8c9d869e84be6bc02039d72104_7417737523106108019.png')
+                .burst(2).damage(1).damage(3, 'v3.8.0').cost(3).handle((_, ver) => ({ summonPre: [newSummon(ver)(115052)] }))
+        ),
 
-    // 1405: () => new GIHero(1405, '枫原万叶', 3, 10, 5, 1,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/0aedb983698b4d5abcd1a4405a0ed634_7726035612370611710.png',
-    //     skill1('我流剑术'), [
-    //     new GISkill('千早振', '造成{dmg}点[风元素伤害]，本角色附属【sts2098】。；如果此技能引发了扩散，则将【sts2098】转换为被扩散的元素。；【此技能结算后：】我方切换到后一个角色。', 2, 3, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/2/29/f7rwj3qb9kffejm2kt2oq7ltl843nrk.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/c492b46c71485b1377cf8c9f3f5dd6e8_6376046014259793309.png',
-    //     ], event => ({
-    //         status: [newStatus(ver)(2098, event.windEl)],
-    //         cmds: [{ cmd: 'switch-after', cnt: 2500 }],
-    //     })),
-    //     new GISkill('万叶之一刀', '造成{dmg}点[风元素伤害]，召唤【smn3037】。', 3, 3, 3, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/4/47/g6cfvzw12ruiclawmxh903fcoowmr9j.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/293efb8c9d869e84be6bc02039d72104_7417737523106108019.png',
-    //     ], () => ({ summonPre: [newSummon(ver)(3037)] }))
-    // ]),
+    1506: () => new HeroBuilder(41).name('流浪者').since('v4.1.0').anemo().catalyst()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/1c63a8f561bdfe0a7d7e1053ff9c42f8_8476567918375768271.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/942e8b6dc3fcd818cd8067cecb562225.png')
+        .skill1(new Skill1Builder('行幡鸣弦'))
+        .skills(
+            new SkillBuilder('羽画·风姿华歌').description('{dealDmg}，本角色附属【sts115061】。')
+                .src('https://patchwiki.biligame.com/images/ys/0/0c/p9khnkc2qxezjcsy2yqn1t1608iq7df.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/af6e40020a01e57e5bf16ed76dfadd97_2412715488042159947.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(115061)] })),
+            new SkillBuilder('狂言·式乐五番').description('{dealDmg}; 如果角色附属有【sts115061】，则将其移除并使此伤害+1。')
+                .src('https://patchwiki.biligame.com/images/ys/3/31/jq8wshhifimtmgedysk1xlscepp9d6l.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/9b7fa91d73564e2cb0cbbbc0d1b75cb3_8357319180909129225.png')
+                .burst(3).damage(7).cost(3).handle(event => {
+                    const { hero: { heroStatus } } = event;
+                    const sts115061 = getStatus(heroStatus, 115061);
+                    return {
+                        addDmgCdt: isCdt(!!sts115061, 1),
+                        exec: () => {
+                            if (sts115061) sts115061.useCnt = 0;
+                        }
+                    }
+                })
+        ),
 
-    // 1406: () => new GIHero(1406, '流浪者', [], 10, 5, 4,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/1c63a8f561bdfe0a7d7e1053ff9c42f8_8476567918375768271.png',
-    //     skill1('行幡鸣弦'), [
-    //     new GISkill('羽画·风姿华歌', '造成{dmg}点[风元素伤害]，本角色附属【sts2102】。', 2, 2, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/0/0c/p9khnkc2qxezjcsy2yqn1t1608iq7df.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/af6e40020a01e57e5bf16ed76dfadd97_2412715488042159947.png',
-    //     ], () => ({ status: [newStatus(ver)(2102)] })),
-    //     new GISkill('狂言·式乐五番', '造成{dmg}点[风元素伤害]; 如果角色附属有【sts2102】，则将其移除并使此伤害+1。', 3, 7, 3, 5, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/3/31/jq8wshhifimtmgedysk1xlscepp9d6l.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/9b7fa91d73564e2cb0cbbbc0d1b75cb3_8357319180909129225.png',
-    //     ], event => {
-    //         const { hero: { inStatus } } = event;
-    //         const sts2102 = inStatus.find(ist => ist.id == 2102);
-    //         return {
-    //             addDmgCdt: isCdt(!!sts2102, 1),
-    //             exec: () => {
-    //                 if (sts2102) sts2102.useCnt = 0;
-    //             }
-    //         }
-    //     })
-    // ]),
+    1507: () => new HeroBuilder(320).name('早柚').since('v4.4.0').inazuma().anemo().claymore()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/7ba293dd475e123f98a89e2c6448c22d_2852763407290233167.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9f7f3f7d1794d4d58b3bce4ba311c170.png')
+        .skill1(new Skill1Builder('忍刀·终末番'))
+        .skills(
+            new SkillBuilder('呜呼流·风隐急进').description('{dealDmg}，本角色[准备技能]：【rsk15074】。；如果当前技能引发了扩散，则【rsk15074】将改为造成被扩散元素的伤害。')
+                .src('https://patchwiki.biligame.com/images/ys/f/f1/nft00ohrbmn6j4hqssftn7kh4ha3nk5.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/1b3691e9a037a54d02076135237d2925_8714311620973409736.png')
+                .elemental().damage(1).cost(3).handle((event, ver) => {
+                    const { swirlEl = ELEMENT_TYPE.Anemo } = event;
+                    return { status: [newStatus(ver)(115071, swirlEl)] }
+                }),
+            new SkillBuilder('呜呼流·影貉缭乱').description('{dealDmg}，召唤【smn115072】。')
+                .src('https://patchwiki.biligame.com/images/ys/7/74/6cc1al7p5kum4yuwp7rtqt6ymv0gl9y.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/3457c9ea9df5a90c56a5be0d8e30482b_4898602838938710962.png')
+                .burst(2).damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(115072)] }))
+        ),
 
-    // 1407: () => new GIHero(1407, '琳妮特', [5, 8, 11], 10, 5, 1,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/138a3a7a50a96267097824590e869fe1_5113881666208140363.png',
-    //     skill1('迅捷礼刺剑'), [
-    //     new GISkill('谜影障身法', '造成{dmg}点[风元素伤害]，本回合第一次使用此技能、且自身生命值不多于8时，治疗自身2点，但是附属【sts2133】。', 2, 3, 3, 5, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b2ba9e68ed4a405e54b4786ecac7c3e3.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2d696e8b97e9fe9fb4572a81786780d6_2735599059161740228.png',
-    //     ], event => {
-    //         const { hero: { talentSlot, hp, skills: [, { useCnt }] }, card } = event;
-    //         const cdt = hp <= 8 && useCnt == 0;
-    //         const isTalent = (!!talentSlot || card?.id == 764) && useCnt == 1;
-    //         return {
-    //             heal: isCdt(cdt, 2),
-    //             status: isCdt(cdt, [newStatus(ver)(2133)]),
-    //             addDmgCdt: isCdt(isTalent, 2),
-    //             cmds: isCdt(isTalent, [{ cmd: 'switch-before', cnt: 2500, isOppo: true }]),
-    //         }
-    //     }),
-    //     new GISkill('魔术·运变惊奇', '造成{dmg}点[风元素伤害]，召唤【smn3049】。', 3, 2, 3, 5, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/20bd958ebc8383c98bfff1c6620deade.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/6f97ce81f1862b031947b8a82ec8c680_8034117038151757666.png',
-    //     ], () => ({ summon: [newSummon(ver)(3049)] }))
-    // ]),
+    1508: () => new HeroBuilder(282).name('琳妮特').since('v4.3.0').fontaine().tags(HERO_TAG.ArkheOusia).fatui().anemo().sword()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/138a3a7a50a96267097824590e869fe1_5113881666208140363.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a9748bebc335c1ae1931f633742f818e.png')
+        .skill1(new Skill1Builder('迅捷礼刺剑'))
+        .skills(
+            new SkillBuilder('谜影障身法').description('{dealDmg}，本回合第一次使用此技能、且自身生命值不多于8时，治疗自身2点，但是附属【sts115081】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b2ba9e68ed4a405e54b4786ecac7c3e3.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2d696e8b97e9fe9fb4572a81786780d6_2735599059161740228.png')
+                .elemental().damage(3).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot, hp, skills: [, { useCnt }] }, card } = event;
+                    const cdt = hp <= 8 && useCnt == 0;
+                    const isTalent = (!!talentSlot || card?.id == 215081) && useCnt == 1;
+                    return {
+                        heal: isCdt(cdt, 2),
+                        status: isCdt(cdt, [newStatus(ver)(115081)]),
+                        addDmgCdt: isCdt(isTalent, 2),
+                        cmds: isCdt(isTalent, [{ cmd: 'switch-before', isOppo: true }]),
+                    }
+                }),
+            new SkillBuilder('魔术·运变惊奇').description('{dealDmg}，召唤【smn115082】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/20bd958ebc8383c98bfff1c6620deade.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/6f97ce81f1862b031947b8a82ec8c680_8034117038151757666.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(115082)] }))
+        ),
 
-    // 1408: () => new GIHero(1408, '早柚', 3, 10, 5, 2,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/7ba293dd475e123f98a89e2c6448c22d_2852763407290233167.png',
-    //     skill1('忍刀·终末番'), [
-    //     new GISkill('呜呼流·风隐急进', '造成{dmg}点[风元素伤害]，本角色[准备技能]：【rsk12】。；如果当前技能引发了扩散，则【rsk12】将改为造成被扩散元素的伤害。', 2, 1, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/f/f1/nft00ohrbmn6j4hqssftn7kh4ha3nk5.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/1b3691e9a037a54d02076135237d2925_8714311620973409736.png',
-    //     ], event => {
-    //         const { windEl = 0 } = event;
-    //         return { status: [newStatus(ver)(2155, windEl)] }
-    //     }),
-    //     new GISkill('呜呼流·影貉缭乱', '造成{dmg}点[风元素伤害]，召唤【smn3053】。', 3, 1, 3, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/7/74/6cc1al7p5kum4yuwp7rtqt6ymv0gl9y.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/3457c9ea9df5a90c56a5be0d8e30482b_4898602838938710962.png',
-    //     ], () => ({ summon: [newSummon(ver)(3053)] }))
-    // ]),
+    1509: () => new HeroBuilder(349).name('珐露珊').since('v4.6.0').sumeru().anemo().bow()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/df01c4398360e3884ceef43d0717699d_6350296313348675536.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0e689ff47e1651bd6178bcc6192b5a11.png')
+        .skill1(new Skill1Builder('迴身箭术'))
+        .skills(
+            new SkillBuilder('非想风天').description('{dealDmg}，本角色附属【sts115091】。')
+                .src('https://patchwiki.biligame.com/images/ys/a/a5/a1tqqztvc2osslkg9s3oatxesdw8zdm.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/7fb2f931bdb1d001003ac18fa8c5a042_180586662624215779.png')
+                .elemental().damage(3).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(115091)] })),
+            new SkillBuilder('抟风秘道').description('{dealDmg}，召唤【smn115093】。')
+                .src('https://patchwiki.biligame.com/images/ys/c/ca/da9v501c8j71zqew4flylr7hmqq5r31.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c992b62ec652ce301ab6e9895aac1284_9109457382282902369.png')
+                .burst(2).damage(1).cost(3).handle((event, ver) => {
+                    const { hero: { talentSlot }, card, summons = [] } = event;
+                    const isTalent = !!talentSlot || card?.id == 215091;
+                    const isExist = summons.some(smn => smn.id == 115093);
+                    return {
+                        summon: [newSummon(ver)(3058, isTalent)],
+                        cmds: isCdt<Cmds[]>(isTalent && !isExist, [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }])
+                    }
+                })
+        ),
 
-    // 1409: () => new GIHero(1409, '珐露珊', 4, 10, 5, 3,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/df01c4398360e3884ceef43d0717699d_6350296313348675536.png',
-    //     skill1('迴身箭术'), [
-    //     new GISkill('非想风天', '造成{dmg}点[风元素伤害]，本角色附属【sts2177】。', 2, 3, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/a/a5/a1tqqztvc2osslkg9s3oatxesdw8zdm.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/7fb2f931bdb1d001003ac18fa8c5a042_180586662624215779.png',
-    //     ], () => ({ status: [newStatus(ver)(2177)] })),
-    //     new GISkill('抟风秘道', '造成{dmg}点[风元素伤害]，召唤【smn3058】。', 3, 1, 3, 5, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/c/ca/da9v501c8j71zqew4flylr7hmqq5r31.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c992b62ec652ce301ab6e9895aac1284_9109457382282902369.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card, summons = [] } = event;
-    //         const isTalent = !!talentSlot || card?.id == 781;
-    //         const isExist = summons.some(smn => smn.id == 3058);
-    //         return {
-    //             summon: [newSummon(ver)(3058, isTalent)],
-    //             cmds: isCdt<Cmds[]>(isTalent && !isExist, [{ cmd: 'getDice', cnt: 1, element: 5 }])
-    //         }
-    //     })
-    // ]),
 
     // 1501: () => new GIHero(1501, '凝光', 2, 10, 6, 4,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png',

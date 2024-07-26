@@ -1,7 +1,7 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ElementType, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
-import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getStatus, hasStatus } from "../utils/gameUtil.js";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
+import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getStatus, hasStatus } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 import { newStatus } from "./statuses.js";
@@ -432,46 +432,148 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
+    115011: (isTalent: boolean = false) => new SummonBuilder('大型风灵').useCnt(3).damage(2).talent(isTalent)
+        .description(`{defaultAtk}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png')
+        .handle((summon, event) => {
+            const { trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            const changeElTrg = ELEMENT_TYPE[summon.element] + '-dmg' as Trigger;
+            if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
+            const isTalent = summon.isTalent && summon.element != ELEMENT_TYPE.Anemo && trigger == changeElTrg;
+            if (isTalent) triggers.push(changeElTrg);
+            return {
+                trigger: triggers,
+                isNotAddTask: isTalent || trigger.startsWith('elReaction-Anemo'),
+                addDmgCdt: isCdt(isTalent, 1),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
+                    if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
+                        const element = ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+                        return { cmds: [{ cmd: 'changeElement', element }] };
+                    }
+                }
+            }
+        }),
 
-    // 3005: (_, isTalent = false) => new GISummon(3005, '大型风灵', `【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png',
-    //     3, 3, 0, 2, 5, (summon, event) => {
-    //         const { trigger = '' } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         const changeElTrg = ELEMENT_ICON[summon.element] + '-dmg' as Trigger;
-    //         if (summon.element == 5) triggers.push('el5Reaction');
-    //         const isTalent = summon.isTalent && summon.element < 5 && trigger == changeElTrg;
-    //         if (isTalent) triggers.push(changeElTrg);
-    //         return {
-    //             trigger: triggers,
-    //             isNotAddTask: isTalent || trigger.startsWith('el5Reaction'),
-    //             addDmgCdt: isCdt(isTalent, 1),
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') return phaseEndAtk(smn);
-    //                 if (trigger.startsWith('el5Reaction:') && smn.element == 5) {
-    //                     const element = Number(trigger.slice(trigger.indexOf(':') + 1));
-    //                     return { cmds: [{ cmd: 'changeElement', element }] };
-    //                 }
-    //             }
-    //         }
-    //     }, { isTalent }),
+    115021: () => new SummonBuilder('蒲公英领域').useCnt(2).damage(1).damage(2, 'v4.2.0').heal(1)
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/13c4609aff96cf57ad218ddf954ecc08_1272742665837129862.png')
+        .handle((summon, event) => {
+            const { heros = [], trigger = '' } = event;
+            const isTalent = !!heros.find(h => h.id == 1402)?.talentSlot;
+            return {
+                trigger: ['phase-end', 'Anemo-dmg'],
+                isNotAddTask: trigger == 'Anemo-dmg',
+                addDmgCdt: isCdt(isTalent, 1),
+                exec: execEvent => {
+                    if (trigger == 'Anemo-dmg') return;
+                    return phaseEndAtk(execEvent?.summon ?? summon);
+                }
+            }
+        }),
 
-    // 3006: () => new GISummon(3006, '蒲公英领域', '【结束阶段：】造成{dmg}点[风元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/13c4609aff96cf57ad218ddf954ecc08_1272742665837129862.png',
-    //     2, 2, 1, 1, 5, (summon, event) => {
-    //         const { heros = [], trigger = '' } = event;
-    //         const isTalent = !!heros.find(h => h.id == 1402)?.talentSlot;
-    //         return {
-    //             trigger: ['phase-end', 'wind-dmg'],
-    //             isNotAddTask: trigger == 'wind-dmg',
-    //             addDmgCdt: isCdt(isTalent, 1),
-    //             exec: execEvent => {
-    //                 if (trigger == 'wind-dmg') return;
-    //                 return phaseEndAtk(execEvent?.summon ?? summon);
-    //             }
-    //         }
-    //     }),
+    115034: () => new SummonBuilder('暴风之眼').useCnt(2).damage(2)
+        .description('【结束阶段：】{dealDmg}，对方切换到[距离我方出战角色最近的角色]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/b0b8a8e9a43548bc39fceba101ea0ab6_1760632395524982528.png')
+        .handle((summon, event) => {
+            const { heros = [], hidx = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
+            return {
+                trigger: triggers,
+                isNotAddTask: trigger.startsWith('elReaction-Anemo'),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') {
+                        smn.useCnt = Math.max(0, smn.useCnt - 1);
+                        return { cmds: [{ cmd: 'attack' }, { cmd: 'switch-to', hidxs: [getNearestHidx(hidx, heros)], isOppo: true }] };
+                    }
+                    if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
+                        const element = ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+                        return { cmds: [{ cmd: 'changeElement', element }] };
+                    }
+                }
+            }
+        }),
+
+    115052: () => new SummonBuilder('流风秋野').useCnt(3).damage(1)
+        .description('{defaultAtk}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/8296c70266ae557b635c27b20e2fd615_5814665570399175790.png')
+        .handle((summon, event) => {
+            const { trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
+            return {
+                trigger: triggers,
+                isNotAddTask: trigger.startsWith('elReaction-Anemo'),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
+                    if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
+                        const element = ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+                        return { cmds: [{ cmd: 'changeElement', element }] };
+                    }
+                }
+            }
+        }),
+
+    115072: () => new SummonBuilder('不倒貉貉').useCnt(2).damage(1).heal(2)
+        .description(`【结束阶段：】{dealDmg}，治疗我方受伤最多的角色{shield}点。；【[可用次数]：{useCnt}】`)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/e78e66eddfb70ab60a6f4d3733a8c3ab_4021248491292359775.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { heros = [] } = event;
+                const { summon: smn = summon } = execEvent;
+                return phaseEndAtk(smn, getMaxHertHidxs(heros));
+            }
+        })),
+
+    115082: () => new SummonBuilder('惊奇猫猫盒').useCnt(2).damage(1).spReset()
+        .description('{defaultAtk}；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)；【我方角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。(离场前仅限一次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
+        .handle((summon, event, ver) => {
+            const { reset = false, trigger = '' } = event;
+            if (reset) return { rOutStatus: [newStatus(ver)(115083)] }
+            const getdmgTrgs: Trigger[] = ['Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg'];
+            const triggers: Trigger[] = ['phase-end'];
+            if (summon.element == ELEMENT_TYPE.Anemo && getdmgTrgs.includes(trigger)) {
+                triggers.push(trigger);
+            }
+            return {
+                trigger: triggers,
+                isNotAddTask: trigger.includes('-getdmg'),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
+                    if (trigger.includes('-getdmg') && smn.element == ELEMENT_TYPE.Anemo) {
+                        const element = ELEMENT_TYPE_KEY[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
+                        return { cmds: [{ cmd: 'changeElement', element }] };
+                    }
+                },
+            }
+        }),
+
+    115093: (isTalent: boolean = false) => new SummonBuilder('赫耀多方面体').useCnt(3).damage(1).talent(isTalent)
+        .description('{defaultAtk}；【此召唤物在场时：】敌方角色受到的[风元素伤害]+1。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/d51fd00a7e640ba13b62315e5184be58_168888966568961527.png')
+        .handle((summon, event) => {
+            const { trigger = '' } = event;
+            const triggers: Trigger[] = ['Anemo-getdmg-oppo', 'phase-end'];
+            if (summon.isTalent) triggers.push('phase-start');
+            return {
+                addDmgCdt: 1,
+                isNotAddTask: trigger == 'Anemo-getdmg-oppo',
+                trigger: triggers,
+                exec: execEvent => {
+                    if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
+                    if (trigger == 'phase-start') return { cmds: [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }] }
+                },
+            }
+        }),
+
 
     // 3009: () => new GISummon(3009, '柯里安巴', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png',
@@ -571,30 +673,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/dc8e548704ca0e52d1c6669fac469b3d_5168805556784249785.png',
     //     1, 2, 0, 1, 7),
 
-    // 3032: () => new GISummon(3032, '暴风之眼', '【结束阶段：】造成{dmg}点[风元素伤害]，对方切换到[距离我方出战角色最近的角色]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/b0b8a8e9a43548bc39fceba101ea0ab6_1760632395524982528.png',
-    //     2, 2, 0, 2, 5, (summon, event) => {
-    //         const { heros = [], trigger = '' } = event;
-    //         const hidx = heros.findIndex(h => h.isFront);
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (summon.element == 5) triggers.push('el5Reaction');
-    //         return {
-    //             trigger: triggers,
-    //             isNotAddTask: trigger.startsWith('el5Reaction'),
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') {
-    //                     smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                     return { cmds: [{ cmd: 'attack' }, { cmd: 'switch-to', hidxs: [hidx], cnt: 2500, isOppo: true }] };
-    //                 }
-    //                 if (trigger.startsWith('el5Reaction:') && smn.element == 5) {
-    //                     const element = Number(trigger.slice(trigger.indexOf(':') + 1));
-    //                     return { cmds: [{ cmd: 'changeElement', element }] };
-    //                 }
-    //             }
-    //         }
-    //     }),
-
     // 3033: () => new GISummon(3033, '岩脊', '【结束阶段：】造成{dmg}点[岩元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/251c5e32d6cbdfb4c4d0e14e7088ab67_7008401766526335309.png',
     //     2, 2, 0, 1, 6),
@@ -663,26 +741,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png',
     //     2, 2, 0, 1, 2, undefined, { pdmg: 1 }),
 
-    // 3037: () => new GISummon(3037, '流风秋野', '【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。(离场前仅限一次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/8296c70266ae557b635c27b20e2fd615_5814665570399175790.png',
-    //     3, 3, 0, 1, 5, (summon, event) => {
-    //         const { trigger = '' } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (summon.element == 5) triggers.push('el5Reaction');
-    //         return {
-    //             trigger: triggers,
-    //             isNotAddTask: trigger.startsWith('el5Reaction'),
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') return phaseEndAtk(smn);
-    //                 if (trigger.startsWith('el5Reaction:') && smn.element == 5) {
-    //                     const element = Number(trigger.slice(trigger.indexOf(':') + 1));
-    //                     return { cmds: [{ cmd: 'changeElement', element }] };
-    //                 }
-    //             }
-    //         }
-    //     }),
-
     // 3040: () => new GISummon(3040, '阳华', '【结束阶段：】造成{dmg}点[岩元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。(每回合1次)',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png',
     //     3, 3, 0, 1, 6, (summon, event) => {
@@ -720,31 +778,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3046: () => new GISummon(3046, '游丝徵灵', '【结束阶段：】造成{dmg}点[草元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png',
     //     1, 1, 1, 1, 7),
-
-    // 3049: () => new GISummon(3049, '惊奇猫猫盒', '【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)；【我方角色受到‹4冰›/‹1水›/‹2火›/‹3雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。（离场前仅限一次）',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png',
-    //     2, 2, 0, 1, 5, (summon, event) => {
-    //         const { reset = false, trigger = '' } = event;
-    //         if (reset) return { rOutStatus: [heroStatus(2134, 3049)] }
-    //         const getdmg = ['water-getdmg', 'fire-getdmg', 'thunder-getdmg', 'ice-getdmg'];
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (summon.element == 5 && getdmg.includes(trigger)) {
-    //             triggers.push(trigger);
-    //         }
-    //         return {
-    //             trigger: triggers,
-    //             isNotAddTask: trigger.includes('-getdmg'),
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') return phaseEndAtk(smn);
-    //                 if (trigger.includes('-getdmg') && smn.element == 5) {
-    //                     const element = ELEMENT_ICON.indexOf(trigger.slice(0, trigger.indexOf('-getdmg')));
-    //                     return { cmds: [{ cmd: 'changeElement', element }] };
-    //                 }
-    //             },
-    //         }
-    //     }, { spReset: true }),
-
 
     // 3050: () => new GISummon(3050, '大将威仪', '【结束阶段：】造成{dmg}点[岩元素伤害]；如果队伍中存在2名‹6岩元素›角色，则生成【sts2007】。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/669b37ae522405031419cd14f6e8daf0_5829987868413544081.png',
@@ -800,17 +833,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3053: () => new GISummon(3053, '不倒貉貉', `【结束阶段：】造成{dmg}点[风元素伤害]，治疗我方受伤最多的角色{shield}点。；【[可用次数]：{useCnt}】`,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/e78e66eddfb70ab60a6f4d3733a8c3ab_4021248491292359775.png',
-    //     2, 2, 2, 1, 5, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { heros = [] } = event;
-    //             const { summon: smn = summon } = execEvent;
-    //             return phaseEndAtk(smn, getMaxHertHidxs(heros));
-    //         }
-    //     })),
-
     // 3054: () => new GISummon(3054, '刺击冰棱', `【结束阶段：】对敌方[距离我方出战角色最近的角色]造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/7becac09916614d57a2f084749634d5d_3605800251898465783.png',
     //     2, 2, 0, 1, 4, (summon, event) => ({
@@ -860,23 +882,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //             }
     //         }
     //     }),
-
-    // 3058: (isTalent = false) => new GISummon(3058, '赫耀多方面体', '【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】敌方角色受到的[风元素伤害]+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/d51fd00a7e640ba13b62315e5184be58_168888966568961527.png',
-    //     3, 3, 0, 1, 5, (summon, event) => {
-    //         const { trigger = '' } = event;
-    //         const triggers: Trigger[] = ['wind-getdmg-oppo', 'phase-end'];
-    //         if (summon.isTalent) triggers.push('phase-start');
-    //         return {
-    //             addDmgCdt: 1,
-    //             isNotAddTask: trigger == 'wind-getdmg-oppo',
-    //             trigger: triggers,
-    //             exec: execEvent => {
-    //                 if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
-    //                 if (trigger == 'phase-start') return { cmds: [{ cmd: 'getDice', cnt: 1, element: 5 }] }
-    //             },
-    //         }
-    //     }, { isTalent }),
 
     // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；【[可用次数]：{useCnt}】', src, 2, 2, 0, 2, 0),
 

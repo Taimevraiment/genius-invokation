@@ -122,7 +122,7 @@
           'my': hgi == 1,
           'is-front-oppo': hero?.isFront && player.phase >= PHASE.DICE && opponent?.phase >= PHASE.DICE && hgi == 0,
           'is-front-my': hero?.isFront && hgi == 1,
-          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || client.isShowChangeHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
+          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hidx] || client.isShowChangeHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
@@ -267,7 +267,7 @@
                 'will-heal': (willHp[hgi][hidx] ?? 0) > 0,
               }" :style="{
                 'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
-                // 'background-image': `url(${getPngIcon('Preview2')})`,
+                // 'background-image': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
                 'border-image-source': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
@@ -312,6 +312,7 @@
             }" v-for="(summon, suidx) in smnArea" :key="suidx"
               @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
               <div class="summon-img-content">
+                <div class="card-border"></div>
                 <img class="summon-img" :src="summon.UI.src" v-if="summon?.UI.src?.length > 0" :alt="summon.name" />
                 <span v-else>{{ summon.name }}</span>
                 <div style="position: absolute; width: 100%; height: 100%"
@@ -1257,9 +1258,6 @@ button:active {
   position: relative;
   width: 45%;
   height: 45%;
-  border: 2px black solid;
-  border-radius: 10px;
-  background: black;
   text-align: center;
   padding-top: 10%;
   box-sizing: border-box;
@@ -1276,7 +1274,7 @@ button:active {
   width: 100%;
   height: 100%;
   color: white;
-  border-radius: 10px;
+  border-radius: 10%;
   overflow: hidden;
 }
 
@@ -1285,7 +1283,6 @@ button:active {
   left: 50%;
   top: 50%;
   width: 107%;
-  border-radius: 10px;
   transform: translate(-50%, -50%);
 }
 
@@ -1314,6 +1311,7 @@ button:active {
   font-size: medium;
   -webkit-text-stroke: 1px black;
   transition: 0.2s;
+  z-index: 1;
 }
 
 .summon-top-icon,
@@ -1324,6 +1322,7 @@ button:active {
   width: 25px;
   height: 25px;
   transform: translate(35%, -30%);
+  z-index: 1;
 }
 
 .summon-bottom-num,
@@ -1340,6 +1339,7 @@ button:active {
   font-weight: bolder;
   font-size: medium;
   -webkit-text-stroke: 1px black;
+  z-index: 1;
 }
 
 .summon-bottom-icon,
@@ -1352,6 +1352,7 @@ button:active {
   border-radius: 50%;
   background: radial-gradient(#ffffff 10%, #ffffff19 60%, transparent 80%);
   transform: translate(-30%, 30%);
+  z-index: 1;
 }
 
 .dices {

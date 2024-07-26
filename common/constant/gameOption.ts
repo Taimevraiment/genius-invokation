@@ -17,7 +17,7 @@ export const MAX_SUPPORT_COUNT = 4; // 支援物区最大数量
 
 export const PLAYER_COUNT = 2; // 玩家数量
 
-export const SHUFFLE_COUNT = 3; // 初始牌库洗牌次数
+export const SHUFFLE_COUNT = 10; // 初始牌库洗牌次数
 
 export const INIT_SWITCH_HERO_DICE = 1; // 初始切换角色所需骰子
 

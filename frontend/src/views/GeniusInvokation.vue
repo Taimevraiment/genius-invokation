@@ -61,7 +61,7 @@
       :class="{ 'mobile-hand-card': isMobile }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
       <div v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`" class="card"
-        :class="{ selected: client.handcardsSelect[idx], 'mobile-card': isMobile }"
+        :class="{ selected: client.handcardsSelect == idx, 'mobile-card': isMobile }"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
         <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
@@ -173,8 +173,8 @@
       {{ client.actionInfo }}
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
-    <div class="willskill-mask"
-      v-if="client.player.status == PLAYER_STATUS.PLAYING && (client.currSkill.type != SKILL_TYPE.Passive || client.isShowChangeHero >= 2)">
+    <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
+      (client.willHp.some(v => v != undefined) || client.isShowChangeHero >= 2)">
     </div>
 
   </div>
@@ -198,7 +198,6 @@ import {
   ELEMENT_TYPE,
   PHASE,
   PLAYER_STATUS,
-  SKILL_TYPE,
   Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
@@ -325,7 +324,7 @@ const selectUseDice = () => {
 };
 // 进入调和模式
 const reconcile = (bool: boolean) => {
-  client.value.reconcile(bool, client.value.handcardsSelect.findIndex(v => v));
+  client.value.reconcile(bool, client.value.handcardsSelect);
 };
 // 使用技能
 const useSkill = (sidx: number, isOnlyRead: boolean) => {

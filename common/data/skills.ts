@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing"
-import { ElementType, PureElementType, Version } from "../constant/enum.js"
+import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 import { newStatus } from "./statuses.js"
@@ -53,6 +53,9 @@ export type SkillHandleRes = {
     exec?: () => void,
 }
 
+const ski1507x = (swirlEl: PureElementType) => {
+    return new SkillBuilder('风风轮舞踢').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(2).dmgElement(swirlEl);
+}
 
 export const skillTotal: Record<number, () => SkillBuilder> = {
     12074: () => new SkillBuilder('苍鹭震击').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3),
@@ -84,6 +87,16 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     14054: () => new SkillBuilder('踏潮').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3).damage(2, 'v3.8.0'),
 
+    15074: () => new SkillBuilder('风风轮舞踢').description('(需准备1个行动轮)；{dealDmg}(或被扩散元素的伤害)。').elemental().readySkill().damage(2),
+
+    15075: () => ski1507x(ELEMENT_TYPE.Cryo),
+
+    15076: () => ski1507x(ELEMENT_TYPE.Hydro),
+
+    15077: () => ski1507x(ELEMENT_TYPE.Pyro),
+
+    15078: () => ski1507x(ELEMENT_TYPE.Electro),
+
     // 2: () => new GISkill('猜拳三连击·剪刀', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]，然后[准备技能]：【rsk3】。', 2, 2, 0, 3, { id: 24015, ec: -2, rskid: 2 }),
 
     // 3: () => new GISkill('猜拳三连击·布', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 2, 3, 0, 3, { ec: -2, rskid: 3 }),
@@ -109,16 +122,6 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     // 11: ver => new GISkill('霜刺破袭', '造成{dmg}点[冰元素伤害]，此角色附属【sts2145】。', 2, 3, 3, 4, { rskid: 11 },
     //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/ac22f83f25890eca87720581f6b06408.png',
     //     () => ({ status: [newStatus(ver)(2145)] })),
-
-    // 12: () => new GISkill('风风轮舞踢', '(需准备1个行动轮)；造成{dmg}点[风元素伤害](或被扩散元素的伤害)。', 2, 2, 0, 5, { ec: -2, rskid: 12 }),
-
-    // 13: () => new GISkill('风风轮舞踢', '(需准备1个行动轮)；造成{dmg}点[水元素伤害]。', 2, 2, 0, 1, { ec: -2, rskid: 13 }),
-
-    // 14: () => new GISkill('风风轮舞踢', '(需准备1个行动轮)；造成{dmg}点[火元素伤害]。', 2, 2, 0, 2, { ec: -2, rskid: 14 }),
-
-    // 15: () => new GISkill('风风轮舞踢', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 2, 2, 0, 3, { ec: -2, rskid: 15 }),
-
-    // 16: () => new GISkill('风风轮舞踢', '(需准备1个行动轮)；造成{dmg}点[冰元素伤害]。', 2, 2, 0, 4, { ec: -2, rskid: 16 }),
 
     // 18: () => new GISkill('霆电迸发', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 3, 2, 0, 3, { ec: -2, rskid: 18 }),
 
