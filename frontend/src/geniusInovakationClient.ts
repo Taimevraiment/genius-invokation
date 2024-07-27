@@ -18,6 +18,11 @@ import {
     ServerData, Skill, Summon,
 } from "../../typing";
 
+type DeckValid = {
+    isValid: boolean,
+    error: string,
+}
+
 export default class GeniusInvokationClient {
     socket: Socket;
     userid: number; // 用户id
@@ -35,7 +40,6 @@ export default class GeniusInvokationClient {
     willHp: (number | undefined)[] = []; // 总共的血量变化
     damageVO: Exclude<DamageVO, -1> = this.resetDamageVO(); // 显示伤害
     isShowDmg: boolean = false; // 是否显示伤害数
-    isShowHeal: boolean = false; // 是否显示加血数
     isShowChangeHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
@@ -53,6 +57,8 @@ export default class GeniusInvokationClient {
     decks: { name: string, shareCode: string, version: Version }[] = [];
     deckIdx: number; // 出战卡组id
     editDeckIdx: number; // 当前编辑卡组idx
+    isDeckVersionValid: DeckValid; // 卡组是否匹配版本
+    isDeckCompleteValid: DeckValid; // 卡组是否完整
     countdown: Countdown = { curr: 0, limit: 0, timer: undefined }; // 倒计时配置
     log: string[] = []; // 当局游戏日志
     pileCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 牌库数量
@@ -92,6 +98,16 @@ export default class GeniusInvokationClient {
         this.handcardsGap = isMobile ? HANDCARDS_GAP_MOBILE : HANDCARDS_GAP_PC;
         this.handcardsOffset = isMobile ? HANDCARDS_OFFSET_MOBILE : HANDCARDS_OFFSET_PC;
         this.handcardsPos = this.player.handCards.map((_, ci) => ci * this.handcardsGap);
+        const { shareCode = 'null', version: ver } = this.decks[this.deckIdx] ?? {};
+        const { heroIds, cardIds } = parseShareCode(shareCode);
+        this.isDeckCompleteValid = {
+            isValid: !heroIds.includes(0) && cardIds.length == DECK_CARD_COUNT,
+            error: '当前出战卡组不完整',
+        };
+        this.isDeckVersionValid = {
+            isValid: ver == version,
+            error: '当前卡组版本不匹配',
+        };
     }
     get playerIdx() { // 该玩家序号
         return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userid);
@@ -253,9 +269,9 @@ export default class GeniusInvokationClient {
                 this.heroCanSelect = [...preview.heroCanSelect!];
                 this.summonCanSelect = [...preview.summonCanSelect!.slice()];
                 this.supportCanSelect = [...preview.supportCanSelect!.slice()];
-                this.willHp = preview.willHp ?? this._resetWillHp();
-                this.willAttachs = preview.willAttachs ?? this._resetWillAttachs();
-                this.willSummons = preview.willSummons ?? this._resetWillSummons();
+                this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
+                this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
+                this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
                 if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
@@ -326,15 +342,13 @@ export default class GeniusInvokationClient {
      */
     startGame() {
         if (this.players.length < PLAYER_COUNT) return alert(`玩家为${PLAYER_COUNT}人才能开始游戏`);
-        const { shareCode = 'null', version } = this.decks[this.deckIdx] ?? {};
+        const { shareCode = 'null' } = this.decks[this.deckIdx] ?? {};
         if (shareCode == 'null') return console.error('卡组未找到');
-        const { heroIds, cardIds } = parseShareCode(shareCode);
-        if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return alert('当前出战卡组不完整');
-        if (version != this.version) return alert('当前卡组版本不匹配');
+        if (!this.isDeckCompleteValid.isValid) return alert(this.isDeckCompleteValid.error);
+        if (!this.isDeckVersionValid.isValid) return alert(this.isDeckVersionValid.error);
         console.info(`player[${this.player.name}]:${this.isStart ? 'cancelReady' : 'startGame'}-${this.playerIdx}`);
         this.isStart = !this.isStart;
         this._resetWillAttachs();
-        this.isWin = -1;
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.StartGame,
             cpidx: this.playerIdx,
@@ -379,23 +393,27 @@ export default class GeniusInvokationClient {
             this.actionInfo = actionInfo;
             setTimeout(() => this.actionInfo = '', 1000);
         }
-        if (damageVO != -1) {
+        if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
             this.damageVO.dmgElements = damageVO?.dmgElements ?? [];
             this.damageVO.elTips = damageVO?.elTips ?? [];
             this.damageVO.atkPidx = damageVO?.atkPidx ?? -1;
             this.damageVO.atkHidx = damageVO?.atkHidx ?? -1;
             this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
-        }
-        if (hasDmg) {
             this.isShowDmg = true;
             setTimeout(() => {
                 this.players = players;
                 this.updateHandCardsPos();
                 this.damageVO.willDamages = damageVO?.willDamages ?? [];
                 this.damageVO.willHeals = damageVO?.willHeals ?? [];
+                if (damageVO?.dmgSource == 'summon') {
+                    this.summonSelect[+(damageVO.atkPidx == this.playerIdx)][-damageVO.atkHidx] = true;
+                }
                 setTimeout(() => {
                     this.isShowDmg = false;
+                    if (damageVO?.dmgSource == 'summon') {
+                        this.summonSelect[+(damageVO.atkPidx == this.playerIdx)][-damageVO.atkHidx] = false;
+                    }
                     setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);
             }, 550);
@@ -438,10 +456,13 @@ export default class GeniusInvokationClient {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && pre.heroIdxs![0] == hidx);
             if (preview == undefined) throw new Error('未找到切换角色预览');
             this.heroSwitchDice = preview.switchHeroDiceCnt!;
-            this.diceSelect = [...preview.diceSelect!];
-            this.heroCanSelect = [...preview.heroCanSelect!];
+            this.diceSelect = preview.diceSelect!.slice();
+            this.heroCanSelect = preview.heroCanSelect!.slice();
             this.heroSelect = this.heroSelect.map((_, hidx) => +!!preview.heroIdxs!.includes(hidx));
             this.isShowChangeHero = 2 + +!!preview.isQuickAction;
+            this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
+            this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
+            this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
         }
     }
     /**
@@ -651,9 +672,9 @@ export default class GeniusInvokationClient {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
             if (!preview) throw new Error('预览未找到');
             this.diceSelect = [...preview.diceSelect!];
-            this.willHp = preview.willHp!;
-            this.willAttachs = preview.willAttachs!;
-            this.willSummons = preview.willSummons!;
+            this.willHp = [...preview.willHp!.slice()];
+            this.willAttachs = [...preview.willAttachs!.slice()];
+            this.willSummons = [...preview.willSummons!.slice()];
         }
         // if (!isCard) {
         //     if (!isOnlyRead) {
@@ -672,7 +693,7 @@ export default class GeniusInvokationClient {
             return;
         }
         if (!this.isValid) return;
-        this.cancel({ onlyHeros: true });
+        // this.cancel({ onlyHeros: true });
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.SwitchHero,
             cpidx: this.playerIdx,

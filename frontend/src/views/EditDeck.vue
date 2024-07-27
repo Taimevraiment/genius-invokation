@@ -4,6 +4,10 @@
         <div v-if="editDeckIdx == -1" class="edit-deck-list">
             <div v-for="(deck, did) in decks" :key="'deckid:' + did" class="deck"
                 :class="{ 'curr-deck': deckIdx == did }" @click="toEditDeck(did)">
+                <div class="forbidden" style="top: -10%; border-radius: 10%;"
+                    v-if="deckIdx == did && (deck.heroIds.some(h => h.id == 0) || deck.cardIds.length < 30)">
+                    卡组不完整
+                </div>
                 <div>{{ deck.name }}</div>
                 <div style="height: 1.2rem;">{{ deck.version }}</div>
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero"
@@ -683,6 +687,7 @@ body div {
     border-radius: 10px;
     cursor: pointer;
     box-sizing: border-box;
+    position: relative;
 }
 
 .deck:hover,

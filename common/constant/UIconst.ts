@@ -153,10 +153,10 @@ export const DEBUFF_BG_COLOR = CHANGE_BAD_COLOR; // debuff红色
 
 export const STATUS_BG_COLOR = {
     [ELEMENT_TYPE.Physical]: '#848484',
+    [ELEMENT_TYPE.Cryo]: '#00b7dc',
     [ELEMENT_TYPE.Hydro]: '#003ab6',
     [ELEMENT_TYPE.Pyro]: '#b46534',
     [ELEMENT_TYPE.Electro]: '#9956c8',
-    [ELEMENT_TYPE.Cryo]: '#00b7dc',
     [ELEMENT_TYPE.Anemo]: '#62c8b3',
     [ELEMENT_TYPE.Geo]: '#c39c26',
     [ELEMENT_TYPE.Dendro]: '#869c17',
@@ -222,7 +222,7 @@ export const HERO_TAG_URL = {
     [HERO_LOCAL.Snezhnaya]: '',
     [HERO_TAG.Fatui]: '/image/local8.png',
     [HERO_TAG.Hilichurl]: '/image/local9.png',
-    [HERO_TAG.Eremite]: '',
+    [HERO_TAG.Eremite]: '/image/local10.png',
     [HERO_TAG.ArkheOusia]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/2bf769807e6739fbeb8b5781b9689386.png',
     [HERO_TAG.ArkhePneuma]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bb176892163d7c0d63e664b01217802d.png',
     [HERO_TAG.ConsecratedBeast]: '/image/local13.png',

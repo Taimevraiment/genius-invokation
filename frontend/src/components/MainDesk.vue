@@ -194,7 +194,7 @@
             }" :style="{
               color: ELEMENT_COLOR[elTips[hgi][hidx][1]],
               fontWeight: 'bolder',
-              '-webkit-text-stroke': `0.5px${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`,
+              '-webkit-text-stroke': `1px${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`,
             }">
               {{ elTips[hgi][hidx][0] }}
             </div>
@@ -268,7 +268,7 @@
               }" :style="{
                 'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
                 // 'background-image': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
-                'border-image-source': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
+                'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
                   :src="getPngIcon('https://gi-tcg-assets.guyutongxue.support/assets/UI_Gcg_Buff_Common_Revive.webp')"
@@ -281,18 +281,24 @@
               </div>
               <div class="damages" v-if="willDamages[hgi][hidx] != undefined">
                 <div class="damage" v-if="dmgElements[hgi] != undefined"
-                  :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][0] >= 0 && hero.hp >= 0 }"
-                  :style="{ color: ELEMENT_COLOR[dmgElements[hgi][hidx]] }">
+                  :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][0] >= 0 && hero.hp >= 0 }" :style="{
+                    color: ELEMENT_COLOR[dmgElements[hgi][hidx]],
+                    'background-image': `url(${getPngIcon('Attack')})`,
+                  }">
                   -{{ willDamages[hgi][hidx][0] }}
                 </div>
                 <div class="damage"
-                  :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][1] > 0 && hero.hp >= 0 }"
-                  :style="{ color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce] }">
+                  :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][1] > 0 && hero.hp >= 0 }" :style="{
+                    color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce],
+                    'background-image': `url(${getPngIcon('Attack')})`,
+                  }">
                   -{{ willDamages[hgi][hidx][1] }}
                 </div>
                 <div class="heal" v-if="willHeals[hgi][hidx] != undefined"
-                  :class="{ 'show-heal': isShowHeal && willHeals[hgi][hidx] >= 0 }"
-                  :style="{ color: ELEMENT_COLOR.Heal }">
+                  :class="{ 'show-heal': isShowDmg && willHeals[hgi][hidx] >= 0 }" :style="{
+                    color: ELEMENT_COLOR.Heal,
+                    'background-image': `url(${getPngIcon('Heal')})`,
+                  }">
                   +{{ willHeals[hgi][hidx] }}
                 </div>
               </div>
@@ -413,7 +419,6 @@
             {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
           </button>
         </div>
-        <img src="@@/image/Attack.png" style="display: none;" />
       </div>
 </template>
 
@@ -422,6 +427,7 @@ import {
   CARD_SUBTYPE, CARD_TAG, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version,
 } from '@@@/constant/enum';
+import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
@@ -435,16 +441,16 @@ const emits = defineEmits([
 
 type Curcnt = { sid: number, val: number, isChange: boolean };
 const genChangeProxy = (length: number) => Array.from({ length }, () => ({ sid: 0, val: 0, isChange: false }));
-const supportCurcnt = ref<Curcnt[][]>([genChangeProxy(4), genChangeProxy(4)]);
-const summonCurcnt = ref<Curcnt[][]>([genChangeProxy(4), genChangeProxy(4)]);
+const supportCurcnt = ref<Curcnt[][]>([genChangeProxy(MAX_SUPPORT_COUNT), genChangeProxy(MAX_SUPPORT_COUNT)]);
+const summonCurcnt = ref<Curcnt[][]>([genChangeProxy(MAX_SUMMON_COUNT), genChangeProxy(MAX_SUMMON_COUNT)]);
 const statusCurcnt = ref<Curcnt[][][][]>([]);
 const hpCurcnt = ref<Curcnt[][]>([]);
 const getGroup = (idx: number) => idx ^ playerIdx.value ^ 1;
-const wrapArr = <T>(arr: T[]) => {
+const wrapArr = <T>(arr: T[], reverse: boolean = false) => {
   const h0 = props.client.players[0].heros.length;
   const a0 = arr.slice(0, h0);
   const a1 = arr.slice(h0);
-  if (playerIdx.value == 1) return [a0, a1];
+  if (playerIdx.value == 1 != reverse) return [a0, a1];
   return [a1, a0];
 }
 
@@ -492,7 +498,7 @@ const player = computed<Player>(() => {
       }
     });
     p.summons.forEach((smn, smni) => {
-      const saidx = +(smni == playerIdx.value);
+      const saidx = +(pi == playerIdx.value);
       if (summonCurcnt.value[saidx][smni].val != smn.useCnt) {
         if (summonCurcnt.value[saidx][smni].sid == smn.id) {
           summonCurcnt.value[saidx][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
@@ -569,7 +575,6 @@ const willSummons = computed<Summon[][]>(() => props.client.willSummons);
 const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch));
 const isShowChangeHero = computed<number>(() => props.client.isShowChangeHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
-const isShowHeal = computed<boolean>(() => props.client.isShowHeal);
 const canAction = computed<boolean>(() => props.canAction);
 const heroChangeDice = computed<number>(() => props.client.heroChangeDice);
 const supportCnt = computed<number[][]>(() => props.client.supportCnt);
@@ -957,7 +962,8 @@ button:active {
   --front-val: -20%;
 }
 
-.will-damage {
+.will-damage,
+.will-heal {
   position: absolute;
   top: 5px;
   left: 30%;
@@ -977,22 +983,23 @@ button:active {
   background-repeat: no-repeat; */
   border-image-slice: 20 25 fill;
   border-image-width: 7px;
+  z-index: 1;
 }
 
-.will-heal {
+/* .will-heal {
   position: absolute;
   top: 5px;
   left: 20%;
   height: 20px;
   line-height: 20px;
   border-radius: 10px;
-  /* color: #22a800;
+  color: #22a800;
   font-weight: bold;
-  background-color: #7bc67c; */
+  background-color: #7bc67c;
   display: flex;
   justify-content: center;
   align-items: center;
-}
+} */
 
 .will-destroy {
   position: absolute;
@@ -1040,12 +1047,12 @@ button:active {
   top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  transition: 1s;
+  transition: all 1s;
   font-weight: bold;
 }
 
 .el-tip-enter {
-  transform: translate(-50%, -10px);
+  top: -10px;
 }
 
 .el-tip-leave {
@@ -1088,7 +1095,7 @@ button:active {
   box-sizing: border-box;
   -webkit-text-stroke: 0.5px black;
   font-weight: bold;
-  background-image: url(@@/image/Attack.png);
+  /* background-image: url(@@/image/Attack.png); */
   background-size: 100%;
 }
 
@@ -1221,8 +1228,9 @@ button:active {
 }
 
 .hero-shield7 {
-  border-radius: 2px !important;
-  border: 4px solid #fffdd2e5 !important;
+  border-radius: 5px !important;
+  border: 4px solid #fffdd2bd !important;
+  z-index: 1;
 }
 
 .summons,
@@ -1328,8 +1336,8 @@ button:active {
 .summon-bottom-num,
 .support-bottom-num {
   position: absolute;
-  left: 0;
-  bottom: 0;
+  left: 11px;
+  bottom: 10px;
   width: 25px;
   height: 25px;
   text-align: center;
@@ -1345,8 +1353,8 @@ button:active {
 .summon-bottom-icon,
 .support-bottom-icon {
   position: absolute;
-  left: 0;
-  bottom: 0;
+  left: 10px;
+  bottom: 10px;
   width: 25px;
   height: 25px;
   border-radius: 50%;

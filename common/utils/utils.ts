@@ -121,3 +121,18 @@ export const swapKeysAndValues = <K extends string | number | symbol, V extends 
 // 获取数组最后一项
 export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
 
+// 不改变地址复制一个对象
+export const assgin = <T>(target: T, source: T) => {
+    if (Array.isArray(target) && Array.isArray(source) && source.every(v => typeof v !== 'object')) {
+        target.length = 0;
+        target.push(...source);
+        return;
+    }
+    for (const key in target) {
+        !source?.hasOwnProperty(key) && delete target[key];
+    }
+    for (const key in source) {
+        if (typeof target[key] === 'object') assgin(target[key], source[key]);
+        else target[key] = source[key];
+    }
+}

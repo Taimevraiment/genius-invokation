@@ -144,7 +144,7 @@ const cancelCreateRoom = () => {
 // 创建房间
 const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, isDev });
 };
 
 // 打开加入房间界面

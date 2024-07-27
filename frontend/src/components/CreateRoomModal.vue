@@ -13,8 +13,8 @@
 </template>
 
 <script setup lang='ts'>
-import { ref } from 'vue';
 import { VERSION, Version } from '@@@/constant/enum';
+import { ref } from 'vue';
 
 const emit = defineEmits(['create-room', 'create-room-cancel']);
 

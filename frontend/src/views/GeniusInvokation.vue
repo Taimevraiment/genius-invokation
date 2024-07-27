@@ -8,13 +8,18 @@
       投降
     </button>
     <div class="player-info">{{ client.player?.UI.info }}</div>
-    <button v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN" class="start" @click.stop="startGame">
-      {{ client.player?.phase == PHASE.NOT_READY ? "准备开始" : "取消准备" }}
-    </button>
-    <button v-if="isLookon == -1 && client.player?.phase == PHASE.NOT_READY" class="deck-open"
-      @click.stop="enterEditDeck">
-      查看卡组
-    </button>
+
+    <div class="menu">
+      <button v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN" class="start" @click.stop="startGame">
+        {{ client.player?.phase == PHASE.NOT_READY ? "准备开始" : "取消准备" }}
+      </button>
+      <button v-if="isLookon == -1 && client.player?.phase == PHASE.NOT_READY" class="deck-open"
+        @click.stop="enterEditDeck">
+        查看卡组
+      </button>
+      <div class="warn" v-if="!client.isDeckCompleteValid.isValid">{{ client.isDeckCompleteValid.error }}</div>
+      <div class="warn" v-if="!client.isDeckVersionValid.isValid">{{ client.isDeckVersionValid.error }}</div>
+    </div>
 
     <div :class="{
       'player-display': true,
@@ -152,7 +157,7 @@
     <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile"
       style="z-index: 10" />
 
-    <h1 v-if="client.isWin > 1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
+    <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
       :class="{ 'mobile-win-banner': isMobile }">
       {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！
     </h1>
@@ -759,6 +764,16 @@ body {
   height: 30px;
 }
 
+.menu {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .start {
   padding: 5px;
   background-color: #0077ff;
@@ -766,10 +781,7 @@ body {
   width: 200px;
   height: 50px;
   font-size: larger;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -120%);
+  margin-bottom: 3%;
   user-select: none;
   cursor: pointer;
   border: 4px outset #0053b1;
@@ -783,10 +795,7 @@ body {
   width: 200px;
   height: 50px;
   font-size: larger;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, 20%);
+  margin-bottom: 3%;
   user-select: none;
   cursor: pointer;
   border: 4px outset #0053b1;
@@ -802,6 +811,13 @@ body {
 .deck-open:active {
   background-color: #004a9e;
   border: 4px inset #0053b1;
+}
+
+.warn {
+  padding: 0 5%;
+  color: red;
+  margin-bottom: 1%;
+  background: linear-gradient(to right, transparent, #feb4b4 50%, transparent);
 }
 
 .exit {
