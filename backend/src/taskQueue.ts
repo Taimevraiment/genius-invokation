@@ -35,7 +35,7 @@ export default class TaskQueue {
     addStatusAtk(ststask: StatusTask[], isUnshift = false) {
         if (ststask.length == 0) return;
         for (const t of ststask) {
-            const atkname = 'statusAtk-' + t.entityId + '-p' + t.pidx + 'h' + t.hidx;
+            const atkname = 'statusAtk-' + t.id + t.entityId + '-p' + t.pidx + 'h' + t.hidx;
             if (this.queue.some(([tpn]) => tpn == atkname)) {
                 console.warn('重复status:', atkname);
                 continue;

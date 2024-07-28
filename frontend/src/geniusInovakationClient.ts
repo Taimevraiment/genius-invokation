@@ -71,8 +71,8 @@ export default class GeniusInvokationClient {
     handcardsPos: number[]; // 手牌位置
     handcardsSelect: number = -1; // 被选中的手牌序号
     reconcileValid: boolean[] = []; // 是否允许调和
-    heroSelect: number[] = []; // 角色是否选中
-    heroCanSelect: boolean[] = []; // 角色是否可选
+    heroSelect: number[]; // 角色是否选中
+    heroCanSelect: boolean[]; // 角色是否可选
     heroSwitchDice: number = INIT_SWITCH_HERO_DICE; // 切换角色所需骰子数
     supportSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否选中
     supportCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否可选
@@ -108,6 +108,8 @@ export default class GeniusInvokationClient {
             isValid: ver == version,
             error: '当前卡组版本不匹配',
         };
+        this.heroSelect = (players[this.playerIdx]?.heros ?? []).map(() => 0);
+        this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
     }
     get playerIdx() { // 该玩家序号
         return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userid);
@@ -422,14 +424,14 @@ export default class GeniusInvokationClient {
         }
         this.updateHandCardsPos();
         this.log = [...log];
+        if (this.heroSelect.length == 0) this.heroSelect = this.player.heros.map(() => 0);
+        if (this.heroCanSelect.length == 0) this.heroCanSelect = this.player.heros.map(() => false);
     }
     /**
      * 游戏开始时换卡
      * @param cardIdxs 要换的卡的索引数组
      */
     changeCard(cardIdxs: number[]) {
-        this.heroSelect = this.player.heros.map(() => 0);
-        this.heroCanSelect = this.player.heros.map(() => false);
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.ChangeCard,
             cpidx: this.playerIdx,
@@ -583,7 +585,8 @@ export default class GeniusInvokationClient {
         this.isValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), {
             card: isCdt(this.currCard.id > 0, this.currCard),
             skill: isCdt(this.currSkill.type != SKILL_TYPE.Passive, this.currSkill),
-        })
+            heroSwitchDice: isCdt(this.isShowChangeHero > 0, this.heroSwitchDice),
+        });
         if (this.isShowChangeHero > 0) { // 切换角色所消耗的骰子
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && this.heroSelect[pre.heroIdxs![0]]);
             this.isValid = preview?.diceSelect?.filter(v => v).length == this.heroSwitchDice;

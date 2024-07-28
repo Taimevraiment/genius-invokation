@@ -576,7 +576,7 @@ const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch))
 const isShowChangeHero = computed<number>(() => props.client.isShowChangeHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
 const canAction = computed<boolean>(() => props.canAction);
-const heroChangeDice = computed<number>(() => props.client.heroChangeDice);
+const heroSwitchDice = computed<number>(() => props.client.heroSwitchDice);
 const supportCnt = computed<number[][]>(() => props.client.supportCnt);
 const summonCnt = computed<number[][]>(() => props.client.summonCnt);
 const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).fill(false));
@@ -680,7 +680,7 @@ const reroll = () => {
 // 选择要消费的骰子
 const selectUseDice = (didx: number) => {
   if (player.value.status == PLAYER_STATUS.WAITING) return;
-  if (currCard.value.id <= 0 && currSkill.value.type == SKILL_TYPE.Passive && isShowChangeHero.value < 2) return;
+  if (currCard.value.id <= 0 && currSkill.value.type == SKILL_TYPE.Passive && isShowChangeHero.value == 0) return;
   if (isReconcile.value && [DICE_COST_TYPE.Omni, player.value.heros[player.value.hidx].element].includes(dices.value[didx])) return;
   const newVal = !diceSelect.value[didx];
   emits('update:diceSelect', didx, newVal);
@@ -688,9 +688,9 @@ const selectUseDice = (didx: number) => {
     let cost = 0;
     if (currCard.value.id > 0) {
       cost = currCard.value.cost + currCard.value.anydice - currCard.value.costChange;
-    } else if (currSkill.value.type > 0) {
+    } else if (currSkill.value.type != SKILL_TYPE.Passive) {
       cost = currSkill.value.cost[0].cnt - currSkill.value.costChange[0] + currSkill.value.cost[1].cnt - currSkill.value.costChange[1];
-    } else if (isShowChangeHero.value > 0) cost = heroChangeDice.value;
+    } else if (isShowChangeHero.value > 0) cost = heroSwitchDice.value;
     if (isReconcile.value) cost = 1;
     if (cost == 0) {
       emits('update:diceSelect', -1);
