@@ -1,7 +1,7 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
-import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getStatus, hasStatus } from "../utils/gameUtil.js";
+import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 import { newStatus } from "./statuses.js";
@@ -19,7 +19,7 @@ export type SummonHandleEvent = {
     isExec?: boolean,
     isSkill?: number,
     minusDiceCard?: number,
-    minusDiceSkillIds?: number[],
+    isMinusDiceSkill?: boolean,
     tround?: number,
     force?: boolean,
 }
@@ -41,6 +41,7 @@ export type SummonHandleRes = {
     minusDiceSkill?: MinuDiceSkill,
     tround?: number,
     willSummon?: Summon,
+    isQuickAction?: boolean,
     exec?: (event: SummonExecEvent) => SummonExecRes | void,
 }
 
@@ -49,6 +50,7 @@ export type SummonExecEvent = {
     heros?: Hero[],
     eheros?: Hero[],
     switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
 }
 
 export type SummonExecRes = {
@@ -156,7 +158,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
                 const { combatStatus = [] } = event;
-                const sts111092 = getStatus(combatStatus, 111092);
+                const sts111092 = getObjById(combatStatus, 111092);
                 if (sts111092) ++sts111092.useCnt;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);
                 return { cmds: [{ cmd: 'attack' }] }
@@ -192,8 +194,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 const { summon: smn = summon } = execEvent;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);
                 const { heros = [] } = event;
-                const hero = heros.find(h => h.id == getHidById(smn.id));
-                const isTalent = !!hero?.talentSlot && hasStatus(hero?.heroStatus, 112052);
+                const hero = getObjById(heros, getHidById(smn.id));
+                const isTalent = !!hero?.talentSlot && hasObjById(hero?.heroStatus, 112052);
                 return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }, { cmd: 'heal' }] }
             }
         })),
@@ -214,7 +216,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/865915f8734cdc641df43198eb728497_5603461429712047360.png')
         .handle((summon, event) => {
             const { heros = [] } = event;
-            const hero = heros.find(h => h.id == getHidById(summon.id));
+            const hero = getObjById(heros, getHidById(summon.id));
             const isTalent = !!hero?.talentSlot;
             const triggers: Trigger[] = ['phase-end'];
             if (summon.useCnt >= 2) triggers.push('end-phase');
@@ -324,7 +326,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
                 const { heros = [] } = event;
-                const talent = heros.find(h => h.id == getHidById(summon.id))?.talentSlot;
+                const talent = getObjById(heros, getHidById(summon.id))?.talentSlot;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);
                 if (talent && talent.useCnt > 0) {
                     --talent.useCnt;
@@ -462,7 +464,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/13c4609aff96cf57ad218ddf954ecc08_1272742665837129862.png')
         .handle((summon, event) => {
             const { heros = [], trigger = '' } = event;
-            const isTalent = !!heros.find(h => h.id == 1402)?.talentSlot;
+            const isTalent = !!getObjById(heros, getHidById(summon.id))?.talentSlot;
             return {
                 trigger: ['phase-end', 'Anemo-dmg'],
                 isNotAddTask: trigger == 'Anemo-dmg',
@@ -574,6 +576,79 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    116031: () => new SummonBuilder('岩脊').useCnt(2).damage(1)
+        .description('{defaultAtk}')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/251c5e32d6cbdfb4c4d0e14e7088ab67_7008401766526335309.png'),
+
+    116041: () => new SummonBuilder('阳华').useCnt(3).damage(1).perCnt(1)
+        .description('{defaultAtk}；【此召唤物在场，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。(每回合1次)')
+        .description('{defaultAtk}；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。(每回合1次)', 'v4.8.0')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
+        .handle((summon, event, ver) => {
+            const { isFallAtk = false, isMinusDiceSkill, trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (ver < 'v4.8.0') triggers.push('skilltype1');
+            else triggers.push('change-from');
+            return {
+                minusDiceSkill: isCdt(ver < 'v4.8.0' && isFallAtk && summon.perCnt > 0, { skilltype1: [0, 1, 0] }),
+                isNotAddTask: trigger != 'phase-end',
+                trigger: ['skilltype1', 'phase-end'],
+                isQuickAction: ver >= 'v4.8.0' && summon.perCnt > 0,
+                exec: execEvent => {
+                    const { summon: smn = summon, isQuickAction = false } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
+                    if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
+                    if (trigger == 'change-from' && isQuickAction) --smn.perCnt;
+                }
+            }
+        }),
+
+    116051: () => new SummonBuilder('阿丑').useCnt(1).damage(1).shield(1).perCnt(1).statusId().roundEnd()
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，造成{dmg}点[岩元素伤害]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png')
+        .handle((summon, event, ver) => {
+            const { heros = [], trigger = '' } = event;
+            const hidx = heros.findIndex(h => h.id == 1503 && h.hp > 0);
+            return {
+                trigger: ['phase-end', 'getdmg'],
+                isNotAddTask: trigger == 'getdmg',
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
+                    if (smn.perCnt <= 0 || trigger != 'getdmg' || hidx == -1) return;
+                    --smn.perCnt;
+                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(116054)], hidxs: [hidx] }] }
+                },
+            }
+        }),
+
+    116062: () => new SummonBuilder('大将威仪').useCnt(2).damage(1)
+        .description('【结束阶段：】{dealDmg}；如果队伍中存在2名‹6岩元素›角色，则生成【sts111】。；【[可用次数]：{useCnt}】')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/669b37ae522405031419cd14f6e8daf0_5829987868413544081.png')
+        .handle((summon, event, ver) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
+                const { heros = [] } = event;
+                if (heros.filter(h => h.element == ELEMENT_TYPE.Geo).length >= 2) {
+                    cmds.push({ cmd: 'getStatus', status: [newStatus(ver)(111)] })
+                }
+                return { cmds }
+            }
+        })),
+
+    116082: () => new SummonBuilder('金花礼炮').useCnt(2).damage(1)
+        .description('【结束阶段：】{dealDmg}，摸1张【crd116081】。；【[可用次数]：{useCnt}】')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ca1b1317e66c9b1092afa2a516dddcd4_5204752880345309322.png')
+        .handle(summon => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                return { cmds: [{ cmd: 'attack' }, { cmd: 'getCard', cnt: 1, card: 116081, isAttach: true }] }
+            }
+        })),
+
 
     // 3009: () => new GISummon(3009, '柯里安巴', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png',
@@ -651,31 +726,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3026: () => new GISummon(3026, '阿丑', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro1503】附属【sts2068】。；【结束阶段：】弃置此牌，造成{dmg}点[岩元素伤害]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png',
-    //     1, 1, -1, 1, 6, (summon, event) => {
-    //         const { heros = [], trigger = '' } = event;
-    //         const hidx = heros.findIndex(h => h.id == 1503 && h.hp > 0);
-    //         return {
-    //             trigger: ['phase-end', 'getdmg'],
-    //             isNotAddTask: trigger == 'getdmg',
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') return phaseEndAtk(smn);
-    //                 if (smn.perCnt <= 0 || trigger != 'getdmg' || hidx == -1) return;
-    //                 --smn.perCnt;
-    //                 return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2068)], hidxs: [hidx] }] }
-    //             },
-    //         }
-    //     }, { pct: 1, isDestroy: 2, stsId: 2070 }),
-
     // 3027: () => new GISummon(3027, '藏蕴花矢', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/dc8e548704ca0e52d1c6669fac469b3d_5168805556784249785.png',
     //     1, 2, 0, 1, 7),
-
-    // 3033: () => new GISummon(3033, '岩脊', '【结束阶段：】造成{dmg}点[岩元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/251c5e32d6cbdfb4c4d0e14e7088ab67_7008401766526335309.png',
-    //     2, 2, 0, 1, 6),
 
     // 3034: () => new GISummon(3034, '冰萤', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)；【愚人众·冰萤术士｢普通攻击｣后：】此牌[可用次数]+1。；【愚人众·冰萤术士受到元素反应伤害后：】此牌[可用次数]-1。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png',
@@ -741,24 +794,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png',
     //     2, 2, 0, 1, 2, undefined, { pdmg: 1 }),
 
-    // 3040: () => new GISummon(3040, '阳华', '【结束阶段：】造成{dmg}点[岩元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png',
-    //     3, 3, 0, 1, 6, (summon, event) => {
-    //         const { isFallAtk = false, trigger = '' } = event;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 1, 0] },
-    //             () => isFallAtk && summon.perCnt > 0);
-    //         return {
-    //             ...minusSkillRes,
-    //             isNotAddTask: trigger == 'skilltype1',
-    //             trigger: ['skilltype1', 'phase-end'],
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') return phaseEndAtk(smn);
-    //                 if (trigger == 'skilltype1' && isMinusSkill) --smn.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
-
     // 3042: (isTalent = false) => new GISummon(3042, '月桂·抛掷型', `【结束阶段：】造成{dmg}点[草元素伤害]，治疗我方受伤最多的角色{shield}点。${isTalent ? '；如果可用次数仅剩余1，则此效果造成的伤害和治疗各+1。' : ''}；【[可用次数]：{useCnt}】`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/7bc79d56afd059a2f88d45ae0c500923_7487275599868058123.png',
     //     2, 2, 1, 1, 7, (summon, event) => ({
@@ -778,20 +813,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3046: () => new GISummon(3046, '游丝徵灵', '【结束阶段：】造成{dmg}点[草元素伤害]，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png',
     //     1, 1, 1, 1, 7),
-
-    // 3050: () => new GISummon(3050, '大将威仪', '【结束阶段：】造成{dmg}点[岩元素伤害]；如果队伍中存在2名‹6岩元素›角色，则生成【sts2007】。；【[可用次数]：{useCnt}】',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/669b37ae522405031419cd14f6e8daf0_5829987868413544081.png',
-    //     2, 2, 0, 1, 6, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
-    //             const { heros = [] } = event;
-    //             if (heros.filter(h => h.element == 6).length >= 2) {
-    //                 cmds.push({ cmd: 'getStatus', status: [heroStatus(2007)] })
-    //             }
-    //             return { cmds }
-    //         }
-    //     })),
 
     // 3051: (isTalent = false) => new GISummon(3051, '厄灵·炎之魔蝎', `【结束阶段：】造成{dmg}点[火元素伤害]${isTalent ? '; 如果本回合中【hro1743】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。；【[可用次数]：{useCnt}】；【入场时和行动阶段开始：】使我方【hro1743】附属【sts2139】。(【厄灵·炎之魔蝎】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png',
@@ -899,17 +920,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3065: () => crd907summon(3065),
 
     // 3066: () => crd907summon(3066),
-
-    // 3067: () => new GISummon(3067, '金花礼炮', '【结束阶段：】造成{dmg}点[岩元素伤害]，摸1张【crd913】。；【[可用次数]：{useCnt}】',
-    //     '',
-    //     2, 2, 0, 1, 6, summon => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { summon: smn = summon } = execEvent;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             return { cmds: [{ cmd: 'attack' }, { cmd: 'getCard', cnt: 1, card: 913, isAttach: true }] }
-    //         }
-    //     })),
 
 }
 

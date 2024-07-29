@@ -11,6 +11,7 @@ export type SkillHandleEvent = {
     reset?: boolean,
     card?: Card,
     heros?: Hero[],
+    combatStatus?: Status[],
     eheros?: Hero[],
     hcards?: Card[],
     summons?: Summon[],
@@ -26,6 +27,7 @@ export type SkillHandleEvent = {
     playerInfo?: GameInfo,
     discards?: Card[],
     dmg?: number[],
+    isTalent?: boolean,
 }
 
 export type SkillHandleRes = {
@@ -97,6 +99,12 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     15078: () => ski1507x(ELEMENT_TYPE.Electro),
 
+    16074: () => new SkillBuilder('长枪开相').description('(需准备1个行动轮)；{dealDmg}; 如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
+        .elemental().readySkill().damage(2).handle(event => {
+            const { playerInfo: { discardCnt = 0, reconcileCnt = 0 } = {} } = event;
+            return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
+        }),
+
     // 2: () => new GISkill('猜拳三连击·剪刀', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]，然后[准备技能]：【rsk3】。', 2, 2, 0, 3, { id: 24015, ec: -2, rskid: 2 }),
 
     // 3: () => new GISkill('猜拳三连击·布', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 2, 3, 0, 3, { ec: -2, rskid: 3 }),
@@ -131,12 +139,6 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     //     3, 1, 0, 2, { ec: -2, rskid: 20 }, '', event => {
     //         const { hero: { heroStatus } } = event;
     //         return { pdmg: 2, addDmgCdt: Math.floor((heroStatus.find(ist => ist.id == 2182)?.useCnt ?? 0) / 2) }
-    //     }),
-
-    // 21: () => new GISkill('长枪开相', '(需准备1个行动轮)；造成{dmg}点[岩元素伤害]; 如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。',
-    //     2, 2, 0, 6, { ec: -2, rskid: 21 }, '', event => {
-    //         const { playerInfo: { discardCnt = 0, reconcileCnt = 0 } = {} } = event;
-    //         return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
     //     }),
 
 }

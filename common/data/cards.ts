@@ -1,8 +1,8 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { getHidById, getStatus, hasStatus, hasSummon } from '../utils/gameUtil.js';
+import { allHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newStatus } from './statuses.js';
@@ -11,6 +11,7 @@ import { newSupport } from './supports.js';
 
 export type CardHandleEvent = {
     heros?: Hero[],
+    combatStatus?: Status[],
     eheros?: Hero[],
     hidxs?: number[],
     reset?: boolean,
@@ -1906,7 +1907,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             if (ver >= 'v3.7.0') return;
             const { heros = [] } = event;
-            const hero = heros.find(h => h.id == getHidById(card.id));
+            const hero = getObjById(heros, getHidById(card.id));
             return { addDmgCdt: isCdt(!!hero?.skills[2].useCnt, 1) }
         }),
 
@@ -1970,7 +1971,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/29c5370c3846c6c0a5722ef1f6c94d97_1023653312046109359.png')
         .handle((card, event) => {
             const { eheros = [] } = event;
-            if (card.perCnt > 0 && hasStatus(eheros.flatMap(h => h.heroStatus), 111101)) {
+            if (card.perCnt > 0 && hasObjById(eheros.flatMap(h => h.heroStatus), 111101)) {
                 return {
                     trigger: ['skilltype1', 'other-skilltype1'],
                     execmds: [{ cmd: 'heal', cnt: 2 }],
@@ -2003,7 +2004,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png')
         .handle((card, event) => {
             let { summons = [], switchHeroDiceCnt = 0 } = event;
-            if (card.perCnt > 0 && hasSummon(summons, 112011)) {
+            if (card.perCnt > 0 && hasObjById(summons, 112011)) {
                 return {
                     trigger: ['change'],
                     minusDiceHero: 1,
@@ -2047,7 +2048,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/a222141c6f996c368c642afe39572e9f_2099787104835776248.png')
         .handle((_, event, ver) => {
             const { eheros = [], heros = [], hidxs: [hidx] = [], ehidx = -1 } = event;
-            if ((eheros[ehidx]?.hp ?? 10) <= 6 && hasStatus(heros[hidx]?.heroStatus, 112061)) {
+            if ((eheros[ehidx]?.hp ?? 10) <= 6 && hasObjById(heros[hidx]?.heroStatus, 112061)) {
                 return { trigger: ['skilltype1'], addDmgCdt: ver < 'v4.7.0' ? 1 : 2 }
             }
         }),
@@ -2133,7 +2134,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype1'],
                 addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 1),
-                execmds: isCdt(ver >= 'v4.2.0' && hasStatus(heros[hidx]?.heroStatus, 113081), [{ cmd: 'getCard', cnt: 1 }])
+                execmds: isCdt(ver >= 'v4.2.0' && hasObjById(heros[hidx]?.heroStatus, 113081), [{ cmd: 'getCard', cnt: 1 }])
             }
         }),
 
@@ -2226,7 +2227,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const { heroStatus } = heros[hidx];
-            const stsCnt = getStatus(heroStatus, 114041)?.useCnt ?? 0;
+            const stsCnt = getObjById(heroStatus, 114041)?.useCnt ?? 0;
             let addDmgCdt = 0;
             if (ver < 'v4.2.0' && [3, 5].includes(stsCnt) || ver < 'v4.8.0' && stsCnt % 2 == 0) addDmgCdt = 1;
             if (ver >= 'v4.8.0' && card.perCnt > 0) addDmgCdt = 2;
@@ -2251,7 +2252,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_card, event) => {
             const { heros = [] } = event;
             const hero = heros.find(h => h.isFront)!;
-            if (hero.element == ELEMENT_TYPE.Electro && hasStatus(hero.heroStatus, 114063)) {
+            if (hero.element == ELEMENT_TYPE.Electro && hasObjById(hero.heroStatus, 114063)) {
                 return {
                     addDmgCdt: 1,
                     trigger: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],
@@ -2335,7 +2336,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/08a42903fcff2a5249ef1fc4021ecf7a_492792879105973370.png')
         .handle((_, event, ver) => {
             const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
-            const hasSts115061 = hasStatus(heros[hidx]?.heroStatus, 115061);
+            const hasSts115061 = hasObjById(heros[hidx]?.heroStatus, 115061);
             if (isChargedAtk && hasSts115061) return { trigger: ['skilltype1'], execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(115062)] }] }
         }),
 
@@ -2360,27 +2361,113 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】所召唤的【smn115093】入场时和行动阶段开始时：生成1个[风元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/6f4712bcbbe53515e63c1de112a58967_7457105821554314257.png'),
 
+    216011: () => new CardBuilder(102).name('储之千日，用之一刻').talent(1).costGeo(4)
+        .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/8b72e98d01d978567eac5b3ad09d7ec1_7682448375697308965.png'),
 
-    // 710: () => new GICard(710, '储之千日，用之一刻', '{action}；装备有此牌的【hro】在场时，【sts2027】会使我方造成的[岩元素伤害]+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/8b72e98d01d978567eac5b3ad09d7ec1_7682448375697308965.png',
-    //     4, 6, 0, [6, 7], 1501, 1),
+    216021: () => new CardBuilder(103).name('支援就交给我吧').talent(1).costGeo(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】｢普通攻击｣后：如果此牌和【sts116021】仍在场，治疗我方所有角色1点。(每回合1次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4c6332fd42d6edc64633a44aa900b32f_248861550176006555.png')
+        .handle((card, event) => {
+            const { heros = [], combatStatus = [] } = event;
+            if (hasObjById(combatStatus, 112061) && card.perCnt > 0) {
+                return {
+                    trigger: ['skilltype1'],
+                    execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
+                    exec: () => { --card.perCnt },
+                }
+            }
+        }),
+
+    216031: () => new CardBuilder(104).name('炊金馔玉').since('v3.7.0').talent(2).costGeo(5)
+        .description('{action}；装备有此牌的【hro】生命值至少为7时，【hro】造成的伤害和我方召唤物造成的[岩元素伤害]+1。')
+        .description('{action}；装备有此牌的【hro】在场时，我方出战角色在[护盾]角色状态或[护盾]出战状态的保护下时，我方召唤物造成的[岩元素伤害]+1。', 'v4.8.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [], combatStatus = [], isSkill = -1, trigger = '' } = event;
+            let isTriggered = false;
+            const triggers: Trigger[] = ['Geo-dmg'];
+            if (ver < 'v4.8.0') {
+                const fhero = heros.find(h => h.isFront);
+                const istShield = fhero?.heroStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
+                const ostShield = combatStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
+                isTriggered = istShield || ostShield;
+            } else {
+                triggers.push('dmg');
+                const hero = heros[hidx];
+                isTriggered = hero.hp >= 7 && hero.isFront;
+            }
+            if (isTriggered) {
+                return {
+                    trigger: triggers,
+                    addDmgCdt: isCdt(trigger == 'dmg' && isSkill != -1, 1),
+                    addDmgSummon: isCdt(trigger == 'Geo-dmg', 1),
+                }
+            }
+        }),
+
+    216041: () => new CardBuilder(105).name('神性之陨').since('v4.0.0').talent(1).costGeo(3)
+        .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1，且少花费1个[无色元素骰]。')
+        .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1。', 'v4.8.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png')
+        .handle((_, event, ver) => {
+            const { summons = [], isFallAtk } = event;
+            if (hasObjById(summons, 116041) && isFallAtk) {
+                return {
+                    trigger: ['skilltype1', 'other-skilltype1'],
+                    addDmgCdt: 1,
+                    minusDiceSkill: isCdt(ver >= 'v4.8.0', { skilltype1: [0, 1, 0] })
+                }
+            }
+        }),
+
+    216051: () => new CardBuilder(106).name('荒泷第一').since('v3.6.0').talent(0).costGeo(1).anydice(2)
+        .description('{action}；装备有此牌的【hro】每回合第2次及以后使用【ski】时：如果触发【sts116054】，伤害额外+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png')
+        .handle((_card, event) => {
+            const { heros = [], hidxs: [hidx] = [], isChargedAtk = false } = event;
+            const { heroStatus, skills: [{ useCnt }] } = heros[hidx];
+            if (isChargedAtk && useCnt >= 1 && hasObjById(heroStatus, 116054)) {
+                return { trigger: ['skilltype1'], addDmgCdt: 1 }
+            }
+        }),
+
+    216061: () => new CardBuilder(292).name('犬奔·疾如风').since('v4.3.0').talent(1).costGeo(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts116061】，抓1张牌。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png')
+        .handle((card, event) => {
+            const { combatStatus = [], isSkill = -1 } = event;
+            const isTriggered = isSkill > -1 && hasObjById(combatStatus, 116061) && card.perCnt > 0;
+            if (isTriggered) {
+                return {
+                    trigger: ['Geo-dmg'],
+                    execmds: [{ cmd: 'getCard', cnt: 1 }],
+                    exec: () => { --card.perCnt },
+                }
+            }
+        }),
+
+    216071: () => new CardBuilder(375).name('庄谐并举').since('v4.7.0').talent(2).costGeo(3).energy(2)
+        .description('{action}；装备有此牌的【hro】在场，且我方触发【sts116073】时：如果我方没有手牌，则使此次技能伤害+2。')
+        .description('{action}；装备有此牌的【hro】在场时，我方没有手牌，则【sts116073】会使｢普通攻击｣造成的伤害额外+2。', 'v4.8.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/51cdfbb5318ad7af6ad0eece4ef05423_8606735009174856621.png'),
+
+    216081: () => new CardBuilder(397).name('不明流通渠道').talent(1).costGeo(3).perCnt(1)
+        .description('{action}；【装备有此牌的〖hro〗使用技能后：】抓2张【crd116081】。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ff75f3060780eb4e510f0f60c336dcb6_6404286710698044326.png')
+        .handle(card => {
+            if (card.perCnt <= 0) return;
+            return {
+                trigger: ['skill'],
+                execmds: [{ cmd: 'getCard', cnt: 2, card: 116081, isAttach: true }],
+                exec: () => { --card.perCnt },
+            }
+        }),
+
 
     // 711: () => new GICard(711, '飞叶迴斜', '{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。(每回合1次)',
     //     'https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png',
     //     4, 7, 0, [6, 7], 1601, 1),
-
-    // 715: () => new GICard(715, '支援就交给我吧', '{action}；装备有此牌的【hro】｢普通攻击｣后：如果此牌和【sts2036】仍在场，治疗我方所有角色1点。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4c6332fd42d6edc64633a44aa900b32f_248861550176006555.png',
-    //     3, 6, 0, [6, 7], 1502, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         if (heros[hidx]?.outStatus.some(ost => ost.id == 2036) && card.perCnt > 0) {
-    //             return {
-    //                 trigger: ['skilltype1'],
-    //                 execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
-    //                 exec: () => { --card.perCnt },
-    //             }
-    //         }
-    //     }, { pct: 1 }),
 
     // 721: () => new GICard(721, '百川奔流', '{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b1a0f699a2168c60bc338529c3dee38b_3650391807139860687.png',
@@ -2409,16 +2496,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
     //     3, 7, 0, [6, 7], 1821, 1),
 
-    // 734: () => new GICard(734, '荒泷第一', '{action}；装备有此牌的【hro】每回合第2次及以后使用【ski】时：如果触发【sts2068】，伤害额外+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png',
-    //     1, 6, 0, [6, 7], 1503, 0, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], isChargedAtk = false } = event;
-    //         const { inStatus, skills: [{ useCnt }] } = heros[hidx];
-    //         if (isChargedAtk && useCnt >= 1 && inStatus.some(ist => ist.id == 2068)) {
-    //             return { trigger: ['skilltype1'], addDmgCdt: 1 }
-    //         }
-    //     }, { anydice: 2 }),
-
     // 735: () => new GICard(735, '眼识殊明', '{action}；装备有此牌的【hro】在附属【sts2071】期间，进行[重击]时少花费1个[无色元素骰]。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png',
     //     4, 7, 0, [6, 7], 1602, 1, (_card, event) => {
@@ -2426,16 +2503,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] },
     //             () => isChargedAtk && heros[hidx].inStatus.some(ist => ist.id == 2071));
     //         return { trigger: ['skilltype1'], ...minusSkillRes }
-    //     }),
-
-    // 744: () => new GICard(744, '炊金馔玉', '{action}；装备有此牌的【hro】在场时，我方出战角色在[护盾]角色状态或[护盾]出战状态的保护下时，我方召唤物造成的[岩元素伤害]+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png',
-    //     5, 6, 0, [6, 7], 1504, 2, (_card, event) => {
-    //         const { heros = [] } = event;
-    //         const fhero = heros.find(h => h.isFront);
-    //         const istShield = fhero?.inStatus.some(ist => ist.type.includes(7));
-    //         const ostShield = fhero?.outStatus.some(ost => ost.type.includes(7));
-    //         if (istShield || ostShield) return { trigger: ['rock-dmg'], addDmgSummon: 1 }
     //     }),
 
     // 745: () => new GICard(745, '心识蕴藏之种', '{action}；装备有此牌的【hro】在场时，根据我方队伍中存在的元素类型提供效果：；‹2火元素›：【sts2089】在场时，自身受到元素反应触发【sts2088】的敌方角色，所受【sts2088】的[穿透伤害]改为[草元素伤害];；‹3雷元素›：【sts2089】入场时，使当前对方场上【sts2088】的[可用次数]+1;；‹1水元素›：装备有此牌的【hro】所生成的【sts2089】初始[持续回合]+1。',
@@ -2459,13 +2526,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         }
     //     }),
 
-    // 754: () => new GICard(754, '神性之陨', '{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn3040】，则我方角色进行[下落攻击]时造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png',
-    //     3, 6, 0, [6, 7], 1505, 1, (_card, event) => {
-    //         const { summons = [], isFallAtk = false } = event;
-    //         if (summons.some(smn => smn.id == 3040) && isFallAtk) return { trigger: ['skilltype1', 'other-skilltype1'], addDmgCdt: 1 }
-    //     }),
-
     // 757: () => new GICard(757, '慈惠仁心', '{action}；装备有此牌的【hro】生成的【smn3042】，在[可用次数]仅剩余最后1次时造成的伤害和治疗各+1。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/2b762e3829ac4a902190fde3e0f5377e_8510806015272134296.png',
     //     3, 7, 0, [6, 7], 1604, 1),
@@ -2473,19 +2533,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 760: () => new GICard(760, '在地为化', '{action}；装备有此牌的【hro】在场，【sts2114】触发治疗效果时：生成1个出战角色类型的元素骰。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png',
     //     4, 7, 0, [6, 7], 1605, 2, undefined, { energy: 2 }),
-
-    // 765: () => new GICard(765, '犬奔·疾如风', '{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts2135】，抓1张牌。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png',
-    //     3, 6, 0, [6, 7], 1506, 1, (card, event) => {
-    //         const { heros = [], isSkill = -1 } = event;
-    //         const isUse = isSkill > -1 && heros.find(h => h.isFront)?.outStatus.some(ost => ost.id == 2135) && card.perCnt > 0;
-    //         if (!isUse) return;
-    //         return {
-    //             trigger: ['rock-dmg'],
-    //             execmds: [{ cmd: 'getCard', cnt: 1 }],
-    //             exec: () => { --card.perCnt },
-    //         }
-    //     }, { pct: 1 }),
 
     // 766: () => new GICard(766, '正理', '{action}；装备有此牌的【hro】使用【ski】时，如果消耗了持续回合至少为1的【sts2136】，则总是附属持续回合为3的【sts2136】，并且抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png',
@@ -2579,13 +2626,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png',
     //     1, 2, 0, [6], 1744, 1, (_card, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs, element: 2 }] }), { pct: 1 }),
 
-    // 787: () => new GICard(787, '庄谐并举', '{action}；装备有此牌的【hro】在场时，我方没有手牌，则【sts2198】会使｢普通攻击｣造成的伤害额外+2。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/51cdfbb5318ad7af6ad0eece4ef05423_8606735009174856621.png',
-    //     3, 6, 0, [6, 7], 1507, 2, (_card, { hcards = [] }) => {
-    //         if (hcards.length > 0) return;
-    //         return { trigger: ['skilltype1', 'other-skilltype1'], addDmgCdt: 2 }
-    //     }, { energy: 2 }),
-
     // 788: () => new GICard(788, '预算师的技艺', '{action}；装备有此牌的【hro】在场时，我方触发【sts2202】的效果后：将1张所[舍弃]卡牌的复制加入你的手牌。如果该牌为｢场地｣牌，则使本回合中我方下次打出｢场地｣时少花费2个元素骰。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/10ea9432a97b89788ede72906f5af735_8657249785871520397.png',
     //     3, 7, 0, [6, 7], 1608, 1, undefined, { pct: 1 }),
@@ -2624,17 +2664,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { cmds: [{ cmd: 'addCard', cnt: 4, card: 907 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isSummon == 3063, 1) }
     //     }),
 
-    // 794: () => new GICard(794, '不明流通渠道', '{action}；【装备有此牌的〖hro〗使用技能后：】抓2张【crd913】。(每回合1次)',
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Navia.webp',
-    //     3, 6, 0, [6, 7], 1508, 1, card => {
-    //         if (card.perCnt <= 0) return;
-    //         return {
-    //             trigger: ['skill'],
-    //             execmds: [{ cmd: 'getCard', cnt: 2, card: 913, isAttach: true }],
-    //             exec: () => { --card.perCnt },
-    //         }
-    //     }, { pct: 1 }),
-
     // 795: () => new GICard(795, '冰雅刺剑', '{action}；【装备有此牌的〖hro〗触发【sts2221】后：】使敌方出战角色的【sts2221】层数翻倍。',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_EscadronIce.webp',
     //     3, 4, 0, [6, 7], 1704, 1),
@@ -2646,7 +2675,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { heros = [], summons = [], isExec = false } = event;
             if (!isExec) return;
-            const hidx = heros.findIndex(h => h.id == getHidById(card.id));
+            const hidx = getObjIdxById(heros, getHidById(card.id));
             if (hidx == -1) return;
             const hero = heros[hidx];
             const clocal = hero.tags.pop();
@@ -2659,7 +2688,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 hero.UI.src = hero.UI.srcs[1];
                 nsummonId = 1;
             }
-            const smnIdx = summons.findIndex(smn => smn.id == 112111 + (nsummonId ^ 1));
+            const smnIdx = getObjIdxById(summons, 112111 + (nsummonId ^ 1));
             if (smnIdx > -1) {
                 const useCnt = summons[smnIdx].useCnt;
                 summons.splice(smnIdx, 1, newSummon(ver)(112111 + nsummonId, useCnt));
@@ -2682,11 +2711,16 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [fhidx] = [] } = event;
-            const hidx = heros.findIndex(h => h.id == getHidById(card.id));
+            const hidx = getObjIdxById(heros, getHidById(card.id));
             const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 1 }];
             if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
             return { trigger: ['skilltype2'], cmds }
         }),
+
+    116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
+        .description('对敌方｢出战角色｣造成1点物理伤害，抓1张牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
+        .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] }))
 
 
     // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
@@ -2737,10 +2771,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 910: magicCount(1),
 
     // 911: magicCount(0),
-
-    // 913: () => new GICard(913, '裂晶弹片', '对敌方｢出战角色｣造成1点物理伤害，抓1张牌。',
-    //     '',
-    //     1, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'attack', element: 0, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
 
 }
 

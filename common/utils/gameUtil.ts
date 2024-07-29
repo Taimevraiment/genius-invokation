@@ -1,4 +1,4 @@
-import { Card, Hero, Skill, Status, Summon } from "../../typing";
+import { Card, Hero, Skill } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
@@ -103,24 +103,19 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
     return false;
 }
 
-// 是否含有某状态
-export const hasStatus = (statuses: Status[] | undefined, id: number): boolean => {
-    return !!statuses?.some(s => s.id == id);
+// 是否含有某id
+export const hasObjById = <T extends { id: number }>(obj: T[] | undefined, id: number) => {
+    return !!obj?.some(o => o.id == id);
 }
 
-// 找出某状态
-export const getStatus = (statuses: Status[] | undefined, id: number): Status | undefined => {
-    return statuses?.find(s => s.id == id);
+// 找出含有某id的对象
+export const getObjById = <T extends { id: number }>(obj: T[] | undefined, id: number): T | undefined => {
+    return obj?.find(o => o.id == id);
 }
 
-// 是否有某召唤物
-export const hasSummon = (summons: Summon[], id: number): boolean => {
-    return summons.some(s => s.id == id);
-}
-
-// 找出某召唤物
-export const getSummon = (summons: Summon[], id: number): Summon | undefined => {
-    return summons.find(s => s.id == id);
+// 找出某id所在队列序号
+export const getObjIdxById = <T extends { id: number }>(obj: T[] | undefined, id: number): number => {
+    return obj?.findIndex(o => o.id == id) ?? -1;
 }
 
 // 根据id提取角色id

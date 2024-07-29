@@ -3,7 +3,7 @@ import {
     CARD_SUBTYPE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getStatus, hasStatus } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 import { newSummon } from "./summons.js";
@@ -293,7 +293,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。(生成此出战状态的技能，也会触发此效果)；【重复生成此出战状态时：】累积2枚｢晚星｣。')
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1, trigger = '', card } = event;
-            const addCnt = heros[hidx]?.id == 1009 && trigger == 'skilltype2' ? 2 : 0;
+            const addCnt = heros[hidx]?.id == getHidById(status.id) && trigger == 'skilltype2' ? 2 : 0;
             const isDmg = status.useCnt + addCnt >= 4;
             const isTalent = !!heros?.find(h => h.id == getHidById(status.id))?.talentSlot || card?.id == 211091;
             return {
@@ -412,7 +412,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event = {}, ver) => {
             const { isChargedAtk, eheros = [], trigger = '' } = event;
             const efHero = eheros.find(h => h.isFront);
-            const isDuanliu = hasStatus(efHero?.heroStatus, 112043);
+            const isDuanliu = hasObjById(efHero?.heroStatus, 112043);
             const [afterIdx = -1] = getBackHidxs(eheros);
             const isPenDmg = status.perCnt > 0 && isDuanliu && afterIdx > -1 && trigger == 'skill';
             return {
@@ -437,7 +437,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event = {}, ver) => {
             const { heros = [], hidx = -1, eheros = [], hidxs, trigger = '' } = event;
             const triggers: Trigger[] = ['killed'];
-            const isTalent = trigger == 'phase-end' && !!eheros.find(h => h.id == 1106)?.talentSlot && (ver < 'v4.1.0' || heros[hidx].isFront);
+            const isTalent = trigger == 'phase-end' && !!getObjById(eheros, getHidById(status.id))?.talentSlot && (ver < 'v4.1.0' || heros[hidx].isFront);
             if (isTalent) triggers.push('phase-end');
             return {
                 trigger: triggers,
@@ -514,7 +514,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => {
                 --status.useCnt;
                 const { heros = [], hidx = -1 } = event;
-                const sts112071 = getStatus(heros[hidx].heroStatus, 112071);
+                const sts112071 = getObjById(heros[hidx].heroStatus, 112071);
                 if (sts112071) sts112071.useCnt = 0;
             }
         })),
@@ -576,7 +576,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: (eStatus, execEvent = {}) => {
                     const { heros: hs = [] } = execEvent;
                     if (eStatus) --eStatus.useCnt;
-                    if (hs.find(h => h.id == hid)?.isFront) {
+                    if (getObjById(hs, hid)?.isFront) {
                         return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(112102)] }] }
                     }
                 },
@@ -795,12 +795,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event = {}) => {
             const { restDmg = 0, heros = [] } = event;
             const hid = getHidById(status.id);
-            const hero = heros.find(h => h.id == hid);
+            const hero = getObjById(heros, hid);
             if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
             --status.useCnt;
             return {
                 pdmg: isCdt(hero.hp >= 7, 1),
-                hidxs: isCdt(hero.hp >= 7, [heros.findIndex(h => h.id == hid)]),
+                hidxs: isCdt(hero.hp >= 7, [getObjIdxById(heros, hid)]),
                 restDmg: restDmg - 1,
             }
         }),
@@ -942,7 +942,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => {
                 --status.useCnt;
                 const { heros = [], hidx = -1 } = event;
-                const sts114051 = getStatus(heros[hidx].heroStatus, 114051);
+                const sts114051 = getObjById(heros[hidx].heroStatus, 114051);
                 if (sts114051) sts114051.useCnt = 0;
             }
         })),
@@ -1080,7 +1080,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色使用〖ski,1〗时：】少花费1个[风元素骰]。；【[可用次数]：{useCnt}】；【所附属角色不再附属〖sts115041〗时：】移除此效果。')
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1, isMinusDiceSkill = false, trigger = '' } = event;
-            const hasSts115041 = getStatus(heros[hidx]?.heroStatus, 115041);
+            const hasSts115041 = getObjById(heros[hidx]?.heroStatus, 115041);
             const triggers: Trigger[] = ['skilltype2'];
             if (trigger == 'phase-end' && (hasSts115041?.roundCnt ?? 0) <= 1) triggers.push('phase-end');
             return {
@@ -1218,6 +1218,122 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
+    116011: () => new StatusBuilder('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
+        .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
+            const { restDmg = -1, heros = [] } = event;
+            if (restDmg > -1) {
+                if (restDmg < 2) return { restDmg }
+                --status.useCnt;
+                return { restDmg: restDmg - 1 }
+            }
+            if (!getObjById(heros, getHidById(status.id))?.talentSlot) return;
+            return { trigger: ['Geo-dmg'], addDmgCdt: 1 }
+        }),
+
+    116021: () => new StatusBuilder('护体岩铠').combatStatus().useCnt(2).type(STATUS_TYPE.Shield)
+        .description('为我方出战角色提供2点[护盾]。此[护盾]耗尽前，我方受到的[物理伤害]减半。(向上取整)')
+        .handle((_status, event = {}) => {
+            const { restDmg = 0, dmgElement } = event;
+            if (restDmg < 2 || dmgElement != DAMAGE_TYPE.Physical) return { restDmg }
+            return { restDmg: Math.ceil(restDmg / 2) }
+        }),
+
+    116022: () => new StatusBuilder('大扫除').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
+        .description('【角色使用｢普通攻击｣时：】少花费1个[岩元素骰]。(每回合1次)；角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】')
+        .handle((status, event = {}) => ({
+            addDmgType1: 2,
+            minusDiceSkill: isCdt(status.perCnt > 0, { skilltype1: [1, 0, 0] }),
+            trigger: ['skilltype1'],
+            attachEl: ELEMENT_TYPE.Geo,
+            exec: () => {
+                if (status.perCnt > 0 && event.isMinusDiceSkill) --status.perCnt;
+            },
+        })),
+
+    116032: () => shieldStatus('玉璋护盾'),
+
+    116033: () => new StatusBuilder('石化').heroStatus().icon('ski,3').roundCnt(1).iconBg(DEBUFF_BG_COLOR)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction)
+        .description('【角色无法使用技能。】(持续到回合结束)'),
+
+    116051: () => new StatusBuilder('阿丑').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
+        .handle((status, event = {}) => {
+            const { restDmg = 0, summon } = event;
+            if (restDmg <= 0) return { restDmg }
+            --status.useCnt;
+            if (summon) --summon.useCnt;
+            return { restDmg: restDmg - 1 }
+        }),
+
+    116053: () => new StatusBuilder('怒目鬼王').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
+        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)')
+        .description('所附属角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)', 'v4.2.0')
+        .handle((status, _, ver) => ({
+            addDmgType1: ver < 'v4.2.0' ? 2 : 1,
+            attachEl: ELEMENT_TYPE.Geo,
+            trigger: ['skilltype1'],
+            exec: () => {
+                if (status.perCnt <= 0) return;
+                --status.perCnt;
+                return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(116054)] }] }
+            }
+        })),
+
+    116054: () => new StatusBuilder('乱神之怪力').heroStatus().icon('buff4').useCnt(1).maxCnt(3).type(STATUS_TYPE.AddDamage)
+        .description('【所附属角色进行[重击]时：】造成的伤害+1。如果[可用次数]至少为2，则还会使本技能少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)')
+        .handle((status, event = {}) => {
+            if (!event.isChargedAtk) return;
+            return {
+                addDmgCdt: 1,
+                minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype1: [0, 1, 0] }),
+                trigger: ['skilltype1'],
+                exec: () => { --status.useCnt },
+            }
+        }),
+
+    116061: () => new StatusBuilder('大将旗指物').heroStatus().icon('ski,1').roundCnt(2).maxCnt(3).type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
+        .description('我方角色造成的[岩元素伤害]+1。；【[持续回合]：{roundCnt}】(可叠加，最多叠加到3回合)')
+        .handle((_status, event = {}) => {
+            const { skilltype = -1 } = event;
+            return {
+                trigger: skilltype != -1 ? ['Geo-dmg'] : [],
+                addDmgCdt: 1,
+            }
+        }),
+
+    116071: () => readySkillShieldStatus('旋云护盾'),
+
+    116072: () => new StatusBuilder('长枪开相').heroStatus().icon('buff3').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+        .description('本角色将在下次行动时，直接使用技能：【rsk16074】。')
+        .handle((status, event = {}) => ({
+            trigger: ['change-from', 'useReadySkill'],
+            skill: 16074,
+            exec: () => {
+                --status.useCnt;
+                const { heros = [], hidx = -1 } = event;
+                const sts116071 = getObjById(heros[hidx].heroStatus, 116071);
+                if (sts116071) sts116071.useCnt = 0;
+            }
+        })),
+
+    116073: (useCnt: number = 1) => new StatusBuilder('飞云旗阵').combatStatus().icon('ski,1').useCnt(useCnt).maxCnt(4)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .description('我方角色进行｢普通攻击｣时：如果我方手牌数量不多于1，则此技能少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加，最多叠加到4次)】')
+        .description('我方角色进行｢普通攻击｣时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加，最多叠加到4次)】', 'v4.8.0')
+        .handle((status, event = {}, ver) => {
+            const { hcardsCnt = 10, heros = [] } = event;
+            return {
+                trigger: ['skilltype1'],
+                minusDiceSkill: isCdt(hcardsCnt <= 1, { skilltype1: [0, 0, 1] }),
+                addDmgType1: isCdt(ver < 'v4.8.0', 1),
+                addDmgCdt: isCdt(hcardsCnt == 0 && !!getObjById(heros, getHidById(status.id))?.talentSlot, 2),
+                exec: () => { --status.useCnt }
+            }
+        }),
+
+    116084: () => enchantStatus(ELEMENT_TYPE.Geo).roundCnt(2),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
@@ -1333,21 +1449,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2026: (useCnt: number) => new GIStatus(2026, '千岩之护', '根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。', '', 0, [7], useCnt, 0, -1),
 
-    // 2027: () => new GIStatus(2027, '璇玑屏', '【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
-    //     '', 1, [2, 6], 2, 0, -1, (status, event = {}) => {
-    //         const { restDmg = -1, heros = [] } = event;
-    //         if (restDmg > -1) {
-    //             if (restDmg < 2) return { restDmg }
-    //             --status.useCnt;
-    //             return { restDmg: restDmg - 1 }
-    //         }
-    //         if (!heros.find(h => h.id == 1501)?.talentSlot) return;
-    //         return {
-    //             trigger: ['rock-dmg'],
-    //             addDmgCdt: 1,
-    //         }
-    //     }),
-
     // 2028: () => new GIStatus(2028, '新叶', '【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。(每回合1次)；【[持续回合]：{roundCnt}】',
     //     'buff6', 1, [1], 1, 0, 1, () => ({
     //         damage: 1,
@@ -1396,27 +1497,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         trigger: ['elReaction'],
     //         exec: () => { --status.useCnt },
     //     })),
-
-    // 2036: () => new GIStatus(2036, '护体岩铠', '为我方出战角色提供2点[护盾]。此[护盾]耗尽前，我方受到的[物理伤害]减半。(向上取整)',
-    //     '', 1, [7], 2, 0, -1, (_status, event = {}) => {
-    //         const { restDmg = 0, willAttach = -1 } = event;
-    //         if (restDmg < 2 || willAttach > 0) return { restDmg }
-    //         return { restDmg: Math.ceil(restDmg / 2) }
-    //     }),
-
-    // 2037: () => new GIStatus(2037, '大扫除', '【角色使用｢普通攻击｣时：】少花费1个[岩元素骰]。(每回合1次)；角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】',
-    //     'ski1502,2', 0, [6, 8], -1, 0, 2, (status, event = {}) => {
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] }, () => status.perCnt > 0);
-    //         return {
-    //             addDmgType1: 2,
-    //             ...minusSkillRes,
-    //             trigger: ['skilltype1'],
-    //             attachEl: 6,
-    //             exec: () => {
-    //                 if (status.perCnt > 0 && isMinusSkill) --status.perCnt;
-    //             },
-    //         }
-    //     }, { pct: 1, icbg: STATUS_BG_COLOR[6] }),
 
     // 2042: (summonId: number) => new GIStatus(2042, '纯水幻形·蛙', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
     //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
@@ -1584,39 +1664,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301104: (name: string) => senlin1Sts(name),
 
-    // 2068: () => new GIStatus(2068, '乱神之怪力', '【所附属角色进行[重击]时：】造成的伤害+1。如果[可用次数]至少为2，则还会使本技能少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)',
-    //     'buff4', 0, [6], 1, 3, -1, (status, event = {}) => {
-    //         if (!event.isChargedAtk) return;
-    //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 1, 0] }, () => status.useCnt >= 2);
-    //         return {
-    //             addDmgCdt: 1,
-    //             ...minusSkillRes,
-    //             trigger: ['skilltype1'],
-    //             exec: () => { --status.useCnt },
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[6] }),
-
-    // 2069: () => new GIStatus(2069, '怒目鬼王', '所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】；【所附属角色｢普通攻击｣后：】为其附属【sts2068】。(每回合1次)',
-    //     'ski1503,2', 0, [6, 8], -1, 0, 2, status => ({
-    //         addDmgType1: 1,
-    //         attachEl: 6,
-    //         trigger: ['skilltype1'],
-    //         exec: () => {
-    //             if (status.perCnt <= 0) return;
-    //             --status.perCnt;
-    //             return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2068)] }] }
-    //         }
-    //     }), { icbg: STATUS_BG_COLOR[6], pct: 1 }),
-
-    // 2070: (summonId: number) => new GIStatus(2070, '阿丑', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
-    //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
-    //         const { restDmg = 0, summon } = event;
-    //         if (restDmg <= 0) return { restDmg }
-    //         --status.useCnt;
-    //         if (summon) --summon.useCnt;
-    //         return { restDmg: restDmg - 1 }
-    //     }, { smnId: summonId }),
-
     // 2071: () => new GIStatus(2071, '通塞识', '【所附属角色进行[重击]时：】造成的[物理伤害]变为[草元素伤害]，并且会在技能结算后召唤【smn3027】。；【[可用次数]：{useCnt}】',
     //     'buff', 0, [16], 3, 0, -1, (status, event = {}) => {
     //         if (!event.isChargedAtk) return;
@@ -1643,10 +1690,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             return { switchHeroDiceCnt: Math.max(0, switchHeroDiceCnt - 1) }
     //         }
     //     })),
-
-    // 2086: () => shieldStatus(2086, '玉璋护盾'),
-
-    // 2087: () => new GIStatus(2087, '石化', '【角色无法使用技能。】(持续到回合结束)', 'ski1504,3', 0, [3, 10, 14], -1, 0, 1, undefined, { icbg: DEBUFF_BG_COLOR }),
 
     // 2088: () => new GIStatus(2088, '蕴种印', '【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；【[可用次数]：{useCnt}】',
     //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp',
@@ -1828,15 +1871,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     // 2126: () => card587sts(3),
 
     // 2127: () => card587sts(4),
-
-    // 2135: () => new GIStatus(2135, '大将旗指物', '我方角色造成的[岩元素伤害]+1。；【[持续回合]：{roundCnt}】(可叠加，最多叠加到3回合)',
-    //     'ski1506,1', 0, [3, 6], -1, 3, 2, (_status, event = {}) => {
-    //         const { isSkill = -1 } = event;
-    //         return {
-    //             trigger: isSkill > -1 ? ['rock-dmg'] : [],
-    //             addDmgCdt: 1,
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[6] }),
 
     // 2136: (rcnt = 2) => new GIStatus(2136, '琢光镜', '角色造成的[物理伤害]变为[草元素伤害]。；【角色｢普通攻击｣后：】造成1点[草元素伤害]。如果此技能为[重击]，则使此状态的[持续回合]+1。；【[持续回合]：{roundCnt}】(可叠加，最多叠加到3回合)',
     //     'ski1606,2', 0, [1, 8], -1, 3, rcnt, (status, event = {}) => {
@@ -2333,33 +2367,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //     }),
 
     // 2191: () => new GIStatus(2191, '火之新生·锐势', '角色造成的[火元素伤害]+1。', 'buff4', 0, [6, 10], 1, 0, -1, () => ({ addDmg: 1 }), { icbg: STATUS_BG_COLOR[2] }),
-
-    // 2198: (useCnt = 1) => new GIStatus(2198, '飞云旗阵', '我方角色进行｢普通攻击｣时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加，最多叠加到4次)】',
-    //     'ski1507,1', 1, [4, 6], useCnt, 4, -1, (status, event = {}) => {
-    //         const { hcardsCnt = 10, heros = [] } = event;
-    //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] }, () => hcardsCnt <= 1);
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             ...minusSkillRes,
-    //             addDmgType1: 1,
-    //             addDmgCdt: isCdt(hcardsCnt == 0 && !!heros.find(h => h.id == 1507)?.talentSlot, 2),
-    //             exec: () => { --status.useCnt }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[6] }),
-
-    // 2200: () => readySkillShieldStatus(2200, '旋云护盾'),
-
-    // 2201: () => new GIStatus(2201, '长枪开相', '本角色将在下次行动时，直接使用技能：【rsk21】。',
-    //     'buff3', 0, [10, 11], 1, 0, -1, (status, event = {}) => ({
-    //         trigger: ['change-from', 'useReadySkill'],
-    //         skill: 21,
-    //         exec: () => {
-    //             --status.useCnt;
-    //             const { heros = [], hidx = -1 } = event;
-    //             const sts2200 = heros[hidx].inStatus.find(ist => ist.id == 2200);
-    //             if (sts2200) sts2200.useCnt = 0;
-    //         }
-    //     })),
 
     // 2202: (useCnt = 1) => new GIStatus(2202, '迸发扫描', '【双方选择行动前：】如果我方场上存在【sts2005】或【smn3043】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；【[可用次数]：{useCnt}(可叠加，最多叠加到3次)】',
     //     'ski1608,1', 1, [1], useCnt, 3, -1, (_status, event = {}) => {

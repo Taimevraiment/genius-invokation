@@ -409,12 +409,19 @@ export default class GeniusInvokationClient {
                 this.damageVO.willDamages = damageVO?.willDamages ?? [];
                 this.damageVO.willHeals = damageVO?.willHeals ?? [];
                 if (damageVO?.dmgSource == 'summon') {
-                    this.summonSelect[+(damageVO.atkPidx == this.playerIdx)][-damageVO.atkHidx] = true;
+                    const [saidx, suidx] = damageVO.selected ?? [-1, -1];
+                    this.summonSelect[+(saidx == this.playerIdx)][suidx] = true;
+                } else if (damageVO?.dmgSource == 'status') {
+                    // const [saidx, group, suidx] = damageVO.selected ?? [-1, -1, -1];
+                    // this.statusSelect[+(saidx == this.playerIdx)][group][suidx] = true;
                 }
                 setTimeout(() => {
                     this.isShowDmg = false;
                     if (damageVO?.dmgSource == 'summon') {
-                        this.summonSelect[+(damageVO.atkPidx == this.playerIdx)][-damageVO.atkHidx] = false;
+                        const [saidx, suidx] = damageVO.selected ?? [-1, -1];
+                        this.summonSelect[+(saidx == this.playerIdx)][suidx] = false;
+                    } else if (damageVO?.dmgSource == 'status') {
+                        // const [saidx, group, suidx] = damageVO.selected ?? [-1, -1, -1];
                     }
                     setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);

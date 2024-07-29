@@ -161,6 +161,7 @@ type DamageVO = {
     willDamages: number[][], // 造成伤害
     dmgElements: DamageType[], // 元素伤害类型
     elTips: [string, PureElementType, PureElementType][], // 元素反应提示
+    selected?: number[], // 伤害来源闪光(状态/召唤物)
 } | -1;
 
 type TrgElRe = keyof typeof SWIRL_ELEMENT;

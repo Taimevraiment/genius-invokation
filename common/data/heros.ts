@@ -1,7 +1,7 @@
-import { Cmds, Hero, Status } from '../../typing';
+import { Hero, Status } from '../../typing';
 import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getMaxHertHidxs, getStatus, getSummon, hasStatus, hasSummon } from '../utils/gameUtil.js';
+import { allHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { Skill1Builder, SkillBuilder } from './builder/skillBuilder.js';
@@ -34,9 +34,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/d/de/d7vartodjuo8s7k0fkp6qsl09brzcvy.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/a4c1f60fc2461f2853edb4e765ba4262_6013693059397455292.png')
                 .normal().damage(2).cost(5).handle(event => {
-                    const { hero: { skills: [, , { useCnt }], talentSlot }, card } = event;
-                    const isTalent = useCnt > 0 && (!!talentSlot || card?.id == 211011);
-                    return { pdmg: isTalent ? 3 : 2 }
+                    const { hero: { skills: [, , { useCnt }] }, isTalent } = event;
+                    return { pdmg: useCnt > 0 && isTalent ? 3 : 2 }
                 }),
             new SkillBuilder('降众天华').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn111011】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fc/jwj2u3ksefltv5hz9y5zjz3p1p7f8n7.png',
@@ -53,11 +52,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('猫爪冻冻').description('{dealDmg}，生成【sts111021】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1e/293bqkk7gcer933p14viqh445sdwqzf.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/fc7cc8ae1d95bc094e69b8f3c1c270f8_1908586115904037757.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 211021;
-                    return { status: [newStatus(ver)(111021, isTalent)] };
-                }),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111021, event.isTalent)] })),
             new SkillBuilder('最烈特调').description('{dealDmg}，治疗此角色2点，召唤【smn111023】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3a/gltxegl17e1mwhv3z3xdakycst8h5sg.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/d749ae8a4ce1c2693106ef4a39430ff7_1792825158969730188.png')
@@ -87,11 +82,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('重华叠霜').description('{dealDmg}，生成【sts111041】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/90fe50a43ea7905773df4433d385e4d9_8501818730448316824.png')
-                .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 211041;
-                    return { status: [newStatus(ver)(111041, isTalent)] }
-                }),
+                .elemental().damage(3).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111041, event.isTalent)] })),
             new SkillBuilder('云开星落').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/0/01/5vyck7f9rpns92tfop3r41xr1aats4u.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0bddb45b9d91fb892ddaf2e8eb1e04a8_1565971516954358022.png')
@@ -133,7 +124,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/7cd81d9357655d9c620f961bb8d80b59_6750120717511006729.png')
                 .elemental().damage(2).cost(3).handle((event, ver) => {
                     const { hero: { heroStatus } } = event;
-                    return { status: isCdt(!hasStatus(heroStatus, 111061), [newStatus(ver)(111061)]) }
+                    return { status: isCdt(!hasObjById(heroStatus, 111061), [newStatus(ver)(111061)]) }
                 }),
             new SkillBuilder('凝浪之光剑').description('{dealDmg}，召唤【smn111062】。')
                 .src('https://patchwiki.biligame.com/images/ys/a/aa/1qme7ho5ktg0yglv8mv7a2xf0i7w6fu.png',
@@ -149,11 +140,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('仰灵威召将役咒').description('{dealDmg}，生成【sts111071】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c7750c7dbf76e9e3dffa7df162028a4d_5325191736377199101.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 211071;
-                    return { status: [newStatus(ver)(111071, isTalent)] }
-                }),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111071, event.isTalent)] })),
             new SkillBuilder('神女遣灵真诀').description('{dealDmg}，召唤【smn111073】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/49/cquyhtfdkpk25f0sk3afsnb5j502yhk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/89e2ed92b6352a5925652f421aaddbaa_7169125488313816137.png')
@@ -179,7 +166,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const isExecTalent = hidxs.length > 0 && talent && talent.perCnt > 0;
                     return {
                         status: [newStatus(ver)(111082)],
-                        cmds: isCdt<Cmds[]>(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
+                        cmds: isCdt(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
                         ...(isExecTalent ? { heal: 1.7, hidxs } : {}),
                         exec: () => {
                             if (isExecTalent) --talent.perCnt;
@@ -266,11 +253,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('画雨笼山').description('{dealDmg}，本角色[附着水元素]，生成【sts112021】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/9f/n2lo8l7ov8w0bx2jwh5qcvmmflm8wbs.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/6ebbfb60e7eee60282022e0c935672dd_2463677033991737689.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 212021;
-                    return { status: [newStatus(ver)(112021, isTalent)], isAttach: true }
-                }),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(112021, event.isTalent)], isAttach: true })),
             new SkillBuilder('裁雨留虹').description('{dealDmg}，本角色[附着水元素]，生成【sts112022】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fb/rj85t7tm68l6y8yyuvryh2hagcz1g3b.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/c8eb10016106e63120b6b5c92fcb2a5e_1562905905897327561.png')
@@ -310,7 +293,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/393b86b2158acd396af9fe09f9cd887c_8219782349327935117.png')
                 .elemental().damage(2).cost(3).handle((event, ver) => {
                     const { hero: { heroStatus } } = event;
-                    const sts112041 = heroStatus.findIndex(ist => ist.id == 112041);
+                    const sts112041 = getObjIdxById(heroStatus, 112041);
                     return {
                         status: [newStatus(ver)(112042)],
                         statusOppo: [newStatus(ver)(112043)],
@@ -325,7 +308,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/de5fd6fc3f4530233cba1774deea0706_8854785564582245062.png')
                 .burst(3).damage(5).damage(4, 'v4.1.0').cost(3).handle((event, ver) => {
                     const { hero: { heroStatus } } = event;
-                    if (hasStatus(heroStatus, 112042)) return { addDmgCdt: ver < 'v4.1.0' ? 3 : 2 }
+                    if (hasObjById(heroStatus, 112042)) return { addDmgCdt: ver < 'v4.1.0' ? 3 : 2 }
                     return { statusOppo: [newStatus(ver)(112043)], cmds: [{ cmd: 'getEnergy', cnt: 2 }] }
                 }),
             new SkillBuilder('遏浪').description('战斗开始时，初始附属【sts112041】。；角色所附属的【sts112042】效果结束时，重新附属【sts112041】。')
@@ -348,9 +331,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/7/7a/a5apmahnio46pxnjy2ejzd7hgts9a7i.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/c9160408f2b03a1b2cedb046aa09f3be_3291666669631292065.png')
                 .burst(2).damage(2).damage(3, 'v3.6.0').cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card, summons = [], heros = [] } = event;
-                    const smn112051 = getSummon(summons, 112051);
-                    const isTalent = !!talentSlot || card?.id == 212051;
+                    const { isTalent, summons = [], heros = [] } = event;
+                    const smn112051 = getObjById(summons, 112051);
                     const summon = isCdt(ver >= 'v4.2.0' && isTalent && !smn112051, [newSummon(ver)(112051, 1)]);
                     if (isTalent && smn112051) ++smn112051.useCnt;
                     return {
@@ -388,11 +370,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('圣仪·灰鸰衒潮').description('{dealDmg}，生成【sts112072】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fc/ipi3ncx8dl44m9og51z6g72pu1mux41.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/65b29af9633d647a90b9ff0acd90d750_1308512450439952516.png')
-                .burst(2).damage(2).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 212071;
-                    return { status: [newStatus(ver)(112072, isTalent)] }
-                })
+                .burst(2).damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(112072, event.isTalent)] }))
         ),
 
     1208: () => new HeroBuilder(16).name('妮露').since('v4.2.0').sumeru().hydro().sword()
@@ -456,7 +434,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .skill1(new Skill1Builder('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
             .handle(event => {
                 const { hero: { skills: [skill1] }, hcards = [] } = event;
-                if (skill1.perCnt == 0 || hcards.some(c => c.id == 112113)) return;
+                if (skill1.perCnt == 0 || hasObjById(hcards, 112113)) return;
                 return { cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }], exec: () => { --skill1.perCnt } }
             }))
         .skills(
@@ -497,11 +475,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('锅巴出击').description('召唤【smn113021】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e0/ioytpg3b208mckx76izeidcojyybs0g.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/eff41796c703a21e367766cd96ccfefc_4096903365398601995.png')
-                .elemental().cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 213021;
-                    return { summon: [newSummon(ver)(113021)], addDmgCdt: isCdt(isTalent, 1) }
-                }),
+                .elemental().cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(113021)], addDmgCdt: isCdt(event.isTalent, 1) })),
             new SkillBuilder('旋火轮').description('{dealDmg}，生成【sts113022】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8f/abxrclvx2nuyo4rsvbq1rxlcb2vcqh6.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c324cd014801eaea70ee05529d9ba3ff_2574087438784210727.png')
@@ -520,11 +494,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('美妙旅程').description('{dealDmg}，生成【sts113031】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/13/avxfgtbz3r8qu7zk71dcr8kk3e949zi.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6cdff59fc3701119002ab7cb38157a2c_8058649649755407178.png')
-                .burst(2).damage(2).cost(4).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 213031;
-                    return { statusPre: [newStatus(ver)(113031, isTalent)] }
-                })
+                .burst(2).damage(2).cost(4).handle((event, ver) => ({ statusPre: [newStatus(ver)(113031, event.isTalent)] }))
         ),
 
     1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').mondstadt().pyro().bow()
@@ -550,11 +520,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('焰硝庭火舞').description('本角色附属【sts113051】。(此技能不产生[充能])')
                 .src('https://patchwiki.biligame.com/images/ys/4/4d/nxz4yj425tcxv3bevn05eu33wrqv2jr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/cec17a1d299dd83a96a4e2e791a21da4_3223499260532391975.png')
-                .elemental().cost(1).energy(-1).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 213051;
-                    return { status: [newStatus(ver)(113051, isTalent)] }
-                }),
+                .elemental().cost(1).energy(-1).handle((event, ver) => ({ status: [newStatus(ver)(113051, event.isTalent)] })),
             new SkillBuilder('琉金云间草').description('{dealDmg}，生成【sts113052】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/22/p14o20u95t6u0b4hngqf8hhku0r1krx.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/938ac8f32d0998f3c896b862d0791b56_7334292135415645740.png')
@@ -570,11 +536,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('蹦蹦炸弹').description('{dealDmg}，本角色附属【sts113061】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/99/eqni0xudmuxvbflx6kviz8l793fju23.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/4409746db70c242861fb0a6addafd850_1072795968508012901.png')
-                .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 213061;
-                    return { status: [newStatus(ver)(113061, isTalent)] }
-                }),
+                .elemental().damage(3).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(113061, event.isTalent)] })),
             new SkillBuilder('轰轰火花').description('{dealDmg}，在对方场上生成【sts113063】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/28/s88qf6z943kpscss1oye99kmccz2y10.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/01/18/12109492/3f4f659ff99b2435aa3662f4d17d537d_4727800863330247216.png')
@@ -625,7 +587,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/b590f6bfaf00c68987b204aa33e937aa_4421699992460567189.png')
                 .elemental().cost(3).handle((event, ver) => {
                     const { summons = [] } = event;
-                    const isSmned = hasSummon(summons, 113093);
+                    const isSmned = hasObjById(summons, 113093);
                     return { summon: [newSummon(ver)(113093)], addDmgCdt: isCdt(isSmned, 1) }
                 }),
             new SkillBuilder('炎啸狮子咬').description('{dealDmg}，然后[准备技能]：【rsk13095】。')
@@ -668,11 +630,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('真红炽火之大铠').description('{dealDmg}，生成【sts113111】和【sts113112】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/21/a47iyqyy205fi0kyn38tmakcinh281j.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/7d6cb477d20cd8b75925ce62d3b73e8e_5295401799072493605.png')
-                .burst(2).damage(2).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 213111;
-                    return { status: [newStatus(ver)(113111), newStatus(ver)(113112, isTalent)] }
-                })
+                .burst(2).damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(113111), newStatus(ver)(113112, event.isTalent)] }))
         ),
 
     1312: () => new HeroBuilder(365).name('辛焱').since('v4.7.0').liyue().pyro().claymore()
@@ -732,11 +690,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('夜巡影翼').description('{dealDmg}，召唤【smn114011】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/29/9ikuan4r5rhgza5nlxl86m718d3zmtt.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/4ab444ac20da8ea0990ff891600596ed_358383106993654545.png')
-                .elemental().damage(1).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 214011;
-                    return { summon: [newSummon(ver)(114011, isTalent)] }
-                }),
+                .elemental().damage(1).cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(114011, event.isTalent)] })),
             new SkillBuilder('至夜幻现').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/5/5e/oi2xpx4ad1wuo0g4nozm1yqfxzmzrut.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bac9b0ca7056b02ffac854871d7cb0e0_7559183843121315562.png')
@@ -767,11 +721,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c351b44d3163278214f6f9db09c020fd_3304441541356399096.png')
                 .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card, hcards = [] } = event;
-                    const isTalent = +(!!talentSlot || card?.id == 214031);
-                    const hasCard114031 = hcards.some(c => c.id == 114031);
+                    const { isTalent = false, card, hcards = [] } = event;
+                    const hasCard114031 = hasObjById(hcards, 114031);
                     return {
-                        status: isCdt(card?.id == 114031 || hasCard114031, [newStatus(ver)(114032, isTalent)]),
+                        status: isCdt(card?.id == 114031 || hasCard114031, [newStatus(ver)(114032, +isTalent)]),
                         cmds: isCdt(hasCard114031, [{ cmd: 'discard', card: 114031 }], [{ cmd: 'getCard', cnt: 1, card: 114031 }]),
                     }
                 }),
@@ -809,9 +762,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/e/e5/k9meeap7ei7ox3q9yx4b6803v79m6om.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/ab87d12b9075094e4ddc0637d3d938ba_5680751413245970029.png')
                 .elemental().cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
+                    const { isTalent } = event;
                     const status = [newStatus(ver)(114051), newStatus(ver)(114055)];
-                    if (ver >= 'v4.2.0' && (!!talentSlot || card?.id == 214051)) status.push(newStatus(ver)(114052));
+                    if (ver >= 'v4.2.0' && isTalent) status.push(newStatus(ver)(114052));
                     return { status }
                 }),
             new SkillBuilder('斫雷').description('{dealDmg}，生成【sts114053】。')
@@ -850,8 +803,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(4).handle(event => {
                     const { heros = [], card, hero: { talentSlot, heroStatus } } = event;
                     const hidxs: number[] = heros.filter(v => !v.isFront).map(v => v.hidx);
-                    const isTalent = talentSlot != null || card?.id == 740;
-                    const sts114072 = getStatus(heroStatus, 114072);
+                    const isTalent = talentSlot != null || card?.id == 214071;
+                    const sts114072 = getObjById(heroStatus, 114072);
                     return {
                         addDmgCdt: (sts114072?.useCnt ?? 0) * (isTalent ? 2 : 1),
                         cmds: [{ cmd: 'getEnergy', cnt: 2, hidxs }],
@@ -876,13 +829,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/e/ea/8y36keriq61eszpx5mm5ph7fvwa07ad.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b5ebdd77cfd7a6e12d1326c08e8f9214_6239158387266355120.png')
                 .burst(2).damage(4).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card, summons = [] } = event;
-                    const status114081Idx = summons.findIndex(smn => smn.id == 114081);
+                    const { isTalent, summons = [] } = event;
+                    const smn114081Idx = getObjIdxById(summons, 114081);
                     let status: Status[] = [];
-                    if (status114081Idx > -1) {
-                        summons.splice(status114081Idx, 1);
+                    if (smn114081Idx > -1) {
+                        summons.splice(smn114081Idx, 1);
                         status.push(newStatus(ver)(114083));
-                        if (!!talentSlot || card?.id == 214081) status.push(newStatus(ver)(114082));
+                        if (isTalent) status.push(newStatus(ver)(114082));
                     }
                     return { status }
                 })
@@ -899,7 +852,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/bb9487283d20c857804988ace8572ebc_971397791433710881.png')
                 .elemental().damage(2).cost(3).handle((event, ver) => {
                     const { eheros = [] } = event;
-                    const status114091 = getStatus(eheros.find(h => h.isFront)?.heroStatus, 114091);
+                    const status114091 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 114091);
                     const addDmgCdt = status114091?.useCnt ?? 0;
                     if (status114091) status114091.useCnt = 0;
                     return { statusOppo: isCdt(!status114091, [newStatus(ver)(114091)]), addDmgCdt }
@@ -925,10 +878,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('卡萨扎莱宫的无微不至').description('{dealDmg}，召唤【smn114102】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b7/pzuxl8ukf3do834omkdzx5p8yfape0u.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/a1870db7855c7037f700f74152d1f28e_1635879084262346523.png')
-                .burst(2).damage(1).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    return { summon: [newSummon(ver)(114102, !!talentSlot || card?.id == 214101)] }
-                })
+                .burst(2).damage(1).cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(114102, event.isTalent)] }))
         ),
 
     1411: () => new HeroBuilder(348).name('久岐忍').since('v4.6.0').inazuma().electro().sword()
@@ -958,11 +908,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('禁·风灵作成·柒伍同构贰型').description('{dealDmg}，召唤【smn115011】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png')
-                .burst(2).damage(1).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 215011;
-                    return { summonPre: [newSummon(ver)(115011, isTalent)] }
-                })
+                .burst(2).damage(1).cost(3).handle((event, ver) => ({ summonPre: [newSummon(ver)(115011, event.isTalent)] }))
         ),
 
     1502: () => new HeroBuilder(37).name('琴').mondstadt().anemo().sword()
@@ -988,11 +934,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('高天之歌').description('{dealDmg}，生成【sts115031】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/hhb16pe3sq5duv4cu299atxbi78k7ae.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/73d15303525e2658bf60d8336109d92e_404486790465744082.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
-                    const isTalent = !!talentSlot || card?.id == 215031;
-                    return { status: [newStatus(ver)(115031, isTalent)] }
-                }),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(115031, event.isTalent)] })),
             new SkillBuilder('风神之诗').description('{dealDmg}，召唤【smn115034】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/cf/iv3keguj9pqi3blf8j9xk10olca914v.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3e4ec3f94bfd2547b1431d8fa2cd2889_8125698290989309719.png')
@@ -1012,9 +954,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/9/9f/7dxxr4z59ch7bsg0xaoxxi38meuaeff.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/081c165d08ff75ec2f15215cfc892056_2221900956718137863.png')
                 .burst(2).damage(4).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card } = event;
+                    const { isTalent } = event;
                     const status = [newStatus(ver)(115041)];
-                    if (!!talentSlot || card?.id == 215041) status.push(newStatus(ver)(115042));
+                    if (isTalent) status.push(newStatus(ver)(115042));
                     return { status }
                 })
         ),
@@ -1051,7 +993,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/9b7fa91d73564e2cb0cbbbc0d1b75cb3_8357319180909129225.png')
                 .burst(3).damage(7).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
-                    const sts115061 = getStatus(heroStatus, 115061);
+                    const sts115061 = getObjById(heroStatus, 115061);
                     return {
                         addDmgCdt: isCdt(!!sts115061, 1),
                         exec: () => {
@@ -1088,14 +1030,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b2ba9e68ed4a405e54b4786ecac7c3e3.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2d696e8b97e9fe9fb4572a81786780d6_2735599059161740228.png')
                 .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot, hp, skills: [, { useCnt }] }, card } = event;
+                    const { hero: { hp, skills: [, { useCnt }] }, isTalent } = event;
                     const cdt = hp <= 8 && useCnt == 0;
-                    const isTalent = (!!talentSlot || card?.id == 215081) && useCnt == 1;
+                    const hasTalent = isTalent && useCnt == 1;
                     return {
                         heal: isCdt(cdt, 2),
                         status: isCdt(cdt, [newStatus(ver)(115081)]),
-                        addDmgCdt: isCdt(isTalent, 2),
-                        cmds: isCdt(isTalent, [{ cmd: 'switch-before', isOppo: true }]),
+                        addDmgCdt: isCdt(hasTalent, 2),
+                        cmds: isCdt(hasTalent, [{ cmd: 'switch-before', isOppo: true }]),
                     }
                 }),
             new SkillBuilder('魔术·运变惊奇').description('{dealDmg}，召唤【smn115082】。')
@@ -1117,141 +1059,153 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/c/ca/da9v501c8j71zqew4flylr7hmqq5r31.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c992b62ec652ce301ab6e9895aac1284_9109457382282902369.png')
                 .burst(2).damage(1).cost(3).handle((event, ver) => {
-                    const { hero: { talentSlot }, card, summons = [] } = event;
-                    const isTalent = !!talentSlot || card?.id == 215091;
-                    const isExist = summons.some(smn => smn.id == 115093);
+                    const { isTalent, summons = [] } = event;
+                    const isExist = hasObjById(summons, 115093);
                     return {
                         summon: [newSummon(ver)(3058, isTalent)],
-                        cmds: isCdt<Cmds[]>(isTalent && !isExist, [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }])
+                        cmds: isCdt(isTalent && !isExist, [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }])
                     }
                 })
         ),
 
+    1601: () => new HeroBuilder(42).name('凝光').liyue().geo().catalyst()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/69b48f96666e12872c81087955a4abcb.png')
+        .skill1(new Skill1Builder('千金掷'))
+        .skills(
+            new SkillBuilder('璇玑屏').description('{dealDmg}，生成【sts116011】。')
+                .src('https://patchwiki.biligame.com/images/ys/c/c7/fhhajrw49bck487xgc9tm832v1lydan.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e16efaaa1d7a4e0e50c2df84b5870ea3_8679057305261038668.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116011)] })),
+            new SkillBuilder('天权崩玉').description('{dealDmg}，如果【sts116011】在场，就使此伤害+2。')
+                .src('https://patchwiki.biligame.com/images/ys/a/a7/3s4vt3i6mu5kopy55xern2tdvq2tl2a.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2930a6e689cea53607ab586a8cde8c97_8943298426488751810.png')
+                .burst(3).damage(6).cost(3).handle(event => {
+                    const { combatStatus = [] } = event;
+                    return { addDmgCdt: isCdt(hasObjById(combatStatus, 116011), 2) };
+                })
+        ),
 
-    // 1501: () => new GIHero(1501, '凝光', 2, 10, 6, 4,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png',
-    //     skill1('千金掷'), [
-    //     new GISkill('璇玑屏', '造成{dmg}点[岩元素伤害]，生成【sts2027】。', 2, 2, 3, 6, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/c/c7/fhhajrw49bck487xgc9tm832v1lydan.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e16efaaa1d7a4e0e50c2df84b5870ea3_8679057305261038668.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         return { status: [newStatus(ver)(2027)], addDmgCdt: isCdt(!talentSlot && card?.id == 710, 1) };
-    //     }),
-    //     new GISkill('天权崩玉', '造成{dmg}点[岩元素伤害]，如果【sts2027】在场，就使此伤害+2。', 3, 6, 3, 6, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/a/a7/3s4vt3i6mu5kopy55xern2tdvq2tl2a.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2930a6e689cea53607ab586a8cde8c97_8943298426488751810.png',
-    //     ], event => {
-    //         const { hero: { outStatus } } = event;
-    //         return { addDmgCdt: isCdt(outStatus.some(sts => sts.id == 2027), 2) };
-    //     })
-    // ]),
+    1602: () => new HeroBuilder(43).name('诺艾尔').mondstadt().geo().claymore()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e985b9bc4ec19c9e982c5b018ebbd74e_3315904207091435338.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a1163fe769ec8e0e244e952e8f7c9f9d.png')
+        .skill1(new Skill1Builder('西风剑术·女仆'))
+        .skills(
+            new SkillBuilder('护心铠').description('{dealDmg}，生成【sts116021】。')
+                .src('https://patchwiki.biligame.com/images/ys/d/de/bfodvzfdm75orbjztzb2tu29vc1cr2f.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/1b0a3de6e27ee7758a947371fb4789ad_6207555536600733923.png')
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116021)] })),
+            new SkillBuilder('大扫除').description('{dealDmg}，本角色附属【sts116022】。')
+                .src('https://patchwiki.biligame.com/images/ys/6/62/5drxd3veuo8k8peke518xe7kyfxl4yr.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e3847d4db2fd91fcd97388ab950598fd_6553932389060621914.png')
+                .burst(2).damage(4).cost(4).handle((_, ver) => ({ status: [newStatus(ver)(116022)] }))
+        ),
 
-    // 1502: () => new GIHero(1502, '诺艾尔', 1, 10, 6, 2,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e985b9bc4ec19c9e982c5b018ebbd74e_3315904207091435338.png',
-    //     skill1('西风剑术·女仆'), [
-    //     new GISkill('护心铠', '造成{dmg}点[岩元素伤害]，生成【sts2036】。', 2, 1, 3, 6, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/d/de/bfodvzfdm75orbjztzb2tu29vc1cr2f.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/1b0a3de6e27ee7758a947371fb4789ad_6207555536600733923.png',
-    //     ], () => ({ status: [newStatus(ver)(2036)] })),
-    //     new GISkill('大扫除', '造成{dmg}点[岩元素伤害]，本角色附属【sts2037】。', 3, 4, 4, 6, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/6/62/5drxd3veuo8k8peke518xe7kyfxl4yr.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e3847d4db2fd91fcd97388ab950598fd_6553932389060621914.png',
-    //     ], () => ({ status: [newStatus(ver)(2037)] }))
-    // ]),
+    1603: () => new HeroBuilder(44).name('钟离').since('v3.7.0').liyue().geo().polearm()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/025bfe8320c376254bec54a9507ad33a_604601120081367211.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1f8e8ca48f32c190a937fc519e706b92.png')
+        .skill1(new Skill1Builder('岩雨'))
+        .skills(
+            new SkillBuilder('地心').description('{dealDmg}，召唤【smn116031】。')
+                .src('https://patchwiki.biligame.com/images/ys/e/ee/k5fhv7fxeg9ofaauivue65iid8mh7ou.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/71af9d46cf47c0b17aabf4805341cfb2_8343080343050934571.png')
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(116031)] })),
+            new SkillBuilder('地心·磐礴').description('{dealDmg}，召唤【smn116031】，生成【sts116032】。')
+                .src('https://patchwiki.biligame.com/images/ys/6/6b/4gtr1hu4msb4sulc3tpaq3k7uwvjo9d.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d89ebbeba3f31335d3ccf495fa29adf6_1138994566223638735.png')
+                .elemental().damage(3).cost(5).handle((_, ver) => ({ summon: [newSummon(ver)(116031)], status: [newStatus(ver)(116032)] })),
+            new SkillBuilder('天星').description('{dealDmg}，目标角色附属【sts116033】。')
+                .src('https://patchwiki.biligame.com/images/ys/a/a3/isu08rwkjyir4rbkc3rk2bk15ko8y7a.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/03c6245c3468e7d518e1292ac0f22c5a_8147918389515243613.png')
+                .burst(3).damage(4).cost(3).handle((_, ver) => ({ statusOppo: [newStatus(ver)(116033)] }))
+        ),
 
-    // 1503: () => new GIHero(1503, '荒泷一斗', 3, 10, 6, 2,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/0f6a96fb219e919f92c2768dd4a8d17d_2763599020845762537.png',
-    //     skill1('喧哗屋传说'), [
-    //     new GISkill('魔杀绝技·赤牛发破！', '造成{dmg}点[岩元素伤害]，召唤【smn3026】，本角色附属【sts2068】。', 2, 1, 3, 6, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/a/a5/3jpx4gxudn54mk2ll6v5mxl0hqrt3e5.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/b4b64a69f56b22af463637781ef1c035_1284380292638397340.png',
-    //     ], () => ({ summon: [newSummon(ver)(3026)], status: [newStatus(ver)(2068)] })),
-    //     new GISkill('最恶鬼王·一斗轰临！！', '造成{dmg}点[岩元素伤害]，本角色附属【sts2069】。', 3, 4, 3, 6, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/0/08/al3ofu1w19zdogu1bf0pqvj7qjx9nc4.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/ba4c88cde04f2cd06944ddcda99c5475_7502957554265579801.png',
-    //     ], () => ({ status: [newStatus(ver)(2069)] }))
-    // ]),
+    1604: () => new HeroBuilder(45).name('阿贝多').since('v4.0.0').mondstadt().geo().sword()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/82503813/5ec1824cea9aad20a4e2ddca9f4b090e_8072421465872569194.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5bc8d6153d2a0f33252114d8c0754a23.png')
+        .skill1(new Skill1Builder('西风剑术·白'))
+        .skills(
+            new SkillBuilder('创生法·拟造阳华').description('召唤【smn116041】。')
+                .src('https://patchwiki.biligame.com/images/ys/4/49/7juclt9sdhys5cqpsszabbcgvr80onv.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/d74358fdddc26940e736836760dd7c94_829927587434288065.png')
+                .elemental().cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(116041)] })),
+            new SkillBuilder('诞生式·大地之潮').description('{dealDmg}。如果【smn116041】在场，就使此伤害+2。')
+                .src('https://patchwiki.biligame.com/images/ys/b/b7/jtvi7qufpjdnlob7t4vj8afpbqxi9w8.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/75d7ab3b57d9db6cee911be55e21a4a0_3851331594331778687.png')
+                .burst(2).damage(4).cost(3).handle(event => {
+                    const { summons = [] } = event;
+                    return { addDmgCdt: isCdt(hasObjById(summons, 116041), 2) };
+                })
+        ),
 
-    // 1504: () => new GIHero(1504, '钟离', 2, 10, 6, 5,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/025bfe8320c376254bec54a9507ad33a_604601120081367211.png',
-    //     skill1('岩雨'), [
-    //     new GISkill('地心', '造成{dmg}点[岩元素伤害]，召唤【smn3033】。', 2, 1, 3, 6, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/e/ee/k5fhv7fxeg9ofaauivue65iid8mh7ou.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/71af9d46cf47c0b17aabf4805341cfb2_8343080343050934571.png',
-    //     ], () => ({ summon: [newSummon(ver)(3033)] })),
-    //     new GISkill('地心·磐礴', '造成{dmg}点[岩元素伤害]，召唤【smn3033】，生成【sts2086】。', 2, 3, 5, 6, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/6/6b/4gtr1hu4msb4sulc3tpaq3k7uwvjo9d.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d89ebbeba3f31335d3ccf495fa29adf6_1138994566223638735.png',
-    //     ], () => ({ summon: [newSummon(ver)(3033)], status: [newStatus(ver)(2086)] })),
-    //     new GISkill('天星', '造成{dmg}点[岩元素伤害]，目标角色附属【sts2087】。', 3, 4, 3, 6, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/a/a3/isu08rwkjyir4rbkc3rk2bk15ko8y7a.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/03c6245c3468e7d518e1292ac0f22c5a_8147918389515243613.png',
-    //     ], () => ({ statusOppo: [newStatus(ver)(2087)] }))
-    // ]),
+    1605: () => new HeroBuilder(46).name('荒泷一斗').since('v3.6.0').inazuma().geo().claymore()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/0f6a96fb219e919f92c2768dd4a8d17d_2763599020845762537.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a7f896027d32b91c3cbab7a77d53b62e.png')
+        .skill1(new Skill1Builder('喧哗屋传说'))
+        .skills(
+            new SkillBuilder('魔杀绝技·赤牛发破！').description('{dealDmg}，召唤【smn116051】，本角色附属【sts116054】。')
+                .src('https://patchwiki.biligame.com/images/ys/a/a5/3jpx4gxudn54mk2ll6v5mxl0hqrt3e5.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/b4b64a69f56b22af463637781ef1c035_1284380292638397340.png')
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(116051)], status: [newStatus(ver)(116054)] })),
+            new SkillBuilder('最恶鬼王·一斗轰临！！').description('{dealDmg}，本角色附属【sts116053】。')
+                .src('https://patchwiki.biligame.com/images/ys/0/08/al3ofu1w19zdogu1bf0pqvj7qjx9nc4.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/ba4c88cde04f2cd06944ddcda99c5475_7502957554265579801.png')
+                .burst(3).damage(4).damage(5, 'v4.2.0').cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116053)] }))
+        ),
 
-    // 1505: () => new GIHero(1505, '阿贝多', 1, 10, 6, 1,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/08/12/82503813/5ec1824cea9aad20a4e2ddca9f4b090e_8072421465872569194.png',
-    //     skill1('西风剑术·白'), [
-    //     new GISkill('创生法·拟造阳华', '召唤【smn3040】。', 2, 0, 3, 6, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/4/49/7juclt9sdhys5cqpsszabbcgvr80onv.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/d74358fdddc26940e736836760dd7c94_829927587434288065.png',
-    //     ], () => ({ summon: [newSummon(ver)(3040)] })),
-    //     new GISkill('诞生式·大地之潮', '造成{dmg}点[岩元素伤害]。如果【3040】在场，就使此伤害+2。', 3, 4, 3, 6, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/b/b7/jtvi7qufpjdnlob7t4vj8afpbqxi9w8.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/75d7ab3b57d9db6cee911be55e21a4a0_3851331594331778687.png',
-    //     ], event => {
-    //         const { summons = [] } = event;
-    //         return { addDmgCdt: isCdt(summons.some(smn => smn.id == 3040), 2) };
-    //     })
-    // ]),
+    1606: () => new HeroBuilder(283).name('五郎').since('v4.3.0').inazuma().geo().bow()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/a7a11aafd2166bd18514eb85107bbe6f_8372190332816763613.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/25cce22b0e3bb52323b98ca51942645c.png')
+        .skill1(new Skill1Builder('呲牙裂扇箭'))
+        .skills(
+            new SkillBuilder('犬坂吠吠方圆阵').description('{dealDmg}，生成【sts116061】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/82cfdcfa18c2ac51c7d7c80ad271b850.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/3d25c8d7ea6541f2b0873f0dad5892a0_8644416094552727288.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116061)] })),
+            new SkillBuilder('兽牙逐突形胜战法').description('{dealDmg}，生成【sts116061】，召唤【smn116062】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/0d85c76bf3b545043bed5237d3713569.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/44d2af6450e8e7b56f1108e96609754c_6106169218939314736.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116061)], summon: [newSummon(ver)(116062)] }))
+        ),
 
-    // 1506: () => new GIHero(1506, '五郎', 3, 10, 6, 3,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/a7a11aafd2166bd18514eb85107bbe6f_8372190332816763613.png',
-    //     skill1('呲牙裂扇箭'), [
-    //     new GISkill('犬坂吠吠方圆阵', '造成{dmg}点[岩元素伤害]，生成【sts2135】。', 2, 2, 3, 6, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/82cfdcfa18c2ac51c7d7c80ad271b850.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/3d25c8d7ea6541f2b0873f0dad5892a0_8644416094552727288.png',
-    //     ], () => ({ status: [newStatus(ver)(2135)] })),
-    //     new GISkill('兽牙逐突形胜战法', '造成{dmg}点[岩元素伤害]，生成【sts2135】，召唤【smn3050】。', 3, 2, 3, 6, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/0d85c76bf3b545043bed5237d3713569.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/44d2af6450e8e7b56f1108e96609754c_6106169218939314736.png',
-    //     ], () => ({ status: [newStatus(ver)(2135)], summon: [newSummon(ver)(3050)] }))
-    // ]),
+    1607: () => new HeroBuilder(366).name('云堇').since('v4.7.0').liyue().geo().polearm()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/1d2e9fbd3e021de0c2e944e9c3dbfab3_8286048443691981221.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e293da3c41de47ddc78daf4af1950a32.png')
+        .skill1(new Skill1Builder('拂云出手'))
+        .skills(
+            new SkillBuilder('旋云开相').description('生成【sts116073】，本角色附属【sts116071】并[准备技能]：【rsk16074】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1800fefaf04f62c348cfecf558a0d573.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/9653b6a5d3fda17c3e8443962584b311_4509508959084319555.png')
+                .elemental().cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116073), newStatus(ver)(116072), newStatus(ver)(116071)] })),
+            new SkillBuilder('破嶂见旌仪').description('{dealDmg}，生成3层【sts116073】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4fbd00e2cf6f2931fdf7c1d3c3f3d196.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/289c56363620f16b7372fc097b9a9883_846777564977909040.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116073, 3)] }))
+        ),
 
-    // 1507: () => new GIHero(1507, '云堇', 2, 10, 6, 5,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/1d2e9fbd3e021de0c2e944e9c3dbfab3_8286048443691981221.png',
-    //     skill1('拂云出手'), [
-    //     new GISkill('旋云开相', '生成【sts2198】，本角色附属【sts2200】并[准备技能]：【rsk21】。', 2, 0, 3, 6, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1800fefaf04f62c348cfecf558a0d573.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/9653b6a5d3fda17c3e8443962584b311_4509508959084319555.png',
-    //     ], () => ({ status: [newStatus(ver)(2198), newStatus(ver)(2200), newStatus(ver)(2201)] })),
-    //     new GISkill('破嶂见旌仪', '造成{dmg}点[岩元素伤害]，生成3层【sts2198】。', 3, 2, 3, 6, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4fbd00e2cf6f2931fdf7c1d3c3f3d196.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/289c56363620f16b7372fc097b9a9883_846777564977909040.png',
-    //     ], () => ({ status: [newStatus(ver)(2198, 3)] }))
-    // ]),
+    1608: () => new HeroBuilder(394).name('娜维娅').since('v4.8.0').fontaine().tags(HERO_TAG.ArkheOusia).geo().claymore()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/4c23484ade8f496c7bbf790a1dd43d30_170105147546023510.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/684bdd3ce161df1f5acb5ddc4aa59505.png')
+        .skill1(new Skill1Builder('直率的辞绝'))
+        .skills(
+            new SkillBuilder('典仪式晶火').description('{dealDmg}，本角色附属【sts116084】; 从手牌中[舍弃]至多5张【crd116081】，每[舍弃]1张都使此伤害+1并抓1张牌。')
+                .src('https://patchwiki.biligame.com/images/ys/7/71/nfo33f6mtxhgnz8i0a2sy8sgmv15fwm.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/d0dcd28c67d7d98130a278f53fcb774c_2487646826758507883.png')
+                .elemental().damage(3).cost(3).handle((event, ver) => {
+                    const { hcards = [] } = event;
+                    const cnt = Math.min(5, hcards.filter(c => c.id == 116081).length);
+                    return { addDmgCdt: cnt, status: [newStatus(ver)(116084)], cmds: [{ cmd: 'discard', cnt, card: 116081 }, { cmd: 'getCard', cnt }] }
+                }),
+            new SkillBuilder('如霰澄天的鸣礼').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。召唤【smn116082】，生成1张【crd116081】加入手牌。')
+                .src('https://patchwiki.biligame.com/images/ys/4/47/8e1kz8l4bi9oqq01b9het09tpn9ssso.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/7ae275333bb0c81948bea2c0d00a23aa_778675072682900471.png')
+                .burst(2).damage(1).cost(3).handle((_, ver) => ({ pdmg: 1, summon: [newSummon(ver)(116082)], cmds: [{ cmd: 'getCard', cnt: 1, card: 116081 }] })),
+            new SkillBuilder('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
+                .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
+                .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
+        ),
 
-    // 1508: () => new GIHero(1508, '娜维娅', [5, 11], 10, 6, 2,
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Navia.webp',
-    //     skill1('直率的辞绝'), [
-    //     new GISkill('典仪式晶火', '造成{dmg}点[岩元素伤害]，本角色附属【sts2008,6】; 从手牌中[舍弃]至多5张【crd913】，每[舍弃]1张都使此伤害+1并抓1张牌。', 2, 3, 3, 6, {}, [
-    //         '',
-    //         '',
-    //     ], event => {
-    //         const { hcards = [] } = event;
-    //         const cnt = Math.min(5, hcards.filter(c => c.id == 913).length);
-    //         return { addDmgCdt: cnt, status: [newStatus(ver)(2008, 6)], cmds: [{ cmd: 'discard', cnt, card: 913 }, { cmd: 'getCard', cnt }] }
-    //     }),
-    //     new GISkill('如霰澄天的鸣礼', '造成{dmg}点[岩元素伤害]，对所有敌方后台角色造成1点[穿透伤害]。召唤【smn3067】，生成1张【crd913】加入手牌。', 3, 1, 3, 6, { ec: 2 }, [
-    //         '',
-    //         '',
-    //     ], () => ({ pdmg: 1, summon: [newSummon(ver)(3067)], cmds: [{ cmd: 'getCard', cnt: 1, card: 913 }] })),
-    //     new GISkill('互助关系网', '【敌方角色受到结晶反应伤害后：】生成3张【crd913】，随机置入我方牌库中。', 4, 0, 0, 0, {}, [
-    //         '',
-    //         '',
-    //     ], () => ({ trigger: ['el6Reaction'], cmds: [{ cmd: 'addCard', cnt: 3, card: 913 }] }))
-    // ]),
 
     // 1601: () => new GIHero(1601, '柯莱', 4, 10, 7, 3,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/cca275e9c7e6fa6cf61c5e1d6768db9d_4064677380613373250.png',
@@ -1805,7 +1759,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a72086131fbe3e03201926a46dac48f3_7155522304163694322.png',
     //     ], event => {
     //         const { hero: { talentSlot }, card } = event;
-    //         const cmds = isCdt<Cmds[]>(!!talentSlot || card?.id == 724, [{ cmd: 'switch-after', cnt: 2500 }]);
+    //         const cmds = isCdt(!!talentSlot || card?.id == 724, [{ cmd: 'switch-after', cnt: 2500 }]);
     //         return { summon: [newSummon(ver)(3019)], cmds }
     //     }),
     //     new GISkill('霜驰影突', '召唤【smn3020】。', 2, 0, 3, 4, {}, [
@@ -1815,7 +1769,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //         const { hero: { talentSlot }, card } = event;
     //         return {
     //             summon: [newSummon(ver)(3020)],
-    //             cmds: isCdt<Cmds[]>(!!talentSlot || card?.id == 724, [{ cmd: 'switch-before', cnt: 2500 }]),
+    //             cmds: isCdt(!!talentSlot || card?.id == 724, [{ cmd: 'switch-before', cnt: 2500 }]),
     //         }
     //     }),
     //     new GISkill('机巧伪天狗抄', '造成{dmg}点[风元素伤害]，触发我方所有【剑影】召唤物效果。(不消耗其可用次数)', 3, 4, 3, 5, { ec: 3 }, [
