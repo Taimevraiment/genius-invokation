@@ -31,7 +31,7 @@ export type CardHandleEvent = {
     dicesCnt?: number,
     restDmg?: number,
     isSkill?: number,
-    isSummon?: number,
+    isSummon?: number[],
     isExec?: boolean,
     supports?: Support[],
     esupports?: Support[],
@@ -2464,10 +2464,62 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    217011: () => new CardBuilder(107).name('飞叶迴斜').talent(1).costDendro(4).costDendro(3, 'v3.4.0').perCnt(1)
+        .description('{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。(每回合1次)')
+        .src('https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png'),
 
-    // 711: () => new GICard(711, '飞叶迴斜', '{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。(每回合1次)',
-    //     'https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png',
-    //     4, 7, 0, [6, 7], 1601, 1),
+    217021: () => new CardBuilder(108).name('眼识殊明').since('v3.6.0').talent(1).costDendro(4)
+        .description('{action}；装备有此牌的【hro】在附属【sts117021】期间，进行[重击]时少花费1个[无色元素骰]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png')
+        .handle((_card, event) => {
+            const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
+            const isMinus = isChargedAtk && hasObjById(heros[hidx].heroStatus, 117021);
+            return {
+                trigger: ['skilltype1'],
+                minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 0, 1] }),
+            }
+        }),
+
+    217031: () => new CardBuilder(109).name('心识蕴藏之种').since('v3.7.0').talent(3).costDendro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】在场时，根据我方队伍中存在的元素类型提供效果：；‹3火元素›：【sts117032】在场时，自身受到元素反应触发【sts117031】的敌方角色，所受【sts117031】的[穿透伤害]改为[草元素伤害];；‹4雷元素›：【sts117032】入场时，使当前对方场上【sts117031】的[可用次数]+1;；‹2水元素›：装备有此牌的【hro】所生成的【sts117032】初始[持续回合]+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/013c862d1c89850fb23f26763f601b11_823565145951775374.png'),
+
+    217041: () => new CardBuilder(110).name('慈惠仁心').since('v4.1.0').talent(1).costDendro(3)
+        .description('{action}；装备有此牌的【hro】生成的【smn117041】，在[可用次数]仅剩余最后1次时造成的伤害和治疗各+1。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/2b762e3829ac4a902190fde3e0f5377e_8510806015272134296.png'),
+
+    217051: () => new CardBuilder(111).name('在地为化').since('v4.2.0').talent(2).costDendro(4).energy(2)
+        .description('{action}；装备有此牌的【hro】在场，【sts117053】触发治疗效果时：生成1个出战角色类型的元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png'),
+
+    217061: () => new CardBuilder(293).name('正理').since('v4.3.0').talent(2).costDendro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】使用【ski】时，如果消耗了持续回合至少为1的【sts117061】，则总是附属持续回合为3的【sts117061】，并且抓1张牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png'),
+
+    217071: () => new CardBuilder(340).name('沿途百景会心').since('v4.5.0').talent(1).costDendro(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】为出战角色，我方进行｢切换角色｣行动时：少花费1个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d00693f2246c912c56900d481e37104a_1436874897141676884.png')
+        .handle((card, event) => {
+            let { switchHeroDiceCnt = 0 } = event;
+            const isMinus = card.perCnt > 0;
+            return {
+                trigger: ['change-from'],
+                minusDiceHero: isCdt(isMinus, 1),
+                exec: () => {
+                    if (switchHeroDiceCnt > 0 && isMinus) {
+                        --card.perCnt;
+                        --switchHeroDiceCnt;
+                    }
+                    return { switchHeroDiceCnt }
+                }
+            }
+        }),
+
+    217081: () => new CardBuilder(376).name('预算师的技艺').since('v4.7.0').talent(1).costDendro(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场时，我方触发【sts117082】的效果后：将1张所[舍弃]卡牌的复制加入你的手牌。如果该牌为｢场地｣牌，则使本回合中我方下次打出｢场地｣时少花费2个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/10ea9432a97b89788ede72906f5af735_8657249785871520397.png'),
+
+
 
     // 721: () => new GICard(721, '百川奔流', '{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b1a0f699a2168c60bc338529c3dee38b_3650391807139860687.png',
@@ -2496,19 +2548,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
     //     3, 7, 0, [6, 7], 1821, 1),
 
-    // 735: () => new GICard(735, '眼识殊明', '{action}；装备有此牌的【hro】在附属【sts2071】期间，进行[重击]时少花费1个[无色元素骰]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png',
-    //     4, 7, 0, [6, 7], 1602, 1, (_card, event) => {
-    //         const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
-    //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] },
-    //             () => isChargedAtk && heros[hidx].inStatus.some(ist => ist.id == 2071));
-    //         return { trigger: ['skilltype1'], ...minusSkillRes }
-    //     }),
-
-    // 745: () => new GICard(745, '心识蕴藏之种', '{action}；装备有此牌的【hro】在场时，根据我方队伍中存在的元素类型提供效果：；‹2火元素›：【sts2089】在场时，自身受到元素反应触发【sts2088】的敌方角色，所受【sts2088】的[穿透伤害]改为[草元素伤害];；‹3雷元素›：【sts2089】入场时，使当前对方场上【sts2088】的[可用次数]+1;；‹1水元素›：装备有此牌的【hro】所生成的【sts2089】初始[持续回合]+1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/013c862d1c89850fb23f26763f601b11_823565145951775374.png',
-    //     3, 7, 0, [6, 7], 1603, 3, undefined, { energy: 2 }),
-
     // 746: () => new GICard(746, '冰萤寒光', '{action}；装备有此牌的【hro】使用技能后：如果【smn3034】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png',
     //     3, 4, 0, [6, 7], 1701, 1),
@@ -2525,18 +2564,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //             return { status: [newStatus(2093)], isDestroy: true }
     //         }
     //     }),
-
-    // 757: () => new GICard(757, '慈惠仁心', '{action}；装备有此牌的【hro】生成的【smn3042】，在[可用次数]仅剩余最后1次时造成的伤害和治疗各+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/2b762e3829ac4a902190fde3e0f5377e_8510806015272134296.png',
-    //     3, 7, 0, [6, 7], 1604, 1),
-
-    // 760: () => new GICard(760, '在地为化', '{action}；装备有此牌的【hro】在场，【sts2114】触发治疗效果时：生成1个出战角色类型的元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png',
-    //     4, 7, 0, [6, 7], 1605, 2, undefined, { energy: 2 }),
-
-    // 766: () => new GICard(766, '正理', '{action}；装备有此牌的【hro】使用【ski】时，如果消耗了持续回合至少为1的【sts2136】，则总是附属持续回合为3的【sts2136】，并且抓1张牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png',
-    //     3, 7, 0, [6, 7], 1606, 2, undefined, { energy: 2 }),
 
     // 767: () => new GICard(767, '苦痛奉还', '我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts2137】或【sts2137,1】。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png',
@@ -2588,24 +2615,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         return { isValid: hero?.isFront, status: [newStatus(2158, true, cnt, 1)] }
     //     }),
 
-    // 778: () => new GICard(778, 340, '沿途百景会心', '{action}；装备有此牌的【hro】为出战角色，我方进行｢切换角色｣行动时：少花费1个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d00693f2246c912c56900d481e37104a_1436874897141676884.png',
-    //     3, 7, 0, [6, 7], 1607, 1, (card, event) => {
-    //         let { switchHeroDiceCnt = 0 } = event;
-    //         const isMinus = card.perCnt > 0;
-    //         return {
-    //             trigger: ['change-from'],
-    //             minusDiceHero: isCdt(isMinus, 1),
-    //             exec: () => {
-    //                 if (switchHeroDiceCnt > 0 && isMinus) {
-    //                     --card.perCnt;
-    //                     --switchHeroDiceCnt;
-    //                 }
-    //                 return { switchHeroDiceCnt }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
-
     // 779: () => new GICard(779, 341, '雷萤浮闪', '{action}；装备有此牌的【hro】在场时，我方选择行动前：如果【smn3057】的[可用次数]至少为3，则【smn3057】立刻造成1点[雷元素伤害]。(需消耗[可用次数]，每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/adf954bd07442eed0bc3c77847c2d727_1148348250566405252.png',
     //     3, 3, 0, [6, 7], 1764, 1, undefined, { pct: 1 }),
@@ -2625,10 +2634,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 783: () => new GICard(783, '熔火铁甲', '【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts2182】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts2182】。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png',
     //     1, 2, 0, [6], 1744, 1, (_card, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs, element: 2 }] }), { pct: 1 }),
-
-    // 788: () => new GICard(788, '预算师的技艺', '{action}；装备有此牌的【hro】在场时，我方触发【sts2202】的效果后：将1张所[舍弃]卡牌的复制加入你的手牌。如果该牌为｢场地｣牌，则使本回合中我方下次打出｢场地｣时少花费2个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/10ea9432a97b89788ede72906f5af735_8657249785871520397.png',
-    //     3, 7, 0, [6, 7], 1608, 1, undefined, { pct: 1 }),
 
     // 789: () => new GICard(789, '无光鲸噬', '{action}；装备有此牌的【hro】使用【ski】[舍弃]1张手牌后：治疗此角色该手牌元素骰费用的点数。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6c8ce9408dc45b74242f45fb45c2e5d0_4468452485234515493.png',

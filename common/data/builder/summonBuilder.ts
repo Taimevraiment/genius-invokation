@@ -54,7 +54,7 @@ export class GISummon {
         const hid = getHidById(id);
         this.UI = {
             description: description
-                .replace(/{defaultAtk}/, '【结束阶段：】{dealDmg}。；【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `(可叠加，最多叠加到${maxUse}次)` : ''))
+                .replace(/{defaultAtk(.*)}/, '【结束阶段：】{dealDmg}$1；【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `(可叠加，最多叠加到${maxUse}次)` : ''))
                 .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
                 .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
                 .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`),

@@ -46,7 +46,6 @@ export default class GeniusInvokationClient {
     willSwitch: boolean[] = []; // 是否将要切换角色
     supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0)); // 支援物变化数
     summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0)); // 召唤物变化数
-    canSelectHero: number = 0; // 可以选择角色的数量
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
@@ -78,6 +77,7 @@ export default class GeniusInvokationClient {
     supportCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否可选
     summonSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否选中
     summonCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否可选
+    statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     error: string = ''; // 服务器发生的错误信息
 
     constructor(
@@ -390,6 +390,13 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
         this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
+        if (this.statusSelect[0][0].length == 0 && phase == PHASE.CHANGE_CARD) {
+            this.statusSelect.forEach((p, pi) => {
+                p.forEach((_, i, a) => {
+                    a[i] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(20).fill(false));
+                });
+            });
+        }
         this._sendTip(tip);
         if (actionInfo != '') {
             this.actionInfo = actionInfo;
@@ -412,8 +419,8 @@ export default class GeniusInvokationClient {
                     const [saidx, suidx] = damageVO.selected ?? [-1, -1];
                     this.summonSelect[+(saidx == this.playerIdx)][suidx] = true;
                 } else if (damageVO?.dmgSource == 'status') {
-                    // const [saidx, group, suidx] = damageVO.selected ?? [-1, -1, -1];
-                    // this.statusSelect[+(saidx == this.playerIdx)][group][suidx] = true;
+                    const [spidx, sgroup, shidx, sidx] = damageVO.selected ?? [-1, -1, -1, -1];
+                    this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
                 }
                 setTimeout(() => {
                     this.isShowDmg = false;
@@ -421,7 +428,7 @@ export default class GeniusInvokationClient {
                         const [saidx, suidx] = damageVO.selected ?? [-1, -1];
                         this.summonSelect[+(saidx == this.playerIdx)][suidx] = false;
                     } else if (damageVO?.dmgSource == 'status') {
-                        // const [saidx, group, suidx] = damageVO.selected ?? [-1, -1, -1];
+                        this._resetStatusSelect();
                     }
                     setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);
@@ -803,25 +810,31 @@ export default class GeniusInvokationClient {
      * 重置支援物选择
      */
     private _resetSupportSelect() {
-        return this.supportSelect.forEach(v => v.fill(false));
+        this.supportSelect.forEach(v => v.fill(false));
     }
     /**
      * 重置支援物可选
      */
     private _resetSupportCanSelect() {
-        return this.supportCanSelect.forEach(v => v.fill(false));
+        this.supportCanSelect.forEach(v => v.fill(false));
     }
     /**
      * 重置召唤物选择
      */
     private _resetSummonSelect() {
-        return this.summonSelect.forEach(v => v.fill(false));
+        this.summonSelect.forEach(v => v.fill(false));
     }
     /**
      * 重置召唤物可选
      */
     private _resetSummonCanSelect() {
-        return this.summonCanSelect.forEach(v => v.fill(false));
+        this.summonCanSelect.forEach(v => v.fill(false));
+    }
+    /**
+     * 重置状态发光
+     */
+    private _resetStatusSelect() {
+        this.statusSelect.forEach(p => p.forEach(g => g.forEach(h => h.fill(false))));
     }
     /**
      * 重置附着预览

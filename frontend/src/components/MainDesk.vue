@@ -206,7 +206,8 @@
             </template>
           </div>
           <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
-            <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': ists.UI.isSelected }"
+            <div
+              :class="{ status: true, 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[0]?.[hidx]?.[isti] }"
               v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => hero.heroStatus.length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 4)"
               :key="ists.id">
               <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
@@ -233,7 +234,8 @@
             </div>
             <div class="outstatus" :class="{ 'mobile-outstatus': isMobile }"
               v-if="phase >= PHASE.DICE && hero.hp > 0 && hero.isFront">
-              <div :class="{ status: true, 'mobile-status': isMobile, 'status-select': osts.UI.isSelected }"
+              <div
+                :class="{ status: true, 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[1]?.[hidx]?.[osti] }"
                 v-for="(osts, osti) in combatStatuses[hgi].filter((sts, stsi) => combatStatuses[hgi].length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 3)"
                 :key="osts.id">
                 <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }"
@@ -584,6 +586,7 @@ const heroSelect = computed<number[]>(() => props.client.heroSelect);
 const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
+const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
 const isLookon = computed<number>(() => props.isLookon);
 const heros = computed<Hero[][]>(() => {
   if (props.client.isWin < 2) return [opponent?.value.heros, player.value.heros];

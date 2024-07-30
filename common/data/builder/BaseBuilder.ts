@@ -52,14 +52,14 @@ export class BaseBuilder extends BaseVersionBuilder {
     costElectro(cost: number, version?: Version) {
         return this.cost(cost, DICE_TYPE.Electro, version);
     }
-    costAnemo(cost: number) {
-        return this.cost(cost, DICE_TYPE.Anemo);
+    costAnemo(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Anemo, version);
     }
-    costGeo(cost: number) {
-        return this.cost(cost, DICE_TYPE.Geo);
+    costGeo(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Geo, version);
     }
-    costDendro(cost: number) {
-        return this.cost(cost, DICE_TYPE.Dendro);
+    costDendro(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Dendro, version);
     }
     costSame(cost: number) {
         return this.cost(cost, DICE_TYPE.Same);

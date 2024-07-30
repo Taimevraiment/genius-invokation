@@ -199,8 +199,18 @@ export class StatusBuilder extends BaseVersionBuilder {
         if (cdt) this._perCnt = perCnt;
         return this;
     }
-    roundCnt(roundCnt: number, version: Version = 'vlatest', cdt: boolean = true) {
-        if (cdt) this._roundCnt.push([version, roundCnt]);
+    roundCnt(roundCnt: number, cdt: boolean): StatusBuilder;
+    roundCnt(roundCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
+    roundCnt(roundCnt: number, version: Version | boolean = 'vlatest', cdt: boolean = true) {
+        if (typeof version == 'boolean') {
+            if (version) {
+                const unt = this._roundCnt.find(([ver]) => ver == 'vlatest');
+                if (unt) unt[1] = roundCnt;
+                else this._roundCnt.push(['vlatest', roundCnt]);
+            }
+        } else if (cdt) {
+            this._roundCnt.push([version, roundCnt]);
+        }
         return this;
     }
     icon(icon: string) {
