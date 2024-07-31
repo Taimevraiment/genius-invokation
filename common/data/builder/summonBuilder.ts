@@ -54,7 +54,8 @@ export class GISummon {
         const hid = getHidById(id);
         this.UI = {
             description: description
-                .replace(/{defaultAtk(.*)}/, '【结束阶段：】{dealDmg}$1；【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `(可叠加，最多叠加到${maxUse}次)` : ''))
+                .replace(/{defaultAtk(.*)}/, '【结束阶段：】{dealDmg}$1；[useCnt]')
+                .replace(/\[useCnt\]/, '【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `(可叠加，最多叠加到${maxUse}次)` : ''))
                 .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
                 .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
                 .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`),
@@ -102,7 +103,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _name: string;
     private _description: [Version, string][] = [];
     private _src: string = '';
-    private _useCnt: number = 0;
+    private _useCnt: [Version, number][] = [];
     private _maxUse: number = 0;
     private _shieldOrHeal: number = 0;
     private _damage: [Version, number][] = [];
@@ -133,8 +134,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._src = src;
         return this;
     }
-    useCnt(useCnt: number) {
-        this._useCnt = useCnt;
+    useCnt(useCnt: number, version: Version = 'vlatest') {
+        this._useCnt.push([version, useCnt]);
         return this;
     }
     maxUse(maxUse: number) {
@@ -234,12 +235,13 @@ export class SummonBuilder extends BaseVersionBuilder {
         return this;
     }
     done() {
-        const maxUse = this._maxUse || this._useCnt;
+        const useCnt = this._getValByVersion(this._useCnt, 0);
+        const maxUse = this._maxUse || useCnt;
         const description = this._getValByVersion(this._description, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
         const damage = this._getValByVersion(this._damage, 0);
         const stsId = this._statusId == -2 ? this._id : this._statusId;
-        return new GISummon(this._id, this._name, description, this._src, this._useCnt, maxUse,
+        return new GISummon(this._id, this._name, description, this._src, useCnt, maxUse,
             this._shieldOrHeal, damage, element, this._handle,
             {
                 pct: this._perCnt,

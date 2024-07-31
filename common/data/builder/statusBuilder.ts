@@ -1,5 +1,6 @@
 import { Status } from "../../../typing";
 import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
@@ -48,6 +49,8 @@ export class GIStatus {
         const hid = getHidById(id);
         const el = getElByHid(hid);
         description = description
+            .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `(可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`})`))
+            .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 ? '' : `(可叠加，最多叠加到${maxCnt}回合)`))
             .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`)
             .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`);
@@ -143,6 +146,8 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _isReset: boolean = false;
     private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
     private _typeCdt: [(ver: Version) => boolean, StatusType[]][] = [];
+    private _barrierCdt: [(ver: Version) => boolean, number][] = [];
+    private _barrierCnt: number = 1;
     constructor(name: string) {
         super();
         this._name = name;
@@ -245,6 +250,17 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._handle = handle;
         return this;
     }
+    barrierCdt(cnt: number, cdt?: boolean): StatusBuilder;
+    barrierCdt(cnt: number, cdt?: (ver: Version) => boolean): StatusBuilder;
+    barrierCdt(cnt: number, cdt: ((ver: Version) => boolean) | boolean = () => true) {
+        if (typeof cdt == 'boolean') this._barrierCdt.push([() => cdt, cnt]);
+        else this._barrierCdt.push([cdt, cnt]);
+        return this;
+    }
+    barrierCnt(cnt: number) {
+        this._barrierCnt = cnt;
+        return this;
+    }
     done() {
         const description = this._getValByVersion(this._description, '');
         const useCnt = this._getValByVersion(this._useCnt, -1);
@@ -254,8 +270,17 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._typeCdt.forEach(([cdt, types]) => {
             if (cdt(this._version)) this._type.push(...types);
         });
+        const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
+            (status: Status, event: StatusHandleEvent, ver: Version) => {
+                const { restDmg = 0, summon } = event;
+                if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
+                if (status.useCnt > 0) --status.useCnt;
+                if (status.roundCnt > 0) --status.roundCnt;
+                if (summon && this._summonId != -1) --summon.useCnt;
+                return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
+            } : this._handle;
         return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
-            useCnt, maxCnt, roundCnt, this._handle,
+            useCnt, maxCnt, roundCnt, handle,
             {
                 pct: this._perCnt,
                 act: this._addCnt || Math.max(useCnt, roundCnt),

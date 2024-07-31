@@ -70,11 +70,14 @@ export class HeroBuilder extends BaseBuilder {
     private _src: string[] = [];
     private _avatar: string[] = [];
     private _skill1: Skill1Builder | undefined;
-    constructor(shareId: number) {
-        super(shareId);
+    constructor(shareId?: number) {
+        super(shareId ?? -1);
     }
-    get inVersion() {
-        return this._version <= this._curVersion;
+    get notExist() {
+        return this._version > this._curVersion;
+    }
+    get notInHeroPool() {
+        return this._shareId == -1;
     }
     tags(...tags: HeroTag[]) {
         this._tags.push(...tags);

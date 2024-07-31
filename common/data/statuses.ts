@@ -1,8 +1,9 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
+    CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { DEBUFF_BG_COLOR, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
+import { MAX_USE_COUNT } from "../constant/gameOption.js";
+import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
@@ -95,7 +96,7 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
     const hasAddDmgDesc = addDmg > 0 ? `，且造成的[${elName}伤害]+${addDmg}` : '';
     return new StatusBuilder(`${elName}附魔`).heroStatus().type(STATUS_TYPE.Enchant)
         .icon(`buff${addDmg > 0 ? '4' : ''}`).iconBg(STATUS_BG_COLOR[el])
-        .description(`所附属角色造成的[物理伤害]变为[${elName}伤害]${hasAddDmgDesc}。；【[持续回合]：{roundCnt}】`)
+        .description(`所附属角色造成的[物理伤害]变为[${elName}伤害]${hasAddDmgDesc}。；[roundCnt]`)
         .handle(status => ({
             attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType,
             addDmg,
@@ -124,7 +125,7 @@ const senlin1Sts = (name: string) => {
 
 // const card587sts = (element: number) => {
 //     const names = ['', '藏镜仕女', '火铳游击兵', '雷锤前锋军', '冰萤术士'];
-//     return new GIStatus(2123 + element, '愚人众伏兵·' + names[element], `所在阵营的角色使用技能后：对所在阵营的出战角色造成1点[${ELEMENT[element]}伤害]。(每回合1次)；【[可用次数]：{useCnt}】`,
+//     return new GIStatus(2123 + element, '愚人众伏兵·' + names[element], `所在阵营的角色使用技能后：对所在阵营的出战角色造成1点[${ELEMENT[element]}伤害]。(每回合1次)；[useCnt]`,
 //         ELEMENT_ICON[element] + '-dice', 1, [1], 2, 0, -1, status => ({
 //             damage: isCdt(status.perCnt > 0, 1),
 //             element: ELEMENT_ICON.indexOf(status.icon.split('-')[0]),
@@ -142,7 +143,7 @@ const senlin1Sts = (name: string) => {
 const sts11505x = (swirlEl: PureElementType) => {
     return new StatusBuilder('风物之诗咏·' + ELEMENT_NAME[swirlEl][0]).combatStatus().icon('buff4').useCnt(2)
         .type(STATUS_TYPE.AddDamage).iconBg(STATUS_BG_COLOR[swirlEl])
-        .description(`我方角色和召唤物所造成的[${ELEMENT_NAME[swirlEl]}伤害]+1。；【[可用次数]：{useCnt}】`)
+        .description(`我方角色和召唤物所造成的[${ELEMENT_NAME[swirlEl]}伤害]+1。；[useCnt]`)
         .handle(status => ({
             trigger: [`${ELEMENT_TYPE_KEY[STATUS_BG_COLOR_KEY[status.UI.iconBg] as ElementType]}-dmg`],
             addDmgCdt: 1,
@@ -181,7 +182,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111: () => shieldStatus('结晶', 1, 2),
 
     116: () => new StatusBuilder('草原核').combatStatus().type(STATUS_TYPE.AddDamage).useCnt(1)
-        .description('【我方对敌方出战角色造成[火元素伤害]或[雷元素伤害]时，】伤害值+2。；【[可用次数]：{useCnt}】')
+        .description('【我方对敌方出战角色造成[火元素伤害]或[雷元素伤害]时，】伤害值+2。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_116.webp')
         .handle((status, event = {}) => {
             const { eheros = [], getDmgIdx = -1 } = event;
@@ -194,7 +195,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     117: () => new StatusBuilder('激化领域').combatStatus().type(STATUS_TYPE.AddDamage).useCnt(2)
-        .description('【我方对敌方出战角色造成[雷元素伤害]或[草元素伤害]时，】伤害值+1。；【[可用次数]：{useCnt}】')
+        .description('【我方对敌方出战角色造成[雷元素伤害]或[草元素伤害]时，】伤害值+1。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_117.webp')
         .handle((status, event = {}) => {
             const { eheros = [], getDmgIdx = -1 } = event;
@@ -206,20 +207,27 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    122: (useCnt: number = 1) => new StatusBuilder('生命之契').heroStatus().useCnt(useCnt).maxCnt(MAX_USE_COUNT)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_HpDebts.webp')
+        .description('【所附属角色受到治疗时：】此效果每有1次[可用次数]，就消耗1次，以抵消1点所受到的治疗。(无法抵消复苏治疗和分配生命值引发的治疗)；[useCnt]')
+    // .handle((status, event = {}) => {
+    //     const { heal = [] } = event;
+
+    //     return {
+    //         trigger: ['pre-heal'],
+    //         exec: () => { --status.useCnt },
+    //     }
+    // })
+    , // todo 没做完
+
     111012: () => new StatusBuilder('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
-        .description('【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
-        .handle((status, event = {}) => {
-            const { restDmg = 0 } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
     111021: (isTalent: boolean = false) => new StatusBuilder('猫爪护盾').combatStatus().type(STATUS_TYPE.Shield)
         .useCnt(isTalent ? 2 : 1).description('为我方出战角色提供1点[护盾]。').talent(isTalent),
 
     111031: () => new StatusBuilder('寒冰之棱').combatStatus().type(STATUS_TYPE.Attack).useCnt(3)
-        .description('【我方切换角色后：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】').icon('ski,2')
+        .description('【我方切换角色后：】造成2点[冰元素伤害]。；[useCnt]').icon('ski,2')
         .handle(() => ({
             damage: 2,
             element: ELEMENT_TYPE.Cryo,
@@ -231,7 +239,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus()
         .roundCnt(2).roundCnt(3, 'v4.2.0', isTalent).talent(isTalent).icon('buff')
-        .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；【[持续回合]：{roundCnt}】`)
+        .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；[roundCnt]`)
         .type(STATUS_TYPE.AddDamage).type(() => isTalent, STATUS_TYPE.Enchant)
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
@@ -257,7 +265,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111071: (isTalent: boolean = false) => new StatusBuilder('冰翎').combatStatus().icon('buff4').useCnt(2).useCnt(3, 'v4.2.0').perCnt(1, isTalent)
         .type(STATUS_TYPE.AddDamage).talent(isTalent)
-        .description(`我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；【[可用次数]：{useCnt}】${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`)
+        .description(`我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；[useCnt]${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`)
         .handle((status, event = {}) => {
             const { skilltype = -1 } = event;
             return {
@@ -274,7 +282,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111082: () => new StatusBuilder('度厄真符').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
-        .description('【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；【[可用次数]：{useCnt}】')
+        .description('【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；[useCnt]')
         .handle((_, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             const fhero = heros[hidx];
@@ -311,7 +319,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111101: () => new StatusBuilder('瞬时剪影').heroStatus().icon('ice-dice').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
-        .description(`【结束阶段：】对所附属角色造成1点[冰元素伤害]; 如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；【[可用次数]：{useCnt}】`)
+        .description(`【结束阶段：】对所附属角色造成1点[冰元素伤害]; 如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；[useCnt]`)
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             const isAddDmg = heros[hidx]?.attachElement.includes(ELEMENT_TYPE.Cryo) && status.useCnt == 1;
@@ -327,7 +335,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111111: () => new StatusBuilder('寒烈的惩裁').heroStatus().icon('ski,1').useCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
-        .description('【角色进行｢普通攻击｣时：】如果角色生命至少为6，则此技能少花费1个[冰元素骰]，伤害+1，且对自身造成1点[穿透伤害]。；如果角色生命不多于5，则使此伤害+1，并且技能结算后治疗角色2点。；【[可用次数]：{useCnt}】')
+        .description('【角色进行｢普通攻击｣时：】如果角色生命至少为6，则此技能少花费1个[冰元素骰]，伤害+1，且对自身造成1点[穿透伤害]。；如果角色生命不多于5，则使此伤害+1，并且技能结算后治疗角色2点。；[useCnt]')
         .handle((_, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             if (hidx == -1) return;
@@ -346,7 +354,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111112: () => new StatusBuilder('余威冰锥').combatStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack)
-        .description('【我方选择行动前：】造成2点[冰元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【我方选择行动前：】造成2点[冰元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 2,
             element: DAMAGE_TYPE.Cryo,
@@ -357,19 +365,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
-        .type(STATUS_TYPE.Barrier).talent(isTalent)
-        .description(`【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`)
-        .description(`【我方出战角色受到至少为3的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】`, 'v4.2.0')
-        .handle((status, event = {}, ver) => {
-            const { restDmg = 0 } = event;
-            if (restDmg < 3 - +(status.isTalent && ver >= 'v4.2.0')) return { restDmg }
-            --status.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
+        .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver >= 'v4.2.0' && isTalent)
+        .description(`【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；[useCnt]`)
+        .description(`【我方出战角色受到至少为3的伤害时：】抵消1点伤害。；[useCnt]`, 'v4.2.0'),
 
     112022: () => new StatusBuilder('虹剑势').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
-        .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；【[可用次数]：{useCnt}】')
-        .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；【[可用次数]：{useCnt}】', 'v3.6.0')
+        .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；[useCnt]')
+        .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；[useCnt]', 'v3.6.0')
         .handle((_s, _e, ver) => ({
             damage: ver < 'v3.6.0' ? 2 : 1,
             element: DAMAGE_TYPE.Hydro,
@@ -380,14 +382,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112031: () => new StatusBuilder('虚影').combatStatus().roundCnt(1).type(STATUS_TYPE.Barrier).summonId()
-        .description('【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
-        .handle((status, event = {}) => {
-            const { restDmg = 0, summon } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.roundCnt;
-            if (summon) --summon.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
     112032: () => new StatusBuilder('泡影').combatStatus().icon('ski,2').useCnt(1)
         .type(STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
@@ -410,7 +405,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112042: () => new StatusBuilder('近战状态').heroStatus().icon('ski,1').roundCnt(2).perCnt(2)
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('角色造成的[物理伤害]转换为[水元素伤害]。；【角色进行[重击]后：】目标角色附属【sts112043】。；角色对附属有【sts112043】的角色造成的伤害+1;；【角色对已附属有断流的角色使用技能后：】对下一个敌方后台角色造成1点[穿透伤害]。(每回合至多2次)；【[持续回合]：{roundCnt}】')
+        .description('角色造成的[物理伤害]转换为[水元素伤害]。；【角色进行[重击]后：】目标角色附属【sts112043】。；角色对附属有【sts112043】的角色造成的伤害+1;；【角色对已附属有断流的角色使用技能后：】对下一个敌方后台角色造成1点[穿透伤害]。(每回合至多2次)；[roundCnt]')
         .handle((status, event = {}, ver) => {
             const { isChargedAtk, eheros = [], trigger = '' } = event;
             const efHero = eheros.find(h => h.isFront);
@@ -457,7 +452,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112052: () => new StatusBuilder('仪来羽衣').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
-        .description('所附属角色｢普通攻击｣造成的伤害+1。；【所附属角色｢普通攻击｣后：】治疗所有我方角色1点。；【[持续回合]：{roundCnt}】')
+        .description('所附属角色｢普通攻击｣造成的伤害+1。；【所附属角色｢普通攻击｣后：】治疗所有我方角色1点。；[roundCnt]')
         .handle((_status, event = {}) => {
             const { heros = [], trigger = '' } = event;
             return {
@@ -470,7 +465,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112061: () => new StatusBuilder('泷廻鉴花').heroStatus().icon('buff4').useCnt(3).useCnt(2, 'v4.1.0')
         .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[水元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[水元素伤害]。；[useCnt]')
         .handle(status => ({
             addDmgType1: 1,
             trigger: ['skilltype1'],
@@ -482,7 +477,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112072: (isTalent: boolean = false) => new StatusBuilder('赤冕祝祷').combatStatus().icon('ski,2').roundCnt(2).perCnt(1).perCnt(3, isTalent)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).talent(isTalent)
-        .description(`我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}【[持续回合]：{roundCnt}】`)
+        .description(`我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}[roundCnt]`)
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
             const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx]?.weaponType);
@@ -526,7 +521,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_s, _e, ver) => ({ trigger: ['Bloom'], summon: [newSummon(ver)(3043)] })),
 
     112083: () => new StatusBuilder('永世流沔').heroStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
-        .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 3,
             element: ELEMENT_TYPE.Hydro,
@@ -556,8 +551,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112092: () => new StatusBuilder('玄掷玲珑').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
-        .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；【[持续回合]：{roundCnt}】')
-        .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；【[持续回合]：{roundCnt}】', 'v4.6.1')
+        .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；[roundCnt]')
+        .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；[roundCnt]', 'v4.6.1')
         .handle((_s, _e, ver) => ({
             damage: ver < 'v4.6.1' ? 2 : 1,
             element: ELEMENT_TYPE.Hydro,
@@ -566,7 +561,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112101: (cnt: number = 1) => new StatusBuilder('源水之滴').combatStatus().useCnt(cnt).maxCnt(3).type(STATUS_TYPE.Attack)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Neuvillette_S.webp')
-        .description(`【〖hro〗进行｢普通攻击｣后：】治疗【hro】2点，然后如果【hro】是我方｢出战角色｣，则[准备技能]：【rsk12104】。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)`)
+        .description('【〖hro〗进行｢普通攻击｣后：】治疗【hro】2点，然后如果【hro】是我方｢出战角色｣，则[准备技能]：【rsk12104】。；[useCnt]')
         .handle((status, event = {}, ver) => {
             const { heros = [], hidx = -1 } = event;
             const hid = getHidById(status.id);
@@ -603,7 +598,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112114: () => new StatusBuilder('普世欢腾').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage)
-        .description('【我方出战角色受到伤害或治疗后：】叠加1点【sts112115】。；【[持续回合]：{roundCnt}】')
+        .description('【我方出战角色受到伤害或治疗后：】叠加1点【sts112115】。；[roundCnt]')
         .handle((_status, event = {}, ver) => {
             const { heal = [], hidx = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['getdmg'];
@@ -614,9 +609,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112115: () => new StatusBuilder('狂欢值').combatStatus().useCnt(1).maxCnt(1000).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+    112115: () => new StatusBuilder('狂欢值').combatStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
-        .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}(可叠加，没有上限)】')
+        .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}】')
         .handle((status, { trigger } = {}) => ({
             trigger: ['dmg', 'dmg-Swirl'],
             addDmg: 1,
@@ -626,7 +622,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff4').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Enchant)
-        .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】')
+        .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；[useCnt]')
         .handle((_status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             if (hidx == -1) return;
@@ -647,7 +643,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
     113022: () => new StatusBuilder('旋火轮').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
-        .description('【我方角色使用技能后：】造成2点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【我方角色使用技能后：】造成2点[火元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 2,
             element: ELEMENT_TYPE.Pyro,
@@ -659,7 +655,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113031: (isTalent: boolean = false) => new StatusBuilder('鼓舞领域').combatStatus().icon('ski,2').roundCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
-        .description('【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；【[持续回合]：{roundCnt}】')
+        .description('【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；[roundCnt]')
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
             if (hidx == -1) return;
@@ -674,7 +670,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113051: (isTalent: boolean = false) => new StatusBuilder('庭火焰硝').heroStatus().icon('buff4')
         .useCnt(3).useCnt(2, 'v4.7.0').useCnt(3, 'v4.7.0', isTalent).useCnt(2, 'v4.2.0')
         .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).talent(isTalent)
-        .description(`所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；【[可用次数]：{useCnt}】`)
+        .description(`所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；[useCnt]`)
         .handle((status, event = {}) => {
             const { trigger = '' } = event;
             return {
@@ -691,7 +687,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     113052: () => new StatusBuilder('琉金火光').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
-        .description('【hro】以外的我方角色使用技能后：造成1点[火元素伤害]。；【[持续回合]：{roundCnt}】')
+        .description('【hro】以外的我方角色使用技能后：造成1点[火元素伤害]。；[roundCnt]')
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             return {
@@ -702,18 +698,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     113041: () => new StatusBuilder('兔兔伯爵').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
-        .description('【我方出战角色受到伤害时：】抵消2点伤害。；【[可用次数]：{useCnt}】')
-        .handle((status, event = {}) => {
-            const { restDmg = 0, summon } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            if (summon) --summon.useCnt;
-            return { restDmg: Math.max(0, restDmg - 2) }
-        }),
+        .description('【我方出战角色受到伤害时：】抵消2点伤害。；[useCnt]').barrierCnt(2),
 
     113061: (isTalent: boolean = false) => new StatusBuilder('爆裂火花').heroStatus().icon('buff5').useCnt(1).useCnt(2, isTalent)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
-        .description('【所附属角色进行[重击]时：】少花费1个[火元素骰]，并且伤害+1。；【[可用次数]：{useCnt}】')
+        .description('【所附属角色进行[重击]时：】少花费1个[火元素骰]，并且伤害+1。；[useCnt]')
         .handle((status, event = {}) => {
             if (!event.isChargedAtk) return;
             return {
@@ -725,7 +714,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     113063: () => new StatusBuilder('轰轰火花').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
-        .description('【所在阵营的角色使用技能后：】对所在阵营的出战角色造成2点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【所在阵营的角色使用技能后：】对所在阵营的出战角色造成2点[火元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 2,
             element: ELEMENT_TYPE.Pyro,
@@ -737,7 +726,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     113071: () => new StatusBuilder('彼岸蝶舞').heroStatus().icon('buff5').roundCnt(2).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('所附属角色造成的[物理伤害]变为[火元素伤害]，且角色造成的[火元素伤害]+1。；【所附属角色进行[重击]时：】目标角色附属【sts113072】。；【[持续回合]：{roundCnt}】')
+        .description('所附属角色造成的[物理伤害]变为[火元素伤害]，且角色造成的[火元素伤害]+1。；【所附属角色进行[重击]时：】目标角色附属【sts113072】。；[roundCnt]')
         .handle((_, event = {}, ver) => ({
             addDmg: 1,
             attachEl: ELEMENT_TYPE.Pyro,
@@ -747,7 +736,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113072: () => new StatusBuilder('血梅香').combatStatus().useCnt(1).type(STATUS_TYPE.Attack)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp')
-        .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 1,
             element: ELEMENT_TYPE.Pyro,
@@ -759,8 +748,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     113081: () => new StatusBuilder('丹火印').heroStatus().icon('buff5').useCnt(1).maxCnt(2).maxCnt(0, 'v4.2.0').type(STATUS_TYPE.AddDamage)
-        .description('【角色进行[重击]时：】造成的伤害+2。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)')
-        .description('【角色进行[重击]时：】造成的伤害+2。；【[可用次数]：{useCnt}】', 'v4.2.0')
+        .description('【角色进行[重击]时：】造成的伤害+2。；[useCnt]')
         .handle((status, event = {}) => {
             if (!event.isChargedAtk) return;
             return {
@@ -771,7 +759,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     113082: () => new StatusBuilder('灼灼').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
-        .description('【角色进行[重击]时：】少花费1个[火元素骰]。(每回合1次)；【结束阶段：】角色附属【sts113081】。；【[持续回合]：{roundCnt}】')
+        .description('【角色进行[重击]时：】少花费1个[火元素骰]。(每回合1次)；【结束阶段：】角色附属【sts113081】。；[roundCnt]')
         .handle((status, event = {}, ver) => {
             const { isChargedAtk = false, isMinusDiceSkill = false, trigger = '' } = event;
             return {
@@ -822,7 +810,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113112: (isTalent: boolean = false) => new StatusBuilder('炽火大铠').combatStatus().icon('ski,2').type(STATUS_TYPE.Attack)
         .useCnt(2).useCnt(3, isTalent).talent(isTalent)
-        .description('【我方角色｢普通攻击｣后：】造成1点[火元素伤害]，生成【sts113111】。；【[可用次数]：{useCnt}】')
+        .description('【我方角色｢普通攻击｣后：】造成1点[火元素伤害]，生成【sts113111】。；[useCnt]')
         .handle((_s, _e, ver) => ({
             damage: 1,
             element: ELEMENT_TYPE.Pyro,
@@ -836,7 +824,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113121: () => shieldStatus('热情护盾'),
 
     113123: () => new StatusBuilder('氛围烈焰').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
-        .description('【我方宣布结束时：】如果我方的手牌数量不多于1，则造成1点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【我方宣布结束时：】如果我方的手牌数量不多于1，则造成1点[火元素伤害]。；[useCnt]')
         .handle((_, event = {}) => {
             const { hcardsCnt = 10 } = event;
             if (hcardsCnt > 1) return;
@@ -851,7 +839,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     113132: () => new StatusBuilder('二重毁伤弹').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
-        .description('【所在阵营切换角色后：】对切换到的角色造成1点[火元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【所在阵营切换角色后：】对切换到的角色造成1点[火元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 1,
             element: ELEMENT_TYPE.Pyro,
@@ -864,7 +852,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113134: () => new StatusBuilder('尖兵协同战法(生效中)').combatStatus().icon('buff2').useCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
-        .description('我方造成的[火元素伤害]或[雷元素伤害]+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}】')
+        .description('我方造成的[火元素伤害]或[雷元素伤害]+1。(包括角色引发的扩散伤害)；[useCnt]')
         .handle(status => ({
             trigger: ['Pyro-dmg', 'Electro-dmg', 'Pyro-dmg-Swirl', 'Electro-dmg-Swirl'],
             addDmgCdt: 1,
@@ -872,7 +860,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114021: () => new StatusBuilder('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
-        .description('【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；【[持续回合]：{roundCnt}】')
+        .description('【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；[roundCnt]')
         .handle(() => ({
             damage: 2,
             element: ELEMENT_TYPE.Electro,
@@ -915,7 +903,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     }),
 
     114052: () => new StatusBuilder('奔潮引电').heroStatus().icon('buff3').useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
-        .description('本回合内所附属的角色｢普通攻击｣少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】')
+        .description('本回合内所附属的角色｢普通攻击｣少花费1个[无色元素骰]。；[useCnt]')
         .handle((status, event = {}) => ({
             trigger: ['skilltype1'],
             minusDiceSkill: { skilltype1: [0, 1, 0] },
@@ -925,7 +913,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114053: () => new StatusBuilder('雷兽之盾').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.Barrier)
-        .description('【我方角色｢普通攻击｣后：】造成1点[雷元素伤害]。；【我方角色受到至少为3的伤害时：】抵消其中1点伤害。；【[持续回合]：{roundCnt}】')
+        .description('【我方角色｢普通攻击｣后：】造成1点[雷元素伤害]。；【我方角色受到至少为3的伤害时：】抵消其中1点伤害。；[roundCnt]')
         .handle((_, event = {}) => {
             const { restDmg = 0 } = event;
             return {
@@ -950,7 +938,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114063: () => new StatusBuilder('鸣煌护持').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
-        .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；【[可用次数]：{useCnt}】')
+        .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；[useCnt]')
         .handle((status, event = {}) => {
             const { skilltype = 1, hasDmg = false } = event;
             const trigger: Trigger[] = [];
@@ -993,7 +981,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114083: () => new StatusBuilder('天狐霆雷').combatStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign)
-        .description('【我方选择行动前：】造成3点[雷元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【我方选择行动前：】造成3点[雷元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 3,
             element: ELEMENT_TYPE.Electro,
@@ -1011,7 +999,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114111: () => new StatusBuilder('越袚草轮').combatStatus().icon('ski,1').useCnt(3).perCnt(1).type(STATUS_TYPE.Attack)
-        .description('【我方切换角色后：】造成1点[雷元素伤害]，治疗我方受伤最多的角色1点。(每回合1次)；【[可用次数]：{useCnt}】')
+        .description('【我方切换角色后：】造成1点[雷元素伤害]，治疗我方受伤最多的角色1点。(每回合1次)；[useCnt]')
         .handle((status, event = {}) => {
             if (status.perCnt <= 0) return;
             return {
@@ -1030,7 +1018,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon('buff3').useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
-        .description(`【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；【[可用次数]：{useCnt}】`)
+        .description(`【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；[useCnt]`)
         .handle((status, _, ver) => ({
             minusDiceHero: 1,
             trigger: ['change-from'],
@@ -1058,7 +1046,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     115041: () => new StatusBuilder('夜叉傩面').heroStatus().icon('ski,2').roundCnt(2).perCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('所附属角色造成的[物理伤害]变为[风元素伤害]，且角色造成的[风元素伤害]+1。；【所附属角色进行[下落攻击]时：】伤害额外+2。；【所附属角色为出战角色，我方执行｢切换角色｣行动时：】少花费1个元素骰。(每回合1次)；【[持续回合]：{roundCnt}】')
+        .description('所附属角色造成的[物理伤害]变为[风元素伤害]，且角色造成的[风元素伤害]+1。；【所附属角色进行[下落攻击]时：】伤害额外+2。；【所附属角色为出战角色，我方执行｢切换角色｣行动时：】少花费1个元素骰。(每回合1次)；[roundCnt]')
         .handle((status, event = {}) => {
             const { isFallAtk = false, trigger = '' } = event;
             return {
@@ -1079,7 +1067,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     115042: () => new StatusBuilder('降魔·忿怒显相').heroStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
-        .description('【所附属角色使用〖ski,1〗时：】少花费1个[风元素骰]。；【[可用次数]：{useCnt}】；【所附属角色不再附属〖sts115041〗时：】移除此效果。')
+        .description('【所附属角色使用〖ski,1〗时：】少花费1个[风元素骰]。；[useCnt]；【所附属角色不再附属〖sts115041〗时：】移除此效果。')
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1, isMinusDiceSkill = false, trigger = '' } = event;
             const hasSts115041 = getObjById(heros[hidx]?.heroStatus, 115041);
@@ -1133,7 +1121,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115050: () => sts11505x(ELEMENT_TYPE.Electro),
 
     115061: () => new StatusBuilder('优风倾姿').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
-        .description('【所附属角色进行｢普通攻击｣时：】造成的伤害+2; 如果敌方存在后台角色，则此技能改为对下一个敌方后台角色造成伤害。；【[可用次数]：{useCnt}】')
+        .description('【所附属角色进行｢普通攻击｣时：】造成的伤害+2; 如果敌方存在后台角色，则此技能改为对下一个敌方后台角色造成伤害。；[useCnt]')
         .handle((status, { trigger = '' } = {}) => ({
             addDmgType1: 2,
             trigger: ['skilltype1'],
@@ -1142,7 +1130,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     115062: () => new StatusBuilder('倾落').heroStatus().icon('buff6').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Usage)
-        .description('下次从该角色执行｢切换角色｣行动时少花费1个元素骰，并且造成1点[风元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('下次从该角色执行｢切换角色｣行动时少花费1个元素骰，并且造成1点[风元素伤害]。；[useCnt]')
         .handle(() => ({
             trigger: ['change-from'],
             damage: 1,
@@ -1168,7 +1156,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     115081: () => new StatusBuilder('攻袭余威').heroStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Round)
-        .description('【结束阶段：】如果角色生命值至少为6，则受到2点[穿透伤害]。；【[持续回合]：{roundCnt}】')
+        .description('【结束阶段：】如果角色生命值至少为6，则受到2点[穿透伤害]。；[roundCnt]')
         .handle((_status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             if (hidx == -1) return;
@@ -1184,16 +1172,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     115083: () => new StatusBuilder('惊奇猫猫盒的嘲讽').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId(115082)
-        .description('【我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)')
-        .handle((status, event = {}) => {
-            const { restDmg = 0 } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)'),
 
     115091: () => new StatusBuilder('疾风示现').heroStatus().icon('buff').useCnt(1).type(STATUS_TYPE.ConditionalEnchant)
-        .description('【所附属角色进行[重击]时：】少花费1个[无色元素骰]，造成的[物理伤害]变为[风元素伤害]，并且使目标角色附属【sts115092】；【[可用次数]：{useCnt}】')
+        .description('【所附属角色进行[重击]时：】少花费1个[无色元素骰]，造成的[物理伤害]变为[风元素伤害]，并且使目标角色附属【sts115092】；[useCnt]')
         .handle((status, event = {}, ver) => {
             const { isChargedAtk = false } = event;
             if (!isChargedAtk) return;
@@ -1209,7 +1191,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     115092: () => new StatusBuilder('风压坍陷').heroStatus().icon('ski,1').useCnt(1).type(STATUS_TYPE.Round).iconBg(DEBUFF_BG_COLOR)
-        .description('【结束阶段：】将附属角色切换为｢出战角色｣。；【[可用次数]：{useCnt}】；(同一方场上最多存在一个此状态)')
+        .description('【结束阶段：】将附属角色切换为｢出战角色｣。；[useCnt]；(同一方场上最多存在一个此状态)')
         .handle((_status, event = {}) => ({
             trigger: ['phase-end'],
             onlyOne: true,
@@ -1221,10 +1203,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     116011: () => new StatusBuilder('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
-        .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
+        .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；[useCnt]')
         .handle((status, event = {}) => {
-            const { restDmg = -1, heros = [] } = event;
-            if (restDmg > -1) {
+            const { restDmg = 0, heros = [] } = event;
+            if (restDmg > 0) {
                 if (restDmg < 2) return { restDmg }
                 --status.useCnt;
                 return { restDmg: restDmg - 1 }
@@ -1242,7 +1224,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     116022: () => new StatusBuilder('大扫除').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('【角色使用｢普通攻击｣时：】少花费1个[岩元素骰]。(每回合1次)；角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】')
+        .description('【角色使用｢普通攻击｣时：】少花费1个[岩元素骰]。(每回合1次)；角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]')
         .handle((status, event = {}) => ({
             addDmgType1: 2,
             minusDiceSkill: isCdt(status.perCnt > 0, { skilltype1: [1, 0, 0] }),
@@ -1260,18 +1242,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【角色无法使用技能。】(持续到回合结束)'),
 
     116051: () => new StatusBuilder('阿丑').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
-        .description('【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】')
-        .handle((status, event = {}) => {
-            const { restDmg = 0, summon } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            if (summon) --summon.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
     116053: () => new StatusBuilder('怒目鬼王').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)')
-        .description('所附属角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；【[持续回合]：{roundCnt}】；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)', 'v4.2.0')
+        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)')
+        .description('所附属角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)', 'v4.2.0')
         .handle((status, _, ver) => ({
             addDmgType1: ver < 'v4.2.0' ? 2 : 1,
             attachEl: ELEMENT_TYPE.Geo,
@@ -1284,7 +1259,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     116054: () => new StatusBuilder('乱神之怪力').heroStatus().icon('buff4').useCnt(1).maxCnt(3).type(STATUS_TYPE.AddDamage)
-        .description('【所附属角色进行[重击]时：】造成的伤害+1。如果[可用次数]至少为2，则还会使本技能少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)')
+        .description('【所附属角色进行[重击]时：】造成的伤害+1。如果[可用次数]至少为2，则还会使本技能少花费1个[无色元素骰]。；[useCnt]')
         .handle((status, event = {}) => {
             if (!event.isChargedAtk) return;
             return {
@@ -1295,8 +1270,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    116061: () => new StatusBuilder('大将旗指物').heroStatus().icon('ski,1').roundCnt(2).maxCnt(3).type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
-        .description('我方角色造成的[岩元素伤害]+1。；【[持续回合]：{roundCnt}】(可叠加，最多叠加到3回合)')
+    116061: () => new StatusBuilder('大将旗指物').heroStatus().icon('ski,1').roundCnt(2).maxCnt(3)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
+        .description('我方角色造成的[岩元素伤害]+1。；[roundCnt]')
         .handle((_status, event = {}) => {
             const { skilltype = -1 } = event;
             return {
@@ -1322,8 +1298,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116073: (useCnt: number = 1) => new StatusBuilder('飞云旗阵').combatStatus().icon('ski,1').useCnt(useCnt).maxCnt(4)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
-        .description('我方角色进行｢普通攻击｣时：如果我方手牌数量不多于1，则此技能少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加，最多叠加到4次)】')
-        .description('我方角色进行｢普通攻击｣时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加，最多叠加到4次)】', 'v4.8.0')
+        .description('我方角色进行｢普通攻击｣时：如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]')
+        .description('我方角色进行｢普通攻击｣时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]】', 'v4.8.0')
         .handle((status, event = {}, ver) => {
             const { hcardsCnt = 10, heros = [] } = event;
             return {
@@ -1338,7 +1314,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     116084: () => enchantStatus(ELEMENT_TYPE.Geo).roundCnt(2),
 
     117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').roundCnt(1).type(STATUS_TYPE.Attack)
-        .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。(每回合1次)；【[持续回合]：{roundCnt}】')
+        .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。(每回合1次)；[roundCnt]')
         .handle(() => ({
             damage: 1,
             element: ELEMENT_TYPE.Dendro,
@@ -1349,7 +1325,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     117021: () => new StatusBuilder('通塞识').heroStatus().icon('buff').useCnt(3).type(STATUS_TYPE.ConditionalEnchant)
-        .description('【所附属角色进行[重击]时：】造成的[物理伤害]变为[草元素伤害]，并且会在技能结算后召唤【smn117022】。；【[可用次数]：{useCnt}】')
+        .description('【所附属角色进行[重击]时：】造成的[物理伤害]变为[草元素伤害]，并且会在技能结算后召唤【smn117022】。；[useCnt]')
         .handle((status, event = {}, ver) => {
             if (!event.isChargedAtk) return;
             return {
@@ -1361,7 +1337,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack)
-        .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；【[可用次数]：{useCnt}】')
+        .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((_status, event = {}) => {
             const { heros = [], eheros = [], hidx = -1, combatStatus = [] } = event;
@@ -1403,11 +1379,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     117032: (isTalent: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus()
         .icon('ski,3').roundCnt(2).roundCnt(3, isTalent).talent(isTalent)
-        .description('【我方引发元素反应时：】伤害额外+1。；【[持续回合]：{roundCnt}】')
+        .description('【我方引发元素反应时：】伤害额外+1。；[roundCnt]')
         .handle(() => ({ addDmgCdt: 1, trigger: ['elReaction'] })),
 
     117043: () => new StatusBuilder('桂子仙机').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
-        .description('【我方切换角色后：】造成1点[草元素伤害]，治疗我方出战角色1点。；【[可用次数]：{useCnt}】')
+        .description('【我方切换角色后：】造成1点[草元素伤害]，治疗我方出战角色1点。；[useCnt]')
         .handle(() => ({
             damage: 1,
             element: ELEMENT_TYPE.Dendro,
@@ -1419,7 +1395,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     117052: () => new StatusBuilder('脉摄宣明').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Usage)
-        .description('【行动阶段开始时：】生成【sts117053】。；【[可用次数]：{useCnt}】')
+        .description('【行动阶段开始时：】生成【sts117053】。；[useCnt]')
         .handle((_s, _e, ver) => ({
             trigger: ['phase-start'],
             exec: eStatus => {
@@ -1451,7 +1427,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     117061: (rcnt: number = 2) => new StatusBuilder('琢光镜').heroStatus().icon('ski,2').roundCnt(rcnt).maxCnt(3)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Enchant)
-        .description('角色造成的[物理伤害]变为[草元素伤害]。；【角色｢普通攻击｣后：】造成1点[草元素伤害]。如果此技能为[重击]，则使此状态的[持续回合]+1。；【[持续回合]：{roundCnt}】(可叠加，最多叠加到3回合)')
+        .description('角色造成的[物理伤害]变为[草元素伤害]。；【角色｢普通攻击｣后：】造成1点[草元素伤害]。如果此技能为[重击]，则使此状态的[持续回合]+1。；[roundCnt]')
         .handle((status, event = {}) => {
             const { isChargedAtk = false, trigger = '' } = event;
             return {
@@ -1468,7 +1444,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     117071: () => new StatusBuilder('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
-        .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，摸1张牌。；【[可用次数]：{useCnt}】(可叠加，最多叠加到2次)')
+        .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，摸1张牌。；[useCnt]')
         .handle((status, event = {}) => {
             const { heros = [], force = false } = event;
             if (!getObjById(heros, getHidById(status.id))?.isFront && !force) return;
@@ -1487,7 +1463,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     117073: () => new StatusBuilder('猫草豆蔻').combatStatus().icon('ski,2').useCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).iconBg(DEBUFF_BG_COLOR)
-        .description('【所在阵营打出2张行动牌后：】对所在阵营的出战角色造成1点[草元素伤害]。；【[可用次数]：{useCnt}】')
+        .description('【所在阵营打出2张行动牌后：】对所在阵营的出战角色造成1点[草元素伤害]。；[useCnt]')
         .handle(status => ({
             damage: isCdt(status.perCnt <= -1, 1),
             element: ELEMENT_TYPE.Dendro,
@@ -1513,8 +1489,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     117082: (useCnt: number = 1) => new StatusBuilder('迸发扫描').combatStatus().icon('ski,1').useCnt(useCnt).maxCnt(3).type(STATUS_TYPE.Attack)
-        .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用的[草元素伤害]。；【[可用次数]：{useCnt}(可叠加，最多叠加到3次)】')
-        .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；【[可用次数]：{useCnt}(可叠加，最多叠加到3次)】', 'v4.8.0')
+        .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用的[草元素伤害]。；[useCnt]')
+        .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；[useCnt]', 'v4.8.0')
         .handle((status, event = {}, ver) => {
             const { heros = [], summons = [], pile = [], card, combatStatus = [] } = event;
             if (pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) return;
@@ -1562,9 +1538,83 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    121012: (useCnt: number = 0) => new StatusBuilder('流萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
+        .description('为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn121011】，则额外提供其[可用次数]的[护盾]。(最多额外提供3点[护盾])'),
+
+    121021: () => new StatusBuilder('冰封的炽炎魔女').heroStatus().icon('ski,3').useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
+        .description('【行动阶段开始时：】如果所附属角色生命值不多于4，则移除此效果。；【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。【此效果被移除时：】所附属角色转换为[｢焚尽的炽炎魔女｣]形态。')
+        .handle((_, event = {}) => {
+            const { heros = [], hidx = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['will-killed', 'skilltype3'];
+            if ((heros[hidx]?.hp ?? 10) <= 4) triggers.push('phase-start');
+            return {
+                trigger: triggers,
+                cmds: isCdt(trigger == 'will-killed', [{ cmd: 'revive', cnt: 1 }]),
+                exec: eStatus => {
+                    if (eStatus) {
+                        --eStatus.useCnt;
+                        return;
+                    }
+                    return { cmds: [{ cmd: 'changePattern', cnt: 6301, hidxs: [hidx] }] }
+                }
+            }
+        }),
+
+    121022: (type: number = 0) => new StatusBuilder(['严寒', '炽热'][type]).heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
+        .icon(ELEMENT_ICON[ELEMENT_CODE_KEY[[1, 3][type] as ElementCode]] + '-dice').iconBg(DEBUFF_BG_COLOR).perCnt(-type)
+        .description(`【结束阶段：】对所附属角色造成1点[${['冰', '火'][type]}元素伤害]。；[useCnt]；所附属角色被附属【sts121022${[',1', ''][type]}】时，移除此效果。`)
+        .handle(status => ({
+            damage: 1,
+            element: status.perCnt == 0 ? ELEMENT_TYPE.Cryo : ELEMENT_TYPE.Pyro,
+            isSelf: true,
+            trigger: ['phase-end'],
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
+            },
+        })),
+
+    121031: () => new StatusBuilder('四迸冰锥').heroStatus().icon('buff6').useCnt(1)
+        .description('【我方角色｢普通攻击｣时：】对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]')
+        .handle(status => ({
+            pdmg: 1,
+            trigger: ['skilltype1'],
+            exec: () => { --status.useCnt },
+        })),
+
+    121034: () => new StatusBuilder('冰晶核心').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
+        .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。')
+        .handle((_, event = {}, ver) => ({
+            trigger: ['will-killed'],
+            cmds: [{ cmd: 'revive', cnt: 1 }],
+            exec: eStatus => {
+                const { heros = [], hidx = -1 } = event;
+                if (eStatus) {
+                    --eStatus.useCnt;
+                    return;
+                }
+                if (!heros[hidx].talentSlot) return;
+                return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(121022)], isOppo: true }] }
+            }
+        })),
+
+    121042: () => new StatusBuilder('掠袭锐势').heroStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
+        .description('【结束阶段：】对所有附属有【sts122】的敌方角色造成1点[穿透伤害]。；[useCnt]')
+        .handle((status, { heros = [] } = {}) => ({
+            trigger: ['phase-end'],
+            pdmg: 1,
+            hidxs: heros.filter(h => hasObjById(h.heroStatus, 122)).map(h => h.hidx),
+            exec: () => { --status.useCnt },
+        })),
+
+    122013: () => new StatusBuilder('纯水幻形·蛙').combatStatus().useCnt(1).useCnt(2, 'v4.3.0')
+        .type(STATUS_TYPE.Barrier).summonId()
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
+
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
-        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('本回合无法食用更多的｢料理｣。'),
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
+        .description('本回合无法食用更多的｢料理｣。'),
 
     // 2010: () => new GIStatus(2010, '换班时间(生效中)', '【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。',
     //     'buff2', 1, [4, 10], 1, 0, -1, status => ({
@@ -1631,7 +1681,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         return { restDmg: Math.max(0, restDmg - 3) }
     //     }),
 
-    // 2019: () => new GIStatus(2019, '兽肉薄荷卷(生效中)', '本回合中，该角色｢普通攻击｣少花费1个[无色元素骰]。；【[可用次数]：{useCnt}】',
+    // 2019: () => new GIStatus(2019, '兽肉薄荷卷(生效中)', '本回合中，该角色｢普通攻击｣少花费1个[无色元素骰]。；[useCnt]',
     //     'buff2', 0, [4], 3, 0, 1, (status, event = {}) => {
     //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 1, 0] });
     //         return {
@@ -1716,16 +1766,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: () => { --status.useCnt },
     //     })),
 
-    // 2042: (summonId: number) => new GIStatus(2042, '纯水幻形·蛙', '【我方出战角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
-    //     '', 1, [2], 1, 0, -1, (status, event = {}) => {
-    //         const { restDmg = 0, summon } = event;
-    //         if (restDmg <= 0) return { restDmg }
-    //         --status.useCnt;
-    //         if (summon) --summon.useCnt;
-    //         return { restDmg: restDmg - 1 }
-    //     }, { smnId: summonId }),
-
-    // 2043: (isTalent:boolean = false) => new GIStatus(2043, '水光破镜', '所附属角色受到的[水元素伤害]+1。；【[持续回合]：{roundCnt}】；(同一方场上最多存在一个此状态)',
+    // 2043: (isTalent:boolean = false) => new GIStatus(2043, '水光破镜', '所附属角色受到的[水元素伤害]+1。；[roundCnt]；(同一方场上最多存在一个此状态)',
     //     'debuff', 0, isTalent ? [4, 6] : [6], -1, 0, isTalent ? 3 : 2, status => {
     //         const trigger: Trigger[] = ['water-getdmg'];
     //         if (status.isTalent) trigger.push('change-from');
@@ -1737,7 +1778,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { isTalent }),
 
-    // 2044: (isTalent:boolean = false) => new GIStatus(2044, '潜行', '所附属角色受到的伤害-1，造成的伤害+1。；【[可用次数]：{useCnt}】',
+    // 2044: (isTalent:boolean = false) => new GIStatus(2044, '潜行', '所附属角色受到的伤害-1，造成的伤害+1。；[useCnt]',
     //     '', 0, isTalent ? [2, 6, 8] : [2, 6], isTalent ? 3 : 2, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0 } = event;
     //         if (restDmg > 0) --status.useCnt;
@@ -1750,7 +1791,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { isTalent }),
 
-    // 2045: () => new GIStatus(2045, '岩盔', '【所附属角色受到伤害时：】抵消1点伤害。；抵消[岩元素伤害]时，需额外消耗1次[可用次数]。；【[可用次数]：{useCnt}】',
+    // 2045: () => new GIStatus(2045, '岩盔', '【所附属角色受到伤害时：】抵消1点伤害。；抵消[岩元素伤害]时，需额外消耗1次[可用次数]。；[useCnt]',
     //     '', 0, [2], 3, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0, willAttach = 0, heros = [], hidx = -1 } = event;
     //         if (restDmg <= 0) return { restDmg }
@@ -1796,7 +1837,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //     }),
 
     301102: () => new StatusBuilder('千年的大乐章·别离之歌').heroStatus().icon('buff5').roundCnt(2)
-        .description('我方角色造成的伤害+1。；【[持续回合]：{roundCnt}】')
+        .description('我方角色造成的伤害+1。；[roundCnt]')
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage).handle(() => ({ addDmg: 1 })),
 
     // 2049: () => shieldStatus(2049, '叛逆的守护', 1, 2),
@@ -1835,7 +1876,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2054: () => new GIStatus(2054, '自由的新风(生效中)', '【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：{useCnt}】',
+    // 2054: () => new GIStatus(2054, '自由的新风(生效中)', '【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]',
     //     'buff3', 1, [4, 10], 1, 0, 1, (status, event = {}) => {
     //         const { card, playerInfo: { isKillCurRound = false } = {} } = event;
     //         if (!isKillCurRound) return;
@@ -1897,9 +1938,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             return { switchHeroDiceCnt: Math.max(0, switchHeroDiceCnt - 1) }
     //         }
     //     })),
-
-    // 2090: (useCnt = 0) => new GIStatus(2090, '流萤护罩', '为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn3034】，则额外提供其[可用次数]的[护盾]。(最多额外提供3点[护盾])',
-    //     '', 1, [7], 1 + Math.min(3, useCnt), 0, -1),
 
     // 2091: () => new GIStatus(2091, '雷晶核心', '【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。',
     //     'heal2', 0, [10, 13], 1, 0, -1, () => ({
@@ -1993,36 +2031,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2127: () => card587sts(4),
 
-    // 2137: (type = 0) => new GIStatus(2137, ['严寒', '炽热'][type], `【结束阶段：】对所附属角色造成1点[${['冰', '火'][type]}元素伤害]。；【[可用次数]：{useCnt}】；所附属角色被附属【sts2137${[',1', ''][type]}】时，移除此效果。`,
-    //     ELEMENT_ICON[[4, 2][type]] + '-dice', 0, [1], 1, 0, -1, status => ({
-    //         damage: 1,
-    //         element: status.perCnt == 0 ? 4 : 2,
-    //         isSelf: true,
-    //         trigger: ['phase-end'],
-    //         exec: eStatus => {
-    //             if (eStatus) --eStatus.useCnt;
-    //         },
-    //     }), { icbg: DEBUFF_BG_COLOR, pct: -type }),
-
-    // 2138: () => new GIStatus(2138, '冰封的炽炎魔女', '【行动阶段开始时：】如果所附属角色生命值不多于4，则移除此效果。；【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。【此效果被移除时：】所附属角色转换为[｢焚尽的炽炎魔女｣]形态。',
-    //     'ski1702,3', 0, [4, 10, 13], 1, 0, -1, (_status, event = {}) => {
-    //         const { heros = [], hidx = -1, trigger = '' } = event;
-    //         const triggers: Trigger[] = ['will-killed', 'skilltype3'];
-    //         if ((heros[hidx]?.hp ?? 10) <= 4) triggers.push('phase-start');
-    //         return {
-    //             trigger: triggers,
-    //             cmds: isCdt(trigger == 'will-killed', [{ cmd: 'revive', cnt: 1 }]),
-    //             exec: eStatus => {
-    //                 if (eStatus) {
-    //                     --eStatus.useCnt;
-    //                     return;
-    //                 }
-    //                 return { cmds: [{ cmd: 'changePattern', cnt: 1851, hidxs: [hidx] }] }
-    //             }
-    //         }
-    //     }, { icbg: STATUS_BG_COLOR[4] }),
-
-    // 2139: (cnt = 1) => new GIStatus(2139, '炎之魔蝎·守势', '【附属角色受到伤害时：】抵消1点伤害。；【[可用次数]：{useCnt}】',
+    // 2139: (cnt = 1) => new GIStatus(2139, '炎之魔蝎·守势', '【附属角色受到伤害时：】抵消1点伤害。；[useCnt]',
     //     '', 0, [2], cnt, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0 } = event;
     //         if (restDmg <= 0) return { restDmg }
@@ -2058,7 +2067,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { isReset: false }),
 
-    // 2142: () => new GIStatus(2142, '坍毁', '所附属角色受到的[物理伤害]或[风元素伤害]+2。；【[可用次数]：{useCnt}】',
+    // 2142: () => new GIStatus(2142, '坍毁', '所附属角色受到的[物理伤害]或[风元素伤害]+2。；[useCnt]',
     //     'debuff', 0, [6], 1, 0, -1, (status, event = {}) => {
     //         const { heros = [], hidx = -1, eheros = [] } = event;
     //         return {
@@ -2116,7 +2125,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { icbg: STATUS_BG_COLOR[6], expl: ['rsk8', 'rsk9', 'rsk10', 'rsk11'] }),
 
-    // 2146: () => new GIStatus(2146, '裁定之时(生效中)', '本回合中，我方打出的事件牌无效。；【[可用次数]：{useCnt}】',
+    // 2146: () => new GIStatus(2146, '裁定之时(生效中)', '本回合中，我方打出的事件牌无效。；[useCnt]',
     //     'debuff', 1, [4], 3, 0, 1, (status, event = {}) => {
     //         const { card } = event;
     //         const isInvalid = card?.type == 2;
@@ -2133,7 +2142,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //     'debuff', 1, [4, 10], -1, 0, 1, () => ({ trigger: ['change-from'], addDiceHero: 1 })),
 
 
-    // 2148: () => new GIStatus(2148, '野猪公主(生效中)', '【本回合中，我方每有一张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。；【[可用次数]：{useCnt}】；(角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果)',
+    // 2148: () => new GIStatus(2148, '野猪公主(生效中)', '【本回合中，我方每有一张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。；[useCnt]；(角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果)',
     //     'buff2', 1, [4], 2, 0, 1, (status, event = {}) => {
     //         const { heros = [], hidx = -1 } = event;
     //         return {
@@ -2208,29 +2217,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }), { expl: ['rsk8', 'rsk9', 'rsk10', 'rsk11'] }),
 
-    // 2156: () => new GIStatus(2156, '四迸冰锥', '【我方角色｢普通攻击｣时：】对所有敌方后台角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
-    //     'buff6', 0, [], 1, 0, -1, status => ({
-    //         pdmg: 1,
-    //         trigger: ['skilltype1'],
-    //         exec: () => { --status.useCnt },
-    //     })),
-
-    // 2157: () => new GIStatus(2157, '冰晶核心', '【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。',
-    //     'heal2', 0, [10, 13], 1, 0, -1, (_status, event = {}) => ({
-    //         trigger: ['will-killed'],
-    //         cmds: [{ cmd: 'revive', cnt: 1 }],
-    //         exec: eStatus => {
-    //             const { heros = [], hidx = -1 } = event;
-    //             if (eStatus) {
-    //                 --eStatus.useCnt;
-    //                 return;
-    //             }
-    //             if (!heros[hidx].talentSlot) return;
-    //             return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2137)], isOppo: true }] }
-    //         }
-    //     })),
-
-    // 2158: (isTalent:boolean = false, useCnt = 2, addCnt?: number) => new GIStatus(2158, '原海明珠', `【所附属角色受到伤害时：】抵消1点伤害。；【每回合${isTalent ? 2 : 1}次：】抵消来自召唤物的伤害时不消耗[可用次数]。；【[可用次数]：{useCnt}】；【我方宣布结束时：】如果所附属角色为｢出战角色｣，则摸1张牌。`,
+    // 2158: (isTalent:boolean = false, useCnt = 2, addCnt?: number) => new GIStatus(2158, '原海明珠', `【所附属角色受到伤害时：】抵消1点伤害。；【每回合${isTalent ? 2 : 1}次：】抵消来自召唤物的伤害时不消耗[可用次数]。；[useCnt]；【我方宣布结束时：】如果所附属角色为｢出战角色｣，则摸1张牌。`,
     //     '', 0, [2, 4], useCnt, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0, heros = [], hidx = -1, dmgSource = -1 } = event;
     //         if (restDmg > 0) {
@@ -2245,7 +2232,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }, { isTalent, pct: isTalent ? 2 : 1, act: addCnt }),
 
-    // 2159: () => new GIStatus(2159, '松茸酿肉卷(生效中)', '【结束阶段：】治疗该角色1点。【[可用次数]：{useCnt}】',
+    // 2159: () => new GIStatus(2159, '松茸酿肉卷(生效中)', '【结束阶段：】治疗该角色1点。[useCnt]',
     //     'heal', 0, [3], 3, 0, -1, (_status, event = {}) => {
     //         const { hidx = -1 } = event;
     //         return {
@@ -2315,7 +2302,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.roundCnt },
         })),
 
-    // 2173: () => new GIStatus(2173, '抗争之日·碎梦之时(生效中)', '本回合中，所附属角色受到的伤害-1。；【[可用次数]：{useCnt}】',
+    // 2173: () => new GIStatus(2173, '抗争之日·碎梦之时(生效中)', '本回合中，所附属角色受到的伤害-1。；[useCnt]',
     //     '', 0, [2], 4, 0, 1, (status, event = {}) => {
     //         const { restDmg = 0 } = event;
     //         if (restDmg <= 0) return { restDmg }
@@ -2323,7 +2310,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         return { restDmg: Math.max(0, restDmg - 1) }
     //     }),
 
-    // 2174: () => new GIStatus(2174, '严格禁令', '本回合中，所在阵营打出的事件牌无效。；【[可用次数]：{useCnt}】',
+    // 2174: () => new GIStatus(2174, '严格禁令', '本回合中，所在阵营打出的事件牌无效。；[useCnt]',
     //     'debuff', 1, [4], 1, 0, 1, (status, event = {}) => {
     //         const { card } = event;
     //         const isInvalid = card?.type == 2;
@@ -2357,7 +2344,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: () => { --status.useCnt },
     //     })),
 
-    // 2180: () => new GIStatus(2180, '暗流的诅咒', '【所在阵营的角色使用｢元素战技｣或｢元素爆发｣时：】需要多花费1个元素骰。；【[可用次数]：{useCnt}】',
+    // 2180: () => new GIStatus(2180, '暗流的诅咒', '【所在阵营的角色使用｢元素战技｣或｢元素爆发｣时：】需要多花费1个元素骰。；[useCnt]',
     //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSkill.webp',
     //     1, [4], 2, 0, -1, status => ({
     //         trigger: ['skilltype2', 'skilltype3'],
@@ -2390,7 +2377,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: () => { --status.useCnt },
     //     })),
 
-    // 2184: () => new GIStatus(2184, '悠远雷暴', '【结束阶段：】对所附属角色造成2点[穿透伤害]。；【[可用次数]：{useCnt}】',
+    // 2184: () => new GIStatus(2184, '悠远雷暴', '【结束阶段：】对所附属角色造成2点[穿透伤害]。；[useCnt]',
     //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp',
     //     0, [1], 1, 0, -1, (_status, event = {}) => {
     //         const { hidx = -1 } = event;
@@ -2412,7 +2399,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: () => { status.useCnt = 0 },
     //     })),
 
-    // 2186: () => new GIStatus(2186, '缤纷马卡龙(生效中)', '【所附属角色受到伤害后：】治疗该角色1点。；【[可用次数]：{useCnt}】',
+    // 2186: () => new GIStatus(2186, '缤纷马卡龙(生效中)', '【所附属角色受到伤害后：】治疗该角色1点。；[useCnt]',
     //     'heal', 0, [1], 3, 0, -1, () => ({
     //         heal: 1,
     //         trigger: ['getdmg'],
@@ -2424,7 +2411,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     // 2187: () => new GIStatus(2187, '水之新生·锐势', '角色造成的[物理伤害]变为[水元素伤害]，且[水元素伤害]+1。',
     //     'buff4', 0, [6, 8, 10], 1, 0, -1, () => ({ attachEl: 1, addDmg: 1 }), { icbg: STATUS_BG_COLOR[1] }),
 
-    // 2188: () => new GIStatus(2188, '沙与梦', '【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；【[可用次数]：{useCnt}】',
+    // 2188: () => new GIStatus(2188, '沙与梦', '【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；[useCnt]',
     //     'buff2', 0, [4], 1, 0, -1, (status, event = {}) => {
     //         const { card, heros = [], hidx = -1, trigger = '', minusDiceCard: mdc = 0 } = event;
     //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skill: [0, 0, 3] });
@@ -2504,7 +2491,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     })),
 
-    // 2209: (useCnt = 1) => new GIStatus(2209, '绿洲之滋养', '【我方打出〖crd907〗时：】少花费1个元素骰。；【[可用次数]：{useCnt}(可叠加到3)】',
+    // 2209: (useCnt = 1) => new GIStatus(2209, '绿洲之滋养', '【我方打出〖crd907〗时：】少花费1个元素骰。；[useCnt]',
     //     'ski1822,1', 1, [4], useCnt, 3, -1, (status, event = {}) => {
     //         const { card, minusDiceCard: mdc = 0 } = event;
     //         if (card && card.id == 907 && card.cost > mdc) {
@@ -2534,7 +2521,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2211: () => new GIStatus(2211, '绿洲之庇护', '提供2点[护盾]，保护所附属角色。', '', 0, [7], 2, 0, -1),
 
-    // 2212: (summonId: number, useCnt = 1) => new GIStatus(2212, '黑色幻影', '【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-2。；【[可用次数]：{useCnt}】',
+    // 2212: (summonId: number, useCnt = 1) => new GIStatus(2212, '黑色幻影', '【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-2。；[useCnt]',
     //     '', 1, [2], useCnt, 0, -1, (status, event = {}) => {
     //         const { restDmg = 0, summon } = event;
     //         if (restDmg <= 0) return { restDmg }
@@ -2580,23 +2567,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     // 2217: (cnt = 1) => new GIStatus(2217, '奇异之躯', '每层为【hro1724】提供1点额外最大生命。',
     //     'ski1724,3', 0, [9], cnt, 1000, -1, undefined, { icbg: STATUS_BG_COLOR[1] }),
-
-    // 2220: () => new GIStatus(2220, '掠袭锐势', '【结束阶段：】对所有附属有【sts2221】的敌方角色造成1点[穿透伤害]。；【[持续回合]：{useCnt}】',
-    //     'ski1704,2', 0, [1], 2, 0, -1, (status, { heros = [] } = {}) => ({
-    //         trigger: ['phase-end'],
-    //         pdmg: 1,
-    //         hidxs: heros.map((h, hi) => ({ h, hi })).filter(v => v.h.inStatus.some(ist => ist.id == 2221)).map(v => v.hi),
-    //         exec: () => { --status.useCnt },
-    //     }), { icbg: STATUS_BG_COLOR[4] }),
-
-    // 2221: (useCnt = 1) => new GIStatus(2221, '生命之契', '【所附属角色受到治疗时：】此效果每有1次[可用次数]，就消耗1次，以抵消1点所受到的治疗。(无法抵消复苏治疗和分配生命值引发的治疗)；【[可用次数]：{useCnt}(可叠加，没有上限)】',
-    //     '', 0, [1], useCnt, 0, -1, (status, event = {}) => {
-    //         const { heal = [] } = event;
-    //         return {
-    //             trigger: ['pre-heal'],
-    //             exec: () => { --status.useCnt },
-    //         }
-    //     }, { icbg: DEBUFF_BG_COLOR }),
 
     // 2222: () => new GIStatus(2222, '噔噔！(生效中)', '结束阶段时，摸2张牌。',
     //     'buff3', 0, [3], 1, 0, -1, () => ({

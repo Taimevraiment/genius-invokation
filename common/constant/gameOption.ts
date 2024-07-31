@@ -28,3 +28,7 @@ export const AI_ID = 1; // ai的id
 export const DECK_CARD_COUNT = 30; // 卡组所需行动牌数量
 
 export const DECK_HERO_COUNT = 3; // 卡组所需角色数量
+
+export const MAX_USE_COUNT = 2 ** 32 - 1; // 最大使用次数
+
+export const MAX_STATUS_COUNT = 20; // 最大状态数量

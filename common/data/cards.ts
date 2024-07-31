@@ -2519,11 +2519,41 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方触发【sts117082】的效果后：将1张所[舍弃]卡牌的复制加入你的手牌。如果该牌为｢场地｣牌，则使本回合中我方下次打出｢场地｣时少花费2个元素骰。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/10ea9432a97b89788ede72906f5af735_8657249785871520397.png'),
 
+    221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
+        .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png'),
 
+    221021: () => new CardBuilder(294).name('苦痛奉还').since('v4.3.0').talent().costSame(3).tag(CARD_TAG.Barrier).perCnt(1)
+        .description('我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts121022】或【sts121022,1】。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png')
+        .handle((card, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
+            if (hidx == undefined) return;
+            const hero = heros[hidx];
+            if (restDmg > -1) {
+                if (restDmg < 3 || card.perCnt == 0) return { restDmg }
+                --card.perCnt;
+                return { restDmg: restDmg - 1, statusOppo: [newStatus(ver)(121022, +(hero.element != ELEMENT_TYPE.Cryo))] }
+            }
+            return { isValid: hero?.isFront, cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
+        }),
 
-    // 721: () => new GICard(721, '百川奔流', '{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b1a0f699a2168c60bc338529c3dee38b_3650391807139860687.png',
-    //     4, 1, 0, [6, 7], 1721, 3, undefined, { energy: 3 }),
+    221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
+        .description('我方出战角色为【hro】时，才能打出：使其附属【sts121034】。；装备有此牌的【hro】触发【sts121034】后：对敌方出战角色附属【sts121022】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            return { isValid: heros[hidx]?.isFront, status: [newStatus(ver)(121034)] }
+        }),
+
+    221041: () => new CardBuilder(398).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
+        .description('{action}；【装备有此牌的〖hro〗触发〖sts122〗后：】使敌方出战角色的【sts122】层数翻倍。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a0597437167a2f8b5637ae66b393bd84_1668427359164092344.png'),
+
+    222011: () => new CardBuilder(113).name('百川奔流').talent(3).costHydro(4).energy(3)
+        .description('{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b1a0f699a2168c60bc338529c3dee38b_3650391807139860687.png'),
+
 
     // 722: () => new GICard(722, '镜锢之笼', '{action}；装备有此牌的【hro】生成的【sts2043】获得以下效果：；初始[持续回合]+1，并且会使所附属角色切换到其他角色时元素骰费用+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/12109492/b0294bbab49b071b0baa570bc2339917_4550477078586399854.png',
@@ -2548,10 +2578,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
     //     3, 7, 0, [6, 7], 1821, 1),
 
-    // 746: () => new GICard(746, '冰萤寒光', '{action}；装备有此牌的【hro】使用技能后：如果【smn3034】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png',
-    //     3, 4, 0, [6, 7], 1701, 1),
-
     // 747: () => new GICard(747, '汲能棱晶', '[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts2091】。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png',
     //     2, 3, 2, [6, 7], 1761, 1, () => ({ status: [newStatus(2091)], cmds: [{ cmd: 'heal', cnt: 3 }] })),
@@ -2564,20 +2590,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //             return { status: [newStatus(2093)], isDestroy: true }
     //         }
     //     }),
-
-    // 767: () => new GICard(767, '苦痛奉还', '我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts2137】或【sts2137,1】。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png',
-    //     3, 8, 0, [-1, 6], 1702, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
-    //         if (hidx == undefined) return;
-    //         const hero = heros[hidx];
-    //         if (restDmg > -1) {
-    //             if (restDmg < 3 || card.perCnt == 0) return { restDmg }
-    //             --card.perCnt;
-    //             return { restDmg: restDmg - 1, inStatusOppo: [newStatus(2137, +(hero.element != 4))] }
-    //         }
-    //         return { isValid: hero?.isFront, cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
-    //     }, { pct: 1 }),
 
     // 768: () => new GICard(768, 295, '魔蝎烈祸', '{action}；装备有此牌的【hro】生成的【smn3051】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn3051】的减伤效果改为每回合至多2次。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png',
@@ -2597,13 +2609,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         const { heros = [] } = event;
     //         const element = [...new Set(heros.map(h => h.element))];
     //         return { status: [newStatus(2145)], cmds: [{ cmd: 'getDice', cnt: element.length, element }] }
-    //     }),
-
-    // 774: () => new GICard(774, 325, '严霜棱晶', '我方出战角色为【hro】时，才能打出：使其附属【sts2157】。；装备有此牌的【hro】触发【sts2157】后：对敌方出战角色附属【sts2137】。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png',
-    //     1, 4, 0, [6], 1703, 1, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         return { isValid: heros[hidx]?.isFront, status: [newStatus(2157)] }
     //     }),
 
     // 775: () => new GICard(775, '明珠固化', '我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts2158】; 如果已附属【sts2158】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts2158】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。',
@@ -2668,10 +2673,6 @@ const allCards: Record<number, () => CardBuilder> = {
     //         const { isSummon = -1 } = event;
     //         return { cmds: [{ cmd: 'addCard', cnt: 4, card: 907 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isSummon == 3063, 1) }
     //     }),
-
-    // 795: () => new GICard(795, '冰雅刺剑', '{action}；【装备有此牌的〖hro〗触发【sts2221】后：】使敌方出战角色的【sts2221】层数翻倍。',
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_EscadronIce.webp',
-    //     3, 4, 0, [6, 7], 1704, 1),
 
 
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0)

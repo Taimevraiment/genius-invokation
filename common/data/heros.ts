@@ -1364,136 +1364,160 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(117081), newStatus(ver)(117082, 2)] }))
         ),
 
+    2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/549d1869ad1f7d1d27fb5c733a239373_8053361497142459397.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/22a03af7f319a9d1583bc8d33781c241.png')
+        .skill1(new Skill1Builder('冰萤棱锥').catalyst())
+        .skills(
+            new SkillBuilder('虚雾摇唤').description('{dealDmg}，召唤【smn121011】。')
+                .src('https://patchwiki.biligame.com/images/ys/6/63/ba46nzqmjmyf97k0w9u5f70ll5b6xwh.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a2577774e5f89006d35488e99dc15531_1749914171755434787.png')
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(121011)] })),
+            new SkillBuilder('冰枝白花').description('{dealDmg}，本角色[附着冰元素]，生成【sts121012】。')
+                .src('https://patchwiki.biligame.com/images/ys/5/54/1wmf5ct2ccet6bltjvkqs03jusibbrs.png',
+                    'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1368416ac693a1e50e703e92d93d2043_1088350178906732314.png')
+                .burst(3).damage(5).cost(3).handle((event, ver) => {
+                    const { summons = [] } = event;
+                    const useCnt = getObjById(summons, 121011)?.useCnt ?? 0;
+                    return { isAttach: true, status: [newStatus(ver)(121012, useCnt)] }
+                })
+        ),
 
-    // 1701: () => new GIHero(1701, '愚人众·冰萤术士', 8, 10, 4, 0,
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/549d1869ad1f7d1d27fb5c733a239373_8053361497142459397.png',
-    //     skill1('冰萤棱锥', 4), [
-    //     new GISkill('虚雾摇唤', '造成{dmg}点[冰元素伤害]，召唤【smn3034】。', 2, 1, 3, 4, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/6/63/ba46nzqmjmyf97k0w9u5f70ll5b6xwh.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a2577774e5f89006d35488e99dc15531_1749914171755434787.png',
-    //     ], () => ({ summon: [newSummon(ver)(3034)] })),
-    //     new GISkill('冰枝白花', '造成{dmg}点[冰元素伤害]，本角色[附着冰元素]，生成【sts2090】。', 3, 5, 3, 4, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/5/54/1wmf5ct2ccet6bltjvkqs03jusibbrs.png',
-    //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1368416ac693a1e50e703e92d93d2043_1088350178906732314.png',
-    //     ], event => {
-    //         const { summons = [] } = event;
-    //         const useCnt = summons.find(smn => smn.id == 3034)?.useCnt ?? 0;
-    //         return { isAttach: true, status: [newStatus(ver)(2090, useCnt)] }
-    //     })
-    // ]),
+    2102: () => new HeroBuilder(277).name('「女士」').since('v4.3.0').fatui().cryo()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/f5904898779c5de0fd9cf2f207f5d2f8_1917054016449064269.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/b433655430a3f8d58e2e9f73b83567a3.png')
+        .skill1(new Skill1Builder('霜锋霰舞').catalyst())
+        .skills(
+            new SkillBuilder('凛冽之刺').description('{dealDmg}，目标角色附属【sts121022】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/887fc71fd182117241270c692d12a2de.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/fcd147fbb1603eebf7574496af8424df_6173017475342647286.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ statusOppo: [newStatus(ver)(121022)] })),
+            new SkillBuilder('红莲冰茧').description('{dealDmg}，治疗本角色2点。移除【sts121021】，本角色永久转换为[｢焚尽的炽炎魔女｣]形态。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/d6cc71f74d274ae4cf0255b403cfb4da.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/ed3c25462958e78b9156b668a319bc7a_1717048070002778416.png')
+                .burst(2).damage(4).cost(3).handle(() => ({ heal: 2 })),
+            new SkillBuilder('邪眼之威').description('战斗开始时，初始附属【sts121021】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ed9acfc03544bd410106bc9bd50f3c49.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(121021)] }))
+        ),
 
-    // 1702: () => new GIHero(1702, 277, '「女士」', 8, 10, 4, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/f5904898779c5de0fd9cf2f207f5d2f8_1917054016449064269.png',
-    //     skill1('霜锋霰舞', 4), [
-    //     new GISkill('凛冽之刺', '造成{dmg}点[冰元素伤害]，目标角色附属【sts2137】。', 2, 2, 3, 4, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/887fc71fd182117241270c692d12a2de.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/fcd147fbb1603eebf7574496af8424df_6173017475342647286.png',
-    //     ], () => ({ statusOppo: [newStatus(ver)(2137)] })),
-    //     new GISkill('红莲冰茧', '造成{dmg}点[冰元素伤害]，治疗本角色2点。移除【sts2138】，本角色永久转换为[｢焚尽的炽炎魔女｣]形态。', 3, 4, 3, 4, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/d6cc71f74d274ae4cf0255b403cfb4da.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/ed3c25462958e78b9156b668a319bc7a_1717048070002778416.png',
-    //     ], () => ({ heal: 2 })),
-    //     new GISkill('邪眼之威', '战斗开始时，初始附属【sts2138】。', 4, 0, 0, 0, {},
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ed9acfc03544bd410106bc9bd50f3c49.png',
-    //         () => ({ trigger: ['game-start'], status: [newStatus(ver)(2138)] }))
-    // ]),
+    2103: () => new HeroBuilder(321).name('无相之冰').since('v4.4.0').maxHp(8).monster().cryo()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/452f63cf4e88b83a99bb781e8ae34122_3507980204838910528.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/3d51fdddc0b7e8ffdb4284b4320028d6.png')
+        .skill1(new Skill1Builder('冰锥迸射').catalyst())
+        .skills(
+            new SkillBuilder('圆舞冰环').description('{dealDmg}，本角色附属【sts121031】。')
+                .src('https://patchwiki.biligame.com/images/ys/9/9d/ff2hpksrbxpfe1wl6iyzcmw44521jmy.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/67efe676784e835017414a7d5e0d4355_8823792902089803501.png')
+                .elemental().damage(3).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(121031)] })),
+            new SkillBuilder('冰棱轰坠').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn121033】。')
+                .src('https://patchwiki.biligame.com/images/ys/7/70/2cn3ntlfdulqls3gpsmmm54w8hxk97t.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/6f1d186efcaa3d682cbea2a1009fddfa_3844365324429029242.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ pdmg: 1, summon: [newSummon(ver)(121033)] })),
+            new SkillBuilder('冰晶核心').description('战斗开始时，初始附属【sts121034】。')
+                .src('https://patchwiki.biligame.com/images/ys/f/fd/mgyby1c37lbykdol0uuyzduyugfmb0f.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/5e08c69f4911a028c4a559c1de33a4d9_7840872634290634295.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(121034)] }))
+        ),
 
-    // 1703: () => new GIHero(1703, 321, '无相之冰', 0, 8, 4, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/452f63cf4e88b83a99bb781e8ae34122_3507980204838910528.png',
-    //     skill1('冰锥迸射', 4), [
-    //     new GISkill('圆舞冰环', '造成{dmg}点[冰元素伤害]，本角色附属【sts2156】。', 2, 3, 3, 4, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/9/9d/ff2hpksrbxpfe1wl6iyzcmw44521jmy.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/67efe676784e835017414a7d5e0d4355_8823792902089803501.png',
-    //     ], () => ({ status: [newStatus(ver)(2156)] })),
-    //     new GISkill('冰棱轰坠', '造成{dmg}点[冰元素伤害]，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn3054】。', 3, 2, 3, 4, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/7/70/2cn3ntlfdulqls3gpsmmm54w8hxk97t.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/6f1d186efcaa3d682cbea2a1009fddfa_3844365324429029242.png',
-    //     ], () => ({ pdmg: 1, summon: [newSummon(ver)(3054)] })),
-    //     new GISkill('冰晶核心', '战斗开始时，初始附属【sts2157】。', 4, 0, 0, 0, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/f/fd/mgyby1c37lbykdol0uuyzduyugfmb0f.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/5e08c69f4911a028c4a559c1de33a4d9_7840872634290634295.png',
-    //     ], () => ({ trigger: ['game-start'], status: [newStatus(ver)(2157)] }))
-    // ]),
+    2104: () => new HeroBuilder(395).name('愚人众·霜役人').since('v4.8.0').fatui().cryo()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a7baaff1ecc4dcda963698919ef2cae4_3934264341680499887.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/16b46893b0a27f52004e9377cd62c623.png')
+        .skill1(new Skill1Builder('迅捷剑锋'))
+        .skills(
+            new SkillBuilder('霜刃截击').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/3/3d/9ey3xozz1ho95mjplt7r9exqqh1iqbc.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/58d0c62ef0d8d47f00c04f4dea077279_4513441128219896668.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('掠袭之刺').description('{dealDmg}，本角色附属【sts121042】。')
+                .src('https://patchwiki.biligame.com/images/ys/a/ad/j8mjqzvynh98w3e5qkkxe3li00i0tv5.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/91aaf5308bc072b31b6624af8f2ad1f0_601312319464014295.png')
+                .burst(2).damage(4).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(121042)] })),
+            new SkillBuilder('血契掠影').description('【本角色使用技能后：】对敌方出战角色附属[可用次数]为(本技能最终伤害值-2)的【sts122】。(最多5层)')
+                .src('https://patchwiki.biligame.com/images/ys/8/82/izm590u04twm2v4y5md823l6fqeevof.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/78e32bb625cf50b2f92487f8577bff6b_4076485311764645060.png')
+                .handle((event, ver) => {
+                    const { dmg = [], hero: { talentSlot }, card, eheros = [] } = event;
+                    let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + b, 0) - 2));
+                    if (talentSlot || card?.id == 221041) {
+                        const ocnt = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122)?.useCnt ?? 0;
+                        const fcnt = (ocnt + fdmg) * 2;
+                        fdmg = fcnt - ocnt;
+                    }
+                    if (fdmg <= 0) return;
+                    return { trigger: ['skill'], status: [newStatus(ver)(122, fdmg)] }
+                })
+        ),
 
-    // 1704: () => new GIHero(1704, '愚人众·霜役人', 8, 10, 4, 0,
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_EscadronIce.webp',
-    //     skill1('迅捷剑锋'), [
-    //     new GISkill('霜刃截击', '造成{dmg}点[冰元素伤害]。', 2, 3, 3, 4, {}, [
-    //         '',
-    //         '',
-    //     ]),
-    //     new GISkill('掠袭之刺', '造成{dmg}点[冰元素伤害]，本角色附属【sts2220】。', 3, 4, 3, 4, { ec: 2 }, [
-    //         '',
-    //         '',
-    //     ], () => ({ status: [newStatus(ver)(2220)] })),
-    //     new GISkill('血契掠影', '【本角色使用技能后：】对敌方出战角色附属[可用次数]为(本技能最终伤害值-2)的【sts2221】。(最多5层)', 4, 0, 0, 0, {}, [
-    //         '',
-    //         '',
-    //     ], event => {
-    //         const { dmg = [], hero: { talentSlot }, card, eheros = [] } = event;
-    //         let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + b, 0) - 2));
-    //         if (talentSlot || card?.id == 795) {
-    //             const ocnt = eheros.find(h => h.isFront)?.inStatus.find(ist => ist.id == 2221)?.useCnt ?? 0;
-    //             const fcnt = (ocnt + fdmg) * 2;
-    //             fdmg = fcnt - ocnt;
-    //         }
-    //         if (fdmg <= 0) return;
-    //         return { trigger: ['skill'], status: [newStatus(ver)(2221, fdmg)] }
-    //     })
-    // ]),
+    2201: () => new HeroBuilder(53).name('纯水精灵·洛蒂娅').monster().hydro()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/322de5ae9b660a9bf16eb96908949f20_6864460867288429831.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/aead2d2ae3013f2a1de52e4c77dcffa2.png')
+        .skill1(new Skill1Builder('翻涌').catalyst())
+        .skills(
+            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)')
+                .description('随机召唤1种【纯水幻形】。(优先生成不同的类型)', 'v4.3.0')
+                .src('https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
+                .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
+                    const { summons = [], randomInArr } = event;
+                    if (!randomInArr) return;
+                    const opools = [122011, 122012, 122013];
+                    const pools = opools.filter(smnid => !hasObjById(summons, smnid));
+                    if (ver >= 'v4.3.0' && pools.length == 1) {
+                        pools.length = 0;
+                        pools.push(...opools.filter(smnid => hasObjById(summons, smnid)));
+                    }
+                    const summonId = randomInArr(ver < 'v4.3.0' && pools.length == 0 ? opools : pools);
+                    return { summon: [newSummon(ver)(summonId)] }
+                }),
+            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)')
+                .description('随机召唤2种【纯水幻形】。(优先生成不同的类型)', 'v4.3.0')
+                .src('https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
+                .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
+                    const { summons = [], randomInArr } = event;
+                    if (!randomInArr) return;
+                    const opools = [122011, 122012, 122013];
+                    const pools = opools.filter(smnid => !hasObjById(summons, smnid));
+                    let summonId1 = -1;
+                    if (pools.length == 1) {
+                        if (ver < 'v4.3.0') {
+                            summonId1 = pools[0];
+                        } else {
+                            const [smnId1, smnId2] = opools.filter(smnid => hasObjById(summons, smnid));
+                            return { summon: [newSummon(ver)(smnId1), newSummon(ver)(smnId2)] }
+                        }
+                    }
+                    if (pools.length == 2) {
+                        if (ver < 'v4.3.0') {
+                            return { summon: [newSummon(ver)(pools[0]), newSummon(ver)(pools[1])] }
+                        }
+                        summonId1 = opools.find(smnid => !pools.includes(smnid))!;
+                    }
+                    if (pools.length == 3 || (ver < 'v4.3.0' && pools.length == 0)) {
+                        summonId1 = randomInArr(pools);
+                        pools.splice(pools.indexOf(summonId1), 1);
+                    }
+                    const summonId2 = randomInArr(pools);
+                    return { summon: [newSummon(ver)(summonId1), newSummon(ver)(summonId2)] }
+                }),
+            new SkillBuilder('潮涌与激流').description('{dealDmg}; 我方每有1个召唤物，再使此伤害+1。')
+                .description('{dealDmg}; 我方每有1个召唤物，再使此伤害+2。', 'v4.2.0')
+                .src('https://patchwiki.biligame.com/images/ys/3/3b/8nz5w00ylo8dxpa8gt93f4d6ldjs5d2.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/37dedea23dfa78e8fb4e356bb4a4bed4_1738280724029210097.png')
+                .burst(3).damage(4).damage(2, 'v4.2.0').cost(3).handle((event, ver) => {
+                    const { isTalent, summons = [] } = event;
+                    if (isTalent) summons.forEach(smn => ++smn.useCnt);
+                    return { addDmgCdt: summons.length * (ver < 'v4.2.0' ? 2 : 1) }
+                })
+        ),
 
-    // 1721: () => new GIHero(1721, '纯水精灵·洛蒂娅', 0, 10, 1, 0,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/322de5ae9b660a9bf16eb96908949f20_6864460867288429831.png',
-    //     skill1('翻涌', 4), [
-    //     new GISkill('纯水幻造', '随机召唤1种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)', 2, 0, 3, 1, { expl: ['smn3016', 'smn3017', 'smn3018'] }, [
-    //         'https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png',
-    //     ], event => {
-    //         const { summons = [] } = event;
-    //         const pools = [3016, 3017, 3018].filter(smnid => summons.every(smn => smn.id != smnid));
-    //         if (pools.length == 1) {
-    //             pools.length = 0;
-    //             pools.push(...[3016, 3017, 3018].filter(smnid => summons.some(smn => smn.id == smnid)));
-    //         }
-    //         const summonId = pools[Math.floor(Math.random() * pools.length)];
-    //         return { summon: [newSummon(ver)(summonId)] }
-    //     }),
-    //     new GISkill('林野百态', '随机召唤2种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)', 2, 0, 5, 1, { expl: ['smn3016', 'smn3017', 'smn3018'] }, [
-    //         'https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png',
-    //     ], event => {
-    //         const { summons = [] } = event;
-    //         const pools = [3016, 3017, 3018].filter(smnid => summons.every(smn => smn.id != smnid));
-    //         if (pools.length == 1) {
-    //             pools.length = 0;
-    //             pools.push(...[3016, 3017, 3018].filter(smnid => summons.some(smn => smn.id == smnid)));
-    //             return { summon: [newSummon(ver)(pools[0]), newSummon(ver)(pools[1])] }
-    //         }
-    //         let summonId1 = -1;
-    //         if (pools.length == 2) {
-    //             summonId1 = [3016, 3017, 3018].find(smnid => !pools.includes(smnid)) ?? -1;
-    //         }
-    //         if (pools.length == 3) {
-    //             summonId1 = pools[Math.floor(Math.random() * pools.length)];
-    //             pools.splice(pools.indexOf(summonId1), 1);
-    //         }
-    //         const summonId2 = pools[Math.floor(Math.random() * pools.length)];
-    //         return { summon: [newSummon(ver)(summonId1), newSummon(ver)(summonId2)] }
-    //     }),
-    //     new GISkill('潮涌与激流', '造成{dmg}点[水元素伤害]; 我方每有1个召唤物，再使此伤害+1。', 3, 4, 3, 1, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/3/3b/8nz5w00ylo8dxpa8gt93f4d6ldjs5d2.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/37dedea23dfa78e8fb4e356bb4a4bed4_1738280724029210097.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card, summons = [] } = event;
-    //         if (!!talentSlot || card?.id == 721) summons.forEach(smn => ++smn.useCnt);
-    //         return { addDmgCdt: summons.length }
-    //     })
-    // ]),
+
 
     // 1722: () => new GIHero(1722, '愚人众·藏镜仕女', 8, 10, 1, 0,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3fc3ca86fcfc5333343aed2bb93f972c_2058660383709712628.png',
     //     skill1('水弹', 4), [
-    //     new GISkill('潋波绽破', '造成{dmg}点[水元素伤害]，目标角色附属【sts2043】。', 2, 2, 3, 1, {}, [
+    //     new GISkill('潋波绽破', '{dealDmg}，目标角色附属【sts2043】。', 2, 2, 3, 1, {}, [
     //         'https://patchwiki.biligame.com/images/ys/b/bb/ejgc07c2acyw7emun013j336cvmksvt.png',
     //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/72eb60be8d1a88f12671264e29101ad4_5912821621104766081.png',
     //     ], event => {
@@ -1501,7 +1525,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //         const isTalent = !!talentSlot || card?.id == 722;
     //         return { statusOppo: [newStatus(ver)(2043, isTalent)] }
     //     }),
-    //     new GISkill('粼镜折光', '造成{dmg}点[水元素伤害]。', 3, 5, 3, 1, { ec: 2 }, [
+    //     new GISkill('粼镜折光', '{dealDmg}。', 3, 5, 3, 1, { ec: 2 }, [
     //         'https://patchwiki.biligame.com/images/ys/8/80/1dsnenenx6cm0ojaln742iwx60rzc1r.png',
     //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/9bd9b0f4cad85c234146ef15518ee57e_5116572838966914686.png'])
     // ]),
@@ -1509,11 +1533,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1723: () => new GIHero(1723, '深渊使徒·激流', 0, 6, 1, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/8e4f28eaf527a26d7b014eed8ee0f966_202629246380655977.png',
     //     skill1('波刃锋斩'), [
-    //     new GISkill('洄涡锋刃', '造成{dmg}点[水元素伤害]，然后[准备技能]：【rsk19】。', 2, 2, 3, 1, {}, [
+    //     new GISkill('洄涡锋刃', '{dealDmg}，然后[准备技能]：【rsk19】。', 2, 2, 3, 1, {}, [
     //         'https://patchwiki.biligame.com/images/ys/2/24/t9ua2iv40wm0f3yig6vxig7onh3up3n.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/84c980b8b25210d2cd1bd9d2377cd932_6861846186263087638.png',
     //     ], () => ({ status: [newStatus(ver)(2179)] })),
-    //     new GISkill('激流强震', '造成{dmg}点[水元素伤害]，在对方场上生成【sts2180】。', 3, 3, 3, 1, { ec: 2 }, [
+    //     new GISkill('激流强震', '{dealDmg}，在对方场上生成【sts2180】。', 3, 3, 3, 1, { ec: 2 }, [
     //         'https://patchwiki.biligame.com/images/ys/d/d8/oiwyudqa0jod9q7e41b6gsk3ok9g4b8.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/190ea01a320f9023eee1656e09528bb2_8501522101938982601.png',
     //     ], () => ({ statusOppo: [newStatus(ver)(2180)] })),
@@ -1526,7 +1550,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1724: () => new GIHero(1724, '吞星之鲸', 0, 5, 1, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/17c1739ef970603be767fa88764fc44f_4845015785088476307.png',
     //     skill1('碎涛旋跃'), [
-    //     new GISkill('迸落星雨', '造成{dmg}点[水元素伤害]，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+5)。然后[舍弃]1张原本元素骰费用最高的手牌。', 2, 1, 3, 1, { expl: ['sts2205'] }, [
+    //     new GISkill('迸落星雨', '{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+5)。然后[舍弃]1张原本元素骰费用最高的手牌。', 2, 1, 3, 1, { expl: ['sts2205'] }, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f5c0f89cf02925ec13e306d11a5f7bd8.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/942e3d28310f4395ee7e3f1580268db8_512199522496433076.png',
     //     ], event => {
@@ -1536,7 +1560,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //             cmds: [{ cmd: 'discard', element: 0 }],
     //         }
     //     }),
-    //     new GISkill('横噬鲸吞', '造成{dmg}点[水元素伤害]，对敌方所有后台角色造成1点[穿透伤害]。召唤【smn3062】。', 3, 1, 3, 1, { ec: 2 }, [
+    //     new GISkill('横噬鲸吞', '{dealDmg}，对敌方所有后台角色造成1点[穿透伤害]。召唤【smn3062】。', 3, 1, 3, 1, { ec: 2 }, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/347f4286f0891f1b6937c9ac8cf5b1f7.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/4a25287ec5707c0cbcdfa997c1621224_1686936517736141335.png',
     //     ], event => {
@@ -1555,7 +1579,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1741: () => new GIHero(1741, '愚人众·火之债务处理人', 8, 9, 2, 0,
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9f134f05bb71f0ee1afb33785cf945e9_8487118119361104507.png',
     //     skill1('突刺'), [
-    //     new GISkill('伺机而动', '造成{dmg}点[火元素伤害]，本角色附属【sts2044】。', 2, 1, 3, 2, {}, [
+    //     new GISkill('伺机而动', '{dealDmg}，本角色附属【sts2044】。', 2, 1, 3, 2, {}, [
     //         'https://patchwiki.biligame.com/images/ys/3/36/rr6eiuoeleum3em795e7r1x687ielwb.png',
     //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3903202fe02b486f479ba7f8d32d8658_8665610180849380821.png',
     //     ], event => {
@@ -1563,7 +1587,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //         const isTalent = !!talentSlot || card?.id == 723;
     //         return { status: [newStatus(ver)(2044, isTalent)] }
     //     }),
-    //     new GISkill('焚毁之锋', '造成{dmg}点[火元素伤害]。', 3, 5, 3, 2, { ec: 2 }, [
+    //     new GISkill('焚毁之锋', '{dealDmg}。', 3, 5, 3, 2, { ec: 2 }, [
     //         'https://patchwiki.biligame.com/images/ys/5/5a/lz90owtayb7iw587z7ve8nfdfy8eysp.png',
     //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/7cef125734bc7fb32e80c64c06e5f755_2159532089128773899.png']),
     //     new GISkill('潜行大师', '战斗开始时，初始附属【sts2044】。', 4, 0, 0, 0, {}, [
@@ -1575,10 +1599,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1742: () => new GIHero(1742, '深渊咏者·渊火', 0, 6, 2, 0,
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1e2c28dfe8d5f14a70af6219a888432a_956783985247152270.png',
     //     skill1('拯救之焰', 4), [
-    //     new GISkill('炽烈箴言', '造成{dmg}点[火元素伤害]。', 2, 3, 3, 2, {}, [
+    //     new GISkill('炽烈箴言', '{dealDmg}。', 2, 3, 3, 2, {}, [
     //         'https://patchwiki.biligame.com/images/ys/b/bd/npp1xbnlyr7e4jn8mznv55dnm3wowxz.png',
     //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3090acc4a927cba996b6356f99db87d9_8220742127501145178.png']),
-    //     new GISkill('天陨预兆', '造成{dmg}点[火元素伤害]，召唤【smn3036】。', 3, 3, 4, 2, { ec: 2 }, [
+    //     new GISkill('天陨预兆', '{dealDmg}，召唤【smn3036】。', 3, 3, 4, 2, { ec: 2 }, [
     //         'https://patchwiki.biligame.com/images/ys/d/d3/7igqw47k9eg48907jvj0xqumreiav0v.png',
     //         'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/dfa378fb6c635d91b99fcc65edcb0546_1724051858233871114.png',
     //     ], () => ({ summon: [newSummon(ver)(3036)] })),
@@ -1591,10 +1615,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1743: () => new GIHero(1743, 285, '镀金旅团·炽沙叙事人', 10, 10, 2, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/ccc5db5ede1a2303cc018e18995fbab1_2557032699772032384.png',
     //     skill1('烧蚀之光', 4), [
-    //     new GISkill('炎晶迸击', '造成{dmg}点[火元素伤害]。', 2, 3, 3, 2, {}, [
+    //     new GISkill('炎晶迸击', '{dealDmg}。', 2, 3, 3, 2, {}, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/714623e3c2775d4e7cc1c78573e5443e.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/95c606e65f456edfec8a28c18f17f6cc_4264699545618649047.png']),
-    //     new GISkill('厄灵苏醒·炎之魔蝎', '造成{dmg}点[火元素伤害]，召唤【smn3051】。', 3, 2, 3, 2, { ec: 2 }, [
+    //     new GISkill('厄灵苏醒·炎之魔蝎', '{dealDmg}，召唤【smn3051】。', 3, 2, 3, 2, { ec: 2 }, [
     //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/637396968147be2805479aebcbe5b825.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/84274abeb2c38f6f46c94dd2953323db_4939077374255699145.png',
     //     ], event => {
@@ -1619,7 +1643,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     // 1744: () => new GIHero(1744, '铁甲熔火帝皇', 0, 6, 2, 0,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e96a9a84bdc0f1d2171010770f0605f0_3000155239481283018.png',
     //     skill1('重钳碎击'), [
-    //     new GISkill('烈焰燃绽', '造成{dmg}点[火元素伤害]; 如果本角色附属有至少7层【sts2182】，则此伤害+1。；然后，本角色附属2层【sts2182】。', 2, 1, 3, 2, {}, [
+    //     new GISkill('烈焰燃绽', '{dealDmg}; 如果本角色附属有至少7层【sts2182】，则此伤害+1。；然后，本角色附属2层【sts2182】。', 2, 1, 3, 2, {}, [
     //         'https://patchwiki.biligame.com/images/ys/e/ee/pkoq2y1juntwzekemn1cu1fiv9h5ed6.png',
     //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/b73f1ffc4ba14fa027c3e36104bf7119_3142073596996390484.png',
     //     ], event => {
@@ -1923,18 +1947,19 @@ const allHeros: Record<number, () => HeroBuilder> = {
     //     ], () => ({ trigger: ['game-start'], status: [newStatus(ver)(2216)] }))
     // ]),
 
-
-    // 1851: () => new GIHero(1851, '焚尽的炽炎魔女', 8, 10, 2, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/36f1358533325d377d6a4e99eec5918f_6190662149106536998.png',
-    //     skill1('红莲之蛾', 4), [
-    //     new GISkill('烬灭之鞭', '造成{dmg}点[火元素伤害]，目标角色附属【sts2137,1】。', 2, 2, 3, 2, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/fa766b02212311a6f0d15c0904b7af40.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/5ebe47ad42ad678785def13a30f485ad_5687308121190951050.png',
-    //     ], () => ({ statusOppo: [newStatus(ver)(2137, 1)] })),
-    //     new GISkill('燃焰旋织', '造成{dmg}点[火元素伤害]。', 3, 6, 3, 2, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/1dee7d6a7c6efeb3621013c59f051c31.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/456005ca57b543d460e516403de7dd7b_5879470454090240332.png'])
-    // ]),
+    6301: () => new HeroBuilder().name('焚尽的炽炎魔女').since('v4.3.0').fatui().pyro()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/36f1358533325d377d6a4e99eec5918f_6190662149106536998.png')
+        .skill1(new Skill1Builder('红莲之蛾').catalyst())
+        .skills(
+            new SkillBuilder('烬灭之鞭').description('{dealDmg}，目标角色附属【sts121022,1】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/fa766b02212311a6f0d15c0904b7af40.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/5ebe47ad42ad678785def13a30f485ad_5687308121190951050.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ statusOppo: [newStatus(ver)(121022, 1)] })),
+            new SkillBuilder('燃焰旋织').description('{dealDmg}。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/1dee7d6a7c6efeb3621013c59f051c31.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/456005ca57b543d460e516403de7dd7b_5879470454090240332.png')
+                .burst(2).damage(6).cost(3)
+        ),
 
 }
 
@@ -1942,7 +1967,7 @@ export const herosTotal = (version: Version = VERSION[0]) => {
     const heros: Hero[] = [];
     for (const idx in allHeros) {
         const heroBuilder = allHeros[idx]().version(version);
-        if (!heroBuilder.inVersion || +idx > 6000) continue;
+        if (heroBuilder.notExist || heroBuilder.notInHeroPool) continue;
         heros.push(heroBuilder.id(+idx).done());
     }
     return heros;

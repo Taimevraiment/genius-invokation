@@ -28,6 +28,7 @@ export type SkillHandleEvent = {
     discards?: Card[],
     dmg?: number[],
     isTalent?: boolean,
+    randomInArr?: <T>(arr: T[]) => T,
 }
 
 export type SkillHandleRes = {

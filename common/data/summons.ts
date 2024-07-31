@@ -59,7 +59,7 @@ export type SummonExecRes = {
 }
 
 // const crd907summon = (id: number) => {
-//     return new GISummon(id, '增殖生命体', '【结束阶段：】造成{dmg}点[草元素伤害]。；【[可用次数]：{useCnt}】',
+//     return new GISummon(id, '增殖生命体', '【结束阶段：】造成{dmg}点[草元素伤害]。；[useCnt]',
 //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_2475050287145431617.png',
 //         1, 1, 0, 1, 7);
 // }
@@ -170,7 +170,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/a4249ebb8a68e2843cdd2fa78937912c_2796631322062911422.png'),
 
     112011: () => new SummonBuilder('歌声之环').useCnt(2).heal(1)
-        .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；【[可用次数]：{useCnt}】')
+        .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；[useCnt]')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
@@ -182,7 +182,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     112031: () => new SummonBuilder('虚影').useCnt(1).damage(1).shield(1).statusId().roundEnd()
-        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，{dealDmg}。')
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，{dealDmg}。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png'),
 
     112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(2).damage(1).heal(1)
@@ -254,7 +254,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     112112: (useCnt: number = 2) => new SummonBuilder('众水的歌者').useCnt(useCnt).maxUse(4).heal(1)
-        .description('【结束阶段：】治疗所有我方角色1点。如果我方存在生命值不多于5的角色，则再治疗一位受伤最多的角色1点。；【[可用次数]：{useCnt}】(可叠加，最多叠加到4次)')
+        .description('【结束阶段：】治疗所有我方角色1点。如果我方存在生命值不多于5的角色，则再治疗一位受伤最多的角色1点。；[useCnt]')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/e223897c5723dcc6b6ea50fcdf966232_9198406692148038444.png')
         .handle((summon, event) => {
             const { tround = 0, heros = [] } = event;
@@ -276,7 +276,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),
 
     113041: () => new SummonBuilder('兔兔伯爵').useCnt(1).shield(2).damage(2).usedRoundEnd().statusId()
-        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png')
         .handle((summon, event, ver) => {
             const { heros = [], trigger = '', isExec = true } = event;
@@ -415,7 +415,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/fe4516935ffa9eb9b193411113fa823f_372775257521707079.png'),
 
     114102: (isTalent: boolean = false) => new SummonBuilder('灯中幽精').useCnt(2).heal(2).talent(isTalent).plus(isTalent)
-        .description(`【结束阶段：】治疗我方出战角色{shield}点，并使其获得1点[充能]。${isTalent ? '；治疗生命值不多于6的角色时，治疗量+1; 使没有[充能]的角色获得[充能]时，获得量+1。' : ''}；【[可用次数]：{useCnt}】`)
+        .description(`【结束阶段：】治疗我方出战角色{shield}点，并使其获得1点[充能]。${isTalent ? '；治疗生命值不多于6的角色时，治疗量+1; 使没有[充能]的角色获得[充能]时，获得量+1。' : ''}；[useCnt]`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/c8209ff8f2c21e01e4e05203385410d7_8366905551575281519.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
@@ -604,7 +604,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     116051: () => new SummonBuilder('阿丑').useCnt(1).damage(1).shield(1).perCnt(1).statusId().roundEnd()
-        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，{dealDmg}。')
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，{dealDmg}。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png')
         .handle((summon, event, ver) => {
             const { heros = [], trigger = '' } = event;
@@ -678,44 +678,105 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk，治疗我方出战角色{shield}点。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png'),
 
+    121011: () => new SummonBuilder('冰萤').useCnt(2).maxUse(3).damage(1)
+        .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。')
+        .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
+        .handle((summon, event, ver) => {
+            const { trigger = '', heros = [], hcard, isExec = true } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            const hero = heros[getAtkHidx(heros)];
+            const cnt = Number(trigger.slice(-1));
+            const isHero = hero?.id == getHidById(summon.id);
+            const isTalent = !isNaN(cnt) && isHero &&
+                (!!hero?.talentSlot || hcard?.id == 221011) &&
+                summon.useCnt + cnt > summon.maxUse;
+            if (ver < 'v4.1.0' || isHero) triggers.push('get-elReaction');
+            if (!isExec && trigger == 'get-elReaction' && (ver < 'v4.1.0' || isHero)) {
+                summon.useCnt = Math.max(0, summon.useCnt - 1);
+            }
+            if (isHero) {
+                triggers.push('skilltype1', 'after-skilltype1');
+                if (isTalent && trigger == 'after-skilltype2') {
+                    triggers.push('after-skilltype2');
+                }
+                if (!isExec) {
+                    if (['after-skilltype1', 'after-skilltype2'].includes(trigger)) {
+                        summon.useCnt = Math.max(summon.useCnt, Math.min(summon.maxUse, summon.useCnt + 1));
+                    }
+                }
+            }
+            return {
+                trigger: triggers,
+                damage: isCdt(isTalent, 2),
+                element: summon.element,
+                isNotAddTask: !isTalent && trigger != 'phase-end',
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger.startsWith('after-skilltype')) {
+                        if (isTalent || trigger == 'after-skilltype1') smn.useCnt = Math.max(smn.useCnt, Math.min(smn.maxUse, smn.useCnt + 1));
+                        if (isTalent) return { cmds: [{ cmd: 'attack', cnt: 2 }] }
+                        return;
+                    }
+                    smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    if (trigger == 'phase-end') return { cmds: [{ cmd: 'attack' }] }
+                }
+            }
+        }),
 
-    // 3010: () => new GISummon(3010, '水丘丘萨满', '【结束阶段：】造成{dmg}点[水元素伤害]。；【[可用次数]：{useCnt}】',
+    121033: () => new SummonBuilder('刺击冰棱').useCnt(2).damage(1)
+        .description('【结束阶段：】对敌方[距离我方出战角色最近的角色]{dealDmg}。；[useCnt]')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/7becac09916614d57a2f084749634d5d_3605800251898465783.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { heros = [], eheros = [] } = event;
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                return { cmds: [{ cmd: 'attack', hidxs: [getNearestHidx(heros.findIndex(h => h.isFront), eheros)] }] }
+            }
+        })),
+
+    122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2)
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png'),
+
+    122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1)
+        .description('{defaultAtk。}')
+        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp')
+        .handle((_s, _e, ver) => ({ willSummon: newSummon(ver)(122011) })),
+
+    122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
+        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Frog.webp')
+        .handle((summon, _, ver) => {
+            const trigger: Trigger[] = [];
+            if (summon.useCnt == 0) trigger.push('phase-end');
+            return {
+                willSummon: newSummon(ver)(122011),
+                trigger,
+                exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
+            }
+        }),
+
+
+    // 3010: () => new GISummon(3010, '水丘丘萨满', '【结束阶段：】造成{dmg}点[水元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png',
     //     2, 2, 0, 1, 1),
 
-    // 3011: () => new GISummon(3011, '冲锋丘丘人', '【结束阶段：】造成{dmg}点[火元素伤害]。；【[可用次数]：{useCnt}】',
+    // 3011: () => new GISummon(3011, '冲锋丘丘人', '【结束阶段：】造成{dmg}点[火元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/b2751af5c3dddc5a4bf7909bd2382adc_8142471467728886523.png',
     //     2, 2, 0, 1, 2),
 
-    // 3012: () => new GISummon(3012, '雷箭丘丘人', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】',
+    // 3012: () => new GISummon(3012, '雷箭丘丘人', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png',
     //     2, 2, 0, 1, 3),
 
-    // 3013: () => new GISummon(3013, '冰箭丘丘人', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】',
+    // 3013: () => new GISummon(3013, '冰箭丘丘人', '【结束阶段：】造成{dmg}点[冰元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png',
     //     2, 2, 0, 1, 4),
 
-    // 3016: () => new GISummon(3016, '纯水幻形·花鼠', '【结束阶段：】造成{dmg}点[水元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png',
-    //     2, 2, 0, 2, 1),
-
-    // 3017: () => new GISummon(3017, '纯水幻形·飞鸢', '【结束阶段：】造成{dmg}点[水元素伤害]。；【[可用次数]：{useCnt}】',
-    //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp',
-    //     3, 3, 0, 1, 1, () => ({ willSummon: newSummon(ver)(3016) })),
-
-    // 3018: () => new GISummon(3018, '纯水幻形·蛙', '【我方出战角色受到伤害时：】抵消{shield}点伤害。；【[可用次数]：{useCnt}】，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以造成{dmg}点[水元素伤害]。',
-    //     'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Frog.webp',
-    //     1, 1, -1, 2, 1, summon => {
-    //         const trigger: Trigger[] = [];
-    //         if (summon.useCnt == 0) trigger.push('phase-end');
-    //         return {
-    //             willSummon: newSummon(ver)(3016),
-    //             trigger,
-    //             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
-    //         }
-    //     }, { isDestroy: 1, stsId: 2042 }),
-
-    // 3019: () => new GISummon(3019, '剑影·孤风', '【结束阶段：】造成{dmg}点[风元素伤害]。；【[可用次数]：{useCnt}】',
+    // 3019: () => new GISummon(3019, '剑影·孤风', '【结束阶段：】造成{dmg}点[风元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/90767acfd11dc25ae46a333557b3ee2a_4658043205818200753.png',
     //     2, 2, 0, 1, 5, (summon, event) => {
     //         const { trigger = '', heros = [], force = false } = event;
@@ -733,7 +794,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3020: () => new GISummon(3020, '剑影·霜驰', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】',
+    // 3020: () => new GISummon(3020, '剑影·霜驰', '【结束阶段：】造成{dmg}点[冰元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3f77ab65d8d940df9b3cf70d96ae0b25_8204101439924542003.png',
     //     2, 2, 0, 1, 4, (summon, event) => {
     //         const { trigger = '', heros = [], force = false } = event;
@@ -751,47 +812,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3034: () => new GISummon(3034, '冰萤', '【结束阶段：】造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)；【愚人众·冰萤术士｢普通攻击｣后：】此牌[可用次数]+1。；【愚人众·冰萤术士受到元素反应伤害后：】此牌[可用次数]-1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png',
-    //     2, 3, 0, 1, 4, (summon, event) => {
-    //         const { trigger = '', heros = [], hcard, isExec = true } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         const hero = heros[getAtkHidx(heros)];
-    //         const cnt = Number(trigger.slice(-1));
-    //         const isTalent = !isNaN(cnt) && hero?.id == 1701 && (!!hero?.talentSlot || hcard?.id == 746) && summon.useCnt + cnt > summon.maxUse;
-    //         if (hero?.id == 1701) {
-    //             triggers.push('skilltype1', 'get-elReaction', 'after-skilltype1');
-    //             if (isTalent && trigger == 'after-skilltype2') {
-    //                 triggers.push('after-skilltype2');
-    //             }
-    //             if (!isExec) {
-    //                 if (['after-skilltype1', 'after-skilltype2'].includes(trigger)) {
-    //                     summon.useCnt = Math.max(summon.useCnt, Math.min(summon.maxUse, summon.useCnt + 1));
-    //                 }
-    //                 if (trigger == 'get-elReaction') {
-    //                     summon.useCnt = Math.max(0, summon.useCnt - 1);
-    //                 }
-    //             }
-    //         }
-    //         return {
-    //             trigger: triggers,
-    //             damage: isCdt(isTalent, 2),
-    //             element: summon.element,
-    //             isNotAddTask: !isTalent && trigger != 'phase-end',
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger.startsWith('after-skilltype')) {
-    //                     if (isTalent || trigger == 'after-skilltype1') smn.useCnt = Math.max(smn.useCnt, Math.min(smn.maxUse, smn.useCnt + 1));
-    //                     if (isTalent) return { cmds: [{ cmd: 'attack', cnt: 2 }] }
-    //                     return;
-    //                 }
-    //                 smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 if (trigger == 'phase-end') return { cmds: [{ cmd: 'attack' }] }
-    //             }
-    //         }
-    //     }),
-
-    // 3035: () => new GISummon(3035, '雷锁镇域', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】；【此召唤物在场时：】敌方执行｢切换角色｣行动的元素骰费用+1。(每回合1次)',
+    // 3035: () => new GISummon(3035, '雷锁镇域', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]；【此召唤物在场时：】敌方执行｢切换角色｣行动的元素骰费用+1。(每回合1次)',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/8df8ffcdace3033ced5ccedc1dc7da68_5001323349681512527.png',
     //     2, 2, 0, 1, 3, (summon, event) => {
     //         const { trigger = '' } = event;
@@ -811,11 +832,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }, { pct: 1 }),
 
-    // 3036: () => new GISummon(3036, '黯火炉心', '【结束阶段：】造成{dmg}点[火元素伤害]，对所有敌方后台角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】',
+    // 3036: () => new GISummon(3036, '黯火炉心', '【结束阶段：】造成{dmg}点[火元素伤害]，对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png',
     //     2, 2, 0, 1, 2, undefined, { pdmg: 1 }),
 
-    // 3051: (isTalent = false) => new GISummon(3051, '厄灵·炎之魔蝎', `【结束阶段：】造成{dmg}点[火元素伤害]${isTalent ? '; 如果本回合中【hro1743】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。；【[可用次数]：{useCnt}】；【入场时和行动阶段开始：】使我方【hro1743】附属【sts2139】。(【厄灵·炎之魔蝎】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`,
+    // 3051: (isTalent = false) => new GISummon(3051, '厄灵·炎之魔蝎', `【结束阶段：】造成{dmg}点[火元素伤害]${isTalent ? '; 如果本回合中【hro1743】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。；[useCnt]；【入场时和行动阶段开始：】使我方【hro1743】附属【sts2139】。(【厄灵·炎之魔蝎】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png',
     //     2, 2, 0, 1, 2, (summon, event) => {
     //         const { heros = [], trigger = '' } = event;
@@ -840,7 +861,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }, { isTalent, pls: isTalent }),
 
-    // 3052: () => new GISummon(3052, '轰雷禁锢', '【结束阶段：】对附属【sts2141】的敌方角色造成{dmg}点[雷元素伤害]。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)；【[可用次数]：{useCnt}】',
+    // 3052: () => new GISummon(3052, '轰雷禁锢', '【结束阶段：】对附属【sts2141】的敌方角色造成{dmg}点[雷元素伤害]。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)；[useCnt]',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/552ec062eef427f9a1986f92ee19c716_8843394885297317371.png',
     //     1, 1, 0, 3, 3, (summon, event) => {
     //         const { eheros = [] } = event;
@@ -855,23 +876,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3054: () => new GISummon(3054, '刺击冰棱', `【结束阶段：】对敌方[距离我方出战角色最近的角色]造成{dmg}点[冰元素伤害]。；【[可用次数]：{useCnt}】`,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/7becac09916614d57a2f084749634d5d_3605800251898465783.png',
-    //     2, 2, 0, 1, 4, (summon, event) => ({
-    //         trigger: ['phase-end'],
-    //         exec: execEvent => {
-    //             const { heros = [], eheros = [] } = event;
-    //             const { summon: smn = summon } = execEvent;
-    //             smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //             return { cmds: [{ cmd: 'attack', hidxs: [getNearestHidx(heros.findIndex(h => h.isFront), eheros)] }] }
-    //         }
-    //     })),
-
-    // 3055: () => new GISummon(3055, '共鸣珊瑚珠', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】',
+    // 3055: () => new GISummon(3055, '共鸣珊瑚珠', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/5776f31ac915874cb7eadd77a0098839_1777069343038822943.png',
     //     2, 2, 0, 1, 3),
 
-    // 3057: () => new GISummon(3057, '雷萤', '【结束阶段：】造成{dmg}点[雷元素伤害]。；【[可用次数]：{useCnt}】；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。(最多叠加到3)；【愚人众·雷萤术士受到元素反应伤害后：】此牌[可用次数]-1。',
+    // 3057: () => new GISummon(3057, '雷萤', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。(最多叠加到3)；【愚人众·雷萤术士受到元素反应伤害后：】此牌[可用次数]-1。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png',
     //     3, 3, 0, 1, 3, (summon, event) => {
     //         const { trigger = '', heros = [], isExec = true } = event;
@@ -905,9 +914,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //         }
     //     }),
 
-    // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；【[可用次数]：{useCnt}】', src, 2, 2, 0, 2, 0),
+    // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；[useCnt]', src, 2, 2, 0, 2, 0),
 
-    // 3062: (dmg = -1, useCnt = -1) => new GISummon(3062, '黑色幻影', `【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成${dmg == -1 ? '此牌｢攻击力｣值的' : '{dmg}点'}[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。${useCnt == -1 ? '' : '；【[可用次数]：{useCnt}】'}`,
+    // 3062: (dmg = -1, useCnt = -1) => new GISummon(3062, '黑色幻影', `【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成${dmg == -1 ? '此牌｢攻击力｣值的' : '{dmg}点'}[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。${useCnt == -1 ? '' : '；[useCnt]'}`,
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png',
     //     useCnt, useCnt, 0, dmg, 3, summon => ({
     //         trigger: ['phase-end', 'end-phase'],
