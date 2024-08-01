@@ -207,7 +207,9 @@ export const HERO_TAG_NAME = {
     [HERO_TAG.Hilichurl]: '丘丘人',
     [HERO_TAG.Eremite]: '镀金旅团',
     [HERO_TAG.ArkheOusia]: '始基力:荒性',
+    [HERO_TAG.Ousia]: '荒',
     [HERO_TAG.ArkhePneuma]: '始基力:芒性',
+    [HERO_TAG.Pneuma]: '芒',
     [HERO_TAG.ConsecratedBeast]: '圣骸兽',
 } as const;
 
@@ -224,7 +226,9 @@ export const HERO_TAG_URL = {
     [HERO_TAG.Hilichurl]: '/image/local9.png',
     [HERO_TAG.Eremite]: '/image/local10.png',
     [HERO_TAG.ArkheOusia]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/2bf769807e6739fbeb8b5781b9689386.png',
+    [HERO_TAG.Ousia]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/2bf769807e6739fbeb8b5781b9689386.png',
     [HERO_TAG.ArkhePneuma]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bb176892163d7c0d63e664b01217802d.png',
+    [HERO_TAG.Pneuma]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bb176892163d7c0d63e664b01217802d.png',
     [HERO_TAG.ConsecratedBeast]: '/image/local13.png',
 } as const;
 

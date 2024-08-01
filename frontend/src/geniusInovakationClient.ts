@@ -78,6 +78,7 @@ export default class GeniusInvokationClient {
     summonSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否选中
     summonCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否可选
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
+    slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
     error: string = ''; // 服务器发生的错误信息
 
     constructor(
@@ -375,7 +376,7 @@ export default class GeniusInvokationClient {
      */
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt,
-            handCardsCnt, damageVO, tip, actionInfo, log, isWin, flag } = data;
+            handCardsCnt, damageVO, tip, actionInfo, slotSelect, log, isWin, flag } = data;
         console.info(flag);
         const hasDmg = damageVO != -1 && ((damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0);
         this.isWin = isWin;
@@ -397,10 +398,23 @@ export default class GeniusInvokationClient {
                 });
             });
         }
+        if (this.slotSelect[0].length == 0 && phase == PHASE.CHANGE_CARD) {
+            // todo 要做装备发光的变量
+            this.slotSelect.forEach((p, pi) => {
+                p.forEach((_, i, a) => {
+                    a[i] = new Array(this.players[+(pi == this.playerIdx)].heros.length);
+                });
+            });
+        }
         this._sendTip(tip);
         if (actionInfo != '') {
             this.actionInfo = actionInfo;
             setTimeout(() => this.actionInfo = '', 1000);
+        }
+        if (slotSelect.length > 0) {
+            const [p, h, s] = slotSelect;
+            this.slotSelect[p][h][s] = true;
+
         }
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
@@ -835,6 +849,12 @@ export default class GeniusInvokationClient {
      */
     private _resetStatusSelect() {
         this.statusSelect.forEach(p => p.forEach(g => g.forEach(h => h.fill(false))));
+    }
+    /**
+     * 重置装备发光
+     */
+    private _resetSlotSelect() {
+        this.slotSelect.forEach(p => p.forEach(h => h.fill(false)));
     }
     /**
      * 重置附着预览

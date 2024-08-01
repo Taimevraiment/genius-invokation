@@ -1919,9 +1919,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】后：治疗自身2点。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png')
         .handle((card, event) => {
-            if (card.perCnt <= 0) return;
-            const { hidxs } = event;
+            const { heros = [], hidxs, hidxs: [hidx] = [-1] } = event;
+            const hero = heros[hidx];
+            if (card.perCnt <= 0 || !hero || hero.hp == hero.maxHp) return;
             return {
+                trigger: ['skilltype2'],
                 execmds: [{ cmd: 'heal', cnt: 2, hidxs }],
                 exec: () => { --card.perCnt },
             }
@@ -2168,8 +2170,8 @@ const allCards: Record<number, () => CardBuilder> = {
     213121: () => new CardBuilder(374).name('地狱里摇摆').since('v4.7.0').talent(0).costPyro(1).anydice(2).perCnt(1)
         .description('{action}；【装备有此牌的〖hro〗使用技能时：】如果我方手牌数量不多于1，则造成的伤害+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/219c7c6843e4ead2ab8ab2ce7044f5c3_8151320593747508491.png')
-        .handle((card, { hcards = [] }) => {
-            if ((hcards.length - +card.selected) > 1 || card.perCnt <= 0) return;
+        .handle((card, { hcards = [], hcard }) => {
+            if ((hcards.length - +(card.entityId == hcard?.entityId)) > 1 || card.perCnt <= 0) return;
             return { trigger: ['skill'], addDmgCdt: 2, exec: () => { --card.perCnt } }
         }),
 
@@ -2554,14 +2556,66 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b1a0f699a2168c60bc338529c3dee38b_3650391807139860687.png'),
 
+    222021: () => new CardBuilder(114).name('镜锢之笼').talent(1).costHydro(3).costHydro(4, 'v4.2.0')
+        .description('{action}；装备有此牌的【hro】生成的【sts122021】获得以下效果：；初始[持续回合]+1，并且会使所附属角色受到的[水元素伤害]+1。')
+        .description('{action}；装备有此牌的【hro】生成的【sts122021】获得以下效果：；初始[持续回合]+1，并且会使所附属角色切换到其他角色时元素骰费用+1。', 'v4.8.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/12109492/b0294bbab49b071b0baa570bc2339917_4550477078586399854.png'),
 
-    // 722: () => new GICard(722, '镜锢之笼', '{action}；装备有此牌的【hro】生成的【sts2043】获得以下效果：；初始[持续回合]+1，并且会使所附属角色切换到其他角色时元素骰费用+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/12109492/b0294bbab49b071b0baa570bc2339917_4550477078586399854.png',
-    //     3, 1, 0, [6, 7], 1722, 1),
+    222031: () => new CardBuilder(354).name('暗流涌动').since('v4.6.0').talent().costHydro(1)
+        .description('【入场时：】如果装备有此牌的【hro】已触发过【sts122031】，则在对方场上生成【sts122033】。；装备有此牌的【hro】被击倒或触发【sts122031】时：在对方场上生成【sts122033】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/1dc62c9d9244cd9d63b6f01253ca9533_7942036787353741713.png')
+        .handle((_card, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const isTriggered = !hasObjById(heros[hidx]?.heroStatus, 122031);
+            return {
+                trigger: ['will-killed'],
+                statusOppo: isCdt(isTriggered, [newStatus(ver)(122033)]),
+                execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122033)], isOppo: true }],
+            }
+        }),
 
-    // 723: () => new GICard(723, '悉数讨回', '{action}；装备有此牌的【hro】生成的【sts2044】获得以下效果：；初始[持续回合]+1，并且使所附属角色造成的[物理伤害]变为[火元素伤害]。',
-    //     'https://patchwiki.biligame.com/images/ys/4/4b/p2lmo1107n5nwc2pulpjkurlixa2o4h.png',
-    //     3, 2, 0, [6, 7], 1741, 1),
+    222041: () => new CardBuilder(377).name('无光鲸噬').since('v4.7.0').talent(1).costHydro(4).perCnt(1)
+        .description('{action}；装备有此牌的【hro】使用【ski】[舍弃]1张手牌后：治疗此角色该手牌元素骰费用的点数。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6c8ce9408dc45b74242f45fb45c2e5d0_4468452485234515493.png')
+        .handle((card, event) => {
+            if (card.perCnt == 0) return;
+            const { hcards = [], hcard } = event;
+            return {
+                trigger: ['skilltype2'],
+                execmds: [{ cmd: 'heal', cnt: Math.max(...hcards.filter(c => c.entityId != hcard?.entityId).map(c => c.cost + c.anydice)) }],
+                exec: () => { --card.perCnt },
+            }
+        }),
+
+    223011: () => new CardBuilder(115).name('悉数讨回').talent(1).costPyro(3)
+        .description('{action}；装备有此牌的【hro】生成的【sts123011】获得以下效果：；初始[持续回合]+1，并且使所附属角色造成的[物理伤害]变为[火元素伤害]。')
+        .src('https://patchwiki.biligame.com/images/ys/4/4b/p2lmo1107n5nwc2pulpjkurlixa2o4h.png'),
+
+    223021: () => new CardBuilder(116).name('烬火重燃').since('v3.7.0').talent().costPyro(2)
+        .description('【入场时：】如果装备有此牌的【hro】已触发过【sts123022】，就立刻弃置此牌，为角色附属【sts123024】。；装备有此牌的【hro】触发【sts123022】时：弃置此牌，为角色附属【sts123024】。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            if (!hasObjById(heros[hidx]?.heroStatus, 123022)) {
+                return { status: [newStatus(ver)(123024)], isDestroy: true }
+            }
+        }),
+
+    223031: () => new CardBuilder(295).name('魔蝎烈祸').since('v4.3.0').talent(2).costPyro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】生成的【smn123031】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn123031】的减伤效果改为每回合至多2次。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png'),
+
+    223041: () => new CardBuilder(355).name('熔火铁甲').since('v4.6.0').talent().costPyro(1).perCnt(1)
+        .description('【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts123041】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts123041】。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
+        .handle((_, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs, element: ELEMENT_TYPE.Pyro }] })),
+
+    224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
+        .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(124014)], cmds: [{ cmd: 'heal', cnt: 3 }] })),
+
+
 
     // 724: () => new GICard(724, '机巧神通', '{action}；装备有此牌的【hro】施放【ski】后，我方切换到后一个角色；施放【ski1781,2】后，我方切换到前一个角色。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/12109492/29356bd9bc7cbd8bf4843d6725cb8af6_6954582480310016602.png',
@@ -2577,23 +2631,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 726: () => new GICard(726, '孢子增殖', '{action}；装备有此牌的【hro】可累积的｢【sts2047】｣层数+1。',
     //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
     //     3, 7, 0, [6, 7], 1821, 1),
-
-    // 747: () => new GICard(747, '汲能棱晶', '[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts2091】。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png',
-    //     2, 3, 2, [6, 7], 1761, 1, () => ({ status: [newStatus(2091)], cmds: [{ cmd: 'heal', cnt: 3 }] })),
-
-    // 748: () => new GICard(748, '烬火重燃', '【入场时：】如果装备有此牌的【hro】已触发过【sts2092】，就立刻弃置此牌，为角色附属【sts2093】。；装备有此牌的【hro】触发【sts2092】时：弃置此牌，为角色附属【sts2093】。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png',
-    //     2, 2, 0, [6], 1742, 1, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         if (heros[hidx]?.inStatus.every(ist => ist.id != 2092)) {
-    //             return { status: [newStatus(2093)], isDestroy: true }
-    //         }
-    //     }),
-
-    // 768: () => new GICard(768, 295, '魔蝎烈祸', '{action}；装备有此牌的【hro】生成的【smn3051】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn3051】的减伤效果改为每回合至多2次。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png',
-    //     3, 2, 0, [6, 7], 1743, 2, undefined, { energy: 2 }),
 
     // 769: () => new GICard(769, '悲号回唱', '{action}；装备有此牌的【hro】在场，附属有【sts2141】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png',
@@ -2623,33 +2660,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 779: () => new GICard(779, 341, '雷萤浮闪', '{action}；装备有此牌的【hro】在场时，我方选择行动前：如果【smn3057】的[可用次数]至少为3，则【smn3057】立刻造成1点[雷元素伤害]。(需消耗[可用次数]，每回合1次)',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/adf954bd07442eed0bc3c77847c2d727_1148348250566405252.png',
     //     3, 3, 0, [6, 7], 1764, 1, undefined, { pct: 1 }),
-
-    // 782: () => new GICard(782, '暗流涌动', '【入场时：】如果装备有此牌的【hro】已触发过【sts2181】，则在对方场上生成【sts2180】。；装备有此牌的【hro】被击倒或触发【sts2181】时：在对方场上生成【sts2180】。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/1dc62c9d9244cd9d63b6f01253ca9533_7942036787353741713.png',
-    //     1, 1, 0, [6], 1723, 1, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const isTriggered = heros[hidx]?.inStatus.every(ist => ist.id != 2181);
-    //         return {
-    //             trigger: ['will-killed'],
-    //             statusOppo: isCdt(isTriggered, [newStatus(2180)]),
-    //             execmds: [{ cmd: 'getStatus', status: [newStatus(2180)], isOppo: true }],
-    //         }
-    //     }),
-
-    // 783: () => new GICard(783, '熔火铁甲', '【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts2182】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts2182】。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png',
-    //     1, 2, 0, [6], 1744, 1, (_card, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs, element: 2 }] }), { pct: 1 }),
-
-    // 789: () => new GICard(789, '无光鲸噬', '{action}；装备有此牌的【hro】使用【ski】[舍弃]1张手牌后：治疗此角色该手牌元素骰费用的点数。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6c8ce9408dc45b74242f45fb45c2e5d0_4468452485234515493.png',
-    //     4, 1, 0, [6, 7], 1724, 1, (card, { hcards = [] }) => {
-    //         if (card.perCnt == 0) return;
-    //         return {
-    //             trigger: ['skilltype2'],
-    //             execmds: [{ cmd: 'heal', cnt: Math.max(...hcards.filter(c => !c.selected).map(c => c.cost + c.anydice)) }],
-    //             exec: () => { --card.perCnt },
-    //         }
-    //     }, { pct: 1 }),
 
     // 790: () => new GICard(790, '亡雷凝蓄', '【入场时：】生成1张【crd906】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd906】后：抓1张牌，然后生成1张【crd906】，随机置入我方牌库中。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5138e59de35ef8ede3a26540a7b883e0_5065992084832534424.png',

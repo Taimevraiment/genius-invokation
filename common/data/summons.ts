@@ -1,7 +1,7 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
-import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, hasObjById } from "../utils/gameUtil.js";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
+import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 import { newStatus } from "./statuses.js";
@@ -759,6 +759,65 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    122043: (dmg: number = -1, useCnt: number = -1) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
+        .description(`【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成${dmg == -1 ? '此牌｢攻击力｣值的' : '{dmg}点'}[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。${useCnt == -1 ? '' : '；[useCnt]'}`)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
+        .handle(summon => ({
+            trigger: ['phase-end', 'end-phase'],
+            exec: execEvent => phaseEndAtk(execEvent.summon ?? summon),
+        })),
+
+    123021: () => new SummonBuilder('黯火炉心').useCnt(2).damage(1).pdmg(1)
+        .description('{defaultAtk，对所有敌方后台角色造成1点[穿透伤害]。}')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png'),
+
+    123031: (isTalent: boolean = false) => new SummonBuilder('厄灵·炎之魔蝎').useCnt(2).damage(1).plus(isTalent).talent(isTalent)
+        .description(`{defaultAtk${isTalent ? '; 如果本回合中【hro】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
+        .handle((summon, event, ver) => {
+            const { heros = [], trigger = '' } = event;
+            const hidx = getObjIdxById(heros, getHidById(summon.id));
+            return {
+                trigger: ['phase-end', 'phase-start'],
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    const hero = heros[hidx];
+                    if (trigger == 'phase-end') {
+                        smn.useCnt = Math.max(0, smn.useCnt - 1);
+                        let addDmg = 0;
+                        if (hero.hp > 0) {
+                            addDmg = +(smn.isTalent && hero.skills.some(sk => (sk.type == SKILL_TYPE.Normal || sk.type == SKILL_TYPE.Elemental) && sk.useCnt > 0));
+                        }
+                        return { cmds: [{ cmd: 'attack', cnt: smn.damage + addDmg }] }
+                    }
+                    if (trigger == 'phase-start' && hero.hp > 0) {
+                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(123033, smn.isTalent ? 2 : 1)], hidxs: [hidx] }] }
+                    }
+                },
+            }
+        }),
+
+    124013: () => new SummonBuilder('雷锁镇域').useCnt(2).damage(1).perCnt(1)
+        .description('{defaultAtk。}；【此召唤物在场时：】敌方执行｢切换角色｣行动的元素骰费用+1。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/8df8ffcdace3033ced5ccedc1dc7da68_5001323349681512527.png')
+        .handle((summon, event) => {
+            const { trigger = '' } = event;
+            return {
+                addDiceHero: summon.perCnt,
+                isNotAddTask: trigger != 'phase-end',
+                trigger: ['phase-end', 'change-oppo'],
+                exec: execEvent => {
+                    const { summon: smn = summon, switchHeroDiceCnt = 0 } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
+                    if (trigger == 'change-oppo' && smn.perCnt > 0) {
+                        --smn.perCnt;
+                        return { switchHeroDiceCnt: switchHeroDiceCnt + 1 }
+                    }
+                    return { switchHeroDiceCnt }
+                }
+            }
+        }),
+
 
     // 3010: () => new GISummon(3010, '水丘丘萨满', '【结束阶段：】造成{dmg}点[水元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png',
@@ -811,55 +870,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //             },
     //         }
     //     }),
-
-    // 3035: () => new GISummon(3035, '雷锁镇域', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]；【此召唤物在场时：】敌方执行｢切换角色｣行动的元素骰费用+1。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/8df8ffcdace3033ced5ccedc1dc7da68_5001323349681512527.png',
-    //     2, 2, 0, 1, 3, (summon, event) => {
-    //         const { trigger = '' } = event;
-    //         return {
-    //             addDiceHero: summon.perCnt,
-    //             isNotAddTask: trigger != 'phase-end',
-    //             trigger: ['phase-end', 'change-oppo'],
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon, switchHeroDiceCnt = 0 } = execEvent;
-    //                 if (trigger == 'phase-end') return phaseEndAtk(smn);
-    //                 if (trigger == 'change-oppo' && smn.perCnt > 0) {
-    //                     --smn.perCnt;
-    //                     return { switchHeroDiceCnt: switchHeroDiceCnt + 1 }
-    //                 }
-    //                 return { switchHeroDiceCnt }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
-
-    // 3036: () => new GISummon(3036, '黯火炉心', '【结束阶段：】造成{dmg}点[火元素伤害]，对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png',
-    //     2, 2, 0, 1, 2, undefined, { pdmg: 1 }),
-
-    // 3051: (isTalent = false) => new GISummon(3051, '厄灵·炎之魔蝎', `【结束阶段：】造成{dmg}点[火元素伤害]${isTalent ? '; 如果本回合中【hro1743】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。；[useCnt]；【入场时和行动阶段开始：】使我方【hro1743】附属【sts2139】。(【厄灵·炎之魔蝎】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png',
-    //     2, 2, 0, 1, 2, (summon, event) => {
-    //         const { heros = [], trigger = '' } = event;
-    //         const hidx = heros.findIndex(h => h.id == 1743 && h.hp > 0);
-    //         return {
-    //             trigger: ['phase-end', 'phase-start'],
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') {
-    //                     smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                     let addDmg = 0;
-    //                     if (hidx > -1) {
-    //                         const hero = heros[hidx];
-    //                         addDmg = +(smn.isTalent && hero.skills.some(sk => sk.type < 3 && sk.useCnt > 0));
-    //                     }
-    //                     return { cmds: [{ cmd: 'attack', cnt: smn.damage + addDmg }] }
-    //                 }
-    //                 if (trigger == 'phase-start' && hidx > -1) {
-    //                     return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2139, smn.isTalent ? 2 : 1)], hidxs: [hidx] }] }
-    //                 }
-    //             },
-    //         }
-    //     }, { isTalent, pls: isTalent }),
 
     // 3052: () => new GISummon(3052, '轰雷禁锢', '【结束阶段：】对附属【sts2141】的敌方角色造成{dmg}点[雷元素伤害]。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)；[useCnt]',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/552ec062eef427f9a1986f92ee19c716_8843394885297317371.png',
@@ -915,13 +925,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     }),
 
     // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；[useCnt]', src, 2, 2, 0, 2, 0),
-
-    // 3062: (dmg = -1, useCnt = -1) => new GISummon(3062, '黑色幻影', `【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成${dmg == -1 ? '此牌｢攻击力｣值的' : '{dmg}点'}[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。${useCnt == -1 ? '' : '；[useCnt]'}`,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png',
-    //     useCnt, useCnt, 0, dmg, 3, summon => ({
-    //         trigger: ['phase-end', 'end-phase'],
-    //         exec: execEvent => phaseEndAtk(execEvent.summon ?? summon),
-    //     }), { stsId: 2212 }),
 
     // 3063: () => crd907summon(3063),
 

@@ -63,7 +63,7 @@ export class GIHero {
 
 export class HeroBuilder extends BaseBuilder {
     private _tags: HeroTag[] = [];
-    private _maxHp: number = 10;
+    private _maxHp: [Version, number][] = [];
     private _element: ElementType | undefined;
     private _weaponType: WeaponType = WEAPON_TYPE.Other;
     private _skills: SkillBuilder[] = [];
@@ -83,8 +83,8 @@ export class HeroBuilder extends BaseBuilder {
         this._tags.push(...tags);
         return this;
     }
-    maxHp(maxHp: number) {
-        this._maxHp = maxHp;
+    maxHp(maxHp: number, version: Version = 'vlatest') {
+        this._maxHp.push([version, maxHp]);
         return this;
     }
     monster() {
@@ -192,11 +192,12 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     done() {
+        const maxHp = this._getValByVersion(this._maxHp, 10);
         const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
         const skills: (SkillBuilder | Skill1Builder)[] = this._skills.map(skill => skill.costElement(element));
         if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType).costElement(element));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
-            this._maxHp, element, this._weaponType, this._src, this._avatar,
+            maxHp, element, this._weaponType, this._src, this._avatar,
             skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
     }
 }

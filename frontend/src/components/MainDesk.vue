@@ -157,7 +157,7 @@
           </div>
           <div class="hero-equipment">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
-              :class="{ 'slot-select': hero.weaponSlot.selected }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx][0] }">
               <img :src="getSvgIcon('weapon')" />
               <div :style="{
                 position: 'absolute',
@@ -167,7 +167,7 @@
               }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-artifact" v-if="hero.artifactSlot != null"
-              :class="{ 'slot-select': hero.artifactSlot.selected }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx][1] }">
               <img :src="getSvgIcon('artifact')" />
               <div :style="{
                 position: 'absolute',
@@ -177,7 +177,7 @@
               }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-talent" v-if="hero.talentSlot != null"
-              :class="{ 'slot-select': hero.talentSlot.selected }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx][2] }">
               <img :src="getSvgIcon('talent')" />
               <div :style="{
                 position: 'absolute',
@@ -587,6 +587,7 @@ const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
 const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
+const slotSelect = computed<boolean[][][][]>(() => props.client.slotSelect);
 const isLookon = computed<number>(() => props.isLookon);
 const heros = computed<Hero[][]>(() => {
   if (props.client.isWin < 2) return [opponent?.value.heros, player.value.heros];

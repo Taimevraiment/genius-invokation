@@ -219,6 +219,7 @@ type ServerData = Readonly<{
     isWin: number,
     tip: string,
     actionInfo: string,
+    slotSelect: number[],
     flag: string,
 }>
 

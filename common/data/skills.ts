@@ -1,5 +1,6 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing"
 import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
+import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 import { newStatus } from "./statuses.js"
@@ -106,9 +107,19 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
         }),
 
-    // 2: () => new GISkill('猜拳三连击·剪刀', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]，然后[准备技能]：【rsk3】。', 2, 2, 0, 3, { id: 24015, ec: -2, rskid: 2 }),
+    22035: () => new SkillBuilder('涟锋旋刃').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(1),
 
-    // 3: () => new GISkill('猜拳三连击·布', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 2, 3, 0, 3, { ec: -2, rskid: 3 }),
+    23046: () => new SkillBuilder('炽烈轰破').description('(需准备1个行动轮)；{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
+        .burst().readySkill().damage(1).handle(event => {
+            const { hero: { heroStatus } } = event;
+            return { pdmg: 2, addDmgCdt: Math.floor((getObjById(heroStatus, 123041)?.useCnt ?? 0) / 2) }
+        }),
+
+    24015: () => new SkillBuilder('猜拳三连击·剪刀').description('(需准备1个行动轮)；{dealDmg}，然后[准备技能]：【rsk24016】。')
+        .elemental().readySkill().damage(2).handle((_, ver) => ({ status: [newStatus(ver)(124012)] })),
+
+    24016: () => new SkillBuilder('猜拳三连击·布').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3),
+
 
     // 6: () => new GISkill('长延涤流', '(需准备1个行动轮)；对下一个敌方后台角色造成{dmg}点[风元素伤害]，然后[准备技能]：【rsk7】。(敌方没有后台角色时，改为对出战角色造成伤害)',
     //     2, 1, 0, 5, { ec: -2, rskid: 6 }, '', () => ({ atkOffset: 1 })),
@@ -133,14 +144,6 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     //     () => ({ status: [newStatus(ver)(2145)] })),
 
     // 18: () => new GISkill('霆电迸发', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 3, 2, 0, 3, { ec: -2, rskid: 18 }),
-
-    // 19: () => new GISkill('涟锋旋刃', '(需准备1个行动轮)；造成{dmg}点[水元素伤害]。', 2, 1, 0, 1, { ec: -2, rskid: 19 }),
-
-    // 20: () => new GISkill('炽烈轰破', '(需准备1个行动轮)；造成{dmg}点[火元素伤害]，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts2182】，就使此技能造成的[火元素伤害]+1。',
-    //     3, 1, 0, 2, { ec: -2, rskid: 20 }, '', event => {
-    //         const { hero: { heroStatus } } = event;
-    //         return { pdmg: 2, addDmgCdt: Math.floor((heroStatus.find(ist => ist.id == 2182)?.useCnt ?? 0) / 2) }
-    //     }),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

@@ -235,7 +235,9 @@ export const HERO_TAG = {
     Hilichurl: 'Hilichurl', // 丘丘人 9
     Eremite: 'Eremite', // 镀金旅团 10
     ArkheOusia: 'ArkheOusia', // 始基力:荒性 11
+    Ousia: 'Ousia', // 荒 11
     ArkhePneuma: 'ArkhePneuma', // 始基力:芒性 12
+    Pneuma: 'Pneuma', // 芒 12
     ConsecratedBeast: 'ConsecratedBeast', // 圣骸兽 13
 } as const;
 

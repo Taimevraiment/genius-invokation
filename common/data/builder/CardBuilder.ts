@@ -27,7 +27,6 @@ export class GICard {
     perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
-    selected: boolean = false; // 是否被选择
     handle: (card: Card, event: CardHandleEvent) => CardHandleRes; // 卡牌发动的效果函数
     canSelectHero: number; // 能选择角色的数量
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方

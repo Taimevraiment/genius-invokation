@@ -165,7 +165,7 @@ export default class GeniusInvokationRoom {
      */
     emit(flag: string, pidx: number, options: {
         socket?: Socket, tip?: string | string[], actionInfo?: string, damageVO?: DamageVO, notPreview?: boolean,
-        isActionInfo?: boolean,
+        isActionInfo?: boolean, slotSelect?: number[]
     } = {}) {
         this.players.forEach(p => {
             p.heros.forEach(h => h.heroStatus.splice(0, MAX_STATUS_COUNT, ...this._updateStatus(p.pidx, [], h.heroStatus, true, p.heros, h.hidx)));
@@ -175,7 +175,7 @@ export default class GeniusInvokationRoom {
                 p.heros.every(h => h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill))) &&
                 p.combatStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill));
         });
-        const { socket, tip = '', actionInfo = '', damageVO = -1, notPreview = false, isActionInfo = false } = options;
+        const { socket, tip = '', actionInfo = '', damageVO = -1, notPreview = false, isActionInfo = false, slotSelect = [] } = options;
         const previews: Preview[] = [];
         this._clacCardChange(pidx);
         if (this.phase == PHASE.ACTION && !notPreview && this.taskQueue.isTaskEmpty()) { // 计算预测行动的所有情况
@@ -197,6 +197,7 @@ export default class GeniusInvokationRoom {
             tip: typeof tip == 'string' ? tip : '',
             actionInfo: actionInfo || (isActionInfo ? this.log.at(-1) ?? '' : ''),
             isWin: this.winner,
+            slotSelect,
             flag: `[${this.id}]${flag}-p${pidx}`,
         };
         if (socket) {
@@ -785,7 +786,7 @@ export default class GeniusInvokationRoom {
                             {
                                 isExec,
                                 usedDice: skill.cost.reduce((a, b) => a + b.cnt, 0),
-                                withCard: withCard,
+                                withCard,
                                 minusDiceSkillIds: skill.costChange[2],
                             }
                         );
@@ -896,6 +897,7 @@ export default class GeniusInvokationRoom {
                     isExec,
                     skidx,
                     sktype: skill.type,
+                    withCard,
                     isChargedAtk,
                     isFallAtk,
                     isReadySkill,
@@ -1491,7 +1493,7 @@ export default class GeniusInvokationRoom {
                     isSummon,
                     usedDice,
                     isExec,
-                    card: withCard,
+                    hcard: withCard,
                     minusDiceSkillIds,
                 });
                 aist[i].push(...slotres.heroStatus);
@@ -1892,6 +1894,7 @@ export default class GeniusInvokationRoom {
         const player = this.players[pidx];
         const opponent = this.players[pidx ^ 1];
         const currCard = player.handCards[cardIdx];
+        this._writeLog(`[${player.name}]使用了[${currCard.name}]`);
         const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
         if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
         player.dice = player.dice.filter((_, i) => !diceSelect[i]);
@@ -2013,6 +2016,7 @@ export default class GeniusInvokationRoom {
                 dmgElements,
                 elTips,
             }
+            // if (isUseSkill) await delay(2400);
             await this._execTask();
         }
         if (currCard.hasSubtype(CARD_SUBTYPE.Action)) {
@@ -2022,7 +2026,6 @@ export default class GeniusInvokationRoom {
         } else {
             this._doActionBefore(pidx);
         }
-        this._writeLog(`[${player.name}]使用了[${currCard.name}]`);
         setTimeout(() => this.emit('useCard', pidx, { damageVO }), isUseSkill ? 2450 : 0);
     }
     /**
@@ -2595,14 +2598,14 @@ export default class GeniusInvokationRoom {
      * @param options 配置项: isOnlyRead 是否只读, hidxs 当前角色索引, summons 当前玩家召唤物, switchHeroDiceCnt 切换角色需要骰子,
      *                        heal 回血量, heros 我方角色组, eheros 敌方角色组, hcard 使用的牌, isChargedAtk 是否为重击, isSkill 使用技能的idx, 
      *                        taskMark 任务标记, isFallAtk 是否为下落攻击, isExec 是否执行task(配合新heros), dieChangeBack 是否为死后切换角色,
-     *                        card 可能要装备的卡, usedDice 使用的骰子数, ehidx 被攻击角色的idx, minusDiceCard 用卡减骰子, isSummon 是否为召唤物攻击
+     *                        usedDice 使用的骰子数, ehidx 被攻击角色的idx, minusDiceCard 用卡减骰子, isSummon 是否为召唤物攻击
      *                        minusDiceSkillIds 用技能减骰子id, isExecTask 是否执行任务队列, getdmg 受到的伤害, isQuickAction 是否为快速攻击,
      *                        isUnshift 是否立即加入task,
      * @returns willHeals 将要回血, switchHeroDiceCnt 切换角色需要骰子, addDmg 条件加伤, heroStatus 新增角色状态, combatStatus 新增出战状态,
      *          addDmgSummon 召唤物加伤, nsummons 新出的召唤物, isQuickAction 是否为快速攻击, supportCnt 支援区的变化数
      */
     private _detectSlot(pidx: number, otriggers: Trigger | Trigger[], options: {
-        players?: Player[], hidxs?: number | number[], summons?: Summon[], ehidx?: number, card?: Card | null, taskMark?: [number, CardSubtype],
+        players?: Player[], hidxs?: number | number[], summons?: Summon[], ehidx?: number, taskMark?: [number, CardSubtype],
         switchHeroDiceCnt?: number, heal?: number[], heros?: Hero[], eheros?: Hero[], minusDiceCard?: number, isUnshift?: boolean,
         hcard?: Card, isChargedAtk?: boolean, isFallAtk?: boolean, isSkill?: number, isSummon?: number[],
         isExec?: boolean, intvl?: number[], usedDice?: number, isQuickAction?: boolean, getdmg?: number[],
@@ -2613,7 +2616,7 @@ export default class GeniusInvokationRoom {
         else triggers.push(...otriggers);
         const { players = this.players, summons = players[pidx].summons, heal, hcard, ehidx = players[pidx ^ 1].hidx,
             heros = players[pidx].heros, eheros = players[pidx ^ 1].heros, taskMark, isUnshift = false, minusDiceSkillIds = [],
-            isChargedAtk = false, isFallAtk = players[pidx].isFallAtk, isExec = true, card, isSummon = [],
+            isChargedAtk = false, isFallAtk = players[pidx].isFallAtk, isExec = true, isSummon = [],
             isSkill = -1, usedDice = 0, getdmg } = options;
         const player = players[pidx];
         let { switchHeroDiceCnt = 0, minusDiceCard = 0, hidxs = [player.hidx], isQuickAction = false } = options;
@@ -2638,7 +2641,7 @@ export default class GeniusInvokationRoom {
             if (taskMark && taskMark[0] != hidx) continue;
             const fHero = heros[hidx];
             const slots = [fHero.weaponSlot, fHero.artifactSlot, fHero.talentSlot];
-            if (card?.type == CARD_TYPE.Equipment && slots.every(slot => slot?.entityId != card.entityId) && fHero.id == card.userType) slots.push(card);
+            if (hcard?.type == CARD_TYPE.Equipment && slots.every(slot => slot?.entityId != hcard.entityId) && fHero.id == hcard.userType) slots.push(hcard);
             for (const slot of slots) {
                 if (slot == null || (taskMark && !slot.hasSubtype(taskMark[1]))) continue;
                 const tcmds: Cmds[] = [];
@@ -2700,8 +2703,8 @@ export default class GeniusInvokationRoom {
                 if (isExec && (tcmds.length > 0 || isAddTask)) {
                     if (!taskMark) {
                         const args = clone(Array.from(arguments));
-                        args[1] = {
-                            ...(clone(args[1]) ?? {}),
+                        args[2] = {
+                            ...(clone(args[2]) ?? {}),
                             taskMark: [hidx, slot.subType[0]],
                             heros: undefined,
                             eheros: undefined,
@@ -3402,7 +3405,7 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'discard') {
                 if (discards == undefined) discards = [];
                 let discardCnt = Math.max(1, cnt);
-                const unselectedCards = player.handCards.filter(c => !c.selected);
+                const unselectedCards = player.handCards.filter(c => c.entityId != withCard?.entityId);
                 const discardIdxs = cmds[i].hidxs ?? [];
                 if (discardIdxs.length > 0) {
                     discards.push(...clone(unselectedCards.filter((_, ci) => discardIdxs.includes(ci))));

@@ -26,7 +26,6 @@ export class GIStatus {
         description: string, // 描述
         descriptions: string[], // 处理后的技能描述
         explains: string[], // 要解释的文本
-        isSelected: boolean, // 是否正在发动
         iconBg: StatusBgColor, // 图标背景
     };
     constructor(
@@ -60,7 +59,6 @@ export class GIStatus {
             iconBg: icbg,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             descriptions: [],
-            isSelected: false,
         }
         this.addCnt = act;
         this.summonId = smnId;
@@ -148,6 +146,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _typeCdt: [(ver: Version) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: Version) => boolean, number][] = [];
     private _barrierCnt: number = 1;
+    private _barrierUsage: number = 1;
     constructor(name: string) {
         super();
         this._name = name;
@@ -169,10 +168,15 @@ export class StatusBuilder extends BaseVersionBuilder {
         return this;
     }
     type(...types: StatusType[]): StatusBuilder;
+    type(cdt: boolean, ...types: StatusType[]): StatusBuilder;
     type(cdt: (ver: Version) => boolean, ...types: StatusType[]): StatusBuilder;
-    type(cdt: StatusType | ((ver: Version) => boolean), ...types: StatusType[]) {
+    type(cdt: StatusType | ((ver: Version) => boolean) | boolean, ...types: StatusType[]) {
         if (typeof cdt == 'function') {
             this._typeCdt.push([cdt, types]);
+            return this;
+        }
+        if (typeof cdt == 'boolean') {
+            if (cdt) this._type.push(...types);
             return this;
         }
         this._type.push(cdt, ...types);
@@ -238,8 +242,8 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._summonId = smnId ?? -2;
         return this;
     }
-    addition(...addition: string[]) {
-        this._addition.push(...addition);
+    addition(...addition: (string | number)[]) {
+        this._addition.push(...addition.map(v => v.toString()));
         return this;
     }
     isReset() {
@@ -261,6 +265,10 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._barrierCnt = cnt;
         return this;
     }
+    barrierUsage(cnt: number) {
+        this._barrierUsage = cnt;
+        return this;
+    }
     done() {
         const description = this._getValByVersion(this._description, '');
         const useCnt = this._getValByVersion(this._useCnt, -1);
@@ -274,9 +282,9 @@ export class StatusBuilder extends BaseVersionBuilder {
             (status: Status, event: StatusHandleEvent, ver: Version) => {
                 const { restDmg = 0, summon } = event;
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
-                if (status.useCnt > 0) --status.useCnt;
+                if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
                 if (status.roundCnt > 0) --status.roundCnt;
-                if (summon && this._summonId != -1) --summon.useCnt;
+                if (summon && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
             } : this._handle;
         return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
