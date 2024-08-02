@@ -105,6 +105,7 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _src: string[] = [];
     private _description: [Version, string][] = [];
     private _explains: string[] = [];
+    private _readySkillRound: number = 0;
     constructor(name: string) {
         super();
         this._name = name;
@@ -126,8 +127,9 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._energyCost.push([version, energy]);
         return this;
     }
-    readySkill() {
+    readySkill(round: number = 1) {
         this._energyCost.push(['vlatest', -2]);
+        this._readySkillRound = round;
         return this;
     }
     energy(energy: number) {
@@ -208,7 +210,8 @@ export class SkillBuilder extends BaseVersionBuilder {
     done() {
         const element: ElementType = ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode];
         this.costElement(element);
-        const description = this._getValByVersion(this._description, '')
+        const readySkillDesc = this._readySkillRound > 0 ? `(需准备${this._readySkillRound}个行动轮)；` : '';
+        const description = readySkillDesc + this._getValByVersion(this._description, '')
             .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)
             .replace(/(?<=【)hro(?=】)/g, `hro${Math.floor(this._id / 10)}`);
         const ec = this._getValByVersion(this._energyCost, 0);

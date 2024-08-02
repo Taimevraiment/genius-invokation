@@ -21,7 +21,7 @@ export class BaseBuilder extends BaseVersionBuilder {
     protected _shareId: number;
     protected _name: string = '无';
     protected _cost: [Version, number][] = [];
-    protected _costType: DiceType = DICE_TYPE.Same;
+    protected _costType: [Version, DiceType][] = [];
     constructor(shareId: number) {
         super();
         this._shareId = shareId;
@@ -35,9 +35,9 @@ export class BaseBuilder extends BaseVersionBuilder {
         this._name = name;
         return this;
     }
-    cost(cost: number, type: DiceType, version: Version = 'vlatest') {
+    cost(cost: number, type: DiceType = DICE_TYPE.Same, version: Version = 'vlatest') {
         this._cost.push([version, cost]);
-        this._costType = type;
+        this._costType.push([version, type]);
         return this;
     }
     costCryo(cost: number, version?: Version) {
@@ -61,8 +61,8 @@ export class BaseBuilder extends BaseVersionBuilder {
     costDendro(cost: number, version?: Version) {
         return this.cost(cost, DICE_TYPE.Dendro, version);
     }
-    costSame(cost: number) {
-        return this.cost(cost, DICE_TYPE.Same);
+    costSame(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Same, version);
     }
     costAny(cost: number) {
         return this.cost(cost, DICE_TYPE.Any);

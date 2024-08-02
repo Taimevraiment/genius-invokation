@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { allHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
@@ -259,7 +259,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311109: () => new CardBuilder(379).name('金流监督').since('v4.7.0').weapon().costSame(2).perCnt(2)
+    311109: () => new CardBuilder(381).name('金流监督').since('v4.7.0').weapon().costSame(2).perCnt(2)
         .description('【角色受到伤害或治疗后：】使角色本回合中下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。(每回合至多2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/83ab325be102a71a7df848546e7eacbb_2193569914822395358.png')
         .handle((card, event, ver) => {
@@ -313,7 +313,7 @@ const allCards: Record<number, () => CardBuilder> = {
     311206: () => senlin1Weapon(131, '王下近侍', 301103).since('v4.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/c667e01fa50b448958eff1d077a7ce1b_1806864451648421284.png'),
 
-    311207: () => new CardBuilder(380).name('竭泽').since('v4.7.0').weapon().costSame(2).perCnt(2).useCnt(0)
+    311207: () => new CardBuilder(382).name('竭泽').since('v4.7.0').weapon().costSame(2).perCnt(2).useCnt(0)
         .description('【我方打出名称不存在于初始牌组中的行动牌后：】此牌累积1点｢渔猎｣。(最多累积2点，每回合最多累积2点)；【角色使用技能时：】如果此牌已有｢渔猎｣，则消耗所有｢渔猎｣，使此技能伤害+1，并且每消耗1点｢渔猎｣就抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ea03edad3c81f49bddc24a5689f278d2_6229118249248157024.png')
         .handle((card, event) => {
@@ -2615,75 +2615,80 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
         .handle((_c, _e, ver) => ({ status: [newStatus(ver)(124014)], cmds: [{ cmd: 'heal', cnt: 3 }] })),
 
+    224021: () => new CardBuilder(296).name('悲号回唱').since('v4.3.0').talent(1).talent(-1, 'v4.4.0').costElectro(3).costSame(0, 'v4.4.0').perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场，附属有【sts124022】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)')
+        .description('装备有此牌的【hro】在场，附属有【sts124022】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)', 'v4.4.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png'),
 
+    224031: () => new CardBuilder(326).name('明珠固化').since('v4.4.0').talent().costSame(0)
+        .description('我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts124032】; 如果已附属【sts124032】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts124032】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/ec966272143de66e191950a6016cf14f_3693512171806066057.png')
+        .handle((_card, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const hero = heros[hidx];
+            const cnt = (getObjById(hero.heroStatus, 124032)?.useCnt ?? 0) + 1;
+            return { isValid: hero?.isFront, status: [newStatus(ver)(124032, true, cnt, 1)] }
+        }),
 
-    // 724: () => new GICard(724, '机巧神通', '{action}；装备有此牌的【hro】施放【ski】后，我方切换到后一个角色；施放【ski1781,2】后，我方切换到前一个角色。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/12109492/29356bd9bc7cbd8bf4843d6725cb8af6_6954582480310016602.png',
-    //     3, 5, 0, [6, 7], 1781, 1),
+    224041: () => new CardBuilder(341).name('雷萤浮闪').since('v4.5.0').talent(1).costElectro(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场时，我方选择行动前：如果【smn124041】的[可用次数]至少为3，则【smn124041】立刻造成1点[雷元素伤害]。(需消耗[可用次数]，每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/adf954bd07442eed0bc3c77847c2d727_1148348250566405252.png'),
 
-    // 725: () => new GICard(725, '重铸：岩盔', '{action}；装备有此牌的【hro】击倒敌方角色后：【hro】重新附属【sts2045】和【sts2046】。',
-    //     'https://patchwiki.biligame.com/images/ys/9/9f/ijpaagvk7o9jh1pzb933vl9l2l4islk.png',
-    //     4, 6, 0, [6, 7], 1801, 2, () => ({
-    //         trigger: ['kill'],
-    //         execmds: [{ cmd: 'getStatus', status: [newStatus(2045), newStatus(2046)] }],
-    //     }), { energy: 2 }),
+    224051: () => new CardBuilder(378).name('亡雷凝蓄').since('v4.7.0').talent().costElectro(1)
+        .description('【入场时：】生成1张【crd124051】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd124051】后：抓1张牌，然后生成1张【crd124051】，随机置入我方牌库中。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5138e59de35ef8ede3a26540a7b883e0_5065992084832534424.png')
+        .handle((_, { hcard }) => ({
+            trigger: ['card'],
+            cmds: [{ cmd: 'getCard', cnt: 1, card: 124051 }],
+            execmds: isCdt(hcard?.id == 124051, [{ cmd: 'getCard', cnt: 1 }, { cmd: 'addCard', cnt: 1, card: 124051 }]),
+        })),
 
-    // 726: () => new GICard(726, '孢子增殖', '{action}；装备有此牌的【hro】可累积的｢【sts2047】｣层数+1。',
-    //     'https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png',
-    //     3, 7, 0, [6, 7], 1821, 1),
+    225011: () => new CardBuilder(118).name('机巧神通').talent(1).costAnemo(3)
+        .description('{action}；装备有此牌的【hro】施放【ski】后，我方切换到后一个角色；施放【ski,2】后，我方切换到前一个角色。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/12109492/29356bd9bc7cbd8bf4843d6725cb8af6_6954582480310016602.png'),
 
-    // 769: () => new GICard(769, '悲号回唱', '{action}；装备有此牌的【hro】在场，附属有【sts2141】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png',
-    //     3, 3, 0, [6, 7], 1762, 1, undefined, { pct: 1 }),
+    225021: () => new CardBuilder(297).name('毁裂风涡').since('v4.3.0').talent(1).costAnemo(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场时，敌方出战角色所附属的【sts125021】状态被移除后：对下一个敌方后台角色附属【sts125021】。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2832d884a3a931ecf486c2259908f41b_7125699530621449061.png'),
 
-    // 770: () => new GICard(770, '毁裂风涡', '{action}；装备有此牌的【hro】在场时，敌方出战角色所附属的【sts2142】状态被移除后：对下一个敌方后台角色附属【sts2142】。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2832d884a3a931ecf486c2259908f41b_7125699530621449061.png',
-    //     3, 5, 0, [6, 7], 1782, 1, undefined, { pct: 1 }),
+    225031: () => new CardBuilder(379).name('亡风啸卷').since('v4.7.0').talent().costAnemo(1)
+        .description('【入场时：】生成1张【crd124051】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd124051】后：本回合中，我方下次切换角色后，生成1个出战角色类型的元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/fe1743d31d026423617324d6c74ff0af_8502180086842896297.png')
+        .handle((_, { hcard }, ver) => ({
+            trigger: ['card'],
+            cmds: [{ cmd: 'getCard', cnt: 1, card: 124051 }],
+            execmds: isCdt(hcard?.id == 124051, [{ cmd: 'getStatus', status: [newStatus(ver)(125032)] }]),
+        })),
 
-    // 771: () => new GICard(771, '晦朔千引', '[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts2145】，然后生成每种我方角色所具有的元素类型的元素骰各1个。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png',
-    //     2, 8, 2, [6, 7], 1802, 1, (_card, event) => {
-    //         const { heros = [] } = event;
-    //         const element = [...new Set(heros.map(h => h.element))];
-    //         return { status: [newStatus(2145)], cmds: [{ cmd: 'getDice', cnt: element.length, element }] }
-    //     }),
+    226011: () => new CardBuilder(119).name('重铸：岩盔').talent(2).costGeo(4).energy(2)
+        .description('{action}；装备有此牌的【hro】击倒敌方角色后：【hro】重新附属【sts126011】和【sts126012】。')
+        .src('https://patchwiki.biligame.com/images/ys/9/9f/ijpaagvk7o9jh1pzb933vl9l2l4islk.png')
+        .handle((_c, _e, ver) => ({
+            trigger: ['kill'],
+            execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(126011), newStatus(ver)(126012)] }],
+        })),
 
-    // 775: () => new GICard(775, '明珠固化', '我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts2158】; 如果已附属【sts2158】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts2158】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/ec966272143de66e191950a6016cf14f_3693512171806066057.png',
-    //     0, 8, 0, [6], 1763, 1, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const hero = heros[hidx];
-    //         const cnt = (hero.inStatus.find(ist => ist.id == 2158)?.useCnt ?? 0) + 1;
-    //         return { isValid: hero?.isFront, status: [newStatus(2158, true, cnt, 1)] }
-    //     }),
+    226021: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
+        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            const element = [...new Set(heros.map(h => h.element))];
+            return { status: [newStatus(ver)(126022)], cmds: [{ cmd: 'getDice', cnt: element.length, element }] }
+        }),
 
-    // 779: () => new GICard(779, 341, '雷萤浮闪', '{action}；装备有此牌的【hro】在场时，我方选择行动前：如果【smn3057】的[可用次数]至少为3，则【smn3057】立刻造成1点[雷元素伤害]。(需消耗[可用次数]，每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/adf954bd07442eed0bc3c77847c2d727_1148348250566405252.png',
-    //     3, 3, 0, [6, 7], 1764, 1, undefined, { pct: 1 }),
+    227011: () => new CardBuilder(120).name('孢子增殖').talent(1).costDendro(3)
+        .description('{action}；装备有此牌的【hro】可累积的｢【sts127011】｣层数+1。')
+        .src('https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png'),
 
-    // 790: () => new GICard(790, '亡雷凝蓄', '【入场时：】生成1张【crd906】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd906】后：抓1张牌，然后生成1张【crd906】，随机置入我方牌库中。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5138e59de35ef8ede3a26540a7b883e0_5065992084832534424.png',
-    //     1, 3, 0, [6], 1765, 1, (_card, { hcard }) => ({
-    //         trigger: ['card'],
-    //         cmds: [{ cmd: 'getCard', cnt: 1, card: 906 }],
-    //         execmds: isCdt(hcard?.id == 906, [{ cmd: 'getCard', cnt: 1 }, { cmd: 'addCard', cnt: 1, card: 906 }]),
-    //     })),
-
-    // 791: () => new GICard(791, '亡风啸卷', '【入场时：】生成1张【crd906】，置入我方手牌。；装备有此牌的【hro】在场时，我方打出【crd906】后：本回合中，我方下次切换角色后，生成1个出战角色类型的元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/fe1743d31d026423617324d6c74ff0af_8502180086842896297.png',
-    //     1, 5, 0, [6], 1783, 1, (_card, { hcard }) => ({
-    //         trigger: ['card'],
-    //         cmds: [{ cmd: 'getCard', cnt: 1, card: 906 }],
-    //         execmds: isCdt(hcard?.id == 906, [{ cmd: 'getStatus', status: [newStatus(2208)] }]),
-    //     })),
-
-    // 792: () => new GICard(792, '万千子嗣', '【入场时：】生成4张【crd907】，随机置入我方牌库。；装备有此牌的【hro】在场时，我方【smn3063】造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/37bdaf8745b1264fdac723555ba2938b_177410860486747187.png',
-    //     2, 7, 0, [6], 1822, 1, (_card, event) => {
-    //         const { isSummon = -1 } = event;
-    //         return { cmds: [{ cmd: 'addCard', cnt: 4, card: 907 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isSummon == 3063, 1) }
-    //     }),
-
+    227021: () => new CardBuilder(380).name('万千子嗣').since('v4.7.0').talent().costDendro(2)
+        .description('【入场时：】生成4张【crd127021】，随机置入我方牌库。；装备有此牌的【hro】在场时，我方【smn127022】造成的伤害+1。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/37bdaf8745b1264fdac723555ba2938b_177410860486747187.png')
+        .handle((_, event) => {
+            const { isSummon: [smnId] = [-1] } = event;
+            const isAddDmg = [127022, 127023, 127024, 127025].includes(smnId);
+            return { cmds: [{ cmd: 'addCard', cnt: 4, card: 127021 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isAddDmg, 1) }
+        }),
 
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0)
         .description('在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
@@ -2736,8 +2741,30 @@ const allCards: Record<number, () => CardBuilder> = {
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方｢出战角色｣造成1点物理伤害，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
-        .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] }))
+        .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
 
+    124051: () => new CardBuilder().name('噬骸能量块').event().costSame(0)
+        .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。(每回合最多打出1张)')
+        .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。如果我方出战角色是｢圣骸兽｣角色，则使其获得1点[充能]。(每回合最多打出1张)', 'v4.8.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/7cb3ab81a7226897afdff50f4d567c13_7393439119842323642.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [], combatStatus = [] } = event;
+            const cmds: Cmds[] = [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }, { cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }];
+            const fhero = heros[hidx];
+            if (ver < 'v4.8.0' && fhero?.tags.includes(HERO_TAG.ConsecratedBeast)) cmds.push({ cmd: 'getEnergy', cnt: 1 })
+            return { isValid: !hasObjById(combatStatus, 124053), cmds, status: [newStatus(ver)(124053)] }
+        }),
+
+    127021: () => new CardBuilder().name('唤醒眷属').event().costDendro(2)
+        .description('【打出此牌或[舍弃]此牌时：】召唤一个独立的【smn127022】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_5016592096671426026.png')
+        .handle((_, event, ver) => {
+            const { summons = [] } = event;
+            if (summons.length == 4) return { isValid: false }
+            let smnid = 127022;
+            while (hasObjById(summons, smnid)) ++smnid;
+            return { trigger: ['discard'], summon: [newSummon(ver)(smnid)] }
+        }),
 
     // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png',
@@ -2750,26 +2777,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 904: () => new GICard(904, '海底宝藏', '治疗我方出战角色1点，生成1个随机基础元素骰。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'heal', cnt: 1 }, { cmd: 'getDice', cnt: 1, element: -1 }] })),
-
-    // 906: () => new GICard(906, '噬骸能量块', '随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。如果我方出战角色是｢圣骸兽｣角色，则使其获得1点[充能]。(每回合最多打出1张)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/7cb3ab81a7226897afdff50f4d567c13_7393439119842323642.png',
-    //     0, 8, 2, [], 0, 0, (_card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const cmds: Cmds[] = [{ cmd: 'discard', element: 0 }, { cmd: 'getDice', cnt: 1, element: -2 }];
-    //         const fhero = heros[hidx];
-    //         if (fhero?.local.includes(13)) cmds.push({ cmd: 'getEnergy', cnt: 1 })
-    //         return { isValid: !fhero?.outStatus.some(ost => ost.id == 2207), cmds, status: [newStatus(2207)] }
-    //     }),
-
-    // 907: () => new GICard(907, '唤醒眷属', '【打出此牌或[舍弃]此牌时：】召唤一个独立的【smn3063】。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_5016592096671426026.png',
-    //     2, 7, 2, [], 0, 0, (_card, event) => {
-    //         const { summons = [] } = event;
-    //         if (summons.length == 4) return { isValid: false }
-    //         let smnid = 3063;
-    //         while (summons.some(smn => smn.id == smnid)) ++smnid;
-    //         return { trigger: ['discard'], summon: [newSummon(smnid)] }
-    //     }),
 
     // 908: () => new GICard(908, '禁忌知识', '无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，抓1张牌。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/fe20720734d5041d50cf6eab08689916_6711209992824489498.png',

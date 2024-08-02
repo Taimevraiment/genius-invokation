@@ -1,6 +1,6 @@
 import { Card } from "../../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DiceType, HERO_LOCAL_CODE_KEY,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
     HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType,
     WeaponTypeCode,
 } from "../../constant/enum.js";
@@ -310,10 +310,11 @@ export class CardBuilder extends BaseBuilder {
         }
         const description = this._getValByVersion(this._description, '');
         const cost = this._getValByVersion(this._cost, 0);
+        const costType = this._getValByVersion(this._costType, DICE_TYPE.Same);
         const perCnt = this._getValByVersion(this._perCnt, 0);
         const energy = this._getValByVersion(this._energy, 0);
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
-            cost, this._costType, this._type, this._subtype, userType, this._handle,
+            cost, costType, this._type, this._subtype, userType, this._handle,
             {
                 tag: this._tag,
                 uct: this._useCnt,

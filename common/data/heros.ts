@@ -1,7 +1,7 @@
-import { Hero, Status } from '../../typing';
-import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
+import { Cmds, Hero, Status, Trigger } from '../../typing';
+import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { Skill1Builder, SkillBuilder } from './builder/skillBuilder.js';
@@ -1203,7 +1203,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
-                .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
+                .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081, isAttach: true }] }))
         ),
 
     1701: () => new HeroBuilder(47).name('柯莱').sumeru().dendro().bow()
@@ -1710,248 +1710,274 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(124014)] }))
         ),
 
+    2402: () => new HeroBuilder(286).name('雷音权现').since('v4.3.0').monster().electro()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/7577bb07bad6418da34d16e788e56dc7_5139467133099341814.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2c69a56d98a6aaf7b24319a362568f9f.png')
+        .skill1(new Skill1Builder('轰霆翼斩').catalyst())
+        .skills(
+            new SkillBuilder('雷墙倾轧').description('对附属有【sts124022】的敌方角色{dealDmg}。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/1f1b73b917fc25ea3c71c08583037cb1.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/ca84fd08636d380d57da96f9a37e9e7f_7121937516609130674.png')
+                .elemental().damage(3).cost(3).handle(event => {
+                    const { eheros = [] } = event;
+                    const sts124022Idx = eheros.findIndex(h => hasObjById(h.heroStatus, 124022));
+                    if (sts124022Idx == -1) return;
+                    return { atkTo: sts124022Idx }
+                }),
+            new SkillBuilder('轰雷禁锢').description('{dealDmg}，召唤【smn124023】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/924d4e27f199d95cde09b26ce36d6e8b.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/eb2b0fb434298a92925563a640f462a9_5945618352718846846.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(124023)] })),
+            new SkillBuilder('雷霆探知').description('战斗开始时，在敌方场上生成【sts124021】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/85101cecf76e834437a758fc19093700.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/eb1d94ce0af17b97f756f8c126a5863a_674902409578889354.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], statusOppo: [newStatus(ver)(124021)] }))
+        ),
 
-    // 1762: () => new GIHero(1762, '雷音权现', 0, 10, 3, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/7577bb07bad6418da34d16e788e56dc7_5139467133099341814.png',
-    //     skill1('轰霆翼斩', 4), [
-    //     new GISkill('雷墙倾轧', '对附属有【sts2141】的敌方角色{dealDmg}。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)', 2, 3, 3, 3, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/1f1b73b917fc25ea3c71c08583037cb1.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/ca84fd08636d380d57da96f9a37e9e7f_7121937516609130674.png',
-    //     ], event => {
-    //         const { eheros = [] } = event;
-    //         const sts2141 = eheros.findIndex(h => h.inStatus.some(ist => ist.id === 2141));
-    //         if (sts2141 == -1) return;
-    //         return { atkTo: sts2141 }
-    //     }),
-    //     new GISkill('轰雷禁锢', '{dealDmg}，召唤【smn3052】。', 3, 2, 3, 3, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/924d4e27f199d95cde09b26ce36d6e8b.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/eb2b0fb434298a92925563a640f462a9_5945618352718846846.png',
-    //     ], () => ({ summon: [newSummon(ver)(3052)] })),
-    //     new GISkill('雷霆探知', '战斗开始时，在敌方场上生成【sts2140】。', 4, 0, 0, 0, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/85101cecf76e834437a758fc19093700.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/eb1d94ce0af17b97f756f8c126a5863a_674902409578889354.png',
-    //     ], () => ({ trigger: ['game-start'], statusOppo: [newStatus(ver)(2140)] }))
-    // ]),
+    2403: () => new HeroBuilder(322).name('千年珍珠骏麟').since('v4.4.0').maxHp(8).monster().electro()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/6ea12823806de2c2c7fe62d839410c8b_8031642621604475811.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/54bce42537a3bc38d77aa159d8f61355.png')
+        .skill1(new Skill1Builder('旋尾扇击'))
+        .skills(
+            new SkillBuilder('霞舞鱼群').description('{dealDmg}。；【每回合1次：】如果本角色已附属【sts124032】，则使其[可用次数]+1。')
+                .src('https://patchwiki.biligame.com/images/ys/3/3a/fej2c9u7kria1j2btaxy7f9o9k7uuyg.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/ba6b95e623fd861b69316a6f649d150c_90481026227323793.png')
+                .elemental().damage(3).cost(3).handle(event => ({
+                    exec: () => {
+                        const { hero: { heroStatus } } = event;
+                        const sts124032 = getObjById(heroStatus, 124032);
+                        if (sts124032) ++sts124032.useCnt;
+                    }
+                })),
+            new SkillBuilder('原海古雷').description('{dealDmg}，本角色附属【sts124032】，召唤【smn124031】。')
+                .src('https://patchwiki.biligame.com/images/ys/1/1f/popxzd68zzf3mhig28gkekdxhef63zf.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/68b45e352424c4127c47bd9fdee5bd78_7983386802406853220.png')
+                .burst(2).damage(1).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(124032)], summon: [newSummon(ver)(124031)] })),
+            new SkillBuilder('明珠甲胄').description('战斗开始时，本角色附属【sts124032】。')
+                .src('https://patchwiki.biligame.com/images/ys/f/fc/0v3wnltquhqgjaig2kp4o6qicrstkwl.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/34245e37e3d9881e1ac466ba3058fead_3899055182644035950.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(124032)] }))
+        ),
 
-    // 1763: () => new GIHero(1763, 322, '千年珍珠骏麟', 0, 8, 3, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/6ea12823806de2c2c7fe62d839410c8b_8031642621604475811.png',
-    //     skill1('旋尾扇击'), [
-    //     new GISkill('霞舞鱼群', '{dealDmg}。；【每回合1次：】如果本角色已附属【sts2158】，则使其[可用次数]+1。', 2, 3, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/3/3a/fej2c9u7kria1j2btaxy7f9o9k7uuyg.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/ba6b95e623fd861b69316a6f649d150c_90481026227323793.png',
-    //     ], event => ({
-    //         exec: () => {
-    //             const { hero: { inStatus } } = event;
-    //             const sts2158 = inStatus.find(ist => ist.id == 2158);
-    //             if (sts2158) ++sts2158.useCnt;
-    //         }
-    //     })),
-    //     new GISkill('原海古雷', '{dealDmg}，本角色附属【sts2158】，召唤【smn3055】。', 3, 1, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/1/1f/popxzd68zzf3mhig28gkekdxhef63zf.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/68b45e352424c4127c47bd9fdee5bd78_7983386802406853220.png',
-    //     ], () => ({ status: [newStatus(ver)(2158)], summon: [newSummon(ver)(3055)] })),
-    //     new GISkill('明珠甲胄', '战斗开始时，本角色附属【sts2158】。', 4, 0, 0, 0, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/f/fc/0v3wnltquhqgjaig2kp4o6qicrstkwl.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/34245e37e3d9881e1ac466ba3058fead_3899055182644035950.png',
-    //     ], () => ({ trigger: ['game-start'], status: [newStatus(ver)(2158)] }))
-    // ]),
+    2404: () => new HeroBuilder(337).name('愚人众·雷萤术士').since('v4.5.0').fatui().electro()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/e7e0e8c1cab4d08764f95d14345c4eef_4303268682366227358.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/84e21c3810a36fda0935379b8fd2a317.png')
+        .skill1(new Skill1Builder('轰闪落雷').catalyst())
+        .skills(
+            new SkillBuilder('雾虚之召').description('召唤【smn124041】。')
+                .src('https://patchwiki.biligame.com/images/ys/b/ba/gyx575dg0jl0555jhw17pfr0kkge1dg.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/170a763eb069a3f4577b04dbeb73f3a7_245180266074223049.png')
+                .elemental().cost(3).handle((_, ver) => ({ summon: [newSummon(ver)(124041)], statusOppo: [newStatus(ver)(124044)] })),
+            new SkillBuilder('霆雷之护').description('{dealDmg}，本角色[附着雷元素]，生成【sts124042】并[准备技能]：【rsk24044】。')
+                .src('https://patchwiki.biligame.com/images/ys/b/bb/qyleol8t4tzuujvuj3wlfk6h53icvcb.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/7ddbd6e73bea8f907590c964c2f88d98_2187578641261417207.png')
+                .burst(2).damage(1).cost(3).handle((event, ver) => {
+                    const { summons = [] } = event;
+                    const useCnt = getObjById(summons, 124041)?.useCnt ?? 0;
+                    return { isAttach: true, status: [newStatus(ver)(124042, useCnt), newStatus(ver)(124043)] }
+                })
+        ),
 
-    // 1764: () => new GIHero(1764, 337, '愚人众·雷萤术士', 8, 10, 3, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/e7e0e8c1cab4d08764f95d14345c4eef_4303268682366227358.png',
-    //     skill1('轰闪落雷', 4), [
-    //     new GISkill('雾虚之召', '召唤【smn3057】。', 2, 0, 3, 3, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/b/ba/gyx575dg0jl0555jhw17pfr0kkge1dg.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/170a763eb069a3f4577b04dbeb73f3a7_245180266074223049.png',
-    //     ], () => ({ summon: [newSummon(ver)(3057)], statusOppo: [newStatus(ver)(2175)] })),
-    //     new GISkill('霆雷之护', '{dealDmg}，本角色[附着雷元素]，生成【sts2170】并[准备技能]：【rsk18】。', 3, 1, 3, 3, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/b/bb/qyleol8t4tzuujvuj3wlfk6h53icvcb.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/7ddbd6e73bea8f907590c964c2f88d98_2187578641261417207.png',
-    //     ], event => {
-    //         const { summons = [] } = event;
-    //         const useCnt = summons.find(smn => smn.id == 3057)?.useCnt ?? 0;
-    //         return { isAttach: true, status: [newStatus(ver)(2170, useCnt), newStatus(ver)(2171)] }
-    //     })
-    // ]),
+    2405: () => new HeroBuilder(369).name('圣骸毒蝎').since('v4.7.0').monster().tags(HERO_TAG.ConsecratedBeast).electro()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/379deb8c564c0af89f544ff6bab049d2_839388424690765015.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a0b7c961a2b65824a4d68d461f059298.png')
+        .skill1(new Skill1Builder('蝎爪钳击'))
+        .skills(
+            new SkillBuilder('蝎尾锥刺').description('{dealDmg}。；生成1张【crd124051】，随机置入我方牌库顶部2张牌之中。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ba3107753a28bf55c7279482d9b0c9ed.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/0e1110651dbff69343c8e40bf3c7e93f_6498390434174190990.png')
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', card: 124051, cnt: 1, hidxs: [2], isAttach: true }] })),
+            new SkillBuilder('雷锥散射').description('{dealDmg}，弃置手牌中最多3张【crd124051】，在对方场上生成【sts124052】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4d58f950df06a277f43a21dcdfa58eb0.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/54dc8816d5fb42528ba84eaefb1a8068_7565040194931804591.png')
+                .burst(2).damage(3).cost(3).handle((event, ver) => {
+                    const { hcards = [] } = event;
+                    const cnt = Math.min(3, hcards.filter(c => c.id == 124051).length);
+                    if (cnt == 0) return;
+                    return { cmds: [{ cmd: 'discard', cnt, card: 124051 }], statusOppo: [newStatus(ver)(124052, cnt)] }
+                }),
+            new SkillBuilder('不朽亡骸·雷').description('回合结束时，生成两张【crd124051】，随机置入我方牌库顶部10张牌中。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f2c9fb8d451bc79e309ce9f397738a39.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/02cbaf22d48774e6e7cff5203e9562eb_9127079687708650066.png')
+                .handle(() => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10], isAttach: true }] }))
+        ),
 
-    // 1765: () => new GIHero(1765, '圣骸毒蝎', [0, 13], 10, 3, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/379deb8c564c0af89f544ff6bab049d2_839388424690765015.png',
-    //     skill1('蝎爪钳击'), [
-    //     new GISkill('蝎尾锥刺', '{dealDmg}。；生成1张【crd906】，随机置入我方牌库顶部2张牌之中。', 2, 3, 3, 3, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ba3107753a28bf55c7279482d9b0c9ed.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/0e1110651dbff69343c8e40bf3c7e93f_6498390434174190990.png',
-    //     ], () => ({ cmds: [{ cmd: 'addCard', card: 906, cnt: 1, hidxs: [2] }] })),
-    //     new GISkill('雷锥散射', '{dealDmg}，弃置手牌中最多3张【crd906】，在对方场上生成【sts2206】。', 3, 3, 3, 3, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4d58f950df06a277f43a21dcdfa58eb0.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/54dc8816d5fb42528ba84eaefb1a8068_7565040194931804591.png',
-    //     ], event => {
-    //         const { hcards = [] } = event;
-    //         const cnt = Math.min(3, hcards.filter(c => c.id == 906).length);
-    //         if (cnt == 0) return;
-    //         return { cmds: [{ cmd: 'discard', cnt, card: 906 }], statusOppo: [newStatus(ver)(2206, cnt)] }
-    //     }),
-    //     new GISkill('不朽亡骸·雷', '回合结束时，生成两张【crd906】，随机置入我方牌库顶部10张牌中。', 4, 0, 0, 0, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f2c9fb8d451bc79e309ce9f397738a39.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/02cbaf22d48774e6e7cff5203e9562eb_9127079687708650066.png',
-    //     ], () => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 906, cnt: 2, hidxs: [10] }] }))
-    // ]),
+    2501: () => new HeroBuilder(58).name('魔偶剑鬼').monster().anemo()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5b21d3abb8dd7245a8f5f540d8049fcb_59481287402207724.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6a1743d67ca3e21074e1f0c704c4549.png')
+        .skill1(new Skill1Builder('一文字'))
+        .skills(
+            new SkillBuilder('孤风刀势').description('召唤【smn125011】。').description('{dealDmg},召唤【smn125011】。', 'v3.4.0')
+                .src('https://patchwiki.biligame.com/images/ys/f/f2/gucxzyumx6uaumg6r6ms4czbw32v3gt.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a72086131fbe3e03201926a46dac48f3_7155522304163694322.png')
+                .elemental().damage(1, 'v3.4.0').cost(3).handle((event, ver) => ({
+                    summon: [newSummon(ver)(125011)],
+                    cmds: isCdt(event.isTalent, [{ cmd: 'switch-after' }]),
+                })),
+            new SkillBuilder('霜驰影突').description('召唤【smn125012】。').description('{dealDmg},召唤【smn125012】。', 'v3.4.0')
+                .src('https://patchwiki.biligame.com/images/ys/1/17/a8qboxl35nar8vuaho1cewppy0fp43t.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6df8766388e62c6a97f9898605fb45e2_6047730151662669218.png')
+                .elemental().damage(1, 'v3.4.0').costCryo(3).handle((event, ver) => ({
+                    summon: [newSummon(ver)(125012)],
+                    cmds: isCdt(event.isTalent, [{ cmd: 'switch-before' }]),
+                })),
+            new SkillBuilder('机巧伪天狗抄').description('{dealDmg}，触发我方所有【剑影】召唤物效果。(不消耗其[可用次数])')
+                .src('https://patchwiki.biligame.com/images/ys/f/fd/ren7lbexbnyvrdvn0aqhbrxx6atdoov.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/75142675f9625abbe1d9686f1a7f59b7_6144574132276306286.png')
+                .burst(3).damage(4).cost(3)
+        ),
 
-    // 1781: () => new GIHero(1781, '魔偶剑鬼', 0, 10, 5, 0,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5b21d3abb8dd7245a8f5f540d8049fcb_59481287402207724.png',
-    //     skill1('一文字'), [
-    //     new GISkill('孤风刀势', '召唤【smn3019】。', 2, 0, 3, 5, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/f/f2/gucxzyumx6uaumg6r6ms4czbw32v3gt.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a72086131fbe3e03201926a46dac48f3_7155522304163694322.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         const cmds = isCdt(!!talentSlot || card?.id == 724, [{ cmd: 'switch-after', cnt: 2500 }]);
-    //         return { summon: [newSummon(ver)(3019)], cmds }
-    //     }),
-    //     new GISkill('霜驰影突', '召唤【smn3020】。', 2, 0, 3, 4, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/1/17/a8qboxl35nar8vuaho1cewppy0fp43t.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6df8766388e62c6a97f9898605fb45e2_6047730151662669218.png',
-    //     ], event => {
-    //         const { hero: { talentSlot }, card } = event;
-    //         return {
-    //             summon: [newSummon(ver)(3020)],
-    //             cmds: isCdt(!!talentSlot || card?.id == 724, [{ cmd: 'switch-before', cnt: 2500 }]),
-    //         }
-    //     }),
-    //     new GISkill('机巧伪天狗抄', '造成{dmg}点[风元素伤害]，触发我方所有【剑影】召唤物效果。(不消耗其可用次数)', 3, 4, 3, 5, { ec: 3 }, [
-    //         'https://patchwiki.biligame.com/images/ys/f/fd/ren7lbexbnyvrdvn0aqhbrxx6atdoov.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/75142675f9625abbe1d9686f1a7f59b7_6144574132276306286.png'])
-    // ]),
+    2502: () => new HeroBuilder(287).name('特瓦林').since('v4.3.0').monster().anemo()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/83ef329668e4d3f2521c712881a9a028_6040566226446903836.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/690d318b28b1bde9d7ffc17a337b632b.png')
+        .skill1(new Skill1Builder('裂爪横击'))
+        .skills(
+            new SkillBuilder('暴风轰击').description('{dealDmg}，目标角色附属【sts125021】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/6d5115adf3c4273b26e05690e4222f51.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/8e44228dec3be9b4259aa2adb521583b_5399958061718053885.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ statusOppo: [newStatus(ver)(125021)] })),
+            new SkillBuilder('风龙涤流').description('{dealDmg}，然后分别[准备技能]：【rsk25025】和【rsk25026】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/8b5ffe13741032cb75964df7fcec0fa2.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/d2d2168c6889018520e518229c610c7b_2627906278875893396.png')
+                .elemental().damage(2).cost(5).handle((_, ver) => ({ status: [newStatus(ver)(125022)] })),
+            new SkillBuilder('终天闭幕曲').description('{dealDmg}，所有敌方后台角色附属【sts125021】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/dc176e73075e38839e1557815da53cc8.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/ea18fc2d49dac1d270821cc0f318aa9e_7299667602196853258.png')
+                .burst(2).damage(5).cost(4).handle(({ eheros = [] }, ver) => ({ statusOppo: [newStatus(ver)(125021)], hidxs: getBackHidxs(eheros) }))
+        ),
 
-    // 1782: () => new GIHero(1782, '特瓦林', 0, 10, 5, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/83ef329668e4d3f2521c712881a9a028_6040566226446903836.png',
-    //     skill1('裂爪横击'), [
-    //     new GISkill('暴风轰击', '造成{dmg}点[风元素伤害]，目标角色附属【sts2142】。', 2, 2, 3, 5, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/6d5115adf3c4273b26e05690e4222f51.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/8e44228dec3be9b4259aa2adb521583b_5399958061718053885.png',
-    //     ], () => ({ statusOppo: [newStatus(ver)(2142)] })),
-    //     new GISkill('风龙涤流', '造成{dmg}点[风元素伤害]，然后分别[准备技能]：【rsk6】和【rsk7】。', 2, 2, 5, 5, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/8b5ffe13741032cb75964df7fcec0fa2.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/d2d2168c6889018520e518229c610c7b_2627906278875893396.png',
-    //     ], () => ({ status: [newStatus(ver)(2143)] })),
-    //     new GISkill('终天闭幕曲', '造成{dmg}点[风元素伤害]，所有敌方后台角色附属【sts2142】。', 3, 5, 4, 5, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/dc176e73075e38839e1557815da53cc8.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/ea18fc2d49dac1d270821cc0f318aa9e_7299667602196853258.png',
-    //     ], event => {
-    //         const { eheros = [] } = event;
-    //         return { statusOppo: [newStatus(ver)(2142)], hidxs: getBackHidxs(eheros) }
-    //     })
-    // ]),
+    2503: () => new HeroBuilder(370).name('圣骸飞蛇').since('v4.7.0').monster().tags(HERO_TAG.ConsecratedBeast).anemo()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/39bdf909aff15f061d4d9ea3d4c2b2ab_472359532850721936.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c1d78d82c85022519c595a9ab954ebfb.png')
+        .skill1(new Skill1Builder('旋尾迅击'))
+        .skills(
+            new SkillBuilder('盘绕风引').description('{dealDmg}，抓1张牌。')
+                .description('{dealDmg}，抓1张【crd124051】; 然后，手牌中每有1张【crd124051】，抓1张牌(每回合最多抓2张)。', 'v4.8.0')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/8c6ea09bfd6308bb23bf32d96d640487.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/20afc68783ad98f1da36cc3a5286bee6_5169119727722449200.png')
+                .elemental().damage(3).damage(2, 'v4.8.0').cost(3).perCnt(2).handle((event, ver) => {
+                    if (ver >= 'v4.8.0') return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
+                    const { hcards = [], hero: { skills: [, skill1] } } = event;
+                    const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 1, card: 124051, isAttach: true }];
+                    let cnt = 0;
+                    if (skill1.perCnt > 0) {
+                        cnt = Math.min(skill1.perCnt, hcards.filter(c => c.id == 124051).length + +(hcards.length < 10));
+                        cmds.push({ cmd: 'getCard', cnt });
+                    }
+                    return { cmds, exec: () => { skill1.perCnt -= cnt } }
+                }),
+            new SkillBuilder('错落风涡').description('{dealDmg}，[舍弃]手牌中所有的【crd124051】，每[舍弃]2张，此次伤害翻倍1次。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/468894f96582f384ff87859549de0536.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/65225a24479d53ed9bbc0200d6786423_1124235468902631200.png')
+                .burst(2).damage(2).cost(3).handle(event => {
+                    const { hcards = [] } = event;
+                    const cnt = hcards.filter(c => c.id == 124051).length;
+                    return { cmds: [{ cmd: 'discard', cnt, card: 124051 }], multiDmgCdt: 2 ** Math.floor(cnt / 2) }
+                }),
+            new SkillBuilder('不朽亡骸·风').description('战斗开始时，生成6张【crd124051】，均匀放入牌库。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b20cdf60cef51f689592487d6587d353.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/3f113b01a3fbab406f2ddb81d9a2a019_675662049327994953.png')
+                .handle(() => ({ trigger: ['game-start'], cmds: [{ cmd: 'addCard', cnt: 6, card: 124051 }] }))
+        ),
 
-    // 1783: () => new GIHero(1783, '圣骸飞蛇', [0, 13], 10, 5, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/39bdf909aff15f061d4d9ea3d4c2b2ab_472359532850721936.png',
-    //     skill1('旋尾迅击'), [
-    //     new GISkill('盘绕风引', '造成{dmg}点[风元素伤害]，抓1张【crd906】; 然后，手牌中每有1张【crd906】，抓1张牌(每回合最多抓2张)。', 2, 2, 3, 5, { pct: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/8c6ea09bfd6308bb23bf32d96d640487.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/20afc68783ad98f1da36cc3a5286bee6_5169119727722449200.png',
-    //     ], event => {
-    //         const { hcards = [], hero: { skills: [, skill1] } } = event;
-    //         const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 1, card: 906, isAttach: true }];
-    //         let cnt = 0;
-    //         if (skill1.perCnt > 0) {
-    //             cnt = Math.min(skill1.perCnt, hcards.filter(c => c.id == 906).length + +(hcards.length < 10));
-    //             cmds.push({ cmd: 'getCard', cnt });
-    //         }
-    //         return { cmds, exec: () => { skill1.perCnt -= cnt } }
-    //     }),
-    //     new GISkill('错落风涡', '造成{dmg}点[风元素伤害]，[舍弃]手牌中所有的【crd906】，每[舍弃]2张，此次伤害翻倍1次。', 3, 2, 3, 5, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/468894f96582f384ff87859549de0536.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/65225a24479d53ed9bbc0200d6786423_1124235468902631200.png',
-    //     ], event => {
-    //         const { hcards = [] } = event;
-    //         const cnt = hcards.filter(c => c.id == 906).length;
-    //         return { cmds: [{ cmd: 'discard', cnt, card: 906 }], multiDmgCdt: 2 ** Math.floor(cnt / 2) }
-    //     }),
-    //     new GISkill('不朽亡骸·风', '战斗开始时，生成6张【crd906】，均匀放入牌库。', 4, 0, 0, 0, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b20cdf60cef51f689592487d6587d353.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/3f113b01a3fbab406f2ddb81d9a2a019_675662049327994953.png',
-    //     ], () => ({ trigger: ['game-start'], cmds: [{ cmd: 'addCard', cnt: 6, card: 906, element: 1 }] })),
-    // ]),
+    2601: () => new HeroBuilder(59).name('丘丘岩盔王').maxHp(8).monster().tags(HERO_TAG.Hilichurl).geo()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/db05474f6bdc3a5080e141d72c876548_5712469579238063350.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2886b95ca3fcd79cf72577fd0276cb94.png')
+        .skill1(new Skill1Builder('Plama Lawa'))
+        .skills(
+            new SkillBuilder('Movo Lawa').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/2/25/8sausa1g74119xvltdmopivnxclkn4l.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e605c46abaca4c05ff7fcc803d318644_1932728961174964565.png')
+                .elemental().damage(3).cost(3).dmgElement(DAMAGE_TYPE.Physical),
+            new SkillBuilder('Upa Shato').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/e/ef/jc6xafunhp1qi3wcqemc5wir9d973px.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a63aaedd24cfbefc634b2ac2a77d5f4f_7864871648075602067.png')
+                .burst(2).damage(5).cost(3).dmgElement(DAMAGE_TYPE.Physical),
+            new SkillBuilder('魔化：岩盔').description('战斗开始时，初始附属【sts126011】和【sts126012】。')
+                .src('https://patchwiki.biligame.com/images/ys/3/3e/i50gzgkih3a45yl3df7hvq6143bw6r9.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/60d5501fc29ffb28bc6d2a435b463b2a_6974894146119719968.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(126011), newStatus(ver)(126012)] }))
+        ),
 
-    // 1801: () => new GIHero(1801, '丘丘岩盔王', [0, 9], 8, 6, 0,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/db05474f6bdc3a5080e141d72c876548_5712469579238063350.png',
-    //     skill1('Plama Lawa'), [
-    //     new GISkill('Movo Lawa', '造成{dmg}点[物理伤害]。', 2, 3, 3, 6, { de: 0 }, [
-    //         'https://patchwiki.biligame.com/images/ys/2/25/8sausa1g74119xvltdmopivnxclkn4l.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e605c46abaca4c05ff7fcc803d318644_1932728961174964565.png']),
-    //     new GISkill('Upa Shato', '造成{dmg}点[物理伤害]。', 3, 5, 3, 6, { ec: 2, de: 0 }, [
-    //         'https://patchwiki.biligame.com/images/ys/e/ef/jc6xafunhp1qi3wcqemc5wir9d973px.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a63aaedd24cfbefc634b2ac2a77d5f4f_7864871648075602067.png']),
-    //     new GISkill('魔化：岩盔', '战斗开始时，初始附属【sts2045】和【sts2046】。', 4, 0, 0, 0, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/3/3e/i50gzgkih3a45yl3df7hvq6143bw6r9.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/60d5501fc29ffb28bc6d2a435b463b2a_6974894146119719968.png',
-    //     ], () => ({ trigger: ['game-start'], status: [newStatus(ver)(2045), newStatus(ver)(2046)] }))
-    // ]),
+    2602: () => new HeroBuilder(278).name('若陀龙王').since('v4.3.0').monster().geo()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/521fdaa2d51e93166ccbf2a91a1047aa_2809827424052136166.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/1dde94ee671e2a61b42ff051b816f490.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/e1688d349ca1ff0f5f78bb6bdae07b6f.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/8e7128d60419e53054de5daa1e096252.png',
+            'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/6bfb045422ca297b5ead653065fecfbe.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/949d01e6a23ceba1d6adeae6ac445374.png')
+        .skill1(new Skill1Builder('碎岩冲撞'))
+        .skills(
+            new SkillBuilder('磅礴之气').description('{dealDmg}，如果发生了结晶反应，则角色[汲取对应元素的力量]。；如果本技能中角色未汲取元素的力量，则附属【sts126021】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/5ab059679b08fba559b68f7d361a64be.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b49c1863d6b6a61ec13501c27d8204bf_1566255463657696734.png')
+                .elemental().damage(3).cost(3).handle((event, ver) => {
+                    const { eheros = [], hero: { id, heroStatus }, heros, isExec = false } = event;
+                    if (!isExec) return;
+                    const rockEl = eheros.find(h => h.isFront)?.attachElement?.find(el => (Object.values(SWIRL_ELEMENT) as PureElementType[]).includes(el)) ?? ELEMENT_TYPE.Geo;
+                    if (rockEl == ELEMENT_TYPE.Geo) return { status: [newStatus(ver)(126021)] }
+                    const sts126021 = getObjById(heroStatus, 126021)!;
+                    return { ...sts126021.handle(sts126021, { heros, hidx: getObjIdxById(heros, id), trigger: `elReaction-Geo:${rockEl}` as Trigger })?.exec?.() }
+                }),
+            new SkillBuilder('山崩毁阵').description('{dealDmg}，每汲取过一种元素此伤害+1。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/3eea73a1f50aaa9ab8f03546a0db4483.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/eeb2325a52556c0f9259eb3d47807c45_994928579787374692.png')
+                .burst(2).damage(4).cost(3).handle(event => ({ addDmgCdt: getObjById(event.hero.heroStatus, 126021)?.useCnt ?? 0 })),
+            new SkillBuilder('磐岩百相').description('战斗开始时，初始附属【sts126021】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/c7dc740570a4a65821767e0e2ba83529.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/3c29d28a60d100687cf9968a3a278e4d_5040009350976601315.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(126021)] }))
+        ),
 
-    // 1802: () => new GIHero(1802, '若陀龙王', 0, 10, 6, 0, [
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/521fdaa2d51e93166ccbf2a91a1047aa_2809827424052136166.png',
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/e1688d349ca1ff0f5f78bb6bdae07b6f.png',
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/8e7128d60419e53054de5daa1e096252.png',
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/6bfb045422ca297b5ead653065fecfbe.png',
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/1dde94ee671e2a61b42ff051b816f490.png'],
-    //     skill1('碎岩冲撞'), [
-    //     new GISkill('磅礴之气', '造成{dmg}点[岩元素伤害]，如果发生了结晶反应，则角色[汲取对应元素的力量]。；如果本技能中角色未汲取元素的力量，则附属【sts2145】。', 2, 3, 3, 6, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/5ab059679b08fba559b68f7d361a64be.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b49c1863d6b6a61ec13501c27d8204bf_1566255463657696734.png',
-    //     ], event => {
-    //         const { eheros = [], hero: { id, inStatus }, heros, isExec = false } = event;
-    //         if (!isExec) return;
-    //         const rockEl = eheros.find(h => h.isFront)?.attachElement?.find(el => el > 0 && el < 5) ?? 6;
-    //         if (rockEl == 6) return { status: [newStatus(ver)(2145)] }
-    //         const sts2153 = inStatus.find(ist => ist.id == 2153)!;
-    //         return { ...heroStatus(2153).handle(sts2153, { heros, hidx: heros?.findIndex(h => h.id == id), trigger: `el6Reaction:${rockEl}` as Trigger })?.exec?.() }
-    //     }),
-    //     new GISkill('山崩毁阵', '造成{dmg}点[岩元素伤害]，每汲取过一种元素此伤害+1。', 3, 4, 3, 6, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/3eea73a1f50aaa9ab8f03546a0db4483.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/eeb2325a52556c0f9259eb3d47807c45_994928579787374692.png',
-    //     ], event => ({ addDmgCdt: event.hero.inStatus.find(ist => ist.id == 2153)?.useCnt ?? 0 })),
-    //     new GISkill('磐岩百相', '战斗开始时，初始附属【sts2153】。', 4, 0, 0, 0, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/c7dc740570a4a65821767e0e2ba83529.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/3c29d28a60d100687cf9968a3a278e4d_5040009350976601315.png',
-    //     ], () => ({ trigger: ['game-start'], status: [newStatus(ver)(2153)] }))
-    // ]),
+    2701: () => new HeroBuilder(60).name('翠翎恐蕈').monster().dendro()
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/83e1eecf95f1e3ba10afad2e2a4de03c_4053328098702513548.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0c8a00c0737279e0349769448e7a1f35.png')
+        .skill1(new Skill1Builder('菌王舞步'))
+        .skills(
+            new SkillBuilder('不稳定孢子云').description('{dealDmg}。')
+                .src('https://patchwiki.biligame.com/images/ys/4/46/2tjoad0wz0qn966hqp6vvgfvi07izaf.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/875de1c4943f909a4adf7802bbb1034f_3081914478799274881.png')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('尾羽豪放').description('{dealDmg}，消耗所有｢【sts127011】｣层数，每层使本伤害+1。')
+                .src('https://patchwiki.biligame.com/images/ys/3/36/gyhrz87493bups3avpelhusplml11gw.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/34525ada2f131e99da075f32283db903_3717723304434052962.png')
+                .burst(2).damage(4).cost(3).handle(event => {
+                    const { hero: { heroStatus } } = event;
+                    const sts127011 = getObjById(heroStatus, 127011);
+                    const addDmgCdt = sts127011?.useCnt ?? 0;
+                    if (sts127011) sts127011.useCnt = -1;
+                    return { addDmgCdt }
+                }),
+            new SkillBuilder('活化激能').description('战斗开始时，初始附属【sts127011】。')
+                .src('https://patchwiki.biligame.com/images/ys/7/79/q3o61yegls3thng3z7dns2sykg2voci.png',
+                    'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/f72847095bda0ccb92781ed3f1c1bb4e_1629774298046012918.png')
+                .handle((_, ver) => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(127011)] }))
+        ),
 
-    // 1821: () => new GIHero(1821, '翠翎恐蕈', 0, 10, 7, 0,
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/83e1eecf95f1e3ba10afad2e2a4de03c_4053328098702513548.png',
-    //     skill1('菌王舞步'), [
-    //     new GISkill('不稳定孢子云', '{dealDmg}。', 2, 3, 3, 7, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/4/46/2tjoad0wz0qn966hqp6vvgfvi07izaf.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/875de1c4943f909a4adf7802bbb1034f_3081914478799274881.png']),
-    //     new GISkill('尾羽豪放', '{dealDmg}，消耗所有｢【sts2047】｣层数，每层使本伤害+1。', 3, 4, 3, 7, { ec: 2 }, [
-    //         'https://patchwiki.biligame.com/images/ys/3/36/gyhrz87493bups3avpelhusplml11gw.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/34525ada2f131e99da075f32283db903_3717723304434052962.png',
-    //     ], event => {
-    //         const { hero: { inStatus } } = event;
-    //         const sts2047 = inStatus.find(ist => ist.id == 2047);
-    //         const addDmgCdt = sts2047?.useCnt ?? 0;
-    //         if (sts2047) sts2047.useCnt = -1;
-    //         return { addDmgCdt }
-    //     }),
-    //     new GISkill('活化激能', '战斗开始时，初始附属【sts2047】。', 4, 0, 0, 0, {}, [
-    //         'https://patchwiki.biligame.com/images/ys/7/79/q3o61yegls3thng3z7dns2sykg2voci.png',
-    //         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/f72847095bda0ccb92781ed3f1c1bb4e_1629774298046012918.png',
-    //     ], () => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(2047)] }))
-    // ]),
-
-    // 1822: () => new GIHero(1822, '阿佩普的绿洲守望者', 0, 10, 7, 0,
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/59b3a5744a5e0cef3a742cf97ee1a48e_9222353554920937369.png',
-    //     skill1('失乡重击'), [
-    //     new GISkill('生命流束', '{dealDmg}，抓1张【crd907】，生成1层【sts2209】。', 2, 2, 3, 7, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a2598b6377145054026356571e3494d6.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6b6af66686864e881e180633491577b7_1337053029698647969.png',
-    //     ], () => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 907, isAttach: true }], status: [newStatus(ver)(2209)] })),
-    //     new GISkill('终景迸落', '{dealDmg}，抓1张【crd907】，生成2层【sts2209】。', 3, 2, 3, 7, { ec: 2 }, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e2b183c009d60ca57023829db15c23fb.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/67a564cb356fc0cfddb1f98658d35573_3718187889744663164.png',
-    //     ], () => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 907, isAttach: true }], status: [newStatus(ver)(2209, 2)] })),
-    //     new GISkill('增殖感召', '战斗开始时，生成6张【crd907】，随机放入牌库。我方召唤4个【smn3063】后，此角色附属【sts2210】，并获得2点[护盾]。', 4, 0, 0, 0, {}, [
-    //         'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
-    //         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png',
-    //     ], () => ({ trigger: ['game-start'], status: [newStatus(ver)(2216)] }))
-    // ]),
+    2702: () => new HeroBuilder(371).name('阿佩普的绿洲守望者').since('v4.7.0').monster().dendro()
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/59b3a5744a5e0cef3a742cf97ee1a48e_9222353554920937369.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6c67691a5ce406ff1ac33796448454ed.png')
+        .skill1(new Skill1Builder('失乡重击'))
+        .skills(
+            new SkillBuilder('生命流束').description('{dealDmg}，抓1张【crd127021】，生成1层【sts127026】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a2598b6377145054026356571e3494d6.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6b6af66686864e881e180633491577b7_1337053029698647969.png')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({
+                    cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
+                    status: [newStatus(ver)(127026)],
+                })),
+            new SkillBuilder('终景迸落').description('{dealDmg}，抓1张【crd127021】，生成2层【sts127026】。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e2b183c009d60ca57023829db15c23fb.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/67a564cb356fc0cfddb1f98658d35573_3718187889744663164.png')
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({
+                    cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
+                    status: [newStatus(ver)(127026, 2)],
+                })),
+            new SkillBuilder('增殖感召').description('战斗开始时，生成6张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png')
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(127029)] }))
+        ),
 
     6301: () => new HeroBuilder().name('焚尽的炽炎魔女').since('v4.3.0').fatui().pyro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/36f1358533325d377d6a4e99eec5918f_6190662149106536998.png')

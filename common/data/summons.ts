@@ -51,6 +51,8 @@ export type SummonExecEvent = {
     eheros?: Hero[],
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
+    combatStatus?: Status[],
+    eCombatStatus?: Status[],
 }
 
 export type SummonExecRes = {
@@ -58,11 +60,12 @@ export type SummonExecRes = {
     switchHeroDiceCnt?: number,
 }
 
-// const crd907summon = (id: number) => {
-//     return new GISummon(id, '增殖生命体', '【结束阶段：】造成{dmg}点[草元素伤害]。；[useCnt]',
-//         'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_2475050287145431617.png',
-//         1, 1, 0, 1, 7);
-// }
+const crd12702summon = () => {
+    return new SummonBuilder('增殖生命体').useCnt(1).damage(1)
+        .description('{defaultAtk。}')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_2475050287145431617.png');
+}
+
 
 const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
@@ -818,6 +821,105 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    124023: () => new SummonBuilder('轰雷禁锢').useCnt(1).damage(3)
+        .description('【结束阶段：】对附属【sts124022】的敌方角色{dealDmg}。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)；[useCnt]')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/552ec062eef427f9a1986f92ee19c716_8843394885297317371.png')
+        .handle((summon, event) => {
+            const { eheros = [] } = event;
+            const sts124022Idx = eheros.findIndex(h => hasObjById(h.heroStatus, 124022));
+            const hidxs = isCdt(sts124022Idx > -1, [sts124022Idx]);
+            return {
+                trigger: ['phase-end'],
+                exec: () => {
+                    summon.useCnt = Math.max(0, summon.useCnt - 1);
+                    return { cmds: [{ cmd: 'attack', hidxs }] }
+                },
+            }
+        }),
+
+    124031: () => new SummonBuilder('共鸣珊瑚珠').useCnt(2).damage(1)
+        .description('{defaultAtk。}')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/5776f31ac915874cb7eadd77a0098839_1777069343038822943.png'),
+
+    124041: () => new SummonBuilder('雷萤').useCnt(3).damage(1)
+        .description('{defaultAtk；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。(最多叠加到3)；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。}')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png')
+        .handle((summon, event) => {
+            const { trigger = '', heros = [], isExec = true } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            const hero = getObjById(heros, getHidById(summon.id));
+            if (hero?.isFront) {
+                triggers.push('get-elReaction');
+                if (!isExec && trigger == 'get-elReaction') {
+                    summon.useCnt = Math.max(0, summon.useCnt - 1);
+                }
+            }
+            if ((hero?.talentSlot?.useCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
+            return {
+                trigger: triggers,
+                damage: summon.damage,
+                element: summon.element,
+                isNotAddTask: trigger == 'get-elReaction',
+                exec: execEvent => {
+                    const { summon: smn = summon, heros: hrs = heros, eCombatStatus = [] } = execEvent;
+                    smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    if (smn.useCnt == 0) {
+                        const sts124044 = getObjIdxById(eCombatStatus, 124044) ?? -1;
+                        if (sts124044 > -1) eCombatStatus.splice(sts124044, 1);
+                    }
+                    if (trigger == 'get-elReaction') return;
+                    const chero = getObjById(hrs, getHidById(smn.id));
+                    if (trigger == 'action-start' && chero?.talentSlot) --chero.talentSlot.useCnt;
+                    return { cmds: [{ cmd: 'attack' }] }
+                }
+            }
+        }),
+
+    125011: () => new SummonBuilder('剑影·孤风').useCnt(2).damage(1)
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/90767acfd11dc25ae46a333557b3ee2a_4658043205818200753.png')
+        .handle((summon, event) => {
+            const { trigger = '', heros = [], force = false } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (getObjById(heros, getHidById(summon.id))?.isFront || force) triggers.push('after-skilltype3')
+            return {
+                trigger: triggers,
+                damage: summon.damage,
+                element: summon.element,
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    return { cmds: [{ cmd: 'attack' }] }
+                },
+            }
+        }),
+
+    125012: () => new SummonBuilder('剑影·霜驰').useCnt(2).damage(1).cryo()
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3f77ab65d8d940df9b3cf70d96ae0b25_8204101439924542003.png')
+        .handle((summon, event) => {
+            const { trigger = '', heros = [], force = false } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (getObjById(heros, getHidById(summon.id))?.isFront || force) triggers.push('after-skilltype3')
+            return {
+                trigger: triggers,
+                damage: summon.damage,
+                element: summon.element,
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    return { cmds: [{ cmd: 'attack' }] }
+                },
+            }
+        }),
+
+    127022: () => crd12702summon(),
+
+    127023: () => crd12702summon(),
+
+    127024: () => crd12702summon(),
+
+    127025: () => crd12702summon(),
 
     // 3010: () => new GISummon(3010, '水丘丘萨满', '【结束阶段：】造成{dmg}点[水元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png',
@@ -835,104 +937,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png',
     //     2, 2, 0, 1, 4),
 
-    // 3019: () => new GISummon(3019, '剑影·孤风', '【结束阶段：】造成{dmg}点[风元素伤害]。；[useCnt]',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/90767acfd11dc25ae46a333557b3ee2a_4658043205818200753.png',
-    //     2, 2, 0, 1, 5, (summon, event) => {
-    //         const { trigger = '', heros = [], force = false } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (heros.find(h => h.id == 1781)?.isFront || force) triggers.push('after-skilltype3')
-    //         return {
-    //             trigger: triggers,
-    //             damage: summon.damage,
-    //             element: summon.element,
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 return { cmds: [{ cmd: 'attack' }] }
-    //             },
-    //         }
-    //     }),
-
-    // 3020: () => new GISummon(3020, '剑影·霜驰', '【结束阶段：】造成{dmg}点[冰元素伤害]。；[useCnt]',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3f77ab65d8d940df9b3cf70d96ae0b25_8204101439924542003.png',
-    //     2, 2, 0, 1, 4, (summon, event) => {
-    //         const { trigger = '', heros = [], force = false } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         if (heros.find(h => h.id == 1781)?.isFront || force) triggers.push('after-skilltype3')
-    //         return {
-    //             trigger: triggers,
-    //             damage: summon.damage,
-    //             element: summon.element,
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon } = execEvent;
-    //                 if (trigger == 'phase-end') smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 return { cmds: [{ cmd: 'attack' }] }
-    //             },
-    //         }
-    //     }),
-
-    // 3052: () => new GISummon(3052, '轰雷禁锢', '【结束阶段：】对附属【sts2141】的敌方角色造成{dmg}点[雷元素伤害]。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)；[useCnt]',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/552ec062eef427f9a1986f92ee19c716_8843394885297317371.png',
-    //     1, 1, 0, 3, 3, (summon, event) => {
-    //         const { eheros = [] } = event;
-    //         const sts2141 = eheros.findIndex(h => h.inStatus.some(ist => ist.id == 2141));
-    //         const hidxs = isCdt(sts2141 > -1, [sts2141]);
-    //         return {
-    //             trigger: ['phase-end'],
-    //             exec: () => {
-    //                 summon.useCnt = Math.max(0, summon.useCnt - 1);
-    //                 return { cmds: [{ cmd: 'attack', hidxs }] }
-    //             },
-    //         }
-    //     }),
-
-    // 3055: () => new GISummon(3055, '共鸣珊瑚珠', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/5776f31ac915874cb7eadd77a0098839_1777069343038822943.png',
-    //     2, 2, 0, 1, 3),
-
-    // 3057: () => new GISummon(3057, '雷萤', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。(最多叠加到3)；【愚人众·雷萤术士受到元素反应伤害后：】此牌[可用次数]-1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png',
-    //     3, 3, 0, 1, 3, (summon, event) => {
-    //         const { trigger = '', heros = [], isExec = true } = event;
-    //         const triggers: Trigger[] = ['phase-end'];
-    //         const hero = heros.find(h => h.id == 1764);
-    //         if (hero?.isFront) {
-    //             triggers.push('get-elReaction');
-    //             if (!isExec && trigger == 'get-elReaction') {
-    //                 summon.useCnt = Math.max(0, summon.useCnt - 1);
-    //             }
-    //         }
-    //         if ((hero?.talentSlot?.useCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
-    //         return {
-    //             trigger: triggers,
-    //             damage: 1,
-    //             element: 3,
-    //             isNotAddTask: trigger == 'get-elReaction',
-    //             exec: execEvent => {
-    //                 const { summon: smn = summon, heros: hrs = heros, eheros = [] } = execEvent;
-    //                 smn.useCnt = Math.max(0, smn.useCnt - 1);
-    //                 if (smn.useCnt == 0) {
-    //                     const eOutStatus = eheros.find(h => h.isFront)?.outStatus;
-    //                     const sts2175 = eOutStatus?.findIndex(ist => ist.id == 2175) ?? -1;
-    //                     if (sts2175 > -1) eOutStatus?.splice(sts2175, 1);
-    //                 }
-    //                 if (trigger == 'get-elReaction') return;
-    //                 const chero = hrs.find(h => h.id == 1764);
-    //                 if (trigger == 'action-start' && chero?.talentSlot) --chero.talentSlot.useCnt;
-    //                 return { cmds: [{ cmd: 'attack' }] }
-    //             }
-    //         }
-    //     }),
-
     // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；[useCnt]', src, 2, 2, 0, 2, 0),
-
-    // 3063: () => crd907summon(3063),
-
-    // 3064: () => crd907summon(3064),
-
-    // 3065: () => crd907summon(3065),
-
-    // 3066: () => crd907summon(3066),
 
 }
 

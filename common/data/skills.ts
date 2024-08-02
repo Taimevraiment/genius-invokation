@@ -58,13 +58,13 @@ export type SkillHandleRes = {
 }
 
 const ski1507x = (swirlEl: PureElementType) => {
-    return new SkillBuilder('风风轮舞踢').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(2).dmgElement(swirlEl);
+    return new SkillBuilder('风风轮舞踢').description('{dealDmg}。').elemental().readySkill().damage(2).dmgElement(swirlEl);
 }
 
 export const skillTotal: Record<number, () => SkillBuilder> = {
-    12074: () => new SkillBuilder('苍鹭震击').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3),
+    12074: () => new SkillBuilder('苍鹭震击').description('{dealDmg}。').elemental().readySkill().damage(3),
 
-    12104: () => new SkillBuilder('衡平推裁').description('(需准备1个行动轮)；{dealDmg}，如果生命值至少为6，则对自身造成1点[穿透伤害]，使伤害+1。')
+    12104: () => new SkillBuilder('衡平推裁').description('{dealDmg}，如果生命值至少为6，则对自身造成1点[穿透伤害]，使伤害+1。')
         .normal().readySkill().damage(2).handle(event => {
             const { hero: { hp } } = event;
             if (hp >= 6) return { addDmgCdt: 1, pdmgSelf: 1 }
@@ -87,11 +87,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             return { summon: [newSummon(ver)(112112)], status: isCdt(isTalent, [newStatus(ver)(112116)]) }
         }),
 
-    13095: () => new SkillBuilder('焚落踢').description('(需准备1个行动轮)；{dealDmg}。').burst().readySkill().damage(3),
+    13095: () => new SkillBuilder('焚落踢').description('{dealDmg}。').burst().readySkill().damage(3),
 
-    14054: () => new SkillBuilder('踏潮').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3).damage(2, 'v3.8.0'),
+    14054: () => new SkillBuilder('踏潮').description('{dealDmg}。').elemental().readySkill().damage(3).damage(2, 'v3.8.0'),
 
-    15074: () => new SkillBuilder('风风轮舞踢').description('(需准备1个行动轮)；{dealDmg}(或被扩散元素的伤害)。').elemental().readySkill().damage(2),
+    15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}(或被扩散元素的伤害)。').elemental().readySkill().damage(2),
 
     15075: () => ski1507x(ELEMENT_TYPE.Cryo),
 
@@ -101,49 +101,48 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     15078: () => ski1507x(ELEMENT_TYPE.Electro),
 
-    16074: () => new SkillBuilder('长枪开相').description('(需准备1个行动轮)；{dealDmg}; 如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
+    16074: () => new SkillBuilder('长枪开相').description('{dealDmg}; 如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
         .elemental().readySkill().damage(2).handle(event => {
             const { playerInfo: { discardCnt = 0, reconcileCnt = 0 } = {} } = event;
             return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
         }),
 
-    22035: () => new SkillBuilder('涟锋旋刃').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(1),
+    22035: () => new SkillBuilder('涟锋旋刃').description('{dealDmg}。').elemental().readySkill().damage(1),
 
-    23046: () => new SkillBuilder('炽烈轰破').description('(需准备1个行动轮)；{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
+    23046: () => new SkillBuilder('炽烈轰破').description('{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
         .burst().readySkill().damage(1).handle(event => {
             const { hero: { heroStatus } } = event;
             return { pdmg: 2, addDmgCdt: Math.floor((getObjById(heroStatus, 123041)?.useCnt ?? 0) / 2) }
         }),
 
-    24015: () => new SkillBuilder('猜拳三连击·剪刀').description('(需准备1个行动轮)；{dealDmg}，然后[准备技能]：【rsk24016】。')
+    24015: () => new SkillBuilder('猜拳三连击·剪刀').description('{dealDmg}，然后[准备技能]：【rsk24016】。')
         .elemental().readySkill().damage(2).handle((_, ver) => ({ status: [newStatus(ver)(124012)] })),
 
-    24016: () => new SkillBuilder('猜拳三连击·布').description('(需准备1个行动轮)；{dealDmg}。').elemental().readySkill().damage(3),
+    24016: () => new SkillBuilder('猜拳三连击·布').description('{dealDmg}。').elemental().readySkill().damage(3),
 
+    24044: () => new SkillBuilder('霆电迸发').description('{dealDmg}。').burst().readySkill().damage(2),
 
-    // 6: () => new GISkill('长延涤流', '(需准备1个行动轮)；对下一个敌方后台角色造成{dmg}点[风元素伤害]，然后[准备技能]：【rsk7】。(敌方没有后台角色时，改为对出战角色造成伤害)',
-    //     2, 1, 0, 5, { ec: -2, rskid: 6 }, '', () => ({ atkOffset: 1 })),
+    25025: () => new SkillBuilder('长延涤流').description('对下一个敌方后台角色{dealDmg}，然后[准备技能]：【rsk25026】。(敌方没有后台角色时，改为对出战角色造成伤害)')
+        .elemental().readySkill().damage(1).handle((_, ver) => ({ atkOffset: 1, status: [newStatus(ver)(125023)] })),
 
-    // 7: () => new GISkill('终幕涤流', '(需准备1个行动轮)；对上一个敌方后台角色造成{dmg}点[风元素伤害]。(敌方没有后台角色时，改为对出战角色造成伤害)',
-    //     2, 2, 0, 5, { ec: -2, rskid: 7 }, '', () => ({ atkOffset: -1 })),
+    25026: () => new SkillBuilder('终幕涤流').description('对上一个敌方后台角色{dealDmg}。(敌方没有后台角色时，改为对出战角色造成伤害)')
+        .elemental().readySkill().damage(2).handle(() => ({ atkOffset: -1 })),
 
-    // 8: ver => new GISkill('洪流重斥', '造成{dmg}点[水元素伤害]，此角色附属【sts2145】。', 2, 3, 3, 1, { rskid: 8 },
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/45a7f8c8f26f921fce5bb8738bf1bec0.png',
-    //     () => ({ status: [newStatus(ver)(2145)] })),
+    66013: () => new SkillBuilder('霜刺破袭').description('{dealDmg}，此角色附属【sts126022】。')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/ac22f83f25890eca87720581f6b06408.png')
+        .elemental().damage(3).costCryo(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
 
-    // 9: ver => new GISkill('炽焰重斥', '造成{dmg}点[火元素伤害]，此角色附属【sts2145】。', 2, 3, 3, 2, { rskid: 9 },
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/160f02ee2bfde3fcfdc558c78a168899.png',
-    //     () => ({ status: [newStatus(ver)(2145)] })),
+    66023: () => new SkillBuilder('洪流重斥').description('{dealDmg}，此角色附属【sts126022】。')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/45a7f8c8f26f921fce5bb8738bf1bec0.png')
+        .elemental().damage(3).costHydro(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
 
-    // 10: ver => new GISkill('霆雷破袭', '造成{dmg}点[雷元素伤害]，此角色附属【sts2145】。', 2, 3, 3, 3, { rskid: 10 },
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png',
-    //     () => ({ status: [newStatus(ver)(2145)] })),
+    66033: () => new SkillBuilder('炽焰重斥').description('{dealDmg}，此角色附属【sts126022】。')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/160f02ee2bfde3fcfdc558c78a168899.png')
+        .elemental().damage(3).costPyro(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
 
-    // 11: ver => new GISkill('霜刺破袭', '造成{dmg}点[冰元素伤害]，此角色附属【sts2145】。', 2, 3, 3, 4, { rskid: 11 },
-    //     'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/ac22f83f25890eca87720581f6b06408.png',
-    //     () => ({ status: [newStatus(ver)(2145)] })),
-
-    // 18: () => new GISkill('霆电迸发', '(需准备1个行动轮)；造成{dmg}点[雷元素伤害]。', 3, 2, 0, 3, { ec: -2, rskid: 18 }),
+    66043: () => new SkillBuilder('霆雷破袭').description('{dealDmg}，此角色附属【sts126022】。')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png')
+        .elemental().damage(3).costElectro(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

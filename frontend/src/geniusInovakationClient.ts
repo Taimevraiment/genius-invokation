@@ -399,11 +399,8 @@ export default class GeniusInvokationClient {
             });
         }
         if (this.slotSelect[0].length == 0 && phase == PHASE.CHANGE_CARD) {
-            // todo 要做装备发光的变量
-            this.slotSelect.forEach((p, pi) => {
-                p.forEach((_, i, a) => {
-                    a[i] = new Array(this.players[+(pi == this.playerIdx)].heros.length);
-                });
+            this.slotSelect.forEach((_, pi, pa) => {
+                pa[pi] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(3).fill(false));
             });
         }
         this._sendTip(tip);
@@ -413,8 +410,8 @@ export default class GeniusInvokationClient {
         }
         if (slotSelect.length > 0) {
             const [p, h, s] = slotSelect;
-            this.slotSelect[p][h][s] = true;
-
+            this.slotSelect[+(p == this.playerIdx)][h][s] = true;
+            setTimeout(() => this._resetSlotSelect(), 500);
         }
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';

@@ -20,7 +20,7 @@ export class GIStatus {
     isTalent: boolean; // 是否有天赋
     handle: (status: Status, event?: StatusHandleEvent) => StatusHandleRes; // 处理函数
     summonId: number; // 可能对应的召唤物 -1不存在
-    addition: string[]; // 额外信息
+    addition: any[]; // 额外信息
     UI: {
         icon: string, // 图标
         description: string, // 描述
@@ -133,7 +133,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _useCnt: [Version, number][] = [];
     private _maxCnt: [Version, number][] = [];
     private _addCnt: number = 0;
-    private _perCnt: number = 0;
+    private _perCnt: [Version, number][] = [];
     private _roundCnt: [Version, number][] = [];
     private _icon: string = '';
     private _explains: string[] = [];
@@ -141,7 +141,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _isTalent: boolean = false;
     private _summonId: number = -1;
     private _addition: string[] = [];
-    private _isReset: boolean = false;
+    private _isReset: boolean = true;
     private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
     private _typeCdt: [(ver: Version) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: Version) => boolean, number][] = [];
@@ -182,6 +182,11 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._type.push(cdt, ...types);
         return this;
     }
+    typeOverride(...types: StatusType[]) {
+        this._type = [];
+        this._type.push(...types);
+        return this;
+    }
     useCnt(useCnt: number, cdt: boolean): StatusBuilder;
     useCnt(useCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
     useCnt(useCnt: number, version: Version | boolean = 'vlatest', cdt: boolean = true) {
@@ -200,12 +205,18 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._maxCnt.push([version, maxCnt]);
         return this;
     }
-    addCnt(addCnt: number) {
-        this._addCnt = addCnt;
+    addCnt(addCnt?: number) {
+        if (addCnt != undefined) this._addCnt = addCnt;
         return this;
     }
-    perCnt(perCnt: number, cdt: boolean = true) {
-        if (cdt) this._perCnt = perCnt;
+    perCnt(perCnt: number, cdt?: boolean): StatusBuilder;
+    perCnt(perCnt: number, ver?: Version, cdt?: boolean): StatusBuilder;
+    perCnt(perCnt: number, cdt: boolean | Version = true, cdt2: boolean = true) {
+        if (typeof cdt == 'boolean') {
+            if (cdt) this._perCnt.push(['vlatest', perCnt]);
+            return this;
+        }
+        if (cdt2) this._perCnt.push([cdt, perCnt]);
         return this;
     }
     roundCnt(roundCnt: number, cdt: boolean): StatusBuilder;
@@ -242,12 +253,12 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._summonId = smnId ?? -2;
         return this;
     }
-    addition(...addition: (string | number)[]) {
-        this._addition.push(...addition.map(v => v.toString()));
+    addition(...addition: any[]) {
+        this._addition.push(...addition);
         return this;
     }
-    isReset() {
-        this._isReset = true;
+    notReset() {
+        this._isReset = false;
         return this;
     }
     handle(handle: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) {
@@ -271,6 +282,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     }
     done() {
         const description = this._getValByVersion(this._description, '');
+        const perCnt = this._getValByVersion(this._perCnt, 0);
         const useCnt = this._getValByVersion(this._useCnt, -1);
         const roundCnt = this._getValByVersion(this._roundCnt, -1);
         const smnId = this._summonId == -2 ? this._id : this._summonId;
@@ -290,7 +302,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
             useCnt, maxCnt, roundCnt, handle,
             {
-                pct: this._perCnt,
+                pct: perCnt,
                 act: this._addCnt || Math.max(useCnt, roundCnt),
                 icbg: this._iconBg,
                 isTalent: this._isTalent,

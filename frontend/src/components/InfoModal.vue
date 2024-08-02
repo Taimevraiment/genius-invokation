@@ -363,7 +363,7 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
     })
     .replace(/(?<!\\)‹(\d+)(.*?)›/g, (_, c: string, v: string) => {
       const color = ELEMENT_CODE_KEY[+c as ElementCode];
-      return `${wrapedIcon(color)}<span style='color:${ELEMENT_COLOR[color]};'>${v}</span>`;
+      return `${wrapedIcon(color)}<span style='color:${ELEMENT_COLOR[color]};'>${v.replace(" style='color:white;'", '')}</span>`;
     }).replace(/(?<!\\)(\*?)\[(.*?)\]/g, (_, isUnderline: string, ctt: string) => {
       const [el] = objToArr(ELEMENT_NAME).find(([, v]) => ['元素', '伤害', '骰'].some(v => ctt.includes(v)) ? ctt.includes(v) : ctt == v) ?? [];
       const color = el == undefined ? 'white' : ELEMENT_COLOR[el];
