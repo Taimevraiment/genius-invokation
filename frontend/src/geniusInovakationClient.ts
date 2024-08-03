@@ -139,7 +139,7 @@ export default class GeniusInvokationClient {
     get skills() { // 技能组
         const fhero = this.getFrontHero();
         if (fhero == undefined) return [];
-        return fhero.skills.map((skill, skidx) => {
+        return fhero.skills.filter(skill => skill.type != SKILL_TYPE.Passive).map((skill, skidx) => {
             const elColor = ELEMENT_COLOR[skill.cost[0].type];
             const energyPer = fhero.energy / skill.cost[2].cnt * 100;
             const isValid = !!this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx)?.isValid;

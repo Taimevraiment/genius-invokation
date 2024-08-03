@@ -157,7 +157,7 @@
           </div>
           <div class="hero-equipment">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx][0] }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[0] }">
               <img :src="getSvgIcon('weapon')" />
               <div :style="{
                 position: 'absolute',
@@ -167,7 +167,7 @@
               }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-artifact" v-if="hero.artifactSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx][1] }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[1] }">
               <img :src="getSvgIcon('artifact')" />
               <div :style="{
                 position: 'absolute',
@@ -177,7 +177,7 @@
               }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-talent" v-if="hero.talentSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx][2] }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[2] }">
               <img :src="getSvgIcon('talent')" />
               <div :style="{
                 position: 'absolute',
@@ -281,15 +281,15 @@
                   {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{ Math.abs(Math.ceil(willHp[hgi][hidx] ?? 0) % 100) }}
                 </span>
               </div>
-              <div class="damages" v-if="willDamages[hgi][hidx] != undefined">
-                <div class="damage" v-if="dmgElements[hgi] != undefined"
+              <div class="damages">
+                <div class="damage" v-if="dmgElements[hgi] != undefined && willDamages[hgi][hidx] != undefined"
                   :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][0] >= 0 && hero.hp >= 0 }" :style="{
                     color: ELEMENT_COLOR[dmgElements[hgi][hidx]],
                     'background-image': `url(${getPngIcon('Attack')})`,
                   }">
                   -{{ willDamages[hgi][hidx][0] }}
                 </div>
-                <div class="damage"
+                <div class="damage" v-if="willDamages[hgi][hidx] != undefined"
                   :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][1] > 0 && hero.hp >= 0 }" :style="{
                     color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce],
                     'background-image': `url(${getPngIcon('Attack')})`,
