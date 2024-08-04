@@ -114,17 +114,10 @@
         <div class="quick-action" v-if="client.isShowChangeHero == 3">
           快速行动
         </div>
-        <!-- <button :class="{ forbidden: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO }"
-          v-if="client.isShowChangeHero < 2" @click.stop="chooseHero">
-          {{ client.player.phase == PHASE.CHOOSE_HERO || client.player.phase >= PHASE.ACTION_END ? "出战" : "切换" }}
-        </button> -->
-        <div class="switch-button" @click.stop="client.isShowChangeHero < 2 ? chooseHero() : changeHero()"
+        <div class="switch-button" v-if="client.player.hidx != -1"
+          @click.stop="client.isShowChangeHero < 2 ? chooseHero() : changeHero()"
           :style="{ filter: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO ? `url(${getSvgIcon('filter')}#status-color-10)` : '' }">
         </div>
-        <!-- <button v-else :class="{ forbidden: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO }"
-          @click.stop="changeHero">
-          确定
-        </button> -->
         <div class="skill-cost" v-if="client.player.phase == PHASE.ACTION"
           :style="{ marginTop: '10px', opacity: +(client.isShowChangeHero >= 2) }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />

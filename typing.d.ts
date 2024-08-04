@@ -220,6 +220,7 @@ type ServerData = Readonly<{
     tip: string,
     actionInfo: string,
     slotSelect: number[],
+    heroSelect: number[],
     flag: string,
 }>
 

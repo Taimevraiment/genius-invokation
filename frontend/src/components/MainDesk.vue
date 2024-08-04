@@ -122,11 +122,11 @@
           'my': hgi == 1,
           'is-front-oppo': hero?.isFront && player.phase >= PHASE.DICE && opponent?.phase >= PHASE.DICE && hgi == 0,
           'is-front-my': hero?.isFront && hgi == 1,
-          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hidx] || client.isShowChangeHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
+          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hgi][hidx] || client.isShowChangeHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
-            'hero-select': hgi == 1 && heroSelect[hidx],
+            'hero-select': heroSelect[hgi][hidx],
             'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
             'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
           }">
@@ -333,8 +333,11 @@
                 {{ summon.useCnt }}
               </div>
               <div :class="{
-                'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
-                'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
+                // 'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
+                // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
+                'will-add': true,
+              }" :style="{
+                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : -summonCnt[getGroup(saidx)][suidx] < summon.useCnt ? 2 : 1}`)})`,
               }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
                 <img
                   v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && summon.isDestroy == SUMMON_DESTROY_TYPE.Used"
@@ -582,7 +585,7 @@ const heroSwitchDice = computed<number>(() => props.client.heroSwitchDice);
 const supportCnt = computed<number[][]>(() => props.client.supportCnt);
 const summonCnt = computed<number[][]>(() => props.client.summonCnt);
 const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).fill(false));
-const heroSelect = computed<number[]>(() => props.client.heroSelect);
+const heroSelect = computed<number[][]>(() => props.client.heroSelect);
 const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
@@ -1028,13 +1031,18 @@ button:active {
   min-width: 35px;
   height: 20px;
   line-height: 20px;
-  border-radius: 10px;
-  color: #22a800;
   font-weight: bold;
-  background-color: #7bc67c;
+  /* border-radius: 10px;
+  color: #22a800;
+  background-color: #7bc67c; */
   display: flex;
   justify-content: center;
   align-items: center;
+  border-image-slice: 20 25 fill;
+  border-image-width: 7px;
+  color: white;
+  -webkit-text-stroke: 0.5px black;
+  z-index: 1;
 }
 
 .attach-element {
@@ -1467,6 +1475,12 @@ button:active {
 .slot-select {
   box-shadow: 4px 4px 6px #ffeb56, -4px 4px 6px #ffeb56, 4px -4px 6px #ffeb56,
     -4px -4px 6px #ffeb56 !important;
+}
+
+.summon-select,
+.support-select,
+.hero-select {
+  background-color: #ffeb56;
 }
 
 .dice-select {

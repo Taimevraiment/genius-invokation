@@ -89,19 +89,22 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}; 每有1点｢能量层数｣，都使次伤害+1。(影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {
-            const { heros = [], trigger = '' } = event;
+            const { heros = [], isExec = true, trigger = '' } = event;
+            const hero = heros[getAtkHidx(heros)];
+            if (hero?.isFront && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
+                summon.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
+            }
             return {
                 trigger: ['phase-end', 'skilltype1', 'skilltype2'],
                 isNotAddTask: trigger != 'phase-end',
                 exec: execEvent => {
-                    const { summon: smn = summon } = execEvent;
+                    const { summon: smn = summon, heros: hs = [] } = execEvent;
                     if (trigger == 'phase-end') {
                         return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
                     }
-                    const hero = heros[getAtkHidx(heros)];
+                    const hero = hs[getAtkHidx(hs)];
                     if (hero?.id == getHidById(summon.id)) {
-                        const cnt = !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
-                        smn.useCnt += cnt;
+                        smn.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
                         return { cmds: [{ cmd: 'getEnergy', cnt: -1 }] }
                     }
                 },
@@ -128,7 +131,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
         .handle((summon, event = {}, ver) => {
-            const { heros = [], trigger = '', tround = 0, isExec = false } = event;
+            const { heros = [], trigger = '', tround = 0, isExec = true } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = getMaxHertHidxs(heros);
             const fhero = heros[getAtkHidx(heros)];

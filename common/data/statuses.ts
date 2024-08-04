@@ -258,7 +258,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus()
         .roundCnt(2).roundCnt(3, 'v4.2.0', isTalent).talent(isTalent).icon('buff')
         .description(`我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[冰元素伤害]${isTalent ? '，｢普通攻击｣造成的伤害+1' : ''}。；[roundCnt]`)
-        .type(STATUS_TYPE.AddDamage).type(() => isTalent, STATUS_TYPE.Enchant)
+        .type(STATUS_TYPE.Enchant).type(isTalent, STATUS_TYPE.AddDamage)
         .handle((status, event = {}) => {
             const { heros = [], hidx = -1 } = event;
             const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx].weaponType);

@@ -44,8 +44,8 @@ export default class GeniusInvokationClient {
     isShowHistory: boolean = false; // 是否显示历史信息
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
     willSwitch: boolean[] = []; // 是否将要切换角色
-    supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0)); // 支援物变化数
-    summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0)); // 召唤物变化数
+    supportCnt: number[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0)); // 支援物变化数
+    summonCnt: number[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0)); // 召唤物变化数
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
@@ -70,7 +70,7 @@ export default class GeniusInvokationClient {
     handcardsPos: number[]; // 手牌位置
     handcardsSelect: number = -1; // 被选中的手牌序号
     reconcileValid: boolean[] = []; // 是否允许调和
-    heroSelect: number[]; // 角色是否选中
+    heroSelect: number[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 角色是否选中
     heroCanSelect: boolean[]; // 角色是否可选
     heroSwitchDice: number = INIT_SWITCH_HERO_DICE; // 切换角色所需骰子数
     supportSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否选中
@@ -109,7 +109,6 @@ export default class GeniusInvokationClient {
             isValid: ver == version,
             error: '当前卡组版本不匹配',
         };
-        this.heroSelect = (players[this.playerIdx]?.heros ?? []).map(() => 0);
         this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
     }
     get playerIdx() { // 该玩家序号
@@ -208,7 +207,6 @@ export default class GeniusInvokationClient {
         this._resetWillAttachs();
         if (this.phase == PHASE.ACTION) this.resetDiceSelect();
         this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
-        this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
         this.isValid = false;
         this.isShowChangeHero = 0;
         this.isShowHistory = false;
@@ -285,7 +283,7 @@ export default class GeniusInvokationClient {
                     this.isValid = preview1.isValid;
                     if (this.isValid) {
                         if (canSelectHero == 1) {
-                            this.heroSelect[this.heroCanSelect.indexOf(true)] = 1;
+                            this.heroSelect[1][this.heroCanSelect.indexOf(true)] = 1;
                         }
                         if (canSelectSummon != -1) {
                             this.summonSelect[canSelectSummon][this.summonCanSelect[canSelectSummon].indexOf(true)] = true;
@@ -309,7 +307,7 @@ export default class GeniusInvokationClient {
             type: ACTION_TYPE.UseCard,
             cardIdxs: [this.handcardsSelect],
             diceSelect: this.diceSelect,
-            heroIdxs: this.heroSelect.map((v, i) => ({ v, i })).filter(v => v.v).map(v => v.i),
+            heroIdxs: this.heroSelect[1].map((v, i) => ({ v, i })).filter(v => v.v).map(v => v.i),
             supportIdx: this.supportSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             summonIdx: this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             flag: 'useCard',
@@ -376,7 +374,7 @@ export default class GeniusInvokationClient {
      */
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt,
-            handCardsCnt, damageVO, tip, actionInfo, slotSelect, log, isWin, flag } = data;
+            handCardsCnt, damageVO, tip, actionInfo, slotSelect, heroSelect, log, isWin, flag } = data;
         console.info(flag);
         const hasDmg = damageVO != -1 && ((damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0);
         this.isWin = isWin;
@@ -403,6 +401,11 @@ export default class GeniusInvokationClient {
                 pa[pi] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(3).fill(false));
             });
         }
+        if (this.heroSelect[0].length == 0 && phase == PHASE.CHANGE_CARD) {
+            this.heroSelect.forEach((_, pi, pa) => {
+                pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => 0);
+            });
+        }
         this._sendTip(tip);
         if (actionInfo != '') {
             this.actionInfo = actionInfo;
@@ -412,6 +415,11 @@ export default class GeniusInvokationClient {
             const [p, h, s] = slotSelect;
             this.slotSelect[+(p == this.playerIdx)][h][s] = true;
             setTimeout(() => this._resetSlotSelect(), 500);
+        }
+        if (heroSelect.length > 0) {
+            const [p, h] = heroSelect;
+            this.heroSelect[+(p == this.playerIdx)][h] = 1;
+            setTimeout(() => this._resetHeroSelect(), 500);
         }
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
@@ -449,7 +457,6 @@ export default class GeniusInvokationClient {
         }
         this.updateHandCardsPos();
         this.log = [...log];
-        if (this.heroSelect.length == 0) this.heroSelect = this.player.heros.map(() => 0);
         if (this.heroCanSelect.length == 0) this.heroCanSelect = this.player.heros.map(() => false);
     }
     /**
@@ -470,7 +477,7 @@ export default class GeniusInvokationClient {
      */
     chooseHero() {
         if (this.isLookon > -1) return;
-        const hidx = this.player.heros.findIndex(h => this.heroSelect[h.hidx] > 0 || h.id == this.modalInfo.info?.id);
+        const hidx = this.player.heros.findIndex(h => this.heroSelect[1][h.hidx] > 0 || h.id == this.modalInfo.info?.id || h.isFront);
         if (this.player.phase == PHASE.CHOOSE_HERO) { // 选择初始出战角色
             return this.selectHero(1, hidx);
         }
@@ -479,13 +486,13 @@ export default class GeniusInvokationClient {
             return this.changeHero();
         }
         if (this.player.phase >= PHASE.ACTION_START && this.isShowChangeHero > 0) { // 准备切换角色
-            const hidx = this.player.heros.findIndex(h => this.heroSelect[h.hidx] || h.id == this.modalInfo.info?.id);
+            const hidx = this.player.heros.findIndex(h => this.heroSelect[1][h.hidx] || h.id == this.modalInfo.info?.id);
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && pre.heroIdxs![0] == hidx);
             if (preview == undefined) throw new Error('未找到切换角色预览');
             this.heroSwitchDice = preview.switchHeroDiceCnt!;
             this.diceSelect = preview.diceSelect!.slice();
             this.heroCanSelect = preview.heroCanSelect!.slice();
-            this.heroSelect = this.heroSelect.map((_, hidx) => +!!preview.heroIdxs!.includes(hidx));
+            this.heroSelect[1] = this.heroSelect[1].map((_, hidx) => +!!preview.heroIdxs!.includes(hidx));
             this.isShowChangeHero = 2 + +!!preview.isQuickAction;
             this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
             this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
@@ -509,7 +516,7 @@ export default class GeniusInvokationClient {
                 isShow: true,
                 type: INFO_TYPE.Hero,
                 info: hero,
-                combatStatus: isCdt(hero.isFront, this.players[this.playerIdx ^ pidx ^ 1].combatStatus),
+                combatStatus: isCdt(hero?.isFront, this.players[this.playerIdx ^ pidx ^ 1].combatStatus),
             };
         }
         if (this.isLookon > -1) return;
@@ -520,7 +527,7 @@ export default class GeniusInvokationClient {
         this._resetWillAttachs();
         if (this.player.phase == PHASE.CHOOSE_HERO && pidx == 1) { // 选择初始出战角色
             this.cancel({ onlyCard: true, notHeros: true });
-            if (this.player.heros[hidx].isFront) this.modalInfo = NULL_MODAL();
+            if (this.player.heros[hidx]?.isFront) this.modalInfo = NULL_MODAL();
             else this.isShowChangeHero = 1;
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.ChooseInitHero,
@@ -530,7 +537,7 @@ export default class GeniusInvokationClient {
             } as ActionData);
         } else {
             if (this.isShowChangeHero > 1 && pidx == 1 && this.heroCanSelect[hidx]) {
-                this.heroSelect.forEach((_, hi, ha) => ha[hi] = +(hi == hidx));
+                this.heroSelect[1].forEach((_, hi, ha) => ha[hi] = +(hi == hidx));
                 this.chooseHero();
                 this.modalInfo = NULL_MODAL();
             } else {
@@ -555,23 +562,23 @@ export default class GeniusInvokationClient {
             this.cancel();
             return true;
         }
-        if (this.heroSelect[hidx] > 0) {
+        if (this.heroSelect[pidx][hidx] > 0) {
             this._resetHeroSelect();
         } else {
-            const selected = this.heroSelect.filter(v => v > 0).length;
+            const selected = this.heroSelect[pidx].filter(v => v > 0).length;
             if (selected >= canSelectHero) {
-                this.heroSelect.forEach((v, i, a) => {
+                this.heroSelect[pidx].forEach((v, i, a) => {
                     if (canSelectHero == 1) a[i] = +(i == hidx);
                     else if (v != 1) a[i] = +(i == hidx) * 2;
                 });
             } else {
-                this.heroSelect[hidx] = selected + 1;
+                this.heroSelect[pidx][hidx] = selected + 1;
             }
         }
         const preview = this.previews.find(pre =>
             pre.type == ACTION_TYPE.UseCard &&
             pre.cardIdxs?.[0] == this.currCard.cidx &&
-            (pre.heroIdxs?.length ?? 0) > 0 && pre.heroIdxs?.every(hi => this.heroSelect[hi] > 0)
+            (pre.heroIdxs?.length ?? 0) > 0 && pre.heroIdxs?.every(hi => this.heroSelect[pidx][hi] > 0)
         );
         this.isValid = !!preview?.isValid;
         if (this.isValid) this.diceSelect = [...preview?.diceSelect!];
@@ -613,7 +620,7 @@ export default class GeniusInvokationClient {
             heroSwitchDice: isCdt(this.isShowChangeHero > 0, this.heroSwitchDice),
         });
         if (this.isShowChangeHero > 0) { // 切换角色所消耗的骰子
-            const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && this.heroSelect[pre.heroIdxs![0]]);
+            const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && this.heroSelect[1][pre.heroIdxs![0]]);
             this.isValid = preview?.diceSelect?.filter(v => v).length == this.heroSwitchDice;
         }
     }
@@ -703,6 +710,8 @@ export default class GeniusInvokationClient {
             this.willHp = [...preview.willHp!.slice()];
             this.willAttachs = [...preview.willAttachs!.slice()];
             this.willSummons = [...preview.willSummons!.slice()];
+            this.summonCnt = [...preview.willSummonChange!.slice()];
+            this.supportCnt = [...preview.willSupportChange!.slice()];
         }
         // if (!isCard) {
         //     if (!isOnlyRead) {
@@ -714,7 +723,7 @@ export default class GeniusInvokationClient {
      * 切换角色
      */
     changeHero() {
-        const hidx = this.player.heros.findIndex(h => this.heroSelect[h.hidx] || h.id == this.modalInfo.info?.id);
+        const hidx = this.player.heros.findIndex(h => this.heroSelect[1][h.hidx] || h.id == this.modalInfo.info?.id);
         if (this.player.phase == PHASE.CHOOSE_HERO) {
             this.chooseHero();
             this.cancel();
@@ -809,7 +818,7 @@ export default class GeniusInvokationClient {
      * 重置角色选择
      */
     private _resetHeroSelect() {
-        return this.heroSelect.fill(0);
+        this.heroSelect.forEach((_, i, a) => a[i].fill(0));
     }
     /**
      * 重置角色可选
@@ -863,6 +872,7 @@ export default class GeniusInvokationClient {
      * 重置召唤物预览
      */
     private _resetWillSummons(): Summon[][] {
+        this.summonCnt?.forEach(smns => smns.fill(0));
         return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
     }
     /**
