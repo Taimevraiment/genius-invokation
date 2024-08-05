@@ -65,7 +65,12 @@
     <div class="hand-card" v-if="(client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
-      <div v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`" class="card"
+      <handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
+        :class="{ selected: client.handcardsSelect == idx }" :card="card" :isMobile="isMobile"
+        :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
+        @mouseleave="mouseleave(idx)">
+      </handcard>
+      <!-- <div v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`" class="card"
         :class="{ selected: client.handcardsSelect == idx, 'mobile-card': isMobile }"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
@@ -78,7 +83,6 @@
             <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
             <span>{{ card.cost - card.costChange }}</span>
           </div>
-          <!-- todo 重新考虑下面的减骰 -->
           <div class="card-energy" v-if="card.anydice > 0"
             :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
             <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
@@ -92,7 +96,7 @@
             <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <div class="btn-group" v-if="client.isShowButton">
@@ -172,7 +176,7 @@
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
-      (client.willHp.some(v => v != undefined) || client.isShowChangeHero >= 2)">
+      (client.currSkill.id != -1 || client.isShowChangeHero >= 2)">
     </div>
 
   </div>
@@ -183,6 +187,7 @@ import type { Socket } from 'socket.io-client';
 import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import Handcard from '@/components/Card.vue';
 import InfoModal from '@/components/InfoModal.vue';
 import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
@@ -199,7 +204,7 @@ import {
   Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
-import { CHANGE_GOOD_COLOR, ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
+import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { debounce, genShareCode } from '@@@/utils/utils';
@@ -231,10 +236,10 @@ const getDiceBgIcon = (name: string) => {
 };
 
 // 获取png图片
-const getPngIcon = (name: string) => {
-  if (name.startsWith('http')) return name;
-  return `/image/${name}.png`;
-};
+// const getPngIcon = (name: string) => {
+//   if (name.startsWith('http')) return name;
+//   return `/image/${name}.png`;
+// };
 
 // 获取svg图片
 const getSvgIcon = (name: string) => {
@@ -568,7 +573,7 @@ body {
   z-index: 5;
 }
 
-.card {
+/* .card {
   position: absolute;
   width: 90px;
   height: 140px;
@@ -580,16 +585,16 @@ body {
   text-align: center;
   white-space: nowrap;
   transition: 0.3s;
-}
+} */
 
-.card-content {
+/* .card-content {
   position: relative;
   width: 100%;
   height: 100%;
   padding-top: 20px;
-}
+} */
 
-.card-cost {
+/* .card-cost {
   position: absolute;
   left: -20px;
   top: -10px;
@@ -601,9 +606,9 @@ body {
   text-align: center;
   line-height: 20px;
   -webkit-text-stroke: 1px black;
-}
+} */
 
-.card-energy {
+/* .card-energy {
   position: absolute;
   width: 20px;
   height: 20px;
@@ -614,32 +619,32 @@ body {
   text-align: center;
   line-height: 20px;
   -webkit-text-stroke: 1px black;
-}
+} */
 
-.card-cost>span,
+/* .card-cost>span,
 .card-energy>span {
   position: absolute;
   left: 20px;
   top: 5px;
-}
+} */
 
-.card-img {
+/* .card-img {
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   border-radius: 10px;
-}
+} */
 
-.lengend-border {
+/* .lengend-border {
   position: absolute;
   width: 100%;
   height: 100%;
   left: 0;
   top: 0;
   border-radius: inherit;
-}
+} */
 
 .card.selected {
   transform: translateY(-15px);
@@ -1056,10 +1061,10 @@ body {
     height: 100px;
   }
 
-  .card,
+  /* .card,
   .card-img {
     width: 60px;
-  }
+  } */
 
   .btn-group button {
     font-size: 12px;
@@ -1096,10 +1101,10 @@ body {
   font-size: medium;
 }
 
-.mobile-card {
+/* .mobile-card {
   width: 60px;
   height: 90px;
-}
+} */
 
 .mobile-rest-card {
   width: 16px;

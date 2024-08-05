@@ -154,7 +154,7 @@ export class CardBuilder extends BaseBuilder {
     private _subtype: CardSubtype[] = [];
     private _tag: CardTag[] = [];
     private _userType: [Version, number | WeaponType][] = [];
-    private _useCnt: number = -1;
+    private _useCnt: [Version, number][] = [];
     private _perCnt: [Version, number][] = [];
     private _energy: [Version, number][] = [];
     private _anydice: number = 0;
@@ -255,8 +255,8 @@ export class CardBuilder extends BaseBuilder {
         this._tag.push(...tags);
         return this;
     }
-    useCnt(useCnt: number) {
-        this._useCnt = useCnt;
+    useCnt(useCnt: number, version: Version = 'vlatest') {
+        this._useCnt.push([version, useCnt]);
         return this;
     }
     perCnt(perCnt: number, version: Version = 'vlatest') {
@@ -311,13 +311,14 @@ export class CardBuilder extends BaseBuilder {
         const description = this._getValByVersion(this._description, '');
         const cost = this._getValByVersion(this._cost, 0);
         const costType = this._getValByVersion(this._costType, DICE_TYPE.Same);
+        const useCnt = this._getValByVersion(this._useCnt, -1);
         const perCnt = this._getValByVersion(this._perCnt, 0);
         const energy = this._getValByVersion(this._energy, 0);
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
             cost, costType, this._type, this._subtype, userType, this._handle,
             {
                 tag: this._tag,
-                uct: this._useCnt,
+                uct: useCnt,
                 pct: perCnt,
                 expl: this._explains,
                 energy,

@@ -20,6 +20,7 @@ export type SummonHandleEvent = {
     isSkill?: number,
     minusDiceCard?: number,
     isMinusDiceSkill?: boolean,
+    minusDiceSkill?: number[][],
     tround?: number,
     force?: boolean,
 }
@@ -104,7 +105,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     }
                     const hero = hs[getAtkHidx(hs)];
                     if (hero?.id == getHidById(summon.id)) {
+                        console.log('smnCnt-before:', smn.useCnt);
                         smn.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
+                        console.log('smnCnt-after:', smn.useCnt);
                         return { cmds: [{ cmd: 'getEnergy', cnt: -1 }] }
                     }
                 },

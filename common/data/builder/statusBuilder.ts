@@ -156,7 +156,9 @@ export class StatusBuilder extends BaseVersionBuilder {
         return this;
     }
     description(description: string, version: Version = 'vlatest') {
-        this._description.push([version, description]);
+        const desc = this._description.find(([ver]) => ver == version);
+        if (desc) desc[1] = description;
+        else this._description.push([version, description]);
         return this;
     }
     heroStatus() {

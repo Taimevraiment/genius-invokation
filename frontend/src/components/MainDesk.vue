@@ -394,7 +394,11 @@
 
         <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && isLookon == -1">
           <div class="init-cards">
-            <div class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`"
+            <handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
+              :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
+              <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
+            </handcard>
+            <!-- <div class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`"
               @click.stop="selectChangeCard(cidx)">
               <div class="init-card-content">
                 <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
@@ -417,8 +421,7 @@
               <div class="init-card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
                 <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
               </div>
-              <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
-            </div>
+            </div> -->
           </div>
           <button @click="changeCard" v-if="showChangeCardBtn">
             {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
@@ -428,9 +431,11 @@
 </template>
 
 <script setup lang='ts'>
+import Handcard from '@/components/Card.vue';
 import {
-  CARD_SUBTYPE, CARD_TAG, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
-  PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version,
+  CARD_SUBTYPE, CARD_TAG,
+  DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+  PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
@@ -535,7 +540,8 @@ const willAttachs = computed<ElementType[][][]>(() => wrapArr(props.client.willA
 let isAnimating = false;
 const willDamages = computed<number[][][]>(() => {
   const dmgs: number[][][] = wrapArr(props.client.damageVO.willDamages ?? []);
-  if (dmgs.length > 0 && props.client.damageVO.dmgSource == 'skill' && atkHidx.value >= 0 && heroDOMs.value != undefined && !isAnimating) {
+  if (dmgs.length > 0 && props.client.damageVO.dmgSource == 'skill' &&
+    atkHidx.value >= 0 && tarHidx.value > -1 && heroDOMs.value != undefined && !isAnimating) {
     isAnimating = true;
     const isAtker = playerIdx.value == atkPidx.value;
     const atkHeroDOM = heroDOMs.value[+isAtker * props.client.players[playerIdx.value ^ 1].heros.length + atkHidx.value];
@@ -1608,7 +1614,7 @@ button:active {
   border-radius: 10px;
 }
 
-.init-card-cost {
+/* .init-card-cost {
   position: absolute;
   left: 0;
   top: 0;
@@ -1640,7 +1646,7 @@ button:active {
   color: white;
   font-weight: bold;
   -webkit-text-stroke: 1px black;
-}
+} */
 
 .init-select {
   position: absolute;

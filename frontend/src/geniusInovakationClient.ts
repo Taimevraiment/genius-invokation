@@ -708,10 +708,10 @@ export default class GeniusInvokationClient {
             if (!preview) throw new Error('预览未找到');
             this.diceSelect = [...preview.diceSelect!];
             this.willHp = [...preview.willHp!.slice()];
-            this.willAttachs = [...preview.willAttachs!.slice()];
-            this.willSummons = [...preview.willSummons!.slice()];
-            this.summonCnt = [...preview.willSummonChange!.slice()];
-            this.supportCnt = [...preview.willSupportChange!.slice()];
+            this.willAttachs = [...clone(preview.willAttachs)!];
+            this.willSummons = [...clone(preview.willSummons)!];
+            this.summonCnt = [...clone(preview.willSummonChange)!];
+            this.supportCnt = [...clone(preview.willSupportChange)!];
         }
         // if (!isCard) {
         //     if (!isOnlyRead) {

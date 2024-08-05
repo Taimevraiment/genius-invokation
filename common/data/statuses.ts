@@ -30,6 +30,7 @@ export type StatusHandleEvent = {
     dmgSource?: number,
     minusDiceCard?: number,
     isMinusDiceSkill?: boolean,
+    minusDiceSkill?: number[][],
     heal?: number[],
     force?: boolean,
     summons?: Summon[],
@@ -138,6 +139,30 @@ const senlin1Status = (name: string) => {
                 }
             }
         });
+}
+
+const senlin2Status = (name: string) => {
+    return new StatusBuilder(name + '(生效中)').heroStatus().icon('buff2').roundCnt(1)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【角色在本回合中，下次使用｢普通攻击｣后：】生成2个此角色类型的元素骰。')
+        .handle(status => ({
+            trigger: ['skilltype1'],
+            exec: () => {
+                --status.roundCnt;
+                return { cmds: [{ cmd: 'getDice', cnt: 2, mode: CMD_MODE.FrontHero }] }
+            }
+        }));
+}
+
+const card311306sts = (name: string) => {
+    return new StatusBuilder(name).heroStatus().icon('buff5').roundCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('本回合内，所附属角色下次造成的伤害额外+1。')
+        .handle(status => ({
+            trigger: ['skill'],
+            addDmg: 1,
+            exec: () => { --status.roundCnt }
+        }));
 }
 
 // const card587sts = (element: number) => {
@@ -288,9 +313,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { skilltype = -1 } = event;
             return {
                 addDmgCdt: 1,
-                trigger: isCdt(skilltype > -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
+                trigger: isCdt(skilltype != -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
                 exec: () => {
-                    if (status.perCnt == 1 && skilltype == 1) {
+                    if (status.perCnt == 1 && skilltype == SKILL_TYPE.Normal) {
                         --status.perCnt;
                     } else {
                         --status.useCnt;
@@ -1511,6 +1536,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     121012: (useCnt: number = 0) => new StatusBuilder('流萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
         .description('为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn121011】，则额外提供其[可用次数]的[护盾]。(最多额外提供3点[护盾])'),
 
+    121013: () => shieldStatus('叛逆的守护', 1, 2),
+
     121021: () => new StatusBuilder('冰封的炽炎魔女').heroStatus().icon('ski,3').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【行动阶段开始时：】如果所附属角色生命值不多于4，则移除此效果。；【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。【此效果被移除时：】所附属角色转换为[｢焚尽的炽炎魔女｣]形态。')
@@ -2040,6 +2067,34 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
         .description('本回合无法食用更多的｢料理｣。'),
 
+    301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
+        .description('根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。'),
+
+    301102: () => new StatusBuilder('千年的大乐章·别离之歌').heroStatus().icon('buff5').roundCnt(2)
+        .description('我方角色造成的伤害+1。；[roundCnt]')
+        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage).handle(() => ({ addDmg: 1 })),
+
+    301103: (name: string) => senlin1Status(name),
+
+    301104: (name: string) => senlin1Status(name),
+
+    301105: () => card311306sts('沙海守望·主动出击'),
+
+    301106: () => card311306sts('沙海守望·攻势防御'),
+
+    301107: (name: string) => senlin2Status(name),
+
+    301109: (name: string) => senlin2Status(name),
+
+    301201: () => new StatusBuilder('重嶂不移').heroStatus().useCnt(2).type(STATUS_TYPE.Shield)
+        .description('提供2点[护盾]，保护所附属角色。'),
+
+    301203: () => new StatusBuilder('辰砂往生录(生效中)').heroStatus().icon('buff5').roundCnt(1)
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('本回合中，角色｢普通攻击｣造成的伤害+1。')
+        .handle(() => ({ addDmgType1: 1 })),
+
+
     // 2010: () => new GIStatus(2010, '换班时间(生效中)', '【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。',
     //     'buff2', 1, [4, 10], 1, 0, -1, status => ({
     //         minusDiceHero: 1,
@@ -2149,8 +2204,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         return { restDmg: Math.max(0, restDmg - 2) }
     //     }),
 
-    // 2026: (useCnt: number) => new GIStatus(2026, '千岩之护', '根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。', '', 0, [7], useCnt, 0, -1),
-
     // 2029: () => new GIStatus(2029, '元素共鸣：热诚之火(生效中)', '本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。',
     //     'buff2', 0, [6, 10], 1, 0, 1, (status, event = {}) => ({
     //         addDmgCdt: 3,
@@ -2189,14 +2242,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         trigger: ['elReaction'],
     //         exec: () => { --status.useCnt },
     //     })),
-
-    301102: () => new StatusBuilder('千年的大乐章·别离之歌').heroStatus().icon('buff5').roundCnt(2)
-        .description('我方角色造成的伤害+1。；[roundCnt]')
-        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage).handle(() => ({ addDmg: 1 })),
-
-    // 2049: () => shieldStatus(2049, '叛逆的守护', 1, 2),
-
-    // 2050: () => new GIStatus(2050, '重嶂不移', '提供2点[护盾]，保护所附属角色。', '', 0, [7], 2, 0, -1),
 
     // 2051: () => new GIStatus(2051, '重攻击(生效中)', '本回合中，当前我方出战角色下次｢普通攻击｣造成的伤害+1。；【此次｢普通攻击｣为[重击]时：】伤害额外+1。',
     //     'buff3', 0, [6, 10], 1, 0, 1, (status, event = {}) => ({
@@ -2272,13 +2317,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             if (eStatus) --eStatus.useCnt;
     //         },
     //     })),
-
-    301103: (name: string) => senlin1Status(name),
-
-    301104: (name: string) => senlin1Status(name),
-
-    // 2072: () => new GIStatus(2072, '辰砂往生录(生效中)', '本回合中，角色｢普通攻击｣造成的伤害+1。',
-    //     'buff5', 0, [6, 10], -1, 0, 1, () => ({ addDmgType1: 1 })),
 
     // 2084: () => new GIStatus(2084, '红羽团扇(生效中)', '本回合中，我方执行的下次｢切换角色｣行动视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。',
     //     'buff2', 1, [4, 10], 1, 0, -1, status => ({
@@ -2361,20 +2399,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         }
     //     }),
 
-    // 2149: () => new GIStatus(2149, '沙海守望·主动出击', '本回合内，所附属角色下次造成的伤害额外+1。',
-    //     'buff5', 0, [4, 6, 10], 1, 0, 1, status => ({
-    //         trigger: ['skill'],
-    //         addDmg: 1,
-    //         exec: () => { --status.useCnt }
-    //     })),
-
-    // 2150: () => new GIStatus(2150, '沙海守望·攻势防御', '本回合内，所附属角色下次造成的伤害额外+1。',
-    //     'buff5', 0, [4, 6, 10], 1, 0, 1, status => ({
-    //         trigger: ['skill'],
-    //         addDmg: 1,
-    //         exec: () => { --status.useCnt }
-    //     })),
-
     // 2151: () => new GIStatus(2151, '四叶印(生效中)', '【结束阶段：】切换到所附属角色。',
     //     'buff3', 0, [3, 10], -1, 0, -1, (_status, event = {}) => ({
     //         trigger: ['phase-end'],
@@ -2407,15 +2431,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             },
     //         }
     //     }),
-
-    // 2160: (name: string) => new GIStatus(2160, `${name}(生效中)`, '【角色在本回合中，下次使用｢普通攻击｣后：】生成2个此角色类型的元素骰。',
-    //     'buff2', 0, [3, 4, 10], 1, 0, 1, status => ({
-    //         trigger: ['skilltype1'],
-    //         exec: () => {
-    //             --status.useCnt;
-    //             return { cmds: [{ cmd: 'getDice', element: -2, cnt: 2 }] }
-    //         }
-    //     })),
 
     // 2161: () => new GIStatus(2161, '净觉花(生效中)', '【本回合中，我方下次打出支援牌时：】少花费1个元素骰。',
     //     'buff2', 1, [4, 10], 1, 0, 1, (status, event = {}) => {

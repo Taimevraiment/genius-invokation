@@ -1,8 +1,8 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_LOCAL, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
 import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { allHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newStatus } from './statuses.js';
@@ -35,8 +35,11 @@ export type CardHandleEvent = {
     isExec?: boolean,
     supports?: Support[],
     esupports?: Support[],
+    isMinusDiceCard?: boolean,
+    isMinusDiceTalent?: boolean,
     minusDiceCard?: number,
     isMinusDiceSkill?: boolean,
+    minusDiceSkill?: number[][],
     ehidx?: number,
     getdmg?: number[],
     slotUse?: boolean,
@@ -112,15 +115,16 @@ const tiankongWeapon = (shareId: number) => {
 }
 
 const senlin1Weapon = (shareId: number, name: string, stsId: number) => {
-    return new CardBuilder(shareId).name(name)
+    return new CardBuilder(shareId).name(name).weapon().costSame(3)
         .description('【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次对角色打出｢天赋｣或使用｢元素战技｣时少花费2个元素骰。')
-        .weapon().costSame(3).handle((_c, _e, ver) => ({ addDmg: 1, status: [newStatus(ver)(stsId, name)] }));
+        .handle((_c, _e, ver) => ({ addDmg: 1, status: [newStatus(ver)(stsId, name)] }));
 }
 
-// const senlin2Weapon = (id: number, name: string, version: Version, userType: number, stsId: number, src: string) => {
-//     return () => new GICard(id, name, version, '【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次使用｢普通攻击｣后：生成2个此角色类型的元素骰。',
-//         src, 3, DICE_TYPE.Any, CARD_TYPE.Equipment, CARD_SUBTYPE.Weapon, userType, 1, () => ({ addDmg: 1, status: [newStatus(version)(stsId, name)] }));
-// }
+const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
+    return new CardBuilder(shareId).name(name).weapon().costAny(3)
+        .description('【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次使用｢普通攻击｣后：生成2个此角色类型的元素骰。')
+        .handle((_c, _e, ver) => ({ addDmg: 1, status: [newStatus(ver)(stsId, name)] }));
+}
 
 // const normalElArtifact = (id: number, name: string, element: PureElementType, src: string) => {
 //     return () => new GICard(id, name, 'v3.3.0', `【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。(每回合1次)`,
@@ -336,673 +340,720 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    311301: () => normalWeapon(132).name('白铁大剑')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/d8916ae5aaa5296a25c1f54713e2fd85_802175621117502141.png'),
 
-    // 41: normalWeapon(41, '白铁大剑', 2, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/d8916ae5aaa5296a25c1f54713e2fd85_802175621117502141.png'),
+    311302: () => jiliWeapon(133).name('祭礼大剑')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/35a410a0aad34824fdcf8ae986893d30_2999739715093754473.png'),
 
-    // 42: jiliWeapon(42, '祭礼大剑', 2, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/35a410a0aad34824fdcf8ae986893d30_2999739715093754473.png'),
+    311303: () => new CardBuilder(134).name('狼的末路').weapon().costSame(3)
+        .description('【角色造成的伤害+1】。；攻击剩余生命值不多于6的目标时，伤害额外+2。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/3ec60d32f7ce9f816a6dd784b8800e93_4564486285810218753.png')
+        .handle((_, event) => {
+            const { eheros = [], ehidx = -1 } = event;
+            return { trigger: ['skill'], addDmg: 1, addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 2) }
+        }),
 
-    // 43: () => new GICard(43, '狼的末路', '【角色造成的伤害+1】。；攻击剩余生命值不多于6的目标时，伤害额外+2。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/3ec60d32f7ce9f816a6dd784b8800e93_4564486285810218753.png',
-    //     3, 8, 0, [0], 2, 1, (_card, event) => {
-    //         const { eheros = [], ehidx = -1 } = event;
-    //         return { trigger: ['skill'], addDmg: 1, addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 2) }
-    //     }),
+    311304: () => tiankongWeapon(135).name('天空之傲')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7ce2f924ae1b0922ea14eef9fbd3f2bb_951683174491798888.png'),
 
-    // 44: tiankongWeapon(44, '天空之傲', 2, 'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7ce2f924ae1b0922ea14eef9fbd3f2bb_951683174491798888.png'),
+    311305: () => new CardBuilder(136).name('钟剑').since('v3.7.0').weapon().costSame(3).perCnt(1)
+        .description('【角色造成的伤害+1】。；【角色使用技能后：】为我方出战角色提供1点[护盾]。(每回合1次，可叠加到2点)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e8bf7a38608cc3811f32f396ccea01d4_493091124030114777.png')
+        .handle((card, event, ver) => {
+            const { combatStatus = [] } = event;
+            const shieldCnt = getObjById(combatStatus, 121013)?.useCnt ?? 0;
+            const isTriggered = card.perCnt > 0 && shieldCnt < 2;
+            return {
+                addDmg: 1,
+                trigger: ['skill'],
+                execmds: isCdt<Cmds[]>(isTriggered, [{ cmd: 'getStatus', status: [newStatus(ver)(121013)] }]),
+                exec: () => {
+                    if (isTriggered) --card.perCnt;
+                }
+            }
+        }),
 
-    // 45: () => new GICard(45, '钟剑', '【角色造成的伤害+1】。；【角色使用技能后：】为我方出战角色提供1点[护盾]。(每回合1次，可叠加到2点)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e8bf7a38608cc3811f32f396ccea01d4_493091124030114777.png',
-    //     3, 8, 0, [0], 2, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const shieldCnt = heros[hidx].outStatus.find(ost => ost.id == 2049)?.useCnt ?? 0;
-    //         const isTriggered = card.perCnt > 0 && shieldCnt < 2;
-    //         return {
-    //             addDmg: 1,
-    //             trigger: ['skill'],
-    //             execmds: isCdt<Cmds[]>(isTriggered, [{ cmd: 'getStatus', status: [newStatus(2049)] }]),
-    //             exec: () => {
-    //                 if (isTriggered) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    311306: () => new CardBuilder(301).name('苇海信标').since('v4.3.0').weapon().costSame(3).perCnt(3)
+        .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】本回合内，角色下次造成的伤害额外+1。(每回合1次)；【角色受到伤害后：】本回合内，角色下次造成的伤害额外+1。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/4148c247b2685dfcb305cc9b6c5e8cff_6450004800527281410.png')
+        .handle((card, event, ver) => {
+            const { trigger = '' } = event;
+            const isTriggered1 = trigger == 'skilltype2' && (card.perCnt >> 0 & 1) == 1;
+            const isTriggered2 = trigger == 'getdmg' && (card.perCnt >> 1 & 1) == 1;
+            return {
+                addDmg: 1,
+                trigger: ['skilltype2', 'getdmg'],
+                execmds: isCdt<Cmds[]>(isTriggered1 || isTriggered2, [{ cmd: 'getStatus', status: [newStatus(ver)(301105 + +isTriggered2)] }]),
+                exec: () => {
+                    if (isTriggered1) card.perCnt &= ~(1 << 0);
+                    if (isTriggered2) card.perCnt &= ~(1 << 1);
+                }
+            }
+        }),
 
-    // 46: () => new GICard(46, '苇海信标', '【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】本回合内，角色下次造成的伤害额外+1。(每回合1次)；【角色受到伤害后：】本回合内，角色下次造成的伤害额外+1。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/4148c247b2685dfcb305cc9b6c5e8cff_6450004800527281410.png',
-    //     3, 8, 0, [0], 2, 1, (card, event) => {
-    //         const { trigger = '' } = event;
-    //         const isTriggered1 = trigger == 'skilltype2' && (card.perCnt >> 0 & 1) == 1;
-    //         const isTriggered2 = trigger == 'getdmg' && (card.perCnt >> 1 & 1) == 1;
-    //         return {
-    //             addDmg: 1,
-    //             trigger: ['skilltype2', 'getdmg'],
-    //             execmds: isCdt<Cmds[]>(isTriggered1 || isTriggered2, [{ cmd: 'getStatus', status: [newStatus(2149 + +isTriggered2)] }]),
-    //             exec: () => {
-    //                 if (isTriggered1) card.perCnt &= ~(1 << 0);
-    //                 if (isTriggered2) card.perCnt &= ~(1 << 1);
-    //             }
-    //         }
-    //     }, { pct: 3 }),
+    311307: () => senlin2Weapon(383, '森林王器', 301109).since('v4.7.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/9d317a3a81e47ab989c633ff609b5861_5509350951295616421.png'),
 
-    // 47: senlin2Weapon(47, '森林王器', 2, 'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/9d317a3a81e47ab989c633ff609b5861_5509350951295616421.png'),
+    311308: () => new CardBuilder(401).name('｢究极霸王超级魔剑｣').since('v4.8.0').weapon().costSame(2)
+        .description('此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌种类，称为｢声援｣。如果此牌的｢声援｣至少为2/4/8，则角色造成的伤害+1/2/3。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/21e68f35af52025a6088ca7aec78ef8f_7867921157902864538.png')
+        .handle((card, event) => {
+            const { playerInfo: { usedCardIds = [], initCardIds = [] } = {}, hcard, slotUse = false } = event;
+            if (slotUse) {
+                card.useCnt = usedCardIds.filter(c => !initCardIds.includes(c)).length;
+                return;
+            }
+            const cardId = hcard?.id ?? 0;
+            return {
+                trigger: isCdt(!initCardIds.includes(cardId) && !usedCardIds.includes(cardId), ['card']),
+                addDmg: card.useCnt >= 8 ? 3 : card.useCnt >= 4 ? 2 : +(card.useCnt >= 2),
+                exec: () => { ++card.useCnt }
+            }
+        }),
 
-    // 48: () => new GICard(48, '｢究极霸王超级魔剑｣', '此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌种类，称为｢声援｣。如果此牌的｢声援｣至少为2/4/8，则角色造成的伤害+1/2/3。',
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_BaWangJian.webp',
-    //     2, 8, 0, [0], 2, 1, (card, event) => {
-    //         const { playerInfo: { usedCardIds = [], initCardIds = [] } = {}, hcard, slotUse = false } = event;
-    //         if (slotUse) {
-    //             card.useCnt = usedCardIds.filter(c => !initCardIds.includes(c)).length;
-    //             return;
-    //         }
-    //         const cardid = hcard?.id ?? 0;
-    //         return {
-    //             trigger: isCdt(!initCardIds.includes(cardid) && !usedCardIds.includes(cardid), ['card']),
-    //             addDmg: card.useCnt >= 8 ? 3 : card.useCnt >= 4 ? 2 : +(card.useCnt >= 2),
-    //             exec: () => { ++card.useCnt }
-    //         }
-    //     }),
+    311401: () => normalWeapon(137).name('白缨枪')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2618b55f8449904277794039473df17c_5042678227170067991.png'),
 
-    // 61: normalWeapon(61, '白缨枪', 5, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2618b55f8449904277794039473df17c_5042678227170067991.png'),
+    311402: () => new CardBuilder(138).name('千岩长枪').weapon().costSame(3)
+        .description('【角色造成的伤害+1】。；【入场时：】队伍中每有一名｢璃月｣角色，此牌就为附属的角色提供1点[护盾]。(最多3点)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/7b6b74c3444f624f117f8e05344d27ec_6292708375904670698.png')
+        .handle((_, event, ver) => {
+            const { heros } = event;
+            const liyueCnt = Math.min(3, heros?.filter(h => h.tags.includes(HERO_LOCAL.Liyue) && (ver >= 'v3.7.0' || h.hp > 0))?.length ?? 0);
+            return { addDmg: 1, status: [newStatus(ver)(301101, liyueCnt)] }
+        }),
 
-    // 62: () => new GICard(62, '千岩长枪', '【角色造成的伤害+1】。；【入场时：】队伍中每有一名｢璃月｣角色，此牌就为附属的角色提供1点[护盾]。(最多3点)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/7b6b74c3444f624f117f8e05344d27ec_6292708375904670698.png',
-    //     3, 8, 0, [0], 5, 1, (_card, event) => {
-    //         const { heros } = event;
-    //         const liyueCnt = Math.min(3, heros?.filter(h => h.local.includes(2))?.length ?? 0);
-    //         return { addDmg: 1, status: [newStatus(2026, liyueCnt)] }
-    //     }),
+    311403: () => tiankongWeapon(139).name('天空之脊')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/788811f1c1ce03f56a89ecde4cbe52a7_2992557107190163621.png'),
 
-    // 63: tiankongWeapon(63, '天空之脊', 5, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/788811f1c1ce03f56a89ecde4cbe52a7_2992557107190163621.png'),
+    311404: () => new CardBuilder(140).name('贯虹之槊').since('v3.7.0').weapon().costSame(3).perCnt(1)
+        .description('【角色造成的伤害+1】。；角色如果在[护盾]角色状态或[护盾]出战状态的保护下，则造成的伤害额外+1。；【角色使用｢元素战技｣后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充1点[护盾]。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/0a1242b4eeb9c6b6e731466fb182cb60_6226689090161933551.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], combatStatus = [], trigger = '' } = event;
+            const fhero = heros[hidx];
+            const isShieldStatus = fhero?.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Shield)) ||
+                combatStatus.some(ost => ost.hasType(STATUS_TYPE.Shield));
+            return {
+                addDmg: 1,
+                addDmgCdt: isCdt(isShieldStatus && trigger == 'skill', 1),
+                trigger: ['skill', 'skilltype2'],
+                isAddTask: trigger == 'skilltype2',
+                exec: () => {
+                    if (card.perCnt == 0 || trigger != 'skilltype2') return;
+                    const ost = combatStatus.find(ost => ost.hasType(STATUS_TYPE.Shield));
+                    if (ost) {
+                        ++ost.useCnt;
+                        --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 64: () => new GICard(64, '贯虹之槊', '【角色造成的伤害+1】。；角色如果在[护盾]角色状态或[护盾]出战状态的保护下，则造成的伤害额外+1。；【角色使用｢元素战技｣后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充1点[护盾]。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/0a1242b4eeb9c6b6e731466fb182cb60_6226689090161933551.png',
-    //     3, 8, 0, [0], 5, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], trigger = '' } = event;
-    //         const fhero = heros[hidx];
-    //         const isShieldStatus = fhero?.inStatus.some(ist => ist.type.includes(7)) || fhero?.outStatus.some(ost => ost.type.includes(7));
-    //         return {
-    //             addDmg: 1,
-    //             addDmgCdt: isCdt(isShieldStatus && trigger == 'skill', 1),
-    //             trigger: ['skill', 'skilltype2'],
-    //             isAddTask: trigger == 'skilltype2',
-    //             exec: () => {
-    //                 if (card.perCnt == 0 || trigger != 'skilltype2') return;
-    //                 const ost = fhero.outStatus.find(ost => ost.type.includes(7));
-    //                 if (ost) {
-    //                     ++ost.useCnt;
-    //                     --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    311405: () => new CardBuilder(141).name('薙草之稻光').since('v3.7.0').weapon().costSame(3)
+        .description('【角色造成的伤害+1】。；【每回合自动触发1次：】如果所附属角色没有[充能]，就使其获得1点[充能]。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1ed5905877be45aca0e92093e3b5fdbe_7752495456460826672.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs = [] } = event;
+            const execmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy > 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
+            return { addDmg: 1, trigger: ['phase-start'], execmds }
+        }),
 
-    // 65: () => new GICard(65, '薙草之稻光', '【角色造成的伤害+1】。；【每回合自动触发1次：】如果所附属角色没有[充能]，就使其获得1点[充能]。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1ed5905877be45aca0e92093e3b5fdbe_7752495456460826672.png',
-    //     3, 8, 0, [0], 5, 1, (_card, event) => {
-    //         const { heros = [], hidxs = [] } = event;
-    //         const execmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy > 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
-    //         return { addDmg: 1, trigger: ['phase-start'], execmds }
-    //     }),
+    311406: () => senlin1Weapon(142, '贯月矢', 301104).since('v4.1.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/9d44a608d1ba86c970a0fe897f22121c_7239489409641716764.png'),
 
-    // 66: senlin1Weapon(66, '贯月矢', 5, 'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/9d44a608d1ba86c970a0fe897f22121c_7239489409641716764.png'),
+    311407: () => new CardBuilder(302).name('和璞鸢').since('v4.3.0').weapon().costSame(3).useCnt(0).isResetUseCnt()
+        .description('【角色造成的伤害+1】。；【角色使用技能后：】直到回合结束前，此牌所提供的伤害加成值额外+1。(最多累积到+2)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/15/258999284/972e1ba2e544111bc0069697539b707e_7547101337974467153.png')
+        .handle(card => ({
+            addDmg: 1 + card.useCnt,
+            trigger: ['skill'],
+            exec: () => {
+                if (card.useCnt < 2) ++card.useCnt;
+            }
+        })),
 
-    // 67: () => new GICard(67, '和璞鸢', '【角色造成的伤害+1】。；【角色使用技能后：】直到回合结束前，此牌所提供的伤害加成值额外+1。(最多累积到+2)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/15/258999284/972e1ba2e544111bc0069697539b707e_7547101337974467153.png',
-    //     3, 8, 0, [0], 5, 1, card => ({
-    //         addDmg: 1 + card.useCnt,
-    //         trigger: ['skill'],
-    //         exec: () => {
-    //             if (card.useCnt < 2) ++card.useCnt;
-    //         }
-    //     }), { uct: 0, isResetUct: true }),
+    311408: () => new CardBuilder(356).name('公义的酬报').since('v4.6.0').weapon().costSame(2).useCnt(0)
+        .description('角色使用｢元素爆发｣造成的伤害+2。；【我方出战角色受到伤害或治疗后：】累积1点｢公义之理｣。如果此牌已累积3点｢公义之理｣，则消耗3点｢公义之理｣，使角色获得1点[充能]。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/000bcdedf14ef6af2cfa36a003841098_4382151758785122038.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs = [], getdmg = [], heal = [] } = event;
+            const fhidx = heros.findIndex(h => h.isFront);
+            const trigger: Trigger[] = [];
+            if (getdmg[fhidx] > 0) trigger.push('getdmg', 'other-getdmg');
+            if (heal[fhidx] > 0) trigger.push('heal');
+            return {
+                trigger,
+                addDmgType3: 2,
+                execmds: isCdt<Cmds[]>(card.useCnt >= 2, [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
+                isAddTask: true,
+                exec: () => {
+                    if (++card.useCnt >= 3) card.useCnt -= 3;
+                }
+            }
+        }),
 
-    // 68: () => new GICard(68, '公义的酬报', '角色使用｢元素爆发｣造成的伤害+2。；【我方出战角色受到伤害或治疗后：】累积1点｢公义之理｣。如果此牌已累积3点｢公义之理｣，则消耗3点｢公义之理｣，使角色获得1点[充能]。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/000bcdedf14ef6af2cfa36a003841098_4382151758785122038.png',
-    //     2, 8, 0, [0], 5, 1, (card, event) => {
-    //         const { heros = [], hidxs = [], getdmg = [], heal = [] } = event;
-    //         const fhidx = heros.findIndex(h => h.isFront);
-    //         const trigger: Trigger[] = [];
-    //         if (getdmg[fhidx] > 0) trigger.push('getdmg', 'other-getdmg');
-    //         if (heal[fhidx] > 0) trigger.push('heal');
-    //         return {
-    //             addDmgType3: 2,
-    //             trigger,
-    //             execmds: isCdt<Cmds[]>(card.useCnt >= 2, [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
-    //             isAddTask: true,
-    //             exec: () => {
-    //                 if (++card.useCnt >= 3) card.useCnt -= 3;
-    //             }
-    //         }
-    //     }, { uct: 0 }),
+    311409: () => new CardBuilder(402).name('勘探钻机').since('v4.8.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(2)
+        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
+        .handle((card, event) => {
+            const { restDmg = -1, hcards: { length: hcardsCnt } = [] } = event;
+            if (restDmg > -1) {
+                if (hcardsCnt == 0 || card.perCnt <= 0) return { restDmg }
+                ++card.useCnt;
+                --card.perCnt;
+                return { restDmg: restDmg - 1, execmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }] }
+            }
+            if (card.useCnt <= 0) return;
+            return {
+                trigger: ['skill'],
+                addDmgCdt: 1,
+                execmds: [{ cmd: 'getCard', cnt: card.useCnt }],
+                exec: () => { card.useCnt = 0 }
+            }
+        }),
 
-    // 69: () => new GICard(69, '勘探钻机', '【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。',
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_KanTanQiang.webp',
-    //     2, 8, 0, [-1, 0], 5, 1, (card, event) => {
-    //         const { restDmg = -1, hcards: { length: hcardsCnt } = [] } = event;
-    //         if (restDmg > -1) {
-    //             if (hcardsCnt == 0 || card.perCnt <= 0) return { restDmg }
-    //             ++card.useCnt;
-    //             --card.perCnt;
-    //             return { restDmg: restDmg - 1, execmds: [{ cmd: 'discard', element: 0 }] }
-    //         }
-    //         if (card.useCnt <= 0) return;
-    //         return {
-    //             trigger: ['skill'],
-    //             addDmgCdt: 1,
-    //             execmds: [{ cmd: 'getCard', cnt: card.useCnt }],
-    //             exec: () => { card.useCnt = 0 }
-    //         }
-    //     }, { uct: 0, pct: 2 }),
+    311501: () => normalWeapon(143).name('旅行剑')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2540a7ead6f2e957a6f25c9899ce428b_3859616323968734996.png'),
 
-    // 81: normalWeapon(81, '旅行剑', 1, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2540a7ead6f2e957a6f25c9899ce428b_3859616323968734996.png'),
+    311502: () => jiliWeapon(144).name('祭礼剑')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/5dda866add6d4244a69c0ffdd2b53e51_1375735839691106206.png'),
 
-    // 82: jiliWeapon(82, '祭礼剑', 1, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/5dda866add6d4244a69c0ffdd2b53e51_1375735839691106206.png'),
+    311503: () => new CardBuilder(145).name('风鹰剑').weapon().costSame(3).perCnt(2)
+        .description('【角色造成的伤害+1】。；【对方使用技能后：】如果所附属角色为｢出战角色｣，则治疗该角色1点。(每回合至多2次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/fcad55ff202d5dc8fa1d782f0b2f3400_3902557354688808483.png')
+        .handle((card, { hidxs }) => ({
+            addDmg: 1,
+            trigger: ['oppo-skill'],
+            execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'heal', cnt: 1, hidxs }]),
+            exec: () => {
+                if (card.perCnt > 0) --card.perCnt;
+            }
+        })),
 
-    // 83: () => new GICard(83, '风鹰剑', '【角色造成的伤害+1】。；【对方使用技能后：】如果所附属角色为｢出战角色｣，则治疗该角色1点。(每回合至多2次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/fcad55ff202d5dc8fa1d782f0b2f3400_3902557354688808483.png',
-    //     3, 8, 0, [0], 1, 1, (card, event) => {
-    //         const { hidxs } = event;
-    //         return {
-    //             addDmg: 1,
-    //             trigger: ['oppo-skill'],
-    //             execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'heal', cnt: 1, hidxs }]),
-    //             exec: () => {
-    //                 if (card.perCnt > 0) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 2 }),
+    311504: () => tiankongWeapon(146).name('天空之刃').since('v3.7.0')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b3a9cd06298bf6dcd9191a88bb754f14_6317636823354305889.png'),
 
-    // 84: tiankongWeapon(84, '天空之刃', 1, 'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b3a9cd06298bf6dcd9191a88bb754f14_6317636823354305889.png'),
+    311505: () => new CardBuilder(147).name('西风剑').since('v3.6.0').weapon().costSame(3).perCnt(1)
+        .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】角色额外获得1点[充能]。(每回合1次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e1938c4cf6e50cfcb65d67ef10bc16a3_1486330508550781744.png')
+        .handle(card => ({
+            addDmg: 1,
+            trigger: ['skilltype2'],
+            execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getEnergy', cnt: 1 }]),
+            exec: () => {
+                if (card.perCnt > 0) --card.perCnt;
+            }
+        })),
 
-    // 85: () => new GICard(85, '西风剑', '【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】角色额外获得1点[充能]。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e1938c4cf6e50cfcb65d67ef10bc16a3_1486330508550781744.png',
-    //     3, 8, 0, [0], 1, 1, card => ({
-    //         addDmg: 1,
-    //         trigger: ['skilltype2'],
-    //         execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getEnergy', cnt: 1 }]),
-    //         exec: () => {
-    //             if (card.perCnt > 0) --card.perCnt;
-    //         }
-    //     }), { pct: 1 }),
+    311506: () => new CardBuilder(303).name('裁叶萃光').since('v4.3.0').weapon().costSame(3).perCnt(2)
+        .description('【角色造成的伤害+1】。；【角色使用｢普通攻击｣后：】生成1个随机的基础元素骰。(每回合最多触发2次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/4d3935c7b67e051b02f9a525357b2fb0_8903486552471935304.png')
+        .handle(card => ({
+            addDmg: 1,
+            trigger: ['skilltype1'],
+            execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.RandomDice }]),
+            exec: () => {
+                if (card.perCnt > 0) --card.perCnt;
+            }
+        })),
 
-    // 86: () => new GICard(86, '裁叶萃光', '【角色造成的伤害+1】。；【角色使用｢普通攻击｣后：】生成1个随机的基础元素骰。(每回合最多触发2次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/4d3935c7b67e051b02f9a525357b2fb0_8903486552471935304.png',
-    //     3, 8, 0, [0], 1, 1, card => ({
-    //         addDmg: 1,
-    //         trigger: ['skilltype1'],
-    //         execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: -1 }]),
-    //         exec: () => {
-    //             if (card.perCnt > 0) --card.perCnt;
-    //         }
-    //     }), { pct: 2 }),
+    311507: () => senlin2Weapon(327, '原木刀', 301107).since('v4.4.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/1f97927392b79a716430461251ff53e2_4196794667556484935.png'),
 
-    // 87: senlin2Weapon(87, '原木刀', 1, 'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/1f97927392b79a716430461251ff53e2_4196794667556484935.png'),
+    311508: () => new CardBuilder(384).name('静水流涌之辉').since('v4.7.0').weapon().costSame(2).useCnt(0).perCnt(1)
+        .description('【我方角色受到伤害或治疗后：】此牌累积1点｢湖光｣。；【角色进行｢普通攻击｣时：】如果已有12点｢湖光｣，则消耗12点，使此技能少花费2个[无色元素骰]且造成的伤害+1，并且治疗所附属角色1点。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/92753a699957dc63318f06ab506d7e41_8008667568462089258.png')
+        .handle((card, event) => {
+            const { trigger = '' } = event;
+            const triggers: Trigger[] = ['getdmg', 'heal'];
+            const isTriggered = card.useCnt >= 12 && card.perCnt > 0;
+            if (isTriggered) triggers.push('skilltype1');
+            return {
+                trigger: triggers,
+                addDmgCdt: isCdt(trigger == 'skilltype1', 1),
+                execmds: isCdt<Cmds[]>(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
+                minusDiceSkill: isCdt(isTriggered, { skilltype1: [0, 2, 0] }),
+                exec: () => {
+                    if (['getdmg', 'heal'].includes(trigger)) ++card.useCnt;
+                    else if (trigger == 'skilltype1') {
+                        card.useCnt -= 12;
+                        --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 88: () => new GICard(88, '静水流涌之辉', '【我方角色受到伤害或治疗后：】此牌累积1点｢湖光｣。；【角色进行｢普通攻击｣时：】如果已有12点｢湖光｣，则消耗12点，使此技能少花费2个[无色元素骰]且造成的伤害+1，并且治疗所附属角色1点。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/92753a699957dc63318f06ab506d7e41_8008667568462089258.png',
-    //     2, 8, 0, [0], 1, 1, (card, event) => {
-    //         const { trigger = '' } = event;
-    //         const triggers: Trigger[] = ['getdmg', 'heal'];
-    //         const isTriggered = card.useCnt >= 12 && card.perCnt > 0;
-    //         if (isTriggered) triggers.push('skilltype1');
-    //         const { minusSkillRes } = minusDiceSkillHandle(event, { skilltype1: [0, 2, 0] }, () => isTriggered);
-    //         return {
-    //             trigger: triggers,
-    //             addDmgCdt: isCdt(trigger == 'skilltype1', 1),
-    //             execmds: isCdt<Cmds[]>(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
-    //             ...minusSkillRes,
-    //             exec: () => {
-    //                 if (['getdmg', 'heal'].includes(trigger)) ++card.useCnt;
-    //                 else if (trigger == 'skilltype1') {
-    //                     card.useCnt -= 12;
-    //                     --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { uct: 0, pct: 1 }),
+    312001: () => new CardBuilder(148).name('冒险家头带').artifact().costSame(1).perCnt(3)
+        .description('【角色使用｢普通攻击｣后：】治疗自身1点(每回合至多3次)。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/c2617ba94c31d82bd4af6df8e74aac91_8306847584147063772.png')
+        .handle((card, event) => {
+            const { hidxs = [], heros = [] } = event;
+            const curHero = heros[hidxs[0]];
+            if (card.perCnt <= 0 || curHero?.maxHp == curHero?.hp) return;
+            return {
+                trigger: ['skilltype1'],
+                execmds: [{ cmd: 'heal', cnt: 1, hidxs }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 101: () => new GICard(101, '冒险家头带', '【角色使用｢普通攻击｣后：】治疗自身1点(每回合至多3次)。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/c2617ba94c31d82bd4af6df8e74aac91_8306847584147063772.png',
-    //     1, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { hidxs = [], heros = [] } = event;
-    //         const curHero = heros[hidxs[0]];
-    //         const notUse = card.perCnt <= 0 || curHero?.maxhp == curHero?.hp;
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             execmds: isCdt<Cmds[]>(!notUse, [{ cmd: 'heal', cnt: 1, hidxs }]),
-    //             exec: () => {
-    //                 if (!notUse) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 3 }),
+    312002: () => new CardBuilder(149).name('幸运儿银冠').artifact().costAny(2).perCnt(1)
+        .description('【角色使用｢元素战技｣后：】治疗自身2点(每回合1次)。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/27d7021e8d3dc0ee1b6f271558179c77_4899141043311513249.png')
+        .handle((card, event) => {
+            const { hidxs = [], heros = [] } = event;
+            const curHero = heros[hidxs[0]];
+            if (card.perCnt <= 0 || curHero?.maxHp == curHero?.hp) return;
+            return {
+                trigger: ['skilltype2'],
+                execmds: [{ cmd: 'heal', cnt: 2, hidxs }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 102: () => new GICard(102, '幸运儿银冠', '【角色使用｢元素战技｣后：】治疗自身2点(每回合1次)。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/27d7021e8d3dc0ee1b6f271558179c77_4899141043311513249.png',
-    //     2, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { hidxs = [], heros = [] } = event;
-    //         const curHero = heros[hidxs[0]];
-    //         const notUse = card.perCnt <= 0 || curHero?.maxhp == curHero?.hp;
-    //         return {
-    //             trigger: ['skilltype2'],
-    //             execmds: isCdt<Cmds[]>(!notUse, [{ cmd: 'heal', cnt: 2, hidxs }]),
-    //             exec: () => {
-    //                 if (!notUse) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312003: () => new CardBuilder(150).name('游医的方巾').artifact().costSame(1).perCnt(1)
+        .description('【角色使用｢元素爆发｣后：】治疗所有我方角色1点(每回合1次)。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/27f34fa09a68f4de71cd8ce12b2ff2ea_7632599925994945499.png')
+        .handle((card, event) => {
+            const { heros = [] } = event;
+            if (card.perCnt <= 0 || heros?.every(h => h.maxHp == h.hp)) return;
+            return {
+                trigger: ['skilltype3'],
+                execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 103: () => new GICard(103, '游医的方巾', '【角色使用｢元素爆发｣后：】治疗所有我方角色1点(每回合1次)。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/27f34fa09a68f4de71cd8ce12b2ff2ea_7632599925994945499.png',
-    //     1, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [] } = event;
-    //         const notUse = card.perCnt <= 0 || heros?.every(h => h.maxhp == h.hp);
-    //         return {
-    //             trigger: ['skilltype3'],
-    //             execmds: isCdt<Cmds[]>(!notUse, [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }]),
-    //             exec: () => {
-    //                 if (!notUse) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312004: () => new CardBuilder(151).name('赌徒的耳环').artifact().costSame(1).perCnt(3).perCnt(0, 'v3.8.0').isResetPerCnt()
+        .description('【敌方角色被击倒后：】如果所附属角色为｢出战角色｣，则生成2个[万能元素骰]。(整场牌局限制3次)')
+        .description('【敌方角色被击倒后：】如果所附属角色为｢出战角色｣，则生成2个[万能元素骰]。', 'v3.8.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/c36e23e6486cfc14ba1afac19d73620e_6020851449922266352.png')
+        .handle((card, _, ver) => {
+            if (ver >= 'v3.8.0' && card.perCnt <= 0) return;
+            return {
+                trigger: ['kill'],
+                execmds: [{ cmd: 'getDice', cnt: 2, element: DICE_COST_TYPE.Omni }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 104: () => new GICard(104, '赌徒的耳环', '【敌方角色被击倒后：】如果所附属角色为｢出战角色｣，则生成2个[万能元素骰]。(整场牌局限制3次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/c36e23e6486cfc14ba1afac19d73620e_6020851449922266352.png',
-    //     1, 8, 0, [1], 0, 1, card => ({
-    //         trigger: ['kill'],
-    //         execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getDice', cnt: 2, element: 0 }]),
-    //         exec: () => {
-    //             if (card.perCnt > 0) --card.perCnt;
-    //         }
-    //     }), { pct: 3, isResetPct: false }),
+    312005: () => new CardBuilder(152).name('教官的帽子').artifact().costAny(2).perCnt(3)
+        .description('【角色引发元素反应后：】生成1个此角色元素类型的元素骰。(每回合至多3次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/66b3c1346a589e0dea45a58cd4d65c5a_3513743616827517581.png')
+        .handle(card => {
+            if (card.perCnt <= 0) return;
+            return {
+                trigger: ['elReaction'],
+                execmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 105: () => new GICard(105, '教官的帽子', '【角色引发元素反应后：】生成1个此角色元素类型的元素骰。(每回合至多3次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/66b3c1346a589e0dea45a58cd4d65c5a_3513743616827517581.png',
-    //     2, 0, 0, [1], 0, 1, card => ({
-    //         trigger: ['elReaction'],
-    //         execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: -2 }]),
-    //         exec: () => {
-    //             if (card.perCnt > 0) --card.perCnt;
-    //         }
-    //     }), { pct: 3, isResetPct: false }),
+    312006: () => new CardBuilder(153).name('流放者头冠').artifact().costAny(2).perCnt(1)
+        .description('【角色使用｢元素爆发｣后：】所有后台我方角色获得1点[充能]。(每回合1次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/dd30c7290b9379c5a1a91e0bb5d881c3_4746512653382401326.png')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { heros = [] } = event;
+            return {
+                trigger: ['skilltype3'],
+                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: getBackHidxs(heros) }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 106: () => new GICard(106, '流放者头冠', '【角色使用｢元素爆发｣后：】所有后台我方角色获得1点[充能]。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/dd30c7290b9379c5a1a91e0bb5d881c3_4746512653382401326.png',
-    //     2, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [] } = event;
-    //         const hidxs = heros.map((h, hi) => ({ hi, f: h.isFront, hp: h.hp })).filter(v => !v.f && v.hp > 0).map(v => v.hi);
-    //         return {
-    //             trigger: ['skilltype3'],
-    //             execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
-    //             exec: () => {
-    //                 if (card.perCnt > 0) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312007: () => new CardBuilder(154).name('华饰之兜').since('v3.5.0').artifact().costSame(1).costAny(2, 'v4.0.0')
+        .description('【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/82dc7fbd9334da0ca277b234c902a394_6676194364878839414.png')
+        .handle((_, { hidxs }) => ({
+            trigger: ['other-skilltype3'],
+            execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
+        })),
 
-    // 107: () => new GICard(107, '华饰之兜', '【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/82dc7fbd9334da0ca277b234c902a394_6676194364878839414.png',
-    //     1, 8, 0, [1], 0, 1, (_card, { hidxs }) => ({
-    //         trigger: ['other-skilltype3'],
-    //         execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
-    //     })),
+    312008: () => new CardBuilder(155).name('绝缘之旗印').since('v3.7.0').artifact().costSame(2).costAny(3, 'v4.0.0').perCnt(1).perCnt(0, 'v4.1.0')
+        .description('【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。；角色使用｢元素爆发｣造成的伤害+2。(每回合1次)')
+        .description('【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。；角色使用｢元素爆发｣造成的伤害+2。', 'v4.1.0')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/361399b0aa575a2805da6765d3c0e17c_4972333427190668688.png')
+        .handle((card, event, ver) => {
+            const { hidxs, trigger = '' } = event;
+            return {
+                addDmgType3: isCdt(ver < 'v4.1.0' || card.perCnt > 0, 2),
+                trigger: ['other-skilltype3', 'skilltype3'],
+                execmds: isCdt<Cmds[]>(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
+                exec: () => {
+                    if (trigger == 'skilltype3' && card.perCnt > 0) --card.perCnt;
+                }
+            }
+        }),
 
-    // 108: () => new GICard(108, '绝缘之旗印', '【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。；角色使用｢元素爆发｣造成的伤害+2。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/361399b0aa575a2805da6765d3c0e17c_4972333427190668688.png',
-    //     2, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { hidxs, trigger = '' } = event;
-    //         return {
-    //             addDmgType3: isCdt(card.perCnt > 0, 2),
-    //             trigger: ['other-skilltype3', 'skilltype3'],
-    //             execmds: isCdt<Cmds[]>(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
-    //             exec: () => {
-    //                 if (trigger == 'other-skilltype3') return;
-    //                 if (card.perCnt > 0) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312009: () => new CardBuilder(156).name('将帅兜鍪').since('v3.5.0').artifact().costSame(2)
+        .description('【行动阶段开始时：】为角色附属｢【sts301201】｣。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/86ed124f5715f96604248a48a57de351_6600927335776465307.png')
+        .handle((_, event, ver) => ({
+            trigger: ['phase-start'],
+            execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301201)], hidxs: event.hidxs }],
+        })),
 
-    // 109: () => new GICard(109, '将帅兜鍪', '【行动阶段开始时：】为角色附属｢【sts2050】｣。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/86ed124f5715f96604248a48a57de351_6600927335776465307.png',
-    //     2, 8, 0, [1], 0, 1, () => ({
-    //         trigger: ['phase-start'],
-    //         execmds: [{ cmd: 'getStatus', status: [newStatus(2050)] }],
-    //     })),
+    312010: () => new CardBuilder(157).name('千岩牢固').since('v3.7.0').artifact().costSame(3).perCnt(1)
+        .description('【行动阶段开始时：】为角色附属｢【sts301201】｣。；【角色受到伤害后：】如果所附属角色为｢出战角色｣，则生成1个此角色元素类型的元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/6b1e8983b34f821da73f7a93076a501e_3915605735095366427.png')
+        .handle((card, event, ver) => {
+            const { heros = [], hidxs = [], trigger = '', isExecTask = false } = event;
+            const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && heros[hidxs[0]].isFront;
+            return {
+                trigger: ['phase-start', 'getdmg'],
+                isAddTask: !isExecTask,
+                execmds: isCdt<Cmds[]>(trigger == 'phase-start', [{ cmd: 'getStatus', status: [newStatus(ver)(301201)], hidxs }],
+                    isCdt<Cmds[]>(isGetDmg, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }])),
+                exec: () => {
+                    if (isGetDmg) --card.perCnt;
+                }
+            }
+        }),
 
-    // 110: () => new GICard(110, '千岩牢固', '【行动阶段开始时：】为角色附属｢【sts2050】｣。；【角色受到伤害后：】如果所附属角色为｢出战角色｣，则生成1个此角色元素类型的元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/6b1e8983b34f821da73f7a93076a501e_3915605735095366427.png',
-    //     3, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], trigger = '', isExecTask = false } = event;
-    //         const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && heros[hidx].isFront;
-    //         return {
-    //             trigger: ['phase-start', 'getdmg'],
-    //             isAddTask: !isExecTask,
-    //             execmds: isCdt<Cmds[]>(trigger == 'phase-start', [{ cmd: 'getStatus', status: [newStatus(2050)] }],
-    //                 isCdt<Cmds[]>(isGetDmg, [{ cmd: 'getDice', cnt: 1, element: heros[hidx]?.element ?? 0 }])),
-    //             exec: () => {
-    //                 if (isGetDmg) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312011: () => new CardBuilder(158).name('虺雷之姿').since('v3.7.0').artifact().costAny(2).costSame(2, 'v4.0.0').perCnt(1)
+        .description('【对角色打出｢天赋｣或角色使用｢普通攻击｣时：】少花费1个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d136fc0fd368a268fe3adaba8c0e64bb_8574805937216108762.png')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+            return {
+                minusDiceSkill: { skilltype1: [0, 0, 1] },
+                minusDiceCard: isCdt(isMinusDiceTalent, 1),
+                trigger: ['skilltype1', 'card'],
+                exec: () => {
+                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skilltype1' && isMinusDiceSkill) {
+                        --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 111: () => new GICard(111, '虺雷之姿', '【对角色打出｢天赋｣或角色使用｢普通攻击｣时：】少花费1个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d136fc0fd368a268fe3adaba8c0e64bb_8574805937216108762.png',
-    //     2, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { hcard, heros = [], hidxs: [hidx] = [], trigger = '', minusDiceCard: mdc = 0 } = event;
-    //         const isMinusCard = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] }, () => card.perCnt > 0);
-    //         return {
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isMinusCard, 1),
-    //             trigger: ['skilltype1', 'card'],
-    //             exec: () => {
-    //                 if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusSkill)) {
-    //                     --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312012: () => new CardBuilder(159).name('辰砂往生录').since('v3.7.0').artifact().costAny(3).costSame(3, 'v4.0.0').perCnt(1)
+        .description('【对角色打出｢天赋｣或角色使用｢普通攻击｣时：】少花费1个元素骰。(每回合1次)；【角色被切换为｢出战角色｣后：】本回合中，角色｢普通攻击｣造成的伤害+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ad8e8b77b4efc4aabd42b7954fbc244c_7518202688884952912.png')
+        .handle((card, event, ver) => {
+            const { trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+            const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
+            return {
+                minusDiceSkill: isCdt(card.perCnt > 0, { skilltype1: [0, 0, 1] }),
+                minusDiceCard: isCdt(isMinusCard, 1),
+                trigger: ['skilltype1', 'card', 'change-to'],
+                execmds: isCdt<Cmds[]>(trigger == 'change-to', [{ cmd: 'getStatus', status: [newStatus(ver)(301203)] }]),
+                exec: () => {
+                    if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusDiceSkill)) {
+                        --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 112: () => new GICard(112, '辰砂往生录', '【对角色打出｢天赋｣或角色使用｢普通攻击｣时：】少花费1个元素骰。(每回合1次)；【角色被切换为｢出战角色｣后：】本回合中，角色｢普通攻击｣造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ad8e8b77b4efc4aabd42b7954fbc244c_7518202688884952912.png',
-    //     3, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { hcard, heros = [], hidxs: [hidx] = [], trigger = '', minusDiceCard: mdc = 0 } = event;
-    //         const isMinusCard = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && hcard.cost + hcard.anydice > mdc && card.perCnt > 0;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] }, () => card.perCnt > 0);
-    //         return {
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isMinusCard, 1),
-    //             trigger: ['skilltype1', 'card', 'change-to'],
-    //             execmds: isCdt<Cmds[]>(trigger == 'change-to', [{ cmd: 'getStatus', status: [newStatus(2072)] }]),
-    //             exec: () => {
-    //                 if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusSkill)) {
-    //                     --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312013: () => new CardBuilder(160).name('无常之面').since('v3.7.0').artifact().costAny(2).costSame(2, 'v4.0.0').perCnt(1)
+        .description('【对角色打出｢天赋｣或角色使用｢元素战技｣时：】少花费1个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/e2a6d4ad4958d5fff80bb17ec93189ab_7011820758446145491.png')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+            return {
+                minusDiceSkill: { skilltype2: [0, 0, 1] },
+                minusDiceCard: isCdt(isMinusDiceTalent, 1),
+                trigger: ['skilltype2', 'card'],
+                exec: () => {
+                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skilltype2' && isMinusDiceSkill) {
+                        --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 113: () => new GICard(113, '无常之面', '【对角色打出｢天赋｣或角色使用｢元素战技｣时：】少花费1个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/e2a6d4ad4958d5fff80bb17ec93189ab_7011820758446145491.png',
-    //     2, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { hcard, heros = [], hidxs: [hidx] = [], trigger = '', minusDiceCard: mdc = 0 } = event;
-    //         const isMinusCard = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype2: [0, 0, 1] }, () => card.perCnt > 0);
-    //         return {
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isMinusCard, 1),
-    //             trigger: ['skilltype2', 'card'],
-    //             exec: () => {
-    //                 if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype2' && isMinusSkill)) {
-    //                     --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312014: () => new CardBuilder(161).name('追忆之注连').since('v3.7.0').artifact().costAny(3).costSame(3, 'v4.0.0').perCnt(1)
+        .description('【对角色打出｢天赋｣或角色使用｢元素战技｣时：】少花费1个元素骰。(每回合1次)；【如果角色具有至少2点[充能]，】就使角色｢普通攻击｣和｢元素战技｣造成的伤害+1。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/48be75f0a23375adb34789dcb1e95a97_850843251536084281.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+            const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
+            const isAddDmg = (heros[hidx]?.energy ?? 0) >= 2;
+            return {
+                addDmgType1: isCdt(isAddDmg, 1),
+                addDmgType2: isCdt(isAddDmg, 1),
+                minusDiceSkill: isCdt(card.perCnt > 0, { skilltype2: [0, 0, 1] }),
+                minusDiceCard: isCdt(isMinusCard, 1),
+                trigger: ['skilltype2', 'card'],
+                exec: () => {
+                    if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype2' && isMinusDiceSkill)) {
+                        --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 114: () => new GICard(114, '追忆之注连', '【对角色打出｢天赋｣或角色使用｢元素战技｣时：】少花费1个元素骰。(每回合1次)；【如果角色具有至少2点[充能]，】就使角色｢普通攻击｣和｢元素战技｣造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/48be75f0a23375adb34789dcb1e95a97_850843251536084281.png',
-    //     3, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { hcard, heros = [], hidxs: [hidx] = [], trigger = '', minusDiceCard: mdc = 0 } = event;
-    //         const isMinusCard = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
-    //         const isAddDmg = (heros[hidx]?.energy ?? 0) >= 2;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype2: [0, 0, 1] }, () => card.perCnt > 0);
-    //         return {
-    //             addDmgType1: isCdt(isAddDmg, 1),
-    //             addDmgType2: isCdt(isAddDmg, 1),
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isMinusCard, 1),
-    //             trigger: ['skilltype2', 'card'],
-    //             exec: () => {
-    //                 if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype2' && isMinusSkill)) {
-    //                     --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312015: () => new CardBuilder(162).name('海祇之冠').since('v4.1.0').artifact().costSame(1).useCnt(0)
+        .description('我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/dfea4a0c2219c145125277f8eddb8269_3306254185680856587.png')
+        .handle((card, event) => {
+            const { trigger = '', heal = [] } = event;
+            const allHeal = heal.reduce((a, b) => a + Math.max(0, b), 0);
+            return {
+                trigger: ['dmg', 'heal'],
+                addDmgCdt: Math.floor(card.useCnt),
+                isAddTask: trigger == 'heal',
+                exec: () => {
+                    if (trigger == 'heal') {
+                        if (allHeal > 0) card.useCnt = Math.min(2, card.useCnt + allHeal * 0.34);
+                        return;
+                    }
+                    if (trigger == 'dmg') card.useCnt %= 1;
+                }
+            }
+        }),
 
-    // 115: () => new GICard(115, '海祇之冠', '我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/dfea4a0c2219c145125277f8eddb8269_3306254185680856587.png',
-    //     1, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { trigger = '', heal = [] } = event;
-    //         const allHeal = heal.reduce((a, b) => a + b, 0);
-    //         return {
-    //             trigger: ['dmg', 'heal'],
-    //             addDmgCdt: Math.floor(card.useCnt),
-    //             isAddTask: trigger == 'heal',
-    //             exec: () => {
-    //                 if (trigger == 'heal') {
-    //                     if (allHeal > 0) card.useCnt = Math.min(2, card.useCnt + allHeal * 0.34);
-    //                     return;
-    //                 }
-    //                 if (trigger == 'dmg') card.useCnt %= 1;
-    //             }
-    //         }
-    //     }, { uct: 0 }),
+    312016: () => new CardBuilder(163).name('海染砗磲').since('v4.2.0').artifact().costAny(3).useCnt(0.681).useCnt(1.021, 'v4.3.0')
+        .description('【入场时：】治疗所附属角色2点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
+        .description('【入场时：】治疗所附属角色3点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。', 'v4.3.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/16b4765f951281f2547ba40eeb994271_8658397109914249143.png')
+        .handle((card, event) => {
+            const { trigger = '', heal = [] } = event;
+            const allHeal = heal.reduce((a, b) => a + b, 0);
+            return {
+                trigger: ['dmg', 'heal'],
+                addDmgCdt: Math.floor(card.useCnt),
+                cmds: [{ cmd: 'heal', cnt: 2 }],
+                isAddTask: trigger == 'heal',
+                exec: () => {
+                    if (trigger == 'heal') {
+                        if (allHeal > 0) card.useCnt = Math.min(2, card.useCnt + allHeal * 0.34);
+                        return;
+                    }
+                    if (trigger == 'dmg') card.useCnt %= 1;
+                }
+            }
+        }),
 
-    // 116: () => new GICard(116, '海染砗磲', '【入场时：】治疗所附属角色2点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/16b4765f951281f2547ba40eeb994271_8658397109914249143.png',
-    //     3, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { trigger = '', heal = [] } = event;
-    //         const allHeal = heal.reduce((a, b) => a + b, 0);
-    //         return {
-    //             trigger: ['dmg', 'heal'],
-    //             addDmgCdt: Math.floor(card.useCnt),
-    //             cmds: [{ cmd: 'heal', cnt: 2 }],
-    //             isAddTask: trigger == 'heal',
-    //             exec: () => {
-    //                 if (trigger == 'heal') {
-    //                     if (allHeal > 0) card.useCnt = Math.min(2, card.useCnt + allHeal * 0.34);
-    //                     return;
-    //                 }
-    //                 if (trigger == 'dmg') card.useCnt %= 1;
-    //             }
-    //         }
-    //     }, { uct: 0.681 }),
+    312017: () => new CardBuilder(164).name('沙王的投影').since('v4.2.0').artifact().costSame(1).perCnt(1)
+        .description('【入场时：】抓1张牌。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/fe25340f51936207ac2a9e71a8cad87e_3874053549243035788.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const isUse = card.perCnt > 0 && heros[hidx].isFront;
+            return {
+                trigger: ['elReaction'],
+                cmds: [{ cmd: 'getCard', cnt: 1 }],
+                execmds: isCdt<Cmds[]>(isUse, [{ cmd: 'getCard', cnt: 1 }]),
+                exec: () => {
+                    if (isUse) --card.perCnt;
+                }
+            }
+        }),
 
-    // 117: () => new GICard(117, '沙王的投影', '【入场时：】抓1张牌。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/fe25340f51936207ac2a9e71a8cad87e_3874053549243035788.png',
-    //     1, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const isUse = card.perCnt > 0 && heros[hidx].isFront;
-    //         return {
-    //             trigger: ['elReaction'],
-    //             cmds: [{ cmd: 'getCard', cnt: 1 }],
-    //             execmds: isCdt<Cmds[]>(isUse, [{ cmd: 'getCard', cnt: 1 }]),
-    //             exec: () => {
-    //                 if (isUse) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312018: () => new CardBuilder(304).name('饰金之梦').since('v4.3.0').artifact().costSame(3).costAny(3, 'v4.5.0').perCnt(1)
+        .description('【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则改为生成2个。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)')
+        .description('【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则则额外生成1个[万能元素骰]。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)', 'v4.5.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/b0f1283d8fec75259495c4ef24cc768a_277942760294951822.png')
+        .handle((card, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const isExtra = new Set(heros.map(h => h.element)).size == 3;
+            const isTriggered = card.perCnt > 0 && heros[hidx]?.isFront;
+            const cmds: Cmds[] = [];
+            if (ver < 'v4.5.0') {
+                cmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx]?.element });
+                if (isExtra) cmds.push({ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni });
+            } else {
+                cmds.push({ cmd: 'getDice', cnt: isExtra ? 2 : 1, element: heros[hidx]?.element });
+            }
+            return {
+                trigger: ['elReaction'],
+                cmds,
+                execmds: isCdt<Cmds[]>(isTriggered, [{ cmd: 'getCard', cnt: 1 }]),
+                exec: () => {
+                    if (isTriggered) --card.perCnt;
+                }
+            }
+        }),
 
-    // 118: () => new GICard(118, '饰金之梦', '【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则改为生成2个。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/b0f1283d8fec75259495c4ef24cc768a_277942760294951822.png',
-    //     3, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const isExtra = new Set(heros.map(h => h.element)).size == 3;
-    //         const isUse = card.perCnt > 0 && heros[hidx]?.isFront;
-    //         return {
-    //             trigger: ['elReaction'],
-    //             cmds: [{ cmd: 'getDice', cnt: isExtra ? 2 : 1, element: heros[hidx]?.element }],
-    //             execmds: isCdt<Cmds[]>(isUse, [{ cmd: 'getCard', cnt: 1 }]),
-    //             exec: () => {
-    //                 if (isUse) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312019: () => new CardBuilder(305).name('浮溯之珏').since('v4.3.0').artifact().costSame(0).perCnt(1)
+        .description('【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8ac2175960ea0dace83f9bd76efb70ef_3923530911851671969.png')
+        .handle(card => {
+            if (card.perCnt <= 0) return;
+            return {
+                trigger: ['skilltype1'],
+                execmds: [{ cmd: 'getCard', cnt: 1 }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 119: () => new GICard(119, '浮溯之珏', '【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8ac2175960ea0dace83f9bd76efb70ef_3923530911851671969.png',
-    //     0, 8, 0, [1], 0, 1, card => ({
-    //         trigger: ['skilltype1'],
-    //         execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getCard', cnt: 1 }]),
-    //         exec: () => {
-    //             if (card.perCnt > 0) --card.perCnt;
-    //         }
-    //     }), { pct: 1 }),
+    312020: () => new CardBuilder(306).name('来歆余响').since('v4.3.0').artifact().costSame(2).perCnt(3)
+        .description('【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)；【角色使用技能后：】如果我方元素骰数量不多于手牌数量，则生成1个所附属角色类型的元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/d9db70a7475940b91d63699e1276678d_8473736559088406285.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [], dicesCnt = 0, trigger = '' } = event;
+            const isGetCard = trigger == 'skilltype1' && (card.perCnt >> 0 & 1) == 1;
+            const isGetDice = trigger == 'skill' && dicesCnt <= hcardsCnt && (card.perCnt >> 1 & 1) == 1;
+            const execmds: Cmds[] = [];
+            if (isGetCard) execmds.push({ cmd: 'getCard', cnt: 1 });
+            if (isGetDice) execmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx].element });
+            return {
+                trigger: ['skill'],
+                execmds,
+                exec: () => {
+                    if (isGetCard) card.perCnt &= ~(1 << 0);
+                    if (isGetDice) card.perCnt &= ~(1 << 1);
+                }
+            }
+        }),
 
-    // 120: () => new GICard(120, '来歆余响', '【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)；【角色使用技能后：】如果我方元素骰数量不多于手牌数量，则生成1个所附属角色类型的元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/d9db70a7475940b91d63699e1276678d_8473736559088406285.png',
-    //     2, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [], dicesCnt = 0, trigger = '' } = event;
-    //         const isGetCard = trigger == 'skilltype1' && (card.perCnt >> 0 & 1) == 1;
-    //         const isGetDice = trigger.startsWith('skill') && dicesCnt <= hcardsCnt && (card.perCnt >> 1 & 1) == 1;
-    //         const execmds: Cmds[] = [];
-    //         if (isGetCard) execmds.push({ cmd: 'getCard', cnt: 1 });
-    //         if (isGetDice) execmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx].element });
-    //         return {
-    //             trigger: ['skill'],
-    //             execmds,
-    //             exec: () => {
-    //                 if (isGetCard) card.perCnt &= ~(1 << 0);
-    //                 if (isGetDice) card.perCnt &= ~(1 << 1);
-    //             }
-    //         }
-    //     }, { pct: 3 }),
+    312021: () => new CardBuilder(307).name('灵光明烁之心').since('v4.3.0').artifact().costSame(0).perCnt(1)
+        .description('【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/3a2b86994907366639498965934b1d99_16804113149239958.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            if (card.perCnt <= 0 || !heros[hidx]?.isFront) return;
+            return {
+                trigger: ['getdmg'],
+                execmds: [{ cmd: 'getCard', cnt: 1 }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
-    // 121: () => new GICard(121, 307, '灵光明烁之心', '【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/3a2b86994907366639498965934b1d99_16804113149239958.png',
-    //     0, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const isGetCard = card.perCnt > 0 && heros[hidx].isFront;
-    //         return {
-    //             trigger: ['getdmg'],
-    //             isAddTask: card.perCnt > 0,
-    //             cmds: isCdt<Cmds[]>(isGetCard, [{ cmd: 'getCard', cnt: 1 }]),
-    //             exec: () => {
-    //                 if (isGetCard) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312022: () => new CardBuilder(308).name('花海甘露之光').since('v4.3.0').artifact().costSame(1).perCnt(1)
+        .description('【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌，并且在本回合结束阶段中治疗所附属角色1点。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/aaaf307c3c9725d0c8f0be7d264e04bd_9827908420304255.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs = [], trigger = '' } = event;
+            const isHeal = trigger == 'phase-end' && card.perCnt <= 0;
+            const isGetCard = trigger == 'getdmg' && card.perCnt > 0 && heros[hidxs[0]]?.isFront;
+            return {
+                trigger: ['getdmg', 'phase-end'],
+                isAddTask: card.perCnt > 0,
+                execmds: isCdt<Cmds[]>(isHeal, [{ cmd: 'heal', cnt: 1, hidxs }], isCdt(isGetCard, [{ cmd: 'getCard', cnt: 1 }])),
+                exec: () => {
+                    if (isGetCard) --card.perCnt;
+                }
+            }
+        }),
 
-    // 122: () => new GICard(122, '花海甘露之光', '【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌，并且在本回合结束阶段中治疗所附属角色1点。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/aaaf307c3c9725d0c8f0be7d264e04bd_9827908420304255.png',
-    //     1, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs = [], trigger = '' } = event;
-    //         const isHeal = trigger == 'phase-end' && card.perCnt <= 0;
-    //         const isGetCard = trigger == 'getdmg' && card.perCnt > 0 && heros[hidxs[0]].isFront;
-    //         return {
-    //             trigger: ['getdmg', 'phase-end'],
-    //             isAddTask: card.perCnt > 0,
-    //             execmds: isCdt<Cmds[]>(isHeal, [{ cmd: 'heal', cnt: 1, hidxs }], isCdt(isGetCard, [{ cmd: 'getCard', cnt: 1 }])),
-    //             exec: () => {
-    //                 if (isGetCard) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312023: () => new CardBuilder(328).name('老兵的容颜').since('v4.4.0').artifact().costAny(2).useCnt(0).perCnt(1).isResetUseCnt()
+        .description('【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/166e56c3c68e531c97f4fdfde1adde06_4511818010196081435.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
+            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0)) {
+                const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
+                return {
+                    trigger: ['getdmg', 'heal'],
+                    execmds: [execmds[card.useCnt]],
+                    exec: () => {
+                        if (++card.useCnt == 2) --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 123: () => new GICard(123, '老兵的容颜', '【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/166e56c3c68e531c97f4fdfde1adde06_4511818010196081435.png',
-    //     2, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
-    //         if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0)) {
-    //             const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
-    //             return {
-    //                 trigger: ['getdmg', 'heal'],
-    //                 execmds: [execmds[card.useCnt]],
-    //                 exec: () => {
-    //                     if (++card.useCnt == 2) --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { uct: 0, pct: 1, isResetUct: true }),
+    312024: () => new CardBuilder(385).name('逐影猎人').since('v4.7.0').artifact().costAny(3).useCnt(0).perCnt(1).isResetUseCnt()
+        .description('【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。；【第四次触发：】生成1个此角色类型的元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/8d877f34a6ce748ac2f474d83fa05785_4045703223333362794.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
+            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0)) {
+                const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
+                return {
+                    trigger: ['getdmg', 'heal'],
+                    execmds: isCdt(card.useCnt != 2, [execmds[card.useCnt % 3]]),
+                    exec: () => {
+                        if (++card.useCnt == 4) --card.perCnt;
+                    }
+                }
+            }
+        }),
 
-    // 124: () => new GICard(124, '逐影猎人', '【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。；【第四次触发：】生成1个此角色类型的元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/8d877f34a6ce748ac2f474d83fa05785_4045703223333362794.png',
-    //     3, 0, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
-    //         if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0)) {
-    //             const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
-    //             return {
-    //                 trigger: ['getdmg', 'heal'],
-    //                 execmds: isCdt(card.useCnt != 2, [execmds[card.useCnt % 3]]),
-    //                 exec: () => {
-    //                     if (++card.useCnt == 4) --card.perCnt;
-    //                 }
-    //             }
-    //         }
-    //     }, { uct: 0, pct: 1, isResetUct: true }),
+    312025: () => new CardBuilder(343).name('黄金剧团的奖赏').since('v4.5.0').artifact().costSame(0).useCnt(0)
+        .description('【结束阶段：】如果所附属的角色在后台，则此牌累积1点｢报酬｣。(最多累积2点)；【对角色打出｢天赋｣或角色使用｢元素战技｣时：】此牌每有1点｢报酬｣，就将其消耗，以少花费1个元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0f7dfce291215155b3a48a56c8c996c4_3799856037595257577.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false,
+                minusDiceCard: mdc = 0, minusDiceSkill = [], isSkill = -1 } = event;
+            const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 2 && !heros[hidx]?.isFront;
+            return {
+                minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
+                minusDiceCard: isCdt(isMinusDiceTalent, card.useCnt),
+                trigger: ['phase-end', 'card', 'skilltype2'],
+                isAddTask: isPhaseEnd,
+                exec: () => {
+                    if (isPhaseEnd) {
+                        ++card.useCnt;
+                    } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
+                        card.useCnt -= hcard.cost + hcard.anydice - mdc;
+                    } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
+                        const skill = heros[hidx]?.skills[isSkill].cost ?? [{ cnt: 0 }, { cnt: 0 }];
+                        const skillcost = skill[0].cnt + skill[1].cnt;
+                        card.useCnt -= skillcost - mdc - minusDiceSkill.find(([eid]) => eid == card.entityId)![1];
+                    }
+                }
+            }
+        }),
 
-    // 125: () => new GICard(125, '黄金剧团的奖赏', '【结束阶段：】如果所附属的角色在后台，则此牌累积1点｢报酬｣。(最多累积2点)；【对角色打出｢天赋｣或角色使用｢元素战技｣时：】此牌每有1点｢报酬｣，就将其消耗，以少花费1个元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0f7dfce291215155b3a48a56c8c996c4_3799856037595257577.png',
-    //     0, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', minusDiceCard: mdc = 0, isSkill = -1 } = event;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype2: [0, 0, card.useCnt] });
-    //         const isCardMinus = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && hcard.cost + hcard.anydice > mdc;
-    //         const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 2 && !heros[hidx]?.isFront;
-    //         return {
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isCardMinus, card.useCnt),
-    //             trigger: ['phase-end', 'card', 'skilltype2'],
-    //             isAddTask: isPhaseEnd,
-    //             exec: () => {
-    //                 if (isPhaseEnd) {
-    //                     ++card.useCnt;
-    //                 } else if (trigger == 'card' && isCardMinus) {
-    //                     card.useCnt -= hcard.cost + hcard.anydice - mdc;
-    //                 } else if (trigger == 'skilltype2' && isMinusSkill) {
-    //                     const skill = heros[hidx]?.skills[isSkill].cost ?? [{ val: 0 }, { val: 0 }];
-    //                     const skillcost = skill[0].val + skill[1].val;
-    //                     card.useCnt -= skillcost - mdc - minusSkillRes.minusDiceSkill[isSkill].reduce((a, b) => a + b);
-    //                 }
-    //             }
-    //         }
-    //     }, { uct: 0 }),
+    312026: () => new CardBuilder(386).name('黄金剧团').since('v4.7.0').artifact().costSame(2).useCnt(0)
+        .description('【结束阶段：】如果所附属的角色在后台，则此牌累积2点｢报酬｣。(最多累积4点)；【对角色打出｢天赋｣或角色使用｢元素战技｣时：】此牌每有1点｢报酬｣，就将其消耗，以少花费1个元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/bbe185732644f5d29e9097985c4c09a8_8068337050754144727.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false,
+                minusDiceCard: mdc = 0, minusDiceSkill = [], isSkill = -1 } = event;
+            const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 4 && !heros[hidx]?.isFront;
+            return {
+                minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
+                minusDiceCard: isCdt(isMinusDiceTalent, card.useCnt),
+                trigger: ['phase-end', 'card', 'skilltype2'],
+                isAddTask: isPhaseEnd,
+                exec: () => {
+                    if (isPhaseEnd) {
+                        card.useCnt = Math.max(4, card.useCnt + 2);
+                    } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
+                        card.useCnt -= hcard.cost + hcard.anydice - mdc;
+                    } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
+                        const skill = heros[hidx]?.skills[isSkill].cost ?? [{ cnt: 0 }, { cnt: 0 }];
+                        const skillcost = skill[0].cnt + skill[1].cnt;
+                        card.useCnt -= skillcost - mdc - minusDiceSkill.find(([eid]) => eid == card.entityId)![1];
+                    }
+                }
+            }
+        }),
 
-    // 126: () => new GICard(126, '黄金剧团', '【结束阶段：】如果所附属的角色在后台，则此牌累积2点｢报酬｣。(最多累积4点)；【对角色打出｢天赋｣或角色使用｢元素战技｣时：】此牌每有1点｢报酬｣，就将其消耗，以少花费1个元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/bbe185732644f5d29e9097985c4c09a8_8068337050754144727.png',
-    //     2, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', minusDiceCard: mdc = 0, isSkill = -1 } = event;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype2: [0, 0, card.useCnt] });
-    //         const isCardMinus = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && hcard.cost + hcard.anydice > mdc;
-    //         const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 4 && !heros[hidx]?.isFront;
-    //         return {
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isCardMinus, card.useCnt),
-    //             trigger: ['phase-end', 'card', 'skilltype2'],
-    //             isAddTask: isPhaseEnd,
-    //             exec: () => {
-    //                 if (isPhaseEnd) {
-    //                     card.useCnt = Math.min(4, card.useCnt + 2);
-    //                 } else if (trigger == 'card' && isCardMinus) {
-    //                     card.useCnt -= hcard.cost + hcard.anydice - mdc;
-    //                 } else if (trigger == 'skilltype2' && isMinusSkill) {
-    //                     const skill = heros[hidx]?.skills[isSkill].cost ?? [{ val: 0 }, { val: 0 }];
-    //                     const skillcost = skill[0].val + skill[1].val;
-    //                     card.useCnt -= skillcost - mdc - minusSkillRes.minusDiceSkill[isSkill].reduce((a, b) => a + b);
-    //                 }
-    //             }
-    //         }
-    //     }, { uct: 0 }),
+    312027: () => new CardBuilder(357).name('紫晶的花冠').since('v4.6.0').artifact().costSame(1).useCnt(0).perCnt(2)
+        .description('【所附属角色为出战角色，敌方受到[草元素伤害]后：】累积1枚｢花冠水晶｣。如果｢花冠水晶｣大于等于我方手牌数，则生成1个随机基础元素骰。(每回合至多生成2个)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e431910b741b3723c64334265ce3e93e_3262613974155239712.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [] } = event;
+            if (!heros[hidx]?.isFront) return;
+            return {
+                trigger: ['Dendro-getdmg-oppo'],
+                execmds: isCdt<Cmds[]>(card.useCnt + 1 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.RandomDice }]),
+                isAddTask: true,
+                exec: () => {
+                    if (++card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
+                }
+            }
+        }),
 
-    // 127: () => new GICard(127, '紫晶的花冠', '【所附属角色为出战角色，敌方受到[草元素伤害]后：】累积1枚｢花冠水晶｣。如果｢花冠水晶｣大于等于我方手牌数，则生成1个随机基础元素骰。(每回合至多生成2个)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e431910b741b3723c64334265ce3e93e_3262613974155239712.png',
-    //     1, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [] } = event;
-    //         if (!heros[hidx]?.isFront) return;
-    //         return {
-    //             trigger: ['grass-getdmg-oppo'],
-    //             execmds: isCdt<Cmds[]>(card.useCnt + 1 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: -1 }]),
-    //             isAddTask: true,
-    //             exec: () => {
-    //                 if (++card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
-    //             }
-    //         }
-    //     }, { uct: 0, pct: 2 }),
+    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').artifact().costSame(2).useCnt(0).perCnt(2)
+        .description('【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚｢花冠水晶｣。如果｢花冠水晶｣大于等于我方手牌数，则生成1个[万能元素骰]。(每回合至多生成2个)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/5a997c90413e44f8147b136856facd2b_8759080322483134287.png')
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [] } = event;
+            if (!heros[hidx]?.isFront) return;
+            return {
+                trigger: ['Dendro-getdmg-oppo', 'elReaction-Dendro'],
+                execmds: isCdt<Cmds[]>(card.useCnt + 2 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
+                isAddTask: true,
+                exec: () => {
+                    card.useCnt += 2;
+                    if (card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
+                }
+            }
+        }),
 
-    // 128: () => new GICard(128, '乐园遗落之花', '【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚｢花冠水晶｣。如果｢花冠水晶｣大于等于我方手牌数，则生成1个[万能元素骰]。(每回合至多生成2个)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/5a997c90413e44f8147b136856facd2b_8759080322483134287.png',
-    //     2, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { heros = [], hidxs: [hidx] = [], hcards: { length: hcardsCnt } = [] } = event;
-    //         if (!heros[hidx]?.isFront) return;
-    //         return {
-    //             trigger: ['grass-getdmg-oppo', 'el7Reaction'],
-    //             execmds: isCdt<Cmds[]>(card.useCnt + 2 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: 0 }]),
-    //             isAddTask: true,
-    //             exec: () => {
-    //                 card.useCnt += 2;
-    //                 if (card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
-    //             }
-    //         }
-    //     }, { uct: 0, pct: 2 }),
+
 
     // 129: () => new GICard(129, '角斗士的凯旋', '【角色使用｢普通攻击｣时：】如果我方手牌数量不多于2，则少消耗1个元素骰。(每回合1次)',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_JiaoDouShiXiao.webp',

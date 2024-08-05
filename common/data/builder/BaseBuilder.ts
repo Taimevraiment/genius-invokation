@@ -64,7 +64,7 @@ export class BaseBuilder extends BaseVersionBuilder {
     costSame(cost: number, version?: Version) {
         return this.cost(cost, DICE_TYPE.Same, version);
     }
-    costAny(cost: number) {
-        return this.cost(cost, DICE_TYPE.Any);
+    costAny(cost: number, version?: Version) {
+        return this.cost(cost, DICE_TYPE.Any, version);
     }
 }

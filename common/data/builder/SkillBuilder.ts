@@ -22,7 +22,7 @@ export class GISkill {
     handle: (event: SkillHandleEvent) => SkillHandleRes; // 处理函数
     isForbidden: boolean = false; // 是否禁用
     dmgChange: number = 0; // 伤害变化
-    costChange: [number, number, number[]] = [0, 0, []]; // 费用变化 [元素骰, 任意骰, 生效的entityId组]
+    costChange: [number, number, number[], number[][]] = [0, 0, [], []]; // 费用变化 [元素骰, 任意骰, 生效的entityId组, 技能当前被x减费后留存的骰子数]
     useCntPerRound: number = 0; // 本回合技能已使用次数
     perCnt: number = 0; // 每回合使用次数
     useCnt: number = 0; // 整局技能使用次数

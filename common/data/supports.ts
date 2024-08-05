@@ -15,6 +15,7 @@ export type SupportHandleEvent = {
     playerInfo?: GameInfo,
     minusDiceCard?: number,
     minusDiceSkillIds?: number[],
+    minusDiceSkill?: number[][],
     isSkill?: number,
     hidx?: number,
     heal?: number[],
