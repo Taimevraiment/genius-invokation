@@ -105,9 +105,9 @@
               {{ Math.abs(supportCnt[getGroup(saidx)][siidx]) }}
             </span>
           </div>
-          <img class="support-bottom-icon" v-if="support.hpCnt > 0" :src="getSvgIcon('heal')" />
-          <div class="support-bottom-num" v-if="support.hpCnt > 0">
-            {{ support.hpCnt }}
+          <img class="support-bottom-icon" v-if="support.heal > 0" :src="getSvgIcon('heal')" />
+          <div class="support-bottom-num" v-if="support.heal > 0">
+            {{ support.heal }}
           </div>
         </div>
       </div>
@@ -273,11 +273,12 @@
                 'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
-                  :src="getPngIcon('https://gi-tcg-assets.guyutongxue.support/assets/UI_Gcg_Buff_Common_Revive.webp')"
+                  :src="getPngIcon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp')"
                   style="height: 16px" />
                 <img v-else-if="hero.hp + (willHp[hgi][hidx] ?? 0) <= 0" :src="getSvgIcon('die')"
                   style="height: 16px; padding-left: 3px" />
-                <span :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hgi][hidx] ?? 0) > 0 ? '5px' : '0'}` }">
+                <span
+                  :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hgi][hidx] ?? 0) > 0 && (willHp[hgi][hidx] ?? 0) % 1 == 0 ? '5px' : '0'}` }">
                   {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{ Math.abs(Math.ceil(willHp[hgi][hidx] ?? 0) % 100) }}
                 </span>
               </div>
@@ -1467,7 +1468,7 @@ button:active {
 }
 
 .summon-can-use {
-  box-shadow: 0 0 5px 2px yellow inset;
+  box-shadow: 0 0 15px 2px yellow inset;
 }
 
 .status-can-use {

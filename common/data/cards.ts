@@ -1,13 +1,12 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_LOCAL, HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version } from '../constant/enum.js';
 import { NULL_CARD } from '../constant/init.js';
-import { PURE_ELEMENT_NAME } from '../constant/UIconst.js';
+import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newStatus } from './statuses.js';
 import { newSummon } from './summons.js';
-import { newSupport } from './supports.js';
 
 export type CardHandleEvent = {
     heros?: Hero[],
@@ -126,45 +125,45 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
         .handle((_c, _e, ver) => ({ addDmg: 1, status: [newStatus(ver)(stsId, name)] }));
 }
 
-// const normalElArtifact = (id: number, name: string, element: PureElementType, src: string) => {
-//     return () => new GICard(id, name, 'v3.3.0', `【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。(每回合1次)`,
-//         src, 2, DICE_TYPE.Any, CARD_TYPE.Equipment, CARD_SUBTYPE.Artifact, 0, 1, (card, event) => {
-//             const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', minusDiceCard: mdc = 0, isMinusDiceSkill = false } = event;
-//             const isCardMinus = hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
-//             return {
-//                 minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
-//                 minusDiceCard: isCdt(isCardMinus, 1),
-//                 trigger: ['skill', 'card'],
-//                 exec: () => {
-//                     if (card.perCnt <= 0) return;
-//                     if (trigger == 'card' && !isCardMinus) return;
-//                     if (trigger == 'skill' && !isMinusDiceSkill) return;
-//                     --card.perCnt;
-//                 }
-//             }
-//         }, { pct: 1 });
-// }
+const normalElArtifact = (shareId: number, element: PureElementType) => {
+    return new CardBuilder(shareId).artifact().costAny(2).costSame(2, 'v4.0.0').perCnt(1)
+        .description(`【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。(每回合1次)`)
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+            return {
+                minusDiceSkill: { skill: [1, 0, 0], elDice: element },
+                minusDiceCard: isCdt(isMinusDiceTalent, 1),
+                trigger: ['skill', 'card'],
+                exec: () => {
+                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
+                        --card.perCnt;
+                    }
+                }
+            }
+        });
+}
 
-// const advancedElArtifact = (id: number, name: string, element: number, src: string) => {
-//     return () => new GICard(id, name, `【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT[element]}骰]。(每回合1次)；【投掷阶段：】2个元素骰初始总是投出[${ELEMENT[element]}骰]。`, src, 2, 8, 0, [1], 0, 1,
-//         (card, event) => {
-//             const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', minusDiceCard: mdc = 0 } = event;
-//             const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skill: [1, 0, 0] },
-//                 skill => skill?.cost[0].color == element && card.perCnt > 0);
-//             const isCardMinus = hcard && hcard.subType.includes(6) && hcard.userType == heros[hidx]?.id && card.perCnt > 0 && hcard.cost + hcard.anydice > mdc;
-//             return {
-//                 ...minusSkillRes,
-//                 minusDiceCard: isCdt(isCardMinus, 1),
-//                 trigger: ['skill', 'card', 'phase-dice'],
-//                 element,
-//                 cnt: 2,
-//                 exec: () => {
-//                     if (trigger == 'card' && !isCardMinus || trigger == 'skill' && !isMinusSkill || card.perCnt <= 0) return;
-//                     --card.perCnt;
-//                 }
-//             }
-//         }, { pct: 1 });
-// }
+const advancedElArtifact = (shareId: number, element: PureElementType) => {
+    return new CardBuilder(shareId).artifact().costSame(2).costAny(3, 'v4.0.0').perCnt(1)
+        .description(`【对角色打出｢天赋｣或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。(每回合1次)；【投掷阶段：】2个元素骰初始总是投出[${ELEMENT_NAME[element]}骰]。`)
+        .handle((card, event) => {
+            const { trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+            const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
+            return {
+                minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
+                minusDiceCard: isCdt(isMinusCard, 1),
+                trigger: ['skill', 'card', 'phase-dice'],
+                element,
+                cnt: 2,
+                exec: () => {
+                    if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skill' && isMinusDiceSkill)) {
+                        --card.perCnt;
+                    }
+                }
+            }
+        });
+}
 
 const elCard = (shareId: number, element: PureElementType) => {
     const elName = PURE_ELEMENT_NAME[element];
@@ -1053,135 +1052,152 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    312029: () => new CardBuilder(403).name('角斗士的凯旋').since('v4.8.0').artifact().costSame(0).perCnt(1)
+        .description('【角色使用｢普通攻击｣时：】如果我方手牌数量不多于2，则少消耗1个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/7c41bdc8b55d96ceafee346cd339e564_7638181105517812729.png')
+        .handle((card, event) => {
+            const { hcards: { length: hcardsCnt } = [], isMinusDiceSkill = false } = event;
+            if (hcardsCnt > 2 || card.perCnt <= 0) return;
+            return {
+                trigger: ['skilltype1'],
+                minusDiceSkill: { skilltype1: [0, 0, 1] },
+                exec: () => {
+                    if (isMinusDiceSkill) --card.perCnt;
+                }
+            }
+        }),
 
+    312101: () => normalElArtifact(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
 
-    // 129: () => new GICard(129, '角斗士的凯旋', '【角色使用｢普通攻击｣时：】如果我方手牌数量不多于2，则少消耗1个元素骰。(每回合1次)',
-    //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_JiaoDouShiXiao.webp',
-    //     0, 8, 0, [1], 0, 1, (card, event) => {
-    //         const { hcards: { length: hcardsCnt } = [] } = event;
-    //         if (hcardsCnt > 2 || card.perCnt <= 0) return;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skilltype1: [0, 0, 1] });
-    //         return {
-    //             trigger: ['skilltype1'],
-    //             ...minusSkillRes,
-    //             exec: () => {
-    //                 if (isMinusSkill) --card.perCnt;
-    //             }
-    //         }
-    //     }, { pct: 1 }),
+    312102: () => advancedElArtifact(166, ELEMENT_TYPE.Cryo).name('冰风迷途的勇士')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/9f6238a08b5844b652365304f05a4e8e_1667994661821497515.png'),
 
-    // 180: normalElArtifact(180, '破冰踏雪的回音', 4, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
+    312201: () => normalElArtifact(167, ELEMENT_TYPE.Hydro).name('酒渍船帽')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/26c4d2daa8a4686107a39f372a2066f3_2037156632546120753.png'),
 
-    // 181: advancedElArtifact(181, '冰风迷途的勇士', 4, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/9f6238a08b5844b652365304f05a4e8e_1667994661821497515.png'),
+    312202: () => advancedElArtifact(168, ELEMENT_TYPE.Hydro).name('沉沦之心')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/b415a4b00134ee115f7abd0518623f4f_8721743655470015978.png'),
 
-    // 182: normalElArtifact(182, '酒渍船帽', 1, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/26c4d2daa8a4686107a39f372a2066f3_2037156632546120753.png'),
+    312301: () => normalElArtifact(169, ELEMENT_TYPE.Pyro).name('焦灼的魔女帽')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/0d841e5b1b0bbf09b8fa1bb7a3e9125b_8584142007202998007.png'),
 
-    // 183: advancedElArtifact(183, '沉沦之心', 1, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/b415a4b00134ee115f7abd0518623f4f_8721743655470015978.png'),
+    312302: () => advancedElArtifact(170, ELEMENT_TYPE.Pyro).name('炽烈的炎之魔女')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/fa55d0e05799d88270cc50bd7148bfcf_3804037770932131779.png'),
 
-    // 184: normalElArtifact(184, '焦灼的魔女帽', 2, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/0d841e5b1b0bbf09b8fa1bb7a3e9125b_8584142007202998007.png'),
+    312401: () => normalElArtifact(171, ELEMENT_TYPE.Electro).name('唤雷的头冠')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/00d958c2d533c85d56613c0d718d9498_7034674946756695515.png'),
 
-    // 185: advancedElArtifact(185, '炽烈的炎之魔女', 2, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/fa55d0e05799d88270cc50bd7148bfcf_3804037770932131779.png'),
+    312402: () => advancedElArtifact(172, ELEMENT_TYPE.Electro).name('如雷的盛怒')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/3c5878d193077253d00e39f6db043270_1544021479773717286.png'),
 
-    // 186: normalElArtifact(186, '唤雷的头冠', 3, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/00d958c2d533c85d56613c0d718d9498_7034674946756695515.png'),
+    312501: () => normalElArtifact(173, ELEMENT_TYPE.Anemo).name('翠绿的猎人之冠')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/ab97ddfef51292e8032722be4b90033c_7637964083886847648.png'),
 
-    // 187: advancedElArtifact(187, '如雷的盛怒', 3, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/3c5878d193077253d00e39f6db043270_1544021479773717286.png'),
+    312502: () => advancedElArtifact(174, ELEMENT_TYPE.Anemo).name('翠绿之影')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/b95596e3e5648849048417635b619e2e_2329852964215208759.png'),
 
-    // 188: normalElArtifact(188, '翠绿的猎人之冠', 5, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/ab97ddfef51292e8032722be4b90033c_7637964083886847648.png'),
+    312601: () => normalElArtifact(175, ELEMENT_TYPE.Geo).name('不动玄石之相')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/886a90f766bcecf0e8812513b7075638_2236001599325966947.png'),
 
-    // 189: advancedElArtifact(189, '翠绿之影', 5, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/b95596e3e5648849048417635b619e2e_2329852964215208759.png'),
+    312602: () => advancedElArtifact(176, ELEMENT_TYPE.Geo).name('悠古的磐岩')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/977478ceacb3093ecefcf986aeacc1c5_8889340500329632165.png'),
 
-    // 190: normalElArtifact(190, '不动玄石之相', 6, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/886a90f766bcecf0e8812513b7075638_2236001599325966947.png'),
+    312701: () => normalElArtifact(177, ELEMENT_TYPE.Dendro).name('月桂的宝冠')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/ee4fbb8c86fcc3d54c5e6717b3b62ddb_7264725145151740958.png'),
 
-    // 191: advancedElArtifact(191, '悠古的磐岩', 6, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/977478ceacb3093ecefcf986aeacc1c5_8889340500329632165.png'),
-
-    // 192: normalElArtifact(192, '月桂的宝冠', 7, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/ee4fbb8c86fcc3d54c5e6717b3b62ddb_7264725145151740958.png'),
-
-    // 193: advancedElArtifact(193, '深林的记忆', 7, 'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/8c84639efb7e6a9fb445daafdee873fe_8494733884893501982.png'),
+    312702: () => advancedElArtifact(178, ELEMENT_TYPE.Dendro).name('深林的记忆')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/8c84639efb7e6a9fb445daafdee873fe_8494733884893501982.png'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/c9f669c64195790d3ca31ee6559360ab_669337352006808767.png')
-        .handle((card, _, ver) => ({ support: [newSupport(ver)(card)] })),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/c9f669c64195790d3ca31ee6559360ab_669337352006808767.png'),
 
-    // 202: () => new GICard(202, '骑士团图书馆', '【入场时：】选择任意元素骰重投。；【投掷阶段：】获得额外一次重投机会。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/cedc39cd65a6fde9ec51971973328b74_5542237863639059092.png',
-    //     0, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4009, 202)], cmds: [{ cmd: 'reroll', cnt: 1 }], })),
+    321002: () => new CardBuilder(180).name('骑士团图书馆').place().costSame(0).costSame(1, 'v4.5.0')
+        .description('【入场时：】选择任意元素骰重投。；【投掷阶段：】获得额外一次重投机会。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/cedc39cd65a6fde9ec51971973328b74_5542237863639059092.png')
+        .handle(() => ({ cmds: [{ cmd: 'reroll', cnt: 1 }] })),
 
-    // 203: () => new GICard(203, '群玉阁', '【行动阶段开始时：】如果我方手牌数不多于3，则弃置此牌，生成1个[万能元素骰]。；【投掷阶段：】2个元素骰初始总是投出我方出战角色类型的元素。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/a170755e85072e3672834ae9f4d558d5_593047424158919411.png',
-    //     0, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4010, 203)] })),
+    321003: () => new CardBuilder(181).name('群玉阁').place().costSame(0)
+        .description('【行动阶段开始时：】如果我方手牌数不多于3，则弃置此牌，生成1个[万能元素骰]。；【投掷阶段：】2个元素骰初始总是投出我方出战角色类型的元素。')
+        .description('【投掷阶段：】2个元素骰初始总是投出我方出战角色类型的元素。', 'v4.5.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/a170755e85072e3672834ae9f4d558d5_593047424158919411.png'),
 
-    // 204: () => new GICard(204, '晨曦酒庄', '【我方执行行动｢切换角色｣时：】少花费1个元素骰。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/27ea1b01a7d0011b40c0180e4fba0490_7938002191515673602.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4008, 204)] })),
+    321004: () => new CardBuilder(182).name('晨曦酒庄').place().costSame(2)
+        .description('【我方执行行动｢切换角色｣时：】少花费1个元素骰。(每回合至多2次)')
+        .description('【我方执行行动｢切换角色｣时：】少花费1个元素骰。(每回合1次)', 'v4.8.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/27ea1b01a7d0011b40c0180e4fba0490_7938002191515673602.png'),
 
-    // 205: () => new GICard(205, '望舒客栈', '【结束阶段：】治疗受伤最多的我方后台角色2点。；[可用次数]：2',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/7ae272a8b40944f34630e0ec54c22317_1223200541912838887.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4006, 205)] })),
+    321005: () => new CardBuilder(183).name('望舒客栈').place().costSame(2)
+        .description('【结束阶段：】治疗受伤最多的我方后台角色2点。；[可用次数]：2')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/7ae272a8b40944f34630e0ec54c22317_1223200541912838887.png'),
 
-    // 206: () => new GICard(206, '西风大教堂', '【结束阶段：】治疗我方出战角色2点。；[可用次数]：2',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/e47492f5cf0d78f285c20ac6b38c8ed3_5642129970809736301.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4007, 206)] })),
+    321006: () => new CardBuilder(184).name('西风大教堂').place().costSame(2)
+        .description('【结束阶段：】治疗我方出战角色2点。；[可用次数]：2')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/e47492f5cf0d78f285c20ac6b38c8ed3_5642129970809736301.png'),
 
-    // 207: () => new GICard(207, '天守阁', '【行动阶段开始时：】如果我方的元素骰包含5种不同的元素，则生成1个[万能元素骰]。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6f2b064d7711e30c742b802770bef71_3841942586663095539.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4021, 207)] })),
+    321007: () => new CardBuilder(185).name('天守阁').since('v3.7.0').place().costSame(2)
+        .description('【行动阶段开始时：】如果我方的元素骰包含5种不同的元素，则生成1个[万能元素骰]。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6f2b064d7711e30c742b802770bef71_3841942586663095539.png'),
 
-    // 208: () => new GICard(208, '鸣神大社', '【每回合自动触发1次：】生成1个随机的基础元素骰。；[可用次数]：3',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/25bee82daa48f8018a4a921319ca2686_8817000056070129488.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4022, 208)], cmds: [{ cmd: 'getDice', cnt: 1, element: -1 }] })),
+    321008: () => new CardBuilder(186).name('鸣神大社').since('v3.6.0').place().costSame(2)
+        .description('【每回合自动触发1次：】生成1个随机的基础元素骰。；[可用次数]：3')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/25bee82daa48f8018a4a921319ca2686_8817000056070129488.png')
+        .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.RandomDice }] })),
 
-    // 209: () => new GICard(209, '珊瑚宫', '【结束阶段：】治疗所有我方角色1点。；[可用次数]：2',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2d016c4db4d3ce5c383d4fdb2a33f3e9_8583073738643262052.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4023, 209)] })),
+    321009: () => new CardBuilder(187).name('珊瑚宫').since('v3.7.0').place().costSame(2)
+        .description('【结束阶段：】治疗所有我方角色1点。；[可用次数]：2')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2d016c4db4d3ce5c383d4fdb2a33f3e9_8583073738643262052.png'),
 
-    // 210: () => new GICard(210, '须弥城', '【对角色打出｢天赋｣或我方角色使用技能时：】如果我方元素骰数量不多于手牌数量，则少花费1个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a659c38687c72bdd6244b9ef3c28390b_972040861793737387.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4024, 210)] })),
+    321010: () => new CardBuilder(188).name('须弥城').since('v3.7.0').place().costSame(2)
+        .description('【对角色打出｢天赋｣或我方角色使用技能时：】如果我方元素骰数量不多于手牌数量，则少花费1个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a659c38687c72bdd6244b9ef3c28390b_972040861793737387.png'),
 
-    // 211: () => new GICard(211, '桓那兰那', '【结束阶段：】收集最多2个未使用的元素骰。；【行动阶段开始时：】拿回此牌所收集的元素骰。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d46d38ef070b2340e8ee9dfa697aad3f_8762501854367946191.png',
-    //     0, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4025, 211)] })),
+    321011: () => new CardBuilder(189).name('桓那兰那').since('v3.7.0').place().costSame(0)
+        .description('【结束阶段：】收集最多2个未使用的元素骰。；【行动阶段开始时：】拿回此牌所收集的元素骰。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d46d38ef070b2340e8ee9dfa697aad3f_8762501854367946191.png'),
 
-    // 212: () => new GICard(212, '镇守之森', '【行动阶段开始时：】如果我方不是｢先手牌手｣，则生成1个出战角色类型的元素骰。；[可用次数]：3',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5a543775e68a6f02d0ba6526712d32c3_5028743115976906315.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4026, 212)] })),
+    321012: () => new CardBuilder(190).name('镇守之森').since('v3.7.0').place().costSame(1)
+        .description('【行动阶段开始时：】如果我方不是｢先手牌手｣，则生成1个出战角色类型的元素骰。；[可用次数]：3')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5a543775e68a6f02d0ba6526712d32c3_5028743115976906315.png'),
 
-    // 213: () => new GICard(213, '黄金屋', '【我方打出原本元素骰至少为3的｢武器｣或｢圣遗物｣手牌时：】少花费1个元素骰。(每回合1次)；[可用次数]：2',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/b8d17f6fa027ce2ae0d7032daf5b0ee8_2325912171963958867.png',
-    //     0, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4027, 213)] })),
+    321013: () => new CardBuilder(191).name('黄金屋').since('v4.0.0').place().costSame(0)
+        .description('【我方打出原本元素骰至少为3的｢武器｣或｢圣遗物｣手牌时：】少花费1个元素骰。(每回合1次)；[可用次数]：2')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/b8d17f6fa027ce2ae0d7032daf5b0ee8_2325912171963958867.png'),
 
-    // 214: () => new GICard(214, '化城郭', '【我方选择行动前，元素骰为0时：】生成1个[万能元素骰]。(每回合1次)；[可用次数]：3',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/5649867012fe98050232cf0b29c89609_1113164615099773768.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4028, 214)] })),
+    321014: () => new CardBuilder(192).name('化城郭').since('v4.1.0').place().costSame(1)
+        .description('【我方选择行动前，元素骰为0时：】生成1个[万能元素骰]。(每回合1次)；[可用次数]：3')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/5649867012fe98050232cf0b29c89609_1113164615099773768.png'),
 
-    // 215: () => new GICard(215, '风龙废墟', '【入场时：】从牌组中随机抽取一张｢天赋｣牌。；【我方打出｢天赋｣牌，或我方角色使用原本元素骰消耗至少为4的技能时：】少花费1个元素骰。(每回合1次)；[可用次数]：3',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/1812234f8a4cbd2445ce3bc1387df37c_4843239005964574553.png',
-    //     2, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4039, 215)], cmds: [{ cmd: 'getCard', cnt: 1, subtype: 6 }] })),
+    321015: () => new CardBuilder(193).name('风龙废墟').since('v4.2.0').place().costSame(2)
+        .description('【入场时：】从牌组中随机抽取一张｢天赋｣牌。；【我方打出｢天赋｣牌，或我方角色使用原本元素骰消耗至少为4的技能时：】少花费1个元素骰。(每回合1次)；[可用次数]：3')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/1812234f8a4cbd2445ce3bc1387df37c_4843239005964574553.png')
+        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Talent }] })),
 
-    // 216: () => new GICard(216, '湖中垂柳', '【结束阶段：】如果我方手牌数量不多于2，则抓2张牌。；[可用次数]：2',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/15/258999284/3e8a5c300c5c01f7fedaac87bd641d92_296932138041166470.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4040, 216)] })),
+    321016: () => new CardBuilder(309).name('湖中垂柳').since('v4.3.0').place().costSame(1)
+        .description('【结束阶段：】如果我方手牌数量不多于2，则抓2张牌。；[可用次数]：2')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/15/258999284/3e8a5c300c5c01f7fedaac87bd641d92_296932138041166470.png'),
 
-    // 217: () => new GICard(217, 310, '欧庇克莱歌剧院', '【我方选择行动前：】如果我方角色所装备卡牌的原本元素骰费用总和不比对方更低，则生成1个出战角色类型的元素骰。(每回合1次)；[可用次数]：3',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/d34719921cedd17675f38dccc24ebf43_8000545229587575448.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4041, 217)] })),
+    321017: () => new CardBuilder(310).name('欧庇克莱歌剧院').since('v4.3.0').place().costSame(1)
+        .description('【我方选择行动前：】如果我方角色所装备卡牌的原本元素骰费用总和不比对方更低，则生成1个出战角色类型的元素骰。(每回合1次)；[可用次数]：3')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/d34719921cedd17675f38dccc24ebf43_8000545229587575448.png'),
 
-    // 218: () => new GICard(218, '梅洛彼得堡', '【我方出战角色受到伤害或治疗后：】此牌累积1点｢禁令｣。(最多累积到4点)；【行动阶段开始时：】如果此牌已有4点｢禁令｣，则消耗4点，在敌方场上生成【sts2174】。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/41b42ed41f27f21f01858c0cdacd6286_8391561387795885599.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4047, 218)] })),
+    321018: () => new CardBuilder(344).name('梅洛彼得堡').since('v4.5.0').place().costSame(1)
+        .description('【我方出战角色受到伤害或治疗后：】此牌累积1点｢禁令｣。(最多累积到4点)；【行动阶段开始时：】如果此牌已有4点｢禁令｣，则消耗4点，在敌方场上生成【sts301018】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/41b42ed41f27f21f01858c0cdacd6286_8391561387795885599.png'),
 
-    // 219: () => new GICard(219, '清籁岛', '【任意阵营的角色受到治疗后：】使该角色附属【sts2184】。；[持续回合]：2',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/2bfc84b730feaf6a350373080d97c255_2788497572764739451.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4049, 219)] })),
+    321019: () => new CardBuilder(358).name('清籁岛').since('v4.6.0').place().costSame(1)
+        .description('【任意阵营的角色受到治疗后：】使该角色附属【sts301019】。；[持续回合]：2')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/2bfc84b730feaf6a350373080d97c255_2788497572764739451.png'),
 
-    // 220: () => new GICard(220, '赤王陵', '【对方累积抓4张牌后：】弃置此牌，在对方牌库顶生成2张【crd908】。然后直到本回合结束前，对方每抓1张牌，就立刻生成1张【crd908】随机地置入对方牌库中。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ad50dbbd94e8a1e52add8ad5efa5d61f_7946928210268600604.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4052, 220)] })),
+    321020: () => new CardBuilder(388).name('赤王陵').since('v4.7.0').place().costSame(1)
+        .description('【对方累积抓4张牌后：】弃置此牌，在对方牌库顶生成2张【crd301020】。然后直到本回合结束前，对方每抓1张牌，就立刻生成1张【crd301020】随机地置入对方牌库中。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ad50dbbd94e8a1e52add8ad5efa5d61f_7946928210268600604.png'),
 
-    // 221: () => new GICard(221, '中央实验室遗址', '【我方[舍弃]或[调和]1张牌后：】此牌累积1点｢实验进展｣。每当｢实验进展｣达到3点、6点、9点时，就获得1个[万能元素骰]。然后，如果｢实验进展｣至少为9点，则弃置此牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/519cc801980bbb5907f9a25ca017d03a_4463551389207387795.png',
-    //     1, 8, 1, [2], 0, 0, () => ({ support: [newSupport(4053, 221)] })),
+    321021: () => new CardBuilder(389).name('中央实验室遗址').since('v4.7.0').place().costSame(1)
+        .description('【我方[舍弃]或[调和]1张牌后：】此牌累积1点｢实验进展｣。每当｢实验进展｣达到3点、6点、9点时，就获得1个[万能元素骰]。然后，如果｢实验进展｣至少为9点，则弃置此牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/519cc801980bbb5907f9a25ca017d03a_4463551389207387795.png'),
+
 
     // 301: () => new GICard(301, '派蒙', '【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8b291b7aa846d8e987a9c7d60af3cffb_7229054083686130166.png',
@@ -2817,6 +2833,18 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['discard'], summon: [newSummon(ver)(smnid)] }
         }),
 
+    301020: () => new CardBuilder().name('禁忌知识').event().costSame(0).tag(CARD_TAG.NonReconcile)
+        .description('无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，抓1张牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/fe20720734d5041d50cf6eab08689916_6711209992824489498.png')
+        .handle((_card, event, ver) => {
+            const { hidxs = [], combatStatus = [] } = event;
+            return {
+                isValid: !hasObjById(combatStatus, 301021),
+                cmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Pierce, hidxs, isOppo: false }, { cmd: 'getCard', cnt: 1 }],
+                status: [newStatus(ver)(301021)],
+            }
+        }),
+
     // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }] })),
@@ -2828,17 +2856,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 904: () => new GICard(904, '海底宝藏', '治疗我方出战角色1点，生成1个随机基础元素骰。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'heal', cnt: 1 }, { cmd: 'getDice', cnt: 1, element: -1 }] })),
-
-    // 908: () => new GICard(908, '禁忌知识', '无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，抓1张牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/fe20720734d5041d50cf6eab08689916_6711209992824489498.png',
-    //     0, 8, 2, [-5], 0, 0, (_card, event) => {
-    //         const { heros = [], hidxs = [] } = event;
-    //         return {
-    //             isValid: !heros[hidxs[0]]?.outStatus.some(ost => ost.id == 2215),
-    //             cmds: [{ cmd: 'attack', cnt: 1, element: -1, hidxs, isOppo: true }, { cmd: 'getCard', cnt: 1 }],
-    //             status: [newStatus(2215)],
-    //         }
-    //     }),
 
     // 909: magicCount(2),
 

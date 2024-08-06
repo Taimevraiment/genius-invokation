@@ -129,7 +129,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    111081: () => new SummonBuilder('寒病鬼差').useCnt(3).perCnt(1).damage(1)
+    111081: () => new SummonBuilder('寒病鬼差').useCnt(3).perCnt(1).perCnt(0, 'v4.7.0').damage(1)
         .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点; 【每回合1次：】再治疗我方出战角色1点。')
         .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
@@ -139,7 +139,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const hidxs = getMaxHertHidxs(heros);
             const fhero = heros[getAtkHidx(heros)];
             const isHeal = fhero?.id == getHidById(summon.id) && trigger == 'skilltype1' && hidxs.length > 0;
-            const hasTround = trigger == 'skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp && ver >= 'v4.7.0';
+            const hasTround = ver >= 'v4.7.0' && trigger == 'skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
             if (isHeal) triggers.push('skilltype1');
             const skcmds: Cmds[] = [{ cmd: 'heal', cnt: 1, hidxs }];
             const trdcmds: Cmds[] = [];
@@ -149,12 +149,13 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 cmds: isCdt(isHeal && !isExec, [...skcmds, ...trdcmds]),
                 tround: isCdt(hasTround, 1),
                 exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
                     if (tround == 1) {
-                        --summon.perCnt;
+                        --smn.perCnt;
                         return { cmds: trdcmds }
                     }
                     if (trigger == 'skilltype1') return { cmds: skcmds }
-                    if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
                 },
             }
         }),
@@ -255,7 +256,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     return {
                         cmds: [
                             { cmd: 'attack', cnt: 1 },
-                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(heros), cnt: 1, isOppo: true },
+                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(heros), cnt: 1, isOppo: false },
                         ]
                     }
                 },

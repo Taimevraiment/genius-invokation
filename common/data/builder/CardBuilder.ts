@@ -8,6 +8,7 @@ import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/
 import { getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { newStatus } from "../statuses.js";
+import { newSupport } from "../supports.js";
 import { BaseBuilder } from "./baseBuilder.js";
 
 export class GICard {
@@ -307,6 +308,15 @@ export class CardBuilder extends BaseBuilder {
         }
         if (this._subtype.includes(CARD_SUBTYPE.Talent) && !this._subtype.includes(CARD_SUBTYPE.Action)) {
             userType = getHidById(this._id);
+        }
+        if (this._type == CARD_TYPE.Support) {
+            const handle = this._handle;
+            this._handle = (card, event, ver) => {
+                return {
+                    ...handle?.(card, event, ver),
+                    support: [newSupport(ver)(card)],
+                }
+            };
         }
         const description = this._getValByVersion(this._description, '');
         const cost = this._getValByVersion(this._cost, 0);

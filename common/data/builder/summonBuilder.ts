@@ -109,7 +109,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _damage: [Version, number][] = [];
     private _pdmg: number = 0;
     private _element: ElementType | undefined;
-    private _perCnt: number = 0;
+    private _perCnt: [Version, number][] = [];
     private _isTalent: boolean = false;
     private _addition: string[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
@@ -190,8 +190,8 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._pdmg = pdmg;
         return this;
     }
-    perCnt(perCnt: number) {
-        this._perCnt = perCnt;
+    perCnt(perCnt: number, version: Version = 'vlatest') {
+        this._perCnt.push([version, perCnt]);
         return this;
     }
     talent(isTalent: boolean) {
@@ -239,12 +239,13 @@ export class SummonBuilder extends BaseVersionBuilder {
         const maxUse = this._maxUse || useCnt;
         const description = this._getValByVersion(this._description, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
+        const perCnt = this._getValByVersion(this._perCnt, 0);
         const damage = this._getValByVersion(this._damage, 0);
         const stsId = this._statusId == -2 ? this._id : this._statusId;
         return new GISummon(this._id, this._name, description, this._src, useCnt, maxUse,
             this._shieldOrHeal, damage, element, this._handle,
             {
-                pct: this._perCnt,
+                pct: perCnt,
                 isTalent: this._isTalent,
                 adt: this._addition,
                 pdmg: this._pdmg,

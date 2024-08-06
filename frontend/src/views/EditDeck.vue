@@ -969,6 +969,7 @@ body div {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
+    z-index: 1;
 }
 
 .card-cost>span,
@@ -996,6 +997,7 @@ body div {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
+    z-index: 1;
 }
 
 .card-cnt {
@@ -1055,6 +1057,7 @@ body div {
     font-weight: bold;
     text-align: center;
     box-sizing: border-box;
+    z-index: 1;
 }
 
 .selected {

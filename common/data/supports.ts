@@ -1,11 +1,15 @@
-import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Summon, Trigger } from '../../typing';
-import { DiceCostType, Version } from '../constant/enum.js';
+import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from '../../typing';
+import { CARD_SUBTYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, SKILL_TYPE, Version } from '../constant/enum.js';
+import { allHidxs, getMaxHertHidxs, hasObjById } from '../utils/gameUtil.js';
+import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
+import { newStatus } from './statuses.js';
 
 export type SupportHandleEvent = {
     dices?: DiceCostType[],
     trigger?: Trigger,
     eheros?: Hero[],
+    eCombatStatus?: Status[],
     heros?: Hero[],
     reset?: boolean,
     card?: Card,
@@ -14,8 +18,9 @@ export type SupportHandleEvent = {
     hidxs?: number[],
     playerInfo?: GameInfo,
     minusDiceCard?: number,
-    minusDiceSkillIds?: number[],
+    isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
+    isMinusDiceTalent?: boolean,
     isSkill?: number,
     hidx?: number,
     heal?: number[],
@@ -55,33 +60,320 @@ export type SupportExecRes = {
     summon?: Summon[],
 }
 
-// const DICE_WEIGHT = [ // 吃骰子的优先级权重(越低越优先)
-//     DICE_COST_TYPE.Omni,
-//     DICE_COST_TYPE.Cryo,
-//     DICE_COST_TYPE.Hydro,
-//     DICE_COST_TYPE.Pyro,
-//     DICE_COST_TYPE.Electro,
-//     DICE_COST_TYPE.Geo,
-//     DICE_COST_TYPE.Dendro,
-//     DICE_COST_TYPE.Anemo,
-// ];
+const DICE_WEIGHT = [ // 吃骰子的优先级权重(越低越优先)
+    DICE_COST_TYPE.Omni,
+    DICE_COST_TYPE.Cryo,
+    DICE_COST_TYPE.Hydro,
+    DICE_COST_TYPE.Pyro,
+    DICE_COST_TYPE.Electro,
+    DICE_COST_TYPE.Geo,
+    DICE_COST_TYPE.Dendro,
+    DICE_COST_TYPE.Anemo,
+];
 
-// const getSortedDices = (dices: DiceCostType[]) => {
-//     const diceCnt = arrToObj(DICE_WEIGHT, 0);
-//     dices.forEach(d => ++diceCnt[d]);
-//     return objToArr(diceCnt)
-//         .sort((a, b) => b[1] * (b[0] == DICE_COST_TYPE.Omni ? 0 : 1) - a[1] * (a[0] == DICE_COST_TYPE.Omni ? 0 : 1) || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
-//         .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
-// }
+const getSortedDices = (dices: DiceCostType[]) => {
+    const diceCnt = arrToObj(DICE_WEIGHT, 0);
+    dices.forEach(d => ++diceCnt[d]);
+    return objToArr(diceCnt)
+        .sort((a, b) => b[1] * (b[0] == DICE_COST_TYPE.Omni ? 0 : 1) - a[1] * (a[0] == DICE_COST_TYPE.Omni ? 0 : 1) || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
+        .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
+}
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
-    // // 派蒙
+    // 璃月港口
+    321001: () => new SupportBuilder().round(2).handle(support => ({
+        trigger: ['phase-end'],
+        exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: --support.cnt == 0 })
+    })),
+    // 骑士团图书馆
+    321002: () => new SupportBuilder().permanent().handle(() => ({
+        trigger: ['phase-dice'],
+        addRollCnt: 1,
+    })),
+    // 群玉阁
+    321003: () => new SupportBuilder().permanent().handle((_support, event = {}, ver) => {
+        const { hcards = [], trigger = '' } = event;
+        const triggers: Trigger[] = ['phase-dice'];
+        if (ver >= 'v4.5.0' && hcards.length <= 3) triggers.push('phase-start');
+        return {
+            trigger: triggers,
+            element: -2,
+            cnt: 2,
+            exec: () => {
+                if (trigger == 'phase-start') {
+                    return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }], isDestroy: true }
+                }
+                return { isDestroy: false }
+            }
+        }
+    }),
+    // 晨曦酒庄
+    321004: () => new SupportBuilder().permanent().perCnt(2).perCnt(1, 'v4.8.0').handle(support => {
+        if (support.perCnt <= 0) return;
+        return {
+            trigger: ['change'],
+            isNotAddTask: true,
+            minusDiceHero: 1,
+            exec: execEvent => {
+                let { switchHeroDiceCnt = 0 } = execEvent;
+                if (switchHeroDiceCnt > 0) {
+                    --support.perCnt;
+                    --switchHeroDiceCnt;
+                }
+                return { switchHeroDiceCnt, isDestroy: false }
+            }
+        }
+    }),
+    // 望舒客栈
+    321005: () => new SupportBuilder().round(2).heal(2).handle((support, event = {}) => {
+        const { heros = [] } = event;
+        const hidxs = getMaxHertHidxs(heros);
+        if (hidxs.length == 0) return;
+        return {
+            trigger: ['phase-end'],
+            exec: () => ({ cmds: [{ cmd: 'heal', cnt: 2, hidxs }], isDestroy: --support.cnt == 0 })
+        }
+    }),
+    // 西风大教堂
+    321006: () => new SupportBuilder().round(2).heal(2).handle((support, event = {}) => {
+        const { heros = [] } = event;
+        return {
+            trigger: ['phase-end'],
+            exec: () => {
+                const frontHeroIdx = heros.findIndex(h => h.isFront);
+                if (frontHeroIdx == -1 || heros[frontHeroIdx].hp == heros[frontHeroIdx].maxHp) {
+                    return { isDestroy: false }
+                }
+                return { cmds: [{ cmd: 'heal', hidxs: [frontHeroIdx], cnt: 2 }], isDestroy: --support.cnt == 0 }
+            }
+        }
+    }),
+    // 天守阁
+    321007: () => new SupportBuilder().permanent().handle((_support, event = {}) => {
+        const { dices = [] } = event;
+        return {
+            trigger: ['phase-start'],
+            exec: () => {
+                const cmds: Cmds[] = [];
+                if (new Set(dices.filter(v => v != DICE_COST_TYPE.Omni)).size + dices.filter(v => v == DICE_COST_TYPE.Omni).length >= 5) {
+                    cmds.push({ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni });
+                }
+                return { cmds, isDestroy: false }
+            }
+        }
+    }),
+    // 鸣神大社
+    321008: () => new SupportBuilder().round(2).handle(support => ({
+        trigger: ['phase-start'],
+        exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.RandomDice }], isDestroy: --support.cnt == 0 })
+    })),
+    // 珊瑚宫
+    321009: () => new SupportBuilder().round(2).handle((support, event = {}) => {
+        const { heros = [] } = event;
+        if (heros.every(h => h.hp == h.maxHp)) return;
+        return {
+            trigger: ['phase-end'],
+            exec: () => ({ cmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }], isDestroy: --support.cnt == 0 })
+        }
+    }),
+    // 须弥城
+    321010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event = {}) => {
+        const { dices = [], hcards = [], isMinusDiceTalent = false, isMinusDiceSkill = false, trigger = '' } = event;
+        if (dices.length > hcards.length || support.perCnt <= 0) return;
+        return {
+            minusDiceSkill: { skill: [0, 0, 1] },
+            minusDiceCard: isCdt(isMinusDiceTalent, 1),
+            trigger: ['skill', 'card'],
+            isNotAddTask: true,
+            exec: () => {
+                if (trigger == 'skill' && isMinusDiceSkill || trigger == 'card' && isMinusDiceTalent) {
+                    --support.perCnt;
+                }
+                return { isDestroy: false }
+            }
+        }
+    }),
+    // 桓那兰那
+    321011: () => new SupportBuilder().collection().handle((support, event = {}) => {
+        const { dices = [], trigger } = event;
+        return {
+            trigger: ['phase-end', 'phase-start'],
+            exec: () => {
+                if (trigger == 'phase-end') {
+                    const pdices = getSortedDices(dices);
+                    dices.length = 0;
+                    dices.push(...pdices.slice(2));
+                    support.perCnt = -pdices.slice(0, 2).map(v => DICE_WEIGHT.indexOf(v) + 1).join('');
+                    support.cnt = pdices.slice(0, 2).length;
+                    return { isDestroy: false }
+                } else if (trigger == 'phase-start') {
+                    const element = support.perCnt.toString().slice(1).split('').map(v => DICE_WEIGHT[Number(v) - 1]);
+                    support.cnt = 0;
+                    support.perCnt = 0;
+                    if (element.length > 0) return { cmds: [{ cmd: 'getDice', cnt: 2, element }], isDestroy: false }
+                }
+                return { isDestroy: false }
+            }
+        }
+    }),
+    // 镇守之森
+    321012: () => new SupportBuilder().round(3).handle((support, event = {}) => {
+        const { isFirst = true } = event;
+        if (isFirst) return;
+        return {
+            trigger: ['phase-start'],
+            exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }], isDestroy: --support.cnt == 0 })
+        }
+    }),
+    // 黄金屋
+    321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event = {}) => {
+        const { card, minusDiceCard: mdc = 0 } = event;
+        const isMinus = support.perCnt > 0 && card && card.cost >= 3 && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Artifact) && card.cost > mdc;
+        return {
+            trigger: ['card'],
+            isNotAddTask: true,
+            minusDiceCard: isCdt(isMinus, 1),
+            exec: () => {
+                if (!isMinus) return { isDestroy: false }
+                --support.perCnt;
+                return { isDestroy: --support.cnt == 0 }
+            }
+        }
+    }),
+    // 化城郭
+    321014: () => new SupportBuilder().round(3).perCnt(1).handle((support, event = {}) => {
+        const { dices = [] } = event;
+        if (support.perCnt == 0 || dices.length > 0) return;
+        return {
+            trigger: ['action-start'],
+            exec: () => {
+                --support.perCnt;
+                return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }], isDestroy: --support.cnt == 0 }
+            }
+        }
+    }),
+    // 风龙废墟
+    321015: () => new SupportBuilder().round(3).perCnt(1).handle((support, event = {}) => {
+        const { heros = [], hidx = -1, trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+        const isCardMinus = isMinusDiceTalent && support.perCnt > 0;
+        const skills = heros[hidx].skills.filter(v => v.type != SKILL_TYPE.Passive).map(skill => {
+            if (support.perCnt > 0 && skill.cost[0].cnt + skill.cost[1].cnt >= 4) return [0, 0, 1];
+            return [0, 0, 0];
+        });
+        return {
+            trigger: ['skill', 'card'],
+            isNotAddTask: true,
+            minusDiceCard: isCdt(isCardMinus, 1),
+            minusDiceSkill: { skills },
+            exec: () => {
+                if (support.perCnt > 0 && (trigger == 'card' && isCardMinus || trigger.startsWith('skill') && isMinusDiceSkill)) {
+                    --support.perCnt;
+                    --support.cnt;
+                }
+                return { isDestroy: support.cnt == 0 }
+            }
+        }
+    }),
+    // 湖中垂柳
+    321016: () => new SupportBuilder().round(2).handle((support, event = {}) => {
+        const { hcards = [] } = event;
+        return {
+            trigger: isCdt(hcards.length <= 2, ['phase-end']),
+            exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: --support.cnt == 0 })
+        }
+    }),
+    // 欧庇克莱歌剧院
+    321017: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event = {}) => {
+        const { heros = [], eheros = [] } = event;
+        const slotCost = heros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot])
+            .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
+        const eslotCost = eheros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot])
+            .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
+        if (slotCost >= eslotCost && support.perCnt > 0) {
+            return {
+                trigger: ['action-start'],
+                exec: () => {
+                    --support.perCnt;
+                    return { cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }], isDestroy: --support.cnt == 0 }
+                }
+            }
+        }
+    }),
+    // 梅洛彼得堡
+    321018: () => new SupportBuilder().collection().handle((support, event = {}, ver) => {
+        const { hidxs = [], getdmg = [], heal = [], eCombatStatus = [], trigger = '' } = event;
+        const triggers: Trigger[] = [];
+        if (trigger == 'getdmg' && getdmg[hidxs[0]] > 0 && support.cnt < 4) triggers.push('getdmg');
+        if (trigger == 'heal' && heal[hidxs[0]] > 0 && support.cnt < 4) triggers.push('heal');
+        if (support.cnt >= 4 && !hasObjById(eCombatStatus, 301018)) triggers.push('phase-start');
+        const isAdd = triggers.some(tr => ['getdmg', 'heal'].includes(tr));
+        return {
+            trigger: triggers,
+            supportCnt: isCdt(isAdd, 1),
+            exec: () => {
+                if (trigger == 'phase-start') {
+                    support.cnt -= 4;
+                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301018)], isOppo: true }], isDestroy: false }
+                }
+                support.cnt = Math.min(4, support.cnt + 1);
+                return { isDestroy: false }
+            }
+        }
+    }),
+    // 清籁岛
+    321019: () => new SupportBuilder().round(2).handle((support, event = {}, ver) => {
+        const { heal = [], trigger = '' } = event;
+        const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl > 0).map(v => v.hli);
+        return {
+            trigger: ['heal', 'heal-oppo', 'phase-end'],
+            exec: () => {
+                if (trigger == 'phase-end') return { isDestroy: --support.cnt == 0 }
+                return {
+                    cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301019)], hidxs, isOppo: trigger == 'heal-oppo' }],
+                    isDestroy: false,
+                }
+            }
+        }
+    }),
+    // 赤王陵
+    321020: () => new SupportBuilder().collection().handle((support, _, ver) => ({
+        trigger: ['getcard-oppo'],
+        supportCnt: 1 + (support.cnt < 4 ? 1 : -5),
+        exec: () => {
+            ++support.cnt;
+            if (support.cnt < 4) return { isDestroy: false }
+            return {
+                cmds: [
+                    { cmd: 'addCard', cnt: 2, card: 301020, hidxs: [2], isOppo: true },
+                    { cmd: 'getStatus', status: [newStatus(ver)(301022)], isOppo: true },
+                ],
+                isDestroy: true,
+            }
+        },
+    })),
+    // 中央实验室遗址
+    321021: () => new SupportBuilder().collection().handle((support, event = {}) => {
+        const { discard = 0, trigger = '' } = event;
+        return {
+            trigger: ['discard', 'reconcile'],
+            exec: () => {
+                const ocnt = support.cnt;
+                if (trigger == 'reconcile') ++support.cnt;
+                else if (trigger == 'discard') support.cnt += discard;
+                const dcnt = Math.floor(support.cnt / 3) - Math.floor(ocnt / 3);
+                if (dcnt == 0) return { isDestroy: false }
+                return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }], isDestroy: support.cnt >= 9 }
+            },
+        }
+    }),
+
+    // 派蒙
     // 4001: (card: Card) => new GISupport(4001, card, 2, 0, 1, support => ({
     //     trigger: ['phase-start'],
     //     exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 2, element: 0 }], isDestroy: --support.cnt == 0 })
     // })),
-    // // 参量质变仪
+    // 参量质变仪
     // 4002: (card: Card) => new GISupport(4002, card, 0, 0, 2, (support, event = {}) => {
     //     const { isSkill = -1 } = event;
     //     if (isSkill == -1) return;
@@ -94,12 +386,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // 璃月港口
-    321001: () => new SupportBuilder().round(2).handle(support => ({
-        trigger: ['phase-end'],
-        exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: --support.cnt == 0 })
-    })),
-    // // 常九爷
+    // 常九爷
     // 4004: (card: Card) => new GISupport(4004, card, 0, 0, 2, (support, event = {}) => {
     //     const { isSkill = -1 } = event;
     //     if (isSkill == -1) return;
@@ -113,7 +400,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 立本
+    // 立本
     // 4005: (card: Card) => new GISupport(4005, card, 0, 0, 2, (support, event = {}) => {
     //     const { dices = [], trigger } = event;
     //     return {
@@ -143,77 +430,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 望舒客栈
-    // 4006: (card: Card) => new GISupport(4006, card, 2, 0, 1, (support, event = {}) => {
-    //     const { heros = [] } = event;
-    //     const minHp = Math.min(...heros.filter(h => h.hp > 0 && h.hp < h.maxhp && !h.isFront).map(h => h.hp));
-    //     const hidxs: number[] = [];
-    //     const fhidx = heros.findIndex(h => h.isFront);
-    //     for (let i = 1; i < heros.length; ++i) {
-    //         const hidx = (i + fhidx) % heros.length;
-    //         if (heros[hidx].hp == minHp) {
-    //             hidxs.push(hidx);
-    //             break;
-    //         }
-    //     }
-    //     if (hidxs.length == 0) return;
-    //     return {
-    //         trigger: ['phase-end'],
-    //         exec: () => ({ cmds: [{ cmd: 'heal', hidxs, cnt: 2 }], isDestroy: --support.cnt == 0 })
-    //     }
-    // }, 2),
-    // // 西风大教堂
-    // 4007: (card: Card) => new GISupport(4007, card, 2, 0, 1, (support, event = {}) => {
-    //     const { heros = [] } = event;
-    //     return {
-    //         trigger: ['phase-end'],
-    //         exec: () => {
-    //             const frontHeroIdx = heros.findIndex(h => h.isFront);
-    //             if (frontHeroIdx == -1 || heros[frontHeroIdx].hp == heros[frontHeroIdx].maxhp) {
-    //                 return { isDestroy: false }
-    //             }
-    //             return { cmds: [{ cmd: 'heal', hidxs: [frontHeroIdx], cnt: 2 }], isDestroy: --support.cnt == 0 }
-    //         }
-    //     }
-    // }, 2),
-
-    // // 晨曦酒庄
-    // 4008: (card: Card) => new GISupport(4008, card, 0, 1, 3, support => ({
-    //     trigger: ['change'],
-    //     isNotAddTask: true,
-    //     minusDiceHero: support.perCnt,
-    //     exec: execEvent => {
-    //         let { switchHeroDiceCnt = 0 } = execEvent;
-    //         if (support.perCnt > 0 && switchHeroDiceCnt > 0) {
-    //             --support.perCnt;
-    //             --switchHeroDiceCnt;
-    //         }
-    //         return { switchHeroDiceCnt, isDestroy: false }
-    //     }
-    // })),
-    // // 骑士团图书馆
-    // 4009: (card: Card) => new GISupport(4009, card, 0, 0, 3, () => ({
-    //     trigger: ['phase-dice'],
-    //     addRollCnt: 1,
-    // })),
-    // // 群玉阁
-    // 4010: (card: Card) => new GISupport(4010, card, 0, 0, 3, (_support, event = {}) => {
-    //     const { hcards = [], trigger = '' } = event;
-    //     const triggers: Trigger[] = ['phase-dice'];
-    //     if (hcards.length <= 3) triggers.push('phase-start');
-    //     return {
-    //         trigger: triggers,
-    //         element: -2,
-    //         cnt: 2,
-    //         exec: () => {
-    //             if (trigger == 'phase-start') {
-    //                 return { cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }], isDestroy: true }
-    //             }
-    //             return { isDestroy: false }
-    //         }
-    //     }
-    // }),
-    // // 凯瑟琳
+    // 凯瑟琳
     // 4011: (card: Card) => new GISupport(4011, card, 0, 1, 3, support => ({
     //     trigger: ['change'],
     //     isNotAddTask: true,
@@ -223,7 +440,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         return { isDestroy: false }
     //     }
     // })),
-    // // 蒂玛乌斯
+    // 蒂玛乌斯
     // 4012: (card: Card) => new GISupport(4012, card, 2, 1, 2, (support, event = {}) => {
     //     const { card, trigger = '', minusDiceCard: mdc = 0 } = event;
     //     const isMinus = support.perCnt > 0 && card && card.subType.includes(1) && card.cost > mdc && support.cnt >= card.cost - mdc;
@@ -242,7 +459,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 瓦格纳
+    // 瓦格纳
     // 4013: (card: Card) => new GISupport(4013, card, 2, 1, 2, (support, event = {}) => {
     //     const { card, trigger = '', minusDiceCard: mdc = 0 } = event;
     //     const isMinus = support.perCnt > 0 && card && card.subType.includes(0) && card.cost > mdc && support.cnt >= card.cost - mdc;
@@ -261,7 +478,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 卯师傅
+    // 卯师傅
     // 4014: (card: Card) => new GISupport(4014, card, 1, 1, 3, (support, event = {}) => {
     //     const { card } = event;
     //     return {
@@ -279,7 +496,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 阿圆
+    // 阿圆
     // 4015: (card: Card) => new GISupport(4015, card, 0, 1, 3, (support, event = {}) => {
     //     const { card, minusDiceCard: mdc = 0 } = event;
     //     const isMinus = support.perCnt > 0 && card && card.subType.includes(2) && card.cost > mdc;
@@ -293,7 +510,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 提米
+    // 提米
     // 4016: (card: Card) => new GISupport(4016, card, 1, 0, 2, support => ({
     //     trigger: ['phase-start'],
     //     exec: () => {
@@ -304,7 +521,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // })),
-    // // 艾琳
+    // 艾琳
     // 4017: (card: Card) => new GISupport(4017, card, 0, 1, 3, (support, event = {}) => {
     //     const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skill: [0, 0, 1] },
     //         skill => (skill?.useCnt ?? 0) > 0 && support.perCnt > 0);
@@ -320,7 +537,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 田铁嘴
+    // 田铁嘴
     // 4018: (card: Card) => new GISupport(4018, card, 2, 0, 1, (support, event = {}) => {
     //     const { heros = [] } = event;
     //     const hidxs: number[] = [];
@@ -339,7 +556,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 刘苏
+    // 刘苏
     // 4019: (card: Card) => new GISupport(4019, card, 2, 1, 2, (support, event = {}) => {
     //     const { heros = [], hidx = -1 } = event;
     //     if (hidx == -1) return;
@@ -352,7 +569,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 便携营养袋
+    // 便携营养袋
     // 4020: (card: Card) => new GISupport(4020, card, 0, 1, 3, (support, event = {}) => {
     //     const { card } = event;
     //     return {
@@ -365,114 +582,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 天守阁
-    // 4021: (card: Card) => new GISupport(4021, card, 0, 0, 3,
-    //     (_support, event = {}) => {
-    //         const { dices = [] } = event;
-    //         return {
-    //             trigger: ['phase-start'],
-    //             exec: () => {
-    //                 const cmds: Cmds[] = [];
-    //                 if (new Set(dices.filter(v => v > 0)).size + dices.filter(v => v == 0).length >= 5) {
-    //                     cmds.push({ cmd: 'getDice', cnt: 1, element: 0 });
-    //                 }
-    //                 return { cmds, isDestroy: false }
-    //             }
-    //         }
-    //     }),
-    // // 鸣神大社
-    // 4022: (card: Card) => new GISupport(4022, card, 2, 0, 1, support => ({
-    //     trigger: ['phase-start'],
-    //     exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: -1 }], isDestroy: --support.cnt == 0 })
-    // })),
-    // // 珊瑚宫
-    // 4023: (card: Card) => new GISupport(4023, card, 2, 0, 1, (support, event = {}) => {
-    //     const { heros = [] } = event;
-    //     if (heros.every(h => h.hp == h.maxhp)) return;
-    //     return {
-    //         trigger: ['phase-end'],
-    //         exec: () => ({ cmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }], isDestroy: --support.cnt == 0 })
-    //     }
-    // }),
-    // // 须弥城
-    // 4024: (card: Card) => new GISupport(4024, card, 0, 1, 3, (support, event = {}) => {
-    //     const { dices = [], hcards = [], card, trigger = '', minusDiceCard: mdc = 0 } = event;
-    //     const isMinus = dices.length <= hcards.length && support.perCnt > 0;
-    //     const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skill: [0, 0, 1] }, () => isMinus);
-    //     const isCard = card && card.subType.includes(6) && card.cost + card.anydice > mdc;
-    //     return {
-    //         ...minusSkillRes,
-    //         minusDiceCard: isCdt(isMinus && isCard, 1),
-    //         trigger: ['skill', 'card'],
-    //         isNotAddTask: true,
-    //         exec: () => {
-    //             if (isMinus && (trigger == 'skill' && isMinusSkill || trigger == 'card' && isCard)) {
-    //                 --support.perCnt;
-    //             }
-    //             return { isDestroy: false }
-    //         }
-    //     }
-    // }),
-    // // 桓那兰那
-    // 4025: (card: Card) => new GISupport(4025, card, 0, 0, 2, (support, event = {}) => {
-    //     const { dices = [], trigger } = event;
-    //     return {
-    //         trigger: ['phase-end', 'phase-start'],
-    //         exec: () => {
-    //             if (trigger == 'phase-end') {
-    //                 const pdices = getSortedDices(dices);
-    //                 dices.length = 0;
-    //                 dices.push(...pdices.slice(2));
-    //                 support.perCnt = -pdices.slice(0, 2).map(v => v == 0 ? 8 : v).join('');
-    //                 support.cnt = pdices.slice(0, 2).length;
-    //                 return { isDestroy: false }
-    //             } else if (trigger == 'phase-start') {
-    //                 const element = support.perCnt.toString().slice(1).split('').map(v => Number(v) % 8);
-    //                 support.cnt = 0;
-    //                 support.perCnt = 0;
-    //                 if (element.length > 0) return { cmds: [{ cmd: 'getDice', cnt: 2, element }], isDestroy: false }
-    //             }
-    //             return { isDestroy: false }
-    //         }
-    //     }
-    // }),
-    // // 镇守之森
-    // 4026: (card: Card) => new GISupport(4026, card, 3, 0, 1, (support, event = {}) => {
-    //     const { isFirst = true } = event;
-    //     if (isFirst) return;
-    //     return {
-    //         trigger: ['phase-start'],
-    //         exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: -2 }], isDestroy: --support.cnt == 0 })
-    //     }
-    // }),
-    // // 黄金屋
-    // 4027: (card: Card) => new GISupport(4027, card, 2, 1, 2, (support, event = {}) => {
-    //     const { card, minusDiceCard: mdc = 0 } = event;
-    //     const isMinus = support.perCnt > 0 && card && card.cost >= 3 && card.subType.some(v => v < 2) && card.cost > mdc;
-    //     return {
-    //         trigger: ['card'],
-    //         isNotAddTask: true,
-    //         minusDiceCard: isCdt(isMinus, 1),
-    //         exec: () => {
-    //             if (!isMinus) return { isDestroy: false }
-    //             --support.perCnt;
-    //             return { isDestroy: --support.cnt == 0 }
-    //         }
-    //     }
-    // }),
-    // // 化城郭
-    // 4028: (card: Card) => new GISupport(4028, card, 3, 1, 2, (support, event = {}) => {
-    //     const { dices = [] } = event;
-    //     if (support.perCnt == 0 || dices.length > 0) return;
-    //     return {
-    //         trigger: ['action-start'],
-    //         exec: () => {
-    //             --support.perCnt;
-    //             return { cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }], isDestroy: --support.cnt == 0 }
-    //         }
-    //     }
-    // }),
-    // // 花散里
+    // 花散里
     // 4029: (card: Card) => new GISupport(4029, card, 0, 0, 2, (support, event = {}) => {
     //     const { card, trigger = '', minusDiceCard: mdc = 0 } = event;
     //     const isMinus = support.cnt >= 3 && card && card.subType.some(v => v < 2) && card.cost > mdc;
@@ -489,13 +599,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 鲸井小弟
+    // 鲸井小弟
     // 4030: (card: Card) => new GISupport(4030, card, 0, 0, 3, () => ({
     //     trigger: ['phase-start'],
     //     isExchange: true,
     //     exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }], isDestroy: true })
     // })),
-    // // 旭东
+    // 旭东
     // 4031: (card: Card) => new GISupport(4031, card, 0, 1, 3, (support, event = {}) => {
     //     const { card, minusDiceCard: mdc = 0 } = event;
     //     const isMinus = card && card.subType.includes(5) && card.cost > mdc && support.perCnt > 0;
@@ -509,7 +619,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 迪娜泽黛
+    // 迪娜泽黛
     // 4032: (card: Card) => new GISupport(4032, card, -1, 1, 3, (support, event = {}) => {
     //     const { card, minusDiceCard: mdc = 0 } = event;
     //     const isMinus = card && card.subType.includes(3) && card.cost > mdc && support.perCnt > 0;
@@ -528,7 +638,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 拉娜
+    // 拉娜
     // 4033: (card: Card) => new GISupport(4033, card, 0, 1, 3, (support, event = {}) => {
     //     const { heros = [] } = event;
     //     if (support.perCnt == 0 || getBackHidxs(heros).length == 0) return;
@@ -543,7 +653,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 老章
+    // 老章
     // 4034: (card: Card) => new GISupport(4034, card, 0, 1, 3, (support, event = {}) => {
     //     const { card, heros = [], minusDiceCard: mdc = 0 } = event;
     //     const isMinus = card && card.subType.includes(0) && card.cost > mdc && support.perCnt > 0;
@@ -558,7 +668,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 塞塔蕾
+    // 塞塔蕾
     // 4035: (card: Card) => new GISupport(4035, card, 3, 0, 2, (support, event = {}) => {
     //     const { hcards } = event;
     //     if ((hcards?.length ?? 1) > 0) return;
@@ -567,7 +677,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 1 }], isDestroy: --support.cnt == 0 })
     //     }
     // }),
-    // // 弥生七月
+    // 弥生七月
     // 4036: (card: Card) => new GISupport(4036, card, 0, 1, 3, (support, event = {}) => {
     //     const { card, heros = [], minusDiceCard: mdc = 0 } = event;
     //     const isMinus = card && card.subType.includes(1) && card.cost > mdc && support.perCnt > 0;
@@ -582,7 +692,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 红羽团扇
+    // 红羽团扇
     // 4037: (card: Card) => new GISupport(4037, card, 0, 1, 3, support => ({
     //     trigger: ['change'],
     //     isNotAddTask: true,
@@ -592,7 +702,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2084)] }], isDestroy: false }
     //     }
     // })),
-    // // 寻宝仙灵
+    // 寻宝仙灵
     // 4038: (card: Card) => new GISupport(4038, card, 0, 0, 2, support => ({
     //     trigger: ['skill'],
     //     supportCnt: support.cnt < 2 ? 1 : -3,
@@ -601,57 +711,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         return { cmds: [{ cmd: 'getCard', cnt: 3 }], isDestroy: true }
     //     }
     // })),
-    // // 风龙废墟
-    // 4039: (card: Card) => new GISupport(4039, card, 3, 1, 2, (support, event = {}) => {
-    //     const { card, trigger = '', minusDiceCard: mdc = 0 } = event;
-    //     const isCardMinus = card && card.subType.includes(6) && card.cost > mdc && support.perCnt > 0;
-    //     const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skill: [0, 0, 1] },
-    //         skill => support.perCnt > 0 && skill.cost.toString().padStart(2, '0').split('').reduce((a, c) => a + Number(c), 0) >= 4)
-    //     return {
-    //         trigger: ['skill', 'card'],
-    //         isNotAddTask: true,
-    //         minusDiceCard: isCdt(isCardMinus, 1),
-    //         ...minusSkillRes,
-    //         exec: () => {
-    //             if (support.perCnt > 0 && (trigger == 'card' && isCardMinus || trigger.startsWith('skill') && isMinusSkill)) {
-    //                 --support.perCnt;
-    //                 --support.cnt;
-    //             }
-    //             return { isDestroy: support.cnt == 0 }
-    //         }
-    //     }
-    // }),
-    // // 湖中垂柳
-    // 4040: (card: Card) => new GISupport(4040, card, 2, 0, 1, (support, event = {}) => {
-    //     const { hcards = [] } = event;
-    //     return {
-    //         trigger: hcards.length <= 2 ? ['phase-end'] : [],
-    //         exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: --support.cnt == 0 })
-    //     }
-    // }),
-    // // 欧庇克莱歌剧院
-    // 4041: (card: Card) => new GISupport(4041, card, 3, 1, 2, (support, event = {}) => {
-    //     const { heros = [], eheros = [] } = event;
-    //     const slotCost = heros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot])
-    //         .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
-    //     const eslotCost = eheros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot])
-    //         .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
-    //     if (slotCost >= eslotCost && support.perCnt > 0) {
-    //         return {
-    //             trigger: ['action-start'],
-    //             exec: () => {
-    //                 --support.perCnt;
-    //                 return { cmds: [{ cmd: 'getDice', cnt: 1, element: -2 }], isDestroy: --support.cnt == 0 }
-    //             }
-    //         }
-    //     }
-    // }),
-    // // 玛梅赫
+    // 玛梅赫
     // 4042: (card: Card) => new GISupport(4042, card, 3, 1, 2, (support, event = {}) => {
     //     const { card } = event;
     //     const isUse = card?.id != 321 && support.perCnt > 0 && card?.subType.some(st => [2, 3, 4, 5].includes(st));
     //     return {
-    //         trigger: isUse ? ['card'] : [],
+    //         trigger: isCdt(isUse, ['card']),
     //         exec: () => {
     //             --support.cnt;
     //             --support.perCnt;
@@ -666,7 +731,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 化种匣
+    // 化种匣
     // 4043: (card: Card) => new GISupport(4043, card, 2, 1, 2, (support, event = {}) => {
     //     const { card, minusDiceCard: mdc = 0 } = event;
     //     if (card && card.cost >= 2 && card.type == 1 && support.perCnt > 0 && card.cost > mdc) {
@@ -681,7 +746,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 留念镜
+    // 留念镜
     // 4044: (card: Card) => new GISupport(4044, card, 2, 1, 2, (support, event = {}) => {
     //     const { card, playerInfo: { usedcards = [] } = {}, minusDiceCard: mdc = 0 } = event;
     //     if (card && usedcards.includes(card.id) && card.subType.some(sbtp => sbtp < 4) && support.perCnt > 0 && card.cost > mdc) {
@@ -696,7 +761,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 婕德
+    // 婕德
     // 4045: (card: Card, cnt: number) => new GISupport(4045, card, cnt, 0, 2, (support, event = {}) => {
     //     const { trigger = '', playerInfo: { destroyedSupport = 0 } = {} } = event;
     //     return {
@@ -709,7 +774,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 西尔弗和迈勒斯
+    // 西尔弗和迈勒斯
     // 4046: (card: Card, cnt: number) => new GISupport(4046, card, cnt, 0, 2, (support, event = {}) => {
     //     const { trigger = '', playerInfo: { oppoGetElDmgType = 0 } = {} } = event;
     //     const triggers: Trigger[] = [1, 2, 3, 4, 5, 6, 7].map(v => ELEMENT_ICON[v] + '-getdmg-oppo') as Trigger[];
@@ -735,29 +800,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 梅洛彼得堡
-    // 4047: (card: Card) => new GISupport(4047, card, 0, 0, 2, (support, event = {}) => {
-    //     const { hidxs = [], getdmg = [], heal = [], eheros = [], trigger = '' } = event;
-    //     const triggers: Trigger[] = [];
-    //     if (trigger == 'getdmg' && getdmg[hidxs[0]] > 0 && support.cnt < 4) triggers.push('getdmg');
-    //     if (trigger == 'heal' && heal[hidxs[0]] > 0 && support.cnt < 4) triggers.push('heal');
-    //     const hasSts2174 = eheros.flatMap(h => h.outStatus).some(ost => ost.id == 2174);
-    //     if (support.cnt >= 4 && !hasSts2174) triggers.push('phase-start');
-    //     const isAdd = triggers.some(tr => ['getdmg', 'heal'].includes(tr));
-    //     return {
-    //         trigger: triggers,
-    //         supportCnt: isCdt(isAdd, 1),
-    //         exec: () => {
-    //             if (trigger == 'phase-start') {
-    //                 support.cnt -= 4;
-    //                 return { cmds: [{ cmd: 'getStatus', status: [heroStatus(2174)], isOppo: true }], isDestroy: false }
-    //             }
-    //             support.cnt = Math.min(4, support.cnt + 1);
-    //             return { isDestroy: false }
-    //         }
-    //     }
-    // }),
-    // // 流明石触媒
+    // 流明石触媒
     // 4048: (card: Card) => new GISupport(4048, card, 3, 3, 2, support => {
     //     const triggers: Trigger[] = [];
     //     if (support.perCnt > 0) triggers.push('card');
@@ -772,22 +815,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         }
     //     }
     // }),
-    // // 清籁岛
-    // 4049: (card: Card) => new GISupport(4049, card, 2, 0, 1, (support, event = {}) => {
-    //     const { heal = [], trigger = '' } = event;
-    //     const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl > 0).map(v => v.hli);
-    //     return {
-    //         trigger: ['heal', 'eheal', 'phase-end'],
-    //         exec: () => {
-    //             if (trigger == 'phase-end') return { isDestroy: --support.cnt == 0 }
-    //             return {
-    //                 cmds: [{ cmd: 'getStatus', status: [heroStatus(2184)], hidxs, isOppo: trigger == 'eheal' }],
-    //                 isDestroy: false,
-    //             }
-    //         }
-    //     }
-    // }),
-    // // 太郎丸
+    // 太郎丸
     // 4050: (card: Card) => new GISupport(4050, card, 0, 0, 2, (support, event = {}) => {
     //     if (event.card?.id != 902) return;
     //     return {
@@ -796,7 +824,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         exec: () => ({ isDestroy: ++support.cnt >= 2 }),
     //     }
     // }),
-    // // 白手套和渔夫
+    // 白手套和渔夫
     // 4051: (card: Card) => new GISupport(4051, card, 2, 0, 1, support => ({
     //     trigger: ['phase-end'],
     //     exec: () => {
@@ -805,41 +833,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         return { cmds, isDestroy: --support.cnt == 0 }
     //     }
     // })),
-    // // 赤王陵
-    // 4052: (card: Card) => new GISupport(4052, card, 0, 0, 2, (support, event = {}) => {
-    //     const { getcard = 0 } = event;
-    //     return {
-    //         trigger: ['getcard-oppo'],
-    //         supportCnt: getcard + support.cnt < 4 ? getcard : -5,
-    //         exec: () => {
-    //             support.cnt += getcard;
-    //             if (support.cnt < 4) return { isDestroy: false }
-    //             return {
-    //                 cmds: [
-    //                     { cmd: 'addCard', cnt: 2, card: 908, hidxs: [2], isOppo: true },
-    //                     { cmd: 'getStatus', status: [heroStatus(2214)], isOppo: true },
-    //                 ],
-    //                 isDestroy: true,
-    //             }
-    //         },
-    //     }
-    // }),
-    // // 中央实验室遗址
-    // 4053: (card: Card) => new GISupport(4053, card, 0, 0, 2, (support, event = {}) => {
-    //     const { discard = 0, trigger = '' } = event;
-    //     return {
-    //         trigger: ['discard', 'reconcile'],
-    //         exec: () => {
-    //             const ocnt = support.cnt;
-    //             if (trigger == 'reconcile') ++support.cnt;
-    //             else if (trigger == 'discard') support.cnt += discard;
-    //             const dcnt = Math.floor(support.cnt / 3) - Math.floor(ocnt / 3);
-    //             if (dcnt == 0) return { isDestroy: false }
-    //             return { cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }], isDestroy: support.cnt >= 9 }
-    //         },
-    //     }
-    // }),
-    // // 亚瑟先生
+    // 亚瑟先生
     // 4054: (card: Card) => new GISupport(4054, card, 0, 0, 2, (support, event = {}) => {
     //     const { discard = 0, trigger = '', epile = [] } = event;
     //     if (+(support.cnt >= 2) ^ +(trigger == 'phase-end' && epile.length > 0)) return;
@@ -855,7 +849,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         },
     //     }
     // }),
-    // // 苦舍桓
+    // 苦舍桓
     // 4055: (card: Card) => new GISupport(4055, card, 0, 1, 2, (support, event = {}) => {
     //     const { hcards = [], isSkill = -1, trigger = '' } = event;
     //     if (trigger == 'phase-start' && (support.cnt >= 2 || hcards.length == 0)) return;
@@ -879,7 +873,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     //         },
     //     }
     // }),
-    // // 瑟琳
+    // 瑟琳
     // 4056: (card: Card) => new GISupport(4056, card, 3, 0, 1, support => ({
     //     trigger: ['phase-start'],
     //     exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 914 }], isDestroy: --support.cnt == 0 }),

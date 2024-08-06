@@ -79,6 +79,7 @@ type Skill = GISkill
 
 type MinuDiceSkill = {
     skill?: number[],
+    skills?: number[][],
     skilltype1?: number[],
     skilltype2?: number[],
     skilltype3?: number[],

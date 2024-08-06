@@ -390,7 +390,8 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
       const dmg = Number(res.match(/{dmg\+?(\d*)}/)?.[1]) || 0;
       res = res.replace(/{dmg\+?\d*}/g, `${Math.abs(obj.damage + dmg)}`);
     }
-    if ('useCnt' in obj) res = res.replace('{useCnt}', `${obj.useCnt}`);
+    if ('useCnt' in obj && 'roundCnt' in obj) res = res.replace('{useCnt}', `${obj.useCnt > -1 ? obj.useCnt : obj.roundCnt}`);
+    if ('useCnt' in obj && !('roundCnt' in obj)) res = res.replace('{useCnt}', `${obj.useCnt}`);
     if ('roundCnt' in obj) res = res.replace('{roundCnt}', `${obj.roundCnt}`); // Status
     if ('shieldOrHeal' in obj) { // Summon
       res = res.replace('{shield}', `${Math.abs(obj.shieldOrHeal)}`).replace('{heal}', `${obj.shieldOrHeal}`);

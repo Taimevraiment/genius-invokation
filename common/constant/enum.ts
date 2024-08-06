@@ -278,7 +278,7 @@ export type SummonDestroyType = TypeConst<typeof SUMMON_DESTROY_TYPE>;
 
 export const CMD_MODE = {
     RandomDice: 1, // 随机不重复基础骰子
-    FrontHero: 2, // 当前出战角色(cnt控制前后)元素骰子
+    FrontHero: 2, // 当前出战角色(hidxs[0]控制前后)元素骰子
     HighHandCard: 3, // 弃置花费最高的手牌 
     AllHandCards: 4, // 弃置所有手牌
     TopPileCard: 5, // 弃置牌堆顶的牌
