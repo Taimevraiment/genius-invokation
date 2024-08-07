@@ -14,7 +14,7 @@ import {
 } from '../../common/constant/gameOption.js';
 import { INIT_PLAYER, NULL_CARD, NULL_SKILL } from '../../common/constant/init.js';
 import { ELEMENT_NAME, SKILL_TYPE_NAME } from '../../common/constant/UIconst.js';
-import { CardHandleRes, newCard, parseCard } from '../../common/data/cards.js';
+import { CardHandleRes, cardsTotal, newCard, parseCard } from '../../common/data/cards.js';
 import { newHero, parseHero } from '../../common/data/heros.js';
 import { newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
@@ -731,7 +731,7 @@ export default class GeniusInvokationRoom {
     private _useSkill(pidx: number, skidx: number, options: { isPreview?: boolean, withCard?: Card, isSwitch?: number, isReadySkill?: boolean, otriggers?: Trigger | Trigger[] } = {}) {
         const { isPreview = false, withCard, isSwitch = -1, isReadySkill = false, otriggers = [] } = options;
         const isExec = !isPreview || isReadySkill;
-        const mergeWillHeals = (oWillHeals: number[], resHeals?: number[]) => {
+        const mergeWillHeals = (oWillHeals: number[], resHeals?: number[], players?: Player[]) => {
             if (!resHeals) return;
             resHeals.forEach((hl, hli) => {
                 if (hl > -1) {
@@ -739,6 +739,7 @@ export default class GeniusInvokationRoom {
                     else oWillHeals[hli] += hl;
                 }
             });
+            players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, resHeals?.[h.hidx + (p.pidx * players[0].heros.length)] ?? 0))));
         }
         const oplayers = clone(this.players);
         const players = clone(this.players);
@@ -976,10 +977,16 @@ export default class GeniusInvokationRoom {
         const isSwitchOppo = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && cmds.isOppo);
         const calcAtk = (res: any, type: string, stsId: number, ahidx: number, ehidx: number, isSkill = false, isSelf = false) => {
             const cpidx = pidx ^ +!isSelf;
-            if (res?.damage == undefined && res?.pdmg == undefined && res?.heal == undefined) return false;
             if (res?.damage == undefined && res?.pdmg == undefined) {
-                const { willHeals } = this._doCmds(cpidx, [{ cmd: 'heal', cnt: res.heal, hidxs: res.hidxs }], { players: bPlayers });
-                mergeWillHeals(bWillHeal, willHeals);
+                let willheals: number[] | undefined;
+                if (type.includes('Status')) {
+                    if (res.heal) {
+                        willheals = this._doCmds(cpidx, [{ cmd: 'heal', cnt: res.heal, hidxs: res.hidxs }], { players: bPlayers }).willHeals;
+                    }
+                } else {
+                    willheals = this._doCmds(cpidx, res?.cmds, { players: bPlayers }).willHeals;
+                }
+                mergeWillHeals(bWillHeal, willheals, bPlayers);
                 return false;
             }
             if (ahidx == -1) ahidx = hidx;
@@ -1109,9 +1116,9 @@ export default class GeniusInvokationRoom {
             });
             for (const smn of bPlayers[pidx].summons) {
                 ([`after-skilltype${skill.type}`, 'after-skill'] as Trigger[]).forEach(trg => {
-                    const smnres = smn.handle(smn, { heros: bPlayers[pidx].heros, trigger: trg, hcard: withCard });
+                    const smnres = smn.handle(smn, { heros: bPlayers[pidx].heros, trigger: trg, hcard: withCard, isExec: false });
                     if (smnres?.trigger?.includes(trg)) {
-                        calcAtk(smnres, 'summon', smn.id, aswhidx, eswhidx, true);
+                        calcAtk(smnres, 'summon', smn.id, aswhidx, eswhidx, true, true);
                         this._detectSummon(pidx, trg, { csummon: [smn], isExec });
                     }
                 });
@@ -2321,10 +2328,11 @@ export default class GeniusInvokationRoom {
             let heroDie = -1;
             for (const h of p.heros) {
                 const phidx = h.hidx + p.pidx * this.players[0].heros.length;
-                if (h.hp > 0) {
+                const heal = Math.max(0, willHeals[phidx] ?? 0);
+                if (h.hp > 0 || heal % 1 != 0) {
                     const damage = willDamages[phidx]?.reduce((a, b) => a + Math.max(0, b), 0) ?? 0;
-                    const heal = Math.max(0, willHeals[phidx] ?? 0);
-                    h.hp = Math.max(0, h.hp - damage + heal);
+                    if (heal % 1 != 0) h.hp = Math.ceil(heal)
+                    else h.hp = Math.max(0, h.hp - damage + heal);
                     // 被击倒
                     if (h.hp <= 0 && h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) && !h.talentSlot?.hasTag(CARD_TAG.NonDefeat)) {
                         h.heroStatus.forEach(sts => {
@@ -2510,7 +2518,7 @@ export default class GeniusInvokationRoom {
                 await delay(1100);
                 getAtkStatus().type.length = 0;
                 this.emit('statusAtk-destroy', pidx);
-            } else await delay(600);
+            } else await delay(1000);
             resolve(true);
         });
     }
@@ -2823,7 +2831,6 @@ export default class GeniusInvokationRoom {
                     phase: pidx == player.phase ? phase : player.phase,
                     card,
                     discards,
-                    minusDiceCard,
                     heal,
                     summons: player.summons,
                     esummons: players[pidx ^ 1].summons,
@@ -2838,6 +2845,8 @@ export default class GeniusInvokationRoom {
                     getDmgIdx,
                     hasDmg,
                     source,
+                    minusDiceCard,
+                    isMinusDiceTalent: card && card.hasSubtype(CARD_SUBTYPE.Talent) && card.userType == pheros[hidx]?.id && card.cost + card.anydice > minusDiceCard,
                     isMinusDiceSkill: minusDiceSkillIds.includes(sts.entityId),
                     minusDiceSkill,
                 });
@@ -3388,12 +3397,17 @@ export default class GeniusInvokationRoom {
                             const cardIdx = player.pile.findIndex(c => !exclude.includes(c.id));
                             if (cardIdx > -1) [wcard] = player.pile.splice(cardIdx, 1);
                         } else { // 指定副类型
-                            if (player.pile.every(c => !c.hasSubtype(...(subtype as CardSubtype[])))) {
-                                break;
-                            }
-                            while (wcard == null) {
-                                const cardIdx = player.pile.findIndex(c => c.hasSubtype(...(subtype as CardSubtype[])) && !exclude.includes(c.id));
-                                if (cardIdx > -1) [wcard] = player.pile.splice(cardIdx, 1);
+                            if (isAttach) {
+                                if (player.pile.every(c => !c.hasSubtype(...subtype))) {
+                                    break;
+                                }
+                                while (wcard == null) {
+                                    const cardIdx = player.pile.findIndex(c => c.hasSubtype(...subtype) && !exclude.includes(c.id));
+                                    if (cardIdx > -1) [wcard] = player.pile.splice(cardIdx, 1);
+                                }
+                            } else {
+                                const cardsPool = cardsTotal(this.version).filter(c => c.UI.cnt > 0 && c.hasSubtype(...subtype) && !exclude.includes(c.id));
+                                wcard = this._randomInArr(cardsPool);
                             }
                         }
                         if (wcard && wcard.id != 0) {
@@ -3645,7 +3659,7 @@ export default class GeniusInvokationRoom {
                     } = this._calcDamage(epidx ^ 1, dmgel, wdmgs, hidx, players, { isSummon, isStatus });
                     willDamages!.forEach((wdmg, wdci) => {
                         const [nwdmg, nwpdmg] = willDamage1[wdci];
-                        if (nwdmg > 0) wdmg[0] = Math.max(0, wdmg[0]) + nwdmg;
+                        if (nwdmg > -1) wdmg[0] = Math.max(0, wdmg[0]) + nwdmg;
                         wdmg[1] += nwpdmg;
                     });
                     dmgElements1.forEach((de, dei) => {

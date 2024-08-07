@@ -74,6 +74,7 @@ export type CardHandleRes = {
     restDmg?: number,
     isAddTask?: boolean,
     exec?: () => CardExecRes | void,
+    supportArgs?: any[],
 };
 
 export type CardExecRes = {
@@ -1172,7 +1173,7 @@ const allCards: Record<number, () => CardBuilder> = {
     321015: () => new CardBuilder(193).name('风龙废墟').since('v4.2.0').place().costSame(2)
         .description('【入场时：】从牌组中随机抽取一张｢天赋｣牌。；【我方打出｢天赋｣牌，或我方角色使用原本元素骰消耗至少为4的技能时：】少花费1个元素骰。(每回合1次)；[可用次数]：3')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/1812234f8a4cbd2445ce3bc1387df37c_4843239005964574553.png')
-        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Talent }] })),
+        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Talent, isAttach: true }] })),
 
     321016: () => new CardBuilder(309).name('湖中垂柳').since('v4.3.0').place().costSame(1)
         .description('【结束阶段：】如果我方手牌数量不多于2，则抓2张牌。；[可用次数]：2')
@@ -1198,134 +1199,142 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方[舍弃]或[调和]1张牌后：】此牌累积1点｢实验进展｣。每当｢实验进展｣达到3点、6点、9点时，就获得1个[万能元素骰]。然后，如果｢实验进展｣至少为9点，则弃置此牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/519cc801980bbb5907f9a25ca017d03a_4463551389207387795.png'),
 
+    322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
+        .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8b291b7aa846d8e987a9c7d60af3cffb_7229054083686130166.png'),
 
-    // 301: () => new GICard(301, '派蒙', '【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8b291b7aa846d8e987a9c7d60af3cffb_7229054083686130166.png',
-    //     3, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4001, 301)] })),
+    322002: () => new CardBuilder(195).name('凯瑟琳').ally().costSame(1).costAny(2, 'v3.6.0')
+        .description('【我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。(每回合1次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/67cf3f813876e6df62f21dc45c378fa3_4407562376050767664.png'),
 
-    // 302: () => new GICard(302, '凯瑟琳', '【我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/67cf3f813876e6df62f21dc45c378fa3_4407562376050767664.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4011, 302)] })),
+    322003: () => new CardBuilder(196).name('蒂玛乌斯').ally().costSame(2)
+        .description('【入场时：】此牌附带2个｢合成材料｣。如果我方牌组中初始包含至少6张｢圣遗物｣，则从牌组中随机抽取一张｢圣遗物｣牌。；【结束阶段：】补充1个｢合成材料｣。；【打出｢圣遗物｣手牌时：】如可能，则支付等同于｢圣遗物｣总费用数量的｢合成材料｣，以免费装备此｢圣遗物｣(每回合1次)')
+        .description('【入场时：】此牌附带2个｢合成材料｣。；【结束阶段：】补充1个｢合成材料｣。；【打出｢圣遗物｣手牌时：】如可能，则支付等同于｢圣遗物｣总费用数量的｢合成材料｣，以免费装备此｢圣遗物｣(每回合1次)', 'v4.3.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/839e1884908b6ce5e8bc2d27bde98f20_778730297202034218.png')
+        .handle((_, event, ver) => {
+            if (ver < 'v4.3.0') return;
+            const { playerInfo: { artifactCnt = 0 } = {} } = event;
+            return { cmds: isCdt<Cmds[]>(artifactCnt >= 6, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Artifact, isAttach: true }]) }
+        }),
 
-    // 303: () => new GICard(303, '蒂玛乌斯', '【入场时：】此牌附带2个｢合成材料｣。如果我方牌组中初始包含至少6张｢圣遗物｣，则从牌组中随机抽取一张｢圣遗物｣牌。；【结束阶段：】补充1个｢合成材料｣。；【打出｢圣遗物｣手牌时：】如可能，则支付等同于｢圣遗物｣总费用数量的｢合成材料｣，以免费装备此｢圣遗物｣(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/839e1884908b6ce5e8bc2d27bde98f20_778730297202034218.png',
-    //     2, 8, 1, [3], 0, 0, (_card, event) => {
-    //         const { playerInfo: { artifactCnt = 0 } = {} } = event;
-    //         return {
-    //             support: [newSupport(4012, 303)],
-    //             cmds: isCdt<Cmds[]>(artifactCnt >= 6, [{ cmd: 'getCard', cnt: 1, subtype: 1 }]),
-    //         }
-    //     }),
+    322004: () => new CardBuilder(197).name('瓦格纳').ally().costSame(2)
+        .description('【入场时：】此牌附带2个｢锻造原胚｣。如果我方牌组中初始包含至少3种不同的｢武器｣，则从牌组中随机抽取一张｢武器｣牌。；【结束阶段：】补充1个｢锻造原胚｣。；【打出｢武器｣手牌时：】如可能，则支付等同于｢武器｣总费用数量的｢锻造原胚｣，以免费装备此｢武器｣(每回合1次)')
+        .description('【入场时：】此牌附带2个｢锻造原胚｣。；【结束阶段：】补充1个｢锻造原胚｣。；【打出｢武器｣手牌时：】如可能，则支付等同于｢武器｣总费用数量的｢锻造原胚｣，以免费装备此｢武器｣(每回合1次)', 'v4.3.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/9a47df734f5bd5d52ce3ade67cf50cfa_2013364341657681878.png')
+        .handle((_, event, ver) => {
+            if (ver < 'v.4.3.0') return;
+            const { playerInfo: { weaponTypeCnt = 0 } = {} } = event;
+            return { cmds: isCdt<Cmds[]>(weaponTypeCnt >= 3, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Weapon, isAttach: true }]) }
+        }),
 
-    // 304: () => new GICard(304, '瓦格纳', '【入场时：】此牌附带2个｢锻造原胚｣。如果我方牌组中初始包含至少3种不同的｢武器｣，则从牌组中随机抽取一张｢武器｣牌。；【结束阶段：】补充1个｢锻造原胚｣。；【打出｢武器｣手牌时：】如可能，则支付等同于｢武器｣总费用数量的｢锻造原胚｣，以免费装备此｢武器｣(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/9a47df734f5bd5d52ce3ade67cf50cfa_2013364341657681878.png',
-    //     2, 8, 1, [3], 0, 0, (_card, event) => {
-    //         const { playerInfo: { weaponTypeCnt = 0 } = {} } = event;
-    //         return {
-    //             support: [newSupport(4013, 304)],
-    //             cmds: isCdt<Cmds[]>(weaponTypeCnt >= 3, [{ cmd: 'getCard', cnt: 1, subtype: 0 }]),
-    //         }
-    //     }),
+    322005: () => new CardBuilder(198).name('卯师傅').ally().costSame(1)
+        .description('【打出｢料理｣事件牌后：】生成1个随机基础元素骰。(每回合1次)；【打出｢料理｣事件牌后：】从牌组中随机抽取1张｢料理｣事件牌。(整场牌局限制1次)')
+        .description('【打出｢料理｣事件牌后：】生成1个随机基础元素骰。(每回合1次)', 'v4.1.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/430ad3710929867f9a4da3cb40812181_3109488257851299648.png'),
 
-    // 305: () => new GICard(305, '卯师傅', '【打出｢料理｣事件牌后：】生成1个随机基础元素骰。(每回合1次)；【打出｢料理｣事件牌后：】从牌组中随机抽取1张｢料理｣事件牌。(整场牌局限制1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/430ad3710929867f9a4da3cb40812181_3109488257851299648.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4014, 305)] })),
+    322006: () => new CardBuilder(199).name('阿圆').ally().costSame(2)
+        .description('【打出｢场地｣支援牌时：】少花费2个元素骰。(每回合1次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/0fa92f9ea49deff80274c1c4702e46e3_5650398579643580888.png'),
 
-    // 306: () => new GICard(306, '阿圆', '【打出｢场地｣支援牌时：】少花费2个元素骰。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/0fa92f9ea49deff80274c1c4702e46e3_5650398579643580888.png',
-    //     2, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4015, 306)] })),
+    322007: () => new CardBuilder(200).name('提米').ally().costSame(0)
+        .description('【每回合自动触发1次：】此牌累积1只｢鸽子｣。；如果此牌已累积3只｢鸽子｣，则弃置此牌，抓1张牌，并生成1点[万能元素骰]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/638d754606562a2ff5aa768e9e0008a9_2604997534782710176.png'),
 
-    // 307: () => new GICard(307, '提米', '【每回合自动触发1次：】此牌累积1只｢鸽子｣。；如果此牌已累积3只｢鸽子｣，则弃置此牌，抓1张牌，并生成1点[万能元素骰]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/638d754606562a2ff5aa768e9e0008a9_2604997534782710176.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4016, 307)] })),
+    322008: () => new CardBuilder(201).name('立本').ally().costSame(0)
+        .description('【结束阶段：】收集我方未使用的元素骰(每种最多1个)。；【行动阶段开始时：】如果此牌已收集3个元素骰，则抓2张牌，生成2点[万能元素骰]，然后弃置此牌。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/dbe203124b2b61d17f0c46523679ee52_7625356549640398540.png'),
 
-    // 308: () => new GICard(308, '立本', '【结束阶段：】收集我方未使用的元素骰(每种最多1个)。；【行动阶段开始时：】如果此牌已收集3个元素骰，则抓2张牌，生成2点[万能元素骰]，然后弃置此牌。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/dbe203124b2b61d17f0c46523679ee52_7625356549640398540.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4005, 308)] })),
+    322009: () => new CardBuilder(202).name('常九爷').ally().costSame(0)
+        .description('【双方角色使用技能后：】如果造成了[物理伤害]、[穿透伤害]或引发了【元素反应】，此牌积累1个｢灵感｣。；如果此牌已积累3个｢灵感｣，弃置此牌并抓2张牌。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/df918cc6348b04d9f287c9b2f429c35c_3616287504640722699.png'),
 
-    // 309: () => new GICard(309, '常九爷', '【双方角色使用技能后：】如果造成了[物理伤害]、[穿透伤害]或引发了【元素反应】，此牌积累1个｢灵感｣。；如果此牌已积累3个｢灵感｣，弃置此牌并抓2张牌。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/df918cc6348b04d9f287c9b2f429c35c_3616287504640722699.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4004, 309)] })),
+    322010: () => new CardBuilder(203).name('艾琳').ally().costSame(2)
+        .description('【我方角色使用本回合使用过的技能时：】少花费1个元素骰。(每回合1次)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8c0a0d6b2fab8ef94f09ed61451ec972_2061140384853735643.png'),
 
-    // 310: () => new GICard(310, '艾琳', '【我方角色使用本回合使用过的技能时：】少花费1个元素骰。(每回合1次)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8c0a0d6b2fab8ef94f09ed61451ec972_2061140384853735643.png',
-    //     2, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4017, 310)] })),
+    322011: () => new CardBuilder(204).name('田铁嘴').ally().costAny(2)
+        .description('【结束阶段：】我方一名充能未满的角色获得1点[充能]。(出战角色优先)；[可用次数]：2')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/163adc79a3050ea18fc75293e76f1a13_607175307652592237.png'),
 
-    // 311: () => new GICard(311, '田铁嘴', '【结束阶段：】我方一名充能未满的角色获得1点[充能]。(出战角色优先)；[可用次数]：2',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/163adc79a3050ea18fc75293e76f1a13_607175307652592237.png',
-    //     2, 0, 1, [3], 0, 0, () => ({ support: [newSupport(4018, 311)] })),
+    322012: () => new CardBuilder(205).name('刘苏').ally().costSame(1)
+        .description('【我方切换角色后：】如果切换到的角色没有[充能]，则使该角色获得1点[充能]。(每回合1次)；[可用次数]：2')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/2d2a294488e6a5ecff2af216d1a4a81c_2786433729730992349.png'),
 
-    // 312: () => new GICard(312, '刘苏', '【我方切换角色后：】如果切换到的角色没有[充能]，则使该角色获得1点[充能]。(每回合1次)；[可用次数]：2',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/2d2a294488e6a5ecff2af216d1a4a81c_2786433729730992349.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4019, 312)] })),
+    322013: () => new CardBuilder(206).name('花散里').since('v3.7.0').ally().costSame(0)
+        .description('【召唤物消失时：】此牌累积1点｢大袚｣进度。(最多累积3点)；【我方打出｢武器｣或｢圣遗物｣装备时：】如果｢大袚｣进度已达到3，则弃置此牌，使打出的卡牌少花费2个元素骰。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/874298075217770b022b0f3a02261a2a_7985920737393426048.png'),
 
-    // 313: () => new GICard(313, '花散里', '【召唤物消失时：】此牌累积1点｢大袚｣进度。(最多累积3点)；【我方打出｢武器｣或｢圣遗物｣装备时：】如果｢大袚｣进度已达到3，则弃置此牌，使打出的卡牌少花费2个元素骰。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/874298075217770b022b0f3a02261a2a_7985920737393426048.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4029, 313)] })),
+    322014: () => new CardBuilder(207).name('鲸井小弟').since('v3.7.0').ally().costSame(0)
+        .description('【行动阶段开始时：】生成1点[万能元素骰]。然后，如果对方的支援区未满，则将此牌转移到对方的支援区。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/8d008ff3e1a2b0cf5b4b212e1509726c_1757117943857279627.png'),
 
-    // 314: () => new GICard(314, '鲸井小弟', '【行动阶段开始时：】生成1点[万能元素骰]。然后，如果对方的支援区未满，则将此牌转移到对方的支援区。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/8d008ff3e1a2b0cf5b4b212e1509726c_1757117943857279627.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4030, 314)] })),
+    322015: () => new CardBuilder(208).name('旭东').since('v3.7.0').ally().costAny(2)
+        .description('【打出｢料理｣事件牌时：】少花费2个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a23ea3b4f3cb6b2df59b912bb418f5b8_1362269257088452771.png'),
 
-    // 315: () => new GICard(315, '旭东', '【打出｢料理｣事件牌时：】少花费2个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a23ea3b4f3cb6b2df59b912bb418f5b8_1362269257088452771.png',
-    //     2, 0, 1, [3], 0, 0, () => ({ support: [newSupport(4031, 315)] })),
+    322016: () => new CardBuilder(209).name('迪娜泽黛').since('v3.7.0').ally().costSame(1)
+        .description('【打出｢伙伴｣支援牌时：】少花费1个元素骰。(每回合1次)；【打出｢伙伴｣支援牌后：】从牌组中随机抽取1张｢伙牌｣支援牌。(整场牌局限1次)')
+        .description('【打出｢伙伴｣支援牌时：】少花费1个元素骰。(每回合1次)', 'v4.1.0')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f08622b4178df0e2856f22c5e89a5bbb_735371509950287883.png'),
 
-    // 316: () => new GICard(316, '迪娜泽黛', '【打出｢伙伴｣支援牌时：】少花费1个元素骰。(每回合1次)；【打出｢伙伴｣支援牌后：】从牌组中随机抽取1张｢伙牌｣支援牌。(整场牌局限1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f08622b4178df0e2856f22c5e89a5bbb_735371509950287883.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4032, 316)] })),
+    322017: () => new CardBuilder(210).name('拉娜').since('v3.7.0').ally().costSame(2)
+        .description('【我方角色使用｢元素战技｣后：】生成1个我方下一个后台角色类型的元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f0c19a49595f68895e309e5bf5760c1f_8058110322505961900.png'),
 
-    // 317: () => new GICard(317, '拉娜', '【我方角色使用｢元素战技｣后：】生成1个我方下一个后台角色类型的元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f0c19a49595f68895e309e5bf5760c1f_8058110322505961900.png',
-    //     2, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4033, 317)] })),
+    322018: () => new CardBuilder(211).name('老章').since('v3.8.0').ally().costSame(1)
+        .description('【我方打出｢武器｣手牌时：】少花费1个元素骰; 我方场上每有一个已装备｢武器｣的角色，就额外少花费1个元素骰。(每回合1次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/c332425d700b588ed93ae01f9817e568_3896726709346713005.png'),
 
-    // 318: () => new GICard(318, '老章', '【我方打出｢武器｣手牌时：】少花费1个元素骰; 我方场上每有一个已装备｢武器｣的角色，就额外少花费1个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/c332425d700b588ed93ae01f9817e568_3896726709346713005.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4034, 318)] })),
+    322019: () => new CardBuilder(212).name('塞塔蕾').since('v4.0.0').ally().costSame(1)
+        .description('【双方执行任何行动后，手牌数量为0时：】抓1张牌。；[可用次数]：3')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/b4a9b32d9ff26697821d3cf0f2444ef7_7283838166930329300.png'),
 
-    // 319: () => new GICard(319, '塞塔蕾', '【双方执行任何行动后，手牌数量为0时：】抓1张牌。；[可用次数]：3',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/b4a9b32d9ff26697821d3cf0f2444ef7_7283838166930329300.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4035, 319)] })),
+    322020: () => new CardBuilder(213).name('弥生七月').since('v4.1.0').ally().costSame(1)
+        .description('【我方打出｢圣遗物｣手牌时：】少花费1个元素骰; 如果我方场上已有2个装备｢圣遗物｣的角色，就额外少花费1个元素骰。(每回合1次)')
+        .description('【我方打出｢圣遗物｣手牌时：】少花费1个元素骰; 如果我方场上每有1个装备｢圣遗物｣的角色，就额外少花费1个元素骰。(每回合1次)', 'v4.6.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/09820a12324bca69fe30277287462e2f_7162251245504180312.png'),
 
-    // 320: () => new GICard(320, '弥生七月', '【我方打出｢圣遗物｣手牌时：】少花费1个元素骰; 如果我方场上已有2个装备｢圣遗物｣的角色，就额外少花费1个元素骰。(每回合1次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/09820a12324bca69fe30277287462e2f_7162251245504180312.png',
-    //     1, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4036, 320)] })),
+    322021: () => new CardBuilder(311).name('玛梅赫').since('v4.3.0').ally().costSame(0)
+        .description('【我方打出｢玛梅赫｣以外的｢料理｣/｢场地｣/｢伙伴｣/｢道具｣行动牌后：】随机生成1张｢玛梅赫｣以外的｢料理｣/｢场地｣/｢伙伴｣/｢道具｣行动牌，将其加入手牌。(每回合1次)；[可用次数]：3')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/eb0cb5b32a8c816b7f13c3d44d0a0fe4_6830305949958078300.png'),
 
-    // 321: () => new GICard(321, '玛梅赫', '【我方打出｢玛梅赫｣以外的｢料理｣/｢场地｣/｢伙伴｣/｢道具｣行动牌后：】随机生成1张｢玛梅赫｣以外的｢料理｣/｢场地｣/｢伙伴｣/｢道具｣行动牌，将其加入手牌。(每回合1次)；[可用次数]：3',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/eb0cb5b32a8c816b7f13c3d44d0a0fe4_6830305949958078300.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4042, 321)] })),
+    322022: () => new CardBuilder(329).name('婕德').since('v4.4.0').ally().costSame(1).costAny(2, 'v4.6.0')
+        .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为｢阅历｣。(最多6点)；【我方角色使用｢元素爆发｣后：】如果｢阅历｣至少为6，则弃置此牌，对我方出战角色附属【sts302205】。')
+        .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为｢阅历｣。(最多6点)；【我方角色使用｢元素爆发｣后：】如果｢阅历｣至少为5，则弃置此牌，生成【｢阅历｣-2】数量的[万能元素骰]。', 'v4.6.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8931597db1022094e0ebdf3e91f5f44c_6917553066022383928.png')
+        .handle((_card, event) => {
+            const { playerInfo: { destroyedSupport = 0 } = {} } = event;
+            return { supportArgs: [destroyedSupport] }
+        }),
 
-    // 322: () => new GICard(322, '婕德', '此牌会记录本场对局中我方支援区弃置卡牌的数量，称为｢阅历｣。(最多6点)；【我方角色使用｢元素爆发｣后：】如果｢阅历｣至少为6，则弃置此牌，对我方出战角色附属【sts2188】。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8931597db1022094e0ebdf3e91f5f44c_6917553066022383928.png',
-    //     1, 8, 1, [3], 0, 0, (_card, event) => {
-    //         const { playerInfo: { destroyedSupport = 0 } = {} } = event;
-    //         return { support: [newSupport(4045, 322, destroyedSupport)] }
-    //     }),
+    322023: () => new CardBuilder(330).name('西尔弗和迈勒斯').since('v4.4.0').ally().costSame(1)
+        .description('此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为｢侍从的周到｣。(最多4点)；【结束阶段：】如果｢侍从的周到｣至少为3，则弃置此牌，然后抓｢侍从的周到｣点数的牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/e160832e6337e402fc01d5f89c042aa3_8868205734801507533.png')
+        .handle((_card, event) => {
+            const { playerInfo: { oppoGetElDmgType = 0 } = {} } = event;
+            let typelist = oppoGetElDmgType;
+            let elcnt = 0;
+            while (typelist != 0) {
+                typelist &= typelist - 1;
+                ++elcnt;
+            }
+            return { supportArgs: [elcnt] }
+        }),
 
-    // 323: () => new GICard(323, '西尔弗和迈勒斯', '此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为｢侍从的周到｣。(最多4点)；【结束阶段：】如果｢侍从的周到｣至少为3，则弃置此牌，然后抓｢侍从的周到｣点数的牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/e160832e6337e402fc01d5f89c042aa3_8868205734801507533.png',
-    //     1, 8, 1, [3], 0, 0, (_card, event) => {
-    //         const { playerInfo: { oppoGetElDmgType = 0 } = {} } = event;
-    //         let typelist = oppoGetElDmgType;
-    //         let elcnt = 0;
-    //         while (typelist != 0) {
-    //             typelist &= typelist - 1;
-    //             ++elcnt;
-    //         }
-    //         return { support: [newSupport(4046, 323, Math.min(4, elcnt))] }
-    //     }),
+    322024: () => new CardBuilder(359).name('太郎丸').since('v4.6.0').ally().costAny(2)
+        .description('【入场时：】生成4张【crd302202】，均匀地置入我方牌库中。；我方打出2张【crd302202】后：弃置此牌，召唤【smn302201】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png')
+        .handle(() => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 302202 }] })),
 
-    // 324: () => new GICard(324, '太郎丸', '【入场时：】生成4张【crd902】，均匀地置入我方牌库中。；我方打出2张【crd902】后：弃置此牌，召唤【smn3059】。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png',
-    //     2, 0, 1, [3], 0, 0, () => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 902, element: 1 }], support: [newSupport(4050, 324)] })),
+    322025: () => new CardBuilder(360).name('白手套和渔夫').since('v4.6.0').ally().costSame(0)
+        .description('【结束阶段：】生成1张【crd302203】，随机将其置入我方牌库顶部5张牌之中。；如果此牌的[可用次数]仅剩1次，则抓1张牌。；[可用次数]：2')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/08e6d818575b52bd4459ec98798a799a_2502234583603653928.png'),
 
-    // 325: () => new GICard(325, '白手套和渔夫', '【结束阶段：】生成1张【crd903】，随机将其置入我方牌库顶部5张牌之中。；如果此牌的[可用次数]仅剩1次，则抓1张牌。；[可用次数]：2',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/08e6d818575b52bd4459ec98798a799a_2502234583603653928.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4051, 325)] })),
+    322026: () => new CardBuilder(390).name('亚瑟先生').since('v4.7.0').ally().costSame(0)
+        .description('【我方[舍弃]或[调和]1张牌后：】此牌累积1点｢新闻线索｣。(最多累积到2点)；【结束阶段：】如果此牌已累积2点｢新闻线索｣，则扣除2点，复制对方牌库顶的1张牌加入我方手牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/c2b793adbb8201b2e886bfd05b55b216_2354473128226348221.png'),
 
-    // 326: () => new GICard(326, '亚瑟先生', '【我方[舍弃]或[调和]1张牌后：】此牌累积1点｢新闻线索｣。(最多累积到2点)；【结束阶段：】如果此牌已累积2点｢新闻线索｣，则扣除2点，复制对方牌库顶的1张牌加入我方手牌。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/c2b793adbb8201b2e886bfd05b55b216_2354473128226348221.png',
-    //     0, 8, 1, [3], 0, 0, () => ({ support: [newSupport(4054, 326)] })),
+
 
     // 327: () => new GICard(327, '瑟琳', '【每回合自动触发1次：】将1张随机的｢美露莘的声援｣放入我方手牌。；[可用次数]：3',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/c2b793adbb8201b2e886bfd05b55b216_2354473128226348221.png',
@@ -2845,13 +2854,15 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    // 902: () => new GICard(902, '太郎丸的存款', '生成1个[万能元素骰]。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png',
-    //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }] })),
+    302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0)
+        .description('生成1个[万能元素骰]。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png')
+        .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }] })),
 
-    // 903: () => new GICard(903, '｢清洁工作｣', '我方出战角色下次造成伤害+1。(可叠加，最多叠加到+2)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/382849ade5e2cebea6b3a77a92f49f5b_4826032308536650097.png',
-    //     0, 8, 2, [], 0, 0, () => ({ status: [newStatus(2185)] })),
+    302203: () => new CardBuilder().name('｢清洁工作｣').event().costSame(0)
+        .description('我方出战角色下次造成伤害+1。(可叠加，最多叠加到+2)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/382849ade5e2cebea6b3a77a92f49f5b_4826032308536650097.png')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(302204)] })),
 
     // 904: () => new GICard(904, '海底宝藏', '治疗我方出战角色1点，生成1个随机基础元素骰。',
     //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png',

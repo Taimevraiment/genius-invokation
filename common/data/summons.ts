@@ -138,9 +138,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = getMaxHertHidxs(heros);
             const fhero = heros[getAtkHidx(heros)];
-            const isHeal = fhero?.id == getHidById(summon.id) && trigger == 'skilltype1' && hidxs.length > 0;
-            const hasTround = ver >= 'v4.7.0' && trigger == 'skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
-            if (isHeal) triggers.push('skilltype1');
+            const isHeal = fhero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
+            const hasTround = ver >= 'v4.7.0' && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
+            if (isHeal) triggers.push('after-skilltype1');
             const skcmds: Cmds[] = [{ cmd: 'heal', cnt: 1, hidxs }];
             const trdcmds: Cmds[] = [];
             if (hasTround || tround == 1) trdcmds.push({ cmd: 'heal', cnt: 1 });
@@ -154,7 +154,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         --smn.perCnt;
                         return { cmds: trdcmds }
                     }
-                    if (trigger == 'skilltype1') return { cmds: skcmds }
+                    if (trigger == 'after-skilltype1') return { cmds: skcmds }
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                 },
             }
@@ -928,6 +928,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     127025: () => crd12702summon(),
 
+    302201: (src: string) => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical()
+        .description('{defaultAtk。}').src(src),
+
+
     // 3010: () => new GISummon(3010, '水丘丘萨满', '【结束阶段：】造成{dmg}点[水元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png',
     //     2, 2, 0, 1, 1),
@@ -943,8 +947,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     // 3013: () => new GISummon(3013, '冰箭丘丘人', '【结束阶段：】造成{dmg}点[冰元素伤害]。；[useCnt]',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png',
     //     2, 2, 0, 1, 4),
-
-    // 3059: (src = '') => new GISummon(3059, '愤怒的太郎丸', '【结束阶段：】造成{dmg}点[物理伤害]。；[useCnt]', src, 2, 2, 0, 2, 0),
 
 }
 

@@ -312,10 +312,8 @@ export class CardBuilder extends BaseBuilder {
         if (this._type == CARD_TYPE.Support) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {
-                return {
-                    ...handle?.(card, event, ver),
-                    support: [newSupport(ver)(card)],
-                }
+                const ores = handle?.(card, event, ver) ?? {};
+                return { ...ores, support: [newSupport(ver)(card, ...(ores.supportArgs ?? []))] }
             };
         }
         const description = this._getValByVersion(this._description, '');

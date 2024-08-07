@@ -29,6 +29,7 @@ export type StatusHandleEvent = {
     hasDmg?: boolean,
     dmgSource?: number,
     minusDiceCard?: number,
+    isMinusDiceTalent?: boolean,
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
     heal?: number[],
@@ -2149,6 +2150,30 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合中，角色｢普通攻击｣造成的伤害+1。')
         .handle(() => ({ addDmgType1: 1 })),
 
+    302204: () => new StatusBuilder('｢清洁工作｣(生效中)').combatStatus().icon('buff5').useCnt(1).maxCnt(2)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .description('我方出战角色下次造成的伤害+1。；(可叠加，最多叠加到+2)')
+        .handle(status => ({
+            trigger: ['skill'],
+            addDmg: status.useCnt,
+            exec: () => { status.useCnt = 0 },
+        })),
+
+    302205: () => new StatusBuilder('沙与梦').heroStatus().icon('buff2').useCnt(1)
+        .description('【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；[useCnt]')
+        .handle((status, event = {}) => {
+            const { trigger = '', isMinusDiceSkill = false, isMinusDiceTalent = false } = event;
+            return {
+                minusDiceSkill: { skill: [0, 0, 3] },
+                minusDiceCard: isCdt(isMinusDiceTalent, 3),
+                trigger: ['card', 'skill'],
+                exec: () => {
+                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
+                        --status.useCnt;
+                    }
+                },
+            }
+        }),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
@@ -2529,13 +2554,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         return { restDmg: Math.max(0, restDmg - 1) }
     //     }),
 
-    // 2185: () => new GIStatus(2185, '｢清洁工作｣(生效中)', '我方出战角色下次造成的伤害+1。；(可叠加，最多叠加到+2)',
-    //     'buff5', 1, [4, 6], 1, 2, -1, status => ({
-    //         trigger: ['skill'],
-    //         addDmg: status.useCnt,
-    //         exec: () => { status.useCnt = 0 },
-    //     })),
-
     // 2186: () => new GIStatus(2186, '缤纷马卡龙(生效中)', '【所附属角色受到伤害后：】治疗该角色1点。；[useCnt]',
     //     'heal', 0, [1], 3, 0, -1, () => ({
     //         heal: 1,
@@ -2544,21 +2562,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //             if (eStatus) --eStatus.useCnt;
     //         },
     //     })),
-
-    // 2188: () => new GIStatus(2188, '沙与梦', '【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；[useCnt]',
-    //     'buff2', 0, [4], 1, 0, -1, (status, event = {}) => {
-    //         const { card, heros = [], hidx = -1, trigger = '', minusDiceCard: mdc = 0 } = event;
-    //         const { minusSkillRes, isMinusSkill } = minusDiceSkillHandle(event, { skill: [0, 0, 3] });
-    //         const isCardMinus = card && card.subType.includes(6) && card.userType == heros[hidx]?.id && card.cost + card.anydice > mdc;
-    //         return {
-    //             ...minusSkillRes,
-    //             minusDiceCard: isCdt(isCardMinus, 3),
-    //             trigger: ['card', 'skill'],
-    //             exec: () => {
-    //                 if (trigger == 'card' && isCardMinus || trigger == 'skill' && isMinusSkill) --status.useCnt;
-    //             },
-    //         }
-    //     }),
 
     // 2222: () => new GIStatus(2222, '噔噔！(生效中)', '结束阶段时，抓2张牌。',
     //     'buff3', 0, [3], 1, 0, -1, () => ({

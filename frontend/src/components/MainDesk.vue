@@ -302,7 +302,7 @@
                     color: ELEMENT_COLOR.Heal,
                     'background-image': `url(${getPngIcon('Heal')})`,
                   }">
-                  +{{ willHeals[hgi][hidx] }}
+                  +{{ Math.ceil(willHeals[hgi][hidx]) }}
                 </div>
               </div>
             </div>
@@ -1097,6 +1097,7 @@ button:active {
   justify-content: center;
   align-items: center;
   width: 100%;
+  z-index: 1;
 }
 
 .damage,

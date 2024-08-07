@@ -70,8 +70,9 @@ export class SupportBuilder extends BaseVersionBuilder {
         this._cnt = cnt;
         return this;
     }
-    permanent() {
+    permanent(cnt: number = 0) {
         this._type = SUPPORT_TYPE.Permanent;
+        this._cnt = cnt;
         return this;
     }
     heal(heal: number) {
