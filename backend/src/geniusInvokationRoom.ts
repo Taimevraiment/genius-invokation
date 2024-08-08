@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
 import {
-    ACTION_TYPE, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
+    ACTION_TYPE, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
     DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
     PURE_ELEMENT_TYPE_KEY, Phase, PureElementCode, PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup,
     StatusType, Version,
@@ -267,7 +267,7 @@ export default class GeniusInvokationRoom {
             p.dice = [];
             p.combatStatus.splice(0, MAX_STATUS_COUNT);
             p.status = PLAYER_STATUS.WAITING;
-            p.isUsedLengend = false;
+            p.playerInfo.isUsedLengend = false;
             p.playerInfo.weaponTypeCnt = new Set(p.pile.filter(c => c.subType.includes(CARD_SUBTYPE.Weapon))).size;
             p.playerInfo.weaponCnt = p.pile.filter(c => c.subType.includes(CARD_SUBTYPE.Weapon)).length;
             p.playerInfo.artifactTypeCnt = new Set(p.pile.filter(c => c.subType.includes(CARD_SUBTYPE.Artifact))).size;
@@ -937,7 +937,7 @@ export default class GeniusInvokationRoom {
             willDamage1.forEach((dmg, di) => {
                 aWillDamages[di] = allHeros()[di].hp > 0 ? [...dmg] : [-1, 0];
             });
-            if (skillres.summon) player().summons = this._updateSummon(pidx, skillres.summon, aSummons(), aCombatStatus());
+            if (skillres.summon) assgin(player().summons, this._updateSummon(pidx, skillres.summon, aSummons(), aCombatStatus()));
             //     if (skillres.isAttach) {
             //         this._doCmds(pidx, [{ cmd: 'attach', hidxs: [hidx] }]);
             //         // todo 把下面的变为上面的一行
@@ -977,6 +977,8 @@ export default class GeniusInvokationRoom {
         const isSwitchOppo = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && cmds.isOppo);
         const calcAtk = (res: any, type: string, stsId: number, ahidx: number, ehidx: number, isSkill = false, isSelf = false) => {
             const cpidx = pidx ^ +!isSelf;
+            const dmgedHidx = isSelf ? ehidx : ahidx;
+            const dmgedHlen = isSelf ? ehlen : ahlen;
             if (res?.damage == undefined && res?.pdmg == undefined) {
                 let willheals: number[] | undefined;
                 if (type.includes('Status')) {
@@ -992,17 +994,17 @@ export default class GeniusInvokationRoom {
             if (ahidx == -1) ahidx = hidx;
             if (ehidx == -1) ehidx = odmgedHidx;
             const reshidxs = res?.hidxs ?? getBackHidxs(bPlayers[cpidx ^ 1].heros);
-            const willDamages = new Array(isSelf ? ahlen : ehlen).fill(0).map((_, i) => [
-                i == (isSelf ? ahidx : ehidx) ? (res?.damage ?? -1) : -1,
+            const willDamages = new Array(dmgedHlen).fill(0).map((_, i) => [
+                i == dmgedHidx ? (res?.damage ?? -1) : -1,
                 reshidxs.includes(i) ? (res?.pdmg ?? 0) : 0
             ]);
             const { willDamages: willDamage3, willAttachs: willAttachs3, supportCnt: supportCnt3,
                 players: players3, elrcmds: elrcmds3, etriggers: etriggers3, atriggers: atriggers3,
             } = this._calcDamage(
-                pidx,
+                cpidx,
                 res.element,
                 willDamages,
-                isSelf ? ahidx : ehidx,
+                dmgedHidx,
                 bPlayers,
                 {
                     isExec: false,
@@ -1023,7 +1025,7 @@ export default class GeniusInvokationRoom {
             }
             supportCnt.forEach((_, sti, sta) => sta[sti].forEach((_, i, a) => a[i] += supportCnt3[sti][i]));
             assgin(bPlayers, players3);
-            for (let i = 0; i < (isSelf ? ahlen : ehlen); ++i) bWillAttach[i + cpidx * (isSelf ? ehlen : ahlen)].push(willAttachs3[i]);
+            for (let i = 0; i < dmgedHlen; ++i) bWillAttach[i + (cpidx ^ 1) * (isSelf ? ahlen : ehlen)].push(willAttachs3[i]);
             bWillDamages.push(willDamage3);
             if (isSelf) {
                 ahidx = cswo > -1 ? cswo : ahidx;
@@ -1060,6 +1062,7 @@ export default class GeniusInvokationRoom {
                         heros: bPlayers[cpidx].heros,
                         eheros: bPlayers[cpidx ^ 1].heros,
                         hidx: chidx,
+                        skilltype: skill?.type,
                         trigger: state,
                         isChargedAtk: isSelf ? isChargedAtk : false,
                     });
@@ -1763,7 +1766,7 @@ export default class GeniusInvokationRoom {
     private _checkCard(pidx: number, cardIdx: number, isReconcile: boolean = false) {
         const player = this.players[pidx];
         const opponent = this.players[pidx ^ 1];
-        const { dice, heros, hidx, summons, isUsedLengend, handCards } = player;
+        const { dice, heros, hidx, summons, playerInfo: { isUsedLengend }, handCards } = player;
         const currCard = handCards[cardIdx];
         const { cost, canSelectHero, type, userType, canSelectSupport, costChange, canSelectSummon, energy } = currCard;
         let { costType, anydice } = currCard;
@@ -1922,6 +1925,7 @@ export default class GeniusInvokationRoom {
             heros: player.heros,
             eheros: opponent.heros,
             ehidx: opponent.hidx,
+            epile: opponent.pile,
             selectHeros,
             selectSummon,
             selectSupport,
@@ -1931,9 +1935,11 @@ export default class GeniusInvokationRoom {
             ehcardsCnt: opponent.handCards.length,
             round: this.round,
             playerInfo: player.playerInfo,
+            eplayerInfo: opponent.playerInfo,
             supports: player.supports,
             esupports: opponent.supports,
             isExec: true,
+            randomInArr: this._randomInArr,
             slotUse: currCard.type == CARD_TYPE.Equipment,
         });
         player.playerInfo.destroyedSupport += oSupportCnt - player.supports.length;
@@ -1950,7 +1956,7 @@ export default class GeniusInvokationRoom {
         let damageVO: DamageVO | undefined;
         const { usedCardIds } = player.playerInfo;
         if (!usedCardIds.includes(currCard.id)) usedCardIds.push(currCard.id);
-        if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.isUsedLengend = true;
+        if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLengend = true;
         if (currCard.type == CARD_TYPE.Equipment && !cardres?.isDestroy) { // 装备
             const tarHero = player.heros[hidxs[0]];
             if (currCard.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器
@@ -1994,8 +2000,17 @@ export default class GeniusInvokationRoom {
                     player.supports.splice(selectSupport, 1);
                     isSupportDestroy = true;
                 }
-                player.supports.push(...cardres.support);
+                cardres.support.forEach(support => {
+                    support.handle(support, { playerInfo: player.playerInfo, trigger: 'enter' });
+                    player.supports.push(support);
+                });
             }
+            cardres.supportOppo?.forEach(support => {
+                if (opponent.supports.length < MAX_SUPPORT_COUNT) {
+                    support.handle(support, { playerInfo: opponent.playerInfo, trigger: 'enter' });
+                    opponent.supports.push(support);
+                }
+            });
             if (oSupportCnt - player.supports.length > 0) isSupportDestroy = true;
             if (isSupportDestroy) this._doSupportDestroy(pidx);
             player.summons = this._updateSummon(pidx, cardres.summon ?? [], player.summons, player.combatStatus);
@@ -2849,6 +2864,7 @@ export default class GeniusInvokationRoom {
                     isMinusDiceTalent: card && card.hasSubtype(CARD_SUBTYPE.Talent) && card.userType == pheros[hidx]?.id && card.cost + card.anydice > minusDiceCard,
                     isMinusDiceSkill: minusDiceSkillIds.includes(sts.entityId),
                     minusDiceSkill,
+                    randomInt: this._randomInt,
                 });
                 if (sts.hasType(STATUS_TYPE.AddDamage) && (!this._hasNotTriggered(stsres.trigger, trigger) || isReadySkill)) {
                     addDmg += stsres.addDmgCdt ?? 0;
@@ -3337,9 +3353,8 @@ export default class GeniusInvokationRoom {
         for (let i = 0; i < cmdlen; ++i) {
             const { cmd = '', cnt = 0, element, isReadySkill = false, status: getsts = [],
                 card, isOppo, isAttach = false, mode = 0 } = cmds[i];
-            let { hidxs, subtype = [] } = cmds[i];
+            let { hidxs, subtype = [], cardTag = [] } = cmds[i];
             if (!hidxs && chidxs) hidxs = [...chidxs];
-            if (!Array.isArray(subtype)) subtype = [subtype];
             if (cmd == 'useSkill') {
                 this._useSkill(pidx, cnt, { isPreview: !isExec, withCard, isSwitch, isReadySkill });
             } else if (cmd.startsWith('switch-')) {
@@ -3371,6 +3386,8 @@ export default class GeniusInvokationRoom {
                     this._switchHero(pidx, nhidx, socket, 'doCmd--switch');
                 }
             } else if (['getCard', 'addCard'].includes(cmd)) {
+                if (!Array.isArray(subtype)) subtype = [subtype];
+                if (!Array.isArray(cardTag)) cardTag = [cardTag];
                 let cards: Card[] = [];
                 if (card) {
                     cards = (Array.isArray(card) ? card : Array.from({ length: cnt }, () => clone(card)))
@@ -3390,23 +3407,25 @@ export default class GeniusInvokationRoom {
                             } else { // 直接生成
                                 wcard = cards[restCnt];
                             }
-                        } else if (subtype.length == 0) { // 摸除了指定之外的牌
-                            if (player.pile.every(c => exclude.includes(c.id))) {
-                                break;
-                            }
-                            const cardIdx = player.pile.findIndex(c => !exclude.includes(c.id));
-                            if (cardIdx > -1) [wcard] = player.pile.splice(cardIdx, 1);
+                        } else if (subtype.length == 0 && cardTag.length == 0) { // 在指定的某几张牌中模
+                            wcard = this.newCard(this._randomInArr(exclude));
+                            // 从牌库中模除了指定的牌
+                            // if (player.pile.every(c => exclude.includes(c.id))) {
+                            //     break;
+                            // }
+                            // const cardIdx = player.pile.findIndex(c => !exclude.includes(c.id));
+                            // if (cardIdx > -1) [wcard] = player.pile.splice(cardIdx, 1);
                         } else { // 指定副类型
                             if (isAttach) {
-                                if (player.pile.every(c => !c.hasSubtype(...subtype))) {
+                                if (player.pile.every(c => !c.hasSubtype(...(subtype as CardSubtype[])) || !c.hasTag(...(cardTag as CardTag[])))) {
                                     break;
                                 }
                                 while (wcard == null) {
-                                    const cardIdx = player.pile.findIndex(c => c.hasSubtype(...subtype) && !exclude.includes(c.id));
+                                    const cardIdx = player.pile.findIndex(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[]))) && !exclude.includes(c.id));
                                     if (cardIdx > -1) [wcard] = player.pile.splice(cardIdx, 1);
                                 }
                             } else {
-                                const cardsPool = cardsTotal(this.version).filter(c => c.UI.cnt > 0 && c.hasSubtype(...subtype) && !exclude.includes(c.id));
+                                const cardsPool = cardsTotal(this.version).filter(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[]))) && !exclude.includes(c.id));
                                 wcard = this._randomInArr(cardsPool);
                             }
                         }
@@ -3487,9 +3506,14 @@ export default class GeniusInvokationRoom {
                             const hcardsSorted = unselectedCards.slice().sort((a, b) => ((b.cost + b.anydice) - (a.cost + a.anydice)) || (Math.random() - 0.5));
                             const targetCnt = discardCnt;
                             while (discardCnt > 0) {
-                                if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
+                                if (mode == CMD_MODE.Random) { // 弃置随机手牌
+                                    const didx = this._randomInArr(unselectedCards).cidx;
+                                    unselectedCards.splice(didx, 1);
+                                    discardIdxs.push(didx);
+                                } else if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
                                     if (hcardsSorted.length == 0) break;
-                                    const didx = unselectedCards.findIndex(c => c.id == hcardsSorted[0].id);
+                                    const maxCost = hcardsSorted[0].cost + hcardsSorted[0].anydice;
+                                    const didx = this._randomInArr(unselectedCards.filter(c => c.cost + c.anydice == maxCost)).cidx;
                                     unselectedCards.splice(didx, 1);
                                     discardIdxs.push(didx);
                                     discards.push(clone(hcardsSorted.shift()!));
@@ -3499,7 +3523,7 @@ export default class GeniusInvokationRoom {
                                     discardIdxs.push(targetCnt - discardCnt);
                                 } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
                                     if (player.pile.length == 0) break;
-                                    const disIdx = Math.floor(Math.random() * player.pile.length);
+                                    const disIdx = this._randomInt(player.pile.length - 1);
                                     discards.push(clone(player.pile[disIdx]));
                                     discardIdxs.push(disIdx);
                                 }
@@ -3535,7 +3559,7 @@ export default class GeniusInvokationRoom {
                 }
             } else if (cmd == 'getDice' && isExec) {
                 let elements: DiceCostType[] = [];
-                if (mode == CMD_MODE.RandomDice) { // 随机不重复
+                if (mode == CMD_MODE.Random) { // 随机不重复
                     let ndice: DiceCostType = this._randomInArr(Object.values(PURE_ELEMENT_TYPE));
                     while (elements.includes(ndice)) ndice = this._randomInArr(Object.values(PURE_ELEMENT_TYPE));
                     elements.push(ndice);

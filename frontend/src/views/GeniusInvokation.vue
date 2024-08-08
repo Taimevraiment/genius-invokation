@@ -32,7 +32,7 @@
         {{ handCardsCnt[client.playerIdx] }}
       </div>
       <img class="lengend" :src="getDiceBgIcon('lengend-empty')" />
-      <img v-if="!client.player?.isUsedLengend" class="lengend" :src="getDiceBgIcon('lengend')" />
+      <img v-if="!client.player?.playerInfo.isUsedLengend" class="lengend" :src="getDiceBgIcon('lengend')" />
     </div>
 
     <div v-if="client.opponent" :class="{
@@ -53,7 +53,7 @@
       <img v-if="isLookon > -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
         @click.stop="lookonTo(client.opponent?.pidx ?? -1)" />
       <img class="lengend-oppo" :src="getDiceBgIcon('lengend-empty')" />
-      <img v-if="!client.opponent.isUsedLengend" class="lengend-oppo" :src="getDiceBgIcon('lengend')" />
+      <img v-if="!client.opponent.playerInfo.isUsedLengend" class="lengend-oppo" :src="getDiceBgIcon('lengend')" />
     </div>
 
     <MainDesk v-if="client.phase >= PHASE.CHANGE_CARD || client.isWin > -1" :isMobile="isMobile" :canAction="canAction"

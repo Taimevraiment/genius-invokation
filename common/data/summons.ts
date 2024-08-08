@@ -14,7 +14,6 @@ export type SummonHandleEvent = {
     reset?: boolean,
     isChargedAtk?: boolean,
     isFallAtk?: boolean,
-    combatStatus?: Status[],
     hcard?: Card,
     isExec?: boolean,
     isSkill?: number,
@@ -163,11 +162,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     111093: () => new SummonBuilder('饰梦天球').useCnt(2).damage(1)
         .description('{defaultAtk。如果【sts111092】在场，则使其累积1枚｢晚星｣。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/1b86f1cb97411b77d51cc22bb5622ff7_2462971599599504312.png')
-        .handle((summon, event) => ({
+        .handle(summon => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { summon: smn = summon } = execEvent;
-                const { combatStatus = [] } = event;
+                const { summon: smn = summon, combatStatus = [] } = execEvent;
                 const sts111092 = getObjById(combatStatus, 111092);
                 if (sts111092) ++sts111092.useCnt;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);

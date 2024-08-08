@@ -1,5 +1,5 @@
 import {
-    ActionType, CardSubtype, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
+    ActionType, CardSubtype, CardTag, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType, StatusGroup, SWIRL_ELEMENT, Version,
 } from "./common/constant/enum"
 import { type GICard } from "./common/data/builder/cardBuilder"
@@ -43,7 +43,6 @@ type Player = {
     hidx: number, // 出战角色序号
     isFallAtk: boolean, // 是否为下落攻击状态
     canAction: boolean, // 是否可以行动
-    isUsedLengend: boolean, // 是否使用秘传卡
     playerInfo: GameInfo,
     deckIdx: number, // 出战卡组id
     isOffline: boolean,
@@ -116,6 +115,7 @@ type Cmds = {
     isAttach?: boolean,
     card?: Card | number | (Card | number)[],
     subtype?: CardSubtype | CardSubtype[],
+    cardTag?: CardTag | CardTag[],
     status?: Status[],
     isReadySkill?: boolean,
     isOppo?: boolean,
@@ -126,6 +126,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'changePattern' | 'getSkill' | 'loseSkill' | 'addCard' | 'discard';
 
 type GameInfo = {
+    isUsedLengend: boolean, // 是否使用秘传卡
     artifactCnt: number, // 初始牌堆圣遗物数量
     artifactTypeCnt: number, // 初始牌堆圣遗物种类
     weaponCnt: number, // 初始牌堆武器数量
@@ -181,7 +182,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther}dmg` | `${TrgDmg}-dmg` |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
-    'reconcile' | 'discard' | `getcard${TrgOppo}` | keyof typeof ELEMENT_REACTION | '';
+    'reconcile' | 'discard' | `getcard${TrgOppo}` | keyof typeof ELEMENT_REACTION | 'enter' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

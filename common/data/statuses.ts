@@ -1,6 +1,6 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
@@ -42,6 +42,7 @@ export type StatusHandleEvent = {
     playerInfo?: GameInfo,
     isSummon?: number[],
     source?: number,
+    randomInt?: (len?: number) => number,
 }
 
 export type StatusHandleRes = {
@@ -343,21 +344,22 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111091: () => shieldStatus('安眠帷幕护盾'),
 
-    111092: () => new StatusBuilder('飞星').combatStatus().icon('ski,1').useCnt(1).maxCnt(16).addCnt(2)
+    111092: () => new StatusBuilder('飞星').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).addCnt(3)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Accumulate)
         .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。(生成此出战状态的技能，也会触发此效果)；【重复生成此出战状态时：】累积2枚｢晚星｣。')
         .handle((status, event = {}) => {
-            const { heros = [], hidx = -1, trigger = '', card } = event;
-            const addCnt = heros[hidx]?.id == getHidById(status.id) && trigger == 'skilltype2' ? 2 : 0;
+            const { heros = [], hidx = -1, skilltype = -1, card, trigger = '' } = event;
+            const hid = getHidById(status.id);
+            const addCnt = heros[hidx]?.id == hid && skilltype == SKILL_TYPE.Elemental ? 3 : 1;
             const isDmg = status.useCnt + addCnt >= 4;
-            const isTalent = !!heros?.find(h => h.id == getHidById(status.id))?.talentSlot || card?.id == 211091;
+            const isTalent = !!getObjById(heros, hid)?.talentSlot || card?.id == 211091;
             return {
                 trigger: [`${isDmg ? 'after-' : ''}skill`],
                 damage: isCdt(isDmg, 1),
                 element: DAMAGE_TYPE.Cryo,
                 cmds: isCdt(isTalent, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: eStatus => {
-                    ++status.useCnt;
+                    if (trigger == 'skill') ++status.useCnt;
                     if (eStatus) eStatus.useCnt -= 4;
                 }
             }
@@ -2175,6 +2177,68 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    302216: () => new StatusBuilder('托皮娅的心意').combatStatus().roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .icon('https://gi-tcg-assets.guyutocngxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
+        .description('本回合打出手牌后，随机[舍弃]1张牌或抓1张牌。')
+        .handle((_, event) => {
+            const { randomInt } = event;
+            return {
+                trigger: ['card'],
+                exec: () => {
+                    const cmd: Cmds[] = [{ cmd: 'getCard', cnt: 1 }, { cmd: 'discard', cnt: 1, mode: CMD_MODE.Random }];
+                    return { cmds: [cmd[randomInt!()]] }
+                }
+            }
+        }),
+
+    302217: () => new StatusBuilder('卢蒂妮的心意').combatStatus().useCnt(2).type(STATUS_TYPE.Attack)
+        .icon('https://gi-tcg-assets.guyutocngxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
+        .description('角色使用技能后，随机受到2点治疗或2点[穿透伤害]。；[useCnt]')
+        .handle((_, event) => {
+            const { hidx = -1, randomInt } = event;
+            const res: StatusHandleRes = [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()];
+            return {
+                trigger: ['skill'],
+                ...res,
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt;
+                }
+            }
+        }),
+
+    302219: () => new StatusBuilder('希洛娜的心意').combatStatus().useCnt(3).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
+        .description('将1张美露莘看好的超棒事件牌加入手牌。；[useCnt]')
+        .handle(status => ({
+            trigger: ['phase-end'],
+            exec: () => {
+                --status.useCnt;
+                return {
+                    cmds: [{
+                        cmd: 'getCard',
+                        cnt: 2,
+                        subtype: CARD_SUBTYPE.ElementResonance,
+                        cardTag: CARD_TAG.LocalResonance,
+                        hidxs: [331101, 331201, 331331, 331401, 331501, 331601, 331701, 332015, 332016],
+                    }]
+                }
+            }
+        })),
+
+    302303: () => new StatusBuilder('红羽团扇(生效中)').combatStatus().icon('buff2').useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('本回合中，我方执行的下次｢切换角色｣行动视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。')
+        .handle(status => ({
+            minusDiceHero: 1,
+            isQuickAction: true,
+            trigger: ['change-from'],
+            exec: (_, execEvent = {}) => {
+                const { switchHeroDiceCnt = 0, isQuickAction = false } = execEvent;
+                if (switchHeroDiceCnt == 0 && !isQuickAction) return { switchHeroDiceCnt }
+                --status.useCnt;
+                return { switchHeroDiceCnt: Math.max(0, switchHeroDiceCnt - 1) }
+            }
+        })),
+
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
         .description('本回合无法食用更多的｢料理｣。'),
@@ -2400,19 +2464,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     //         exec: eStatus => {
     //             if (eStatus) --eStatus.useCnt;
     //         },
-    //     })),
-
-    // 2084: () => new GIStatus(2084, '红羽团扇(生效中)', '本回合中，我方执行的下次｢切换角色｣行动视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。',
-    //     'buff2', 1, [4, 10], 1, 0, -1, status => ({
-    //         minusDiceHero: 1,
-    //         isQuickAction: true,
-    //         trigger: ['change-from'],
-    //         exec: (_eStatus, execEvent = {}) => {
-    //             const { switchHeroDiceCnt = 0, isQuickAction = false } = execEvent;
-    //             if (switchHeroDiceCnt == 0 && !isQuickAction) return { switchHeroDiceCnt }
-    //             --status.useCnt;
-    //             return { switchHeroDiceCnt: Math.max(0, switchHeroDiceCnt - 1) }
-    //         }
     //     })),
 
     // 2101: () => new GIStatus(2101, '拳力斗技！(生效中)', '【本回合中，一位牌手先宣布结束时：】未宣布结束的牌手抓2张牌。',
