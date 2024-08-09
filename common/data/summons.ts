@@ -929,22 +929,21 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     302201: (src: string) => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical()
         .description('{defaultAtk。}').src(src),
 
+    303211: () => new SummonBuilder('冰箭丘丘人').useCnt(2).damage(1).cryo()
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png'),
 
-    // 3010: () => new GISummon(3010, '水丘丘萨满', '【结束阶段：】造成{dmg}点[水元素伤害]。；[useCnt]',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png',
-    //     2, 2, 0, 1, 1),
+    303212: () => new SummonBuilder('水丘丘萨满').useCnt(2).damage(1).hydro()
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png'),
 
-    // 3011: () => new GISummon(3011, '冲锋丘丘人', '【结束阶段：】造成{dmg}点[火元素伤害]。；[useCnt]',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/b2751af5c3dddc5a4bf7909bd2382adc_8142471467728886523.png',
-    //     2, 2, 0, 1, 2),
+    303213: () => new SummonBuilder('冲锋丘丘人').useCnt(2).damage(1).pyro()
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/b2751af5c3dddc5a4bf7909bd2382adc_8142471467728886523.png'),
 
-    // 3012: () => new GISummon(3012, '雷箭丘丘人', '【结束阶段：】造成{dmg}点[雷元素伤害]。；[useCnt]',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png',
-    //     2, 2, 0, 1, 3),
-
-    // 3013: () => new GISummon(3013, '冰箭丘丘人', '【结束阶段：】造成{dmg}点[冰元素伤害]。；[useCnt]',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png',
-    //     2, 2, 0, 1, 4),
+    303214: () => new SummonBuilder('雷箭丘丘人').useCnt(2).damage(1).electro()
+        .description('{defaultAtk。}')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
 
 }
 

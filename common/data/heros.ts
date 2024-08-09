@@ -183,7 +183,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('垂裳端凝之夜').description('生成【sts111091】和【sts111092】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f4992b1b1ccc7488e72d044a689add90.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/752935b8ac76b044a14e788b146542d9_8202062186002160885.png')
-                .elemental().cost(3).handle((_, ver) => ({ status: [newStatus(ver)(111091), newStatus(ver)(111092)] })),
+                .elemental().cost(3).handle((_, ver) => ({ statusPre: [newStatus(ver)(111091), newStatus(ver)(111092)] })),
             new SkillBuilder('星流摇床之梦').description('{dealDmg}，召唤【smn111093】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/890bd4e04afaa53a01d52fc1087c8da7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/e419e8855adc7d838639a2dacb3be165_5717426653880544475.png')
@@ -655,7 +655,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 }))
         ),
 
-    1313: () => new HeroBuilder(393).name('夏沃蕾').since('v4.8.0').fontaine().tags(HERO_TAG.ArkheOusia).pyro().polearm()
+    1313: () => new HeroBuilder(395).name('夏沃蕾').since('v4.8.0').fontaine().tags(HERO_TAG.ArkheOusia).pyro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/6c91fd059cdcc4f1c068b0a255350433_8349286385786874049.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a428c5149c159454c1ea98b254d80990.png')
         .skill1(new Skill1Builder('线列枪刺·改'))
@@ -1183,7 +1183,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(116073, 3)] }))
         ),
 
-    1608: () => new HeroBuilder(394).name('娜维娅').since('v4.8.0').fontaine().tags(HERO_TAG.ArkheOusia).geo().claymore()
+    1608: () => new HeroBuilder(396).name('娜维娅').since('v4.8.0').fontaine().tags(HERO_TAG.ArkheOusia).geo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/4c23484ade8f496c7bbf790a1dd43d30_170105147546023510.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/684bdd3ce161df1f5acb5ddc4aa59505.png')
         .skill1(new Skill1Builder('直率的辞绝'))
@@ -1420,7 +1420,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(121034)] }))
         ),
 
-    2104: () => new HeroBuilder(395).name('愚人众·霜役人').since('v4.8.0').fatui().cryo()
+    2104: () => new HeroBuilder(397).name('愚人众·霜役人').since('v4.8.0').fatui().cryo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a7baaff1ecc4dcda963698919ef2cae4_3934264341680499887.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/16b46893b0a27f52004e9377cd62c623.png')
         .skill1(new Skill1Builder('迅捷剑锋'))

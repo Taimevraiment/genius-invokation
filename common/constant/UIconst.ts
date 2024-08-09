@@ -139,7 +139,7 @@ export const ELEMENT_ICON = {
     [COST_TYPE.Dendro]: 'dendro',
     [COST_TYPE.Same]: 'same',
     [COST_TYPE.Energy]: 'energy',
-    [CARD_SUBTYPE.Legend]: 'lengend',
+    [CARD_SUBTYPE.Legend]: 'legend',
     [STATUS_TYPE.Shield]: 'shield',
     [DICE_COST_TYPE.Omni]: 'omni',
     [COST_TYPE.Any]: 'any',
@@ -188,18 +188,6 @@ export const HERO_LOCAL_NAME = {
     [HERO_LOCAL.Natlan]: '纳塔',
     [HERO_LOCAL.Snezhnaya]: '至冬',
     [HERO_LOCAL.Fatui]: '愚人众',
-} as const;
-
-export const HERO_LOCAL_CODE = {
-    [HERO_LOCAL.Monster]: 215,
-    [HERO_LOCAL.Mondstadt]: 1,
-    [HERO_LOCAL.Liyue]: 2,
-    [HERO_LOCAL.Inazuma]: 3,
-    [HERO_LOCAL.Sumeru]: 4,
-    [HERO_LOCAL.Fontaine]: 5,
-    [HERO_LOCAL.Natlan]: 6,
-    [HERO_LOCAL.Snezhnaya]: 7,
-    [HERO_LOCAL.Fatui]: 216,
 } as const;
 
 export const HERO_TAG_NAME = {

@@ -126,7 +126,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'changePattern' | 'getSkill' | 'loseSkill' | 'addCard' | 'discard';
 
 type GameInfo = {
-    isUsedLengend: boolean, // 是否使用秘传卡
+    isUsedlegend: boolean, // 是否使用秘传卡
     artifactCnt: number, // 初始牌堆圣遗物数量
     artifactTypeCnt: number, // 初始牌堆圣遗物种类
     weaponCnt: number, // 初始牌堆武器数量

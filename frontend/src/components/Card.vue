@@ -2,8 +2,8 @@
     <div class="card" :class="{ 'mobile-card': isMobile }">
         <div class="card-border"></div>
         <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-        <img class="lengend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
-            :src="getPngIcon('lengend-border')" />
+        <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
+            :src="getPngIcon('legend-border')" />
         <div class="card-cost" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
             <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
             <span>{{ card.cost - card.costChange }}</span>
@@ -77,7 +77,7 @@ const getPngIcon = (name: string) => {
 }
 
 
-.lengend-border {
+.legend-border {
     position: absolute;
     width: 100%;
     height: 100%;

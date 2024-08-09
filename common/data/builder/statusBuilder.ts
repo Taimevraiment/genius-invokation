@@ -135,7 +135,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _addCnt: number = 0;
     private _perCnt: [Version, number][] = [];
     private _roundCnt: [Version, number][] = [];
-    private _icon: string = '';
+    private _icon: [Version, string][] = [];
     private _explains: string[] = [];
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
@@ -235,8 +235,8 @@ export class StatusBuilder extends BaseVersionBuilder {
         }
         return this;
     }
-    icon(icon: string) {
-        this._icon = icon;
+    icon(icon: string, version: Version = 'vlatest') {
+        this._icon.push([version, icon]);
         return this;
     }
     explains(...explains: string[]) {
@@ -284,6 +284,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     }
     done() {
         const description = this._getValByVersion(this._description, '');
+        const icon = this._getValByVersion(this._icon, '');
         const perCnt = this._getValByVersion(this._perCnt, 0);
         const useCnt = this._getValByVersion(this._useCnt, -1);
         const roundCnt = this._getValByVersion(this._roundCnt, -1);
@@ -301,7 +302,7 @@ export class StatusBuilder extends BaseVersionBuilder {
                 if (summon && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
             } : this._handle;
-        return new GIStatus(this._id, this._name, description, this._icon, this._group, this._type,
+        return new GIStatus(this._id, this._name, description, icon, this._group, this._type,
             useCnt, maxCnt, roundCnt, handle,
             {
                 pct: perCnt,

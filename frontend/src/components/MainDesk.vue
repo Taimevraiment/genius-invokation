@@ -404,8 +404,8 @@
               <div class="init-card-content">
                 <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
                 <span v-else>{{ card.name }}</span>
-                <img class="lengend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
-                  :src="getPngIcon('lengend-border')" />
+                <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
+                  :src="getPngIcon('legend-border')" />
               </div>
               <div class="init-card-cost">
                 <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
@@ -434,9 +434,9 @@
 <script setup lang='ts'>
 import Handcard from '@/components/Card.vue';
 import {
-  CARD_SUBTYPE, CARD_TAG,
-  DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
-  PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
+    CARD_SUBTYPE, CARD_TAG,
+    DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+    PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
@@ -1598,7 +1598,7 @@ button:active {
   background-color: #35527fce;
 }
 
-.lengend-border {
+.legend-border {
   position: absolute;
   width: 100%;
   height: 100%;

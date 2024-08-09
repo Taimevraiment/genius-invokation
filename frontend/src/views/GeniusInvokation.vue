@@ -31,8 +31,8 @@
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
         {{ handCardsCnt[client.playerIdx] }}
       </div>
-      <img class="lengend" :src="getDiceBgIcon('lengend-empty')" />
-      <img v-if="!client.player?.playerInfo.isUsedLengend" class="lengend" :src="getDiceBgIcon('lengend')" />
+      <img class="legend" :src="getDiceBgIcon('legend-empty')" />
+      <img v-if="!client.player?.playerInfo.isUsedlegend" class="legend" :src="getDiceBgIcon('legend')" />
     </div>
 
     <div v-if="client.opponent" :class="{
@@ -52,8 +52,8 @@
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
       <img v-if="isLookon > -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
         @click.stop="lookonTo(client.opponent?.pidx ?? -1)" />
-      <img class="lengend-oppo" :src="getDiceBgIcon('lengend-empty')" />
-      <img v-if="!client.opponent.playerInfo.isUsedLengend" class="lengend-oppo" :src="getDiceBgIcon('lengend')" />
+      <img class="legend-oppo" :src="getDiceBgIcon('legend-empty')" />
+      <img v-if="!client.opponent.playerInfo.isUsedlegend" class="legend-oppo" :src="getDiceBgIcon('legend')" />
     </div>
 
     <MainDesk v-if="client.phase >= PHASE.CHANGE_CARD || client.isWin > -1" :isMobile="isMobile" :canAction="canAction"
@@ -75,8 +75,8 @@
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
         <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-        <img class="lengend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
-          :src="getPngIcon('lengend-border')" />
+        <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
+          :src="getPngIcon('legend-border')" />
         <div class="card-content">
           <span v-if="card?.UI.src?.length == 0">{{ card.name }}</span>
           <div class="card-cost" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
@@ -193,15 +193,15 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
-  CARD_SUBTYPE,
-  COST_TYPE,
-  DICE_COST_TYPE_CODE_KEY,
-  DiceCostType,
-  DiceCostTypeCode,
-  ELEMENT_TYPE,
-  PHASE,
-  PLAYER_STATUS,
-  Version
+    CARD_SUBTYPE,
+    COST_TYPE,
+    DICE_COST_TYPE_CODE_KEY,
+    DiceCostType,
+    DiceCostTypeCode,
+    ELEMENT_TYPE,
+    PHASE,
+    PLAYER_STATUS,
+    Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
@@ -637,7 +637,7 @@ body {
   border-radius: 10px;
 } */
 
-/* .lengend-border {
+/* .legend-border {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -884,13 +884,13 @@ body {
     -4px -4px 6px #ffeb56;
 }
 
-.lengend {
+.legend {
   position: absolute;
   right: -10px;
   top: -10px;
 }
 
-.lengend-oppo {
+.legend-oppo {
   position: absolute;
   left: -10px;
   top: -10px;

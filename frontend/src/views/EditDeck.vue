@@ -82,8 +82,8 @@
                             <span class="card-img">{{ dcard.name }}</span>
                             <img class="card-img" :src="dcard.UI.src" v-if="dcard?.UI.src?.length > 0" :alt="dcard.name"
                                 draggable="false" />
-                            <img class="subtype8-border" v-if="dcard.hasSubtype(CARD_SUBTYPE.Legend)"
-                                :src="getPngIcon('subtype8-border')" />
+                            <img class="legend-border" v-if="dcard.hasSubtype(CARD_SUBTYPE.Legend)"
+                                :src="getPngIcon('legend-border')" />
                         </div>
                         <div class="card-cost">
                             <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[dcard.costType])" draggable="false" />
@@ -116,8 +116,8 @@
                             <span class="card-img">{{ dtcard.name }}</span>
                             <img class="card-img" :src="dtcard.UI.src" v-if="dtcard?.UI.src?.length > 0"
                                 :alt="dtcard.name" draggable="false" />
-                            <img class="subtype8-border" v-if="dtcard.hasSubtype(CARD_SUBTYPE.Legend)"
-                                :src="getPngIcon('subtype8-border')" />
+                            <img class="legend-border" v-if="dtcard.hasSubtype(CARD_SUBTYPE.Legend)"
+                                :src="getPngIcon('legend-border')" />
                         </div>
                         <div class="card-cost">
                             <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[dtcard.costType])" draggable="false" />
@@ -185,6 +185,7 @@ import {
     ELEMENT_TYPE,
     ElementType,
     HERO_LOCAL,
+    HERO_LOCAL_CODE,
     HeroLocal,
     HeroTag,
     INFO_TYPE,
@@ -199,10 +200,7 @@ import {
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
-    CARD_SUBTYPE_NAME,
-    CARD_TYPE_NAME,
-    ELEMENT_COLOR, ELEMENT_ICON,
-    HERO_LOCAL_CODE,
+    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON,
     HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
@@ -952,7 +950,7 @@ body div {
 }
 
 
-.subtype8-border {
+.legend-border {
     position: absolute;
     width: 100%;
     height: 100%;

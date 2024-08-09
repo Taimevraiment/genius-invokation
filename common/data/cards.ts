@@ -1,9 +1,9 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
-    CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, HERO_LOCAL,
-    HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, VERSION, Version
+    CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
+    HERO_TAG, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
 } from '../constant/enum.js';
-import { MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
+import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
@@ -177,8 +177,8 @@ const advancedElArtifact = (shareId: number, element: PureElementType) => {
 const elCard = (shareId: number, element: PureElementType) => {
     const elName = PURE_ELEMENT_NAME[element];
     return new CardBuilder(shareId).name('元素共鸣：交织之' + elName[0])
+        .subtype(CARD_SUBTYPE.ElementResonance).costSame(0)
         .description(`生成1个[${elName}骰]。`)
-        .subtype(CARD_SUBTYPE.ElementResonance)
         .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 1, element }] }));
 }
 
@@ -1373,169 +1373,417 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【行动阶段开始时：】[舍弃]最多2张原本元素骰费用最高的手牌，每[舍弃]1张，此牌就累积1点｢记忆和梦｣。(最多2点)；【我方角色使用技能时：】如果我方本回合未打出过行动牌，则消耗1点｢记忆和梦｣，以使此技能少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/67607b9684e9fb62a44f68c0f3a2e30c_5397809820905590818.png'),
 
+    330001: () => new CardBuilder(218).name('旧时庭园').since('v3.8.0').legend().costSame(0)
+        .description('【我方有角色已装备｢武器｣或｢圣遗物｣时，才能打出：】本回合中，我方下次打出｢武器｣或｢圣遗物｣装备牌时少花费2个元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/cd9d8158b2361b984da8c061926bb636_390832108951639145.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            const isValid = heros.some(h => h.weaponSlot != null || h.artifactSlot != null);
+            return { status: [newStatus(ver)(300001)], isValid }
+        }),
 
+    330002: () => new CardBuilder(219).name('磐岩盟契').since('v3.8.0').legend().costSame(0)
+        .description('【我方剩余元素骰数量为0时，才能打出：】生成2个不同的基础元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/194eb0cdc9200aca52848d54b971743f_2099934631074713677.png')
+        .handle((_, event) => {
+            const { dicesCnt = 10 } = event;
+            return { cmds: [{ cmd: 'getDice', cnt: 2, mode: CMD_MODE.Random }], isValid: dicesCnt == 0 }
+        }),
 
-    // 501: () => new GICard(501, '最好的伙伴！', '将所花费的元素骰转换为2个[万能元素骰]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/3fc6d26bb7b306296834c0b14abd4bc6_3989407061293772527.png',
-    //     2, 0, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getDice', cnt: 2, element: 0 }] })),
+    330003: () => new CardBuilder(220).name('愉舞欢游').since('v4.0.0').legend().costSame(0)
+        .description('【我方出战角色的元素类型为‹1冰›/‹2水›/‹3火›/‹4雷›/‹7草›时，才能打出：】对我方所有具有元素附着的角色，附着我方出战角色类型的元素。')
+        .description('【我方出战角色的元素类型为‹1冰›/‹2水›/‹3火›/‹4雷›/‹7草›时，才能打出：】对我方所有角色，附着我方出战角色类型的元素。', 'v4.2.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/f11867042dd52c75e73d7b2e68b03430_7080334454031898922.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            const elements: ElementType[] = [ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro];
+            const isValid = elements.includes(heros[hidx]?.element ?? ELEMENT_TYPE.Physical);
+            const hidxs = ver < 'v4.2.0' ? allHidxs(heros) : heros.filter(h => h.attachElement.length > 0).map(h => h.hidx);
+            return { cmds: [{ cmd: 'attach', hidxs, mode: CMD_MODE.FrontHero }], isValid }
+        }),
 
-    // 502: () => new GICard(502, '换班时间', '【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/c512c490a548f8322503c59c9d87c89a_5960770686347735037.png',
-    //     0, 8, 2, [], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         return { isValid: allHidxs(heros).length > 1, status: [newStatus(2010)] }
-    //     }),
+    330004: () => new CardBuilder(221).name('自由的新风').since('v4.1.0').legend().costSame(0)
+        .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/bccf12a9c926bec7203e543c469ac58d_1423280855629304603.png')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(300002)] })),
 
-    // 503: () => new GICard(503, '一掷乾坤', '选择任意元素骰【重投】，可重投2次。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/524d3e5c5e6f3fad28a931abd9c7bb92_2495658906309226331.png',
-    //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'reroll', cnt: 2 }] })),
+    330005: () => new CardBuilder(222).name('万家灶火').since('v4.2.0').legend().costSame(0)
+        .description('【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的｢天赋｣牌，则抓1张｢天赋｣牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。(最多抓4张)')
+        .description('我方抓【当前回合数-1】数量的牌。(最多抓4张)', 'v4.7.0')
+        .description('我方抓【当前回合数】数量的牌。(最多抓4张)', 'v4.4.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/4c214784418f974b6b3fa294b415cdb4_8205569284186975732.png')
+        .handle((_, event, ver) => {
+            const { round = 1, playerInfo: { talentTypeCnt = 0 } = {} } = event;
+            if (ver < 'v4.4.0') return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round) }] }
+            if (ver < 'v4.7.0') return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }], isValid: round > 1 }
+            if (round > 1) return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }] }
+            return { cmds: [{ cmd: 'getCard', subtype: CARD_SUBTYPE.Talent, cnt: 1 }], isValid: talentTypeCnt >= 2 }
+        }),
 
-    // 504: () => new GICard(504, '运筹帷幄', '抓2张牌。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/88a4ec8b97063fad015a9112ee352a88_3657371852718944273.png',
-    //     1, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'getCard', cnt: 2 }] })),
+    330006: () => new CardBuilder(314).name('裁定之时').since('v4.3.0').legend().costSame(1)
+        .description('本回合中，对方牌手打出的3张｢事件牌｣无效。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/9ed8846c18cdf85e9b451a702d91c6e8_6360061723145748301.png')
+        .handle((_c, _e, ver) => ({ statusOppo: [newStatus(ver)(300003)] })),
 
-    // 505: () => new GICard(505, '本大爷还没有输！', '【本回合有我方角色被击倒，才能打出：】生成1个[万能元素骰]，我方当前出战角色获得1点[充能]。(每回合中，最多只能打出1张此牌)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a1ae1067afcf9899a958c166b7b32fa0_5333005492197066238.png',
-    //     0, 8, 2, [], 0, 0, (_, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         return {
-    //             isValid: !heros[hidx]?.outStatus.some(ost => ost.id == 2116) && heros.some(h => h.hp == 0),
-    //             cmds: [{ cmd: 'getDice', cnt: 1, element: 0 }, { cmd: 'getEnergy', cnt: 1 }],
-    //             status: [newStatus(2116)],
-    //         }
-    //     }),
+    330007: () => new CardBuilder(346).name('抗争之日·碎梦之时').since('v4.5.0').legend().costSame(0).canSelectHero(1)
+        .description('本回合中，目标我方角色受到的伤害-1。(最多生效4次)')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/035d9f63a863e8ad26cb6ecf62725411_2229767666746467527.png')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(300004)] })),
 
-    // 506: () => new GICard(506, '交给我吧！', '【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/182f87b4ad80bc18e051098c8d73ba98_7868509334361476394.png',
-    //     0, 8, 2, [], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         return { isValid: allHidxs(heros).length > 1, status: [newStatus(2011)] }
-    //     }),
+    330008: () => new CardBuilder(392).name('旧日鏖战').since('v4.7.0').legend().costSame(1)
+        .description('敌方出战角色失去1点[充能]。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e09e62a684575d632c731f3725280df2_7385957084481452662.png')
+        .handle((_, event) => ({
+            isValid: (event.eheros?.find(h => h.isFront)?.energy ?? 0) > 0,
+            cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }],
+        })),
 
-    // 507: () => new GICard(507, '鹤归之时', '【我方下一次使用技能后：】将下一个我方后台角色切换到场上。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/4b9215f7e25ed9581698b45f67164395_8716418184979886737.png',
-    //     1, 8, 2, [], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         return { isValid: allHidxs(heros).length > 1, status: [newStatus(2017)] }
-    //     }),
+    331101: () => elCard(223, ELEMENT_TYPE.Cryo)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
 
-    // 508: () => new GICard(508, '星天之兆', '我方当前出战角色【获得1点[充能]】。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/e6e557f4dd2762ecb727e14c66bafb57_828613557415004800.png',
-    //     2, 0, 2, [], 0, 0, (_, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const hero = heros[hidx];
-    //         return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], isValid: (hero?.energy ?? 0) < (hero?.maxEnergy ?? 0) }
-    //     }),
+    331102: () => new CardBuilder(224).name('元素共鸣：粉碎之冰').subtype(CARD_SUBTYPE.ElementResonance).costCryo(1)
+        .description('本回合中，我方当前出战角色下一次造成的伤害+2。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75833613/4bbbf27e898aeace567039c5c2bb2a7c_4533106343661611310.png')
+        .handle((_, { hidxs }, ver) => ({ status: [newStatus(ver)(303112)], hidxs })),
 
-    // 509: () => new GICard(509, '白垩之术', '从最多2个我方后台角色身上，转移1点[充能]到我方出战角色。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/567c17051137fdd9e5c981ea584df298_4305321690584111415.png',
-    //     1, 8, 2, [], 0, 0, (_, event) => {
-    //         const { heros = [], hidxs: [fhidx] = [] } = event;
-    //         let isNeedEnergy = true;
-    //         let hasEnergy = false;
-    //         heros.forEach(h => {
-    //             if (h.isFront) isNeedEnergy = h.energy < h.maxEnergy;
-    //             else hasEnergy ||= h.energy > 0;
-    //         });
-    //         return {
-    //             isValid: isNeedEnergy && hasEnergy,
-    //             exec: () => {
-    //                 let getEnergy = 0;
-    //                 let needEnergy = heros[fhidx].maxEnergy - heros[fhidx].energy;
-    //                 for (let i = 1; i < heros.length; ++i) {
-    //                     const h = heros[(i + fhidx) % heros.length];
-    //                     if (needEnergy == 0 || getEnergy >= 2) break;
-    //                     if (h.energy == 0) continue;
-    //                     --h.energy;
-    //                     --needEnergy;
-    //                     ++getEnergy;
-    //                 }
-    //                 heros[fhidx].energy += getEnergy;
-    //             }
-    //         }
-    //     }),
+    331201: () => elCard(225, ELEMENT_TYPE.Hydro)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/4111a176d3936db8220047ff52e37c40_264497451263620555.png'),
 
-    // 510: () => new GICard(510, '诸武精通', '将一个装备在我方角色的｢武器｣装备牌，转移给另一个武器类型相同的我方角色，并重置其效果的｢每回合｣次数限制。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/05625ae4eed490d0958191d8022174cd_5288127036517503589.png',
-    //     0, 8, 2, [], 0, 2, (_, event) => {
-    //         const { heros = [], hidxs = [] } = event;
-    //         const selectCnt = heros.filter(h => h.isSelected > 0).length;
-    //         let canSelectHero;
-    //         if (selectCnt == 0) {
-    //             canSelectHero = heros.map(h => h.weaponSlot != null);
-    //         } else if (selectCnt == 1) {
-    //             const selectHero = heros.find(h => h.isSelected == 1);
-    //             canSelectHero = heros.map(h => h.weaponType == selectHero?.weaponType && h.hp > 0);
-    //         } else if (selectCnt == 2) {
-    //             canSelectHero = heros.map(() => false);
-    //         }
-    //         return {
-    //             canSelectHero,
-    //             exec: () => {
-    //                 const [fromHeroIdx, toHeroIdx] = hidxs;
-    //                 const fromHero = heros[fromHeroIdx];
-    //                 const toHero = heros[toHeroIdx];
-    //                 const fromWeapon = fromHero.weaponSlot;
-    //                 if (fromWeapon) {
-    //                     fromHero.weaponSlot = null;
-    //                     cardsTotal(fromWeapon.id).handle(fromWeapon, { reset: true });
-    //                     toHero.weaponSlot = fromWeapon;
-    //                 }
-    //             }
-    //         }
-    //     }),
+    331202: () => new CardBuilder(226).name('元素共鸣：愈疗之水').subtype(CARD_SUBTYPE.ElementResonance).costHydro(1)
+        .description('治疗我方出战角色2点。然后，治疗我方所有后台角色1点。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/2735fa558713779ca2f925701643157a_7412042337637299588.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs = [] } = event;
+            return {
+                cmds: [
+                    { cmd: 'heal', cnt: 2, hidxs },
+                    { cmd: 'heal', cnt: 1, hidxs: getBackHidxs(heros) },
+                ],
+                isValid: heros.some(h => h.hp < h.maxHp),
+            }
+        }),
 
-    // 511: () => new GICard(511, '神宝迁宫祝词', '将一个装备在我方角色的｢圣遗物｣装备牌，转移给另一个我方角色，并重置其效果的｢每回合｣次数限制。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a67aefe7f7473b2bc9f602917bad9c5f_6329604065139808609.png',
-    //     0, 8, 2, [], 0, 2, (_, event) => {
-    //         const { heros = [], hidxs = [] } = event;
-    //         const selectCnt = heros.filter(h => h.isSelected > 0).length;
-    //         const canSelectHero = selectCnt == 0 ? heros.map(h => h.artifactSlot != null) : heros.map(h => h.hp > 0);
-    //         return {
-    //             canSelectHero,
-    //             exec: () => {
-    //                 const [fromHeroIdx, toHeroIdx] = hidxs;
-    //                 const fromHero = heros[fromHeroIdx];
-    //                 const toHero = heros[toHeroIdx];
-    //                 const fromArtifact = fromHero.artifactSlot;
-    //                 if (fromArtifact) {
-    //                     fromHero.artifactSlot = null;
-    //                     cardsTotal(fromArtifact.id).handle(fromArtifact, { reset: true });
-    //                     toHero.artifactSlot = fromArtifact;
-    //                 }
-    //             }
-    //         }
-    //     }),
+    331301: () => elCard(227, ELEMENT_TYPE.Pyro)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/a37ec2ccbb719551f14586a51609a049_6190862804933467057.png'),
 
-    // 512: () => new GICard(512, '快快缝补术', '选择一个我方｢召唤物｣，使其[可用次数]+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1ede638fa4bb08aef24d03edf5c5d1d9_6232288201967488424.png',
-    //     1, 8, 2, [], 0, 0, (_, event) => ({
-    //         exec: () => {
-    //             const { summons = [] } = event;
-    //             const selectSmn = summons.find(smn => smn.isSelected);
-    //             if (selectSmn) ++selectSmn.useCnt;
-    //         }
-    //     }), { canSelectSummon: 1 }),
+    331302: () => new CardBuilder(228).name('元素共鸣：热诚之火').subtype(CARD_SUBTYPE.ElementResonance).costPyro(1)
+        .description('本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/82515ce0a16de7f3fba6e02232545230_5475039957819136120.png')
+        .handle((_, { hidxs }, ver) => ({ status: [newStatus(ver)(303132)], hidxs })),
 
-    // 513: () => new GICard(513, '送你一程', '选择一个敌方｢召唤物｣，使其[可用次数]-2。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/c0c1b91fe602e0d29159e8ae5effe537_7465992504913868183.png',
-    //     2, 0, 2, [], 0, 0, (_, event) => ({
-    //         exec: () => {
-    //             const { esummons = [] } = event;
-    //             const selectSmn = esummons.find(smn => smn.isSelected);
-    //             if (selectSmn) selectSmn.useCnt = Math.max(0, selectSmn.useCnt - 2);
-    //         }
-    //     }), { canSelectSummon: 0 }),
+    331401: () => elCard(229, ELEMENT_TYPE.Electro)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/d7a7653168cd80943a50578aa1251f7a_1527724411934371635.png'),
 
-    // 514: () => new GICard(514, '护法之誓', '消灭所有｢召唤物｣。(不分敌我！)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/9df79dcb5f6faeed4d1f1b286dcaba76_1426047687046512159.png',
-    //     4, 8, 2, [], 0, 0, (_, event) => ({
-    //         exec: () => {
-    //             const { summons = [], esummons = [] } = event;
-    //             summons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = 0));
-    //             esummons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = 0));
-    //         }
-    //     })),
+    331402: () => new CardBuilder(230).name('元素共鸣：强能之雷').subtype(CARD_SUBTYPE.ElementResonance).costElectro(1)
+        .description('我方一名充能未满的角色获得1点[充能]。(出战角色优先)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/24c0eec5aa696696abeacd2a9ab2e443_2548840222933909920.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [fhidx] = [] } = event;
+            const hidxs: number[] = [];
+            for (let i = 0; i < heros.length; ++i) {
+                const chidx = (fhidx + i) % heros.length;
+                const chero = heros[chidx];
+                if (chero.hp > 0 && chero.energy < chero.maxEnergy) {
+                    hidxs.push(chidx);
+                    break;
+                }
+            }
+            return { cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }], isValid: hidxs.length > 0 }
+        }),
+
+    331501: () => elCard(231, ELEMENT_TYPE.Anemo)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f3fdbb9e308bfd69c04aa4e6681ad71d_7543590216853591638.png'),
+
+    331502: () => new CardBuilder(232).name('元素共鸣：迅捷之风').subtype(CARD_SUBTYPE.ElementResonance).costAnemo(1)
+        .description('切换到目标角色，并生成1点[万能元素骰]。').canSelectHero(1)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/707f537df32de90d61b3ac8e8dcd4daf_7351067372939949818.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs } = event;
+            return {
+                cmds: [{ cmd: 'switch-to', hidxs }, { cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }],
+                canSelectHero: heros.map(h => !h.isFront && h.hp > 0),
+            }
+        }),
+
+    331601: () => elCard(233, ELEMENT_TYPE.Geo)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/cdd36a350467dd02ab79a4c49f07ba7f_4199152511760822055.png'),
+
+    331602: () => new CardBuilder(234).name('元素共鸣：坚定之岩').subtype(CARD_SUBTYPE.ElementResonance).costGeo(1)
+        .description('本回合中，我方角色下一次造成[岩元素伤害]后：如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/504be5406c58bbc3e269ceb8780eaa54_8358329092517997158.png')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(303162)] })),
+
+    331701: () => elCard(235, ELEMENT_TYPE.Dendro)
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f6109c65a24602b1ad921d5bd5f94d97_2028353267602639806.png'),
+
+    331702: () => new CardBuilder(236).name('元素共鸣：蔓生之草').subtype(CARD_SUBTYPE.ElementResonance).costDendro(1)
+        .description('本回合中，我方角色下一次引发元素反应时，造成的伤害+2。；使我方场上的｢【smn115】｣、｢【sts116】｣和｢【sts117】｣[可用次数]+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/af52f6c4f7f85bb3d3242778dc257c5c_1159043703701983776.png')
+        .handle((_, event, ver) => {
+            const { combatStatus = [], summons = [] } = event;
+            return {
+                status: [newStatus(ver)(303172)],
+                exec: () => {
+                    combatStatus.forEach(ost => (ost.id == 116 || ost.id == 117) && ++ost.useCnt);
+                    summons.forEach(smn => smn.id == 115 && ++smn.useCnt);
+                }
+            }
+        }),
+
+    331801: () => new CardBuilder(237).name('风与自由').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(0).costSame(1, 'v4.3.0')
+        .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
+        .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1', 'v4.1.0')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            return { isValid: ver < 'v4.1.0' || allHidxs(heros).length > 1, status: [newStatus(ver)(303181)] }
+        }),
+
+    331802: () => new CardBuilder(238).name('岩与契约').since('v3.7.0').tag(CARD_TAG.LocalResonance).costAny(3)
+        .description('【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/7ffbf85a7089e25fc48f6a48826e1fa4_183114830191275147.png')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(303182)] })),
+
+    331803: () => new CardBuilder(239).name('雷与永恒').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(0)
+        .description('将我方所有元素骰转换为[万能元素骰]。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/760c101ed6ef3b500a830ae430458d89_4230653799114143139.png')
+        .handle(() => ({ cmds: [{ cmd: 'changeDice', element: DICE_COST_TYPE.Omni }] })),
+
+    331804: () => new CardBuilder(240).name('草与智慧').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(1)
+        .description('抓1张牌。然后，选择任意手牌替换。')
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/1c656067801c6beb53803faefedd0a47_7333316108362576471.png')
+        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1 }, { cmd: 'changeCard', cnt: 2500 }] })),
+
+    331805: () => new CardBuilder(393).name('水与正义').since('v4.7.0').tag(CARD_TAG.LocalResonance).costAny(2)
+        .description('平均分配我方未被击倒的角色的生命值，然后治疗所有我方角色1点。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e4ef932872a23852c3c2a7912e5f7d77_449791480408929176.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const hidxs = allHidxs(heros);
+            const cmds: Cmds[] = [];
+            if (hidxs.length > 1) {
+                const allHp = heros.reduce((a, c) => c.hp > 0 ? a + c.hp : a, 0);
+                const baseHp = Math.floor(allHp / hidxs.length);
+                const fhps = Array.from({ length: heros.length }, (_, hpi) => heros[hpi].hp > 0 ? baseHp : -1);
+                let restHp = allHp - baseHp * hidxs.length;
+                for (let i = 0; i < heros.length; ++i) {
+                    const hi = (hidx + i) % heros.length;
+                    if (fhps[hi] == -1) continue;
+                    if (restHp-- <= 0) break;
+                    ++fhps[hi];
+                }
+                for (let i = 0; i < heros.length; ++i) {
+                    if (fhps[i] == -1) continue;
+                    const chp = fhps[i] - heros[i].hp;
+                    if (chp == 0) continue;
+                    const isOppo = chp < 0;
+                    const cmd = !isOppo ? 'heal' : 'attack';
+                    const element = isCdt(isOppo, DAMAGE_TYPE.Pierce);
+                    cmds.push({ cmd, cnt: Math.abs(chp), element, isOppo, hidxs: [i] });
+                }
+            }
+            cmds.push({ cmd: 'heal', cnt: 1, hidxs, mode: 1 });
+            return { cmds }
+        }),
+
+    332001: () => new CardBuilder(241).name('最好的伙伴！').event().costAny(2)
+        .description('将所花费的元素骰转换为2个[万能元素骰]。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/3fc6d26bb7b306296834c0b14abd4bc6_3989407061293772527.png')
+        .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 2, element: DICE_COST_TYPE.Omni }] })),
+
+    332002: () => new CardBuilder(242).name('换班时间').event().costSame(0)
+        .description('【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/c512c490a548f8322503c59c9d87c89a_5960770686347735037.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            return { isValid: allHidxs(heros).length > 1, status: [newStatus(ver)(303202)] }
+        }),
+
+    332003: () => new CardBuilder(243).name('一掷乾坤').event().costSame(0)
+        .description('选择任意元素骰【重投】，可重投2次。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/524d3e5c5e6f3fad28a931abd9c7bb92_2495658906309226331.png')
+        .handle(() => ({ cmds: [{ cmd: 'reroll', cnt: 2 }] })),
+
+    332004: () => new CardBuilder(244).name('运筹帷幄').event().costSame(1)
+        .description('抓2张牌。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/88a4ec8b97063fad015a9112ee352a88_3657371852718944273.png')
+        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 2 }] })),
+
+    332005: () => new CardBuilder(245).name('本大爷还没有输！').event().costSame(0)
+        .description('【本回合有我方角色被击倒，才能打出：】生成1个[万能元素骰]，我方当前出战角色获得1点[充能]。(每回合中，最多只能打出1张此牌)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a1ae1067afcf9899a958c166b7b32fa0_5333005492197066238.png')
+        .handle((_, event, ver) => {
+            const { heros = [], combatStatus = [] } = event;
+            return {
+                isValid: (ver < '4.0.0' || !hasObjById(combatStatus, 303205)) && heros.some(h => h.hp == 0),
+                cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }, { cmd: 'getEnergy', cnt: 1 }],
+                status: isCdt(ver >= '4.0.0', [newStatus(ver)(303205)]),
+            }
+        }),
+
+    332006: () => new CardBuilder(246).name('交给我吧！').event().costSame(0)
+        .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/182f87b4ad80bc18e051098c8d73ba98_7868509334361476394.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            return { isValid: allHidxs(heros).length > 1, status: [newStatus(ver)(303206)] }
+        }),
+
+    332007: () => new CardBuilder(247).name('鹤归之时').event().costSame(1)
+        .description('【我方下一次使用技能后：】将下一个我方后台角色切换到场上。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/4b9215f7e25ed9581698b45f67164395_8716418184979886737.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            return { isValid: allHidxs(heros).length > 1, status: [newStatus(ver)(303207)] }
+        }),
+
+    332008: () => new CardBuilder(248).name('星天之兆').event().costAny(2)
+        .description('我方当前出战角色【获得1点[充能]】。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/e6e557f4dd2762ecb727e14c66bafb57_828613557415004800.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            const hero = heros[hidx];
+            return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], isValid: hero.energy < hero.maxEnergy }
+        }),
+
+    332009: () => new CardBuilder(249).name('白垩之术').event().costSame(0)
+        .description('从最多2个我方后台角色身上，转移1点[充能]到我方出战角色。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/567c17051137fdd9e5c981ea584df298_4305321690584111415.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [fhidx] = [] } = event;
+            let isNeedEnergy = true;
+            let hasEnergy = false;
+            heros.forEach(h => {
+                if (h.isFront) isNeedEnergy = h.energy < h.maxEnergy;
+                else hasEnergy ||= h.energy > 0;
+            });
+            return {
+                isValid: isNeedEnergy && hasEnergy,
+                exec: () => {
+                    let getEnergy = 0;
+                    let needEnergy = heros[fhidx].maxEnergy - heros[fhidx].energy;
+                    for (let i = 1; i < heros.length; ++i) {
+                        const h = heros[(i + fhidx) % heros.length];
+                        if (needEnergy == 0 || getEnergy >= 2) break;
+                        if (h.energy == 0) continue;
+                        --h.energy;
+                        --needEnergy;
+                        ++getEnergy;
+                    }
+                    heros[fhidx].energy += getEnergy;
+                }
+            }
+        }),
+
+    332010: () => new CardBuilder(250).name('诸武精通').event().costSame(0).canSelectHero(2)
+        .description('将一个装备在我方角色的｢武器｣装备牌，转移给另一个武器类型相同的我方角色，并重置其效果的｢每回合｣次数限制。')
+        .description('将一个装备在我方角色的｢武器｣装备牌，转移给另一个武器类型相同的我方角色。', 'v4.1.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/05625ae4eed490d0958191d8022174cd_5288127036517503589.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs = [] } = event;
+            const selectCnt = hidxs.length;
+            let canSelectHero: boolean[] = heros.map(() => false);
+            if (selectCnt == 0) {
+                canSelectHero = heros.map(h => h.weaponSlot != null);
+            } else if (selectCnt == 1) {
+                const selectHero = heros[hidxs[0]];
+                canSelectHero = heros.map(h => h.weaponType == selectHero?.weaponType && h.hp > 0);
+            }
+            return {
+                canSelectHero,
+                exec: () => {
+                    const [fromHeroIdx, toHeroIdx] = hidxs;
+                    const fromHero = heros[fromHeroIdx];
+                    const toHero = heros[toHeroIdx];
+                    const fromWeapon = fromHero.weaponSlot;
+                    if (fromWeapon) {
+                        fromHero.weaponSlot = null;
+                        if (ver >= 'v4.1.0') fromWeapon.handle(fromWeapon, { reset: true });
+                        toHero.weaponSlot = fromWeapon;
+                    }
+                }
+            }
+        }),
+
+    332011: () => new CardBuilder(251).name('神宝迁宫祝词').event().costSame(0).canSelectHero(2)
+        .description('将一个装备在我方角色的｢圣遗物｣装备牌，转移给另一个我方角色，并重置其效果的｢每回合｣次数限制。')
+        .description('将一个装备在我方角色的｢圣遗物｣装备牌，转移给另一个我方角色。', 'v4.1.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a67aefe7f7473b2bc9f602917bad9c5f_6329604065139808609.png')
+        .handle((_, event, ver) => {
+            const { heros = [], hidxs = [] } = event;
+            const selectCnt = hidxs.length;
+            return {
+                canSelectHero: selectCnt == 0 ? heros.map(h => h.artifactSlot != null) : heros.map(h => h.hp > 0),
+                exec: () => {
+                    const [fromHeroIdx, toHeroIdx] = hidxs;
+                    const fromHero = heros[fromHeroIdx];
+                    const toHero = heros[toHeroIdx];
+                    const fromArtifact = fromHero.artifactSlot;
+                    if (fromArtifact) {
+                        fromHero.artifactSlot = null;
+                        if (ver >= 'v4.1.0') fromArtifact.handle(fromArtifact, { reset: true });
+                        toHero.artifactSlot = fromArtifact;
+                    }
+                }
+            }
+        }),
+
+    332012: () => new CardBuilder(252).name('快快缝补术').event().costSame(1).canSelectSummon(1)
+        .description('选择一个我方｢召唤物｣，使其[可用次数]+1。')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1ede638fa4bb08aef24d03edf5c5d1d9_6232288201967488424.png')
+        .handle((_, event) => ({
+            exec: () => {
+                const { summons = [], hidxs: [smnIdx] = [] } = event;
+                const selectSmn = summons[smnIdx];
+                if (selectSmn) ++selectSmn.useCnt;
+            }
+        })),
+
+    332013: () => new CardBuilder(253).name('送你一程').event().costAny(2).canSelectSummon(0)
+        .description('选择一个敌方｢召唤物｣，使其[可用次数]-2。')
+        .description('选择一个敌方｢召唤物｣，将其消灭。', 'v3.7.0')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/c0c1b91fe602e0d29159e8ae5effe537_7465992504913868183.png')
+        .handle((_, event, ver) => ({
+            exec: () => {
+                const { esummons = [], hidxs: [smnIdx] = [] } = event;
+                const selectSmn = esummons[smnIdx];
+                if (ver < 'v3.7.0') {
+                    selectSmn.useCnt = 0;
+                    selectSmn.isDestroy = SUMMON_DESTROY_TYPE.Used;
+                } else {
+                    selectSmn.useCnt = Math.max(0, selectSmn.useCnt - 2);
+                }
+            }
+        })),
+
+    332014: () => new CardBuilder(254).name('护法之誓').event().costSame(4)
+        .description('消灭所有｢召唤物｣。(不分敌我！)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/9df79dcb5f6faeed4d1f1b286dcaba76_1426047687046512159.png')
+        .handle((_, event) => ({
+            exec: () => {
+                const { summons = [], esummons = [] } = event;
+                summons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
+                esummons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
+            }
+        })),
+
+    332015: () => new CardBuilder(255).name('深渊的呼唤').tag(CARD_TAG.LocalResonance).costSame(2)
+        .description('召唤一个随机｢丘丘人｣召唤物！').explain('smn303211', 'smn303212', 'smn303213', 'smn303214')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/011610bb3aedb5dddfa1db1322c0fd60_7383120485374723900.png')
+        .handle((_, event, ver) => {
+            const { summons = [], randomInArr } = event;
+            if (summons.length == MAX_SUMMON_COUNT) return { isValid: false }
+            const smnIds = [303211, 303212, 303213, 303214].filter(sid => !hasObjById(summons, sid));
+            return { summon: [newSummon(ver)(randomInArr!(smnIds))] }
+        }),
+
+    // 578: () => new GICard(578, '愚人众的阴谋', '在对方场上，生成1个随机类型的｢愚人众伏兵｣。',
+    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png',
+    //     2, 8, 2, [-3], 0, 0, (_, event) => {
+    //         const { eheros = [] } = event;
+    //         const stsIds = [2124, 2125, 2126, 2127].filter(sid => !eheros.find(h => h.isFront)?.outStatus.some(sts => sts.id === sid));
+    //         return { statusOppo: [newStatus(stsIds[Math.floor(Math.random() * stsIds.length)])] }
+    //     }, { expl: ['sts2124', 'sts2125', 'sts2126', 'sts2127'] }),
 
     // 515: () => new GICard(515, '下落斩', '[战斗行动]：切换到目标角色，然后该角色进行｢普通攻击｣。',
     //     'https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/a3aa3a8c13499a0c999fc765c4a0623d_2838069371786460200.png',
@@ -1668,215 +1916,6 @@ const allCards: Record<number, () => CardBuilder> = {
     // 532: () => new GICard(532, '噔噔！', '对我方｢出战角色｣造成1点[物理伤害]。本回合的结束阶段时，抓2张牌。',
     //     'https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_DengDeng.webp',
     //     0, 8, 2, [], 0, 0, () => ({ cmds: [{ cmd: 'attack', element: 0, cnt: 1, isOppo: true }], status: [newStatus(2222)] })),
-
-    // 561: () => new GICard(561, '自由的新风', '【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/bccf12a9c926bec7203e543c469ac58d_1423280855629304603.png',
-    //     0, 8, 2, [8], 0, 0, () => ({ status: [newStatus(2054)] })),
-
-    // 562: () => new GICard(562, '磐岩盟契', '【我方剩余元素骰数量为0时，才能打出：】生成2个不同的基础元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/194eb0cdc9200aca52848d54b971743f_2099934631074713677.png',
-    //     0, 8, 2, [8], 0, 0, (_, event) => {
-    //         const { dicesCnt = 10 } = event;
-    //         return { cmds: [{ cmd: 'getDice', cnt: 2, element: -1 }], isValid: dicesCnt == 0 }
-    //     }),
-    // 563: () => new GICard(563, '旧时庭园', '【我方有角色已装备｢武器｣或｢圣遗物｣时，才能打出：】本回合中，我方下次打出｢武器｣或｢圣遗物｣装备牌时少花费2个元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/cd9d8158b2361b984da8c061926bb636_390832108951639145.png',
-    //     0, 8, 2, [8], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         const isValid = heros.some(h => h.weaponSlot != null || h.artifactSlot != null);
-    //         return { status: [newStatus(2055)], isValid }
-    //     }),
-
-    // 564: () => new GICard(564, '愉舞欢游', '【我方出战角色的元素类型为‹4冰›/‹1水›/‹2火›/‹3雷›/‹7草›时，才能打出：】对我方所有具有元素附着的角色，附着我方出战角色类型的元素。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/f11867042dd52c75e73d7b2e68b03430_7080334454031898922.png',
-    //     0, 8, 2, [8], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         const isValid = [1, 2, 3, 4, 7].includes(heros.find(h => h.isFront)?.element ?? 0);
-    //         const hidxs = heros.map((h, hi) => ({ hi, val: h.attachElement.length > 0 })).filter(v => v.val).map(v => v.hi);
-    //         return { cmds: [{ cmd: 'attach', hidxs, element: -1 }], isValid }
-    //     }),
-
-    // 565: () => new GICard(565, '万家灶火', '【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的｢天赋｣牌，则抓1张｢天赋｣牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。(最多抓4张)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/4c214784418f974b6b3fa294b415cdb4_8205569284186975732.png',
-    //     0, 8, 2, [8], 0, 0, (_, event) => {
-    //         const { round = 1, playerInfo: { talentTypeCnt = 0 } = {} } = event;
-    //         if (round > 1) return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }] }
-    //         return { isValid: talentTypeCnt >= 2, cmds: [{ cmd: 'getCard', subtype: 6, cnt: 1 }] }
-    //     }),
-
-    // 566: () => new GICard(566, 314, '裁定之时', '本回合中，对方牌手打出的3张｢事件牌｣无效。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/9ed8846c18cdf85e9b451a702d91c6e8_6360061723145748301.png',
-    //     1, 8, 2, [8], 0, 0, () => ({ statusOppo: [newStatus(2146)] })),
-
-    // 567: () => new GICard(567, 346, '抗争之日·碎梦之时', '本回合中，目标我方角色受到的伤害-1。(最多生效4次)',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/035d9f63a863e8ad26cb6ecf62725411_2229767666746467527.png',
-    //     0, 8, 2, [8], 0, 1, () => ({ status: [newStatus(2173)] })),
-
-    // 568: () => new GICard(568, '旧日鏖战', '敌方出战角色失去1点[充能]。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e09e62a684575d632c731f3725280df2_7385957084481452662.png',
-    //     1, 8, 2, [8], 0, 0, (_, event) => {
-    //         const { eheros = [] } = event;
-    //         return {
-    //             isValid: (eheros.find(h => h.isFront)?.energy ?? 0) > 0,
-    //             cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }],
-    //         }
-    //     }),
-
-    // 570: () => new GICard(570, '深渊的呼唤', '召唤一个随机｢丘丘人｣召唤物！',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/011610bb3aedb5dddfa1db1322c0fd60_7383120485374723900.png',
-    //     2, 8, 2, [-3], 0, 0, (_, event) => {
-    //         const { summons = [] } = event;
-    //         if (summons.length == 4) return { isValid: false }
-    //         const smnIds = [3010, 3011, 3012, 3013].filter(sid => !summons.some(smn => smn.id === sid));
-    //         return { summon: [newSummon(smnIds[Math.floor(Math.random() * smnIds.length)])] }
-    //     },
-    //     { expl: ['smn3010', 'smn3011', 'smn3012', 'smn3013'] }),
-
-    // 571: () => new GICard(571, '风与自由', '【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png',
-    //     0, 8, 2, [-3], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         return { isValid: allHidxs(heros).length > 1, status: [newStatus(2056)] }
-    //     }),
-
-    // 572: () => new GICard(572, '岩与契约', '【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/7ffbf85a7089e25fc48f6a48826e1fa4_183114830191275147.png',
-    //     3, 0, 2, [-3], 0, 0, () => ({ status: [newStatus(2057)] })),
-
-    // 573: () => new GICard(573, '雷与永恒', '将我方所有元素骰转换为[万能元素骰]。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/760c101ed6ef3b500a830ae430458d89_4230653799114143139.png',
-    //     0, 8, 2, [-3], 0, 0, () => ({ cmds: [{ cmd: 'changeDice', element: 0 }] })),
-
-    // 574: () => new GICard(574, '草与智慧', '抓1张牌。然后，选择任意手牌替换。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/1c656067801c6beb53803faefedd0a47_7333316108362576471.png',
-    //     1, 8, 2, [-3], 0, 0, () => ({ cmds: [{ cmd: 'getCard', cnt: 1 }, { cmd: 'changeCard', cnt: 2500 }] })),
-
-    // 575: () => new GICard(575, '水与正义', '平均分配我方未被击倒的角色的生命值，然后治疗所有我方角色1点。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e4ef932872a23852c3c2a7912e5f7d77_449791480408929176.png',
-    //     2, 0, 2, [-3], 0, 0, (_, event) => {
-    //         const { heros = [], hidxs: [hidx] = [] } = event;
-    //         const hidxs = allHidxs(heros);
-    //         const cmds: Cmds[] = [];
-    //         if (hidxs.length > 1) {
-    //             const allHp = heros.reduce((a, c) => c.hp > 0 ? a + c.hp : a, 0);
-    //             const baseHp = Math.floor(allHp / hidxs.length);
-    //             const fhps = Array.from({ length: heros.length }, (_, hpi) => heros[hpi].hp > 0 ? baseHp : -1);
-    //             let restHp = allHp - baseHp * hidxs.length;
-    //             for (let i = 0; i < heros.length; ++i) {
-    //                 const hi = (hidx + i) % heros.length;
-    //                 if (fhps[hi] == -1) continue;
-    //                 if (restHp-- <= 0) break;
-    //                 ++fhps[hi];
-    //             }
-    //             for (let i = 0; i < heros.length; ++i) {
-    //                 if (fhps[i] == -1) continue;
-    //                 const chp = fhps[i] - heros[i].hp;
-    //                 if (chp == 0) continue;
-    //                 const isOppo = chp < 0;
-    //                 const cmd = !isOppo ? 'heal' : 'attack';
-    //                 const element = isCdt(isOppo, -1);
-    //                 cmds.push({ cmd, cnt: Math.abs(chp), element, isOppo, hidxs: [i] });
-    //             }
-    //         }
-    //         cmds.push({ cmd: 'heal', cnt: 1, hidxs, round: 1 });
-    //         return { cmds }
-    //     }),
-
-    // 578: () => new GICard(578, '愚人众的阴谋', '在对方场上，生成1个随机类型的｢愚人众伏兵｣。',
-    //     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png',
-    //     2, 8, 2, [-3], 0, 0, (_, event) => {
-    //         const { eheros = [] } = event;
-    //         const stsIds = [2124, 2125, 2126, 2127].filter(sid => !eheros.find(h => h.isFront)?.outStatus.some(sts => sts.id === sid));
-    //         return { statusOppo: [newStatus(stsIds[Math.floor(Math.random() * stsIds.length)])] }
-    //     }, { expl: ['sts2124', 'sts2125', 'sts2126', 'sts2127'] }),
-
-    331101: () => elCard(225, ELEMENT_TYPE.Cryo)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
-
-    // 588: () => new GICard(588, '元素共鸣：粉碎之冰', '本回合中，我方当前出战角色下一次造成的伤害+2。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75833613/4bbbf27e898aeace567039c5c2bb2a7c_4533106343661611310.png',
-    //     1, 4, 2, [9], 0, 0, (_, { hidxs }) => ({ status: [newStatus(2030)], hidxs })),
-
-    331201: () => elCard(227, ELEMENT_TYPE.Hydro)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/4111a176d3936db8220047ff52e37c40_264497451263620555.png'),
-
-    // 582: () => new GICard(582, '元素共鸣：愈疗之水', '治疗我方出战角色2点。然后，治疗我方所有后台角色1点。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/2735fa558713779ca2f925701643157a_7412042337637299588.png',
-    //     1, 1, 2, [9], 0, 0, (_, event) => {
-    //         const { heros = [], hidxs = [] } = event;
-    //         return {
-    //             cmds: [
-    //                 { cmd: 'heal', cnt: 2, hidxs },
-    //                 { cmd: 'heal', cnt: 1, hidxs: getBackHidxs(heros) },
-    //             ],
-    //             isValid: heros.some(h => h.hp < h.maxhp),
-    //         }
-    //     }),
-
-    331301: () => elCard(229, ELEMENT_TYPE.Pyro)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/a37ec2ccbb719551f14586a51609a049_6190862804933467057.png'),
-
-    // 584: () => new GICard(584, '元素共鸣：热诚之火', '本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/82515ce0a16de7f3fba6e02232545230_5475039957819136120.png',
-    //     1, 2, 2, [9], 0, 0, (_, { hidxs }) => ({ status: [newStatus(2029)], hidxs })),
-
-    331401: () => elCard(231, ELEMENT_TYPE.Electro)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/d7a7653168cd80943a50578aa1251f7a_1527724411934371635.png'),
-
-    // 586: () => new GICard(586, '元素共鸣：强能之雷', '我方一名充能未满的角色获得1点[充能]。(出战角色优先)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/24c0eec5aa696696abeacd2a9ab2e443_2548840222933909920.png',
-    //     1, 3, 2, [9], 0, 0, (_, event) => {
-    //         const { heros = [], hidxs: [fhidx] = [] } = event;
-    //         const hidxs: number[] = [];
-    //         if (heros[fhidx].energy < heros[fhidx].maxEnergy) {
-    //             hidxs.push(fhidx);
-    //         } else {
-    //             const hidx = heros.findIndex(h => h.energy < h.maxEnergy);
-    //             if (hidx > -1) hidxs.push(hidx);
-    //         }
-    //         return { cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }], hidxs }
-    //     }),
-
-    331501: () => elCard(233, ELEMENT_TYPE.Anemo)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f3fdbb9e308bfd69c04aa4e6681ad71d_7543590216853591638.png'),
-
-    // 590: () => new GICard(590, '元素共鸣：迅捷之风', '切换到目标角色，并生成1点[万能元素骰]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/707f537df32de90d61b3ac8e8dcd4daf_7351067372939949818.png',
-    //     1, 5, 2, [9], 0, 1, (_, event) => {
-    //         const { heros = [], hidxs } = event;
-    //         return {
-    //             cmds: [{ cmd: 'switch-to', hidxs }, { cmd: 'getDice', cnt: 1, element: 0 }],
-    //             canSelectHero: heros.map(h => !h.isFront && h.hp > 0),
-    //         }
-    //     }),
-
-    331601: () => elCard(235, ELEMENT_TYPE.Geo)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/cdd36a350467dd02ab79a4c49f07ba7f_4199152511760822055.png'),
-
-    // 592: () => new GICard(592, '元素共鸣：坚定之岩', '本回合中，我方角色下一次造成[岩元素伤害]后：如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/504be5406c58bbc3e269ceb8780eaa54_8358329092517997158.png',
-    //     1, 6, 2, [9], 0, 0, () => ({ status: [newStatus(2031)] })),
-
-    331701: () => elCard(237, ELEMENT_TYPE.Dendro)
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f6109c65a24602b1ad921d5bd5f94d97_2028353267602639806.png'),
-
-    // 594: () => new GICard(594, '元素共鸣：蔓生之草', '本回合中，我方角色下一次引发元素反应时，造成的伤害+2。；使我方场上的｢燃烧烈焰｣、｢草原核｣和｢激化领域｣[可用次数]+1。',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/af52f6c4f7f85bb3d3242778dc257c5c_1159043703701983776.png',
-    //     1, 7, 2, [9], 0, 0, (_, event) => {
-    //         const { heros = [], summons = [] } = event;
-    //         return {
-    //             status: [newStatus(2032)],
-    //             exec: () => {
-    //                 const outStatus = heros.find(h => h.isFront)?.outStatus ?? [];
-    //                 outStatus.forEach(ost => {
-    //                     if (ost.id == 2005 || ost.id == 2006) ++ost.useCnt;
-    //                 });
-    //                 summons.forEach(smn => {
-    //                     if (smn.id == 3002) ++smn.useCnt;
-    //                 });
-    //             }
-    //         }
-    //     }),
 
     // 601: () => new GICard(601, '绝云锅巴', '本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png',
@@ -2253,7 +2292,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['skill'], addDmgCdt: 2, exec: () => { --card.perCnt } }
         }),
 
-    213131: () => new CardBuilder(396).name('尖兵协同战法').since('v4.8.0').talent().costPyro(2)
+    213131: () => new CardBuilder(398).name('尖兵协同战法').since('v4.8.0').talent().costPyro(2)
         .description('【队伍中包含‹3火元素›角色和‹4雷元素›角色且不包含其他元素的角色，才能打出：】将此牌装备给【hro】。；装备有此牌的【hro】在场，敌方角色受到超载反应伤害后：我方接下来造成的2次[火元素伤害]或[雷元素伤害]+1。(包括扩散反应造成的[火元素伤害]或[雷元素伤害])')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/63d30082fb5068d4b847292c999003a4_5250915378710745589.png')
         .handle((_, event, ver) => {
@@ -2532,7 +2571,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方没有手牌，则【sts116073】会使｢普通攻击｣造成的伤害额外+2。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/51cdfbb5318ad7af6ad0eece4ef05423_8606735009174856621.png'),
 
-    216081: () => new CardBuilder(397).name('不明流通渠道').talent(1).costGeo(3).perCnt(1)
+    216081: () => new CardBuilder(399).name('不明流通渠道').talent(1).costGeo(3).perCnt(1)
         .description('{action}；【装备有此牌的〖hro〗使用技能后：】抓2张【crd116081】。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ff75f3060780eb4e510f0f60c336dcb6_6404286710698044326.png')
         .handle(card => {
@@ -2626,7 +2665,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: heros[hidx]?.isFront, status: [newStatus(ver)(121034)] }
         }),
 
-    221041: () => new CardBuilder(398).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
+    221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
         .description('{action}；【装备有此牌的〖hro〗触发〖sts122〗后：】使敌方出战角色的【sts122】层数翻倍。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a0597437167a2f8b5637ae66b393bd84_1668427359164092344.png'),
 
@@ -2914,8 +2953,8 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds: [{ cmd: 'getCard', cnt: 2, subtype: CARD_SUBTYPE.Legend }],
             exec: () => {
                 const { playerInfo, eplayerInfo } = event;
-                if (playerInfo) playerInfo.isUsedLengend = false;
-                if (eplayerInfo) eplayerInfo.isUsedLengend = false;
+                if (playerInfo) playerInfo.isUsedlegend = false;
+                if (eplayerInfo) eplayerInfo.isUsedlegend = false;
             }
         })),
 

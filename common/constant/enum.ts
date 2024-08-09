@@ -215,7 +215,7 @@ export const HERO_LOCAL = {
 export type HeroLocal = TypeConst<typeof HERO_LOCAL>;
 
 export const HERO_LOCAL_CODE = {
-    [HERO_LOCAL.Monster]: 0,
+    [HERO_LOCAL.Monster]: 215,
     [HERO_LOCAL.Mondstadt]: 1,
     [HERO_LOCAL.Liyue]: 2,
     [HERO_LOCAL.Inazuma]: 3,
@@ -223,7 +223,7 @@ export const HERO_LOCAL_CODE = {
     [HERO_LOCAL.Fontaine]: 5,
     [HERO_LOCAL.Natlan]: 6,
     [HERO_LOCAL.Snezhnaya]: 7,
-    [HERO_LOCAL.Fatui]: 8,
+    [HERO_LOCAL.Fatui]: 216,
 } as const;
 
 export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
