@@ -12,21 +12,16 @@
         {{ pileCnt[playerIdx ^ 1] }}
         <div class="will-getcard-oppo" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willGetCard"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(_, cidx) in opponent?.UI.willGetCard" :key="cidx"></div>
-        <div class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willAddCard"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willAddCard" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
-        <div class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }"
+        <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willAddCard"
+          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willAddCard" :card="card"
+          :key="cidx">
+        </handcard>
+        <handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willDiscard[0]" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
-        <div class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }"
+        </handcard>
+        <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willDiscard[1]" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
+        </handcard>
       </div>
       <div class="timer" :style="{ 'background-image': currTimeBg }">
         <button class="end-phase" @click.stop="endPhase"
@@ -39,26 +34,18 @@
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
         {{ pileCnt[playerIdx] }}
-        <div class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :style="{ left: `${cidx * 70 - 70}px` }"
-          v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
-        <div class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :style="{ left: `${cidx * 70 - 70}px` }"
-          v-for="(card, cidx) in player.UI.willAddCard" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
-        <div class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }"
+        <handcard class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
+        </handcard>
+        <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willAddCard" :key="cidx">
+        </handcard>
+        <handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[0]" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
-        <div class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }"
+        </handcard>
+        <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[1]" :key="cidx">
-          <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-          <span v-else>{{ card.name }}</span>
-        </div>
+        </handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
         <div v-for="(his, hsidx) in historyInfo" :key="hsidx"
@@ -434,9 +421,9 @@
 <script setup lang='ts'>
 import Handcard from '@/components/Card.vue';
 import {
-    CARD_SUBTYPE, CARD_TAG,
-    DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
-    PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
+  CARD_SUBTYPE, CARD_TAG,
+  DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+  PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';

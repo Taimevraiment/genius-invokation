@@ -123,9 +123,18 @@ export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
 
 // 不改变地址复制一个对象
 export const assgin = <T>(target: T, source: T) => {
-    if (Array.isArray(target) && Array.isArray(source) && source.every(v => typeof v !== 'object')) {
+    if (Array.isArray(target) && Array.isArray(source)) {
+        const equal = (tar: any, src: any) => (src?.entityId !== undefined && src.entityId != -1 && src.entityId == tar.entityId) || (src?.id !== undefined && src.id == tar.id);
+        const existObj = target.filter(tar => source.some(src => equal(src, tar)));
         target.length = 0;
-        target.push(...source);
+        for (const src of source) {
+            const tar = existObj.find(tar => equal(tar, src));
+            if (tar === undefined) target.push(src);
+            else {
+                assgin(tar, src);
+                target.push(tar);
+            }
+        }
         return;
     }
     for (const key in target) {

@@ -193,15 +193,15 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
-    CARD_SUBTYPE,
-    COST_TYPE,
-    DICE_COST_TYPE_CODE_KEY,
-    DiceCostType,
-    DiceCostTypeCode,
-    ELEMENT_TYPE,
-    PHASE,
-    PLAYER_STATUS,
-    Version
+  CARD_SUBTYPE,
+  COST_TYPE,
+  DICE_COST_TYPE_CODE_KEY,
+  DiceCostType,
+  DiceCostTypeCode,
+  ELEMENT_TYPE,
+  PHASE,
+  PLAYER_STATUS,
+  Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
@@ -522,7 +522,7 @@ const devOps = (cidx = 0) => {
     } else { // 摸牌
       const cards: (number | Card)[] = [];
       const isAttach = op.endsWith('~');
-      const [cid = 0, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
+      const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
       if (cid == 0) {
         cards.push(+`2${heros[client.value.players[cpidx].hidx].id}1`);
       }

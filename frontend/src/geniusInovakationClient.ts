@@ -264,7 +264,7 @@ export default class GeniusInvokationClient {
                 type: INFO_TYPE.Card,
                 info: this.currCard,
             }
-            if (this.player.status == PLAYER_STATUS.PLAYING) {
+            if (this.player.status == PLAYER_STATUS.PLAYING && this.player.canAction) {
                 const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
                 if (!preview) throw new Error('预览未找到');
                 this.heroCanSelect = [...preview.heroCanSelect!];
@@ -296,7 +296,6 @@ export default class GeniusInvokationClient {
                 if (this.isValid) this.diceSelect = [...preview.diceSelect!];
             }
         }
-        if (this.player.phase < PHASE.ACTION || this.isLookon > -1) return;
     }
     /**
      * 使用卡
@@ -439,7 +438,11 @@ export default class GeniusInvokationClient {
                     this.summonSelect[+(saidx == this.playerIdx)][suidx] = true;
                 } else if (damageVO?.dmgSource == 'status') {
                     const [spidx, sgroup, shidx, sidx] = damageVO.selected ?? [-1, -1, -1, -1];
-                    this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
+                    try {
+                        this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
+                    } catch (e) {
+                        console.error(spidx, sgroup, shidx, sidx);
+                    }
                 }
                 setTimeout(() => {
                     this.isShowDmg = false;

@@ -221,7 +221,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { skills: [, , { perCnt }] }, trigger = '' } = event;
                     return {
                         status: isCdt(trigger == 'skilltype3', [newStatus(ver)(111112)]),
-                        trigger: isCdt(perCnt < 4, ['getdmg', 'heal']),
+                        // trigger: isCdt(perCnt < 4, ['getdmg', 'heal']),
                         minusDiceSkill: { skilltype3: [0, 0, Math.floor(perCnt / 2)] },
                         exec: () => {
                             if (['getdmg', 'heal'].includes(trigger)) ++event.hero.skills[2].perCnt;

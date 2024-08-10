@@ -344,7 +344,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111091: () => shieldStatus('安眠帷幕护盾'),
 
-    111092: () => new StatusBuilder('飞星').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).addCnt(2)
+    111092: () => new StatusBuilder('飞星').combatStatus().icon('ski,1').useCnt(0).maxCnt(MAX_USE_COUNT).addCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。(生成此出战状态的技能，也会触发此效果)；【重复生成此出战状态时：】累积2枚｢晚星｣。')
         .handle((status, event) => {
@@ -358,7 +358,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: triggers,
                 damage: isCdt(isDmg, 1),
                 element: DAMAGE_TYPE.Cryo,
-                cmds: isCdt(isTalent, [{ cmd: 'getCard', cnt: 1 }]),
+                cmds: isCdt(isDmg && isTalent, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: eStatus => {
                     if (trigger == 'skill') ++status.useCnt;
                     if (eStatus) eStatus.useCnt -= 4;
@@ -366,7 +366,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    111101: () => new StatusBuilder('瞬时剪影').heroStatus().icon('ice-dice').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
+    111101: () => new StatusBuilder('瞬时剪影').heroStatus().icon('cryo-dice').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
         .description(`【结束阶段：】对所附属角色造成1点[冰元素伤害]; 如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；[useCnt]`)
         .handle((status, event) => {
             const { heros = [], hidx = -1 } = event;
@@ -389,11 +389,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (hidx == -1) return;
             let res: StatusHandleRes = {};
             const curHp = heros[hidx]?.hp ?? 0;
-            if (curHp >= 6) res = { addDmgCdt: 1, pdmg: 1, hidxs: [hidx], isSelf: true };
-            else res = { addDmgCdt: 1, heal: 2 };
+            if (curHp >= 6) res = { pdmg: 1, hidxs: [hidx], isSelf: true };
+            else res = { heal: 2 };
             return {
                 trigger: ['after-skilltype1', 'skilltype1'],
-                minusDiceSkill: isCdt(curHp < 6, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Cryo }),
+                minusDiceSkill: isCdt(curHp >= 6, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Cryo }),
+                addDmgCdt: 1,
                 ...res,
                 exec: eStatus => {
                     if (eStatus) --eStatus.useCnt
