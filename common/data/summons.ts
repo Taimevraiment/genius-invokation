@@ -69,8 +69,7 @@ const crd12702summon = () => {
 
 const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
-    115: () => new SummonBuilder('燃烧烈焰').useCnt(1).maxUse(2).damage(1).pyro()
-        .description('{defaultAtk。}')
+    115: () => new SummonBuilder('燃烧烈焰').useCnt(1).maxUse(2).damage(1).pyro().description('{defaultAtk。}')
         .src('https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png'),
 
     111011: () => new SummonBuilder('冰灵珠').useCnt(2).damage(1).pdmg(1)
@@ -81,8 +80,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk，治疗我方出战角色{shield}点。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a8a7cc75353c6df3921b63e42f46fe7d_3484731987232379289.png'),
 
-    111051: () => new SummonBuilder('霜见雪关扉').useCnt(2).damage(2)
-        .description('{defaultAtk。}')
+    111051: () => new SummonBuilder('霜见雪关扉').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
     111062: () => new SummonBuilder('光降之剑').maxUse(1000).damage(3).damage(2, 'v3.8.0').physical().plus().roundEnd()
@@ -279,8 +277,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    113021: () => new SummonBuilder('锅巴').useCnt(2).damage(2)
-        .description('{defaultAtk。}')
+    113021: () => new SummonBuilder('锅巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),
 
     113041: () => new SummonBuilder('兔兔伯爵').useCnt(1).shield(2).damage(2).usedRoundEnd().statusId()
@@ -326,8 +323,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    113101: () => new SummonBuilder('怪笑猫猫帽').useCnt(1).maxUse(2).damage(1)
-        .description('{defaultAtk。}')
+    113101: () => new SummonBuilder('怪笑猫猫帽').useCnt(1).maxUse(2).damage(1).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
@@ -414,12 +410,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    114092: () => new SummonBuilder('蔷薇雷光').useCnt(2).damage(2)
-        .description('{defaultAtk。}')
+    114092: () => new SummonBuilder('蔷薇雷光').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/0ea69a82861d8469ecdbbc78797e9fd8_3713104012683105893.png'),
 
-    114101: () => new SummonBuilder('售后服务弹').useCnt(1).damage(1)
-        .description('{defaultAtk。}')
+    114101: () => new SummonBuilder('售后服务弹').useCnt(1).damage(1).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/fe4516935ffa9eb9b193411113fa823f_372775257521707079.png'),
 
     114102: (isTalent: boolean = false) => new SummonBuilder('灯中幽精').useCnt(2).heal(2).talent(isTalent).plus(isTalent)
@@ -584,8 +578,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    116031: () => new SummonBuilder('岩脊').useCnt(2).damage(1)
-        .description('{defaultAtk。}')
+    116031: () => new SummonBuilder('岩脊').useCnt(2).damage(1).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/251c5e32d6cbdfb4c4d0e14e7088ab67_7008401766526335309.png'),
 
     116041: () => new SummonBuilder('阳华').useCnt(3).damage(1).perCnt(1)
@@ -657,12 +650,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    117011: () => new SummonBuilder('柯里安巴').useCnt(2).damage(2)
-        .description('{defaultAtk。}')
+    117011: () => new SummonBuilder('柯里安巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png'),
 
-    117022: () => new SummonBuilder('藏蕴花矢').useCnt(1).maxUse(2).damage(1)
-        .description('{defaultAtk。}')
+    117022: () => new SummonBuilder('藏蕴花矢').useCnt(1).maxUse(2).damage(1).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/dc8e548704ca0e52d1c6669fac469b3d_5168805556784249785.png'),
 
     117041: (isTalent: boolean = false) => new SummonBuilder('月桂·抛掷型').useCnt(2).damage(1).heal(1).talent(isTalent)
@@ -745,12 +736,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2)
-        .description('{defaultAtk。}')
+    122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png'),
 
-    122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1)
-        .description('{defaultAtk。}')
+    122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp')
         .handle((_s, _e, ver) => ({ willSummon: newSummon(ver)(122011) })),
 
@@ -842,8 +831,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    124031: () => new SummonBuilder('共鸣珊瑚珠').useCnt(2).damage(1)
-        .description('{defaultAtk。}')
+    124031: () => new SummonBuilder('共鸣珊瑚珠').useCnt(2).damage(1).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/5776f31ac915874cb7eadd77a0098839_1777069343038822943.png'),
 
     124041: () => new SummonBuilder('雷萤').useCnt(3).damage(1)
@@ -926,23 +914,18 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     127025: () => crd12702summon(),
 
-    302201: (src: string) => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical()
-        .description('{defaultAtk。}').src(src),
+    302201: (src: string) => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical().description('{defaultAtk。}').src(src),
 
-    303211: () => new SummonBuilder('冰箭丘丘人').useCnt(2).damage(1).cryo()
-        .description('{defaultAtk。}')
+    303211: () => new SummonBuilder('冰箭丘丘人').useCnt(2).damage(1).cryo().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png'),
 
-    303212: () => new SummonBuilder('水丘丘萨满').useCnt(2).damage(1).hydro()
-        .description('{defaultAtk。}')
+    303212: () => new SummonBuilder('水丘丘萨满').useCnt(2).damage(1).hydro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png'),
 
-    303213: () => new SummonBuilder('冲锋丘丘人').useCnt(2).damage(1).pyro()
-        .description('{defaultAtk。}')
+    303213: () => new SummonBuilder('冲锋丘丘人').useCnt(2).damage(1).pyro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/b2751af5c3dddc5a4bf7909bd2382adc_8142471467728886523.png'),
 
-    303214: () => new SummonBuilder('雷箭丘丘人').useCnt(2).damage(1).electro()
-        .description('{defaultAtk。}')
+    303214: () => new SummonBuilder('雷箭丘丘人').useCnt(2).damage(1).electro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
 
 }

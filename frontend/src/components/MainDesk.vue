@@ -325,7 +325,7 @@
                 // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
                 'will-add': true,
               }" :style="{
-                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : -summonCnt[getGroup(saidx)][suidx] < summon.useCnt ? 2 : 1}`)})`,
+                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : -summonCnt[getGroup(saidx)][suidx] <= summon.useCnt ? 2 : 1}`)})`,
               }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
                 <img
                   v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && summon.isDestroy == SUMMON_DESTROY_TYPE.Used"

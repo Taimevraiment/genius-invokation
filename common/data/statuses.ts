@@ -434,7 +434,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
     112032: () => new StatusBuilder('泡影').combatStatus().icon('ski,2').useCnt(1)
-        .type(STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle((status, event) => ({
             multiDmgCdt: 2,

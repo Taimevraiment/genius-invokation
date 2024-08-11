@@ -233,7 +233,7 @@ export class SkillBuilder extends BaseVersionBuilder {
 
 }
 
-export class Skill1Builder {
+export class NormalSkillBuilder {
     private _id: number = -1;
     private _weaponType: WeaponType | undefined;
     private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;

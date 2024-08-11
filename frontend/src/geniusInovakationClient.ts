@@ -124,7 +124,7 @@ export default class GeniusInvokationClient {
         return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER();
     }
     get canAction() {// 是否可以操作
-        return this.player.canAction && this.tip == '';
+        return this.player.canAction && this.tip == '' && this.damageVO.dmgSource == 'null';
     }
     get heroSwitchDiceColor() { // 切换角色骰子颜色
         return this.heroSwitchDice > INIT_SWITCH_HERO_DICE ? CHANGE_BAD_COLOR :

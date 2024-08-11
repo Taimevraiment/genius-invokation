@@ -1933,12 +1933,14 @@ const allCards: Record<number, () => CardBuilder> = {
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/bea77758f2b1392abba322e54cb43dc4_7154513228471011328.png',
     //     0, 8, 2, [5], 0, 1, () => ({ status: [newStatus(2021)] })),
 
-    // 605: () => new GICard(605, '甜甜花酿鸡', '治疗目标角色1点。(每回合每个角色最多食用1次｢料理｣)',
-    //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/bb5528c89decc6e54ade58e1c672cbfa_4113972688843190708.png',
-    //     0, 8, 2, [5], 0, 1, (_, event) => {
-    //         const canSelectHero = (event?.heros ?? []).map(h => h.hp < h.maxhp);
-    //         return { cmds: [{ cmd: 'heal', cnt: 1 }], canSelectHero }
-    //     }),
+    333005: () => new CardBuilder(269).name('甜甜花酿鸡').food().costSame(0).canSelectHero(1)
+        .description('治疗目标角色1点。(每回合每个角色最多食用1次｢料理｣)')
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/bb5528c89decc6e54ade58e1c672cbfa_4113972688843190708.png')
+        .handle((_, event) => {
+            const { heros = [] } = event;
+            const canSelectHero = heros.map(h => h.hp < h.maxHp);
+            return { cmds: [{ cmd: 'heal', cnt: 1 }], canSelectHero }
+        }),
 
     // 606: () => new GICard(606, '蒙德土豆饼', '治疗目标角色2点。(每回合每个角色最多食用1次｢料理｣)',
     //     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/f1026f0a187267e7484d04885e62558a_1248842015783359733.png',
@@ -2103,13 +2105,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】受到伤害或治疗后，此牌累积1点｢惩戒计数｣。；装备有此牌的【hro】使用技能时：如果已有3点｢惩戒计数｣，则消耗3点使此技能伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/ba5051d7c24ad430dcd83d95e4a6bf42_1747806350562559991.png')
         .handle((card, event) => {
-            const { hidxs: [hidx] = [], heal = [], getdmg = [], trigger = '' } = event;
+            const { hidxs: [hidx] = [], heal = [], trigger = '' } = event;
             return {
                 trigger: ['getdmg', 'heal', 'skill'],
                 addDmgCdt: isCdt(card.useCnt >= 3, 1),
                 isAddTask: trigger != 'skill',
                 exec: () => {
-                    if (trigger == 'getdmg' && getdmg[hidx] > 0 || trigger == 'heal' && heal[hidx] > 0) {
+                    if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) {
                         ++card.useCnt;
                     } else if (trigger == 'skill' && card.useCnt >= 3) {
                         card.useCnt -= 3;

@@ -79,21 +79,23 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
     const diceCntArr = objToArr(diceCnt);
     const typeCnt = diceCntArr.filter(([v, n]) => v != DICE_COST_TYPE.Omni && n > 0).length;
     if (card) { // 选择卡所消耗的骰子
-        const { cost, costType, anydice } = card;
-        if (diceLen < cost + anydice) return false;
+        const { cost, costType, anydice, costChange } = card;
+        if (diceLen != cost + anydice - costChange) return false;
         if (costType == DICE_TYPE.Any) return true;
         if (costType != DICE_TYPE.Same) {
-            const elDiceValid = diceCnt[costType] + diceCnt[DICE_COST_TYPE.Omni] >= cost;
-            const anyDiceValid = diceCntArr.reduce((a, [, b]) => a + b, 0) - cost == anydice;
+            const elDiceValid = diceCnt[costType] + diceCnt[DICE_COST_TYPE.Omni] >= cost - costChange;
+            const anyDiceValid = diceCntArr.reduce((a, [, b]) => a + b, 0) - cost + costChange == anydice;
             return elDiceValid && anyDiceValid;
         }
         return !(typeCnt > 2 || (typeCnt == 2 && diceCnt[DICE_COST_TYPE.Omni] == 0));
     }
     if (skill) { // 选择技能所消耗的骰子
         const [elDice, anyDice] = skill.cost;
+        const [elMinus, anyMinus] = skill.costChange;
+        if (diceLen != elDice.cnt + anyDice.cnt - elMinus - anyMinus) return false;
         if (elDice.type != COST_TYPE.Same) {
-            const elDiceValid = diceCnt[elDice.type] + diceCnt[DICE_COST_TYPE.Omni] >= elDice.cnt;
-            const anyDiceValid = diceCntArr.reduce((a, b) => a + b[1], 0) - elDice.cnt == anyDice.cnt;
+            const elDiceValid = diceCnt[elDice.type] + diceCnt[DICE_COST_TYPE.Omni] >= elDice.cnt - elMinus;
+            const anyDiceValid = diceCntArr.reduce((a, b) => a + b[1], 0) - elDice.cnt + elMinus == anyDice.cnt - anyMinus;
             return elDiceValid && anyDiceValid;
         }
         return !(typeCnt > 2 || (typeCnt == 2 && diceCnt[DICE_COST_TYPE.Omni] == 0));

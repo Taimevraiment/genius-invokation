@@ -1,5 +1,9 @@
 
-// 深拷贝函数
+/**
+ * 深拷贝函数
+ * @param obj 要拷贝的对象
+ * @returns 拷贝后的对象
+ */
 export function clone<T>(obj: T): T {
     if (typeof obj !== 'object' || obj === null) {
         return obj;
@@ -17,14 +21,24 @@ export function clone<T>(obj: T): T {
     return cloneObj;
 }
 
-// 符合条件就返回，否则返回undefined
+/**
+ * 符合条件就返回，否则返回undefined
+ * @param cdt 条件
+ * @param res 返回的值
+ * @param elres 否则返回的值
+ */
 export const isCdt = <T>(cdt: boolean | null | undefined, res: T, elres?: T): T | undefined => {
     if (cdt) return res;
     if (elres == undefined) return undefined;
     return elres;
 }
 
-// 生成分享码
+/**
+ * 生成分享码
+ * @param ids 卡组中角色行动卡的id数组
+ * @param salt 盐值
+ * @returns 分享码
+ */
 export const genShareCode = (ids: number[], salt = 0): string => {
     const ostr = ids.map(id => id.toString(2).padStart(12, '0')).join('').padEnd(400, '0');
     const farr: number[] = [];
@@ -36,7 +50,11 @@ export const genShareCode = (ids: number[], salt = 0): string => {
     return btoa(String.fromCharCode(...farr));
 }
 
-// 解析分享码
+/**
+ * 解析分享码
+ * @param code 分享码
+ * @returns 解析后对象 {heroIds: number[], cardIds: number[]}
+ */
 export const parseShareCode = (code: string): { heroIds: number[], cardIds: number[] } => {
     const salt = atob(code).split('').at(-1)?.charCodeAt(0) ?? 0;
     const ores = atob(code).split('').map(v => ((v.charCodeAt(0) - salt + 256) % 256).toString(2).padStart(8, '0')).join('');
@@ -57,7 +75,10 @@ export const parseShareCode = (code: string): { heroIds: number[], cardIds: numb
     }
 }
 
-// 延迟函数
+/**
+ * 延迟函数
+ * @param time 延迟时间(ms = 0)
+ */
 export const delay = (time: number = 0) => {
     if (time == 0) return;
     return new Promise<void>(resolve => {
@@ -65,7 +86,15 @@ export const delay = (time: number = 0) => {
     });
 }
 
-// 条件同步等待
+/**
+ * 条件同步等待
+ * @param cdt 条件
+ * @param options.delay 符合条件后延迟时间(ms = 2000)
+ * @param options.freq 频率(ms = 500)
+ * @param options.maxtime 最大等待时间(ms = 8000)
+ * @param options.isImmediate 是否立即执行
+ * @returns 
+ */
 export const wait = async (cdt: () => boolean, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean } = {}) => {
     const { delay: dl = 2000, freq = 500, maxtime = 8000, isImmediate = true } = options;
     let loop = 0;
@@ -81,7 +110,12 @@ export const wait = async (cdt: () => boolean, options: { delay?: number, freq?:
     }
 }
 
-// 数组转对象
+/**
+ * 数组转对象
+ * @param arr 数组
+ * @param initValue 默认值
+ * @returns 转换后的对象
+ */
 export const arrToObj = <K extends string | number | symbol, V>(arr: K[], initValue: V) => {
     return arr.reduce((acc, cur) => {
         acc[cur] = initValue;
@@ -89,12 +123,20 @@ export const arrToObj = <K extends string | number | symbol, V>(arr: K[], initVa
     }, {} as Record<K, V>);
 }
 
-// 对象转数组
+/**
+ * 对象转数组
+ * @param obj 对象
+ * @returns 转换后的数组
+ */
 export const objToArr = <K extends string | number | symbol, V>(obj: Record<K, V>): [K, V][] => {
     return Object.keys(obj).map(k => [k as K, obj[k as K] as V]);
 }
 
-// 防抖函数
+/**
+ * 防抖函数
+ * @param fn 执行函数
+ * @param wait 防抖频率(ms = 100)
+ */
 export const debounce = (fn: (...args: any[]) => any, wait: number = 100) => {
     let timer: NodeJS.Timeout | undefined;
     return (...args: any[]) => {
@@ -106,7 +148,11 @@ export const debounce = (fn: (...args: any[]) => any, wait: number = 100) => {
     };
 };
 
-// 交换键值
+/**
+ * 交换键值
+ * @param obj 对象
+ * @returns 交换后的对象
+ */
 export const swapKeysAndValues = <K extends string | number | symbol, V extends string | number>(obj: Record<K, V>) => {
     const swapped: Record<V, K> = {} as Record<V, K>;
     for (const key in obj) {
@@ -118,10 +164,18 @@ export const swapKeysAndValues = <K extends string | number | symbol, V extends 
     return swapped;
 }
 
-// 获取数组最后一项
+/**
+ * 获取数组最后一项
+ * @param arr 数组
+ * @returns 最后一项
+ */
 export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
 
-// 不改变地址复制一个对象
+/**
+ * 不改变地址复制一个对象
+ * @param target 目标对象
+ * @param source 源对象
+ */
 export const assgin = <T>(target: T, source: T) => {
     if (Array.isArray(target) && Array.isArray(source)) {
         const equal = (tar: any, src: any) => (src?.entityId !== undefined && src.entityId != -1 && src.entityId == tar.entityId) || (src?.id !== undefined && src.id == tar.id);

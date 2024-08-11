@@ -1,7 +1,7 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { BaseBuilder } from "./baseBuilder.js";
-import { GISkill, Skill1Builder, SkillBuilder } from "./skillBuilder";
+import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
 
 export class GIHero {
     id: number; // 唯一id
@@ -69,7 +69,7 @@ export class HeroBuilder extends BaseBuilder {
     private _skills: SkillBuilder[] = [];
     private _src: string[] = [];
     private _avatar: string[] = [];
-    private _skill1: Skill1Builder | undefined;
+    private _normalSkill: NormalSkillBuilder | undefined;
     constructor(shareId?: number) {
         super(shareId ?? -1);
     }
@@ -175,8 +175,8 @@ export class HeroBuilder extends BaseBuilder {
         this._weaponType = WEAPON_TYPE.Sword;
         return this;
     }
-    skill1(skill1Builder: Skill1Builder) {
-        this._skill1 = skill1Builder.version(this._version);
+    normalSkill(normalSkillBuilder: NormalSkillBuilder) {
+        this._normalSkill = normalSkillBuilder.version(this._version);
         return this;
     }
     skills(...skills: SkillBuilder[]) {
@@ -194,8 +194,8 @@ export class HeroBuilder extends BaseBuilder {
     done() {
         const maxHp = this._getValByVersion(this._maxHp, 10);
         const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
-        const skills: (SkillBuilder | Skill1Builder)[] = this._skills.map(skill => skill.costElement(element));
-        if (this._skill1 != undefined) skills.unshift(this._skill1.weaponType(this._weaponType).costElement(element));
+        const skills: (SkillBuilder | NormalSkillBuilder)[] = this._skills.map(skill => skill.costElement(element));
+        if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType).costElement(element));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
             maxHp, element, this._weaponType, this._src, this._avatar,
             skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
