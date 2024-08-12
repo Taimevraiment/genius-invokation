@@ -278,7 +278,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bc5c12ac6eb36b8d24f03864bf281b87_4261814317325062178.png')
                 .handle(event => {
                     const { hero: { skills: [, , , { useCnt = 1 }] } } = event;
-                    return { trigger: ['change-from'], isQuickAction: useCnt == 0 }
+                    return { trigger: ['change-from'], isNotAddTask: true, isQuickAction: useCnt == 0 }
                 })
         ),
 

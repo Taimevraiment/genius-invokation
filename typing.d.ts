@@ -141,6 +141,7 @@ type GameInfo = {
     discardIds: number[], // 舍弃卡牌的id
     initCardIds: number[], // 初始牌组id
     isKillByMyRound: boolean, // 本回合轮到我方行动期间对方角色被击倒数
+    isUsedCardPerRound: boolean, // 我方本回合是否使用过行动卡
 }
 
 type InfoVO = {

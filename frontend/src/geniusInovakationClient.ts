@@ -180,13 +180,11 @@ export default class GeniusInvokationClient {
                 this._resetHeroCanSelect();
                 if (onlyHeros) return;
             }
-            if (onlySupportAndSummon) {
-                this._resetSummonSelect();
-                this._resetSummonCanSelect();
-                this._resetSupportSelect();
-                this._resetSupportCanSelect();
-                if (onlySupportAndSummon) return;
-            }
+            this._resetSummonSelect();
+            this._resetSummonCanSelect();
+            this._resetSupportSelect();
+            this._resetSupportCanSelect();
+            if (onlySupportAndSummon) return;
         }
         if (this.currCard.canSelectSupport != -1 && this.modalInfo.type != null) {
             this.modalInfo = NULL_MODAL()
