@@ -215,10 +215,18 @@ export class StatusBuilder extends BaseVersionBuilder {
     perCnt(perCnt: number, ver?: Version, cdt?: boolean): StatusBuilder;
     perCnt(perCnt: number, cdt: boolean | Version = true, cdt2: boolean = true) {
         if (typeof cdt == 'boolean') {
-            if (cdt) this._perCnt.push(['vlatest', perCnt]);
+            const pct = this._perCnt.find(([ver]) => ver == 'vlatest');
+            if (cdt) {
+                if (pct) pct[1] = perCnt;
+                else this._perCnt.push(['vlatest', perCnt]);
+            }
             return this;
         }
-        if (cdt2) this._perCnt.push([cdt, perCnt]);
+        if (cdt2) {
+            const pct = this._perCnt.find(([ver]) => ver == cdt);
+            if (pct) pct[1] = perCnt;
+            else this._perCnt.push([cdt, perCnt]);
+        }
         return this;
     }
     roundCnt(roundCnt: number, cdt: boolean): StatusBuilder;

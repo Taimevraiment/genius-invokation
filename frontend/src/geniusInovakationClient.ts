@@ -45,7 +45,7 @@ export default class GeniusInvokationClient {
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
     willSwitch: boolean[] = []; // 是否将要切换角色
     supportCnt: number[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0)); // 支援物变化数
-    summonCnt: number[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0)); // 召唤物变化数
+    summonCnt: number[][] = this._resetSummonCnt(); // 召唤物变化数
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
@@ -202,6 +202,7 @@ export default class GeniusInvokationClient {
         this.currSkill = NULL_SKILL();
         this.willSwitch = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(false);
         this._resetWillSummons();
+        this._resetSummonCnt();
         this._resetWillAttachs();
         if (this.phase == PHASE.ACTION) this.resetDiceSelect();
         this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
@@ -242,6 +243,7 @@ export default class GeniusInvokationClient {
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
         this.currSkill = NULL_SKILL();
         this._resetWillSummons();
+        this._resetSummonCnt();
         this._resetHeroSelect();
         this.isShowChangeHero = 0;
         if (this.phase == PHASE.ACTION) {
@@ -271,6 +273,7 @@ export default class GeniusInvokationClient {
                 this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
                 this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
                 this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
+                this.summonCnt = preview.willSummonChange?.slice() ?? this._resetSummonCnt();
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
                 if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
@@ -525,6 +528,7 @@ export default class GeniusInvokationClient {
             this.currSkill = NULL_SKILL();
         }
         this._resetWillSummons();
+        this._resetSummonCnt();
         this._resetWillAttachs();
         if (this.player.phase == PHASE.CHOOSE_HERO && pidx == 1) { // 选择初始出战角色
             this.cancel({ onlyCard: true, notHeros: true });
@@ -703,6 +707,7 @@ export default class GeniusInvokationClient {
             this.resetDiceSelect();
             this._resetWillAttachs();
             this._resetWillSummons();
+            this._resetSummonCnt();
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
@@ -873,8 +878,13 @@ export default class GeniusInvokationClient {
      * 重置召唤物预览
      */
     private _resetWillSummons(): Summon[][] {
-        this.summonCnt?.forEach(smns => smns.fill(0));
         return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
+    }
+    /**
+     * 重置召唤物次数预览
+     */
+    private _resetSummonCnt() {
+        return this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
     }
     /**
      * 重置伤害预览

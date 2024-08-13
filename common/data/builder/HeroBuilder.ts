@@ -24,8 +24,6 @@ export class GIHero {
     heroStatus: Status[] = []; // 角色状态
     isFront: boolean = false; // 是否为前台角色
     attachElement: PureElementType[] = []; // 附着元素
-    // canSelect: boolean = false; // 是否能被选择
-    // isSelected: number = 0; // 是否被选择 0未被选择 1被选为一号位 2被选为二号位
     UI: {
         src: string, // 立绘url
         srcs: string[], // 所有立绘url

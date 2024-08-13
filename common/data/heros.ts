@@ -205,7 +205,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle((event, ver) => ({ heal: 1, hidxs: allHidxs(event.heros), summon: [newSummon(ver)(111102)] }))
         ),
 
-    1111: () => new HeroBuilder(364).name('莱欧斯利').since('v4.7.0').fontaine().tags(HERO_TAG.ArkheOusia).cryo().catalyst()
+    1111: () => new HeroBuilder(363).name('莱欧斯利').since('v4.7.0').fontaine().tags(HERO_TAG.ArkheOusia).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/064e881b99d30a1ce455d16a11768a24_8173906534678189661.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a9641995fd67126ff2b1e0d0294db57.png')
         .normalSkill(new NormalSkillBuilder('迅烈倾霜拳'))
@@ -228,6 +228,22 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         }
                     }
                 })
+        ),
+
+    1112: () => new HeroBuilder(407).name('菲米尼').since('v5.0.0').fontaine().tags(HERO_TAG.ArkhePneuma).fatui().cryo().claymore()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Freminet.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('洑流剑'))
+        .skills(
+            new SkillBuilder('浮冰增压').description('{dealDmg}，若角色未附属【sts111121】，则使其附属【sts111121】。')
+                .src('')
+                .elemental().damage(2).cost(3).handle((event, ver) => {
+                    const { hero: { heroStatus } } = event;
+                    return { status: isCdt(!hasObjById(heroStatus, 111121), [newStatus(ver)(111121)]) }
+                }),
+            new SkillBuilder('猎影潜袭').description('{dealDmg}，本角色附属【sts111122】。')
+                .src('')
+                .burst(2).damage(4).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(111122)] }))
         ),
 
     1201: () => new HeroBuilder(9).name('芭芭拉').mondstadt().hydro().catalyst()
@@ -1068,6 +1084,19 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
+    1510: () => new HeroBuilder(408).name('闲云').since('v5.0.0').liyue().anemo().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Liuyun.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('清风散花词'))
+        .skills(
+            new SkillBuilder('朝起鹤云').description('{dealDmg}，生成【sts115101】，本角色附属【sts115104】。')
+                .src('')
+                .elemental().damage(2).cost(3).handle((_, ver) => ({ status: [newStatus(ver)(115101), newStatus(ver)(115104)] })),
+            new SkillBuilder('暮集竹星').description('{dealDmg}，治疗所有我方角色1点，生成手牌【crd115102】。')
+                .src('')
+                .burst(2).damage(1).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 115102 }] }))
+        ),
+
     1601: () => new HeroBuilder(42).name('凝光').liyue().geo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/69b48f96666e12872c81087955a4abcb.png')
@@ -1578,6 +1607,26 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle((_, ver) => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(122041)] }))
         ),
 
+    2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').monster().tags(HERO_TAG.Hilichurl).hydro()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_HilistrayWater.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('镰刀旋斩'))
+        .skills(
+            new SkillBuilder('狂澜镰击').description('{dealDmg}。；如果有敌方角色附属有【sts106】或【sts122052】，则本角色获得1点[充能]。(每回合1次)')
+                .src('')
+                .elemental().damage(3).cost(3).perCnt(1).handle(event => {
+                    const { eheros = [], hero: { skills: [, skill] } } = event;
+                    if (skill.perCnt <= 0) return;
+                    const eStatus = eheros.flatMap(h => h.heroStatus);
+                    if (hasObjById(eStatus, 106) || hasObjById(eStatus, 122052)) {
+                        return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], exec: () => { --skill.perCnt } }
+                    }
+                }),
+            new SkillBuilder('浮泡攻势').description('{dealDmg}，生成手牌【crd122051】。')
+                .src('')
+                .burst(2).damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 122051 }] }))
+        ),
+
     2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9f134f05bb71f0ee1afb33785cf945e9_8487118119361104507.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/de42691212adcb46a66595c833bd3598.png')
@@ -1912,8 +1961,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/5ab059679b08fba559b68f7d361a64be.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b49c1863d6b6a61ec13501c27d8204bf_1566255463657696734.png')
                 .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { eheros = [], hero: { id, heroStatus }, heros, isExec = false } = event;
-                    if (!isExec) return;
+                    const { eheros = [], hero: { id, heroStatus }, heros } = event;
                     const rockEl = eheros.find(h => h.isFront)?.attachElement?.find(el => (Object.values(SWIRL_ELEMENT) as PureElementType[]).includes(el)) ?? ELEMENT_TYPE.Geo;
                     if (rockEl == ELEMENT_TYPE.Geo) return { status: [newStatus(ver)(126021)] }
                     const sts126021 = getObjById(heroStatus, 126021)!;

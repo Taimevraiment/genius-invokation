@@ -1122,6 +1122,7 @@ button:active {
   flex-direction: row;
   box-sizing: border-box;
   padding: 3px;
+  z-index: 1;
 }
 
 .outstatus {

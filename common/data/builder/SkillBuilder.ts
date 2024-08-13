@@ -55,7 +55,7 @@ export class GISkill {
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.handle = hevent => {
-            const { reset = false, heros = [], hero, skidx, isReadySkill = false } = hevent;
+            const { reset = false, hero, skidx, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, ver) ?? {};
             if (isReadySkill) return handleres;
             const curskill = hero.skills[skidx];
@@ -64,10 +64,10 @@ export class GISkill {
                 curskill.perCnt = pct;
                 return {}
             }
-            let dmgElement = handleres.dmgElement;
+            let dmgElement = handleres.dmgElement ?? DAMAGE_TYPE.Physical;
             let atkOffset = handleres.atkOffset;
             for (const ist of hero.heroStatus) {
-                const event = { ...clone(hevent), hidx: heros.findIndex(h => h.id == hero.id) };
+                const event = { ...clone(hevent), hidx: hero.hidx };
                 delete event.minusDiceSkill;
                 const stsres = ist.handle(ist, event) ?? {};
                 if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && dmgElement == DAMAGE_TYPE.Physical) {

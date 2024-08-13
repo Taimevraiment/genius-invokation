@@ -1956,7 +1956,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/bb5528c89decc6e54ade58e1c672cbfa_4113972688843190708.png')
         .handle((_, event) => {
             const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp);
+            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 1 }], canSelectHero }
         }),
 
@@ -1965,7 +1965,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/f1026f0a187267e7484d04885e62558a_1248842015783359733.png')
         .handle((_, event) => {
             const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp);
+            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 2 }], canSelectHero }
         }),
 
@@ -1974,7 +1974,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/915af5fee026a95d6001559c3a1737ff_7749997812479443913.png')
         .handle((_, event, ver) => {
             const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp);
+            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 1 }], status: [newStatus(ver)(303305)], canSelectHero }
         }),
 
@@ -2020,30 +2020,32 @@ const allCards: Record<number, () => CardBuilder> = {
             return { status: [newStatus(ver)(303310)], hidxs }
         }),
 
-    // 613: () => new GICard(613, 318, '炸鱼薯条', '本回合中，所有我方角色下次使用技能时少花费1个元素骰。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/21ece93fa784b810495128f6f0b14c59_4336812734349949596.png',
-    //     2, 0, 2, [5], 0, 0, (_, event) => {
-    //         const { heros = [] } = event;
-    //         const hidxs = heros.map((h, hi) => ({ hi, val: !h.inStatus.some(ist => ist.id == 303300) && h.hp > 0 }))
-    //             .filter(v => v.val).map(v => v.hi);
-    //         return { status: [newStatus(2152)], hidxs }
-    //     }),
+    333013: () => new CardBuilder(318).name('炸鱼薯条').since('v4.3.0').food().costAny(2)
+        .description('本回合中，所有我方角色下次使用技能时少花费1个元素骰。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/21ece93fa784b810495128f6f0b14c59_4336812734349949596.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            const hidxs = heros.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
+            return { status: [newStatus(ver)(303311)], hidxs }
+        }),
 
-    // 614: () => new GICard(614, 333, '松茸酿肉卷', '治疗目标角色2点，3回合内结束阶段再治疗此角色1点。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/9001508071c110f4b13088edeb22c8b4_7346504108686077875.png',
-    //     2, 8, 2, [5], 0, 1, (_, event) => {
-    //         const { heros = [] } = event;
-    //         const canSelectHero = heros.map(h => h.hp < h.maxhp);
-    //         return { cmds: [{ cmd: 'heal', cnt: 2 }], status: [newStatus(2159)], canSelectHero }
-    //     }),
+    333014: () => new CardBuilder(333).name('松茸酿肉卷').since('v4.4.0').food().costSame(2).canSelectHero(1)
+        .description('治疗目标角色2点，3回合内结束阶段再治疗此角色1点。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/9001508071c110f4b13088edeb22c8b4_7346504108686077875.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            return { cmds: [{ cmd: 'heal', cnt: 2 }], status: [newStatus(ver)(303312)], canSelectHero }
+        }),
 
-    // 615: () => new GICard(615, '缤纷马卡龙', '治疗目标角色1点，该角色接下来3次受到伤害后再治疗其1点。',
-    //     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/287f535c9a60620259bb149a75a3a001_7028948017645858669.png',
-    //     2, 0, 2, [5], 0, 1, (_, event) => {
-    //         const { heros = [] } = event;
-    //         const canSelectHero = heros.map(h => h.hp < h.maxhp);
-    //         return { cmds: [{ cmd: 'heal', cnt: 1 }], status: [newStatus(2186)], canSelectHero }
-    //     }),
+    333015: () => new CardBuilder(361).name('缤纷马卡龙').since('v4.6.0').food().costAny(2).canSelectHero(1)
+        .description('治疗目标角色1点，该角色接下来3次受到伤害后再治疗其1点。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/287f535c9a60620259bb149a75a3a001_7028948017645858669.png')
+        .handle((_, event, ver) => {
+            const { heros = [] } = event;
+            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            return { cmds: [{ cmd: 'heal', cnt: 1 }], status: [newStatus(ver)(303313)], canSelectHero }
+        }),
 
     211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -2142,6 +2144,18 @@ const allCards: Record<number, () => CardBuilder> = {
                         card.useCnt -= 3;
                     }
                 }
+            }
+        }),
+
+    211121: () => new CardBuilder(410).name('梦晓与决意之刻').since('v5.0.0').talent(1).costCryo(3).perCnt(2)
+        .description('{action}；装备有此牌的【hro】使用技能后，抓1张牌。(每回合至多触发2次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Freminet.webp')
+        .handle(card => {
+            if (card.perCnt <= 0) return;
+            return {
+                trigger: ['skill'],
+                execmds: [{ cmd: 'getCard', cnt: 1 }],
+                exec: () => { --card.perCnt }
             }
         }),
 
@@ -2507,6 +2521,23 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】所召唤的【smn115093】入场时和行动阶段开始时：生成1个[风元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/6f4712bcbbe53515e63c1de112a58967_7457105821554314257.png'),
 
+    215101: () => new CardBuilder(411).name('知是留云僊').since('v5.0.0').talent(1).costAnemo(3).useCnt(0).isResetUseCnt()
+        .description('{action}；我方切换角色时，此牌累积1层｢风翎｣。(每回合最多累积2层)；装备有此牌的【hro】使用【ski,0】时，消耗所有｢风翎｣，每消耗1层都使伤害+1。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Liuyun.webp')
+        .handle((card, event) => {
+            const { trigger = '' } = event;
+            if (trigger == 'change' && card.useCnt == 2) return;
+            return {
+                trigger: ['change', 'skilltype3'],
+                addDmgCdt: isCdt(trigger == 'skilltype3', card.useCnt),
+                isAddTask: trigger == 'change',
+                exec: () => {
+                    if (trigger == 'change') ++card.useCnt;
+                    else if (trigger == 'skilltype3') card.useCnt = 0;
+                }
+            }
+        }),
+
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').talent(1).costGeo(4)
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/8b72e98d01d978567eac5b3ad09d7ec1_7682448375697308965.png'),
@@ -2731,6 +2762,21 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    222051: () => new CardBuilder(412).name('水镖史莱姆').since('v5.0.0').talent(1).costHydro(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】在场，我方使用｢特技｣时：少花费1个元素骰。(每回合1次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_HilistrayWater.webp')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            return {
+                trigger: ['spskill', 'other-spskill'],
+                minusDiceSkill: { spskill: [0, 0, 1] },
+                exec: () => {
+                    const { isMinusDiceSkill } = event;
+                    if (isMinusDiceSkill) --card.perCnt;
+                }
+            }
+        }),
+
     223011: () => new CardBuilder(115).name('悉数讨回').talent(1).costPyro(3)
         .description('{action}；装备有此牌的【hro】生成的【sts123011】获得以下效果：；初始[持续回合]+1，并且使所附属角色造成的[物理伤害]变为[火元素伤害]。')
         .src('https://patchwiki.biligame.com/images/ys/4/4b/p2lmo1107n5nwc2pulpjkurlixa2o4h.png'),
@@ -2812,7 +2858,7 @@ const allCards: Record<number, () => CardBuilder> = {
             execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(126011), newStatus(ver)(126012)] }],
         })),
 
-    226021: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
+    226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png')
         .handle((_, event, ver) => {
@@ -2882,10 +2928,14 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['skilltype2'], cmds }
         }),
 
+    115102: () => new CardBuilder().name('竹星'),
+
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方｢出战角色｣造成1点物理伤害，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
         .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
+
+    122051: () => new CardBuilder().name('水泡史莱姆'),
 
     124051: () => new CardBuilder().name('噬骸能量块').event().costSame(0)
         .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。(每回合最多打出1张)')

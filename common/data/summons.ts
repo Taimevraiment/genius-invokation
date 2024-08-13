@@ -192,7 +192,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png'),
 
     112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(2).damage(1).heal(1)
-        .description('{defaultAtk，治疗我方出战角色{shield}点。}')
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/4608304a2a01f7f33b59b731543a761b_3713077215425832494.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
@@ -212,6 +212,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             addDmgType1: 1,
             trigger: ['phase-end', 'skilltype1'],
+            isNotAddTask: event.trigger == 'skilltype1',
             exec: execEvent => {
                 if (event?.trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
             },
