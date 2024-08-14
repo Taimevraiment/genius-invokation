@@ -4,22 +4,28 @@
         <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
         <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
             :src="getPngIcon('legend-border')" />
-        <div class="card-cost" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
+        <div class="card-cost" :class="{ 'mobile-card-cost': isMobile }"
+            :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+            <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
+                :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
             <span>{{ card.cost - card.costChange }}</span>
         </div>
         <!-- todo 重新考虑下面的减骰 -->
-        <div class="card-energy" v-if="card.anydice > 0"
-            :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
+        <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
+            v-if="card.anydice > 0" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+            <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
+                :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
             <span>{{ Math.max(0, card.anydice - Math.max(0, card.costChange - card.cost)) }}</span>
         </div>
-        <div class="card-energy" v-if="card.energy > 0">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
+        <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0">
+            <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
+                :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
             <span>{{ card.energy }}</span>
         </div>
-        <div class="card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
+        <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }"
+            v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
+            <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
+                :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
         </div>
         <div class="card-content">
             <span v-if="card?.UI.src?.length == 0">{{ card.name }}</span>
@@ -95,15 +101,14 @@ const getPngIcon = (name: string) => {
 
 .card-cost {
     position: absolute;
-    left: -20px;
+    left: -30px;
     top: -10px;
-    width: 20px;
-    height: 20px;
-    border-radius: 8px;
+    width: 30px;
+    height: 30px;
     color: white;
     font-weight: bold;
     text-align: center;
-    line-height: 20px;
+    line-height: 30px;
     -webkit-text-stroke: 1px black;
     z-index: 1;
 }
@@ -112,8 +117,8 @@ const getPngIcon = (name: string) => {
     position: absolute;
     width: 20px;
     height: 20px;
-    left: -20px;
-    top: 25px;
+    left: -25px;
+    top: 30px;
     color: white;
     font-weight: bold;
     text-align: center;
@@ -122,11 +127,22 @@ const getPngIcon = (name: string) => {
     z-index: 1;
 }
 
-.card-cost>span,
-.card-energy>span {
+.card-cost>span {
     position: absolute;
+    font-size: 23px;
+    width: 30px;
+    height: 30px;
     left: 20px;
     top: 5px;
+}
+
+.card-energy>span {
+    position: absolute;
+    font-size: 23px;
+    width: 30px;
+    height: 30px;
+    left: 15px;
+    top: 10px;
 }
 
 
@@ -136,14 +152,9 @@ const getPngIcon = (name: string) => {
     height: 25px;
 }
 
-.cost-img.hcard {
-    width: 30px;
-    height: 30px;
-}
-
-.mobile-card {
-    width: 60px;
-    height: 90px;
+.hcard {
+    width: 40px;
+    height: 40px;
 }
 
 .card-border {
@@ -156,5 +167,35 @@ const getPngIcon = (name: string) => {
     top: 0;
     left: 0;
     z-index: 1;
+}
+
+.mobile-card {
+    width: 60px;
+    height: 90px;
+}
+
+.mobile-card-cost,
+.mobile-card-energy {
+    left: -20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+}
+
+.mobile-card-energy {
+    top: 20px;
+}
+
+.mobile-card-cost>span,
+.mobile-card-energy>span {
+    position: absolute;
+    font-size: 18px;
+    left: 10px;
+    top: 5px;
+}
+
+.mobile-hcard {
+    width: 30px;
+    height: 30px;
 }
 </style>

@@ -108,23 +108,28 @@ export type DiceCostTypeCode = TypeConst<typeof DICE_COST_TYPE_CODE>;
 
 export const DICE_COST_TYPE_CODE_KEY = swapKeysAndValues(DICE_COST_TYPE_CODE);
 
+export const CARD_SUBTYPE_EQUIPMENT = {
+    Weapon: 'Weapon', // 武器
+    Artifact: 'Artifact', // 圣遗物
+    Spskill: 'Spskill', // 特技
+} as const;
+
 export const CARD_SUBTYPE_SUPPORT = {
-    Place: 'Place', // 场地 2
-    Ally: 'Ally', // 伙伴 3
-    Item: 'Item', // 道具 4
+    Place: 'Place', // 场地
+    Ally: 'Ally', // 伙伴
+    Item: 'Item', // 道具
 } as const;
 
 export type CardSubtypeSupport = TypeConst<typeof CARD_SUBTYPE_SUPPORT>;
 
 export const CARD_SUBTYPE = {
-    Weapon: 'Weapon', // 武器 0
-    Artifact: 'Artifact', // 圣遗物 1
+    ...CARD_SUBTYPE_EQUIPMENT,
     ...CARD_SUBTYPE_SUPPORT,
-    Food: 'Food', // 料理 5
-    Talent: 'Talent', // 天赋 6
-    Action: 'Action', // 战斗行动 7
-    Legend: 'Legend', // 秘传 8
-    ElementResonance: 'ElementResonance', // 元素共鸣 9
+    Food: 'Food', // 料理
+    Talent: 'Talent', // 天赋
+    Action: 'Action', // 战斗行动
+    Legend: 'Legend', // 秘传
+    ElementResonance: 'ElementResonance', // 元素共鸣
 } as const;
 
 export type CardSubtype = TypeConst<typeof CARD_SUBTYPE>;

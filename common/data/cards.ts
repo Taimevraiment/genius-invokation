@@ -196,15 +196,19 @@ const magicCount = (cnt: number, shareId?: number) => {
         })
 }
 
-// 311xxx：武器
-// 312xxx：圣遗物
-// 321xxx：场地
-// 322xxx：伙伴
-// 323xxx：道具
-// 330xxx：秘传
-// 331xxx：共鸣
-// 332xxx：事件
-// 333xxx：料理
+// 31xxxx：装备
+//   311xxx：武器
+//   312xxx：圣遗物
+//   313xxx：特技
+// 32xxxx：支援
+//   321xxx：场地
+//   322xxx：伙伴
+//   323xxx：道具
+// 33xxxx：事件
+//   330xxx：秘传
+//   331xxx：共鸣
+//   332xxx：事件
+//   333xxx：料理
 // 2xxxx1：天赋
 
 const allCards: Record<number, () => CardBuilder> = {
@@ -1119,6 +1123,18 @@ const allCards: Record<number, () => CardBuilder> = {
     312702: () => advancedElArtifact(178, ELEMENT_TYPE.Dendro).name('深林的记忆')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/8c84639efb7e6a9fb445daafdee873fe_8494733884893501982.png'),
 
+    313001: () => new CardBuilder(413).name('异色猎刀鳐').since('v5.0.0').spskill().costSame(0)
+        .description('')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_LiedaoYao.webp'),
+
+    313002: () => new CardBuilder(414).name('匿叶龙').since('v5.0.0').spskill().costSame(1)
+        .description('')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_GouzhuaLong.webp'),
+
+    313003: () => new CardBuilder(415).name('鳍游龙').since('v5.0.0').spskill().costSame(2)
+        .description('')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_QiyouLong.webp'),
+
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/c9f669c64195790d3ca31ee6559360ab_669337352006808767.png'),
@@ -1207,6 +1223,10 @@ const allCards: Record<number, () => CardBuilder> = {
     321021: () => new CardBuilder(389).name('中央实验室遗址').since('v4.7.0').place().costSame(1)
         .description('【我方[舍弃]或[调和]1张牌后：】此牌累积1点｢实验进展｣。每当｢实验进展｣达到3点、6点、9点时，就获得1个[万能元素骰]。然后，如果｢实验进展｣至少为9点，则弃置此牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/519cc801980bbb5907f9a25ca017d03a_4463551389207387795.png'),
+
+    321022: () => new CardBuilder(416).name('圣火竞技场').since('v5.0.0').place().costSame(2)
+        .description('【我方使用技能或特技后：】此牌累积1点｢角逐之焰｣。；【｢角逐之焰｣达到2时：】生成1个随机基础元素骰。；【达到4时：】治疗我方出战角色2点。；【达到6时：】弃置此牌，使当前的我方出战角色在2回合内造成的伤害+1。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_JingjiChang.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1340,6 +1360,10 @@ const allCards: Record<number, () => CardBuilder> = {
             return { cmds: [{ cmd: 'getCard', cnt: 1, hidxs }] }
         }),
 
+    322028: () => new CardBuilder(417).name('阿伽娅').since('v5.0.0').ally().costSame(1)
+        .description('我方使用｢特技｣时：少花费1个元素骰。(每回合1次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_AimiTa.webp'),
+
     323001: () => new CardBuilder(214).name('参量质变仪').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个｢质变进度｣。；此牌已累积3个｢质变进度｣时，弃置此牌并生成3个不同的基础元素骰。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/380f0bb73ffac88a2e8b60a1069a8246_3779576916894165131.png'),
@@ -1438,6 +1462,11 @@ const allCards: Record<number, () => CardBuilder> = {
             isValid: (event.eheros?.find(h => h.isFront)?.energy ?? 0) > 0,
             cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }],
         })),
+
+    330009: () => new CardBuilder(418).name('赦免宣告').since('v5.0.0').legend().costSame(1).canSelectHero(1)
+        .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Wuzui.webp')
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(300005)] })),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -1930,6 +1959,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('对我方｢出战角色｣造成1点[物理伤害]。本回合的结束阶段时，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9d4fdc428069d3b7f538e56c8bf222d8_660249598222625991.png')
         .handle((_c, _e, ver) => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }], status: [newStatus(ver)(303237)] })),
+
+    332039: () => new CardBuilder(419).name('龙伙伴的聚餐').since('v5.0.0').event().costSame(0)
+        .description('选择一个装备在我方角色的｢特技｣装备牌，使其[可用次数]+1。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_FeedDrogen.webp')
+        .handle((_, event) => {
+            const { selectHeros: [hidx] = [], heros = [] } = event;
+            return {
+                canSelectHero: heros.map(h => h.spskillSlot != null),
+                exec: () => {
+                    const spskillSlot = heros[hidx]?.spskillSlot;
+                    if (spskillSlot) ++spskillSlot.useCnt;
+                }
+            }
+        }),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')

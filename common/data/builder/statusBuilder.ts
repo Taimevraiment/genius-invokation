@@ -142,7 +142,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _summonId: number = -1;
     private _addition: string[] = [];
     private _isReset: boolean = true;
-    private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) | undefined;
+    private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: Version) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: Version) => boolean, number][] = [];
     private _barrierCnt: number = 1;
@@ -271,7 +271,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._isReset = false;
         return this;
     }
-    handle(handle: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined) {
+    handle(handle: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }
@@ -309,7 +309,7 @@ export class StatusBuilder extends BaseVersionBuilder {
                 if (status.roundCnt > 0) --status.roundCnt;
                 if (summon && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
-            } : this._handle;
+            } : (status: Status, event: StatusHandleEvent, ver: Version) => this._handle?.(status, event, ver) ?? {};
         return new GIStatus(this._id, this._name, description, icon, this._group, this._type,
             useCnt, maxCnt, roundCnt, handle,
             {

@@ -64,13 +64,13 @@ export class GISkill {
                 curskill.perCnt = pct;
                 return {}
             }
-            let dmgElement = handleres.dmgElement ?? DAMAGE_TYPE.Physical;
+            let dmgElement = handleres.dmgElement;
             let atkOffset = handleres.atkOffset;
             for (const ist of hero.heroStatus) {
                 const event = { ...clone(hevent), hidx: hero.hidx };
                 delete event.minusDiceSkill;
                 const stsres = ist.handle(ist, event) ?? {};
-                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && dmgElement == DAMAGE_TYPE.Physical) {
+                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
                     dmgElement = stsres.attachEl;
                 }
                 if (stsres.atkOffset) atkOffset = stsres.atkOffset;

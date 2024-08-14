@@ -368,6 +368,18 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             },
         }
     }),
+    // 圣火竞技场
+    321022: () => new SupportBuilder().collection().handle((support, _, ver) => ({
+        trigger: ['skill', 'spskill'],
+        exec: () => {
+            ++support.cnt;
+            const cmds: Cmds[] = [];
+            if (support.cnt == 2) cmds.push({ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random });
+            else if (support.cnt == 4) cmds.push({ cmd: 'heal', cnt: 2 });
+            else if (support.cnt == 6) cmds.push({ cmd: 'getStatus', status: [newStatus(ver)(301023)] });
+            return { cmds, isDestroy: support.cnt >= 6 }
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(support => ({
         trigger: ['phase-start'],
@@ -439,6 +451,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
+    // 阿圆
     322006: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
         const { card, minusDiceCard: mdc = 0 } = event;
@@ -778,6 +791,19 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         trigger: ['phase-start'],
         exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 1, hidxs: [] }], isDestroy: --support.cnt == 0 }),
     })),
+    // 阿伽娅
+    322028: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+        if (support.perCnt <= 0) return;
+        return {
+            trigger: ['spskill'],
+            isNotAddTask: true,
+            minusDiceSkill: { spskill: [0, 0, 1] },
+            exec: () => {
+                if (event.isMinusDiceSkill) --support.perCnt;
+                return { isDestroy: false }
+            }
+        }
+    }),
     // 参量质变仪
     323001: () => new SupportBuilder().collection().handle((support, event) => {
         const { isSkill = -1 } = event;

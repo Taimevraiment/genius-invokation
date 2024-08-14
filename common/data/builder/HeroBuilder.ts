@@ -21,6 +21,7 @@ export class GIHero {
     weaponSlot: Card | null = null; // 武器栏
     artifactSlot: Card | null = null; // 圣遗物栏
     talentSlot: Card | null = null; // 天赋栏
+    spskillSlot: Card | null = null; // 特技栏
     heroStatus: Status[] = []; // 角色状态
     isFront: boolean = false; // 是否为前台角色
     attachElement: PureElementType[] = []; // 附着元素

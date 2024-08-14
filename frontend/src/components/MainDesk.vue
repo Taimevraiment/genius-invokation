@@ -14,13 +14,15 @@
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(_, cidx) in opponent?.UI.willGetCard" :key="cidx"></div>
         <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willAddCard"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willAddCard" :card="card"
-          :key="cidx">
+          :isMobile="isMobile" :key="cidx">
         </handcard>
         <handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willDiscard[0]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }"
+          v-for="(card, cidx) in opponent?.UI.willDiscard[0]" :key="cidx">
         </handcard>
         <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willDiscard[1]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }"
+          v-for="(card, cidx) in opponent?.UI.willDiscard[1]" :key="cidx">
         </handcard>
       </div>
       <div class="timer" :style="{ 'background-image': currTimeBg }">
@@ -34,17 +36,19 @@
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
         {{ pileCnt[playerIdx] }}
-        <handcard class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+        <handcard class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
         </handcard>
-        <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+        <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willAddCard" :key="cidx">
         </handcard>
         <handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[0]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[0]"
+          :key="cidx">
         </handcard>
         <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[1]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[1]"
+          :key="cidx">
         </handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
@@ -145,33 +149,43 @@
           <div class="hero-equipment">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[0] }">
-              <img :src="getSvgIcon('weapon')" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot)}%`,
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot + +!!hero.spskillSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-artifact" v-if="hero.artifactSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[1] }">
-              <img :src="getSvgIcon('artifact')" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Artifact]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
+                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot + +!!hero.spskillSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-talent" v-if="hero.talentSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[2] }">
-              <img :src="getSvgIcon('talent')" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Talent]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot)}%`,
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.spskillSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
+            </div>
+            <div class="hero-spskill" v-if="hero.spskillSlot != null"
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[3] }">
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Spskill]" style="filter: brightness(0.3);" />
+              <div :style="{
+                position: 'absolute',
+                width: '100%',
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
+                borderRadius: '50%',
+              }" :class="{ 'slot-can-use': hero.spskillSlot.perCnt > 0 }"></div>
             </div>
           </div>
           <div class="attach-element">
@@ -386,30 +400,6 @@
               :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
               <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
             </handcard>
-            <!-- <div class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`"
-              @click.stop="selectChangeCard(cidx)">
-              <div class="init-card-content">
-                <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-                <span v-else>{{ card.name }}</span>
-                <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
-                  :src="getPngIcon('legend-border')" />
-              </div>
-              <div class="init-card-cost">
-                <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
-                <span>{{ card.cost }}</span>
-              </div>
-              <div class="init-card-energy" v-if="card.anydice > 0">
-                <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[ELEMENT_TYPE.Physical])" />
-                <span>{{ card.anydice }}</span>
-              </div>
-              <div class="init-card-energy" v-if="card.energy > 0">
-                <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
-                <span>{{ card.energy }}</span>
-              </div>
-              <div class="init-card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
-                <img class="dice-img" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
-              </div>
-            </div> -->
           </div>
           <button @click="changeCard" v-if="showChangeCardBtn">
             {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
@@ -426,7 +416,7 @@ import {
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
-import { ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
@@ -936,7 +926,8 @@ button:active {
 
 .hero-weapon,
 .hero-artifact,
-.hero-talent {
+.hero-talent,
+.hero-spskill {
   width: 100%;
   border: 2px solid #525252;
   border-radius: 50%;
@@ -950,7 +941,8 @@ button:active {
 
 .hero-weapon>img,
 .hero-artifact>img,
-.hero-talent>img {
+.hero-talent>img,
+.hero-spskill>img {
   width: 100%;
   border-radius: 50%;
 }

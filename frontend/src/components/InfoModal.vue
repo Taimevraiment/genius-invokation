@@ -88,8 +88,9 @@
               :key="slidx">
               <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
                 <span class="equipment-title-left">
-                  <img
-                    :src="getIcon((slot as Card).subType.includes(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).subType.includes(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
+                  <div class="equipment-icon">
+                    <img class="equipment-icon-img" :src="CARD_SUBTYPE_URL[(slot as Card).subType[0]]" />
+                  </div>
                   <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                     {{ Math.floor((slot as Card).useCnt) }}
                   </div>
@@ -190,8 +191,9 @@
           :key="slidx">
           <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
             <span class="equipment-title-left">
-              <img
-                :src="getIcon((slot as Card).subType.includes(CARD_SUBTYPE.Weapon) ? 'weapon' : (slot as Card).subType.includes(CARD_SUBTYPE.Artifact) ? 'artifact' : 'talent')" />
+              <div class="equipment-icon">
+                <img class="equipment-icon-img" :src="CARD_SUBTYPE_URL[(slot as Card).subType[0]]" />
+              </div>
               <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                 {{ Math.floor((slot as Card).useCnt) }}
                 <!-- {{ (slot as Card).useCnt.toFixed(2) }} -->
@@ -531,11 +533,6 @@ watchEffect(() => {
   }
 });
 
-// 获取图片
-const getIcon = (name: string) => {
-  return `/svg/${name}.svg`;
-}
-
 // 是否显示描述
 const showDesc = (obj: boolean[], sidx: number) => {
   isShowRule.value = false;
@@ -689,13 +686,23 @@ const showRule = (...desc: string[]) => {
   height: 25px;
 }
 
-.equipment-title-left>img {
+.equipment-icon {
+  position: relative;
   width: 25px;
   height: 25px;
   border: 2px solid #525252;
   border-radius: 50%;
   background: #d2d493;
   margin-right: 3px;
+}
+
+.equipment-icon-img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  filter: brightness(0.3);
 }
 
 .status-icon {

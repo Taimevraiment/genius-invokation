@@ -501,6 +501,7 @@ export default class GeniusInvokationClient {
             this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
             this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
             this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
+            this.isValid = preview.isValid;
         }
     }
     /**
@@ -735,15 +736,17 @@ export default class GeniusInvokationClient {
             this.cancel();
             return;
         }
-        if (!this.isValid) return;
-        // this.cancel({ onlyHeros: true });
-        this.socket.emit('sendToServer', {
-            type: ACTION_TYPE.SwitchHero,
-            cpidx: this.playerIdx,
-            heroIdxs: [hidx],
-            diceSelect: this.diceSelect,
-            flag: 'changeHero',
-        } as ActionData);
+        if (!this.isValid) {
+            this._sendTip('骰子不符合要求');
+        } else {
+            this.socket.emit('sendToServer', {
+                type: ACTION_TYPE.SwitchHero,
+                cpidx: this.playerIdx,
+                heroIdxs: [hidx],
+                diceSelect: this.diceSelect,
+                flag: 'changeHero',
+            } as ActionData);
+        }
         this.cancel();
     }
     /**

@@ -644,20 +644,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112091: (act: number = 1) => new StatusBuilder('破局').heroStatus().useCnt(1).maxCnt(3).addCnt(act)
-        .type(STATUS_TYPE.Accumulate, STATUS_TYPE.ConditionalEnchant).icon('buff').iconBg(STATUS_BG_COLOR[ELEMENT_TYPE.Hydro])
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.ConditionalEnchant).icon('buff').iconBg(STATUS_BG_COLOR[ELEMENT_TYPE.Hydro])
         .description('此状态初始具有1层｢破局｣; 重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并抓1张牌。')
         .handle((status, event) => {
             const { trigger = '' } = event;
-            const triggers: Trigger[] = ['phase-end'];
+            const triggers: Trigger[] = [];
+            if (status.useCnt < status.maxCnt) triggers.push('phase-end');
             if (status.useCnt >= 2) triggers.push('skilltype1');
             return {
                 trigger: triggers,
-                isAddTask: trigger == 'phase-end',
                 attachEl: isCdt(status.useCnt >= 2 && trigger == 'skilltype1', ELEMENT_TYPE.Hydro),
                 cmds: isCdt(trigger == 'skilltype1', [{ cmd: 'getCard', cnt: 1 }]),
                 exec: () => {
                     if (trigger == 'skilltype1') status.useCnt -= 2;
-                    else if (trigger == 'phase-end') status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
+                    else if (trigger == 'phase-end') ++status.useCnt;
                 }
             }
         }),
@@ -680,7 +680,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (heros[hidx]?.id != hid) return;
             return {
                 heal: 2,
-                hidxs: [heros.findIndex(h => h.id = hid)],
+                hidxs: [getObjIdxById(heros, hid)],
                 trigger: ['after-skilltype1'],
                 exec: (eStatus, execEvent = {}) => {
                     const { heros: hs = [] } = execEvent;
@@ -695,7 +695,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112102: () => readySkillStatus('衡平推裁', 12104),
 
     112103: () => new StatusBuilder('遗龙之荣').heroStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
-        .description('角色造成的伤害+1。【[可用次数]:{useCnt}】')
+        .description('角色造成的伤害+1。；[useCnt]')
         .handle(status => ({
             addDmg: 1,
             trigger: ['skill'],
@@ -717,7 +717,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112115: () => new StatusBuilder('狂欢值').combatStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
-        .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；【[可用次数]：{useCnt}】')
+        .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；[useCnt]')
         .handle((status, { trigger } = {}) => ({
             trigger: ['dmg', 'dmg-Swirl'],
             addDmg: 1,
@@ -2217,6 +2217,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(4).roundCnt(1).type(STATUS_TYPE.Barrier)
         .description('本回合中，所附属角色受到的伤害-1。；[useCnt]'),
 
+    300005: () => new StatusBuilder('赦免宣告(生效中)').heroStatus().icon('buff2').roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
+        .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
+        .handle((_, event) => {
+            const { heros = [], hidx = -1 } = event;
+            heros[hidx]?.heroStatus.forEach(sts => {
+                if (sts.hasType(STATUS_TYPE.NonAction)) sts.roundCnt = 0;
+            });
+        }),
+
     301018: () => new StatusBuilder('严格禁令').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]')
         .handle((status, event) => {
@@ -2256,6 +2265,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             isAddTask: true,
             exec: () => ({ cmds: [{ cmd: 'addCard', cnt: 1, card: 301020, isAttach: true }] }),
         })),
+
+    301023: () => new StatusBuilder('圣火竞技场(生效中)').heroStatus().icon('buff5').roundCnt(2).type(STATUS_TYPE.AddDamage)
+        .description('所附属角色造成的伤害+1。；[roundCnt]')
+        .handle(() => ({ addDmg: 1 })),
 
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
         .description('根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。'),
