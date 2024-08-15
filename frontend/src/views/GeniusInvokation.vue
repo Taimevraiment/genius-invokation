@@ -70,33 +70,6 @@
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
       </handcard>
-      <!-- <div v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`" class="card"
-        :class="{ selected: client.handcardsSelect == idx, 'mobile-card': isMobile }"
-        :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
-        @mouseleave="mouseleave(idx)">
-        <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
-        <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
-          :src="getPngIcon('legend-border')" />
-        <div class="card-content">
-          <span v-if="card?.UI.src?.length == 0">{{ card.name }}</span>
-          <div class="card-cost" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
-            <span>{{ card.cost - card.costChange }}</span>
-          </div>
-          <div class="card-energy" v-if="card.anydice > 0"
-            :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
-            <span>{{ Math.max(0, card.anydice - Math.max(0, card.costChange - card.cost)) }}</span>
-          </div>
-          <div class="card-energy" v-if="card.energy > 0">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
-            <span>{{ card.energy }}</span>
-          </div>
-          <div class="card-energy" v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
-            <img class="cost-img hcard" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
-          </div>
-        </div>
-      </div> -->
     </div>
 
     <div class="btn-group" v-if="client.isShowButton">
@@ -497,7 +470,7 @@ const devOps = (cidx = 0) => {
         const dcmds: Cmds[] = [{ cmd: 'discard', mode, cnt, card, hidxs }];
         cmds.push(...dcmds);
       } else {
-        disCardCnt = +op;
+        disCardCnt = -op;
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态
@@ -724,6 +697,7 @@ body {
 
 .switch-button:hover {
   cursor: pointer;
+  filter: brightness(1.2);
 }
 
 .switch-button:active {

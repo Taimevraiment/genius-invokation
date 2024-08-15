@@ -726,11 +726,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff4').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Enchant)
+    112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff3').useCnt(1)
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
         .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；[useCnt]')
         .handle((_status, event) => {
             const { heros = [], hidx = -1 } = event;
-            if (hidx == -1) return;
+            if (!heros[hidx]) return;
             const { tags } = heros[hidx];
             let res: StatusHandleRes = {};
             if (tags.includes(HERO_TAG.ArkheOusia)) res = { heal: 1, hidxs: getBackHidxs(heros) };
@@ -760,11 +761,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113031: (isTalent: boolean = false) => new StatusBuilder('鼓舞领域').combatStatus().icon('ski,2').roundCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
-        .description('【我方角色使用技能时：】如果该角色生命值至少为7，则使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；[roundCnt]')
+        .description(`【我方角色使用技能时：】${isTalent ? '' : '如果该角色生命值至少为7，则'}使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；[roundCnt]`)
         .handle((status, event) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
-            if (hidx == -1) return;
             const fHero = heros[hidx];
+            if (!fHero) return;
             return {
                 trigger: ['skill', 'after-skill'],
                 addDmgCdt: isCdt(fHero.hp >= 7 || status.isTalent, 2),
@@ -882,9 +883,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113094: () => new StatusBuilder('净焰剑狱之护').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId(113093)
         .description('【〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。')
         .handle((status, event) => {
-            const { restDmg = 0, heros = [] } = event;
+            const { restDmg = 0, heros = [], trigger = '' } = event;
             const hid = getHidById(status.id);
             const hero = getObjById(heros, hid);
+            if (trigger == 'enter') {
+                if (status.hasType(STATUS_TYPE.Barrier) && hero?.isFront) {
+                    status.type = [STATUS_TYPE.Usage];
+                }
+                return;
+            }
+            // todo trigger == change  查看所有detectStatus的有change的type一般写什么
             if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
             --status.useCnt;
             return {

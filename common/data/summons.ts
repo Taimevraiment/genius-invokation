@@ -247,13 +247,13 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: ['phase-end'],
                 tround: isCdt(hasTround, 1),
                 exec: execEvent => {
-                    const { summon: smn = summon } = execEvent;
+                    const { summon: smn = summon, heros: hs = heros } = execEvent;
                     if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
                     if (tround == 0) return { cmds: [{ cmd: 'attack' }] }
                     return {
                         cmds: [
+                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(hs), cnt: 1, isOppo: false },
                             { cmd: 'attack', cnt: 1 },
-                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(heros), cnt: 1, isOppo: false },
                         ]
                     }
                 },
@@ -292,10 +292,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver < 'v4.2.0' ? 3 : 4);
             if (cnt) {
                 triggers.push('after-skilltype1');
-                if (!isExec) {
-                    summon.isDestroy = SUMMON_DESTROY_TYPE.Used;
-                    summon.useCnt = 0;
-                }
+                if (!isExec) summon.useCnt = -100;
             }
             return {
                 trigger: triggers,

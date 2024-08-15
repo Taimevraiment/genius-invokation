@@ -196,7 +196,6 @@
               </div>
               <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                 {{ Math.floor((slot as Card).useCnt) }}
-                <!-- {{ (slot as Card).useCnt.toFixed(2) }} -->
               </div>
               <span>{{ (slot as Card).name }}</span>
             </span>

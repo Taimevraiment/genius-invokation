@@ -129,11 +129,10 @@
           </div>
           <div class="hero-freeze" style="background-color: #716446de"
             v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 2087)"></div>
-          <div class="hero-shield2" v-if="hero.hp > 0 &&
-            (hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier) && ist.useCnt > 0) ||
-              // todo 迪希雅的特殊情况要在js里处理
-              hero.isFront && combatStatuses[hgi].some(ost => ost.type.some(t => t == STATUS_TYPE.Barrier && (ost.id != 2105 || hero.id != 1209) && ost.useCnt > 0)) ||
-              (hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.useCnt ?? 0) > 0))">
+          <div class="hero-shield2" v-if="hero.hp > 0 && (
+            hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier)) ||
+            hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||
+            hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.perCnt ?? 0) > 0)">
           </div>
           <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getSvgIcon('switch')" />
           <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">
@@ -342,14 +341,16 @@
                 'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : -summonCnt[getGroup(saidx)][suidx] <= summon.useCnt ? 2 : 1}`)})`,
               }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
                 <img
-                  v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && summon.isDestroy == SUMMON_DESTROY_TYPE.Used"
+                  v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -99)"
                   :src="getSvgIcon('die')" style="height: 16px" />
                 <span>
-                  {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" : summonCnt[getGroup(saidx)][suidx] >
-                    -summon.useCnt || summon.isDestroy > 0 ? "-" : "" }}
+                  {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
+                    summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
+                      (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -99) ?
+                      "-" : "" }}
                 </span>
                 <span
-                  v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || summon.isDestroy != SUMMON_DESTROY_TYPE.Used">
+                  v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -99)">
                   {{ Math.abs(summonCnt[getGroup(saidx)][suidx]) }}
                 </span>
               </div>
@@ -545,18 +546,12 @@ const willDamages = computed<number[][][]>(() => {
       transform: `rotate(${deg}deg)`,
       zIndex: 5,
     }], { duration: 700 });
-    setTimeout(() => {
-      anime.cancel();
-      isAnimating = false;
-    }, 700);
+    setTimeout(() => anime.cancel(), 700);
+    setTimeout(() => isAnimating = false, 3000);
   }
   return dmgs;
 });
-const dmgElements = computed<ElementType[][]>(() => {
-  const dmgels = props.client.damageVO.dmgElements ?? [];
-  if (atkPidx.value == playerIdx.value) return [dmgels, []];
-  return [[], dmgels];
-});
+const dmgElements = computed<ElementType[][]>(() => wrapArr(props.client.damageVO.dmgElements ?? []));
 const willHeals = computed<number[][]>(() => wrapArr(props.client.damageVO.willHeals ?? []));
 const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wrapArr(props.client.damageVO.elTips ?? []));
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));

@@ -2293,7 +2293,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const { skills: [, { useCnt = 0 }] } = heros[hidx];
             const isMinus = useCnt == 1 || (ver >= 'v4.7.0' && useCnt == 2);
-            return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0] }) }
+            return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }) }
         }),
 
     213021: () => new CardBuilder(78).name('交叉火力').talent(1).costPyro(3).costPyro(4, 'v4.2.0')
