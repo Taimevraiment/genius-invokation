@@ -330,8 +330,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 const { heros = [] } = event;
                 const talent = getObjById(heros, getHidById(summon.id))?.talentSlot;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);
-                if (talent && talent.useCnt > 0) {
-                    --talent.useCnt;
+                if (talent && talent.perCnt > 0) {
+                    --talent.perCnt;
                     return { cmds: [{ cmd: 'attack', cnt: smn.damage + 2 }] }
                 }
                 return { cmds: [{ cmd: 'attack' }] }

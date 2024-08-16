@@ -18,6 +18,7 @@ export type CardHandleEvent = {
     combatStatus?: Status[],
     eheros?: Hero[],
     eCombatStatus?: Status[],
+    eAttachments?: ElementType[][],
     epile?: Card[],
     hidxs?: number[],
     reset?: boolean,
@@ -102,7 +103,7 @@ const jiliWeapon = (shareId: number) => {
         .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】生成1个此角色类型的元素骰(每回合1次)。')
         .weapon().costSame(3).perCnt(1).handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
-            const element = heros[hidx].element == ELEMENT_TYPE.Physical ? DICE_COST_TYPE.Omni : heros[hidx].element;
+            const element = heros[hidx]?.element == ELEMENT_TYPE.Physical ? DICE_COST_TYPE.Omni : heros[hidx]?.element;
             return {
                 addDmg: 1,
                 trigger: isCdt(card.perCnt > 0, ['skilltype2']),
@@ -2346,15 +2347,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/161a55bb8e3e5141557f38536579e897_3725263134237782114.png')
         .handle((_, event) => {
             const { heros = [], hidxs = [] } = event;
-            if ((heros[hidxs[0]]?.hp ?? 10) <= 6) return { trigger: ['phase-end'], execmds: [{ cmd: 'heal', cnt: 2, hidxs }] }
+            if ((heros[hidxs[0]]?.hp ?? 10) <= 6) {
+                return {
+                    trigger: ['phase-end'],
+                    execmds: [{ cmd: 'heal', cnt: 2, hidxs }]
+                }
+            }
         }),
 
     213101: () => new CardBuilder(290).name('完场喝彩').since('v4.3.0').talent(1).costPyro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，【hro】自身和【smn113101】对具有‹3火元素附着›的角色造成的伤害+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/be471c09e294aaf12766ee17b624ddcc_5013564012859422460.png')
         .handle((card, event) => {
-            const { heros = [], eheros = [], hidxs: [hidx] = [] } = event;
-            const isAttachPyro = eheros.find(h => h.isFront)?.attachElement.includes(ELEMENT_TYPE.Pyro);
+            const { heros = [], eAttachments = [], hidxs: [hidx] = [], ehidx = -1 } = event;
+            const isAttachPyro = eAttachments[ehidx]?.includes(ELEMENT_TYPE.Pyro);
             if (card.perCnt > 0 && heros[hidx]?.isFront && isAttachPyro) {
                 return {
                     trigger: ['skill'],
@@ -2399,8 +2405,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹4雷元素›角色获得1点[充能]。(出战角色优先)', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7b07468873ea01ee319208a3e1f608e3_1769364352128477547.png')
         .handle((card, event, ver) => {
-            const { heros = [], hidxs: [fhidx] = [], isSkill = -1 } = event;
-            if (isSkill != 1 || (ver >= 'v4.2.0' && card.perCnt <= 0)) return;
+            const { heros = [], hidxs: [fhidx] = [] } = event;
+            if (ver >= 'v4.2.0' && card.perCnt <= 0) return;
             const nhidxs: number[] = [];
             for (let i = 0; i < heros.length; ++i) {
                 const hidx = (i + fhidx) % heros.length;
@@ -2412,7 +2418,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
             if (nhidxs.length == 0) return;
             return {
-                trigger: ['skill'],
+                trigger: ['skilltype2'],
                 execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs }],
                 exec: () => { --card.perCnt },
             }

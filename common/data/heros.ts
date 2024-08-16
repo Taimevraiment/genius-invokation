@@ -446,7 +446,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1211: () => new HeroBuilder(364).name('芙宁娜').since('v4.7.0').fontaine().tags(HERO_TAG.ArkheOusia).hydro().sword()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e958e09d88022d4a18633be9bf51b399.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/fa0204761d8dae8b0dbaac46a494752f.png')
-        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e330408cba4b278428656f4e5c7a8915.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e330408cba4b278428656f4e5c7a8915.png',
+            'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Char_AvatarIcon_FurinaOusia.webp')
         .normalSkill(new NormalSkillBuilder('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
             .handle(event => {
                 const { hero: { skills: [skill1] }, hcards = [] } = event;
@@ -510,7 +511,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('美妙旅程').description('{dealDmg}，生成【sts113031】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/13/avxfgtbz3r8qu7zk71dcr8kk3e949zi.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6cdff59fc3701119002ab7cb38157a2c_8058649649755407178.png')
-                .burst(2).damage(2).cost(4).handle((event, ver) => ({ statusPre: [newStatus(ver)(113031, event.isTalent)] }))
+                .burst(2).damage(2).cost(4).handle((event, ver) => ({ statusAfter: [newStatus(ver)(113031, event.isTalent)] }))
         ),
 
     1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').mondstadt().pyro().bow()
@@ -658,7 +659,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png')
                 .elemental().damage(2).cost(3).handle((_, ver) => ({
-                    cmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }],
+                    cmds: [{ cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard }],
                     status: [newStatus(ver)(113121)],
                 })),
             new SkillBuilder('叛逆刮弦').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]; [舍弃]我方所有手牌，生成【sts113123】。')

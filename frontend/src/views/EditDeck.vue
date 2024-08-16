@@ -168,7 +168,7 @@
             </div>
         </div>
     </div>
-    <InfoModal :info="modalInfo" :isMobile="isMobile" />
+    <InfoModal :info="modalInfo" :isMobile="isMobile" :isInGame="false" />
 </template>
 
 <script setup lang="ts">

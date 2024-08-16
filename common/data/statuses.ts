@@ -880,10 +880,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113092: () => readySkillStatus('焚落踢', 13095).icon('ski,2'),
 
-    113094: () => new StatusBuilder('净焰剑狱之护').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId(113093)
+    113094: () => new StatusBuilder('净焰剑狱之护').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Usage).summonId(113093)
         .description('【〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。')
         .handle((status, event) => {
-            const { restDmg = 0, heros = [], trigger = '' } = event;
+            const { restDmg = 0, heros = [], hidx = -1, trigger = '' } = event;
             const hid = getHidById(status.id);
             const hero = getObjById(heros, hid);
             if (trigger == 'enter') {
@@ -892,7 +892,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 }
                 return;
             }
-            // todo trigger == change  查看所有detectStatus的有change的type一般写什么
+            if (trigger == 'change-to') {
+                const toHero = heros[hidx];
+                if (status.hasType(STATUS_TYPE.Barrier) && toHero.id == hid) {
+                    status.type = [STATUS_TYPE.Usage];
+                } else {
+                    status.type = [STATUS_TYPE.Barrier, STATUS_TYPE.Usage];
+                }
+                return;
+            }
             if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
             --status.useCnt;
             return {

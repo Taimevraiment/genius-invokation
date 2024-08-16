@@ -244,7 +244,9 @@ export class StatusBuilder extends BaseVersionBuilder {
         return this;
     }
     icon(icon: string, version: Version = 'vlatest') {
-        this._icon.push([version, icon]);
+        const cicon = this._icon.find(([ver]) => ver == version);
+        if (cicon) cicon[1] = icon;
+        else this._icon.push([version, icon]);
         return this;
     }
     explains(...explains: string[]) {

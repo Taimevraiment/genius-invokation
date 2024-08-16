@@ -302,9 +302,10 @@ import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
 import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
 
-const props = defineProps(['info', 'isMobile']);
+const props = defineProps(['info', 'isMobile', 'isInGame']);
 
 const isMobile = computed<boolean>(() => props.isMobile);
+const isInGame = computed<boolean>(() => !!props.isInGame); // 是否在游戏中显示(用于一些游戏实时数据的显示)
 const version = computed<Version>(() => props.info.version); // 版本
 const isShow = computed<boolean>(() => props.info.isShow); // 是否显示
 const type = computed<InfoType>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物
@@ -347,6 +348,7 @@ const wrapExplCtt = (content: string) => {
 const wrapDesc = (desc: string, obj?: ExplainContent): string => {
   const wrapName = (_: string, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`;
   let res = desc.slice()
+    .replace(/〔(.*?)〕/g, isInGame ? '<span style="color:#ebc000;">$1</span>' : '')
     .replace(/(?<!\\)〖(.*?)〗/g, wrapName)
     .replace(/(?<!\\)【(.*?)】/g, wrapName)
     .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
@@ -404,6 +406,7 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
 // 下划线（有规则解释，如果可能前面会有图标）：[]
 // 解析名字并加入解释：〖〗【】
 // 有某些特殊颜色（如 冰/水/火/雷）：‹nxxx› n为字体元素颜色 + 前面的图标 xxx为内容
+// 卡牌上一些实时信息：〔〕
 // 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
 const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {

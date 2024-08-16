@@ -124,7 +124,7 @@
       </div>
     </div>
 
-    <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile"
+    <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" :isInGame="true"
       style="z-index: 10" />
 
     <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
@@ -470,7 +470,7 @@ const devOps = (cidx = 0) => {
         const dcmds: Cmds[] = [{ cmd: 'discard', mode, cnt, card, hidxs }];
         cmds.push(...dcmds);
       } else {
-        disCardCnt = -op;
+        disCardCnt = +op;
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态

@@ -271,6 +271,7 @@
                 'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
                 // 'background-image': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
                 'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
+                color: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '#ffb5b5' : (willHp[hgi][hidx] ?? 0) <= 0 ? 'white' : '#c6ffb5'}`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
                   :src="getPngIcon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp')"
@@ -338,7 +339,7 @@
                 // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
                 'will-add': true,
               }" :style="{
-                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : -summonCnt[getGroup(saidx)][suidx] <= summon.useCnt ? 2 : 1}`)})`,
+                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -99) ? 1 : 2}`)})`,
               }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
                 <img
                   v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -99)"
