@@ -27,7 +27,8 @@ export function clone<T>(obj: T): T {
  * @param res 返回的值
  * @param elres 否则返回的值
  */
-export const isCdt = <T>(cdt: boolean | null | undefined, res: T, elres?: T): T | undefined => {
+export const isCdt = <T>(cdt: boolean | null | undefined | (() => boolean | null | undefined), res: T, elres?: T): T | undefined => {
+    if (typeof cdt == 'function') cdt = cdt();
     if (cdt) return res;
     if (elres == undefined) return undefined;
     return elres;

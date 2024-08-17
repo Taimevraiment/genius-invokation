@@ -4,7 +4,7 @@ import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
-import { BaseVersionBuilder } from "./baseBuilder.js";
+import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GIStatus {
     id: number; // 唯一id
@@ -127,15 +127,15 @@ export class GIStatus {
 export class StatusBuilder extends BaseVersionBuilder {
     private _id: number = -1;
     private _name: string = '无';
-    private _description: [Version, string][] = [];
+    private _description: VersionMap<string> = new VersionMap();
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
-    private _useCnt: [Version, number][] = [];
-    private _maxCnt: [Version, number][] = [];
+    private _useCnt: VersionMap<number> = new VersionMap();
+    private _maxCnt: VersionMap<number> = new VersionMap();
     private _addCnt: number = 0;
-    private _perCnt: [Version, number][] = [];
-    private _roundCnt: [Version, number][] = [];
-    private _icon: [Version, string][] = [];
+    private _perCnt: VersionMap<number> = new VersionMap();
+    private _roundCnt: VersionMap<number> = new VersionMap();
+    private _icon: VersionMap<string> = new VersionMap();
     private _explains: string[] = [];
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
@@ -156,9 +156,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         return this;
     }
     description(description: string, version: Version = 'vlatest') {
-        const desc = this._description.find(([ver]) => ver == version);
-        if (desc) desc[1] = description;
-        else this._description.push([version, description]);
+        this._description.set([version, description]);
         return this;
     }
     heroStatus() {
@@ -193,18 +191,14 @@ export class StatusBuilder extends BaseVersionBuilder {
     useCnt(useCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
     useCnt(useCnt: number, version: Version | boolean = 'vlatest', cdt: boolean = true) {
         if (typeof version == 'boolean') {
-            if (version) {
-                const unt = this._useCnt.find(([ver]) => ver == 'vlatest');
-                if (unt) unt[1] = useCnt;
-                else this._useCnt.push(['vlatest', useCnt]);
-            }
+            if (version) this._useCnt.set(['vlatest', useCnt]);
         } else if (cdt) {
-            this._useCnt.push([version, useCnt]);
+            this._useCnt.set([version, useCnt]);
         }
         return this;
     }
     maxCnt(maxCnt: number, version: Version = 'vlatest') {
-        this._maxCnt.push([version, maxCnt]);
+        this._maxCnt.set([version, maxCnt]);
         return this;
     }
     addCnt(addCnt?: number) {
@@ -215,38 +209,24 @@ export class StatusBuilder extends BaseVersionBuilder {
     perCnt(perCnt: number, ver?: Version, cdt?: boolean): StatusBuilder;
     perCnt(perCnt: number, cdt: boolean | Version = true, cdt2: boolean = true) {
         if (typeof cdt == 'boolean') {
-            const pct = this._perCnt.find(([ver]) => ver == 'vlatest');
-            if (cdt) {
-                if (pct) pct[1] = perCnt;
-                else this._perCnt.push(['vlatest', perCnt]);
-            }
+            if (cdt) this._perCnt.set(['vlatest', perCnt]);
             return this;
         }
-        if (cdt2) {
-            const pct = this._perCnt.find(([ver]) => ver == cdt);
-            if (pct) pct[1] = perCnt;
-            else this._perCnt.push([cdt, perCnt]);
-        }
+        if (cdt2) this._perCnt.set([cdt, perCnt]);
         return this;
     }
     roundCnt(roundCnt: number, cdt: boolean): StatusBuilder;
     roundCnt(roundCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
     roundCnt(roundCnt: number, version: Version | boolean = 'vlatest', cdt: boolean = true) {
         if (typeof version == 'boolean') {
-            if (version) {
-                const unt = this._roundCnt.find(([ver]) => ver == 'vlatest');
-                if (unt) unt[1] = roundCnt;
-                else this._roundCnt.push(['vlatest', roundCnt]);
-            }
+            if (version) this._roundCnt.set(['vlatest', roundCnt]);
         } else if (cdt) {
-            this._roundCnt.push([version, roundCnt]);
+            this._roundCnt.set([version, roundCnt]);
         }
         return this;
     }
     icon(icon: string, version: Version = 'vlatest') {
-        const cicon = this._icon.find(([ver]) => ver == version);
-        if (cicon) cicon[1] = icon;
-        else this._icon.push([version, icon]);
+        this._icon.set([version, icon]);
         return this;
     }
     explains(...explains: string[]) {
@@ -293,13 +273,13 @@ export class StatusBuilder extends BaseVersionBuilder {
         return this;
     }
     done() {
-        const description = this._getValByVersion(this._description, '');
-        const icon = this._getValByVersion(this._icon, '');
-        const perCnt = this._getValByVersion(this._perCnt, 0);
-        const useCnt = this._getValByVersion(this._useCnt, -1);
-        const roundCnt = this._getValByVersion(this._roundCnt, -1);
+        const description = this._description.get(this._curVersion, '');
+        const icon = this._icon.get(this._curVersion, '');
+        const perCnt = this._perCnt.get(this._curVersion, 0);
+        const useCnt = this._useCnt.get(this._curVersion, -1);
+        const roundCnt = this._roundCnt.get(this._curVersion, -1);
         const smnId = this._summonId == -2 ? this._id : this._summonId;
-        const maxCnt = this._getValByVersion(this._maxCnt, 0);
+        const maxCnt = this._maxCnt.get(this._curVersion, 0);
         this._typeCdt.forEach(([cdt, types]) => {
             if (cdt(this._version)) this._type.push(...types);
         });

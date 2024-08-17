@@ -734,14 +734,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c6196a177b92302347a85c6e51fde46a.png')
         .normalSkill(new NormalSkillBuilder('云来剑法'))
         .skills(
-            new SkillBuilder('星斗归位').description('{dealDmg}，生成手牌【crd114031】')
+            new SkillBuilder('星斗归位').description('{dealDmg}，生成手牌【crd114031】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c351b44d3163278214f6f9db09c020fd_3304441541356399096.png')
                 .elemental().damage(3).cost(3).handle((event, ver) => {
                     const { isTalent = false, card, hcards = [] } = event;
-                    const hasCard114031 = hasObjById(hcards, 114031);
+                    const hasCard114031 = hasObjById(hcards, 114031) || card?.id == 114031;
                     return {
-                        status: isCdt(card?.id == 114031 || hasCard114031, [newStatus(ver)(114032, +isTalent)]),
+                        status: isCdt(hasCard114031, [newStatus(ver)(114032, +isTalent)]),
                         cmds: isCdt(hasCard114031, [{ cmd: 'discard', card: 114031 }], [{ cmd: 'getCard', cnt: 1, card: 114031 }]),
                     }
                 }),

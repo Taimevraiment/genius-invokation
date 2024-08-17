@@ -409,9 +409,9 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
 // 卡牌上一些实时信息：〔〕
 // 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
-const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {
+const wrapExpl = (expls: ExplainContent[], memo: number | number[]): string[][] => {
   const container: string[][] = [];
-  if (!Array.isArray(memo)) memo = [];
+  if (typeof memo == 'number') memo = [memo];
   for (let expl of expls) {
     const explains: string[] = [];
     if (typeof expl == 'string') {
@@ -419,8 +419,8 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
       if (nctt.name == '' || 'skills' in nctt || 'default' in nctt) continue;
       expl = nctt;
     }
-    if (memo.includes(expl.name)) continue;
-    memo.push(expl.name);
+    if (memo.includes(expl.id)) continue;
+    memo.push(expl.id);
     const nameEl = `<span style="font-weight:bold;color:white;">${expl.name}</span>`;
     if ('costType' in expl) { // Card
       explains.push(`
@@ -485,24 +485,21 @@ watchEffect(() => {
   ruleExplain.value = [];
   if (info.value && 'costType' in info.value) {
     info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc));
-    skillExplain.value = wrapExpl(info.value.UI.explains, info.value.name);
+    skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id);
   }
-  // if (info.value && 'card' in info.value) {
-  //   info.value.card.UI.descriptions = info.value.card.UI.description.split('；').map(desc => wrapDesc(desc));
-  // }
   if (info.value && 'maxUse' in info.value) {
-    smnExplain.value = wrapExpl(info.value.UI.explains, info.value.name);
+    smnExplain.value = wrapExpl(info.value.UI.explains, info.value.id);
   }
   if (info.value && 'heroStatus' in info.value) {
     heroStatusExplain.value = [];
     combatStatusExplain.value = [];
     info.value.heroStatus.forEach(ist => {
       ist.UI.descriptions = ist.UI.description.split('；').map(desc => wrapDesc(desc, ist));
-      heroStatusExplain.value.push(wrapExpl(ist.UI.explains, ist.name));
+      heroStatusExplain.value.push(wrapExpl(ist.UI.explains, ist.id));
     });
     combatStatus.value.forEach(ost => {
       ost.UI.descriptions = ost.UI.description.split('；').map(desc => wrapDesc(desc, ost));
-      combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.name));
+      combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.id));
     });
     slotExplain.value = [];
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].forEach(slot => {
@@ -512,7 +509,7 @@ watchEffect(() => {
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
-        slotExplain.value.push(wrapExpl(slot.UI.explains, slot.name).slice(isActionTalent ? 1 : 0));
+        slotExplain.value.push(wrapExpl(slot.UI.explains, slot.id).slice(isActionTalent ? 1 : 0));
       }
     });
     skills.value = [];
@@ -524,7 +521,7 @@ watchEffect(() => {
     }
     skills.value.forEach(skill => {
       skill.UI.descriptions = skill.UI.description.split('；').map(desc => wrapDesc(desc, skill));
-      skillExplain.value.push(wrapExpl(skill.UI.explains, skill.name));
+      skillExplain.value.push(wrapExpl(skill.UI.explains, skill.id));
     });
     isHeroStatus.value = new Array(info.value.heroStatus.length).fill(false);
     isCombatStatus.value = new Array(combatStatus.value.length).fill(false);

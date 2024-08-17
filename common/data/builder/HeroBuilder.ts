@@ -1,6 +1,6 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
-import { BaseBuilder } from "./baseBuilder.js";
+import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
 
 export class GIHero {
@@ -62,7 +62,7 @@ export class GIHero {
 
 export class HeroBuilder extends BaseBuilder {
     private _tags: HeroTag[] = [];
-    private _maxHp: [Version, number][] = [];
+    private _maxHp: VersionMap<number> = new VersionMap();
     private _element: ElementType | undefined;
     private _weaponType: WeaponType = WEAPON_TYPE.Other;
     private _skills: SkillBuilder[] = [];
@@ -83,7 +83,7 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     maxHp(maxHp: number, version: Version = 'vlatest') {
-        this._maxHp.push([version, maxHp]);
+        this._maxHp.set([version, maxHp]);
         return this;
     }
     monster() {
@@ -191,7 +191,7 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     done() {
-        const maxHp = this._getValByVersion(this._maxHp, 10);
+        const maxHp = this._maxHp.get(this._curVersion, 10);
         const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
         const skills: (SkillBuilder | NormalSkillBuilder)[] = this._skills.map(skill => skill.costElement(element));
         if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType).costElement(element));

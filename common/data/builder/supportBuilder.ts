@@ -1,7 +1,7 @@
 import { Card, Support } from "../../../typing";
 import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import { SupportHandleEvent, SupportHandleRes } from "../supports.js";
-import { BaseVersionBuilder } from "./baseBuilder.js";
+import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISupport {
     entityId: number = -1; // 实体id
@@ -42,7 +42,7 @@ export class GISupport {
 export class SupportBuilder extends BaseVersionBuilder {
     private _card: Card | undefined;
     private _cnt: number = 0;
-    private _perCnt: [Version, number][] = [];
+    private _perCnt: VersionMap<number> = new VersionMap();
     private _type: SupportType = SUPPORT_TYPE.Permanent;
     private _heal: number = 0;
     private _handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined) | undefined = () => ({});
@@ -57,7 +57,7 @@ export class SupportBuilder extends BaseVersionBuilder {
         return this;
     }
     perCnt(perCnt: number, version: Version = 'vlatest') {
-        this._perCnt.push([version, perCnt]);
+        this._perCnt.set([version, perCnt]);
         return this;
     }
     round(cnt: number) {
@@ -85,7 +85,7 @@ export class SupportBuilder extends BaseVersionBuilder {
     }
     done() {
         if (this._card == undefined) throw new Error("SupportBuilder: card is undefined");
-        const perCnt = this._getValByVersion(this._perCnt, 0);
+        const perCnt = this._perCnt.get(this._curVersion, 0);
         return new GISupport(this._card, this._cnt, perCnt, this._type, this._handle, this._heal, this._version);
     }
 }

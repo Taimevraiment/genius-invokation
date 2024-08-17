@@ -818,10 +818,8 @@ export default class GeniusInvokationClient {
     _sendTip(tip: string) {
         if (tip == '') return;
         if (this.tip != '') this.tip = '';
-        setTimeout(() => {
-            this.tip = tip;
-            setTimeout(() => this.tip = '', 1200);
-        }, 100);
+        this.tip = tip;
+        setTimeout(() => this.tip = '', 1200);
     }
     /**
      * 重置角色选择

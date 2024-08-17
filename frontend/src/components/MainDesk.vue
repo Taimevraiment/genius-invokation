@@ -10,18 +10,20 @@
           <div>{{ diceCnt[playerIdx ^ 1] }}</div>
         </span>
         {{ pileCnt[playerIdx ^ 1] }}
-        <div class="will-getcard-oppo" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willGetCard"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(_, cidx) in opponent?.UI.willGetCard" :key="cidx"></div>
+        <handcard class="will-getcard-oppo" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willGetCard"
+          :style="{ left: `${getLeft(cidx, opponent?.UI.willGetCard.length)}px` }"
+          v-for="(card, cidx) in opponent?.UI.willGetCard" :card="card" :isMobile="isMobile" :key="cidx">
+        </handcard>
         <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willAddCard"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in opponent?.UI.willAddCard" :card="card"
-          :isMobile="isMobile" :key="cidx">
+          :style="{ left: `${getLeft(cidx, opponent?.UI.willAddCard.length)}px` }"
+          v-for="(card, cidx) in opponent?.UI.willAddCard" :card="card" :isMobile="isMobile" :key="cidx">
         </handcard>
         <handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }"
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[0].length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willDiscard[0]" :key="cidx">
         </handcard>
         <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }"
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[1].length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willDiscard[1]" :key="cidx">
         </handcard>
       </div>
@@ -37,18 +39,20 @@
         </span>
         {{ pileCnt[playerIdx] }}
         <handcard class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
+          :style="{ left: `${getLeft(cidx, player.UI.willGetCard.length)}px` }"
+          v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
         </handcard>
         <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
-          :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willAddCard" :key="cidx">
+          :style="{ left: `${getLeft(cidx, player.UI.willAddCard.length)}px` }"
+          v-for="(card, cidx) in player.UI.willAddCard" :key="cidx">
         </handcard>
         <handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[0]"
-          :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player.UI.willDiscard[0].length)}px` }"
+          v-for="(card, cidx) in player.UI.willDiscard[0]" :key="cidx">
         </handcard>
         <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${cidx * 70 - 70}px` }" v-for="(card, cidx) in player.UI.willDiscard[1]"
-          :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard[1].length)}px` }"
+          v-for="(card, cidx) in player.UI.willDiscard[1]" :key="cidx">
         </handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
@@ -271,7 +275,7 @@
                 'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
                 // 'background-image': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
                 'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
-                color: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '#ffb5b5' : (willHp[hgi][hidx] ?? 0) <= 0 ? 'white' : '#c6ffb5'}`,
+                color: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '#ffdada' : (willHp[hgi][hidx] ?? 0) <= 0 ? 'white' : '#e0ffd6'}`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
                   :src="getPngIcon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp')"
@@ -624,6 +628,13 @@ const getEnergyIcon = (isCharged: boolean = false) => {
 // 获取过滤器
 const getSvgFilter = (statusColor: StatusBgColor) => {
   return `url(/svg/filter.svg#status-color-${STATUS_BG_COLOR_CODE[STATUS_BG_COLOR_KEY[statusColor]]})`;
+}
+
+// 摸牌、弃牌、加牌等动画，牌的位置计算函数
+const getLeft = (cidx: number, len: number) => {
+  const willCardGap = isMobile.value ? 50 : 70;
+  const initLeftOffset = isMobile.value ? cidx : cidx - 1;
+  return initLeftOffset * willCardGap - len * willCardGap / 2;
 }
 
 watchEffect(() => {
@@ -1591,40 +1602,6 @@ button:active {
   height: 30px;
   border-radius: 10px;
 }
-
-/* .init-card-cost {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 20px;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-  color: white;
-  font-weight: bold;
-  -webkit-text-stroke: 1px black;
-}
-
-.init-card-cost>span,
-.init-card-energy>span {
-  position: absolute;
-  left: 5px;
-  top: 0;
-  font-size: medium;
-}
-
-.init-card-energy {
-  position: absolute;
-  left: 0;
-  top: 35px;
-  width: 20px;
-  height: 20px;
-  text-align: center;
-  line-height: 20px;
-  color: white;
-  font-weight: bold;
-  -webkit-text-stroke: 1px black;
-} */
 
 .init-select {
   position: absolute;

@@ -3,7 +3,7 @@ import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERS
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
-import { BaseVersionBuilder } from "./baseBuilder.js";
+import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISummon {
     id: number; // 唯一id
@@ -101,15 +101,15 @@ export const phaseEndAtk = (summon: Summon, healHidxs?: number[]): SummonHandleR
 export class SummonBuilder extends BaseVersionBuilder {
     private _id: number = -1;
     private _name: string;
-    private _description: [Version, string][] = [];
+    private _description: VersionMap<string> = new VersionMap();
     private _src: string = '';
-    private _useCnt: [Version, number][] = [];
+    private _useCnt: VersionMap<number> = new VersionMap();
     private _maxUse: number = 0;
     private _shieldOrHeal: number = 0;
-    private _damage: [Version, number][] = [];
+    private _damage: VersionMap<number> = new VersionMap();
     private _pdmg: number = 0;
     private _element: ElementType | undefined;
-    private _perCnt: [Version, number][] = [];
+    private _perCnt: VersionMap<number> = new VersionMap();
     private _isTalent: boolean = false;
     private _addition: string[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
@@ -127,7 +127,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         return this;
     }
     description(description: string, version: Version = 'vlatest') {
-        this._description.push([version, description]);
+        this._description.set([version, description]);
         return this;
     }
     src(src: string) {
@@ -135,7 +135,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         return this;
     }
     useCnt(useCnt: number, version: Version = 'vlatest') {
-        this._useCnt.push([version, useCnt]);
+        this._useCnt.set([version, useCnt]);
         return this;
     }
     maxUse(maxUse: number) {
@@ -151,7 +151,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         return this;
     }
     damage(damage: number, version: Version = 'vlatest') {
-        this._damage.push([version, damage]);
+        this._damage.set([version, damage]);
         return this;
     }
     physical() {
@@ -191,7 +191,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         return this;
     }
     perCnt(perCnt: number, version: Version = 'vlatest') {
-        this._perCnt.push([version, perCnt]);
+        this._perCnt.set([version, perCnt]);
         return this;
     }
     talent(isTalent: boolean) {
@@ -235,12 +235,12 @@ export class SummonBuilder extends BaseVersionBuilder {
         return this;
     }
     done() {
-        const useCnt = this._getValByVersion(this._useCnt, 0);
+        const useCnt = this._useCnt.get(this._curVersion, 0);
         const maxUse = this._maxUse || useCnt;
-        const description = this._getValByVersion(this._description, '');
+        const description = this._description.get(this._curVersion, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
-        const perCnt = this._getValByVersion(this._perCnt, 0);
-        const damage = this._getValByVersion(this._damage, 0);
+        const perCnt = this._perCnt.get(this._curVersion, 0);
+        const damage = this._damage.get(this._curVersion, 0);
         const stsId = this._statusId == -2 ? this._id : this._statusId;
         return new GISummon(this._id, this._name, description, this._src, useCnt, maxUse,
             this._shieldOrHeal, damage, element, this._handle,

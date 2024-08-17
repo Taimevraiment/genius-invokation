@@ -2,7 +2,7 @@ import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE, STATUS_TYPE, SkillType, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { MAX_USE_COUNT } from "../constant/gameOption.js";
+import { MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
@@ -984,7 +984,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     114032: (isTalent: boolean = false) => enchantStatus(ELEMENT_TYPE.Electro, +isTalent).roundCnt(2 + +isTalent).talent(isTalent),
 
-    114041: () => new StatusBuilder('启途誓使').heroStatus().icon('ski,2').roundCnt(0).maxCnt(100).type(STATUS_TYPE.Enchant, STATUS_TYPE.Accumulate)
+    114041: () => new StatusBuilder('启途誓使').heroStatus().icon('ski,2').useCnt(0).maxCnt(MAX_STATUS_COUNT)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Enchant, STATUS_TYPE.Accumulate)
         .description('【结束阶段：】累积1级｢凭依｣，如果｢凭依｣级数至少为8，则｢凭依｣级数-6。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2。')
         .description('【结束阶段：】累积1级｢凭依｣。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2;；大于等于6级：｢凭依｣级数-4。', 'v4.8.0')
         .handle((status, event, ver) => {
@@ -1002,8 +1003,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     else if (trigger == 'skilltype3') status.useCnt += 2;
                     if (ver < 'v4.8.0') {
                         if (status.useCnt >= 6) status.useCnt -= 4;
-                    } else {
-                        if (trigger == 'phase-end' && status.useCnt >= 8) status.useCnt -= 6;
+                    } else if (trigger == 'phase-end' && status.useCnt >= 8) {
+                        status.useCnt -= 6;
                     }
                 }
             }

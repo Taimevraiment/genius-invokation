@@ -5,7 +5,7 @@ import {
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { clone } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
-import { BaseVersionBuilder } from "./baseBuilder.js";
+import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISkill {
     id: number = -1; // 唯一id
@@ -26,7 +26,6 @@ export class GISkill {
     useCntPerRound: number = 0; // 本回合技能已使用次数
     perCnt: number = 0; // 每回合使用次数
     useCnt: number = 0; // 整局技能使用次数
-    rskid: number = -1; // 准备技能的id
     UI: {
         src: string, // 图片url
         description: string; // 技能描述
@@ -35,13 +34,13 @@ export class GISkill {
     };
     constructor(
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
-        options: { id?: number, ac?: number, ec?: number, de?: ElementType, rskid?: number, pct?: number, expl?: string[], ver?: Version } = {},
+        options: { id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version } = {},
         src?: string | string[], handle?: (hevent: SkillHandleEvent, version: Version) => SkillHandleRes | undefined
     ) {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, rskid = -1, pct = 0, expl = [], ver = VERSION[0] } = options;
+        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0] } = options;
         costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         this.UI = {
@@ -51,7 +50,6 @@ export class GISkill {
             descriptions: [],
         };
         if (id > -1) this.id = id;
-        this.rskid = rskid;
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.handle = hevent => {
@@ -93,17 +91,16 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _name: string = '';
     private _id: number = -1;
     private _type: SkillType = SKILL_TYPE.Passive;
-    private _damage: [Version, number][] = [];
+    private _damage: VersionMap<number> = new VersionMap();
     private _dmgElement: ElementType | undefined;
-    private _cost: [Version, number][] = [];
+    private _cost: VersionMap<number> = new VersionMap();
     private _costElement: SkillCostType | undefined;
     private _anyCost: number = 0;
-    private _energyCost: [Version, number][] = [];
+    private _energyCost: VersionMap<number> = new VersionMap();
     private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;
     private _perCnt: number = 0;
-    private _rskidx: number = -1;
     private _src: string[] = [];
-    private _description: [Version, string][] = [];
+    private _description: VersionMap<string> = new VersionMap();
     private _explains: string[] = [];
     private _readySkillRound: number = 0;
     constructor(name: string) {
@@ -124,20 +121,20 @@ export class SkillBuilder extends BaseVersionBuilder {
     }
     burst(energy: number = 0, version: Version = 'vlatest') {
         this._type = SKILL_TYPE.Burst;
-        this._energyCost.push([version, energy]);
+        this._energyCost.set([version, energy]);
         return this;
     }
     readySkill(round: number = 1) {
-        this._energyCost.push(['vlatest', -2]);
+        this._energyCost.set(['vlatest', -2]);
         this._readySkillRound = round;
         return this;
     }
     energy(energy: number) {
-        this._energyCost.push(['vlatest', energy]);
+        this._energyCost.set(['vlatest', energy]);
         return this;
     }
     damage(damage: number, version: Version = 'vlatest') {
-        this._damage.push([version, damage]);
+        this._damage.set([version, damage]);
         return this;
     }
     dmgElement(element: ElementType) {
@@ -145,7 +142,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         return this;
     }
     cost(cost: number, version: Version = 'vlatest') {
-        this._cost.push([version, cost]);
+        this._cost.set([version, cost]);
         return this;
     }
     costElement(element: ElementType) {
@@ -191,16 +188,12 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._perCnt = pct;
         return this;
     }
-    rskidx(rskidx: number) {
-        this._rskidx = rskidx;
-        return this;
-    }
     src(...srcs: string[]) {
         this._src.push(...srcs.filter(v => v != ''));
         return this;
     }
     description(description: string, version: Version = 'vlatest') {
-        this._description.push([version, description]);
+        this._description.set([version, description]);
         return this;
     }
     explain(...explains: string[]) {
@@ -211,12 +204,12 @@ export class SkillBuilder extends BaseVersionBuilder {
         const element: ElementType = ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode];
         this.costElement(element);
         const readySkillDesc = this._readySkillRound > 0 ? `(需准备${this._readySkillRound}个行动轮)；` : '';
-        const description = readySkillDesc + this._getValByVersion(this._description, '')
+        const description = readySkillDesc + this._description.get(this._curVersion, '')
             .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)
             .replace(/(?<=【)hro(?=】)/g, `hro${Math.floor(this._id / 10)}`);
-        const ec = this._getValByVersion(this._energyCost, 0);
-        const damage = this._getValByVersion(this._damage, 0);
-        const cost = this._getValByVersion(this._cost, 0);
+        const ec = this._energyCost.get(this._curVersion, 0);
+        const damage = this._damage.get(this._curVersion, 0);
+        const cost = this._cost.get(this._curVersion, 0);
         return new GISkill(this._name, description, this._type, damage, cost, this._costElement,
             {
                 id: this._id,
@@ -225,7 +218,6 @@ export class SkillBuilder extends BaseVersionBuilder {
                 de: this._dmgElement,
                 expl: this._explains,
                 pct: this._perCnt,
-                rskid: this._rskidx,
                 ver: this._version,
             },
             this._src, this._handle);

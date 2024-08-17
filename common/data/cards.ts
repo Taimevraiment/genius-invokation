@@ -2333,12 +2333,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】进行[重击]时：对生命值不多于6的敌人造成的伤害+1。', 'v4.2.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/ad8a2130c54da3c3f25d094b7019cb69_4536540887547691720.png')
         .handle((_, event, ver) => {
-            const { isChargedAtk = false, heros = [], hidxs: [hidx] = [], eheros = [], ehidx = -1 } = event;
-            if (!isChargedAtk) return;
+            const { isChargedAtk = false, heros = [], hidxs: [hidx] = [], eheros = [], ehidx = -1, isExecTask = false } = event;
+            if (!isChargedAtk && !isExecTask) return;
             return {
                 trigger: ['skilltype1'],
                 addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 1),
-                execmds: isCdt(ver >= 'v4.2.0' && hasObjById(heros[hidx]?.heroStatus, 113081), [{ cmd: 'getCard', cnt: 1 }])
+                execmds: isCdt(ver >= 'v4.2.0' && (hasObjById(heros[hidx]?.heroStatus, 113081) || isExecTask), [{ cmd: 'getCard', cnt: 1 }])
             }
         }),
 
@@ -2439,9 +2439,9 @@ const allCards: Record<number, () => CardBuilder> = {
             const stsCnt = getObjById(heroStatus, 114041)?.useCnt ?? 0;
             let addDmgCdt = 0;
             if (ver < 'v4.2.0' && [3, 5].includes(stsCnt) || ver < 'v4.8.0' && stsCnt % 2 == 0) addDmgCdt = 1;
-            if (ver >= 'v4.8.0' && card.perCnt > 0) addDmgCdt = 2;
+            if (ver >= 'v4.8.0' && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
             return {
-                trigger: ['skilltype2'],
+                trigger: isCdt(addDmgCdt == 2, ['skilltype2']),
                 addDmgCdt,
                 exec: () => {
                     if (ver >= 'v4.8.0') --card.perCnt;
@@ -2907,7 +2907,7 @@ const allCards: Record<number, () => CardBuilder> = {
             execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(126011), newStatus(ver)(126012)] }],
         })),
 
-    226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
+    226021: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png')
         .handle((_, event, ver) => {

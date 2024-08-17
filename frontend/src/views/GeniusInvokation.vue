@@ -497,7 +497,7 @@ const devOps = (cidx = 0) => {
       const isAttach = op.endsWith('~');
       const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
       if (cid == 0) {
-        cards.push(+`2${heros[client.value.players[cpidx].hidx].id}1`);
+        cards.push(...new Array(cnt).fill(+`2${heros[client.value.players[cpidx].hidx].id}1`));
       }
       if (cid > 0) cards.push(...new Array(cnt).fill(cid));
       cmds.push({ cmd: 'getCard', cnt, card: cards, isAttach });

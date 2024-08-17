@@ -9,7 +9,7 @@ import { getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { newStatus } from "../statuses.js";
 import { newSupport } from "../supports.js";
-import { BaseBuilder } from "./baseBuilder.js";
+import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GICard {
     id: number; // 唯一id
@@ -155,10 +155,10 @@ export class CardBuilder extends BaseBuilder {
     private _type: CardType = CARD_TYPE.Event;
     private _subtype: CardSubtype[] = [];
     private _tag: CardTag[] = [];
-    private _userType: [Version, number | WeaponType][] = [];
-    private _useCnt: [Version, number][] = [];
-    private _perCnt: [Version, number][] = [];
-    private _energy: [Version, number][] = [];
+    private _userType: VersionMap<number | WeaponType> = new VersionMap();
+    private _useCnt: VersionMap<number> = new VersionMap();
+    private _perCnt: VersionMap<number> = new VersionMap();
+    private _energy: VersionMap<number> = new VersionMap();
     private _anydice: number = 0;
     private _handle: ((card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined) | undefined;
     private _canSelectHero: number = 0;
@@ -168,7 +168,7 @@ export class CardBuilder extends BaseBuilder {
     private _isResetPerCnt: boolean = true;
     private _isSpReset: boolean = false;
     private _src: string = '';
-    private _description: [Version, string][] = [];
+    private _description: VersionMap<string> = new VersionMap();
     private _explains: string[] = [];
     private _cnt: number = 2;
     constructor(shareId?: number) {
@@ -182,7 +182,7 @@ export class CardBuilder extends BaseBuilder {
         return this._version > this._curVersion;
     }
     description(description: string, version: Version = 'vlatest') {
-        this._description.push([version, description]);
+        this._description.set([version, description]);
         return this;
     }
     src(src: string) {
@@ -204,7 +204,7 @@ export class CardBuilder extends BaseBuilder {
     }
     weapon(weaponType?: WeaponType) {
         this._subtype.push(CARD_SUBTYPE.Weapon);
-        if (weaponType != undefined) this._userType.push(['vlatest', weaponType]);
+        if (weaponType != undefined) this._userType.set(['vlatest', weaponType]);
         return this.equipment();
     }
     artifact() {
@@ -219,7 +219,7 @@ export class CardBuilder extends BaseBuilder {
         if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Talent);
         if (skillIdx != -1) {
             if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Action);
-            this._userType.push([version, skillIdx]);
+            this._userType.set([version, skillIdx]);
         }
         return this.equipment();
     }
@@ -262,15 +262,15 @@ export class CardBuilder extends BaseBuilder {
         return this;
     }
     useCnt(useCnt: number, version: Version = 'vlatest') {
-        this._useCnt.push([version, useCnt]);
+        this._useCnt.set([version, useCnt]);
         return this;
     }
     perCnt(perCnt: number, version: Version = 'vlatest') {
-        this._perCnt.push([version, perCnt]);
+        this._perCnt.set([version, perCnt]);
         return this;
     }
     energy(energy: number, version: Version = 'vlatest') {
-        this._energy.push([version, energy]);
+        this._energy.set([version, energy]);
         return this;
     }
     anydice(anydice: number) {
@@ -307,7 +307,7 @@ export class CardBuilder extends BaseBuilder {
     }
     done() {
         if (this.notExist) return;
-        let userType = this._getValByVersion(this._userType, 0);
+        let userType = this._userType.get(this._curVersion, 0);
         if (this._subtype.includes(CARD_SUBTYPE.Weapon)) {
             userType ||= WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10 as WeaponTypeCode];
         }
@@ -320,12 +320,12 @@ export class CardBuilder extends BaseBuilder {
                 return { support: [newSupport(ver)(card)], ...handle?.(card, event, ver) }
             };
         }
-        const description = this._getValByVersion(this._description, '');
-        const cost = this._getValByVersion(this._cost, 0);
-        const costType = this._getValByVersion(this._costType, DICE_TYPE.Same);
-        const useCnt = this._getValByVersion(this._useCnt, -1);
-        const perCnt = this._getValByVersion(this._perCnt, 0);
-        const energy = this._getValByVersion(this._energy, 0);
+        const description = this._description.get(this._curVersion, '');
+        const cost = this._cost.get(this._curVersion, 0);
+        const costType = this._costType.get(this._curVersion, DICE_TYPE.Same);
+        const useCnt = this._useCnt.get(this._curVersion, -1);
+        const perCnt = this._perCnt.get(this._curVersion, 0);
+        const energy = this._energy.get(this._curVersion, 0);
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
             cost, costType, this._type, this._subtype, userType, this._handle,
             {
