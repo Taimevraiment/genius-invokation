@@ -43,8 +43,8 @@ export default class GeniusInvokationClient {
     isShowChangeHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
-    willSwitch: boolean[] = []; // 是否将要切换角色
-    supportCnt: number[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0)); // 支援物变化数
+    willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
+    supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
     summonCnt: number[][] = this._resetSummonCnt(); // 召唤物变化数
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
@@ -200,12 +200,12 @@ export default class GeniusInvokationClient {
         this.modalInfo = NULL_MODAL();
         this.currCard = NULL_CARD();
         this.currSkill = NULL_SKILL();
-        this.willSwitch = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(false);
+        this._resetWillSwitch();
         this._resetWillSummons();
         this._resetSummonCnt();
         this._resetWillAttachs();
+        this._resetSupportCnt();
         if (this.phase == PHASE.ACTION) this.resetDiceSelect();
-        this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
         this.isValid = false;
         this.isShowChangeHero = 0;
         this.isShowHistory = false;
@@ -392,7 +392,11 @@ export default class GeniusInvokationClient {
         if (this.statusSelect[0][0].length == 0 && phase >= PHASE.CHANGE_CARD) {
             this.statusSelect.forEach((p, pi) => {
                 p.forEach((_, i, a) => {
-                    a[i] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(MAX_STATUS_COUNT).fill(false));
+                    try {
+                        a[i] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(MAX_STATUS_COUNT).fill(false));
+                    } catch (e) {
+                        console.error(e, this.players, +(pi == this.playerIdx));
+                    }
                 });
             });
         }
@@ -405,6 +409,9 @@ export default class GeniusInvokationClient {
             this.heroSelect.forEach((_, pi, pa) => {
                 pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => 0);
             });
+        }
+        if (this.willSwitch[0].length == 0 && phase >= PHASE.CHANGE_CARD) {
+            this._resetWillSwitch();
         }
         this._sendTip(tip);
         if (actionInfo != '') {
@@ -704,11 +711,13 @@ export default class GeniusInvokationClient {
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
             } as ActionData);
             this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
-            this.currSkill = NULL_SKILL();
-            this.resetDiceSelect();
-            this._resetWillAttachs();
-            this._resetWillSummons();
-            this._resetSummonCnt();
+            // this.currSkill = NULL_SKILL();
+            // this.resetDiceSelect();
+            // this._resetWillAttachs();
+            // this._resetWillSummons();
+            // this._resetSummonCnt();
+            // this._resetWillSwitch();
+            this.cancel();
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
@@ -719,12 +728,8 @@ export default class GeniusInvokationClient {
             this.willSummons = [...clone(preview.willSummons)!];
             this.summonCnt = [...clone(preview.willSummonChange)!];
             this.supportCnt = [...clone(preview.willSupportChange)!];
+            this.willSwitch = [...preview.willSwitch!];
         }
-        // if (!isCard) {
-        //     if (!isOnlyRead) {
-        //         this.isValid = true;
-        //     }
-        // }
     }
     /**
      * 切换角色
@@ -846,6 +851,12 @@ export default class GeniusInvokationClient {
         this.supportCanSelect.forEach(v => v.fill(false));
     }
     /**
+     * 重置支援物预览
+     */
+    private _resetSupportCnt() {
+        return this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
+    }
+    /**
      * 重置召唤物选择
      */
     private _resetSummonSelect() {
@@ -856,6 +867,18 @@ export default class GeniusInvokationClient {
      */
     private _resetSummonCanSelect() {
         this.summonCanSelect.forEach(v => v.fill(false));
+    }
+    /**
+     * 重置召唤物次数预览
+     */
+    private _resetSummonCnt() {
+        return this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
+    }
+    /**
+     * 重置召唤物预览
+     */
+    private _resetWillSummons(): Summon[][] {
+        return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
     }
     /**
      * 重置状态发光
@@ -876,22 +899,13 @@ export default class GeniusInvokationClient {
         return this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
     }
     /**
-     * 重置召唤物预览
-     */
-    private _resetWillSummons(): Summon[][] {
-        return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
-    }
-    /**
-     * 重置召唤物次数预览
-     */
-    private _resetSummonCnt() {
-        return this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
-    }
-    /**
      * 重置伤害预览
      */
     private _resetWillHp() {
         return this.willHp = new Array(this.players.flatMap(p => p.heros).length).fill(undefined);
+    }
+    private _resetWillSwitch() {
+        return this.willSwitch = Array.from({ length: PLAYER_COUNT }, (_, i) => new Array(this.players[i]?.heros.length ?? 0).fill(false));
     }
     /**
      * 重置骰子选择

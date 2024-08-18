@@ -1012,10 +1012,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     114051: () => readySkillShieldStatus('捉浪·涛拥之守').handle((_s, _e, ver) => {
         if (ver >= 'v4.2.0') return;
-        return {
-            trigger: ['getdmg'],
-            exec: () => ({ cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(114052)] }] })
-        }
+        return { trigger: ['getdmg'], exec: () => ({ cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(114052)] }] }) }
     }),
 
     114052: () => new StatusBuilder('奔潮引电').heroStatus().icon('buff3').useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)

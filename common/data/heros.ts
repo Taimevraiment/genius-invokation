@@ -875,11 +875,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { statusOppo: isCdt(!status114091, [newStatus(ver)(114091)]), addDmgCdt }
                 }),
             new SkillBuilder('蔷薇的雷光').description('{dealDmg}，召唤【smn114092】，使敌方出战角色附属【sts114091】。')
+                .description('{dealDmg}，召唤【smn114092】。', 'v4.8.0')
                 .src('https://patchwiki.biligame.com/images/ys/0/01/l5uobg3f84vj4x52kanzphba9ype2tw.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/d641396daad417dda3c4f9a26f02bfdc_897742072769166162.png')
                 .burst(2).damage(2).cost(3).handle((_, ver) => ({
                     summon: [newSummon(ver)(114092)],
-                    status: isCdt(ver >= 'v4.8.0', [newStatus(ver)(114091)]),
+                    statusOppo: isCdt(ver >= 'v4.8.0', [newStatus(ver)(114091)]),
                 }))
         ),
 

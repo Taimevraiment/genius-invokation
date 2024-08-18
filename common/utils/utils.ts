@@ -5,20 +5,28 @@
  * @returns 拷贝后的对象
  */
 export function clone<T>(obj: T): T {
-    if (typeof obj !== 'object' || obj === null) {
-        return obj;
-    }
-    if (Array.isArray(obj)) {
-        return obj.map(item => clone(item)) as unknown as T;
-    }
-    const cloneObj = {} as T;
-    Object.setPrototypeOf(cloneObj, Object.getPrototypeOf(obj));
-    for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            cloneObj[key] = clone(obj[key]);
+    const cache = new Map();
+    function _clone<T>(_obj: T): T {
+        if (typeof _obj !== 'object' || _obj === null) {
+            return _obj;
         }
+        if (cache.has(_obj)) {
+            return cache.get(_obj);
+        }
+        if (Array.isArray(_obj)) {
+            return _obj.map(item => clone(item)) as unknown as T;
+        }
+        const cloneObj = {} as T;
+        cache.set(_obj, cloneObj);
+        Object.setPrototypeOf(cloneObj, Object.getPrototypeOf(_obj));
+        for (const key in _obj) {
+            if (_obj.hasOwnProperty(key)) {
+                cloneObj[key] = clone(_obj[key]);
+            }
+        }
+        return cloneObj;
     }
-    return cloneObj;
+    return _clone(obj);
 }
 
 /**
@@ -90,14 +98,14 @@ export const delay = (time: number = 0) => {
 /**
  * 条件同步等待
  * @param cdt 条件
- * @param options.delay 符合条件后延迟时间(ms = 2000)
+ * @param options.delay 符合条件后延迟时间(ms = 0)
  * @param options.freq 频率(ms = 500)
  * @param options.maxtime 最大等待时间(ms = 8000)
  * @param options.isImmediate 是否立即执行
  * @returns 
  */
 export const wait = async (cdt: () => boolean, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean } = {}) => {
-    const { delay: dl = 2000, freq = 500, maxtime = 8000, isImmediate = true } = options;
+    const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true } = options;
     let loop = 0;
     if (cdt() && isImmediate) return;
     while (true) {

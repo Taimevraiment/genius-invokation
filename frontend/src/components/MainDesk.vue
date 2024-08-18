@@ -138,7 +138,7 @@
             hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.perCnt ?? 0) > 0)">
           </div>
-          <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getSvgIcon('switch')" />
+          <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
             <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
@@ -561,7 +561,7 @@ const willHeals = computed<number[][]>(() => wrapArr(props.client.damageVO.willH
 const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wrapArr(props.client.damageVO.elTips ?? []));
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
-const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch));
+const willSwitch = computed<boolean[][]>(() => props.client.willSwitch);
 const isShowChangeHero = computed<number>(() => props.client.isShowChangeHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
 const canAction = computed<boolean>(() => props.canAction);
