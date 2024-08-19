@@ -538,7 +538,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
         .handle((summon, event, ver) => {
             const { reset = false, trigger = '' } = event;
-            if (reset) return { rOutStatus: [newStatus(ver)(115083)] }
+            if (reset) return { rCombatStatus: [newStatus(ver)(115083)] }
             const getdmgTrgs: Trigger[] = ['Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg'];
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo && getdmgTrgs.includes(trigger)) {

@@ -922,7 +922,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('风灵作成·陆叁零捌').description('{dealDmg}，使对方强制切换到前一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6a/lu1s5jeliurancx62txk0i7pbgeu07d.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/20e905e459a535c372b1c0eacf6dd9d8_1859277343951133632.png')
-                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-before', isOppo: true }] })),
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-before', cnt: 2500, isOppo: true }] })),
             new SkillBuilder('禁·风灵作成·柒伍同构贰型').description('{dealDmg}，召唤【smn115011】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png')
@@ -937,7 +937,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('风压剑').description('{dealDmg}，使对方强制切换到下一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/7/76/qzlqexf6zwkkcpxpyevb3m4viwepssv.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/68d6fd8c9815617b0491dd19586ae2f4_2703229586151516906.png')
-                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-after', isOppo: true }] })),
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-after', cnt: 2500, isOppo: true }] })),
             new SkillBuilder('蒲公英之风').description('治疗我方所有角色2点，召唤【smn115021】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/23/gqtjyn7ckzz3g0zbtmska8ws1ry1dqj.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e4d3dd465a4f6026ba923619c1827c94_3960747061292563787.png')
@@ -987,14 +987,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('千早振').description('{dealDmg}，本角色附属【sts115051】。；如果此技能引发了扩散，则将【sts115051】转换为被扩散的元素。；【此技能结算后：】我方切换到后一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/2/29/f7rwj3qb9kffejm2kt2oq7ltl843nrk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/c492b46c71485b1377cf8c9f3f5dd6e8_6376046014259793309.png')
-                .elemental().damage(1).damage(3, 'v3.8.0').cost(3).handle((event, ver) => ({
+                .elemental().damage(1).damage(3, 'v4.8.0').cost(3).handle((event, ver) => ({
                     status: [newStatus(ver)(115051, event.swirlEl)],
-                    cmds: [{ cmd: 'switch-after' }],
+                    cmds: [{ cmd: 'switch-after', cnt: 2500 }],
                 })),
             new SkillBuilder('万叶之一刀').description('{dealDmg}，召唤【smn115052】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/47/g6cfvzw12ruiclawmxh903fcoowmr9j.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/293efb8c9d869e84be6bc02039d72104_7417737523106108019.png')
-                .burst(2).damage(1).damage(3, 'v3.8.0').cost(3).handle((_, ver) => ({ summonPre: [newSummon(ver)(115052)] }))
+                .burst(2).damage(1).damage(3, 'v4.8.0').cost(3).handle((_, ver) => ({ summonPre: [newSummon(ver)(115052)] }))
         ),
 
     1506: () => new HeroBuilder(41).name('流浪者').since('v4.1.0').anemo().catalyst()
@@ -1048,14 +1048,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b2ba9e68ed4a405e54b4786ecac7c3e3.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2d696e8b97e9fe9fb4572a81786780d6_2735599059161740228.png')
                 .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { hero: { hp, skills: [, { useCnt }] }, isTalent } = event;
-                    const cdt = hp <= 8 && useCnt == 0;
-                    const hasTalent = isTalent && useCnt == 1;
+                    const { hero: { hp, skills: [, { useCntPerRound }] }, isTalent } = event;
+                    const cdt = hp <= 8 && useCntPerRound == 0;
+                    const hasTalent = isTalent && useCntPerRound == 1;
                     return {
                         heal: isCdt(cdt, 2),
                         status: isCdt(cdt, [newStatus(ver)(115081)]),
                         addDmgCdt: isCdt(hasTalent, 2),
-                        cmds: isCdt(hasTalent, [{ cmd: 'switch-before', isOppo: true }]),
+                        cmds: isCdt(hasTalent, [{ cmd: 'switch-before', cnt: 2500, isOppo: true }]),
                     }
                 }),
             new SkillBuilder('魔术·运变惊奇').description('{dealDmg}，召唤【smn115082】。')
@@ -1080,7 +1080,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { isTalent, summons = [] } = event;
                     const isExist = hasObjById(summons, 115093);
                     return {
-                        summon: [newSummon(ver)(3058, isTalent)],
+                        summon: [newSummon(ver)(115093, isTalent)],
                         cmds: isCdt(isTalent && !isExist, [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }])
                     }
                 })

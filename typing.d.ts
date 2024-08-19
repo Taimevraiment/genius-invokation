@@ -225,6 +225,8 @@ type ServerData = Readonly<{
     actionInfo: string,
     slotSelect: number[],
     heroSelect: number[],
+    statusSelect: number[],
+    summonSelect: number[],
     flag: string,
 }>
 

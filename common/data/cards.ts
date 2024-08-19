@@ -2544,9 +2544,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在【sts115061】状态下进行[重击]后：下次从该角色执行｢切换角色｣行动时少花费1个元素骰，并且造成1点[风元素伤害]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/08a42903fcff2a5249ef1fc4021ecf7a_492792879105973370.png')
         .handle((_, event, ver) => {
-            const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
+            const { isChargedAtk = false, heros = [], hidxs: [hidx] = [], isExecTask = false } = event;
             const hasSts115061 = hasObjById(heros[hidx]?.heroStatus, 115061);
-            if (isChargedAtk && hasSts115061) return { trigger: ['skilltype1'], execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(115062)] }] }
+            if (isChargedAtk && hasSts115061 || isExecTask) {
+                return { trigger: ['skilltype1'], execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(115062)] }] }
+            }
         }),
 
     215071: () => new CardBuilder(324).name('偷懒的新方法').since('v4.4.0').talent(1).costAnemo(3).perCnt(1)

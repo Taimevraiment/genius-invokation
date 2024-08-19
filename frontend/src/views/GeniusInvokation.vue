@@ -85,18 +85,18 @@
       <button v-if="client.isReconcile && client.currCard.id > 0" @click.stop="reconcile(false)">
         取消
       </button>
-      <div v-if="(client.isShowChangeHero > 0 && client.currCard.id <= 0) ||
+      <div v-if="(client.isShowSwitchHero > 0 && client.currCard.id <= 0) ||
         (client.player.phase == PHASE.CHOOSE_HERO && client.heroSelect.some(v => v))"
         style="display: flex; flex-direction: column; align-items: center; transform: translateY(20px);">
-        <div class="quick-action" v-if="client.isShowChangeHero == 3">
+        <div class="quick-action" v-if="client.isShowSwitchHero == 3">
           快速行动
         </div>
         <div class="switch-button" v-if="client.player.hidx != -1"
-          @click.stop="client.isShowChangeHero < 2 ? chooseHero() : changeHero()"
+          @click.stop="client.isShowSwitchHero < 2 ? chooseHero() : switchHero()"
           :style="{ filter: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO ? `url(${getSvgIcon('filter')}#status-color-10)` : '' }">
         </div>
         <div class="skill-cost" v-if="client.player.phase == PHASE.ACTION"
-          :style="{ marginTop: '10px', opacity: +(client.isShowChangeHero >= 2) }">
+          :style="{ marginTop: '10px', opacity: +(client.isShowSwitchHero >= 2) }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
           <span :style="{ zIndex: 1, color: client.heroSwitchDiceColor }">
             {{ client.heroSwitchDice }}
@@ -149,7 +149,7 @@
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
-      (client.currSkill.id != -1 || client.willHp.some(v => v != undefined) || client.isShowChangeHero >= 2)">
+      (client.currSkill.id != -1 || client.willHp.some(v => v != undefined) || client.isShowSwitchHero >= 2)">
     </div>
 
   </div>
@@ -307,8 +307,8 @@ const useSkill = (sidx: number, isOnlyRead: boolean) => {
   client.value.useSkill(sidx, { isOnlyRead });
 };
 // 切换角色
-const changeHero = debounce(() => {
-  client.value.changeHero();
+const switchHero = debounce(() => {
+  client.value.switchHero();
 });
 // 结束回合
 const endPhase = () => {

@@ -117,7 +117,7 @@
           'my': hgi == 1,
           'is-front-oppo': hero?.isFront && player.phase >= PHASE.DICE && opponent?.phase >= PHASE.DICE && hgi == 0,
           'is-front-my': hero?.isFront && hgi == 1,
-          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hgi][hidx] || client.isShowChangeHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
+          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
@@ -561,8 +561,8 @@ const willHeals = computed<number[][]>(() => wrapArr(props.client.damageVO.willH
 const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wrapArr(props.client.damageVO.elTips ?? []));
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
-const willSwitch = computed<boolean[][]>(() => props.client.willSwitch);
-const isShowChangeHero = computed<number>(() => props.client.isShowChangeHero);
+const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch.flat()));
+const isShowSwitchHero = computed<number>(() => props.client.isShowSwitchHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
 const canAction = computed<boolean>(() => props.canAction);
 const heroSwitchDice = computed<number>(() => props.client.heroSwitchDice);
@@ -678,7 +678,7 @@ const reroll = () => {
 // 选择要消费的骰子
 const selectUseDice = (didx: number) => {
   if (player.value.status == PLAYER_STATUS.WAITING) return;
-  if (currCard.value.id <= 0 && currSkill.value.type == SKILL_TYPE.Passive && isShowChangeHero.value == 0) return;
+  if (currCard.value.id <= 0 && currSkill.value.type == SKILL_TYPE.Passive && isShowSwitchHero.value == 0) return;
   if (isReconcile.value && [DICE_COST_TYPE.Omni, player.value.heros[player.value.hidx].element].includes(dices.value[didx])) return;
   const newVal = !diceSelect.value[didx];
   emits('update:diceSelect', didx, newVal);
@@ -688,7 +688,7 @@ const selectUseDice = (didx: number) => {
       cost = currCard.value.cost + currCard.value.anydice - currCard.value.costChange;
     } else if (currSkill.value.type != SKILL_TYPE.Passive) {
       cost = currSkill.value.cost[0].cnt - currSkill.value.costChange[0] + currSkill.value.cost[1].cnt - currSkill.value.costChange[1];
-    } else if (isShowChangeHero.value > 0) cost = heroSwitchDice.value;
+    } else if (isShowSwitchHero.value > 0) cost = heroSwitchDice.value;
     if (isReconcile.value) cost = 1;
     if (cost == 0) {
       emits('update:diceSelect', -1);
