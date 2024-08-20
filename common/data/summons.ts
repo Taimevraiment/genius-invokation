@@ -584,14 +584,20 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。(每回合1次)', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
         .handle((summon, event, ver) => {
-            const { isFallAtk = false, isMinusDiceSkill, trigger = '' } = event;
+            const { heros = [], isFallAtk = false, isMinusDiceSkill, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (ver < 'v4.8.0') triggers.push('skilltype1');
-            else triggers.push('change-from');
+            let minusDiceCdt = isFallAtk;
+            if (ver < 'v4.8.0') {
+                triggers.push('skilltype1');
+                minusDiceCdt &&= summon.perCnt > 0;
+            } else {
+                triggers.push('change-from');
+                minusDiceCdt &&= !!getObjById(heros, getHidById(summon.id))?.talentSlot;
+            }
             return {
-                minusDiceSkill: isCdt(ver < 'v4.8.0' && isFallAtk && summon.perCnt > 0, { skilltype1: [0, 1, 0] }),
+                minusDiceSkill: isCdt(minusDiceCdt, { skilltype1: [0, 1, 0] }),
                 isNotAddTask: trigger != 'phase-end',
-                trigger: ['skilltype1', 'phase-end'],
+                trigger: triggers,
                 isQuickAction: ver >= 'v4.8.0' && summon.perCnt > 0,
                 exec: execEvent => {
                     const { summon: smn = summon, isQuickAction = false } = execEvent;
@@ -607,16 +613,16 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png')
         .handle((summon, event, ver) => {
             const { heros = [], trigger = '' } = event;
-            const hidx = heros.findIndex(h => h.id == 1503 && h.hp > 0);
+            const hero = getObjById(heros, getHidById(summon.id));
             return {
                 trigger: ['phase-end', 'getdmg'],
                 isNotAddTask: trigger == 'getdmg',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
-                    if (smn.perCnt <= 0 || trigger != 'getdmg' || hidx == -1) return;
+                    if (smn.perCnt <= 0 || trigger != 'getdmg' || hero?.hidx == undefined || hero.hp <= 0) return;
                     --smn.perCnt;
-                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(116054)], hidxs: [hidx] }] }
+                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(116054)], hidxs: [hero.hidx] }] }
                 },
             }
         }),

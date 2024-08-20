@@ -132,7 +132,7 @@
             <img :src="getPngIcon('freeze-bg')" />
           </div>
           <div class="hero-freeze" style="background-color: #716446de"
-            v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 2087)"></div>
+            v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 116033)"></div>
           <div class="hero-shield2" v-if="hero.hp > 0 && (
             hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier)) ||
             hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||

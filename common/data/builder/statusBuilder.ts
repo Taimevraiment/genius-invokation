@@ -289,7 +289,7 @@ export class StatusBuilder extends BaseVersionBuilder {
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
                 if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
                 if (status.roundCnt > 0) --status.roundCnt;
-                if (summon && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
+                if (summon && summon.statusId != -1 && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
             } : (status: Status, event: StatusHandleEvent, ver: Version) => this._handle?.(status, event, ver) ?? {};
         return new GIStatus(this._id, this._name, description, icon, this._group, this._type,

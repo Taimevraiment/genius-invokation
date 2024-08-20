@@ -17,18 +17,15 @@ export default class TaskQueue {
         const queueList = `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
         console.info((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList);
     }
-    execTask(taskType: string, funcs: [() => void, number?][], isPriority: boolean) {
-        return new Promise<void>(async resolve => {
-            // await delay(800);
-            if (!isPriority && this.priorityQueue == undefined && this.queue.length > 0) this.priorityQueue = [];
-            for (const [func, intvl = 0] of funcs) {
-                func();
-                await delay(intvl);
-            }
-            this.isExecuting = true;
-            console.info('execTask-' + taskType);
-            resolve();
-        });
+    async execTask(taskType: string, funcs: [() => void | Promise<void>, number?][], isPriority: boolean) {
+        // await delay(800);
+        if (!isPriority && this.priorityQueue == undefined && this.queue.length > 0) this.priorityQueue = [];
+        for (const [func, intvl = 0] of funcs) {
+            await func();
+            await delay(intvl);
+        }
+        this.isExecuting = true;
+        console.info('execTask-' + taskType);
     }
     getTask(): [[string, any[] | StatusTask], boolean] {
         const res = this.priorityQueue?.shift() ?? this.queue.shift();

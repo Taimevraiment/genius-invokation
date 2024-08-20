@@ -1273,12 +1273,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     115083: () => new StatusBuilder('惊奇猫猫盒的嘲讽').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId(115082)
-        .description('【我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)').handle((status, event) => {
-            const { restDmg = 0 } = event;
-            if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            return { restDmg: restDmg - 1 }
-        }),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)'),
 
     115091: () => new StatusBuilder('疾风示现').heroStatus().icon('buff').useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.ConditionalEnchant)
         .description('【所附属角色进行[重击]时：】少花费1个[无色元素骰]，造成的[物理伤害]变为[风元素伤害]，并且使目标角色附属【sts115092】；[useCnt]')
@@ -1380,7 +1375,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)')
         .description('所附属角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)', 'v4.2.0')
         .handle((status, _, ver) => ({
-            addDmgType1: ver < 'v4.2.0' ? 2 : 1,
+            addDmgType1: isCdt(ver < 'v4.2.0', 2, 1),
             attachEl: ELEMENT_TYPE.Geo,
             trigger: ['skilltype1'],
             exec: () => {
@@ -1402,14 +1397,23 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    116061: () => new StatusBuilder('大将旗指物').heroStatus().icon('ski,1').roundCnt(2).maxCnt(3)
+    116061: () => new StatusBuilder('大将旗指物').combatStatus().icon('ski,1').roundCnt(2).maxCnt(3)
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
         .description('我方角色造成的[岩元素伤害]+1。；[roundCnt]')
-        .handle((_, event) => {
-            const { skilltype = -1 } = event;
+        .handle((status, event) => {
+            const { skilltype = -1, card, heros = [] } = event;
+            if (skilltype == -1) return;
+            const talent = card ?? getObjById(heros, getHidById(status.id))?.talentSlot;
+            const isTalent = !!talent && talent.id == 216061 && talent.perCnt > 0;
             return {
-                trigger: isCdt(skilltype != -1, ['Geo-dmg']),
+                trigger: ['Geo-dmg'],
                 addDmgCdt: 1,
+                exec: () => {
+                    if (isTalent) {
+                        --talent.perCnt;
+                        return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
+                    }
+                }
             }
         }),
 

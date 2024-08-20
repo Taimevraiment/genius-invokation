@@ -2598,7 +2598,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4c6332fd42d6edc64633a44aa900b32f_248861550176006555.png')
         .handle((card, event) => {
             const { heros = [], combatStatus = [] } = event;
-            if (hasObjById(combatStatus, 112061) && card.perCnt > 0) {
+            if (hasObjById(combatStatus, 116021) && card.perCnt > 0) {
                 return {
                     trigger: ['skilltype1'],
                     execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
@@ -2638,14 +2638,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1，且少花费1个[无色元素骰]。')
         .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png')
-        .handle((_, event, ver) => {
+        .handle((_, event) => {
             const { summons = [], isFallAtk } = event;
             if (hasObjById(summons, 116041) && isFallAtk) {
-                return {
-                    trigger: ['skilltype1', 'other-skilltype1'],
-                    addDmgCdt: 1,
-                    minusDiceSkill: isCdt(ver >= 'v4.8.0', { skilltype1: [0, 1, 0] })
-                }
+                return { trigger: ['skilltype1', 'other-skilltype1'], addDmgCdt: 1 }
             }
         }),
 
@@ -2654,26 +2650,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png')
         .handle((_, event) => {
             const { heros = [], hidxs: [hidx] = [], isChargedAtk = false } = event;
-            const { heroStatus, skills: [{ useCnt }] } = heros[hidx];
-            if (isChargedAtk && useCnt >= 1 && hasObjById(heroStatus, 116054)) {
+            const { heroStatus, skills: [{ useCntPerRound }] } = heros[hidx];
+            if (isChargedAtk && useCntPerRound >= 1 && hasObjById(heroStatus, 116054)) {
                 return { trigger: ['skilltype1'], addDmgCdt: 1 }
             }
         }),
 
     216061: () => new CardBuilder(292).name('犬奔·疾如风').since('v4.3.0').talent(1).costGeo(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts116061】，抓1张牌。(每回合1次)')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png')
-        .handle((card, event) => {
-            const { combatStatus = [], isSkill = -1 } = event;
-            const isTriggered = isSkill > -1 && hasObjById(combatStatus, 116061) && card.perCnt > 0;
-            if (isTriggered) {
-                return {
-                    trigger: ['Geo-dmg'],
-                    execmds: [{ cmd: 'getCard', cnt: 1 }],
-                    exec: () => { --card.perCnt },
-                }
-            }
-        }),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png'),
 
     216071: () => new CardBuilder(375).name('庄谐并举').since('v4.7.0').talent(2).costGeo(3).energy(2)
         .description('{action}；装备有此牌的【hro】在场，且我方触发【sts116073】时：如果我方没有手牌，则使此次技能伤害+2。')
