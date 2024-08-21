@@ -438,7 +438,6 @@ export default class GeniusInvokationClient {
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
             this.damageVO.dmgElements = damageVO?.dmgElements ?? [];
-            this.damageVO.elTips = damageVO?.elTips ?? [];
             this.damageVO.atkPidx = damageVO?.atkPidx ?? -1;
             this.damageVO.atkHidx = damageVO?.atkHidx ?? -1;
             this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
@@ -446,6 +445,7 @@ export default class GeniusInvokationClient {
             setTimeout(() => {
                 this.players = players;
                 this.updateHandCardsPos();
+                this.damageVO.elTips = damageVO?.elTips ?? [];
                 this.damageVO.willDamages = damageVO?.willDamages ?? [];
                 this.damageVO.willHeals = damageVO?.willHeals ?? [];
                 if (damageVO?.dmgSource == 'summon') {

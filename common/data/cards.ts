@@ -2686,10 +2686,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png')
         .handle((_, event) => {
             const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
-            const isMinus = isChargedAtk && hasObjById(heros[hidx].heroStatus, 117021);
-            return {
-                trigger: ['skilltype1'],
-                minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 0, 1] }),
+            if (isChargedAtk && hasObjById(heros[hidx].heroStatus, 117021)) {
+                return { trigger: ['skilltype1'], minusDiceSkill: { skilltype1: [0, 0, 1] } }
             }
         }),
 

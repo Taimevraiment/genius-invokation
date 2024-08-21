@@ -19,6 +19,8 @@ export type StatusHandleEvent = {
     heros?: Hero[],
     combatStatus?: Status[],
     eheros?: Hero[],
+    eCombatStatus?: Status[],
+    dmgedHidx?: number,
     dmgElement?: ElementType,
     reset?: boolean,
     trigger?: Trigger,
@@ -41,7 +43,6 @@ export type StatusHandleEvent = {
     force?: boolean,
     summons?: Summon[],
     esummons?: Summon[],
-    getDmgIdx?: number,
     hcards?: Card[],
     pile?: Card[],
     playerInfo?: GameInfo,
@@ -258,8 +259,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方对敌方出战角色造成[火元素伤害]或[雷元素伤害]时，】伤害值+2。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_116.webp')
         .handle((status, event) => {
-            const { eheros = [], getDmgIdx = -1 } = event;
-            if (!eheros[getDmgIdx]?.isFront) return;
+            const { eheros = [], dmgedHidx = -1 } = event;
+            if (!eheros[dmgedHidx]?.isFront) return;
             return {
                 addDmgCdt: 2,
                 trigger: ['Pyro-dmg', 'Electro-dmg'],
@@ -271,8 +272,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方对敌方出战角色造成[雷元素伤害]或[草元素伤害]时，】伤害值+1。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_117.webp')
         .handle((status, event) => {
-            const { eheros = [], getDmgIdx = -1 } = event;
-            if (!eheros[getDmgIdx]?.isFront) return;
+            const { eheros = [], dmgedHidx = -1 } = event;
+            if (!eheros[dmgedHidx]?.isFront) return;
             return {
                 addDmgCdt: 1,
                 trigger: ['Dendro-dmg', 'Electro-dmg'],
@@ -1438,18 +1439,19 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116084: () => enchantStatus(ELEMENT_TYPE.Geo).roundCnt(2),
 
-    117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').roundCnt(1).type(STATUS_TYPE.Attack)
+    117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。(每回合1次)；[roundCnt]')
         .handle(() => ({
             damage: 1,
             element: DAMAGE_TYPE.Dendro,
             trigger: ['elReaction-Dendro'],
             exec: eStatus => {
-                if (eStatus) --eStatus.roundCnt;
+                if (eStatus) --eStatus.useCnt;
             },
         })),
 
-    117021: () => new StatusBuilder('通塞识').heroStatus().icon('buff').useCnt(3).type(STATUS_TYPE.ConditionalEnchant)
+    117021: () => new StatusBuilder('通塞识').heroStatus().icon('buff').useCnt(3)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.ConditionalEnchant)
         .description('【所附属角色进行[重击]时：】造成的[物理伤害]变为[草元素伤害]，并且会在技能结算后召唤【smn117022】。；[useCnt]')
         .handle((status, event, ver) => {
             if (!event.isChargedAtk) return;
@@ -1464,48 +1466,30 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack)
         .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
-        .handle((_, event) => {
-            const { heros = [], eheros = [], hidx = -1, combatStatus = [] } = event;
-            const hidxs: number[] = [];
-            heros.forEach((h, hi) => {
-                if (hasObjById(h.heroStatus, 117031) && hi != hidx) {
-                    hidxs.push(hi);
-                }
-            });
-            const hasPyro = eheros.map(h => h.talentSlot).some(slot => slot?.id == 217031) &&
-                hasObjById(combatStatus, 117032) &&
-                eheros.filter(h => h.hp > 0).some(h => h.element == ELEMENT_TYPE.Pyro);
-            if (!hasPyro && hidx > -1) hidxs.push(hidx);
+        .handle((status, event) => {
+            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, card, trigger = '', force = false } = event;
+            if ((!hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !force) return;
+            const hasPyro = trigger == 'get-elReaction' &&
+                (!!getObjById(eheros, getHidById(status.id))?.talentSlot || card?.id == 217031) &&
+                (hasObjById(eCombatStatus, 117032) || force) &&
+                eheros.some(h => h.element == ELEMENT_TYPE.Pyro);
             return {
                 damage: isCdt(hasPyro, 1),
                 element: DAMAGE_TYPE.Dendro,
-                pdmg: 1,
+                pdmg: isCdt(!hasPyro, 1),
                 isSelf: true,
-                hidxs,
-                trigger: ['get-elReaction'],
-                exec: (eStatus, execEvent = {}) => {
-                    const { heros = [] } = execEvent;
-                    heros.forEach((h, hi) => {
-                        if (hidxs.includes(hi)) {
-                            const ist117031Idx = getObjIdxById(h.heroStatus, 117031);
-                            if (ist117031Idx > -1) {
-                                const ist117031 = h.heroStatus[ist117031Idx];
-                                --ist117031.useCnt;
-                                if (ist117031.useCnt == 0 && hi != hidx) {
-                                    h.heroStatus.splice(ist117031Idx, 1);
-                                }
-                            }
-                        }
-                    });
-                    if (hasPyro && eStatus) --eStatus.useCnt;
+                hidxs: [hidx],
+                trigger: ['get-elReaction', 'other-get-elReaction'],
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt;
                 }
             }
         }),
 
-    117032: (isTalent: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus()
-        .icon('ski,3').roundCnt(2).roundCnt(3, isTalent).talent(isTalent)
+    117032: (isTalent: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus().icon('ski,3')
+        .type(STATUS_TYPE.AddDamage).roundCnt(2).roundCnt(3, isTalent).talent(isTalent)
         .description('【我方引发元素反应时：】伤害额外+1。；[roundCnt]')
-        .handle(() => ({ addDmgCdt: 1, trigger: ['elReaction'] })),
+        .handle(() => ({ trigger: ['elReaction'], addDmgCdt: 1 })),
 
     117043: () => new StatusBuilder('桂子仙机').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
         .description('【我方切换角色后：】造成1点[草元素伤害]，治疗我方出战角色1点。；[useCnt]')
@@ -1523,6 +1507,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【行动阶段开始时：】生成【sts117053】。；[useCnt]')
         .handle((_s, _e, ver) => ({
             trigger: ['phase-start'],
+            isAddTask: true,
             exec: eStatus => {
                 if (eStatus) --eStatus.useCnt;
                 return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(117053)] }] }
@@ -1532,21 +1517,21 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117053: () => new StatusBuilder('无欲气护盾').combatStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Shield)
         .description('提供1点[护盾]，保护我方出战角色。；【此效果被移除，或被重复生成时：】造成1点[草元素伤害]，治疗我方出战角色1点。')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, combatStatus = [] } = event;
+            const { heros = [], hidx = -1, combatStatus = [], force = false } = event;
             const fhero = heros[hidx];
             if (!fhero) return;
             const triggers: Trigger[] = [];
             if (status.useCnt == 0) triggers.push('status-destroy');
             const hid = getHidById(status.id)
-            if (fhero.id == hid) triggers.push('skilltype3');
-            if (hasObjById(combatStatus, 117052)) triggers.push('phase-start');
+            if (fhero.id == hid) triggers.push('after-skilltype3');
+            if (hasObjById(combatStatus, 117052) || force) triggers.push('phase-start');
             const isTalent = !!getObjById(heros, hid)?.talentSlot;
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
                 heal: 1,
                 trigger: triggers,
-                cmds: isCdt(fhero.hp < fhero.maxHp && isTalent, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }]),
+                cmds: isCdt(isTalent, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }]),
             }
         }),
 
