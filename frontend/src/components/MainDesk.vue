@@ -72,6 +72,7 @@
           'active-supportcnt': canAction && currSkill.type != SKILL_TYPE.Passive && supportCnt[getGroup(saidx)][siidx] != 0,
         }" v-for="(support, siidx) in supportArea" :key="siidx" @click.stop="showSupportInfo(saidx, siidx)">
           <div class="support-img-content">
+            <div class="card-border"></div>
             <img class="support-img"
               :style="{ top: support.card.subType.includes(CARD_SUBTYPE.Ally) && isMobile ? '100%' : '60%' }"
               :src="support.card.UI.src" v-if="support.card.UI.src.length > 0" :alt="support.card.name" />
@@ -534,7 +535,8 @@ const willDamages = computed<number[][][]>(() => {
     const widthDiff = (tarHidx.value - atkHidx.value) * (width + 0.1 * parentWidth);
     const heightDiff = height / 0.35 * 0.5 * (isAtker ? -1 : 1);
     const deg = Math.atan2(widthDiff, -heightDiff) * (180 / Math.PI) - (isAtker ? 0 : 180);
-    const anime = atkHeroDOM.animate([{
+
+    const atkAnime = atkHeroDOM.animate([{
       offset: 0.3,
       transform: `rotate(${deg}deg) scale(1.3)`,
       zIndex: 5,
@@ -551,7 +553,19 @@ const willDamages = computed<number[][][]>(() => {
       transform: `rotate(${deg}deg)`,
       zIndex: 5,
     }], { duration: 700 });
-    setTimeout(() => anime.cancel(), 700);
+    const tarHeroDOM = heroDOMs.value[+!isAtker * props.client.players[playerIdx.value ^ 1].heros.length + tarHidx.value];
+    setTimeout(() => {
+      const tarAnime = tarHeroDOM.animate([{
+        offset: 0.5,
+        transform: `translate(${15 * Math.tan(deg / 180 * Math.PI) * (isAtker ? 1 : -1)}px,${5 * (isAtker ? -1 : 1)}px) scale(0.9)`,
+        zIndex: 5,
+      }, {
+        offset: 1,
+        zIndex: 5,
+      }], { duration: 175 });
+      setTimeout(() => tarAnime.cancel(), 175);
+    }, 525);
+    setTimeout(() => atkAnime.cancel(), 700);
     setTimeout(() => isAnimating = false, 3000);
   }
   return dmgs;
@@ -1899,18 +1913,18 @@ svg {
 
 @keyframes discard-pile {
   20% {
-    transform: translate(800%, -10%);
+    transform: translate(600%, -10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(800%, -10%);
+    transform: translate(600%, -10%);
     z-index: 5;
   }
 
   100% {
     transform-origin: center center;
-    transform: translate(800%, -10%) scale(0);
+    transform: translate(600%, -10%) scale(0);
     opacity: 0;
     z-index: 5;
   }
@@ -1918,21 +1932,21 @@ svg {
 
 @keyframes discard-hcard-my {
   0% {
-    transform: translate(800%, 200%);
+    transform: translate(600%, 200%);
   }
 
   20% {
-    transform: translate(800%, -10%);
+    transform: translate(600%, -10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(800%, -10%);
+    transform: translate(600%, -10%);
     z-index: 5;
   }
 
   100% {
-    transform: translate(800%, -10%) scale(0);
+    transform: translate(600%, -10%) scale(0);
     opacity: 0;
     z-index: 5;
   }

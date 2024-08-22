@@ -716,9 +716,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: !isTalent && trigger != 'phase-end',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger.startsWith('after-skilltype')) {
-                        if (isTalent || trigger == 'after-skilltype1') smn.useCnt = Math.max(smn.useCnt, Math.min(smn.maxUse, smn.useCnt + 1));
-                        if (isTalent) return { cmds: [{ cmd: 'attack', cnt: 2 }] }
+                    if (isTalent || trigger.includes('skilltype1')) {
+                        smn.useCnt = Math.max(smn.useCnt, Math.min(smn.maxUse, smn.useCnt + 1));
+                        if (isTalent && trigger.startsWith('after-skilltype')) return { cmds: [{ cmd: 'attack', cnt: 2 }] }
                         return;
                     }
                     smn.useCnt = Math.max(0, smn.useCnt - 1);

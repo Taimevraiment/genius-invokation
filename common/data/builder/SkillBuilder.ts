@@ -129,6 +129,10 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._readySkillRound = round;
         return this;
     }
+    spSkill() {
+        this._energyCost.set(['vlatest', -3]);
+        return this;
+    }
     energy(energy: number) {
         this._energyCost.set(['vlatest', energy]);
         return this;

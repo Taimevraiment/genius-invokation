@@ -1,7 +1,8 @@
 <template>
   <div class="info-outer-container">
     <div class="info-container" :class="{ 'mobile-font': isMobile }" v-if="isShow" @click.stop="">
-      <div v-if="type == INFO_TYPE.Card" @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
+      <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
+        @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
         <div class="name">{{ (info as Card).name }}</div>
         <div>
           <div class="info-card-cost">
@@ -302,10 +303,11 @@ import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
 import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
 
-const props = defineProps(['info', 'isMobile', 'isInGame']);
+const props = defineProps(['info', 'isMobile', 'isInGame', 'round']);
 
 const isMobile = computed<boolean>(() => props.isMobile);
 const isInGame = computed<boolean>(() => !!props.isInGame); // 是否在游戏中显示(用于一些游戏实时数据的显示)
+const round = computed<number>(() => props.round ?? 0); // 当前回合
 const version = computed<Version>(() => props.info.version); // 版本
 const isShow = computed<boolean>(() => props.info.isShow); // 是否显示
 const type = computed<InfoType>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物
@@ -345,10 +347,17 @@ const wrapExplCtt = (content: string) => {
             type == 'hro' ? newHero(version.value)(a1) :
               { name: content, default: true };
 }
-const wrapDesc = (desc: string, obj?: ExplainContent): string => {
+const wrapDesc = (desc: string, isExplain: boolean, obj?: ExplainContent): string => {
   const wrapName = (_: string, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`;
   let res = desc.slice()
-    .replace(/〔(.*?)〕/g, isInGame ? '<span style="color:#ebc000;">$1</span>' : '')
+    .replace(/〔(.*?)〕/g, (_, ctt: string) => {
+      if (!isInGame.value || isExplain) return '';
+      ctt = ctt.replace(/{round}/, `${round.value}`);
+      if (typeof obj != 'string' && obj != undefined) {
+        ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`);
+      }
+      return `<span style="color:#d5bb49;">${ctt}</span>`
+    })
     .replace(/(?<!\\)〖(.*?)〗/g, wrapName)
     .replace(/(?<!\\)【(.*?)】/g, wrapName)
     .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
@@ -409,9 +418,9 @@ const wrapDesc = (desc: string, obj?: ExplainContent): string => {
 // 卡牌上一些实时信息：〔〕
 // 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
-const wrapExpl = (expls: ExplainContent[], memo: number | number[]): string[][] => {
+const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {
   const container: string[][] = [];
-  if (typeof memo == 'number') memo = [memo];
+  if (typeof memo == 'string') memo = [memo];
   for (let expl of expls) {
     const explains: string[] = [];
     if (typeof expl == 'string') {
@@ -419,8 +428,8 @@ const wrapExpl = (expls: ExplainContent[], memo: number | number[]): string[][] 
       if (nctt.name == '' || 'skills' in nctt || 'default' in nctt) continue;
       expl = nctt;
     }
-    if (memo.includes(expl.id)) continue;
-    memo.push(expl.id);
+    if (memo.includes(expl.id + expl.name)) continue;
+    memo.push(expl.id + expl.name);
     const nameEl = `<span style="font-weight:bold;color:white;">${expl.name}</span>`;
     if ('costType' in expl) { // Card
       explains.push(`
@@ -435,7 +444,7 @@ const wrapExpl = (expls: ExplainContent[], memo: number | number[]): string[][] 
     } else {
       explains.push(nameEl);
     }
-    explains.push(...expl.UI.description.split('；').map(desc => wrapDesc(desc, expl)));
+    explains.push(...expl.UI.description.split('；').map(desc => wrapDesc(desc, true, expl)));
     container.push(explains);
     if (expl.UI.explains.length > 0) {
       container.push(...wrapExpl(expl.UI.explains, memo));
@@ -448,8 +457,8 @@ const wrapRule = (...desc: string[]) => {
   ruleExplain.value = [];
   [...new Set(desc.join('').replace(/<img[^<>]+>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
     if (title in RULE_EXPLAIN) {
-      ruleExplain.value.push(`<div style='font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`)}</div>`);
-      ruleExplain.value.push(...RULE_EXPLAIN[title].split('；').map(desc => wrapDesc(desc)));
+      ruleExplain.value.push(`<div style='font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`, true)}</div>`);
+      ruleExplain.value.push(...RULE_EXPLAIN[title].split('；').map(desc => wrapDesc(desc, true)));
     }
   });
 }
@@ -484,32 +493,32 @@ const getSvgFilter = (statusColor: StatusBgColor) => {
 watchEffect(() => {
   ruleExplain.value = [];
   if (info.value && 'costType' in info.value) {
-    info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc));
-    skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id);
+    info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc, false));
+    skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
   }
   if (info.value && 'maxUse' in info.value) {
-    smnExplain.value = wrapExpl(info.value.UI.explains, info.value.id);
+    smnExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
   }
   if (info.value && 'heroStatus' in info.value) {
     heroStatusExplain.value = [];
     combatStatusExplain.value = [];
     info.value.heroStatus.forEach(ist => {
-      ist.UI.descriptions = ist.UI.description.split('；').map(desc => wrapDesc(desc, ist));
-      heroStatusExplain.value.push(wrapExpl(ist.UI.explains, ist.id));
+      ist.UI.descriptions = ist.UI.description.split('；').map(desc => wrapDesc(desc, false, ist));
+      heroStatusExplain.value.push(wrapExpl(ist.UI.explains, ist.id + ist.name));
     });
     combatStatus.value.forEach(ost => {
-      ost.UI.descriptions = ost.UI.description.split('；').map(desc => wrapDesc(desc, ost));
-      combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.id));
+      ost.UI.descriptions = ost.UI.description.split('；').map(desc => wrapDesc(desc, false, ost));
+      combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.id + ost.name));
     });
     slotExplain.value = [];
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].forEach(slot => {
       if (slot != null) {
-        const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc));
+        const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc, false));
         const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Action].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
-        slotExplain.value.push(wrapExpl(slot.UI.explains, slot.id).slice(isActionTalent ? 1 : 0));
+        slotExplain.value.push(wrapExpl(slot.UI.explains, slot.id + slot.name).slice(isActionTalent ? 1 : 0));
       }
     });
     skills.value = [];
@@ -520,15 +529,15 @@ watchEffect(() => {
       isShowSkill.value.push(type.value == INFO_TYPE.Skill);
     }
     skills.value.forEach(skill => {
-      skill.UI.descriptions = skill.UI.description.split('；').map(desc => wrapDesc(desc, skill));
-      skillExplain.value.push(wrapExpl(skill.UI.explains, skill.id));
+      skill.UI.descriptions = skill.UI.description.split('；').map(desc => wrapDesc(desc, false, skill));
+      skillExplain.value.push(wrapExpl(skill.UI.explains, skill.id + skill.name));
     });
     isHeroStatus.value = new Array(info.value.heroStatus.length).fill(false);
     isCombatStatus.value = new Array(combatStatus.value.length).fill(false);
     isEquipment.value = new Array([info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].filter(s => s != null).length).fill(false);
   }
   if (info.value && 'isDestroy' in info.value) {
-    info.value.UI.descriptions = (info.value.UI.description as string).split('；').map(desc => wrapDesc(desc, info.value as Summon));
+    info.value.UI.descriptions = (info.value.UI.description as string).split('；').map(desc => wrapDesc(desc, false, info.value as Summon));
   }
 });
 

@@ -1434,7 +1434,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_c, _e, ver) => ({ status: [newStatus(ver)(300002)] })),
 
     330005: () => new CardBuilder(222).name('万家灶火').since('v4.2.0').legend().costSame(0)
-        .description('【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的｢天赋｣牌，则抓1张｢天赋｣牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。(最多抓4张)')
+        .description('【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的｢天赋｣牌，则抓1张｢天赋｣牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。(最多抓4张〔，当前为回合{round}〕)')
         .description('我方抓【当前回合数-1】数量的牌。(最多抓4张)', 'v4.7.0')
         .description('我方抓【当前回合数】数量的牌。(最多抓4张)', 'v4.4.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/4c214784418f974b6b3fa294b415cdb4_8205569284186975732.png')
@@ -1692,16 +1692,14 @@ const allCards: Record<number, () => CardBuilder> = {
                 isValid: isNeedEnergy && hasEnergy,
                 exec: () => {
                     let getEnergy = 0;
-                    let needEnergy = heros[fhidx].maxEnergy - heros[fhidx].energy;
                     for (let i = 1; i < heros.length; ++i) {
                         const h = heros[(i + fhidx) % heros.length];
-                        if (needEnergy == 0 || getEnergy >= 2) break;
+                        if (getEnergy >= 2) break;
                         if (h.energy == 0) continue;
                         --h.energy;
-                        --needEnergy;
                         ++getEnergy;
                     }
-                    heros[fhidx].energy += getEnergy;
+                    heros[fhidx].energy = Math.min(heros[fhidx].energy + getEnergy, heros[fhidx].maxEnergy);
                 }
             }
         }),
@@ -2711,13 +2709,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】为出战角色，我方进行｢切换角色｣行动时：少花费1个元素骰。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d00693f2246c912c56900d481e37104a_1436874897141676884.png')
         .handle((card, event) => {
-            let { switchHeroDiceCnt = 0 } = event;
-            const isMinus = card.perCnt > 0;
+            if (card.perCnt <= 0) return;
             return {
                 trigger: ['change-from'],
-                minusDiceHero: isCdt(isMinus, 1),
+                minusDiceHero: 1,
                 exec: () => {
-                    if (switchHeroDiceCnt > 0 && isMinus) {
+                    let { switchHeroDiceCnt = 0 } = event;
+                    if (switchHeroDiceCnt > 0) {
                         --card.perCnt;
                         --switchHeroDiceCnt;
                     }
