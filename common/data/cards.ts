@@ -2730,29 +2730,39 @@ const allCards: Record<number, () => CardBuilder> = {
 
     221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
-        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png'),
+        .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png')
+        .handle((card, event) => {
+            const { summons = [], trigger = '' } = event;
+            const summon = getObjById(summons, 121011);
+            if (summon && ['skilltype1', 'skilltype2'].includes(trigger)) {
+                const cnt = +trigger.slice(-1);
+                if (summon.useCnt + cnt > summon.maxUse) card.perCnt = -1;
+                else card.perCnt = 0;
+            }
+        }),
 
     221021: () => new CardBuilder(294).name('苦痛奉还').since('v4.3.0').talent().costSame(3).tag(CARD_TAG.Barrier).perCnt(1)
         .description('我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts121022】或【sts121022,1】。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png')
         .handle((card, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
-            if (hidx == undefined) return;
+            const { heros = [], hidxs: [hidx] = [-1], restDmg = -1 } = event;
+            if (hidx == -1) return;
             const hero = heros[hidx];
             if (restDmg > -1) {
                 if (restDmg < 3 || card.perCnt == 0) return { restDmg }
                 --card.perCnt;
                 return { restDmg: restDmg - 1, statusOppo: [newStatus(ver)(121022, +(hero.element != ELEMENT_TYPE.Cryo))] }
             }
-            return { isValid: hero?.isFront, cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
+            return { isValid: hero?.id == getHidById(card.id), cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
         }),
 
     221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
         .description('我方出战角色为【hro】时，才能打出：使其附属【sts121034】。；装备有此牌的【hro】触发【sts121034】后：对敌方出战角色附属【sts121022】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png')
-        .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [] } = event;
-            return { isValid: heros[hidx]?.isFront, status: [newStatus(ver)(121034)] }
+        .handle((card, event, ver) => {
+            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            if (hidx == -1) return;
+            return { isValid: heros[hidx]?.id == getHidById(card.id), status: [newStatus(ver)(121034)] }
         }),
 
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)

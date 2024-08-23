@@ -15,6 +15,7 @@ export type SummonHandleEvent = {
     isChargedAtk?: boolean,
     isFallAtk?: boolean,
     hcard?: Card,
+    talent?: Card | null,
     isExec?: boolean,
     isSkill?: number,
     minusDiceCard?: number,
@@ -327,8 +328,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
-                const { heros = [] } = event;
-                const talent = getObjById(heros, getHidById(summon.id))?.talentSlot;
+                const { talent } = event;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);
                 if (talent && talent.perCnt > 0) {
                     --talent.perCnt;
@@ -686,27 +686,24 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
         .handle((summon, event, ver) => {
-            const { trigger = '', heros = [], hcard, isExec = true } = event;
+            const { trigger = '', heros = [], talent, isExec = true } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hero = heros[getAtkHidx(heros)];
-            const cnt = Number(trigger.slice(-1));
+            if (!hero) return;
             const isHero = hero?.id == getHidById(summon.id);
-            const isTalent = !isNaN(cnt) && isHero &&
-                (!!hero?.talentSlot || hcard?.id == 221011) &&
-                summon.useCnt + cnt > summon.maxUse;
+            const isTalent = isHero && talent && talent.perCnt == -1;
             if (ver < 'v4.1.0' || isHero) triggers.push('get-elReaction');
             if (!isExec && trigger == 'get-elReaction' && (ver < 'v4.1.0' || isHero)) {
                 summon.useCnt = Math.max(0, summon.useCnt - 1);
             }
+            const isTalentTrg = ['after-skilltype1', 'after-skilltype2'].includes(trigger);
             if (isHero) {
-                triggers.push('skilltype1', 'after-skilltype1');
-                if (isTalent && trigger == 'after-skilltype2') {
-                    triggers.push('after-skilltype2');
+                triggers.push('skilltype1');
+                if (isTalent && isTalentTrg) {
+                    triggers.push(trigger);
                 }
-                if (!isExec) {
-                    if (['after-skilltype1', 'after-skilltype2'].includes(trigger)) {
-                        summon.useCnt = Math.max(summon.useCnt, Math.min(summon.maxUse, summon.useCnt + 1));
-                    }
+                if (!isExec && trigger == 'after-skilltype1') {
+                    summon.useCnt = Math.max(summon.useCnt, Math.min(summon.maxUse, summon.useCnt + 1));
                 }
             }
             return {
@@ -718,7 +715,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (isTalent || trigger.includes('skilltype1')) {
                         smn.useCnt = Math.max(smn.useCnt, Math.min(smn.maxUse, smn.useCnt + 1));
-                        if (isTalent && trigger.startsWith('after-skilltype')) return { cmds: [{ cmd: 'attack', cnt: 2 }] }
+                        if (isTalent && isTalentTrg) {
+                            talent.perCnt = 0;
+                            return { cmds: [{ cmd: 'attack', cnt: 2 }] }
+                        }
                         return;
                     }
                     smn.useCnt = Math.max(0, smn.useCnt - 1);
@@ -728,15 +728,15 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     121033: () => new SummonBuilder('刺击冰棱').useCnt(2).damage(1)
-        .description('【结束阶段：】对敌方[距离我方出战角色最近的角色]{dealDmg}。；[useCnt]')
+        .description('{对敌方[距离我方出战角色最近的角色]defaultAtk}。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/7becac09916614d57a2f084749634d5d_3605800251898465783.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { heros = [], eheros = [] } = event;
+                const { hidx = -1, eheros = [] } = event;
                 const { summon: smn = summon } = execEvent;
                 smn.useCnt = Math.max(0, smn.useCnt - 1);
-                return { cmds: [{ cmd: 'attack', hidxs: [getNearestHidx(heros.findIndex(h => h.isFront), eheros)] }] }
+                return { cmds: [{ cmd: 'attack', hidxs: [getNearestHidx(hidx, eheros)] }] }
             }
         })),
 

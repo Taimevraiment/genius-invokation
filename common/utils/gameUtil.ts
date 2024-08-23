@@ -5,7 +5,15 @@ import { arrToObj, objToArr } from "./utils.js";
 // 获取所有存活/死亡角色的索引hidx
 export const allHidxs = (heros?: Hero[], options: { isDie?: boolean, exclude?: number, isAll?: boolean } = {}): number[] => {
     const { isDie = false, exclude = -1, isAll = false } = options;
-    return heros?.filter(h => isAll || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != h.hidx)).map(v => v.hidx) ?? [];
+    const hidx = heros?.findIndex(h => h.isFront) ?? -1;
+    if (!heros || hidx == -1) return [];
+    const hidxs: number[] = [];
+    for (let i = 0; i < heros.length; ++i) {
+        const hi = (hidx + i) % heros.length;
+        const { hp } = heros[hi];
+        if (isAll || ((isDie ? hp <= 0 : hp > 0) && exclude != hi)) hidxs.push(hi);
+    }
+    return hidxs;
 }
 
 // 获取受伤最多的角色的hidxs(只有一个number的数组)
@@ -130,3 +138,6 @@ export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
 
 // 根据角色id获取元素
 export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];
+
+// 根据角色id获取天赋id
+export const getTalentIdByHid = (hid: number): number => +`2${hid}1`;

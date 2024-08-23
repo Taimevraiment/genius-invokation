@@ -149,7 +149,7 @@
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
-      (client.currSkill.id != -1 || client.willHp.some(v => v != undefined) || client.isShowSwitchHero >= 2)">
+      (client.currSkill.id != -1 || client.isShowSwitchHero >= 2)">
     </div>
 
   </div>
@@ -394,9 +394,8 @@ onUnmounted(() => {
 
 // dev
 let prodEnv = 0;
-// const maskOpacity = ref<number>(0.84);
+const maskOpacity = ref<number>(0.84);
 // const isOpenMask = ref<boolean>(true);
-const maskOpacity = ref<number>(0.94);
 const isOpenMask = ref<boolean>(false);
 const devOps = (cidx = 0) => {
   if (client.value.phase < 5 || !isDev && ++prodEnv < 3) return;

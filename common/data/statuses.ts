@@ -7,7 +7,7 @@ import {
 } from "../constant/enum.js";
 import { MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 import { newSummon } from "./summons.js";
@@ -25,6 +25,7 @@ export type StatusHandleEvent = {
     reset?: boolean,
     trigger?: Trigger,
     card?: Card,
+    talent?: Card | null,
     discards?: Card[],
     isChargedAtk?: boolean,
     isFallAtk?: boolean,
@@ -268,7 +269,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117: () => new StatusBuilder('激化领域').combatStatus().type(STATUS_TYPE.AddDamage).useCnt(2)
+    117: () => new StatusBuilder('激化领域').combatStatus().type(STATUS_TYPE.AddDamage).useCnt(2).useCnt(3, 'v3.4.0')
         .description('【我方对敌方出战角色造成[雷元素伤害]或[草元素伤害]时，】伤害值+1。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Reaction_117.webp')
         .handle((status, event) => {
@@ -377,17 +378,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。(生成此出战状态的技能，也会触发此效果)；【重复生成此出战状态时：】累积2枚｢晚星｣。')
         .handle((status, event) => {
-            const { heros = [], card, trigger = '' } = event;
-            const hid = getHidById(status.id);
+            const { talent, trigger = '' } = event;
             const isDmg = status.useCnt >= 4 && trigger == 'after-skill';
-            const isTalent = !!getObjById(heros, hid)?.talentSlot || card?.id == 211091;
             const triggers: Trigger[] = ['skill'];
             if (isDmg) triggers.push('after-skill');
             return {
                 trigger: triggers,
                 damage: isCdt(isDmg, 1),
                 element: DAMAGE_TYPE.Cryo,
-                cmds: isCdt(isDmg && isTalent, [{ cmd: 'getCard', cnt: 1 }]),
+                cmds: isCdt(isDmg && !!talent, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: eStatus => {
                     if (trigger == 'skill') ++status.useCnt;
                     if (eStatus) eStatus.useCnt -= 4;
@@ -1401,11 +1400,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     116061: () => new StatusBuilder('大将旗指物').combatStatus().icon('ski,1').roundCnt(2).maxCnt(3)
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
         .description('我方角色造成的[岩元素伤害]+1。；[roundCnt]')
-        .handle((status, event) => {
-            const { skilltype = -1, card, heros = [] } = event;
+        .handle((_, event) => {
+            const { skilltype = -1, talent } = event;
             if (skilltype == -1) return;
-            const talent = card ?? getObjById(heros, getHidById(status.id))?.talentSlot;
-            const isTalent = !!talent && talent.id == 216061 && talent.perCnt > 0;
+            const isTalent = !!talent && talent.perCnt > 0;
             return {
                 trigger: ['Geo-dmg'],
                 addDmgCdt: 1,
@@ -1606,12 +1604,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用的[草元素伤害]。；[useCnt]')
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；[useCnt]', 'v4.8.0')
         .handle((status, event, ver) => {
-            const { heros = [], summons = [], pile = [], card, combatStatus = [] } = event;
+            const { summons = [], pile = [], card, combatStatus = [], talent } = event;
             if (pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) return;
             const cmds: Cmds[] = [{ cmd: 'discard', mode: CMD_MODE.TopPileCard }];
-            const thero = getObjById(heros, getHidById(status.id))!;
-            const talent = thero.talentSlot ?? card;
-            if (talent && talent.id == 217081 && talent.perCnt > 0) {
+            if (talent && talent.perCnt > 0) {
                 cmds.push({ cmd: 'getCard', cnt: 1, card: pile[0].id });
                 if (pile[0].hasSubtype(CARD_SUBTYPE.Place)) cmds.push({ cmd: 'getStatus', status: [newStatus(ver)(117083)] });
             }
@@ -1627,8 +1623,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         if (sts116) --sts116.useCnt;
                         else --getObjById(smns, 112082)!.useCnt;
                         const thero = getObjById(hs, getHidById(status.id))!;
-                        const talent = thero.talentSlot ?? card;
-                        if (talent && talent.id == 217081 && talent.perCnt > 0) {
+                        const talent = isCdt(card?.id == getTalentIdByHid(thero.id), card) ?? thero.talentSlot;
+                        if (talent && talent.perCnt > 0) {
                             --talent.perCnt;
                         }
                         return { cmds }
@@ -1658,18 +1654,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     121021: () => new StatusBuilder('冰封的炽炎魔女').heroStatus().icon('ski,3').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【行动阶段开始时：】如果所附属角色生命值不多于4，则移除此效果。；【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。【此效果被移除时：】所附属角色转换为[｢焚尽的炽炎魔女｣]形态。')
-        .handle((_, event) => {
+        .handle((status, event) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['will-killed', 'skilltype3'];
             if ((heros[hidx]?.hp ?? 10) <= 4) triggers.push('phase-start');
             return {
                 trigger: triggers,
                 cmds: isCdt(trigger == 'will-killed', [{ cmd: 'revive', cnt: 1 }]),
+                isAddTask: trigger != 'skilltype3',
                 exec: eStatus => {
-                    if (eStatus) {
-                        --eStatus.useCnt;
-                        return;
-                    }
+                    if (eStatus) --eStatus.useCnt;
+                    if (trigger == 'skilltype3') --status.useCnt;
                     return { cmds: [{ cmd: 'changePattern', cnt: 6301, hidxs: [hidx] }] }
                 }
             }
@@ -1688,7 +1683,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    121031: () => new StatusBuilder('四迸冰锥').heroStatus().icon('buff6').useCnt(1)
+    121031: () => new StatusBuilder('四迸冰锥').heroStatus().icon('buff6').useCnt(1).type(STATUS_TYPE.Usage)
         .description('【我方角色｢普通攻击｣时：】对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]')
         .handle(status => ({
             pdmg: 1,
@@ -1703,10 +1698,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             cmds: [{ cmd: 'revive', cnt: 1 }],
             exec: eStatus => {
                 const { heros = [], hidx = -1 } = event;
-                if (eStatus) {
-                    --eStatus.useCnt;
-                    return;
-                }
+                if (eStatus) --eStatus.useCnt;
                 if (!heros[hidx].talentSlot) return;
                 return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(121022)], isOppo: true }] }
             }

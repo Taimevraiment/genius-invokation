@@ -43,7 +43,7 @@ export class GICard {
     constructor(
         id: number, shareId: number, name: string, version: Version, description: string, src: string, cost: number, costType: DiceType,
         type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0,
-        handle?: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined,
+        handle?: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number,
@@ -160,7 +160,7 @@ export class CardBuilder extends BaseBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _energy: VersionMap<number> = new VersionMap();
     private _anydice: number = 0;
-    private _handle: ((card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined) | undefined;
+    private _handle: ((card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined | void) | undefined;
     private _canSelectHero: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
@@ -289,7 +289,7 @@ export class CardBuilder extends BaseBuilder {
         this._canSelectSupport = canSelectSupport;
         return this;
     }
-    handle(handle: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined) {
+    handle(handle: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

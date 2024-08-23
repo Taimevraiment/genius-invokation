@@ -275,7 +275,7 @@
               }" :style="{
                 'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
                 // 'background-image': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
-                'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
+                'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 || (willHp[hgi][hidx] ?? 0) % 1 != 0 ? 2 : 3}`)})`,
                 color: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '#ffdada' : (willHp[hgi][hidx] ?? 0) <= 0 ? 'white' : '#e0ffd6'}`,
               }" v-if="willHp[hgi][hidx] != undefined">
                 <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"

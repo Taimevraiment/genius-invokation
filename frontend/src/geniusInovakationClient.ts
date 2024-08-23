@@ -277,6 +277,13 @@ export default class GeniusInvokationClient {
                 this.summonCnt = preview.willSummonChange?.slice() ?? this._resetSummonCnt();
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
+                if (
+                    this.willHp.some(v => v != undefined) ||
+                    this.willSummons.some(smns => smns.length > 0) ||
+                    this.summonCnt.some(smns => smns.some(v => v != 0))
+                ) {
+                    this.currSkill.id = -2;
+                }
                 if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
                     canSelectSummon != -1 && this.summonCanSelect[canSelectSummon].filter(v => v).length == 1 ||
                     canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1) {
