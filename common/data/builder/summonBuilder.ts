@@ -72,10 +72,10 @@ export class GISummon {
         this.isDestroy = isDestroy;
         this.statusId = stsId;
         this.handle = (summon, event = {}) => {
-            const { reset = false } = event;
+            const { reset = false, trigger = '' } = event;
             if (reset) {
                 summon.perCnt = pct;
-                if (!spReset) return {}
+                if (!spReset && trigger != 'enter') return {}
             }
             if (handle) return handle(summon, event, ver) ?? {};
             return {

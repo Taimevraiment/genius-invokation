@@ -93,7 +93,7 @@
         </div>
         <div class="switch-button" v-if="client.player.hidx != -1"
           @click.stop="client.isShowSwitchHero < 2 ? chooseHero() : switchHero()"
-          :style="{ filter: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO ? `url(${getSvgIcon('filter')}#status-color-10)` : '' }">
+          :style="{ filter: !client.isValid && client.player.phase != PHASE.CHOOSE_HERO ? 'brightness(0.4)' : '' }">
         </div>
         <div class="skill-cost" v-if="client.player.phase == PHASE.ACTION"
           :style="{ marginTop: '10px', opacity: +(client.isShowSwitchHero >= 2) }">
@@ -215,9 +215,9 @@ const getDiceBgIcon = (name: string) => {
 // };
 
 // 获取svg图片
-const getSvgIcon = (name: string) => {
-  return `/svg/${name}.svg`;
-};
+// const getSvgIcon = (name: string) => {
+//   return `/svg/${name}.svg`;
+// };
 
 watchEffect(() => {
   if (client.value.isWin < 2) {

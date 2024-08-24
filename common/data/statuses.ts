@@ -8,7 +8,7 @@ import {
 import { MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
-import { clone, isCdt } from "../utils/utils.js";
+import { isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 import { newSummon } from "./summons.js";
 
@@ -1696,11 +1696,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, event, ver) => ({
             trigger: ['will-killed'],
             cmds: [{ cmd: 'revive', cnt: 1 }],
-            exec: eStatus => {
-                const { heros = [], hidx = -1 } = event;
-                if (eStatus) --eStatus.useCnt;
-                if (!heros[hidx].talentSlot) return;
-                return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(121022)], isOppo: true }] }
+            exec: (eStatus, execEvent = {}) => {
+                const { hidx = -1 } = event;
+                const { heros = [] } = execEvent;
+                if (!eStatus) return;
+                --eStatus.useCnt;
+                if (heros[hidx].talentSlot) return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(121022)], isOppo: true }] }
             }
         })),
 
@@ -1718,19 +1719,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
     122021: (isTalent: boolean = false) => new StatusBuilder('水光破镜').heroStatus().icon('debuff').roundCnt(2).roundCnt(3, isTalent)
-        .type(STATUS_TYPE.AddDamage).type(isTalent, STATUS_TYPE.Usage).talent(isTalent)
-        .description('所附属角色切换到其他角色时元素骰费用+1。；[roundCnt]；(同一方场上最多存在一个此状态)')
-        .description('所附属角色受到的[水元素伤害]+1。；[roundCnt]；(同一方场上最多存在一个此状态)', 'v4.8.0')
-        .handle(status => {
-            const trigger: Trigger[] = ['Hydro-getdmg'];
-            if (status.isTalent) trigger.push('change-from');
-            return {
-                addDiceHero: 1,
-                getDmg: isCdt(status.isTalent, 1),
-                trigger,
-                onlyOne: true,
-            }
-        }),
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).talent(isTalent)
+        .description(`所附属角色切换到其他角色时元素骰费用+1${isTalent ? '，并且会使所附属角色受到的[水元素伤害]+1' : ''}。；[roundCnt]；(同一方场上最多存在一个此状态)`)
+        .description(`所附属角色受到的[水元素伤害]+1${isTalent ? '，并且会使所附属角色切换到其他角色时元素骰费用+1' : ''}。；[roundCnt]；(同一方场上最多存在一个此状态)`, 'v4.8.0')
+        .handle((status, _, ver) => ({
+            addDiceHero: isCdt(ver >= 'v4.8.0' || status.isTalent, 1),
+            getDmg: isCdt(ver < 'v4.8.0' || status.isTalent, 1),
+            trigger: ['Hydro-getdmg', 'change-from'],
+            onlyOne: true,
+        })),
 
     122031: () => new StatusBuilder('水之新生').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。触发此效果后，角色造成的[物理伤害]变为[水元素伤害]，且[水元素伤害]+1。')
@@ -1738,10 +1735,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['will-killed'],
             cmds: [{ cmd: 'revive', cnt: 4 }],
             exec: eStatus => {
-                if (eStatus) {
-                    --eStatus.useCnt;
-                    return;
-                }
+                if (!eStatus) return;
+                --eStatus.useCnt;
                 return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122037)] }] }
             }
         })),
@@ -1767,16 +1762,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     122041: () => new StatusBuilder('深噬之域').combatStatus().icon('ski,3').useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。')
-        .addition(-1, -1, 0, 0).handle((status, event, ver) => {
+        .addition(-1, -1, 0, 0).handle((_, event, ver) => {
             const { discards = [], card, heros = [] } = event;
             return {
                 trigger: ['discard', 'reconcile'],
                 isAddTask: true,
                 exec: (eStatus, execEvent = {}) => {
-                    eStatus ??= clone(status);
+                    if (!eStatus) return;
                     const { heros: hs = heros } = execEvent;
-                    const hidx = hs.findIndex(h => h.id == 1724);
-                    if (hidx == -1) return;
+                    const hero = getObjById(hs, getHidById(eStatus.id));
+                    if (!hero) return;
                     const [cost1, cost2, maxDice] = eStatus.addition as number[];
                     if (card && card.id > 0) discards.splice(0, 10, card);
                     let cnt = 0;
@@ -1794,12 +1789,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         } else {
                             cnt += 1 + +(cost1 == cost) + +(cost2 == cost);
                             eStatus.useCnt = 0;
-                            heros[hidx].maxHp += cnt;
+                            hero.maxHp += cnt;
                         }
                     });
                     if (cnt > 0) {
-                        const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hidx], mode: i }));
-                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122042, cnt)], hidxs: [hidx] }, ...healcmds], }
+                        const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hero.hidx], mode: i }));
+                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122042, cnt)], hidxs: [hero.hidx] }, ...healcmds], }
                     }
                 }
             }
@@ -1831,7 +1826,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    123022: () => new StatusBuilder('火之新生').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+    123022: () => new StatusBuilder('火之新生').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。此效果触发后，此角色造成的[火元素伤害]+1。')
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到3点生命值。', 'v4.6.0')
         .handle((_, event, ver) => ({
@@ -1840,15 +1835,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: eStatus => {
                 if (eStatus) {
                     --eStatus.useCnt;
-                    return;
+                    const { heros = [], hidx = -1 } = event;
+                    const status: Status[] = ver < 'v4.6.0' ? [newStatus(ver)(123026)] : [];
+                    if (heros[hidx]?.talentSlot) {
+                        heros[hidx].talentSlot = null;
+                        status.push(newStatus(ver)(123024))
+                    }
+                    return { cmds: [{ cmd: 'getStatus', status }] }
                 }
-                const { heros = [], hidx = -1 } = event;
-                const inStatus: Status[] = ver < 'v4.6.0' ? [newStatus(ver)(123026)] : [];
-                if (heros[hidx]?.talentSlot) {
-                    heros[hidx].talentSlot = null;
-                    inStatus.push(newStatus(ver)(123024))
-                }
-                return { cmds: [{ cmd: 'getStatus', status: inStatus }] }
             }
         })),
 

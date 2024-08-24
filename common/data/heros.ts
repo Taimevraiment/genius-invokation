@@ -52,7 +52,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('猫爪冻冻').description('{dealDmg}，生成【sts111021】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1e/293bqkk7gcer933p14viqh445sdwqzf.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/fc7cc8ae1d95bc094e69b8f3c1c270f8_1908586115904037757.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111021, event.talent)] })),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111021, !!event.talent)] })),
             new SkillBuilder('最烈特调').description('{dealDmg}，治疗此角色2点，召唤【smn111023】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3a/gltxegl17e1mwhv3z3xdakycst8h5sg.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/24/195563531/d749ae8a4ce1c2693106ef4a39430ff7_1792825158969730188.png')
@@ -82,7 +82,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('重华叠霜').description('{dealDmg}，生成【sts111041】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/90fe50a43ea7905773df4433d385e4d9_8501818730448316824.png')
-                .elemental().damage(3).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111041, event.talent)] })),
+                .elemental().damage(3).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111041, !!event.talent)] })),
             new SkillBuilder('云开星落').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/0/01/5vyck7f9rpns92tfop3r41xr1aats4u.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0bddb45b9d91fb892ddaf2e8eb1e04a8_1565971516954358022.png')
@@ -140,7 +140,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('仰灵威召将役咒').description('{dealDmg}，生成【sts111071】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c7750c7dbf76e9e3dffa7df162028a4d_5325191736377199101.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111071, event.talent)] })),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(111071, !!event.talent)] })),
             new SkillBuilder('神女遣灵真诀').description('{dealDmg}，召唤【smn111073】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/49/cquyhtfdkpk25f0sk3afsnb5j502yhk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/89e2ed92b6352a5925652f421aaddbaa_7169125488313816137.png')
@@ -268,7 +268,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('画雨笼山').description('{dealDmg}，本角色[附着水元素]，生成【sts112021】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/9f/n2lo8l7ov8w0bx2jwh5qcvmmflm8wbs.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/6ebbfb60e7eee60282022e0c935672dd_2463677033991737689.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(112021, event.talent)], isAttach: true })),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(112021, !!event.talent)], isAttach: true })),
             new SkillBuilder('裁雨留虹').description('{dealDmg}，本角色[附着水元素]，生成【sts112022】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fb/rj85t7tm68l6y8yyuvryh2hagcz1g3b.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/c8eb10016106e63120b6b5c92fcb2a5e_1562905905897327561.png')
@@ -385,7 +385,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('圣仪·灰鸰衒潮').description('{dealDmg}，生成【sts112072】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fc/ipi3ncx8dl44m9og51z6g72pu1mux41.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/65b29af9633d647a90b9ff0acd90d750_1308512450439952516.png')
-                .burst(2).damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(112072, event.talent)] }))
+                .burst(2).damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(112072, !!event.talent)] }))
         ),
 
     1208: () => new HeroBuilder(16).name('妮露').since('v4.2.0').sumeru().hydro().sword()
@@ -510,7 +510,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('美妙旅程').description('{dealDmg}，生成【sts113031】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/13/avxfgtbz3r8qu7zk71dcr8kk3e949zi.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6cdff59fc3701119002ab7cb38157a2c_8058649649755407178.png')
-                .burst(2).damage(2).cost(4).handle((event, ver) => ({ statusAfter: [newStatus(ver)(113031, event.talent)] }))
+                .burst(2).damage(2).cost(4).handle((event, ver) => ({ statusAfter: [newStatus(ver)(113031, !!event.talent)] }))
         ),
 
     1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').mondstadt().pyro().bow()
@@ -536,7 +536,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('焰硝庭火舞').description('本角色附属【sts113051】。(此技能不产生[充能])')
                 .src('https://patchwiki.biligame.com/images/ys/4/4d/nxz4yj425tcxv3bevn05eu33wrqv2jr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/cec17a1d299dd83a96a4e2e791a21da4_3223499260532391975.png')
-                .elemental().cost(1).energy(-1).handle((event, ver) => ({ status: [newStatus(ver)(113051, event.talent)] })),
+                .elemental().cost(1).energy(-1).handle((event, ver) => ({ status: [newStatus(ver)(113051, !!event.talent)] })),
             new SkillBuilder('琉金云间草').description('{dealDmg}，生成【sts113052】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/22/p14o20u95t6u0b4hngqf8hhku0r1krx.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/938ac8f32d0998f3c896b862d0791b56_7334292135415645740.png')
@@ -552,7 +552,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('蹦蹦炸弹').description('{dealDmg}，本角色附属【sts113061】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/99/eqni0xudmuxvbflx6kviz8l793fju23.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/4409746db70c242861fb0a6addafd850_1072795968508012901.png')
-                .elemental().damage(3).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(113061, event.talent)] })),
+                .elemental().damage(3).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(113061, !!event.talent)] })),
             new SkillBuilder('轰轰火花').description('{dealDmg}，在对方场上生成【sts113063】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/28/s88qf6z943kpscss1oye99kmccz2y10.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/01/18/12109492/3f4f659ff99b2435aa3662f4d17d537d_4727800863330247216.png')
@@ -646,7 +646,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('真红炽火之大铠').description('{dealDmg}，生成【sts113111】和【sts113112】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/21/a47iyqyy205fi0kyn38tmakcinh281j.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/7d6cb477d20cd8b75925ce62d3b73e8e_5295401799072493605.png')
-                .burst(2).damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(113111), newStatus(ver)(113112, event.talent)] }))
+                .burst(2).damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(113111), newStatus(ver)(113112, !!event.talent)] }))
         ),
 
     1312: () => new HeroBuilder(365).name('辛焱').since('v4.7.0').liyue().pyro().claymore()
@@ -706,7 +706,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('夜巡影翼').description('{dealDmg}，召唤【smn114011】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/29/9ikuan4r5rhgza5nlxl86m718d3zmtt.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/4ab444ac20da8ea0990ff891600596ed_358383106993654545.png')
-                .elemental().damage(1).cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(114011, event.talent)] })),
+                .elemental().damage(1).cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(114011, !!event.talent)] })),
             new SkillBuilder('至夜幻现').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/5/5e/oi2xpx4ad1wuo0g4nozm1yqfxzmzrut.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bac9b0ca7056b02ffac854871d7cb0e0_7559183843121315562.png')
@@ -894,7 +894,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('卡萨扎莱宫的无微不至').description('{dealDmg}，召唤【smn114102】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b7/pzuxl8ukf3do834omkdzx5p8yfape0u.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/a1870db7855c7037f700f74152d1f28e_1635879084262346523.png')
-                .burst(2).damage(1).cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(114102, event.talent)] }))
+                .burst(2).damage(1).cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(114102, !!event.talent)] }))
         ),
 
     1411: () => new HeroBuilder(348).name('久岐忍').since('v4.6.0').inazuma().electro().sword()
@@ -924,7 +924,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('禁·风灵作成·柒伍同构贰型').description('{dealDmg}，召唤【smn115011】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png')
-                .burst(2).damage(1).cost(3).handle((event, ver) => ({ summonPre: [newSummon(ver)(115011, event.talent)] }))
+                .burst(2).damage(1).cost(3).handle((event, ver) => ({ summonPre: [newSummon(ver)(115011, !!event.talent)] }))
         ),
 
     1502: () => new HeroBuilder(37).name('琴').mondstadt().anemo().sword()
@@ -950,7 +950,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('高天之歌').description('{dealDmg}，生成【sts115031】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/hhb16pe3sq5duv4cu299atxbi78k7ae.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/73d15303525e2658bf60d8336109d92e_404486790465744082.png')
-                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(115031, event.talent)] })),
+                .elemental().damage(2).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(115031, !!event.talent)] })),
             new SkillBuilder('风神之诗').description('{dealDmg}，召唤【smn115034】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/cf/iv3keguj9pqi3blf8j9xk10olca914v.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3e4ec3f94bfd2547b1431d8fa2cd2889_8125698290989309719.png')
@@ -1312,7 +1312,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('云台团团降芦菔').description('召唤【smn117041】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b9/1kp0f3qy6c5glhcphgbxi3nze2nq695.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/73c9611548f96cbcaaa820548576ff81_266542015961172436.png')
-                .elemental().cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(117041, event.talent)] })),
+                .elemental().cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(117041, !!event.talent)] })),
             new SkillBuilder('云颗珊珊月中落').description('{dealDmg}，生成【sts117043】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6e/34fahwmjls4qg1gnq2ew4v0mdxa2hqg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/f364530033902093e271b5b3b26c0018_6031597060341810921.png')
@@ -1548,7 +1548,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('潋波绽破').description('{dealDmg}，目标角色附属【sts122021】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/bb/ejgc07c2acyw7emun013j336cvmksvt.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/72eb60be8d1a88f12671264e29101ad4_5912821621104766081.png')
-                .elemental().damage(2).damage(3, 'v3.7.0').cost(3).handle((event, ver) => ({ statusOppo: [newStatus(ver)(122021, event.talent)] })),
+                .elemental().damage(2).damage(3, 'v3.7.0').cost(3).handle((event, ver) => ({ statusOppo: [newStatus(ver)(122021, !!event.talent)] })),
             new SkillBuilder('粼镜折光').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/8/80/1dsnenenx6cm0ojaln742iwx60rzc1r.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/9bd9b0f4cad85c234146ef15518ee57e_5116572838966914686.png')
@@ -1634,7 +1634,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('伺机而动').description('{dealDmg}，本角色附属【sts123011】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/36/rr6eiuoeleum3em795e7r1x687ielwb.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3903202fe02b486f479ba7f8d32d8658_8665610180849380821.png')
-                .elemental().damage(1).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(123011, event.talent)] })),
+                .elemental().damage(1).cost(3).handle((event, ver) => ({ status: [newStatus(ver)(123011, !!event.talent)] })),
             new SkillBuilder('焚毁之锋').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/5/5a/lz90owtayb7iw587z7ve8nfdfy8eysp.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/7cef125734bc7fb32e80c64c06e5f755_2159532089128773899.png')

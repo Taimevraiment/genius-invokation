@@ -89,8 +89,17 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {
             const { heros = [], isExec = true, trigger = '' } = event;
+            const fhero = getObjById(heros, getHidById(summon.id));
+            if (['enter', 'summon-destroy'].includes(trigger)) {
+                fhero?.skills.forEach(skill => {
+                    if (skill.type == SKILL_TYPE.Normal || skill.type == SKILL_TYPE.Elemental) {
+                        skill.cost[2].cnt = trigger == 'enter' ? -1 : 0;
+                    }
+                });
+                return;
+            }
             const hero = heros[getAtkHidx(heros)];
-            if (hero?.isFront && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
+            if (hero?.id == fhero?.id && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
                 summon.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
             }
             return {
@@ -103,10 +112,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     }
                     const hero = hs[getAtkHidx(hs)];
                     if (hero?.id == getHidById(summon.id)) {
-                        console.log('smnCnt-before:', smn.useCnt);
                         smn.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
-                        console.log('smnCnt-after:', smn.useCnt);
-                        return { cmds: [{ cmd: 'getEnergy', cnt: -1 }] }
                     }
                 },
             }
@@ -741,20 +747,29 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png'),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png')
+        .handle((summon, event, ver) => ({
+            willSummon: isCdt([1, 2].includes(event.isSkill ?? -1), newSummon(ver)(122011)),
+            trigger: ['phase-end'],
+            exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
+        })),
 
     122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp')
-        .handle((_s, _e, ver) => ({ willSummon: newSummon(ver)(122011) })),
+        .handle((summon, event, ver) => ({
+            willSummon: isCdt([1, 2].includes(event.isSkill ?? -1), newSummon(ver)(122011)),
+            trigger: ['phase-end'],
+            exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
+        })),
 
     122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Frog.webp')
-        .handle((summon, _, ver) => {
+        .handle((summon, event, ver) => {
             const trigger: Trigger[] = [];
             if (summon.useCnt == 0) trigger.push('phase-end');
             return {
-                willSummon: newSummon(ver)(122011),
+                willSummon: isCdt([1, 2].includes(event.isSkill ?? -1), newSummon(ver)(122011)),
                 trigger,
                 exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
             }

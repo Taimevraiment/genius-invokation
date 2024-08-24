@@ -1,4 +1,4 @@
-import { Card, Hero, Skill } from "../../typing";
+import { Card, Hero, Player, Skill } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
@@ -141,3 +141,19 @@ export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.fl
 
 // 根据角色id获取天赋id
 export const getTalentIdByHid = (hid: number): number => +`2${hid}1`;
+
+// 合并预回血
+export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | number[][], players?: Player[]) => {
+    if (!resHeals) return;
+    if (typeof resHeals[0] != 'number') {
+        (resHeals as number[][]).forEach(hl => mergeWillHeals(tarWillHeals, hl, players));
+        return;
+    }
+    (resHeals as number[]).forEach((hl, hli) => {
+        if (hl > -1) {
+            if (tarWillHeals[hli] < 0) tarWillHeals[hli] = hl;
+            else tarWillHeals[hli] += hl;
+        }
+    });
+    players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, (resHeals as number[])[h.hidx + (p.pidx * players[0].heros.length)]))));
+}

@@ -51,7 +51,6 @@ export type SupportHandleRes = {
 export type SupportExecEvent = {
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
-    summonDiffCnt?: number,
 }
 
 export type SupportExecRes = {
@@ -578,12 +577,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         return {
             trigger: ['summon-destroy', 'card'],
             minusDiceCard: isCdt(isMinus, 2),
-            exec: execEvent => {
-                let { summonDiffCnt = 0 } = execEvent;
+            exec: () => {
                 if (trigger == 'card' && isMinus) return { isDestroy: true }
-                if (trigger == 'summon-destroy' && support.cnt < 3) {
-                    support.cnt = Math.min(3, support.cnt + summonDiffCnt);
-                }
+                if (trigger == 'summon-destroy' && support.cnt < 3) ++support.cnt;
                 return { isDestroy: false }
             }
         }

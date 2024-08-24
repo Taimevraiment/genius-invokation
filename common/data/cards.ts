@@ -2804,7 +2804,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    222051: () => new CardBuilder(412).name('水镖史莱姆').since('v5.0.0').talent(1).costHydro(3).perCnt(1)
+    222051: () => new CardBuilder(412).name('轻盈水沫').since('v5.0.0').talent(1).costHydro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，我方使用｢特技｣时：少花费1个元素骰。(每回合1次)')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_HilistrayWater.webp')
         .handle((card, event) => {

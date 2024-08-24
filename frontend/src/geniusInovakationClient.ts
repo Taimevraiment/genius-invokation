@@ -638,10 +638,6 @@ export default class GeniusInvokationClient {
             skill: isCdt(this.currSkill.type != SKILL_TYPE.Passive, this.currSkill),
             heroSwitchDice: isCdt(this.isShowSwitchHero > 0, this.heroSwitchDice),
         });
-        if (this.isShowSwitchHero > 0) { // 切换角色所消耗的骰子
-            const preview = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && this.heroSelect[1][pre.heroIdxs![0]]);
-            this.isValid = preview?.diceSelect?.filter(v => v).length == this.heroSwitchDice;
-        }
     }
     /**
      * 调和骰子

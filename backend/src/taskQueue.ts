@@ -18,7 +18,6 @@ export default class TaskQueue {
         console.info((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList);
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void>, number?][], isPriority: boolean) {
-        // await delay(800);
         if (!isPriority && this.priorityQueue == undefined && this.queue.length > 0) this.priorityQueue = [];
         for (const [func, intvl = 0] of funcs) {
             await func();
