@@ -8,7 +8,7 @@ import {
 import { MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
-import { isCdt } from "../utils/utils.js";
+import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 import { newSummon } from "./summons.js";
 
@@ -1762,19 +1762,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     122041: () => new StatusBuilder('深噬之域').combatStatus().icon('ski,3').useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。')
-        .addition(-1, -1, 0, 0).handle((_, event, ver) => {
+        .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], card, heros = [] } = event;
             return {
                 trigger: ['discard', 'reconcile'],
                 isAddTask: true,
                 exec: (eStatus, execEvent = {}) => {
-                    if (!eStatus) return;
+                    const notAtk = eStatus == undefined;
+                    eStatus ??= clone(status);
                     const { heros: hs = heros } = execEvent;
                     const hero = getObjById(hs, getHidById(eStatus.id));
                     if (!hero) return;
+                    let cnt = 0;
                     const [cost1, cost2, maxDice] = eStatus.addition as number[];
                     if (card && card.id > 0) discards.splice(0, 10, card);
-                    let cnt = 0;
                     discards.forEach(c => {
                         const cost = c.cost + c.anydice;
                         if (cost > maxDice) {
@@ -1789,7 +1790,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         } else {
                             cnt += 1 + +(cost1 == cost) + +(cost2 == cost);
                             eStatus.useCnt = 0;
-                            hero.maxHp += cnt;
+                            if (notAtk) hero.maxHp += cnt;
                         }
                     });
                     if (cnt > 0) {
@@ -1833,16 +1834,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['will-killed'],
             cmds: [{ cmd: 'revive', cnt: ver < 'v4.6.0' ? 3 : 4 }],
             exec: eStatus => {
-                if (eStatus) {
-                    --eStatus.useCnt;
-                    const { heros = [], hidx = -1 } = event;
-                    const status: Status[] = ver < 'v4.6.0' ? [newStatus(ver)(123026)] : [];
-                    if (heros[hidx]?.talentSlot) {
-                        heros[hidx].talentSlot = null;
-                        status.push(newStatus(ver)(123024))
-                    }
-                    return { cmds: [{ cmd: 'getStatus', status }] }
+                if (!eStatus) return;
+                --eStatus.useCnt;
+                const { heros = [], hidx = -1 } = event;
+                const status: Status[] = ver < 'v4.6.0' ? [] : [newStatus(ver)(123026)];
+                if (heros[hidx]?.talentSlot) {
+                    heros[hidx].talentSlot = null;
+                    status.push(newStatus(ver)(123024))
                 }
+                return { cmds: [{ cmd: 'getStatus', status }] }
             }
         })),
 

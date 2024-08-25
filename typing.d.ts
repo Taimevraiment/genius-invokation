@@ -51,7 +51,12 @@ type Player = {
         heroSwitchDice: number, // 切换角色所需骰子
         showRerollBtn: boolean, // 是否显示重投按钮
         willGetCard: Card[], // 即将获得的卡
-        willAddCard: Card[], // 即将加入牌堆的卡
+        willAddCard: {
+            cards: Card[], // 即将加入牌库的卡
+            scope: number, // 加入牌库范围
+            isRandom: boolean, // 是否随机置入,否则均匀
+            isNotPublic: boolean, // 是否公开
+        },
         willDiscard: Card[][], // 即将舍弃的卡 [手牌, 牌库]
         atkhidx: number, // 攻击角色序号
         tarhidx: number, // 受击角色序号
@@ -104,6 +109,8 @@ type StatusTask = {
     isSwitchAtk?: boolean, // 是否为下落攻击/刻晴切换攻击
     isQuickAction?: boolean, // 是否为快速行动
     isAfterSwitch?: boolean, // 是否为后切换触发
+    discards?: Card[], // 舍弃的牌
+    card?: Card, // 调和或使用的牌
 }
 
 type Cmds = {
@@ -231,7 +238,6 @@ type ServerData = Readonly<{
 }>
 
 type Preview = Readonly<ActionData & {
-    players: Player[],
     isValid: boolean,
     willHp?: (number | undefined)[],
     willAttachs?: ElementType[][],

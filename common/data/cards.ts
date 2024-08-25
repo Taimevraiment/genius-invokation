@@ -2826,9 +2826,9 @@ const allCards: Record<number, () => CardBuilder> = {
     223021: () => new CardBuilder(116).name('烬火重燃').since('v3.7.0').talent().costPyro(2)
         .description('【入场时：】如果装备有此牌的【hro】已触发过【sts123022】，就立刻弃置此牌，为角色附属【sts123024】。；装备有此牌的【hro】触发【sts123022】时：弃置此牌，为角色附属【sts123024】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png')
-        .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [] } = event;
-            if (!hasObjById(heros[hidx]?.heroStatus, 123022)) {
+        .handle((card, event, ver) => {
+            const { heros = [] } = event;
+            if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 123022)) {
                 return { status: [newStatus(ver)(123024)], isDestroy: true }
             }
         }),

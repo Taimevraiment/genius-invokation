@@ -1603,7 +1603,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('无尽食欲').description('战斗开始时，生成【sts122041】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a9e29da334dce66803ef9edb13b8e8d9.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/66b604a5c6cc6b3ca21c5bee7bee28a5_2353476581760344471.png')
-                .handle((_, ver) => ({ trigger: ['game-start', 'revive'], status: [newStatus(ver)(122041)] }))
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(122041)] }))
         ),
 
     2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').monster().tags(HERO_TAG.Hilichurl).hydro()
@@ -1690,7 +1690,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle(event => {
                     const { hero: { hp, skills: [, , , skill4], energy, maxEnergy, hidx }, getdmg = [] } = event;
                     if (hp - getdmg[hidx] > 7 || energy >= maxEnergy || skill4.useCnt) return;
-                    return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1 }] }
+                    return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
         ),
 

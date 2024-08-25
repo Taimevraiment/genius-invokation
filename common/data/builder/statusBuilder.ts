@@ -71,7 +71,7 @@ export class GIStatus {
             this.UI.icon = SHIELD_ICON_URL;
             // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
             thandle = (status, event = {}) => {
-                let { restDmg = 0 } = event;
+                let { restDmg = -1 } = event;
                 let rest: StatusHandleRes = {};
                 if (handle) {
                     const { restDmg: dmg = -1, ...other } = handle(status, event, ver) ?? {};
@@ -285,7 +285,7 @@ export class StatusBuilder extends BaseVersionBuilder {
         });
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
             (status: Status, event: StatusHandleEvent, ver: Version) => {
-                const { restDmg = 0, summon } = event;
+                const { restDmg = -1, summon } = event;
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
                 if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
                 if (status.roundCnt > 0) --status.roundCnt;

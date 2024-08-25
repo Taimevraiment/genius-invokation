@@ -51,7 +51,12 @@ export const INIT_PLAYER: () => Player = () => ({
         atkhidx: -1,
         tarhidx: -1,
         willGetCard: [],
-        willAddCard: [],
+        willAddCard: {
+            cards: [],
+            scope: 0,
+            isRandom: true,
+            isNotPublic: false,
+        },
         willDiscard: [[], []],
     },
 });

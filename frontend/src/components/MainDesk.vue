@@ -14,9 +14,10 @@
           :style="{ left: `${getLeft(cidx, opponent?.UI.willGetCard.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willGetCard" :card="card" :isMobile="isMobile" :key="cidx">
         </handcard>
-        <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willAddCard"
-          :style="{ left: `${getLeft(cidx, opponent?.UI.willAddCard.length)}px` }"
-          v-for="(card, cidx) in opponent?.UI.willAddCard" :card="card" :isMobile="isMobile" :key="cidx">
+        <handcard class="will-addcard-oppo" :class="{ 'mobile-will-card': isMobile }"
+          v-if="opponent?.UI.willAddCard.cards"
+          :style="{ left: `${getLeft(cidx, opponent?.UI.willAddCard.cards.length)}px` }"
+          v-for="(card, cidx) in opponent?.UI.willAddCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
         </handcard>
         <handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[0].length)}px` }"
@@ -43,8 +44,8 @@
           v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
         </handcard>
         <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
-          :style="{ left: `${getLeft(cidx, player.UI.willAddCard.length)}px` }"
-          v-for="(card, cidx) in player.UI.willAddCard" :key="cidx">
+          :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
+          v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
         </handcard>
         <handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player.UI.willDiscard[0].length)}px` }"
@@ -362,9 +363,9 @@
               </div>
               <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"
                 :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
-                :src="summon.damage > 0 ? ELEMENT_URL[summon.element] : getSvgIcon('heal')" />
+                :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getSvgIcon('heal')" />
               <div class="summon-bottom-num" v-if="!summon?.UI.isWill">
-                {{ summon.damage > 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
+                {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
               </div>
             </div>
           </div>
@@ -418,8 +419,7 @@
 <script setup lang='ts'>
 import Handcard from '@/components/Card.vue';
 import {
-  CARD_SUBTYPE, CARD_TAG,
-  DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+  CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
@@ -1249,8 +1249,8 @@ button:active {
 }
 
 .hero-shield7 {
-  border-radius: 5px !important;
-  border: 4px solid #fffdd2bd !important;
+  border-radius: 3px !important;
+  border: 5px solid #fffdd2e9 !important;
   z-index: 1;
 }
 

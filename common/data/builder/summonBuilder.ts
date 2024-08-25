@@ -93,7 +93,7 @@ export class GISummon {
 export const phaseEndAtk = (summon: Summon, healHidxs?: number[]): SummonHandleRes => {
     if (summon.isDestroy == 0) summon.useCnt = Math.max(0, summon.useCnt - 1);
     const cmds: Cmds[] = [];
-    if (summon.damage > 0) cmds.push({ cmd: 'attack' });
+    if (summon.damage >= 0) cmds.push({ cmd: 'attack' });
     if (summon.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });
     return { cmds }
 }
@@ -240,7 +240,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         const description = this._description.get(this._curVersion, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
         const perCnt = this._perCnt.get(this._curVersion, 0);
-        const damage = this._damage.get(this._curVersion, 0);
+        const damage = this._damage.get(this._curVersion, -1);
         const stsId = this._statusId == -2 ? this._id : this._statusId;
         return new GISummon(this._id, this._name, description, this._src, useCnt, maxUse,
             this._shieldOrHeal, damage, element, this._handle,
