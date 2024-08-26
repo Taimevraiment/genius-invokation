@@ -866,7 +866,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     summon.useCnt = Math.max(0, summon.useCnt - 1);
                 }
             }
-            if ((hero?.talentSlot?.useCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
+            if ((hero?.talentSlot?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
             return {
                 trigger: triggers,
                 damage: summon.damage,
@@ -881,7 +881,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     }
                     if (trigger == 'get-elReaction') return;
                     const chero = getObjById(hrs, getHidById(smn.id));
-                    if (trigger == 'action-start' && chero?.talentSlot) --chero.talentSlot.useCnt;
+                    if (trigger == 'action-start' && chero?.talentSlot) --chero.talentSlot.perCnt;
                     return { cmds: [{ cmd: 'attack' }] }
                 }
             }

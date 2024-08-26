@@ -369,7 +369,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 圣火竞技场
     321022: () => new SupportBuilder().collection().handle((support, _, ver) => ({
-        trigger: ['skill', 'spskill'],
+        trigger: ['skill', 'vehicle'],
         exec: () => {
             ++support.cnt;
             const cmds: Cmds[] = [];
@@ -791,9 +791,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322028: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
         return {
-            trigger: ['spskill'],
+            trigger: ['vehicle'],
             isNotAddTask: true,
-            minusDiceSkill: { spskill: [0, 0, 1] },
+            minusDiceSkill: { vehicle: [0, 0, 1] },
             exec: () => {
                 if (event.isMinusDiceSkill) --support.perCnt;
                 return { isDestroy: false }

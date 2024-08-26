@@ -449,9 +449,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
             'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Char_AvatarIcon_FurinaOusia.webp')
         .normalSkill(new NormalSkillBuilder('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
             .handle(event => {
-                const { hero: { skills: [skill1] }, hcards = [] } = event;
-                if (skill1.perCnt == 0 || hasObjById(hcards, 112113)) return;
-                return { cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }], exec: () => { --skill1.perCnt } }
+                const { hero: { skills: [skill] }, hcards = [] } = event;
+                if (skill.perCnt <= 0 || hasObjById(hcards, 112113)) return;
+                return { cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }], exec: () => { --skill.perCnt } }
             }))
         .skills(
             skillTotal[12112](),
@@ -1719,7 +1719,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     let stsCnt = 0;
                     if (trigger == 'game-start') stsCnt = 5;
                     else if (trigger == 'action-after') {
-                        heros.forEach(hero => stsCnt += [...hero.heroStatus, ...combatStatus].filter(sts => sts.hasType(STATUS_TYPE.Shield) && sts.id != 123041).length * 2);
+                        stsCnt += [...heros.flatMap(h => h.heroStatus), ...combatStatus].filter(sts => sts.hasType(STATUS_TYPE.Shield) && sts.id != 123041).length * 2;
                         if (stsCnt > 0 && (hero.talentSlot?.perCnt ?? 0) > 0) stsCnt += 2;
                     }
                     if (stsCnt == 0) return;
@@ -1729,9 +1729,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         exec: () => {
                             if (trigger == 'game-start' || stsCnt == 0) return;
                             for (const sts of [...heros.flatMap(h => h.heroStatus), ...combatStatus]) {
-                                if (sts.hasType(STATUS_TYPE.Shield) && sts.id != 123041) {
-                                    sts.useCnt = 0;
-                                }
+                                if (!sts.hasType(STATUS_TYPE.Shield) || sts.id == 123041) continue;
+                                sts.useCnt = 0;
                             }
                             if (stsCnt > 0 && hero.talentSlot && hero.talentSlot.perCnt > 0) --hero.talentSlot.perCnt;
                         }
@@ -1790,13 +1789,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('霞舞鱼群').description('{dealDmg}。；【每回合1次：】如果本角色已附属【sts124032】，则使其[可用次数]+1。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3a/fej2c9u7kria1j2btaxy7f9o9k7uuyg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/ba6b95e623fd861b69316a6f649d150c_90481026227323793.png')
-                .elemental().damage(3).cost(3).handle(event => ({
-                    exec: () => {
-                        const { hero: { heroStatus } } = event;
-                        const sts124032 = getObjById(heroStatus, 124032);
-                        if (sts124032) ++sts124032.useCnt;
+                .elemental().damage(3).cost(3).perCnt(1).handle(event => {
+                    const { hero: { skills: [, skill], heroStatus } } = event;
+                    const sts124032 = getObjById(heroStatus, 124032);
+                    if (skill.perCnt <= 0 || !sts124032) return;
+                    return {
+                        exec: () => {
+                            ++sts124032.useCnt;
+                            --skill.perCnt;
+                        }
                     }
-                })),
+                }),
             new SkillBuilder('原海古雷').description('{dealDmg}，本角色附属【sts124032】，召唤【smn124031】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1f/popxzd68zzf3mhig28gkekdxhef63zf.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/68b45e352424c4127c47bd9fdee5bd78_7983386802406853220.png')

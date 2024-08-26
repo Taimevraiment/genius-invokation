@@ -920,12 +920,13 @@ export default class GeniusInvokationClient {
      */
     resetDamageVO() {
         return this.damageVO = {
+            ...this.damageVO,
             dmgSource: 'null',
             atkPidx: -1,
             atkHidx: -1,
             tarHidx: -1,
             willDamages: [],
-            dmgElements: [],
+            // dmgElements: [],
             willHeals: [],
             elTips: [],
         }

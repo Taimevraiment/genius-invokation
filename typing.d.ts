@@ -88,7 +88,7 @@ type MinuDiceSkill = {
     skilltype2?: number[],
     skilltype3?: number[],
     elDice?: PureElementType,
-    spskill?: number[],
+    vehicle?: number[],
 }
 
 type AddDiceSkill = {
@@ -191,7 +191,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther}dmg` | `${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
-    'reconcile' | 'discard' | `getcard${TrgOppo}` | keyof typeof ELEMENT_REACTION | 'enter' | `${TrgOther}spskill` | '';
+    'reconcile' | 'discard' | `getcard${TrgOppo}` | keyof typeof ELEMENT_REACTION | 'enter' | `${TrgOther}vehicle` | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

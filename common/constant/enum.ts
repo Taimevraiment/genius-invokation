@@ -111,7 +111,7 @@ export const DICE_COST_TYPE_CODE_KEY = swapKeysAndValues(DICE_COST_TYPE_CODE);
 export const CARD_SUBTYPE_EQUIPMENT = {
     Weapon: 'Weapon', // 武器
     Artifact: 'Artifact', // 圣遗物
-    Spskill: 'Spskill', // 特技
+    Vehicle: 'Vehicle', // 特技
 } as const;
 
 export const CARD_SUBTYPE_SUPPORT = {

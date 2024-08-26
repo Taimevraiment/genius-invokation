@@ -394,7 +394,7 @@ onUnmounted(() => {
 
 // dev
 let prodEnv = 0;
-const maskOpacity = ref<number>(0.84);
+const maskOpacity = ref<number>(0.75);
 // const isOpenMask = ref<boolean>(true);
 const isOpenMask = ref<boolean>(false);
 const devOps = (cidx = 0) => {

@@ -158,7 +158,7 @@
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot + +!!hero.spskillSlot)}%`,
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot + +!!hero.vehicleSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
@@ -168,7 +168,7 @@
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot + +!!hero.spskillSlot)}%`,
+                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot + +!!hero.vehicleSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
             </div>
@@ -178,19 +178,19 @@
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.spskillSlot)}%`,
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.vehicleSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
             </div>
-            <div class="hero-spskill" v-if="hero.spskillSlot != null"
+            <div class="hero-vehicle" v-if="hero.vehicleSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[3] }">
-              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Spskill]" style="filter: brightness(0.3);" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
                 height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
                 borderRadius: '50%',
-              }" :class="{ 'slot-can-use': hero.spskillSlot.perCnt > 0 }"></div>
+              }" :class="{ 'slot-can-use': hero.vehicleSlot.perCnt > 0 }"></div>
             </div>
           </div>
           <div class="attach-element">
@@ -482,24 +482,23 @@ const player = computed<Player>(() => {
       });
     });
     p.supports.forEach((st, sti) => {
-      const saidx = +(pi == playerIdx.value);
-      if (supportCurcnt.value[saidx][sti].val != st.cnt) {
-        if (supportCurcnt.value[saidx][sti].sid == st.entityId) {
-          supportCurcnt.value[saidx][sti] = { sid: st.entityId, val: st.cnt, isChange: true };
-          setTimeout(() => supportCurcnt.value[saidx][sti].isChange = false, 300);
+      if (supportCurcnt.value[pi][sti].val != st.cnt) {
+        if (supportCurcnt.value[pi][sti].sid == st.entityId) {
+          supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: true };
+          setTimeout(() => supportCurcnt.value[pi][sti].isChange = false, 300);
         } else {
-          supportCurcnt.value[saidx][sti] = { sid: st.entityId, val: st.cnt, isChange: false };
+          supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: false };
         }
       }
     });
     p.summons.forEach((smn, smni) => {
-      const saidx = +(pi == playerIdx.value);
-      if (summonCurcnt.value[saidx][smni].val != smn.useCnt) {
-        if (summonCurcnt.value[saidx][smni].sid == smn.id) {
-          summonCurcnt.value[saidx][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
-          setTimeout(() => summonCurcnt.value[saidx][smni].isChange = false, 300);
+      if (summonCurcnt.value[pi][smni].val != smn.useCnt) {
+        if (summonCurcnt.value[pi][smni].sid == smn.id) {
+          console.log(smn.name, smn.id);
+          summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
+          setTimeout(() => summonCurcnt.value[pi][smni].isChange = false, 300);
         } else {
-          summonCurcnt.value[saidx][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
+          summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
         }
       }
     });
@@ -948,7 +947,7 @@ button:active {
 .hero-weapon,
 .hero-artifact,
 .hero-talent,
-.hero-spskill {
+.hero-vehicle {
   width: 100%;
   border: 2px solid #525252;
   border-radius: 50%;
@@ -963,7 +962,7 @@ button:active {
 .hero-weapon>img,
 .hero-artifact>img,
 .hero-talent>img,
-.hero-spskill>img {
+.hero-vehicle>img {
   width: 100%;
   border-radius: 50%;
 }

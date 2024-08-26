@@ -47,7 +47,7 @@ export type StatusHandleEvent = {
     hcards?: Card[],
     pile?: Card[],
     playerInfo?: GameInfo,
-    isSummon?: number[],
+    isSummon?: number,
     source?: number,
     randomInt?: (len?: number) => number,
     randomInArr?: <T>(arr: T[]) => T,
@@ -1660,7 +1660,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if ((heros[hidx]?.hp ?? 10) <= 4) triggers.push('phase-start');
             return {
                 trigger: triggers,
-                cmds: isCdt(trigger == 'will-killed', [{ cmd: 'revive', cnt: 1 }]),
+                cmds: isCdt(trigger == 'will-killed', [{ cmd: 'revive', cnt: 1, hidxs: [hidx] }]),
                 isAddTask: trigger != 'skilltype3',
                 exec: eStatus => {
                     if (eStatus) --eStatus.useCnt;
@@ -1693,17 +1693,21 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     121034: () => new StatusBuilder('冰晶核心').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。')
-        .handle((_, event, ver) => ({
-            trigger: ['will-killed'],
-            cmds: [{ cmd: 'revive', cnt: 1 }],
-            exec: (eStatus, execEvent = {}) => {
-                const { hidx = -1 } = event;
-                const { heros = [] } = execEvent;
-                if (!eStatus) return;
-                --eStatus.useCnt;
-                if (heros[hidx].talentSlot) return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(121022)], isOppo: true }] }
+        .handle((_, event, ver) => {
+            const { hidx = -1 } = event;
+            return {
+                trigger: ['will-killed'],
+                cmds: [{ cmd: 'revive', cnt: 1, hidxs: [hidx] }],
+                exec: (eStatus, execEvent = {}) => {
+                    const { heros = [] } = execEvent;
+                    if (!eStatus) return;
+                    --eStatus.useCnt;
+                    if (heros[hidx].talentSlot) {
+                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(121022)], hidxs: [hidx], isOppo: true }] }
+                    }
+                }
             }
-        })),
+        }),
 
     121042: () => new StatusBuilder('掠袭锐势').heroStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
         .description('【结束阶段：】对所有附属有【sts122】的敌方角色造成1点[穿透伤害]。；[useCnt]')
@@ -1731,15 +1735,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     122031: () => new StatusBuilder('水之新生').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。触发此效果后，角色造成的[物理伤害]变为[水元素伤害]，且[水元素伤害]+1。')
-        .handle((_s, _e, ver) => ({
-            trigger: ['will-killed'],
-            cmds: [{ cmd: 'revive', cnt: 4 }],
-            exec: eStatus => {
-                if (!eStatus) return;
-                --eStatus.useCnt;
-                return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122037)] }] }
+        .handle((_, event, ver) => {
+            const { hidx = -1 } = event;
+            return {
+                trigger: ['will-killed'],
+                cmds: [{ cmd: 'revive', cnt: 4, hidxs: [hidx] }],
+                exec: eStatus => {
+                    if (!eStatus) return;
+                    --eStatus.useCnt;
+                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122037)], hidxs: [hidx] }] }
+                }
             }
-        })),
+        }),
 
     122032: () => readySkillStatus('涟锋旋刃', 22035),
 
@@ -1830,21 +1837,23 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     123022: () => new StatusBuilder('火之新生').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。此效果触发后，此角色造成的[火元素伤害]+1。')
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到3点生命值。', 'v4.6.0')
-        .handle((_, event, ver) => ({
-            trigger: ['will-killed'],
-            cmds: [{ cmd: 'revive', cnt: ver < 'v4.6.0' ? 3 : 4 }],
-            exec: eStatus => {
-                if (!eStatus) return;
-                --eStatus.useCnt;
-                const { heros = [], hidx = -1 } = event;
-                const status: Status[] = ver < 'v4.6.0' ? [] : [newStatus(ver)(123026)];
-                if (heros[hidx]?.talentSlot) {
-                    heros[hidx].talentSlot = null;
-                    status.push(newStatus(ver)(123024))
+        .handle((_, event, ver) => {
+            const { heros = [], hidx = -1 } = event;
+            return {
+                trigger: ['will-killed'],
+                cmds: [{ cmd: 'revive', cnt: ver < 'v4.6.0' ? 3 : 4, hidxs: [hidx] }],
+                exec: eStatus => {
+                    if (!eStatus) return;
+                    --eStatus.useCnt;
+                    const status: Status[] = ver < 'v4.6.0' ? [] : [newStatus(ver)(123026)];
+                    if (heros[hidx]?.talentSlot) {
+                        heros[hidx].talentSlot = null;
+                        status.push(newStatus(ver)(123024))
+                    }
+                    return { cmds: [{ cmd: 'getStatus', status, hidxs: [hidx] }] }
                 }
-                return { cmds: [{ cmd: 'getStatus', status }] }
             }
-        })),
+        }),
 
     123024: () => new StatusBuilder('渊火加护').heroStatus().useCnt(2)
         .type(STATUS_TYPE.Shield).type(ver => ver >= 'v4.6.0', STATUS_TYPE.Attack)
@@ -1880,16 +1889,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     124014: () => new StatusBuilder('雷晶核心').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。')
-        .handle(() => ({
+        .handle((_, event) => ({
             trigger: ['will-killed'],
-            cmds: [{ cmd: 'revive', cnt: 1 }],
+            cmds: [{ cmd: 'revive', cnt: 1, hidxs: [event.hidx ?? -1] }],
             exec: eStatus => {
                 if (eStatus) --eStatus.useCnt;
             }
         })),
 
     124021: () => new StatusBuilder('雷霆探针').combatStatus().icon('ski,3')
-        .type(STATUS_TYPE.Sign).iconBg(DEBUFF_BG_COLOR).perCnt(1)
+        .type(STATUS_TYPE.Sign, STATUS_TYPE.Usage).iconBg(DEBUFF_BG_COLOR).perCnt(1)
         .description('【所在阵营角色使用技能后：】对所在阵营出战角色附属【sts124022】。(每回合1次)')
         .handle((status, _, ver) => ({
             trigger: ['skill'],
@@ -1905,41 +1914,38 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色受到〖hro〗及其召唤物造成的伤害时：】移除此状态，使此伤害+1。；(同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。)')
         .description('【此状态存在期间，可以触发1次：】所附属角色受到〖hro〗及其召唤物造成的伤害+1。；(同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。)', 'v4.4.0')
         .handle((status, event, ver) => {
-            const { dmgSource = 0, eheros = [] } = event;
-            const hid = getHidById(status.id);
-            const getDmg = +(dmgSource == hid || dmgSource == 124023);
-            const talent = getObjById(eheros, hid)?.talentSlot;
-            const isTalent = talent && talent.useCnt > 0;
+            const { dmgSource = 0 } = event;
+            const getDmg = +(dmgSource == getHidById(status.id) || dmgSource == 124023);
             return {
                 trigger: ['getdmg'],
                 getDmg,
                 onlyOne: true,
-                cmds: isCdt(isTalent, [{ cmd: 'getCard', cnt: 1, isOppo: true }]),
                 exec: () => {
                     if (getDmg > 0) {
                         if (ver < 'v4.4.0') --status.perCnt;
                         else --status.useCnt;
                     }
-                    if (isTalent) --talent.useCnt;
                 }
             }
         }),
 
-    124032: (isTalent: boolean = false, useCnt: number = 2, addCnt?: number) => new StatusBuilder('原海明珠').heroStatus()
-        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Usage).talent(isTalent).useCnt(useCnt).addCnt(addCnt).perCnt(1).perCnt(2, isTalent)
+    124032: (isTalent: boolean = false, useCnt: number = 2) => new StatusBuilder('原海明珠').heroStatus()
+        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Usage).talent(isTalent).useCnt(useCnt).perCnt(1).perCnt(2, isTalent)
         .description(`【所附属角色受到伤害时：】抵消1点伤害。；【每回合${isTalent ? 2 : 1}次：】抵消来自召唤物的伤害时不消耗[可用次数]。；[useCnt]；【我方宣布结束时：】如果所附属角色为｢出战角色｣，则抓1张牌。`)
         .handle((status, event) => {
-            const { restDmg = 0, heros = [], hidx = -1, isSummon: [smnId] = [-1] } = event;
-            if (restDmg > 0) {
-                if (smnId > -1 && status.perCnt > 0) --status.perCnt;
+            const { restDmg = -1, heros = [], hidx = -1, isSummon = -1 } = event;
+            if (restDmg >= 0) {
+                if (restDmg == 0) return { restDmg }
+                if (isSummon > -1 && status.perCnt > 0) --status.perCnt;
                 else --status.useCnt;
                 return { restDmg: restDmg - 1 }
             }
-            const { isFront } = heros[hidx];
+            const hero = heros[hidx];
+            if (!hero || !hero.isFront) return;
             return {
-                restDmg,
-                trigger: isCdt(isFront, ['end-phase']),
-                cmds: isCdt(isFront, [{ cmd: 'getCard', cnt: 1 }]),
+                trigger: ['end-phase'],
+                isAddTask: true,
+                exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 1 }] })
             }
         }),
 
@@ -1950,14 +1956,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     124044: () => new StatusBuilder('雷压').combatStatus().icon('debuff').useCnt(0).maxCnt(3)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .description('每当我方累积打出3张行动牌，就会触发敌方场上【smn12401】的效果。(使【smn124041】的[可用次数]+1)')
+        .description('每当我方累积打出3张行动牌，就会触发敌方场上【smn124041】的效果。(使【smn124041】的[可用次数]+1)')
         .handle((status, event) => ({
             trigger: ['card'],
             exec: () => {
                 const { esummons = [] } = event;
                 status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
                 const summon = getObjById(esummons, 124041);
-                if (summon && summon.useCnt < 3) {
+                if (status.useCnt >= 3 && summon && summon.useCnt < 3) {
                     ++summon.useCnt;
                     status.useCnt = 0;
                 }

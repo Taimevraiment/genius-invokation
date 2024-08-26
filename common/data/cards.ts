@@ -39,7 +39,7 @@ export type CardHandleEvent = {
     dicesCnt?: number,
     restDmg?: number,
     isSkill?: number,
-    isSummon?: number[],
+    isSummon?: number,
     isExec?: boolean,
     supports?: Support[],
     esupports?: Support[],
@@ -1124,15 +1124,15 @@ const allCards: Record<number, () => CardBuilder> = {
     312702: () => advancedElArtifact(178, ELEMENT_TYPE.Dendro).name('深林的记忆')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/8c84639efb7e6a9fb445daafdee873fe_8494733884893501982.png'),
 
-    313001: () => new CardBuilder(413).name('异色猎刀鳐').since('v5.0.0').spskill().costSame(0)
+    313001: () => new CardBuilder(413).name('异色猎刀鳐').since('v5.0.0').vehicle().costSame(0)
         .description('')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_LiedaoYao.webp'),
 
-    313002: () => new CardBuilder(414).name('匿叶龙').since('v5.0.0').spskill().costSame(1)
+    313002: () => new CardBuilder(414).name('匿叶龙').since('v5.0.0').vehicle().costSame(1)
         .description('')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_GouzhuaLong.webp'),
 
-    313003: () => new CardBuilder(415).name('鳍游龙').since('v5.0.0').spskill().costSame(2)
+    313003: () => new CardBuilder(415).name('鳍游龙').since('v5.0.0').vehicle().costSame(2)
         .description('')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_QiyouLong.webp'),
 
@@ -1965,10 +1965,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { selectHeros: [hidx] = [], heros = [] } = event;
             return {
-                canSelectHero: heros.map(h => h.spskillSlot != null),
+                canSelectHero: heros.map(h => h.vehicleSlot != null),
                 exec: () => {
-                    const spskillSlot = heros[hidx]?.spskillSlot;
-                    if (spskillSlot) ++spskillSlot.useCnt;
+                    const vehicleSlot = heros[hidx]?.vehicleSlot;
+                    if (vehicleSlot) ++vehicleSlot.useCnt;
                 }
             }
         }),
@@ -2810,8 +2810,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             return {
-                trigger: ['spskill', 'other-spskill'],
-                minusDiceSkill: { spskill: [0, 0, 1] },
+                trigger: ['vehicle', 'other-vehicle'],
+                minusDiceSkill: { vehicle: [0, 0, 1] },
                 exec: () => {
                     const { isMinusDiceSkill } = event;
                     if (isMinusDiceSkill) --card.perCnt;
@@ -2850,16 +2850,23 @@ const allCards: Record<number, () => CardBuilder> = {
     224021: () => new CardBuilder(296).name('悲号回唱').since('v4.3.0').talent(1).talent(-1, 'v4.4.0').costElectro(3).costSame(0, 'v4.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，附属有【sts124022】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)')
         .description('装备有此牌的【hro】在场，附属有【sts124022】的敌方角色受到伤害时：我方抓1张牌。(每回合1次)', 'v4.4.0')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { getdmg = [], eheros = [], isExecTask = false } = event;
+            const [ehero] = eheros.filter(h => hasObjById(h.heroStatus, 124022));
+            if (!isExecTask && (!ehero || (getdmg[ehero.hidx] ?? -1) < 0)) return;
+            return { trigger: ['getdmg-oppo'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => { --card.perCnt } }
+        }),
 
     224031: () => new CardBuilder(326).name('明珠固化').since('v4.4.0').talent().costSame(0)
         .description('我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts124032】; 如果已附属【sts124032】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts124032】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/ec966272143de66e191950a6016cf14f_3693512171806066057.png')
-        .handle((_, event, ver) => {
+        .handle((card, event, ver) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             const cnt = (getObjById(hero.heroStatus, 124032)?.useCnt ?? 0) + 1;
-            return { isValid: hero?.isFront, status: [newStatus(ver)(124032, true, cnt, 1)] }
+            return { isValid: hero?.id == getHidById(card.id), status: [newStatus(ver)(124032, true, cnt)] }
         }),
 
     224041: () => new CardBuilder(341).name('雷萤浮闪').since('v4.5.0').talent(1).costElectro(3).perCnt(1)
@@ -2917,8 +2924,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】生成4张【crd127021】，随机置入我方牌库。；装备有此牌的【hro】在场时，我方【smn127022】造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/37bdaf8745b1264fdac723555ba2938b_177410860486747187.png')
         .handle((_, event) => {
-            const { isSummon: [smnId] = [-1] } = event;
-            const isAddDmg = [127022, 127023, 127024, 127025].includes(smnId);
+            const { isSummon = -1 } = event;
+            const isAddDmg = [127022, 127023, 127024, 127025].includes(isSummon);
             return { cmds: [{ cmd: 'addCard', cnt: 4, card: 127021 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isAddDmg, 1) }
         }),
 

@@ -91,7 +91,7 @@ export const CARD_TYPE_NAME = {
 export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Weapon]: '武器',
     [CARD_SUBTYPE.Artifact]: '圣遗物',
-    [CARD_SUBTYPE.Spskill]: '特技',
+    [CARD_SUBTYPE.Vehicle]: '特技',
     [CARD_SUBTYPE.Place]: '场地',
     [CARD_SUBTYPE.Ally]: '伙伴',
     [CARD_SUBTYPE.Item]: '道具',
@@ -105,7 +105,7 @@ export const CARD_SUBTYPE_NAME = {
 export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Weapon]: 'https://patchwiki.biligame.com/images/ys/thumb/c/ce/l98mlw9whvdgy6w95qlteb9wwc2dc5i.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%AD%A6%E5%99%A8.png',
     [CARD_SUBTYPE.Artifact]: 'https://patchwiki.biligame.com/images/ys/thumb/7/75/540z6nuruz9nb2do1epuwnocpe054kz.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%A3%E9%81%97%E7%89%A9.png',
-    [CARD_SUBTYPE.Spskill]: 'https://homdgcat.wiki/images/GCG_Ul/3008.png',
+    [CARD_SUBTYPE.Vehicle]: 'https://homdgcat.wiki/images/GCG_Ul/3008.png',
     [CARD_SUBTYPE.Place]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2b/54crg8w1f0ccqmh8x4qc6yg8qxnvy4c.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%BA%E5%9C%B0.png',
     [CARD_SUBTYPE.Ally]: 'https://patchwiki.biligame.com/images/ys/thumb/a/aa/nwz9v6fm3wn5cdtnmq5m33nnzlubx8s.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E4%BC%99%E4%BC%B4.png',
     [CARD_SUBTYPE.Item]: 'https://patchwiki.biligame.com/images/ys/thumb/1/1c/9ljzczmf9xjnk6qwdx893iicjkw392h.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E9%81%93%E5%85%B7.png',
