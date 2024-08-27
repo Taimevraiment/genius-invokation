@@ -280,13 +280,16 @@ export default class GeniusInvokationClient {
                 if (
                     this.willHp.some(v => v != undefined) ||
                     this.willSummons.some(smns => smns.length > 0) ||
-                    this.summonCnt.some(smns => smns.some(v => v != 0))
+                    this.summonCnt.some(smns => smns.some(v => v != 0)) ||
+                    this.willSwitch.some(ws => ws.some(v => v))
                 ) {
                     this.currSkill.id = -2;
                 }
-                if (canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
+                if (
+                    canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
                     canSelectSummon != -1 && this.summonCanSelect[canSelectSummon].filter(v => v).length == 1 ||
-                    canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1) {
+                    canSelectSupport != -1 && this.supportCanSelect[canSelectSupport].filter(v => v).length == 1
+                ) {
                     const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0] && pre.heroIdxs?.length == 1);
                     if (!preview1) throw new Error('预览未找到');
                     this.isValid = preview1.isValid;
@@ -743,17 +746,14 @@ export default class GeniusInvokationClient {
             this.cancel();
             return;
         }
-        if (!this.isValid) {
-            this._sendTip('骰子不符合要求');
-        } else {
-            this.socket.emit('sendToServer', {
-                type: ACTION_TYPE.SwitchHero,
-                cpidx: this.playerIdx,
-                heroIdxs: [hidx],
-                diceSelect: this.diceSelect,
-                flag: 'switchHero',
-            } as ActionData);
-        }
+        if (!this.isValid) return;
+        this.socket.emit('sendToServer', {
+            type: ACTION_TYPE.SwitchHero,
+            cpidx: this.playerIdx,
+            heroIdxs: [hidx],
+            diceSelect: this.diceSelect,
+            flag: 'switchHero',
+        } as ActionData);
         this.cancel();
     }
     /**

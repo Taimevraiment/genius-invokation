@@ -1,6 +1,6 @@
 
 import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
 import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
@@ -458,7 +458,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+                        const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
                     }
                 }
@@ -499,7 +499,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         return { cmds: [{ cmd: 'attack' }, { cmd: 'switch-to', hidxs: [getNearestHidx(hidx, heros)], isOppo: true }] };
                     }
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+                        const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
                     }
                 }
@@ -520,7 +520,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+                        const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
                     }
                 }
@@ -557,7 +557,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                     if (trigger.includes('-getdmg') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE_KEY[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
+                        const element = ELEMENT_TYPE[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
                     }
                 },

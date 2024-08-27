@@ -1,7 +1,7 @@
 import { swapKeysAndValues } from "../utils/utils.js";
 import {
     CARD_SUBTYPE, CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE,
-    HERO_LOCAL, HERO_TAG, SKILL_TYPE, STATUS_TYPE, TypeConst, WEAPON_TYPE,
+    HERO_LOCAL, HERO_TAG, SKILL_TYPE, STATUS_TYPE, TypeConst, WEAPON_TYPE
 } from "./enum.js";
 
 export const HANDCARDS_GAP_PC = 48; // 电脑端手牌间隔(px)

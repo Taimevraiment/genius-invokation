@@ -64,12 +64,6 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
         if (livehidxs.indexOf((hidx + i) % heros.length) > -1) return hidx + i;
     }
     return -1;
-    // let res = hidx;
-    // if (heros[hidx].hp <= 0) {
-    //     const [[nhidx]] = livehidxs.map(v => [v, Math.abs(v - res)]).sort((a, b) => a[1] - b[1] || a[0] - b[0]);
-    //     res = nhidx;
-    // }
-    // return res;
 }
 
 // 获得所有后台角色hidx

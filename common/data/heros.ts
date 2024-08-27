@@ -1,4 +1,4 @@
-import { Cmds, Hero, Status, Trigger } from '../../typing';
+import { Cmds, Hero, Status } from '../../typing';
 import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
@@ -1232,7 +1232,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
-                .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081, isAttach: true }] }))
+                .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
         ),
 
     1701: () => new HeroBuilder(47).name('柯莱').sumeru().dendro().bow()
@@ -1837,7 +1837,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('蝎尾锥刺').description('{dealDmg}。；生成1张【crd124051】，随机置入我方牌库顶部2张牌之中。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ba3107753a28bf55c7279482d9b0c9ed.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/0e1110651dbff69343c8e40bf3c7e93f_6498390434174190990.png')
-                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', card: 124051, cnt: 1, hidxs: [2], isAttach: true }] })),
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', card: 124051, cnt: 1, hidxs: [2] }] })),
             new SkillBuilder('雷锥散射').description('{dealDmg}，弃置手牌中最多3张【crd124051】，在对方场上生成【sts124052】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4d58f950df06a277f43a21dcdfa58eb0.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/54dc8816d5fb42528ba84eaefb1a8068_7565040194931804591.png')
@@ -1850,7 +1850,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('不朽亡骸·雷').description('回合结束时，生成两张【crd124051】，随机置入我方牌库顶部10张牌中。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f2c9fb8d451bc79e309ce9f397738a39.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/02cbaf22d48774e6e7cff5203e9562eb_9127079687708650066.png')
-                .handle(() => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10], isAttach: true }] }))
+                .handle(() => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
         ),
 
     2501: () => new HeroBuilder(58).name('魔偶剑鬼').monster().anemo()
@@ -1863,14 +1863,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a72086131fbe3e03201926a46dac48f3_7155522304163694322.png')
                 .elemental().damage(1, 'v3.4.0').cost(3).handle((event, ver) => ({
                     summon: [newSummon(ver)(125011)],
-                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-after' }]),
+                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-after', cnt: 2500 }]),
                 })),
             new SkillBuilder('霜驰影突').description('召唤【smn125012】。').description('{dealDmg},召唤【smn125012】。', 'v3.4.0')
                 .src('https://patchwiki.biligame.com/images/ys/1/17/a8qboxl35nar8vuaho1cewppy0fp43t.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6df8766388e62c6a97f9898605fb45e2_6047730151662669218.png')
                 .elemental().damage(1, 'v3.4.0').costCryo(3).handle((event, ver) => ({
                     summon: [newSummon(ver)(125012)],
-                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-before' }]),
+                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-before', cnt: 2500 }]),
                 })),
             new SkillBuilder('机巧伪天狗抄').description('{dealDmg}，触发我方所有【剑影】召唤物效果。(不消耗其[可用次数])')
                 .src('https://patchwiki.biligame.com/images/ys/f/fd/ren7lbexbnyvrdvn0aqhbrxx6atdoov.png',
@@ -1928,7 +1928,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('不朽亡骸·风').description('战斗开始时，生成6张【crd124051】，均匀放入牌库。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b20cdf60cef51f689592487d6587d353.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/3f113b01a3fbab406f2ddb81d9a2a019_675662049327994953.png')
-                .handle(() => ({ trigger: ['game-start'], cmds: [{ cmd: 'addCard', cnt: 6, card: 124051 }] }))
+                .handle(() => ({ trigger: ['game-start'], cmds: [{ cmd: 'addCard', cnt: 6, card: 124051, isAttach: true }] }))
         ),
 
     2601: () => new HeroBuilder(59).name('丘丘岩盔王').maxHp(8).monster().tags(HERO_TAG.Hilichurl).geo()
@@ -1963,11 +1963,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/5ab059679b08fba559b68f7d361a64be.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b49c1863d6b6a61ec13501c27d8204bf_1566255463657696734.png')
                 .elemental().damage(3).cost(3).handle((event, ver) => {
-                    const { eheros = [], hero: { id, heroStatus }, heros } = event;
-                    const rockEl = eheros.find(h => h.isFront)?.attachElement?.find(el => (Object.values(SWIRL_ELEMENT) as PureElementType[]).includes(el)) ?? ELEMENT_TYPE.Geo;
-                    if (rockEl == ELEMENT_TYPE.Geo) return { status: [newStatus(ver)(126021)] }
-                    const sts126021 = getObjById(heroStatus, 126021)!;
-                    return { ...sts126021.handle(sts126021, { heros, hidx: getObjIdxById(heros, id), trigger: `elReaction-Geo:${rockEl}` as Trigger })?.exec?.() }
+                    const { eheros = [] } = event;
+                    const crystallizeEl = eheros.find(h => h.isFront)?.attachElement?.find(el => (Object.values(SWIRL_ELEMENT) as PureElementType[]).includes(el)) ?? ELEMENT_TYPE.Geo;
+                    if (crystallizeEl == ELEMENT_TYPE.Geo) return { status: [newStatus(ver)(126022)] }
                 }),
             new SkillBuilder('山崩毁阵').description('{dealDmg}，每汲取过一种元素此伤害+1。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/3eea73a1f50aaa9ab8f03546a0db4483.png',

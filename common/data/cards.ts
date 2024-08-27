@@ -1,7 +1,8 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_TAG, PHASE, PURE_ELEMENT_TYPE_KEY, PureElementType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
+    HERO_TAG, PHASE, PURE_ELEMENT_TYPE,
+    PureElementType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { NULL_CARD } from '../constant/init.js';
@@ -1340,7 +1341,7 @@ const allCards: Record<number, () => CardBuilder> = {
     322024: () => new CardBuilder(358).name('太郎丸').since('v4.6.0').ally().costAny(2)
         .description('【入场时：】生成4张【crd302202】，均匀地置入我方牌库中。；我方打出2张【crd302202】后：弃置此牌，召唤【smn302201】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png')
-        .handle(() => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 302202 }] })),
+        .handle(() => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 302202, isAttach: true }] })),
 
     322025: () => new CardBuilder(359).name('白手套和渔夫').since('v4.6.0').ally().costSame(0)
         .description('【结束阶段：】生成1张【crd302203】，随机将其置入我方牌库顶部5张牌之中。；如果此牌的[可用次数]仅剩1次，则抓1张牌。；[可用次数]：2')
@@ -1945,7 +1946,7 @@ const allCards: Record<number, () => CardBuilder> = {
     332031: () => new CardBuilder(360).name('海中寻宝').since('v4.6.0').event().costSame(2).costSame(1, 'v4.6.1')
         .description('生成6张【crd303230】，随机地置入我方牌库中。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/40001dfa11a6aa20be3de16e0c89d598_3587066228917552605.png')
-        .handle(() => ({ cmds: [{ cmd: 'addCard', cnt: 6, card: 303230, isAttach: true }] })),
+        .handle(() => ({ cmds: [{ cmd: 'addCard', cnt: 6, card: 303230 }] })),
 
     332032: () => magicCount(3, 394).since('v4.7.0'),
 
@@ -2531,7 +2532,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/dd06fa7b0ec63f3e60534a634ebd6fd2_9125107885461849882.png')
         .handle((_, event, ver) => {
             const { trigger = '' } = event;
-            const windEl = trigger.startsWith('elReaction-Anemo') ? PURE_ELEMENT_TYPE_KEY[trigger.slice(trigger.indexOf(':') + 1) as PureElementType] : ELEMENT_TYPE.Anemo;
+            const windEl = trigger.startsWith('elReaction-Anemo') ? PURE_ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as PureElementType] : ELEMENT_TYPE.Anemo;
             return {
                 trigger: ['elReaction-Anemo'],
                 status: isCdt(windEl != ELEMENT_TYPE.Anemo, [newStatus(ver)(115050 + (6 + ELEMENT_CODE[windEl]) % 10)]),

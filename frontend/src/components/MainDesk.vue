@@ -1641,7 +1641,6 @@ button:active {
   position: absolute;
   width: 90px;
   height: 120px;
-  border: 2px solid black;
   border-radius: 10px;
   background-color: #14408c;
   background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
@@ -1672,7 +1671,6 @@ button:active {
   position: absolute;
   width: 90px;
   height: 120px;
-  border: 2px solid black;
   border-radius: 10px;
   background-color: #14408c;
   background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
@@ -1682,7 +1680,6 @@ button:active {
   padding-top: 20px;
   transform: translate(500%, -10%);
   animation: addcard 1.2s linear;
-  overflow: hidden;
   opacity: 0;
 }
 

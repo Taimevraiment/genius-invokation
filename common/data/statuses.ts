@@ -1,6 +1,7 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
+    ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE,
     SkillType,
     STATUS_TYPE,
     Version, WEAPON_TYPE, WeaponType
@@ -21,7 +22,7 @@ export type StatusHandleEvent = {
     eheros?: Hero[],
     eCombatStatus?: Status[],
     dmgedHidx?: number,
-    dmgElement?: ElementType,
+    dmgElement?: DamageType,
     reset?: boolean,
     trigger?: Trigger,
     card?: Card,
@@ -31,6 +32,7 @@ export type StatusHandleEvent = {
     isFallAtk?: boolean,
     phase?: number,
     skilltype?: SkillType,
+    skidx?: number,
     hasDmg?: boolean,
     dmgSource?: number,
     minusDiceCard?: number,
@@ -41,7 +43,7 @@ export type StatusHandleEvent = {
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
     heal?: number[],
-    force?: boolean,
+    isExecTask?: boolean,
     summons?: Summon[],
     esummons?: Summon[],
     hcards?: Card[],
@@ -215,7 +217,7 @@ const status11505x = (swirlEl: PureElementType) => {
         .type(STATUS_TYPE.AddDamage).iconBg(STATUS_BG_COLOR[swirlEl])
         .description(`我方角色和召唤物所造成的[${ELEMENT_NAME[swirlEl]}伤害]+1。；[useCnt]`)
         .handle(status => ({
-            trigger: [`${ELEMENT_TYPE_KEY[STATUS_BG_COLOR_KEY[status.UI.iconBg] as ElementType]}-dmg`],
+            trigger: [`${STATUS_BG_COLOR_KEY[status.UI.iconBg] as ElementType}-dmg`],
             addDmgCdt: 1,
             exec: () => { --status.useCnt }
         }));
@@ -1465,11 +1467,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((status, event) => {
-            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, card, trigger = '', force = false } = event;
-            if ((!hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !force) return;
+            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, card, trigger = '', isExecTask = false } = event;
+            if ((!hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !isExecTask) return;
             const hasPyro = trigger == 'get-elReaction' &&
                 (!!getObjById(eheros, getHidById(status.id))?.talentSlot || card?.id == 217031) &&
-                (hasObjById(eCombatStatus, 117032) || force) &&
+                (hasObjById(eCombatStatus, 117032) || isExecTask) &&
                 eheros.some(h => h.element == ELEMENT_TYPE.Pyro);
             return {
                 damage: isCdt(hasPyro, 1),
@@ -1556,8 +1558,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117071: () => new StatusBuilder('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
         .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, force = false } = event;
-            if (heros[hidx]?.id != getHidById(status.id) && !force) return;
+            const { heros = [], hidx = -1, isExecTask = false } = event;
+            if (heros[hidx]?.id != getHidById(status.id) && !isExecTask) return;
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
@@ -1995,8 +1997,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: () => {
                     --status.useCnt;
                     const talent = getObjById(eheros, getHidById(status.id))?.talentSlot;
-                    if (status.useCnt == 0 && talent && talent.useCnt > 0) {
-                        --talent.useCnt;
+                    if (status.useCnt == 0 && talent && talent.perCnt > 0) {
+                        --talent.perCnt;
                         const all = allHidxs(heros);
                         const hidxs = [all[(all.indexOf(hidx) + 1) % all.length]];
                         return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(125021)], hidxs }] }
@@ -2024,7 +2026,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     126011: () => new StatusBuilder('岩盔').heroStatus().useCnt(3).type(STATUS_TYPE.Barrier)
         .description('【所附属角色受到伤害时：】抵消1点伤害。；抵消[岩元素伤害]时，需额外消耗1次[可用次数]。；[useCnt]')
         .handle((status, event) => {
-            const { restDmg = 0, dmgElement, heros = [], hidx = -1 } = event;
+            const { restDmg = -1, dmgElement, heros = [], hidx = -1 } = event;
             if (restDmg <= 0) return { restDmg }
             --status.useCnt;
             if (status.useCnt > 0 && dmgElement == DAMAGE_TYPE.Geo) --status.useCnt;
@@ -2048,54 +2050,45 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     126021: () => new StatusBuilder('磐岩百相·元素汲取').heroStatus().icon('buff2').useCnt(0).maxCnt(4)
-        .type(STATUS_TYPE.Accumulate, STATUS_TYPE.NonDestroy)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.NonDestroy)
         .description('角色可以汲取‹1冰›/‹2水›/‹3火›/‹4雷›元素的力量，然后根据所汲取的元素类型，获得技能‹1【rsk66013】›/‹2【rsk66023】›/‹3【rsk66033】›/‹4【rsk66043】›。(角色同时只能汲取一种元素，此状态会记录角色已汲取过的元素类型数量)；【角色汲取了一种和当前不同的元素后：】生成1个所汲取元素类型的元素骰。')
-        .handle((status, event) => ({
-            trigger: ['elReaction-Geo'],
-            exec: () => {
-                const { heros = [], hidx = -1, trigger = '' } = event;
-                const hero = heros[hidx];
-                const curEl = hero.UI.srcs.indexOf(hero.UI.src);
-                const drawEl = trigger.startsWith('elReaction-Geo') ? ELEMENT_CODE[trigger.slice(trigger.indexOf(':') + 1) as ElementType] : 0;
-                if (drawEl == 0 || drawEl == curEl) return;
-                const isDrawed = status.perCnt != 0;
-                hero.UI.src = hero.UI.srcs[drawEl];
-                let els = -status.perCnt;
-                if ((els >> drawEl - 1 & 1) == 0) {
-                    els |= 1 << drawEl - 1;
-                    ++status.useCnt;
-                    status.perCnt = -els;
-                }
-                const cmds: Cmds[] = [
-                    { cmd: 'getDice', cnt: 1, element: ELEMENT_CODE_KEY[drawEl] },
-                    { cmd: 'getSkill', hidxs: [hidx], cnt: 66003 + drawEl * 10, mode: 2 }
-                ];
-                if (isDrawed) cmds.splice(1, 0, { cmd: 'loseSkill', hidxs: [hidx], mode: 2 });
-                return { cmds }
-            }
-        })),
-
-    126022: () => new StatusBuilder('磐岩百相·元素凝晶').heroStatus().icon('ski,1').useCnt(1).type(STATUS_TYPE.Sign)
-        .explains('rsk66013', 'rsk66023', 'rsk66033', 'rsk66043')
-        .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, trigger = '' } = event;
-            const triggers: Trigger[] = ['Cryo-getdmg', 'Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg'];
-            if (hidx == -1 || !triggers.includes(trigger)) return;
+            const { heros = [], hidx = -1, skidx = -1, trigger = '' } = event;
             const hero = heros[hidx];
-            const curEl = hero.UI.srcs.indexOf(hero.UI.src) || ELEMENT_CODE[ELEMENT_TYPE.Geo];
-            const drawEl = ELEMENT_CODE[trigger.split('-')[0] as ElementType];
+            const triggers: Trigger[] = [];
+            const sts126022 = getObjById(hero?.heroStatus, 126022);
+            if (sts126022) triggers.push('Cryo-getdmg', 'Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg');
+            if (skidx == 1 && trigger.startsWith('elReaction-Geo:')) triggers.push(trigger);
             return {
                 trigger: triggers,
                 exec: () => {
-                    if (curEl != drawEl) {
-                        --status.useCnt;
-                        const sts126021 = getObjById(hero.heroStatus, 126021)!;
-                        return { ...sts126021.handle(sts126021, { ...event, trigger: `elReaction-Geo:${ELEMENT_CODE_KEY[drawEl]}` as Trigger })?.exec?.() }
+                    const { heros = [], hidx = -1, trigger = '' } = event;
+                    const hero = heros[hidx];
+                    const curElCode = hero.UI.srcs.indexOf(hero.UI.src);
+                    const drawElCode = trigger.startsWith('elReaction-Geo:') ?
+                        ELEMENT_CODE[ELEMENT_TYPE[trigger.split(':')[1] as ElementType]] :
+                        ELEMENT_CODE[ELEMENT_TYPE[trigger.split('-')[0] as ElementType]];
+                    if (drawElCode == curElCode) return;
+                    if (sts126022 && trigger.endsWith('getdmg')) --sts126022.useCnt;
+                    const isDrawed = status.perCnt != 0;
+                    hero.UI.src = hero.UI.srcs[drawElCode];
+                    let els = -status.perCnt;
+                    if ((els >> drawElCode - 1 & 1) == 0) {
+                        els |= 1 << drawElCode - 1;
+                        ++status.useCnt;
+                        status.perCnt = -els;
                     }
+                    const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, element: ELEMENT_CODE_KEY[drawElCode] }];
+                    if (isDrawed) cmds.push({ cmd: 'loseSkill', hidxs: [hidx], mode: 2 });
+                    cmds.push({ cmd: 'getSkill', hidxs: [hidx], cnt: 66003 + drawElCode * 10, mode: 2 });
+                    return { cmds }
                 }
             }
         }),
+
+    126022: () => new StatusBuilder('磐岩百相·元素凝晶').heroStatus().icon('ski,1').useCnt(1).type(STATUS_TYPE.Sign)
+        .explains('rsk66013', 'rsk66023', 'rsk66033', 'rsk66043')
+        .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。'),
 
     127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Accumulate)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_FungusRaptor_S.webp')
@@ -2268,7 +2261,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle(() => ({
             trigger: ['getcard'],
             isAddTask: true,
-            exec: () => ({ cmds: [{ cmd: 'addCard', cnt: 1, card: 301020, isAttach: true }] }),
+            exec: () => ({ cmds: [{ cmd: 'addCard', cnt: 1, card: 301020 }] }),
         })),
 
     301023: () => new StatusBuilder('圣火竞技场（生效中）').heroStatus().icon('buff5').roundCnt(2).type(STATUS_TYPE.AddDamage)

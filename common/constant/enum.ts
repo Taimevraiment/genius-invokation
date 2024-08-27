@@ -11,6 +11,8 @@ export const SWIRL_ELEMENT = {
 
 export type SwirlElementType = TypeConst<typeof SWIRL_ELEMENT>;
 
+export const SWIRL_ELEMENT_TYPE_KEY: Record<any, SwirlElementType> = swapKeysAndValues(SWIRL_ELEMENT);
+
 export const PURE_ELEMENT_TYPE = {
     ...SWIRL_ELEMENT,
     Anemo: 'Anemo', // 风 5
@@ -20,6 +22,8 @@ export const PURE_ELEMENT_TYPE = {
 
 export type PureElementType = TypeConst<typeof PURE_ELEMENT_TYPE>;
 
+export const PURE_ELEMENT_TYPE_KEY: Record<any, PureElementType> = swapKeysAndValues(PURE_ELEMENT_TYPE);
+
 export const ELEMENT_TYPE = {
     Physical: 'Physical', // 物理 0
     ...PURE_ELEMENT_TYPE,
@@ -27,9 +31,7 @@ export const ELEMENT_TYPE = {
 
 export type ElementType = TypeConst<typeof ELEMENT_TYPE>;
 
-export const ELEMENT_TYPE_KEY = swapKeysAndValues(ELEMENT_TYPE);
-
-export const PURE_ELEMENT_TYPE_KEY = swapKeysAndValues(PURE_ELEMENT_TYPE);
+export const ELEMENT_TYPE_KEY: Record<any, ElementType> = swapKeysAndValues(ELEMENT_TYPE);
 
 export const PURE_ELEMENT_CODE = {
     [ELEMENT_TYPE.Cryo]: 1,
