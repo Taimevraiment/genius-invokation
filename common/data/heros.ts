@@ -1991,10 +1991,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/34525ada2f131e99da075f32283db903_3717723304434052962.png')
                 .burst(2).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
-                    const sts127011 = getObjById(heroStatus, 127011);
-                    const addDmgCdt = sts127011?.useCnt ?? 0;
-                    if (sts127011) sts127011.useCnt = -1;
-                    return { addDmgCdt }
+                    return { addDmgCdt: getObjById(heroStatus, 127011)?.useCnt ?? 0 }
                 }),
             new SkillBuilder('活化激能').description('战斗开始时，初始附属【sts127011】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/79/q3o61yegls3thng3z7dns2sykg2voci.png',
@@ -2012,19 +2009,19 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6b6af66686864e881e180633491577b7_1337053029698647969.png')
                 .elemental().damage(2).cost(3).handle((_, ver) => ({
                     cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
-                    status: [newStatus(ver)(127026)],
+                    statusPre: [newStatus(ver)(127026)],
                 })),
             new SkillBuilder('终景迸落').description('{dealDmg}，抓1张【crd127021】，生成2层【sts127026】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e2b183c009d60ca57023829db15c23fb.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/67a564cb356fc0cfddb1f98658d35573_3718187889744663164.png')
                 .burst(2).damage(2).cost(3).handle((_, ver) => ({
                     cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
-                    status: [newStatus(ver)(127026, 2)],
+                    statusPre: [newStatus(ver)(127026, 2)],
                 })),
             new SkillBuilder('增殖感召').description('战斗开始时，生成6张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png')
-                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(127029)] }))
+                .handle((_, ver) => ({ trigger: ['game-start'], status: [newStatus(ver)(127029)], cmds: [{ cmd: 'addCard', cnt: 6, card: 127021 }] }))
         ),
 
     6301: () => new HeroBuilder().name('焚尽的炽炎魔女').since('v4.3.0').fatui().pyro()

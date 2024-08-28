@@ -91,7 +91,7 @@ export class GICard {
             if (this.UI.description.startsWith('{action}')) {
                 if (!this.UI.explains.includes(ski)) this.UI.explains.unshift(ski);
                 const ohandle = handle;
-                const cnt = userType as number;
+                const cnt = hid * 10 + (userType as number) + 1;
                 handle = (card, event) => {
                     const { slotUse = false } = event;
                     if (slotUse) return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }

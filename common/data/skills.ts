@@ -8,7 +8,7 @@ import { newSummon } from "./summons.js"
 
 export type SkillHandleEvent = {
     hero: Hero,
-    skidx: number,
+    skid: number,
     reset?: boolean,
     card?: Card,
     heros?: Hero[],

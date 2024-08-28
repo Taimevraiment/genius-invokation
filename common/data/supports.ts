@@ -22,7 +22,7 @@ export type SupportHandleEvent = {
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
     isMinusDiceTalent?: boolean,
-    isSkill?: number,
+    skid?: number,
     hidx?: number,
     heal?: number[],
     getdmg?: number[],
@@ -508,8 +508,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 常九爷
     322009: () => new SupportBuilder().collection().handle((support, event) => {
-        const { isSkill = -1 } = event;
-        if (isSkill == -1) return;
+        const { skid = -1 } = event;
+        if (skid == -1) return;
         return {
             trigger: ['Physical-dmg', 'Physical-getdmg', 'Pierce-dmg', 'Pierce-getdmg', 'elReaction', 'get-elReaction'],
             supportCnt: support.cnt < 2 ? 1 : -3,
@@ -802,8 +802,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 参量质变仪
     323001: () => new SupportBuilder().collection().handle((support, event) => {
-        const { isSkill = -1 } = event;
-        if (isSkill == -1) return;
+        const { skid = -1 } = event;
+        if (skid == -1) return;
         return {
             trigger: ['el-dmg', 'el-getdmg'],
             supportCnt: support.cnt < 2 ? 1 : -3,

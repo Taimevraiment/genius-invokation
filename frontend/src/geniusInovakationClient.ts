@@ -138,10 +138,10 @@ export default class GeniusInvokationClient {
     get skills() { // 技能组
         const fhero = this.getFrontHero();
         if (fhero == undefined) return [];
-        return fhero.skills.filter(skill => skill.type != SKILL_TYPE.Passive).map((skill, skidx) => {
+        return fhero.skills.filter(skill => skill.type != SKILL_TYPE.Passive).map(skill => {
             const elColor = ELEMENT_COLOR[skill.cost[0].type];
             const energyPer = fhero.energy / skill.cost[2].cnt * 100;
-            const isValid = !!this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx)?.isValid;
+            const isValid = !!this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skill.id)?.isValid;
             return {
                 ...skill,
                 isForbidden: skill.isForbidden || this.isLookon > -1 || !this.canAction || !isValid,
@@ -675,14 +675,15 @@ export default class GeniusInvokationClient {
     }
     /**
      * 使用技能
-     * @param skidx 选组技能的索引idx -1切换角色
+     * @param skid 选组技能的id -1切换角色
      * @param options isOnlyRead 是否为只读, isCard 是否为使用卡, isSwitch 是否切换角色, isReadySkill 是否为准备技能, triggers 触发数组(出牌或切换角色时)
      */
-    async useSkill(skidx: number, options: { isOnlyRead?: boolean, isCard?: boolean, isSwitch?: number, isReadySkill?: boolean } = {}) {
+    async useSkill(skid: number, options: { isOnlyRead?: boolean, isCard?: boolean, isSwitch?: number, isReadySkill?: boolean } = {}) {
         const { isOnlyRead = false, isCard = false, isReadySkill = false } = options;
+        const skidx = this.skills.findIndex(sk => sk.id == skid);
         const isExec = !isOnlyRead && this.modalInfo.skidx == skidx || isReadySkill;
-        this.currSkill = this.skills[skidx];
-        if (this.currCard.id <= 0 && skidx > -1) {
+        if (skid > -1) this.currSkill = this.skills.find(sk => sk.id == skid)!;
+        if (this.currCard.id <= 0 && skid > -1) {
             if (!isExec) {
                 this.modalInfo = {
                     version: this.version,
@@ -697,11 +698,11 @@ export default class GeniusInvokationClient {
             }
         }
         if (([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.opponent.phase) || (!this.canAction && !isReadySkill)) return;
-        if (skidx > -1 && (!this.currCard.subType.includes(CARD_SUBTYPE.Action) || !isCard)) {
+        if (skid > -1 && (!this.currCard.subType.includes(CARD_SUBTYPE.Action) || !isCard)) {
             this.currCard = NULL_CARD();
             this.cancel({ onlyCard: true });
         }
-        if (skidx == -1 || !this.canAction) return;
+        if (skid == -1 || !this.canAction) return;
 
         if (isExec) {
             this.isValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
@@ -711,21 +712,15 @@ export default class GeniusInvokationClient {
             }
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
-                skillIdx: skidx,
+                skillId: skid,
                 diceSelect: this.diceSelect,
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
             } as ActionData);
             this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
-            // this.currSkill = NULL_SKILL();
-            // this.resetDiceSelect();
-            // this._resetWillAttachs();
-            // this._resetWillSummons();
-            // this._resetSummonCnt();
-            // this._resetWillSwitch();
             this.cancel();
             return;
         } else {
-            const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillIdx == skidx);
+            const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skid);
             if (!preview) throw new Error('预览未找到');
             this.diceSelect = [...preview.diceSelect!];
             this.willHp = [...preview.willHp!.slice()];

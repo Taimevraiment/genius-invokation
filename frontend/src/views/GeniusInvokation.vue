@@ -106,8 +106,8 @@
     </div>
     <div class="skills" v-else-if="client.isShowSkills">
       <div class="skill" :class="{ 'skill-will': canAction && client.currSkill.id == skill.id }"
-        v-for="(skill, sidx) in client.skills" :key="sidx">
-        <div class="skill-btn" @click.stop="useSkill(sidx, false)" :style="{ boxShadow: skill.style.fullEnergy }">
+        v-for="skill in client.skills" :key="skill.id">
+        <div class="skill-btn" @click.stop="useSkill(skill.id, false)" :style="{ boxShadow: skill.style.fullEnergy }">
           <div class="skill3-bg" v-if="skill.isNotFullEnergy" :style="{ background: skill.style.notFullEnergy }">
             <div class="skill-btn" style="transform: translate(1px, 1px)"></div>
           </div>
@@ -120,7 +120,7 @@
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[cost.type])" />
           <span style="z-index: 1">{{ skill.CurrCnts[cidx] }}</span>
         </div>
-        <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop=" useSkill(sidx, true)"></div>
+        <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop=" useSkill(skill.id, true)"></div>
       </div>
     </div>
 
@@ -303,8 +303,8 @@ const reconcile = (bool: boolean) => {
   client.value.reconcile(bool, client.value.handcardsSelect);
 };
 // 使用技能
-const useSkill = (sidx: number, isOnlyRead: boolean) => {
-  client.value.useSkill(sidx, { isOnlyRead });
+const useSkill = (skid: number, isOnlyRead: boolean) => {
+  client.value.useSkill(skid, { isOnlyRead });
 };
 // 切换角色
 const switchHero = debounce(() => {
@@ -394,7 +394,7 @@ onUnmounted(() => {
 
 // dev
 let prodEnv = 0;
-const maskOpacity = ref<number>(0.8);
+const maskOpacity = ref<number>(0.7);
 // const isOpenMask = ref<boolean>(true);
 const isOpenMask = ref<boolean>(false);
 const devOps = (cidx = 0) => {

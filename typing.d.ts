@@ -106,6 +106,7 @@ type StatusTask = {
     isSelf: number, // 是否为自伤
     trigger: Trigger, // 触发条件
     hidx: number, // 攻击者hidx
+    skid: number, // 引起协同攻击的技能id -1为切换角色
     isSwitchAtk?: boolean, // 是否为下落攻击/刻晴切换攻击
     isQuickAction?: boolean, // 是否为快速行动
     isAfterSwitch?: boolean, // 是否为后切换触发
@@ -204,7 +205,7 @@ type Countdown = {
 type ActionData = {
     type: ActionType,
     cpidx?: number, // 发起请求的玩家序号
-    skillIdx?: number, // 使用的技能序号 -1无
+    skillId?: number, // 使用的技能id -1无
     cardIdxs?: number[], // 使用/替换的卡牌序号
     heroIdxs?: number[], // 选择的目标角色序号
     summonIdx?: number, // 选择的召唤物序号 -1无

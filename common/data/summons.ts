@@ -17,7 +17,7 @@ export type SummonHandleEvent = {
     hcard?: Card,
     talent?: Card | null,
     isExec?: boolean,
-    isSkill?: number,
+    skid?: number,
     minusDiceCard?: number,
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
@@ -749,7 +749,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png')
         .handle((summon, event, ver) => ({
-            willSummon: isCdt([1, 2].includes(event.isSkill ?? -1), newSummon(ver)(122011)),
+            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), newSummon(ver)(122011)),
             trigger: ['phase-end'],
             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
         })),
@@ -757,7 +757,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp')
         .handle((summon, event, ver) => ({
-            willSummon: isCdt([1, 2].includes(event.isSkill ?? -1), newSummon(ver)(122011)),
+            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), newSummon(ver)(122011)),
             trigger: ['phase-end'],
             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
         })),
@@ -769,7 +769,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const trigger: Trigger[] = [];
             if (summon.useCnt == 0) trigger.push('phase-end');
             return {
-                willSummon: isCdt([1, 2].includes(event.isSkill ?? -1), newSummon(ver)(122011)),
+                willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), newSummon(ver)(122011)),
                 trigger,
                 exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
             }

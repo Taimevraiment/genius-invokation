@@ -53,10 +53,10 @@ export class GISkill {
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.handle = hevent => {
-            const { reset = false, hero, skidx, isReadySkill = false } = hevent;
+            const { reset = false, hero, skid, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, ver) ?? {};
             if (isReadySkill) return handleres;
-            const curskill = hero.skills[skidx];
+            const curskill = hero.skills.find(sk => sk.id == skid)!;
             if (reset) {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;

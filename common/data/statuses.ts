@@ -32,7 +32,7 @@ export type StatusHandleEvent = {
     isFallAtk?: boolean,
     phase?: number,
     skilltype?: SkillType,
-    skidx?: number,
+    skid?: number,
     hasDmg?: boolean,
     dmgSource?: number,
     minusDiceCard?: number,
@@ -2052,26 +2052,29 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     126021: () => new StatusBuilder('磐岩百相·元素汲取').heroStatus().icon('buff2').useCnt(0).maxCnt(4)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.NonDestroy)
         .description('角色可以汲取‹1冰›/‹2水›/‹3火›/‹4雷›元素的力量，然后根据所汲取的元素类型，获得技能‹1【rsk66013】›/‹2【rsk66023】›/‹3【rsk66033】›/‹4【rsk66043】›。(角色同时只能汲取一种元素，此状态会记录角色已汲取过的元素类型数量)；【角色汲取了一种和当前不同的元素后：】生成1个所汲取元素类型的元素骰。')
-        .handle((status, event) => {
-            const { heros = [], hidx = -1, skidx = -1, trigger = '' } = event;
+        .handle((status, event, ver) => {
+            const { heros = [], hidx = -1, skid = -1, trigger = '' } = event;
             const hero = heros[hidx];
             const triggers: Trigger[] = [];
             const sts126022 = getObjById(hero?.heroStatus, 126022);
             if (sts126022) triggers.push('Cryo-getdmg', 'Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg');
-            if (skidx == 1 && trigger.startsWith('elReaction-Geo:')) triggers.push(trigger);
+            const isSkill = skid == 26022 && trigger.startsWith('elReaction-Geo:');
+            if (isSkill) triggers.push('elReaction-Geo');
             return {
                 trigger: triggers,
                 exec: () => {
-                    const { heros = [], hidx = -1, trigger = '' } = event;
-                    const hero = heros[hidx];
                     const curElCode = hero.UI.srcs.indexOf(hero.UI.src);
-                    const drawElCode = trigger.startsWith('elReaction-Geo:') ?
+                    const drawElCode = isSkill ?
                         ELEMENT_CODE[ELEMENT_TYPE[trigger.split(':')[1] as ElementType]] :
                         ELEMENT_CODE[ELEMENT_TYPE[trigger.split('-')[0] as ElementType]];
-                    if (drawElCode == curElCode) return;
+                    if (drawElCode == curElCode) {
+                        if (isSkill) return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(126022)], hidxs: [hidx] }] }
+                        return;
+                    }
                     if (sts126022 && trigger.endsWith('getdmg')) --sts126022.useCnt;
                     const isDrawed = status.perCnt != 0;
                     hero.UI.src = hero.UI.srcs[drawElCode];
+                    const oels = status.perCnt;
                     let els = -status.perCnt;
                     if ((els >> drawElCode - 1 & 1) == 0) {
                         els |= 1 << drawElCode - 1;
@@ -2079,6 +2082,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         status.perCnt = -els;
                     }
                     const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, element: ELEMENT_CODE_KEY[drawElCode] }];
+                    if (oels == status.perCnt) cmds.push({ cmd: 'getStatus', status: [newStatus(ver)(126022)], hidxs: [hidx] })
                     if (isDrawed) cmds.push({ cmd: 'loseSkill', hidxs: [hidx], mode: 2 });
                     cmds.push({ cmd: 'getSkill', hidxs: [hidx], cnt: 66003 + drawElCode * 10, mode: 2 });
                     return { cmds }
@@ -2090,14 +2094,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .explains('rsk66013', 'rsk66023', 'rsk66033', 'rsk66043')
         .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。'),
 
-    127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Accumulate)
+    127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_FungusRaptor_S.webp')
         .description('【本角色造成或受到元素伤害后：】累积1层｢活化激能｣。(最多累积3层)；【结束阶段：】如果｢活化激能｣层数已达到上限，就将其清空。同时，角色失去所有[充能]。')
         .handle((status, event) => {
             const { trigger = '', heros = [], hidx = -1 } = event;
             return {
-                trigger: ['el-dmg', 'el-getdmg', 'phase-end'],
+                trigger: ['el-dmg', 'el-getdmg', 'phase-end', 'skilltype3'],
                 exec: () => {
+                    if (trigger == 'skilltype3') {
+                        status.useCnt = 0;
+                        return;
+                    }
                     if (hidx == -1) return;
                     const hero = heros[hidx];
                     const maxCnt = status.maxCnt + +!!hero.talentSlot;
@@ -2127,26 +2135,28 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    127027: () => new StatusBuilder('重燃的绿洲之心').heroStatus().icon('ski,2').type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+    127027: () => new StatusBuilder('重燃的绿洲之心').heroStatus().icon('ski,2')
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('所附属角色造成的伤害+3。；【所附属角色使用技能后：】移除我方场上的【sts127026】，每移除1层就治疗所附属角色1点。')
         .handle((_, event) => {
             const { combatStatus = [] } = event;
             const sts127026 = getObjById(combatStatus, 127026);
-            let cnt = 0;
-            if (sts127026) {
-                cnt = sts127026.useCnt;
-                sts127026.useCnt = 0;
-            }
             return {
-                trigger: ['skill'],
+                trigger: ['after-skill'],
                 addDmg: 3,
-                cmds: [{ cmd: 'heal', cnt }],
+                heal: sts127026?.useCnt ?? 0,
+                exec: (_, execEvent = {}) => {
+                    const { combatStatus = [] } = execEvent;
+                    const sts127026 = getObjById(combatStatus, 127026);
+                    if (sts127026) sts127026.useCnt = 0;
+                }
             }
         }),
 
     127028: () => shieldHeroStatus('绿洲之庇护'),
 
-    127029: () => new StatusBuilder('绿洲之心').combatStatus().icon('ski,2').useCnt(0).maxCnt(4).type(STATUS_TYPE.Accumulate)
+    127029: () => new StatusBuilder('绿洲之心').combatStatus().icon('ski,2').useCnt(0).maxCnt(4)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方召唤4个【smn127022】后，我方【hro】附属【sts127027】，并获得2点[护盾]。')
         .handle((status, event, ver) => {
             const { card, discards = [], heros = [] } = event;
@@ -2155,6 +2165,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['card', 'discard'],
                 exec: () => {
                     if (++status.useCnt == 4) {
+                        status.roundCnt = 0;
                         return {
                             cmds: [{
                                 cmd: 'getStatus',

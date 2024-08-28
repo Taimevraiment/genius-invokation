@@ -39,7 +39,7 @@ export type CardHandleEvent = {
     eplayerInfo?: GameInfo,
     dicesCnt?: number,
     restDmg?: number,
-    isSkill?: number,
+    skid?: number,
     isSummon?: number,
     isExec?: boolean,
     supports?: Support[],
@@ -306,11 +306,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色造成的伤害+1】。；【角色使用原本元素骰费用+充能费用至少为5的技能时，】伤害额外+2。(每回合1次)')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d974aa6b36205d2c4ee83900f6383f40_5244142374562514025.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [], isSkill = -1 } = event;
-            let isAddDmg = card.perCnt > 0 && isSkill > -1;
+            const { heros = [], hidxs: [hidx] = [], skid = -1 } = event;
+            let isAddDmg = card.perCnt > 0 && skid > -1;
             if (isAddDmg) {
-                const cskill = heros[hidx].skills[isSkill];
-                isAddDmg &&= cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
+                const cskill = heros[hidx].skills.find(sk => sk.id == skid);
+                if (cskill) isAddDmg &&= cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
             }
             return {
                 addDmg: 1,
@@ -988,7 +988,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0f7dfce291215155b3a48a56c8c996c4_3799856037595257577.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false,
-                minusDiceCard: mdc = 0, minusDiceSkill = [], isSkill = -1 } = event;
+                minusDiceCard: mdc = 0, minusDiceSkill = [], skid = -1 } = event;
             const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 2 && !heros[hidx]?.isFront;
             return {
                 minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
@@ -1001,7 +1001,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
                         card.useCnt -= hcard.cost + hcard.anydice - mdc;
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
-                        const skill = heros[hidx]?.skills[isSkill].cost ?? [{ cnt: 0 }, { cnt: 0 }];
+                        const skill = heros[hidx]?.skills.find(sk => sk.id == skid)?.cost ?? [{ cnt: 0 }, { cnt: 0 }];
                         const skillcost = skill[0].cnt + skill[1].cnt;
                         card.useCnt -= skillcost - mdc - minusDiceSkill.find(([eid]) => eid == card.entityId)![1];
                     }
@@ -1014,7 +1014,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/bbe185732644f5d29e9097985c4c09a8_8068337050754144727.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], hcard, trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false,
-                minusDiceCard: mdc = 0, minusDiceSkill = [], isSkill = -1 } = event;
+                minusDiceCard: mdc = 0, minusDiceSkill = [], skid = -1 } = event;
             const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 4 && !heros[hidx]?.isFront;
             return {
                 minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
@@ -1027,7 +1027,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
                         card.useCnt -= hcard.cost + hcard.anydice - mdc;
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
-                        const skill = heros[hidx]?.skills[isSkill].cost ?? [{ cnt: 0 }, { cnt: 0 }];
+                        const skill = heros[hidx]?.skills.find(sk => sk.id == skid)?.cost ?? [{ cnt: 0 }, { cnt: 0 }];
                         const skillcost = skill[0].cnt + skill[1].cnt;
                         card.useCnt -= skillcost - mdc - minusDiceSkill.find(([eid]) => eid == card.entityId)![1];
                     }
@@ -2276,8 +2276,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；我方角色引发[水元素相关反应]后：装备有此牌的【hro】接下来2次造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d419604605c1acde00b841ecf8c82864_58733338663118408.png')
         .handle((_, event, ver) => {
-            const { isSkill = -1, hidxs } = event;
-            if (isSkill == -1) return;
+            const { skid = -1, hidxs } = event;
+            if (skid == -1) return;
             return { trigger: ['elReaction-Hydro', 'other-elReaction-Hydro'], status: [newStatus(ver)(112103)], hidxs }
         }),
 
@@ -2611,7 +2611,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方出战角色在[护盾]角色状态或[护盾]出战状态的保护下时，我方召唤物造成的[岩元素伤害]+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [], combatStatus = [], isSkill = -1, trigger = '' } = event;
+            const { heros = [], hidxs: [hidx] = [], combatStatus = [], skid = -1, trigger = '' } = event;
             let isTriggered = false;
             const triggers: Trigger[] = ['Geo-dmg'];
             if (ver < 'v4.8.0') {
@@ -2627,7 +2627,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (isTriggered) {
                 return {
                     trigger: triggers,
-                    addDmgCdt: isCdt(trigger == 'dmg' && isSkill != -1, 1),
+                    addDmgCdt: isCdt(trigger == 'dmg' && skid != -1, 1),
                     addDmgSummon: isCdt(trigger == 'Geo-dmg', 1),
                 }
             }
