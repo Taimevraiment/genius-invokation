@@ -426,6 +426,8 @@ const devOps = (cidx = 0) => {
   const hps: { hidx: number, hp: number }[] = [];
   const clearSts: { hidx: number, stsid: number }[] = [];
   const getSts: { hidxs: number[], stsid: number }[] = [];
+  const smnIds: number[] = [];
+  const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
   for (let op of ops) {
     const index = op.indexOf(' ');
@@ -491,6 +493,14 @@ const devOps = (cidx = 0) => {
       const hidxs = hidx == -1 ? undefined : (parseInt(rest.slice(hidx + 1)) || undefined)?.toString().split('```').map(Number) || undefined;
       flag.add('addCard');
       cmds.push({ cmd: 'addCard', card: cid, isAttach, cnt, hidxs });
+    } else if (op.startsWith('m')) {
+      const rest = op.slice(1);
+      smnIds.push(+rest);
+      flag.add('setSummon');
+    } else if (op.startsWith('p')) {
+      const rest = op.slice(1);
+      sptIds.push(+rest);
+      flag.add('setSupport');
     } else { // 摸牌
       const cards: (number | Card)[] = [];
       const isAttach = op.endsWith('~');
@@ -503,7 +513,7 @@ const devOps = (cidx = 0) => {
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, getSts, disCardCnt, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, getSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
 };
 </script>
 

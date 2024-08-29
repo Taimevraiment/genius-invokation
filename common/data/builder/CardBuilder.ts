@@ -136,7 +136,7 @@ export class GICard {
         this.canSelectSupport = canSelectSupport;
     }
     setEntityId(entityId: number): Card {
-        if (this.entityId == -1) this.entityId = entityId;
+        this.entityId = entityId;
         return this;
     }
     setCnt(cnt: number): Card {

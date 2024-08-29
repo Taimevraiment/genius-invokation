@@ -34,7 +34,7 @@ export class GISupport {
         };
     }
     setEntityId(id: number): Support {
-        if (this.entityId == -1) this.entityId = id;
+        this.entityId = id;
         return this;
     }
 }

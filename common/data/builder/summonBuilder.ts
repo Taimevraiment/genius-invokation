@@ -21,7 +21,6 @@ export class GISummon {
     statusId: number; // 可能对应的状态 -1不存在
     addition: string[]; // 额外信息
     handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
-    isSelected: boolean = false; // 是否被选择
     canSelect: boolean = false; // 是否能被选择
     UI: {
         src: string; // 图片url
@@ -85,7 +84,7 @@ export class GISummon {
         };
     }
     setEntityId(id: number): Summon {
-        if (this.entityId == -1) this.entityId = id;
+        this.entityId = id;
         return this;
     }
 }

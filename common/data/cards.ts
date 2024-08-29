@@ -2,7 +2,7 @@ import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Tri
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
     HERO_TAG, PHASE, PURE_ELEMENT_TYPE,
-    PureElementType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
+    PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { NULL_CARD } from '../constant/init.js';
@@ -1824,7 +1824,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { heros = [], hidxs } = event;
             return {
-                cmds: [{ cmd: 'switch-to', hidxs }, { cmd: 'useSkill', cnt: 0 }],
+                cmds: [{ cmd: 'switch-to', hidxs }, { cmd: 'useSkill', cnt: SKILL_TYPE.Normal }],
                 canSelectHero: heros.map(h => !h.isFront && h.hp > 0),
             }
         }),
@@ -2571,7 +2571,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】所召唤的【smn115093】入场时和行动阶段开始时：生成1个[风元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/6f4712bcbbe53515e63c1de112a58967_7457105821554314257.png'),
 
-    215101: () => new CardBuilder(411).name('知是留云僊').since('v5.0.0').talent(1).costAnemo(3).useCnt(0).isResetUseCnt()
+    215101: () => new CardBuilder(411).name('知是留云僊').since('v5.0.0').talent(1).costAnemo(3).useCnt(0)
         .description('{action}；我方切换角色时，此牌累积1层｢风翎｣。(每回合最多累积2层)；装备有此牌的【hro】使用【ski,0】时，消耗所有｢风翎｣，每消耗1层都使伤害+1。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Liuyun.webp')
         .handle((card, event) => {
@@ -2952,7 +2952,8 @@ const allCards: Record<number, () => CardBuilder> = {
             const smnIdx = getObjIdxById(summons, 112111 + (nsummonId ^ 1));
             if (smnIdx > -1) {
                 const useCnt = summons[smnIdx].useCnt;
-                summons.splice(smnIdx, 1, newSummon(ver)(112111 + nsummonId, useCnt));
+                const entityId = summons[smnIdx].entityId;
+                summons.splice(smnIdx, 1, newSummon(ver)(112111 + nsummonId, useCnt).setEntityId(entityId));
             }
             return {
                 cmds: [
@@ -2973,7 +2974,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [], hidxs: [fhidx] = [] } = event;
             const hidx = getObjIdxById(heros, getHidById(card.id));
-            const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 1 }];
+            const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 14032 }];
             if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
             return { trigger: ['skilltype2'], cmds }
         }),

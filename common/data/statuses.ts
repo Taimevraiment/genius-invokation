@@ -6,7 +6,7 @@ import {
     STATUS_TYPE,
     Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
+import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
@@ -731,9 +731,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff3').useCnt(1)
-        .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
         .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；[useCnt]')
-        .handle((_, event) => {
+        .handle((status, event) => {
             const { heros = [], hidx = -1 } = event;
             if (!heros[hidx]) return;
             const { tags } = heros[hidx];
@@ -742,11 +742,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             else res = { addDmgCdt: 2, pdmg: 1, hidxs: getMinHertHidxs(heros), isSelf: true };
             return {
                 attachEl: ELEMENT_TYPE.Hydro,
-                trigger: ['after-skilltype1', 'skilltype1'],
+                trigger: ['skilltype1'],
                 ...res,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt
-                }
+                exec: () => { --status.useCnt }
             }
         }),
 
@@ -1783,9 +1781,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const hero = getObjById(hs, getHidById(eStatus.id));
                     if (!hero) return;
                     let cnt = 0;
-                    const [cost1, cost2, maxDice] = eStatus.addition as number[];
-                    if (card && card.id > 0) discards.splice(0, 10, card);
+                    if (card && card.id > 0) discards.splice(0, INIT_PILE_COUNT, card);
                     discards.forEach(c => {
+                        const [cost1, cost2, maxDice, _maxDiceCnt] = eStatus.addition as number[];
                         const cost = c.cost + c.anydice;
                         if (cost > maxDice) {
                             eStatus.addition[2] = cost;
@@ -1797,12 +1795,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                             eStatus.addition[eStatus.useCnt] = cost;
                             ++eStatus.useCnt;
                         } else {
-                            cnt += 1 + +(cost1 == cost) + +(cost2 == cost);
+                            ++cnt;
+                            if (cost1 == cost2 || cost == cost1 || cost == cost2) ++cnt;
+                            if (cost == cost1 && cost == cost2) ++cnt;
                             eStatus.useCnt = 0;
-                            if (notAtk) hero.maxHp += cnt;
                         }
                     });
                     if (cnt > 0) {
+                        if (notAtk) hero.maxHp += cnt;
                         const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hero.hidx], mode: i }));
                         return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122042, cnt)], hidxs: [hero.hidx] }, ...healcmds], }
                     }
@@ -2136,7 +2136,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     127027: () => new StatusBuilder('重燃的绿洲之心').heroStatus().icon('ski,2')
-        .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('所附属角色造成的伤害+3。；【所附属角色使用技能后：】移除我方场上的【sts127026】，每移除1层就治疗所附属角色1点。')
         .handle((_, event) => {
             const { combatStatus = [] } = event;

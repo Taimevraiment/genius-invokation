@@ -474,6 +474,10 @@ export default class GeniusInvokationClient {
             }, 550);
         } else {
             this.players = players;
+            if (damageVO != -1 && (damageVO?.elTips ?? []).length > 0) {
+                this.damageVO.elTips = damageVO?.elTips ?? [];
+                setTimeout(() => this.resetDamageVO(), 1100);
+            }
         }
         this.updateHandCardsPos();
         this.log = [...log];

@@ -17,6 +17,9 @@
             <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
             <span>{{ (info as Card).energy }}</span>
           </div>
+          <div class="info-card-legend" v-if="(info as Card).subType.includes(CARD_SUBTYPE.Legend)">
+            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
+          </div>
         </div>
         <div class="info-card-type">{{ CARD_TYPE_NAME[(info as Card).type] }}</div>
         <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
@@ -612,7 +615,8 @@ const showRule = (...desc: string[]) => {
 }
 
 .info-card-energy,
-.info-card-anydice {
+.info-card-anydice,
+.info-card-legend {
   position: relative;
   width: 20px;
   height: 20px;

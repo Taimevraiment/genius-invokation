@@ -235,7 +235,7 @@ io.on('connection', socket => {
     // 发送数据到服务器(开发用)
     socket.on('sendToServerDev', (actionData) => {
         const me = getPlayer(pid);
-        if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
+        if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;

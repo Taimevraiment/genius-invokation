@@ -116,7 +116,7 @@ export class GIStatus {
         }
     }
     setEntityId(id: number): Status {
-        if (this.entityId == -1) this.entityId = id;
+        this.entityId = id;
         return this;
     }
     hasType(...types: StatusType[]): boolean {

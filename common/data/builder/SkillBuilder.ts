@@ -62,6 +62,11 @@ export class GISkill {
                 curskill.perCnt = pct;
                 return {}
             }
+            const skillcmds = handleres.cmds ?? [];
+            if (curskill.type != SKILL_TYPE.Passive) {
+                if (curskill.cost[2].cnt == 0) skillcmds.push({ cmd: 'getEnergy', cnt: 1 });
+                else if (curskill.cost[2].cnt > 0) skillcmds.push({ cmd: 'getEnergy', cnt: -curskill.cost[2].cnt });
+            }
             let dmgElement = handleres.dmgElement;
             let atkOffset = handleres.atkOffset;
             for (const ist of hero.heroStatus) {
@@ -75,6 +80,7 @@ export class GISkill {
             }
             return {
                 ...handleres,
+                cmds: skillcmds,
                 dmgElement,
                 atkOffset,
                 exec: () => {

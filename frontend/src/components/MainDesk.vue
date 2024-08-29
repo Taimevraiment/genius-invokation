@@ -142,7 +142,8 @@
           </div>
           <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">
-            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
+            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png"
+              :style="{ filter: `${hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}` }" />
             <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
               {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
             </div>
@@ -322,7 +323,7 @@
             :key="saidx">
             <div class="summon" :class="{
               'will-attach': summon.UI.isWill,
-              'summon-select': summonSelect[saidx][suidx] || summon.isSelected,
+              'summon-select': summonSelect[saidx][suidx],
               'summon-can-select': summon.canSelect && player.status == PLAYER_STATUS.PLAYING,
               'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
             }" v-for="(summon, suidx) in smnArea" :key="suidx"
@@ -494,7 +495,6 @@ const player = computed<Player>(() => {
     p.summons.forEach((smn, smni) => {
       if (summonCurcnt.value[pi][smni].val != smn.useCnt) {
         if (summonCurcnt.value[pi][smni].sid == smn.id) {
-          console.log(smn.name, smn.id);
           summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
           setTimeout(() => summonCurcnt.value[pi][smni].isChange = false, 300);
         } else {
@@ -1062,11 +1062,12 @@ button:active {
 
 .el-tip {
   position: absolute;
+  opacity: 1;
   top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  transition: all 1s;
   font-weight: bold;
+  transition: all 1s;
 }
 
 .el-tip-enter {
@@ -1075,7 +1076,6 @@ button:active {
 
 .el-tip-leave {
   opacity: 0;
-  z-index: -20;
 }
 
 .attach-element img {
