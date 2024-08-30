@@ -390,6 +390,8 @@ const wrapDesc = (desc: string, isExplain: boolean, obj?: ExplainContent): strin
         ctt = ctt1 + wpicon + ctt2;
         wpicon = '';
       }
+      const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == ctt) ?? [];
+      if (subtype) wpicon ||= `<img style='width:18px;transform:translateY(20%);' src='${CARD_SUBTYPE_URL[subtype]}'/>`;
       const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
       const marginLeft = el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same ? 'margin-left:2px;' : '';
       return `${wpicon}<span style='color:${color};${underline}margin-right:2px;${marginLeft}'>${ctt}</span>`;

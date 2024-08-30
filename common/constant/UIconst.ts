@@ -105,15 +105,21 @@ export const CARD_SUBTYPE_NAME = {
 export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Weapon]: 'https://patchwiki.biligame.com/images/ys/thumb/c/ce/l98mlw9whvdgy6w95qlteb9wwc2dc5i.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%AD%A6%E5%99%A8.png',
     [CARD_SUBTYPE.Artifact]: 'https://patchwiki.biligame.com/images/ys/thumb/7/75/540z6nuruz9nb2do1epuwnocpe054kz.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%A3%E9%81%97%E7%89%A9.png',
-    [CARD_SUBTYPE.Vehicle]: 'https://homdgcat.wiki/images/GCG_Ul/3008.png',
+    [CARD_SUBTYPE.Vehicle]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_Vehicle.png',
     [CARD_SUBTYPE.Place]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2b/54crg8w1f0ccqmh8x4qc6yg8qxnvy4c.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%BA%E5%9C%B0.png',
     [CARD_SUBTYPE.Ally]: 'https://patchwiki.biligame.com/images/ys/thumb/a/aa/nwz9v6fm3wn5cdtnmq5m33nnzlubx8s.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E4%BC%99%E4%BC%B4.png',
     [CARD_SUBTYPE.Item]: 'https://patchwiki.biligame.com/images/ys/thumb/1/1c/9ljzczmf9xjnk6qwdx893iicjkw392h.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E9%81%93%E5%85%B7.png',
     [CARD_SUBTYPE.Food]: 'https://patchwiki.biligame.com/images/ys/thumb/3/3e/c3w8tms9npmrntwlvptylijslt7ujn1.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%96%99%E7%90%86.png',
     [CARD_SUBTYPE.Talent]: 'https://patchwiki.biligame.com/images/ys/thumb/8/82/pg8v7zj01kq1lohm9objnn9tv9ffdn4.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%A4%A9%E8%B5%8B.png',
-    [CARD_SUBTYPE.Action]: '',
+    [CARD_SUBTYPE.Action]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_CombatAction.png',
     [CARD_SUBTYPE.Legend]: 'https://patchwiki.biligame.com/images/ys/thumb/9/90/iwrhiaj9r18jopmj1vtj6zbimxw0z72.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E7%A7%98%E4%BC%A0.png',
-    [CARD_SUBTYPE.ElementResonance]: '',
+    [CARD_SUBTYPE.ElementResonance]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_Sync.png',
+} as const;
+
+export const SLOT_CODE = {
+    [CARD_SUBTYPE.Weapon]: 0,
+    [CARD_SUBTYPE.Artifact]: 1,
+    [CARD_SUBTYPE.Talent]: 2,
 } as const;
 
 export const SKILL_TYPE_NAME = {
@@ -165,7 +171,6 @@ export const STATUS_BG_COLOR = {
     Debuff: DEBUFF_BG_COLOR,
     Buff: '#b9a11a',
     Transparent: '#00000000',
-    // [STATUS_TYPE.Shield]: '#b79b00',
 } as const;
 
 export type StatusBgColor = TypeConst<typeof STATUS_BG_COLOR>;
@@ -232,7 +237,7 @@ export const WEAPON_TYPE_NAME = {
 } as const;
 
 export const WEAPON_TYPE_URL = {
-    [WEAPON_TYPE.Other]: '',
+    [WEAPON_TYPE.Other]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Weapon_None.png',
     [WEAPON_TYPE.Sword]: 'https://patchwiki.biligame.com/images/ys/thumb/9/99/ci8ct35ze990qobgxr3qrn5ja7odwq6.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%8D%95%E6%89%8B%E5%89%91.png',
     [WEAPON_TYPE.Claymore]: 'https://patchwiki.biligame.com/images/ys/thumb/5/5f/oya1teccyuglwbbcb13gepwwax63pp8.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%8F%8C%E6%89%8B%E5%89%91.png',
     [WEAPON_TYPE.Bow]: 'https://patchwiki.biligame.com/images/ys/thumb/4/47/ck3noau3m5bj3f5in9ac4oipcsfd5on.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%BC%93.png',

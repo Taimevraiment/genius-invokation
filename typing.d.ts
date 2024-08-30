@@ -255,5 +255,5 @@ type Preview = Readonly<ActionData & {
     isQuickAction?: boolean,
 }>
 
-
+type LogType = 'log' | 'system' | 'info';
 

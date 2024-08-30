@@ -99,7 +99,7 @@ const normalWeapon = (shareId: number) => {
         .weapon().costSame(2).handle(() => ({ addDmg: 1 }));
 }
 
-const jiliWeapon = (shareId: number) => {
+const sacrificialWeapon = (shareId: number) => {
     return new CardBuilder(shareId)
         .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】生成1个此角色类型的元素骰(每回合1次)。')
         .weapon().costSame(3).perCnt(1).handle((card, event) => {
@@ -108,13 +108,13 @@ const jiliWeapon = (shareId: number) => {
             return {
                 addDmg: 1,
                 trigger: isCdt(card.perCnt > 0, ['skilltype2']),
-                execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element }]),
+                execmds: isCdt(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element }]),
                 exec: () => { --card.perCnt }
             }
         });
 }
 
-const tiankongWeapon = (shareId: number) => {
+const skywardWeapon = (shareId: number) => {
     return new CardBuilder(shareId)
         .description('【角色造成的伤害+1】。；【每回合1次：】角色使用｢普通攻击｣造成的伤害额外+1。')
         .weapon().costSame(3).perCnt(1).handle(card => ({
@@ -200,6 +200,11 @@ const magicCount = (cnt: number, shareId?: number) => {
 
 // 31xxxx：装备
 //   311xxx：武器
+//     3111xx：法器
+//     3112xx：弓
+//     3113xx：双手剑
+//     3114xx：长柄武器
+//     3115xx：单手剑
 //   312xxx：圣遗物
 //   313xxx：特技
 // 32xxxx：支援
@@ -218,10 +223,10 @@ const allCards: Record<number, () => CardBuilder> = {
     311101: () => normalWeapon(121).name('魔导绪论')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/1abc432f853c6fa24624a92646c62237_7336928583967273301.png'),
 
-    311102: () => jiliWeapon(122).name('祭礼残章')
+    311102: () => sacrificialWeapon(122).name('祭礼残章')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/35a99ec73d99ed979a915e9a10a33a1e_5761287146349681281.png'),
 
-    311103: () => tiankongWeapon(123).name('天空之卷')
+    311103: () => skywardWeapon(123).name('天空之卷')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/347336161ab1d81f0b5bf1508a392f64_4021839086739887808.png'),
 
     311104: () => new CardBuilder(124).name('千夜浮梦').since('v3.7.0').weapon().costSame(3).perCnt(2)
@@ -230,7 +235,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(card => ({
             addDmg: 1,
             addDmgCdt: isCdt(card.perCnt > 0, 1),
-            trigger: isCdt<Trigger[]>(card.perCnt > 0, ['elReaction']),
+            trigger: isCdt(card.perCnt > 0, ['elReaction']),
             exec: () => { --card.perCnt }
         })),
 
@@ -245,6 +250,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(card => ({
             addDmg: card.useCnt,
             trigger: isCdt(card.useCnt < 2, ['phase-end']),
+            isAddTask: true,
             exec: () => { ++card.useCnt }
         })),
 
@@ -266,11 +272,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/9a6794d76b3ea150a101e354f9f5a162_9095966637954555968.png')
         .handle((card, event, ver) => {
             const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
-            const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) && card.perCnt > 0;
+            const isMinus = (trigger == 'getdmg' || trigger == 'heal' && (heal[hidx] ?? -1) >= 0) && card.perCnt > 0;
             return {
                 addDmg: 1,
                 trigger: isCdt(isMinus, ['getdmg', 'heal']),
-                execmds: isCdt<Cmds[]>(isMinus && card.useCnt == 1, [{ cmd: 'getStatus', status: [newStatus(ver)(301108)] }]),
+                isAddTask: isMinus,
+                execmds: isCdt(isMinus && card.useCnt == 1, [{ cmd: 'getStatus', status: [newStatus(ver)(301108)] }]),
                 exec: () => {
                     if (card.useCnt < 2) ++card.useCnt;
                     if (card.useCnt >= 2) --card.perCnt;
@@ -282,8 +289,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色受到伤害或治疗后：】使角色本回合中下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。(每回合至多2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/83ab325be102a71a7df848546e7eacbb_2193569914822395358.png')
         .handle((card, event, ver) => {
-            const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
-            const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) && card.perCnt > 0;
+            const { heros = [], heal = [], hidxs: [hidx] = [-1], trigger = '' } = event;
+            const hasSts301111 = hasObjById(heros[hidx]?.heroStatus, 301111);
+            const isMinus = !hasSts301111 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0) && card.perCnt > 0;
             if (!isMinus) return;
             return {
                 trigger: ['getdmg', 'heal'],
@@ -296,10 +304,10 @@ const allCards: Record<number, () => CardBuilder> = {
     311201: () => normalWeapon(126).name('鸦羽弓')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/e20881692f9c3dcb128e3768347af4c0_5029781426547880539.png'),
 
-    311202: () => jiliWeapon(127).name('祭礼弓')
+    311202: () => sacrificialWeapon(127).name('祭礼弓')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/4adb0666f4e171943739e4baa0863b48_5457536750893996771.png'),
 
-    311203: () => tiankongWeapon(128).name('天空之翼')
+    311203: () => skywardWeapon(128).name('天空之翼')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/b50f747817c941c6ea72a56b4501a99c_2147958904876284896.png'),
 
     311204: () => new CardBuilder(129).name('阿莫斯之弓').since('v3.7.0').weapon().costSame(3).perCnt(1)
@@ -310,7 +318,7 @@ const allCards: Record<number, () => CardBuilder> = {
             let isAddDmg = card.perCnt > 0 && skid > -1;
             if (isAddDmg) {
                 const cskill = heros[hidx].skills.find(sk => sk.id == skid);
-                if (cskill) isAddDmg &&= cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
+                if (cskill) isAddDmg &&= cskill.damage > 0 && cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
             }
             return {
                 addDmg: 1,
@@ -343,7 +351,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: triggers,
                 addDmg: isCdt(card.useCnt > 0, 1),
-                execmds: isCdt<Cmds[]>(trigger == 'skill' && card.useCnt > 0, [{ cmd: 'getCard', cnt: card.useCnt }]),
+                execmds: isCdt(trigger == 'skill' && card.useCnt > 0, [{ cmd: 'getCard', cnt: card.useCnt }]),
                 exec: () => {
                     if (trigger == 'card') {
                         ++card.useCnt;
@@ -358,7 +366,7 @@ const allCards: Record<number, () => CardBuilder> = {
     311301: () => normalWeapon(132).name('白铁大剑')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/d8916ae5aaa5296a25c1f54713e2fd85_802175621117502141.png'),
 
-    311302: () => jiliWeapon(133).name('祭礼大剑')
+    311302: () => sacrificialWeapon(133).name('祭礼大剑')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/35a410a0aad34824fdcf8ae986893d30_2999739715093754473.png'),
 
     311303: () => new CardBuilder(134).name('狼的末路').weapon().costSame(3)
@@ -369,7 +377,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['skill'], addDmg: 1, addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 2) }
         }),
 
-    311304: () => tiankongWeapon(135).name('天空之傲')
+    311304: () => skywardWeapon(135).name('天空之傲')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7ce2f924ae1b0922ea14eef9fbd3f2bb_951683174491798888.png'),
 
     311305: () => new CardBuilder(136).name('钟剑').since('v3.7.0').weapon().costSame(3).perCnt(1)
@@ -382,7 +390,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 addDmg: 1,
                 trigger: ['skill'],
-                execmds: isCdt<Cmds[]>(isTriggered, [{ cmd: 'getStatus', status: [newStatus(ver)(121013)] }]),
+                execmds: isCdt(isTriggered, [{ cmd: 'getStatus', status: [newStatus(ver)(121013)] }]),
                 exec: () => {
                     if (isTriggered) --card.perCnt;
                 }
@@ -399,7 +407,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 addDmg: 1,
                 trigger: ['skilltype2', 'getdmg'],
-                execmds: isCdt<Cmds[]>(isTriggered1 || isTriggered2, [{ cmd: 'getStatus', status: [newStatus(ver)(301105 + +isTriggered2)] }]),
+                execmds: isCdt(isTriggered1 || isTriggered2, [{ cmd: 'getStatus', status: [newStatus(ver)(301105 + +isTriggered2)] }]),
                 exec: () => {
                     if (isTriggered1) card.perCnt &= ~(1 << 0);
                     if (isTriggered2) card.perCnt &= ~(1 << 1);
@@ -422,7 +430,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const cardId = hcard?.id ?? 0;
             return {
                 trigger: isCdt(!initCardIds.includes(cardId) && !usedCardIds.includes(cardId), ['card']),
-                addDmg: card.useCnt >= 8 ? 3 : card.useCnt >= 4 ? 2 : +(card.useCnt >= 2),
+                addDmg: Math.min(3, Math.floor(Math.log2(card.useCnt))),
                 exec: () => { ++card.useCnt }
             }
         }),
@@ -439,25 +447,25 @@ const allCards: Record<number, () => CardBuilder> = {
             return { addDmg: 1, status: [newStatus(ver)(301101, liyueCnt)] }
         }),
 
-    311403: () => tiankongWeapon(139).name('天空之脊')
+    311403: () => skywardWeapon(139).name('天空之脊')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/788811f1c1ce03f56a89ecde4cbe52a7_2992557107190163621.png'),
 
     311404: () => new CardBuilder(140).name('贯虹之槊').since('v3.7.0').weapon().costSame(3).perCnt(1)
         .description('【角色造成的伤害+1】。；角色如果在[护盾]角色状态或[护盾]出战状态的保护下，则造成的伤害额外+1。；【角色使用｢元素战技｣后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充1点[护盾]。(每回合1次)')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/0a1242b4eeb9c6b6e731466fb182cb60_6226689090161933551.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [], combatStatus = [], trigger = '' } = event;
+            const { heros = [], hidxs: [hidx] = [], combatStatus = [], trigger = '', isExecTask = false } = event;
             const fhero = heros[hidx];
             const isShieldStatus = fhero?.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Shield)) ||
                 combatStatus.some(ost => ost.hasType(STATUS_TYPE.Shield));
+            const ost = combatStatus.find(ost => ost.hasType(STATUS_TYPE.Shield));
             return {
                 addDmg: 1,
                 addDmgCdt: isCdt(isShieldStatus && trigger == 'skill', 1),
                 trigger: ['skill', 'skilltype2'],
-                isAddTask: trigger == 'skilltype2',
+                isAddTask: trigger == 'skilltype2' && (!isExecTask || !!ost),
                 exec: () => {
                     if (card.perCnt == 0 || trigger != 'skilltype2') return;
-                    const ost = combatStatus.find(ost => ost.hasType(STATUS_TYPE.Shield));
                     if (ost) {
                         ++ost.useCnt;
                         --card.perCnt;
@@ -471,7 +479,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1ed5905877be45aca0e92093e3b5fdbe_7752495456460826672.png')
         .handle((_, event) => {
             const { heros = [], hidxs = [] } = event;
-            const execmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy > 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
+            const execmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy == 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
             return { addDmg: 1, trigger: ['phase-start'], execmds }
         }),
 
@@ -484,6 +492,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(card => ({
             addDmg: 1 + card.useCnt,
             trigger: ['skill'],
+            isAddTask: true,
             exec: () => {
                 if (card.useCnt < 2) ++card.useCnt;
             }
@@ -501,7 +510,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger,
                 addDmgType3: 2,
-                execmds: isCdt<Cmds[]>(card.useCnt >= 2, [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
+                execmds: isCdt(card.useCnt >= 2, [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
                 isAddTask: true,
                 exec: () => {
                     if (++card.useCnt >= 3) card.useCnt -= 3;
@@ -532,22 +541,25 @@ const allCards: Record<number, () => CardBuilder> = {
     311501: () => normalWeapon(143).name('旅行剑')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2540a7ead6f2e957a6f25c9899ce428b_3859616323968734996.png'),
 
-    311502: () => jiliWeapon(144).name('祭礼剑')
+    311502: () => sacrificialWeapon(144).name('祭礼剑')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/5dda866add6d4244a69c0ffdd2b53e51_1375735839691106206.png'),
 
     311503: () => new CardBuilder(145).name('风鹰剑').weapon().costSame(3).perCnt(2)
         .description('【角色造成的伤害+1】。；【对方使用技能后：】如果所附属角色为｢出战角色｣，则治疗该角色1点。(每回合至多2次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/fcad55ff202d5dc8fa1d782f0b2f3400_3902557354688808483.png')
-        .handle((card, { hidxs }) => ({
-            addDmg: 1,
-            trigger: ['oppo-skill'],
-            execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'heal', cnt: 1, hidxs }]),
-            exec: () => {
-                if (card.perCnt > 0) --card.perCnt;
+        .handle((card, event) => {
+            const { heros = [], hidxs = [-1], isExecTask = false } = event;
+            const isTriggered = !!heros[hidxs[0]]?.isFront && card.perCnt > 0;
+            return {
+                addDmg: 1,
+                trigger: isCdt(!isExecTask || isTriggered, ['oppo-skill']),
+                isAddTask: true,
+                execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs }]),
+                exec: () => { --card.perCnt }
             }
-        })),
+        }),
 
-    311504: () => tiankongWeapon(146).name('天空之刃').since('v3.7.0')
+    311504: () => skywardWeapon(146).name('天空之刃').since('v3.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b3a9cd06298bf6dcd9191a88bb754f14_6317636823354305889.png'),
 
     311505: () => new CardBuilder(147).name('西风剑').since('v3.6.0').weapon().costSame(3).perCnt(1)
@@ -556,7 +568,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(card => ({
             addDmg: 1,
             trigger: ['skilltype2'],
-            execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getEnergy', cnt: 1 }]),
+            execmds: isCdt(card.perCnt > 0, [{ cmd: 'getEnergy', cnt: 1 }]),
             exec: () => {
                 if (card.perCnt > 0) --card.perCnt;
             }
@@ -568,7 +580,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(card => ({
             addDmg: 1,
             trigger: ['skilltype1'],
-            execmds: isCdt<Cmds[]>(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
+            execmds: isCdt(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
             exec: () => {
                 if (card.perCnt > 0) --card.perCnt;
             }
@@ -588,7 +600,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: triggers,
                 addDmgCdt: isCdt(trigger == 'skilltype1', 1),
-                execmds: isCdt<Cmds[]>(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
+                execmds: isCdt(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
                 minusDiceSkill: isCdt(isTriggered, { skilltype1: [0, 2, 0] }),
                 exec: () => {
                     if (['getdmg', 'heal'].includes(trigger)) ++card.useCnt;
@@ -696,7 +708,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 addDmgType3: isCdt(ver < 'v4.1.0' || card.perCnt > 0, 2),
                 trigger: ['other-skilltype3', 'skilltype3'],
-                execmds: isCdt<Cmds[]>(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
+                execmds: isCdt(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
                 exec: () => {
                     if (trigger == 'skilltype3' && card.perCnt > 0) --card.perCnt;
                 }
@@ -756,7 +768,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skilltype1: [0, 0, 1] }),
                 minusDiceCard: isCdt(isMinusCard, 1),
                 trigger: ['skilltype1', 'card', 'change-to'],
-                execmds: isCdt<Cmds[]>(trigger == 'change-to', [{ cmd: 'getStatus', status: [newStatus(ver)(301203)] }]),
+                execmds: isCdt(trigger == 'change-to', [{ cmd: 'getStatus', status: [newStatus(ver)(301203)] }]),
                 exec: () => {
                     if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusDiceSkill)) {
                         --card.perCnt;
@@ -855,7 +867,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['elReaction'],
                 cmds: [{ cmd: 'getCard', cnt: 1 }],
-                execmds: isCdt<Cmds[]>(isUse, [{ cmd: 'getCard', cnt: 1 }]),
+                execmds: isCdt(isUse, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: () => {
                     if (isUse) --card.perCnt;
                 }
@@ -880,7 +892,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['elReaction'],
                 cmds,
-                execmds: isCdt<Cmds[]>(isTriggered, [{ cmd: 'getCard', cnt: 1 }]),
+                execmds: isCdt(isTriggered, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: () => {
                     if (isTriggered) --card.perCnt;
                 }
@@ -1043,7 +1055,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (!heros[hidx]?.isFront) return;
             return {
                 trigger: ['Dendro-getdmg-oppo'],
-                execmds: isCdt<Cmds[]>(card.useCnt + 1 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
+                execmds: isCdt(card.useCnt + 1 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
                 isAddTask: true,
                 exec: () => {
                     if (++card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
@@ -1059,7 +1071,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (!heros[hidx]?.isFront) return;
             return {
                 trigger: ['Dendro-getdmg-oppo', 'elReaction-Dendro'],
-                execmds: isCdt<Cmds[]>(card.useCnt + 2 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
+                execmds: isCdt(card.useCnt + 2 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
                 isAddTask: true,
                 exec: () => {
                     card.useCnt += 2;
@@ -1245,7 +1257,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             if (ver < 'v4.3.0') return;
             const { playerInfo: { artifactCnt = 0 } = {} } = event;
-            return { cmds: isCdt<Cmds[]>(artifactCnt >= 6, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Artifact, isAttach: true }]) }
+            return { cmds: isCdt(artifactCnt >= 6, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Artifact, isAttach: true }]) }
         }),
 
     322004: () => new CardBuilder(197).name('瓦格纳').ally().costSame(2)
@@ -1255,7 +1267,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             if (ver < 'v.4.3.0') return;
             const { playerInfo: { weaponTypeCnt = 0 } = {} } = event;
-            return { cmds: isCdt<Cmds[]>(weaponTypeCnt >= 3, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Weapon, isAttach: true }]) }
+            return { cmds: isCdt(weaponTypeCnt >= 3, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Weapon, isAttach: true }]) }
         }),
 
     322005: () => new CardBuilder(198).name('卯师傅').ally().costSame(1)

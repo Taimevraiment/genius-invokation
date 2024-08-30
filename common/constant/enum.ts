@@ -137,11 +137,11 @@ export const CARD_SUBTYPE = {
 export type CardSubtype = TypeConst<typeof CARD_SUBTYPE>;
 
 export const CARD_TAG = {
-    Barrier: 0, // 减伤
-    Revive: 1, // 复苏料理
-    LocalResonance: 2, // 所属共鸣
-    NonDefeat: 3, // 免击倒
-    NonReconcile: 4, // 不能调和
+    Barrier: 'Barrier', // 减伤 0
+    Revive: 'Revive', // 复苏料理 1
+    LocalResonance: 'LocalResonance', // 所属共鸣 2
+    NonDefeat: 'NonDefeat', // 免击倒 3
+    NonReconcile: 'NonReconcile', // 不能调和 4
 } as const;
 
 export type CardTag = TypeConst<typeof CARD_TAG>;
@@ -304,17 +304,17 @@ export const INFO_TYPE = {
 export type InfoType = TypeConst<typeof INFO_TYPE>;
 
 export const PHASE = {
-    NOT_READY: 0,
-    NOT_BEGIN: 1,
-    CHANGE_CARD: 2,
-    CHOOSE_HERO: 3,
-    DICE: 4,
-    ACTION_START: 5,
-    ACTION: 6,
-    ACTION_END: 7,
-    PHASE_END: 8,
-    DIE_CHANGE_ACTION: 9,
-    DIE_CHANGE_ACTION_END: 10,
+    NOT_READY: 0, // 未准备
+    NOT_BEGIN: 1, // 未开始
+    CHANGE_CARD: 2, // 换牌
+    CHOOSE_HERO: 3, // 选择出战角色
+    DICE: 4, // 掷骰子
+    ACTION_START: 5, // 行动开始
+    ACTION: 6, // 行动中
+    ACTION_END: 7, // 行动结束
+    PHASE_END: 8, // 回合结束
+    DIE_CHANGE_ACTION: 9, // 行动中角色死亡
+    DIE_CHANGE_ACTION_END: 10, // 行动结束后角色死亡
 } as const;
 
 export type Phase = TypeConst<typeof PHASE>;

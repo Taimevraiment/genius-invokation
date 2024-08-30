@@ -169,8 +169,8 @@ const card311306sts = (name: string) => {
     return new StatusBuilder(name).heroStatus().icon('buff5').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合内，所附属角色下次造成的伤害额外+1。')
-        .handle(status => ({
-            trigger: ['skill'],
+        .handle((status, event) => ({
+            trigger: isCdt(event.hasDmg, ['skill']),
             addDmg: 1,
             exec: () => { --status.roundCnt }
         }));
@@ -722,13 +722,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
         .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；[useCnt]')
-        .handle((status, { trigger } = {}) => ({
-            trigger: ['dmg', 'dmg-Swirl'],
-            addDmg: 1,
-            exec: () => {
-                if (trigger == 'dmg') --status.useCnt
-            },
-        })),
+        .handle((status, event) => {
+            const { skilltype = -1, trigger = '' } = event;
+            return {
+                trigger: ['dmg', 'dmg-Swirl'],
+                addDmg: 1,
+                addDmgCdt: isCdt(skilltype == -1, 1),
+                exec: () => {
+                    if (trigger == 'dmg') --status.useCnt
+                },
+            }
+        }),
 
     112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff3').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
@@ -2299,15 +2303,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301108: () => new StatusBuilder('万世的浪涛').heroStatus().icon('buff5').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('角色在本回合中，下次造成的伤害+2。')
-        .handle(status => ({
+        .handle((status, event) => ({
             addDmg: 2,
-            trigger: ['skill'],
+            trigger: isCdt(event.hasDmg, ['skill']),
             exec: () => { --status.roundCnt },
         })),
 
     301109: (name: string) => senlin2Status(name),
 
-    301111: () => new StatusBuilder('金流监督（生效中）').heroStatus().icon('buff5').roundCnt(1).type(STATUS_TYPE.Usage)
+    301111: () => new StatusBuilder('金流监督（生效中）').heroStatus().icon('buff5')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).roundCnt(1)
         .description('本回合中，角色下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。')
         .handle(status => ({
             trigger: ['skilltype1'],
@@ -2339,8 +2344,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     302204: () => new StatusBuilder('｢清洁工作｣（生效中）').combatStatus().icon('buff5').useCnt(1).maxCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方出战角色下次造成的伤害+1。；(可叠加，最多叠加到+2)')
-        .handle(status => ({
-            trigger: ['skill'],
+        .handle((status, event) => ({
+            trigger: isCdt(event.hasDmg, ['skill']),
             addDmg: status.useCnt,
             exec: () => { status.useCnt = 0 },
         })),
@@ -2427,9 +2432,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303112: () => new StatusBuilder('元素共鸣：粉碎之冰（生效中）').heroStatus().icon('buff2')
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，我方当前出战角色下一次造成的伤害+2。')
-        .handle(status => ({
+        .handle((status, event) => ({
             addDmg: 2,
-            trigger: ['skill'],
+            trigger: isCdt(event.hasDmg, ['skill']),
             exec: () => { --status.roundCnt },
         })),
 
@@ -2708,9 +2713,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303302: () => new StatusBuilder('仙跳墙（生效中）').heroStatus().icon('buff2').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，目标角色下一次｢元素爆发｣造成的伤害+3。')
-        .handle(status => ({
+        .handle((status, event) => ({
             addDmgType3: 1,
-            trigger: ['skilltype3'],
+            trigger: isCdt(event.hasDmg, ['skilltype3']),
             exec: () => { --status.roundCnt },
         })),
 
@@ -2762,9 +2767,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303309: () => new StatusBuilder('唐杜尔烤鸡（生效中）').heroStatus().icon('buff2').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，所附属角色下一次｢元素战技｣造成的伤害+2。')
-        .handle(status => ({
+        .handle((status, event) => ({
             addDmgType2: 2,
-            trigger: ['skilltype2'],
+            trigger: isCdt(event.hasDmg, ['skilltype2']),
             exec: () => { --status.roundCnt },
         })),
 

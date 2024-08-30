@@ -154,44 +154,34 @@
           </div>
           <div class="hero-equipment">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[0] }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Weapon]] }">
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot + +!!hero.vehicleSlot)}%`,
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.talentSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-artifact" v-if="hero.artifactSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[1] }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Artifact]] }">
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Artifact]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot + +!!hero.vehicleSlot)}%`,
+                height: `${100 / (1 + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-talent" v-if="hero.talentSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[2] }">
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Talent]] }">
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Talent]" style="filter: brightness(0.3);" />
               <div :style="{
                 position: 'absolute',
                 width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.vehicleSlot)}%`,
+                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot)}%`,
                 borderRadius: '50%',
               }" :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
-            </div>
-            <div class="hero-vehicle" v-if="hero.vehicleSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[3] }">
-              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]" style="filter: brightness(0.3);" />
-              <div :style="{
-                position: 'absolute',
-                width: '100%',
-                height: `${100 / (1 + +!!hero.artifactSlot + +!!hero.weaponSlot + +!!hero.talentSlot)}%`,
-                borderRadius: '50%',
-              }" :class="{ 'slot-can-use': hero.vehicleSlot.perCnt > 0 }"></div>
             </div>
           </div>
           <div class="attach-element">
@@ -424,7 +414,7 @@ import {
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
-import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
@@ -1217,6 +1207,7 @@ button:active {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
 }
 
 .hero-freeze>img {
