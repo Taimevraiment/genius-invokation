@@ -524,7 +524,6 @@ const willDamages = computed<number[][][]>(() => {
     const widthDiff = (tarHidx.value - atkHidx.value) * (width + 0.1 * parentWidth);
     const heightDiff = height / 0.35 * 0.5 * (isAtker ? -1 : 1);
     const deg = Math.atan2(widthDiff, -heightDiff) * (180 / Math.PI) - (isAtker ? 0 : 180);
-
     const atkAnime = atkHeroDOM.animate([{
       offset: 0.3,
       transform: `rotate(${deg}deg) scale(1.3)`,

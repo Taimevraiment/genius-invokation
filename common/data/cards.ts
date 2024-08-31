@@ -17,6 +17,7 @@ import { newSupport } from './supports.js';
 export type CardHandleEvent = {
     heros?: Hero[],
     combatStatus?: Status[],
+    pile?: Card[],
     eheros?: Hero[],
     eCombatStatus?: Status[],
     eAttachments?: ElementType[][],
@@ -474,13 +475,14 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311405: () => new CardBuilder(141).name('薙草之稻光').since('v3.7.0').weapon().costSame(3)
+    311405: () => new CardBuilder(141).name('薙草之稻光').since('v3.7.0').weapon().costSame(3).perCnt(1)
         .description('【角色造成的伤害+1】。；【每回合自动触发1次：】如果所附属角色没有[充能]，就使其获得1点[充能]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1ed5905877be45aca0e92093e3b5fdbe_7752495456460826672.png')
-        .handle((_, event) => {
-            const { heros = [], hidxs = [] } = event;
-            const execmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy == 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
-            return { addDmg: 1, trigger: ['phase-start'], execmds }
+        .handle((card, event) => {
+            const { heros = [], hidxs = [], slotUse = false } = event;
+            const cmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy == 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
+            if (slotUse && cmds) --card.perCnt;
+            return { addDmg: 1, cmds, trigger: ['phase-start'], execmds: cmds, exec: () => { --card.perCnt } }
         }),
 
     311406: () => senlin1Weapon(142, '贯月矢', 301104).since('v4.1.0')
@@ -552,7 +554,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const isTriggered = !!heros[hidxs[0]]?.isFront && card.perCnt > 0;
             return {
                 addDmg: 1,
-                trigger: isCdt(!isExecTask || isTriggered, ['oppo-skill']),
+                trigger: isCdt(!isExecTask || isTriggered, ['after-skill-oppo']),
                 isAddTask: true,
                 execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs }]),
                 exec: () => { --card.perCnt }
@@ -565,25 +567,26 @@ const allCards: Record<number, () => CardBuilder> = {
     311505: () => new CardBuilder(147).name('西风剑').since('v3.6.0').weapon().costSame(3).perCnt(1)
         .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】角色额外获得1点[充能]。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e1938c4cf6e50cfcb65d67ef10bc16a3_1486330508550781744.png')
-        .handle(card => ({
-            addDmg: 1,
-            trigger: ['skilltype2'],
-            execmds: isCdt(card.perCnt > 0, [{ cmd: 'getEnergy', cnt: 1 }]),
-            exec: () => {
-                if (card.perCnt > 0) --card.perCnt;
+        .handle((card, event) => {
+            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            const hero = heros[hidx];
+            if (!hero) return;
+            return {
+                addDmg: 1,
+                trigger: isCdt(card.perCnt > 0 && hero.energy < hero.maxEnergy, ['skilltype2']),
+                execmds: [{ cmd: 'getEnergy', cnt: 1 }],
+                exec: () => { --card.perCnt }
             }
-        })),
+        }),
 
     311506: () => new CardBuilder(303).name('裁叶萃光').since('v4.3.0').weapon().costSame(3).perCnt(2)
         .description('【角色造成的伤害+1】。；【角色使用｢普通攻击｣后：】生成1个随机的基础元素骰。(每回合最多触发2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/4d3935c7b67e051b02f9a525357b2fb0_8903486552471935304.png')
         .handle(card => ({
             addDmg: 1,
-            trigger: ['skilltype1'],
-            execmds: isCdt(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
-            exec: () => {
-                if (card.perCnt > 0) --card.perCnt;
-            }
+            trigger: isCdt(card.perCnt > 0, ['skilltype1']),
+            execmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }],
+            exec: () => { --card.perCnt }
         })),
 
     311507: () => senlin2Weapon(327, '原木刀', 301107).since('v4.4.0')
@@ -599,6 +602,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (isTriggered) triggers.push('skilltype1');
             return {
                 trigger: triggers,
+                isAddTask: trigger != 'skilltype1',
                 addDmgCdt: isCdt(trigger == 'skilltype1', 1),
                 execmds: isCdt(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
                 minusDiceSkill: isCdt(isTriggered, { skilltype1: [0, 2, 0] }),
@@ -1920,7 +1924,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     332027: () => new CardBuilder(317).name('浮烁的四叶印').since('v4.3.0').event().costSame(0).canSelectHero(1)
-        .description('目标角色附属【四叶印】：每个回合的结束阶段，我方都切换到此角色。')
+        .description('目标角色附属【sts303227】：每个回合的结束阶段，我方都切换到此角色。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/4845ea28326df1869e6385677b360722_5388810612366437595.png')
         .handle((_c, _e, ver) => ({ status: [newStatus(ver)(303227)] })),
 
@@ -2679,8 +2683,9 @@ const allCards: Record<number, () => CardBuilder> = {
     216081: () => new CardBuilder(399).name('不明流通渠道').talent(1).costGeo(3).perCnt(1)
         .description('{action}；【装备有此牌的〖hro〗使用技能后：】抓2张【crd116081】。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ff75f3060780eb4e510f0f60c336dcb6_6404286710698044326.png')
-        .handle(card => {
-            if (card.perCnt <= 0) return;
+        .handle((card, event) => {
+            const { pile = [] } = event;
+            if (card.perCnt <= 0 || !hasObjById(pile, 116081)) return;
             return {
                 trigger: ['skill'],
                 execmds: [{ cmd: 'getCard', cnt: 2, card: 116081, isAttach: true }],
@@ -2779,8 +2784,18 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
-        .description('{action}；【装备有此牌的〖hro〗触发〖sts122〗后：】使敌方出战角色的【sts122】层数翻倍。')
+        .description('{action}；【装备有此牌的〖hro〗触发〖ski,3〗后：】使敌方出战角色的【sts122】层数翻倍。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a0597437167a2f8b5637ae66b393bd84_1668427359164092344.png'),
+        // .handle((_, event) => {
+        //     const { eheros = [], ehidx = -1 } = event;
+        //     const sts122 = getObjById(eheros[ehidx]?.heroStatus, 122);
+        //     if (!sts122 || sts122.useCnt == 0) return;
+        //     return {
+        //         trigger: ['skill'],
+        //         isAddTask: true,
+        //         exec: () => { sts122.useCnt *= 2 }
+        //     }
+        // }),
 
     222011: () => new CardBuilder(113).name('百川奔流').talent(3).costHydro(4).energy(3)
         .description('{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。')

@@ -97,7 +97,7 @@ export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Item]: '道具',
     [CARD_SUBTYPE.Food]: '料理',
     [CARD_SUBTYPE.Talent]: '天赋',
-    [CARD_SUBTYPE.Action]: '战斗行动',
+    [CARD_SUBTYPE.Action]: '战斗行动\uFEFF',
     [CARD_SUBTYPE.Legend]: '秘传',
     [CARD_SUBTYPE.ElementResonance]: '元素共鸣',
 } as const;

@@ -692,9 +692,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/etjv39dbype1nvxty7pn43rlczzrf3p.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a5b60cf0ca11cd6359a6c54c815174e1_907488869279933822.png')
                 .handle(event => {
-                    const { hero: { skills: [, , , { useCnt }] } } = event;
-                    if (useCnt > 0) return;
-                    return { trigger: ['Vaporize'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
+                    const { hero: { skills: [, , , { useCntPerRound }] } } = event;
+                    if (useCntPerRound > 0) return;
+                    return { trigger: ['Overload'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
                 })
         ),
 
@@ -1466,14 +1466,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/78e32bb625cf50b2f92487f8577bff6b_4076485311764645060.png')
                 .handle((event, ver) => {
                     const { dmg = [], talent, eheros = [] } = event;
-                    let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + b, 0) - 2));
+                    let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + Math.max(0, b), 0) - 2));
                     if (talent) {
                         const ocnt = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122)?.useCnt ?? 0;
                         const fcnt = (ocnt + fdmg) * 2;
                         fdmg = fcnt - ocnt;
                     }
                     if (fdmg <= 0) return;
-                    return { trigger: ['skill'], status: [newStatus(ver)(122, fdmg)] }
+                    return { trigger: ['skill'], statusOppo: [newStatus(ver)(122, fdmg)] }
                 })
         ),
 

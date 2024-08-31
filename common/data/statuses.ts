@@ -284,18 +284,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    122: (useCnt: number = 1) => new StatusBuilder('生命之契').heroStatus().useCnt(useCnt).maxCnt(MAX_USE_COUNT)
+    122: (useCnt: number = 1) => new StatusBuilder('生命之契').heroStatus()
+        .type(STATUS_TYPE.Usage).useCnt(useCnt).maxCnt(MAX_USE_COUNT)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_HpDebts.webp')
         .description('【所附属角色受到治疗时：】此效果每有1次[可用次数]，就消耗1次，以抵消1点所受到的治疗。(无法抵消复苏治疗和分配生命值引发的治疗)；[useCnt]')
-    // .handle((status, event) => {
-    //     const { heal = [] } = event;
-
-    //     return {
-    //         trigger: ['pre-heal'],
-    //         exec: () => { --status.useCnt },
-    //     }
-    // })
-    , // todo 没做完
+        .handle((status, event) => {
+            const { heal = [], hidx = -1 } = event;
+            if (heal[hidx] <= 0) return;
+            const reduceHeal = Math.min(status.useCnt, heal[hidx]);
+            heal[hidx] -= reduceHeal;
+            return {
+                trigger: ['heal'],
+                exec: () => { status.useCnt -= reduceHeal },
+            }
+        }),
 
     111012: () => new StatusBuilder('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
@@ -491,7 +493,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    111123: () => shieldHeroStatus('todo', 1, 2),
+    111123: () => shieldHeroStatus('潜猎护盾', 1, 2),
 
     112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
         .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver >= 'v4.2.0' && isTalent)
@@ -1715,11 +1717,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     121042: () => new StatusBuilder('掠袭锐势').heroStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
         .description('【结束阶段：】对所有附属有【sts122】的敌方角色造成1点[穿透伤害]。；[useCnt]')
-        .handle((status, { heros = [] } = {}) => ({
+        .handle((_, { eheros = [] } = {}) => ({
             trigger: ['phase-end'],
             pdmg: 1,
-            hidxs: heros.filter(h => hasObjById(h.heroStatus, 122)).map(h => h.hidx),
-            exec: () => { --status.useCnt },
+            hidxs: eheros.filter(h => hasObjById(h.heroStatus, 122)).map(h => h.hidx),
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt
+            },
         })),
 
     122013: () => new StatusBuilder('纯水幻形·蛙').combatStatus().useCnt(1).useCnt(2, 'v4.3.0')
