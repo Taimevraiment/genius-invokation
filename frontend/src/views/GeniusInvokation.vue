@@ -180,6 +180,7 @@ import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/const
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
+import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { debounce, genShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
@@ -198,7 +199,7 @@ const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * 2)
 const client = ref(new GeniusInvokationClient(socket, userid, version.value, cplayers, isMobile.value, countdown, JSON.parse(localStorage.getItem('GIdecks') || '[]'), Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value));
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt);
-const canAction = computed<boolean>(() => client.value.canAction && client.value.tip == '' && client.value.actionInfo == ''); // 是否可以操作
+const canAction = computed<boolean>(() => client.value.canAction); // 是否可以操作
 const afterWinHeros = ref<Hero[][]>([]); // 游戏结束后显示的角色信息
 const hasAI = ref<boolean>(false); // 是否有AI
 let clientAI: GeniusInvokationClient | null = null;
@@ -505,10 +506,7 @@ const devOps = (cidx = 0) => {
       const cards: (number | Card)[] = [];
       const isAttach = op.endsWith('~');
       const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
-      if (cid == 0) {
-        cards.push(...new Array(cnt).fill(+`2${heros[client.value.players[cpidx].hidx].id}1`));
-      }
-      if (cid > 0) cards.push(...new Array(cnt).fill(cid));
+      cards.push(...new Array(cnt).fill(cid || getTalentIdByHid(heros[client.value.players[cpidx].hidx].id)));
       cmds.push({ cmd: 'getCard', cnt, card: cards, isAttach });
       flag.add('getCard');
     }

@@ -138,7 +138,8 @@
           <div class="hero-shield2" v-if="hero.hp > 0 && (
             hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier)) ||
             hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||
-            hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.perCnt ?? 0) > 0)">
+            hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.perCnt ?? 0) > 0 ||
+            hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && (hero.weaponSlot?.perCnt ?? 0) > 0)">
           </div>
           <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">

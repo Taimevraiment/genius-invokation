@@ -687,7 +687,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('圆阵掷弹爆轰术').description('{dealDmg}，在敌方场上生成【sts113132】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/2c/b0tlvwd776zbom2sewxulwqzyq2fsa6.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/065f5a0ba4fa470e36c730b94862e27e_5007009973065767790.png')
-                .burst(2).damage(2).cost(3).handle((_, ver) => ({ statusOppo: [newStatus(ver)(113132)] })),
+                .burst(2).damage(2).cost(3).handle((_, ver) => ({ statusOppoPre: [newStatus(ver)(113132)] })),
             new SkillBuilder('纵阵武力统筹').description('【敌方角色受到超载反应伤害后：】生成手牌【crd113131】。(每回合1次)')
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/etjv39dbype1nvxty7pn43rlczzrf3p.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a5b60cf0ca11cd6359a6c54c815174e1_907488869279933822.png')

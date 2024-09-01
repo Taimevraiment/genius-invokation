@@ -120,13 +120,11 @@ type Cmds = {
     mode?: number,
     element?: DiceCostType | DamageType | (DiceCostType | DamageType)[],
     hidxs?: number[],
-    newdices?: number[],
     isAttach?: boolean,
     card?: Card | number | (Card | number)[],
     subtype?: CardSubtype | CardSubtype[],
     cardTag?: CardTag | CardTag[],
     status?: Status[],
-    isReadySkill?: boolean,
     isOppo?: boolean,
 }
 
@@ -191,8 +189,8 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgOther | TrgGet}elReaction-${TrgEl}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther}dmg` | `${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
-    `heal${TrgOppo}` | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
-    'reconcile' | 'discard' | `getcard${TrgOppo}` | keyof typeof ELEMENT_REACTION | 'enter' | `${TrgOther}vehicle` | '';
+    `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
+    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle` | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

@@ -190,7 +190,10 @@ export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
  */
 export const assgin = <T>(target: T, source: T) => {
     if (Array.isArray(target) && Array.isArray(source)) {
-        const equal = (tar: any, src: any) => (src?.entityId !== undefined && src.entityId != -1 && src.entityId == tar.entityId) || (src?.id !== undefined && src.id == tar.id);
+        const equal = (tar: any, src: any) => {
+            if (src?.entityId !== undefined && src.entityId != -1) return src.entityId == tar.entityId;
+            return src?.id !== undefined && src.id == tar.id;
+        }
         const existObj = target.filter(tar => source.some(src => equal(src, tar)));
         target.length = 0;
         for (const src of source) {

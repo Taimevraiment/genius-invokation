@@ -11,12 +11,11 @@
                     :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
                 <span>{{ card.cost - card.costChange }}</span>
             </div>
-            <!-- todo 重新考虑下面的减骰 -->
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
                 v-if="card.anydice > 0" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
-                <span>{{ Math.max(0, card.anydice - Math.max(0, card.costChange - card.cost)) }}</span>
+                <span>{{ card.anydice - Math.max(0, card.costChange - card.cost) }}</span>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"

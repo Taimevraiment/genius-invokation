@@ -124,7 +124,7 @@ export default class GeniusInvokationClient {
         return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER();
     }
     get canAction() {// 是否可以操作
-        return this.player.canAction && this.tip == '' && this.damageVO.dmgSource == 'null';
+        return this.player.canAction && this.tip == '' && this.actionInfo == '' && this.damageVO.dmgSource == 'null';
     }
     get heroSwitchDiceColor() { // 切换角色骰子颜色
         return this.heroSwitchDice > INIT_SWITCH_HERO_DICE ? CHANGE_BAD_COLOR :
@@ -387,7 +387,7 @@ export default class GeniusInvokationClient {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, log, isWin, flag } = data;
         console.info(flag);
-        const hasDmg = damageVO != -1 && ((damageVO?.willDamages?.length ?? 0) > 0 || (damageVO?.willHeals?.length ?? 0) > 0);
+        const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.length || !!damageVO?.willHeals?.length);
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
         this.previews = previews;
@@ -471,7 +471,7 @@ export default class GeniusInvokationClient {
                     else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
                     setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);
-            }, 550);
+            }, !!damageVO?.willDamages.length ? 550 : 0);
         } else {
             this.players = players;
             if (damageVO != -1 && (damageVO?.elTips ?? []).length > 0) {

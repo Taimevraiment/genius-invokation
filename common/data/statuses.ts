@@ -51,6 +51,7 @@ export type StatusHandleEvent = {
     playerInfo?: GameInfo,
     isSummon?: number,
     source?: number,
+    getdmg?: number[],
     randomInt?: (len?: number) => number,
     randomInArr?: <T>(arr: T[]) => T,
 }
@@ -294,7 +295,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const reduceHeal = Math.min(status.useCnt, heal[hidx]);
             heal[hidx] -= reduceHeal;
             return {
-                trigger: ['heal'],
+                trigger: ['pre-heal'],
                 exec: () => { status.useCnt -= reduceHeal },
             }
         }),
@@ -976,10 +977,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113134: () => new StatusBuilder('尖兵协同战法（生效中）').combatStatus().icon('buff2').useCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方造成的[火元素伤害]或[雷元素伤害]+1。(包括角色引发的扩散伤害)；[useCnt]')
-        .handle(status => ({
+        .handle((status, { trigger = '' }) => ({
             trigger: ['Pyro-dmg', 'Electro-dmg', 'Pyro-dmg-Swirl', 'Electro-dmg-Swirl'],
             addDmgCdt: 1,
-            exec: () => { --status.useCnt },
+            exec: () => {
+                if (!trigger.endsWith('Swirl')) --status.useCnt;
+            },
         })),
 
     114021: () => new StatusBuilder('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
@@ -1717,12 +1720,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     121042: () => new StatusBuilder('掠袭锐势').heroStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
         .description('【结束阶段：】对所有附属有【sts122】的敌方角色造成1点[穿透伤害]。；[useCnt]')
-        .handle((_, { eheros = [] } = {}) => ({
+        .handle((_, { eheros = [] }) => ({
             trigger: ['phase-end'],
             pdmg: 1,
             hidxs: eheros.filter(h => hasObjById(h.heroStatus, 122)).map(h => h.hidx),
             exec: eStatus => {
-                if (eStatus) --eStatus.useCnt
+                if (eStatus) --eStatus.useCnt;
             },
         })),
 

@@ -49,9 +49,12 @@ export type CardHandleEvent = {
     isMinusDiceTalent?: boolean,
     minusDiceCard?: number,
     isMinusDiceSkill?: boolean,
+    isMinusDiceWeapon?: boolean,
+    isMinusDiceArtifact?: boolean,
     minusDiceSkill?: number[][],
     ehidx?: number,
     getdmg?: number[],
+    dmg?: number[],
     slotUse?: boolean,
     isExecTask?: boolean,
     selectHeros?: number[],
@@ -273,7 +276,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/9a6794d76b3ea150a101e354f9f5a162_9095966637954555968.png')
         .handle((card, event, ver) => {
             const { heal = [], hidxs: [hidx] = [], trigger = '' } = event;
-            const isMinus = (trigger == 'getdmg' || trigger == 'heal' && (heal[hidx] ?? -1) >= 0) && card.perCnt > 0;
+            const isMinus = (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0) && card.perCnt > 0;
             return {
                 addDmg: 1,
                 trigger: isCdt(isMinus, ['getdmg', 'heal']),
@@ -290,7 +293,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色受到伤害或治疗后：】使角色本回合中下一次｢普通攻击｣少花费1个[无色元素骰]，且造成的伤害+1。(每回合至多2次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/83ab325be102a71a7df848546e7eacbb_2193569914822395358.png')
         .handle((card, event, ver) => {
-            const { heros = [], heal = [], hidxs: [hidx] = [-1], trigger = '' } = event;
+            const { heros = [], heal = [], hidxs: [hidx] = [], trigger = '' } = event;
             const hasSts301111 = hasObjById(heros[hidx]?.heroStatus, 301111);
             const isMinus = !hasSts301111 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0) && card.perCnt > 0;
             if (!isMinus) return;
@@ -508,7 +511,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const fhidx = heros.findIndex(h => h.isFront);
             const trigger: Trigger[] = [];
             if (getdmg[fhidx] > 0) trigger.push('getdmg', 'other-getdmg');
-            if (heal[fhidx] > 0) trigger.push('heal');
+            if (heal[fhidx] >= 0) trigger.push('heal');
             return {
                 trigger,
                 addDmgType3: 2,
@@ -524,19 +527,24 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
         .handle((card, event) => {
-            const { restDmg = -1, hcards: { length: hcardsCnt } = [] } = event;
+            const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], trigger = '' } = event;
             if (restDmg > -1) {
-                if (hcardsCnt == 0 || card.perCnt <= 0) return { restDmg }
+                if (card.perCnt <= 0) return { restDmg }
                 ++card.useCnt;
                 --card.perCnt;
-                return { restDmg: restDmg - 1, execmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }] }
+                return { restDmg: restDmg - 1 }
             }
-            if (card.useCnt <= 0) return;
+            const triggers: Trigger[] = [];
+            if (card.useCnt > 0) triggers.push('skill');
+            if ((getdmg[hidx] ?? -1) > 0) triggers.push('getdmg');
             return {
-                trigger: ['skill'],
-                addDmgCdt: 1,
-                execmds: [{ cmd: 'getCard', cnt: card.useCnt }],
-                exec: () => { card.useCnt = 0 }
+                trigger: triggers,
+                addDmgCdt: isCdt(card.useCnt > 0, 1),
+                execmds: isCdt<Cmds[]>(trigger == 'skill', [{ cmd: 'getCard', cnt: card.useCnt }],
+                    isCdt(trigger == 'getdmg', [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }])),
+                exec: () => {
+                    if (trigger == 'skill') card.useCnt = 0;
+                }
             }
         }),
 
@@ -673,8 +681,9 @@ const allCards: Record<number, () => CardBuilder> = {
     312005: () => new CardBuilder(152).name('教官的帽子').artifact().costAny(2).perCnt(3)
         .description('【角色引发元素反应后：】生成1个此角色元素类型的元素骰。(每回合至多3次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/66b3c1346a589e0dea45a58cd4d65c5a_3513743616827517581.png')
-        .handle(card => {
-            if (card.perCnt <= 0) return;
+        .handle((card, event) => {
+            const { skid = -1 } = event;
+            if (card.perCnt <= 0 || skid == -1) return;
             return {
                 trigger: ['elReaction'],
                 execmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }],
@@ -686,11 +695,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色使用｢元素爆发｣后：】所有后台我方角色获得1点[充能]。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/dd30c7290b9379c5a1a91e0bb5d881c3_4746512653382401326.png')
         .handle((card, event) => {
-            if (card.perCnt <= 0) return;
             const { heros = [] } = event;
+            const hidxs = getBackHidxs(heros);
+            const isTriggered = heros.filter(h => hidxs.includes(h.hidx)).some(h => h.energy < h.maxEnergy);
+            if (card.perCnt <= 0 || !isTriggered) return;
             return {
                 trigger: ['skilltype3'],
-                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: getBackHidxs(heros) }],
+                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
                 exec: () => { --card.perCnt }
             }
         }),
@@ -732,10 +743,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/6b1e8983b34f821da73f7a93076a501e_3915605735095366427.png')
         .handle((card, event, ver) => {
             const { heros = [], hidxs = [], trigger = '', isExecTask = false } = event;
-            const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && heros[hidxs[0]].isFront;
+            const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && (!isExecTask || heros[hidxs[0]].isFront);
             return {
                 trigger: ['phase-start', 'getdmg'],
-                isAddTask: !isExecTask,
                 execmds: isCdt<Cmds[]>(trigger == 'phase-start', [{ cmd: 'getStatus', status: [newStatus(ver)(301201)], hidxs }],
                     isCdt<Cmds[]>(isGetDmg, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }])),
                 exec: () => {
@@ -821,43 +831,49 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     312015: () => new CardBuilder(162).name('海祇之冠').since('v4.1.0').artifact().costSame(1).useCnt(0)
-        .description('我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
+        .description('我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个〔，当前已受到{pct}点治疗〕)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/dfea4a0c2219c145125277f8eddb8269_3306254185680856587.png')
         .handle((card, event) => {
-            const { trigger = '', heal = [] } = event;
+            const { trigger = '', heal = [], skid = -1 } = event;
             const allHeal = heal.reduce((a, b) => a + Math.max(0, b), 0);
+            if (trigger == 'heal' && (allHeal == 0 || card.useCnt == 2)) return;
             return {
                 trigger: ['dmg', 'heal'],
-                addDmgCdt: Math.floor(card.useCnt),
+                addDmgCdt: isCdt(skid > -1, card.useCnt),
                 isAddTask: trigger == 'heal',
                 exec: () => {
                     if (trigger == 'heal') {
-                        if (allHeal > 0) card.useCnt = Math.min(2, card.useCnt + allHeal * 0.34);
-                        return;
+                        card.perCnt = Math.max(card.useCnt * 3 - 6, card.perCnt - allHeal);
+                        card.useCnt += Math.floor(-card.perCnt / 3);
+                        card.perCnt %= 3;
+                    } else if (trigger == 'dmg' && skid > -1) {
+                        card.useCnt = 0;
                     }
-                    if (trigger == 'dmg') card.useCnt %= 1;
                 }
             }
         }),
 
-    312016: () => new CardBuilder(163).name('海染砗磲').since('v4.2.0').artifact().costAny(3).useCnt(0.681).useCnt(1.021, 'v4.3.0')
-        .description('【入场时：】治疗所附属角色2点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
+    312016: () => new CardBuilder(163).name('海染砗磲').since('v4.2.0').artifact().costAny(3).useCnt(0)
+        .description('【入场时：】治疗所附属角色2点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个〔，当前已受到{pct}点治疗〕)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
         .description('【入场时：】治疗所附属角色3点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。', 'v4.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/16b4765f951281f2547ba40eeb994271_8658397109914249143.png')
         .handle((card, event) => {
-            const { trigger = '', heal = [] } = event;
-            const allHeal = heal.reduce((a, b) => a + b, 0);
+            const { trigger = '', heal = [], skid = -1 } = event;
+            const allHeal = heal.reduce((a, b) => a + Math.max(0, b), 0);
+            if (trigger == 'heal' && (allHeal == 0 || card.useCnt == 2)) return;
             return {
                 trigger: ['dmg', 'heal'],
-                addDmgCdt: Math.floor(card.useCnt),
+                addDmgCdt: isCdt(skid > -1, card.useCnt),
                 cmds: [{ cmd: 'heal', cnt: 2 }],
                 isAddTask: trigger == 'heal',
                 exec: () => {
                     if (trigger == 'heal') {
-                        if (allHeal > 0) card.useCnt = Math.min(2, card.useCnt + allHeal * 0.34);
-                        return;
+                        card.perCnt = Math.max(card.useCnt * 3 - 6, card.perCnt - allHeal);
+                        card.useCnt += Math.floor(-card.perCnt / 3);
+                        card.perCnt %= 3;
+                    } else if (trigger == 'dmg' && skid > -1) {
+                        card.useCnt = 0;
                     }
-                    if (trigger == 'dmg') card.useCnt %= 1;
                 }
             }
         }),
@@ -867,14 +883,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/fe25340f51936207ac2a9e71a8cad87e_3874053549243035788.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
-            const isUse = card.perCnt > 0 && heros[hidx].isFront;
             return {
-                trigger: ['elReaction'],
+                trigger: isCdt(card.perCnt > 0 && heros[hidx].isFront, ['elReaction']),
                 cmds: [{ cmd: 'getCard', cnt: 1 }],
-                execmds: isCdt(isUse, [{ cmd: 'getCard', cnt: 1 }]),
-                exec: () => {
-                    if (isUse) --card.perCnt;
-                }
+                execmds: [{ cmd: 'getCard', cnt: 1 }],
+                exec: () => { --card.perCnt }
             }
         }),
 
@@ -885,7 +898,6 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const isExtra = new Set(heros.map(h => h.element)).size == 3;
-            const isTriggered = card.perCnt > 0 && heros[hidx]?.isFront;
             const cmds: Cmds[] = [];
             if (ver < 'v4.5.0') {
                 cmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx]?.element });
@@ -894,12 +906,10 @@ const allCards: Record<number, () => CardBuilder> = {
                 cmds.push({ cmd: 'getDice', cnt: isExtra ? 2 : 1, element: heros[hidx]?.element });
             }
             return {
-                trigger: ['elReaction'],
+                trigger: isCdt(card.perCnt > 0 && heros[hidx]?.isFront, ['elReaction']),
                 cmds,
-                execmds: isCdt(isTriggered, [{ cmd: 'getCard', cnt: 1 }]),
-                exec: () => {
-                    if (isTriggered) --card.perCnt;
-                }
+                execmds: [{ cmd: 'getCard', cnt: 1 }],
+                exec: () => { --card.perCnt }
             }
         }),
 
@@ -926,7 +936,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (isGetCard) execmds.push({ cmd: 'getCard', cnt: 1 });
             if (isGetDice) execmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx].element });
             return {
-                trigger: ['skill'],
+                trigger: ['skill', 'skilltype1'],
                 execmds,
                 exec: () => {
                     if (isGetCard) card.perCnt &= ~(1 << 0);
@@ -939,8 +949,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/3a2b86994907366639498965934b1d99_16804113149239958.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [] } = event;
-            if (card.perCnt <= 0 || !heros[hidx]?.isFront) return;
+            const { heros = [], hidxs: [hidx] = [], isExecTask = false } = event;
+            if (card.perCnt <= 0 || (!isExecTask && !heros[hidx]?.isFront)) return;
             return {
                 trigger: ['getdmg'],
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
@@ -952,12 +962,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色受到伤害后：】如果所附属角色为｢出战角色｣，则抓1张牌，并且在本回合结束阶段中治疗所附属角色1点。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/aaaf307c3c9725d0c8f0be7d264e04bd_9827908420304255.png')
         .handle((card, event) => {
-            const { heros = [], hidxs = [], trigger = '' } = event;
+            const { heros = [], hidxs = [], trigger = '', isExecTask = false } = event;
             const isHeal = trigger == 'phase-end' && card.perCnt <= 0;
-            const isGetCard = trigger == 'getdmg' && card.perCnt > 0 && heros[hidxs[0]]?.isFront;
+            const isGetCard = trigger == 'getdmg' && card.perCnt > 0 && (!isExecTask || heros[hidxs[0]]?.isFront);
             return {
                 trigger: ['getdmg', 'phase-end'],
-                isAddTask: card.perCnt > 0,
+                isAddTask: card.perCnt == 0,
                 execmds: isCdt<Cmds[]>(isHeal, [{ cmd: 'heal', cnt: 1, hidxs }], isCdt(isGetCard, [{ cmd: 'getCard', cnt: 1 }])),
                 exec: () => {
                     if (isGetCard) --card.perCnt;
@@ -970,7 +980,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/166e56c3c68e531c97f4fdfde1adde06_4511818010196081435.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
-            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0)) {
+            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
                 const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
                 return {
                     trigger: ['getdmg', 'heal'],
@@ -987,10 +997,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/8d877f34a6ce748ac2f474d83fa05785_4045703223333362794.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
-            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0)) {
+            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
                 const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
                 return {
                     trigger: ['getdmg', 'heal'],
+                    isAddTask: true,
                     execmds: isCdt(card.useCnt != 2, [execmds[card.useCnt % 3]]),
                     exec: () => {
                         if (++card.useCnt == 4) --card.perCnt;
@@ -1015,11 +1026,11 @@ const allCards: Record<number, () => CardBuilder> = {
                     if (isPhaseEnd) {
                         ++card.useCnt;
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
-                        card.useCnt -= hcard.cost + hcard.anydice - mdc;
+                        card.useCnt = Math.max(0, card.useCnt - (hcard.cost + hcard.anydice - mdc));
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
                         const skill = heros[hidx]?.skills.find(sk => sk.id == skid)?.cost ?? [{ cnt: 0 }, { cnt: 0 }];
                         const skillcost = skill[0].cnt + skill[1].cnt;
-                        card.useCnt -= skillcost - mdc - minusDiceSkill.find(([eid]) => eid == card.entityId)![1];
+                        card.useCnt = Math.max(0, card.useCnt - (skillcost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]));
                     }
                 }
             }
@@ -1039,13 +1050,13 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: isPhaseEnd,
                 exec: () => {
                     if (isPhaseEnd) {
-                        card.useCnt = Math.max(4, card.useCnt + 2);
+                        card.useCnt = Math.min(4, card.useCnt + 2);
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
-                        card.useCnt -= hcard.cost + hcard.anydice - mdc;
+                        card.useCnt = Math.max(0, card.useCnt - (hcard.cost + hcard.anydice - mdc));
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
                         const skill = heros[hidx]?.skills.find(sk => sk.id == skid)?.cost ?? [{ cnt: 0 }, { cnt: 0 }];
                         const skillcost = skill[0].cnt + skill[1].cnt;
-                        card.useCnt -= skillcost - mdc - minusDiceSkill.find(([eid]) => eid == card.entityId)![1];
+                        card.useCnt = Math.max(0, card.useCnt - (skillcost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]));
                     }
                 }
             }
@@ -2197,7 +2208,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmgCdt: isCdt(card.useCnt >= 3, 1),
                 isAddTask: trigger != 'skill',
                 exec: () => {
-                    if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) {
+                    if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0) {
                         ++card.useCnt;
                     } else if (trigger == 'skill' && card.useCnt >= 3) {
                         card.useCnt -= 3;
@@ -2406,7 +2417,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const hasElectro = heros.some(h => h.element == ELEMENT_TYPE.Electro);
             return {
                 isValid: onlyPyroOrElectro && hasElectro,
-                trigger: ['Vaporize'],
+                trigger: ['Overload', 'other-Overload'],
                 execmds: [{ cmd: 'getStatus', status: [newStatus(ver)(113134)] }],
             }
         }),
@@ -2786,16 +2797,6 @@ const allCards: Record<number, () => CardBuilder> = {
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
         .description('{action}；【装备有此牌的〖hro〗触发〖ski,3〗后：】使敌方出战角色的【sts122】层数翻倍。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a0597437167a2f8b5637ae66b393bd84_1668427359164092344.png'),
-        // .handle((_, event) => {
-        //     const { eheros = [], ehidx = -1 } = event;
-        //     const sts122 = getObjById(eheros[ehidx]?.heroStatus, 122);
-        //     if (!sts122 || sts122.useCnt == 0) return;
-        //     return {
-        //         trigger: ['skill'],
-        //         isAddTask: true,
-        //         exec: () => { sts122.useCnt *= 2 }
-        //     }
-        // }),
 
     222011: () => new CardBuilder(113).name('百川奔流').talent(3).costHydro(4).energy(3)
         .description('{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。')
@@ -2881,9 +2882,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2dd249ed58e8390841360d901bb0908d_4304004857878819810.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { getdmg = [], eheros = [], isExecTask = false } = event;
+            const { dmg = [], eheros = [], isExecTask = false } = event;
             const [ehero] = eheros.filter(h => hasObjById(h.heroStatus, 124022));
-            if (!isExecTask && (!ehero || (getdmg[ehero.hidx] ?? -1) < 0)) return;
+            if (!isExecTask && (!ehero || (dmg[ehero.hidx] ?? -1) < 0)) return;
             return { trigger: ['getdmg-oppo'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => { --card.perCnt } }
         }),
 
