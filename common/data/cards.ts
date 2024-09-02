@@ -1197,8 +1197,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321008: () => new CardBuilder(186).name('鸣神大社').since('v3.6.0').place().costSame(2)
         .description('【每回合自动触发1次：】生成1个随机的基础元素骰。；[可用次数]：3')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/25bee82daa48f8018a4a921319ca2686_8817000056070129488.png')
-        .handle(() => ({ cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }] })),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/25bee82daa48f8018a4a921319ca2686_8817000056070129488.png'),
 
     321009: () => new CardBuilder(187).name('珊瑚宫').since('v3.7.0').place().costSame(2)
         .description('【结束阶段：】治疗所有我方角色1点。；[可用次数]：2')

@@ -205,7 +205,7 @@ export default class GeniusInvokationClient {
         this._resetSummonCnt();
         this._resetWillAttachs();
         this._resetSupportCnt();
-        if (this.phase == PHASE.ACTION) this.resetDiceSelect();
+        if (this.phase != PHASE.DICE && this.player.phase != PHASE.DICE) this.resetDiceSelect();
         this.isValid = false;
         this.isShowSwitchHero = 0;
         this.isShowHistory = false;
@@ -385,7 +385,7 @@ export default class GeniusInvokationClient {
      */
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
-            tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, log, isWin, flag } = data;
+            tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, flag } = data;
         console.info(flag);
         const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.length || !!damageVO?.willHeals?.length);
         this.isWin = isWin;
@@ -444,6 +444,11 @@ export default class GeniusInvokationClient {
             const [p, s] = summonSelect;
             this.summonSelect[+(p == this.playerIdx)][s] = true;
             setTimeout(() => this._resetSummonSelect(), 500);
+        }
+        if (supportSelect.length > 0) {
+            const [p, s] = supportSelect;
+            this.supportSelect[+(p == this.playerIdx)][s] = true;
+            setTimeout(() => this._resetSupportSelect(), 500);
         }
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';

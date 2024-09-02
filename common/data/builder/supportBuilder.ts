@@ -11,7 +11,6 @@ export class GISupport {
     heal: number; // 回血数
     type: SupportType; // 类型 1轮次 2收集物 3常驻
     handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes; // 处理效果函数
-    isSelected: boolean = false; // 是否被选择
     canSelect: boolean = false; // 能否被选择
 
     constructor(

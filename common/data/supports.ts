@@ -128,7 +128,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 望舒客栈
     321005: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
         const { heros = [] } = event;
-        const hidxs = getMaxHertHidxs(heros);
+        const hidxs = getMaxHertHidxs(heros, { isBack: true });
         if (hidxs.length == 0) return;
         return {
             trigger: ['phase-end'],
@@ -138,15 +138,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 西风大教堂
     321006: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
         const { heros = [] } = event;
+        const fhidx = heros.findIndex(h => h.isFront);
+        if (fhidx == -1 || heros[fhidx].hp == heros[fhidx].maxHp) return;
         return {
             trigger: ['phase-end'],
-            exec: () => {
-                const frontHeroIdx = heros.findIndex(h => h.isFront);
-                if (frontHeroIdx == -1 || heros[frontHeroIdx].hp == heros[frontHeroIdx].maxHp) {
-                    return { isDestroy: false }
-                }
-                return { cmds: [{ cmd: 'heal', hidxs: [frontHeroIdx], cnt: 2 }], isDestroy: --support.cnt == 0 }
-            }
+            exec: () => ({ cmds: [{ cmd: 'heal', hidxs: [fhidx], cnt: 2 }], isDestroy: --support.cnt == 0 })
         }
     }),
     // 天守阁
@@ -164,8 +160,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 鸣神大社
-    321008: () => new SupportBuilder().round(2).handle(support => ({
-        trigger: ['phase-start'],
+    321008: () => new SupportBuilder().round(3).handle(support => ({
+        trigger: ['phase-start', 'enter'],
         exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }], isDestroy: --support.cnt == 0 })
     })),
     // 珊瑚宫

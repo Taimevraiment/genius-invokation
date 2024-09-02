@@ -68,7 +68,7 @@
       <div class="support-area" v-for="(supportArea, saidx) in [opponent?.supports ?? [], player.supports]"
         :key="saidx">
         <div class="support" :class="{
-          'support-select': supportSelect[getGroup(saidx)][siidx] || support.isSelected,
+          'support-select': supportSelect[saidx][siidx],
           'support-can-select': support.canSelect && player.status == PLAYER_STATUS.PLAYING,
           'active-supportcnt': canAction && currSkill.type != SKILL_TYPE.Passive && supportCnt[getGroup(saidx)][siidx] != 0,
         }" v-for="(support, siidx) in supportArea" :key="siidx" @click.stop="showSupportInfo(saidx, siidx)">

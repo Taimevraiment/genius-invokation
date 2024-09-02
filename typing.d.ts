@@ -109,7 +109,6 @@ type StatusTask = {
     skid: number, // 引起协同攻击的技能id -1为切换角色
     isSwitchAtk?: boolean, // 是否为下落攻击/刻晴切换攻击
     isQuickAction?: boolean, // 是否为快速行动
-    isAfterSwitch?: boolean, // 是否为后切换触发
     discards?: Card[], // 舍弃的牌
     card?: Card, // 调和或使用的牌
 }
@@ -163,7 +162,7 @@ type InfoVO = {
 type ExplainContent = Card | Summon | Status | Skill | string;
 
 type DamageVO = {
-    dmgSource: 'skill' | 'status' | 'summon' | 'card' | 'null', // 造成伤害来源
+    dmgSource: 'skill' | 'status' | 'summon' | 'card' | 'support' | 'null', // 造成伤害来源
     atkPidx: number, // 攻击者玩家序号
     atkHidx: number, // 攻击者角色序号
     tarHidx: number, // 受攻击角色序号
@@ -233,6 +232,7 @@ type ServerData = Readonly<{
     heroSelect: number[],
     statusSelect: number[],
     summonSelect: number[],
+    supportSelect: number[],
     flag: string,
 }>
 
@@ -253,3 +253,13 @@ type Preview = Readonly<ActionData & {
 
 type LogType = 'log' | 'system' | 'info';
 
+type CalcAtkRes = {
+    element?: DamageType,
+    heal?: number,
+    damage?: number,
+    pdmg?: number,
+    isSelf?: boolean,
+    hidxs?: number[],
+    cmds?: Cmds[],
+    exec?: (...args: any) => any,
+}

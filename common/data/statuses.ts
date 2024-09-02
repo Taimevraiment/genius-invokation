@@ -288,15 +288,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     122: (useCnt: number = 1) => new StatusBuilder('生命之契').heroStatus()
         .type(STATUS_TYPE.Usage).useCnt(useCnt).maxCnt(MAX_USE_COUNT)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_HpDebts.webp')
-        .description('【所附属角色受到治疗时：】此效果每有1次[可用次数]，就消耗1次，以抵消1点所受到的治疗。(无法抵消复苏治疗和分配生命值引发的治疗)；[useCnt]')
+        .description('【所附属角色受到治疗时：】此效果每有1次[可用次数]，就消耗1次，以抵消1点所受到的治疗。(无法抵消复苏、获得最大生命值或分配生命值引发的治疗)；[useCnt]')
         .handle((status, event) => {
             const { heal = [], hidx = -1 } = event;
             if (heal[hidx] <= 0) return;
-            const reduceHeal = Math.min(status.useCnt, heal[hidx]);
-            heal[hidx] -= reduceHeal;
             return {
                 trigger: ['pre-heal'],
-                exec: () => { status.useCnt -= reduceHeal },
+                exec: () => {
+                    const reduceHeal = Math.min(status.useCnt, heal[hidx]);
+                    heal[hidx] -= reduceHeal;
+                    status.useCnt -= reduceHeal;
+                },
             }
         }),
 
@@ -1814,7 +1816,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     });
                     if (cnt > 0) {
                         if (notAtk) hero.maxHp += cnt;
-                        const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hero.hidx], mode: i }));
+                        const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hero.hidx], mode: i, isAttach: true }));
                         return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(122042, cnt)], hidxs: [hero.hidx] }, ...healcmds], }
                     }
                 }
