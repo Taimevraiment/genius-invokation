@@ -32,7 +32,7 @@
         {{ handCardsCnt[client.playerIdx] }}
       </div>
       <img class="legend" :src="getDiceBgIcon('legend-empty')" />
-      <img v-if="!client.player?.playerInfo.isUsedlegend" class="legend" :src="getDiceBgIcon('legend')" />
+      <img v-if="!client.player?.playerInfo.isUsedLegend" class="legend" :src="getDiceBgIcon('legend')" />
     </div>
 
     <div v-if="client.opponent" :class="{
@@ -53,7 +53,7 @@
       <img v-if="isLookon > -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
         @click.stop="lookonTo(client.opponent?.pidx ?? -1)" />
       <img class="legend-oppo" :src="getDiceBgIcon('legend-empty')" />
-      <img v-if="!client.opponent.playerInfo.isUsedlegend" class="legend-oppo" :src="getDiceBgIcon('legend')" />
+      <img v-if="!client.opponent.playerInfo.isUsedLegend" class="legend-oppo" :src="getDiceBgIcon('legend')" />
     </div>
 
     <MainDesk v-if="client.phase >= PHASE.CHANGE_CARD || client.isWin > -1" :isMobile="isMobile" :canAction="canAction"
@@ -166,15 +166,15 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
-  CARD_SUBTYPE,
-  COST_TYPE,
-  DICE_COST_TYPE_CODE_KEY,
-  DiceCostType,
-  DiceCostTypeCode,
-  ELEMENT_TYPE,
-  PHASE,
-  PLAYER_STATUS,
-  Version
+    CARD_SUBTYPE,
+    COST_TYPE,
+    DICE_COST_TYPE_CODE_KEY,
+    DiceCostType,
+    DiceCostTypeCode,
+    ELEMENT_TYPE,
+    PHASE,
+    PLAYER_STATUS,
+    Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';

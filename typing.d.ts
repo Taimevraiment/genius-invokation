@@ -107,7 +107,7 @@ type StatusTask = {
     trigger: Trigger, // 触发条件
     hidx: number, // 攻击者hidx
     skid: number, // 引起协同攻击的技能id -1为切换角色
-    isSwitchAtk?: boolean, // 是否为下落攻击/刻晴切换攻击
+    // isSwitchAtk?: boolean, // 是否为下落攻击/刻晴切换攻击
     isQuickAction?: boolean, // 是否为快速行动
     discards?: Card[], // 舍弃的牌
     card?: Card, // 调和或使用的牌
@@ -132,7 +132,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'changePattern' | 'getSkill' | 'loseSkill' | 'addCard' | 'discard';
 
 type GameInfo = {
-    isUsedlegend: boolean, // 是否使用秘传卡
+    isUsedLegend: boolean, // 是否使用秘传卡
     artifactCnt: number, // 初始牌堆圣遗物数量
     artifactTypeCnt: number, // 初始牌堆圣遗物种类
     weaponCnt: number, // 初始牌堆武器数量

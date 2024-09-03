@@ -22,7 +22,7 @@ export type SummonHandleEvent = {
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
     tround?: number,
-    force?: boolean,
+    isExecTask?: boolean,
 }
 
 export type SummonHandleRes = {
@@ -570,14 +570,14 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => {
             const { trigger = '' } = event;
             const triggers: Trigger[] = ['Anemo-getdmg-oppo', 'phase-end'];
-            if (summon.isTalent) triggers.push('phase-start');
+            if (summon.isTalent) triggers.push('phase-start', 'enter');
             return {
                 addDmgCdt: 1,
                 isNotAddTask: trigger == 'Anemo-getdmg-oppo',
                 trigger: triggers,
                 exec: execEvent => {
                     if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon);
-                    if (trigger == 'phase-start') return { cmds: [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }] }
+                    if (['phase-start', 'enter'].includes(trigger)) return { cmds: [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }] }
                 },
             }
         }),
@@ -891,9 +891,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/90767acfd11dc25ae46a333557b3ee2a_4658043205818200753.png')
         .handle((summon, event) => {
-            const { trigger = '', heros = [], force = false } = event;
+            const { trigger = '', heros = [], isExecTask = false } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (getObjById(heros, getHidById(summon.id))?.isFront || force) triggers.push('after-skilltype3')
+            if (getObjById(heros, getHidById(summon.id))?.isFront || isExecTask) triggers.push('after-skilltype3')
             return {
                 trigger: triggers,
                 damage: summon.damage,
@@ -910,9 +910,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3f77ab65d8d940df9b3cf70d96ae0b25_8204101439924542003.png')
         .handle((summon, event) => {
-            const { trigger = '', heros = [], force = false } = event;
+            const { trigger = '', heros = [], isExecTask = false } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (getObjById(heros, getHidById(summon.id))?.isFront || force) triggers.push('after-skilltype3')
+            if (getObjById(heros, getHidById(summon.id))?.isFront || isExecTask) triggers.push('after-skilltype3')
             return {
                 trigger: triggers,
                 damage: summon.damage,

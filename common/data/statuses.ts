@@ -606,7 +606,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112071: () => readySkillShieldStatus('苍鹭护盾'),
 
-    112072: (isTalent: boolean = false) => new StatusBuilder('赤冕祝祷').combatStatus().icon('ski,2').roundCnt(2).perCnt(1).perCnt(3, isTalent)
+    112072: (isTalent: boolean = false) => new StatusBuilder('赤冕祝祷').combatStatus().icon('ski,2').roundCnt(2).perCnt(1).perCnt(0b11, isTalent)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).talent(isTalent)
         .description(`我方角色｢普通攻击｣造成的伤害+1。；我方单手剑、双手剑或长柄武器角色造成的[物理伤害]变为[水元素伤害]。；【我方切换角色后：】造成1点[水元素伤害]。(每回合1次)；${isTalent ? '【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。(每回合1次)；' : ''}[roundCnt]`)
         .handle((status, event) => {
@@ -1784,12 +1784,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。')
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], card, heros = [] } = event;
+            const isAddTask = (card && card.id > 0 ? 1 : discards.length) + status.useCnt >= 3;
             return {
                 trigger: ['discard', 'reconcile'],
-                isAddTask: true,
+                isAddTask,
                 exec: (eStatus, execEvent = {}) => {
                     const notAtk = eStatus == undefined;
-                    eStatus ??= clone(status);
+                    eStatus ??= isAddTask ? clone(status) : status;
                     const { heros: hs = heros } = execEvent;
                     const hero = getObjById(hs, getHidById(eStatus.id));
                     if (!hero) return;
@@ -1807,6 +1808,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         if (eStatus.useCnt < 2) {
                             eStatus.addition[eStatus.useCnt] = cost;
                             ++eStatus.useCnt;
+                            console.trace();
                         } else {
                             ++cnt;
                             if (cost1 == cost2 || cost == cost1 || cost == cost2) ++cnt;

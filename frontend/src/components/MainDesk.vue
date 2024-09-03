@@ -89,8 +89,10 @@
             {{ support.cnt }}
           </div>
           <div :class="{
-            'will-destroy': supportCnt[getGroup(saidx)][siidx] < 0,
-            'will-add': supportCnt[getGroup(saidx)][siidx] > 0,
+            // 'will-destroy': supportCnt[getGroup(saidx)][siidx] < 0,
+            'will-add': supportCnt[getGroup(saidx)][siidx] != 0,
+          }" :style="{
+            'border-image-source': `url(${getPngIcon(`Preview${supportCnt[getGroup(saidx)][siidx] > 0 ? 3 : supportCnt[getGroup(saidx)][siidx] < -support.cnt ? 1 : 2}`)})`,
           }">
             <img v-if="supportCnt[getGroup(saidx)][siidx] < -support.cnt" :src="getSvgIcon('die')"
               style="height: 16px" />

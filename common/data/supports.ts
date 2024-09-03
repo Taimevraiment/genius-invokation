@@ -88,7 +88,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 骑士团图书馆
     321002: () => new SupportBuilder().permanent().handle(() => ({
-        trigger: ['phase-dice'],
+        trigger: ['phase-dice', 'enter'],
         addRollCnt: 1,
     })),
     // 群玉阁
@@ -238,7 +238,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 化城郭
-    321014: () => new SupportBuilder().round(3).perCnt(1).handle((support, event) => {
+    321014: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
         const { dices = [] } = event;
         if (support.perCnt == 0 || dices.length > 0) return;
         return {
@@ -250,10 +250,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 风龙废墟
-    321015: () => new SupportBuilder().round(3).perCnt(1).handle((support, event) => {
-        const { heros = [], hidx = -1, trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+    321015: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
+        const { heros = [], hidxs: [hidx] = [], trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
         const isCardMinus = isMinusDiceTalent && support.perCnt > 0;
-        const skills = heros[hidx].skills.filter(v => v.type != SKILL_TYPE.Passive).map(skill => {
+        const skills = heros[hidx]?.skills.filter(v => v.type != SKILL_TYPE.Passive).map(skill => {
             if (support.perCnt > 0 && skill.cost[0].cnt + skill.cost[1].cnt >= 4) return [0, 0, 1];
             return [0, 0, 0];
         });
@@ -263,7 +263,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             minusDiceCard: isCdt(isCardMinus, 1),
             minusDiceSkill: { skills },
             exec: () => {
-                if (support.perCnt > 0 && (trigger == 'card' && isCardMinus || trigger.startsWith('skill') && isMinusDiceSkill)) {
+                if (support.perCnt > 0 && (trigger == 'card' && isCardMinus || trigger == 'skill' && isMinusDiceSkill)) {
                     --support.perCnt;
                     --support.cnt;
                 }
@@ -282,9 +282,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 欧庇克莱歌剧院
     321017: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
         const { heros = [], eheros = [] } = event;
-        const slotCost = heros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot])
+        const slotCost = heros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot, h.vehicleSlot])
             .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
-        const eslotCost = eheros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot])
+        const eslotCost = eheros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot, h.vehicleSlot])
             .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
         if (slotCost >= eslotCost && support.perCnt > 0) {
             return {
@@ -520,7 +520,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
         const { heros = [], hidxs: [hidx] = [-1], isMinusDiceSkill = false } = event;
-        const skills = heros[hidx].skills.map(skill => {
+        const skills = heros[hidx]?.skills.map(skill => {
             if (skill.useCntPerRound > 0) return [0, 0, 1];
             return [0, 0, 0];
         });

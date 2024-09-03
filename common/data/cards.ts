@@ -401,7 +401,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311306: () => new CardBuilder(301).name('苇海信标').since('v4.3.0').weapon().costSame(3).perCnt(3)
+    311306: () => new CardBuilder(301).name('苇海信标').since('v4.3.0').weapon().costSame(3).perCnt(0b11)
         .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】本回合内，角色下次造成的伤害额外+1。(每回合1次)；【角色受到伤害后：】本回合内，角色下次造成的伤害额外+1。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/4148c247b2685dfcb305cc9b6c5e8cff_6450004800527281410.png')
         .handle((card, event, ver) => {
@@ -925,7 +925,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312020: () => new CardBuilder(306).name('来歆余响').since('v4.3.0').artifact().costSame(2).perCnt(3)
+    312020: () => new CardBuilder(306).name('来歆余响').since('v4.3.0').artifact().costSame(2).perCnt(0b11)
         .description('【角色使用｢普通攻击｣后：】抓1张牌。(每回合1次)；【角色使用技能后：】如果我方元素骰数量不多于手牌数量，则生成1个所附属角色类型的元素骰。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/d9db70a7475940b91d63699e1276678d_8473736559088406285.png')
         .handle((card, event) => {
@@ -3108,8 +3108,8 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds: [{ cmd: 'getCard', cnt: 2, subtype: CARD_SUBTYPE.Legend }],
             exec: () => {
                 const { playerInfo, eplayerInfo } = event;
-                if (playerInfo) playerInfo.isUsedlegend = false;
-                if (eplayerInfo) eplayerInfo.isUsedlegend = false;
+                if (playerInfo) playerInfo.isUsedLegend = false;
+                if (eplayerInfo) eplayerInfo.isUsedLegend = false;
             }
         })),
 
