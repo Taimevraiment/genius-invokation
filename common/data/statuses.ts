@@ -97,6 +97,7 @@ export type StatusExecEvent = {
     combatStatus?: Status[],
     summons?: Summon[],
     isQuickAction?: boolean,
+    isExec?: boolean,
 }
 
 export type StatusExecRes = {
@@ -1784,14 +1785,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。')
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], card, heros = [] } = event;
-            const isAddTask = (card && card.id > 0 ? 1 : discards.length) + status.useCnt >= 3;
             return {
                 trigger: ['discard', 'reconcile'],
-                isAddTask,
+                isAddTask: true,
                 exec: (eStatus, execEvent = {}) => {
                     const notAtk = eStatus == undefined;
-                    eStatus ??= isAddTask ? clone(status) : status;
                     const { heros: hs = heros } = execEvent;
+                    eStatus ??= clone(status);
                     const hero = getObjById(hs, getHidById(eStatus.id));
                     if (!hero) return;
                     let cnt = 0;
@@ -1808,7 +1808,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         if (eStatus.useCnt < 2) {
                             eStatus.addition[eStatus.useCnt] = cost;
                             ++eStatus.useCnt;
-                            console.trace();
                         } else {
                             ++cnt;
                             if (cost1 == cost2 || cost == cost1 || cost == cost2) ++cnt;
@@ -2620,7 +2619,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (heros[hidx].weaponSlot != null) ++cnt;
                     if (heros[hidx].artifactSlot != null) ++cnt;
                     if (heros[hidx].talentSlot != null) ++cnt;
-                    cnt = Math.max(1, Math.min(2, cnt));
+                    cnt = Math.min(2, cnt) || 1;
                     status.useCnt -= cnt;
                     return { cmds: [{ cmd: 'getDice', cnt, element: DICE_COST_TYPE.Omni }] }
                 }

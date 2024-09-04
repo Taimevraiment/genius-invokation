@@ -166,15 +166,15 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
-    CARD_SUBTYPE,
-    COST_TYPE,
-    DICE_COST_TYPE_CODE_KEY,
-    DiceCostType,
-    DiceCostTypeCode,
-    ELEMENT_TYPE,
-    PHASE,
-    PLAYER_STATUS,
-    Version
+  CARD_SUBTYPE,
+  COST_TYPE,
+  DICE_COST_TYPE_CODE_KEY,
+  DiceCostType,
+  DiceCostTypeCode,
+  ELEMENT_TYPE,
+  PHASE,
+  PLAYER_STATUS,
+  Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';

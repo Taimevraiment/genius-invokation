@@ -741,7 +741,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const hasCard114031 = hasObjById(hcards, 114031) || card?.id == 114031;
                     return {
                         status: isCdt(hasCard114031, [newStatus(ver)(114032, +!!talent)]),
-                        cmds: isCdt(hasCard114031, [{ cmd: 'discard', card: 114031 }], [{ cmd: 'getCard', cnt: 1, card: 114031 }]),
+                        cmds: isCdt(hasCard114031, isCdt<Cmds[]>(card?.id != 114031, [{ cmd: 'discard', card: 114031 }]), [{ cmd: 'getCard', cnt: 1, card: 114031 }]),
                     }
                 }),
             new SkillBuilder('天街巡游').description('{dealDmg}，对所有敌方后台角色造成3点[穿透伤害]。')

@@ -10,7 +10,7 @@ export default class TaskQueue {
         const curQueue = this.priorityQueue ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.warn('重复task:', taskType);
-            return;
+            if (!this.priorityQueue) return;
         }
         if (isUnshift) this.queue.unshift([taskType, args]);
         else curQueue.push([taskType, args]);

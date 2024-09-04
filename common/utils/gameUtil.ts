@@ -151,3 +151,9 @@ export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | num
     });
     players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, (resHeals as number[])[h.hidx + (p.pidx * players[0].heros.length)]))));
 }
+
+// 合并支援物预览
+export const mergeSupportCnt = (oSupportCnt: number[][], resSupportCnt?: number[][]) => {
+    if (!resSupportCnt) return;
+    oSupportCnt.forEach((_, sti, sta) => sta[sti].forEach((_, i, a) => a[i] += resSupportCnt[sti][i]));
+}
