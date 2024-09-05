@@ -268,13 +268,13 @@ export default class GeniusInvokationClient {
                 const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
                 if (!preview) throw new Error('预览未找到');
                 this.heroCanSelect = [...preview.heroCanSelect!];
-                this.summonCanSelect = [...preview.summonCanSelect!.slice()];
-                this.supportCanSelect = [...preview.supportCanSelect!.slice()];
+                this.summonCanSelect = clone(preview.summonCanSelect!);
+                this.supportCanSelect = clone(preview.supportCanSelect!.slice());
                 this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
-                this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
-                this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
-                this.willSwitch = preview.willSwitch?.slice() ?? this._resetWillSwitch();
-                this.summonCnt = preview.willSummonChange?.slice() ?? this._resetSummonCnt();
+                this.willAttachs = clone(preview.willAttachs) ?? this._resetWillAttachs();
+                this.willSummons = clone(preview.willSummons) ?? this._resetWillSummons();
+                this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
+                this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
                 if (
@@ -635,11 +635,13 @@ export default class GeniusInvokationClient {
      */
     selectCardSupport(pidx: number, siidx: number) {
         if (this.currCard.id <= 0 || !this.supportCanSelect[pidx][siidx]) return this.cancel();
-        const newVal = !this.supportSelect[siidx];
+        const newVal = !this.supportSelect[pidx][siidx];
         this.supportSelect[pidx][siidx] = newVal;
         if (newVal) this.supportSelect[pidx].forEach((_, i, a) => a[i] = i == siidx);
-        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.supportIdx == siidx);
-        this.isValid = !!preview?.isValid;
+        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.cardIdxs![0] == this.currCard.cidx && pre.supportIdx == (newVal ? siidx : -1));
+        if (!preview) return this.isValid = false;
+        this.isValid = preview.isValid;
+        if (this.isValid) this.diceSelect = [...preview.diceSelect!];
     }
     /**
      * 选择要消耗的骰子
@@ -794,7 +796,7 @@ export default class GeniusInvokationClient {
      * @param siidx 场地idx
      */
     showSupportInfo(pidx: number, siidx: number) {
-        if (this.player.supports.some(s => s.canSelect)) {
+        if (this.supportCanSelect.flat().some(v => v)) {
             this.modalInfo = NULL_MODAL();
         } else {
             const supports = [this.opponent.supports, this.player.supports];

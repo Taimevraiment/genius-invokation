@@ -240,9 +240,9 @@ const readySkillShieldStatus = (name: string) => {
         .description(`准备技能期间，提供2点[护盾]，保护所附属角色。`);
 }
 
-const coolDownStatus = (name: string) => {
+const coolDownStatus = (name: string, cardId?: number) => {
     return new StatusBuilder(`${name}(冷却中)`).combatStatus().icon('debuff').roundCnt(1)
-        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description(`本回合无法再打出【${name}】。`);
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description(`本回合无法再打出【${cardId ? `crd${cardId}` : name}】。`);
 }
 
 
@@ -1999,7 +1999,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    124053: () => coolDownStatus('噬骸能量块'),
+    124053: () => coolDownStatus('噬骸能量块', 124051),
 
     125021: () => new StatusBuilder('坍毁').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.AddDamage)
         .description('所附属角色受到的[物理伤害]或[风元素伤害]+2。；[useCnt]')
@@ -2279,7 +2279,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    301021: () => coolDownStatus('禁忌知识'),
+    301021: () => coolDownStatus('禁忌知识', 301020),
 
     301022: () => new StatusBuilder('赤王陵（生效中）').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('直到本回合结束前，所在阵营每抓1张牌，就立刻生成1张【crd301020】，随机地置入我方牌库中。')
@@ -2538,7 +2538,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    303205: () => coolDownStatus('本大爷还没有输！'),
+    303205: () => coolDownStatus('本大爷还没有输！', 332005),
 
     303206: () => new StatusBuilder('交给我吧！（生效中）').combatStatus().icon('buff3')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -2678,7 +2678,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    303231: () => coolDownStatus('海底宝藏').description('本回合此角色不会再受到来自｢【crd303230】｣的治疗。'),
+    303231: () => coolDownStatus('海底宝藏', 303230).description('本回合此角色不会再受到来自｢【crd303230】｣的治疗。'),
 
     303232: () => card332024sts(1),
 

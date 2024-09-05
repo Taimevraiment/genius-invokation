@@ -361,7 +361,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, isSlot?: boolean
       if (!isInGame.value || isExplain) return '';
       ctt = ctt.replace(/{round}/, `${round.value}`);
       if (typeof obj != 'string' && obj != undefined) {
-        ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`);
+        ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }
       return `<span style="color:#d5bb49;">${ctt}</span>`
     })

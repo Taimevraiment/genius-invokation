@@ -921,6 +921,7 @@ body {
   background-color: #254162b9;
   border: 5px solid #1c3149b9;
   border-radius: 10px;
+  z-index: 2;
 }
 
 .modal-action-my {

@@ -69,7 +69,7 @@
         :key="saidx">
         <div class="support" :class="{
           'support-select': supportSelect[saidx][siidx],
-          'support-can-select': support.canSelect && player.status == PLAYER_STATUS.PLAYING,
+          'support-can-select': supportCanSelect[saidx][siidx] && player.status == PLAYER_STATUS.PLAYING,
           'active-supportcnt': canAction && currSkill.type != SKILL_TYPE.Passive && supportCnt[getGroup(saidx)][siidx] != 0,
         }" v-for="(support, siidx) in supportArea" :key="siidx" @click.stop="showSupportInfo(saidx, siidx)">
           <div class="support-img-content">
@@ -577,6 +577,7 @@ const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).
 const heroSelect = computed<number[][]>(() => props.client.heroSelect);
 const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
+const supportCanSelect = computed<boolean[][]>(() => props.client.supportCanSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
 const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
 const slotSelect = computed<boolean[][][][]>(() => props.client.slotSelect);
