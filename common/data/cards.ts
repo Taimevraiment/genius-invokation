@@ -1267,22 +1267,12 @@ const allCards: Record<number, () => CardBuilder> = {
     322003: () => new CardBuilder(196).name('蒂玛乌斯').ally().costSame(2)
         .description('【入场时：】此牌附带2个｢合成材料｣。如果我方牌组中初始包含至少6张｢圣遗物｣，则从牌组中随机抽取一张｢圣遗物｣牌。；【结束阶段：】补充1个｢合成材料｣。；【打出｢圣遗物｣手牌时：】如可能，则支付等同于｢圣遗物｣总费用数量的｢合成材料｣，以免费装备此｢圣遗物｣(每回合1次)')
         .description('【入场时：】此牌附带2个｢合成材料｣。；【结束阶段：】补充1个｢合成材料｣。；【打出｢圣遗物｣手牌时：】如可能，则支付等同于｢圣遗物｣总费用数量的｢合成材料｣，以免费装备此｢圣遗物｣(每回合1次)', 'v4.3.0')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/839e1884908b6ce5e8bc2d27bde98f20_778730297202034218.png')
-        .handle((_, event, ver) => {
-            if (ver < 'v4.3.0') return;
-            const { playerInfo: { artifactCnt = 0 } = {} } = event;
-            return { cmds: isCdt(artifactCnt >= 6, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Artifact, isAttach: true }]) }
-        }),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/839e1884908b6ce5e8bc2d27bde98f20_778730297202034218.png'),
 
     322004: () => new CardBuilder(197).name('瓦格纳').ally().costSame(2)
         .description('【入场时：】此牌附带2个｢锻造原胚｣。如果我方牌组中初始包含至少3种不同的｢武器｣，则从牌组中随机抽取一张｢武器｣牌。；【结束阶段：】补充1个｢锻造原胚｣。；【打出｢武器｣手牌时：】如可能，则支付等同于｢武器｣总费用数量的｢锻造原胚｣，以免费装备此｢武器｣(每回合1次)')
         .description('【入场时：】此牌附带2个｢锻造原胚｣。；【结束阶段：】补充1个｢锻造原胚｣。；【打出｢武器｣手牌时：】如可能，则支付等同于｢武器｣总费用数量的｢锻造原胚｣，以免费装备此｢武器｣(每回合1次)', 'v4.3.0')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/9a47df734f5bd5d52ce3ade67cf50cfa_2013364341657681878.png')
-        .handle((_, event, ver) => {
-            if (ver < 'v.4.3.0') return;
-            const { playerInfo: { weaponTypeCnt = 0 } = {} } = event;
-            return { cmds: isCdt(weaponTypeCnt >= 3, [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Weapon, isAttach: true }]) }
-        }),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/9a47df734f5bd5d52ce3ade67cf50cfa_2013364341657681878.png'),
 
     322005: () => new CardBuilder(198).name('卯师傅').ally().costSame(1)
         .description('【打出｢料理｣事件牌后：】生成1个随机基础元素骰。(每回合1次)；【打出｢料理｣事件牌后：】从牌组中随机抽取1张｢料理｣事件牌。(整场牌局限制1次)')
@@ -1356,12 +1346,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/eb0cb5b32a8c816b7f13c3d44d0a0fe4_6830305949958078300.png'),
 
     322022: () => new CardBuilder(329).name('婕德').since('v4.4.0').ally().costSame(1).costAny(2, 'v4.6.0')
-        .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为｢阅历｣。(最多6点)；【我方角色使用｢元素爆发｣后：】如果｢阅历｣至少为6，则弃置此牌，对我方出战角色附属【sts302205】。')
+        .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为｢阅历｣。(最多6点〔[card]，当前为{dessptcnt}点〕)；【我方角色使用｢元素爆发｣后：】如果｢阅历｣至少为6，则弃置此牌，对我方出战角色附属【sts302205】。')
         .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为｢阅历｣。(最多6点)；【我方角色使用｢元素爆发｣后：】如果｢阅历｣至少为5，则弃置此牌，生成【｢阅历｣-2】数量的[万能元素骰]。', 'v4.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8931597db1022094e0ebdf3e91f5f44c_6917553066022383928.png'),
 
     322023: () => new CardBuilder(330).name('西尔弗和迈勒斯').since('v4.4.0').ally().costSame(1)
-        .description('此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为｢侍从的周到｣。(最多4点)；【结束阶段：】如果｢侍从的周到｣至少为3，则弃置此牌，然后抓｢侍从的周到｣点数的牌。')
+        .description('此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为｢侍从的周到｣。(最多4点〔[card]，当前为{eldmgcnt}点〕)；【结束阶段：】如果｢侍从的周到｣至少为3，则弃置此牌，然后抓｢侍从的周到｣点数的牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/e160832e6337e402fc01d5f89c042aa3_8868205734801507533.png'),
 
     322024: () => new CardBuilder(358).name('太郎丸').since('v4.6.0').ally().costAny(2)
@@ -1379,14 +1369,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     322027: () => new CardBuilder(404).name('瑟琳').since('v4.8.0').ally().costAny(2)
         .description('【每回合自动触发1次：】将1张随机的｢美露莘的声援｣放入我方手牌。；[可用次数]：3')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/c4e68c446ec66d090c933d9765281e58_8386778533653121298.png')
-        .handle(() => {
-            const hidxs: number[] = [];
-            for (let i = 0; i < 10; ++i) {
-                hidxs.push(302206 + i);
-            }
-            return { cmds: [{ cmd: 'getCard', cnt: 1, hidxs }] }
-        }),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/c4e68c446ec66d090c933d9765281e58_8386778533653121298.png'),
 
     322028: () => new CardBuilder(417).name('阿伽娅').since('v5.0.0').ally().costSame(1)
         .description('我方使用｢特技｣时：少花费1个元素骰。(每回合1次)')
@@ -1418,8 +1401,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方打出｢武器｣/｢圣遗物｣/｢场地｣/｢伙伴｣手牌时：】如果本场对局中我方曾经打出过所打出牌的同名卡牌，则少花费2个元素骰。(每回合1次)；[可用次数]：2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/aa32049459ce38daffbfe5dc82eb9303_2738230079920133028.png'),
 
-    323007: () => new CardBuilder(345).name('流明石触媒').since('v4.5.0').item().costAny(3).costSame(2, 'v4.8.0')
-        .description('【我方打出行动牌后：】如果此牌在场期间本回合中我方已打出3张行动牌，则抓1张牌并生成1个[万能元素骰]。(每回合1次)；[可用次数]：3')
+    323007: () => new CardBuilder(345).name('流明石触媒').since('v4.5.0').item().costAny(3).costSame(2, 'v4.8.0').useCnt(0).isResetUseCnt()
+        .description('【我方打出行动牌后：】如果此牌在场期间本回合中我方已打出3张行动牌，则抓1张牌并生成1个[万能元素骰]。(每回合1次〔，当前已打出{unt}张〕)；[可用次数]：3')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/f705b86904d8413be39df62741a8c81e_885257763287819413.png'),
 
     323008: () => new CardBuilder(391).name('苦舍桓').since('v4.7.0').item().costSame(1).costSame(0, 'v4.8.0')
@@ -3091,7 +3074,7 @@ const allCards: Record<number, () => CardBuilder> = {
     302210: () => new CardBuilder().name('希洛娜的声援').event().costSame(0)
         .description('接下来3个回合结束时，各将1张美露莘看好的超棒事件牌加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
-        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(202219)] })),
+        .handle((_c, _e, ver) => ({ status: [newStatus(ver)(302219)] })),
 
     302211: () => new CardBuilder().name('希露艾的声援').event().costSame(1)
         .description('复制对方牌库顶部的3张牌，加入手牌。')

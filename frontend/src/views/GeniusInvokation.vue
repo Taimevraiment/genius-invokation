@@ -125,7 +125,7 @@
     </div>
 
     <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" :isInGame="true"
-      :round="client.round" style="z-index: 10" />
+      :round="client.round" :playerInfo="client.player.playerInfo" style="z-index: 10" />
 
     <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
       :class="{ 'mobile-win-banner': isMobile }">
@@ -904,7 +904,6 @@ body {
 
 .tip-leave {
   opacity: 0;
-  z-index: -20;
 }
 
 .modal-action {
@@ -913,6 +912,7 @@ body {
   max-width: 20%;
   min-height: 10%;
   padding: 10px;
+  pointer-events: none;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -934,7 +934,6 @@ body {
 
 .modal-action-leave {
   opacity: 0;
-  z-index: -20;
 }
 
 .btn-group {

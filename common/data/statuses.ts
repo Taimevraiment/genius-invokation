@@ -367,9 +367,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111082: () => new StatusBuilder('度厄真符').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
         .description('【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；[useCnt]')
         .handle((_, event) => {
-            const { heros = [], hidx = -1 } = event;
+            const { heros = [], hidx = -1, skid = -1 } = event;
             const fhero = heros[hidx];
-            if (!fhero) return;
+            if (!fhero || skid == 11083) return;
             const isHeal = fhero.hp < fhero.maxHp;
             return {
                 trigger: ['after-skill'],
@@ -762,14 +762,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113022: () => new StatusBuilder('旋火轮').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
         .description('【我方角色使用技能后：】造成2点[火元素伤害]。；[useCnt]')
-        .handle(() => ({
-            damage: 2,
-            element: DAMAGE_TYPE.Pyro,
-            trigger: ['after-skill'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
-        })),
+        .handle((_, event) => {
+            if (event.skid == 13023) return;
+            return {
+                damage: 2,
+                element: DAMAGE_TYPE.Pyro,
+                trigger: ['after-skill'],
+                exec: eStatus => {
+                    if (eStatus) --eStatus.useCnt;
+                },
+            }
+        }),
 
     113031: (isTalent: boolean = false) => new StatusBuilder('鼓舞领域').combatStatus().icon('ski,2').roundCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
@@ -1201,7 +1204,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     115051: (swirlEl: PureElementType = ELEMENT_TYPE.Anemo) =>
         new StatusBuilder('乱岚拨止' + `${swirlEl != ELEMENT_TYPE.Anemo ? `·${ELEMENT_NAME[swirlEl][0]}` : ''}`)
-            .heroStatus().icon('buff').useCnt(1).iconBg(STATUS_BG_COLOR[swirlEl])
+            .heroStatus().icon('buff').useCnt(1).iconBg(STATUS_BG_COLOR[swirlEl]).perCnt(1).perCnt(0, 'v4.8.0')
             .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.ConditionalEnchant).type(ver => ver >= 'v4.8.0', STATUS_TYPE.Usage)
             .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣; 本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
@@ -1217,11 +1220,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 }
                 return {
                     trigger: ['change-to', 'action-start', 'skill'],
-                    isQuickAction: true,
+                    isQuickAction: status.perCnt > 0,
                     attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
                     exec: () => {
-                        if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: 0 }] }
+                        if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: SKILL_TYPE.Normal }] }
                         if (trigger == 'skill') --status.useCnt;
+                        if (trigger == 'change-to' && status.perCnt > 0) --status.perCnt;
                     },
                 }
             }),
@@ -2360,7 +2364,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { status.useCnt = 0 },
         })),
 
-    302205: () => new StatusBuilder('沙与梦').heroStatus().icon('buff2').useCnt(1)
+    302205: () => new StatusBuilder('沙与梦').heroStatus().icon('buff2').useCnt(1).type(STATUS_TYPE.Usage)
         .description('【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；[useCnt]')
         .handle((status, event) => {
             const { trigger = '', isMinusDiceSkill = false, isMinusDiceTalent = false } = event;
@@ -2377,7 +2381,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     302216: () => new StatusBuilder('托皮娅的心意').combatStatus().roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .icon('https://gi-tcg-assets.guyutocngxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
         .description('本回合打出手牌后，随机[舍弃]1张牌或抓1张牌。')
         .handle((_, event) => {
             const { randomInt } = event;
@@ -2391,13 +2395,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     302217: () => new StatusBuilder('卢蒂妮的心意').combatStatus().useCnt(2).type(STATUS_TYPE.Attack)
-        .icon('https://gi-tcg-assets.guyutocngxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
         .description('角色使用技能后，随机受到2点治疗或2点[穿透伤害]。；[useCnt]')
         .handle((_, event) => {
             const { hidx = -1, randomInt } = event;
-            const res: StatusHandleRes = [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()];
+            const res = isCdt<StatusHandleRes>(!!randomInt, () => [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()], {});
             return {
-                trigger: ['skill'],
+                trigger: ['after-skill'],
                 ...res,
                 exec: eStatus => {
                     if (eStatus) --eStatus.useCnt;

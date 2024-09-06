@@ -8,14 +8,13 @@ export class GISupport {
     card: Card; // 场地卡
     cnt: number; // 次数
     perCnt: number; // 每回合x次
-    useCnt: number = 0; // 使用次数
     heal: number; // 回血数
     type: SupportType; // 类型 1轮次 2收集物 3常驻
     handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes; // 处理效果函数
 
     constructor(
         card: Card, cnt: number, perCnt: number, type: SupportType,
-        handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined) | undefined,
+        handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined | void) | undefined,
         heal = 0, ver: Version = VERSION[0],
     ) {
         this.card = card;
@@ -44,7 +43,7 @@ export class SupportBuilder extends BaseVersionBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _type: SupportType = SUPPORT_TYPE.Permanent;
     private _heal: number = 0;
-    private _handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined) | undefined = () => ({});
+    private _handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined | void) | undefined = () => ({});
     constructor() {
         super();
     }
@@ -78,7 +77,7 @@ export class SupportBuilder extends BaseVersionBuilder {
         this._heal = heal;
         return this;
     }
-    handle(handle: (support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined) {
+    handle(handle: (support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

@@ -22,7 +22,7 @@ export const PURE_ELEMENT_TYPE = {
 
 export type PureElementType = TypeConst<typeof PURE_ELEMENT_TYPE>;
 
-export const PURE_ELEMENT_TYPE_KEY: Record<any, PureElementType> = swapKeysAndValues(PURE_ELEMENT_TYPE);
+export const PURE_ELEMENT_TYPE_KEY: Record<PureElementType, string> = swapKeysAndValues(PURE_ELEMENT_TYPE);
 
 export const ELEMENT_TYPE = {
     Physical: 'Physical', // 物理 0

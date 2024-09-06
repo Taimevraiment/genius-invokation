@@ -304,13 +304,14 @@ import { newSkill } from '@@@/data/skills';
 import { newStatus } from '@@@/data/statuses';
 import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
-import { Card, ExplainContent, Hero, Skill, Status, Summon } from '../../../typing';
+import { Card, ExplainContent, GameInfo, Hero, Skill, Status, Summon } from '../../../typing';
 
-const props = defineProps(['info', 'isMobile', 'isInGame', 'round']);
+const props = defineProps(['info', 'isMobile', 'isInGame', 'round', 'playerInfo']);
 
 const isMobile = computed<boolean>(() => props.isMobile);
 const isInGame = computed<boolean>(() => !!props.isInGame); // 是否在游戏中显示(用于一些游戏实时数据的显示)
 const round = computed<number>(() => props.round ?? 0); // 当前回合
+const playerInfo = computed<GameInfo>(() => props.playerInfo); // 玩家全局信息
 const version = computed<Version>(() => props.info.version); // 版本
 const isShow = computed<boolean>(() => props.info.isShow); // 是否显示
 const type = computed<InfoType>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物
@@ -350,16 +351,24 @@ const wrapExplCtt = (content: string) => {
             type == 'hro' ? newHero(version.value)(a1) :
               { name: content, default: true };
 }
-const wrapDesc = (desc: string, options: { isExplain?: boolean, isSlot?: boolean, obj?: ExplainContent }): string => {
+type WrapExplainType = 'slot' | 'card' | 'support' | '';
+const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
   const wrapName = (_: string, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`;
-  const { isExplain, isSlot, obj } = options;
+  const { isExplain, type = '', obj } = options;
   let res = desc.slice()
-    .replace(/〔(.*?)〕/g, (_, ctt: string) => {
-      if (typeof obj != 'string' && obj != undefined && 'type' in obj && obj.type == CARD_TYPE.Equipment && !isSlot) {
+    .replace(/〔(\[.+\])?(.+)〕/g, (_, f: string, ctt: string) => {
+      const flag = (f || '').slice(1, -1);
+      if (typeof obj != 'string' && obj != undefined && (
+        ('type' in obj && obj.type == CARD_TYPE.Equipment && type != 'slot') ||
+        (flag != '' && type != '' && flag != type)
+      )) {
         return '';
       }
       if (!isInGame.value || isExplain) return '';
-      ctt = ctt.replace(/{round}/, `${round.value}`);
+      ctt = ctt
+        .replace(/{round}/, `${round.value}`)
+        .replace(/{dessptcnt}/, `${playerInfo.value.destroyedSupport}`)
+        .replace(/{eldmgcnt}/, `${playerInfo.value.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`);
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }
@@ -502,7 +511,7 @@ const getSvgFilter = (statusColor: StatusBgColor) => {
 watchEffect(() => {
   ruleExplain.value = [];
   if (info.value && 'costType' in info.value) {
-    info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc, { obj: info.value as Card }));
+    info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' }));
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
   }
   if (info.value && 'maxUse' in info.value) {
@@ -522,7 +531,7 @@ watchEffect(() => {
     slotExplain.value = [];
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot].forEach(slot => {
       if (slot != null) {
-        const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc, { obj: slot, isSlot: true }));
+        const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc, { obj: slot, type: 'slot' }));
         const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Action].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
