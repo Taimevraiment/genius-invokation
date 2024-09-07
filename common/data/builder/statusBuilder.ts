@@ -288,7 +288,6 @@ export class StatusBuilder extends BaseVersionBuilder {
                 const { restDmg = -1, summon, getdmg = [], hidx = -1 } = event;
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
                 if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
-                if (status.roundCnt > 0) --status.roundCnt;
                 if (summon && summon.statusId != -1 && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
                 if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }

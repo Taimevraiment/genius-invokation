@@ -55,7 +55,7 @@ export class GICard {
         this.name = name;
         this.version = version;
         subType ??= [];
-        if (typeof subType !== 'object') subType = [subType];
+        if (!Array.isArray(subType)) subType = [subType];
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2,
             isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0] } = options;
         let { canSelectHero = 0 } = options;

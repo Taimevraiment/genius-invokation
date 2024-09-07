@@ -189,6 +189,7 @@ export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
  * @param source 源对象
  */
 export const assgin = <T>(target: T, source: T) => {
+    if (target == source) source = clone(source);
     if (Array.isArray(target) && Array.isArray(source)) {
         const equal = (tar: any, src: any) => {
             if (src?.entityId !== undefined && src.entityId != -1) return src.entityId == tar.entityId;

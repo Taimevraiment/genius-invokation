@@ -1585,6 +1585,7 @@ button:active {
   padding: 10px;
   color: white;
   height: 80%;
+  max-width: 50%;
   overflow-y: scroll;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;

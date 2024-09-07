@@ -531,12 +531,11 @@ const allCards: Record<number, () => CardBuilder> = {
             if (restDmg > -1) {
                 if (card.perCnt <= 0) return { restDmg }
                 ++card.useCnt;
-                --card.perCnt;
                 return { restDmg: restDmg - 1 }
             }
             const triggers: Trigger[] = [];
             if (card.useCnt > 0) triggers.push('skill');
-            if ((getdmg[hidx] ?? -1) > 0) triggers.push('getdmg');
+            if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0) triggers.push('getdmg');
             return {
                 trigger: triggers,
                 addDmgCdt: isCdt(card.useCnt > 0, 1),
@@ -544,6 +543,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     isCdt(trigger == 'getdmg', [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }])),
                 exec: () => {
                     if (trigger == 'skill') card.useCnt = 0;
+                    else if (trigger == 'getdmg') --card.perCnt;
                 }
             }
         }),
@@ -1381,8 +1381,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     323002: () => new CardBuilder(215).name('便携营养袋').item().costSame(1).costSame(2, 'v4.1.0')
         .description('【入场时：】从牌组中随机抽取1张｢料理｣事件。；【我方打出｢料理｣事件牌时：】从牌组中随机抽取1张｢料理｣事件。(每回合1次)')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/ab41e76335be5fe031e9d2d6a4bc5cb1_7623544243734791763.png')
-        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Food, isAttach: true }] })),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/ab41e76335be5fe031e9d2d6a4bc5cb1_7623544243734791763.png'),
 
     323003: () => new CardBuilder(216).name('红羽团扇').since('v3.7.0').item().costSame(2)
         .description('【我方切换角色后：】本回合中，我方执行的下次｢切换角色｣行动视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。(每回合1次)')
@@ -1402,7 +1401,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/aa32049459ce38daffbfe5dc82eb9303_2738230079920133028.png'),
 
     323007: () => new CardBuilder(345).name('流明石触媒').since('v4.5.0').item().costAny(3).costSame(2, 'v4.8.0').useCnt(0).isResetUseCnt()
-        .description('【我方打出行动牌后：】如果此牌在场期间本回合中我方已打出3张行动牌，则抓1张牌并生成1个[万能元素骰]。(每回合1次〔，当前已打出{unt}张〕)；[可用次数]：3')
+        .description('【我方打出行动牌后：】如果此牌在场期间本回合中我方已打出3张行动牌，则抓1张牌并生成1个[万能元素骰]。(每回合1次〔[support]，当前已打出{unt}张〕)；[可用次数]：3')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/f705b86904d8413be39df62741a8c81e_885257763287819413.png'),
 
     323008: () => new CardBuilder(391).name('苦舍桓').since('v4.7.0').item().costSame(1).costSame(0, 'v4.8.0')
@@ -1453,7 +1452,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (ver < 'v4.4.0') return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round) }] }
             if (ver < 'v4.7.0') return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }], isValid: round > 1 }
             if (round > 1) return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }] }
-            return { cmds: [{ cmd: 'getCard', subtype: CARD_SUBTYPE.Talent, cnt: 1 }], isValid: talentTypeCnt >= 2 }
+            return { cmds: [{ cmd: 'getCard', subtype: CARD_SUBTYPE.Talent, cnt: 1, isAttach: true }], isValid: talentTypeCnt >= 2 }
         }),
 
     330006: () => new CardBuilder(314).name('裁定之时').since('v4.3.0').legend().costSame(1)
@@ -1470,7 +1469,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('敌方出战角色失去1点[充能]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e09e62a684575d632c731f3725280df2_7385957084481452662.png')
         .handle((_, event) => ({
-            isValid: (event.eheros?.find(h => h.isFront)?.energy ?? 0) > 0,
+            isValid: !!event.eheros?.find(h => h.isFront)?.energy,
             cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }],
         })),
 
@@ -1624,7 +1623,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
             cmds.push({ cmd: 'heal', cnt: 1, hidxs, mode: 1 });
-            return { cmds }
+            return { isValid: heros.some(h => h.hp < h.maxHp), cmds }
         }),
 
     332001: () => new CardBuilder(241).name('最好的伙伴！').event().costAny(2)
@@ -2973,7 +2972,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    113131: () => new CardBuilder().name('超量装药弹头').event(true).costPyro(2)
+    113131: () => new CardBuilder().name('超量装药弹头').event(true).talent().costPyro(2)
         .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9e3f3602c9eb4929bd9713b86c7fc5a1_5877781091007295306.png')
         .handle(() => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Pyro, cnt: 1 }] })),

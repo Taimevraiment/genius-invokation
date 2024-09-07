@@ -819,13 +819,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 便携营养袋
     323002: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { card } = event;
-        if (support.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food)) return;
+        const { card, trigger = '' } = event;
+        if (trigger != 'enter' && (support.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food))) return;
         return {
-            trigger: ['card'],
-            isNotAddTask: true,
+            trigger: ['card', 'enter'],
             exec: spt => {
-                --spt.perCnt;
+                if (trigger != 'enter') --spt.perCnt;
                 return { cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Food, isAttach: true }], isDestroy: false }
             }
         }
@@ -835,7 +834,6 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt <= 0) return;
         return {
             trigger: ['change'],
-            isNotAddTask: true,
             exec: spt => {
                 --spt.perCnt;
                 return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(302303)] }], isDestroy: false }
@@ -904,7 +902,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 苦舍桓
     323008: () => new SupportBuilder().collection().perCnt(1).handle((support, event) => {
-        const { hcards = [], trigger = '', isMinusDiceSkill = false, minusDiceSkill = [] } = event;
+        const { hcards = [], trigger = '', isMinusDiceSkill = false } = event;
         if (trigger == 'phase-start' && (support.cnt >= 2 || hcards.length == 0)) return;
         if (support.perCnt == 0 && (trigger == 'card' || (trigger == 'skill' && support.cnt == 0))) return;
         return {
@@ -919,7 +917,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     spt.cnt += cnt;
                     cmds.push({ cmd: 'discard', cnt, mode: CMD_MODE.HighHandCard });
                 } else if (trigger == 'skill' && isMinusDiceSkill) {
-                    spt.cnt -= minusDiceSkill.find(([eid]) => eid == spt.entityId)![1];
+                    --spt.cnt;
                 }
                 return { cmds, isDestroy: false }
             },

@@ -506,7 +506,7 @@ const devOps = (cidx = 0) => {
       const cards: (number | Card)[] = [];
       const isAttach = op.endsWith('~');
       const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
-      cards.push(...new Array(cnt).fill(cid || getTalentIdByHid(heros[client.value.players[cpidx].hidx].id)));
+      if (cid != -1) cards.push(...new Array(cnt).fill(cid || getTalentIdByHid(heros[client.value.players[cpidx].hidx].id)));
       cmds.push({ cmd: 'getCard', cnt, card: cards, isAttach });
       flag.add('getCard');
     }

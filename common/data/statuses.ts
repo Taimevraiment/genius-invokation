@@ -88,6 +88,7 @@ export type StatusHandleRes = {
     isUpdateAttachEl?: boolean,
     atkOffset?: number,
     isAddTask?: boolean,
+    notPreview?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => StatusExecRes | void,
 };
 
@@ -516,7 +517,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    112031: () => new StatusBuilder('虚影').combatStatus().roundCnt(1).type(STATUS_TYPE.Barrier).summonId()
+    112031: () => new StatusBuilder('虚影').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
     112032: () => new StatusBuilder('泡影').combatStatus().icon('ski,2').useCnt(1)
@@ -2387,6 +2388,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { randomInt } = event;
             return {
                 trigger: ['card'],
+                isAddTask: true,
+                notPreview: true,
                 exec: () => {
                     const cmd: Cmds[] = [{ cmd: 'getCard', cnt: 1 }, { cmd: 'discard', cnt: 1, mode: CMD_MODE.Random }];
                     return { cmds: [cmd[randomInt!()]] }
@@ -2402,6 +2405,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const res = isCdt<StatusHandleRes>(!!randomInt, () => [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()], {});
             return {
                 trigger: ['after-skill'],
+                notPreview: true,
                 ...res,
                 exec: eStatus => {
                     if (eStatus) --eStatus.useCnt;
@@ -2409,17 +2413,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    302219: () => new StatusBuilder('希洛娜的心意').combatStatus().useCnt(3).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
+    302219: () => new StatusBuilder('希洛娜的心意').combatStatus().useCnt(3).type(STATUS_TYPE.Round)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
         .description('将1张美露莘看好的超棒事件牌加入手牌。；[useCnt]')
-        .handle(status => ({
+        .handle(() => ({
             trigger: ['phase-end'],
-            exec: () => {
-                --status.useCnt;
+            isAddTask: true,
+            exec: eStatus => {
+                if (eStatus) --eStatus.useCnt;
                 return {
                     cmds: [{
                         cmd: 'getCard',
-                        cnt: 2,
+                        cnt: 1,
                         subtype: CARD_SUBTYPE.ElementResonance,
                         cardTag: CARD_TAG.LocalResonance,
                         hidxs: [331101, 331201, 331331, 331401, 331501, 331601, 331701, 332015, 332016],
@@ -2733,10 +2738,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.roundCnt },
         })),
 
-    303303: () => new StatusBuilder('莲花酥（生效中）').heroStatus().roundCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
+    303303: () => new StatusBuilder('莲花酥（生效中）').heroStatus().useCnt(1).roundCnt(1)
+        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
         .description('本回合中，目标角色下次受到的伤害-3。').barrierCnt(3),
 
-    303304: () => new StatusBuilder('北地烟熏鸡（生效中）').heroStatus().icon('buff2').roundCnt(1)
+    303304: () => new StatusBuilder('北地烟熏鸡（生效中）').heroStatus().icon('buff2').useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('本回合中，目标角色下一次｢普通攻击｣少花费1个[无色元素骰]。')
         .handle((status, event) => ({
@@ -2787,7 +2793,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.roundCnt },
         })),
 
-    303310: () => new StatusBuilder('黄油蟹蟹（生效中）').heroStatus().roundCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
+    303310: () => new StatusBuilder('黄油蟹蟹（生效中）').heroStatus().useCnt(1).roundCnt(1)
+        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
         .description('本回合中，所附属角色下次受到伤害-2。').barrierCnt(2),
 
     303311: () => new StatusBuilder('炸鱼薯条（生效中）').heroStatus().icon('buff2').roundCnt(1)
