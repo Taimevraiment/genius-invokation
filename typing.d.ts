@@ -100,6 +100,7 @@ type AddDiceSkill = {
 
 type StatusTask = {
     id: number, // 攻击状态id
+    name: string, // 状态名称
     entityId: number, // 攻击状态entityId
     group: StatusGroup, // 攻击状态类型：0角色状态 1阵营状态
     pidx: number, // 攻击者pidx

@@ -6,7 +6,7 @@ import {
     STATUS_TYPE,
     Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
+import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
@@ -2178,8 +2178,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方召唤4个【smn127022】后，我方【hro】附属【sts127027】，并获得2点[护盾]。')
         .handle((status, event, ver) => {
-            const { card, discards = [], heros = [] } = event;
-            if (card?.id != 127021 && !hasObjById(discards, 127021) && status.useCnt < 4) return;
+            const { card, discards = [], heros = [], summons = [] } = event;
+            if (summons.length == MAX_SUMMON_COUNT || (card?.id != 127021 && !hasObjById(discards, 127021) && status.useCnt < 4)) return;
             return {
                 trigger: ['card', 'discard'],
                 exec: () => {
@@ -2460,17 +2460,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303132: () => new StatusBuilder('元素共鸣：热诚之火（生效中）').heroStatus().icon('buff2')
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。')
-        .handle((status, { skilltype = -1 }) => ({
+        .handle((status, { skid = -1 }) => ({
             addDmgCdt: 3,
-            trigger: isCdt(skilltype != -1, ['elReaction-Pyro']),
+            trigger: isCdt(skid != -1, ['elReaction-Pyro']),
             exec: () => { --status.roundCnt },
         })),
 
-    303162: () => new StatusBuilder('元素共鸣：坚定之岩（生效中）').combatStatus().icon('buff2').roundCnt(1)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+    303162: () => new StatusBuilder('元素共鸣：坚定之岩（生效中）').combatStatus().icon('buff2')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).useCnt(1).roundCnt(1)
         .description('【本回合中，我方角色下一次造成[岩元素伤害]后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。')
         .handle((_, event) => {
-            const { skilltype = -1 } = event;
+            const { skid = -1 } = event;
             return {
                 trigger: ['Geo-dmg'],
                 isAddTask: true,
@@ -2478,7 +2478,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (!eStatus) return;
                     const { combatStatus = [] } = execEvent;
                     const shieldStatus = combatStatus.find(ost => ost.hasType(STATUS_TYPE.Shield));
-                    if (shieldStatus && skilltype != -1) {
+                    if (shieldStatus && skid != -1) {
                         shieldStatus.useCnt += 3;
                         --eStatus.useCnt;
                     }
@@ -2487,7 +2487,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     303172: () => new StatusBuilder('元素共鸣：蔓生之草（生效中）').combatStatus().icon('buff2')
-        .roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .useCnt(1).roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，我方下一次引发元素反应时，造成的伤害+2。')
         .handle(status => ({
             addDmgCdt: 2,
@@ -2515,7 +2515,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
             return {
                 trigger: ['skill'],
-                cmds: [{ cmd: 'switch-after' }],
+                cmds: [{ cmd: 'switch-after', cnt: 2500 }],
                 exec: () => { --status.roundCnt },
             }
         }),
@@ -2525,6 +2525,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。')
         .handle(() => ({
             trigger: ['phase-start'],
+            isAddTask: true,
             cmds: [{ cmd: 'getDice', cnt: 3, element: DICE_COST_TYPE.Omni }, { cmd: 'getCard', cnt: 1 }],
             exec: eStatus => {
                 if (eStatus) --eStatus.useCnt;
@@ -2733,7 +2734,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，目标角色下一次｢元素爆发｣造成的伤害+3。')
         .handle((status, event) => ({
-            addDmgType3: 1,
+            addDmgType3: 3,
             trigger: isCdt(event.hasDmg, ['skilltype3']),
             exec: () => { --status.roundCnt },
         })),

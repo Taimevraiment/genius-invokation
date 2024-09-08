@@ -73,6 +73,7 @@ const getPngIcon = (name: string) => {
     font-size: medium;
     z-index: 1;
     background-color: #0077ff;
+    border-radius: 5px;
 }
 
 .card-img {

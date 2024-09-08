@@ -163,7 +163,7 @@ export default class GeniusInvokationClient {
     get isShowButton() {
         return this.isLookon == -1 &&
             (((this.player.status == PLAYER_STATUS.PLAYING && this.canAction && this.tip == '' && this.actionInfo == '' ||
-                this.player.phase >= PHASE.DIE_CHANGE_ACTION) &&
+                this.player.status == PLAYER_STATUS.DIESWITCH) &&
                 this.player.phase >= PHASE.CHOOSE_HERO && (this.currCard.id > 0 || this.isShowSwitchHero > 0)) ||
                 this.player.phase == PHASE.CHOOSE_HERO
             );
@@ -510,7 +510,7 @@ export default class GeniusInvokationClient {
         if (this.player.phase == PHASE.CHOOSE_HERO) { // 选择初始出战角色
             return this.selectHero(1, hidx);
         }
-        if (([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase)) { // 阵亡选择角色
+        if (this.player.status == PLAYER_STATUS.DIESWITCH) { // 阵亡选择角色
             this.isValid = true;
             return this.switchHero();
         }
@@ -536,7 +536,7 @@ export default class GeniusInvokationClient {
      */
     selectHero(pidx: number, hidx: number, force: boolean = false) {
         this.cancel({ onlySupportAndSummon: true });
-        if (this.currCard.canSelectHero == 0 || ([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.player.phase) || force) {
+        if (this.currCard.canSelectHero == 0 || this.player.status == PLAYER_STATUS.DIESWITCH || force) {
             this.currCard = NULL_CARD();
             if (this.isMobile && this.handcardsSelect > -1) this.mouseleave(this.handcardsSelect, true);
             this.handcardsSelect = -1;
@@ -574,8 +574,7 @@ export default class GeniusInvokationClient {
             } else {
                 this.cancel({ onlyHeros: true });
                 this.isValid = true;
-                this.isShowSwitchHero = +((this.player.status == PLAYER_STATUS.PLAYING ||
-                    (this.player.phase == PHASE.DIE_CHANGE_ACTION || this.player.phase == PHASE.DIE_CHANGE_ACTION_END)) &&
+                this.isShowSwitchHero = +((this.player.status == PLAYER_STATUS.PLAYING || this.player.status == PLAYER_STATUS.DIESWITCH) &&
                     pidx == 1 && !this.player.heros[hidx].isFront && this.currCard.id <= 0 && this.player.heros[hidx].hp > 0)
             }
         }
@@ -708,7 +707,7 @@ export default class GeniusInvokationClient {
                 this.modalInfo = NULL_MODAL();
             }
         }
-        if (([PHASE.DIE_CHANGE_ACTION, PHASE.DIE_CHANGE_ACTION_END] as Phase[]).includes(this.opponent.phase) || (!this.canAction && !isReadySkill)) return;
+        if (this.opponent.status == PLAYER_STATUS.DIESWITCH || (!this.canAction && !isReadySkill)) return;
         if (skid > -1 && (!this.currCard.subType.includes(CARD_SUBTYPE.Action) || !isCard)) {
             this.currCard = NULL_CARD();
             this.cancel({ onlyCard: true });

@@ -119,7 +119,7 @@
         }" :class="{
           'mobile-hero': isMobile,
           'my': hgi == 1,
-          'is-front-oppo': hero?.isFront && player.phase >= PHASE.DICE && opponent?.phase >= PHASE.DICE && hgi == 0,
+          'is-front-oppo': hero?.isFront && phase >= PHASE.DICE && hgi == 0,
           'is-front-my': hero?.isFront && hgi == 1,
           'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
@@ -317,7 +317,7 @@
             <div class="summon" :class="{
               'will-attach': summon.UI.isWill,
               'summon-select': summonSelect[saidx][suidx],
-              'summon-can-select': summon.canSelect && player.status == PLAYER_STATUS.PLAYING,
+              'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING,
               'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
             }" v-for="(summon, suidx) in smnArea" :key="suidx"
               @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
@@ -579,6 +579,7 @@ const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
 const supportSelect = computed<boolean[][]>(() => props.client.supportSelect);
 const supportCanSelect = computed<boolean[][]>(() => props.client.supportCanSelect);
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
+const summonCanSelect = computed<boolean[][]>(() => props.client.summonCanSelect);
 const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
 const slotSelect = computed<boolean[][][][]>(() => props.client.slotSelect);
 const isLookon = computed<number>(() => props.isLookon);

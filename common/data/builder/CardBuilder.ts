@@ -70,13 +70,13 @@ export class GICard {
             descriptions: [],
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
-        if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；(每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣)`;
-        else if (tag?.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
+        if (tag?.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
         else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；(｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；(角色最多装备1件｢圣遗物｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) this.UI.description += `；(角色最多装备1个｢特技｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Food)) {
-            this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
+            if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；(每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣)`;
+            else this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
             const ohandle = handle;
             handle = (card, event) => {
                 const res = ohandle?.(card, event, ver) ?? {};

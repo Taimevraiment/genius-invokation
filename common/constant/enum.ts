@@ -313,8 +313,6 @@ export const PHASE = {
     ACTION: 6, // 行动中
     ACTION_END: 7, // 行动结束
     PHASE_END: 8, // 回合结束
-    DIE_CHANGE_ACTION: 9, // 行动中角色死亡
-    DIE_CHANGE_ACTION_END: 10, // 行动结束后角色死亡
 } as const;
 
 export type Phase = TypeConst<typeof PHASE>;
@@ -322,6 +320,7 @@ export type Phase = TypeConst<typeof PHASE>;
 export const PLAYER_STATUS = {
     WAITING: 0,
     PLAYING: 1,
+    DIESWITCH: 2,
 } as const;
 
 export type PlayerStatus = TypeConst<typeof PLAYER_STATUS>;

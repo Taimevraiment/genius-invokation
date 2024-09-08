@@ -21,7 +21,6 @@ export class GISummon {
     statusId: number; // 可能对应的状态 -1不存在
     addition: string[]; // 额外信息
     handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
-    canSelect: boolean = false; // 是否能被选择
     UI: {
         src: string; // 图片url
         description: string; // 描述

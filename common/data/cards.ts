@@ -1616,10 +1616,10 @@ const allCards: Record<number, () => CardBuilder> = {
                     if (fhps[i] == -1) continue;
                     const chp = fhps[i] - heros[i].hp;
                     if (chp == 0) continue;
-                    const isOppo = chp < 0;
-                    const cmd = !isOppo ? 'heal' : 'attack';
-                    const element = isCdt(isOppo, DAMAGE_TYPE.Pierce);
-                    cmds.push({ cmd, cnt: Math.abs(chp), element, isOppo, hidxs: [i] });
+                    const isOppo = chp > 0;
+                    const cmd = !isOppo ? 'attack' : 'heal';
+                    const element = isCdt(!isOppo, DAMAGE_TYPE.Pierce);
+                    cmds.push({ cmd, cnt: Math.abs(chp), element, isOppo, hidxs: [i], isAttach: isOppo });
                 }
             }
             cmds.push({ cmd: 'heal', cnt: 1, hidxs, mode: 1 });
@@ -1853,7 +1853,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { hcards: { length: hcardsCnt } = [], ehcardsCnt = 0 } = event;
             const cmds: Cmds[] = [];
-            if (hcardsCnt < 5) cmds.push({ cmd: 'getCard', cnt: 5 - hcardsCnt });
+            if (hcardsCnt < 4) cmds.push({ cmd: 'getCard', cnt: 4 - hcardsCnt });
             if (ehcardsCnt < 4) cmds.push({ cmd: 'getCard', cnt: 4 - ehcardsCnt, isOppo: true });
             return { cmds, isValid: cmds.length > 0 }
         }),
@@ -1870,9 +1870,9 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             return {
-                status: [newStatus(ver)(2053)],
+                status: [newStatus(ver)(303222)],
                 canSelectHero: heros.map(h => h.weaponSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.weaponSlot, newCard(ver)(hero.weaponSlot!.id)) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.weaponSlot, () => newCard(ver)(hero.weaponSlot!.id)) }],
                 exec: () => { hero.weaponSlot = null },
             }
         }),
