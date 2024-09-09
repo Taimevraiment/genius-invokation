@@ -1,7 +1,7 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
-    ElementCode, ElementType, HERO_TAG, PureElementType, SKILL_TYPE,
+    ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, SKILL_TYPE,
     SkillType,
     STATUS_TYPE,
     Version, WEAPON_TYPE, WeaponType
@@ -11,7 +11,6 @@ import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
-import { newSummon } from "./summons.js";
 
 export type StatusHandleEvent = {
     restDmg?: number,
@@ -81,7 +80,7 @@ export type StatusHandleRes = {
     isSelf?: boolean,
     skill?: number,
     cmds?: Cmds[],
-    summon?: Summon[],
+    summon?: (number | [number, ...any])[] | number,
     isInvalid?: boolean,
     onlyOne?: boolean,
     attachEl?: PureElementType,
@@ -640,7 +639,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112081: () => new StatusBuilder('金杯的丰馈').combatStatus().icon('ski,1').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【敌方角色受到绽放反应时：】我方不再生成【sts116】，而是改为召唤【smn112082】。')
-        .handle((_s, _e, ver) => ({ trigger: ['Bloom'], summon: [newSummon(ver)(112082)] })),
+        .handle(() => ({ trigger: ['Bloom'], summon: 112082 })),
 
     112083: () => new StatusBuilder('永世流沔').heroStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；[useCnt]')
@@ -1468,10 +1467,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117021: () => new StatusBuilder('通塞识').heroStatus().icon('buff').useCnt(3)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.ConditionalEnchant)
         .description('【所附属角色进行[重击]时：】造成的[物理伤害]变为[草元素伤害]，并且会在技能结算后召唤【smn117022】。；[useCnt]')
-        .handle((status, event, ver) => {
+        .handle((status, event) => {
             if (!event.isChargedAtk) return;
             return {
-                summon: [newSummon(ver)(117022)],
+                summon: 117022,
                 trigger: ['skilltype1'],
                 attachEl: ELEMENT_TYPE.Dendro,
                 exec: () => { --status.useCnt },
@@ -2602,14 +2601,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    303223: () => new StatusBuilder('拳力斗技！（生效中）').heroStatus().icon('buff3').useCnt(1)
+    303223: () => new StatusBuilder('拳力斗技！（生效中）').combatStatus().icon('buff3').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，一位牌手先宣布结束时：】未宣布结束的牌手抓2张牌。')
         .handle((_, event) => {
             const { phase = -1 } = event;
             return {
                 trigger: ['any-end-phase'],
-                cmds: [{ cmd: 'getCard', cnt: 2, isOppo: phase > 6 }],
+                isAddTask: true,
+                cmds: [{ cmd: 'getCard', cnt: 2, isOppo: phase > PHASE.ACTION }],
                 exec: eStatus => {
                     if (eStatus) --eStatus.useCnt;
                 }
@@ -2629,7 +2629,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (heros[hidx].weaponSlot != null) ++cnt;
                     if (heros[hidx].artifactSlot != null) ++cnt;
                     if (heros[hidx].talentSlot != null) ++cnt;
-                    cnt = Math.min(2, cnt) || 1;
+                    cnt = Math.min(status.useCnt, cnt) || 1;
                     status.useCnt -= cnt;
                     return { cmds: [{ cmd: 'getDice', cnt, element: DICE_COST_TYPE.Omni }] }
                 }
@@ -2646,6 +2646,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【结束阶段：】切换到所附属角色。')
         .handle((_, event) => ({
             trigger: ['phase-end'],
+            isAddTask: true,
             exec: () => {
                 const { hidx = -1 } = event;
                 return { cmds: [{ cmd: 'switch-to', hidxs: [hidx] }] }
@@ -2656,7 +2657,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色每次受到伤害或治疗后：】累积1点｢备战度｣(最多累积2点)。；【我方打出原本费用不多于｢备战度｣的｢武器｣或｢圣遗物｣时:】移除此状态，以免费打出该牌。')
         .handle((status, event) => {
             const { card, trigger = '', heal = [], hidx = -1, isMinusDiceWeapon, isMinusDiceArtifact } = event;
-            const isMinus = (isMinusDiceWeapon || isMinusDiceArtifact) && status.useCnt >= (card?.cost ?? 0);
+            const isMinus = (isMinusDiceWeapon || isMinusDiceArtifact) && status.useCnt >= (card?.cost ?? 3);
             const triggers: Trigger[] = [];
             if (status.useCnt < 2) triggers.push('getdmg', 'heal');
             if (isMinus) triggers.push('card');
@@ -2664,9 +2665,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: triggers,
                 minusDiceCard: isCdt(isMinus, status.useCnt),
                 isAddTask: trigger != 'card',
-                exec: () => {
+                exec: eStatus => {
                     if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) {
-                        ++status.useCnt;
+                        if (eStatus) ++eStatus.useCnt;
                     } else if (trigger == 'card' && isMinus) {
                         status.roundCnt = 0;
                     }
@@ -2688,21 +2689,24 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    303231: () => coolDownStatus('海底宝藏', 303230).description('本回合此角色不会再受到来自｢【crd303230】｣的治疗。'),
+    303231: () => coolDownStatus('海底宝藏', 303230).heroStatus().description('本回合此角色不会再受到来自｢【crd303230】｣的治疗。'),
 
     303232: () => card332024sts(1),
 
     303236: () => new StatusBuilder('｢看到那小子挣钱…｣（生效中）').combatStatus().icon('buff3').useCnt(0).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('本回合中，每当对方获得2个元素骰，你就获得1个[万能元素骰]。(此效果提供的元素骰除外)')
-        .handle((status, event) => {
+        .handle((_, event) => {
             const { source = -1 } = event;
             return {
                 trigger: isCdt(source != 303236, ['getdice-oppo']),
                 isAddTask: true,
-                cmds: isCdt(status.useCnt == 1, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
                 exec: eStatus => {
-                    if (eStatus) eStatus.useCnt = (eStatus.useCnt + 1) % 2;
+                    if (eStatus) {
+                        eStatus.useCnt = (eStatus.useCnt + 1) % 2;
+                        if (eStatus.useCnt == 1) return;
+                        return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }] }
+                    }
                 }
             }
         }),
@@ -2711,6 +2715,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【结束阶段：】抓1张牌。；[useCnt]')
         .handle(() => ({
             trigger: ['phase-end'],
+            isAddTask: true,
             cmds: [{ cmd: 'getCard', cnt: 1 }],
             exec: eStatus => {
                 if (eStatus) --eStatus.useCnt;

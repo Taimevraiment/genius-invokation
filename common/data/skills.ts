@@ -3,8 +3,6 @@ import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant
 import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
-import { newStatus } from "./statuses.js"
-import { newSummon } from "./summons.js"
 
 export type SkillHandleEvent = {
     hero: Hero,
@@ -33,9 +31,9 @@ export type SkillHandleEvent = {
 }
 
 export type SkillHandleRes = {
-    status?: Status[],
-    statusOppo?: Status[],
-    summon?: Summon[],
+    status?: (number | [number, ...any])[] | number,
+    statusOppo?: (number | [number, ...any])[] | number,
+    summon?: (number | [number, ...any])[] | number,
     trigger?: Trigger[],
     isAttach?: boolean,
     pdmg?: number,
@@ -43,11 +41,11 @@ export type SkillHandleRes = {
     addDmgCdt?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
-    statusPre?: Status[],
-    statusOppoPre?: Status[],
-    summonPre?: Summon[],
-    statusAfter?: Status[],
-    statusOppoAfter?: Status[],
+    statusPre?: (number | [number, ...any])[] | number,
+    statusOppoPre?: (number | [number, ...any])[] | number,
+    summonPre?: (number | [number, ...any])[] | number,
+    statusAfter?: (number | [number, ...any])[] | number,
+    statusOppoAfter?: (number | [number, ...any])[] | number,
     cmds?: Cmds[],
     cmdsAfter?: Cmds[],
     heal?: number,
@@ -76,11 +74,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于｢始基力:荒性｣形态，召唤【smn112111】。；(【hro】处于｢始基力:芒性｣形态时，会改为召唤【smn112112】。)')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/629f7630db6af1831478699dbe6a04e0.png',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/d605827c81562212ec685c75f8788b85_3866956682696340528.png')
-        .elemental().cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(112111)], status: isCdt(!!event.talent, [newStatus(ver)(112116)]) })),
+        .elemental().cost(3).handle(event => ({ summon: 112111, status: isCdt(!!event.talent, 112116) })),
 
     12122: () => new SkillBuilder('孤心沙龙').description('【hro1211】当前处于｢始基力:芒性｣形态，召唤【smn112112】。；(【hro】处于｢始基力:荒性｣形态时，会改为召唤【smn112111】。)')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/3a6b3aa64583eed30205cc6959de0b11.png')
-        .elemental().cost(3).handle((event, ver) => ({ summon: [newSummon(ver)(112112)], status: isCdt(!!event.talent, [newStatus(ver)(112116)]) })),
+        .elemental().cost(3).handle(event => ({ summon: 112112, status: isCdt(!!event.talent, 112116) })),
 
     13095: () => new SkillBuilder('焚落踢').description('{dealDmg}。').burst().readySkill().damage(3),
 
@@ -111,33 +109,33 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     24015: () => new SkillBuilder('猜拳三连击·剪刀').description('{dealDmg}，然后[准备技能]：【rsk24016】。')
-        .elemental().readySkill().damage(2).handle((_, ver) => ({ status: [newStatus(ver)(124012)] })),
+        .elemental().readySkill().damage(2).handle(() => ({ status: 124012 })),
 
     24016: () => new SkillBuilder('猜拳三连击·布').description('{dealDmg}。').elemental().readySkill().damage(3),
 
     24044: () => new SkillBuilder('霆电迸发').description('{dealDmg}。').burst().readySkill().damage(2),
 
     25025: () => new SkillBuilder('长延涤流').description('对下一个敌方后台角色{dealDmg}，然后[准备技能]：【rsk25026】。(敌方没有后台角色时，改为对出战角色造成伤害)')
-        .elemental().readySkill().damage(1).handle((_, ver) => ({ atkOffset: 1, status: [newStatus(ver)(125023)] })),
+        .elemental().readySkill().damage(1).handle(() => ({ atkOffset: 1, status: 125023 })),
 
     25026: () => new SkillBuilder('终幕涤流').description('对上一个敌方后台角色{dealDmg}。(敌方没有后台角色时，改为对出战角色造成伤害)')
         .elemental().readySkill().damage(2).handle(() => ({ atkOffset: -1 })),
 
     66013: () => new SkillBuilder('霜刺破袭').description('{dealDmg}，此角色附属【sts126022】。')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/ac22f83f25890eca87720581f6b06408.png')
-        .elemental().damage(3).costCryo(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
+        .elemental().damage(3).costCryo(3).handle(() => ({ status: 126022 })),
 
     66023: () => new SkillBuilder('洪流重斥').description('{dealDmg}，此角色附属【sts126022】。')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/45a7f8c8f26f921fce5bb8738bf1bec0.png')
-        .elemental().damage(3).costHydro(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
+        .elemental().damage(3).costHydro(3).handle(() => ({ status: 126022 })),
 
     66033: () => new SkillBuilder('炽焰重斥').description('{dealDmg}，此角色附属【sts126022】。')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/160f02ee2bfde3fcfdc558c78a168899.png')
-        .elemental().damage(3).costPyro(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
+        .elemental().damage(3).costPyro(3).handle(() => ({ status: 126022 })),
 
     66043: () => new SkillBuilder('霆雷破袭').description('{dealDmg}，此角色附属【sts126022】。')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png')
-        .elemental().damage(3).costElectro(3).handle((_, ver) => ({ status: [newStatus(ver)(126022)] })),
+        .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

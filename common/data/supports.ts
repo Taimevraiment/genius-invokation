@@ -1,10 +1,9 @@
-import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
+import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, Version } from '../constant/enum.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 import { newStatus } from './statuses.js';
-import { newSummon } from './summons.js';
 
 export type SupportHandleEvent = {
     dices?: DiceCostType[],
@@ -46,7 +45,7 @@ export type SupportHandleRes = {
     isNotAddTask?: boolean,
     isOrTrigger?: boolean,
     isLast?: boolean,
-    summon?: Summon[],
+    summon?: (number | [number, ...any])[] | number,
 }
 
 export type SupportExecEvent = {
@@ -59,7 +58,7 @@ export type SupportExecRes = {
     cmds?: Cmds[],
     isDestroy: boolean,
     switchHeroDiceCnt?: number,
-    summon?: Summon[],
+    summon?: (number | [number, ...any])[] | number,
 }
 
 const DICE_WEIGHT = [ // 吃骰子的优先级权重(越低越优先)
@@ -749,11 +748,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 太郎丸
-    322024: () => new SupportBuilder().collection().handle((support, event, ver) => {
+    322024: () => new SupportBuilder().collection().handle((support, event) => {
         if (event.card?.id != 302202) return;
         return {
             trigger: ['card'],
-            summon: isCdt(support.cnt == 1, [newSummon(ver)(302201, support.card.UI.src)]),
+            summon: isCdt(support.cnt == 1, [[302201, support.card.UI.src]]),
             exec: spt => ({ isDestroy: ++spt.cnt >= 2 }),
         }
     }),

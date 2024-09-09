@@ -129,7 +129,8 @@
 
     <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
       :class="{ 'mobile-win-banner': isMobile }">
-      {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！
+      <span v-if="client.isWin == -2">——无人获胜——</span>
+      <span v-else> {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！</span>
     </h1>
 
     <h1 v-if="client.error != '' && isDev" class="error">{{ client.error }}</h1>
@@ -139,10 +140,8 @@
     </div>
 
     <div class="modal-action" :class="{
-      'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING,
-      'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING,
-      'modal-action-enter-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
-      'modal-action-enter-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
+      'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
+      'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
       'modal-action-leave': client.actionInfo == '',
     }">
       {{ client.actionInfo }}
@@ -426,7 +425,6 @@ const devOps = (cidx = 0) => {
   const attachs: { hidx: number, el: number, isAdd: boolean }[] = [];
   const hps: { hidx: number, hp: number }[] = [];
   const clearSts: { hidx: number, stsid: number }[] = [];
-  const getSts: { hidxs: number[], stsid: number }[] = [];
   const smnIds: number[] = [];
   const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
@@ -480,7 +478,7 @@ const devOps = (cidx = 0) => {
       if (stsid <= 0) {
         clearSts.push({ hidx, stsid });
       } else {
-        getSts.push({ hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx], stsid });
+        cmds.push({ cmd: 'getStatus', hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx], status: stsid });
       }
       flag.add('setStatus');
     } else if (op.startsWith('+')) { // 在牌库中加牌
@@ -511,7 +509,7 @@ const devOps = (cidx = 0) => {
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, getSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
 };
 </script>
 

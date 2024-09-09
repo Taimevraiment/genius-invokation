@@ -86,7 +86,7 @@
         <div v-if="type == INFO_TYPE.Skill">
           <div class="info-equipment"
             v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot">
-            <div class="title">- 角色装备 -</div>
+            <div class="title">—— 角色装备 ——</div>
             <div class="equipment"
               v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot].filter(s => s != null)"
               :key="slidx">
@@ -114,7 +114,7 @@
             </div>
           </div>
           <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
-            <div class="title">- 角色状态 -</div>
+            <div class="title">—— 角色状态 ——</div>
             <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))"
               :key="ist.id" class="status">
               <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
@@ -145,7 +145,7 @@
             </div>
           </div>
           <div v-if="combatStatus.length > 0" class="info-status">
-            <div class="title">- 阵营出战状态 -</div>
+            <div class="title">—— 阵营出战状态 ——</div>
             <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ost.id"
               class="status">
               <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
@@ -189,7 +189,7 @@
       v-if="isShow && type == INFO_TYPE.Hero && ((info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
       <div class="info-equipment"
         v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot">
-        <div class="title">- 角色装备 -</div>
+        <div class="title">—— 角色装备 ——</div>
         <div class="equipment"
           v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot].filter(s => s != null)"
           :key="slidx">
@@ -219,7 +219,7 @@
         </div>
       </div>
       <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
-        <div class="title">- 角色状态 -</div>
+        <div class="title">—— 角色状态 ——</div>
         <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))"
           :key="ist.id" class="status">
           <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
@@ -248,7 +248,7 @@
         </div>
       </div>
       <div v-if="combatStatus.length > 0" class="info-status">
-        <div class="title">- 阵营出战状态 -</div>
+        <div class="title">—— 阵营出战状态 ——</div>
         <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ost.id"
           class="status">
           <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">

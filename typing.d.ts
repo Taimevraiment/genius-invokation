@@ -124,7 +124,7 @@ type Cmds = {
     card?: Card | number | (Card | number)[],
     subtype?: CardSubtype | CardSubtype[],
     cardTag?: CardTag | CardTag[],
-    status?: Status[],
+    status?: (number | [number, ...any] | Status)[] | number,
     isOppo?: boolean,
 }
 

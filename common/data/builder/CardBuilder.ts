@@ -7,7 +7,6 @@ import {
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import { getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
-import { newStatus } from "../statuses.js";
 import { newSupport } from "../supports.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -80,9 +79,10 @@ export class GICard {
             const ohandle = handle;
             handle = (card, event) => {
                 const res = ohandle?.(card, event, ver) ?? {};
+                const ressts = typeof res?.status == 'number' ? [res.status] : res?.status ?? [];
                 return {
                     ...res,
-                    status: [...(res?.status ?? []), newStatus(ver)(303300)],
+                    status: [...ressts, 303300],
                 }
             }
         } else if (subType?.includes(CARD_SUBTYPE.Talent)) {

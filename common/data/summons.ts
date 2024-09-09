@@ -33,7 +33,7 @@ export type SummonHandleRes = {
     addDmgType2?: number,
     addDmgType3?: number,
     addDmgCdt?: number,
-    rCombatStatus?: Status[],
+    rCombatStatus?: (number | [number, ...any])[] | number,
     isNotAddTask?: boolean,
     damage?: number,
     element?: ElementType,
@@ -319,9 +319,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     113093: () => new SummonBuilder('净焰剑狱领域').useCnt(3).damage(1).spReset()
         .description('{defaultAtk。}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
-        .handle((summon, event, ver) => {
+        .handle((summon, event) => {
             const { reset = false } = event;
-            if (reset) return { rCombatStatus: [newStatus(ver)(113094)] }
+            if (reset) return { rCombatStatus: 113094 }
             return {
                 trigger: ['phase-end'],
                 exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
@@ -370,12 +370,12 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     114061: () => new SummonBuilder('天狗咒雷·伏').useCnt(1).damage(1)
         .description('{defaultAtk，我方出战角色附属【sts114063】。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/aef9cba89ecb16fa0d73ffef53cad44e_6822516960472237055.png')
-        .handle((summon, _, ver) => ({
+        .handle(summon => ({
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
                 return {
-                    cmds: [...cmds, { cmd: 'getStatus', status: [newStatus(ver)(114063)] }],
+                    cmds: [...cmds, { cmd: 'getStatus', status: 114063 }],
                 }
             }
         })),
@@ -383,12 +383,12 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     114062: () => new SummonBuilder('天狗咒雷·雷砾').useCnt(2).damage(2)
         .description('{defaultAtk，我方出战角色附属【sts114063】。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/51bca1f202172ad60abbace59b96c346_7973049003331786903.png')
-        .handle((summon, _, ver) => ({
+        .handle(summon => ({
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
                 return {
-                    cmds: [...cmds, { cmd: 'getStatus', status: [newStatus(ver)(114063)] }],
+                    cmds: [...cmds, { cmd: 'getStatus', status: 114063 }],
                 }
             }
         })),
@@ -542,9 +542,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     115082: () => new SummonBuilder('惊奇猫猫盒').useCnt(2).damage(1).spReset()
         .description('{defaultAtk。}；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。(每回合1次)；【我方角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。(离场前仅限一次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
-        .handle((summon, event, ver) => {
+        .handle((summon, event) => {
             const { reset = false, trigger = '' } = event;
-            if (reset) return { rCombatStatus: [newStatus(ver)(115083)] }
+            if (reset) return { rCombatStatus: 115083 }
             const getdmgTrgs: Trigger[] = ['Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg'];
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo && getdmgTrgs.includes(trigger)) {
@@ -617,7 +617,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     116051: () => new SummonBuilder('阿丑').useCnt(1).damage(1).shield(1).perCnt(1).statusId().roundEnd()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，{dealDmg}。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png')
-        .handle((summon, event, ver) => {
+        .handle((summon, event) => {
             const { heros = [], trigger = '' } = event;
             const hero = getObjById(heros, getHidById(summon.id));
             return {
@@ -628,7 +628,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                     if (smn.perCnt <= 0 || trigger != 'getdmg' || hero?.hidx == undefined || hero.hp <= 0) return;
                     --smn.perCnt;
-                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(116054)], hidxs: [hero.hidx] }] }
+                    return { cmds: [{ cmd: 'getStatus', status: 116054, hidxs: [hero.hidx] }] }
                 },
             }
         }),
@@ -636,13 +636,13 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     116062: () => new SummonBuilder('大将威仪').useCnt(2).damage(1)
         .description('{defaultAtk。；如果队伍中存在2名‹6岩元素›角色，则生成【sts111】。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/669b37ae522405031419cd14f6e8daf0_5829987868413544081.png')
-        .handle((summon, event, ver) => ({
+        .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
                 const { heros = [] } = event;
                 if (heros.filter(h => h.element == ELEMENT_TYPE.Geo).length >= 2) {
-                    cmds.push({ cmd: 'getStatus', status: [newStatus(ver)(111)] })
+                    cmds.push({ cmd: 'getStatus', status: 111 })
                 }
                 return { cmds }
             }

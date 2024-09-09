@@ -224,7 +224,11 @@ io.on('connection', socket => {
     });
     // 发送数据到服务器
     socket.on('sendToServer', async (actionData: ActionData) => {
-        const me = getPlayer(pid);
+        const me = getPlayer(pid) ?? getPlayer(actionData.cpidx!);
+        if (pid == -1) {
+            pid = actionData.cpidx ?? -1;
+            console.warn(`pidx未找到`);
+        }
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
@@ -235,6 +239,10 @@ io.on('connection', socket => {
     // 发送数据到服务器(开发用)
     socket.on('sendToServerDev', (actionData) => {
         const me = getPlayer(pid);
+        if (pid == -1) {
+            pid = actionData.cpidx ?? -1;
+            console.warn(`pidx未找到`);
+        }
         if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
