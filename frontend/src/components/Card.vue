@@ -9,10 +9,11 @@
                 :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
-                <span>{{ card.cost - card.costChange }}</span>
+                <span>{{ Math.max(0, card.cost - card.costChange) }}</span>
             </div>
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
-                v-if="card.anydice > 0" :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+                v-if="card.anydice > 0"
+                :style="{ color: card.costChange - card.cost > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
                 <span>{{ card.anydice - Math.max(0, card.costChange - card.cost) }}</span>

@@ -2969,12 +2969,12 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    113131: () => new CardBuilder().name('超量装药弹头').event(true).talent().costPyro(2)
+    113131: () => new CardBuilder().name('超量装药弹头').event(true).costPyro(2)
         .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9e3f3602c9eb4929bd9713b86c7fc5a1_5877781091007295306.png')
         .handle(() => ({ trigger: ['discard'], cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Pyro, cnt: 1 }] })),
 
-    114031: () => new CardBuilder().name('雷楔').event(true).costElectro(3)
+    114031: () => new CardBuilder().name('雷楔').talent().event(true).costElectro(3)
         .description('[战斗行动]：将【hro】切换到场上，立刻使用【ski,1】。本次【ski,1】会为【hro】附属【sts114032】，但是不会再生成【雷楔】。(【hro】使用【ski,1】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro】附属【sts114032】)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
         .handle((card, event) => {
@@ -3129,6 +3129,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png')
         .handle((_, event, ver) => {
             const { heros = [], hidxs: [hidx] = [-1] } = event;
+            if (hidx == -1) return;
             const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }];
             if (ver < 'v4.8.0' || !hasObjById(heros[hidx].heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
             return { cmds, status: isCdt(ver >= 'v4.8.0', 303231) }

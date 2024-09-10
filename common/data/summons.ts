@@ -259,8 +259,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     if (tround == 0) return { cmds: [{ cmd: 'attack' }] }
                     return {
                         cmds: [
-                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(hs), cnt: 1, isOppo: false },
                             { cmd: 'attack', cnt: 1 },
+                            { cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(hs), cnt: 1, isOppo: false },
                         ]
                     }
                 },

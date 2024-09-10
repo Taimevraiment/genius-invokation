@@ -509,7 +509,7 @@ const devOps = (cidx = 0) => {
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', { pid: localStorage.getItem('7szh_userid'), cpidx, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
 };
 </script>
 

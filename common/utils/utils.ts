@@ -14,14 +14,14 @@ export function clone<T>(obj: T): T {
             return cache.get(_obj);
         }
         if (Array.isArray(_obj)) {
-            return _obj.map(item => clone(item)) as unknown as T;
+            return _obj.map(item => _clone(item)) as unknown as T;
         }
         const cloneObj = {} as T;
         cache.set(_obj, cloneObj);
         Object.setPrototypeOf(cloneObj, Object.getPrototypeOf(_obj));
         for (const key in _obj) {
             if (_obj.hasOwnProperty(key)) {
-                cloneObj[key] = clone(_obj[key]);
+                cloneObj[key] = _clone(_obj[key]);
             }
         }
         return cloneObj;

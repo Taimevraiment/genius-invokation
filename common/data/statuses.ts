@@ -2696,17 +2696,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303236: () => new StatusBuilder('｢看到那小子挣钱…｣（生效中）').combatStatus().icon('buff3').useCnt(0).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('本回合中，每当对方获得2个元素骰，你就获得1个[万能元素骰]。(此效果提供的元素骰除外)')
-        .handle((_, event) => {
+        .handle((status, event) => {
             const { source = -1 } = event;
             return {
                 trigger: isCdt(source != 303236, ['getdice-oppo']),
                 isAddTask: true,
+                cmds: isCdt(status.useCnt == 1, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
                 exec: eStatus => {
-                    if (eStatus) {
-                        eStatus.useCnt = (eStatus.useCnt + 1) % 2;
-                        if (eStatus.useCnt == 1) return;
-                        return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }] }
-                    }
+                    if (eStatus) eStatus.useCnt = (eStatus.useCnt + 1) % 2;
                 }
             }
         }),
