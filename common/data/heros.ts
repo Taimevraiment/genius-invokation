@@ -346,9 +346,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const summon = isCdt<[number, ...any][]>(ver >= 'v4.2.0' && talent && !smn112051, [[112051, 1]]);
                     if (talent && smn112051) ++smn112051.useCnt;
                     return {
-                        status: 112052,
                         summon,
-                        cmds: isCdt(ver >= 'v3.6.0', [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }]),
+                        cmds: [{ cmd: 'getStatus', status: 112052 }],
+                        heal: isCdt(ver >= 'v3.6.0', 1),
+                        hidxs: allHidxs(heros),
                     }
                 })
         ),

@@ -47,7 +47,6 @@ export type SkillHandleRes = {
     statusAfter?: (number | [number, ...any])[] | number,
     statusOppoAfter?: (number | [number, ...any])[] | number,
     cmds?: Cmds[],
-    cmdsAfter?: Cmds[],
     heal?: number,
     hidxs?: number[],
     dmgElement?: ElementType,
