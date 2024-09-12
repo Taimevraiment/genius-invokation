@@ -7,7 +7,6 @@ export default class TaskQueue {
     isExecuting: boolean = false;
     constructor() { }
     addTask(taskType: string, args: any[] | StatusTask, isUnshift: boolean = false) {
-        if (this.priorityQueue && this.queue.length == 0) this.priorityQueue = undefined;
         const curQueue = this.priorityQueue ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.warn('重复task:', taskType);
@@ -18,22 +17,28 @@ export default class TaskQueue {
         const queueList = `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
         console.info((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList);
     }
-    async execTask(taskType: string, funcs: [() => void | Promise<void>, number?, number?][], isPriority: boolean) {
-        if (!isPriority && this.priorityQueue == undefined && this.queue.length > 0) this.priorityQueue = [];
+    async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][], isPriority: boolean) {
+        console.info('execTask-' + taskType);
+        if (!isPriority && !this.priorityQueue && this.queue.length > 0) {
+            this.priorityQueue = [];
+        }
+        let res = true;
         for (const [func, after = 0, before = 0] of funcs) {
             await delay(before);
-            await func();
+            res = !!await func();
             await delay(after);
         }
         this.isExecuting = true;
-        console.info('execTask-' + taskType);
+        return res;
     }
     getTask(): [[string, any[] | StatusTask], boolean] {
+        const isPriority = (this.priorityQueue?.length ?? 0) > 0;
         const res = this.priorityQueue?.shift() ?? this.queue.shift();
-        if (!res) return [['', []], false];
-        console.info(`getTask:${res[0]}(queue=[${this.queue.map(v => v[0])}])`);
-        const isPriority = this.priorityQueue != undefined;
-        if (this.priorityQueue?.length == 0) this.priorityQueue = undefined;
+        if (!res) return [['not found', []], false];
+        console.info(`getTask:${res[0]}(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`);
+        if (this.priorityQueue?.length == 0) {
+            this.priorityQueue = undefined;
+        }
         return [res, isPriority];
     }
     isTaskEmpty() {

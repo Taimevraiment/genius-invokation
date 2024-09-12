@@ -2566,7 +2566,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方下一次使用技能后：】将下一个我方后台角色切换到场上。')
         .handle(status => ({
             trigger: ['skill'],
-            cmds: [{ cmd: 'switch-after', cnt: 2500 }],
+            cmds: [{ cmd: 'switch-after' }],
             exec: () => { --status.useCnt },
         })),
 
