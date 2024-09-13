@@ -53,8 +53,6 @@ type Player = {
         willGetCard: Card[], // 即将获得的卡
         willAddCard: {
             cards: Card[], // 即将加入牌库的卡
-            scope: number, // 加入牌库范围
-            isRandom: boolean, // 是否随机置入,否则均匀
             isNotPublic: boolean, // 是否公开
         },
         willDiscard: Card[][], // 即将舍弃的卡 [手牌, 牌库]

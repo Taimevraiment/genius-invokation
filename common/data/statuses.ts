@@ -1224,7 +1224,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
                     exec: () => {
                         if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: SKILL_TYPE.Normal }] }
-                        if (trigger == 'skill') --status.useCnt;
+                        if (trigger == 'skill' && status.useCnt > 0) --status.useCnt;
                         if (trigger == 'change-to' && status.perCnt > 0) --status.perCnt;
                     },
                 }
