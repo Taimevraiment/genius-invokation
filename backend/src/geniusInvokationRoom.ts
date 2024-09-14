@@ -144,7 +144,7 @@ export default class GeniusInvokationRoom {
         const players = clone(this.players);
         const previews: Preview[] = [];
         previews.push(...this._previewSkill(pidx));
-        previews.push(...this._previewCard(pidx, players));
+        previews.push(...this._previewCard(pidx));
         previews.push(...this._previewSwitch(pidx));
         assgin(this.players, players);
         return previews;
@@ -173,10 +173,10 @@ export default class GeniusInvokationRoom {
         this.players.forEach(p => {
             p.handCards.forEach((c, ci) => c.cidx = ci);
             p.heros.forEach(h => {
-                if (!notUpdate) assgin(h.heroStatus, this._updateStatus(p.pidx, [], h.heroStatus, true, p.heros, p.combatStatus, h.hidx));
+                if (!notUpdate) assgin(h.heroStatus, this._updateStatus(p.pidx, [], h.heroStatus, p, true, h.hidx));
                 this._calcSkillChange(p.pidx, h.hidx);
             });
-            if (!notUpdate) assgin(p.combatStatus, this._updateStatus(p.pidx, [], p.combatStatus, true, p.heros, p.combatStatus, p.hidx));
+            if (!notUpdate) assgin(p.combatStatus, this._updateStatus(p.pidx, [], p.combatStatus, p, true, p.hidx));
             assgin(p.summons, this._updateSummon(p.pidx, [], p.summons, p, true));
             p.canAction = canAction && (p.pidx == this.currentPlayerIdx || !isChange) &&
                 (isQuickAction || p.canAction) && this.taskQueue.isTaskEmpty() &&
@@ -809,7 +809,7 @@ export default class GeniusInvokationRoom {
      * @param options.withCard 是否为使用卡
      * @param options.isSwitch 是否切换角色
      * @param options.isReadySkill 是否为准备技能
-     * @param options.otriggers 触发数组(出牌或切换角色时)
+     * @param options.otriggers 触发数组(出牌或切换角色)
      * @param options.willDamages 使用卡/召唤物造成的伤害
      * @param options.dmgElement 使用卡/召唤物造成的伤害元素
      * @param options.isSummon 是否为召唤物预览
@@ -1016,6 +1016,7 @@ export default class GeniusInvokationRoom {
             skid,
             card: withCard,
             hcards: player().handCards,
+            ehcards: opponent().handCards,
             summons: aSummons(),
             isChargedAtk,
             isFallAtk,
@@ -1064,7 +1065,7 @@ export default class GeniusInvokationRoom {
         if (dmgEl && oWillDamages) {
             const { willDamages: willDamage1, willAttachs: willAttachs1, dmgElements: dmgElements1,
                 players: players1, elTips: elTips1, atriggers: atriggers1, etriggers: etriggers1, elrcmds: elrcmds1,
-                aWillHeals: ahealres, bWillHeals: bhealres, isQuickAction: iqa1
+                aWillHeals: ahealres, bWillHeals: bhealres, isQuickAction: iqa1,
             } = this._calcDamage(
                 pidx,
                 dmgEl,
@@ -1140,6 +1141,9 @@ export default class GeniusInvokationRoom {
             this.taskQueue.addTask(`useSkill-${skill.name}`, [[() => {
                 assgin(this.players, players);
                 this._writeLog(`[${player().name}][${aHeros()[player().hidx].name}]使用了[${SKILL_TYPE_NAME[skill.type]}][${skill.name}]`, 'info');
+                const energyCmds: Cmds[] = [];
+                if (skill.cost[2].cnt == 0) energyCmds.push({ cmd: 'getEnergy', cnt: 1 });
+                else if (skill.cost[2].cnt > 0) energyCmds.push({ cmd: 'getEnergy', cnt: -skill.cost[2].cnt });
                 this._doDamage(pidx, {
                     dmgSource: 'skill',
                     atkPidx: pidx,
@@ -1149,7 +1153,7 @@ export default class GeniusInvokationRoom {
                     dmgElements: aDmgElements,
                     elTips: aElTips,
                     willHeals: aWillHeal,
-                }, { isSwitch });
+                }, { isSwitch, cmds: energyCmds });
             }, 2250]], true);
         }
         const { willHeals: skillheal, isSwitch: swc = -1, isSwitchOppo: swco = -1, tasks = [] } = this._doCmds(pidx, isCdt(!isExec || !!skill, skillcmds), {
@@ -1237,13 +1241,15 @@ export default class GeniusInvokationRoom {
                 this.taskQueue.addStatusAtk(atkStatues);
                 this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), true);
             }
-            for (const smn of bPlayers[pidx].summons) {
-                if (!oSummonEids.includes(smn.entityId)) continue;
-                ([`after-skilltype${skill.type}`, 'after-skill'] as Trigger[]).forEach(trg => {
-                    const { smnres } = this._detectSummon(pidx, trg, { csummon: [smn], heros: bPlayers[pidx].heros, hcard: withCard, isExec });
-                    if (smnres) calcAtk(bPlayers, smnres, 'summon', smn.id, skid, 1);
-                });
-            }
+        }
+        for (const smn of bPlayers[pidx].summons) {
+            if (!oSummonEids.includes(smn.entityId)) continue;
+            const strigger = [...dtriggers];
+            if (skill) strigger.push(`after-skilltype${skill.type}`, 'after-skill')
+            strigger.forEach(trg => {
+                const { smnres } = this._detectSummon(pidx, trg, { csummon: [smn], heros: bPlayers[pidx].heros, hcard: withCard, isExec });
+                if (smnres) calcAtk(bPlayers, smnres, 'summon', smn.id, skid, 1);
+            });
         }
         if (isSwitchOppo(skillcmds)) {
             doPreviewStatus(bPlayers, bPlayers[epidx].heros[odmgedHidx].heroStatus, odmgedHidx, STATUS_GROUP.heroStatus, ['change-from', 'change-to'], isExec);
@@ -1399,6 +1405,7 @@ export default class GeniusInvokationRoom {
             bWillHeals,
             elrcmds,
             isQuickAction: false,
+            isFallAtk: false,
         });
         const { heros: aheros, summons: asummons, playerInfo } = res.players[pidx];
         const dmgedPidx = epidx ^ +(isAtkSelf || isAttach);
@@ -1500,7 +1507,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Cryo)) { // 水冰 冻结
                         res.willDamages[getDmgIdx][0] += +!isAttach;
-                        assgin(efhero.heroStatus, this._updateStatus(pidx, [this.newStatus(106)], efhero.heroStatus));
+                        assgin(efhero.heroStatus, this._updateStatus(pidx, [this.newStatus(106)], efhero.heroStatus, res.players[dmgedPidx]));
                         res.elTips[elTipIdx] = ['冻结', dmgElement, attachElement];
                         atriggers.forEach((trg, tri) => {
                             if (tri == atkHidx) trg.push('Frozen');
@@ -1712,6 +1719,7 @@ export default class GeniusInvokationRoom {
                 res.willDamages[getDmgIdx][0] += (stsres?.[`${dmg}`] ?? 0) + (isSummon > -1 ? stsres.addDmgSummon ?? 0 : 0);
             }
             res.isQuickAction ||= stsres.isQuickAction;
+            res.isFallAtk ||= stsres.isFallAtk;
             if (stsres.nsummons.length > 0) {
                 assgin(res.players[cpidx].summons, this._updateSummon(cpidx, stsres.nsummons, res.players[cpidx].summons, res.players[cpidx]));
             }
@@ -1886,6 +1894,7 @@ export default class GeniusInvokationRoom {
         this._doCmds(pidx, stscmds, { players: res.players, ahidx: atkHidx, ehidx: dmgedHidx });
         assgin(res.players[dmgedPidx].summons, this._updateSummon(dmgedPidx, [], esummons, res.players[dmgedPidx], isExec, { destroy: true }));
         assgin(res.players[pidx].summons, this._updateSummon(pidx, [], asummons, res.players[pidx]));
+        res.players[pidx].isFallAtk ||= res.isFallAtk;
         if (!isSwirl && isExec) {
             if (res.willDamages.some(d => Math.max(0, d[0]) + d[1] > 0)) {
                 const willKilledHidxs: number[] = [];
@@ -2340,7 +2349,7 @@ export default class GeniusInvokationRoom {
                 h.heroStatus.forEach(sts => sts.handle(sts, { reset: true })); // 重置角色状态
             });
             player.combatStatus.forEach(sts => sts.handle(sts, { reset: true })); // 重置出战状态
-            if (rCombatStatus.length > 0) assgin(player.combatStatus, this._updateStatus(player.pidx, rCombatStatus, player.combatStatus, true, player.heros, player.combatStatus, player.hidx));
+            if (rCombatStatus.length > 0) assgin(player.combatStatus, this._updateStatus(player.pidx, rCombatStatus, player.combatStatus, player, true, player.hidx));
         });
     }
     /**
@@ -2422,9 +2431,9 @@ export default class GeniusInvokationRoom {
                     ([...h.heroStatus, ...(h.isFront ? player.combatStatus : [])]).forEach(sts => {
                         if (sts.roundCnt > 0) --sts.roundCnt; // 持续回合数-1
                     });
-                    assgin(a[hi].heroStatus, this._updateStatus(player.pidx, [], h.heroStatus, true, a, player.combatStatus, hi));
+                    assgin(a[hi].heroStatus, this._updateStatus(player.pidx, [], h.heroStatus, player, true, hi));
                 });
-                assgin(player.combatStatus, this._updateStatus(player.pidx, [], player.combatStatus, true, player.heros, player.combatStatus, player.hidx));
+                assgin(player.combatStatus, this._updateStatus(player.pidx, [], player.combatStatus, player, true, player.hidx));
                 player.status = PLAYER_STATUS.WAITING;
                 player.phase = PHASE.DICE;
                 player.dice = this._rollDice(player.pidx);
@@ -2513,19 +2522,20 @@ export default class GeniusInvokationRoom {
      * @param options.canAction 是否可行动
      * @param options.isQuickAction 是否为快速行动
      * @param options.atkname 攻击实体名称
+     * @param options.cmds 命令集(目前用于技能充能)
      */
     private _doDamage(pidx: number, damageVO: DamageVO, options: {
         isSwitch?: number, slotSelect?: number[], summonSelect?: number[], canAction?: boolean,
-        isQuickAction?: boolean, atkname?: string, supportSelect?: number[],
+        isQuickAction?: boolean, atkname?: string, supportSelect?: number[], cmds?: Cmds[],
     } = {}) {
         if (damageVO == -1) return;
         let isDie = -1;
-        const { isSwitch = -1, slotSelect, summonSelect, supportSelect, canAction = true, isQuickAction = false, atkname = '' } = options;
+        let heroDie = -1;
+        const { isSwitch = -1, slotSelect, summonSelect, supportSelect, canAction = true, isQuickAction = false, atkname = '', cmds = [] } = options;
         const { atkPidx, atkHidx, dmgElements = [], willDamages = [], willHeals = [] } = damageVO;
         const logPrefix = `[${this.players[atkPidx].name}]${atkHidx > -1 ? `[${this.players[atkPidx].heros[atkHidx].name}]` : `${atkname.replace(/\(\-\d+\)/, '')}`}对`;
         const logs: string[] = [];
-        win: for (const p of this.players) {
-            let heroDie = -1;
+        for (const p of this.players) {
             for (let offset = 0; offset < p.heros.length; ++offset) {
                 const h = p.heros[(p.hidx + offset) % p.heros.length];
                 const phidx = h.hidx + p.pidx * this.players[0].heros.length;
@@ -2559,7 +2569,6 @@ export default class GeniusInvokationRoom {
                             s.perCnt = 0;
                             s.useCntPerRound = 0;
                         });
-                        if (this._isWin() > -1) break win;
                         this.players[p.pidx ^ 1].canAction = false;
                         if (h.isFront) {
                             isDie = p.pidx;
@@ -2570,29 +2579,31 @@ export default class GeniusInvokationRoom {
                     willDamages[phidx] = [-1, 0];
                 }
             }
-            if (heroDie > -1) {
-                if (isSwitch > -1 && this.players[p.pidx].heros[isSwitch].hp > 0) {
-                    isDie = -1;
-                    heroDie = -1;
-                } else {
-                    this.isDieBackChange = !isQuickAction && this.players[p.pidx].phase == PHASE.ACTION;
-                    this.players[p.pidx].status = PLAYER_STATUS.DIESWITCH;
-                    this.players[p.pidx].UI.info = '请选择出战角色...';
-                    this.players[p.pidx ^ 1].UI.info = '等待对方选择出战角色......';
-                    this.players[p.pidx ^ 1].playerInfo.isKillByMyRound = true;
-                    const diehi = heroDie;
-                    // 击倒对方角色
-                    if (heroDie != pidx) this._detectSlot(pidx, 'kill');
-                    setTimeout(() => {
-                        this.players[p.pidx].heros[diehi].isFront = false;
-                        const tips = ['', ''];
-                        tips[p.pidx] = '请选择出战角色';
-                        tips[p.pidx ^ 1] = '等待对方选择出战角色';
-                        this.emit(`${damageVO.dmgSource}-doDamage-heroDie`, isDie, { tip: tips, notPreview: true });
-                    }, 2400);
-                }
+        }
+        logs.forEach(log => this._writeLog(log));
+        if (heroDie > -1) {
+            if (isSwitch > -1 && this.players[isDie].heros[isSwitch].hp > 0) {
+                isDie = -1;
+                heroDie = -1;
+            } else if (this._isWin() == -1) {
+                this.isDieBackChange = !isQuickAction && this.players[isDie].phase == PHASE.ACTION;
+                this.players[isDie].status = PLAYER_STATUS.DIESWITCH;
+                this.players[isDie].UI.info = '请选择出战角色...';
+                this.players[isDie ^ 1].UI.info = '等待对方选择出战角色......';
+                this.players[isDie ^ 1].playerInfo.isKillByMyRound = true;
+                const diehi = heroDie;
+                // 击倒对方角色
+                if (heroDie != pidx) this._detectSlot(pidx, 'kill');
+                setTimeout(() => {
+                    this.players[isDie].heros[diehi].isFront = false;
+                    const tips = ['', ''];
+                    tips[isDie] = '请选择出战角色';
+                    tips[isDie ^ 1] = '等待对方选择出战角色';
+                    this.emit(`${damageVO.dmgSource}-doDamage-heroDie`, isDie, { tip: tips, notPreview: true });
+                }, 2400);
             }
         }
+        this._doCmds(pidx, cmds);
         const isActionInfo = ['skill', 'status', 'card'].includes(damageVO.dmgSource);
         this.emit(`${damageVO.dmgSource}-doDamage-${atkname}`, pidx, {
             damageVO,
@@ -2604,7 +2615,6 @@ export default class GeniusInvokationRoom {
             canAction,
             isQuickAction: isQuickAction && isDie == -1,
         });
-        logs.forEach(log => this._writeLog(log));
     }
     /**
      * 检测治疗
@@ -2964,11 +2974,11 @@ export default class GeniusInvokationRoom {
                 const cstop = slotstsop.filter(s => s.group == STATUS_GROUP.combatStatus);
                 if (hstop.length > 0) {
                     (slotres.hidxs ?? [eheros.findIndex(h => h.isFront)]).forEach(hi => {
-                        assgin(eheros[hi].heroStatus, this._updateStatus(pidx ^ 1, hstop, eheros[hi].heroStatus));
+                        assgin(eheros[hi].heroStatus, this._updateStatus(pidx ^ 1, hstop, eheros[hi].heroStatus, players[pidx ^ 1]));
                     });
                 }
                 if (cstop.length > 0) {
-                    assgin(players[pidx ^ 1].combatStatus, this._updateStatus(pidx ^ 1, cstop, players[pidx ^ 1].combatStatus));
+                    assgin(players[pidx ^ 1].combatStatus, this._updateStatus(pidx ^ 1, cstop, players[pidx ^ 1].combatStatus, players[pidx ^ 1]));
                 }
             }
             if (isExec && (tcmds.length > 0 || isAddTask)) {
@@ -3092,6 +3102,7 @@ export default class GeniusInvokationRoom {
         let aWillHeals: number[] | undefined;
         let readySkill = -1;
         let iqa = false;
+        let stsFallAtk = false;
         const task: [() => void | Promise<void>, number?, number?][] = [];
         let addDmg = 0;
         let getDmg = 0;
@@ -3144,6 +3155,7 @@ export default class GeniusInvokationRoom {
                     isMinusDiceSkill: minusDiceSkillIds.includes(sts.entityId),
                     minusDiceSkill,
                     getdmg,
+                    isExecTask: isExec && !isOnlyExecSts,
                     randomInt: this._randomInt.bind(this),
                     randomInArr: this._randomInArr.bind(this),
                 });
@@ -3166,9 +3178,10 @@ export default class GeniusInvokationRoom {
                 isInvalid ||= stsres.isInvalid ?? false;
                 let stsiqa = isQuickAction == 2 || (card && !card.hasSubtype(CARD_SUBTYPE.Action)) || !!stsres.isQuickAction;
                 iqa ||= stsiqa;
+                stsFallAtk ||= !!stsres.isFallAtk;
                 if (isExec || isOnlyExecSts) {
                     const oCnt = sts.useCnt;
-                    const stsexecres = stsres.exec?.(undefined, { isExec: isExec && !isOnlyExecSts, switchHeroDiceCnt, isQuickAction: isTriggeredQuick });
+                    const stsexecres = stsres.exec?.(undefined, { switchHeroDiceCnt, isQuickAction: isTriggeredQuick });
                     switchHeroDiceCnt = stsexecres?.switchHeroDiceCnt ?? switchHeroDiceCnt;
                     const stscmds = [...(stsres.cmds ?? []), ...(stsexecres?.cmds ?? [])];
                     if (isExec || !stsres.notPreview) (stsres.isAddTask ? taskcmds : cmds).push(...stscmds);
@@ -3290,7 +3303,7 @@ export default class GeniusInvokationRoom {
         }
         return {
             isQuickAction: !!isQuickAction || iqa, addDiceHero, minusDiceHero, switchHeroDiceCnt, isInvalid, minusDiceCard, task,
-            addDmg, getDmg, addDmgSummon, nsummons, aWillHeals, bWillHeals, supportCnt, pdmgs, cmds,
+            addDmg, getDmg, addDmgSummon, nsummons, aWillHeals, bWillHeals, supportCnt, pdmgs, cmds, isFallAtk: stsFallAtk,
         }
     }
     /**
@@ -3746,11 +3759,11 @@ export default class GeniusInvokationRoom {
         const player = players[pidx];
         const opponent = players[pidx ^ 1];
         const { withCard, hidxs: chidxs, heal = 0, isExec = true, ahidx = player.hidx, ehidx = opponent.hidx,
-            heros: ocheros, eheros: oceheros, isAction = false, source = -1, damages, socket,
-            isSummon = -1, trigger = '', getdmg = [], willSwitch = players.map(p => p.heros.map(() => false)),
+            isAction = false, source = -1, damages, socket, isSummon = -1, trigger = '', getdmg = [],
+            willSwitch = players.map(p => p.heros.map(() => false)),
             supportCnt = players.map(() => new Array(MAX_SUPPORT_COUNT).fill(0)) } = options;
-        const cheros = ocheros ?? player.heros;
-        const ceheros = oceheros ?? opponent.heros;
+        const cheros = player.heros;
+        const ceheros = opponent.heros;
         let ndices: DiceCostType[] | undefined;
         if (cmds == undefined || cmds.length == 0) return {}
         let isSwitch: number = -1;
@@ -3838,7 +3851,7 @@ export default class GeniusInvokationRoom {
                 if (cmd == 'getCard') {
                     const willGetCard: Card[] = [];
                     const exclude = cmds[i].hidxs ?? [];
-                    let restCnt = cnt;
+                    let restCnt = cnt || cards.length;
                     while (restCnt > 0) {
                         --restCnt;
                         let wcard: Card | null = null;
@@ -3903,16 +3916,16 @@ export default class GeniusInvokationRoom {
                     }
                 }
                 if (cmd == 'addCard' && isExec) {
-                    this.taskQueue.addTask('addCard', [[async () => {
+                    const cardMap = {};
+                    cards.forEach(c => cardMap[c.name] = (cardMap[c.name] ?? 0) + 1);
+                    const cardStr = Object.entries(cardMap).map(([name, cnt]) => `${cnt}张[${name}]`).join('');
+                    this.taskQueue.addTask(`addCard-p${cpidx}:${cardStr}`, [[async () => {
                         const p = this.players[cpidx];
                         p.UI.willAddCard.cards.push(...cards);
                         p.UI.willAddCard.isNotPublic = mode == CMD_MODE.isNotPublic;
                         const scope = cmds[i].hidxs?.[0] ?? 0;
                         const isRandom = !isAttach;
                         const isNotPublic = mode == CMD_MODE.isNotPublic;
-                        const cardMap = {};
-                        cards.forEach(c => cardMap[c.name] = (cardMap[c.name] ?? 0) + 1);
-                        const cardStr = Object.entries(cardMap).map(([name, cnt]) => `${cnt}张[${name}]`).join('');
                         this._writeLog(`[${p.name}]将${isNotPublic ? `${cards.length}张牌` : `${cardStr}`}${scope == cards.length ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${scope == cards.length ? '' : `${Math.abs(scope)}张`}` : ''}`);
                         this.emit('doCmd--addcard', pidx);
                         await delay(1500);
@@ -4051,8 +4064,9 @@ export default class GeniusInvokationRoom {
                 ((isOppo ? ceheros : cheros) as Hero[]).forEach((h, hi) => {
                     if (h.hp > 0 && (hidxs == undefined && h.isFront || hidxs?.includes(hi))) {
                         if ((cnt > 0 && h.energy < h.maxEnergy) || (cnt < 0 && h.energy > 0)) {
-                            this._writeLog(`[${player.name}][${h.name}]${cnt > 0 ? '获得' : '失去'}${Math.abs(cnt)}点充能`, 'system');
-                            h.energy += cnt;
+                            const pcnt = Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
+                            this._writeLog(`[${player.name}][${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点充能`, 'system');
+                            h.energy += pcnt;
                         }
                     }
                 });
@@ -4098,7 +4112,7 @@ export default class GeniusInvokationRoom {
                         (willDamages?.[pidx * players[0].heros.length + hi].reduce((a, b) => a + Math.max(0, b)) ?? 0),
                         (cnt || heal) - (cmd == 'revive' ? 0.3 : 0)) : -1;
                 });
-                notPreHeal[mode] ||= isAttach;
+                notPreHeal[mode] ||= isAttach || cmd == 'revive';
                 willHeals1.forEach((hl, hli) => {
                     if (hl > -1) {
                         const hlidx = hli + player.pidx * ceheros.length;
@@ -4231,18 +4245,18 @@ export default class GeniusInvokationRoom {
             const fhero = cheros[fhidx];
             if (heroStatus && heroStatus[fhidx].length) {
                 if (hasObjById(fhero.heroStatus, 300005)) heroStatus[fhidx] = heroStatus[fhidx].filter(sts => !sts.hasType(STATUS_TYPE.NonAction));
-                assgin(fhero.heroStatus, this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, true, cheros, player.combatStatus, fhidx));
+                assgin(fhero.heroStatus, this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, player, true, fhidx));
             }
         }
-        if (combatStatus) assgin(player.combatStatus, this._updateStatus(pidx, combatStatus, player.combatStatus, true, cheros, player.combatStatus, ahidx));
+        if (combatStatus) assgin(player.combatStatus, this._updateStatus(pidx, combatStatus, player.combatStatus, player, true, ahidx));
         for (let fhidx = 0; fhidx < ceheros.length; ++fhidx) {
             const fhero = ceheros[fhidx];
             if (heroStatusOppo && heroStatusOppo[fhidx].length) {
                 if (hasObjById(fhero.heroStatus, 300005)) heroStatusOppo[fhidx] = heroStatusOppo[fhidx].filter(sts => !sts.hasType(STATUS_TYPE.NonAction));
-                assgin(fhero.heroStatus, this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, true, ceheros, opponent.combatStatus, fhidx));
+                assgin(fhero.heroStatus, this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, opponent, true, fhidx));
             }
         }
-        if (combatStatusOppo) assgin(opponent.combatStatus, this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, true, ceheros, opponent.combatStatus, ehidx));
+        if (combatStatusOppo) assgin(opponent.combatStatus, this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, opponent, true, ehidx));
         return {
             cmds, ndices, phase, heros: cheros, eheros: ceheros, willHeals, changedEl, isSwitch, isSwitchOppo, discards, elrcmds,
             willSwitch, supportCnt, elTips, willAttachs, dmgElements, atkedIdx, willDamages, attackPreview, tasks,
@@ -4323,13 +4337,14 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      * @returns 预览结果
      */
-    private _previewCard(pidx: number, players: Player[]) {
+    private _previewCard(pidx: number) {
         const curRandom = this._random;
         const { handCards } = this.players[pidx];
         const previews: Preview[] = [];
         for (const cidx in handCards) {
+            const players = clone(this.players);
             const { canSelectHero, canSelectSummon, canSelectSupport, type } = handCards[cidx];
-            const player = this.players[pidx];
+            const player = players[pidx];
             const { isValid: diceValid, diceSelect, heroCanSelect = [], supportCnt, attackPreview: atkPreview = {} }
                 = this._checkCard(pidx, players, +cidx);
             const heroSelects: number[][] = [[]];
@@ -4356,8 +4371,6 @@ export default class GeniusInvokationRoom {
                 }
             }
             for (const heroSelect of heroSelects) {
-                const players = clone(this.players);
-                this._random = curRandom;
                 let isValid = diceValid && canSelectHero == heroSelect.length && canSelectSummon == -1 && canSelectSupport == -1;
                 const supportCanSelect: boolean[][] = players.map(() => new Array(MAX_SUPPORT_COUNT).fill(false));
                 const summonCanSelect: boolean[][] = players.map(() => new Array(MAX_SUMMON_COUNT).fill(false));
@@ -4414,7 +4427,6 @@ export default class GeniusInvokationRoom {
                         });
                     }
                 }
-                assgin(this.players, players);
                 this._random = curRandom;
             }
             // 调和的预览
@@ -4487,9 +4499,10 @@ export default class GeniusInvokationRoom {
      * @param ohidx 旧附魔角色idx
      * @returns 合并后状态
      */
-    _updateStatus(pidx: number, nStatus: Status[], oStatus: Status[], isExec = false, heros?: Hero[], combatStatus?: Status[], hidx: number = -1, ohidx: number = -1) {
+    _updateStatus(pidx: number, nStatus: Status[], oStatus: Status[], player: Player, isExec = false, hidx: number = -1, ohidx: number = -1) {
         const oriStatus: Status[] = clone(oStatus);
         const newStatus: Status[] = clone(nStatus);
+        const { combatStatus, heros } = player;
         const updateAttachEl = (aheros: Hero[], ahidx: number, stype: StatusGroup, sts?: Status[]) => {
             const hero = aheros[ahidx];
             const [attachElSts] = [
@@ -4531,7 +4544,8 @@ export default class GeniusInvokationRoom {
                 }
             } else { // 新附属状态
                 sts.setEntityId(this._genEntityId());
-                sts.handle(sts, { heros, hidx, trigger: 'enter' });
+                const { isFallAtk = false } = sts.handle(sts, { heros, hidx, trigger: 'enter' });
+                player.isFallAtk ||= isFallAtk;
                 oriStatus.push(sts);
             }
             if (heros) {
@@ -4597,7 +4611,7 @@ export default class GeniusInvokationRoom {
                 oriSummon.push(smn.setEntityId(this._genEntityId()));
                 const smnres = smn.handle(smn, { trigger: 'enter', reset: true, heros });
                 if (smnres.rCombatStatus) {
-                    const nsts = this._updateStatus(pidx, this._getStatusById(smnres.rCombatStatus), combatStatus, isExec, heros, combatStatus, hidx);
+                    const nsts = this._updateStatus(pidx, this._getStatusById(smnres.rCombatStatus), combatStatus, player, isExec, hidx);
                     assgin(combatStatus, nsts);
                 }
             }
@@ -4607,7 +4621,7 @@ export default class GeniusInvokationRoom {
             if (smn.statusId > 0) { // 召唤物有关联状态
                 const smnStatus = combatStatus.find(sts => sts.id == smn.statusId) ?? this.newStatus(smn.statusId, smn.id);
                 smnStatus.useCnt = smn.useCnt;
-                const nsts = this._updateStatus(pidx, [smnStatus], combatStatus, isExec, heros, combatStatus, hidx);
+                const nsts = this._updateStatus(pidx, [smnStatus], combatStatus, player, isExec, hidx);
                 assgin(combatStatus, nsts);
             }
             if (!destroy) return true;

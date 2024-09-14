@@ -26,6 +26,7 @@ export class GISkill {
     useCntPerRound: number = 0; // 本回合技能已使用次数
     perCnt: number = 0; // 每回合使用次数
     useCnt: number = 0; // 整局技能使用次数
+    canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     UI: {
         src: string, // 图片url
         description: string; // 技能描述
@@ -34,15 +35,15 @@ export class GISkill {
     };
     constructor(
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
-        options: { id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version } = {},
-        src?: string | string[], handle?: (hevent: SkillHandleEvent, version: Version) => SkillHandleRes | undefined
+        options: { id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version, canSelectSummon?: -1 | 0 | 1 } = {},
+        src?: string | string[], handle?: (hevent: SkillHandleEvent, version: Version) => SkillHandleRes | undefined | void
     ) {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0] } = options;
+        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], canSelectSummon = -1 } = options;
         costElement ??= DICE_TYPE.Same;
-        this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
+        this.dmgElement = de ?? (costElement == DICE_TYPE.Same || cost == 0 ? DAMAGE_TYPE.Physical : costElement);
         this.UI = {
             description: description.replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害'),
             src: (Array.isArray(src) ? src : [src]).filter(v => v != '')[0] ?? '',
@@ -52,6 +53,7 @@ export class GISkill {
         if (id > -1) this.id = id;
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
+        this.canSelectSummon = canSelectSummon;
         this.handle = hevent => {
             const { reset = false, hero, skid, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, ver) ?? {};
@@ -61,11 +63,6 @@ export class GISkill {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;
                 return {}
-            }
-            const skillcmds = handleres.cmds ?? [];
-            if (curskill.type != SKILL_TYPE.Passive) {
-                if (curskill.cost[2].cnt == 0) skillcmds.push({ cmd: 'getEnergy', cnt: 1 });
-                else if (curskill.cost[2].cnt > 0) skillcmds.push({ cmd: 'getEnergy', cnt: -curskill.cost[2].cnt });
             }
             let dmgElement = handleres.dmgElement;
             let atkOffset = handleres.atkOffset;
@@ -80,7 +77,6 @@ export class GISkill {
             }
             return {
                 ...handleres,
-                cmds: skillcmds,
                 dmgElement,
                 atkOffset,
                 exec: () => {
@@ -103,12 +99,13 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _costElement: SkillCostType | undefined;
     private _anyCost: number = 0;
     private _energyCost: VersionMap<number> = new VersionMap();
-    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;
+    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined | void) | undefined;
     private _perCnt: number = 0;
     private _src: string[] = [];
     private _description: VersionMap<string> = new VersionMap();
     private _explains: string[] = [];
     private _readySkillRound: number = 0;
+    private _canSelectSummon: -1 | 0 | 1 = -1;
     constructor(name: string) {
         super();
         this._name = name;
@@ -135,7 +132,8 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._readySkillRound = round;
         return this;
     }
-    spSkill() {
+    vehicle() {
+        this._type = SKILL_TYPE.Vehicle;
         this._energyCost.set(['vlatest', -3]);
         return this;
     }
@@ -190,7 +188,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._anyCost = cost;
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined) {
+    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined | void) | undefined) {
         this._handle = handle;
         return this;
     }
@@ -208,6 +206,10 @@ export class SkillBuilder extends BaseVersionBuilder {
     }
     explain(...explains: string[]) {
         this._explains = explains;
+        return this;
+    }
+    canSelectSummon(canSelectSummon: 0 | 1) {
+        this._canSelectSummon = canSelectSummon;
         return this;
     }
     done() {
@@ -229,6 +231,7 @@ export class SkillBuilder extends BaseVersionBuilder {
                 expl: this._explains,
                 pct: this._perCnt,
                 ver: this._version,
+                canSelectSummon: this._canSelectSummon,
             },
             this._src, this._handle);
     }

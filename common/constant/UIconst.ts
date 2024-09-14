@@ -127,6 +127,7 @@ export const SKILL_TYPE_NAME = {
     [SKILL_TYPE.Elemental]: '元素战技',
     [SKILL_TYPE.Burst]: '元素爆发',
     [SKILL_TYPE.Passive]: '被动技能',
+    [SKILL_TYPE.Vehicle]: '特技',
 } as const;
 
 export const SKILL_TYPE_ABBR = {
@@ -134,6 +135,7 @@ export const SKILL_TYPE_ABBR = {
     [SKILL_TYPE.Elemental]: '技',
     [SKILL_TYPE.Burst]: '爆',
     [SKILL_TYPE.Passive]: '被',
+    [SKILL_TYPE.Vehicle]: '特',
 } as const;
 
 export const ELEMENT_ICON = {

@@ -57,7 +57,7 @@ export class GIStatus {
             description,
             icon: icon.replace(/ski,(\d)/, `ski${hid},$1`),
             iconBg: icbg,
-            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)|(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []), ...expl],
             descriptions: [],
         }
         this.addCnt = act;

@@ -280,7 +280,7 @@
     </div>
     <div class="info-container info-rule" :class="{ 'mobile-font': isMobile }"
       v-if="isShow && isShowRule && ruleExplain.length > 0">
-      <div class="title">- 规则解释 -</div>
+      <div class="title">—— 规则解释 ——</div>
       <div class="rule-desc" v-for="(rule, ridx) in ruleExplain" :key="ridx" v-html="rule"></div>
     </div>
   </div>

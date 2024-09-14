@@ -225,18 +225,20 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1112: () => new HeroBuilder(407).name('菲米尼').since('v5.0.0').fontaine().tags(HERO_TAG.ArkhePneuma).fatui().cryo().claymore()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Freminet.webp')
-        .avatar('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/edc282bd8955faa88895b23c4061a2f5_7931855952099336084.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/4c9e507d20691ab1f31c20ba0003b9a9.png')
         .normalSkill(new NormalSkillBuilder('洑流剑'))
         .skills(
             new SkillBuilder('浮冰增压').description('{dealDmg}，若角色未附属【sts111121】，则使其附属【sts111121】。')
-                .src('')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11122',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/631401634edd0a641a42a09722d82f09_6491825398627675961.png')
                 .elemental().damage(2).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     return { status: isCdt(!hasObjById(heroStatus, 111121), 111121) }
                 }),
             new SkillBuilder('猎影潜袭').description('{dealDmg}，本角色附属【sts111122】。')
-                .src('')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11123',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/4c548a11ba631ee6ccf70282d8af1718_5268158437550047138.png')
                 .burst(2).damage(4).cost(3).handle(() => ({ status: 111122 }))
         ),
 
@@ -1078,15 +1080,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1510: () => new HeroBuilder(408).name('闲云').since('v5.0.0').liyue().anemo().catalyst()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Liuyun.webp')
-        .avatar('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/25d2e76748611db680909e98c1629e41_2183137475204023064.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/895c928cc596421e6ecb3e12a8f9ff5d.png')
         .normalSkill(new NormalSkillBuilder('清风散花词'))
         .skills(
             new SkillBuilder('朝起鹤云').description('{dealDmg}，生成【sts115101】，本角色附属【sts115104】。')
-                .src('')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/15102',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1914d2cb4199cd49e28604f105b1e57d_5159935908470746953.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: [115101, 115104] })),
             new SkillBuilder('暮集竹星').description('{dealDmg}，治疗所有我方角色1点，生成手牌【crd115102】。')
-                .src('')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/15103',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/9defe82ef629b59ef3c373d3ba64e492_2031181392714657327.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 115102 }] }))
         ),
 
@@ -1566,14 +1570,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e29c46b79a53a6c428d46017eecb52c2.png')
         .normalSkill(new NormalSkillBuilder('碎涛旋跃'))
         .skills(
-            new SkillBuilder('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+4)。然后[舍弃]1张原本元素骰费用最高的手牌。')
+            new SkillBuilder('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+3)。然后[舍弃]1张原本元素骰费用最高的手牌。')
+                .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+4)。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v5.0.0')
                 .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+5)。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v4.8.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f5c0f89cf02925ec13e306d11a5f7bd8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/942e3d28310f4395ee7e3f1580268db8_512199522496433076.png')
                 .elemental().damage(1).cost(3).explain('sts122041').handle((event, ver) => {
                     const { hero: { heroStatus } } = event;
                     return {
-                        addDmgCdt: Math.min(ver < 'v4.8.0' ? 5 : 4, Math.floor(getObjById(heroStatus, 122042)?.useCnt ?? 0) / 3),
+                        addDmgCdt: Math.min(ver < 'v4.8.0' ? 5 : ver < 'v5.0.0' ? 4 : 3, Math.floor(getObjById(heroStatus, 122042)?.useCnt ?? 0) / 3),
                         cmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }],
                     }
                 }),
@@ -1594,12 +1599,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').monster().tags(HERO_TAG.Hilichurl).hydro()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_HilistrayWater.webp')
-        .avatar('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/79deea8fbb624269dc7a85fb22bbf649_2655043128470707650.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/17912c63d03adfefcb3cc1c262909ffb.png')
         .normalSkill(new NormalSkillBuilder('镰刀旋斩'))
         .skills(
             new SkillBuilder('狂澜镰击').description('{dealDmg}。；如果有敌方角色附属有【sts106】或【sts122052】，则本角色获得1点[充能]。(每回合1次)')
-                .src('')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/22052',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5bcf4aecbc53a844c2a25c980f2ab6ac_2541470900687128535.png')
                 .elemental().damage(3).cost(3).perCnt(1).handle(event => {
                     const { eheros = [], hero: { skills: [, skill] } } = event;
                     if (skill.perCnt <= 0) return;
@@ -1609,7 +1615,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                 }),
             new SkillBuilder('浮泡攻势').description('{dealDmg}，生成手牌【crd122051】。')
-                .src('')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/22053',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1eef9550382f6987f37db0e387ed9ea5_1022099738869474504.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 122051 }] }))
         ),
 

@@ -13,6 +13,7 @@ export type SkillHandleEvent = {
     combatStatus?: Status[],
     eheros?: Hero[],
     hcards?: Card[],
+    ehcards?: Card[],
     summons?: Summon[],
     isChargedAtk?: boolean,
     isFallAtk?: boolean,
@@ -54,6 +55,7 @@ export type SkillHandleRes = {
     atkTo?: number,
     minusDiceSkill?: MinuDiceSkill,
     isNotAddTask?: boolean,
+    emitTrigger?: Trigger[],
     exec?: () => void,
 }
 
@@ -135,6 +137,33 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     66043: () => new SkillBuilder('霆雷破袭').description('{dealDmg}，此角色附属【sts126022】。')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png')
         .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
+
+    1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
+        .vehicle().costSame(1).handle(() => ({ heal: 2, status: 115103 })),
+
+    1220511: () => new SkillBuilder('水泡战法').description('(需准备1个行动轮)造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
+        .vehicle().costSame(1).handle(() => ({ status: 1220512 })),
+
+    3130011: () => new SkillBuilder('原海水刃').description('{dealDmg}。')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130011')
+        .vehicle().damage(2).costAny(2),
+
+    3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021')
+        .vehicle().damage(1).costSame(2).handle(event => {
+            const { hcards = [], ehcards = [], randomInArr } = event;
+            if (!randomInArr) return;
+            const maxDice = ehcards.reduce((a, b) => Math.max(a, b.cost + b.anydice), 0);
+            const { cidx } = randomInArr(ehcards.filter(c => c.cost + c.anydice == maxDice));
+            return {
+                minusDiceSkill: isCdt(hcards.length <= 2, { vehicle: [0, 0, 1] }),
+                cmds: [{ cmd: 'getCard', cnt: 1, card: ehcards.splice(cidx, 1) }],
+            }
+        }),
+
+    3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。(每回合最多使用1次)')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031')
+        .vehicle().costSame(1).canSelectSummon(1).handle(() => ({ emitTrigger: ['phase-end'] })),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

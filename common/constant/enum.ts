@@ -271,6 +271,7 @@ export const SKILL_TYPE = {
     Elemental: 2, // 元素战技
     Burst: 3, // 元素爆发
     Passive: 4, // 被动技能
+    Vehicle: 5, // 特技
 } as const;
 
 export type SkillType = TypeConst<typeof SKILL_TYPE>;

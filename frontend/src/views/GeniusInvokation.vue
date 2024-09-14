@@ -148,7 +148,7 @@
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
-      (client.currSkill.id != -1 || client.isShowSwitchHero >= 2)">
+      (client.currSkill.id != -1 || client.isShowSwitchHero >= 2 || client.willHp.some(v => v != undefined))">
     </div>
 
   </div>

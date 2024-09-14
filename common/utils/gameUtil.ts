@@ -133,7 +133,10 @@ export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
 export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];
 
 // 根据角色id获取天赋id
-export const getTalentIdByHid = (hid: number): number => +`2${hid}1`;
+export const getTalentIdByHid = (hid: number): number => {
+    if (hid == 2602) return 226022;
+    return +`2${hid}1`
+}
 
 // 合并预回血
 export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | number[][], players?: Player[]) => {

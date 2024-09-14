@@ -522,8 +522,9 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311409: () => new CardBuilder(402).name('勘探钻机').since('v4.8.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(2)
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
+    311409: () => new CardBuilder(402).name('勘探钻机').since('v4.8.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
+        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发1次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
+        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。', 'v5.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
         .handle((card, event) => {
             const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], trigger = '' } = event;
@@ -1151,17 +1152,14 @@ const allCards: Record<number, () => CardBuilder> = {
     312702: () => advancedElArtifact(178, ELEMENT_TYPE.Dendro).name('深林的记忆')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/8c84639efb7e6a9fb445daafdee873fe_8494733884893501982.png'),
 
-    313001: () => new CardBuilder(413).name('异色猎刀鳐').since('v5.0.0').vehicle().costSame(0)
-        .description('')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_LiedaoYao.webp'),
+    313001: () => new CardBuilder(413).name('异色猎刀鳐').since('v5.0.0').vehicle().costSame(0).useCnt(2)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/0d55e21afcc8d3c7cf6ced335e61d1ed_4875228470615091891.png'),
 
-    313002: () => new CardBuilder(414).name('匿叶龙').since('v5.0.0').vehicle().costSame(1)
-        .description('')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_GouzhuaLong.webp'),
+    313002: () => new CardBuilder(414).name('匿叶龙').since('v5.0.0').vehicle().costSame(1).useCnt(2)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/287e61466a4267642dd2a744082cd968_4105284594778183841.png'),
 
-    313003: () => new CardBuilder(415).name('鳍游龙').since('v5.0.0').vehicle().costSame(2)
-        .description('')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_QiyouLong.webp'),
+    313003: () => new CardBuilder(415).name('鳍游龙').since('v5.0.0').vehicle().costSame(2).useCnt(2)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/e09b424842396b5009b8507cdd1e24aa_6586947503862363.png'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1253,7 +1251,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321022: () => new CardBuilder(416).name('圣火竞技场').since('v5.0.0').place().costSame(2)
         .description('【我方使用技能或特技后：】此牌累积1点｢角逐之焰｣。；【｢角逐之焰｣达到2时：】生成1个随机基础元素骰。；【达到4时：】治疗我方出战角色2点。；【达到6时：】弃置此牌，使当前的我方出战角色在2回合内造成的伤害+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_JingjiChang.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/1b4eb98d6fba0e8a0746a356a5d3f34c_7076497852083287608.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1372,7 +1370,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     322028: () => new CardBuilder(417).name('阿伽娅').since('v5.0.0').ally().costSame(1)
         .description('我方使用｢特技｣时：少花费1个元素骰。(每回合1次)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_AimiTa.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/10e2b03ab56591fdebdeadd3dcd091dc_4193411804004313763.png'),
 
     323001: () => new CardBuilder(214).name('参量质变仪').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个｢质变进度｣。；此牌已累积3个｢质变进度｣时，弃置此牌并生成3个不同的基础元素骰。')
@@ -1474,7 +1472,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     330009: () => new CardBuilder(418).name('赦免宣告').since('v5.0.0').legend().costSame(1).canSelectHero(1)
         .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Wuzui.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/76e84615db9526436d399c79aaa9d47a_2755116418615718064.png')
         .handle(() => ({ status: 300005 })),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
@@ -1967,7 +1965,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332039: () => new CardBuilder(419).name('龙伙伴的聚餐').since('v5.0.0').event().costSame(0)
         .description('选择一个装备在我方角色的｢特技｣装备牌，使其[可用次数]+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_FeedDrogen.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/d6bc8f4595323b94a240d692f60e9587_6859675329237579153.png')
         .handle((_, event) => {
             const { selectHeros: [hidx] = [], heros = [] } = event;
             return {
@@ -2197,7 +2195,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     211121: () => new CardBuilder(410).name('梦晓与决意之刻').since('v5.0.0').talent(1).costCryo(3).perCnt(2)
         .description('{action}；装备有此牌的【hro】使用技能后，抓1张牌。(每回合至多触发2次)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Freminet.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/64216fa8f7b8b6af5888be62b1e5446f_690317746253684619.png')
         .handle(card => {
             if (card.perCnt <= 0) return;
             return {
@@ -2432,8 +2430,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【sts114032】获得以下效果：初始[持续回合]+1，并且会使所附属角色造成的[雷元素伤害]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/58e4a4eca066cc26e6547f590def46ad_1659079510132865575.png'),
 
-    214041: () => new CardBuilder(89).name('落羽的裁择').talent(1).costElectro(3).perCnt(1).perCnt(0, 'v4.8.0')
-        .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数至少为2时使用【ski】时，造成的伤害额外+2。(每回合1次)')
+    214041: () => new CardBuilder(89).name('落羽的裁择').talent(1).costElectro(3).perCnt(2).perCnt(1, 'v5.0.0').perCnt(0, 'v4.8.0')
+        .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数至少为2时使用【ski】时，造成的伤害额外+1。(每回合2次)')
+        .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数至少为2时使用【ski】时，造成的伤害额外+2。(每回合1次)', 'v5.0.0')
         .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数为偶数时使用【ski】时，造成的伤害额外+1。', 'v4.8.0')
         .description('{action}；装备有此牌的【hro】在【sts114041】的｢凭依｣级数为3或5时使用【ski】时，造成的伤害额外+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png')
@@ -2442,10 +2441,15 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heroStatus } = heros[hidx];
             const stsCnt = getObjById(heroStatus, 114041)?.useCnt ?? 0;
             let addDmgCdt = 0;
-            if (ver < 'v4.2.0' && [3, 5].includes(stsCnt) || ver < 'v4.8.0' && stsCnt % 2 == 0) addDmgCdt = 1;
-            if (ver >= 'v4.8.0' && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
+            if (
+                ver < 'v4.2.0' && [3, 5].includes(stsCnt) ||
+                ver < 'v4.8.0' && stsCnt % 2 == 0 ||
+                ver >= 'v5.0.0' && stsCnt >= 2 && card.perCnt > 0
+            ) {
+                addDmgCdt = 1;
+            } else if (ver >= 'v4.8.0' && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
             return {
-                trigger: isCdt(addDmgCdt == 2, ['skilltype2']),
+                trigger: ['skilltype2'],
                 addDmgCdt,
                 exec: () => {
                     if (ver >= 'v4.8.0') --card.perCnt;
@@ -2578,7 +2582,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     215101: () => new CardBuilder(411).name('知是留云僊').since('v5.0.0').talent(1).costAnemo(3).useCnt(0)
         .description('{action}；我方切换角色时，此牌累积1层｢风翎｣。(每回合最多累积2层)；装备有此牌的【hro】使用【ski,0】时，消耗所有｢风翎｣，每消耗1层都使伤害+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Liuyun.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/62bc79a32ed8d588a83497004487fb3c_1818674885518885960.png')
         .handle((card, event) => {
             const { trigger = '' } = event;
             if (trigger == 'change' && card.useCnt == 2) return;
@@ -2813,7 +2817,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     222051: () => new CardBuilder(412).name('轻盈水沫').since('v5.0.0').talent(1).costHydro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，我方使用｢特技｣时：少花费1个元素骰。(每回合1次)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_HilistrayWater.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/b95574484dca95f9e3a11750c6b3058a_7054619643283816743.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             return {
@@ -2914,7 +2918,7 @@ const allCards: Record<number, () => CardBuilder> = {
             execmds: [{ cmd: 'getStatus', status: [126011, 126012] }],
         })),
 
-    226021: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
+    226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png')
         .handle((_, event) => {
@@ -2985,14 +2989,16 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['skilltype2'], cmds }
         }),
 
-    115102: () => new CardBuilder().name('竹星'),
+    115102: () => new CardBuilder().name('竹星').vehicle().costSame(0).useCnt(2)
+        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Liuyun.webp'),
 
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方｢出战角色｣造成1点物理伤害，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
         .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
 
-    122051: () => new CardBuilder().name('水泡史莱姆'),
+    122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
+        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_HilistrayWater.webp'),
 
     124051: () => new CardBuilder().name('噬骸能量块').event().costSame(0)
         .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。(每回合最多打出1张)')
