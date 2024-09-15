@@ -211,7 +211,7 @@ export const assgin = <T>(target: T, source: T) => {
         !source?.hasOwnProperty(key) && delete target[key];
     }
     for (const key in source) {
-        if (typeof target[key] === 'object') assgin(target[key], source[key]);
+        if (typeof source[key] === 'object' && source[key] !== null) assgin(target[key], source[key]);
         else target[key] = source[key];
     }
 }

@@ -1972,7 +1972,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 canSelectHero: heros.map(h => h.vehicleSlot != null),
                 exec: () => {
                     const vehicleSlot = heros[hidx]?.vehicleSlot;
-                    if (vehicleSlot) ++vehicleSlot.useCnt;
+                    if (vehicleSlot) ++vehicleSlot[0].useCnt;
                 }
             }
         }),
@@ -2838,9 +2838,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】如果装备有此牌的【hro】已触发过【sts123022】，就立刻弃置此牌，为角色附属【sts123024】。；装备有此牌的【hro】触发【sts123022】时：弃置此牌，为角色附属【sts123024】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png')
         .handle((card, event) => {
-            const { heros = [] } = event;
-            if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 123022)) {
-                return { status: 123024, isDestroy: true }
+            const { heros = [], trigger = '' } = event;
+            if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 123022) || trigger == 'will-killed') {
+                return { trigger: ['will-killed'], status: 123024, isDestroy: true }
             }
         }),
 

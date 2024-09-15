@@ -1,5 +1,6 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, Version } from '../constant/enum.js';
+import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
@@ -60,17 +61,6 @@ export type SupportExecRes = {
     switchHeroDiceCnt?: number,
     summon?: (number | [number, ...any])[] | number,
 }
-
-const DICE_WEIGHT = [ // 吃骰子的优先级权重(越低越优先)
-    DICE_COST_TYPE.Omni,
-    DICE_COST_TYPE.Cryo,
-    DICE_COST_TYPE.Hydro,
-    DICE_COST_TYPE.Pyro,
-    DICE_COST_TYPE.Electro,
-    DICE_COST_TYPE.Geo,
-    DICE_COST_TYPE.Dendro,
-    DICE_COST_TYPE.Anemo,
-];
 
 const getSortedDices = (dices: DiceCostType[]) => {
     const diceCnt = arrToObj(DICE_WEIGHT, 0);
@@ -285,10 +275,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 欧庇克莱歌剧院
     321017: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
         const { heros = [], eheros = [] } = event;
-        const slotCost = heros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot, h.vehicleSlot])
-            .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
-        const eslotCost = eheros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot, h.vehicleSlot])
-            .filter(slot => slot != null).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
+        const slotCost = heros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot, h.vehicleSlot?.[0]])
+            .filter(slot => slot).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
+        const eslotCost = eheros.flatMap(h => [h.talentSlot, h.artifactSlot, h.weaponSlot, h.vehicleSlot?.[0]])
+            .filter(slot => slot).reduce((a, b) => a + (b?.cost ?? 0) + (b?.anydice ?? 0), 0);
         if (slotCost >= eslotCost && support.perCnt > 0) {
             return {
                 trigger: ['action-start'],

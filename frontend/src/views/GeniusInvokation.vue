@@ -63,7 +63,7 @@
       @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect" />
 
     <div class="hand-card" v-if="(client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO || client.isWin > -1"
-      :class="{ 'mobile-hand-card': isMobile }"
+      :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
       <handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
         :class="{ selected: client.handcardsSelect == idx }" :card="card" :isMobile="isMobile"
@@ -107,20 +107,22 @@
     <div class="skills" v-else-if="client.isShowSkills">
       <div class="skill" :class="{ 'skill-will': canAction && client.currSkill.id == skill.id }"
         v-for="skill in client.skills" :key="skill.id">
-        <div class="skill-btn" @click.stop="useSkill(skill.id, false)" :style="{ boxShadow: skill.style.fullEnergy }">
+        <div class="skill-btn" :class="{ 'skill-vehicle': skill.type == SKILL_TYPE.Vehicle }"
+          @click.stop="useSkill(skill.id, false)" :style="{ boxShadow: skill.style.fullEnergy }">
           <div class="skill3-bg" v-if="skill.isNotFullEnergy" :style="{ background: skill.style.notFullEnergy }">
-            <div class="skill-btn" style="transform: translate(1px, 1px)"></div>
+            <div class="skill-btn" style="left: 2px;top: 2px;width: 92%;height: 92%;border: 2px solid transparent;">
+            </div>
           </div>
           <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0"
             :alt="SKILL_TYPE_ABBR[skill.type]" />
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
+          <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop="useSkill(skill.id, true)"></div>
         </div>
         <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx"
           :style="{ color: skill.style.costColors[cidx] }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[cost.type])" />
           <span style="z-index: 1">{{ skill.CurrCnts[cidx] }}</span>
         </div>
-        <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop=" useSkill(skill.id, true)"></div>
       </div>
     </div>
 
@@ -173,6 +175,7 @@ import {
   ELEMENT_TYPE,
   PHASE,
   PLAYER_STATUS,
+  SKILL_TYPE,
   Version
 } from '@@@/constant/enum';
 import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
@@ -548,81 +551,7 @@ body {
   background-color: red;
   bottom: 95px;
   font-size: medium;
-  z-index: 5;
 }
-
-/* .card {
-  position: absolute;
-  width: 90px;
-  height: 140px;
-  top: 0;
-  border: 2px solid black;
-  border-radius: 10px;
-  background: #a7bbdd;
-  cursor: pointer;
-  text-align: center;
-  white-space: nowrap;
-  transition: 0.3s;
-} */
-
-/* .card-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  padding-top: 20px;
-} */
-
-/* .card-cost {
-  position: absolute;
-  left: -20px;
-  top: -10px;
-  width: 20px;
-  height: 20px;
-  border-radius: 8px;
-  color: white;
-  font-weight: bold;
-  text-align: center;
-  line-height: 20px;
-  -webkit-text-stroke: 1px black;
-} */
-
-/* .card-energy {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  left: -20px;
-  top: 25px;
-  color: white;
-  font-weight: bold;
-  text-align: center;
-  line-height: 20px;
-  -webkit-text-stroke: 1px black;
-} */
-
-/* .card-cost>span,
-.card-energy>span {
-  position: absolute;
-  left: 20px;
-  top: 5px;
-} */
-
-/* .card-img {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 10px;
-} */
-
-/* .legend-border {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  border-radius: inherit;
-} */
 
 .card.selected {
   transform: translateY(-15px);
@@ -633,6 +562,7 @@ body {
   height: 20%;
   bottom: 0;
   right: 5%;
+  pointer-events: none;
 }
 
 .skill {
@@ -642,18 +572,22 @@ body {
   flex-wrap: wrap;
   justify-content: center;
   margin-right: 5px;
+  pointer-events: auto;
 }
 
 .skill-will {
   z-index: 5;
 }
 
+.skill-vehicle {
+  width: 38px !important;
+  height: 38px !important;
+}
+
 .skill3-bg {
   position: absolute;
-  bottom: -3px;
-  right: -3px;
-  width: 48px;
-  height: 48px;
+  width: 108%;
+  height: 108%;
   border-radius: 50%;
 }
 
@@ -687,8 +621,8 @@ body {
 
 .skill-forbidden {
   position: absolute;
-  width: 45px;
-  height: 45px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background-color: #7e5f2ab9;
 }
@@ -1040,11 +974,6 @@ body {
     height: 100px;
   }
 
-  /* .card,
-  .card-img {
-    width: 60px;
-  } */
-
   .btn-group button {
     font-size: 12px;
     padding: 3px 12px;
@@ -1079,11 +1008,6 @@ body {
   bottom: 70px;
   font-size: medium;
 }
-
-/* .mobile-card {
-  width: 60px;
-  height: 90px;
-} */
 
 .mobile-rest-card {
   width: 16px;

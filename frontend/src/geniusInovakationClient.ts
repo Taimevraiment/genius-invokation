@@ -53,6 +53,7 @@ export default class GeniusInvokationClient {
     actionInfo: string = ''; // 行动信息
     currCard: Card = NULL_CARD(); // 当前选择的卡
     currSkill: Skill = NULL_SKILL(); // 当前选择的技能
+    vehicleSkill: Skill | null = null; // 当前特技
     decks: { name: string, shareCode: string, version: Version }[] = [];
     deckIdx: number; // 出战卡组id
     editDeckIdx: number; // 当前编辑卡组idx
@@ -138,7 +139,9 @@ export default class GeniusInvokationClient {
     get skills() { // 技能组
         const fhero = this.getFrontHero();
         if (fhero == undefined) return [];
-        return fhero.skills.filter(skill => skill.type != SKILL_TYPE.Passive).map(skill => {
+        const skills = [...fhero.skills];
+        if (fhero.vehicleSlot) skills.unshift(fhero.vehicleSlot[1]);
+        return skills.filter(skill => skill.type != SKILL_TYPE.Passive).map(skill => {
             const elColor = ELEMENT_COLOR[skill.cost[0].type];
             const energyPer = fhero.energy / skill.cost[2].cnt * 100;
             const isValid = !!this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skill.id)?.isValid;

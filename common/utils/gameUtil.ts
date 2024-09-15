@@ -3,15 +3,15 @@ import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, E
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
-export const allHidxs = (heros?: Hero[], options: { isDie?: boolean, exclude?: number, isAll?: boolean } = {}): number[] => {
-    const { isDie = false, exclude = -1, isAll = false } = options;
+export const allHidxs = (heros?: Hero[], options: { isDie?: boolean, exclude?: number, include?: number, isAll?: boolean } = {}): number[] => {
+    const { isDie = false, exclude = -1, include = -1, isAll = false } = options;
     const hidx = heros?.findIndex(h => h.isFront) ?? -1;
     if (!heros || hidx == -1) return [];
     const hidxs: number[] = [];
     for (let i = 0; i < heros.length; ++i) {
         const hi = (hidx + i) % heros.length;
         const { hp } = heros[hi];
-        if (isAll || ((isDie ? hp <= 0 : hp > 0) && exclude != hi)) hidxs.push(hi);
+        if (isAll || include == hi || ((isDie ? hp <= 0 : hp > 0) && exclude != hi)) hidxs.push(hi);
     }
     return hidxs;
 }

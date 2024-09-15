@@ -42,6 +42,7 @@ export type StatusHandleEvent = {
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
     heal?: number[],
+    isExec?: boolean,
     isExecTask?: boolean,
     summons?: Summon[],
     esummons?: Summon[],
@@ -51,6 +52,7 @@ export type StatusHandleEvent = {
     isSummon?: number,
     source?: number,
     getdmg?: number[],
+    slotsDestroy?: number[],
     randomInt?: (len?: number) => number,
     randomInArr?: <T>(arr: T[]) => T,
 }
@@ -453,27 +455,27 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111121: () => new StatusBuilder('佩伊刻计').heroStatus().icon('buff2').useCnt(0)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方每抓1张牌后：】此牌累积1层｢压力阶级｣。；【所附属角色使用〖ski,1〗时：】如果｢压力阶级｣至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后｢压力阶级｣至少有4层，则再额外造成2点[物理伤害]。')
-        .handle((status, event) => ({
-            trigger: ['getcard', 'skilltype2', 'after-skilltype2'],
-            minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
-            damage: isCdt(status.useCnt >= 4, 2),
-            element: DAMAGE_TYPE.Physical,
-            exec: eStatus => {
-                const { isMinusDiceSkill, trigger = '' } = event;
-                if (trigger == 'skilltype2' && status.useCnt >= 2 && status.useCnt < 4 && isMinusDiceSkill) {
-                    status.roundCnt = 0;
-                } else if (trigger == 'after-skilltype2' && eStatus && eStatus.useCnt >= 4) {
-                    eStatus.roundCnt = 0;
-                } else if (trigger == 'getcard') {
-                    ++status.useCnt;
+        .handle((status, event) => {
+            const { isMinusDiceSkill, isExecTask, isExec, trigger = '' } = event;
+            return {
+                trigger: ['getcard', 'skilltype2', 'after-skilltype2'],
+                minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
+                damage: isCdt(isExec || status.useCnt >= 4, 2),
+                element: DAMAGE_TYPE.Physical,
+                exec: eStatus => {
+                    if (trigger == 'after-skilltype2' && isExecTask && eStatus) {
+                        if (eStatus.useCnt >= 2 && isMinusDiceSkill || eStatus.useCnt >= 4) eStatus.roundCnt = 0;
+                    } else if (trigger == 'getcard') {
+                        ++status.useCnt;
+                    }
                 }
             }
-        })),
+        }),
 
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。(可叠加，最多叠加至2点〔; 当前已抓{pct}张牌 〕)。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, hcards = [], pile = [], trigger = '', randomInArr } = event;
+            const { heros = [], hidx = -1, hcards = [], pile = [], trigger = '', isExecTask, randomInArr } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const sts111123 = getObjById(heros[hidx]?.heroStatus, 111123);
             if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('getcard');
@@ -481,14 +483,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: triggers,
                 isAddTask: true,
                 exec: eStatus => {
-                    if (trigger.includes('skilltype') && !eStatus) {
+                    if (trigger.includes('skilltype') && !eStatus && isExecTask) {
                         const costs = pile.map(c => c.cost + c.anydice);
-                        const highCost = Math.max(...costs);
-                        const cnt = Math.min(2, costs.filter(c => c == highCost).length);
+                        const cnt = Math.min(2, costs.length);
                         if (cnt == 0) return;
-                        const highCostCidxs = hcards.filter(c => c.cost + c.anydice == highCost).map(c => c.cidx);
                         const willPutInPileCidxs: number[] = [];
-                        for (let i = 0; i < cnt; ++i) willPutInPileCidxs.push(randomInArr!(highCostCidxs));
+                        for (let i = 0; i < cnt; ++i) {
+                            const highCost = Math.max(...costs);
+                            costs.splice(costs.indexOf(highCost), 1);
+                            const highCostCidxs = hcards.filter(c => c.cost + c.anydice == highCost && !willPutInPileCidxs.includes(c.cidx)).map(c => c.cidx);
+                            willPutInPileCidxs.push(randomInArr!(highCostCidxs));
+                        }
                         const card = willPutInPileCidxs.map(cidx => hcards[cidx]);
                         willPutInPileCidxs.sort((a, b) => b - a).forEach(cidx => hcards.splice(cidx, 1));
                         return { cmds: [{ cmd: 'addCard', card, hidxs: [-cnt], mode: CMD_MODE.isNotPublic }, { cmd: 'getCard', cnt }] }
@@ -1361,7 +1366,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    115104: () => new StatusBuilder('闲云冲击波').heroStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
+    115104: () => new StatusBuilder('闲云冲击波').heroStatus().icon('buff6').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
         .description('【我方切换到所附属角色后：】造成1点[风元素伤害]。；[useCnt]')
         .handle(() => ({
             trigger: ['change-to'],
@@ -1899,19 +1904,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。此效果触发后，此角色造成的[火元素伤害]+1。')
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到3点生命值。', 'v4.6.0')
         .handle((_, event, ver) => {
-            const { heros = [], hidx = -1 } = event;
+            const { hidx = -1 } = event;
             return {
                 trigger: ['will-killed'],
                 cmds: [{ cmd: 'revive', cnt: ver < 'v4.6.0' ? 3 : 4, hidxs: [hidx] }],
                 exec: eStatus => {
                     if (!eStatus) return;
                     --eStatus.useCnt;
-                    const status: number[] = ver < 'v4.6.0' ? [] : [123026];
-                    if (heros[hidx]?.talentSlot) {
-                        heros[hidx].talentSlot = null;
-                        status.push(123024)
-                    }
-                    return { cmds: [{ cmd: 'getStatus', status, hidxs: [hidx] }] }
+                    return { cmds: [{ cmd: 'getStatus', status: isCdt(ver >= 'v4.6.0', 123026), hidxs: [hidx] }] }
                 }
             }
         }),
@@ -2439,7 +2439,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     302217: () => new StatusBuilder('卢蒂妮的心意').combatStatus().useCnt(2).type(STATUS_TYPE.Attack)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
-        .description('角色使用技能后，随机受到2点治疗或2点[穿透伤害]。；[useCnt]')
+        .description('【我方角色使用技能后：】受到2点治疗或2点[穿透伤害]。；[useCnt]')
         .handle((_, event) => {
             const { hidx = -1, randomInt } = event;
             const res = isCdt<StatusHandleRes>(!!randomInt, () => [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()], {});
@@ -2660,22 +2660,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303224: () => card332024sts(2),
 
     303225: () => new StatusBuilder('野猪公主（生效中）').combatStatus().icon('buff2').useCnt(2).roundCnt(1).type(STATUS_TYPE.Usage)
-        .description('【本回合中，我方每有一张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。；[useCnt]；(角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果)')
-        .handle((status, event) => {
-            const { heros = [], hidx = -1 } = event;
-            return {
-                trigger: ['slot-destroy'],
-                exec: () => {
-                    let cnt = 0;
-                    if (heros[hidx].weaponSlot != null) ++cnt;
-                    if (heros[hidx].artifactSlot != null) ++cnt;
-                    if (heros[hidx].talentSlot != null) ++cnt;
-                    cnt = Math.min(status.useCnt, cnt) || 1;
-                    status.useCnt -= cnt;
-                    return { cmds: [{ cmd: 'getDice', cnt, element: DICE_COST_TYPE.Omni }] }
-                }
+        .description('【本回合中，我方每有一张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。；[useCnt]；(角色被击倒时弃置装备牌，或者覆盖装备｢武器｣｢圣遗物｣或｢特技｣，都可以触发此效果)')
+        .description('【本回合中，我方每有一张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。；[useCnt]；(角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果)', 'v5.0.0')
+        .handle((status, event) => ({
+            trigger: ['slot-destroy'],
+            isAddTask: true,
+            exec: eStatus => {
+                const { slotsDestroy = [] } = event;
+                const cnt = Math.min(status.useCnt, slotsDestroy.reduce((a, b) => a + b, 0));
+                if (eStatus) eStatus.useCnt -= cnt;
+                return { cmds: [{ cmd: 'getDice', cnt, element: DICE_COST_TYPE.Omni }] }
             }
-        }),
+        })),
 
     303226: () => new StatusBuilder('坍陷与契机（生效中）').combatStatus().icon('debuff').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

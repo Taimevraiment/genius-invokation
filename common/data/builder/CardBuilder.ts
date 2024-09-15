@@ -55,9 +55,8 @@ export class GICard {
         this.version = version;
         subType ??= [];
         if (!Array.isArray(subType)) subType = [subType];
-        const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2,
+        const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
             isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0] } = options;
-        let { canSelectHero = 0 } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -73,8 +72,12 @@ export class GICard {
         if (tag?.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
         else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；(｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；(角色最多装备1件｢圣遗物｣)`;
-        else if (subType?.includes(CARD_SUBTYPE.Vehicle)) this.UI.description += `[特技]：【rsk${id}1】；【[可用次数]：{useCnt}】；(角色最多装备1个｢特技｣)`;
-        else if (subType?.includes(CARD_SUBTYPE.Food)) {
+        else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
+            const vehicle = `rsk${id}1`;
+            this.UI.description += `[特技]：【${vehicle}】；【[可用次数]：{useCnt}】；(角色最多装备1个｢特技｣)`;
+            this.UI.explains.push(vehicle);
+            handle = card => ({ trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } });
+        } else if (subType?.includes(CARD_SUBTYPE.Food)) {
             if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；(每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣)`;
             else this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
             const ohandle = handle;
@@ -112,7 +115,6 @@ export class GICard {
             this.UI.description += `；(牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组)`;
         }
         this.UI.description = this.UI.description.replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`).replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
-        if (type == CARD_TYPE.Equipment) canSelectHero = 1;
         this.cost = cost;
         this.costType = costType;
         this.type = type;

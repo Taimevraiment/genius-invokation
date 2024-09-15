@@ -105,7 +105,7 @@ export const CARD_SUBTYPE_NAME = {
 export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Weapon]: 'https://patchwiki.biligame.com/images/ys/thumb/c/ce/l98mlw9whvdgy6w95qlteb9wwc2dc5i.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%AD%A6%E5%99%A8.png',
     [CARD_SUBTYPE.Artifact]: 'https://patchwiki.biligame.com/images/ys/thumb/7/75/540z6nuruz9nb2do1epuwnocpe054kz.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%A3%E9%81%97%E7%89%A9.png',
-    [CARD_SUBTYPE.Vehicle]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_Vehicle.png',
+    [CARD_SUBTYPE.Vehicle]: '/image/Vehicle.png',
     [CARD_SUBTYPE.Place]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2b/54crg8w1f0ccqmh8x4qc6yg8qxnvy4c.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%BA%E5%9C%B0.png',
     [CARD_SUBTYPE.Ally]: 'https://patchwiki.biligame.com/images/ys/thumb/a/aa/nwz9v6fm3wn5cdtnmq5m33nnzlubx8s.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E4%BC%99%E4%BC%B4.png',
     [CARD_SUBTYPE.Item]: 'https://patchwiki.biligame.com/images/ys/thumb/1/1c/9ljzczmf9xjnk6qwdx893iicjkw392h.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E9%81%93%E5%85%B7.png',
@@ -120,6 +120,7 @@ export const SLOT_CODE = {
     [CARD_SUBTYPE.Weapon]: 0,
     [CARD_SUBTYPE.Artifact]: 1,
     [CARD_SUBTYPE.Talent]: 2,
+    [CARD_SUBTYPE.Vehicle]: 3,
 } as const;
 
 export const SKILL_TYPE_NAME = {
@@ -246,6 +247,17 @@ export const WEAPON_TYPE_URL = {
     [WEAPON_TYPE.Catalyst]: 'https://patchwiki.biligame.com/images/ys/thumb/c/c9/ds5nd67iwl6pmc8mukcl42qkqo4675o.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%B3%95%E5%99%A8.png',
     [WEAPON_TYPE.Polearm]: 'https://patchwiki.biligame.com/images/ys/thumb/0/04/8q4g6en1xo23qzvh7rglnvy2q3t72yt.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E9%95%BF%E6%9F%84%E6%AD%A6%E5%99%A8.png',
 } as const;
+
+export const DICE_WEIGHT = [ // 骰子的优先级权重(越低越优先)
+    DICE_COST_TYPE.Omni,
+    DICE_COST_TYPE.Cryo,
+    DICE_COST_TYPE.Hydro,
+    DICE_COST_TYPE.Pyro,
+    DICE_COST_TYPE.Electro,
+    DICE_COST_TYPE.Geo,
+    DICE_COST_TYPE.Dendro,
+    DICE_COST_TYPE.Anemo,
+];
 
 const elReactionExplain: { [key: string]: (...args: any) => string } = {
     融化: (isAttach = false) => `【融化】：${!isAttach ? '本伤害+2' : '没有效果'}`,
