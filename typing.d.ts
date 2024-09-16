@@ -85,8 +85,8 @@ type MinuDiceSkill = {
     skilltype1?: number[],
     skilltype2?: number[],
     skilltype3?: number[],
+    skilltype5?: number[],
     elDice?: PureElementType,
-    vehicle?: number[],
 }
 
 type AddDiceSkill = {
@@ -94,6 +94,7 @@ type AddDiceSkill = {
     skilltype1?: number[],
     skilltype2?: number[],
     skilltype3?: number[],
+    skilltype5?: number[],
 }
 
 type StatusTask = {
@@ -106,7 +107,6 @@ type StatusTask = {
     trigger: Trigger, // 触发条件
     hidx: number, // 攻击者hidx
     skid: number, // 引起协同攻击的技能id -1为切换角色
-    // isSwitchAtk?: boolean, // 是否为下落攻击/刻晴切换攻击
     isQuickAction?: boolean, // 是否为快速行动
     discards?: Card[], // 舍弃的牌
     card?: Card, // 调和或使用的牌
@@ -173,7 +173,7 @@ type DamageVO = {
 } | -1;
 
 type TrgElRe = keyof typeof SWIRL_ELEMENT;
-type TrgSkType = Exclude<SkillType, 4>;
+type TrgSkType = Exclude<SkillType, 4 | 5>;
 type TrgEl = keyof typeof PURE_ELEMENT_TYPE;
 type TrgDmg = 'el' | keyof typeof DAMAGE_TYPE;
 type TrgOppo = '-oppo' | '';
@@ -188,7 +188,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther}dmg` | `${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
-    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle` | '';
+    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

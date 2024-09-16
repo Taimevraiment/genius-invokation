@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
@@ -23,6 +23,7 @@ export type SupportHandleEvent = {
     minusDiceSkill?: number[][],
     isMinusDiceTalent?: boolean,
     skid?: number,
+    sktype?: SkillType,
     hidx?: number,
     heal?: number[],
     getdmg?: number[],
@@ -505,8 +506,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 常九爷
     322009: () => new SupportBuilder().collection().handle((support, event) => {
-        const { skid = -1 } = event;
-        if (skid == -1) return;
+        const { sktype = SKILL_TYPE.Vehicle } = event;
+        if (sktype != SKILL_TYPE.Vehicle) return;
         return {
             trigger: ['Physical-dmg', 'Physical-getdmg', 'Pierce-dmg', 'Pierce-getdmg', 'elReaction', 'get-elReaction'],
             supportCnt: support.cnt < 2 ? 1 : -3,
@@ -786,7 +787,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         return {
             trigger: ['vehicle'],
             isNotAddTask: true,
-            minusDiceSkill: { vehicle: [0, 0, 1] },
+            minusDiceSkill: { skilltype5: [0, 0, 1] },
             exec: spt => {
                 if (event.isMinusDiceSkill) --spt.perCnt;
                 return { isDestroy: false }
@@ -795,8 +796,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 参量质变仪
     323001: () => new SupportBuilder().collection().handle((support, event) => {
-        const { skid = -1 } = event;
-        if (skid == -1) return;
+        const { sktype = SKILL_TYPE.Vehicle } = event;
+        if (sktype != SKILL_TYPE.Vehicle) return;
         return {
             trigger: ['el-dmg', 'el-getdmg'],
             supportCnt: support.cnt < 2 ? 1 : -3,

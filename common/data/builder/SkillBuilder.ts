@@ -10,7 +10,7 @@ import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 export class GISkill {
     id: number = -1; // 唯一id
     name: string; // 技能名
-    type: SkillType; // 技能类型：1普通攻击 2元素战技 3元素爆发 4被动技能
+    type: SkillType; // 技能类型：1普通攻击 2元素战技 3元素爆发 4被动技能 5特技
     damage: number; // 伤害量
     dmgElement: ElementType; // 伤害元素
     cost: [ // 费用列表 [元素骰, 任意骰, 充能]
@@ -43,7 +43,7 @@ export class GISkill {
         this.damage = damage;
         const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], canSelectSummon = -1 } = options;
         costElement ??= DICE_TYPE.Same;
-        this.dmgElement = de ?? (costElement == DICE_TYPE.Same || cost == 0 ? DAMAGE_TYPE.Physical : costElement);
+        this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         this.UI = {
             description: description.replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害'),
             src: (Array.isArray(src) ? src : [src]).filter(v => v != '')[0] ?? '',
@@ -58,11 +58,12 @@ export class GISkill {
             const { reset = false, hero, skid, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, ver) ?? {};
             if (isReadySkill) return handleres;
-            const curskill = hero.skills.find(sk => sk.id == skid)!;
+            const curskill = hero.skills.find(sk => sk.id == skid) ?? hero.vehicleSlot?.[1];
+            if (!curskill) throw new Error('@skill_constructor: 未找到技能');
             if (reset) {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;
-                return {}
+                return {};
             }
             let dmgElement = handleres.dmgElement;
             let atkOffset = handleres.atkOffset;
@@ -134,7 +135,7 @@ export class SkillBuilder extends BaseVersionBuilder {
     }
     vehicle() {
         this._type = SKILL_TYPE.Vehicle;
-        this._energyCost.set(['vlatest', -3]);
+        this._energyCost.set(['vlatest', -2]);
         return this;
     }
     energy(energy: number) {
@@ -213,7 +214,9 @@ export class SkillBuilder extends BaseVersionBuilder {
         return this;
     }
     done() {
-        const element: ElementType = ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode];
+        const elCode = this._id.toString().startsWith('313') ? 0 :
+            Math.floor(this._id / 1000 / (this._type == SKILL_TYPE.Vehicle ? 10 : 1)) % 10 as ElementCode;
+        const element: ElementType = ELEMENT_CODE_KEY[elCode];
         this.costElement(element);
         const readySkillDesc = this._readySkillRound > 0 ? `(需准备${this._readySkillRound}个行动轮)；` : '';
         const description = readySkillDesc + this._description.get(this._curVersion, '')

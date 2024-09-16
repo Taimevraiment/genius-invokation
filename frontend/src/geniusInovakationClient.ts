@@ -148,17 +148,17 @@ export default class GeniusInvokationClient {
             return {
                 ...skill,
                 isForbidden: skill.isForbidden || this.isLookon > -1 || !this.canAction || !isValid,
-                CurrCnts: skill.cost.filter(c => c.cnt > 0).map((cost, cidx) => {
-                    return Math.max(cost.cnt - (cidx < 2 ? (skill.costChange[cidx] as number) : 0), 0);
-                }),
+                CurrCnts: skill.cost.map((cost, cidx) => [cost.cnt, Math.max(cost.cnt - (cidx < 2 ? (skill.costChange[cidx] as number) : 0), 0)])
+                    .filter(([c]) => c).map(([, c]) => c),
                 isNotFullEnergy: skill.type == SKILL_TYPE.Burst && fhero.energy < skill.cost[2].cnt,
                 style: {
                     fullEnergy: skill.type == SKILL_TYPE.Burst && fhero.energy >= skill.cost[2].cnt ? `0px 0px 8px 3px ${elColor}` : '',
                     notFullEnergy: `linear-gradient(to top, ${elColor} 0%, ${elColor} ${energyPer}%, transparent ${energyPer}%, transparent 100%)`,
-                    costColors: skill.cost.filter(c => c.cnt > 0).map((_, cidx) => {
-                        return cidx < 2 && (skill.costChange[cidx] as number) > 0 ? CHANGE_GOOD_COLOR :
+                    costColors: skill.cost.map((cost, cidx) => ({
+                        cnt: cost.cnt,
+                        color: cidx < 2 && (skill.costChange[cidx] as number) > 0 ? CHANGE_GOOD_COLOR :
                             cidx < 2 && (skill.costChange[cidx] as number) < 0 ? CHANGE_BAD_COLOR : 'white'
-                    }),
+                    })).filter(({ cnt }) => cnt).map(({ color }) => color),
                 },
             }
         });

@@ -915,7 +915,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('风灵作成·陆叁零捌').description('{dealDmg}，使对方强制切换到前一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6a/lu1s5jeliurancx62txk0i7pbgeu07d.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/20e905e459a535c372b1c0eacf6dd9d8_1859277343951133632.png')
-                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-before', cnt: 2500, isOppo: true }] })),
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-before', isOppo: true }] })),
             new SkillBuilder('禁·风灵作成·柒伍同构贰型').description('{dealDmg}，召唤【smn115011】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png')
@@ -930,7 +930,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('风压剑').description('{dealDmg}，使对方强制切换到下一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/7/76/qzlqexf6zwkkcpxpyevb3m4viwepssv.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/68d6fd8c9815617b0491dd19586ae2f4_2703229586151516906.png')
-                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-after', cnt: 2500, isOppo: true }] })),
+                .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'switch-after', isOppo: true }] })),
             new SkillBuilder('蒲公英之风').description('治疗我方所有角色2点，召唤【smn115021】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/23/gqtjyn7ckzz3g0zbtmska8ws1ry1dqj.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/e4d3dd465a4f6026ba923619c1827c94_3960747061292563787.png')
@@ -982,7 +982,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/c492b46c71485b1377cf8c9f3f5dd6e8_6376046014259793309.png')
                 .elemental().damage(1).damage(3, 'v4.8.0').cost(3).handle(event => ({
                     status: [[115051, event.swirlEl]],
-                    cmds: [{ cmd: 'switch-after', cnt: 2500 }],
+                    cmds: [{ cmd: 'switch-after' }],
                 })),
             new SkillBuilder('万叶之一刀').description('{dealDmg}，召唤【smn115052】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/47/g6cfvzw12ruiclawmxh903fcoowmr9j.png',
@@ -1048,7 +1048,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         heal: isCdt(cdt, 2),
                         status: isCdt(cdt, 115081),
                         addDmgCdt: isCdt(hasTalent, 2),
-                        cmds: isCdt(hasTalent, [{ cmd: 'switch-before', cnt: 2500, isOppo: true }]),
+                        cmds: isCdt(hasTalent, [{ cmd: 'switch-before', isOppo: true }]),
                     }
                 }),
             new SkillBuilder('魔术·运变惊奇').description('{dealDmg}，召唤【smn115082】。')
@@ -1091,7 +1091,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('暮集竹星').description('{dealDmg}，治疗所有我方角色1点，生成手牌【crd115102】。')
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/15103',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/9defe82ef629b59ef3c373d3ba64e492_2031181392714657327.png')
-                .burst(2).damage(1).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 115102 }] }))
+                .burst(2).damage(1).cost(3).handle(event => ({ heal: 1, hidxs: allHidxs(event.heros), cmds: [{ cmd: 'getCard', cnt: 1, card: 115102 }] }))
         ),
 
     1601: () => new HeroBuilder(42).name('凝光').liyue().geo().catalyst()
@@ -1610,7 +1610,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { eheros = [], hero: { skills: [, skill] } } = event;
                     if (skill.perCnt <= 0) return;
                     const eStatus = eheros.flatMap(h => h.heroStatus);
-                    if (hasObjById(eStatus, 106) || hasObjById(eStatus, 122052)) {
+                    const eAttachment = eheros.find(h => h.isFront)?.attachElement?.[0];
+                    if (eAttachment == ELEMENT_TYPE.Cryo || hasObjById(eStatus, 106) || hasObjById(eStatus, 122052)) {
                         return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], exec: () => { --skill.perCnt } }
                     }
                 }),
@@ -1857,14 +1858,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/a72086131fbe3e03201926a46dac48f3_7155522304163694322.png')
                 .elemental().damage(1, 'v3.4.0').cost(3).handle(event => ({
                     summon: 125011,
-                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-after', cnt: 2500 }]),
+                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-after' }]),
                 })),
             new SkillBuilder('霜驰影突').description('召唤【smn125012】。').description('{dealDmg},召唤【smn125012】。', 'v3.4.0')
                 .src('https://patchwiki.biligame.com/images/ys/1/17/a8qboxl35nar8vuaho1cewppy0fp43t.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6df8766388e62c6a97f9898605fb45e2_6047730151662669218.png')
                 .elemental().damage(1, 'v3.4.0').costCryo(3).handle(event => ({
                     summon: 125012,
-                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-before', cnt: 2500 }]),
+                    cmds: isCdt(!!event.talent, [{ cmd: 'switch-before' }]),
                 })),
             new SkillBuilder('机巧伪天狗抄').description('{dealDmg}，触发我方所有【剑影】召唤物效果。(不消耗其[可用次数])')
                 .src('https://patchwiki.biligame.com/images/ys/f/fd/ren7lbexbnyvrdvn0aqhbrxx6atdoov.png',

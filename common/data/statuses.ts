@@ -353,10 +353,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.AddDamage).talent(isTalent)
         .description(`我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；[useCnt]${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`)
         .handle((status, event) => {
-            const { skilltype = -1 } = event;
+            const { skilltype = SKILL_TYPE.Vehicle } = event;
             return {
                 addDmgCdt: 1,
-                trigger: isCdt(skilltype != -1, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
+                trigger: isCdt(skilltype != SKILL_TYPE.Vehicle, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
                 exec: () => {
                     if (status.perCnt == 1 && skilltype == SKILL_TYPE.Normal) {
                         --status.perCnt;
@@ -475,7 +475,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。(可叠加，最多叠加至2点〔; 当前已抓{pct}张牌 〕)。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, hcards = [], pile = [], trigger = '', isExecTask, randomInArr } = event;
+            const { heros = [], hidx = -1, hcards = [], trigger = '', isExecTask } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const sts111123 = getObjById(heros[hidx]?.heroStatus, 111123);
             if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('getcard');
@@ -484,19 +484,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 isAddTask: true,
                 exec: eStatus => {
                     if (trigger.includes('skilltype') && !eStatus && isExecTask) {
-                        const costs = pile.map(c => c.cost + c.anydice);
-                        const cnt = Math.min(2, costs.length);
-                        if (cnt == 0) return;
-                        const willPutInPileCidxs: number[] = [];
-                        for (let i = 0; i < cnt; ++i) {
-                            const highCost = Math.max(...costs);
-                            costs.splice(costs.indexOf(highCost), 1);
-                            const highCostCidxs = hcards.filter(c => c.cost + c.anydice == highCost && !willPutInPileCidxs.includes(c.cidx)).map(c => c.cidx);
-                            willPutInPileCidxs.push(randomInArr!(highCostCidxs));
-                        }
-                        const card = willPutInPileCidxs.map(cidx => hcards[cidx]);
-                        willPutInPileCidxs.sort((a, b) => b - a).forEach(cidx => hcards.splice(cidx, 1));
-                        return { cmds: [{ cmd: 'addCard', card, hidxs: [-cnt], mode: CMD_MODE.isNotPublic }, { cmd: 'getCard', cnt }] }
+                        const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
+                        card.sort((a, b) => b.cidx - a.cidx).forEach(c => hcards.splice(c.cidx, 1));
+                        return { cmds: [{ cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.isNotPublic }, { cmd: 'getCard', cnt: card.length }] }
                     }
                     if (trigger == 'getcard') {
                         if (!eStatus) {
@@ -1074,7 +1064,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114063: () => new StatusBuilder('鸣煌护持').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
         .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
-            const { skilltype = 1, hasDmg = false } = event;
+            const { skilltype = SKILL_TYPE.Vehicle, hasDmg = false } = event;
             const trigger: Trigger[] = [];
             if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(skilltype)) {
                 trigger.push(`skilltype${skilltype}` as Trigger);
@@ -1354,9 +1344,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('角色进行｢普通攻击｣时：此技能视为[下落攻击]，并且伤害+1。技能结算后，造成1点[风元素伤害]。；[useCnt]')
         .handle((_, event) => {
             const { skilltype = -1, trigger = '' } = event;
-            if (trigger == 'enter' || (trigger == 'skill' && skilltype != SKILL_TYPE.Normal)) return { isFallAtk: true }
+            if (trigger == 'enter' || (['skill', 'vehicle', 'card'].includes(trigger) && skilltype != SKILL_TYPE.Normal)) {
+                return { trigger: [trigger], isFallAtk: true }
+            }
             return {
-                trigger: ['skilltype1'],
+                trigger: ['after-skilltype1'],
                 addDmgType1: 1,
                 element: DAMAGE_TYPE.Anemo,
                 damage: 1,
@@ -1449,8 +1441,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
         .description('我方角色造成的[岩元素伤害]+1。；[roundCnt]')
         .handle((_, event) => {
-            const { skilltype = -1, talent } = event;
-            if (skilltype == -1) return;
+            const { skilltype = SKILL_TYPE.Vehicle, talent } = event;
+            if (skilltype == SKILL_TYPE.Vehicle) return;
             const isTalent = !!talent && talent.perCnt > 0;
             return {
                 trigger: ['Geo-dmg'],
@@ -1881,9 +1873,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     122043: (useCnt: number = 1) => new StatusBuilder('黑色幻影').combatStatus().useCnt(useCnt).type(STATUS_TYPE.Barrier).summonId()
         .description('【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-2。；[useCnt]').barrierUsage(2),
 
-    122052: () => new StatusBuilder('水泡围困').heroStatus().icon('').roundCnt(1).iconBg(DEBUFF_BG_COLOR)
+    122052: () => new StatusBuilder('水泡围困').heroStatus().roundCnt(1)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Daze.webp')
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction)
         .description('【角色无法使用技能。】(持续到回合结束)'),
+
+    122053: () => readySkillStatus('水泡封锁(准备中)', 1220512),
 
     123011: (isTalent: boolean = false) => new StatusBuilder('潜行').heroStatus().useCnt(2).useCnt(3, isTalent)
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage).type(isTalent, STATUS_TYPE.Enchant).talent(isTalent)
@@ -2335,7 +2330,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     301023: () => new StatusBuilder('圣火竞技场（生效中）').heroStatus().icon('buff5').roundCnt(2).type(STATUS_TYPE.AddDamage)
-        .description('所附属角色造成的伤害+1。；[roundCnt]')
+        .description('角色造成的伤害+1。；[roundCnt]')
         .handle(() => ({ addDmg: 1 })),
 
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
@@ -2500,9 +2495,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303132: () => new StatusBuilder('元素共鸣：热诚之火（生效中）').heroStatus().icon('buff2')
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。')
-        .handle((status, { skid = -1 }) => ({
+        .handle((status, { skilltype = SKILL_TYPE.Vehicle }) => ({
             addDmgCdt: 3,
-            trigger: isCdt(skid != -1, ['elReaction-Pyro']),
+            trigger: isCdt(skilltype != SKILL_TYPE.Vehicle, ['elReaction-Pyro']),
             exec: () => { --status.roundCnt },
         })),
 
@@ -2510,7 +2505,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).useCnt(1).roundCnt(1)
         .description('【本回合中，我方角色下一次造成[岩元素伤害]后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。')
         .handle((_, event) => {
-            const { skid = -1 } = event;
+            const { skilltype = SKILL_TYPE.Vehicle } = event;
             return {
                 trigger: ['Geo-dmg'],
                 isAddTask: true,
@@ -2518,7 +2513,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (!eStatus) return;
                     const { combatStatus = [] } = execEvent;
                     const shieldStatus = combatStatus.find(ost => ost.hasType(STATUS_TYPE.Shield));
-                    if (shieldStatus && skid != -1) {
+                    if (shieldStatus && skilltype != SKILL_TYPE.Vehicle) {
                         shieldStatus.useCnt += 3;
                         --eStatus.useCnt;
                     }

@@ -76,7 +76,11 @@ export class GICard {
             const vehicle = `rsk${id}1`;
             this.UI.description += `[特技]：【${vehicle}】；【[可用次数]：{useCnt}】；(角色最多装备1个｢特技｣)`;
             this.UI.explains.push(vehicle);
-            handle = card => ({ trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } });
+            handle = (card, event) => {
+                const { skid = -1 } = event;
+                if (skid != +`${card.id}1`) return;
+                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+            };
         } else if (subType?.includes(CARD_SUBTYPE.Food)) {
             if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；(每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣)`;
             else this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;

@@ -30,7 +30,9 @@
         </div>
         <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
         </div>
-        <div class="info-card-explain" v-for="(expl, eidx) in skillExplain" :key="eidx" style="margin-top: 5px">
+        <div class="info-card-explain"
+          v-for="(expl, eidx) in skillExplain.filter(() => !(info as Card).subType.includes(CARD_SUBTYPE.Vehicle))"
+          :key="eidx" style="margin-top: 5px">
           <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
         </div>
       </div>
@@ -78,15 +80,15 @@
             <div class="skill-type">{{ SKILL_TYPE_NAME[skill.type] }}</div>
             <div v-for="(desc, didx) in skill.UI.descriptions" :key="didx" v-html="desc"></div>
           </div>
-          <div v-if="isShowSkill[sidx] && skillExplain[type == INFO_TYPE.Skill ? skidx : sidx]?.length"
-            @click.stop=" showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
+          <div v-if="isShowSkill[sidx]"
+            @click.stop="showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
             <div class="info-hero-skill-explain"
               v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx]" :key="eidx">
               <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
             </div>
           </div>
         </div>
-        <div v-if="type == INFO_TYPE.Skill">
+        <div v-if="type == INFO_TYPE.Skill && skills[skidx].type != SKILL_TYPE.Vehicle">
           <div class="info-equipment"
             v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).vehicleSlot">
             <div class="title">—— 角色装备 ——</div>
@@ -530,7 +532,7 @@ watchEffect(() => {
       vehicle.UI.descriptions = vehicle.UI.description.split('；').map(desc => wrapDesc(desc, { obj: vehicle }));
       skills.value.push(vehicle);
       isShowSkill.value.push(true);
-      skillExplain.value = wrapExpl(vehicle.UI.explains, vehicle.id + vehicle.name);
+      skillExplain.value = [wrapExpl(vehicle.UI.explains, vehicle.id + vehicle.name)];
     }
   }
   if (info.value && 'maxUse' in info.value) { // 召唤物
@@ -552,11 +554,11 @@ watchEffect(() => {
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot, info.value.vehicleSlot?.[0]].forEach(slot => {
       if (slot) {
         const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc, { obj: slot, type: 'slot' }));
-        const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Action].every(v => slot.subType.includes(v));
+        const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
-        slotExplain.value.push(wrapExpl(slot.UI.explains, slot.id + slot.name).slice(isActionTalent ? 1 : 0));
+        slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
         if (slot.subType.includes(CARD_SUBTYPE.Vehicle)) {
           skills.value.push((info.value as Hero).vehicleSlot![1]);
           isShowSkill.value.push(type.value == INFO_TYPE.Skill);
