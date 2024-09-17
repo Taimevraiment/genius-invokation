@@ -183,6 +183,7 @@
       </div>
       <div v-if="type == INFO_TYPE.Summon" @click.stop="showRule((info as Summon).UI.description)">
         <div class="name">{{ (info as Summon).name }}</div>
+        <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
         <div class="summon-desc" v-for="(desc, didx) in (info as Summon).UI.descriptions" :key="didx" v-html="desc">
         </div>
         <div class="info-summon-explain" v-for="(expl, eidx) in smnExplain" :key="eidx" style="margin-top: 5px">
@@ -538,6 +539,8 @@ watchEffect(() => {
   if (info.value && 'maxUse' in info.value) { // 召唤物
     smnExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     info.value.UI.descriptions = (info.value.UI.description as string).split('；').map(desc => wrapDesc(desc, { obj: info.value as Summon }));
+    const onceDesc = info.value.UI.descriptions.findIndex(v => v.includes('入场时：'));
+    if (onceDesc > -1) info.value.UI.descriptions.splice(onceDesc, 1);
   }
   if (info.value && 'heroStatus' in info.value) { // 角色
     heroStatusExplain.value = [];

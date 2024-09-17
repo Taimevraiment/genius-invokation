@@ -1508,8 +1508,8 @@ button:active {
 .card-change {
   position: absolute;
   top: 0;
-  left: 15%;
-  width: 70%;
+  left: 10%;
+  width: 80%;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -1520,22 +1520,18 @@ button:active {
 }
 
 .init-cards {
-  width: 90%;
+  width: 100%;
   height: 70%;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly;
   align-items: center;
 }
 
 .init-card {
   position: relative;
-  width: 90px;
-  height: 125px;
-  border-radius: 10px;
   cursor: pointer;
   text-align: center;
-  padding-top: 25px;
   background-color: #a7bbdd;
 }
 

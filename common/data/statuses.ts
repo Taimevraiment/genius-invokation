@@ -53,6 +53,7 @@ export type StatusHandleEvent = {
     source?: number,
     getdmg?: number[],
     slotsDestroy?: number[],
+    isSelfRound?: boolean,
     randomInt?: (len?: number) => number,
     randomInArr?: <T>(arr: T[]) => T,
 }
@@ -358,7 +359,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 addDmgCdt: 1,
                 trigger: isCdt(skilltype != SKILL_TYPE.Vehicle, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
                 exec: () => {
-                    if (status.perCnt == 1 && skilltype == SKILL_TYPE.Normal) {
+                    if (status.perCnt > 0 && skilltype == SKILL_TYPE.Normal) {
                         --status.perCnt;
                     } else {
                         --status.useCnt;
@@ -734,11 +735,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
         .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；[useCnt]')
         .handle((status, event) => {
-            const { skilltype = -1, trigger = '' } = event;
+            const { skilltype = SKILL_TYPE.Vehicle, trigger = '' } = event;
             return {
                 trigger: ['dmg', 'dmg-Swirl'],
                 addDmg: 1,
-                addDmgCdt: isCdt(skilltype == -1, 1),
+                addDmgCdt: isCdt(skilltype == SKILL_TYPE.Vehicle, 1),
                 exec: () => {
                     if (trigger == 'dmg') --status.useCnt
                 },
@@ -1210,7 +1211,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115051: (swirlEl: PureElementType = ELEMENT_TYPE.Anemo) =>
         new StatusBuilder('乱岚拨止' + `${swirlEl != ELEMENT_TYPE.Anemo ? `·${ELEMENT_NAME[swirlEl][0]}` : ''}`)
             .heroStatus().icon('buff').useCnt(1).iconBg(STATUS_BG_COLOR[swirlEl]).perCnt(1).perCnt(0, 'v4.8.0')
-            .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.ConditionalEnchant).type(ver => ver >= 'v4.8.0', STATUS_TYPE.Usage)
+            .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.ConditionalEnchant)
+            .type(ver => ver >= 'v4.8.0', STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill)
             .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣; 本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
@@ -1225,7 +1227,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 }
                 return {
                     trigger: ['change-to', 'action-start', 'skilltype1'],
-                    isQuickAction: status.perCnt > 0,
+                    isQuickAction: trigger == 'change-to' && status.perCnt > 0,
                     attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
                     exec: () => {
                         if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: SKILL_TYPE.Normal }] }
@@ -1339,7 +1341,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    115103: () => new StatusBuilder('踏风腾跃').heroStatus().icon('ski,1').useCnt(1)
+    115103: () => new StatusBuilder('踏风腾跃').heroStatus().icon('ski,2').useCnt(1)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('角色进行｢普通攻击｣时：此技能视为[下落攻击]，并且伤害+1。技能结算后，造成1点[风元素伤害]。；[useCnt]')
         .handle((_, event) => {
@@ -1349,7 +1351,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
             return {
                 trigger: ['after-skilltype1'],
-                addDmgType1: 1,
+                addDmgCdt: +(trigger == 'skilltype1'),
                 element: DAMAGE_TYPE.Anemo,
                 damage: 1,
                 exec: eStatus => {
@@ -2249,15 +2251,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]')
         .handle((status, event) => {
-            const { card, playerInfo: { isKillByMyRound = false } = {} } = event;
-            if (!isKillByMyRound) return;
-            const triggers: Trigger[] = ['kill', 'skill', 'change-from'];
-            if (card?.hasSubtype(CARD_SUBTYPE.Action)) triggers.push('card');
+            const { trigger = '' } = event;
+            if (trigger != 'kill' && status.useCnt == -1) return;
             return {
-                trigger: triggers,
-                isQuickAction: true,
-                exec: (_, execEvent = {}) => {
-                    if (execEvent.isQuickAction) --status.roundCnt;
+                trigger: ['change-turn', 'kill'],
+                isQuickAction: trigger == 'change-turn',
+                exec: () => {
+                    if (trigger == 'kill') status.useCnt = 0;
+                    else if (trigger == 'change-turn') --status.roundCnt;
                 },
             }
         }),
@@ -2281,7 +2282,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合中，所附属角色受到的伤害-1。；[useCnt]'),
 
     300005: () => new StatusBuilder('赦免宣告（生效中）').heroStatus().icon('buff2').roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
-        .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
+        .description('本回合中，所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
         .handle((_, event) => {
             const { heros = [], hidx = -1 } = event;
             heros[hidx]?.heroStatus.forEach(sts => {
@@ -2420,9 +2421,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Event_Sticker.webp')
         .description('本回合打出手牌后，随机[舍弃]1张牌或抓1张牌。')
         .handle((_, event) => {
-            const { randomInt } = event;
+            const { isSelfRound, randomInt } = event;
+            const triggers: Trigger[] = ['card'];
+            if (isSelfRound) triggers.push('enter');
             return {
-                trigger: ['card'],
+                trigger: triggers,
                 isAddTask: true,
                 notPreview: true,
                 exec: () => {
@@ -2536,21 +2539,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]', 'v4.1.0')
         .handle((status, event, ver) => {
             if (ver < 'v4.1.0') {
-                const { card, playerInfo: { isKillByMyRound = false } = {} } = event;
-                if (!isKillByMyRound) return;
-                const triggers: Trigger[] = ['kill', 'skill', 'change-from'];
-                if (card?.hasSubtype(CARD_SUBTYPE.Action)) triggers.push('card');
+                const { trigger = '' } = event;
+                if (trigger != 'kill' && status.useCnt == -1) return;
                 return {
-                    trigger: triggers,
-                    isQuickAction: true,
-                    exec: (_, execEvent = {}) => {
-                        if (execEvent.isQuickAction) --status.roundCnt;
+                    trigger: ['change-turn', 'kill'],
+                    isQuickAction: trigger == 'change-turn',
+                    exec: () => {
+                        if (trigger == 'kill') status.useCnt = 0;
+                        else if (trigger == 'change-turn') --status.roundCnt;
                     },
                 }
             }
             return {
                 trigger: ['skill'],
-                cmds: [{ cmd: 'switch-after', cnt: 2500 }],
+                cmds: [{ cmd: 'switch-after' }],
                 exec: () => { --status.roundCnt },
             }
         }),

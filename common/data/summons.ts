@@ -321,7 +321,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((summon, event) => {
             const { reset = false } = event;
-            if (reset) return { rCombatStatus: 113094 }
+            if (reset) return { trigger: ['enter'], rCombatStatus: 113094 }
             return {
                 trigger: ['phase-end'],
                 exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
@@ -544,7 +544,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
         .handle((summon, event) => {
             const { reset = false, trigger = '' } = event;
-            if (reset) return { rCombatStatus: 115083 }
+            if (reset) return { trigger: ['enter'], rCombatStatus: 115083 }
             const getdmgTrgs: Trigger[] = ['Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg'];
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo && getdmgTrgs.includes(trigger)) {
@@ -776,7 +776,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     122043: (dmg: number = -1, useCnt: number = -1) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
-        .description(`【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成${dmg == -1 ? '此牌｢攻击力｣值的' : '{dmg}点'}[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。${useCnt == -1 ? '' : '；[useCnt]'}`)
+        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌｢攻击力｣值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
         .handle(summon => ({
             trigger: ['phase-end', 'end-phase'],

@@ -1590,7 +1590,7 @@ const allCards: Record<number, () => CardBuilder> = {
     331804: () => new CardBuilder(240).name('草与智慧').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(1)
         .description('抓1张牌。然后，选择任意手牌替换。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/1c656067801c6beb53803faefedd0a47_7333316108362576471.png')
-        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1 }, { cmd: 'changeCard', cnt: 2500 }] })),
+        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1 }, { cmd: 'changeCard' }] })),
 
     331805: () => new CardBuilder(393).name('水与正义').since('v4.7.0').tag(CARD_TAG.LocalResonance).costAny(2)
         .description('平均分配我方未被击倒的角色的生命值，然后治疗所有我方角色1点。')

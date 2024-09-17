@@ -140,7 +140,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1151021')
-        .vehicle().costSame(1).handle(() => ({ heal: 2, status: 115103 })),
+        .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
     1220511: () => new SkillBuilder('水泡战法').description('(需准备1个行动轮)造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1220511')

@@ -662,6 +662,14 @@ export default class GeniusInvokationClient {
         if (this.isValid) this.diceSelect = [...preview.diceSelect!];
     }
     /**
+     * 选择技能需要的召唤物
+     * @param pidx 玩家识别符: 0对方 1我方
+     * @param suidx 召唤物索引idx
+     */
+    selectSkillSummon(pidx: number, suidx: number) {
+        // todo
+    }
+    /**
      * 选择要消耗的骰子
      */
     selectUseDice() {

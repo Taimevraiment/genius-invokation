@@ -1069,14 +1069,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('抟风秘道').description('{dealDmg}，召唤【smn115093】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/ca/da9v501c8j71zqew4flylr7hmqq5r31.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c992b62ec652ce301ab6e9895aac1284_9109457382282902369.png')
-                .burst(2).damage(1).cost(3).handle(event => {
-                    const { talent, summons = [] } = event;
-                    const isExist = hasObjById(summons, 115093);
-                    return {
-                        summon: [[115093, talent]],
-                        cmds: isCdt(talent && !isExist, [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }])
-                    }
-                })
+                .burst(2).damage(1).cost(3).handle(event => ({ summon: [[115093, event.talent]] }))
         ),
 
     1510: () => new HeroBuilder(408).name('闲云').since('v5.0.0').liyue().anemo().catalyst()

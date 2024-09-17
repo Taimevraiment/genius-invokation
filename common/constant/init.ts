@@ -40,7 +40,6 @@ export const INIT_PLAYER: () => Player = () => ({
         reconcileCnt: 0,
         discardIds: [],
         initCardIds: [],
-        isKillByMyRound: false,
         isUsedCardPerRound: false,
     },
     UI: {

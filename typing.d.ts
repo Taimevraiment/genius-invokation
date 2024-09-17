@@ -145,7 +145,6 @@ type GameInfo = {
     reconcileCnt: number, // 每回合调和次数
     discardIds: number[], // 舍弃卡牌的id
     initCardIds: number[], // 初始牌组id
-    isKillByMyRound: boolean, // 本回合轮到我方行动期间对方角色被击倒数
     isUsedCardPerRound: boolean, // 我方本回合是否使用过行动卡
 }
 
@@ -188,7 +187,8 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther}dmg` | `${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
-    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` | '';
+    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` |
+    'change-turn' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

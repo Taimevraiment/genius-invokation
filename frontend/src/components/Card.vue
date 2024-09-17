@@ -65,7 +65,7 @@ const getPngIcon = (name: string) => {
 .card {
     position: absolute;
     width: 90px;
-    height: 140px;
+    height: 154px;
     top: 0;
     cursor: pointer;
     text-align: center;
@@ -175,7 +175,7 @@ const getPngIcon = (name: string) => {
 
 .mobile-card {
     width: 60px;
-    height: 90px;
+    height: 103px;
 }
 
 .mobile-card-cost,
