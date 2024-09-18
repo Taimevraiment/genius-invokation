@@ -37,6 +37,8 @@ export type SummonHandleRes = {
     isNotAddTask?: boolean,
     damage?: number,
     element?: ElementType,
+    pdmg?: number,
+    hidxs?: number[],
     addDiceHero?: number,
     minusDiceCard?: number,
     minusDiceSkill?: MinuDiceSkill,
@@ -106,7 +108,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: ['phase-end', 'skilltype1', 'skilltype2'],
                 isNotAddTask: trigger != 'phase-end',
                 exec: execEvent => {
-                    const { summon: smn = summon, heros: hs = [] } = execEvent;
+                    const { summon: smn = summon, heros: hs = heros } = execEvent;
                     if (trigger == 'phase-end') {
                         return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
                     }
@@ -303,8 +305,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
             return {
                 trigger: triggers,
-                damage: cnt,
-                element: summon.element,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'after-skilltype1') {
@@ -357,8 +357,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
             return {
                 trigger: triggers,
-                damage: cnt,
-                element: summon.element,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     smn.useCnt = Math.max(0, smn.useCnt - 1);
@@ -714,8 +712,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
             return {
                 trigger: triggers,
-                damage: isCdt(isTalent, 2),
-                element: summon.element,
                 isNotAddTask: !isTalent && trigger != 'phase-end',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
@@ -869,8 +865,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if ((hero?.talentSlot?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
             return {
                 trigger: triggers,
-                damage: summon.damage,
-                element: summon.element,
                 isNotAddTask: trigger == 'get-elReaction',
                 exec: execEvent => {
                     const { summon: smn = summon, heros: hrs = heros, eCombatStatus = [] } = execEvent;
@@ -896,8 +890,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (getObjById(heros, getHidById(summon.id))?.isFront || isExecTask) triggers.push('after-skilltype3')
             return {
                 trigger: triggers,
-                damage: summon.damage,
-                element: summon.element,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') smn.useCnt = Math.max(0, smn.useCnt - 1);
@@ -915,8 +907,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (getObjById(heros, getHidById(summon.id))?.isFront || isExecTask) triggers.push('after-skilltype3')
             return {
                 trigger: triggers,
-                damage: summon.damage,
-                element: summon.element,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') smn.useCnt = Math.max(0, smn.useCnt - 1);

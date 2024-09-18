@@ -8,7 +8,7 @@ import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISkill {
-    id: number = -1; // 唯一id
+    id: number; // 唯一id
     name: string; // 技能名
     type: SkillType; // 技能类型：1普通攻击 2元素战技 3元素爆发 4被动技能 5特技
     damage: number; // 伤害量
@@ -50,7 +50,7 @@ export class GISkill {
             explains: [...(description.match(/(?<=【)[^【】]+(?=】)/g) ?? []), ...expl],
             descriptions: [],
         };
-        if (id > -1) this.id = id;
+        this.id = id;
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;

@@ -1350,8 +1350,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 return { trigger: [trigger], isFallAtk: true }
             }
             return {
-                trigger: ['after-skilltype1'],
-                addDmgCdt: +(trigger == 'skilltype1'),
+                trigger: ['after-skilltype1', 'skilltype1'],
+                addDmgCdt: 1,
                 element: DAMAGE_TYPE.Anemo,
                 damage: 1,
                 exec: eStatus => {

@@ -1,4 +1,4 @@
-import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing"
+import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
 import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
@@ -7,6 +7,7 @@ import { SkillBuilder } from "./builder/skillBuilder.js"
 export type SkillHandleEvent = {
     hero: Hero,
     skid: number,
+    skill: Skill,
     reset?: boolean,
     card?: Card,
     heros?: Hero[],
@@ -55,7 +56,8 @@ export type SkillHandleRes = {
     atkTo?: number,
     minusDiceSkill?: MinuDiceSkill,
     isNotAddTask?: boolean,
-    emitTrigger?: Trigger[],
+    summonTrigger?: Trigger[],
+    isForbidden?: boolean,
     exec?: () => void,
 }
 
@@ -165,7 +167,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。(每回合最多使用1次)')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031')
-        .vehicle().costSame(1).canSelectSummon(1).handle(() => ({ emitTrigger: ['phase-end'] })),
+        .vehicle().costSame(1).canSelectSummon(1).handle(event => ({ summonTrigger: ['phase-end'], isForbidden: event.skill.useCntPerRound > 0 })),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

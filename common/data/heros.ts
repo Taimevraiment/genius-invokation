@@ -32,7 +32,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/d/de/d7vartodjuo8s7k0fkp6qsl09brzcvy.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/a4c1f60fc2461f2853edb4e765ba4262_6013693059397455292.png')
                 .normal().damage(2).cost(5).handle(event => {
-                    const { hero: { skills: [, , { useCnt }] }, talent } = event;
+                    const { skill: { useCnt }, talent } = event;
                     return { pdmg: useCnt > 0 && talent ? 3 : 2 }
                 }),
             new SkillBuilder('降众天华').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，召唤【smn111011】。')
@@ -212,7 +212,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bfa34d0f6363c94bbc3e5a2164196028.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/1156bc48af506ea88c321bfc3e0de56a_8959649322241374469.png')
                 .burst(3).damage(2).cost(3).handle(event => {
-                    const { hero: { skills: [, , { perCnt }] }, trigger = '' } = event;
+                    const { skill: { perCnt }, trigger = '' } = event;
                     return {
                         status: isCdt(trigger == 'skilltype3', 111112),
                         trigger: isCdt(perCnt < 4, ['getdmg', 'heal']),
@@ -288,10 +288,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('虚实流动').description('【此角色为出战角色，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。(每回合1次)')
                 .src('https://patchwiki.biligame.com/images/ys/1/12/j3lyz5vb4rhxspzbh9sl9toglxhk5d6.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bc5c12ac6eb36b8d24f03864bf281b87_4261814317325062178.png')
-                .handle(event => {
-                    const { hero: { skills: [, , , { useCnt = 1 }] } } = event;
-                    return { trigger: ['change-from'], isNotAddTask: true, isQuickAction: useCnt == 0 }
-                })
+                .handle(event => ({ trigger: ['change-from'], isNotAddTask: true, isQuickAction: event.skill.useCnt == 0 }))
         ),
 
     1204: () => new HeroBuilder(12).name('达达利亚').since('v3.7.0').fatui().hydro().bow()
@@ -447,7 +444,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Char_AvatarIcon_FurinaOusia.webp')
         .normalSkill(new NormalSkillBuilder('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
             .handle(event => {
-                const { hero: { skills: [skill] }, hcards = [] } = event;
+                const { skill, hcards = [] } = event;
                 if (skill.perCnt <= 0 || hasObjById(hcards, 112113)) return;
                 return { cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }], exec: () => { --skill.perCnt } }
             }))
@@ -471,10 +468,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('逆焰之刃').description('{dealDmg}。每回合第三次使用本技能时，伤害+2。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ef/e4f6sb7ammsholnhufv95kmtfozj9fs.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/7651d152d160362e7c75ce224f92298c_5143713055633145888.png')
-                .elemental().damage(3).cost(3).handle(event => {
-                    const { hero: { skills: [, { useCnt }] } } = event;
-                    return { addDmgCdt: isCdt(useCnt == 2, 2) }
-                }),
+                .elemental().damage(3).cost(3).handle(event => ({ addDmgCdt: isCdt(event.skill.useCnt == 2, 2) })),
             new SkillBuilder('黎明').description('{dealDmg}，本角色附属【sts113011】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/58/6jikt2165rekj99qwm3999hb6qsy04o.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/25bdbe8a9495cdc4f48c2a223d06fac1_8334072998945792701.png')
@@ -690,7 +684,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/etjv39dbype1nvxty7pn43rlczzrf3p.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a5b60cf0ca11cd6359a6c54c815174e1_907488869279933822.png')
                 .handle(event => {
-                    const { hero: { skills: [, , , { useCntPerRound }] } } = event;
+                    const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 0) return;
                     return { trigger: ['Overload'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
                 })
@@ -1041,7 +1035,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b2ba9e68ed4a405e54b4786ecac7c3e3.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/2d696e8b97e9fe9fb4572a81786780d6_2735599059161740228.png')
                 .elemental().damage(3).cost(3).handle(event => {
-                    const { hero: { hp, skills: [, { useCntPerRound }] }, talent } = event;
+                    const { hero: { hp }, skill: { useCntPerRound }, talent } = event;
                     const cdt = hp <= 8 && useCntPerRound == 0;
                     const hasTalent = talent && useCntPerRound == 1;
                     return {
@@ -1600,7 +1594,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/22052',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5bcf4aecbc53a844c2a25c980f2ab6ac_2541470900687128535.png')
                 .elemental().damage(3).cost(3).perCnt(1).handle(event => {
-                    const { eheros = [], hero: { skills: [, skill] } } = event;
+                    const { eheros = [], skill } = event;
                     if (skill.perCnt <= 0) return;
                     const eStatus = eheros.flatMap(h => h.heroStatus);
                     const eAttachment = eheros.find(h => h.isFront)?.attachElement?.[0];
@@ -1676,8 +1670,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/9262db8e7ec7952af306117cb67d668d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/b9854a003c9d7e5b14bed92132391e9e_754640348498205527.png')
                 .handle(event => {
-                    const { hero: { hp, skills: [, , , skill4], energy, maxEnergy, hidx }, getdmg = [] } = event;
-                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy || skill4.useCnt) return;
+                    const { hero: { hp, energy, maxEnergy, hidx }, skill: { useCnt }, getdmg = [] } = event;
+                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy || useCnt) return;
                     return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
         ),
@@ -1778,7 +1772,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/3/3a/fej2c9u7kria1j2btaxy7f9o9k7uuyg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/ba6b95e623fd861b69316a6f649d150c_90481026227323793.png')
                 .elemental().damage(3).cost(3).perCnt(1).handle(event => {
-                    const { hero: { skills: [, skill], heroStatus } } = event;
+                    const { hero: { heroStatus }, skill } = event;
                     const sts124032 = getObjById(heroStatus, 124032);
                     if (skill.perCnt <= 0 || !sts124032) return;
                     return {
@@ -1896,14 +1890,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/20afc68783ad98f1da36cc3a5286bee6_5169119727722449200.png')
                 .elemental().damage(3).damage(2, 'v4.8.0').cost(3).perCnt(2).handle((event, ver) => {
                     if (ver >= 'v4.8.0') return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
-                    const { hcards = [], hero: { skills: [, skill1] } } = event;
+                    const { hcards = [], skill } = event;
                     const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 1, card: 124051, isAttach: true }];
                     let cnt = 0;
-                    if (skill1.perCnt > 0) {
-                        cnt = Math.min(skill1.perCnt, hcards.filter(c => c.id == 124051).length + +(hcards.length < 10));
+                    if (skill.perCnt > 0) {
+                        cnt = Math.min(skill.perCnt, hcards.filter(c => c.id == 124051).length + +(hcards.length < 10));
                         cmds.push({ cmd: 'getCard', cnt });
                     }
-                    return { cmds, exec: () => { skill1.perCnt -= cnt } }
+                    return { cmds, exec: () => { skill.perCnt -= cnt } }
                 }),
             new SkillBuilder('错落风涡').description('{dealDmg}，[舍弃]手牌中所有的【crd124051】，每[舍弃]2张，此次伤害翻倍1次。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/468894f96582f384ff87859549de0536.png',

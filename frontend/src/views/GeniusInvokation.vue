@@ -62,7 +62,8 @@
       @select-use-dice="selectUseDice" @select-support="selectCardSupport" @select-summon="selectCardSummon"
       @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect" />
 
-    <div class="hand-card" v-if="(client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO || client.isWin > -1"
+    <div class="hand-card"
+      v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id == -1) || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
       <handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
@@ -150,7 +151,9 @@
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
-      (client.currSkill.id != -1 || client.isShowSwitchHero >= 2 || client.willHp.some(v => v != undefined))">
+      ((client.currSkill.id != -1 && client.currSkill.canSelectSummon == -1) ||
+        client.isShowSwitchHero >= 2 ||
+        client.willHp.some(v => v != undefined))">
     </div>
 
   </div>

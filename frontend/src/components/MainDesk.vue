@@ -121,12 +121,12 @@
           'my': hgi == 1,
           'is-front-oppo': hero?.isFront && phase >= PHASE.DICE && hgi == 0,
           'is-front-my': hero?.isFront && hgi == 1,
+          'hero-select': heroSelect[hgi][hidx],
+          'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
           'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
-            'hero-select': heroSelect[hgi][hidx],
-            'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
             'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
           }">
             <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
@@ -508,8 +508,11 @@ const willAttachs = computed<ElementType[][][]>(() => wrapArr(props.client.willA
 let isAnimating = false;
 const willDamages = computed<number[][][]>(() => {
   const dmgs: number[][][] = wrapArr(props.client.damageVO.willDamages ?? []);
-  if (dmgs.length > 0 && props.client.damageVO.dmgSource == 'skill' &&
-    atkHidx.value >= 0 && tarHidx.value > -1 && heroDOMs.value != undefined && !isAnimating) {
+  console.log(dmgs);
+  if (
+    dmgs.length > 0 && props.client.damageVO.dmgSource == 'skill' &&
+    atkHidx.value >= 0 && tarHidx.value > -1 && heroDOMs.value != undefined && !isAnimating
+  ) {
     isAnimating = true;
     const isAtker = playerIdx.value == atkPidx.value;
     const atkHeroDOM = heroDOMs.value[+isAtker * props.client.players[playerIdx.value ^ 1].heros.length + atkHidx.value];
@@ -1495,6 +1498,7 @@ button:active {
 .support-can-select {
   box-shadow: 2px 2px 3px #d1ffc4, -2px 2px 3px #d1ffc4, 2px -2px 3px #d1ffc4,
     -2px -2px 3px #d1ffc4;
+  z-index: 5;
 }
 
 .dice-my {

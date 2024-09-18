@@ -269,7 +269,8 @@ export default class GeniusInvokationClient {
             }
             if (this.player.status == PLAYER_STATUS.PLAYING && this.player.canAction) {
                 const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
-                if (!preview) throw new Error('预览未找到');
+                if (!preview) throw new Error('卡牌预览未找到');
+                this.diceSelect.fill(false);
                 this.heroCanSelect = [...(preview.heroCanSelect ?? [])];
                 this.summonCanSelect = clone(preview.summonCanSelect!);
                 this.supportCanSelect = clone(preview.supportCanSelect!.slice());
@@ -297,7 +298,7 @@ export default class GeniusInvokationClient {
                         pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0] &&
                         (pre.heroIdxs?.length == 1 || pre.summonIdx == 0 || pre.supportIdx == 0)
                     );
-                    if (!preview1) throw new Error('预览未找到');
+                    if (!preview1) throw new Error('卡牌预览未找到');
                     this.isValid = preview1.isValid;
                     if (this.isValid) {
                         if (canSelectHero == 1) {
@@ -393,7 +394,8 @@ export default class GeniusInvokationClient {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, flag } = data;
         console.info(flag);
-        const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.length || !!damageVO?.willHeals?.length);
+        const hasDmg = damageVO != -1 && (damageVO?.atkHidx ?? -1) != -1 &&
+            (!!damageVO?.willDamages.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals.some(h => h != -1));
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
         this.previews = previews;
@@ -485,7 +487,7 @@ export default class GeniusInvokationClient {
             }, !!damageVO?.willDamages.length ? 550 : 0);
         } else {
             this.players = players;
-            if (damageVO != -1 && (damageVO?.elTips ?? []).length > 0) {
+            if (damageVO != -1 && damageVO?.elTips.some(([v]) => v != '')) {
                 this.damageVO.elTips = damageVO?.elTips ?? [];
                 setTimeout(() => this.resetDamageVO(), 1100);
             }
@@ -638,10 +640,11 @@ export default class GeniusInvokationClient {
      * @param suidx 召唤物索引idx
      */
     selectCardSummon(pidx: number, suidx: number) {
-        if (this.currCard.id <= 0 || !this.summonCanSelect[pidx][suidx]) return this.cancel();
+        if ((this.currCard.id <= 0 && this.currSkill.id == -1) || !this.summonCanSelect[pidx][suidx]) return this.cancel();
         const newVal = !this.summonSelect[pidx][suidx];
         this.summonSelect[pidx][suidx] = newVal;
         if (newVal) this.summonSelect[pidx].forEach((_, i, a) => a[i] = i == suidx);
+        if (this.currSkill.id > 0) return this.selectSkillSummon(suidx, newVal);
         const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.summonIdx == (newVal ? suidx : -1));
         this.isValid = !!preview?.isValid;
         if (this.isValid) this.diceSelect = [...preview?.diceSelect!];
@@ -663,11 +666,20 @@ export default class GeniusInvokationClient {
     }
     /**
      * 选择技能需要的召唤物
-     * @param pidx 玩家识别符: 0对方 1我方
      * @param suidx 召唤物索引idx
+     * @param newVal 选择的值
      */
-    selectSkillSummon(pidx: number, suidx: number) {
-        // todo
+    selectSkillSummon(suidx: number, newVal: boolean) {
+        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.summonIdx == (newVal ? suidx : -1));
+        if (!preview) throw new Error('技能预览未找到');
+        this.isValid = preview.isValid;
+        if (this.isValid) this.diceSelect = [...preview.diceSelect!];
+        this.willHp = [...preview.willHp!];
+        this.willAttachs = [...clone(preview.willAttachs)!];
+        this.willSummons = [...clone(preview.willSummons)!];
+        this.summonCnt = [...clone(preview.willSummonChange)!];
+        this.supportCnt = [...clone(preview.willSupportChange)!];
+        this.willSwitch = [...preview.willSwitch!];
     }
     /**
      * 选择要消耗的骰子
@@ -742,15 +754,16 @@ export default class GeniusInvokationClient {
         if (skid == -1 || !this.canAction) return;
 
         if (isExec) {
-            this.isValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
-            if (!this.isValid) {
+            const diceValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
+            if (!diceValid || !this.isValid) {
                 this.cancel();
-                return this._sendTip('骰子不符合要求');
+                return this._sendTip('不符合要求');
             }
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
                 skillId: skid,
                 diceSelect: this.diceSelect,
+                summonIdx: this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
             } as ActionData);
             this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
@@ -758,14 +771,32 @@ export default class GeniusInvokationClient {
             return;
         } else {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skid);
-            if (!preview) throw new Error('预览未找到');
-            this.diceSelect = [...preview.diceSelect!];
+            if (!preview) throw new Error('技能预览未找到');
             this.willHp = [...preview.willHp!.slice()];
             this.willAttachs = [...clone(preview.willAttachs)!];
             this.willSummons = [...clone(preview.willSummons)!];
             this.summonCnt = [...clone(preview.willSummonChange)!];
             this.supportCnt = [...clone(preview.willSupportChange)!];
             this.willSwitch = [...preview.willSwitch!];
+            this.summonCanSelect = [...clone(preview.summonCanSelect)!];
+            this.isValid = preview.isValid;
+            const { canSelectSummon } = this.currSkill;
+            if (canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1) {
+                const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skid && pre.summonIdx == 0);
+                if (!preview1) throw new Error('技能预览未找到');
+                this.isValid = preview1.isValid;
+                if (this.isValid) {
+                    this.willHp = [...preview1.willHp!.slice()];
+                    this.willAttachs = [...clone(preview1.willAttachs)!];
+                    this.willSummons = [...clone(preview1.willSummons)!];
+                    this.summonCnt = [...clone(preview1.willSummonChange)!];
+                    this.supportCnt = [...clone(preview1.willSupportChange)!];
+                    this.willSwitch = [...preview1.willSwitch!];
+                    this.summonCanSelect = [...clone(preview1.summonCanSelect)!];
+                    this.summonSelect[canSelectSummon][0] = true;
+                }
+            }
+            if (this.isValid) this.diceSelect = [...preview.diceSelect!];
         }
     }
     /**
@@ -806,7 +837,7 @@ export default class GeniusInvokationClient {
      * @param suidx 召唤物idx
      */
     showSummonInfo(pidx: number, suidx: number) {
-        if (this.currCard.canSelectSummon > -1 || this.currCard.canSelectSupport > -1) return;
+        if (this.currCard.canSelectSummon > -1 || this.currCard.canSelectSupport > -1 || this.currSkill.canSelectSummon > -1) return;
         this.cancel();
         const summons = [this.opponent.summons, this.player.summons];
         this.modalInfo = {
