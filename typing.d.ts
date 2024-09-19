@@ -260,5 +260,8 @@ type CalcAtkRes = {
     isSelf?: boolean,
     hidxs?: number[],
     cmds?: Cmds[],
+    damages?: SmnDamageHandle,
     exec?: (...args: any) => any,
 }
+
+type SmnDamageHandle = (isOppo?: boolean, cnt?: number, element?: DamageType, hidxs?: number[]) => { dmgElement: DamageType, willDamages: number[][] }

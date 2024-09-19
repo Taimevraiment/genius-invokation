@@ -6,7 +6,6 @@ import { SkillBuilder } from "./builder/skillBuilder.js"
 
 export type SkillHandleEvent = {
     hero: Hero,
-    skid: number,
     skill: Skill,
     reset?: boolean,
     card?: Card,

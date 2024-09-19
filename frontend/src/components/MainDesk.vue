@@ -508,7 +508,6 @@ const willAttachs = computed<ElementType[][][]>(() => wrapArr(props.client.willA
 let isAnimating = false;
 const willDamages = computed<number[][][]>(() => {
   const dmgs: number[][][] = wrapArr(props.client.damageVO.willDamages ?? []);
-  console.log(dmgs);
   if (
     dmgs.length > 0 && props.client.damageVO.dmgSource == 'skill' &&
     atkHidx.value >= 0 && tarHidx.value > -1 && heroDOMs.value != undefined && !isAnimating

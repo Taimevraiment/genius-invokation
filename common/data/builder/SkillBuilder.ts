@@ -55,10 +55,10 @@ export class GISkill {
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
         this.handle = hevent => {
-            const { reset = false, hero, skid, isReadySkill = false } = hevent;
+            const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, ver) ?? {};
             if (isReadySkill) return handleres;
-            const curskill = hero.skills.find(sk => sk.id == skid) ?? hero.vehicleSlot?.[1];
+            const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];
             if (!curskill) throw new Error('@skill_constructor: 未找到技能');
             if (reset) {
                 curskill.useCntPerRound = 0;

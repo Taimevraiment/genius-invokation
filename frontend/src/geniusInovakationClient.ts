@@ -394,8 +394,7 @@ export default class GeniusInvokationClient {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, flag } = data;
         console.info(flag);
-        const hasDmg = damageVO != -1 && (damageVO?.atkHidx ?? -1) != -1 &&
-            (!!damageVO?.willDamages.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals.some(h => h != -1));
+        const hasDmg = damageVO != -1 && (!!damageVO?.willDamages.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals.some(h => h != -1));
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
         this.previews = previews;
@@ -484,7 +483,7 @@ export default class GeniusInvokationClient {
                     else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
                     setTimeout(() => this.resetDamageVO(), 500);
                 }, 1100);
-            }, !!damageVO?.willDamages.length ? 550 : 0);
+            }, 550);
         } else {
             this.players = players;
             if (damageVO != -1 && damageVO?.elTips.some(([v]) => v != '')) {
@@ -783,17 +782,18 @@ export default class GeniusInvokationClient {
             const { canSelectSummon } = this.currSkill;
             if (canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1) {
                 const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skid && pre.summonIdx == 0);
-                if (!preview1) throw new Error('技能预览未找到');
-                this.isValid = preview1.isValid;
-                if (this.isValid) {
-                    this.willHp = [...preview1.willHp!.slice()];
-                    this.willAttachs = [...clone(preview1.willAttachs)!];
-                    this.willSummons = [...clone(preview1.willSummons)!];
-                    this.summonCnt = [...clone(preview1.willSummonChange)!];
-                    this.supportCnt = [...clone(preview1.willSupportChange)!];
-                    this.willSwitch = [...preview1.willSwitch!];
-                    this.summonCanSelect = [...clone(preview1.summonCanSelect)!];
-                    this.summonSelect[canSelectSummon][0] = true;
+                if (preview1) {
+                    this.isValid = preview1.isValid;
+                    if (this.isValid) {
+                        this.willHp = [...preview1.willHp!.slice()];
+                        this.willAttachs = [...clone(preview1.willAttachs)!];
+                        this.willSummons = [...clone(preview1.willSummons)!];
+                        this.summonCnt = [...clone(preview1.willSummonChange)!];
+                        this.supportCnt = [...clone(preview1.willSupportChange)!];
+                        this.willSwitch = [...preview1.willSwitch!];
+                        this.summonCanSelect = [...clone(preview1.summonCanSelect)!];
+                        this.summonSelect[canSelectSummon][0] = true;
+                    }
                 }
             }
             if (this.isValid) this.diceSelect = [...preview.diceSelect!];

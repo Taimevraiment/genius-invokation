@@ -63,7 +63,7 @@
       @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect" />
 
     <div class="hand-card"
-      v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id == -1) || client.isWin > -1"
+      v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0) || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
       <handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
@@ -498,11 +498,11 @@ const devOps = (cidx = 0) => {
       const hidxs = hidx == -1 ? undefined : (parseInt(rest.slice(hidx + 1)) || undefined)?.toString().split('```').map(Number) || undefined;
       flag.add('addCard');
       cmds.push({ cmd: 'addCard', card: cid, isAttach, cnt, hidxs });
-    } else if (op.startsWith('m')) {
+    } else if (op.startsWith('m')) { // 召唤物
       const rest = op.slice(1);
       smnIds.push(+rest);
       flag.add('setSummon');
-    } else if (op.startsWith('p')) {
+    } else if (op.startsWith('p')) { // 支援物
       const rest = op.slice(1);
       sptIds.push(+rest);
       flag.add('setSupport');
@@ -515,7 +515,7 @@ const devOps = (cidx = 0) => {
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { pid: localStorage.getItem('7szh_userid'), cpidx, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
 };
 </script>
 
