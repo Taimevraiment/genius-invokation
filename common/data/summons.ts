@@ -1,5 +1,5 @@
 
-import { Card, Cmds, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
+import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
 import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
@@ -41,7 +41,7 @@ export type SummonHandleRes = {
     hidxs?: number[],
     addDiceHero?: number,
     minusDiceCard?: number,
-    minusDiceSkill?: MinuDiceSkill,
+    minusDiceSkill?: MinusDiceSkill,
     tround?: number,
     willSummon?: Summon,
     isQuickAction?: boolean,

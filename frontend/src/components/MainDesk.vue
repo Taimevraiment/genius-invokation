@@ -1828,7 +1828,7 @@ svg {
 
 ::-webkit-scrollbar-thumb {
   border-radius: 5px;
-  background: #335c99d0;
+  background: #8caee1d0;
 }
 
 ::-webkit-scrollbar-track {

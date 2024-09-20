@@ -1,4 +1,4 @@
-import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Support, Trigger } from '../../typing';
+import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
@@ -18,6 +18,7 @@ export type SupportHandleEvent = {
     isFirst?: boolean,
     hidxs?: number[],
     playerInfo?: GameInfo,
+    eplayerInfo?: GameInfo,
     minusDiceCard?: number,
     isMinusDiceSkill?: boolean,
     minusDiceSkill?: number[][],
@@ -37,7 +38,7 @@ export type SupportHandleRes = {
     exec?: (support: Support, event: SupportExecEvent) => SupportExecRes,
     minusDiceCard?: number,
     minusDiceHero?: number,
-    minusDiceSkill?: MinuDiceSkill,
+    minusDiceSkill?: MinusDiceSkill,
     element?: DiceCostType | -2,
     cnt?: number,
     addRollCnt?: number,

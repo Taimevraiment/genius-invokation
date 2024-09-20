@@ -12,7 +12,8 @@
                 <div style="height: 1.2rem;">{{ deck.version }}</div>
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero"
                     :style="{ backgroundColor: ELEMENT_COLOR[hero.element] }">
-                    {{ hero.name }}
+                    <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name" style="width: 100%;height: 100%;" />
+                    <div v-else style="height: 100%;aspect-ratio: 1/1;"></div>
                 </div>
                 <div class="edit-btn-group">
                     <span v-for="( icon, cidx ) in deckListEditIcon" :key="cidx" class="edit-list-icon"
@@ -61,6 +62,10 @@
                         :key="dthero.id" :style="{ color: ELEMENT_COLOR[dthero.element] }"
                         @click.stop="showHeroInfo(dthero.id)">
                         <span class="hero-img">{{ dthero.name }}</span>
+                        <div class="hero-hp" v-if="(dthero?.hp ?? 0) > 0">
+                            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
+                            <div class="hero-hp-cnt"> {{ dthero.maxHp }} </div>
+                        </div>
                         <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
                             draggable="false" />
                         <div class="icon-group" v-if="!dthero.UI.isActive">
@@ -255,6 +260,7 @@ const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => {
                 element: hero.element,
                 tags: hero.tags,
                 src: hero.UI.src,
+                avatar: hero.UI.avatar,
             }
         }),
         cardIds,
@@ -695,13 +701,12 @@ body div {
 
 .deck-hero {
     height: 22%;
-    width: 95%;
-    margin: 3px 0;
-    border-radius: 10px;
+    /* width: 95%; */
+    border-radius: 50%;
+    margin: 2px 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #775900;
 }
 
 .edit-btn-group {
@@ -942,6 +947,36 @@ body div {
     line-height: 500%;
 }
 
+.hero-hp {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 30%;
+    aspect-ratio: 1/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    letter-spacing: -2px;
+    z-index: 1;
+    font-size: min(23px, max(16px, 2vw));
+}
+
+.hero-hp-bg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.hero-hp-cnt {
+    position: absolute;
+    color: white;
+    font-weight: bolder;
+    -webkit-text-stroke: black 1px;
+    z-index: 1;
+    padding-right: 2px;
+}
+
 .curr-deck {
     box-shadow: 4px 4px 6px #ffeb56,
         -4px 4px 6px #ffeb56,
@@ -1070,6 +1105,7 @@ body div {
     color: white;
     text-align: center;
     box-sizing: border-box;
+    z-index: 2;
 }
 
 .filter-condition {
@@ -1130,7 +1166,7 @@ body div {
 
 ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: #335c9973;
+    background: #8caee1d0;
 }
 
 ::-webkit-scrollbar-track {

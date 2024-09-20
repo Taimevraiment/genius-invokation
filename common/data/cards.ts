@@ -1,4 +1,4 @@
-import { Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
+import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
     HERO_TAG, PHASE, PURE_ELEMENT_TYPE,
@@ -79,7 +79,7 @@ export type CardHandleRes = {
     addDmgType3?: number,
     addDmgSummon?: number,
     addDmgCdt?: number,
-    minusDiceSkill?: MinuDiceSkill,
+    minusDiceSkill?: MinusDiceSkill,
     minusDiceCard?: number,
     minusDiceHero?: number,
     hidxs?: number[],
@@ -139,6 +139,28 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
     return new CardBuilder(shareId).name(name).weapon().costAny(3)
         .description('【角色造成的伤害+1】。；【入场时：】所附属角色在本回合中，下次使用｢普通攻击｣后：生成2个此角色类型的元素骰。')
         .handle(() => ({ addDmg: 1, status: [[stsId, name]] }));
+}
+
+const barrierWeaponHandle = (card: Card, event: CardHandleEvent): CardHandleRes => {
+    const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], trigger = '' } = event;
+    if (restDmg > -1) {
+        if (card.perCnt <= 0) return { restDmg }
+        ++card.useCnt;
+        return { restDmg: restDmg - 1 }
+    }
+    const triggers: Trigger[] = [];
+    if (card.useCnt > 0) triggers.push('skill');
+    if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0) triggers.push('getdmg');
+    return {
+        trigger: triggers,
+        addDmgCdt: isCdt(card.useCnt > 0, 1),
+        execmds: isCdt<Cmds[]>(trigger == 'skill', [{ cmd: 'getCard', cnt: card.useCnt }],
+            isCdt(trigger == 'getdmg', [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }])),
+        exec: () => {
+            if (trigger == 'skill') card.useCnt = 0;
+            else if (trigger == 'getdmg') --card.perCnt;
+        }
+    }
 }
 
 const normalElArtifact = (shareId: number, element: PureElementType) => {
@@ -527,27 +549,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发1次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
         .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。', 'v5.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
-        .handle((card, event) => {
-            const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], trigger = '' } = event;
-            if (restDmg > -1) {
-                if (card.perCnt <= 0) return { restDmg }
-                ++card.useCnt;
-                return { restDmg: restDmg - 1 }
-            }
-            const triggers: Trigger[] = [];
-            if (card.useCnt > 0) triggers.push('skill');
-            if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0) triggers.push('getdmg');
-            return {
-                trigger: triggers,
-                addDmgCdt: isCdt(card.useCnt > 0, 1),
-                execmds: isCdt<Cmds[]>(trigger == 'skill', [{ cmd: 'getCard', cnt: card.useCnt }],
-                    isCdt(trigger == 'getdmg', [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }])),
-                exec: () => {
-                    if (trigger == 'skill') card.useCnt = 0;
-                    else if (trigger == 'getdmg') --card.perCnt;
-                }
-            }
-        }),
+        .handle(barrierWeaponHandle),
 
     311501: () => normalWeapon(143).name('旅行剑')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2540a7ead6f2e957a6f25c9899ce428b_3859616323968734996.png'),

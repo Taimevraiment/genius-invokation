@@ -79,7 +79,7 @@ type Hero = GIHero;
 
 type Skill = GISkill
 
-type MinuDiceSkill = {
+type MinusDiceSkill = {
     skill?: number[],
     skills?: number[][],
     skilltype1?: number[],

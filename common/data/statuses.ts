@@ -1,4 +1,4 @@
-import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinuDiceSkill, Status, Summon, Trigger } from "../../typing";
+import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
     ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, SKILL_TYPE,
@@ -76,7 +76,7 @@ export type StatusHandleRes = {
     minusDiceCard?: number,
     minusDiceHero?: number,
     addDiceHero?: number,
-    minusDiceSkill?: MinuDiceSkill,
+    minusDiceSkill?: MinusDiceSkill,
     heal?: number,
     hidxs?: number[],
     isQuickAction?: boolean,
@@ -248,6 +248,18 @@ const coolDownStatus = (name: string, cardId?: number) => {
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description(`本回合无法再打出【${cardId ? `crd${cardId}` : name}】。`);
 }
 
+const continuousActionHandle = (status: Status, event: StatusHandleEvent): StatusHandleRes | void => {
+    const { trigger = '' } = event;
+    if (trigger != 'kill' && status.useCnt == -1) return;
+    return {
+        trigger: ['change-turn', 'kill'],
+        isQuickAction: trigger == 'change-turn',
+        exec: () => {
+            if (trigger == 'kill') status.useCnt = 1;
+            else if (trigger == 'change-turn') --status.roundCnt;
+        },
+    }
+}
 
 const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
@@ -2250,18 +2262,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     300002: () => new StatusBuilder('自由的新风（生效中）').combatStatus().roundCnt(1).icon('buff3')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]')
-        .handle((status, event) => {
-            const { trigger = '' } = event;
-            if (trigger != 'kill' && status.useCnt == -1) return;
-            return {
-                trigger: ['change-turn', 'kill'],
-                isQuickAction: trigger == 'change-turn',
-                exec: () => {
-                    if (trigger == 'kill') status.useCnt = 0;
-                    else if (trigger == 'change-turn') --status.roundCnt;
-                },
-            }
-        }),
+        .handle(continuousActionHandle),
 
     300003: () => new StatusBuilder('裁定之时（生效中）').combatStatus().icon('debuff')
         .useCnt(3).roundCnt(1).type(STATUS_TYPE.Usage)
@@ -2538,18 +2539,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]', 'v4.1.0')
         .handle((status, event, ver) => {
-            if (ver < 'v4.1.0') {
-                const { trigger = '' } = event;
-                if (trigger != 'kill' && status.useCnt == -1) return;
-                return {
-                    trigger: ['change-turn', 'kill'],
-                    isQuickAction: trigger == 'change-turn',
-                    exec: () => {
-                        if (trigger == 'kill') status.useCnt = 0;
-                        else if (trigger == 'change-turn') --status.roundCnt;
-                    },
-                }
-            }
+            if (ver < 'v4.1.0') return continuousActionHandle(status, event);
             return {
                 trigger: ['skill'],
                 cmds: [{ cmd: 'switch-after' }],
