@@ -621,13 +621,16 @@ const showShareCode = () => {
 const pasteShareCode = () => {
     const { heroIds, cardIds } = parseShareCode(pShareCode.value);
     herosDeck.value.forEach((_, hi, ha) => {
-        ha[hi] = herosPool.value.find(v => v.shareId == heroIds[hi])!;
+        ha[hi] = herosPool.value.find(v => v.shareId == heroIds[hi]) ?? NULL_HERO();
     });
     cardsDeck.value = [];
     for (const cid of cardIds) {
         const card = cardsDeck.value.find(c => c.shareId == cid);
         if (card) ++card.UI.cnt;
-        else cardsDeck.value.push(clone(cardsPool.value.find(c => c.id == cid)!).setCnt(1));
+        else {
+            const ncard = clone(cardsPool.value.find(c => c.shareId == cid))?.setCnt(1);
+            if (ncard) cardsDeck.value.push(ncard);
+        }
     }
     updateShareCode();
     pShareCode.value = '';

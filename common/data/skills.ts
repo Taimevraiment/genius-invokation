@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
-import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
+import { CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
@@ -28,6 +28,7 @@ export type SkillHandleEvent = {
     discards?: Card[],
     dmg?: number[],
     talent?: Card | null,
+    pile?: Card[],
     randomInArr?: <T>(arr: T[]) => T,
 }
 
@@ -160,8 +161,13 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             const { hcards = [], ehcards = [], trigger = '' } = event;
             if (trigger == 'calc') return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
             const maxDice = ehcards.reduce((a, b) => Math.max(a, b.cost + b.anydice), 0);
-            const [{ cidx }] = ehcards.filter(c => c.cost + c.anydice == maxDice);
-            return { cmds: [{ cmd: 'getCard', cnt: 1, card: ehcards.splice(cidx, 1) }] }
+            const [{ cidx = -1 } = {}] = ehcards.filter(c => c.cost + c.anydice == maxDice);
+            return {
+                cmds: [
+                    { cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true },
+                    { cmd: 'getCard', cnt: 1, card: ehcards[cidx], mode: CMD_MODE.isPublic },
+                ]
+            }
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。(每回合最多使用1次)')
@@ -171,6 +177,17 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             isForbidden: event.skill.perCnt == 0,
             exec: () => { --event.skill.perCnt },
         })),
+
+    3130041: () => new SkillBuilder('掘进突击').description('抓2张牌。然后，如果手牌中存在名称不存在于本局最初牌组中的牌，则提供2点[护盾]保护所附属角色。')
+        .src('')
+        .vehicle().costSame(1).handle(event => {
+            const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [] } = event;
+            const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];
+            if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {
+                cmds.push({ cmd: 'getStatus', status: 3130042 });
+            }
+            return { cmds }
+        }),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

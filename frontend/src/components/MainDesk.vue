@@ -10,9 +10,13 @@
           <div>{{ diceCnt[playerIdx ^ 1] }}</div>
         </span>
         {{ pileCnt[playerIdx ^ 1] }}
-        <handcard class="will-getcard-oppo" :class="{ 'mobile-will-card': isMobile }" v-if="opponent?.UI.willGetCard"
-          :style="{ left: `${getLeft(cidx, opponent?.UI.willGetCard.length)}px` }"
-          v-for="(card, cidx) in opponent?.UI.willGetCard" :card="card" :isMobile="isMobile" :key="cidx">
+        <handcard class="will-getcard-oppo" :class="{
+          'mobile-will-card': isMobile,
+          'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
+          'will-getcard-oppo-generate': !opponent?.UI.willGetCard.isFromPile
+        }" v-if="opponent?.UI.willGetCard"
+          :style="{ left: `${getLeft(cidx, opponent?.UI.willGetCard.cards.length)}px` }"
+          v-for="(card, cidx) in opponent?.UI.willGetCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
         </handcard>
         <handcard class="will-addcard-oppo" :class="{ 'mobile-will-card': isMobile }"
           v-if="opponent?.UI.willAddCard.cards"
@@ -39,9 +43,13 @@
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
         {{ pileCnt[playerIdx] }}
-        <handcard class="will-getcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
-          :style="{ left: `${getLeft(cidx, player.UI.willGetCard.length)}px` }"
-          v-for="(card, cidx) in player.UI.willGetCard" :key="cidx">
+        <handcard class="will-getcard-my" :class="{
+          'mobile-will-card': isMobile,
+          'will-getcard-my-pile': player.UI.willGetCard.isFromPile,
+          'will-getcard-my-generate': !player.UI.willGetCard.isFromPile
+        }" :card="card" :isMobile="isMobile"
+          :style="{ left: `${getLeft(cidx, player.UI.willGetCard.cards.length)}px` }"
+          v-for="(card, cidx) in player.UI.willGetCard.cards" :key="cidx">
         </handcard>
         <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
@@ -127,31 +135,31 @@
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
-            'hero-shield7': hero.hp > 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
+            'hero-shield7': hero.hp >= 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
           }">
             <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
             <div v-else class="hero-name">{{ hero?.name }}</div>
           </div>
-          <div class="hero-freeze" v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 106)">
+          <div class="hero-freeze" v-if="hero.hp >= 0 && hero.heroStatus.some(ist => ist.id == 106)">
             <img :src="getPngIcon('freeze-bg')" />
           </div>
           <div class="hero-freeze" style="background-color: #716446de"
-            v-if="hero.hp > 0 && hero.heroStatus.some(ist => ist.id == 116033)"></div>
-          <div class="hero-shield2" v-if="hero.hp > 0 && (
+            v-if="hero.hp >= 0 && hero.heroStatus.some(ist => ist.id == 116033)"></div>
+          <div class="hero-shield2" v-if="hero.hp >= 0 && (
             hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier)) ||
             hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && (hero.talentSlot?.perCnt ?? 0) > 0 ||
             hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && (hero.weaponSlot?.perCnt ?? 0) > 0)">
           </div>
           <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
-          <div class="hero-hp" v-if="(hero?.hp ?? 0) > 0">
+          <div class="hero-hp" v-if="(hero?.hp ?? 0) >= 0">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png"
               :style="{ filter: `${hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}` }" />
             <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
               {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
             </div>
           </div>
-          <div class="hero-energys" v-if="(hero?.hp ?? 0) > 0">
+          <div class="hero-energys" v-if="(hero?.hp ?? 0) >= 0">
             <img v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
               :class="{ 'mobile-energy': isMobile }" :src="getEnergyIcon((hero?.energy ?? 0) - 1 >= eidx)" />
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
@@ -161,7 +169,7 @@
               <div :class="{ 'slot-can-use': hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
           </div>
-          <div class="hero-equipment" v-if="(hero?.hp ?? 0) > 0">
+          <div class="hero-equipment" v-if="(hero?.hp ?? 0) >= 0">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Weapon]] }">
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" style="filter: brightness(0.3);" />
@@ -189,14 +197,14 @@
             }">
               {{ elTips[hgi][hidx][0] }}
             </div>
-            <template v-if="hero.hp > 0">
+            <template v-if="hero.hp >= 0">
               <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
               <img class="will-attach"
                 v-for="(attach, waidx) in willAttachs[hgi][hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
                 :key="waidx" :src="ELEMENT_URL[attach]" />
             </template>
           </div>
-          <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp > 0">
+          <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp >= 0">
             <div
               :class="{ status: true, 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[0]?.[hidx]?.[isti] }"
               v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => hero.heroStatus.length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 4)"
@@ -224,7 +232,7 @@
               </div>
             </div>
             <div class="outstatus" :class="{ 'mobile-outstatus': isMobile }"
-              v-if="phase >= PHASE.DICE && hero.hp > 0 && hero.isFront">
+              v-if="phase >= PHASE.DICE && hero.hp >= 0 && hero.isFront">
               <div
                 :class="{ status: true, 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[1]?.[hidx]?.[osti] }"
                 v-for="(osts, osti) in combatStatuses[hgi].filter((sts, stsi) => combatStatuses[hgi].length <= 4 ? !sts.type.includes(STATUS_TYPE.Hide) : stsi < 3)"
@@ -252,7 +260,7 @@
                   </div>
                 </div>
               </div>
-              <div class="hero-die" v-if="hero.hp <= 0">
+              <div class="hero-die" v-if="hero.hp < 0">
                 <img :src="getSvgIcon('die')" style="width: 40px" />
               </div>
               <div :class="{
@@ -1629,34 +1637,42 @@ button:active {
   background-color: #a7bbdd;
   padding-top: 20px;
   transform: rotate(90deg);
-  animation: getcard-my 1.5s linear forwards;
+}
+
+.will-getcard-my-pile {
+  animation: getcard-my-pile 1.5s linear forwards;
+}
+
+.will-getcard-my-generate {
+  animation: getcard-my-generate 1.5s linear forwards;
 }
 
 .will-getcard-oppo {
   position: absolute;
-  width: 90px;
-  height: 120px;
-  border-radius: 10px;
-  background-color: #14408c;
+  background-color: #304260;
   background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
   background-size: 100% 100%;
   color: black;
   text-align: center;
   padding-top: 20px;
   transform: rotate(90deg);
-  animation: getcard-oppo 1.5s linear forwards;
+  z-index: 5;
   overflow: hidden;
+}
+
+.will-getcard-oppo-pile {
+  animation: getcard-oppo-pile 1.5s linear forwards;
+}
+
+.will-getcard-oppo-generate {
+  animation: getcard-oppo-generate 1.5s linear forwards;
 }
 
 .will-addcard-my {
   position: absolute;
-  width: 90px;
-  height: 120px;
-  border-radius: 10px;
   color: black;
   text-align: center;
   background-color: #a7bbdd;
-  padding-top: 20px;
   transform: translate(500%, -10%);
   animation: addcard 1.2s linear;
   opacity: 0;
@@ -1664,15 +1680,11 @@ button:active {
 
 .will-addcard-oppo {
   position: absolute;
-  width: 90px;
-  height: 120px;
-  border-radius: 10px;
-  background-color: #14408c;
+  background-color: #304260;
   background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
   background-size: 100% 100%;
   color: black;
   text-align: center;
-  padding-top: 20px;
   transform: translate(500%, -10%);
   animation: addcard 1.2s linear;
   opacity: 0;
@@ -1680,39 +1692,27 @@ button:active {
 
 .will-discard-pile-my {
   position: absolute;
-  width: 90px;
-  height: 120px;
-  border-radius: 10px;
   color: black;
   text-align: center;
   background-color: #a7bbdd;
-  padding-top: 20px;
   transform: rotate(90deg);
   animation: discard-pile 1.5s linear forwards;
 }
 
 .will-discard-hcard-my {
   position: absolute;
-  width: 90px;
-  height: 120px;
-  border-radius: 10px;
   color: black;
   text-align: center;
   background-color: #a7bbdd;
-  padding-top: 20px;
   transform: rotate(90deg);
   animation: discard-hcard-my 1.5s linear forwards;
 }
 
 .will-discard-hcard-oppo {
   position: absolute;
-  width: 90px;
-  height: 120px;
-  border-radius: 10px;
   color: black;
   text-align: center;
   background-color: #a7bbdd;
-  padding-top: 20px;
   transform: rotate(90deg);
   animation: discard-hcard-oppo 1.5s linear forwards;
 }
@@ -1849,25 +1849,64 @@ svg {
   }
 }
 
-@keyframes getcard-my {
+@keyframes getcard-my-pile {
   20% {
-    transform: translate(500%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(500%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
     z-index: 5;
   }
 
   100% {
-    transform: translate(500%, 200%);
+    transform: translate(calc(50vw + 50%), 200%);
   }
 }
 
-@keyframes getcard-oppo {
+@keyframes getcard-my-generate {
+  0% {
+    transform: translate(calc(50vw + 50%), -10%);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+    z-index: 5;
+  }
+
+  80% {
+    transform: translate(calc(50vw + 50%), -10%);
+    z-index: 5;
+  }
+
+  100% {
+    transform: translate(calc(50vw + 50%), 200%);
+  }
+}
+
+@keyframes getcard-oppo-pile {
   50% {
     transform: translate(1100%, -50%);
+    z-index: 5;
+  }
+
+  100% {
+    transform: translate(1300%, -80%);
+    opacity: 0;
+  }
+}
+
+@keyframes getcard-oppo-generate {
+  0% {
+    transform: translate(calc(50vw + 50%), 0%);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translate(calc(50vw + 50%), 0%);
+    opacity: 1;
     z-index: 5;
   }
 
@@ -1881,19 +1920,19 @@ svg {
   0% {
     z-index: 5;
     opacity: 0;
-    transform: translate(500%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
   }
 
   30% {
     z-index: 5;
     opacity: 1;
-    transform: translate(500%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
   }
 
   50% {
     z-index: 5;
     opacity: 1;
-    transform: translate(500%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
   }
 
   100% {
@@ -1904,18 +1943,18 @@ svg {
 
 @keyframes discard-pile {
   20% {
-    transform: translate(600%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(600%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
     z-index: 5;
   }
 
   100% {
     transform-origin: center center;
-    transform: translate(600%, -10%) scale(0);
+    transform: translate(calc(50vw + 50%), -10%) scale(0);
     opacity: 0;
     z-index: 5;
   }
@@ -1923,21 +1962,21 @@ svg {
 
 @keyframes discard-hcard-my {
   0% {
-    transform: translate(600%, 200%);
+    transform: translate(calc(50vw + 50%), 200%);
   }
 
   20% {
-    transform: translate(600%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(600%, -10%);
+    transform: translate(calc(50vw + 50%), -10%);
     z-index: 5;
   }
 
   100% {
-    transform: translate(600%, -10%) scale(0);
+    transform: translate(calc(50vw + 50%), -10%) scale(0);
     opacity: 0;
     z-index: 5;
   }
@@ -1949,17 +1988,17 @@ svg {
   }
 
   20% {
-    transform: translate(800%, -10%);
+    transform: translate(calc(50vw + 50%), 10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(800%, -10%);
+    transform: translate(calc(50vw + 50%), 10%);
     z-index: 5;
   }
 
   100% {
-    transform: translate(800%, -10%) scale(0);
+    transform: translate(calc(50vw + 50%), 10%) scale(0);
     opacity: 0;
     z-index: 5;
   }

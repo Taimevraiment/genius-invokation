@@ -50,7 +50,11 @@ type Player = {
         info: string, // 右上角提示信息
         heroSwitchDice: number, // 切换角色所需骰子
         showRerollBtn: boolean, // 是否显示重投按钮
-        willGetCard: Card[], // 即将获得的卡
+        willGetCard: {
+            cards: Card[], // 即将获得的卡
+            isNotPublic: boolean, // 是否公开
+            isFromPile: boolean, // 是否从牌库获得
+        },
         willAddCard: {
             cards: Card[], // 即将加入牌库的卡
             isNotPublic: boolean, // 是否公开

@@ -292,6 +292,7 @@ export const CMD_MODE = {
     TopPileCard: 5, // 弃置牌堆顶的牌
     RandomPileCard: 6, // 弃置牌库中随机一张牌
     isNotPublic: 7, // 不公开加入牌库的牌
+    isPublic: 8, // 公开抓到的牌
 } as const;
 
 export const INFO_TYPE = {

@@ -13,7 +13,7 @@ export const allHidxs = (heros?: Hero[], options: {
     for (let i = 0; i < heros.length; ++i) {
         const hi = (hidx + i) % heros.length;
         const h = heros[hi];
-        if (isAll || include == hi || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) hidxs.push(hi);
+        if (isAll || include == hi || ((isDie ? h.hp < 0 : h.hp >= 0) && exclude != hi && cdt(h))) hidxs.push(hi);
     }
     return hidxs;
 }

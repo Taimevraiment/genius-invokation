@@ -499,7 +499,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (trigger.includes('skilltype') && !eStatus && isExecTask) {
                         const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
                         card.sort((a, b) => b.cidx - a.cidx).forEach(c => hcards.splice(c.cidx, 1));
-                        return { cmds: [{ cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.isNotPublic }, { cmd: 'getCard', cnt: card.length }] }
+                        return {
+                            cmds: [
+                                { cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.isNotPublic },
+                                { cmd: 'getCard', cnt: card.length, isAttach: true },
+                            ]
+                        }
                     }
                     if (trigger == 'getcard') {
                         if (!eStatus) {

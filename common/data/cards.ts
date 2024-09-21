@@ -142,22 +142,22 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
 }
 
 const barrierWeaponHandle = (card: Card, event: CardHandleEvent): CardHandleRes => {
-    const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], trigger = '' } = event;
+    const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
     if (restDmg > -1) {
         if (card.perCnt <= 0) return { restDmg }
         ++card.useCnt;
         return { restDmg: restDmg - 1 }
     }
     const triggers: Trigger[] = [];
-    if (card.useCnt > 0) triggers.push('skill');
+    if (card.useCnt > 0 && sktype != SKILL_TYPE.Vehicle) triggers.push('dmg');
     if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0) triggers.push('getdmg');
     return {
         trigger: triggers,
         addDmgCdt: isCdt(card.useCnt > 0, 1),
-        execmds: isCdt<Cmds[]>(trigger == 'skill', [{ cmd: 'getCard', cnt: card.useCnt }],
+        execmds: isCdt<Cmds[]>(trigger == 'dmg', [{ cmd: 'getCard', cnt: card.useCnt }],
             isCdt(trigger == 'getdmg', [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }])),
         exec: () => {
-            if (trigger == 'skill') card.useCnt = 0;
+            if (trigger == 'dmg') card.useCnt = 0;
             else if (trigger == 'getdmg') --card.perCnt;
         }
     }
@@ -546,7 +546,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     311409: () => new CardBuilder(402).name('勘探钻机').since('v4.8.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发1次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
+        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发1次)；【角色造成伤害时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
         .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。', 'v5.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
         .handle(barrierWeaponHandle),
@@ -894,9 +894,9 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312018: () => new CardBuilder(304).name('饰金之梦').since('v4.3.0').artifact().costSame(3).costAny(3, 'v4.5.0').perCnt(1)
-        .description('【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则改为生成2个。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)')
-        .description('【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则则额外生成1个[万能元素骰]。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合1次)', 'v4.5.0')
+    312018: () => new CardBuilder(304).name('饰金之梦').since('v4.3.0').artifact().costSame(3).costAny(3, 'v4.5.0').perCnt(2)
+        .description('【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则改为生成2个。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合至多2次)')
+        .description('【入场时：】生成1个所附属角色类型的元素骰。如果我方队伍中存在3种不同元素类型的角色，则则额外生成1个[万能元素骰]。；【所附属角色为出战角色期间，敌方受到元素反应伤害时：】抓1张牌。(每回合至多2次)', 'v4.5.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/b0f1283d8fec75259495c4ef24cc768a_277942760294951822.png')
         .handle((card, event, ver) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
@@ -1655,7 +1655,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { heros = [], combatStatus = [] } = event;
             return {
-                isValid: (ver < '4.0.0' || !hasObjById(combatStatus, 303205)) && heros.some(h => h.hp == 0),
+                isValid: (ver < '4.0.0' || !hasObjById(combatStatus, 303205)) && heros.some(h => h.hp == -1),
                 cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }, { cmd: 'getEnergy', cnt: 1 }],
                 status: isCdt(ver >= '4.0.0', 303205),
             }

@@ -48,7 +48,11 @@ export const INIT_PLAYER: () => Player = () => ({
         showRerollBtn: false,
         atkhidx: -1,
         tarhidx: -1,
-        willGetCard: [],
+        willGetCard: {
+            cards: [],
+            isFromPile: true,
+            isNotPublic: false,
+        },
         willAddCard: {
             cards: [],
             scope: 0,

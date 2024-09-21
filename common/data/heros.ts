@@ -230,14 +230,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('洑流剑'))
         .skills(
             new SkillBuilder('浮冰增压').description('{dealDmg}，若角色未附属【sts111121】，则使其附属【sts111121】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11122',
+                .src('https://patchwiki.biligame.com/images/ys/d/d8/4w9vt1jcc6qhbza7awafyd70sxxs74l.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/631401634edd0a641a42a09722d82f09_6491825398627675961.png')
                 .elemental().damage(2).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     return { status: isCdt(!hasObjById(heroStatus, 111121), 111121) }
                 }),
             new SkillBuilder('猎影潜袭').description('{dealDmg}，本角色附属【sts111122】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11123',
+                .src('https://patchwiki.biligame.com/images/ys/f/fe/95kd83tmndwc6ikoti7judkg0l1yyw1.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/4c548a11ba631ee6ccf70282d8af1718_5268158437550047138.png')
                 .burst(2).damage(4).cost(3).handle(() => ({ status: 111122 }))
         ),
@@ -1072,11 +1072,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('清风散花词'))
         .skills(
             new SkillBuilder('朝起鹤云').description('{dealDmg}，生成【sts115101】，本角色附属【sts115104】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/15102',
+                .src('https://patchwiki.biligame.com/images/ys/6/6d/ri0edrmy086b2ia85dya1xh5x7thc22.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1914d2cb4199cd49e28604f105b1e57d_5159935908470746953.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: [115101, 115104] })),
             new SkillBuilder('暮集竹星').description('{dealDmg}，治疗所有我方角色1点，生成手牌【crd115102】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/15103',
+                .src('https://patchwiki.biligame.com/images/ys/1/1c/qartvv52tlakx38vhaucxgm3zb9xlnn.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/9defe82ef629b59ef3c373d3ba64e492_2031181392714657327.png')
                 .burst(2).damage(1).cost(3).handle(event => ({ heal: 1, hidxs: allHidxs(event.heros), cmds: [{ cmd: 'getCard', cnt: 1, card: 115102 }] }))
         ),
@@ -1591,7 +1591,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('镰刀旋斩'))
         .skills(
             new SkillBuilder('狂澜镰击').description('{dealDmg}。；如果有敌方角色附属有【sts106】或【sts122052】，则本角色获得1点[充能]。(每回合1次)')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/22052',
+                .src('https://patchwiki.biligame.com/images/ys/1/10/lnygbgud3vpwaeo78le24h55nsbz1ke.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5bcf4aecbc53a844c2a25c980f2ab6ac_2541470900687128535.png')
                 .elemental().damage(3).cost(3).perCnt(1).handle(event => {
                     const { eheros = [], skill } = event;
@@ -1603,7 +1603,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                 }),
             new SkillBuilder('浮泡攻势').description('{dealDmg}，生成手牌【crd122051】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/22053',
+                .src('https://patchwiki.biligame.com/images/ys/1/10/lnygbgud3vpwaeo78le24h55nsbz1ke.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1eef9550382f6987f37db0e387ed9ea5_1022099738869474504.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 122051 }] }))
         ),
