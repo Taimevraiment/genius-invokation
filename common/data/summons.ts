@@ -595,7 +595,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 triggers.push('skilltype1');
                 minusDiceCdt &&= summon.perCnt > 0;
             } else {
-                triggers.push('change-from');
+                triggers.push('active-switch-from');
                 minusDiceCdt &&= !!getObjById(heros, getHidById(summon.id))?.talentSlot;
             }
             return {
@@ -607,7 +607,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon, isQuickAction = false } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                     if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
-                    if (trigger == 'change-from' && isQuickAction) --smn.perCnt;
+                    if (trigger == 'active-switch-from' && isQuickAction) --smn.perCnt;
                 }
             }
         }),
@@ -817,11 +817,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             return {
                 addDiceHero: summon.perCnt,
                 isNotAddTask: trigger != 'phase-end',
-                trigger: ['phase-end', 'change-oppo'],
+                trigger: ['phase-end', 'active-switch-oppo'],
                 exec: execEvent => {
                     const { summon: smn = summon, switchHeroDiceCnt = 0 } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
-                    if (trigger == 'change-oppo' && smn.perCnt > 0) {
+                    if (trigger == 'active-switch-oppo' && smn.perCnt > 0) {
                         --smn.perCnt;
                         return { switchHeroDiceCnt: switchHeroDiceCnt + 1 }
                     }

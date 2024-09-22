@@ -219,7 +219,7 @@ const magicCount = (cnt: number, shareId?: number) => {
             const { trigger = '' } = event;
             const cmds: Cmds[] = trigger == 'discard' ?
                 [{ cmd: 'addCard', cnt: 1, card: 332036 - cnt, hidxs: [1] }] :
-                [{ cmd: 'changeDice', element: DICE_COST_TYPE.Omni }, { cmd: 'getCard', cnt: 4 }];
+                [{ cmd: 'changeDice' }, { cmd: 'getCard', cnt: 4 }];
             return { trigger: isCdt(cnt > 0, ['discard']), cmds }
         })
 }
@@ -672,8 +672,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【敌方角色被击倒后：】如果所附属角色为｢出战角色｣，则生成2个[万能元素骰]。(整场牌局限制3次)')
         .description('【敌方角色被击倒后：】如果所附属角色为｢出战角色｣，则生成2个[万能元素骰]。', 'v3.8.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/c36e23e6486cfc14ba1afac19d73620e_6020851449922266352.png')
-        .handle((card, _, ver) => {
+        .handle((card, event, ver) => {
             if (ver >= 'v3.8.0' && card.perCnt <= 0) return;
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            if (!heros[hidx].isFront) return;
             return {
                 trigger: ['kill'],
                 execmds: [{ cmd: 'getDice', cnt: 2, element: DICE_COST_TYPE.Omni }],
@@ -784,8 +786,8 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skilltype1: [0, 0, 1] }),
                 minusDiceCard: isCdt(isMinusCard, 1),
-                trigger: ['skilltype1', 'card', 'change-to'],
-                execmds: isCdt(trigger == 'change-to', [{ cmd: 'getStatus', status: 301203 }]),
+                trigger: ['skilltype1', 'card', 'switch-to'],
+                execmds: isCdt(trigger == 'switch-to', [{ cmd: 'getStatus', status: 301203 }]),
                 exec: () => {
                     if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusDiceSkill)) {
                         --card.perCnt;
@@ -1587,7 +1589,7 @@ const allCards: Record<number, () => CardBuilder> = {
     331803: () => new CardBuilder(239).name('雷与永恒').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(0)
         .description('将我方所有元素骰转换为[万能元素骰]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/760c101ed6ef3b500a830ae430458d89_4230653799114143139.png')
-        .handle(() => ({ cmds: [{ cmd: 'changeDice', element: DICE_COST_TYPE.Omni }] })),
+        .handle(() => ({ cmds: [{ cmd: 'changeDice' }] })),
 
     331804: () => new CardBuilder(240).name('草与智慧').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(1)
         .description('抓1张牌。然后，选择任意手牌替换。')
@@ -1831,7 +1833,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], selectHeros } = event;
             return {
                 cmds: [{ cmd: 'switch-to', hidxs: selectHeros }, { cmd: 'useSkill', cnt: SKILL_TYPE.Normal }],
-                canSelectHero: heros.map(h => !h.isFront && h.hp > 0),
+                canSelectHero: heros.map(h => !h.isFront && h.hp > 0 && h.heroStatus.every(s => !s.hasType(STATUS_TYPE.NonAction))),
             }
         }),
 
@@ -2134,7 +2136,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('装备有此牌的【hro】生成的【sts111052】会使所附魔角色造成的[冰元素伤害]+1。；切换到装备有此牌的【hro】时：少花费1个元素骰。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7d706fd25ab0b3c4f8cca3af08d8a07b_2913232629544868049.png')
         .handle((card, event) => ({
-            trigger: ['change-to'],
+            trigger: ['active-switch-to'],
             minusDiceHero: card.perCnt,
             exec: () => {
                 let { switchHeroDiceCnt = 0 } = event;
@@ -2215,7 +2217,7 @@ const allCards: Record<number, () => CardBuilder> = {
             let { summons = [], switchHeroDiceCnt = 0 } = event;
             if (card.perCnt > 0 && hasObjById(summons, 112011)) {
                 return {
-                    trigger: ['change'],
+                    trigger: ['active-switch'],
                     minusDiceHero: 1,
                     exec: () => {
                         if (switchHeroDiceCnt > 0) {
@@ -2495,7 +2497,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { ehidx = -1 } = event;
             if (card.perCnt <= 0) return;
             return {
-                trigger: ['change-to'],
+                trigger: ['switch-to'],
                 execmds: [{ cmd: 'getStatus', status: 114091, hidxs: [ehidx], isOppo: true }],
                 exec: () => { --card.perCnt },
             }
@@ -2588,13 +2590,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/62bc79a32ed8d588a83497004487fb3c_1818674885518885960.png')
         .handle((card, event) => {
             const { trigger = '' } = event;
-            if (trigger == 'change' && card.perCnt <= 0) return;
+            if (trigger == 'switch' && card.perCnt <= 0) return;
             return {
-                trigger: ['change', 'skilltype1'],
+                trigger: ['switch', 'skilltype1'],
                 addDmgCdt: isCdt(trigger == 'skilltype1', card.useCnt),
-                isAddTask: trigger == 'change',
+                isAddTask: trigger == 'switch',
                 exec: () => {
-                    if (trigger == 'change') {
+                    if (trigger == 'switch') {
                         ++card.useCnt;
                         --card.perCnt;
                     } else if (trigger == 'skilltype1') card.useCnt = 0;
@@ -2727,7 +2729,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             return {
-                trigger: ['change-from'],
+                trigger: ['active-switch-from'],
                 minusDiceHero: 1,
                 exec: () => {
                     let { switchHeroDiceCnt = 0 } = event;
@@ -2987,10 +2989,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('[战斗行动]：将【hro】切换到场上，立刻使用【ski,1】。本次【ski,1】会为【hro】附属【sts114032】，但是不会再生成【雷楔】。(【hro】使用【ski,1】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro】附属【sts114032】)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [fhidx] = [] } = event;
-            const hidx = getObjIdxById(heros, getHidById(card.id));
+            const { heros = [] } = event;
+            const hero = getObjById(heros, getHidById(card.id));
+            if (!hero) return;
             const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 14032 }];
-            if (hidx != fhidx) cmds.unshift({ cmd: 'switch-to', hidxs: [hidx] });
+            if (!hero.isFront) cmds.unshift({ cmd: 'switch-to', hidxs: [hero.hidx] });
             return { trigger: ['skilltype2'], cmds }
         }),
 

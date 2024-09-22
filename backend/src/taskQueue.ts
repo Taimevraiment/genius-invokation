@@ -1,4 +1,4 @@
-import { delay } from "../../common/utils/utils.js";
+import { delay, isCdt } from "../../common/utils/utils.js";
 import { StatusTask } from "../../typing";
 
 export default class TaskQueue {
@@ -9,13 +9,14 @@ export default class TaskQueue {
     addTask(taskType: string, args: any[] | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean
     } = {}) {
-        const { isUnshift = false, isDmg = false, addAfterNonDmg = false } = options;
-        const curQueue = this.priorityQueue ?? this.queue;
+        const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false } = options;
+        if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
+        const curQueue = isCdt(this.isExecuting || isPriority, this.priorityQueue) ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType)) {
-            console.warn('重复task:', taskType);
+            console.trace('重复task:', taskType);
             // if (!this.priorityQueue) return;
         }
-        if (isUnshift) this.queue.unshift([taskType, args, isDmg]);
+        if (isUnshift || isPriority) curQueue.unshift([taskType, args, isDmg]);
         else if (addAfterNonDmg) {
             const tidx = this.queue.findIndex(([_, _t, isDmg]) => isDmg);
             if (tidx > -1) this.queue.splice(tidx, 0, [taskType, args, isDmg]);

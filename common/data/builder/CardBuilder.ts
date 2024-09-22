@@ -76,7 +76,7 @@ export class GICard {
             const vehicle = `rsk${id}1`;
             this.UI.description += `[特技]：【${vehicle}】；【[可用次数]：{useCnt}】；(角色最多装备1个｢特技｣)`;
             this.UI.explains.push(vehicle);
-            handle = (card, event) => {
+            handle ??= (card, event) => {
                 const { skid = -1 } = event;
                 if (skid != +`${card.id}1`) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }

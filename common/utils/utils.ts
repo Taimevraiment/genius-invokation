@@ -42,7 +42,7 @@ export const isCdt = <T>(cdt: boolean | null | undefined | (() => boolean | null
         return res;
     }
     if (elres == undefined) return undefined;
-    return elres;
+    return elres as T;
 }
 
 /**

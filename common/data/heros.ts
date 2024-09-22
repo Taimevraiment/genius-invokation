@@ -105,7 +105,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png')
                 .handle(event => {
                     const { hero: { talentSlot } } = event;
-                    return { trigger: ['change-to'], status: [[111052, 1, +!!talentSlot]] }
+                    return { trigger: ['switch-to'], status: [[111052, 1, +!!talentSlot]] }
                 })
         ),
 
@@ -288,7 +288,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('虚实流动').description('【此角色为出战角色，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。(每回合1次)')
                 .src('https://patchwiki.biligame.com/images/ys/1/12/j3lyz5vb4rhxspzbh9sl9toglxhk5d6.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bc5c12ac6eb36b8d24f03864bf281b87_4261814317325062178.png')
-                .handle(event => ({ trigger: ['change-from'], isNotAddTask: true, isQuickAction: event.skill.useCnt == 0 }))
+                .handle(event => ({ trigger: ['active-switch-from'], isNotAddTask: true, isQuickAction: event.skill.useCnt == 0 }))
         ),
 
     1204: () => new HeroBuilder(12).name('达达利亚').since('v3.7.0').fatui().hydro().bow()

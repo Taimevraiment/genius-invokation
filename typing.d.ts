@@ -183,16 +183,17 @@ type TrgOppo = '-oppo' | '';
 type TrgGet = 'get-' | '';
 type TrgOther = 'other-' | '';
 type TrgAfter = 'after-' | '';
+type TrgActive = 'active-' | '';
 
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
     'end-phase' | 'any-end-phase' | `${TrgOther | TrgAfter}skill${TrgOppo}` | `${TrgOther | TrgAfter}skilltype${SkillType}` |
-    `change${TrgOppo}` | 'change-to' | 'change-from' | 'card' | `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` |
+    `${TrgActive}switch` | `${TrgActive}switch-to` | `${TrgActive}switch-from` | 'card' | `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` |
     `${TrgOther | TrgGet}elReaction-${TrgEl}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther}dmg` | `${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
     'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` |
-    'change-turn' | '';
+    'change-turn' | `${TrgActive}switch${TrgOppo}` | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

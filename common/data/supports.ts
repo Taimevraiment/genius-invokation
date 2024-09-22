@@ -105,7 +105,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     321004: () => new SupportBuilder().permanent().perCnt(2).perCnt(1, 'v4.8.0').handle(support => {
         if (support.perCnt <= 0) return;
         return {
-            trigger: ['change'],
+            trigger: ['active-switch'],
             isNotAddTask: true,
             minusDiceHero: 1,
             exec: (spt, execEvent) => {
@@ -379,7 +379,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 凯瑟琳
     322002: () => new SupportBuilder().permanent().perCnt(1).handle(support => ({
-        trigger: ['change'],
+        trigger: ['active-switch'],
         isNotAddTask: true,
         isQuickAction: support.perCnt == 1,
         exec: (spt, execEvent) => {
@@ -561,11 +561,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { heros = [], hidx = -1 } = event;
         if (support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) > 0) return;
         return {
-            trigger: ['change'],
+            trigger: ['switch'],
             supportCnt: -1,
             exec: spt => {
                 --spt.perCnt;
-                return { cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }], isDestroy: --spt.cnt == 0 }
+                return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], isDestroy: --spt.cnt == 0 }
             }
         }
     }),
@@ -824,7 +824,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     323003: () => new SupportBuilder().permanent().perCnt(1).handle((support, _, ver) => {
         if (support.perCnt <= 0) return;
         return {
-            trigger: ['change'],
+            trigger: ['switch'],
             exec: spt => {
                 --spt.perCnt;
                 return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(302303)] }], isDestroy: false }
