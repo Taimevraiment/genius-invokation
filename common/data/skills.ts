@@ -151,6 +151,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1220512: () => new SkillBuilder('水泡封锁').description('{dealDmg}，敌方出战角色附属【sts122052】。')
         .vehicle().readySkill().damage(1).handle(() => ({ statusOppo: 122052 })),
 
+    1270321: () => new SkillBuilder('藤蔓锋鳞').description('{dealDmg}。')
+        .src('')
+        .vehicle().damage(1).costSame(1),
+
     3130011: () => new SkillBuilder('原海水刃').description('{dealDmg}。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130011')
         .vehicle().damage(2).costAny(2),
@@ -180,7 +184,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     3130041: () => new SkillBuilder('掘进突击').description('抓2张牌。然后，如果手牌中存在名称不存在于本局最初牌组中的牌，则提供2点[护盾]保护所附属角色。')
         .src('')
-        .vehicle().costSame(1).handle(event => {
+        .vehicle().costAny(2).handle(event => {
             const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [] } = event;
             const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];
             if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {

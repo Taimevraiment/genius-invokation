@@ -23,6 +23,7 @@ export type SummonHandleEvent = {
     minusDiceSkill?: number[][],
     tround?: number,
     isExecTask?: boolean,
+    isSummon?: number,
 }
 
 export type SummonHandleRes = {
@@ -885,9 +886,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/90767acfd11dc25ae46a333557b3ee2a_4658043205818200753.png')
         .handle((summon, event) => {
-            const { trigger = '', heros = [], isExecTask = false } = event;
+            const { trigger = '', skid = -1 } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (getObjById(heros, getHidById(summon.id))?.isFront || isExecTask) triggers.push('after-skilltype3')
+            if (skid == 25014) triggers.push('after-skilltype3')
             return {
                 trigger: triggers,
                 exec: execEvent => {
@@ -902,9 +903,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3f77ab65d8d940df9b3cf70d96ae0b25_8204101439924542003.png')
         .handle((summon, event) => {
-            const { trigger = '', heros = [], isExecTask = false } = event;
+            const { trigger = '', skid = -1 } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (getObjById(heros, getHidById(summon.id))?.isFront || isExecTask) triggers.push('after-skilltype3')
+            if (skid == 25014) triggers.push('after-skilltype3')
             return {
                 trigger: triggers,
                 exec: execEvent => {

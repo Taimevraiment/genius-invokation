@@ -77,7 +77,6 @@ export type CardHandleRes = {
     addDmgType1?: number,
     addDmgType2?: number,
     addDmgType3?: number,
-    addDmgSummon?: number,
     addDmgCdt?: number,
     minusDiceSkill?: MinusDiceSkill,
     minusDiceCard?: number,
@@ -2627,26 +2626,21 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方出战角色在[护盾]角色状态或[护盾]出战状态的保护下时，我方召唤物造成的[岩元素伤害]+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [], combatStatus = [], sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
+            const { heros = [], hidxs: [hidx] = [], combatStatus = [], sktype = SKILL_TYPE.Vehicle, isSummon = -1 } = event;
             let isTriggered = false;
-            const triggers: Trigger[] = ['Geo-dmg'];
+            const triggers: Trigger[] = [];
             if (ver < 'v4.8.0') {
                 const fhero = heros.find(h => h.isFront);
                 const istShield = fhero?.heroStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
                 const ostShield = combatStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
-                isTriggered = istShield || ostShield;
+                isTriggered = (istShield || ostShield) && isSummon > -1;
+                if (isTriggered) triggers.push('Geo-dmg');
             } else {
-                triggers.push('dmg');
                 const hero = heros[hidx];
-                isTriggered = hero.hp >= 7 && hero.isFront;
+                isTriggered = hero.hp >= 7 && hero.isFront && sktype != SKILL_TYPE.Vehicle;
+                if (isTriggered) triggers.push('dmg');
             }
-            if (isTriggered) {
-                return {
-                    trigger: triggers,
-                    addDmgCdt: isCdt(trigger == 'dmg' && sktype != SKILL_TYPE.Vehicle, 1),
-                    addDmgSummon: isCdt(trigger == 'Geo-dmg', 1),
-                }
-            }
+            if (isTriggered) return { trigger: triggers, addDmgCdt: 1 }
         }),
 
     216041: () => new CardBuilder(105).name('神性之陨').since('v4.0.0').talent(1).costGeo(3)
@@ -2944,7 +2938,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { isSummon = -1 } = event;
             const isAddDmg = [127022, 127023, 127024, 127025].includes(isSummon);
-            return { cmds: [{ cmd: 'addCard', cnt: 4, card: 127021 }], trigger: ['dmg', 'other-dmg'], addDmgSummon: isCdt(isAddDmg, 1) }
+            return { cmds: [{ cmd: 'addCard', cnt: 4, card: 127021 }], trigger: ['dmg', 'other-dmg'], addDmgCdt: isCdt(isAddDmg, 1) }
         }),
 
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0)

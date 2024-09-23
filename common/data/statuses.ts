@@ -70,7 +70,6 @@ export type StatusHandleRes = {
     addDmgType3?: number,
     addDmgCdt?: number,
     multiDmgCdt?: number,
-    addDmgSummon?: number,
     addDiceSkill?: AddDiceSkill,
     getDmg?: number,
     minusDiceCard?: number,
