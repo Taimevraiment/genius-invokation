@@ -113,7 +113,7 @@ type StatusTask = {
     skid: number, // 引起协同攻击的技能id -1为切换角色
     isQuickAction?: boolean, // 是否为快速行动
     discards?: Card[], // 舍弃的牌
-    card?: Card, // 调和或使用的牌
+    hcard?: Card, // 调和或使用的牌
 }
 
 type Cmds = {

@@ -2914,10 +2914,14 @@ const allCards: Record<number, () => CardBuilder> = {
     226011: () => new CardBuilder(119).name('重铸：岩盔').talent(2).costGeo(4).energy(2)
         .description('{action}；装备有此牌的【hro】击倒敌方角色后：【hro】重新附属【sts126011】和【sts126012】。')
         .src('https://patchwiki.biligame.com/images/ys/9/9f/ijpaagvk7o9jh1pzb933vl9l2l4islk.png')
-        .handle(() => ({
-            trigger: ['kill'],
-            execmds: [{ cmd: 'getStatus', status: [126011, 126012] }],
-        })),
+        .handle((card, event) => {
+            const { skid = -1 } = event;
+            if (getHidById(skid) != getHidById(card.id)) return;
+            return {
+                trigger: ['kill'],
+                execmds: [{ cmd: 'getStatus', status: [126011, 126012] }],
+            }
+        }),
 
     226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')

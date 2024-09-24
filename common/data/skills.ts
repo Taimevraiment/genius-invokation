@@ -151,6 +151,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1220512: () => new SkillBuilder('水泡封锁').description('{dealDmg}，敌方出战角色附属【sts122052】。')
         .vehicle().readySkill().damage(1).handle(() => ({ statusOppo: 122052 })),
 
+    1230311: () => new SkillBuilder('炙烧攻势').description('{dealDmg}。')
+        .src('')
+        .vehicle().damage(2).costSame(2),
+
     1270321: () => new SkillBuilder('藤蔓锋鳞').description('{dealDmg}。')
         .src('')
         .vehicle().damage(1).costSame(1),

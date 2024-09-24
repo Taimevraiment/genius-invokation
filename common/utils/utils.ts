@@ -111,6 +111,7 @@ export const wait = async (cdt: () => boolean, options: { delay?: number, freq?:
     const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true } = options;
     let loop = 0;
     if (cdt() && isImmediate) return;
+    let warn = false;
     while (true) {
         ++loop;
         await delay(freq);
@@ -118,7 +119,11 @@ export const wait = async (cdt: () => boolean, options: { delay?: number, freq?:
             await delay(dl);
             break;
         }
-        if (loop > maxtime / freq) throw new Error('too many loops: ' + cdt.toString());
+        if (loop > 3e4 / freq && !warn) {
+            console.warn('超过30秒，可能存在死循环');
+            warn = true;
+        }
+        if (loop > maxtime / freq) throw new Error(`too many loops-${maxtime}ms: ${cdt.toString()}`);
     }
 }
 

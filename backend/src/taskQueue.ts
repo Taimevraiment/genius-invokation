@@ -25,10 +25,10 @@ export default class TaskQueue {
         const queueList = `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
         console.info((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList);
     }
-    async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][], isPriority: boolean) {
+    async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
         console.info('execTask-' + taskType);
         console.time('execTask-end-' + taskType);
-        if (!isPriority && !this.priorityQueue && this.queue.length > 0) {
+        if (!this.priorityQueue && this.queue.length > 0) {
             this.priorityQueue = [];
         }
         let res = true;

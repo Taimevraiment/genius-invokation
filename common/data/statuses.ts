@@ -24,7 +24,7 @@ export type StatusHandleEvent = {
     dmgElement?: DamageType,
     reset?: boolean,
     trigger?: Trigger,
-    card?: Card,
+    hcard?: Card,
     talent?: Card | null,
     discards?: Card[],
     isChargedAtk?: boolean,
@@ -923,15 +923,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { restDmg = 0, heros = [], hidx = -1, trigger = '' } = event;
             const hid = getHidById(status.id);
             const hero = getObjById(heros, hid);
-            if (trigger == 'enter') {
-                if (status.hasType(STATUS_TYPE.Barrier) && hero?.isFront) {
+            if (['enter', 'getdmg', 'heal'].includes(trigger)) {
+                if (status.hasType(STATUS_TYPE.Barrier) && (hero?.isFront || (hero?.hp ?? 0) <= 0)) {
                     status.type = [STATUS_TYPE.Usage];
                 }
                 return;
             }
             if (trigger == 'switch-to') {
                 const toHero = heros[hidx];
-                if (status.hasType(STATUS_TYPE.Barrier) && toHero.id == hid) {
+                if (status.hasType(STATUS_TYPE.Barrier) && (toHero.id == hid || toHero.hp <= 0)) {
                     status.type = [STATUS_TYPE.Usage];
                 } else {
                     status.type = [STATUS_TYPE.Barrier, STATUS_TYPE.Usage];
@@ -1521,10 +1521,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((status, event) => {
-            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, card, trigger = '', isExecTask = false } = event;
+            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, hcard, trigger = '', isExecTask = false } = event;
             if ((!hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !isExecTask) return;
             const hasPyro = trigger == 'get-elReaction' &&
-                (!!getObjById(eheros, getHidById(status.id))?.talentSlot || card?.id == 217031) &&
+                (!!getObjById(eheros, getHidById(status.id))?.talentSlot || hcard?.id == 217031) &&
                 (hasObjById(eCombatStatus, 117032) || isExecTask) &&
                 eheros.some(h => h.element == ELEMENT_TYPE.Pyro);
             return {
@@ -1660,7 +1660,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用的[草元素伤害]。；[useCnt]')
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；[useCnt]', 'v4.8.0')
         .handle((status, event, ver) => {
-            const { summons = [], pile = [], card, combatStatus = [], talent } = event;
+            const { summons = [], pile = [], hcard, combatStatus = [], talent } = event;
             if (pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) return;
             const cmds: Cmds[] = [{ cmd: 'discard', mode: CMD_MODE.TopPileCard }];
             if (talent && talent.perCnt > 0) {
@@ -1679,7 +1679,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         if (sts116) --sts116.useCnt;
                         else --getObjById(smns, 112082)!.useCnt;
                         const thero = getObjById(hs, getHidById(status.id))!;
-                        const talent = isCdt(card?.id == getTalentIdByHid(thero.id), card) ?? thero.talentSlot;
+                        const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
                         if (talent && talent.perCnt > 0) {
                             --talent.perCnt;
                         }
@@ -1692,8 +1692,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117083: () => new StatusBuilder('预算师的技艺（生效中）').combatStatus().icon('buff3').useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('我方下次【打出｢场地｣支援牌时：】少花费2个元素骰。')
         .handle((status, event) => {
-            const { card, isMinusDiceCard } = event;
-            if (isMinusDiceCard && card?.hasSubtype(CARD_SUBTYPE.Place)) {
+            const { hcard, isMinusDiceCard } = event;
+            if (isMinusDiceCard && hcard?.hasSubtype(CARD_SUBTYPE.Place)) {
                 return {
                     minusDiceCard: 2,
                     trigger: ['card'],
@@ -1829,7 +1829,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。〔(本回合结束时获得{pct}点)〕')
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。', 'v5.0.0')
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
-            const { discards = [], card, heros = [], trigger = '' } = event;
+            const { discards = [], hcard, heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];
             if (ver >= 'v5.0.0') triggers.push('phase-end');
             return {
@@ -1850,7 +1850,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, { cmd: 'heal', cnt, hidxs: [hero.hidx] }] }
                     }
                     let cnt = 0;
-                    if (card && card.id > 0) discards.splice(0, INIT_PILE_COUNT, card);
+                    if (hcard && hcard.id > 0) discards.splice(0, INIT_PILE_COUNT, hcard);
                     discards.forEach(c => {
                         const [cost1, cost2, maxDice, _maxDiceCnt] = eStatus.addition as number[];
                         const cost = c.cost + c.anydice;
@@ -2195,8 +2195,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage).useCnt(useCnt).maxCnt(3)
         .description('【我方打出〖crd127021〗时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
-            const { card, isMinusDiceCard } = event;
-            if (isMinusDiceCard && card?.id == 127021) {
+            const { hcard, isMinusDiceCard } = event;
+            if (isMinusDiceCard && hcard?.id == 127021) {
                 return {
                     trigger: ['card'],
                     minusDiceCard: 1,
@@ -2229,8 +2229,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方召唤4个【smn127022】后，我方【hro】附属【sts127027】，并获得2点[护盾]。')
         .handle((status, event) => {
-            const { card, discards = [], heros = [], summons = [] } = event;
-            if (summons.length == MAX_SUMMON_COUNT || (card?.id != 127021 && !hasObjById(discards, 127021) && status.useCnt < 4)) return;
+            const { hcard, discards = [], heros = [], summons = [] } = event;
+            if (summons.length == MAX_SUMMON_COUNT || (hcard?.id != 127021 && !hasObjById(discards, 127021) && status.useCnt < 4)) return;
             return {
                 trigger: ['card', 'discard'],
                 exec: () => {
@@ -2270,8 +2270,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(3).roundCnt(1).type(STATUS_TYPE.Usage)
         .description('本回合中，我方打出的事件牌无效。；[useCnt]')
         .handle((status, event) => {
-            const { card } = event;
-            if (card?.type == CARD_TYPE.Event) {
+            const { hcard } = event;
+            if (hcard?.type == CARD_TYPE.Event) {
                 return {
                     trigger: ['card'],
                     isInvalid: true,
@@ -2296,8 +2296,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301018: () => new StatusBuilder('严格禁令').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]')
         .handle((status, event) => {
-            const { card } = event;
-            const isInvalid = card?.type == CARD_TYPE.Event;
+            const { hcard } = event;
+            const isInvalid = hcard?.type == CARD_TYPE.Event;
             return {
                 trigger: ['card'],
                 isInvalid,
@@ -2682,8 +2682,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303228: () => new StatusBuilder('机关铸成之链（生效中）').heroStatus().icon('buff3').useCnt(0).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【所附属角色每次受到伤害或治疗后：】累积1点｢备战度｣(最多累积2点)。；【我方打出原本费用不多于｢备战度｣的｢武器｣或｢圣遗物｣时:】移除此状态，以免费打出该牌。')
         .handle((status, event) => {
-            const { card, trigger = '', heal = [], hidx = -1, isMinusDiceWeapon, isMinusDiceArtifact } = event;
-            const isMinus = (isMinusDiceWeapon || isMinusDiceArtifact) && status.useCnt >= (card?.cost ?? 3);
+            const { hcard, trigger = '', heal = [], hidx = -1, isMinusDiceWeapon, isMinusDiceArtifact } = event;
+            const isMinus = (isMinusDiceWeapon || isMinusDiceArtifact) && status.useCnt >= (hcard?.cost ?? 3);
             const triggers: Trigger[] = [];
             if (status.useCnt < 2) triggers.push('getdmg', 'heal');
             if (isMinus) triggers.push('card');
@@ -2705,8 +2705,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，我方下次打出支援牌时：】少花费1个元素骰。')
         .handle((status, event) => {
-            const { card, isMinusDiceCard } = event;
-            if (isMinusDiceCard && card?.type == CARD_TYPE.Support) {
+            const { hcard, isMinusDiceCard } = event;
+            if (isMinusDiceCard && hcard?.type == CARD_TYPE.Support) {
                 return {
                     minusDiceCard: 1,
                     trigger: ['card'],
