@@ -54,11 +54,11 @@ export default class TaskQueue {
     isTaskEmpty() {
         return (this.priorityQueue ?? []).length == 0 && this.queue.length == 0;
     }
-    addStatusAtk(ststask: StatusTask[], isUnshift = false) {
+    addStatusAtk(ststask: StatusTask[], isUnshift = false, isPriority = false) {
         if (ststask.length == 0) return;
         for (const t of ststask) {
             const atkname = `statusAtk-${t.name}(${t.entityId})-p${t.pidx}h${t.hidx}:${t.trigger}`;
-            this.addTask(atkname, t, { isUnshift, isDmg: true });
+            this.addTask(atkname, t, { isUnshift, isPriority, isDmg: true });
         }
     }
 }

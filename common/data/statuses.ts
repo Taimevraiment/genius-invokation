@@ -30,7 +30,7 @@ export type StatusHandleEvent = {
     isChargedAtk?: boolean,
     isFallAtk?: boolean,
     phase?: number,
-    skilltype?: SkillType,
+    sktype?: SkillType,
     skid?: number,
     hasDmg?: boolean,
     dmgSource?: number,
@@ -47,6 +47,7 @@ export type StatusHandleEvent = {
     summons?: Summon[],
     esummons?: Summon[],
     hcards?: Card[],
+    hcardsCnt?: number,
     pile?: Card[],
     playerInfo?: GameInfo,
     isSummon?: number,
@@ -365,12 +366,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.AddDamage).talent(isTalent)
         .description(`我方角色造成的[冰元素伤害]+1。(包括角色引发的‹1冰元素›扩散的伤害)；[useCnt]${isTalent ? '；我方角色通过｢普通攻击｣触发此效果时，不消耗｢[可用次数]｣。(每回合1次)' : ''}`)
         .handle((status, event) => {
-            const { skilltype = SKILL_TYPE.Vehicle } = event;
+            const { sktype = SKILL_TYPE.Vehicle } = event;
             return {
                 addDmgCdt: 1,
-                trigger: isCdt(skilltype != SKILL_TYPE.Vehicle, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
+                trigger: isCdt(sktype != SKILL_TYPE.Vehicle, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
                 exec: () => {
-                    if (status.perCnt > 0 && skilltype == SKILL_TYPE.Normal) {
+                    if (status.perCnt > 0 && sktype == SKILL_TYPE.Normal) {
                         --status.perCnt;
                     } else {
                         --status.useCnt;
@@ -751,11 +752,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
         .description('我方造成的伤害+1。(包括角色引发的扩散伤害)；[useCnt]')
         .handle((status, event) => {
-            const { skilltype = SKILL_TYPE.Vehicle, trigger = '' } = event;
+            const { sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
             return {
                 trigger: ['dmg', 'dmg-Swirl'],
                 addDmg: 1,
-                addDmgCdt: isCdt(skilltype == SKILL_TYPE.Vehicle, 1),
+                addDmgCdt: isCdt(sktype == SKILL_TYPE.Vehicle, 1),
                 exec: () => {
                     if (trigger == 'dmg') --status.useCnt
                 },
@@ -920,11 +921,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113094: () => new StatusBuilder('净焰剑狱之护').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Usage).summonId(113093)
         .description('【〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。')
         .handle((status, event) => {
-            const { restDmg = 0, heros = [], hidx = -1, trigger = '' } = event;
+            const { restDmg = 0, heros = [], hidx = -1, getdmg = [], trigger = '' } = event;
             const hid = getHidById(status.id);
             const hero = getObjById(heros, hid);
-            if (['enter', 'getdmg', 'heal'].includes(trigger)) {
-                if (status.hasType(STATUS_TYPE.Barrier) && (hero?.isFront || (hero?.hp ?? 0) <= 0)) {
+            if (['enter', 'getdmg', 'other-getdmg', 'heal'].includes(trigger)) {
+                if (status.hasType(STATUS_TYPE.Barrier) && (hero?.isFront || (hero?.hp ?? 0) - (getdmg[hero?.hidx ?? -1] ?? 0) <= 0)) {
                     status.type = [STATUS_TYPE.Usage];
                 }
                 return;
@@ -1081,10 +1082,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114063: () => new StatusBuilder('鸣煌护持').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
         .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
-            const { skilltype = SKILL_TYPE.Vehicle, hasDmg = false } = event;
+            const { sktype = SKILL_TYPE.Vehicle, hasDmg = false } = event;
             const trigger: Trigger[] = [];
-            if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(skilltype)) {
-                trigger.push(`skilltype${skilltype}` as Trigger);
+            if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(sktype)) {
+                trigger.push(`skilltype${sktype}` as Trigger);
             }
             return {
                 addDmgType2: 1,
@@ -1359,8 +1360,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('角色进行｢普通攻击｣时：此技能视为[下落攻击]，并且伤害+1。技能结算后，造成1点[风元素伤害]。；[useCnt]')
         .handle((_, event) => {
-            const { skilltype = -1, trigger = '' } = event;
-            if (trigger == 'enter' || (['skill', 'vehicle', 'card'].includes(trigger) && skilltype != SKILL_TYPE.Normal)) {
+            const { sktype = -1, trigger = '' } = event;
+            if (trigger == 'enter' || (['skill', 'vehicle', 'card'].includes(trigger) && sktype != SKILL_TYPE.Normal)) {
                 return { trigger: [trigger], isFallAtk: true }
             }
             return {
@@ -1457,8 +1458,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
         .description('我方角色造成的[岩元素伤害]+1。；[roundCnt]')
         .handle((_, event) => {
-            const { skilltype = SKILL_TYPE.Vehicle, talent } = event;
-            if (skilltype == SKILL_TYPE.Vehicle) return;
+            const { sktype = SKILL_TYPE.Vehicle, talent } = event;
+            if (sktype == SKILL_TYPE.Vehicle) return;
             const isTalent = !!talent && talent.perCnt > 0;
             return {
                 trigger: ['Geo-dmg'],
@@ -1522,7 +1523,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((status, event) => {
             const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, hcard, trigger = '', isExecTask = false } = event;
-            if ((!hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !isExecTask) return;
+            if ((trigger == 'other-get-elReaction' && !hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !isExecTask) return;
             const hasPyro = trigger == 'get-elReaction' &&
                 (!!getObjById(eheros, getHidById(status.id))?.talentSlot || hcard?.id == 217031) &&
                 (hasObjById(eCombatStatus, 117032) || isExecTask) &&
@@ -2501,9 +2502,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303132: () => new StatusBuilder('元素共鸣：热诚之火（生效中）').heroStatus().icon('buff2')
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。')
-        .handle((status, { skilltype = SKILL_TYPE.Vehicle }) => ({
+        .handle((status, { sktype = SKILL_TYPE.Vehicle }) => ({
             addDmgCdt: 3,
-            trigger: isCdt(skilltype != SKILL_TYPE.Vehicle, ['elReaction-Pyro']),
+            trigger: isCdt(sktype != SKILL_TYPE.Vehicle, ['elReaction-Pyro']),
             exec: () => { --status.roundCnt },
         })),
 
@@ -2511,7 +2512,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).useCnt(1).roundCnt(1)
         .description('【本回合中，我方角色下一次造成[岩元素伤害]后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。')
         .handle((_, event) => {
-            const { skilltype = SKILL_TYPE.Vehicle } = event;
+            const { sktype = SKILL_TYPE.Vehicle } = event;
             return {
                 trigger: ['Geo-dmg'],
                 isAddTask: true,
@@ -2519,7 +2520,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (!eStatus) return;
                     const { combatStatus = [] } = execEvent;
                     const shieldStatus = combatStatus.find(ost => ost.hasType(STATUS_TYPE.Shield));
-                    if (shieldStatus && skilltype != SKILL_TYPE.Vehicle) {
+                    if (shieldStatus && sktype != SKILL_TYPE.Vehicle) {
                         shieldStatus.useCnt += 3;
                         --eStatus.useCnt;
                     }

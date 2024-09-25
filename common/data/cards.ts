@@ -29,6 +29,7 @@ export type CardHandleEvent = {
     esummons?: Summon[],
     switchHeroDiceCnt?: number,
     hcards?: Card[],
+    hcardsCnt?: number,
     ehcardsCnt?: number,
     heal?: number[],
     ephase?: number,
@@ -141,15 +142,16 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
 }
 
 const barrierWeaponHandle = (card: Card, event: CardHandleEvent): CardHandleRes => {
-    const { restDmg = -1, getdmg = [], hidxs: [hidx] = [], sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
+    const { hcards = [], hcardsCnt = hcards.length, restDmg = -1, getdmg = [],
+        hidxs: [hidx] = [], sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
     if (restDmg > -1) {
-        if (card.perCnt <= 0) return { restDmg }
+        if (card.perCnt <= 0 || hcardsCnt == 0) return { restDmg }
         ++card.useCnt;
         return { restDmg: restDmg - 1 }
     }
     const triggers: Trigger[] = [];
     if (card.useCnt > 0 && sktype != SKILL_TYPE.Vehicle) triggers.push('dmg');
-    if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0) triggers.push('getdmg');
+    if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0 && hcardsCnt > 0) triggers.push('getdmg');
     return {
         trigger: triggers,
         addDmgCdt: isCdt(card.useCnt > 0, 1),
