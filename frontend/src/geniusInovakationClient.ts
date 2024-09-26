@@ -533,6 +533,7 @@ export default class GeniusInvokationClient {
             this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
             this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
             this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
+            this.willSwitch = preview.willSwitch?.slice() ?? this._resetWillSwitch();
             this.isValid = preview.isValid;
         }
     }

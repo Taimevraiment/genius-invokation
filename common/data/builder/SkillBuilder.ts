@@ -59,7 +59,7 @@ export class GISkill {
             const handleres = handle?.(hevent, ver) ?? {};
             if (isReadySkill) return handleres;
             const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];
-            if (!curskill) throw new Error('@skill_constructor: 未找到技能');
+            if (!curskill) throw new Error(`@skill_constructor: 未找到技能, skid:${id}, hero:${hero.name}`);
             if (reset) {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;
