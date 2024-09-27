@@ -270,3 +270,9 @@ type CalcAtkRes = {
 }
 
 type SmnDamageHandle = (isOppo?: boolean, cnt?: number, element?: DamageType, hidxs?: number[]) => { dmgElement: DamageType, willDamages: number[][] }
+
+type AtkTask = {
+    pidx: number,
+    cmds: Cmds[],
+    atkname: string,
+}

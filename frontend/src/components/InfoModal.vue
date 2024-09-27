@@ -516,7 +516,7 @@ const getSvgFilter = (statusColor: StatusBgColor) => {
 
 // 获取装备图标
 const getEquipmentIcon = (subtype: CardSubtype) => {
-  if (subtype == CARD_SUBTYPE.Vehicle) return (info.value as Hero).vehicleSlot?.[1].UI.src ?? CARD_SUBTYPE_URL[subtype];
+  if (subtype == CARD_SUBTYPE.Vehicle) return (info.value as Hero).vehicleSlot?.[1].UI.src || CARD_SUBTYPE_URL[subtype];
   return CARD_SUBTYPE_URL[subtype];
 }
 

@@ -1219,6 +1219,27 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
         ),
 
+    1609: () => new HeroBuilder(420).name('千织').since('v5.1.0').inazuma().geo().sword()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Chiori.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('心织刀流'))
+        .skills(
+            new SkillBuilder('羽袖一触').description('从3个【千织的自动制御人形】中[挑选]1个召唤。')
+                .src('',
+                    '')
+                .elemental().cost(3).handle(event => {
+                    const { talent } = event;
+                    const summon: number[] = [];
+                    // const cnt = talent ? 4 : 3;
+                    if (talent) summon.push(116094);
+                    return { summon }
+                }),
+            new SkillBuilder('二刀之形·比翼').description('{dealDmg}。')
+                .src('',
+                    '')
+                .burst(2).damage(5).cost(3)
+        ),
+
     1701: () => new HeroBuilder(47).name('柯莱').sumeru().dendro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/cca275e9c7e6fa6cf61c5e1d6768db9d_4064677380613373250.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a0f79ba2105b03a5b72e01c14c1ee79c.png')
@@ -1835,6 +1856,31 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle(() => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
         ),
 
+    2406: () => new HeroBuilder(421).name('深渊咏者·紫电').since('v5.1.0').monster().electro()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_InvokerElectric.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('渊薮落雷').catalyst())
+        .skills(
+            new SkillBuilder('秘渊虚霆').description('{dealDmg}。；如果目标已[附着雷元素]，则夺取对方1点[充能]。(如果夺取时此角色[充能]已满，则改为由下一个[充能]未满的角色获得[充能])')
+                .src('',
+                    '')
+                .elemental().damage(3).cost(3).handle(event => {
+                    const { eheros = [], heros = [] } = event;
+                    const ehero = eheros.find(h => h.isFront);
+                    if (!ehero?.attachElement.includes(ELEMENT_TYPE.Electro) || ehero.energy == 0) return;
+                    const hidxs = allHidxs(heros, { cdt: h => h.energy < h.maxEnergy }).slice(0, 1);
+                    return { cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }, { cmd: 'getEnergy', cnt: 1, hidxs }] }
+                }),
+            new SkillBuilder('狂迸骇雷').description('{dealDmg}。如果目标[充能]不多于1，造成的伤害+2。')
+                .src('',
+                    '')
+                .burst(2).damage(3).cost(3).handle(event => ({ addDmgCdt: isCdt((event.eheros?.find(h => h.isFront)?.energy ?? 3) <= 1, 2) })),
+            new SkillBuilder('雷之新生').description('战斗开始时，初始附属【sts124061】。')
+                .src('',
+                    '')
+                .handle(() => ({ trigger: ['game-start'], status: 124061 }))
+        ),
+
     2501: () => new HeroBuilder(58).name('魔偶剑鬼').monster().anemo()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5b21d3abb8dd7245a8f5f540d8049fcb_59481287402207724.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6a1743d67ca3e21074e1f0c704c4549.png')
@@ -2004,6 +2050,36 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png')
                 .handle(() => ({ trigger: ['game-start'], status: 127029, cmds: [{ cmd: 'addCard', cnt: 6, card: 127021 }] }))
+        ),
+
+    2703: () => new HeroBuilder(422).name('镀金旅团·叶轮舞者').since('v5.1.0').tags(HERO_TAG.Eremite).dendro()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_EremiteGrass.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('叶轮轻扫'))
+        .skills(
+            new SkillBuilder('蔓延旋舞').description('{dealDmg}，生成1层【sts127033】。')
+                .src('',
+                    '')
+                .elemental().damage(3).cost(3).handle(() => ({ status: 127033 })),
+            new SkillBuilder('厄灵苏醒·草之灵蛇').description('{dealDmg}。整场牌局限制一次，将一张【crd127032】加入我方手牌。')
+                .src('',
+                    '')
+                .burst(2).damage(4).cost(3).handle(event => {
+                    if (event.skill.useCnt > 0) return;
+                    return { cmds: [{ cmd: 'getCard', cnt: 1, card: 127032 }] }
+                }),
+            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(每回合1次)')
+                .src('',
+                    '')
+                .perCnt(1).handle(event => {
+                    const { hero: { hp, energy, maxEnergy, hidx }, skill, getdmg = [] } = event;
+                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy || skill.perCnt <= 0) return;
+                    return {
+                        trigger: ['getdmg'],
+                        cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }],
+                        exec: () => { --skill.perCnt },
+                    }
+                })
         ),
 
     6301: () => new HeroBuilder().name('焚尽的炽炎魔女').since('v4.3.0').fatui().pyro()

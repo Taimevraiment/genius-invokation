@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
-import { CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
+import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
@@ -170,12 +170,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             if (trigger == 'calc') return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
             const maxDice = ehcards.reduce((a, b) => Math.max(a, b.cost + b.anydice), 0);
             const [{ cidx = -1 } = {}] = ehcards.filter(c => c.cost + c.anydice == maxDice);
-            return {
-                cmds: [
-                    { cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true },
-                    { cmd: 'getCard', cnt: 1, card: ehcards[cidx], mode: CMD_MODE.isPublic },
-                ]
-            }
+            return { cmds: [{ cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true }] }
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。(每回合最多使用1次)')

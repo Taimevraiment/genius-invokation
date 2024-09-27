@@ -143,6 +143,7 @@ const senlin1Status = (name: string) => {
         .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【角色在本回合中，下次对角色打出｢天赋｣或使用｢元素战技｣时：】少花费2个元素骰。')
         .handle((status, event) => {
+            if (status.roundCnt <= 0) return;
             const { trigger = '', isMinusDiceTalent, isMinusDiceSkill = false } = event;
             return {
                 minusDiceSkill: { skilltype2: [0, 0, 2] },
@@ -2058,6 +2059,26 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     124053: () => coolDownStatus('噬骸能量块', 124051),
 
+    124061: () => new StatusBuilder('雷之新生').heroStatus().icon('heal2').useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
+        .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。此效果触发后，此角色造成的[雷元素伤害]+1。')
+        .handle((_, event) => {
+            const { hidx = -1 } = event;
+            return {
+                trigger: ['will-killed'],
+                cmds: [{ cmd: 'revive', cnt: 4, hidxs: [hidx] }],
+                exec: eStatus => {
+                    if (!eStatus) return;
+                    --eStatus.useCnt;
+                    return { cmds: [{ cmd: 'getStatus', status: 124062, hidxs: [hidx] }] }
+                }
+            }
+        }),
+
+    124062: () => new StatusBuilder('雷之新生·锐势').heroStatus().icon('buff4')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('角色造成的[雷元素伤害]+1。')
+        .handle(() => ({ addDmg: 1 })),
+
     125021: () => new StatusBuilder('坍毁').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.AddDamage)
         .description('所附属角色受到的[物理伤害]或[风元素伤害]+2。；[useCnt]')
         .handle((status, event) => {
@@ -2249,6 +2270,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    127033: () => new StatusBuilder('灵蛇祝福').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        .description('我方使用【crd127032】的[特技]时：此[特技]造成的伤害+1，并且不消耗【crd127032】的[可用次数]。；[useCnt]')
+        .handle((status, event) => {
+            const { skid = -1 } = event;
+            if (skid != 1270321) return;
+            return { trigger: ['vehicle'], addDmgCdt: 1, exec: () => { --status.useCnt } }
+        }),
+
     300001: () => new StatusBuilder('旧时庭园（生效中）').combatStatus().icon('buff2').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('本回合中，我方下次打出｢武器｣或｢圣遗物｣装备牌时少花费2个元素骰。')
@@ -2383,6 +2412,26 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合中，角色｢普通攻击｣造成的伤害+1。')
         .handle(() => ({ addDmgType1: 1 })),
 
+    301204: () => new StatusBuilder('指挥的礼帽（生效中）').heroStatus().icon('buff2').useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【所附属角色下次使用技能或打出｢天赋｣时：】少花费1个元素骰。；[useCnt]')
+        .handle((status, event) => {
+            if (status.useCnt <= 0) return;
+            const { trigger = '', isMinusDiceSkill = false, isMinusDiceTalent = false } = event;
+            return {
+                minusDiceSkill: { skill: [0, 0, 1] },
+                minusDiceCard: isCdt(isMinusDiceTalent, 1),
+                trigger: ['card', 'skill'],
+                exec: () => {
+                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
+                        --status.useCnt;
+                    }
+                },
+            }
+        }),
+
+    3130042: () => shieldHeroStatus('todo掘进护盾'),
+
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【我方下次打出｢武器｣或｢圣遗物｣手牌时：】少花费1个元素骰。')
@@ -2408,6 +2457,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     302205: () => new StatusBuilder('沙与梦').heroStatus().icon('buff2').useCnt(1).type(STATUS_TYPE.Usage)
         .description('【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；[useCnt]')
         .handle((status, event) => {
+            if (status.useCnt <= 0) return;
             const { trigger = '', isMinusDiceSkill = false, isMinusDiceTalent = false } = event;
             return {
                 minusDiceSkill: { skill: [0, 0, 3] },
@@ -2858,6 +2908,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
+    303314: () => new StatusBuilder('龙龙饼干（生效中）').heroStatus().icon('buff2').roundCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('本回合中，所附属角色下一次使用｢特技｣少花费1个元素骰。')
+        .handle((status, event) => ({
+            trigger: ['vehicle'],
+            minusDiceSkill: { skilltype5: [0, 0, 1] },
+            exec: () => {
+                if (event.isMinusDiceSkill) --status.roundCnt;
+            },
+        })),
 
 };
 

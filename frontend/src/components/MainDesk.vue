@@ -166,7 +166,8 @@
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
-              <img :src="hero.vehicleSlot[1].UI.src" style="filter: brightness(0.3);" />
+              <img :src="hero.vehicleSlot[1].UI.src || CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]"
+                style="filter: brightness(0.3);" />
               <div :class="{ 'slot-can-use': hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
           </div>

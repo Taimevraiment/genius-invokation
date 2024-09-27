@@ -372,6 +372,29 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             return { cmds, isDestroy: support.cnt >= 6 }
         }
     })),
+    // 特佩利舞台
+    321023: () => new SupportBuilder().collection().handle((support, event) => {
+        const { trigger = '', card, playerInfo: { initCardIds: acids = [] } = {}, eplayerInfo: { initCardIds: ecids = [] } = {} } = event;
+        const triggers: Trigger[] = [];
+        if (card) {
+            if (trigger == 'card' && !acids.includes(card.id)) triggers.push(trigger);
+            else if (trigger == 'ecard' && support.cnt > 0 && !ecids.includes(card.id)) triggers.push(trigger);
+        }
+        if (support.cnt > 0) triggers.push('phase-start');
+        return {
+            trigger: triggers,
+            supportCnt: trigger == 'card' ? 1 : trigger == 'ecard' ? -1 : 0,
+            exec: spt => {
+                const cmds: Cmds[] = [];
+                if (trigger == 'phase-start') {
+                    if (spt.cnt >= 3) cmds.push({ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random });
+                    if (spt.cnt >= 1) cmds.push({ cmd: 'changeDice', cnt: 1 });
+                } else if (trigger == 'card') ++spt.cnt;
+                else if (trigger == 'ecard') --spt.cnt;
+                return { cmds, isDestroy: false }
+            }
+        }
+    }),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(() => ({
         trigger: ['phase-start'],
