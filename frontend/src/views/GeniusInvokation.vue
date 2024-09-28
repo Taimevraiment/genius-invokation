@@ -41,11 +41,11 @@
       'mobile-player-display': isMobile,
     }" @click.stop="devOps(1)">
       <p v-if="client.opponent?.name">{{ client.opponent?.name }}</p>
-      <p class="ai-btn" v-if="!client.opponent?.name" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
+      <!-- <p class="ai-btn" v-if="!client.opponent?.name" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
       <p class="ai-btn" v-if="client.opponent.id == AI_ID && client.phase <= PHASE.NOT_BEGIN" style="color: red"
         @click.stop="removeAI">
         -删除bot
-      </p>
+      </p> -->
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
         {{ handCardsCnt[client.playerIdx ^ 1] }}
       </div>
@@ -181,7 +181,7 @@ import {
   SKILL_TYPE,
   Version
 } from '@@@/constant/enum';
-import { AI_ID, DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import { DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
@@ -339,13 +339,13 @@ const lookonTo = (idx: number) => {
   client.value.lookonTo(idx);
 };
 // 添加AI
-const addAI = () => socket.emit('addAI');
+// const addAI = () => socket.emit('addAI');
 // 移除AI
-const removeAI = () => {
-  socket.emit('removeAI');
-  clientAI = null;
-  hasAI.value = false;
-}
+// const removeAI = () => {
+//   socket.emit('removeAI');
+//   clientAI = null;
+//   hasAI.value = false;
+// }
 
 const getPlayerList = ({ plist }: { plist: Player[] }) => {
   const me = plist.find(p => p.id == userid);
@@ -440,7 +440,9 @@ const devOps = (cidx = 0) => {
       ops.push(op[0] + op.slice(index + 1).trim());
       op = op.slice(0, index).trim();
     }
-    if (op.startsWith('&')) { // 附着
+    if (op == 'log') { // 导出日志
+      flag.add('log');
+    } else if (op.startsWith('&')) { // 附着
       const isAdd = op[1] == '+';
       const [el = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(isAdd ? 2 : 1).split(/[:：]+/).map(h);
       attachs.push({ hidx, el, isAdd });

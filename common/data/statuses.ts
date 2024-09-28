@@ -2900,8 +2900,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     303313: () => new StatusBuilder('缤纷马卡龙（生效中）').heroStatus().icon('heal').useCnt(3).type(STATUS_TYPE.Attack)
         .description('【所附属角色受到伤害后：】治疗该角色1点。；[useCnt]')
-        .handle(() => ({
+        .handle((_, event) => ({
             heal: 1,
+            hidxs: [event.hidx ?? -1],
             trigger: ['getdmg'],
             exec: eStatus => {
                 if (eStatus) --eStatus.useCnt;

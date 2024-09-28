@@ -9,6 +9,7 @@ import {
     StatusType, Version,
 } from '../../common/constant/enum.js';
 import {
+    AI_ID,
     DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
     MAX_GAME_ROUND,
     MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT
@@ -46,11 +47,12 @@ export default class GeniusInvokationRoom {
     startIdx: number = 0; // 先手玩家
     onlinePlayersCnt = 0; // 在线玩家数
     winner: number = -1; // 赢家序号
-    taskQueue: TaskQueue = new TaskQueue(); // 任务队列
+    taskQueue: TaskQueue; // 任务队列
     ischangeTurn: boolean = false; // 是否转换回合人
     entityIdIdx: number = -500000; // 实体id序号标记
     previews: Preview[] = []; // 当前出战玩家预览
     log: { content: string, type: LogType }[] = []; // 当局游戏的日志
+    systemLog: string = ''; // 系统日志
     countdown: Countdown = { limit: 0, curr: 0, timer: undefined }; // 倒计时
     isDieBackChange: boolean = true; // 用于记录角色被击倒切换角色后是否转换回合
     isDev: boolean = false; // 是否为开发模式
@@ -80,6 +82,7 @@ export default class GeniusInvokationRoom {
             return newSupport(version)(id);
         }
         this.newSkill = newSkill(version);
+        this.taskQueue = new TaskQueue(this._writeLog.bind(this));
     }
     get currentPlayerIdx() {
         return this._currentPlayerIdx;
@@ -131,10 +134,11 @@ export default class GeniusInvokationRoom {
      * @param isOnlySystem 是否只记录为系统日志
      */
     private _writeLog(log: string, type: LogType = 'log') {
-        if (type != 'system') this.log.push({ content: log.replace(/{[^\{\}]+}/g, ''), type });
-        fs.appendFile(`${__dirname}/../../../logs/${this.seed}.log`, log.replace(/\{|\}/g, '') + '\n', err => {
-            if (err) return console.error('err:', err);
-        });
+        if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/{[^\{\}]+}/g, ''), type });
+        this.systemLog += log.replace(/\{|\}/g, '') + '\n';
+        // fs.appendFile(`${__dirname}/../../../logs/${this.seed}.log`, log.replace(/\{|\}/g, '') + '\n', err => {
+        //     if (err) return console.error('err:', err);
+        // });
     }
     /**
      * 获取预览
@@ -196,6 +200,19 @@ export default class GeniusInvokationRoom {
         ) {
             previews.push(...this._getPreview(this.currentPlayerIdx));
             this.previews = previews;
+            if (this.players[this.currentPlayerIdx].id == AI_ID) { // AI行动
+                const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.GiveUp];
+                while (true) {
+                    const action = this._randomInArr(actionType);
+                    const pres = previews.filter(p => p.type == action && p.isValid);
+                    if (pres.length == 0) {
+                        actionType.splice(actionType.indexOf(action), 1);
+                        continue;
+                    }
+                    const preview = this._randomInArr(pres);
+                    this.io.to(`7szh-${this.id}`).emit('getServerInfo', { AIAction: preview });
+                }
+            }
         }
         const serverData: ServerData = {
             players: [],
@@ -262,7 +279,7 @@ export default class GeniusInvokationRoom {
                 actionInfo: actionInfo || (isActionInfo ? log.filter(lg => lg.type == 'info').at(-1)?.content ?? '' : ''),
             }
         }
-        console.info(serverData.flag);
+        this._writeLog(serverData.flag, 'emit');
         if (socket) {
             socket.emit('getServerInfo', Object.freeze({
                 ...serverData,
@@ -437,6 +454,12 @@ export default class GeniusInvokationRoom {
     }) {
         if (!this.isDev) return;
         const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, smnIds, sptIds, flag } = actionData;
+        if (flag.includes('log')) {
+            fs.appendFile(`${__dirname}/../../../logs/${this.seed}.log`, this.systemLog, err => {
+                if (err) return console.error('err:', err);
+            });
+            return;
+        }
         const player = this.players[cpidx];
         const heros = player.heros;
         for (const { hidx, el, isAdd } of attachs) {
@@ -1307,36 +1330,38 @@ export default class GeniusInvokationRoom {
                 });
                 mergeWillHeals(bWillHeal, slotres.willHeals);
             }
-            const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
-                .map(xtrgs => xtrgs.map(trgs => trgs.map(trg => trg.startsWith('skill') ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[]));
-            const atkStatues: StatusTask[] = [];
-            const atkStatuesUnshift: StatusTask[] = [];
-            for (let i = 0; i < ehlen; ++i) {
-                const hi = (cehidx + i) % ehlen;
-                const h = bPlayers[epidx].heros[hi];
+        }
+        const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
+            .map(xtrgs => xtrgs.map(trgs => trgs.map(trg => trg.startsWith('skill') ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[]));
+        const atkStatues: StatusTask[] = [];
+        const atkStatuesUnshift: StatusTask[] = [];
+        for (let i = 0; i < ehlen; ++i) {
+            const hi = (cehidx + i) % ehlen;
+            const h = bPlayers[epidx].heros[hi];
+            if (h.hp > 0) {
                 afterESkillTrgs[hi].push('status-destroy');
                 const { atkStatus: atkhst } = doPreviewStatus(bPlayers, h.heroStatus, hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
                 atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-                if (i == 0) {
-                    const { atkStatus: atkcst } = doPreviewStatus(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
-                    atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-                }
             }
-            for (let i = 0; i < ahlen; ++i) {
-                const hi = (cahidx + i) % ahlen;
-                const h = bPlayers[pidx].heros[hi];
-                afterASkillTrgs[hi].push('status-destroy');
-                const { atkStatus: atkhst } = doPreviewStatus(bPlayers, h.heroStatus, hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
-                atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-                if (i == 0) {
-                    const { atkStatus: atkcst } = doPreviewStatus(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
-                    atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-                }
+            if (i == 0) {
+                const { atkStatus: atkcst } = doPreviewStatus(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
+                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
-            if (isExec) {
-                this.taskQueue.addStatusAtk(atkStatues);
-                this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), true);
+        }
+        for (let i = 0; i < ahlen; ++i) {
+            const hi = (cahidx + i) % ahlen;
+            const h = bPlayers[pidx].heros[hi];
+            afterASkillTrgs[hi].push('status-destroy');
+            const { atkStatus: atkhst } = doPreviewStatus(bPlayers, h.heroStatus, hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
+            atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+            if (i == 0) {
+                const { atkStatus: atkcst } = doPreviewStatus(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
+                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
+        }
+        if (isExec) {
+            this.taskQueue.addStatusAtk(atkStatues);
+            this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), true);
         }
         for (const smn of (isExec ? players : bPlayers)[pidx].summons) {
             if (!oSummonEids.includes(smn.entityId) || (selectSummon != -1 && bPlayers[pidx].summons[selectSummon].entityId != smn.entityId)) continue;
@@ -2288,6 +2313,7 @@ export default class GeniusInvokationRoom {
         }
         if (isInvalid) {
             this._doActionAfter(pidx);
+            this._startTimer();
             this.emit(`useCard-${currCard.name}-invalid-${pidx}`, pidx, { isActionInfo: true, isQuickAction: true });
             await this._execTask();
             await this._doActionStart(pidx);
@@ -2358,6 +2384,7 @@ export default class GeniusInvokationRoom {
                     if (canAction) await this._execTask();
                 } else if (!isUseSkill) {
                     this._doActionAfter(pidx, isQuickAction);
+                    this._startTimer();
                     this.emit('useCard', pidx, { canAction, damageVO, isQuickAction, isActionInfo: true });
                     await this._execTask();
                 } else {
@@ -2389,9 +2416,7 @@ export default class GeniusInvokationRoom {
             this.players[this.currentPlayerIdx].status = PLAYER_STATUS.WAITING;
             ++this.currentPlayerIdx;
             this.players[this.currentPlayerIdx].status = PLAYER_STATUS.PLAYING;
-            if (type == 'endPhase') {
-                this._startTimer();
-            } else {
+            if (type != 'endPhase') {
                 this.players.forEach(p => {
                     if (p.pidx == this.currentPlayerIdx) p.UI.info = '';
                     else p.UI.info = '对方行动中....';
@@ -2399,6 +2424,7 @@ export default class GeniusInvokationRoom {
             }
         }
         const tip = isCdt(!isQuickAction && !isDie && this.taskQueue.isTaskEmpty(), isChange ? '{p}回合开始' : '继续{p}回合');
+        this._startTimer();
         this.emit(`changeTurn-${type}-isChange:${isChange}`, pidx, { tip, isChange });
         await delay(1e3);
         const currPlayer = this.players[this.currentPlayerIdx];
@@ -2508,6 +2534,7 @@ export default class GeniusInvokationRoom {
                 p.canAction = true;
             } else p.UI.info = '对方行动中....';
         });
+        this._startTimer();
         this.emit(flag, pidx, { tip: '{p}回合开始' });
         await delay(1e3);
         this._doActionStart(this.startIdx);
@@ -2656,10 +2683,10 @@ export default class GeniusInvokationRoom {
                 const heal = Math.max(0, willHeals[phidx] ?? 0);
                 if (h.hp > 0 || heal % 1 != 0) {
                     const damage = willDamages[phidx]?.reduce((a, b) => a + Math.max(0, b), 0) ?? 0;
-                    if ((willDamages[phidx]?.[0] ?? -1) >= 0 || willDamages[phidx]?.[1]) {
-                        this._detectStatus(p.pidx, STATUS_TYPE.Attack, 'getdmg', { hidxs: [h.hidx], isOnlyHeroStatus: true, isQuickAction });
-                        if (offset == 0) this._detectStatus(p.pidx, STATUS_TYPE.Attack, 'getdmg', { hidxs: [h.hidx], isOnlyCombatStatus: true, isQuickAction });
-                    }
+                    // if ((willDamages[phidx]?.[0] ?? -1) >= 0 || willDamages[phidx]?.[1]) {
+                    //     this._detectStatus(p.pidx, STATUS_TYPE.Attack, 'getdmg', { hidxs: [h.hidx], isOnlyHeroStatus: true, isQuickAction });
+                    //     if (offset == 0) this._detectStatus(p.pidx, STATUS_TYPE.Attack, 'getdmg', { hidxs: [h.hidx], isOnlyCombatStatus: true, isQuickAction });
+                    // }
                     if (heal % 1 != 0) h.hp = Math.ceil(heal);
                     else h.hp = Math.max(0, h.hp - damage + heal);
                     if ((willDamages[phidx]?.[0] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}][${h.name}]造成${willDamages[phidx][0]}点${ELEMENT_NAME[dmgElements[phidx]]}伤害`);
@@ -2827,7 +2854,7 @@ export default class GeniusInvokationRoom {
     async _doStatusAtk(stsTask: StatusTask) {
         if (!this._hasNotDieSwitch() || !this.taskQueue.isExecuting) return false;
         const { entityId, group, pidx, isSelf = 0, trigger = '', hidx: ohidx = this.players[pidx].hidx,
-            discards = [], hcard, skid } = stsTask;
+            discards = [], hcard, skid, name: atkname } = stsTask;
         let { isQuickAction = false } = stsTask;
         let { heros: aheros, hidx: ahidx, summons: aSummon, pile, handCards, combatStatus } = this.players[pidx];
         const { heros: eheros, hidx: eFrontIdx, combatStatus: eCombatStatus } = this.players[pidx ^ 1];
@@ -2835,7 +2862,7 @@ export default class GeniusInvokationRoom {
         const atkStatus = (group == STATUS_GROUP.heroStatus ? this.players[pidx].heros[ahidx].heroStatus : combatStatus).find(sts => sts.entityId == entityId)!;
         const atkedIdx = isSelf ? ahidx : eFrontIdx;
         if (atkStatus == undefined) {
-            console.error('@_doStatusAtk: 状态不存在');
+            console.error(`@_doStatusAtk: 状态[${atkname}]不存在`);
             return true;
         }
         const stsres = atkStatus.handle(atkStatus, {
@@ -2853,7 +2880,6 @@ export default class GeniusInvokationRoom {
             isExecTask: true,
             randomInt: this._randomInt.bind(this),
         });
-        const atkname = atkStatus.name;
         if (!stsres.damage && !stsres.heal && stsres.cmds?.every(({ cmd }) => !['heal', 'revive'].includes(cmd))) {
             this.emit(`statusAtk-${atkname}-cancel`, pidx, { isQuickAction });
             return true;
@@ -4862,16 +4888,17 @@ export default class GeniusInvokationRoom {
     }
     private _startTimer() {
         if (this.countdown.limit <= 0) return;
-        if (this.countdown.timer != null) clearInterval(this.countdown.timer);
+        if (this.countdown.timer != undefined) clearInterval(this.countdown.timer);
         this.countdown.curr = this.countdown.limit;
         this.countdown.timer = setInterval(() => {
             --this.countdown.curr;
             if (this.countdown.curr <= 0 || this.phase != PHASE.ACTION) {
+                if (this.countdown.curr <= 0) this._doEndPhase(this.currentPlayerIdx, 'endPhase');
                 this.countdown.curr = 0;
                 clearInterval(this.countdown.timer);
                 this.countdown.timer = undefined;
             }
-        }, 1000);
+        }, 1e3);
     }
     /**
      * 投降
@@ -5278,6 +5305,7 @@ export default class GeniusInvokationRoom {
         if (hero.weaponSlot) field.push(hero.weaponSlot);
         if (hero.artifactSlot) field.push(hero.artifactSlot);
         if (hero.talentSlot) field.push(hero.talentSlot);
+        if (hero.vehicleSlot) field.push(hero.vehicleSlot[0]);
         field.sort((a, b) => b.entityId - a.entityId);
         if (hidx == ahidx) field.push(...combatStatus);
         return field;

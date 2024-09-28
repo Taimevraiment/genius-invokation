@@ -587,7 +587,7 @@ const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
 const slotSelect = computed<boolean[][][][]>(() => props.client.slotSelect);
 const isLookon = computed<number>(() => props.isLookon);
 const heros = computed<Hero[][]>(() => {
-  if (props.client.isWin < 2) return [opponent?.value.heros, player.value.heros];
+  if (props.client.isWin < 2) return [opponent?.value?.heros ?? [], player.value.heros];
   if (playerIdx.value == 0) return [props.afterWinHeros[1], props.afterWinHeros[0]];
   return props.afterWinHeros.flat();
 });

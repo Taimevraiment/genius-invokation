@@ -1,11 +1,14 @@
 import { delay, isCdt } from "../../common/utils/utils.js";
-import { StatusTask } from "../../typing";
+import { LogType, StatusTask } from "../../typing";
 
 export default class TaskQueue {
     priorityQueue: [string, any[] | StatusTask, boolean][] | undefined;
     queue: [string, any[] | StatusTask, boolean][] = [];
     isExecuting: boolean = false;
-    constructor() { }
+    _writeLog: (log: string, type?: LogType) => void;
+    constructor(_writeLog: (log: string, type?: LogType) => void) {
+        this._writeLog = _writeLog;
+    }
     addTask(taskType: string, args: any[] | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean
     } = {}) {
@@ -14,7 +17,6 @@ export default class TaskQueue {
         const curQueue = isCdt(this.isExecuting || isPriority, this.priorityQueue) ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.trace('重复task:', taskType);
-            // if (!this.priorityQueue) return;
         }
         if (isUnshift || isPriority) curQueue.unshift([taskType, args, isDmg]);
         else if (addAfterNonDmg) {
@@ -23,10 +25,10 @@ export default class TaskQueue {
             else this.queue.push([taskType, args, isDmg]);
         } else curQueue.push([taskType, args, isDmg]);
         const queueList = `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
-        console.info((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList);
+        this._writeLog((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList, 'emit');
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
-        console.info('execTask-' + taskType);
+        this._writeLog('execTask-' + taskType, 'emit');
         console.time('execTask-end-' + taskType);
         if (!this.priorityQueue && this.queue.length > 0) {
             this.priorityQueue = [];
@@ -45,7 +47,7 @@ export default class TaskQueue {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
         const res = this.priorityQueue?.shift() ?? this.queue.shift();
         if (!res) return [['not found', [], false], false];;
-        console.info(`getTask:${res[0]}(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`);
+        this._writeLog(`getTask:${res[0]}(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`, 'emit');
         if (this.priorityQueue?.length == 0) {
             this.priorityQueue = undefined;
         }

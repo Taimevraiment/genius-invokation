@@ -237,6 +237,7 @@ type ServerData = Readonly<{
     statusSelect: number[],
     summonSelect: number[],
     supportSelect: number[],
+    AIAction?: Preview,
     flag: string,
 }>
 
@@ -255,7 +256,7 @@ type Preview = Readonly<ActionData & {
     isQuickAction?: boolean,
 }>
 
-type LogType = 'log' | 'system' | 'info';
+type LogType = 'log' | 'system' | 'info' | 'emit';
 
 type CalcAtkRes = {
     element?: DamageType,

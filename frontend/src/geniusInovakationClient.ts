@@ -392,7 +392,8 @@ export default class GeniusInvokationClient {
      */
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
-            tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, flag } = data;
+            tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin,
+            flag } = data;
         console.info(flag);
         const hasDmg = damageVO != -1 && (!!damageVO?.willDamages.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals.some(h => h != -1));
         this.isWin = isWin;
@@ -403,6 +404,8 @@ export default class GeniusInvokationClient {
         this.isStart = isStart;
         this.round = round;
         this.countdown.curr = currCountdown;
+        if (this.countdown.timer != undefined) clearInterval(this.countdown.timer);
+        if (currCountdown > 0) this.countdown.timer = setInterval(() => --this.countdown.curr, 1e3);
         this.pileCnt = pileCnt;
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
@@ -871,10 +874,7 @@ export default class GeniusInvokationClient {
      */
     endPhase() {
         if (this.player.status == PLAYER_STATUS.WAITING || !this.canAction || this.phase != PHASE.ACTION) return;
-        this.socket.emit('sendToServer', {
-            type: ACTION_TYPE.EndPhase,
-            flag: 'endPhase',
-        } as ActionData);
+        this.socket.emit('sendToServer', { type: ACTION_TYPE.EndPhase, flag: 'endPhase' } as ActionData);
         this.cancel();
     }
     /**
