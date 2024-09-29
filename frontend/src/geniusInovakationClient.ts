@@ -395,7 +395,7 @@ export default class GeniusInvokationClient {
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin,
             flag } = data;
         console.info(flag);
-        const hasDmg = damageVO != -1 && (!!damageVO?.willDamages.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals.some(h => h != -1));
+        const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
         this.previews = previews;

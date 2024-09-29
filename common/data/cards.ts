@@ -2951,10 +2951,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】如果装备有此牌的【hro】已触发过【sts124061】，则使敌方出战角色失去1点[充能]。；装备有此牌的【hro】被击倒或触发【sts124061】时：弃置此牌，使敌方出战角色失去1点[充能]。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_InvokerElectric.webp').
         handle((card, event) => {
-            const { heros = [], trigger = '' } = event;
+            const { heros = [], slotUse = false, trigger = '' } = event;
             if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 124061) || trigger == 'will-killed') {
-                const cmds: Cmds[] = [{ cmd: 'getEnergy', cnt: -1 }];
-                return { trigger: ['will-killed'], cmds, execmds: cmds, isDestroy: true }
+                const cmds: Cmds[] = [{ cmd: 'getEnergy', cnt: -1, isOppo: true }];
+                return { trigger: ['will-killed'], cmds, execmds: cmds, isDestroy: !slotUse }
             }
         }),
 

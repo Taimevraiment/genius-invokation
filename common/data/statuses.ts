@@ -2270,7 +2270,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    127033: () => new StatusBuilder('灵蛇祝福').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+    127033: () => new StatusBuilder('灵蛇祝福').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('我方使用【crd127032】的[特技]时：此[特技]造成的伤害+1，并且不消耗【crd127032】的[可用次数]。；[useCnt]')
         .handle((status, event) => {
             const { skid = -1 } = event;

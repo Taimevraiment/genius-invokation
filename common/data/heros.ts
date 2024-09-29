@@ -1856,7 +1856,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle(() => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
         ),
 
-    2406: () => new HeroBuilder(421).name('深渊咏者·紫电').since('v5.1.0').monster().electro()
+    2406: () => new HeroBuilder(421).name('深渊咏者·紫电').since('v5.1.0').maxHp(6).monster().electro()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_InvokerElectric.webp')
         .avatar('')
         .normalSkill(new NormalSkillBuilder('渊薮落雷').catalyst())

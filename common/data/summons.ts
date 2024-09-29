@@ -708,7 +708,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => {
             const { skid = -1, isSummon = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const isAddDmg = summon.perCnt > 0 && getHidById(skid > -1 ? skid : isSummon) == getHidById(summon.id);
+            const hid = getHidById(summon.id);
+            const isAddDmg = summon.perCnt > 0 && (getHidById(skid) == hid || getHidById(isSummon) == hid);
             if (isAddDmg) triggers.push('Geo-dmg');
             return {
                 trigger: triggers,

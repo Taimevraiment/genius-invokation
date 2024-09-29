@@ -217,7 +217,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         const elCode = this._id.toString().startsWith('313') ? 0 :
             Math.floor(this._id / 1000 / (this._type == SKILL_TYPE.Vehicle ? 10 : 1)) % 10 as ElementCode;
         const element: ElementType = ELEMENT_CODE_KEY[elCode];
-        this.costElement(element);
+        this.dmgElement(element);
         const readySkillDesc = this._readySkillRound > 0 ? `(需准备${this._readySkillRound}个行动轮)；` : '';
         const description = readySkillDesc + this._description.get(this._curVersion, '')
             .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)

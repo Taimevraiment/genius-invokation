@@ -13,7 +13,9 @@
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero"
                     :style="{ backgroundColor: ELEMENT_COLOR[hero.element] }">
                     <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name" style="width: 100%;height: 100%;" />
-                    <div v-else style="height: 100%;aspect-ratio: 1/1;"></div>
+                    <div v-else style="height: 100%;aspect-ratio: 1/1;align-content: center;text-align: center">
+                        {{ hero.name }}
+                    </div>
                 </div>
                 <div class="edit-btn-group">
                     <span v-for="( icon, cidx ) in deckListEditIcon" :key="cidx" class="edit-list-icon"
