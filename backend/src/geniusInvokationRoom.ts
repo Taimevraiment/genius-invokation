@@ -9,15 +9,13 @@ import {
     StatusType, Version,
 } from '../../common/constant/enum.js';
 import {
-    AI_ID,
-    DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
-    MAX_GAME_ROUND,
-    MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT
+    AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
+    MAX_GAME_ROUND, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT
 } from '../../common/constant/gameOption.js';
 import { INIT_PLAYER, NULL_CARD } from '../../common/constant/init.js';
 import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../common/constant/UIconst.js';
 import { CardHandleRes, cardsTotal, newCard, parseCard } from '../../common/data/cards.js';
-import { newHero, parseHero } from '../../common/data/heros.js';
+import { herosTotal, newHero, parseHero } from '../../common/data/heros.js';
 import { newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
@@ -136,9 +134,6 @@ export default class GeniusInvokationRoom {
     private _writeLog(log: string, type: LogType = 'log') {
         if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/{[^\{\}]+}/g, ''), type });
         this.systemLog += log.replace(/\{|\}/g, '') + '\n';
-        // fs.appendFile(`${__dirname}/../../../logs/${this.seed}.log`, log.replace(/\{|\}/g, '') + '\n', err => {
-        //     if (err) return console.error('err:', err);
-        // });
     }
     /**
      * 获取预览
@@ -194,24 +189,53 @@ export default class GeniusInvokationRoom {
         });
         const previews: Preview[] = [];
         // 计算预测行动的所有情况
+        const cplayer = this.players[this.currentPlayerIdx];
         if (
-            this.phase == PHASE.ACTION && !notPreview && this.players[this.currentPlayerIdx].canAction &&
-            this._hasNotDieSwitch() && this.taskQueue.isTaskEmpty()
+            this.phase == PHASE.ACTION && !notPreview && cplayer.canAction &&
+            this._hasNotDieSwitch() && this.taskQueue.isTaskEmpty() && cplayer.status == PLAYER_STATUS.PLAYING
         ) {
             previews.push(...this._getPreview(this.currentPlayerIdx));
             this.previews = previews;
-            if (this.players[this.currentPlayerIdx].id == AI_ID) { // AI行动
-                const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.GiveUp];
-                while (true) {
-                    const action = this._randomInArr(actionType);
-                    const pres = previews.filter(p => p.type == action && p.isValid);
-                    if (pres.length == 0) {
+            if (cplayer.id == AI_ID) { // AI行动
+                setTimeout(() => {
+                    const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.EndPhase];
+                    while (true) {
+                        const action = this._randomInArr(actionType);
+                        if (action == ACTION_TYPE.EndPhase) {
+                            this._doEndPhase(pidx, 'endPhase-ai');
+                            break;
+                        }
+                        const pres = previews.filter(p => p.type == action && p.isValid);
+                        if (pres.length > 0) {
+                            const preview = this._randomInArr(pres);
+                            const { pidx, dice } = cplayer;
+                            switch (preview.type) {
+                                case ACTION_TYPE.UseCard:
+                                    this._useCard(pidx, preview.cardIdxs![0], preview.diceSelect!, {
+                                        selectHeros: preview.heroIdxs,
+                                        selectSummon: preview.summonIdx,
+                                        selectSupport: preview.supportIdx,
+                                    });
+                                    break;
+                                case ACTION_TYPE.UseSkill:
+                                    assgin(dice, dice.filter((_, di) => !preview.diceSelect![di]))
+                                    this._useSkill(pidx, preview.skillId!, { selectSummon: preview.summonIdx });
+                                    break;
+                                case ACTION_TYPE.Reconcile:
+                                    this._reconcile(pidx, preview.diceSelect!, preview.cardIdxs![0], 'reconcile-ai');
+                                    break;
+                                case ACTION_TYPE.SwitchHero:
+                                    this._switchHero(pidx, preview.heroIdxs![0], 'switchHero-ai', { diceSelect: preview.diceSelect });
+                                    break;
+                                default:
+                                    const a: never = preview.type as never;
+                                    throw new Error(`@emit-aiAction: 未知的ActionType[${a}]`);
+                            }
+                            break;
+                        }
                         actionType.splice(actionType.indexOf(action), 1);
-                        continue;
                     }
-                    const preview = this._randomInArr(pres);
-                    this.io.to(`7szh-${this.id}`).emit('getServerInfo', { AIAction: preview });
-                }
+                }, 1e3);
             }
         }
         const serverData: ServerData = {
@@ -308,6 +332,7 @@ export default class GeniusInvokationRoom {
             name: newPlayer.name,
             rid: this.id,
         };
+        if (newPlayer.id == AI_ID) player.phase = PHASE.NOT_BEGIN;
         if (pidx < PLAYER_COUNT) {
             this.players.push(player);
             this.onlinePlayersCnt = Math.min(PLAYER_COUNT, this.players.length);
@@ -318,6 +343,33 @@ export default class GeniusInvokationRoom {
         console.info(`init-rid:${this.id}-[${newPlayer.name}]pid:${newPlayer.id}-pidx:${pidx}`);
         this.emit(`player[${player.name}] enter room `, pidx);
         return player;
+    }
+    /**
+     * 创建AI玩家
+     */
+    private _initAI() {
+        const aiPlayer = this.players[1];
+        aiPlayer.heros = [];
+        const heroIds = new Set<number>();
+        const heroIdsPool = herosTotal(this.version).map(h => h.id);
+        while (heroIds.size < 3) {
+            const hid = this._randomInArr(heroIdsPool);
+            if (heroIds.has(hid)) continue;
+            heroIds.add(hid);
+            aiPlayer.heros.push(this.newHero(hid));
+        }
+        const cardIdsMap = new Map<number, number>();
+        const cardIdsPool = cardsTotal(this.version).map(c => c.id);
+        while (aiPlayer.pile.length < DECK_CARD_COUNT) {
+            const card = this.newCard(this._randomInArr(cardIdsPool));
+            const cid = card.id;
+            const cnt = cardIdsMap.get(cid) || 0;
+            if (cnt < 2) {
+                if (cid > 200000 && !heroIds.has(+card.userType) || card.hasSubtype(CARD_SUBTYPE.Legend)) continue;
+                cardIdsMap.set(cid, cnt + 1);
+            }
+            aiPlayer.pile.push(card);
+        }
     }
     /**
      * 开始游戏
@@ -333,12 +385,13 @@ export default class GeniusInvokationRoom {
         this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-r${this.id}-s${this.seed}`;
         this.entityIdIdx = -500000;
         this.isStart = true;
-        this.currentPlayerIdx = this.isDev ? 1 : this.players[1].id == 1 ? 0 : this._randomInt(PLAYER_COUNT);
+        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.isDev ? 1 : this._randomInt(PLAYER_COUNT);
         this.startIdx = this.currentPlayerIdx;
         this.phase = PHASE.CHANGE_CARD;
         this.winner = -1;
         this.round = 1;
         this.log = [];
+        if (this.players[1].id == AI_ID) this._initAI();
         this.players.forEach(p => {
             p.phase = this.phase;
             p.hidx = -1;
@@ -377,6 +430,12 @@ export default class GeniusInvokationRoom {
             this._writeLog(`[${p.name}]获得手牌${p.handCards.map(c => `[${c.name}]`).join('')}`, 'system');
             this._writeLog(`[${p.name}]牌库：${p.pile.map(c => `[${c.name}]`).join('')}`, 'system')
         });
+        if (this.players[1].id == AI_ID) {
+            const aiPlayer = this.players[1];
+            aiPlayer.hidx = this._randomInt(aiPlayer.heros.length - 1);
+            aiPlayer.heros[aiPlayer.hidx].isFront = true;
+            aiPlayer.phase == PHASE.DICE;
+        }
         this.emit(flag, pidx);
     }
     /**
@@ -427,10 +486,10 @@ export default class GeniusInvokationRoom {
                 }
                 break;
             case ACTION_TYPE.UseCard:
-                this._useCard(cpidx, cardIdxs[0], diceSelect, socket, { selectHeros: heroIdxs, selectSummon: summonIdx, selectSupport: supportIdx });
+                this._useCard(cpidx, cardIdxs[0], diceSelect, { socket, selectHeros: heroIdxs, selectSummon: summonIdx, selectSupport: supportIdx });
                 break;
             case ACTION_TYPE.Reconcile:
-                this._reconcile(cpidx, diceSelect, cardIdxs[0], socket, flag);
+                this._reconcile(cpidx, diceSelect, cardIdxs[0], flag, socket);
                 break;
             case ACTION_TYPE.EndPhase:
                 this._doEndPhase(cpidx, flag);
@@ -440,7 +499,7 @@ export default class GeniusInvokationRoom {
                 break;
             default:
                 const a: never = actionData.type;
-                throw new Error(`@getACtion: 未知的ActionType[${a}]`);
+                throw new Error(`@getAction: 未知的ActionType[${a}]`);
         }
     }
     /**
@@ -562,12 +621,13 @@ export default class GeniusInvokationRoom {
         } else { // 预选
             player.heros.forEach(h => h.isFront = h.hidx == hidx);
         }
-        if (this.players.every(p => p.phase == PHASE.DICE)) { // 双方都选完出战角色
+        if (this.players.every(p => p.phase == PHASE.DICE || p.id == AI_ID)) { // 双方都选完出战角色
             this.phase = PHASE.DICE;
             this.players.forEach(player => {
                 player.dice = this._rollDice(player.pidx);
                 player.UI.showRerollBtn = true;
                 this._writeLog(player.dice.reduce((a, c) => a + `[${ELEMENT_NAME[c].replace(/元素/, '')}]`, `[${player.name}]初始骰子为`), 'system');
+                if (player.id == AI_ID) this._reroll(player.dice.map(d => d != DICE_COST_TYPE.Omni && !player.heros.map(h => h.element).includes(d)), player.pidx, socket, flag);
             });
             this.emit(flag, pidx, { tip: '骰子投掷阶段' });
         } else {
@@ -750,7 +810,7 @@ export default class GeniusInvokationRoom {
                         this._doReset();
                         await delay(1e3);
                         this._doPhaseStart(flag, pidx);
-                    } else {
+                    } else if (player.id != AI_ID) {
                         this.emit(`${flag}-finish`, pidx, { socket });
                     }
                 }, 800);
@@ -764,8 +824,9 @@ export default class GeniusInvokationRoom {
      * @param diceSelect 骰子数组
      * @param cardIdx 要调和的卡牌序号
      * @param flag flag
+     * @param socket socket
      */
-    private async _reconcile(pidx: number, diceSelect: boolean[], cardIdx: number, socket: Socket, flag: string) {
+    private async _reconcile(pidx: number, diceSelect: boolean[], cardIdx: number, flag: string, socket?: Socket) {
         if (diceSelect.indexOf(true) == -1) return this.emit('reconcileDiceError', pidx, { socket, tip: '骰子不符合要求' });
         const player = this.players[pidx];
         const currCard = player.handCards[cardIdx];
@@ -2206,15 +2267,15 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      * @param cardIdx 使用的卡牌序号
      * @param diceSelect 选择要消耗的骰子
-     * @param socket socket
+     * @param options.socket socket
      * @param options.selectHero 使用卡牌时选择的角色序号
      * @param options.selectHero2 使用卡牌时选择的角色序号2
      * @param options.selectSummon 使用卡牌时选择的召唤物序号
      * @param options.selectSupport 使用卡牌时选择的支援物序号
      */
-    private async _useCard(pidx: number, cardIdx: number, diceSelect: boolean[], socket: Socket,
-        options: { selectHeros?: number[], selectSummon?: number, selectSupport?: number } = {}) {
-        const { selectHeros = [], selectSummon = -1, selectSupport = -1 } = options;
+    private async _useCard(pidx: number, cardIdx: number, diceSelect: boolean[],
+        options: { socket?: Socket, selectHeros?: number[], selectSummon?: number, selectSupport?: number } = {}) {
+        const { socket, selectHeros = [], selectSummon = -1, selectSupport = -1 } = options;
         const preview = this.previews.find(pre =>
             pre.type == ACTION_TYPE.UseCard &&
             pre.cardIdxs?.[0] == cardIdx &&
@@ -4932,7 +4993,7 @@ export default class GeniusInvokationRoom {
         this.winner = winnerIdx;
         this.players.forEach((p, i) => {
             p.UI.info = '';
-            p.phase = PHASE.NOT_READY;
+            p.phase = p.id == AI_ID ? PHASE.NOT_BEGIN : PHASE.NOT_READY;
             p.status = PLAYER_STATUS.WAITING;
             if (i != this.winner) {
                 p.heros.forEach(h => h.isFront = false);

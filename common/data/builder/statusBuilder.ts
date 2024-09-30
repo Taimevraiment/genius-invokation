@@ -1,7 +1,7 @@
 import { Status } from "../../../typing";
 import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
-import { SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
+import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
 import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
@@ -68,8 +68,8 @@ export class GIStatus {
         let thandle = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
             // this.icon = 'shield2';
-            this.UI.icon = SHIELD_ICON_URL;
             // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
+            this.UI.icon = SHIELD_ICON_URL;
             thandle = (status, event = {}) => {
                 let { restDmg = -1 } = event;
                 let rest: StatusHandleRes = {};
@@ -86,7 +86,7 @@ export class GIStatus {
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             // this.icon = 'shield';
             // this.iconBg = '#9268db';
-            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp';
+            this.UI.icon = BARRIER_ICON_URL;
         }
         if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
             if (icon.startsWith('buff')) {

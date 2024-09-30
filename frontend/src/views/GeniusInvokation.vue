@@ -41,11 +41,11 @@
       'mobile-player-display': isMobile,
     }" @click.stop="devOps(1)">
       <p v-if="client.opponent?.name">{{ client.opponent?.name }}</p>
-      <!-- <p class="ai-btn" v-if="!client.opponent?.name" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
+      <p class="ai-btn" v-if="!client.opponent?.name" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
       <p class="ai-btn" v-if="client.opponent.id == AI_ID && client.phase <= PHASE.NOT_BEGIN" style="color: red"
         @click.stop="removeAI">
         -删除bot
-      </p> -->
+      </p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
         {{ handCardsCnt[client.playerIdx ^ 1] }}
       </div>
@@ -170,7 +170,6 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
-  CARD_SUBTYPE,
   COST_TYPE,
   DICE_COST_TYPE_CODE_KEY,
   DiceCostType,
@@ -181,12 +180,10 @@ import {
   SKILL_TYPE,
   Version
 } from '@@@/constant/enum';
-import { DECK_CARD_COUNT, DECK_HERO_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
-import { cardsTotal } from '@@@/data/cards';
-import { herosTotal } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { debounce, genShareCode } from '@@@/utils/utils';
+import { debounce } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
 const router = useRouter();
@@ -207,7 +204,6 @@ const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt);
 const canAction = computed<boolean>(() => client.value.canAction); // 是否可以操作
 const afterWinHeros = ref<Hero[][]>([]); // 游戏结束后显示的角色信息
 const hasAI = ref<boolean>(false); // 是否有AI
-let clientAI: GeniusInvokationClient | null = null;
 
 // 获取骰子背景
 const getDiceBgIcon = (name: string) => {
@@ -339,13 +335,15 @@ const lookonTo = (idx: number) => {
   client.value.lookonTo(idx);
 };
 // 添加AI
-// const addAI = () => socket.emit('addAI');
+const addAI = () => {
+  socket.emit('addAI');
+  hasAI.value = true;
+};
 // 移除AI
-// const removeAI = () => {
-//   socket.emit('removeAI');
-//   clientAI = null;
-//   hasAI.value = false;
-// }
+const removeAI = () => {
+  socket.emit('removeAI');
+  hasAI.value = false;
+};
 
 const getPlayerList = ({ plist }: { plist: Player[] }) => {
   const me = plist.find(p => p.id == userid);
@@ -353,49 +351,14 @@ const getPlayerList = ({ plist }: { plist: Player[] }) => {
 };
 onMounted(() => {
   socket.emit('roomInfoUpdate', { roomId });
-  socket.on('getServerInfo', data => {
-    client.value.getServerInfo(data);
-    if (clientAI != null) clientAI.getServerInfo(data);
-  });
+  socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
-  socket.on('addAI', ({ players }) => {
-    cplayers.length = 0;
-    cplayers.push(...players);
-    const heroIds = new Set<number>();
-    while (heroIds.size < DECK_HERO_COUNT) {
-      heroIds.add(herosTotal(version.value)[Math.floor(Math.random() * (herosTotal(version.value).length - 1)) + 1].id);
-    }
-    const deck = [...heroIds];
-    const cardIdsMap = new Map<number, number>();
-    let cnts = 0;
-    while (cnts < DECK_CARD_COUNT) {
-      const card = cardsTotal(version.value)[Math.floor(Math.random() * (cardsTotal(version.value).length - 1)) + 1];
-      const cid = card.id;
-      const cnt = cardIdsMap.get(cid) || 0;
-      if (cnt < 2) {
-        if (card.hasSubtype(CARD_SUBTYPE.Legend)) continue;
-        cardIdsMap.set(cid, cnt + 1);
-        ++cnts;
-      }
-    }
-    for (const [cid, cnt] of cardIdsMap.entries()) {
-      for (let i = 0; i < cnt; ++i) {
-        deck.push(cid);
-      }
-    }
-    const shareCode = genShareCode(deck);
-    const AIDeck = [{ name: 'AIDeck', shareCode, version: version.value }];
-    clientAI = new GeniusInvokationClient(socket, 1, version.value, cplayers, false, countdown, AIDeck, 0, -1);
-    clientAI.startGame();
-    hasAI.value = true;
-  });
 });
 
 onUnmounted(() => {
   socket.off('roomInfoUpdate');
   socket.off('getServerInfo');
   socket.off('getPlayerAndRoomList', getPlayerList);
-  socket.off('addAI');
 });
 
 // dev

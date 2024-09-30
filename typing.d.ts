@@ -237,7 +237,6 @@ type ServerData = Readonly<{
     statusSelect: number[],
     summonSelect: number[],
     supportSelect: number[],
-    AIAction?: Preview,
     flag: string,
 }>
 

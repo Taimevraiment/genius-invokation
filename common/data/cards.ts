@@ -2346,7 +2346,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】每回合第2次使用【ski】时，少花费1个[火元素骰]。', 'v4.7.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/5d72a776e175c52de3c4ebb113f2b9e7_2138984540269318755.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [] } = event;
+            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            if (hidx == -1) return;
             const { skills: [, { useCnt = 0 }] } = heros[hidx];
             const isMinus = useCnt == 1 || (ver >= 'v4.7.0' && useCnt == 2);
             return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }) }

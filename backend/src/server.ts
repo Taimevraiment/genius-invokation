@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 // import cors from 'cors';
+import { AI_ID } from "../../common/constant/gameOption.js";
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
@@ -250,9 +251,8 @@ io.on('connection', socket => {
     socket.on('addAI', () => {
         const me = getPlayer(pid)!;
         const room = getRoom(me.rid)!;
-        room.init({ id: 1, name: '机器人' });
+        room.init({ id: AI_ID, name: '机器人' });
         emitPlayerAndRoomList();
-        socket.emit('addAI', { players: room.players });
     });
     // 移除AI
     socket.on('removeAI', () => {

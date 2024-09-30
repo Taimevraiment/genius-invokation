@@ -14,6 +14,8 @@ export const HANDCARDS_OFFSET_MOBILE = 25; // 移动端手牌偏移(px)
 
 export const SHIELD_ICON_URL = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp'; // 护盾图标
 
+export const BARRIER_ICON_URL = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp'; // 减伤盾图标
+
 export const PURE_ELEMENT_NAME = {
     [ELEMENT_TYPE.Cryo]: '冰元素',
     [ELEMENT_TYPE.Hydro]: '水元素',
