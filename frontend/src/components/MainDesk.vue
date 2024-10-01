@@ -1683,7 +1683,7 @@ button:active {
 .will-addcard-oppo {
   position: absolute;
   background-color: #304260;
-  background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
+  background-image: url(@@/image/card-bg.png);
   background-size: 100% 100%;
   color: black;
   text-align: center;

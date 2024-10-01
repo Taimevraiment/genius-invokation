@@ -196,22 +196,22 @@ export default class GeniusInvokationRoom {
         ) {
             previews.push(...this._getPreview(this.currentPlayerIdx));
             this.previews = previews;
-            if (cplayer.id == AI_ID) { // AI行动
+            if ((flag.startsWith('changeTurn') && flag.includes('setCanAction') || flag == 'reroll-finish') && cplayer.id == AI_ID) { // AI行动
                 setTimeout(() => {
                     const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.EndPhase];
+                    const { pidx: cpidx, dice } = cplayer;
                     while (true) {
                         const action = this._randomInArr(actionType);
                         if (action == ACTION_TYPE.EndPhase) {
-                            this._doEndPhase(pidx, 'endPhase-ai');
+                            this._doEndPhase(cpidx, 'endPhase-ai');
                             break;
                         }
                         const pres = previews.filter(p => p.type == action && p.isValid);
                         if (pres.length > 0) {
                             const preview = this._randomInArr(pres);
-                            const { pidx, dice } = cplayer;
                             switch (preview.type) {
                                 case ACTION_TYPE.UseCard:
-                                    this._useCard(pidx, preview.cardIdxs![0], preview.diceSelect!, {
+                                    this._useCard(cpidx, preview.cardIdxs![0], preview.diceSelect!, {
                                         selectHeros: preview.heroIdxs,
                                         selectSummon: preview.summonIdx,
                                         selectSupport: preview.supportIdx,
@@ -219,13 +219,13 @@ export default class GeniusInvokationRoom {
                                     break;
                                 case ACTION_TYPE.UseSkill:
                                     assgin(dice, dice.filter((_, di) => !preview.diceSelect![di]))
-                                    this._useSkill(pidx, preview.skillId!, { selectSummon: preview.summonIdx });
+                                    this._useSkill(cpidx, preview.skillId!, { selectSummon: preview.summonIdx });
                                     break;
                                 case ACTION_TYPE.Reconcile:
-                                    this._reconcile(pidx, preview.diceSelect!, preview.cardIdxs![0], 'reconcile-ai');
+                                    this._reconcile(cpidx, preview.diceSelect!, preview.cardIdxs![0], 'reconcile-ai');
                                     break;
                                 case ACTION_TYPE.SwitchHero:
-                                    this._switchHero(pidx, preview.heroIdxs![0], 'switchHero-ai', { diceSelect: preview.diceSelect });
+                                    this._switchHero(cpidx, preview.heroIdxs![0], 'switchHero-ai', { diceSelect: preview.diceSelect });
                                     break;
                                 default:
                                     const a: never = preview.type as never;
@@ -470,7 +470,7 @@ export default class GeniusInvokationRoom {
                 this._chooseInitHero(cpidx, heroIdxs[0], socket, flag);
                 break;
             case ACTION_TYPE.Reroll:
-                this._reroll(diceSelect, cpidx, socket, flag);
+                this._reroll(diceSelect, cpidx, flag, socket);
                 break;
             case ACTION_TYPE.SwitchHero:
                 this._switchHero(cpidx, heroIdxs[0], flag, { socket, diceSelect });
@@ -627,7 +627,7 @@ export default class GeniusInvokationRoom {
                 player.dice = this._rollDice(player.pidx);
                 player.UI.showRerollBtn = true;
                 this._writeLog(player.dice.reduce((a, c) => a + `[${ELEMENT_NAME[c].replace(/元素/, '')}]`, `[${player.name}]初始骰子为`), 'system');
-                if (player.id == AI_ID) this._reroll(player.dice.map(d => d != DICE_COST_TYPE.Omni && !player.heros.map(h => h.element).includes(d)), player.pidx, socket, flag);
+                if (player.id == AI_ID) this._reroll(player.dice.map(d => d != DICE_COST_TYPE.Omni && !player.heros.map(h => h.element).includes(d)), player.pidx, 'reroll-ai');
             });
             this.emit(flag, pidx, { tip: '骰子投掷阶段' });
         } else {
@@ -788,7 +788,7 @@ export default class GeniusInvokationRoom {
      * @param socket socket
      * @param flag flag
      */
-    private _reroll(diceSelect: boolean[], pidx: number, socket: Socket, flag: string) {
+    private _reroll(diceSelect: boolean[], pidx: number, flag: string, socket?: Socket) {
         const player = this.players[pidx];
         if (player.rollCnt <= 0 || !player.UI.showRerollBtn) return;
         player.dice = this._rollDice(pidx, diceSelect);
@@ -2602,6 +2602,11 @@ export default class GeniusInvokationRoom {
         await delay(1e3);
         this._doActionStart(this.startIdx);
     }
+    /**
+     * 回合结束阶段
+     * @param pidx 玩家序号
+     * @param flag flag
+     */
     private _doPhaseEnd(pidx: number, flag: string) {
         setTimeout(async () => {
             for (const cpidx of [this.startIdx, this.startIdx ^ 1]) {
@@ -2647,6 +2652,7 @@ export default class GeniusInvokationRoom {
                 player.heros.forEach(h => {
                     if (h.hp == -1) h.hp = -2;
                 });
+                if (player.id == AI_ID) this._reroll(player.dice.map(d => d != DICE_COST_TYPE.Omni && !player.heros.map(h => h.element).includes(d)), player.pidx, 'reroll-ai');
             });
             this.emit(flag, pidx, { tip: '骰子投掷阶段' });
         }, 800);

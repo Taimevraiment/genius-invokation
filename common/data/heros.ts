@@ -861,8 +861,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { eheros = [] } = event;
                     const status114091 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 114091);
                     const addDmgCdt = status114091?.useCnt ?? 0;
-                    if (status114091) status114091.useCnt = 0;
-                    return { statusOppo: isCdt(!status114091, 114091), addDmgCdt }
+                    return {
+                        statusOppo: isCdt(!status114091, 114091),
+                        addDmgCdt,
+                        exec: () => {
+                            if (status114091) status114091.useCnt = 0;
+                        },
+                    }
                 }),
             new SkillBuilder('蔷薇的雷光').description('{dealDmg}，召唤【smn114092】，使敌方出战角色附属【sts114091】。')
                 .description('{dealDmg}，召唤【smn114092】。', 'v4.8.0')
