@@ -659,20 +659,21 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    116092: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1)
-        .description('此牌在场时，我方【hro】造成的[物理伤害]变为[岩元素伤害]，且普通攻击造成的伤害+1。；{defaultAtk。}')
+    116091: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1).statusId()
+        .description('{defaultAtk。}；【此牌在场时：】我方【hro】造成的[物理伤害]变为[岩元素伤害]，且｢普通攻击｣造成的[岩元素伤害]+1。')
         .src(''),
 
-    116093: () => new SummonBuilder('无事发生之袖').useCnt(2).damage(1).perCnt(1)
-        .description('此牌在场时，【我方使用技能后：】切换至下一个我方角色。(每回合1次)；{defaultAtk。}')
+    116092: () => new SummonBuilder('无事发生之袖').useCnt(2).damage(1).perCnt(1)
+        .description('{defaultAtk。}；【此牌在场时，我方使用技能后：】切换至下一个我方角色。(每回合1次)')
         .src('')
         .handle((summon, event) => {
+            const { trigger = '' } = event;
+            if (trigger == 'enter') return { cmds: [{ cmd: 'switch-after' }] }
             const triggers: Trigger[] = ['phase-end'];
             if (summon.perCnt > 0) triggers.push('after-skill');
             return {
                 trigger: triggers,
                 exec: execEvent => {
-                    const { trigger = '' } = event;
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
                     if (trigger == 'after-skill') {
@@ -683,27 +684,29 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    116094: () => new SummonBuilder('平静养身之袖').useCnt(2).damage(1).description('{defaultAtk。}')
-        .src(''),
-
-    116095: () => new SummonBuilder('轻松迎敌之袖').useCnt(2).damage(1).perCnt(1)
-        .description('此牌在场时，【hro】以外的角色使用技能后：{dealDmg}。(每回合1次)')
+    116093: () => new SummonBuilder('轻松迎敌之袖').useCnt(2).damage(1).perCnt(1)
+        .description('{defaultAtk。}；【此牌在场时，〖hro〗以外的我方角色使用技能后：】{dealDmg}。(每回合1次)')
         .src('')
         .handle((summon, event) => {
-            const { skid = -1 } = event;
-            if (getHidById(skid) == getHidById(summon.id) || summon.perCnt <= 0) return;
+            const { skid = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (getHidById(skid) != getHidById(summon.id) && summon.perCnt > 0) triggers.push('after-skill');
             return {
-                trigger: ['after-skill'],
+                trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') return phaseEndAtk(smn);
                     --smn.perCnt;
-                    return phaseEndAtk(smn);
+                    return { cmds: [{ cmd: 'attack' }] }
                 },
             }
         }),
 
-    116096: () => new SummonBuilder('闭目战斗之袖').useCnt(2).damage(1).perCnt(2)
-        .description('此牌在场时，我方【hro】及【千织的自动制御人形】造成的[岩元素伤害]+1。(每回合2次)；{defaultAtk。}')
+    116094: () => new SummonBuilder('平静养身之袖').useCnt(2).damage(1).description('{defaultAtk。}')
+        .src(''),
+
+    116095: () => new SummonBuilder('闭目战斗之袖').useCnt(2).damage(1).perCnt(2)
+        .description('{defaultAtk。}；【此牌在场时：】我方【hro】及【千织的自动制御人形】造成的[岩元素伤害]+1。(每回合2次)')
         .src('')
         .handle((summon, event) => {
             const { skid = -1, isSummon = -1, trigger = '' } = event;
@@ -723,8 +726,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    116097: () => new SummonBuilder('侧目睥睨之袖').useCnt(2).damage(1).perCnt(1)
-        .description('【〖hro〗进行普通攻击时：】少花费1个元素骰。(每回合1次)；{defaultAtk。}')
+    116096: () => new SummonBuilder('侧目睥睨之袖').useCnt(2).damage(1).perCnt(1)
+        .description('{defaultAtk。}；【〖hro〗进行｢普通攻击｣时：】少花费1个元素骰。(每回合1次)')
         .src('')
         .handle((summon, event) => {
             const { heros = [], isMinusDiceSkill, trigger = '' } = event;

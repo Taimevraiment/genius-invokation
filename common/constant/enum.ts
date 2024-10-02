@@ -293,6 +293,8 @@ export const CMD_MODE = {
     RandomPileCard: 6, // 弃置牌库中随机一张牌
     isNotPublic: 7, // 不公开加入牌库的牌
     isPublic: 8, // 公开抓到的牌
+    getSummon: 9, // 使用技能挑选牌
+    getCard: 10, // 挑选牌
 } as const;
 
 export const INFO_TYPE = {

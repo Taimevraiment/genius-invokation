@@ -112,8 +112,7 @@ export type StatusExecRes = {
 const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
     const elName = ELEMENT_NAME[el];
     const hasAddDmgDesc = addDmg > 0 ? `，且造成的[${elName}伤害]+${addDmg}` : '';
-    return new StatusBuilder(`${elName}附魔`).heroStatus().type(STATUS_TYPE.Enchant)
-        .icon(`buff${addDmg > 0 ? '4' : ''}`).iconBg(STATUS_BG_COLOR[el])
+    return new StatusBuilder(`${elName}附魔`).heroStatus().type(STATUS_TYPE.Enchant).icon(`buff${addDmg > 0 ? '4' : ''}`)
         .description(`所附属角色造成的[物理伤害]变为[${elName}伤害]${hasAddDmgDesc}。；[roundCnt]`)
         .handle(status => ({
             attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType,
@@ -1495,6 +1494,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116084: () => enchantStatus(ELEMENT_TYPE.Geo).roundCnt(2),
 
+    116091: () => new StatusBuilder('岩元素附魔').heroStatus().type(STATUS_TYPE.Enchant).icon('buff').summonId()
+        .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。')
+        .handle(() => ({ addDmgType1: 1, attachEl: ELEMENT_TYPE.Geo })),
+
     117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。(每回合1次)；[roundCnt]')
         .handle(() => ({
@@ -2270,7 +2273,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    127033: () => new StatusBuilder('灵蛇祝福').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+    127033: () => new StatusBuilder('灵蛇祝福').combatStatus().icon('ski,2').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('我方使用【crd127032】的[特技]时：此[特技]造成的伤害+1，并且不消耗【crd127032】的[可用次数]。；[useCnt]')
         .handle((status, event) => {
             const { skid = -1 } = event;

@@ -10,7 +10,7 @@ export default class TaskQueue {
         this._writeLog = _writeLog;
     }
     addTask(taskType: string, args: any[] | StatusTask, options: {
-        isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean
+        isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean,
     } = {}) {
         const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false } = options;
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];

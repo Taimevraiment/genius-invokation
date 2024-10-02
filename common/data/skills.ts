@@ -157,14 +157,16 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1270321: () => new SkillBuilder('藤蔓锋鳞').description('{dealDmg}。')
         .src('')
-        .vehicle().damage(1).costSame(1),
+        .vehicle().damage(1).costAny(1).energy(1),
 
     3130011: () => new SkillBuilder('原海水刃').description('{dealDmg}。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130011')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130011',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5f3971c1d0665eb3d72f68415c3da8ae_6268200576026280012.png')
         .vehicle().damage(2).costAny(2),
 
     3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle(event => {
             const { hcards = [], ehcards = [], trigger = '' } = event;
             if (trigger == 'calc') return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
@@ -174,7 +176,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。(每回合最多使用1次)')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({
             summonTrigger: ['phase-end'],
             isForbidden: event.skill.perCnt == 0,

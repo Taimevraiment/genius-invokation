@@ -196,7 +196,7 @@ export default class GeniusInvokationRoom {
         ) {
             previews.push(...this._getPreview(this.currentPlayerIdx));
             this.previews = previews;
-            if ((flag.startsWith('changeTurn') && flag.includes('setCanAction') || flag == 'reroll-finish') && cplayer.id == AI_ID) { // AI行动
+            if ((flag.startsWith('changeTurn') && flag.includes('setCanAction') || flag.includes('reroll')) && cplayer.id == AI_ID) { // AI行动
                 setTimeout(() => {
                     const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.EndPhase];
                     const { pidx: cpidx, dice } = cplayer;
@@ -218,7 +218,7 @@ export default class GeniusInvokationRoom {
                                     });
                                     break;
                                 case ACTION_TYPE.UseSkill:
-                                    assgin(dice, dice.filter((_, di) => !preview.diceSelect![di]))
+                                    assgin(dice, dice.filter((_, di) => !preview.diceSelect![di]));
                                     this._useSkill(cpidx, preview.skillId!, { selectSummon: preview.summonIdx });
                                     break;
                                 case ACTION_TYPE.Reconcile:
@@ -798,7 +798,7 @@ export default class GeniusInvokationRoom {
                 player.UI.showRerollBtn = false;
                 setTimeout(() => {
                     player.phase = PHASE.ACTION;
-                    this.emit(flag + '-action', pidx, { isQuickAction: true });
+                    this.emit(`${flag}-action`, pidx, { isQuickAction: true });
                 }, 800);
             }
         } else { // 每回合开始时重投
@@ -952,7 +952,7 @@ export default class GeniusInvokationRoom {
             willDamages, dmgElement, isSummon = -1, atkedIdx, players: cplayers = this.players,
             selectSummon = -1, supportCnt = cplayers.map(() => new Array(MAX_SUPPORT_COUNT).fill(0)),
         } = options;
-        const isExec = !isPreview || isReadySkill;
+        let isExec = !isPreview || isReadySkill;
         const epidx = pidx ^ 1;
         const oplayers = clone(cplayers);
         const players = clone(cplayers);
@@ -4495,6 +4495,8 @@ export default class GeniusInvokationRoom {
                         atkedIdx = hidx;
                     }
                 });
+            } else if (cmd == 'pickCard' && isExec) {
+
             }
         }
         if (!isOnlyGetWillDamages && willDamages != undefined && dmgElement != undefined) {
@@ -4584,7 +4586,7 @@ export default class GeniusInvokationRoom {
         const previews: Preview[] = [];
         const hero = isSwitch != -1 ? this.players[pidx].heros[isSwitch] : this._getFrontHero(pidx);
         if (!hero) return previews;
-        const { skills, energy, maxEnergy, heroStatus, hidx } = hero;
+        const { skills, energy, heroStatus, hidx } = hero;
         const { dice, status, summons } = this.players[pidx];
         const skids = skid != undefined ? [skid] : skills.map(sk => sk.id);
         if (hero.vehicleSlot && skid == undefined) skids.unshift(hero.vehicleSlot[1].id);
@@ -4605,7 +4607,7 @@ export default class GeniusInvokationRoom {
                         if (c != DICE_COST_TYPE.Omni) a[c] = (a[c] ?? 0) + 1;
                         return a;
                     }, {} as Record<DiceCostType, number>)))) < skill.cost[0].cnt - skill.costChange[0];
-                const isEnergy = skill.cost[2].cnt > 0 && energy < maxEnergy;
+                const isEnergy = skill.cost[2].cnt > 0 && skill.cost[2].cnt > energy;
                 const needSelectSmn = skill.canSelectSummon != -1 && summons.length == 0;
                 const skillres = skill.handle({ skill, hero });
                 skillForbidden = isWaiting || this.phase != PHASE.ACTION || isNonAction || isLen || isElDice || isEnergy || !!skillres.isForbidden;
@@ -5308,8 +5310,8 @@ export default class GeniusInvokationRoom {
     private _calcHeroSwitchDice(pidx: number, tohidx: number, fromhidx: number, isOnlyAdd = false) {
         let minusDiceHero = 0;
         let addDiceHero = 0;
-        const { minusDiceHero: stsmh1, addDiceHero: stsah1 } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'switch-from', { isExec: false, hidxs: [fromhidx], isOnlyHeroStatus: true });
-        const { minusDiceHero: stsmh2, addDiceHero: stsah2 } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'switch-from', { isExec: false, isOnlyCombatStatus: true });
+        const { minusDiceHero: stsmh1, addDiceHero: stsah1 } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'active-switch-from', { isExec: false, hidxs: [fromhidx], isOnlyHeroStatus: true });
+        const { minusDiceHero: stsmh2, addDiceHero: stsah2 } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'active-switch-from', { isExec: false, isOnlyCombatStatus: true });
         addDiceHero += this._detectSummon(pidx ^ 1, 'active-switch-oppo', { isUnshift: true, isExec: false }).addDiceHero;
         addDiceHero += stsah1 + stsah2;
         if (isOnlyAdd) return INIT_SWITCH_HERO_DICE + addDiceHero;

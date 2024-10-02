@@ -132,7 +132,7 @@ type Cmds = {
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' |
     'switch-before' | 'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeElement' | 'useSkill' |
-    'changePattern' | 'getSkill' | 'loseSkill' | 'addCard' | 'discard';
+    'changePattern' | 'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡

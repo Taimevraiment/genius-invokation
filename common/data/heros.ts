@@ -1233,11 +1233,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('',
                     '')
                 .elemental().cost(3).handle(event => {
-                    const { talent } = event;
+                    const { talent, isExec } = event;
                     const summon: number[] = [];
-                    // const cnt = talent ? 4 : 3;
+                    const cmds: Cmds[] = [];
                     if (talent) summon.push(116094);
-                    return { summon }
+                    if (isExec) {
+                        const cnt = talent ? 4 : 3;
+                        cmds.push({ cmd: 'pickCard', card: [116091, 116092, 116093, 116095, 116096], cnt, mode: CMD_MODE.getSummon })
+                    }
+                    return { summon, cmds }
                 }),
             new SkillBuilder('二刀之形·比翼').description('{dealDmg}。')
                 .src('',

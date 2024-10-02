@@ -836,6 +836,12 @@ export default class GeniusInvokationClient {
         this.resetDiceSelect();
     }
     /**
+     * 挑选卡牌
+     */
+    pickCard() {
+
+    }
+    /**
      * 展示召唤物信息
      * @param pidx 玩家idx
      * @param suidx 召唤物idx
