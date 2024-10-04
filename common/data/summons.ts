@@ -668,7 +668,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('')
         .handle((summon, event) => {
             const { trigger = '' } = event;
-            if (trigger == 'enter') return { cmds: [{ cmd: 'switch-after' }] }
             const triggers: Trigger[] = ['phase-end'];
             if (summon.perCnt > 0) triggers.push('after-skill');
             return {
@@ -733,7 +732,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const { heros = [], isMinusDiceSkill, trigger = '' } = event;
             const hero = getObjById(heros, getHidById(summon.id));
             const triggers: Trigger[] = ['phase-end'];
-            if (summon.perCnt > 0 && hero?.isFront && isMinusDiceSkill) triggers.push('skilltype1');
+            if (summon.perCnt > 0 && hero?.isFront) triggers.push('skilltype1');
             return {
                 trigger: triggers,
                 minusDiceSkill: isCdt(summon.perCnt > 0, { skilltype1: [0, 0, 1] }),
@@ -741,7 +740,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
-                    if (trigger == 'skilltype1') --smn.perCnt;
+                    if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
                 }
             }
         }),

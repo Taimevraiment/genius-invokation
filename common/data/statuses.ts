@@ -56,7 +56,7 @@ export type StatusHandleEvent = {
     slotsDestroy?: number[],
     isSelfRound?: boolean,
     randomInt?: (len?: number) => number,
-    randomInArr?: <T>(arr: T[]) => T,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 
 export type StatusHandleRes = {
@@ -1494,7 +1494,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116084: () => enchantStatus(ELEMENT_TYPE.Geo).roundCnt(2),
 
-    116091: () => new StatusBuilder('岩元素附魔').heroStatus().type(STATUS_TYPE.Enchant).icon('buff').summonId()
+    116091: () => new StatusBuilder('岩元素附魔').heroStatus().type(STATUS_TYPE.Enchant, STATUS_TYPE.Sign).icon('buff').summonId()
         .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ addDmgType1: 1, attachEl: ELEMENT_TYPE.Geo })),
 
@@ -1844,12 +1844,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const notAtk = eStatus == undefined;
                     const { heros: hs = heros } = execEvent;
                     eStatus ??= clone(status);
-                    const hero = getObjById(hs, getHidById(eStatus.id));
+                    const hero = getObjById(hs, getHidById(eStatus!.id));
                     if (!hero) return;
                     if (trigger == 'phase-end') {
-                        const cnt = -eStatus.perCnt;
+                        const cnt = -eStatus!.perCnt;
                         if (!notAtk) {
-                            eStatus.perCnt = 0;
+                            eStatus!.perCnt = 0;
                             hero.maxHp += cnt;
                         }
                         return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, { cmd: 'heal', cnt, hidxs: [hero.hidx] }] }
@@ -1857,22 +1857,22 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     let cnt = 0;
                     if (hcard && hcard.id > 0) discards.splice(0, INIT_PILE_COUNT, hcard);
                     discards.forEach(c => {
-                        const [cost1, cost2, maxDice, _maxDiceCnt] = eStatus.addition as number[];
+                        const [cost1, cost2, maxDice, _maxDiceCnt] = eStatus!.addition as number[];
                         const cost = c.cost + c.anydice;
                         if (cost > maxDice) {
-                            eStatus.addition[2] = cost;
-                            eStatus.addition[3] = 1;
+                            eStatus!.addition[2] = cost;
+                            eStatus!.addition[3] = 1;
                         } else if (cost == maxDice) {
-                            ++eStatus.addition[3];
+                            ++eStatus!.addition[3];
                         }
-                        if (eStatus.useCnt < 2) {
-                            eStatus.addition[eStatus.useCnt] = cost;
-                            ++eStatus.useCnt;
+                        if (eStatus!.useCnt < 2) {
+                            eStatus!.addition[eStatus!.useCnt] = cost;
+                            ++eStatus!.useCnt;
                         } else {
                             ++cnt;
                             if (cost1 == cost2 || cost == cost1 || cost == cost2) ++cnt;
                             if (cost == cost1 && cost == cost2) ++cnt;
-                            eStatus.useCnt = 0;
+                            eStatus!.useCnt = 0;
                         }
                     });
                     if (cnt > 0) {
@@ -1881,7 +1881,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                             const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hero.hidx], mode: i, isAttach: true }));
                             return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, ...healcmds], }
                         }
-                        eStatus.perCnt -= cnt;
+                        eStatus!.perCnt -= cnt;
                     }
                 }
             }

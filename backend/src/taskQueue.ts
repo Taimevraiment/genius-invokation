@@ -6,8 +6,10 @@ export default class TaskQueue {
     queue: [string, any[] | StatusTask, boolean][] = [];
     isExecuting: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
-    constructor(_writeLog: (log: string, type?: LogType) => void) {
+    isDev: boolean;
+    constructor(_writeLog: (log: string, type?: LogType) => void, isDev: boolean) {
         this._writeLog = _writeLog;
+        this.isDev = isDev;
     }
     addTask(taskType: string, args: any[] | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean,
@@ -29,7 +31,7 @@ export default class TaskQueue {
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
         this._writeLog('execTask-' + taskType, 'emit');
-        console.time('execTask-end-' + taskType);
+        if (this.isDev) console.time('execTask-end-' + taskType);
         if (!this.priorityQueue && this.queue.length > 0) {
             this.priorityQueue = [];
         }
@@ -40,7 +42,7 @@ export default class TaskQueue {
             await delay(after);
         }
         this.isExecuting = true;
-        console.timeEnd('execTask-end-' + taskType);
+        if (this.isDev) console.timeEnd('execTask-end-' + taskType);
         return res;
     }
     getTask(): [[string, any[] | StatusTask, boolean], boolean] {

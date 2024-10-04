@@ -1,15 +1,13 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_TAG,
-    PHASE, PURE_ELEMENT_TYPE,
-    PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
+    HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
-import { isCdt } from '../utils/utils.js';
+import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newSummon } from './summons.js';
 import { newSupport } from './supports.js';
@@ -62,7 +60,7 @@ export type CardHandleEvent = {
     selectHeros?: number[],
     selectSummon?: number,
     selectSupport?: number,
-    randomInArr?: <T>(arr: T[]) => T,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 
 export type CardHandleRes = {
@@ -2013,17 +2011,21 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    332040: () => new CardBuilder(430).name('镀金旅团的茶歇').since('v5.1.0').event().costSame(0)
+    332040: () => new CardBuilder(430).name('镀金旅团的茶歇').since('v5.1.0').event().costSame(2)
         .description('如果我方存在相同元素类型的角色，则从3张｢场地｣中[挑选]1张加入手牌;；如果我方存在相同武器类型的角色，则从3张｢道具｣中[挑选]1张加入手牌;；如果我方存在相同所属势力的角色，则从3张｢料理｣中[挑选]1张加入手牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Caxie.webp'),
-    // .handle((_, event) => {
-    // const { heros = [] } = event;
-    // const canSelectPlace = new Set(heros.map(h => h.element)).size < heros.length;
-    // const canSelectItem = new Set(heros.map(h => h.weaponSlot?.id ?? h.id)).size < heros.length;
-    // const canSelectFood = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
-    // const cmds: Cmds[] = [];
-
-    // }),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Caxie.webp')
+        .handle((_, event) => {
+            const { heros = [] } = event;
+            const cmds: Cmds[] = [];
+            const canSelectPlace = new Set(heros.map(h => h.element)).size < heros.length;
+            const canSelectItem = new Set(heros.map(h => h.weaponType)).size < heros.length;
+            const canSelectFood = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
+            if (canSelectPlace) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Place, cnt: 3, mode: CMD_MODE.getCard });
+            if (canSelectItem) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Item, cnt: 3, mode: CMD_MODE.getCard });
+            if (canSelectFood) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Food, cnt: 3, mode: CMD_MODE.getCard });
+            if (cmds.length == 0) return { isValid: false }
+            return { cmds }
+        }),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')
@@ -3104,8 +3106,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { skid = -1, combatStatus = [], heros = [], trigger = '' } = event;
             const talent = getObjById(heros, getHidById(card.id))?.talentSlot;
             if (talent && trigger == 'switch-to') {
-                // todo 天赋的切换伤害是谁造成的伤害？
-                return;
+                return { trigger: [trigger], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }] };
             }
             if (skid != +`${card.id}1` || hasObjById(combatStatus, 127033)) return;
             return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
@@ -3198,10 +3199,10 @@ const allCards: Record<number, () => CardBuilder> = {
                 const esupportLen = MAX_SUPPORT_COUNT - esupports.length;
                 const allyPool = cardsTotal(ver).filter(c => c.hasSubtype(CARD_SUBTYPE.Ally));
                 for (let i = 0; i < supportLen; ++i) {
-                    support.push(newSupport(ver)(randomInArr!(allyPool)));
+                    support.push(newSupport(ver)(randomInArr!(allyPool)[0]));
                 }
                 for (let i = 0; i < esupportLen; ++i) {
-                    supportOppo.push(newSupport(ver)(randomInArr!(allyPool)));
+                    supportOppo.push(newSupport(ver)(randomInArr!(allyPool)[0]));
                 }
             }
             return { support, supportOppo }

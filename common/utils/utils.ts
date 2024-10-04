@@ -120,7 +120,7 @@ export const wait = async (cdt: () => boolean, options: { delay?: number, freq?:
             break;
         }
         if (loop > 3e4 / freq && !warn) {
-            console.warn('超过30秒，可能存在死循环');
+            console.trace('超过30秒，可能存在死循环');
             warn = true;
         }
         if (loop > maxtime / freq) throw new Error(`too many loops-${maxtime}ms: ${cdt.toString()}`);
@@ -200,7 +200,7 @@ export const assgin = <T>(target: T, source: T) => {
             if (src?.entityId !== undefined && src.entityId != -1) return src.entityId == tar.entityId;
             return src?.id !== undefined && src.id == tar.id;
         }
-        const existObj = target.filter(tar => source.some(src => equal(src, tar)));
+        const existObj = target.filter(tar => (source as (T & any[])).some(src => equal(src, tar)));
         target.length = 0;
         for (const src of source) {
             const tar = existObj.find(tar => equal(tar, src));

@@ -237,6 +237,7 @@ type ServerData = Readonly<{
     statusSelect: number[],
     summonSelect: number[],
     supportSelect: number[],
+    pickModal: PickCard,
     flag: string,
 }>
 
@@ -276,3 +277,15 @@ type AtkTask = {
     cmds: Cmds[],
     atkname: string,
 }
+
+type PickCard = {
+    cards: Card[],
+    selectIdx: number,
+    cardType: PickCardType,
+    actionType: PickCardActionType,
+    skillId: number,
+}
+
+type PickCardActionType = 'getCard' | 'useSkill';
+
+type PickCardType = 'card' | 'summon';

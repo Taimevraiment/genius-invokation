@@ -9,6 +9,7 @@
             "DOM.Iterable",
         ],
         "skipLibCheck": true,
+        "incremental": true,
         /* Bundler mode */
         // "allowImportingTsExtensions": true,
         // "resolveJsonModule": true,

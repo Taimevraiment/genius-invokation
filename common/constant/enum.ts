@@ -217,6 +217,11 @@ export const HERO_LOCAL = {
     Natlan: 'Natlan', // 纳塔 6
     Snezhnaya: 'Snezhnaya', // 至冬 7
     Fatui: 'Fatui', // 愚人众 8
+    Hilichurl: 'Hilichurl', // 丘丘人 9
+    Eremite: 'Eremite', // 镀金旅团 10
+    ArkheOusia: 'ArkheOusia', // 始基力:荒性 11
+    ArkhePneuma: 'ArkhePneuma', // 始基力:芒性 12
+    ConsecratedBeast: 'ConsecratedBeast', // 圣骸兽 13
 } as const;
 
 export type HeroLocal = TypeConst<typeof HERO_LOCAL>;
@@ -231,6 +236,11 @@ export const HERO_LOCAL_CODE = {
     [HERO_LOCAL.Natlan]: 6,
     [HERO_LOCAL.Snezhnaya]: 7,
     [HERO_LOCAL.Fatui]: 216,
+    [HERO_LOCAL.Hilichurl]: 0,
+    [HERO_LOCAL.Eremite]: 0,
+    [HERO_LOCAL.ArkheOusia]: 0,
+    [HERO_LOCAL.ArkhePneuma]: 0,
+    [HERO_LOCAL.ConsecratedBeast]: 0,
 } as const;
 
 export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
@@ -239,13 +249,8 @@ export const HERO_LOCAL_CODE_KEY = swapKeysAndValues(HERO_LOCAL_CODE);
 
 export const HERO_TAG = {
     ...HERO_LOCAL,
-    Hilichurl: 'Hilichurl', // 丘丘人 9
-    Eremite: 'Eremite', // 镀金旅团 10
-    ArkheOusia: 'ArkheOusia', // 始基力:荒性 11
     Ousia: 'Ousia', // 荒 11
-    ArkhePneuma: 'ArkhePneuma', // 始基力:芒性 12
     Pneuma: 'Pneuma', // 芒 12
-    ConsecratedBeast: 'ConsecratedBeast', // 圣骸兽 13
 } as const;
 
 export type HeroTag = TypeConst<typeof HERO_TAG>;
@@ -317,6 +322,7 @@ export const PHASE = {
     ACTION: 6, // 行动中
     ACTION_END: 7, // 行动结束
     PHASE_END: 8, // 回合结束
+    PICK_CARD: 9, // 挑选卡牌
 } as const;
 
 export type Phase = TypeConst<typeof PHASE>;
@@ -340,6 +346,7 @@ export const ACTION_TYPE = {
     SwitchHero: 'switch-hero', // 切换角色
     EndPhase: 'end-phase', // 结束回合
     GiveUp: 'give-up', // 投降
+    PickCard: 'pick-card', // 挑选卡牌
 } as const;
 
 export type ActionType = TypeConst<typeof ACTION_TYPE>;

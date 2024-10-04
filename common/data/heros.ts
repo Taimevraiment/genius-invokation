@@ -1232,16 +1232,22 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('羽袖一触').description('从3个【千织的自动制御人形】中[挑选]1个召唤。')
                 .src('',
                     '')
+                .explain('smn116091', 'smn116092', 'smn116093', 'smn116095', 'smn116096')
                 .elemental().cost(3).handle(event => {
                     const { talent, isExec } = event;
-                    const summon: number[] = [];
+                    const summonPre: number[] = [];
                     const cmds: Cmds[] = [];
-                    if (talent) summon.push(116094);
+                    if (talent) summonPre.push(116094);
                     if (isExec) {
-                        const cnt = talent ? 4 : 3;
-                        cmds.push({ cmd: 'pickCard', card: [116091, 116092, 116093, 116095, 116096], cnt, mode: CMD_MODE.getSummon })
+                        cmds.push({
+                            cmd: 'pickCard',
+                            card: [116091, 116092, 116093, 116095, 116096],
+                            cnt: talent ? 4 : 3,
+                            hidxs: [16092],
+                            mode: CMD_MODE.getSummon,
+                        });
                     }
-                    return { summon, cmds }
+                    return { summonPre, cmds }
                 }),
             new SkillBuilder('二刀之形·比翼').description('{dealDmg}。')
                 .src('',
@@ -1509,8 +1515,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         pools.length = 0;
                         pools.push(...opools.filter(smnid => hasObjById(summons, smnid)));
                     }
-                    const summonId = randomInArr(ver < 'v4.3.0' && pools.length == 0 ? opools : pools);
-                    return { summon: [[summonId]] }
+                    const summon = randomInArr(ver < 'v4.3.0' && pools.length == 0 ? opools : pools);
+                    return { summon }
                 }),
             new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)')
                 .description('随机召唤2种【纯水幻形】。(优先生成不同的类型)', 'v4.3.0')
@@ -1531,10 +1537,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         summonId1 = opools.find(smnid => !pools.includes(smnid))!;
                     }
                     if (pools.length == 3 || (ver < 'v4.3.0' && pools.length == 0)) {
-                        summonId1 = randomInArr(pools);
+                        [summonId1] = randomInArr(pools, 2);
                         pools.splice(pools.indexOf(summonId1), 1);
                     }
-                    const summonId2 = randomInArr(pools);
+                    const [summonId2] = randomInArr(pools);
                     return { summon: [summonId1, summonId2] }
                 }),
             new SkillBuilder('潮涌与激流').description('{dealDmg}; 我方每有1个召唤物，再使此伤害+1。')
@@ -1633,7 +1639,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                 }),
             new SkillBuilder('浮泡攻势').description('{dealDmg}，生成手牌【crd122051】。')
-                .src('https://patchwiki.biligame.com/images/ys/1/10/lnygbgud3vpwaeo78le24h55nsbz1ke.png',
+                .src('https://patchwiki.biligame.com/images/ys/7/78/4l236g81or3zb78ozzojs6dm67wjmev.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1eef9550382f6987f37db0e387ed9ea5_1022099738869474504.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 122051 }] }))
         ),

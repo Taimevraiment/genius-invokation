@@ -7,15 +7,11 @@ import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
     HANDCARDS_OFFSET_PC,
 } from "@@@/constant/UIconst";
+import { newSummon } from "@@@/data/summons";
 import { checkDices } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData,
-    Card, Countdown, DamageVO, Hero,
-    InfoVO,
-    Player,
-    Preview,
-    ServerData, Skill, Summon,
+    ActionData, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Summon,
 } from "../../typing";
 
 type DeckValid = {
@@ -80,6 +76,7 @@ export default class GeniusInvokationClient {
     summonCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否可选
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
+    pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', actionType: 'getCard', skillId: -1 }; // 挑选卡牌
     error: string = ''; // 服务器发生的错误信息
 
     constructor(
@@ -392,7 +389,7 @@ export default class GeniusInvokationClient {
      */
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
-            tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin,
+            tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
             flag } = data;
         console.info(flag);
         const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
@@ -410,6 +407,7 @@ export default class GeniusInvokationClient {
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
         this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
+        this.pickModal = pickModal;
         if (this.statusSelect[0][0].length == 0 && this.players.length > 1 && phase >= PHASE.CHANGE_CARD) {
             this.statusSelect.forEach((p, pi) => {
                 p.forEach((_, i, a) => {
@@ -538,6 +536,7 @@ export default class GeniusInvokationClient {
             this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
             this.willSwitch = preview.willSwitch?.slice() ?? this._resetWillSwitch();
             this.isValid = preview.isValid;
+            this.modalInfo = NULL_MODAL();
         }
     }
     /**
@@ -836,10 +835,38 @@ export default class GeniusInvokationClient {
         this.resetDiceSelect();
     }
     /**
+     * 选择挑选卡牌
+     */
+    selectCardPick(pcidx: number) {
+        if (this.pickModal.selectIdx != pcidx) {
+            this.pickModal.selectIdx = pcidx;
+            const { cardType } = this.pickModal;
+            this.modalInfo = {
+                version: this.version,
+                isShow: true,
+                type: {
+                    card: INFO_TYPE.Card,
+                    summon: INFO_TYPE.Summon,
+                }[cardType],
+                info: cardType == 'summon' ? newSummon(this.version)(this.pickModal.cards[pcidx].id) : this.pickModal.cards[pcidx],
+            }
+        } else {
+            this.pickModal.selectIdx = -1;
+            this.cancel();
+        }
+    }
+    /**
      * 挑选卡牌
      */
     pickCard() {
-
+        if (this.pickModal.selectIdx == -1) return;
+        this.socket.emit('sendToServer', {
+            type: ACTION_TYPE.PickCard,
+            cardIdxs: [this.pickModal.selectIdx],
+            skillId: this.pickModal.skillId,
+            flag: 'pickCard',
+        } as ActionData);
+        this.cancel();
     }
     /**
      * 展示召唤物信息

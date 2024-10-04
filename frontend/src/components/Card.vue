@@ -73,8 +73,12 @@ const getPngIcon = (name: string) => {
     transition: 0.3s;
     font-size: medium;
     z-index: 1;
-    background-color: #0077ff;
+    background-color: #8caee1d0;
     border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .card-img {

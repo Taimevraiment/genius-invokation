@@ -200,17 +200,17 @@ export const HERO_LOCAL_NAME = {
     [HERO_LOCAL.Natlan]: '纳塔',
     [HERO_LOCAL.Snezhnaya]: '至冬',
     [HERO_LOCAL.Fatui]: '愚人众',
+    [HERO_TAG.Hilichurl]: '丘丘人',
+    [HERO_TAG.Eremite]: '镀金旅团',
+    [HERO_TAG.ArkheOusia]: '始基力:荒性',
+    [HERO_TAG.ArkhePneuma]: '始基力:芒性',
+    [HERO_TAG.ConsecratedBeast]: '圣骸兽',
 } as const;
 
 export const HERO_TAG_NAME = {
     ...HERO_LOCAL_NAME,
-    [HERO_TAG.Hilichurl]: '丘丘人',
-    [HERO_TAG.Eremite]: '镀金旅团',
-    [HERO_TAG.ArkheOusia]: '始基力:荒性',
     [HERO_TAG.Ousia]: '荒',
-    [HERO_TAG.ArkhePneuma]: '始基力:芒性',
     [HERO_TAG.Pneuma]: '芒',
-    [HERO_TAG.ConsecratedBeast]: '圣骸兽',
 } as const;
 
 export const HERO_TAG_URL = {

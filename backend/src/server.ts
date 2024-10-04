@@ -38,6 +38,7 @@ process.on('uncaughtException', err => console.error(err));
 
 process.on('exit', code => console.error(code));
 
+const isDev = process.env.NODE_ENV == 'development';
 const playerList: ({ id: number, name: string, rid: number } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map(); // 玩家即将离线销毁列表
@@ -114,7 +115,7 @@ io.on('connection', socket => {
         const log = `[${new Date()}]:玩家[${me.name}]` + {
             exitRoom: `离开了房间[${me.rid}]...`,
             disconnect: `断开连接了...`,
-        }[eventName] ?? eventName;
+        }[eventName];
         console.info(log);
         if (me.rid > 0) {
             socket.leave(`7szh-${me.rid}`);
@@ -175,7 +176,7 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown, isDev } = data;
+        const { roomName, version, roomPassword, countdown } = data;
         const roomId = genId(roomList);
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(io, roomId, roomName, version, roomPassword, countdown, isDev);
@@ -236,12 +237,9 @@ io.on('connection', socket => {
     // 发送数据到服务器(开发用)
     socket.on('sendToServerDev', (actionData) => {
         const me = getPlayer(pid);
-        if (pid == -1) {
-            pid = +actionData.pid ?? -1;
-            console.warn(`pidx未找到`);
-        }
+        if (pid == -1) console.warn(`pidx未找到`);
         if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
-        const room = getRoom(me.rid);
+        const room = getRoom(isDev ? me.rid : actionData.rid);
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;
         room.getActionDev(actionData);
@@ -266,4 +264,4 @@ io.on('connection', socket => {
 
 });
 
-httpServer.listen(PORT, () => console.info(`服务器已在端口${PORT}启动......`));
+httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV}端口${PORT}启动......`));

@@ -29,7 +29,7 @@ export type SkillHandleEvent = {
     dmg?: number[],
     talent?: Card | null,
     pile?: Card[],
-    randomInArr?: <T>(arr: T[]) => T,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 
 export type SkillHandleRes = {
@@ -43,11 +43,11 @@ export type SkillHandleRes = {
     addDmgCdt?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
-    statusPre?: (number | [number, ...any])[] | number,
-    statusOppoPre?: (number | [number, ...any])[] | number,
-    summonPre?: (number | [number, ...any])[] | number,
-    statusAfter?: (number | [number, ...any])[] | number,
-    statusOppoAfter?: (number | [number, ...any])[] | number,
+    statusPre?: (number | [number, ...any] | Status)[] | number,
+    statusOppoPre?: (number | [number, ...any] | Status)[] | number,
+    summonPre?: (number | [number, ...any] | Summon)[] | number,
+    statusAfter?: (number | [number, ...any | Status])[] | number,
+    statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
     cmds?: Cmds[],
     heal?: number,
     hidxs?: number[],

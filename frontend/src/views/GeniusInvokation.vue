@@ -60,7 +60,8 @@
       :afterWinHeros="afterWinHeros" :isLookon="isLookon" :client="client" :version="version"
       @select-change-card="selectChangeCard" @change-card="changeCard" @reroll="reroll" @select-hero="selectHero"
       @select-use-dice="selectUseDice" @select-support="selectCardSupport" @select-summon="selectCardSummon"
-      @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect" />
+      @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect"
+      @select-card-pick="selectCardPick" @pick-card="pickCard" />
 
     <div class="hand-card"
       v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0) || client.isWin > -1"
@@ -195,7 +196,7 @@ const socket: Socket = getSocket(isDev);
 const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow } = history.state;
 
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
-const roomId = route.params.roomId; // 房间id
+const roomId: number = +route.params.roomId; // 房间id
 const version = ref<Version>(cversion); // 版本
 const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * 2) : -1); // 是否旁观
 const client = ref(new GeniusInvokationClient(socket, userid, version.value, cplayers, isMobile.value, countdown, JSON.parse(localStorage.getItem('GIdecks') || '[]'), Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value));
@@ -300,6 +301,14 @@ const selectCardSupport = (pidx: number, siidx: number) => {
 const selectUseDice = () => {
   client.value.selectUseDice();
 };
+// 选择挑选的卡牌
+const selectCardPick = (pcidx: number) => {
+  client.value.selectCardPick(pcidx);
+}
+// 挑选卡牌
+const pickCard = () => {
+  client.value.pickCard();
+}
 // 进入调和模式
 const reconcile = (bool: boolean) => {
   client.value.reconcile(bool, client.value.handcardsSelect);
@@ -369,11 +378,8 @@ const isOpenMask = ref<boolean>(false);
 const devOps = (cidx = 0) => {
   if (client.value.phase < 5 || !isDev && ++prodEnv < 3) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');
-  if (!isDev) {
-    if (!opses?.startsWith('debug')) return;
-    opses = opses?.slice(5);
-    prodEnv = 0;
-  }
+  let rid = roomId;
+  let seed = 0;
   if (opses?.startsWith('--')) {
     const opacity = +opses.slice(2);
     if (opacity == 1) isOpenMask.value = false;
@@ -382,6 +388,15 @@ const devOps = (cidx = 0) => {
       isOpenMask.value = opacity > 0 || !isOpenMask.value;
     }
     opses = null;
+  }
+  if (!isDev) {
+    if (!opses?.startsWith('-r')) return;
+    rid = parseInt(opses.slice(2));
+    opses = opses.slice(opses.match(/-r\d+/)![0].length);
+    if (!opses?.startsWith('-s')) return;
+    seed = parseInt(opses.slice(2));
+    opses = opses.slice(opses.match(/-s\d+/)![0].length);
+    prodEnv = 0;
   }
   if (!opses) return;
   const ops = opses.trim().split(/[,，\.\/、]+/).filter(v => v != '');
@@ -403,7 +418,7 @@ const devOps = (cidx = 0) => {
       ops.push(op[0] + op.slice(index + 1).trim());
       op = op.slice(0, index).trim();
     }
-    if (op == 'log') { // 导出日志
+    if (op.startsWith('log')) { // 导出日志
       flag.add('log');
     } else if (op.startsWith('&')) { // 附着
       const isAdd = op[1] == '+';
@@ -480,7 +495,7 @@ const devOps = (cidx = 0) => {
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { cpidx, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', { cpidx, rid, seed, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
 };
 </script>
 

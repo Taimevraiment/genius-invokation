@@ -326,7 +326,7 @@
                 <div class="card-border"></div>
                 <img class="summon-img" :src="summon.UI.src" v-if="summon?.UI.src?.length > 0" :alt="summon.name" />
                 <span v-else>{{ summon.name }}</span>
-                <div style="position: absolute; width: 100%; height: 100%"
+                <div style="position: absolute; width: 100%; height: 100%;top: 0;"
                   :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
               </div>
               <img class="summon-top-icon" v-if="!summon?.UI.isWill"
@@ -408,6 +408,17 @@
             {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
           </button>
         </div>
+
+        <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && isLookon == -1">
+          <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
+          <div class="pick-cards">
+            <handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
+              :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
+              <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
+            </handcard>
+          </div>
+          <button @click="pickCard" v-if="pickCardIdx > -1">确认</button>
+        </div>
       </div>
 </template>
 
@@ -426,7 +437,7 @@ import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
 const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
 const emits = defineEmits([
   'selectChangeCard', 'changeCard', 'reroll', 'selectHero', 'selectUseDice', 'selectSummon', 'selectSupport', 'endPhase',
-  'showHistory', 'update:diceSelect',
+  'showHistory', 'update:diceSelect', 'selectCardPick', 'pickCard'
 ]);
 
 type Curcnt = { sid: number, val: number, isChange: boolean };
@@ -599,6 +610,8 @@ const historyInfo = computed<string[]>(() => props.client.log);
 const initCards = computed<Card[]>(() => player.value.handCards);
 const dices = computed<DiceCostType[]>(() => player.value.dice);
 const diceSelect = computed<boolean[]>(() => props.client.diceSelect);
+const pickCards = computed<Card[]>(() => props.client.pickModal.cards);
+const pickCardIdx = computed<number>(() => props.client.pickModal.selectIdx);
 const showChangeCardBtn = ref<boolean>(true);
 
 let diceChangeEnter: -1 | boolean = -1;
@@ -685,6 +698,14 @@ const reroll = () => {
   if (!showRerollBtn.value) return;
   emits('reroll');
 };
+// 选择要挑选的卡牌
+const selectCardPick = (pcidx: number) => {
+  emits('selectCardPick', pcidx);
+}
+// 挑选卡牌
+const pickCard = () => {
+  emits('pickCard');
+}
 // 选择要消费的骰子
 const selectUseDice = (didx: number) => {
   if (player.value.status == PLAYER_STATUS.WAITING) return;
@@ -1294,6 +1315,8 @@ button:active {
   cursor: pointer;
   transition: box-shadow 0.5s;
   transform: scale(var(--scale-val-will));
+  background-color: black;
+  border-radius: 10%;
 }
 
 .summon-img-content,
@@ -1487,7 +1510,8 @@ button:active {
 .support-select,
 .hero-select,
 .status-select,
-.slot-select {
+.slot-select,
+.pick-select {
   box-shadow: 4px 4px 6px #ffeb56, -4px 4px 6px #ffeb56, 4px -4px 6px #ffeb56,
     -4px -4px 6px #ffeb56 !important;
 }
@@ -1518,7 +1542,8 @@ button:active {
   margin-bottom: 2px;
 }
 
-.card-change {
+.card-change,
+.card-pick {
   position: absolute;
   top: 0;
   left: 10%;
@@ -1529,10 +1554,12 @@ button:active {
   align-items: center;
   background-color: #636363f4;
   border-radius: 5px;
+  padding: 10px 0;
   z-index: 2;
 }
 
-.init-cards {
+.init-cards,
+.pick-cards {
   width: 100%;
   height: 70%;
   margin: 0 auto;
@@ -1541,7 +1568,8 @@ button:active {
   align-items: center;
 }
 
-.init-card {
+.init-card,
+.pick-card {
   position: relative;
   cursor: pointer;
   text-align: center;

@@ -17,6 +17,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "preserve",
+    "removeComments": true,
+    "noImplicitAny": false,
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
