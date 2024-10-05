@@ -745,6 +745,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    116097: () => new SummonBuilder('千织的自动制御人形').description('千织拥有多种自动制御人形，不但能自动发起攻击，还会提供多种增益效果。'),
+
     117011: () => new SummonBuilder('柯里安巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png'),
 

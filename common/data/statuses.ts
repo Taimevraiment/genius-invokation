@@ -235,7 +235,7 @@ const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
 
 const shieldHeroStatus = (name: string, cnt = 2, mcnt = 0) => {
     return new StatusBuilder(name).heroStatus().useCnt(cnt).maxCnt(mcnt).type(STATUS_TYPE.Shield)
-        .description(`提供2点[护盾]，保护所附属角色。${mcnt > 0 ? `(可叠加，最多到${mcnt})` : ''}`)
+        .description(`提供${cnt}点[护盾]，保护所附属角色。${mcnt > 0 ? `(可叠加，最多到${mcnt})` : ''}`)
 }
 
 const readySkillShieldStatus = (name: string) => {
@@ -1133,12 +1133,22 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    114091: () => new StatusBuilder('引雷').heroStatus().icon('debuff').useCnt(2).addCnt(1).maxCnt(4).type(STATUS_TYPE.AddDamage)
-        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
-        .handle(status => ({
-            trigger: ['phase-end'],
-            exec: () => { status.useCnt = Math.min(status.maxCnt, status.useCnt + 1) },
-        })),
+    114091: () => new StatusBuilder('引雷').heroStatus().icon('debuff').useCnt(2).addCnt(1).maxCnt(4).type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
+        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗或〖smn114092〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
+        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。', 'v5.1.0')
+        .handle((status, event, ver) => {
+            const { skid = -1, isSummon = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (skid == 14092 || (ver >= 'v5.1.0' && isSummon == 114092)) triggers.push('getdmg');
+            return {
+                trigger: triggers,
+                getDmg: status.useCnt,
+                exec: () => {
+                    if (trigger == 'phase-end') status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
+                    else if (trigger == 'getdmg') status.useCnt = 0;
+                },
+            }
+        }),
 
     114111: () => new StatusBuilder('越袚草轮').combatStatus().icon('ski,1').useCnt(3).perCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方切换角色后：】造成1点[雷元素伤害]，治疗我方受伤最多的角色1点。(每回合1次)；[useCnt]')
@@ -1951,6 +1961,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('角色造成的[火元素伤害]+1。')
         .handle(() => ({ addDmg: 1 })),
 
+    123032: () => new StatusBuilder('魔蝎祝福').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+        .description('我方使用【crd123031】的[特技]时：移除此效果，每有1层｢魔蝎祝福｣，就使此[特技]造成的伤害+1。；[useCnt]')
+        .handle((status, event) => {
+            const { skid = -1 } = event;
+            if (skid != 1230311) return;
+            return {
+                trigger: ['vehicle'],
+                addDmgCdt: status.useCnt,
+                exec: () => { status.useCnt = 0 }
+            }
+        }),
+
     123033: (useCnt: number = 1) => new StatusBuilder('炎之魔蝎·守势').heroStatus()
         .useCnt(useCnt).type(STATUS_TYPE.Barrier)
         .description('【附属角色受到伤害时：】抵消1点伤害。；[useCnt]'),
@@ -2248,11 +2270,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    127028: () => shieldHeroStatus('绿洲之庇护'),
+    127028: () => shieldHeroStatus('绿洲之庇护', 1).useCnt(2, 'v5.1.0')
+        .description('提供2点[护盾]，保护所附属角色。', 'v5.1.0'),
 
     127029: () => new StatusBuilder('绿洲之心').combatStatus().icon('ski,2').useCnt(0).maxCnt(4)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .description('我方召唤4个【smn127022】后，我方【hro】附属【sts127027】，并获得2点[护盾]。')
+        .description('我方召唤4个【smn127022】后，我方【hro】附属【sts127027】，并获得1点[护盾]。')
+        .description('我方召唤4个【smn127022】后，我方【hro】附属【sts127027】，并获得2点[护盾]。', 'v5.1.0')
         .handle((status, event) => {
             const { hcard, discards = [], heros = [], summons = [] } = event;
             if (summons.length == MAX_SUMMON_COUNT || (hcard?.id != 127021 && !hasObjById(discards, 127021) && status.useCnt < 4)) return;
@@ -2433,7 +2457,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    3130042: () => shieldHeroStatus('todo掘进护盾'),
+    3130042: () => shieldHeroStatus('掘进的收获'),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

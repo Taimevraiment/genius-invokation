@@ -68,7 +68,7 @@ export const genShareCode = (ids: number[], salt = 0): string => {
  * @returns 解析后对象 {heroIds: number[], cardIds: number[]}
  */
 export const parseShareCode = (code: string): { heroIds: number[], cardIds: number[] } => {
-    const salt = atob(code).split('').at(-1)?.charCodeAt(0) ?? 0;
+    const salt = atob(code).split('').slice(-1)[0]?.charCodeAt(0) ?? 0;
     const ores = atob(code).split('').map(v => ((v.charCodeAt(0) - salt + 256) % 256).toString(2).padStart(8, '0')).join('');
     let str1 = '';
     let str2 = '';

@@ -213,7 +213,8 @@ type ActionData = {
     supportIdx?: number, // 选择的支援物序号 -1无
     diceSelect?: boolean[], // 使用/替换的骰子序号
     deckIdx?: number, // 使用的卡组序号 -1无
-    shareCode?: string, // 卡组分享码
+    heroIds?: number[], // 卡组角色id
+    cardIds?: number[], // 卡组卡牌id
     flag?: string, // 发起请求的标志
 }
 

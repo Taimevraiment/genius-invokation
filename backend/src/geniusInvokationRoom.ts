@@ -21,7 +21,7 @@ import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
 import { allHidxs, checkDices, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, mergeWillHeals } from '../../common/utils/gameUtil.js';
-import { arrToObj, assgin, clone, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
+import { arrToObj, assgin, clone, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
     ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Hero, LogType, MinusDiceSkill, PickCard,
     Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger
@@ -310,7 +310,7 @@ export default class GeniusInvokationRoom {
                 ...(typeof tip != 'string' ? { tip: tip[pidx] } :
                     tip.includes('{p}') ? { tip: tip.replace(/{p}/, pidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
                 log: log.map(v => v.content),
-                actionInfo: actionInfo || (isActionInfo ? log.filter(lg => lg.type == 'info').at(-1)?.content ?? '' : ''),
+                actionInfo: actionInfo || (isActionInfo ? log.filter(lg => lg.type == 'info').slice(-1)[0]?.content ?? '' : ''),
             }
         }
         this._writeLog(serverData.flag, 'emit');
@@ -455,13 +455,12 @@ export default class GeniusInvokationRoom {
      */
     getAction(actionData: ActionData, socket: Socket) {
         if (this.taskQueue.isExecuting) return;
-        const { cpidx = this.currentPlayerIdx, deckIdx = -1, shareCode = '', cardIdxs = [], heroIdxs = [],
+        const { cpidx = this.currentPlayerIdx, deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
             diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, flag = 'noflag' } = actionData;
         const player = this.players[cpidx];
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 player.deckIdx = deckIdx;
-                const { heroIds, cardIds } = parseShareCode(shareCode);
                 if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', cpidx, { socket, tip: '当前出战卡组不完整' });
                 player.heros = heroIds.map(parseHero);
                 player.pile = cardIds.map(parseCard);
@@ -2275,7 +2274,7 @@ export default class GeniusInvokationRoom {
         res.skillId = userType == 0 || userType == heros[hidx].id ? cardres.cmds?.find(({ cmd }) => cmd == 'useSkill')?.cnt ?? -1 : -1;
         if (isReconcile) {
             const dices = player.dice.map((d, di) => [d, di] as const).filter(([d]) => d != DICE_COST_TYPE.Omni && d != heros[hidx].element);
-            const [dice] = dices.at(-1)!;
+            const [dice] = dices.slice(-1)[0];
             const [, didx] = dices.find(([d]) => d == dice)!;
             res.diceSelect[didx] = true;
             res.isValid = true;

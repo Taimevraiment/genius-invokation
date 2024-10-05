@@ -851,23 +851,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1409: () => new HeroBuilder(34).name('丽莎').since('v4.0.0').mondstadt().electro().catalyst()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/203927054/129fe37de1bed078b49b9bc79ef2e757_1437470149833493317.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/94c38cd6acf1adb7d0fa8cd4e72636e3.png')
-        .normalSkill(new NormalSkillBuilder('指尖雷暴').description('；如果此技能为[重击]，则使敌方出战角色附属【sts114091】。')
-            .handle(event => ({ statusOppo: isCdt(event.isChargedAtk, 114091) })))
+        .normalSkill(new NormalSkillBuilder('指尖雷暴').description('；使敌方出战角色附属【sts114091】。')
+            .description('；如果此技能为[重击]，则使敌方出战角色附属【sts114091】。', 'v5.1.0')
+            .handle((event, ver) => ({ statusOppo: isCdt(ver >= 'v5.1.0' || event.isChargedAtk, 114091) })))
         .skills(
             new SkillBuilder('苍雷').description('{dealDmg}; 如果敌方出战角色未附属【sts114091】，则使其附属【sts114091】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/13/1tkxwb0js8qxi9yi8bm6tpub8f9ba19.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/bb9487283d20c857804988ace8572ebc_971397791433710881.png')
                 .elemental().damage(2).cost(3).handle(event => {
                     const { eheros = [] } = event;
-                    const status114091 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 114091);
-                    const addDmgCdt = status114091?.useCnt ?? 0;
-                    return {
-                        statusOppo: isCdt(!status114091, 114091),
-                        addDmgCdt,
-                        exec: () => {
-                            if (status114091) status114091.useCnt = 0;
-                        },
-                    }
+                    const hasSts = hasObjById(eheros.find(h => h.isFront)?.heroStatus, 114091);
+                    return { statusOppo: isCdt(!hasSts, 114091) }
                 }),
             new SkillBuilder('蔷薇的雷光').description('{dealDmg}，召唤【smn114092】，使敌方出战角色附属【sts114091】。')
                 .description('{dealDmg}，召唤【smn114092】。', 'v4.8.0')
@@ -1229,10 +1223,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('')
         .normalSkill(new NormalSkillBuilder('心织刀流'))
         .skills(
-            new SkillBuilder('羽袖一触').description('从3个【千织的自动制御人形】中[挑选]1个召唤。')
+            new SkillBuilder('羽袖一触').description('从3个【smn116097】中[挑选]1个召唤。')
                 .src('',
                     '')
-                .explain('smn116091', 'smn116092', 'smn116093', 'smn116095', 'smn116096')
                 .elemental().cost(3).handle(event => {
                     const { talent, isExec } = event;
                     const summonPre: number[] = [];
@@ -1687,27 +1680,33 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f9bf42e94783ffb86a7dcbbb9c3e38b8.png')
         .normalSkill(new NormalSkillBuilder('烧蚀之光').catalyst())
         .skills(
-            new SkillBuilder('炎晶迸击').description('{dealDmg}。')
+            new SkillBuilder('炎晶迸击').description('{dealDmg}，生成1层【sts123032】。').description('{dealDmg}。', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/714623e3c2775d4e7cc1c78573e5443e.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/95c606e65f456edfec8a28c18f17f6cc_4264699545618649047.png')
-                .elemental().damage(3).cost(3),
-            new SkillBuilder('厄灵苏醒·炎之魔蝎').description('{dealDmg}，召唤【smn123031】。')
+                .elemental().damage(3).cost(3).handle((_, ver) => ({ status: isCdt(ver >= '5.1.0', 123032) })),
+            new SkillBuilder('厄灵苏醒·炎之魔蝎').description('{dealDmg}。整场牌局限制1次，将1张【crd123031】加入我方手牌。')
+                .description('{dealDmg}，召唤【smn123031】。', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/637396968147be2805479aebcbe5b825.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/84274abeb2c38f6f46c94dd2953323db_4939077374255699145.png')
-                .burst(2).damage(2).cost(3).handle(event => {
-                    const { talent, summons = [] } = event;
-                    const isSmned = hasObjById(summons, 123031);
-                    return {
-                        summon: [[123031, talent]],
-                        status: isCdt(!isSmned, [[123033, talent ? 2 : 1]]),
+                .burst(2).damage(3).damage(2, 'v5.1.0').cost(3).handle((event, ver) => {
+                    const { talent, summons = [], skill: { useCnt } } = event;
+                    if (ver < 'v5.1.0') {
+                        const isSmned = hasObjById(summons, 123031);
+                        return {
+                            summon: [[123031, talent]],
+                            status: isCdt(!isSmned, [[123033, talent ? 2 : 1]]),
+                        }
                     }
+                    if (useCnt == 0) return { cmds: [{ cmd: 'getCard', cnt: 1, card: 123031 }] }
                 }),
-            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。（整场牌局限制1次）。')
+            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(每回合1次)')
+                .description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(整场牌局限制1次)', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/9262db8e7ec7952af306117cb67d668d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/b9854a003c9d7e5b14bed92132391e9e_754640348498205527.png')
-                .handle(event => {
-                    const { hero: { hp, energy, maxEnergy, hidx }, skill: { useCnt }, getdmg = [] } = event;
-                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy || useCnt) return;
+                .handle((event, ver) => {
+                    const { hero: { hp, energy, maxEnergy, hidx }, skill: { useCnt, useCntPerRound }, getdmg = [] } = event;
+                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy) return;
+                    if (ver < 'v5.1.0' && useCnt || ver >= 'v5.1.0' && useCntPerRound) return;
                     return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
         ),
@@ -2061,10 +2060,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
                     statusPre: [[127026, 2]],
                 })),
-            new SkillBuilder('增殖感召').description('战斗开始时，生成6张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。')
+            new SkillBuilder('增殖感召').description('战斗开始时，生成5张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。')
+                .description('战斗开始时，生成6张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png')
-                .handle(() => ({ trigger: ['game-start'], status: 127029, cmds: [{ cmd: 'addCard', cnt: 6, card: 127021 }] }))
+                .handle((_, ver) => ({ trigger: ['game-start'], status: 127029, cmds: [{ cmd: 'addCard', cnt: ver < 'v5.1.0' ? 6 : 5, card: 127021 }] }))
         ),
 
     2703: () => new HeroBuilder(422).name('镀金旅团·叶轮舞者').since('v5.1.0').tags(HERO_TAG.Eremite).dendro()

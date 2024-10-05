@@ -242,11 +242,11 @@ export class SkillBuilder extends BaseVersionBuilder {
 
 }
 
-export class NormalSkillBuilder {
+export class NormalSkillBuilder extends BaseVersionBuilder {
     private _id: number = -1;
     private _weaponType: WeaponType | undefined;
     private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;
-    private _description: string = '';
+    private _description: VersionMap<string> = new VersionMap();
     private _perCnt: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
     private _explains: string[] = [];
@@ -268,6 +268,7 @@ export class NormalSkillBuilder {
         'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/2bfbf024135461849666339c43d60b2c_1257931966790216673.png',
     ];
     constructor(name: string) {
+        super();
         this._builder = new SkillBuilder(name).normal().costAny(2);
     }
     id(id: number) {
@@ -291,8 +292,8 @@ export class NormalSkillBuilder {
         if (this._costElement == ELEMENT_TYPE.Physical) this._costElement = costElement;
         return this;
     }
-    description(description: string) {
-        this._description = description;
+    description(description: string, ver: Version = 'vlatest') {
+        this._description.set([ver, description]);
         return this;
     }
     handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined)) {
@@ -312,8 +313,9 @@ export class NormalSkillBuilder {
         this.costElement(ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode]);
         const isCatalyst = this._weaponType == WEAPON_TYPE.Catalyst;
         const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
+        const description = this._description.get(this._curVersion, '')
         return this._builder
-            .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${this._description}`)
+            .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])
             .cost(1)
             .costElement(this._costElement)

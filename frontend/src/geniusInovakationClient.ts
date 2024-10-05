@@ -77,10 +77,11 @@ export default class GeniusInvokationClient {
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', actionType: 'getCard', skillId: -1 }; // 挑选卡牌
+    isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
 
     constructor(
-        socket: Socket, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number,
+        socket: Socket, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
     ) {
         this.socket = socket;
@@ -93,6 +94,7 @@ export default class GeniusInvokationClient {
         this.decks = decks;
         this.isMobile = isMobile;
         this.countdown.limit = timelimit;
+        this.isDev = isDev;
         this.diceSelect = new Array(MAX_DICE_COUNT).fill(false);
         this.handcardsGap = isMobile ? HANDCARDS_GAP_MOBILE : HANDCARDS_GAP_PC;
         this.handcardsOffset = isMobile ? HANDCARDS_OFFSET_MOBILE : HANDCARDS_OFFSET_PC;
@@ -295,7 +297,7 @@ export default class GeniusInvokationClient {
                         pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0] &&
                         (pre.heroIdxs?.length == 1 || pre.summonIdx == 0 || pre.supportIdx == 0)
                     );
-                    if (!preview1) throw new Error('卡牌预览未找到');
+                    if (!preview1) return;
                     this.isValid = preview1.isValid;
                     if (this.isValid) {
                         if (canSelectHero == 1) {
@@ -363,13 +365,15 @@ export default class GeniusInvokationClient {
         if (!this.isDeckCompleteValid.isValid) return alert(this.isDeckCompleteValid.error);
         if (!this.isDeckVersionValid.isValid) return alert(this.isDeckVersionValid.error);
         console.info(`player[${this.player.name}]:${this.isStart ? 'cancelReady' : 'startGame'}-${this.playerIdx}`);
+        const { heroIds, cardIds } = parseShareCode(shareCode);
         this.isStart = !this.isStart;
         this._resetWillAttachs();
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.StartGame,
             cpidx: this.playerIdx,
             deckIdx: this.deckIdx,
-            shareCode,
+            heroIds,
+            cardIds,
             flag: 'startGame',
         } as ActionData);
     }
@@ -391,7 +395,7 @@ export default class GeniusInvokationClient {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
             flag } = data;
-        console.info(flag);
+        if (this.isDev) console.info(flag);
         const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;

@@ -463,7 +463,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     311309: () => new CardBuilder(426).name('便携动力锯').since('v5.1.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1)
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢坚忍标记｣。(每回合最多触发1次)；【角色使用技能时：】如果此牌已有｢坚忍标记｣，则消耗所有｢坚忍标记｣，使此技能伤害+1，并且每消耗1点｢坚忍标记｣就抓1张牌。')
+        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢坚忍标记｣。(每回合1次)；【角色造成伤害时：】如果此牌已有｢坚忍标记｣，则消耗所有｢坚忍标记｣，使此伤害+1，并且每消耗1点｢坚忍标记｣就抓1张牌。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_DongliJu.webp')
         .handle(barrierWeaponHandle),
 
@@ -552,7 +552,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     311409: () => new CardBuilder(402).name('勘探钻机').since('v4.8.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发1次)；【角色造成伤害时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
+        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合1次)；【角色造成伤害时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此伤害+1，并且每消耗1点｢团结｣就抓1张牌。')
         .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢团结｣。(每回合最多触发2次)；【角色使用技能时：】如果此牌已有｢团结｣，则消耗所有｢团结｣，使此技能伤害+1，并且每消耗1点｢团结｣就抓1张牌。', 'v5.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
         .handle(barrierWeaponHandle),
@@ -2740,7 +2740,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     216091: () => new CardBuilder(423).name('落染五色').since('v5.1.0').talent(1).costGeo(3)
-        .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【千织的自动制御人形】中挑选1个并召唤。')
+        .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中挑选1个并召唤。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chiori.webp'),
 
     217011: () => new CardBuilder(107).name('飞叶迴斜').talent(1).costDendro(4).costDendro(3, 'v3.4.0').perCnt(1)
@@ -2902,8 +2902,23 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     223031: () => new CardBuilder(295).name('魔蝎烈祸').since('v4.3.0').talent(2).costPyro(3).energy(2)
-        .description('{action}；装备有此牌的【hro】生成的【smn123031】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn123031】的减伤效果改为每回合至多2次。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png'),
+        .description('{action}；装备有此牌的【hro】在场，我方使用【rsk1230311】击倒敌方角色后：将一张【crd123031】加入手牌。；回合结束时：生成1层【sts123032】、')
+        .description('{action}；装备有此牌的【hro】生成的【smn123031】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn123031】的减伤效果改为每回合至多2次。', 'v5.1.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png')
+        .handle((_, event, ver) => {
+            if (ver < 'v5.1.0') return;
+            const { skid = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (skid == 1230311) triggers.push('kill');
+            return {
+                trigger: triggers,
+                isAddTask: true,
+                execmds: isCdt(trigger == 'kill',
+                    [{ cmd: 'getCard', cnt: 1, card: 123031 }],
+                    [{ cmd: 'getStatus', status: 123032 }]
+                )
+            }
+        }),
 
     223041: () => new CardBuilder(354).name('熔火铁甲').since('v4.6.0').talent().costPyro(1).perCnt(1)
         .description('【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts123041】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts123041】。(每回合1次)')
@@ -3076,6 +3091,27 @@ const allCards: Record<number, () => CardBuilder> = {
 
     122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_HilistrayWater.webp'),
+
+    123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).useCnt(1).perCnt(2).tag(CARD_TAG.Barrier)
+        .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。(每回合至多2次)；')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
+        .handle((card, event) => {
+            const { heros = [], restDmg = 0, skid = -1, hidxs = [], getdmg = [], trigger = '' } = event;
+            if (trigger == 'vehicle') {
+                if (skid != +`${card.id}1`) return;
+                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+            }
+            const isBarrier = card.perCnt > 0 && !!heros[hidxs[0]]?.energy;
+            if (restDmg > 0) {
+                if (!isBarrier) return { restDmg }
+                --card.perCnt;
+                return { restDmg: restDmg - 1 }
+            }
+            return {
+                trigger: isCdt(isBarrier && getdmg[hidxs[0]] > 0, ['getdmg']),
+                execmds: [{ cmd: 'getEnergy', cnt: -1, hidxs }, { cmd: 'getStatus', status: 123032 }],
+            }
+        }),
 
     124051: () => new CardBuilder().name('噬骸能量块').event().costSame(0)
         .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。(每回合最多打出1张)')

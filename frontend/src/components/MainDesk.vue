@@ -168,7 +168,7 @@
             }">
               <img :src="hero.vehicleSlot[1].UI.src || CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]"
                 style="filter: brightness(0.3);" />
-              <div :class="{ 'slot-can-use': hero.vehicleSlot[1].perCnt > 0 }"></div>
+              <div :class="{ 'slot-can-use': hero.vehicleSlot[0].perCnt + hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
           </div>
           <div class="hero-equipment" v-if="(hero?.hp ?? 0) >= 0">

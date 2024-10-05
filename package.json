@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "keywords": [],
-  "author": "",
+  "author": "taim",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.14.2"

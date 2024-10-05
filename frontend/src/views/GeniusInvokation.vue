@@ -191,15 +191,17 @@ const router = useRouter();
 const route = useRoute();
 
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-const isDev = process.env.NODE_ENV == 'development';
+const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow, isDev } = history.state;
 const socket: Socket = getSocket(isDev);
-const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow } = history.state;
 
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
 const version = ref<Version>(cversion); // 版本
 const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * 2) : -1); // 是否旁观
-const client = ref(new GeniusInvokationClient(socket, userid, version.value, cplayers, isMobile.value, countdown, JSON.parse(localStorage.getItem('GIdecks') || '[]'), Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value));
+const client = ref(new GeniusInvokationClient(socket, userid, version.value, cplayers, isMobile.value, countdown, isDev,
+  JSON.parse(localStorage.getItem('GIdecks') || '[]'),
+  Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value,
+));
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt);
 const canAction = computed<boolean>(() => client.value.canAction); // 是否可以操作

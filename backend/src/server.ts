@@ -231,7 +231,14 @@ io.on('connection', socket => {
         const room = getRoom(me.rid);
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;
-        room.getAction(actionData, socket);
+        if (isDev) room.getAction(actionData, socket);
+        else {
+            try {
+                room.getAction(actionData, socket);
+            } catch (e) {
+                console.error(e);
+            }
+        }
         if (isStart != room.isStart) emitPlayerAndRoomList();
     });
     // 发送数据到服务器(开发用)

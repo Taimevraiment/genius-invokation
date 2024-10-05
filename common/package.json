@@ -1,0 +1,12 @@
+{
+    "name": "gi-tcg-common",
+    "version": "1.0.0",
+    "type": "module",
+    "keywords": [],
+    "author": "taim",
+    "license": "ISC",
+    "devDependencies": {
+      "@types/node": "^20.14.2"
+    }
+  }
+  
