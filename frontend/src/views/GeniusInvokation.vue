@@ -197,8 +197,8 @@ const socket: Socket = getSocket(isDev);
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
 const version = ref<Version>(cversion); // 版本
-const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * 2) : -1); // 是否旁观
-const client = ref(new GeniusInvokationClient(socket, userid, version.value, cplayers, isMobile.value, countdown, isDev,
+const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * PLAYER_COUNT) : -1); // 是否旁观
+const client = ref(new GeniusInvokationClient(socket, roomId, userid, version.value, cplayers, isMobile.value, countdown, isDev,
   JSON.parse(localStorage.getItem('GIdecks') || '[]'),
   Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value,
 ));

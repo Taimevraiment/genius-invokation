@@ -201,9 +201,7 @@ io.on('connection', socket => {
         if (room.isStart && isInGame) {
             ++room.onlinePlayersCnt;
             room.players[pidx].isOffline = false;
-            setTimeout(() => {
-                room.emit('continueGame', (me as Player).pidx, { socket });
-            }, 500);
+            setTimeout(() => room.emit('continueGame', (me as Player).pidx, { socket }), 500);
         } else {
             me = room.init(me);
             playerList[getPlayerIdx(pid)] = me;
@@ -222,7 +220,7 @@ io.on('connection', socket => {
     socket.on('roomInfoUpdate', data => {
         const room = getRoom(data.roomId);
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
-        room.emit('roomInfoUpdate', 0);
+        room.emit('roomInfoUpdate', data.pidx || 0);
     });
     // 发送数据到服务器
     socket.on('sendToServer', async (actionData: ActionData) => {

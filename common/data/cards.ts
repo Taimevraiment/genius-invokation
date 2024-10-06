@@ -3096,14 +3096,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。(每回合至多2次)；')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
         .handle((card, event) => {
-            const { heros = [], restDmg = 0, skid = -1, hidxs = [], getdmg = [], trigger = '' } = event;
+            const { heros = [], restDmg = -1, skid = -1, hidxs = [], getdmg = [], trigger = '' } = event;
             if (trigger == 'vehicle') {
                 if (skid != +`${card.id}1`) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             }
             const isBarrier = card.perCnt > 0 && !!heros[hidxs[0]]?.energy;
-            if (restDmg > 0) {
-                if (!isBarrier) return { restDmg }
+            if (restDmg >= 0) {
+                if (!isBarrier || restDmg == 0) return { restDmg }
                 --card.perCnt;
                 return { restDmg: restDmg - 1 }
             }

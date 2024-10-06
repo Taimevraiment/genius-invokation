@@ -1740,16 +1740,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         if (stsCnt > 0 && (hero.talentSlot?.perCnt ?? 0) > 0) stsCnt += 2;
                     }
                     if (stsCnt == 0) return;
+                    stsCnt += getObjById(hero.heroStatus, 123041)?.useCnt ?? 0;
                     return {
                         trigger: ['game-start', 'action-after'],
-                        status: isCdt(stsCnt > 0, [[123041, stsCnt]]),
+                        status: [[123041, stsCnt]],
                         exec: () => {
-                            if (trigger == 'game-start' || stsCnt == 0) return;
+                            if (trigger == 'game-start') return;
                             for (const sts of [...heros.flatMap(h => h.heroStatus), ...combatStatus]) {
-                                if (!sts.hasType(STATUS_TYPE.Shield) || sts.id == 123041) continue;
+                                if (!sts.hasType(STATUS_TYPE.Shield)) continue;
                                 sts.useCnt = 0;
                             }
-                            if (stsCnt > 0 && hero.talentSlot && hero.talentSlot.perCnt > 0) --hero.talentSlot.perCnt;
+                            if (hero.talentSlot && hero.talentSlot.perCnt > 0) --hero.talentSlot.perCnt;
                         }
                     }
                 })
@@ -1867,7 +1868,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('不朽亡骸·雷').description('回合结束时，生成两张【crd124051】，随机置入我方牌库顶部10张牌中。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f2c9fb8d451bc79e309ce9f397738a39.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/02cbaf22d48774e6e7cff5203e9562eb_9127079687708650066.png')
-                .handle(() => ({ trigger: ['phase-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
+                .handle(() => ({ trigger: ['turn-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
         ),
 
     2406: () => new HeroBuilder(421).name('深渊咏者·紫电').since('v5.1.0').maxHp(6).monster().electro()

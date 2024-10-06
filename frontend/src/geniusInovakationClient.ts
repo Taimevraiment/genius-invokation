@@ -21,6 +21,7 @@ type DeckValid = {
 
 export default class GeniusInvokationClient {
     socket: Socket;
+    roomId: number; // 房间id
     userid: number; // 用户id
     version: Version; // 版本
     players: Player[]; // 所有玩家信息数组
@@ -81,10 +82,11 @@ export default class GeniusInvokationClient {
     error: string = ''; // 服务器发生的错误信息
 
     constructor(
-        socket: Socket, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
+        socket: Socket, roomId: number, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
     ) {
         this.socket = socket;
+        this.roomId = roomId;
         this.userid = userid;
         this.version = version;
         this.players = players;
@@ -266,7 +268,7 @@ export default class GeniusInvokationClient {
                 type: INFO_TYPE.Card,
                 info: this.currCard,
             }
-            if (this.player.status == PLAYER_STATUS.PLAYING && this.player.canAction) {
+            if (this.player.status == PLAYER_STATUS.PLAYING && this.player.canAction && this.isLookon == -1) {
                 const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
                 if (!preview) throw new Error('卡牌预览未找到');
                 this.diceSelect.fill(false);
@@ -398,7 +400,7 @@ export default class GeniusInvokationClient {
         if (this.isDev) console.info(flag);
         const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
-        if (this.isLookon > -1 && this.isLookon != this.playerIdx) return;
+        if (this.isLookon > -1 && this.isLookon != this.playerIdx || players.length == 0) return;
         this.previews = previews;
         this.reconcileValid = previews.filter(pre => pre.type == ACTION_TYPE.Reconcile).sort((a, b) => a.cardIdxs![0] - b.cardIdxs![0]).map(v => v.isValid);
         this.phase = phase;
@@ -916,12 +918,12 @@ export default class GeniusInvokationClient {
     }
     /**
      * 选择观战玩家
-     * @param idx 要观战的玩家idx
+     * @param pidx 要观战的玩家idx
      */
-    lookonTo(idx: number) {
+    lookonTo(pidx: number) {
         if (this.isLookon == -1) return;
-        this.isLookon = idx;
-        this.socket.emit('roomInfoUpdate',);
+        this.isLookon = pidx;
+        this.socket.emit('roomInfoUpdate', { roomId: this.roomId, pidx });
     }
     _sendTip(tip: string) {
         if (tip == '') return;

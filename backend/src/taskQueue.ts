@@ -20,7 +20,7 @@ export default class TaskQueue {
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.trace('重复task:', taskType);
         }
-        if (isUnshift || isPriority) curQueue.unshift([taskType, args, isDmg]);
+        if (isUnshift) curQueue.unshift([taskType, args, isDmg]);
         else if (addAfterNonDmg) {
             const tidx = this.queue.findIndex(([_, _t, isDmg]) => isDmg);
             if (tidx > -1) this.queue.splice(tidx, 0, [taskType, args, isDmg]);
@@ -54,6 +54,13 @@ export default class TaskQueue {
             this.priorityQueue = undefined;
         }
         return [res, isPriority];
+    }
+    removeTask(entityId: number) {
+        for (const queue of [this.priorityQueue, this.queue]) {
+            if (!queue) continue;
+            const idx = queue.findIndex(([tpn]) => tpn.includes(`${entityId}`));
+            if (idx > -1) queue.splice(idx, 1);
+        }
     }
     isTaskEmpty() {
         return (this.priorityQueue ?? []).length == 0 && this.queue.length == 0;
