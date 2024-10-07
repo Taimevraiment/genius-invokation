@@ -686,7 +686,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .handle(event => {
                     const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 0) return;
-                    return { trigger: ['Overload'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
+                    return { trigger: ['Overload', 'other-Overload'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
                 })
         ),
 
@@ -1215,7 +1215,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
-                .handle(() => ({ trigger: ['Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
+                .handle(() => ({ trigger: ['Crystallize', 'other-Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
         ),
 
     1609: () => new HeroBuilder(420).name('千织').since('v5.1.0').inazuma().geo().sword()

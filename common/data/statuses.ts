@@ -1504,7 +1504,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116084: () => enchantStatus(ELEMENT_TYPE.Geo).roundCnt(2),
 
-    116091: () => new StatusBuilder('岩元素附魔').heroStatus().type(STATUS_TYPE.Enchant, STATUS_TYPE.Sign).icon('buff').summonId()
+    116098: () => new StatusBuilder('岩元素附魔').heroStatus().type(STATUS_TYPE.Enchant, STATUS_TYPE.Sign).icon('buff').summonId(116091)
         .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ addDmgType1: 1, attachEl: ELEMENT_TYPE.Geo })),
 
@@ -2457,7 +2457,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    3130042: () => shieldHeroStatus('掘进的收获'),
+    301301: () => shieldHeroStatus('掘进的收获'),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

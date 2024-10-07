@@ -2359,18 +2359,18 @@ export default class GeniusInvokationRoom {
         const isAction = currCard.hasSubtype(CARD_SUBTYPE.Action);
         if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
         this._detectSkill(pidx, 'card');
-        await this._execTask();
+        // await this._execTask();
         const { minusDiceCard, isFallAtk: ifa, isInvalid, isQuickAction: iqa } = this._detectSlotAndStatus(pidx, 'card', {
             types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage],
             hidxs: allHidxs(player.heros),
             hcard: currCard,
             isQuickAction: !isAction,
         })
-        await this._execTask();
+        // await this._execTask();
         this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction: !isAction });
-        await this._execTask();
+        // await this._execTask();
         this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction: !isAction });
-        await this._execTask();
+        // await this._execTask();
         if (isAction) player.isFallAtk = ifa;
         const cardcmds = cardres.cmds ?? [];
         const { usedCardIds } = player.playerInfo;
@@ -2391,7 +2391,7 @@ export default class GeniusInvokationRoom {
                     hcard: currCard,
                     slotsDestroy: player.heros.map(h => +(h.hidx == tarHero.hidx)),
                 });
-                await this._execTask();
+                // await this._execTask();
             }
             if (!cardres?.isDestroy) {
                 if (currCard.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器

@@ -190,7 +190,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [] } = event;
             const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];
             if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {
-                cmds.push({ cmd: 'getStatus', status: 3130042 });
+                cmds.push({ cmd: 'getStatus', status: 301301 });
             }
             return { cmds }
         }),

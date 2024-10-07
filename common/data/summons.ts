@@ -659,7 +659,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    116091: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1).statusId()
+    116091: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1).statusId(116098)
         .description('{defaultAtk。}；【此牌在场时：】我方【hro】造成的[物理伤害]变为[岩元素伤害]，且｢普通攻击｣造成的[岩元素伤害]+1。')
         .src(''),
 
