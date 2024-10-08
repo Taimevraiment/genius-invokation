@@ -1846,7 +1846,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], hcard, heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];
-            if (ver >= 'v5.0.0') triggers.push('turn-end');
+            if (ver >= 'v5.0.0') triggers.push('phase-end');
             return {
                 trigger: triggers,
                 isAddTask: true,
@@ -1856,7 +1856,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     eStatus ??= clone(status);
                     const hero = getObjById(hs, getHidById(eStatus!.id));
                     if (!hero) return;
-                    if (trigger == 'turn-end') {
+                    if (trigger == 'phase-end') {
                         const cnt = -eStatus!.perCnt;
                         if (!notAtk) {
                             eStatus!.perCnt = 0;

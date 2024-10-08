@@ -43,6 +43,7 @@ export default class GeniusInvokationClient {
     willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
     supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
     summonCnt: number[][] = this._resetSummonCnt(); // 召唤物变化数
+    energyCnt: number[][]; // 充能变化数
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
@@ -112,6 +113,7 @@ export default class GeniusInvokationClient {
             error: '当前卡组版本不匹配',
         };
         this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
+        this.energyCnt = players.map(p => p.heros.map(() => 0));
     }
     get playerIdx() { // 该玩家序号
         return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userid);
@@ -209,6 +211,7 @@ export default class GeniusInvokationClient {
         this._resetSummonCnt();
         this._resetWillAttachs();
         this._resetSupportCnt();
+        this._resetEnergyCnt();
         if (this.phase != PHASE.DICE && this.player.phase != PHASE.DICE) this.resetDiceSelect();
         this.isValid = false;
         this.isShowSwitchHero = 0;
@@ -787,6 +790,7 @@ export default class GeniusInvokationClient {
             this.supportCnt = [...clone(preview.willSupportChange)!];
             this.willSwitch = [...preview.willSwitch!];
             this.summonCanSelect = [...clone(preview.summonCanSelect)!];
+            this.energyCnt = [...clone(preview.willEnergy)!];
             this.isValid = preview.isValid;
             const { canSelectSummon } = this.currSkill;
             if (canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1) {
@@ -1011,6 +1015,12 @@ export default class GeniusInvokationClient {
     }
     private _resetWillSwitch() {
         return this.willSwitch = Array.from({ length: PLAYER_COUNT }, (_, i) => new Array(this.players[i]?.heros.length ?? 0).fill(false));
+    }
+    /**
+     * 重置充能预览
+     */
+    private _resetEnergyCnt() {
+        this.energyCnt.forEach(v => v.fill(0));
     }
     /**
      * 重置骰子选择

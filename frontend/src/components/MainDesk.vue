@@ -162,7 +162,8 @@
           </div>
           <div class="hero-energys" v-if="(hero?.hp ?? 0) >= 0">
             <img v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
-              :class="{ 'mobile-energy': isMobile }" :src="getEnergyIcon((hero?.energy ?? 0) - 1 >= eidx)" />
+              :class="{ 'mobile-energy': isMobile, 'blink': eidx > (hero?.energy ?? 0) - 1 && eidx <= (hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 }"
+              :src="getEnergyIcon((hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx)" />
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
@@ -377,7 +378,7 @@
         </div>
 
         <div class="dice-change"
-          v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && isLookon == -1"
+          v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && !isHide && isLookon == -1"
           @mousedown.stop="mousedown()" @mouseup.stop="mouseup">
           <div class="dice-change-area">
             <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
@@ -397,7 +398,7 @@
           </button>
         </div>
 
-        <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && isLookon == -1">
+        <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
           <div class="init-cards">
             <handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
               :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
@@ -409,7 +410,7 @@
           </button>
         </div>
 
-        <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && isLookon == -1">
+        <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
           <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
           <div class="pick-cards">
             <handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
@@ -420,6 +421,10 @@
           <button @click="pickCard" v-if="pickCardIdx > -1">确认</button>
         </div>
       </div>
+
+      <button style="position: absolute;top: 5%;right: 10%;z-index: 5;" @click="triggerHide" v-if="showHideBtn">
+        {{ isHide ? '显示' : '隐藏' }}
+      </button>
 </template>
 
 <script setup lang='ts'>
@@ -587,6 +592,7 @@ const canAction = computed<boolean>(() => props.canAction);
 const heroSwitchDice = computed<number>(() => props.client.heroSwitchDice);
 const supportCnt = computed<number[][]>(() => props.client.supportCnt);
 const summonCnt = computed<number[][]>(() => props.client.summonCnt);
+const energyCnt = computed<number[][]>(() => wrapArr(props.client.energyCnt.flat()));
 const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).fill(false));
 const heroSelect = computed<number[][]>(() => props.client.heroSelect);
 const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
@@ -613,6 +619,10 @@ const diceSelect = computed<boolean[]>(() => props.client.diceSelect);
 const pickCards = computed<Card[]>(() => props.client.pickModal.cards);
 const pickCardIdx = computed<number>(() => props.client.pickModal.selectIdx);
 const showChangeCardBtn = ref<boolean>(true);
+const showHideBtn = computed<boolean>(() =>
+  (player.value.phase == PHASE.DICE && (phase.value == PHASE.DICE || phase.value == PHASE.ACTION)) ||
+  player.value.phase == PHASE.CHANGE_CARD || player.value.phase == PHASE.PICK_CARD);
+const isHide = ref<boolean>(false);
 
 let diceChangeEnter: -1 | boolean = -1;
 let isMouseDown: boolean = false;
@@ -740,6 +750,10 @@ const showSupportInfo = (pidx: number, siidx: number) => {
 // 显示历史信息
 const showHistory = () => {
   emits('showHistory');
+}
+// 隐藏/显示选择操作界面
+const triggerHide = () => {
+  isHide.value = !isHide.value;
 }
 // 结束回合
 const endPhase = () => {
@@ -1108,6 +1122,10 @@ button:active {
   width: 20px;
   animation: blink 1s linear infinite alternate;
   z-index: 5;
+}
+
+.blink {
+  animation: blink 1s linear infinite alternate;
 }
 
 .damages {
