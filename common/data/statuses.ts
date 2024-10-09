@@ -1961,7 +1961,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('角色造成的[火元素伤害]+1。')
         .handle(() => ({ addDmg: 1 })),
 
-    123032: () => new StatusBuilder('魔蝎祝福').combatStatus().icon('ski,1').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+    123032: () => new StatusBuilder('魔蝎祝福').combatStatus().icon('ski,2').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('我方使用【crd123031】的[特技]时：移除此效果，每有1层｢魔蝎祝福｣，就使此[特技]造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
             const { skid = -1 } = event;

@@ -446,12 +446,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/9d317a3a81e47ab989c633ff609b5861_5509350951295616421.png'),
 
     311308: () => new CardBuilder(401).name('｢究极霸王超级魔剑｣').since('v4.8.0').weapon().costSame(2)
-        .description('此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌种类，称为｢声援｣。如果此牌的｢声援｣至少为2/4/8，则角色造成的伤害+1/2/3。')
+        .description('此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌种类，称为｢声援｣。〔[card](当前为{unt}点)〕如果此牌的｢声援｣至少为2/4/8，则角色造成的伤害+1/2/3。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/21e68f35af52025a6088ca7aec78ef8f_7867921157902864538.png')
         .handle((card, event) => {
-            const { playerInfo: { usedCardIds = [], initCardIds = [] } = {}, hcard, slotUse = false } = event;
-            if (slotUse) {
-                card.useCnt = usedCardIds.filter(c => !initCardIds.includes(c)).length;
+            const { playerInfo: { usedCardIds = [], initCardIds = [] } = {}, hcard, trigger = '', slotUse = false } = event;
+            if (trigger == 'hcard-calc' || slotUse) {
+                const cUsedCardIds = [...usedCardIds];
+                if (slotUse && !usedCardIds.includes(card.id)) cUsedCardIds.push(card.id);
+                card.useCnt = cUsedCardIds.filter(c => !initCardIds.includes(c)).length;
                 return;
             }
             const cardId = hcard?.id ?? 0;
@@ -464,7 +466,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     311309: () => new CardBuilder(426).name('便携动力锯').since('v5.1.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1)
         .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点｢坚忍标记｣。(每回合1次)；【角色造成伤害时：】如果此牌已有｢坚忍标记｣，则消耗所有｢坚忍标记｣，使此伤害+1，并且每消耗1点｢坚忍标记｣就抓1张牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_DongliJu.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/12bb81a54a568778a58e8ba5094501c8_8843117623857806924.png')
         .handle(barrierWeaponHandle),
 
     311401: () => normalWeapon(137).name('白缨枪')
@@ -842,7 +844,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     312015: () => new CardBuilder(162).name('海祇之冠').since('v4.1.0').artifact().costSame(1).useCnt(0)
-        .description('我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个〔，当前已受到{pct}点治疗〕)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
+        .description('我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个〔[slot]，当前已受到{pct}点治疗〕)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/dfea4a0c2219c145125277f8eddb8269_3306254185680856587.png')
         .handle((card, event) => {
             const { trigger = '', heal = [], sktype = SKILL_TYPE.Vehicle } = event;
@@ -865,7 +867,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     312016: () => new CardBuilder(163).name('海染砗磲').since('v4.2.0').artifact().costAny(3).useCnt(0)
-        .description('【入场时：】治疗所附属角色2点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个〔，当前已受到{pct}点治疗〕)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
+        .description('【入场时：】治疗所附属角色2点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个〔[slot]，当前已受到{pct}点治疗〕)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。')
         .description('【入场时：】治疗所附属角色3点。；我方角色每受到3点治疗，此牌就累计1个｢海染泡沫｣。(最多累积2个)；【角色造成伤害时：】消耗所有｢海染泡沫｣，每消耗1个都能使造成的伤害+1。', 'v4.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/16b4765f951281f2547ba40eeb994271_8658397109914249143.png')
         .handle((card, event) => {
@@ -1123,7 +1125,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312030: () => new CardBuilder(427).name('指挥的礼帽').since('v5.1.0').artifact().costSame(1).perCnt(1)
         .description('【我方切换到所附属角色后：】[舍弃]原本元素骰费用最高的1张手牌，将2个元素骰转换为[万能元素骰]，并使角色下次使用技能或打出｢天赋｣时少花费1个元素骰。(每回合1次)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_DadiYuezhang.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/a304d1400ed0bcb463f93b2be2558833_8026218308357759960.png')
         .handle(card => {
             if (card.perCnt <= 0) return;
             return {
@@ -1189,7 +1191,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/e09b424842396b5009b8507cdd1e24aa_6586947503862363.png'),
 
     313004: () => new CardBuilder(428).name('嵴锋龙').since('v5.1.0').vehicle().costSame(2).useCnt(2)
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_JifengLong.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/34506374c580288b88c38dee3b6af998_278198034630026427.png'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1285,7 +1287,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321023: () => new CardBuilder(429).name('特佩利舞台').since('v5.1.0').place().costSame(0)
         .description('【我方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【敌方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【行动阶段开始时：】如果此牌有至少3点｢瞩目｣，则生成1个随机基础元素骰; 如果此牌有至少1点｢瞩目｣，将1个元素骰转换为[万能元素骰]。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_DouWuTai.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4b25dc7789eb47de50bf4f6d6001cfe6_5614159247725037900.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -2013,7 +2015,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332040: () => new CardBuilder(430).name('镀金旅团的茶歇').since('v5.1.0').event().costSame(2)
         .description('如果我方存在相同元素类型的角色，则从3张｢场地｣中[挑选]1张加入手牌;；如果我方存在相同武器类型的角色，则从3张｢道具｣中[挑选]1张加入手牌;；如果我方存在相同所属势力的角色，则从3张｢料理｣中[挑选]1张加入手牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Caxie.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/d95d31b9e43e517d1044e7b6bfdea685_4585783706555955668.png')
         .handle((_, event) => {
             const { heros = [] } = event;
             const cmds: Cmds[] = [];
@@ -2145,7 +2147,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333016: () => new CardBuilder(431).name('龙龙饼干').since('v5.1.0').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次使用｢特技｣少花费1个元素骰。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_LonglongCookie.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e473f7de075963ef435079bafd6c0388_8656398544128053014.png')
         .handle(() => ({ status: 303314 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(5)
@@ -2741,7 +2743,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     216091: () => new CardBuilder(423).name('落染五色').since('v5.1.0').talent(1).costGeo(3)
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中挑选1个并召唤。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chiori.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 
     217011: () => new CardBuilder(107).name('飞叶迴斜').talent(1).costDendro(4).costDendro(3, 'v3.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。(每回合1次)')
@@ -2967,7 +2969,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     224061: () => new CardBuilder(424).name('侵雷重闪').since('v5.1.0').talent().costElectro(1)
         .description('【入场时：】如果装备有此牌的【hro】已触发过【sts124061】，则使敌方出战角色失去1点[充能]。；装备有此牌的【hro】被击倒或触发【sts124061】时：弃置此牌，使敌方出战角色失去1点[充能]。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_InvokerElectric.webp').
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/caa9283f50c2093abad5c6ba1bf73335_6393422977381042780.png').
         handle((card, event) => {
             const { heros = [], slotUse = false, trigger = '' } = event;
             if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 124061) || trigger == 'will-killed') {
@@ -3029,7 +3031,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     227031: () => new CardBuilder(425).name('灵蛇旋嘶').since('v5.1.0').talent(1).costDendro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，我方装备了【crd127032】的角色切换至出战时：造成1点[草元素伤害]。(每回合1次)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_EremiteGrass.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f6a41cd2ca30f56ff066b73a5be903d_3952798209334004681.png'),
 
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0)
         .description('在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
@@ -3094,7 +3096,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).useCnt(1).perCnt(2).tag(CARD_TAG.Barrier)
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。(每回合至多2次)；')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {
             const { heros = [], restDmg = -1, skid = -1, hidxs = [], getdmg = [], trigger = '' } = event;
             if (trigger == 'vehicle') {
@@ -3137,7 +3139,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     127032: () => new CardBuilder().name('厄灵·草之灵蛇').vehicle().costSame(0).useCnt(2)
-        .src('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/3261818320d16e4b8cabb03dbe540914_8652138560686355356.png')
         .handle((card, event) => {
             const { skid = -1, combatStatus = [], heros = [], trigger = '' } = event;
             const talent = getObjById(heros, getHidById(card.id))?.talentSlot;

@@ -4292,7 +4292,7 @@ export default class GeniusInvokationRoom {
                         }
                         for (let i = 0; i < cnt - restCnt; ++i) {
                             this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', { players, isExec, isOnlyExecSts: !isExec, isQuickAction: isCdt(!isAction, 2), supportCnt });
-                            this._detectSupport(cpidx ^ 1, 'getcard-oppo', { players, isExec, isQuickAction: !isAction, supportCnt });
+                            if (isFromPile) this._detectSupport(cpidx ^ 1, 'getcard-oppo', { players, isExec, isQuickAction: !isAction, supportCnt });
                         }
                     }
                 }
@@ -5424,6 +5424,7 @@ export default class GeniusInvokationRoom {
                     minusDiceCard: costChange[ci],
                 })?.minusDiceCard ?? 0;
             });
+            c.handle(c, { playerInfo: player.playerInfo, trigger: 'hcard-calc' });
         });
         player.handCards.forEach((c, i) => c.costChange = Math.min(c.cost + c.anydice, costChange[i]));
     }

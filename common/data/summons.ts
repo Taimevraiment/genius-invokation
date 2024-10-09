@@ -661,11 +661,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     116091: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1).statusId(116098)
         .description('{defaultAtk。}；【此牌在场时：】我方【hro】造成的[物理伤害]变为[岩元素伤害]，且｢普通攻击｣造成的[岩元素伤害]+1。')
-        .src(''),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1966112146303462873.png'),
 
     116092: () => new SummonBuilder('无事发生之袖').useCnt(2).damage(1).perCnt(1)
         .description('{defaultAtk。}；【此牌在场时，我方使用技能后：】切换至下一个我方角色。(每回合1次)')
-        .src('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/98131080535cd67357f26c38e2294630_5447717373017140684.png')
         .handle((summon, event) => {
             const { trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
@@ -685,7 +685,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     116093: () => new SummonBuilder('轻松迎敌之袖').useCnt(2).damage(1).perCnt(1)
         .description('{defaultAtk。}；【此牌在场时，〖hro〗以外的我方角色使用技能后：】{dealDmg}。(每回合1次)')
-        .src('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/47a725b8793a1379e47d5715edbbdf15_6178888087176525256.png')
         .handle((summon, event) => {
             const { skid = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
@@ -702,11 +702,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     116094: () => new SummonBuilder('平静养身之袖').useCnt(2).damage(1).description('{defaultAtk。}')
-        .src(''),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/146a6915e6959c88352ca50b671726f1_8195662062376364418.png'),
 
     116095: () => new SummonBuilder('闭目战斗之袖').useCnt(2).damage(1).perCnt(2)
         .description('{defaultAtk。}；【此牌在场时：】我方【hro】及【千织的自动制御人形】造成的[岩元素伤害]+1。(每回合2次)')
-        .src('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/2c436857aec7c71268ae762835386ffc_7173560903994006420.png')
         .handle((summon, event) => {
             const { skid = -1, isSummon = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
@@ -727,7 +727,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     116096: () => new SummonBuilder('侧目睥睨之袖').useCnt(2).damage(1).perCnt(1)
         .description('{defaultAtk。}；【〖hro〗进行｢普通攻击｣时：】少花费1个元素骰。(每回合1次)')
-        .src('')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1093502271962485608.png')
         .handle((summon, event) => {
             const { heros = [], isMinusDiceSkill, trigger = '' } = event;
             const hero = getObjById(heros, getHidById(summon.id));

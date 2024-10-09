@@ -152,11 +152,13 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().readySkill().damage(1).handle(() => ({ statusOppo: 122052 })),
 
     1230311: () => new SkillBuilder('炙烧攻势').description('{dealDmg}。')
-        .src('')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1230311',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/91a1aeec8fb8ae9e5eaaf64a839dabcb_6571191726509456077.png')
         .vehicle().damage(2).costSame(2),
 
     1270321: () => new SkillBuilder('藤蔓锋鳞').description('{dealDmg}。')
-        .src('')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1270321',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/1ff71b6c76cb900018bd9f98b8c7add7_7309401796826933036.png')
         .vehicle().damage(1).costAny(1).energy(1),
 
     3130011: () => new SkillBuilder('原海水刃').description('{dealDmg}。')
@@ -185,7 +187,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         })),
 
     3130041: () => new SkillBuilder('掘进突击').description('抓2张牌。然后，如果手牌中存在名称不存在于本局最初牌组中的牌，则提供2点[护盾]保护所附属角色。')
-        .src('')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130041',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e9339d30ff4a5642b32bc1208063a08c_2715679545278748017.png')
         .vehicle().costAny(2).handle(event => {
             const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [] } = event;
             const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];

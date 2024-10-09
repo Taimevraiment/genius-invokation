@@ -301,7 +301,7 @@ import {
   SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
-  CARD_SUBTYPE, CARD_TYPE, CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
+  CARD_SUBTYPE, CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
   InfoType, SKILL_TYPE, STATUS_TYPE, Version, WeaponType,
 } from '@@@/constant/enum';
 import { newCard } from '@@@/data/cards';
@@ -364,17 +364,12 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   let res = desc.slice()
     .replace(/〔(\[.+\])?(.+)〕/g, (_, f: string, ctt: string) => {
       const flag = (f || '').slice(1, -1);
-      if (typeof obj != 'string' && obj != undefined && (
-        ('type' in obj && obj.type == CARD_TYPE.Equipment && type != 'slot') ||
-        (flag != '' && type != '' && flag != type)
-      )) {
-        return '';
-      }
+      if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';
       if (!isInGame.value || isExplain) return '';
       ctt = ctt
         .replace(/{round}/, `${round.value}`)
         .replace(/{dessptcnt}/, `${playerInfo.value.destroyedSupport}`)
-        .replace(/{eldmgcnt}/, `${playerInfo.value.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`);
+        .replace(/{eldmgcnt}/, `${playerInfo.value.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`)
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }

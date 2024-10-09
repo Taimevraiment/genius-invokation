@@ -422,7 +422,8 @@
         </div>
       </div>
 
-      <button style="position: absolute;top: 5%;right: 10%;z-index: 5;" @click="triggerHide" v-if="showHideBtn">
+      <button style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;" @click="triggerHide"
+        v-if="showHideBtn">
         {{ isHide ? '显示' : '隐藏' }}
       </button>
 </template>
