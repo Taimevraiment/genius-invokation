@@ -6,7 +6,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newSummon } from './summons.js';
@@ -88,6 +88,7 @@ export type CardHandleRes = {
     isDestroy?: boolean,
     restDmg?: number,
     isAddTask?: boolean,
+    notPreview?: boolean,
     exec?: () => CardExecRes | void,
 };
 
@@ -3029,7 +3030,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { cmds: [{ cmd: 'addCard', cnt: 4, card: 127021 }], trigger: ['dmg', 'other-dmg'], addDmgCdt: isCdt(isAddDmg, 1) }
         }),
 
-    227031: () => new CardBuilder(425).name('灵蛇旋嘶').since('v5.1.0').talent(1).costDendro(3).perCnt(1)
+    227031: () => new CardBuilder(425).name('灵蛇旋嘶').since('v5.1.0').talent(1).costDendro(3)
         .description('{action}；装备有此牌的【hro】在场，我方装备了【crd127032】的角色切换至出战时：造成1点[草元素伤害]。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f6a41cd2ca30f56ff066b73a5be903d_3952798209334004681.png'),
 
@@ -3138,13 +3139,23 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['discard'], summon }
         }),
 
-    127032: () => new CardBuilder().name('厄灵·草之灵蛇').vehicle().costSame(0).useCnt(2)
+    127032: () => new CardBuilder().name('厄灵·草之灵蛇').vehicle().costSame(0).useCnt(2).perCnt(1).isSpReset()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/3261818320d16e4b8cabb03dbe540914_8652138560686355356.png')
         .handle((card, event) => {
-            const { skid = -1, combatStatus = [], heros = [], trigger = '' } = event;
-            const talent = getObjById(heros, getHidById(card.id))?.talentSlot;
+            const { skid = -1, combatStatus = [], heros = [], slotUse = false, hcard, reset = false, trigger = '' } = event;
+            const hid = getHidById(card.id);
+            const talent = getObjById(heros, hid)?.talentSlot;
+            if (trigger == 'card' && hcard?.id == getTalentIdByHid(hid)) {
+                if (card.perCnt == 0) ++card.perCnt;
+                return;
+            }
+            if (slotUse || reset) {
+                if (!talent && card.perCnt == 1) --card.perCnt;
+                return;
+            }
             if (talent && trigger == 'switch-to') {
-                return { trigger: [trigger], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }] };
+                if (card.perCnt <= 0) return;
+                return { trigger: ['switch-to'], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }], exec: () => { --card.perCnt } };
             }
             if (skid != +`${card.id}1` || hasObjById(combatStatus, 127033)) return;
             return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }

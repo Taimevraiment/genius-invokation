@@ -131,7 +131,7 @@
           'is-front-my': hero?.isFront && hgi == 1,
           'hero-select': heroSelect[hgi][hidx],
           'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
-          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (hero.skills.some(sk => sk.id == currSkill.id) || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
+          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
@@ -163,7 +163,7 @@
           <div class="hero-energys" v-if="(hero?.hp ?? 0) >= 0">
             <img v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
               :class="{ 'mobile-energy': isMobile, 'blink': eidx > (hero?.energy ?? 0) - 1 && eidx <= (hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 }"
-              :src="getEnergyIcon((hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx)" />
+              :src="getEnergyIcon((hero?.energy ?? 0) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx)" />
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
@@ -422,10 +422,11 @@
         </div>
       </div>
 
-      <button style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;" @click="triggerHide"
-        v-if="showHideBtn">
-        {{ isHide ? '显示' : '隐藏' }}
-      </button>
+      <div v-if="showHideBtn" style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;cursor: pointer;">
+        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="" style="position: absolute;width: 100%;height: 100%;"
+          :style="{ filter: isHide ? '' : 'brightness(10)' }" />
+        <div style="width: 20px;height: 30px;"></div>
+      </div>
 </template>
 
 <script setup lang='ts'>

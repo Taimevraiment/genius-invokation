@@ -112,7 +112,7 @@
         <div class="skill-btn" :class="{ 'skill-vehicle': skill.type == SKILL_TYPE.Vehicle }"
           @click.stop="useSkill(skill.id, false)" :style="{ boxShadow: skill.style.fullEnergy }">
           <div class="skill3-bg" v-if="skill.isNotFullEnergy" :style="{ background: skill.style.notFullEnergy }">
-            <div class="skill-btn" style="left: 2px;top: 2px;width: 92%;height: 92%;border: 2px solid transparent;">
+            <div class="skill-btn" style="left: 2px;top: 2px;width: 90%;height: 90%;border: 2px solid transparent;">
             </div>
           </div>
           <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0"

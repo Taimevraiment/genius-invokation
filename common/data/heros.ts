@@ -1704,8 +1704,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/9262db8e7ec7952af306117cb67d668d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/b9854a003c9d7e5b14bed92132391e9e_754640348498205527.png')
                 .handle((event, ver) => {
-                    const { hero: { hp, energy, maxEnergy, hidx }, skill: { useCnt, useCntPerRound }, getdmg = [] } = event;
-                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy) return;
+                    const { hero: { hp, hidx }, skill: { useCnt, useCntPerRound }, getdmg = [] } = event;
+                    if (hp - getdmg[hidx] > 7) return;
                     if (ver < 'v5.1.0' && useCnt || ver >= 'v5.1.0' && useCntPerRound) return;
                     return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
@@ -2087,14 +2087,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(每回合1次)')
                 .src('',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f2fc1e2e7ad6747577d954f3db9012f_2120144226908224970.png')
-                .perCnt(1).handle(event => {
-                    const { hero: { hp, energy, maxEnergy, hidx }, skill, getdmg = [] } = event;
-                    if (hp - getdmg[hidx] > 7 || energy >= maxEnergy || skill.perCnt <= 0) return;
-                    return {
-                        trigger: ['getdmg'],
-                        cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }],
-                        exec: () => { --skill.perCnt },
-                    }
+                .handle(event => {
+                    const { hero: { hp, hidx }, skill: { useCntPerRound }, getdmg = [] } = event;
+                    if (hp - getdmg[hidx] > 7 || useCntPerRound) return;
+                    return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
         ),
 

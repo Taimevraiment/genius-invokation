@@ -261,13 +261,14 @@ type Preview = Readonly<ActionData & {
 type LogType = 'log' | 'system' | 'info' | 'emit';
 
 type CalcAtkRes = {
-    element?: DamageType,
+    element?: DamageType | DiceCostType,
     heal?: number,
     damage?: number,
     pdmg?: number,
     isSelf?: boolean,
     hidxs?: number[],
     cmds?: Cmds[],
+    execmds?: Cmds[],
     damages?: SmnDamageHandle,
     exec?: (...args: any) => any,
 }

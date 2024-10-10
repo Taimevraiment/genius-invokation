@@ -1032,6 +1032,7 @@ export default class GeniusInvokationRoom {
         const isSwitchSelf = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && !cmds.isOppo);
         const isSwitchOppo = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && cmds.isOppo);
         const calcAtk = (oplayers: Player[], res: CalcAtkRes, type: string, stsId: number, skid = -1, isSelf = 0) => {
+            if (res.element == DICE_COST_TYPE.Omni) return false;
             const cpidx = pidx ^ +!isSelf;
             const dmgedHidx = +!!res.isSelf ^ isSelf ? cehidx : cahidx;
             const dmgedHlen = +!!res.isSelf ^ isSelf ? ehlen : ahlen;
@@ -1045,7 +1046,8 @@ export default class GeniusInvokationRoom {
                 });
                 mergeWillHeals(bWillHeal, whl?.[0], oplayers);
             }
-            const { willHeals: whl, willDamages: smndmg, willAttachs: was } = this._doCmds(cpidx, res.cmds, {
+            const atkcmds = [...(res.cmds ?? []), ...(res.execmds ?? [])];
+            const { willHeals: whl, willDamages: smndmg, willAttachs: was } = this._doCmds(cpidx, atkcmds, {
                 hidxs: [atkHidx],
                 players: oplayers,
                 isAction: !isQuickAction,
@@ -1060,6 +1062,8 @@ export default class GeniusInvokationRoom {
             });
             was?.forEach((wa, wai) => bWillAttach[wai].push(...wa));
             mergeWillHeals(bWillHeal, whl?.[0], oplayers);
+            const dmgEl = atkcmds.find(({ element }) => element != undefined)?.element;
+            if (dmgEl) res.element = dmgEl as DamageType;
             if (res.damage == undefined && res.pdmg == undefined && !smndmg) return false;
             const reshidxs = res.hidxs ?? getBackHidxs(oplayers[cpidx ^ +!!res.isSelf].heros);
             const willDamages = smndmg ?? new Array(dmgedHlen).fill(0).map<number[]>((_, i) => [
@@ -1118,16 +1122,16 @@ export default class GeniusInvokationRoom {
                 bWillAttach[i + (cpidx ^ +!res.isSelf) * (isSelf ? ehlen : ahlen)].push(willAttachs);
             }
             bWillDamages.push(willDamage3);
-            doPreviewStatus(oplayers, oplayers[pidx].heros[oahidx].heroStatus, oahidx, STATUS_GROUP.heroStatus, [...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
-            doPreviewStatus(oplayers, oplayers[pidx].heros[nahidx].heroStatus, nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1);
-            doPreviewStatus(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to'] as Trigger[] : [])], isExec, 1);
-            doPreviewStatus(oplayers, oplayers[epidx].heros[oehidx].heroStatus, oehidx, STATUS_GROUP.heroStatus, [...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec);
-            doPreviewStatus(oplayers, oplayers[epidx].heros[nehidx].heroStatus, nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec);
-            doPreviewStatus(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to'] as Trigger[] : [])], isExec);
+            doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: oahidx, isOnlyHeroStatus: true }), oahidx, STATUS_GROUP.heroStatus, [...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
+            doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: nahidx, isOnlyHeroStatus: true }), nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1);
+            doPreviewHfield(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to'] as Trigger[] : [])], isExec, 1);
+            doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: oehidx, isOnlyHeroStatus: true }), oehidx, STATUS_GROUP.heroStatus, [...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec);
+            doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: nehidx, isOnlyHeroStatus: true }), nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec);
+            doPreviewHfield(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to'] as Trigger[] : [])], isExec);
             return willKill;
         }
-        const doPreviewStatus = (oplayers: Player[], ostatus: Status[], hi: number, group: StatusGroup, trgs: Trigger[], isExec: boolean, isSelf = 0) => {
-            const status = clone(ostatus);
+        const doPreviewHfield = (oplayers: Player[], ohfield: (Status | Card)[], hi: number, group: StatusGroup, trgs: Trigger[], isExec: boolean, isSelf = 0) => {
+            const hfields = clone(ohfield);
             const cpidx = pidx ^ +!isSelf;
             const chidx = isSelf ? cahidx : cehidx;
             if (isSelf) {
@@ -1138,10 +1142,11 @@ export default class GeniusInvokationRoom {
                 oplayers[pidx ^ 1].heros.forEach(h => h.isFront = h.hidx == cehidx);
             }
             const atkStatus: [StatusTask, boolean?][] = [];
-            preview_end: for (const sts of status) {
-                if (sts.useCnt == 0 && !sts.hasType(STATUS_TYPE.Shield)) continue;
+            preview_end: for (const hfield of hfields) {
+                const isSts = 'group' in hfield;
+                if (hfield.useCnt == 0 && isSts && !hfield.hasType(STATUS_TYPE.Shield)) continue;
                 for (const state of trgs) {
-                    const stsres = sts.handle(sts, {
+                    const fieldres = hfield.handle(hfield as any, {
                         heros: oplayers[cpidx].heros,
                         combatStatus: oplayers[cpidx].combatStatus,
                         eheros: oplayers[cpidx ^ 1].heros,
@@ -1152,17 +1157,19 @@ export default class GeniusInvokationRoom {
                         dmgedHidx: cehidx,
                         hasDmg: aWillDamages[chidx + cpidx * oplayers[0].heros.length][0] > 0,
                         isChargedAtk: isSelf ? isChargedAtk : false,
+                        talent: oplayers[cpidx].heros[hi].talentSlot,
                         isExec,
                         randomInt: this._randomInt.bind(this),
                     });
-                    const isSelfAtk = +!!stsres.isSelf;
-                    if (this._hasNotTriggered(stsres.trigger, state)) continue;
-                    if (sts.hasType(STATUS_TYPE.Attack) && (stsres.damage || stsres.pdmg || stsres.heal)) {
-                        if (isExec && state.includes('after')) {
+                    const isSelfAtk = +('isSelf' in fieldres && !!fieldres.isSelf);
+                    if (this._hasNotTriggered(fieldres.trigger, state)) continue;
+                    const isStsRes = 'damage' in fieldres;
+                    if (!isSts || hfield.hasType(STATUS_TYPE.Attack) && isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
+                        if (isExec && state.includes('after') && isSts) {
                             atkStatus.push([{
-                                id: sts.id,
-                                name: sts.name,
-                                entityId: sts.entityId,
+                                id: hfield.id,
+                                name: hfield.name,
+                                entityId: hfield.entityId,
                                 group,
                                 pidx: cpidx,
                                 isSelf: isSelfAtk,
@@ -1171,7 +1178,8 @@ export default class GeniusInvokationRoom {
                                 skid,
                             }]);
                         }
-                        if (stsres.notPreview || calcAtk(oplayers, stsres, ['hero', 'combat'][group] + 'Status', sts.id, skid, isSelf)) {
+                        if (!isStsRes) fieldres.element = undefined;
+                        if (fieldres.notPreview || calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, skid, isSelf)) {
                             break preview_end;
                         }
                     }
@@ -1181,9 +1189,9 @@ export default class GeniusInvokationRoom {
         }
         if (isSwitch > -1 && !isExec) { // 切换角色后的协同攻击预览
             cahidx = isSwitch;
-            doPreviewStatus(players, player().heros[ahidx()].heroStatus, ahidx(), STATUS_GROUP.heroStatus, ['switch-from'], false, 1);
-            doPreviewStatus(players, player().heros[cahidx].heroStatus, cahidx, STATUS_GROUP.heroStatus, ['switch-to'], false, 1);
-            doPreviewStatus(players, player().combatStatus, cahidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to'], false, 1);
+            doPreviewHfield(players, this._getHeroField(pidx, { players, hidx: ahidx(), isOnlyHeroStatus: true }), ahidx(), STATUS_GROUP.heroStatus, ['switch-from'], false, 1);
+            doPreviewHfield(players, this._getHeroField(pidx, { players, hidx: cahidx, isOnlyHeroStatus: true }), cahidx, STATUS_GROUP.heroStatus, ['switch-to'], false, 1);
+            doPreviewHfield(players, player().combatStatus, cahidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to'], false, 1);
         }
         skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, skid, players, isExec });
         if (skill) skid = skill.id;
@@ -1348,7 +1356,10 @@ export default class GeniusInvokationRoom {
             { cmd: 'getStatus', status: skillres.statusOppo, hidxs: skillres.hidxs, isOppo: true },
         ];
         this._doCmds(pidx, stscmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
-        if (skill && skill.cost[2].cnt == 0 && !isExec) energyCnt[pidx][ahidx()]++;
+        if (skill && !isExec) {
+            if (skill.cost[2].cnt == 0) energyCnt[pidx][ahidx()]++;
+            else if (skill.cost[2].cnt > 0) energyCnt[pidx][ahidx()] -= skill.cost[2].cnt;
+        }
         if (skill && isExec) {
             players[pidx].isFallAtk = ifa;
             players[pidx].canAction = false;
@@ -1438,22 +1449,21 @@ export default class GeniusInvokationRoom {
             const h = bPlayers[epidx].heros[hi];
             if (h.hp > 0) {
                 afterESkillTrgs[hi].push('status-destroy');
-                const { atkStatus: atkhst } = doPreviewStatus(bPlayers, h.heroStatus, hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
+                const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
                 atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
             if (i == 0) {
-                const { atkStatus: atkcst } = doPreviewStatus(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
+                const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
                 atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
         }
         for (let i = 0; i < ahlen; ++i) {
             const hi = (cahidx + i) % ahlen;
-            const h = bPlayers[pidx].heros[hi];
             afterASkillTrgs[hi].push('status-destroy');
-            const { atkStatus: atkhst } = doPreviewStatus(bPlayers, h.heroStatus, hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
+            const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
             atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             if (i == 0) {
-                const { atkStatus: atkcst } = doPreviewStatus(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
+                const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
                 atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
         }
@@ -1496,13 +1506,13 @@ export default class GeniusInvokationRoom {
             });
         }
         if (isSwitchOppo(skillcmds)) {
-            doPreviewStatus(bPlayers, bPlayers[epidx].heros[odmgedHidx].heroStatus, odmgedHidx, STATUS_GROUP.heroStatus, ['switch-from', 'switch-to'], isExec);
-            doPreviewStatus(bPlayers, bPlayers[epidx].combatStatus, odmgedHidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to'], isExec);
+            doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: odmgedHidx, isOnlyHeroStatus: true }), odmgedHidx, STATUS_GROUP.heroStatus, ['switch-from', 'switch-to'], isExec);
+            doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, odmgedHidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to'], isExec);
         }
         if (isSwitchSelf(skillcmds)) {
             const triggers: Trigger[] = skid == -1 ? dtriggers : ['switch-from', 'switch-to'];
-            doPreviewStatus(bPlayers, bPlayers[pidx].heros[ahidx()].heroStatus, ahidx(), STATUS_GROUP.heroStatus, triggers, isExec, 1);
-            doPreviewStatus(bPlayers, bPlayers[pidx].combatStatus, ahidx(), STATUS_GROUP.combatStatus, triggers, isExec, 1);
+            doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: ahidx(), isOnlyHeroStatus: true }), ahidx(), STATUS_GROUP.heroStatus, triggers, isExec, 1);
+            doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, ahidx(), STATUS_GROUP.combatStatus, triggers, isExec, 1);
         }
 
         if (!isExec) {
@@ -4570,6 +4580,7 @@ export default class GeniusInvokationRoom {
                 const epidx = pidx ^ +atkOppo1;
                 if (!willDamages) willDamages = new Array(player.heros.length + opponent.heros.length).fill(0).map(() => [-1, 0]);
                 if (!dmgElements) dmgElements = new Array(players.flatMap(p => p.heros).length).fill(DAMAGE_TYPE.Physical);
+                if (!willAttachs) willAttachs = new Array(player.heros.length + opponent.heros.length).fill(0).map(() => []);
                 const dmgcnt = cmds[i].cnt;
                 const defaultCnt = dmgcnt ?? -1;
                 (ohidxs ?? [(atkOppo1 ? opponent : player).hidx]).forEach((hidx, hi) => {
@@ -4623,7 +4634,8 @@ export default class GeniusInvokationRoom {
             }
         }
         if (!isOnlyGetWillDamages && willDamages != undefined && dmgElement != undefined) {
-            const { players: players1, willDamages: willDamage1, elTips: elTips1, dmgElements: dmgElements1, willHeal: willHeal1 }
+            const { players: players1, willDamages: willDamage1, elTips: elTips1,
+                dmgElements: dmgElements1, willHeal: willHeal1, willAttachs: willAttachs1 }
                 = this._useSkill(pidx, -2, {
                     isPreview: !isExec,
                     players,
@@ -4643,6 +4655,7 @@ export default class GeniusInvokationRoom {
                     willHeals0[1][hlidx] += hl;
                 }
             });
+            willAttachs1.forEach((wa, wai) => willAttachs![wai].push(...wa));
             elTips1.forEach((et, eti) => elTips[eti] = [...et]);
             if (!isExec) {
                 if (dmgElement != DAMAGE_TYPE.Pierce) {
@@ -5488,10 +5501,11 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家索引
      * @param options.players 玩家信息
      * @param options.hidx 角色序号(默认出战角色)
+     * @param options.isOnlyHeroStatus 是否只获取角色状态
      * @returns 角色区域数组
      */
-    private _getHeroField(pidx: number, options: { players?: Player[], hidx?: number } = {}) {
-        const { players = this.players } = options;
+    private _getHeroField(pidx: number, options: { players?: Player[], hidx?: number, isOnlyHeroStatus?: boolean } = {}) {
+        const { players = this.players, isOnlyHeroStatus = false } = options;
         const { heros, combatStatus, hidx: ahidx } = players[pidx];
         const { hidx = ahidx } = options;
         const hero = heros[hidx] ?? this._getFrontHero(pidx, { players });
@@ -5502,7 +5516,7 @@ export default class GeniusInvokationRoom {
         if (hero.talentSlot) field.push(hero.talentSlot);
         if (hero.vehicleSlot) field.push(hero.vehicleSlot[0]);
         field.sort((a, b) => b.entityId - a.entityId);
-        if (hidx == ahidx) field.push(...combatStatus);
+        if (hidx == ahidx && !isOnlyHeroStatus) field.push(...combatStatus);
         return field;
     }
     /**
