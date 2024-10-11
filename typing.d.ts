@@ -128,6 +128,7 @@ type Cmds = {
     cardTag?: CardTag | CardTag[],
     status?: (number | [number, ...any] | Status)[] | number,
     isOppo?: boolean,
+    summonTrigger?: Trigger[],
 }
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' |
@@ -250,7 +251,7 @@ type Preview = Readonly<ActionData & {
     willSummons?: Summon[][],
     willSummonChange?: number[][],
     willSupportChange?: number[][],
-    willEnergy?: number[][],
+    willEnergyChange?: number[][],
     heroCanSelect?: boolean[],
     supportCanSelect?: boolean[][],
     summonCanSelect?: boolean[][],

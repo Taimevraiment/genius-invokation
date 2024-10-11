@@ -848,6 +848,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt <= 0) return;
         return {
             trigger: ['switch'],
+            supportCnt: -1,
             exec: spt => {
                 --spt.perCnt;
                 return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(302303)] }], isDestroy: false }

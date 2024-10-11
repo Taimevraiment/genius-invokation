@@ -61,6 +61,7 @@ export type CardHandleEvent = {
     selectSummon?: number,
     selectSupport?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
+    randomInt?: (max?: number) => number,
 }
 
 export type CardHandleRes = {
@@ -2466,21 +2467,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹4雷元素›角色获得1点[充能]。(出战角色优先)', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7b07468873ea01ee319208a3e1f608e3_1769364352128477547.png')
         .handle((card, event, ver) => {
-            const { heros = [], hidxs: [fhidx] = [] } = event;
+            const { heros = [] } = event;
             if (ver >= 'v4.2.0' && card.perCnt <= 0) return;
-            const nhidxs: number[] = [];
-            for (let i = 0; i < heros.length; ++i) {
-                const hidx = (i + fhidx) % heros.length;
-                const hero = heros[hidx];
-                if (hero.hp > 0 && hero.element == ELEMENT_TYPE.Electro && hero.energy < hero.maxEnergy) {
-                    nhidxs.push(hidx);
-                    break;
-                }
-            }
+            const nhidxs = allHidxs(heros, { cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && h.energy < h.maxEnergy });
             if (nhidxs.length == 0) return;
             return {
                 trigger: ['skilltype2'],
-                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs }],
+                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs.slice(0, 1) }],
                 exec: () => { --card.perCnt },
             }
         }),

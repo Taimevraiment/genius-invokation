@@ -283,6 +283,7 @@ export default class GeniusInvokationClient {
                 this.willSummons = clone(preview.willSummons) ?? this._resetWillSummons();
                 this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
                 this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
+                this.energyCnt = [...clone(preview.willEnergyChange)!];
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
                 if (
@@ -544,6 +545,8 @@ export default class GeniusInvokationClient {
             this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
             this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
             this.willSwitch = preview.willSwitch?.slice() ?? this._resetWillSwitch();
+            this.supportCnt = [...clone(preview.willSupportChange)!];
+            this.energyCnt = [...clone(preview.willEnergyChange)!];
             this.isValid = preview.isValid;
             this.modalInfo = NULL_MODAL();
         }
@@ -790,7 +793,7 @@ export default class GeniusInvokationClient {
             this.supportCnt = [...clone(preview.willSupportChange)!];
             this.willSwitch = [...preview.willSwitch!];
             this.summonCanSelect = [...clone(preview.summonCanSelect)!];
-            this.energyCnt = [...clone(preview.willEnergy)!];
+            this.energyCnt = [...clone(preview.willEnergyChange)!];
             this.isValid = preview.isValid;
             const { canSelectSummon } = this.currSkill;
             if (canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1) {

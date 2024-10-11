@@ -78,7 +78,7 @@
         <div class="support" :class="{
           'support-select': supportSelect[saidx][siidx],
           'support-can-select': supportCanSelect[saidx][siidx] && player.status == PLAYER_STATUS.PLAYING,
-          'active-supportcnt': canAction && currSkill.type != SKILL_TYPE.Passive && supportCnt[getGroup(saidx)][siidx] != 0,
+          'active-supportcnt': canAction && supportCnt[getGroup(saidx)][siidx],
         }" v-for="(support, siidx) in supportArea" :key="siidx" @click.stop="showSupportInfo(saidx, siidx)">
           <div class="support-img-content">
             <div class="card-border"></div>
@@ -161,9 +161,13 @@
             </div>
           </div>
           <div class="hero-energys" v-if="(hero?.hp ?? 0) >= 0">
-            <img v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
-              :class="{ 'mobile-energy': isMobile, 'blink': eidx > (hero?.energy ?? 0) - 1 && eidx <= (hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 }"
-              :src="getEnergyIcon((hero?.energy ?? 0) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx)" />
+            <div v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
+              :class="{ 'mobile-energy': isMobile }">
+              <img class="hero-energy-img" :src="getEnergyIcon()">
+              <img class="hero-energy-img"
+                :class="{ 'blink': eidx > (hero?.energy ?? 0) - 1 && eidx <= (hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 }"
+                :src="getEnergyIcon((hero?.energy ?? 0) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx)" />
+            </div>
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
@@ -967,9 +971,16 @@ button:active {
 }
 
 .hero-energy {
+  position: relative;
   width: 15px;
   height: 15px;
   margin-bottom: 1px;
+}
+
+.hero-energy-img {
+  width: 100%;
+  height: 100%;
+  position: absolute;
 }
 
 .hero-equipment {

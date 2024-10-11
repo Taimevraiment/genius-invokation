@@ -331,9 +331,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             damage: 2,
             element: DAMAGE_TYPE.Cryo,
             trigger: ['switch-from'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     111041: (isTalent: boolean = false) => new StatusBuilder('重华叠霜领域').combatStatus()
@@ -428,9 +426,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 element: DAMAGE_TYPE.Cryo,
                 isSelf: true,
                 trigger: ['phase-end'],
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                },
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -448,9 +444,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceSkill: isCdt(curHp >= 6, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Cryo }),
                 addDmgCdt: 1,
                 ...res,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -460,9 +454,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             damage: 2,
             element: DAMAGE_TYPE.Cryo,
             trigger: ['action-start'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     111121: () => new StatusBuilder('佩伊刻计').heroStatus().icon('buff2').useCnt(0)
@@ -534,9 +526,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             damage: ver < 'v3.6.0' ? 2 : 1,
             element: DAMAGE_TYPE.Hydro,
             trigger: ['after-skilltype1'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     112031: () => new StatusBuilder('虚影').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
@@ -671,9 +661,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Hydro,
             isSelf: true,
             trigger: ['phase-end'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     112091: (act: number = 1) => new StatusBuilder('破局').heroStatus().useCnt(1).maxCnt(3).addCnt(act)
@@ -791,9 +779,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 damage: 2,
                 element: DAMAGE_TYPE.Pyro,
                 trigger: ['after-skill'],
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                },
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -864,9 +850,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Pyro,
             isSelf: true,
             trigger: ['after-skill'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     113071: () => new StatusBuilder('彼岸蝶舞').heroStatus().icon('buff5').roundCnt(2).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
@@ -886,9 +870,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Pyro,
             isSelf: true,
             trigger: ['phase-end'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     113081: () => new StatusBuilder('丹火印').heroStatus().icon('buff5').useCnt(1).maxCnt(2).maxCnt(0, 'v4.2.0').type(STATUS_TYPE.AddDamage)
@@ -954,9 +936,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['skilltype2', 'after-skilltype2'],
             addDmgCdt: status.useCnt,
             heal: isCdt(event.trigger == 'after-skilltype2', status.useCnt),
-            exec: eStatus => {
-                if (eStatus) eStatus.useCnt = 0;
-            }
+            exec: eStatus => { eStatus && (eStatus.useCnt = 0) },
         })),
 
     113111: () => shieldCombatStatus('烈烧佑命护盾', 1, 3),
@@ -985,9 +965,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['end-phase'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -998,9 +976,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Pyro,
             isSelf: true,
             trigger: ['switch-from'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     113134: () => new StatusBuilder('尖兵协同战法（生效中）').combatStatus().icon('buff2').useCnt(2)
@@ -1128,9 +1104,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             damage: 3,
             element: DAMAGE_TYPE.Electro,
             trigger: ['action-start'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     114091: () => new StatusBuilder('引雷').heroStatus().icon('debuff').useCnt(2).addCnt(1).maxCnt(4).type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
@@ -1314,9 +1288,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 pdmg: 2,
                 hidxs: [hidx],
                 isSelf: true,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -1379,9 +1351,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 addDmgCdt: 1,
                 element: DAMAGE_TYPE.Anemo,
                 damage: 1,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -1391,9 +1361,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['switch-to'],
             damage: 1,
             element: DAMAGE_TYPE.Anemo,
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     116011: () => new StatusBuilder('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
@@ -1514,9 +1482,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             damage: 1,
             element: DAMAGE_TYPE.Dendro,
             trigger: ['elReaction-Dendro'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     117021: () => new StatusBuilder('通塞识').heroStatus().icon('buff').useCnt(3)
@@ -1549,9 +1515,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 isSelf: true,
                 hidxs: [hidx],
                 trigger: ['get-elReaction', 'other-get-elReaction'],
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -1567,9 +1531,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Dendro,
             heal: 1,
             trigger: ['switch-from'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     117052: () => new StatusBuilder('脉摄宣明').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Usage)
@@ -1600,9 +1562,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 element: DAMAGE_TYPE.Dendro,
                 heal: 1,
                 trigger: triggers,
-                exec: eStatus => {
-                    if (eStatus) return { cmds: isCdt(isTalent, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }]) }
-                },
+                exec: eStatus => eStatus && ({ cmds: isCdt(isTalent, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }]) }),
             }
         }),
 
@@ -1687,19 +1647,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 damage: pile[0].cost + pile[0].anydice + +(ver < 'v4.8.0'),
                 element: DAMAGE_TYPE.Dendro,
                 exec: (eStatus, execEvent = {}) => {
-                    if (eStatus) {
-                        --eStatus.useCnt;
-                        const { heros: hs = [], summons: smns = [], combatStatus: ost = [] } = execEvent;
-                        const sts116 = getObjById(ost, 116);
-                        if (sts116) --sts116.useCnt;
-                        else --getObjById(smns, 112082)!.useCnt;
-                        const thero = getObjById(hs, getHidById(status.id))!;
-                        const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
-                        if (talent && talent.perCnt > 0) {
-                            --talent.perCnt;
-                        }
-                        return { cmds }
+                    if (!eStatus) return;
+                    --eStatus.useCnt;
+                    const { heros: hs = [], summons: smns = [], combatStatus: ost = [] } = execEvent;
+                    const sts116 = getObjById(ost, 116);
+                    if (sts116) --sts116.useCnt;
+                    else --getObjById(smns, 112082)!.useCnt;
+                    const thero = getObjById(hs, getHidById(status.id))!;
+                    const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
+                    if (talent && talent.perCnt > 0) {
+                        --talent.perCnt;
                     }
+                    return { cmds }
                 }
             }
         }),
@@ -1749,9 +1708,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: status.perCnt == 0 ? DAMAGE_TYPE.Cryo : DAMAGE_TYPE.Pyro,
             isSelf: true,
             trigger: ['phase-end'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     121031: () => new StatusBuilder('四迸冰锥').heroStatus().icon('buff6').useCnt(1).type(STATUS_TYPE.Usage)
@@ -1786,9 +1743,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['phase-end'],
             pdmg: 1,
             hidxs: eheros.filter(h => hasObjById(h.heroStatus, 122)).map(h => h.hidx),
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     122013: () => new StatusBuilder('纯水幻形·蛙').combatStatus().useCnt(1).useCnt(2, 'v4.3.0')
@@ -1991,9 +1946,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, event) => ({
             trigger: ['will-killed'],
             cmds: [{ cmd: 'revive', cnt: 1, hidxs: [event.hidx ?? -1] }],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     124021: () => new StatusBuilder('雷霆探针').combatStatus().icon('ski,3')
@@ -2077,9 +2030,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Electro,
             isSelf: true,
             trigger: ['after-skill'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     124053: () => coolDownStatus('噬骸能量块', 124051),
@@ -2374,9 +2325,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 pdmg: 2,
                 hidxs: [hidx],
                 isSelf: true,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -2526,9 +2475,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['after-skill'],
                 notPreview: true,
                 ...res,
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -2634,9 +2581,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['phase-start'],
             isAddTask: true,
             cmds: [{ cmd: 'getDice', cnt: 3, element: DICE_COST_TYPE.Omni }, { cmd: 'getCard', cnt: 1 }],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     303202: () => new StatusBuilder('换班时间（生效中）').combatStatus().icon('buff2')
@@ -2718,9 +2663,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['any-end-phase'],
                 isAddTask: true,
                 cmds: [{ cmd: 'getCard', cnt: 2, isOppo: phase > PHASE.ACTION }],
-                exec: eStatus => {
-                    if (eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 
@@ -2806,9 +2749,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: isCdt(source != 303236, ['getdice-oppo']),
                 isAddTask: true,
                 cmds: isCdt(status.useCnt == 1, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
-                exec: eStatus => {
-                    if (eStatus) eStatus.useCnt = (eStatus.useCnt + 1) % 2;
-                }
+                exec: eStatus => { eStatus && (eStatus.useCnt = (eStatus.useCnt + 1) % 2) },
             }
         }),
 
@@ -2818,9 +2759,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['phase-end'],
             isAddTask: true,
             cmds: [{ cmd: 'getCard', cnt: 1 }],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
@@ -2865,9 +2804,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, { hidx = -1 }) => ({
             trigger: ['phase-end'],
             cmds: [{ cmd: 'heal', cnt: 1, hidxs: [hidx] }],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     303306: () => new StatusBuilder('兽肉薄荷卷（生效中）').heroStatus().icon('buff2')
@@ -2920,9 +2857,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, { hidx = -1 }) => ({
             trigger: ['phase-end'],
             cmds: [{ cmd: 'heal', cnt: 1, hidxs: [hidx] }],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     303313: () => new StatusBuilder('缤纷马卡龙（生效中）').heroStatus().icon('heal').useCnt(3).type(STATUS_TYPE.Attack)
@@ -2931,9 +2866,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             heal: 1,
             hidxs: [event.hidx ?? -1],
             trigger: ['getdmg'],
-            exec: eStatus => {
-                if (eStatus) --eStatus.useCnt;
-            },
+            exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
 
     303314: () => new StatusBuilder('龙龙饼干（生效中）').heroStatus().icon('buff2').roundCnt(1)

@@ -1224,7 +1224,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('心织刀流'))
         .skills(
             new SkillBuilder('羽袖一触').description('从3个【smn116097】中[挑选]1个召唤。')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/16092',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8ef27719f84860001bce5a1f5df2dcd3_8474447068629975560.png')
                 .elemental().cost(3).handle(event => {
                     const { talent, isExec } = event;
@@ -1243,7 +1243,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { summonPre, cmds }
                 }),
             new SkillBuilder('二刀之形·比翼').description('{dealDmg}。')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/16093',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6b70159787ab6231003590f7ec5309d2_291726310963939149.png')
                 .burst(2).damage(5).cost(3)
         ),
@@ -1877,7 +1877,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('渊薮落雷').catalyst())
         .skills(
             new SkillBuilder('秘渊虚霆').description('{dealDmg}。；如果目标已[附着雷元素]，则夺取对方1点[充能]。(如果夺取时此角色[充能]已满，则改为由下一个[充能]未满的角色获得[充能])')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/24062',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/f06197e6de2668bf74bc73a391116c1f_9175472387527320923.png')
                 .elemental().damage(3).cost(3).handle(event => {
                     const { eheros = [], heros = [] } = event;
@@ -1887,11 +1887,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }, { cmd: 'getEnergy', cnt: 1, hidxs }] }
                 }),
             new SkillBuilder('狂迸骇雷').description('{dealDmg}。如果目标[充能]不多于1，造成的伤害+2。')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/24063',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/7315eed5a999d03bf46e6fa40a97d2ab_3785888462903729262.png')
                 .burst(2).damage(3).cost(3).handle(event => ({ addDmgCdt: isCdt((event.eheros?.find(h => h.isFront)?.energy ?? 3) <= 1, 2) })),
             new SkillBuilder('雷之新生').description('战斗开始时，初始附属【sts124061】。')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/24064',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/07e9c627e0391e19a7a610b4505a827a_6922644027589193780.png')
                 .handle(() => ({ trigger: ['game-start'], status: 124061 }))
         ),
@@ -2074,18 +2074,18 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('叶轮轻扫'))
         .skills(
             new SkillBuilder('蔓延旋舞').description('{dealDmg}，生成1层【sts127033】。')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/27032',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/d69cd6abad732aa60170bc087993b671_5098242204074695402.png')
                 .elemental().damage(3).cost(3).handle(() => ({ status: 127033 })),
             new SkillBuilder('厄灵苏醒·草之灵蛇').description('{dealDmg}。整场牌局限制一次，将一张【crd127032】加入我方手牌。')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/27033',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/96b81cdc1ce8dfac226116c9fe43992a_2705445042404454391.png')
                 .burst(2).damage(4).cost(3).handle(event => {
                     if (event.skill.useCnt > 0) return;
                     return { cmds: [{ cmd: 'getCard', cnt: 1, card: 127032 }] }
                 }),
             new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(每回合1次)')
-                .src('',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/27034',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f2fc1e2e7ad6747577d954f3db9012f_2120144226908224970.png')
                 .handle(event => {
                     const { hero: { hp, hidx }, skill: { useCntPerRound }, getdmg = [] } = event;
