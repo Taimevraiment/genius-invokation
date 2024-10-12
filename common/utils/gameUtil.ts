@@ -144,13 +144,14 @@ export const getTalentIdByHid = (hid: number): number => {
 export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | number[][], players?: Player[]) => {
     if (!resHeals) return;
     if (typeof resHeals[0] != 'number') {
-        (resHeals as number[][]).forEach(hl => mergeWillHeals(tarWillHeals, hl, players));
-        return;
+        return (resHeals as number[][]).forEach(hl => mergeWillHeals(tarWillHeals, hl, players));
     }
     (resHeals as number[]).forEach((hl, hli) => {
         if (hl > -1) {
-            if (tarWillHeals[hli] < 0) tarWillHeals[hli] = hl;
-            else tarWillHeals[hli] += hl;
+            if (tarWillHeals[hli] < 0) {
+                if (players) --tarWillHeals[hli];
+                else tarWillHeals[hli] = hl;
+            } else if (!players) tarWillHeals[hli] += hl;
         }
     });
     players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, (resHeals as number[])[h.hidx + (p.pidx * players[0].heros.length)]))));

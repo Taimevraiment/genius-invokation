@@ -3,7 +3,7 @@ import { GICard } from '../data/builder/cardBuilder.js';
 import { GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
 import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
-import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE } from './gameOption.js';
+import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from './gameOption.js';
 
 export const INIT_PLAYER: () => Player = () => ({
     id: -1,
@@ -69,10 +69,14 @@ export const NULL_HERO = () => new GIHero(0, -1, '无', 'v3.3.0', [], 0, ELEMENT
 
 export const NULL_CARD = () => new GICard(0, -1, '无', 'v3.3.0', '', '', 0, DICE_TYPE.Same, CARD_TYPE.Event);
 
-export const NULL_MODAL: () => InfoVO = () => ({
+export const NULL_MODAL = (): InfoVO => ({
     version: VERSION[0],
     isShow: false,
     type: null,
     info: null,
 });
+
+export const INIT_SUMMONCNT = () => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
+
+export const INIT_SUPPORTCNT = () => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
 

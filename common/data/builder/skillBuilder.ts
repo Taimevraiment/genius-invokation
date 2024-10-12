@@ -234,7 +234,7 @@ export class SkillBuilder extends BaseVersionBuilder {
                 de: this._dmgElement,
                 expl: this._explains,
                 pct: this._perCnt,
-                ver: this._version,
+                ver: this._curVersion,
                 canSelectSummon: this._canSelectSummon,
             },
             this._src, this._handle);

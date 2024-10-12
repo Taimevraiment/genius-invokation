@@ -1813,11 +1813,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (!hero) return;
                     if (trigger == 'phase-end') {
                         const cnt = -eStatus!.perCnt;
-                        if (!notAtk) {
-                            eStatus!.perCnt = 0;
-                            hero.maxHp += cnt;
-                        }
-                        return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, { cmd: 'heal', cnt, hidxs: [hero.hidx] }] }
+                        if (!notAtk) eStatus!.perCnt = 0;
+                        return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, { cmd: 'addMaxHp', cnt, hidxs: [hero.hidx] }] }
                     }
                     let cnt = 0;
                     if (hcard && hcard.id > 0) discards.splice(0, INIT_PILE_COUNT, hcard);
@@ -1842,8 +1839,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     });
                     if (cnt > 0) {
                         if (ver < 'v5.0.0') {
-                            if (notAtk) hero.maxHp += cnt;
-                            const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'heal', cnt: 1, hidxs: [hero.hidx], mode: i, isAttach: true }));
+                            const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'addMaxHp', cnt: 1, hidxs: [hero.hidx], mode: i, isAttach: true }));
                             return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, ...healcmds], }
                         }
                         eStatus!.perCnt -= cnt;

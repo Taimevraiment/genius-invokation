@@ -4,7 +4,7 @@ import {
     HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
-import { NULL_CARD } from '../constant/init.js';
+import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
@@ -13,6 +13,7 @@ import { newSummon } from './summons.js';
 import { newSupport } from './supports.js';
 
 export type CardHandleEvent = {
+    pidx?: number,
     heros?: Hero[],
     combatStatus?: Status[],
     pile?: Card[],
@@ -90,6 +91,7 @@ export type CardHandleRes = {
     restDmg?: number,
     isAddTask?: boolean,
     notPreview?: boolean,
+    summonCnt?: number[][],
     exec?: () => CardExecRes | void,
 };
 
@@ -1804,39 +1806,54 @@ const allCards: Record<number, () => CardBuilder> = {
     332012: () => new CardBuilder(252).name('快快缝补术').event().costSame(1).canSelectSummon(1)
         .description('选择一个我方｢召唤物｣，使其[可用次数]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1ede638fa4bb08aef24d03edf5c5d1d9_6232288201967488424.png')
-        .handle((_, event) => ({
-            exec: () => {
-                const { summons = [], selectSummon = -1 } = event;
-                const selectSmn = summons[selectSummon];
-                if (selectSmn) ++selectSmn.useCnt;
+        .handle((_, event) => {
+            const { pidx = -1, summons = [], selectSummon = -1 } = event;
+            const summonCnt = INIT_SUMMONCNT();
+            if (selectSummon > -1 && pidx > -1) summonCnt[pidx][selectSummon] = 1;
+            return {
+                summonCnt,
+                exec: () => {
+                    const selectSmn = summons[selectSummon];
+                    if (selectSmn) ++selectSmn.useCnt;
+                }
             }
-        })),
+        }),
 
     332013: () => new CardBuilder(253).name('送你一程').event().costAny(2).canSelectSummon(0)
         .description('选择一个敌方｢召唤物｣，使其[可用次数]-2。')
         .description('选择一个敌方｢召唤物｣，将其消灭。', 'v3.7.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/c0c1b91fe602e0d29159e8ae5effe537_7465992504913868183.png')
-        .handle((_, event, ver) => ({
-            exec: () => {
-                const { esummons = [], hidxs: [smnIdx] = [] } = event;
-                const selectSmn = esummons[smnIdx];
-                if (ver < 'v3.7.0') {
-                    selectSmn.isDestroy = SUMMON_DESTROY_TYPE.Used;
-                    selectSmn.useCnt = 0;
-                } else selectSmn.useCnt = Math.max(0, selectSmn.useCnt - 2);
+        .handle((_, event, ver) => {
+            const { pidx = -1, esummons = [], selectSummon = -1 } = event;
+            const summonCnt = INIT_SUMMONCNT();
+            if (selectSummon > -1 && pidx > -1) summonCnt[pidx ^ 1][selectSummon] = ver < 'v3.7.0' ? -100 : -2;
+            return {
+                summonCnt,
+                exec: () => {
+                    const selectSmn = esummons[selectSummon];
+                    if (ver < 'v3.7.0') {
+                        selectSmn.isDestroy = SUMMON_DESTROY_TYPE.Used;
+                        selectSmn.useCnt = 0;
+                    } else selectSmn.useCnt = Math.max(0, selectSmn.useCnt - 2);
+                }
             }
-        })),
+        }),
 
     332014: () => new CardBuilder(254).name('护法之誓').event().costSame(4)
         .description('消灭所有｢召唤物｣。(不分敌我！)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/9df79dcb5f6faeed4d1f1b286dcaba76_1426047687046512159.png')
-        .handle((_, event) => ({
-            exec: () => {
-                const { summons = [], esummons = [] } = event;
-                summons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
-                esummons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
+        .handle((_, event) => {
+            const summonCnt = INIT_SUMMONCNT();
+            summonCnt.forEach(s => s.fill(-100));
+            return {
+                summonCnt,
+                exec: () => {
+                    const { summons = [], esummons = [] } = event;
+                    summons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
+                    esummons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
+                }
             }
-        })),
+        }),
 
     332015: () => new CardBuilder(255).name('深渊的呼唤').tag(CARD_TAG.LocalResonance).costSame(2)
         .description('召唤一个随机｢丘丘人｣召唤物！').explain('smn303211', 'smn303212', 'smn303213', 'smn303214')
@@ -1975,8 +1992,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/2e859c0e0c52bfe566e2200bb70dae89_789491720602984153.png')
         .handle((_, event) => {
             const { esupports = [], summons = [], esummons = [] } = event;
+            const summonCnt = INIT_SUMMONCNT();
+            summonCnt.forEach(s => s.fill(-1));
             return {
                 isValid: esupports.length + esummons.length >= 4,
+                summonCnt,
                 exec: () => {
                     summons.forEach(smn => smn.useCnt = Math.max(0, smn.useCnt - 1));
                     esummons.forEach(smn => smn.useCnt = Math.max(0, smn.useCnt - 1));

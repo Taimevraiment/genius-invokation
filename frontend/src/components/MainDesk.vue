@@ -358,7 +358,7 @@
                 </span>
                 <span
                   v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -99)">
-                  {{ Math.abs(summonCnt[getGroup(saidx)][suidx]) }}
+                  {{ Math.floor(Math.min(Math.abs(summonCnt[getGroup(saidx)][suidx]), summon.useCnt)) }}
                 </span>
               </div>
               <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"

@@ -2,7 +2,7 @@ import type { Socket } from "socket.io-client";
 
 import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
-import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
+import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
     HANDCARDS_OFFSET_PC,
@@ -282,10 +282,10 @@ export default class GeniusInvokationClient {
                 this.willAttachs = clone(preview.willAttachs) ?? this._resetWillAttachs();
                 this.willSummons = clone(preview.willSummons) ?? this._resetWillSummons();
                 this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
-                this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
-                this.energyCnt = [...clone(preview.willEnergyChange)!];
+                this.energyCnt = clone(preview.willEnergyChange) ?? this._resetEnergyCnt();
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
+                if (this.isValid) this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
                 if (
                     this.willHp.some(v => v != undefined) ||
                     this.willSummons.some(smns => smns.length > 0) ||
@@ -311,6 +311,7 @@ export default class GeniusInvokationClient {
                         }
                         if (canSelectSummon != -1) {
                             this.summonSelect[canSelectSummon][0] = true;
+                            this.summonCnt = clone(preview1.willSummonChange) ?? this._resetSummonCnt();
                         }
                         if (canSelectSupport != -1) {
                             this.supportSelect[canSelectSupport][0] = true;
@@ -659,8 +660,9 @@ export default class GeniusInvokationClient {
         this.summonSelect[pidx][suidx] = newVal;
         if (newVal) this.summonSelect[pidx].forEach((_, i, a) => a[i] = i == suidx);
         if (this.currSkill.id > 0) return this.selectSkillSummon(suidx, newVal);
-        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.summonIdx == (newVal ? suidx : -1));
+        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.cardIdxs![0] == this.currCard.cidx && pre.summonIdx == (newVal ? suidx : -1));
         this.isValid = !!preview?.isValid;
+        this.summonCnt = preview?.willSummonChange ?? this._resetSummonCnt();
         if (this.isValid) this.diceSelect = [...preview?.diceSelect!];
     }
     /**
@@ -966,7 +968,7 @@ export default class GeniusInvokationClient {
      * 重置支援物预览
      */
     private _resetSupportCnt() {
-        return this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
+        return this.supportCnt = INIT_SUPPORTCNT();
     }
     /**
      * 重置召唤物选择
@@ -984,7 +986,7 @@ export default class GeniusInvokationClient {
      * 重置召唤物次数预览
      */
     private _resetSummonCnt() {
-        return this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
+        return this.summonCnt = INIT_SUMMONCNT();
     }
     /**
      * 重置召唤物预览
@@ -1024,6 +1026,7 @@ export default class GeniusInvokationClient {
      */
     private _resetEnergyCnt() {
         this.energyCnt.forEach(v => v.fill(0));
+        return this.energyCnt;
     }
     /**
      * 重置骰子选择

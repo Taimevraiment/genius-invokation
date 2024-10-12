@@ -84,7 +84,7 @@ export class SupportBuilder extends BaseVersionBuilder {
     done() {
         if (this._card == undefined) throw new Error("SupportBuilder: card is undefined");
         const perCnt = this._perCnt.get(this._curVersion, 0);
-        return new GISupport(this._card, this._cnt, perCnt, this._type, this._handle, this._heal, this._version);
+        return new GISupport(this._card, this._cnt, perCnt, this._type, this._handle, this._heal, this._curVersion);
     }
 }
 

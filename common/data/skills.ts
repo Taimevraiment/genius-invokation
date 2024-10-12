@@ -29,6 +29,7 @@ export type SkillHandleEvent = {
     dmg?: number[],
     talent?: Card | null,
     pile?: Card[],
+    isExecTask?: boolean,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 

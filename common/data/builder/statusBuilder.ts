@@ -303,7 +303,7 @@ export class StatusBuilder extends BaseVersionBuilder {
                 adt: this._addition,
                 expl: this._explains,
                 isReset: this._isReset,
-                ver: this._version,
+                ver: this._curVersion,
             }
         );
     }

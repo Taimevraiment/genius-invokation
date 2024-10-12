@@ -252,7 +252,7 @@ export class SummonBuilder extends BaseVersionBuilder {
                 spReset: this._spReset,
                 expl: this._explains,
                 pls: this._hasPlus,
-                ver: this._version,
+                ver: this._curVersion,
             }
         )
     }
