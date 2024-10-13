@@ -395,6 +395,19 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
+    // ｢悬木人｣
+    321024: () => new SupportBuilder().collection().handle((support, event) => {
+        const { card, playerInfo: { initCardIds = [] } = {} } = event;
+        if (!card || initCardIds.includes(card.id) || card.cost + card.anydice < support.cnt) return;
+        return {
+            trigger: ['card'],
+            supportCnt: 1,
+            exec: spt => {
+                ++spt.cnt;
+                return { cmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }], isDestroy: false }
+            }
+        }
+    }),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(() => ({
         trigger: ['phase-start'],

@@ -6,7 +6,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { allHidxs, getBackHidxs, getHidById, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newSummon } from './summons.js';
@@ -61,6 +61,7 @@ export type CardHandleEvent = {
     selectHeros?: number[],
     selectSummon?: number,
     selectSupport?: number,
+    source?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
     randomInt?: (max?: number) => number,
 }
@@ -331,6 +332,26 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    311110: () => new CardBuilder(438).name('纯水流华').since('v5.2.0').weapon().costSame(1).perCnt(1)
+        .description('【入场时和回合结束时：】角色附属1层【sts122】。；【我方行动前：】所附属角色如果未附属【sts122】，则生成1个随机基础元素骰，并且角色下次造成的伤害+1。(每回合1次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_ChunShui.webp')
+        .handle((card, event) => {
+            const { heros = [], hidxs = [], trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            const execmds: Cmds[] = [];
+            if (trigger == 'phase-end') execmds.push({ cmd: 'getStatus', status: 122, hidxs });
+            else if (trigger == 'action-start' && card.perCnt > 0 && !hasObjById(heros[hidxs[0]].heroStatus, 122)) {
+                triggers.push('action-start');
+                execmds.push({ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }, { cmd: 'getStatus', status: 301112, hidxs });
+            }
+            return {
+                trigger: triggers,
+                isAddTask: true,
+                cmds: [{ cmd: 'getStatus', status: 122, hidxs }],
+                execmds,
+                exec: () => { trigger == 'action-start' && --card.perCnt },
+            }
+        }),
 
     311201: () => normalWeapon(126).name('鸦羽弓')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/e20881692f9c3dcb128e3768347af4c0_5029781426547880539.png'),
@@ -1130,8 +1151,8 @@ const allCards: Record<number, () => CardBuilder> = {
     312030: () => new CardBuilder(427).name('指挥的礼帽').since('v5.1.0').artifact().costSame(1).perCnt(1)
         .description('【我方切换到所附属角色后：】[舍弃]原本元素骰费用最高的1张手牌，将2个元素骰转换为[万能元素骰]，并使角色下次使用技能或打出｢天赋｣时少花费1个元素骰。(每回合1次)')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/a304d1400ed0bcb463f93b2be2558833_8026218308357759960.png')
-        .handle(card => {
-            if (card.perCnt <= 0) return;
+        .handle((card, event) => {
+            if (card.perCnt <= 0 || !event.hcards?.length) return;
             return {
                 trigger: ['switch-to'],
                 execmds: [
@@ -1139,6 +1160,20 @@ const allCards: Record<number, () => CardBuilder> = {
                     { cmd: 'changeDice', cnt: 2 },
                     { cmd: 'getStatus', status: 301204 },
                 ],
+                exec: () => { --card.perCnt },
+            }
+        }),
+
+    312031: () => new CardBuilder(439).name('被怜爱的少女').since('v5.2.0').artifact().costSame(1).perCnt(2)
+        .description('【附属角色受到圣遗物以外的治疗后：】治疗我方受伤最多的角色1点。(每回合至多触发2次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XiaoShaoNv.webp')
+        .handle((card, event) => {
+            const { source = -1, heal = [], hidxs = [], heros = [] } = event;
+            if (card.perCnt <= 0 || source.toString().startsWith('312') || (heal[hidxs[0]] ?? -1) < 0 || heros.every(h => h.maxHp == h.hp)) return;
+            console.log(source);
+            return {
+                trigger: ['heal'],
+                execmds: [{ cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(heros) }],
                 exec: () => { --card.perCnt },
             }
         }),
@@ -1196,6 +1231,9 @@ const allCards: Record<number, () => CardBuilder> = {
 
     313004: () => new CardBuilder(428).name('嵴锋龙').since('v5.1.0').vehicle().costSame(2).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/34506374c580288b88c38dee3b6af998_278198034630026427.png'),
+
+    313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_MingshiLong.webp'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1292,6 +1330,10 @@ const allCards: Record<number, () => CardBuilder> = {
     321023: () => new CardBuilder(429).name('特佩利舞台').since('v5.1.0').place().costSame(0)
         .description('【我方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【敌方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【行动阶段开始时：】如果此牌有至少3点｢瞩目｣，则生成1个随机基础元素骰; 如果此牌有至少1点｢瞩目｣，将1个元素骰转换为[万能元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4b25dc7789eb47de50bf4f6d6001cfe6_5614159247725037900.png'),
+
+    321024: () => new CardBuilder(441).name('｢悬木人｣').since('v5.2.0').place().costSame(0)
+        .description('【我方打出名称不存在于本局最初牌组的牌时：】如果打出的牌元素骰费用不低于此牌的｢极限运动点｣，则生成1个随机基础元素骰，然后此牌累积1个｢极限运动点｣。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_XuanmuRen.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1720,6 +1762,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
+            if (!hero) return;
             return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], isValid: hero.energy < hero.maxEnergy }
         }),
 
@@ -2051,6 +2094,21 @@ const allCards: Record<number, () => CardBuilder> = {
             return { cmds }
         }),
 
+    332041: () => new CardBuilder(442).name('强劲冲浪拍档！').since('v5.2.0').event().costSame(0)
+        .description('【双方场上至少存在合计2个｢召唤物｣时，才能打出：】随机触发我方和敌方各1个｢召唤物｣的｢结束阶段｣效果。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_QiyouLong.webp')
+        .handle((_, event) => {
+            const { summons = [], esummons = [], randomInt } = event;
+            const cmds: Cmds[] = [];
+            if (randomInt) {
+                cmds.push(
+                    { cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] },
+                    { cmd: 'useSkill', cnt: -2, hidxs: [randomInt(esummons.length - 1)], summonTrigger: ['phase-end'], isOppo: true },
+                );
+            }
+            return { isValid: summons.length + esummons.length >= 2, cmds }
+        }),
+
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png')
@@ -2171,6 +2229,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('本回合中，目标角色下一次使用｢特技｣少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e473f7de075963ef435079bafd6c0388_8656398544128053014.png')
         .handle(() => ({ status: 303314 })),
+
+    333017: () => new CardBuilder(443).name('宝石闪闪').since('v5.2.0').food().costSame(1).canSelectHero(1)
+        .description('目标角色获得1点额外最大生命值。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Baoshi.webp')
+        .handle(() => ({ cmds: [{ cmd: 'addMaxHp', cnt: 1 }] })),
 
     211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')

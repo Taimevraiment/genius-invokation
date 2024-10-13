@@ -286,10 +286,7 @@ type PickCard = {
     cards: Card[],
     selectIdx: number,
     cardType: PickCardType,
-    actionType: PickCardActionType,
     skillId: number,
 }
-
-type PickCardActionType = 'getCard' | 'useSkill';
 
 type PickCardType = 'card' | 'summon';

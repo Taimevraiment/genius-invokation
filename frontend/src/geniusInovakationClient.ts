@@ -78,7 +78,7 @@ export default class GeniusInvokationClient {
     summonCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否可选
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
-    pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', actionType: 'getCard', skillId: -1 }; // 挑选卡牌
+    pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', skillId: -1 }; // 挑选卡牌
     isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
 

@@ -2377,6 +2377,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.roundCnt },
         })),
 
+    301112: () => new StatusBuilder('纯水流华（生效中）').heroStatus().icon('buff5').useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('所附属角色下次造成的伤害+1。')
+        .handle((status, event) => ({
+            trigger: isCdt(event.hasDmg, ['skill']),
+            addDmg: 1,
+            exec: () => { --status.useCnt },
+        })),
+
     301201: () => shieldHeroStatus('重嶂不移'),
 
     301203: () => new StatusBuilder('辰砂往生录（生效中）').heroStatus().icon('buff5').roundCnt(1)

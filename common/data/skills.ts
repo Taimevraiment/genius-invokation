@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
-import { ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
+import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
@@ -198,6 +198,20 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             }
             return { cmds }
         }),
+
+    3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中挑选1张加入手牌，并且治疗附属角色1点。')
+        .src('')
+        .vehicle().costSame(2).handle(() => ({
+            cmds: [{
+                cmd: 'pickCard',
+                cnt: 3,
+                mode: CMD_MODE.getCard,
+                hidxs: [3130051],
+                isAttach: true,
+                subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food],
+            }],
+            heal: 1,
+        })),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

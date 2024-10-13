@@ -48,11 +48,17 @@ export default class TaskQueue {
     getTask(): [[string, any[] | StatusTask, boolean], boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
         const res = this.priorityQueue?.shift() ?? this.queue.shift();
-        if (!res) return [['not found', [], false], false];;
+        if (!res) return [['not found', [], false], false];
         this._writeLog(`getTask:${res[0]}(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`, 'emit');
         if (this.priorityQueue?.length == 0) {
             this.priorityQueue = undefined;
         }
+        return [res, isPriority];
+    }
+    peekTask(): [[string, any[] | StatusTask, boolean], boolean] {
+        const isPriority = (this.priorityQueue?.length ?? 0) > 0;
+        const res = this.priorityQueue?.[0] ?? this.queue[0];
+        if (!res) return [['not found', [], false], false];
         return [res, isPriority];
     }
     removeTask(entityId: number) {

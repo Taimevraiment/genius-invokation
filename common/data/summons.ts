@@ -300,17 +300,16 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (summon.useCnt == 0) triggers.push('phase-end');
             const hero = heros[getAtkHidx(heros)];
             const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver < 'v4.2.0' ? 3 : 4);
-            if (cnt) {
-                triggers.push('after-skilltype1');
-                if (!isExec) summon.useCnt = -100;
-            }
+            if (cnt) triggers.push('after-skilltype1');
             return {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'after-skilltype1') {
-                        smn.isDestroy = SUMMON_DESTROY_TYPE.Used;
-                        smn.useCnt = 0;
+                        if (isExec) {
+                            smn.isDestroy = SUMMON_DESTROY_TYPE.Used;
+                            smn.useCnt = 0;
+                        } else summon.useCnt = -100;
                     }
                     return { cmds: [{ cmd: 'attack', cnt }] }
                 },
@@ -349,12 +348,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description(`{defaultAtk。}${isTalent ? '；【hro】｢普通攻击｣后：造成2点[雷元素伤害]。(需消耗[可用次数])' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png')
         .handle((summon, event) => {
-            const { heros = [], trigger = '', isExec = true } = event;
+            const { heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             let cnt = isCdt(trigger != 'phase-end', 2);
             if (heros[getAtkHidx(heros)]?.id == getHidById(summon.id) && summon.isTalent) {
                 triggers.push('after-skilltype1');
-                if (!isExec && trigger == 'after-skilltype1') --summon.useCnt;
             }
             return {
                 trigger: triggers,
