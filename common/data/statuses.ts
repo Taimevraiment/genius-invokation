@@ -514,6 +514,31 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111123: () => shieldHeroStatus('潜猎护盾', 1, 2),
 
+    111131: (cnt: number = 2) => new StatusBuilder('穿刺幽影').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
+        .icon('ski,1').type(STATUS_TYPE.Usage)
+        .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。(向下取整)；[useCnt]')
+        .handle((status, event) => {
+            const { randomInt, isExecTask, trigger = '' } = event;
+            if (!isExecTask && (trigger != 'skill' || !randomInt || randomInt(9) >= status.useCnt)) return;
+            return {
+                trigger: ['skill'],
+                isAddTask: true,
+                exec: eStatus => {
+                    if (eStatus) eStatus.useCnt = Math.floor(eStatus.useCnt / 2);
+                    return { cmds: [{ cmd: 'getStatus', status: 111133 }] }
+                }
+            }
+        }),
+
+    111133: () => new StatusBuilder('幽影').combatStatus().icon('').useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
+        .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
+        .handle((status, event) => ({
+            multiDmgCdt: 2,
+            trigger: isCdt(event.hasDmg, ['skill']),
+            exec: () => { --status.useCnt }
+        })),
+
     112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
         .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver >= 'v4.2.0' && isTalent)
         .description(`【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；[useCnt]`)
@@ -2157,6 +2182,22 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     126022: () => new StatusBuilder('磐岩百相·元素凝晶').heroStatus().icon('ski,1').useCnt(1).type(STATUS_TYPE.Sign)
         .explains('rsk66013', 'rsk66023', 'rsk66033', 'rsk66043')
         .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。'),
+
+    126031: (isTalent: boolean = false) => new StatusBuilder('黄金侵蚀').heroStatus().useCnt(1).maxCnt(isTalent ? 5 : 3)
+        .icon('').type(STATUS_TYPE.Attack).talent(isTalent)
+        .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；[useCnt]')
+        .handle((status, event) => {
+            const { heros = [], hidx = -1, eheros = [] } = event;
+            const isTalent = eheros.find(h => h.id == getHidById(status.id))?.talentSlot;
+            if (heros[hidx]?.isFront && !isTalent) return;
+            return {
+                trigger: ['phase-end'],
+                pdmg: status.useCnt,
+                hidxs: [hidx],
+                isSelf: true,
+                exec: eStatus => { eStatus && (eStatus.useCnt = 0) }
+            }
+        }),
 
     127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_FungusRaptor_S.webp')

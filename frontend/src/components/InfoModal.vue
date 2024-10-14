@@ -93,7 +93,7 @@
             v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).vehicleSlot">
             <div class="title">—— 角色装备 ——</div>
             <div class="equipment"
-              v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot, (info as Hero).vehicleSlot?.[0]].filter(s => s)"
+              v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot, (info as Hero).vehicleSlot?.[0]].filter(s => s).sort((a, b) => b!.entityId - a!.entityId)"
               :key="slidx">
               <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
                 <span class="equipment-title-left">
@@ -197,7 +197,7 @@
         v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).vehicleSlot">
         <div class="title">—— 角色装备 ——</div>
         <div class="equipment"
-          v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot, (info as Hero).vehicleSlot?.[0]].filter(s => s)"
+          v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot, (info as Hero).vehicleSlot?.[0]].filter(s => s).sort((a, b) => b!.entityId - a!.entityId)"
           :key="slidx">
           <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
             <span class="equipment-title-left">

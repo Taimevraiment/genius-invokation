@@ -194,7 +194,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
     'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` |
-    'change-turn' | 'turn-end' | `${TrgActive}switch${TrgOppo}` | 'hcard-calc' | '';
+    'change-turn' | 'turn-end' | `${TrgActive}switch${TrgOppo}` | 'hcard-calc' | 'get-status' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

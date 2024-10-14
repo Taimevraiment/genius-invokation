@@ -330,7 +330,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 赤王陵
     321020: () => new SupportBuilder().collection().handle((support, _, ver) => ({
         trigger: ['getcard-oppo'],
-        supportCnt: 1 + (support.cnt < 4 ? 1 : -5),
+        supportCnt: support.cnt < 4 ? 1 : -5,
         exec: spt => {
             ++spt.cnt;
             if (spt.cnt < 4) return { isDestroy: false }

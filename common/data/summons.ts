@@ -185,6 +185,18 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk，治疗我方出战角色{shield}点。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/a4249ebb8a68e2843cdd2fa78937912c_2796631322062911422.png'),
 
+    111132: () => new SummonBuilder('极寒的冰枪').useCnt(2).damage(1)
+        .description('{defaultAtk，生成1层【sts111131】。}')
+        .src('')
+        .handle(summon => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
+                cmds.push({ cmd: 'getStatus', status: [[111131, 1]] })
+                return { cmds }
+            }
+        })),
+
     112011: () => new SummonBuilder('歌声之环').useCnt(2).heal(1)
         .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；[useCnt]')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png')
@@ -1001,6 +1013,18 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 },
             }
         }),
+
+    126032: () => new SummonBuilder('兽境犬首').useCnt(2).damage(1)
+        .description('{defaultAtk，使敌方出战角色附属【sts126031】。}')
+        .src('')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon);
+                cmds.push({ cmd: 'getStatus', status: [[126031, !!event.talent]], isOppo: true })
+                return { cmds }
+            }
+        })),
 
     127022: () => crd12702summon(),
 

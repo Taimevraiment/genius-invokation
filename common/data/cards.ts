@@ -2347,6 +2347,21 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    211131: () => new CardBuilder(435).name('代行裁判').since('v5.2.0').talent(1).costCryo(3).perCnt(1)
+        .description('{action}；装备有此牌的【hro】使用【ski】，或我方生成【sts111133】后，在手牌中生成1张【crd332002】。(每回合1次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Rosaria.webp')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { source = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['skilltype2'];
+            if (trigger == 'get-status' && source == 111133) triggers.push('get-status');
+            return {
+                trigger: triggers,
+                execmds: [{ cmd: 'getCard', cnt: 1, card: 332002 }],
+                exec: () => { --card.perCnt }
+            }
+        }),
+
     212011: () => new CardBuilder(69).name('光辉的季节').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，【smn112011】会使我方执行｢切换角色｣行动时少花费1个元素骰。(每回合1次)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png')
@@ -3091,6 +3106,14 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [] } = event;
             const element = [...new Set(heros.map(h => h.element))];
             return { status: 126022, cmds: [{ cmd: 'getDice', cnt: element.length, element }] }
+        }),
+
+    226031: () => new CardBuilder(437).name('异兽侵蚀').since('v5.2.0').talent(1).costGeo(3)
+        .description('{action}；装备有此牌的【hro】在场时，对方的【sts126031】最多可叠加到5次，并且所附属角色不在后台时也会生效。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Planelurker.webp')
+        .handle((_, event) => {
+            const { eheros = [] } = event;
+            eheros.forEach(h => h.heroStatus.forEach(sts => sts.id == 126031 && (sts.maxCnt = 5)));
         }),
 
     227011: () => new CardBuilder(120).name('孢子增殖').talent(1).costDendro(3)

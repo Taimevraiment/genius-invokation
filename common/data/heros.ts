@@ -242,6 +242,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ status: 111122 }))
         ),
 
+    1113: () => new HeroBuilder(432).name('罗莎莉亚').since('v5.2.0').mondstadt().cryo().polearm()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Rosaria.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('教会枪术'))
+        .skills(
+            new SkillBuilder('噬罪的告解').description('{dealDmg}，生成2层【sts111131】。(触发【sts111131】的效果时，会生成【sts111133】。)')
+                .src('',
+                    '')
+                .elemental().damage(1).cost(3).handle(() => ({ status: 111131 })),
+            new SkillBuilder('终命的圣礼').description('{dealDmg}，生成2层【sts111131】，召唤【smn111132】。')
+                .src('',
+                    '')
+                .burst(2).damage(1).cost(3).handle(() => ({ status: 111131, summon: 111132 }))
+        ),
+
     1201: () => new HeroBuilder(9).name('芭芭拉').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e92854385a3584dbbbd087ee5c49c69d.png')
@@ -2018,6 +2033,27 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/c7dc740570a4a65821767e0e2ba83529.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/3c29d28a60d100687cf9968a3a278e4d_5040009350976601315.png')
                 .handle(() => ({ trigger: ['game-start'], status: 126021 }))
+        ),
+
+    2603: () => new HeroBuilder(434).name('黄金王兽').monster().geo()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_Planelurker.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('王狼直击'))
+        .skills(
+            new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属【sts126031】，召唤【smn126032】。')
+                .src('',
+                    '')
+                .elemental().damage(1).cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent]], summon: 126032 })),
+            new SkillBuilder('黄金侵绞').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并使所有敌方角色附属【sts126031】。')
+                .src('',
+                    '')
+                .burst(2).damage(2).cost(3).handle(event => {
+                    const { eheros = [], talent } = event;
+                    return {
+                        pdmg: 1,
+                        cmds: [{ cmd: 'getStatus', status: [[126031, !!talent]], hidxs: allHidxs(eheros), isOppo: true }],
+                    }
+                })
         ),
 
     2701: () => new HeroBuilder(60).name('翠翎恐蕈').monster().dendro()
