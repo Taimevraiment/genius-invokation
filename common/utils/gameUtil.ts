@@ -1,5 +1,5 @@
 import { Card, Hero, Player, Skill } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType } from "../constant/enum.js";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, Version } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -155,4 +155,30 @@ export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | num
         }
     });
     players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, (resHeals as number[])[h.hidx + (p.pidx * players[0].heros.length)]))));
+}
+
+// 比较版本大小
+const compareVersion = (v1: Version, v2: Version) => {
+    if (v1 === v2) return 0;
+    if (v1 === 'vlatest') return 1;
+    if (v2 === 'vlatest') return -1;
+    const v1s = v1.slice(1).split('.').map(Number);
+    const v2s = v2.slice(1).split('.').map(Number);
+    for (let i = 0; i < v1s.length; ++i) {
+        if (v1s[i] > v2s[i]) return 1;
+        if (v1s[i] < v2s[i]) return -1;
+    }
+    return 0;
+}
+
+// 比较版本大小
+export const compareVersionFn = (curVersion: Version) => {
+    return {
+        value: curVersion,
+        lt: (ver: Version) => compareVersion(curVersion, ver) < 0,
+        lte: (ver: Version) => compareVersion(curVersion, ver) <= 0,
+        gt: (ver: Version) => compareVersion(curVersion, ver) > 0,
+        gte: (ver: Version) => compareVersion(curVersion, ver) >= 0,
+        eq: (ver: Version) => compareVersion(curVersion, ver) == 0,
+    }
 }

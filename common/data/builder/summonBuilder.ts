@@ -1,7 +1,7 @@
-import { Cmds, Summon } from "../../../typing";
+import { Cmds, Summon, VersionCompareFn } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
-import { getElByHid, getHidById } from "../../utils/gameUtil.js";
+import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -32,7 +32,7 @@ export class GISummon {
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
         shieldOrHeal: number, damage: number, element: ElementType,
-        handle?: (summon: Summon, event: SummonHandleEvent, ver: Version) => SummonHandleRes | undefined,
+        handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: string[], pdmg?: number, isDestroy?: SummonDestroyType,
             stsId?: number, spReset?: boolean, expl?: string[], pls?: boolean, ver?: Version,
@@ -75,7 +75,7 @@ export class GISummon {
                 summon.perCnt = pct;
                 if (!spReset && trigger != 'enter') return {}
             }
-            if (handle) return handle(summon, event, ver) ?? {};
+            if (handle) return handle(summon, event, compareVersionFn(ver)) ?? {};
             return {
                 trigger: ['phase-end'],
                 exec: execEvent => phaseEndAtk(execEvent.summon ?? summon),
@@ -115,7 +115,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
-    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: Version) => SummonHandleRes | undefined) | undefined;
+    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
         this._name = name;
@@ -228,7 +228,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._isDestroy = SUMMON_DESTROY_TYPE.UsedRoundEnd;
         return this;
     }
-    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: Version) => SummonHandleRes | undefined) {
+    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined) {
         this._handle = handle;
         return this;
     }

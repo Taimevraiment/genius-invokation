@@ -8,6 +8,7 @@ import { type GISkill } from "./common/data/builder/skillBuilder"
 import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
 import { type GISupport } from "./common/data/builder/supportBuilder"
+import { compareVersionFn } from "./common/utils/gameUtil"
 
 type RoomList = {
     id: number,
@@ -290,3 +291,5 @@ type PickCard = {
 }
 
 type PickCardType = 'card' | 'summon';
+
+type VersionCompareFn = ReturnType<typeof compareVersionFn>;

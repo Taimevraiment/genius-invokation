@@ -1553,7 +1553,7 @@ export default class GeniusInvokationRoom {
                 .map(wsmn => (wsmn.UI.isWill = true, wsmn));
             willSummons[1] = bPlayers[pidx].summons.filter(wsmn => this.players[pidx].summons.every(smn => smn.id != wsmn.id))
                 .map(wsmn => {
-                    const nsmn = wsmn.handle(wsmn, { skid }).willSummon ?? wsmn;
+                    const nsmn = this._getSummonById(wsmn.handle(wsmn, { skid }).willSummon)[0] ?? wsmn;
                     nsmn.UI.isWill = true;
                     return nsmn;
                 });
@@ -2793,6 +2793,7 @@ export default class GeniusInvokationRoom {
      * @param pidx 
      */
     private _doStatusDestroy(pidx: number, cStatus: Status, hidx: number) {
+        this._detectSkill(pidx, 'status-destroy', { source: cStatus.id, sourceHidx: hidx });
         this._detectStatus(pidx, STATUS_TYPE.Attack, 'status-destroy', { cStatus, hidxs: [hidx], isUnshift: true, isQuickAction: 2 });
     }
     /**
@@ -3096,17 +3097,18 @@ export default class GeniusInvokationRoom {
     * @param trigger 触发的时机
     * @param options players 玩家组, heros 角色组, eheros 敌方角色组, isExec 是否执行, getdmg 受到伤害数, cskid 只检测某技能id,
     *                heal 回血数, discards 我方弃牌, dmg 造成的伤害, hidxs 只检测某些序号角色, isExecTask 是否为执行任务, 
-    *                isQuickAction 是否为快速行动, card 打出的卡牌, energyCnt 充能变化
+    *                isQuickAction 是否为快速行动, card 打出的卡牌, energyCnt 充能变化, source 触发id, sourceHidx 触发的角色序号hidx
     * @returns isQuickAction: 是否为快速行动, heros 变化后的我方角色组, eheros 变化后的对方角色组, isTriggered 是否触发被动
     */
     _detectSkill(pidx: number, otrigger: Trigger | Trigger[],
         options: {
             players?: Player[], heros?: Hero[], eheros?: Hero[], hidxs?: number[] | number, cskid?: number,
             isExec?: boolean, getdmg?: number[], heal?: number[], discards?: Card[], isExecTask?: boolean,
-            dmg?: number[], isQuickAction?: boolean, card?: Card, energyCnt?: number[][],
+            dmg?: number[], isQuickAction?: boolean, card?: Card, energyCnt?: number[][], source?: number,
+            sourceHidx?: number,
         } = {}
     ) {
-        const { players = this.players, isExec = true, getdmg = [], dmg = [], heal = [], discards = [], card,
+        const { players = this.players, isExec = true, getdmg = [], dmg = [], heal = [], discards = [], card, source, sourceHidx,
             isExecTask = false, heros = players[pidx].heros, eheros = players[pidx ^ 1].heros, cskid = -1, energyCnt } = options;
         let { hidxs = allHidxs(heros), isQuickAction = false } = options;
         let isTriggered = false;
@@ -3135,6 +3137,8 @@ export default class GeniusInvokationRoom {
                         discards,
                         dmg,
                         talent: isExec ? hero.talentSlot : isCdt(card?.id == getTalentIdByHid(hero.id), card) ?? hero.talentSlot,
+                        source,
+                        sourceHidx,
                         isExecTask,
                     });
                     if (this._hasNotTriggered(skillres.trigger, trigger)) continue;
@@ -4085,7 +4089,7 @@ export default class GeniusInvokationRoom {
                     }
                 } else if (supportres.summon) {
                     willSummons[pidx].push(...this._getSummonById(supportres.summon).map(smn => {
-                        const willSmn = smn.handle(smn).willSummon ?? smn;
+                        const willSmn = this._getSummonById(smn.handle(smn).willSummon)[0] ?? smn;
                         willSmn.UI.isWill = true;
                         return willSmn;
                     }));

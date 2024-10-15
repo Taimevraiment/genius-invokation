@@ -1,10 +1,7 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
-    ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, SKILL_TYPE,
-    SkillType,
-    STATUS_TYPE,
-    Version, WEAPON_TYPE, WeaponType
+    ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
@@ -356,7 +353,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+2。', 'v3.8.0')
         .handle((status, _, ver) => ({
             trigger: ['skilltype2'],
-            addDmgCdt: ver < 'v3.8.0' ? 2 : 3,
+            addDmgCdt: ver.lt('v3.8.0') ? 2 : 3,
             exec: () => { --status.useCnt },
         })),
 
@@ -540,7 +537,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
-        .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver >= 'v4.2.0' && isTalent)
+        .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver.gte('v4.2.0') && isTalent)
         .description(`【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；[useCnt]`)
         .description(`【我方出战角色受到至少为3的伤害时：】抵消1点伤害。；[useCnt]`, 'v4.2.0'),
 
@@ -548,7 +545,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；[useCnt]')
         .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；[useCnt]', 'v3.6.0')
         .handle((_s, _e, ver) => ({
-            damage: ver < 'v3.6.0' ? 2 : 1,
+            damage: ver.lt('v3.6.0') ? 2 : 1,
             element: DAMAGE_TYPE.Hydro,
             trigger: ['after-skilltype1'],
             exec: eStatus => { eStatus && --eStatus.useCnt },
@@ -599,12 +596,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112043: () => new StatusBuilder('断流').heroStatus().icon('ski,2').iconBg(DEBUFF_BG_COLOR).roundCnt(2, 'v4.1.0')
-        .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy).type(ver => ver >= 'v4.1.0', STATUS_TYPE.Sign)
+        .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy).type(ver => ver.gte('v4.1.0'), STATUS_TYPE.Sign)
         .description('【所附属角色被击倒后：】对所在阵营的出战角色附属【断流】。')
         .handle((status, event, ver) => {
             const { heros = [], hidx = -1, eheros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['killed'];
-            const isTalent = trigger == 'phase-end' && !!getObjById(eheros, getHidById(status.id))?.talentSlot && (ver < 'v4.1.0' || heros[hidx].isFront);
+            const isTalent = trigger == 'phase-end' && !!getObjById(eheros, getHidById(status.id))?.talentSlot && (ver.lt('v4.1.0') || heros[hidx].isFront);
             if (isTalent) triggers.push('phase-end');
             return {
                 trigger: triggers,
@@ -712,7 +709,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；[roundCnt]')
         .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；[roundCnt]', 'v4.6.1')
         .handle((_s, _e, ver) => ({
-            damage: ver < 'v4.6.1' ? 2 : 1,
+            damage: ver.lt('v4.6.1') ? 2 : 1,
             element: DAMAGE_TYPE.Hydro,
             trigger: ['after-skilltype1'],
         })),
@@ -791,6 +788,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['skilltype1'],
                 ...res,
                 exec: () => { --status.useCnt }
+            }
+        }),
+
+    112134: () => readySkillStatus('满满心意药剂冲击', 12135),
+
+    112135: () => new StatusBuilder('应当有适当的休息（生效中）').combatStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .description('我方｢元素战技｣或召唤物造成的伤害+1。；[useCnt]')
+        .handle((status, event) => {
+            const { isSummon = -1, sktype = -1 } = event;
+            if (isSummon == -1 && sktype != SKILL_TYPE.Elemental) return;
+            return {
+                addDmgCdt: 1,
+                trigger: ['dmg'],
+                exec: () => { --status.useCnt },
             }
         }),
 
@@ -1033,7 +1044,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { trigger = '' } = event;
             const isAttachEl = status.useCnt >= 2;
             const triggers: Trigger[] = ['phase-end', 'skilltype3'];
-            if (ver >= 'v4.8.0') triggers.push('skilltype2');
+            if (ver.gte('v4.8.0')) triggers.push('skilltype2');
             return {
                 trigger: triggers,
                 addDmg: isCdt(status.useCnt >= 4, 2),
@@ -1042,7 +1053,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: () => {
                     if (trigger == 'phase-end' || trigger == 'skilltype2') ++status.useCnt;
                     else if (trigger == 'skilltype3') status.useCnt += 2;
-                    if (ver < 'v4.8.0') {
+                    if (ver.lt('v4.8.0')) {
                         if (status.useCnt >= 6) status.useCnt -= 4;
                     } else if (trigger == 'phase-end' && status.useCnt >= 8) {
                         status.useCnt -= 6;
@@ -1052,7 +1063,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     114051: () => readySkillShieldStatus('捉浪·涛拥之守').handle((_s, _e, ver) => {
-        if (ver >= 'v4.2.0') return;
+        if (ver.gte('v4.2.0')) return;
         return { trigger: ['getdmg'], exec: () => ({ cmds: [{ cmd: 'getStatus', status: 114052 }] }) }
     }),
 
@@ -1138,7 +1149,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event, ver) => {
             const { skid = -1, isSummon = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (skid == 14092 || (ver >= 'v5.1.0' && isSummon == 114092)) triggers.push('getdmg');
+            if (skid == 14092 || (ver.gte('v5.1.0') && isSummon == 114092)) triggers.push('getdmg');
             return {
                 trigger: triggers,
                 getDmg: status.useCnt,
@@ -1238,12 +1249,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         new StatusBuilder('乱岚拨止' + `${swirlEl != ELEMENT_TYPE.Anemo ? `·${ELEMENT_NAME[swirlEl][0]}` : ''}`)
             .heroStatus().icon('buff').useCnt(1).iconBg(STATUS_BG_COLOR[swirlEl]).perCnt(1).perCnt(0, 'v4.8.0')
             .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.ConditionalEnchant)
-            .type(ver => ver >= 'v4.8.0', STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill)
+            .type(ver => ver.gte('v4.8.0'), STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill)
             .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣; 本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
                 const { isFallAtk = false, trigger = '' } = event;
-                if (ver < 'v4.8.0') {
+                if (ver.lt('v4.8.0')) {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
                         trigger: ['skilltype1'],
@@ -1435,7 +1446,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)')
         .description('所附属角色｢普通攻击｣造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色｢普通攻击｣后：】为其附属【sts116054】。(每回合1次)', 'v4.2.0')
         .handle((status, _, ver) => ({
-            addDmgType1: isCdt(ver < 'v4.2.0', 2, 1),
+            addDmgType1: isCdt(ver.lt('v4.2.0'), 2, 1),
             attachEl: ELEMENT_TYPE.Geo,
             trigger: ['skilltype1'],
             exec: () => {
@@ -1489,7 +1500,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: ['skilltype1'],
                 minusDiceSkill: isCdt(hcardsCnt <= 1, { skilltype1: [0, 0, 1] }),
-                addDmgType1: isCdt(ver < 'v4.8.0', 1),
+                addDmgType1: isCdt(ver.lt('v4.8.0'), 1),
                 addDmgCdt: isCdt(hcardsCnt == 0 && !!getObjById(heros, getHidById(status.id))?.talentSlot, 2),
                 exec: () => { --status.useCnt }
             }
@@ -1669,7 +1680,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
             return {
                 trigger: ['action-start', 'action-start-oppo'],
-                damage: pile[0].cost + pile[0].anydice + +(ver < 'v4.8.0'),
+                damage: pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0')),
                 element: DAMAGE_TYPE.Dendro,
                 exec: (eStatus, execEvent = {}) => {
                     if (!eStatus) return;
@@ -1780,8 +1791,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description(`所附属角色切换到其他角色时元素骰费用+1${isTalent ? '，并且会使所附属角色受到的[水元素伤害]+1' : ''}。；[roundCnt]；(同一方场上最多存在一个此状态)`)
         .description(`所附属角色受到的[水元素伤害]+1${isTalent ? '，并且会使所附属角色切换到其他角色时元素骰费用+1' : ''}。；[roundCnt]；(同一方场上最多存在一个此状态)`, 'v4.8.0')
         .handle((status, _, ver) => ({
-            addDiceHero: isCdt(ver >= 'v4.8.0' || status.isTalent, 1),
-            getDmg: isCdt(ver < 'v4.8.0' || status.isTalent, 1),
+            addDiceHero: isCdt(ver.gte('v4.8.0') || status.isTalent, 1),
+            getDmg: isCdt(ver.lt('v4.8.0') || status.isTalent, 1),
             trigger: ['Hydro-getdmg', 'active-switch-from'],
             onlyOne: true,
         })),
@@ -1826,7 +1837,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], hcard, heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];
-            if (ver >= 'v5.0.0') triggers.push('phase-end');
+            if (ver.gte('v5.0.0')) triggers.push('phase-end');
             return {
                 trigger: triggers,
                 isAddTask: true,
@@ -1863,7 +1874,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         }
                     });
                     if (cnt > 0) {
-                        if (ver < 'v5.0.0') {
+                        if (ver.lt('v5.0.0')) {
                             const healcmds = Array.from<Cmds[], Cmds>({ length: cnt }, (_, i) => ({ cmd: 'addMaxHp', cnt: 1, hidxs: [hero.hidx], mode: i, isAttach: true }));
                             return { cmds: [{ cmd: 'getStatus', status: [[122042, cnt]], hidxs: [hero.hidx] }, ...healcmds], }
                         }
@@ -1909,21 +1920,21 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { hidx = -1 } = event;
             return {
                 trigger: ['will-killed'],
-                cmds: [{ cmd: 'revive', cnt: ver < 'v4.6.0' ? 3 : 4, hidxs: [hidx] }],
+                cmds: [{ cmd: 'revive', cnt: ver.lt('v4.6.0') ? 3 : 4, hidxs: [hidx] }],
                 exec: eStatus => {
                     if (!eStatus) return;
                     --eStatus.useCnt;
-                    return { cmds: [{ cmd: 'getStatus', status: isCdt(ver >= 'v4.6.0', 123026), hidxs: [hidx] }] }
+                    return { cmds: [{ cmd: 'getStatus', status: isCdt(ver.gte('v4.6.0'), 123026), hidxs: [hidx] }] }
                 }
             }
         }),
 
     123024: () => new StatusBuilder('渊火加护').heroStatus().useCnt(2)
-        .type(STATUS_TYPE.Shield).type(ver => ver >= 'v4.6.0', STATUS_TYPE.Attack)
+        .type(STATUS_TYPE.Shield).type(ver => ver.gte('v4.6.0'), STATUS_TYPE.Attack)
         .description('为所附属角色提供2点[护盾]。此[护盾]耗尽后：对所有敌方角色造成1点[穿透伤害]。')
         .description('为所附属角色提供2点[护盾]。', 'v4.6.0')
         .handle((status, event, ver) => {
-            if (status.useCnt > 0 || ver < 'v4.6.0') return;
+            if (status.useCnt > 0 || ver.lt('v4.6.0')) return;
             const { eheros = [] } = event;
             return {
                 trigger: ['status-destroy'],
@@ -1995,7 +2006,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 onlyOne: true,
                 exec: () => {
                     if (getDmg > 0) {
-                        if (ver < 'v4.4.0') --status.perCnt;
+                        if (ver.lt('v4.4.0')) --status.perCnt;
                         else --status.useCnt;
                     }
                 }
@@ -2612,7 +2623,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]', 'v4.1.0')
         .handle((status, event, ver) => {
-            if (ver < 'v4.1.0') return continuousActionHandle(status, event);
+            if (ver.lt('v4.1.0')) return continuousActionHandle(status, event);
             return {
                 trigger: ['skill'],
                 cmds: [{ cmd: 'switch-after' }],
@@ -2854,14 +2865,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     303306: () => new StatusBuilder('兽肉薄荷卷（生效中）').heroStatus().icon('buff2')
-        .useCnt(3).useCnt(-1, 'v3.4.0').roundCnt(1).type(STATUS_TYPE.Usage).type(ver => ver < 'v3.4.0', STATUS_TYPE.Sign)
+        .useCnt(3).useCnt(-1, 'v3.4.0').roundCnt(1).type(STATUS_TYPE.Usage).type(ver => ver.lt('v3.4.0'), STATUS_TYPE.Sign)
         .description('本回合中，该角色｢普通攻击｣少花费1个[无色元素骰]。；[useCnt]')
         .description('本回合中，该角色｢普通攻击｣少花费1个[无色元素骰]。', 'v3.4.0')
         .handle((status, event, ver) => ({
             trigger: ['skilltype1'],
             minusDiceSkill: { skilltype1: [0, 1, 0] },
             exec: () => {
-                if (ver >= 'v3.4.0' && event.isMinusDiceSkill) --status.useCnt;
+                if (ver.gte('v3.4.0') && event.isMinusDiceSkill) --status.useCnt;
             },
         })),
 

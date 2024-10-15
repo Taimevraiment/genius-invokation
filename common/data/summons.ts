@@ -4,7 +4,6 @@ import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE
 import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
-import { newStatus } from "./statuses.js";
 
 export type SummonHandleEvent = {
     trigger?: Trigger,
@@ -44,7 +43,7 @@ export type SummonHandleRes = {
     minusDiceCard?: number,
     minusDiceSkill?: MinusDiceSkill,
     tround?: number,
-    willSummon?: Summon,
+    willSummon?: number,
     isQuickAction?: boolean,
     exec?: (event: SummonExecEvent) => SummonExecRes | void,
 }
@@ -146,7 +145,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const hidxs = getMaxHertHidxs(heros);
             const fhero = heros[getAtkHidx(heros)];
             const isHeal = fhero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
-            const hasTround = ver >= 'v4.7.0' && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
+            const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
             if (isHeal) triggers.push('after-skilltype1');
             const skcmds: Cmds[] = [{ cmd: 'heal', cnt: 1, hidxs }];
             const trdcmds: Cmds[] = [];
@@ -311,7 +310,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const triggers: Trigger[] = [];
             if (summon.useCnt == 0) triggers.push('phase-end');
             const hero = heros[getAtkHidx(heros)];
-            const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver < 'v4.2.0' ? 3 : 4);
+            const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver.lt('v4.2.0') ? 3 : 4);
             if (cnt) triggers.push('after-skilltype1');
             return {
                 trigger: triggers,
@@ -321,7 +320,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         if (isExec) {
                             smn.isDestroy = SUMMON_DESTROY_TYPE.Used;
                             smn.useCnt = 0;
-                        } else summon.useCnt = -100;
+                        } else smn.useCnt = -100;
                     }
                     return { cmds: [{ cmd: 'attack', cnt }] }
                 },
@@ -602,7 +601,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const { heros = [], isFallAtk = false, isMinusDiceSkill, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             let minusDiceCdt = isFallAtk;
-            if (ver < 'v4.8.0') {
+            if (ver.lt('v4.8.0')) {
                 triggers.push('skilltype1');
                 minusDiceCdt &&= summon.perCnt > 0;
             } else {
@@ -613,7 +612,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 minusDiceSkill: isCdt(minusDiceCdt, { skilltype1: [0, 1, 0] }),
                 isNotAddTask: trigger != 'phase-end',
                 trigger: triggers,
-                isQuickAction: ver >= 'v4.8.0' && summon.perCnt > 0,
+                isQuickAction: ver.gte('v4.8.0') && summon.perCnt > 0,
                 exec: execEvent => {
                     const { summon: smn = summon, isQuickAction = false } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn);
@@ -795,8 +794,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (!hero) return;
             const isHero = hero?.id == getHidById(summon.id);
             const isTalent = isHero && talent && talent.perCnt == -1;
-            if (ver < 'v4.1.0' || isHero) triggers.push('get-elReaction');
-            if (!isExec && trigger == 'get-elReaction' && (ver < 'v4.1.0' || isHero)) {
+            if (ver.lt('v4.1.0') || isHero) triggers.push('get-elReaction');
+            if (!isExec && trigger == 'get-elReaction' && (ver.lt('v4.1.0') || isHero)) {
                 summon.useCnt = Math.max(0, summon.useCnt - 1);
             }
             const isTalentTrg = ['after-skilltype1', 'after-skilltype2'].includes(trigger);
@@ -843,16 +842,16 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png')
-        .handle((summon, event, ver) => ({
-            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), newSummon(ver)(122011)),
+        .handle((summon, event) => ({
+            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
             trigger: ['phase-end'],
             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
         })),
 
     122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp')
-        .handle((summon, event, ver) => ({
-            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), newSummon(ver)(122011)),
+        .handle((summon, event) => ({
+            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
             trigger: ['phase-end'],
             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
         })),
@@ -860,11 +859,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Frog.webp')
-        .handle((summon, event, ver) => {
+        .handle((summon, event) => {
             const trigger: Trigger[] = [];
             if (summon.useCnt == 0) trigger.push('phase-end');
             return {
-                willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), newSummon(ver)(122011)),
+                willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
                 trigger,
                 exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon),
             }
@@ -885,7 +884,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     123031: (isTalent: boolean = false) => new SummonBuilder('厄灵·炎之魔蝎').useCnt(2).damage(1).plus(isTalent).talent(isTalent)
         .description(`{defaultAtk${isTalent ? '; 如果本回合中【hro】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
-        .handle((summon, event, ver) => {
+        .handle((summon, event) => {
             const { heros = [], trigger = '' } = event;
             const hidx = getObjIdxById(heros, getHidById(summon.id));
             return {
@@ -902,7 +901,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         return { cmds: [{ cmd: 'attack', cnt: smn.damage + addDmg }] }
                     }
                     if (trigger == 'phase-start' && hero.hp > 0) {
-                        return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(123033, smn.isTalent ? 2 : 1)], hidxs: [hidx] }] }
+                        return { cmds: [{ cmd: 'getStatus', status: [[123033, smn.isTalent ? 2 : 1]], hidxs: [hidx] }] }
                     }
                 },
             }

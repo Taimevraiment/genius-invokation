@@ -502,7 +502,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/7b6b74c3444f624f117f8e05344d27ec_6292708375904670698.png')
         .handle((_, event, ver) => {
             const { heros } = event;
-            const liyueCnt = Math.min(3, heros?.filter(h => h.tags.includes(HERO_LOCAL.Liyue) && (ver >= 'v3.7.0' || h.hp > 0))?.length ?? 0);
+            const liyueCnt = Math.min(3, heros?.filter(h => h.tags.includes(HERO_LOCAL.Liyue) && (ver.gte('v3.7.0') || h.hp > 0))?.length ?? 0);
             return { addDmg: 1, status: [[301101, liyueCnt]] }
         }),
 
@@ -706,7 +706,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【敌方角色被击倒后：】如果所附属角色为｢出战角色｣，则生成2个[万能元素骰]。', 'v3.8.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/c36e23e6486cfc14ba1afac19d73620e_6020851449922266352.png')
         .handle((card, event, ver) => {
-            if (ver >= 'v3.8.0' && card.perCnt <= 0) return;
+            if (ver.gte('v3.8.0') && card.perCnt <= 0) return;
             const { heros = [], hidxs: [hidx] = [] } = event;
             if (!heros[hidx].isFront) return;
             return {
@@ -759,7 +759,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { hidxs, trigger = '' } = event;
             return {
-                addDmgType3: isCdt(ver < 'v4.1.0' || card.perCnt > 0, 2),
+                addDmgType3: isCdt(ver.lt('v4.1.0') || card.perCnt > 0, 2),
                 trigger: ['other-skilltype3', 'skilltype3'],
                 execmds: isCdt(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
                 exec: () => {
@@ -937,7 +937,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const isExtra = new Set(heros.map(h => h.element)).size == 3;
             const cmds: Cmds[] = [];
-            if (ver < 'v4.5.0') {
+            if (ver.lt('v4.5.0')) {
                 cmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx]?.element });
                 if (isExtra) cmds.push({ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni });
             } else {
@@ -1512,7 +1512,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [-1] } = event;
             const elements: ElementType[] = [ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro];
             const isValid = elements.includes(heros[hidx]?.element ?? ELEMENT_TYPE.Physical);
-            const hidxs = ver < 'v4.2.0' ? allHidxs(heros) : heros.filter(h => h.attachElement.length > 0).map(h => h.hidx);
+            const hidxs = ver.lt('v4.2.0') ? allHidxs(heros) : heros.filter(h => h.attachElement.length > 0).map(h => h.hidx);
             return { cmds: [{ cmd: 'attach', hidxs, mode: CMD_MODE.FrontHero }], isValid }
         }),
 
@@ -1528,8 +1528,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/4c214784418f974b6b3fa294b415cdb4_8205569284186975732.png')
         .handle((_, event, ver) => {
             const { round = 1, playerInfo: { talentTypeCnt = 0 } = {} } = event;
-            if (ver < 'v4.4.0') return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round) }] }
-            if (ver < 'v4.7.0') return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }], isValid: round > 1 }
+            if (ver.lt('v4.4.0')) return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round) }] }
+            if (ver.lt('v4.7.0')) return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }], isValid: round > 1 }
             if (round > 1) return { cmds: [{ cmd: 'getCard', cnt: Math.min(4, round - 1) }] }
             return { cmds: [{ cmd: 'getCard', subtype: CARD_SUBTYPE.Talent, cnt: 1, isAttach: true }], isValid: talentTypeCnt >= 2 }
         }),
@@ -1655,7 +1655,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png')
         .handle((_, event, ver) => {
             const { heros = [] } = event;
-            return { isValid: ver < 'v4.1.0' || allHidxs(heros).length > 1, status: 303181 }
+            return { isValid: ver.lt('v4.1.0') || allHidxs(heros).length > 1, status: 303181 }
         }),
 
     331802: () => new CardBuilder(238).name('岩与契约').since('v3.7.0').tag(CARD_TAG.LocalResonance).costAny(3)
@@ -1734,9 +1734,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { heros = [], combatStatus = [] } = event;
             return {
-                isValid: (ver < '4.0.0' || !hasObjById(combatStatus, 303205)) && heros.some(h => h.hp == -1),
+                isValid: (ver.lt('v4.0.0') || !hasObjById(combatStatus, 303205)) && heros.some(h => h.hp == -1),
                 cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }, { cmd: 'getEnergy', cnt: 1 }],
-                status: isCdt(ver >= '4.0.0', 303205),
+                status: isCdt(ver.gte('v4.0.0'), 303205),
             }
         }),
 
@@ -1816,7 +1816,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromWeapon = fromHero.weaponSlot;
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
-                        if (ver >= 'v4.1.0') fromWeapon.handle(fromWeapon, { reset: true });
+                        if (ver.gte('v4.1.0')) fromWeapon.handle(fromWeapon, { reset: true });
                         toHero.weaponSlot = fromWeapon;
                     }
                 }
@@ -1839,7 +1839,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromArtifact = fromHero.artifactSlot;
                     if (fromArtifact) {
                         fromHero.artifactSlot = null;
-                        if (ver >= 'v4.1.0') fromArtifact.handle(fromArtifact, { reset: true });
+                        if (ver.gte('v4.1.0')) fromArtifact.handle(fromArtifact, { reset: true });
                         toHero.artifactSlot = fromArtifact;
                     }
                 }
@@ -1869,12 +1869,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { pidx = -1, esummons = [], selectSummon = -1 } = event;
             const summonCnt = INIT_SUMMONCNT();
-            if (selectSummon > -1 && pidx > -1) summonCnt[pidx ^ 1][selectSummon] = ver < 'v3.7.0' ? -100 : -2;
+            if (selectSummon > -1 && pidx > -1) summonCnt[pidx ^ 1][selectSummon] = ver.lt('v3.7.0') ? -100 : -2;
             return {
                 summonCnt,
                 exec: () => {
                     const selectSmn = esummons[selectSummon];
-                    if (ver < 'v3.7.0') {
+                    if (ver.lt('v3.7.0')) {
                         selectSmn.isDestroy = SUMMON_DESTROY_TYPE.Used;
                         selectSmn.useCnt = 0;
                     } else selectSmn.useCnt = Math.max(0, selectSmn.useCnt - 2);
@@ -1959,13 +1959,13 @@ const allCards: Record<number, () => CardBuilder> = {
     332022: () => new CardBuilder(262).name('藏锋何处').since('v4.0.0').event().costSame(0).canSelectHero(1)
         .description('将一个我方角色所装备的｢武器｣返回手牌。；【本回合中，我方下一次打出｢武器｣手牌时：】少花费2个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/888e75a6b80b0f407683eb2af7d25882_7417759921565488584.png')
-        .handle((_, event, ver) => {
+        .handle((_, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             return {
                 status: 303222,
                 canSelectHero: heros.map(h => h.weaponSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.weaponSlot, () => newCard(ver)(hero.weaponSlot!.id)) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.weaponSlot, () => hero.weaponSlot!.id) }],
                 exec: () => { hero.weaponSlot = null },
             }
         }),
@@ -1987,9 +1987,9 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [], playerInfo: { isUsedCardPerRound } = {} } = event;
             const hero = heros[hidx];
             return {
-                status: ver >= 'v4.8.0' && isUsedCardPerRound ? 303232 : 303224,
+                status: ver.gte('v4.8.0') && isUsedCardPerRound ? 303232 : 303224,
                 canSelectHero: heros.map(h => h.artifactSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.artifactSlot, () => newCard(ver)(hero.artifactSlot!.id)) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.artifactSlot, () => hero.artifactSlot!.id) }],
                 exec: () => { hero.artifactSlot = null },
             }
         }),
@@ -2240,7 +2240,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其造成的[冰元素伤害]+1，并且改为对敌方后台角色造成3点[穿透伤害]。', 'v3.7.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/15a100ee0285878fc5749663031fa05a_7762319984393418259.png')
         .handle((card, event, ver) => {
-            if (ver >= 'v3.7.0') return;
+            if (ver.gte('v3.7.0')) return;
             const { heros = [] } = event;
             const hero = getObjById(heros, getHidById(card.id));
             return { addDmgCdt: isCdt(!!hero?.skills[2].useCnt, 1) }
@@ -2412,7 +2412,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { eheros = [], heros = [], hidxs: [hidx] = [], ehidx = -1 } = event;
             if ((eheros[ehidx]?.hp ?? 10) <= 6 && hasObjById(heros[hidx]?.heroStatus, 112061)) {
-                return { trigger: ['skilltype1'], addDmgCdt: ver < 'v4.7.0' ? 1 : 2 }
+                return { trigger: ['skilltype1'], addDmgCdt: ver.lt('v4.7.0') ? 1 : 2 }
             }
         }),
 
@@ -2445,6 +2445,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时，会对自身附属【sts112116】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/fb5f84b550dcdcfcff9197573aee45a8_1289322499384647153.png'),
 
+    212131: () => new CardBuilder(436).name('应当有适当的休息').since('v5.2.0').talent(1).costHydro(3)
+        .description('{action}；装备有此牌的【hro】使用【ski】后，使我方接下来2次｢元素战技｣或召唤物造成的伤害+1。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Sigewinne.webp')
+        .handle(() => ({ trigger: ['skilltype2'], execmds: [{ cmd: 'getStatus', status: 112135 }] })),
+
     213011: () => new CardBuilder(77).name('流火焦灼').talent(1).costPyro(3)
         .description('{action}；装备有此牌的【hro】每回合第2次与第3次使用【ski】时，少花费1个[火元素骰]。')
         .description('{action}；装备有此牌的【hro】每回合第2次使用【ski】时，少花费1个[火元素骰]。', 'v4.7.0')
@@ -2453,7 +2458,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [-1] } = event;
             if (hidx == -1) return;
             const { skills: [, { useCnt = 0 }] } = heros[hidx];
-            const isMinus = useCnt == 1 || (ver >= 'v4.7.0' && useCnt == 2);
+            const isMinus = useCnt == 1 || (ver.gte('v4.7.0') && useCnt == 2);
             return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }) }
         }),
 
@@ -2498,7 +2503,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype1'],
                 addDmgCdt: isCdt((eheros[ehidx]?.hp ?? 10) <= 6, 1),
-                execmds: isCdt(ver >= 'v4.2.0' && (hasObjById(heros[hidx]?.heroStatus, 113081) || isExecTask), [{ cmd: 'getCard', cnt: 1 }])
+                execmds: isCdt(ver.gte('v4.2.0') && (hasObjById(heros[hidx]?.heroStatus, 113081) || isExecTask), [{ cmd: 'getCard', cnt: 1 }])
             }
         }),
 
@@ -2566,7 +2571,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7b07468873ea01ee319208a3e1f608e3_1769364352128477547.png')
         .handle((card, event, ver) => {
             const { heros = [] } = event;
-            if (ver >= 'v4.2.0' && card.perCnt <= 0) return;
+            if (ver.gte('v4.2.0') && card.perCnt <= 0) return;
             const nhidxs = allHidxs(heros, { cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && h.energy < h.maxEnergy });
             if (nhidxs.length == 0) return;
             return {
@@ -2592,17 +2597,17 @@ const allCards: Record<number, () => CardBuilder> = {
             const stsCnt = getObjById(heroStatus, 114041)?.useCnt ?? 0;
             let addDmgCdt = 0;
             if (
-                ver < 'v4.2.0' && [3, 5].includes(stsCnt) ||
-                ver < 'v4.8.0' && stsCnt % 2 == 0 ||
-                ver >= 'v5.0.0' && stsCnt >= 2 && card.perCnt > 0
+                ver.lt('v4.2.0') && [3, 5].includes(stsCnt) ||
+                ver.lt('v4.8.0') && stsCnt % 2 == 0 ||
+                ver.gte('v5.0.0') && stsCnt >= 2 && card.perCnt > 0
             ) {
                 addDmgCdt = 1;
-            } else if (ver >= 'v4.8.0' && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
+            } else if (ver.gte('v4.8.0') && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
             return {
                 trigger: ['skilltype2'],
                 addDmgCdt,
                 exec: () => {
-                    if (ver >= 'v4.8.0') --card.perCnt;
+                    if (ver.gte('v4.8.0')) --card.perCnt;
                 }
             }
         }),
@@ -2775,7 +2780,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [], combatStatus = [], sktype = SKILL_TYPE.Vehicle, isSummon = -1 } = event;
             let isTriggered = false;
             const triggers: Trigger[] = [];
-            if (ver < 'v4.8.0') {
+            if (ver.lt('v4.8.0')) {
                 const fhero = heros.find(h => h.isFront);
                 const istShield = fhero?.heroStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
                 const ostShield = combatStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
@@ -3000,7 +3005,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【smn123031】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn123031】的减伤效果改为每回合至多2次。', 'v5.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png')
         .handle((_, event, ver) => {
-            if (ver < 'v5.1.0') return;
+            if (ver.lt('v5.1.0')) return;
             const { skid = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             if (skid == 1230311) triggers.push('kill');
@@ -3156,7 +3161,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (smnIdx > -1) {
                 const useCnt = summons[smnIdx].useCnt;
                 const entityId = summons[smnIdx].entityId;
-                summons.splice(smnIdx, 1, newSummon(ver)(112111 + nsummonId, useCnt).setEntityId(entityId));
+                summons.splice(smnIdx, 1, newSummon(ver.value)(112111 + nsummonId, useCnt).setEntityId(entityId));
             }
             return {
                 cmds: [
@@ -3165,6 +3170,33 @@ const allCards: Record<number, () => CardBuilder> = {
                 ]
             }
         }),
+
+    112131: () => new CardBuilder().name('激愈水球·大').event()
+        .description('【抓到此牌时：】治疗我方出战角色3点。生成1张【crd112132】，将其置于对方牌库顶部第2张牌的位置。')
+        .src('')
+        .handle(() => ({
+            trigger: ['getcard'],
+            execmds: [{ cmd: 'heal', cnt: 3 }, { cmd: 'addCard', card: 112132, cnt: -1, hidxs: [2], isOppo: true }],
+        })),
+
+    112132: () => new CardBuilder().name('激愈水球·中').event()
+        .description('【抓到此牌时：】对所在阵营的出战角色造成2点[水元素伤害]。生成1张【crd112133】，将其置于对方牌库顶部。')
+        .src('')
+        .handle(() => ({
+            trigger: ['getcard'],
+            execmds: [
+                { cmd: 'attack', cnt: 2, element: DAMAGE_TYPE.Hydro, isOppo: false },
+                { cmd: 'addCard', card: 112133, cnt: -1, hidxs: [1], isOppo: true },
+            ],
+        })),
+
+    112133: () => new CardBuilder().name('激愈水球·小').event()
+        .src('')
+        .description('【抓到此牌时：】治疗所有我方角色1点，生成【sts112101】。')
+        .handle((_, event) => ({
+            trigger: ['getcard'],
+            execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }, { cmd: 'getStatus', status: 112101 }],
+        })),
 
     113131: () => new CardBuilder().name('超量装药弹头').event(true).costPyro(2)
         .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
@@ -3223,7 +3255,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [], combatStatus = [] } = event;
             const cmds: Cmds[] = [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }, { cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }];
             const fhero = heros[hidx];
-            if (ver < 'v4.8.0' && fhero?.tags.includes(HERO_TAG.ConsecratedBeast)) cmds.push({ cmd: 'getEnergy', cnt: 1 })
+            if (ver.lt('v4.8.0') && fhero?.tags.includes(HERO_TAG.ConsecratedBeast)) cmds.push({ cmd: 'getEnergy', cnt: 1 })
             return { isValid: !hasObjById(combatStatus, 124053), cmds, status: 124053 }
         }),
 
@@ -3345,12 +3377,12 @@ const allCards: Record<number, () => CardBuilder> = {
             if (isExec) {
                 const supportLen = MAX_SUPPORT_COUNT - supports.length;
                 const esupportLen = MAX_SUPPORT_COUNT - esupports.length;
-                const allyPool = cardsTotal(ver).filter(c => c.hasSubtype(CARD_SUBTYPE.Ally));
+                const allyPool = cardsTotal(ver.value).filter(c => c.hasSubtype(CARD_SUBTYPE.Ally));
                 for (let i = 0; i < supportLen; ++i) {
-                    support.push(newSupport(ver)(randomInArr!(allyPool)[0]));
+                    support.push(newSupport(ver.value)(randomInArr!(allyPool)[0]));
                 }
                 for (let i = 0; i < esupportLen; ++i) {
-                    supportOppo.push(newSupport(ver)(randomInArr!(allyPool)[0]));
+                    supportOppo.push(newSupport(ver.value)(randomInArr!(allyPool)[0]));
                 }
             }
             return { support, supportOppo }
@@ -3374,8 +3406,8 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [-1] } = event;
             if (hidx == -1) return;
             const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }];
-            if (ver < 'v4.8.0' || !hasObjById(heros[hidx].heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
-            return { cmds, status: isCdt(ver >= 'v4.8.0', 303231) }
+            if (ver.lt('v4.8.0') || !hasObjById(heros[hidx].heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
+            return { cmds, status: isCdt(ver.gte('v4.8.0'), 303231) }
         }),
 
     332033: () => magicCount(2),

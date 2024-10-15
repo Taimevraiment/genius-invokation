@@ -1,11 +1,10 @@
-import { Card } from "../../../typing";
+import { Card, VersionCompareFn } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
-    HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType,
-    WeaponTypeCode,
+    HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
-import { getHidById } from "../../utils/gameUtil.js";
+import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { newSupport } from "../supports.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
@@ -42,7 +41,7 @@ export class GICard {
     constructor(
         id: number, shareId: number, name: string, version: Version, description: string, src: string, cost: number, costType: DiceType,
         type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0,
-        handle?: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined | void,
+        handle?: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number,
@@ -86,7 +85,7 @@ export class GICard {
             else this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
             const ohandle = handle;
             handle = (card, event) => {
-                const res = ohandle?.(card, event, ver) ?? {};
+                const res = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
                 const ressts = typeof res?.status == 'number' ? [res.status] : res?.status ?? [];
                 return {
                     ...res,
@@ -103,7 +102,7 @@ export class GICard {
                 handle = (card, event) => {
                     const { slotUse = false } = event;
                     if (slotUse) return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }
-                    return ohandle?.(card, event, ver);
+                    return ohandle?.(card, event, compareVersionFn(ver));
                 }
             }
             this.UI.description = this.UI.description
@@ -133,7 +132,7 @@ export class GICard {
                 if (isResetUct) card.useCnt = uct;
                 if (!spReset) return {}
             }
-            return handle?.(card, event, ver) ?? {};
+            return handle?.(card, event, compareVersionFn(ver)) ?? {};
         }
         this.useCnt = uct;
         this.perCnt = pct;
@@ -167,7 +166,7 @@ export class CardBuilder extends BaseBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _energy: VersionMap<number> = new VersionMap();
     private _anydice: number = 0;
-    private _handle: ((card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined | void) | undefined;
+    private _handle: ((card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void) | undefined;
     private _canSelectHero: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
@@ -296,7 +295,7 @@ export class CardBuilder extends BaseBuilder {
         this._canSelectSupport = canSelectSupport;
         return this;
     }
-    handle(handle: (card: Card, event: CardHandleEvent, version: Version) => CardHandleRes | undefined | void) {
+    handle(handle: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }
@@ -324,7 +323,7 @@ export class CardBuilder extends BaseBuilder {
         if (this._type == CARD_TYPE.Support) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {
-                return { support: [newSupport(ver)(card)], ...handle?.(card, event, ver) }
+                return { support: [newSupport(ver.value)(card)], ...handle?.(card, event, ver) }
             };
         }
         const description = this._description.get(this._curVersion, '');

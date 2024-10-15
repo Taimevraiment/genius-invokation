@@ -1,8 +1,10 @@
+import { VersionCompareFn } from "../../../typing.js";
 import {
     COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, SKILL_TYPE, SkillCostType,
     SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
+import { compareVersionFn } from "../../utils/gameUtil.js";
 import { clone } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
@@ -36,7 +38,7 @@ export class GISkill {
     constructor(
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
         options: { id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version, canSelectSummon?: -1 | 0 | 1 } = {},
-        src?: string | string[], handle?: (hevent: SkillHandleEvent, version: Version) => SkillHandleRes | undefined | void
+        src?: string | string[], handle?: (hevent: SkillHandleEvent, version: VersionCompareFn) => SkillHandleRes | undefined | void
     ) {
         this.name = name;
         this.type = type;
@@ -56,7 +58,7 @@ export class GISkill {
         this.canSelectSummon = canSelectSummon;
         this.handle = hevent => {
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
-            const handleres = handle?.(hevent, ver) ?? {};
+            const handleres = handle?.(hevent, compareVersionFn(ver)) ?? {};
             if (isReadySkill) return handleres;
             const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];
             if (!curskill) throw new Error(`@skill_constructor: 未找到技能, skid:${id}, hero:${hero.name}`);
@@ -100,7 +102,7 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _costElement: SkillCostType | undefined;
     private _anyCost: number = 0;
     private _energyCost: VersionMap<number> = new VersionMap();
-    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined | void) | undefined;
+    private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined | void) | undefined;
     private _perCnt: number = 0;
     private _src: string[] = [];
     private _description: VersionMap<string> = new VersionMap();
@@ -126,6 +128,10 @@ export class SkillBuilder extends BaseVersionBuilder {
     burst(energy: number = 0, version: Version = 'vlatest') {
         this._type = SKILL_TYPE.Burst;
         this._energyCost.set([version, energy]);
+        return this;
+    }
+    passive() {
+        this._type = SKILL_TYPE.Passive;
         return this;
     }
     readySkill(round: number = 1) {
@@ -189,7 +195,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._anyCost = cost;
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined | void) | undefined) {
+    handle(handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined | void) | undefined) {
         this._handle = handle;
         return this;
     }
@@ -245,7 +251,7 @@ export class SkillBuilder extends BaseVersionBuilder {
 export class NormalSkillBuilder extends BaseVersionBuilder {
     private _id: number = -1;
     private _weaponType: WeaponType | undefined;
-    private _handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined) | undefined;
+    private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined) | undefined;
     private _description: VersionMap<string> = new VersionMap();
     private _perCnt: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
@@ -296,7 +302,7 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
         this._description.set([ver, description]);
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent, ver: Version) => SkillHandleRes | undefined)) {
+    handle(handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined)) {
         this._handle = handle;
         return this;
     }

@@ -402,7 +402,7 @@ export default class GeniusInvokationClient {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
             flag } = data;
-        if (this.isDev) console.info(flag, players.map(p => p.canAction));
+        if (this.isDev) console.info(flag);
         const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
         if (this.isLookon > -1 && this.isLookon != this.playerIdx || players.length == 0) return;

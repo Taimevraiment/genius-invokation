@@ -30,6 +30,8 @@ export type SkillHandleEvent = {
     talent?: Card | null,
     pile?: Card[],
     isExecTask?: boolean,
+    source?: number,
+    sourceHidx?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 
@@ -83,6 +85,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     12122: () => new SkillBuilder('孤心沙龙').description('【hro1211】当前处于｢始基力:芒性｣形态，召唤【smn112112】。；(【hro】处于｢始基力:荒性｣形态时，会改为召唤【smn112111】。)')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/3a6b3aa64583eed30205cc6959de0b11.png')
         .elemental().cost(3).handle(event => ({ summon: 112112, status: isCdt(!!event.talent, 112116) })),
+
+    12135: () => new SkillBuilder('满满心意药剂冲击').description('{dealDmg}。').burst().readySkill().damage(2),
 
     13095: () => new SkillBuilder('焚落踢').description('{dealDmg}。').burst().readySkill().damage(3),
 

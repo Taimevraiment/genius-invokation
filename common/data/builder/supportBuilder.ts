@@ -1,5 +1,6 @@
-import { Card, Support } from "../../../typing";
+import { Card, Support, VersionCompareFn } from "../../../typing";
 import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
+import { compareVersionFn } from "../../utils/gameUtil.js";
 import { SupportHandleEvent, SupportHandleRes } from "../supports.js";
 import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -14,7 +15,7 @@ export class GISupport {
 
     constructor(
         card: Card, cnt: number, perCnt: number, type: SupportType,
-        handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined | void) | undefined,
+        handle: ((support: Support, event: SupportHandleEvent, ver: VersionCompareFn) => SupportHandleRes | undefined | void) | undefined,
         heal = 0, ver: Version = VERSION[0],
     ) {
         this.card = card;
@@ -28,7 +29,7 @@ export class GISupport {
                 support.perCnt = perCnt;
                 return {}
             }
-            return handle?.(support, event, ver) ?? {};
+            return handle?.(support, event, compareVersionFn(ver)) ?? {};
         };
     }
     setEntityId(id: number): Support {
@@ -43,7 +44,7 @@ export class SupportBuilder extends BaseVersionBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _type: SupportType = SUPPORT_TYPE.Permanent;
     private _heal: number = 0;
-    private _handle: ((support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined | void) | undefined = () => ({});
+    private _handle: ((support: Support, event: SupportHandleEvent, ver: VersionCompareFn) => SupportHandleRes | undefined | void) | undefined = () => ({});
     constructor() {
         super();
     }
@@ -77,7 +78,7 @@ export class SupportBuilder extends BaseVersionBuilder {
         this._heal = heal;
         return this;
     }
-    handle(handle: (support: Support, event: SupportHandleEvent, ver: Version) => SupportHandleRes | undefined | void) {
+    handle(handle: (support: Support, event: SupportHandleEvent, ver: VersionCompareFn) => SupportHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

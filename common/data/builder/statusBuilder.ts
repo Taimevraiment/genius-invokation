@@ -1,8 +1,8 @@
-import { Status } from "../../../typing";
+import { Status, VersionCompareFn } from "../../../typing";
 import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
-import { getElByHid, getHidById } from "../../utils/gameUtil.js";
+import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
 import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -30,7 +30,7 @@ export class GIStatus {
     };
     constructor(
         id: number, name: string, description: string, icon: string, group: StatusGroup, type: StatusType[],
-        useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined,
+        useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
             isTalent?: boolean, isReset?: boolean, adt?: string[], ver?: Version,
@@ -74,7 +74,7 @@ export class GIStatus {
                 let { restDmg = -1 } = event;
                 let rest: StatusHandleRes = {};
                 if (handle) {
-                    const { restDmg: dmg = -1, ...other } = handle(status, event, ver) ?? {};
+                    const { restDmg: dmg = -1, ...other } = handle(status, event, compareVersionFn(ver)) ?? {};
                     if (dmg > -1) restDmg = dmg;
                     rest = { ...other };
                 }
@@ -112,7 +112,7 @@ export class GIStatus {
                 if (isReset) status.perCnt = pct;
                 return {}
             }
-            return thandle(status, event, ver) ?? {};
+            return thandle(status, event, compareVersionFn(ver)) ?? {};
         }
     }
     setEntityId(id: number): Status {
@@ -142,9 +142,9 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _summonId: number = -1;
     private _addition: string[] = [];
     private _isReset: boolean = true;
-    private _handle: ((status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined | void) | undefined;
-    private _typeCdt: [(ver: Version) => boolean, StatusType[]][] = [];
-    private _barrierCdt: [(ver: Version) => boolean, number][] = [];
+    private _handle: ((status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined | void) | undefined;
+    private _typeCdt: [(ver: VersionCompareFn) => boolean, StatusType[]][] = [];
+    private _barrierCdt: [(ver: VersionCompareFn) => boolean, number][] = [];
     private _barrierCnt: number = 1;
     private _barrierUsage: number = 1;
     constructor(name: string) {
@@ -169,8 +169,8 @@ export class StatusBuilder extends BaseVersionBuilder {
     }
     type(...types: StatusType[]): StatusBuilder;
     type(cdt: boolean, ...types: StatusType[]): StatusBuilder;
-    type(cdt: (ver: Version) => boolean, ...types: StatusType[]): StatusBuilder;
-    type(cdt: StatusType | ((ver: Version) => boolean) | boolean, ...types: StatusType[]) {
+    type(cdt: (ver: VersionCompareFn) => boolean, ...types: StatusType[]): StatusBuilder;
+    type(cdt: StatusType | ((ver: VersionCompareFn) => boolean) | boolean, ...types: StatusType[]) {
         if (typeof cdt == 'function') {
             this._typeCdt.push([cdt, types]);
             return this;
@@ -253,13 +253,13 @@ export class StatusBuilder extends BaseVersionBuilder {
         this._isReset = false;
         return this;
     }
-    handle(handle: (status: Status, event: StatusHandleEvent, ver: Version) => StatusHandleRes | undefined | void) {
+    handle(handle: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }
     barrierCdt(cnt: number, cdt?: boolean): StatusBuilder;
-    barrierCdt(cnt: number, cdt?: (ver: Version) => boolean): StatusBuilder;
-    barrierCdt(cnt: number, cdt: ((ver: Version) => boolean) | boolean = () => true) {
+    barrierCdt(cnt: number, cdt?: (ver: VersionCompareFn) => boolean): StatusBuilder;
+    barrierCdt(cnt: number, cdt: ((ver: VersionCompareFn) => boolean) | boolean = () => true) {
         if (typeof cdt == 'boolean') this._barrierCdt.push([() => cdt, cnt]);
         else this._barrierCdt.push([cdt, cnt]);
         return this;
@@ -281,17 +281,17 @@ export class StatusBuilder extends BaseVersionBuilder {
         const smnId = this._summonId == -2 ? this._id : this._summonId;
         const maxCnt = this._maxCnt.get(this._curVersion, 0);
         this._typeCdt.forEach(([cdt, types]) => {
-            if (cdt(this._version)) this._type.push(...types);
+            if (cdt(compareVersionFn(this._curVersion))) this._type.push(...types);
         });
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
-            (status: Status, event: StatusHandleEvent, ver: Version) => {
+            (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => {
                 const { restDmg = -1, summon, getdmg = [], hidx = -1 } = event;
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
                 if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
                 if (summon && summon.statusId != -1 && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
                 if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
-            } : (status: Status, event: StatusHandleEvent, ver: Version) => this._handle?.(status, event, ver) ?? {};
+            } : (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => this._handle?.(status, event, ver) ?? {};
         return new GIStatus(this._id, this._name, description, icon, this._group, this._type,
             useCnt, maxCnt, roundCnt, handle,
             {

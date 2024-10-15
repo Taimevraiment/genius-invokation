@@ -4,7 +4,6 @@ import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
-import { newStatus } from './statuses.js';
 
 export type SupportHandleEvent = {
     dices?: DiceCostType[],
@@ -88,7 +87,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     321003: () => new SupportBuilder().permanent().handle((_, event, ver) => {
         const { hcards = [], trigger = '' } = event;
         const triggers: Trigger[] = ['phase-dice'];
-        if (ver >= 'v4.5.0' && hcards.length <= 3) triggers.push('phase-start');
+        if (ver.gte('v4.5.0') && hcards.length <= 3) triggers.push('phase-start');
         return {
             trigger: triggers,
             element: -2,
@@ -292,7 +291,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 梅洛彼得堡
-    321018: () => new SupportBuilder().collection().handle((support, event, ver) => {
+    321018: () => new SupportBuilder().collection().handle((support, event) => {
         const { hidxs: [hidx] = [], getdmg = [], heal = [], trigger = '' } = event;
         const triggers: Trigger[] = [];
         if (trigger == 'getdmg' && getdmg[hidx] > 0 && support.cnt < 4) triggers.push('getdmg');
@@ -305,7 +304,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: spt => {
                 if (trigger == 'phase-start') {
                     spt.cnt -= 4;
-                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301018)], isOppo: true }], isDestroy: false }
+                    return { cmds: [{ cmd: 'getStatus', status: 301018, isOppo: true }], isDestroy: false }
                 }
                 spt.cnt = Math.min(4, spt.cnt + 1);
                 return { isDestroy: false }
@@ -313,7 +312,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 清籁岛
-    321019: () => new SupportBuilder().round(2).handle((_, event, ver) => {
+    321019: () => new SupportBuilder().round(2).handle((_, event) => {
         const { heal = [], trigger = '' } = event;
         const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl > 0).map(v => v.hli);
         return {
@@ -321,14 +320,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: support => {
                 if (trigger == 'phase-end') return { isDestroy: --support.cnt == 0 }
                 return {
-                    cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(301019)], hidxs, isOppo: trigger == 'heal-oppo' }],
+                    cmds: [{ cmd: 'getStatus', status: 301019, hidxs, isOppo: trigger == 'heal-oppo' }],
                     isDestroy: false,
                 }
             }
         }
     }),
     // 赤王陵
-    321020: () => new SupportBuilder().collection().handle((support, _, ver) => ({
+    321020: () => new SupportBuilder().collection().handle(support => ({
         trigger: ['getcard-oppo'],
         supportCnt: support.cnt < 4 ? 1 : -5,
         exec: spt => {
@@ -337,7 +336,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             return {
                 cmds: [
                     { cmd: 'addCard', cnt: 2, card: 301020, hidxs: [2], isOppo: true },
-                    { cmd: 'getStatus', status: [newStatus(ver)(301022)], isOppo: true },
+                    { cmd: 'getStatus', status: 301022, isOppo: true },
                 ],
                 isDestroy: true,
             }
@@ -360,7 +359,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 圣火竞技场
-    321022: () => new SupportBuilder().collection().handle((_s, _e, ver) => ({
+    321022: () => new SupportBuilder().collection().handle(() => ({
         trigger: ['skill', 'vehicle'],
         supportCnt: 1,
         exec: support => {
@@ -368,7 +367,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             const cmds: Cmds[] = [];
             if (support.cnt == 2) cmds.push({ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random });
             else if (support.cnt == 4) cmds.push({ cmd: 'heal', cnt: 2 });
-            else if (support.cnt == 6) cmds.push({ cmd: 'getStatus', status: [newStatus(ver)(301023)] });
+            else if (support.cnt == 6) cmds.push({ cmd: 'getStatus', status: 301023 });
             return { cmds, isDestroy: support.cnt >= 6 }
         }
     })),
@@ -376,10 +375,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     321023: () => new SupportBuilder().collection().handle((support, event) => {
         const { trigger = '', card, playerInfo: { initCardIds: acids = [] } = {}, eplayerInfo: { initCardIds: ecids = [] } = {} } = event;
         const triggers: Trigger[] = [];
-        if (card) {
-            if (trigger == 'card' && !acids.includes(card.id)) triggers.push(trigger);
-            else if (trigger == 'ecard' && support.cnt > 0 && !ecids.includes(card.id)) triggers.push(trigger);
-        }
+        if (['card', 'enter'].includes(trigger) && !acids.includes(card?.id ?? support.card.id)) triggers.push(trigger);
+        else if (card && trigger == 'ecard' && support.cnt > 0 && !ecids.includes(card.id)) triggers.push(trigger);
         if (support.cnt > 0) triggers.push('phase-start');
         return {
             trigger: triggers,
@@ -389,7 +386,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 if (trigger == 'phase-start') {
                     if (spt.cnt >= 3) cmds.push({ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random });
                     if (spt.cnt >= 1) cmds.push({ cmd: 'changeDice', cnt: 1 });
-                } else if (trigger == 'card') ++spt.cnt;
+                } else if (['card', 'enter'].includes(trigger)) ++spt.cnt;
                 else if (trigger == 'ecard') --spt.cnt;
                 return { cmds, isDestroy: false }
             }
@@ -427,7 +424,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322003: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
         const { card, trigger = '', minusDiceCard: mdc = 0, playerInfo: { artifactCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
-        if (ver >= 'v4.3.0' && artifactCnt >= 6) triggers.push('enter');
+        if (ver.gte('v4.3.0') && artifactCnt >= 6) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc && support.cnt >= card.cost - mdc;
         return {
             trigger: triggers,
@@ -449,7 +446,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322004: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
         const { card, trigger = '', minusDiceCard: mdc = 0, playerInfo: { weaponTypeCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
-        if (ver >= 'v4.3.0' && weaponTypeCnt >= 3) triggers.push('enter');
+        if (ver.gte('v4.3.0') && weaponTypeCnt >= 3) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Weapon) && card.cost > mdc && support.cnt >= card.cost - mdc;
         return {
             trigger: triggers,
@@ -476,7 +473,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 if (support.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food)) return { isDestroy: false }
                 --support.perCnt;
                 const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }];
-                if (ver >= 'v4.1.0' && support.cnt > 0) {
+                if (ver.gte('v4.1.0') && support.cnt > 0) {
                     --support.cnt;
                     cmds.push({ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Food, isAttach: true });
                 }
@@ -653,7 +650,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: spt => {
                 const cmds: Cmds[] = [];
                 if (isMinus) --spt.perCnt;
-                if (ver >= 'v4.1.0' && spt.cnt > 0) {
+                if (ver.gte('v4.1.0') && spt.cnt > 0) {
                     --spt.cnt;
                     cmds.push({ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Ally, isAttach: true });
                 }
@@ -704,7 +701,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { card, heros = [], minusDiceCard: mdc = 0 } = event;
         const isMinus = card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc;
         const artifactLen = heros.filter(h => h.artifactSlot != null).length;
-        const minusCnt = 1 + +(ver < 'v4.6.0' ? artifactLen : (artifactLen >= 2));
+        const minusCnt = 1 + +(ver.lt('v4.6.0') ? artifactLen : (artifactLen >= 2));
         return {
             trigger: ['card'],
             isNotAddTask: true,
@@ -735,14 +732,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             support.cnt = Math.min(6, destroyedSupport);
             return;
         }
-        const threshold = ver < 'v4.6.0' ? 5 : 6;
+        const threshold = ver.lt('v4.6.0') ? 5 : 6;
         return {
             trigger: support.cnt >= threshold ? ['skilltype3'] : ['support-destroy'],
             supportCnt: isCdt(support.cnt >= threshold, -10, 1),
             exec: spt => {
                 if (trigger == 'skilltype3') {
-                    if (ver < 'v4.6.0') return { cmds: [{ cmd: 'getDice', cnt: spt.cnt - 2, element: DICE_COST_TYPE.Omni }], isDestroy: true }
-                    return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(302205)] }], isDestroy: true }
+                    if (ver.lt('v4.6.0')) return { cmds: [{ cmd: 'getDice', cnt: spt.cnt - 2, element: DICE_COST_TYPE.Omni }], isDestroy: true }
+                    return { cmds: [{ cmd: 'getStatus', status: 302205 }], isDestroy: true }
                 }
                 if (trigger == 'support-destroy') spt.cnt = Math.min(6, destroyedSupport);
                 return { isDestroy: false }
@@ -857,14 +854,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 红羽团扇
-    323003: () => new SupportBuilder().permanent().perCnt(1).handle((support, _, ver) => {
+    323003: () => new SupportBuilder().permanent().perCnt(1).handle(support => {
         if (support.perCnt <= 0) return;
         return {
             trigger: ['switch'],
             supportCnt: -1,
             exec: spt => {
                 --spt.perCnt;
-                return { cmds: [{ cmd: 'getStatus', status: [newStatus(ver)(302303)] }], isDestroy: false }
+                return { cmds: [{ cmd: 'getStatus', status: 302303 }], isDestroy: false }
             }
         }
     }),
@@ -880,7 +877,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 化种匣
     323005: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
         const { card, minusDiceCard: mdc = 0 } = event;
-        if (card && (ver < 'v4.6.0' ? card.cost == 1 : card.cost >= 2) && card.type == CARD_TYPE.Support && support.perCnt > 0 && card.cost > mdc) {
+        if (card && (ver.lt('v4.6.0') ? card.cost == 1 : card.cost >= 2) && card.type == CARD_TYPE.Support && support.perCnt > 0 && card.cost > mdc) {
             return {
                 trigger: ['card'],
                 minusDiceCard: 1,
