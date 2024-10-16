@@ -78,7 +78,7 @@ export class GISummon {
             if (handle) return handle(summon, event, compareVersionFn(ver)) ?? {};
             return {
                 trigger: ['phase-end'],
-                exec: execEvent => phaseEndAtk(execEvent.summon ?? summon),
+                exec: execEvent => phaseEndAtk(execEvent.summon ?? summon, event),
             }
         };
     }
@@ -88,8 +88,9 @@ export class GISummon {
     }
 }
 
-export const phaseEndAtk = (summon: Summon, healHidxs?: number[]): SummonHandleRes => {
-    if (summon.isDestroy == 0) summon.useCnt = Math.max(0, summon.useCnt - 1);
+export const phaseEndAtk = (summon: Summon, event: SummonHandleEvent, healHidxs?: number[]): SummonHandleRes => {
+    if (summon.isDestroy == SUMMON_DESTROY_TYPE.Used) summon.useCnt = Math.max(0, summon.useCnt - 1);
+    else if (!event.isExec) summon.useCnt = -100;
     const cmds: Cmds[] = [];
     if (summon.damage >= 0) cmds.push({ cmd: 'attack' });
     if (summon.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });

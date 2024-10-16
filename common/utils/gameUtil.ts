@@ -149,8 +149,10 @@ export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | num
     (resHeals as number[]).forEach((hl, hli) => {
         if (hl > -1) {
             if (tarWillHeals[hli] < 0) {
-                if (players) --tarWillHeals[hli];
-                else tarWillHeals[hli] = hl;
+                if (players) {
+                    --tarWillHeals[hli];
+                    if (hl == 0) --tarWillHeals[hli];
+                } else tarWillHeals[hli] = hl;
             } else if (!players) tarWillHeals[hli] += hl;
         }
     });

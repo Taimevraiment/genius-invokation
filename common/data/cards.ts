@@ -708,7 +708,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             if (ver.gte('v3.8.0') && card.perCnt <= 0) return;
             const { heros = [], hidxs: [hidx] = [] } = event;
-            if (!heros[hidx].isFront) return;
+            if (!heros[hidx]?.isFront) return;
             return {
                 trigger: ['kill'],
                 execmds: [{ cmd: 'getDice', cnt: 2, element: DICE_COST_TYPE.Omni }],

@@ -507,7 +507,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         exec: () => {
                             if (trigger == 'switch-to') {
                                 const sts112101 = getObjById(combatStatus, 112101);
-                                if (sts112101) --sts112101.useCnt;
+                                if (sts112101 && --sts112101.useCnt == 0) sts112101.type.length = 0;
                             }
                         }
                     }
