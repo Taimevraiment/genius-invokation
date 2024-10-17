@@ -489,11 +489,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
             new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。(对每名角色最多生效3次)；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
                 .handle(event => {
-                    const { hero, sourceHidx = -1, source = -1, combatStatus = [], trigger = '' } = event;
+                    const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
                     const triggers: Trigger[] = [];
                     const cmds: Cmds[] = [];
                     if (trigger == 'status-destroy' && source == 122) {
-                        // todo 每角色限3次没做，看看最后是用状态还是加个addtion字段存
+                        if (skill.addition[sourceHidx] == 3) return;
                         triggers.push('status-destroy');
                         cmds.push({ cmd: 'addMaxHp', cnt: 1, hidxs: [sourceHidx] });
                     }
@@ -505,7 +505,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         trigger: triggers,
                         cmds,
                         exec: () => {
-                            if (trigger == 'switch-to') {
+                            if (trigger == 'status-destroy') {
+                                skill.addition[sourceHidx] = (skill.addition[sourceHidx] ?? 0) + 1;
+                            } else if (trigger == 'switch-to') {
                                 const sts112101 = getObjById(combatStatus, 112101);
                                 if (sts112101 && --sts112101.useCnt == 0) sts112101.type.length = 0;
                             }

@@ -33,7 +33,7 @@ export class GIStatus {
         useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, adt?: string[], ver?: Version,
+            isTalent?: boolean, isReset?: boolean, adt?: any[], ver?: Version,
         } = {}
     ) {
         this.id = id;
@@ -140,7 +140,7 @@ export class StatusBuilder extends BaseVersionBuilder {
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
     private _summonId: number = -1;
-    private _addition: string[] = [];
+    private _addition: any[] = [];
     private _isReset: boolean = true;
     private _handle: ((status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionCompareFn) => boolean, StatusType[]][] = [];

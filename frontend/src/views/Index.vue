@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤</div>
+    <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div v-if="isShowEditName" class="edit-name">
       <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto" @click="register">

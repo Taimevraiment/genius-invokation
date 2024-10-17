@@ -19,7 +19,7 @@ export class GISummon {
     perCnt: number; // 每回合次数
     isTalent: boolean; // 是否有天赋
     statusId: number; // 可能对应的状态 -1不存在
-    addition: string[]; // 额外信息
+    addition: any[]; // 额外信息
     handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
     UI: {
         src: string; // 图片url
@@ -34,7 +34,7 @@ export class GISummon {
         shieldOrHeal: number, damage: number, element: ElementType,
         handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined,
         options: {
-            pct?: number, isTalent?: boolean, adt?: string[], pdmg?: number, isDestroy?: SummonDestroyType,
+            pct?: number, isTalent?: boolean, adt?: any[], pdmg?: number, isDestroy?: SummonDestroyType,
             stsId?: number, spReset?: boolean, expl?: string[], pls?: boolean, ver?: Version,
         } = {}
     ) {
@@ -110,7 +110,7 @@ export class SummonBuilder extends BaseVersionBuilder {
     private _element: ElementType | undefined;
     private _perCnt: VersionMap<number> = new VersionMap();
     private _isTalent: boolean = false;
-    private _addition: string[] = [];
+    private _addition: any[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
     private _statusId: number = -1;
     private _hasPlus: boolean = false;
@@ -197,7 +197,7 @@ export class SummonBuilder extends BaseVersionBuilder {
         this._isTalent = isTalent;
         return this;
     }
-    addition(...addition: string[]) {
+    addition(...addition: any[]) {
         this._addition.push(...addition);
         return this;
     }

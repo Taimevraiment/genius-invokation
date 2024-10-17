@@ -204,12 +204,12 @@ export default class GeniusInvokationRoom {
         ) {
             previews.push(...this._getPreview(this.currentPlayerIdx));
             this.previews = previews;
-            if (
+            if ( // AI行动
                 (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
                     flag.includes('reroll') ||
                     ((flag.includes('useCard') || flag.endsWith('card-after')) && !isChange)
                 ) && cplayer.id == AI_ID
-            ) { // AI行动
+            ) {
                 setTimeout(() => {
                     const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.EndPhase];
                     const { pidx: cpidx, dice } = cplayer;
@@ -250,6 +250,10 @@ export default class GeniusInvokationRoom {
                     }
                 }, 2e3);
             }
+        }
+        // AI挑选卡牌
+        if (cplayer.id == AI_ID && cplayer.phase == PHASE.PICK_CARD && flag.startsWith('pickCard')) {
+            setTimeout(() => this._pickCard(cplayer.pidx, this._randomInt(this.pickModal.cards.length - 1), this.pickModal.skillId), 1e3);
         }
         const serverData: ServerData = {
             players: [],
@@ -580,7 +584,7 @@ export default class GeniusInvokationRoom {
                 player.supports.push(this.newSupport(sptIds.shift()!).setEntityId(this._genEntityId()));
             }
         }
-        this.emit(flag, cpidx);
+        this.emit(flag, cpidx, { isQuickAction: true });
         this._execTask();
     }
     /**
@@ -2331,26 +2335,35 @@ export default class GeniusInvokationRoom {
      * @param options.selectHero2 使用卡牌时选择的角色序号2
      * @param options.selectSummon 使用卡牌时选择的召唤物序号
      * @param options.selectSupport 使用卡牌时选择的支援物序号
+     * @param options.getcard 抓到牌时触发效果(而非使用牌)的牌
+     * @param options.isQuickAction 是否为快速行动
      */
     private async _useCard(pidx: number, cardIdx: number, diceSelect: boolean[],
-        options: { socket?: Socket, selectHeros?: number[], selectSummon?: number, selectSupport?: number } = {}) {
-        const { socket, selectHeros = [], selectSummon = -1, selectSupport = -1 } = options;
-        const preview = this.previews.find(pre =>
-            pre.type == ACTION_TYPE.UseCard &&
-            pre.cardIdxs?.[0] == cardIdx &&
-            (pre.heroIdxs?.length ?? 0) == selectHeros.length &&
-            pre.heroIdxs?.every(hi => selectHeros.includes(hi)) &&
-            (pre.summonIdx ?? -1) == selectSummon &&
-            (pre.supportIdx ?? -1) == selectSupport
-        );
-        if (!preview?.isValid) return this.emit('useCard-invalid', pidx, { socket, tip: '卡牌使用无效' });
+        options: {
+            socket?: Socket, selectHeros?: number[], selectSummon?: number, selectSupport?: number, getcard?: Card,
+            isQuickAction?: boolean,
+        } = {}) {
+        const { socket, selectHeros = [], selectSummon = -1, selectSupport = -1, getcard } = options;
+        if (!getcard) {
+            const preview = this.previews.find(pre =>
+                pre.type == ACTION_TYPE.UseCard &&
+                pre.cardIdxs?.[0] == cardIdx &&
+                (pre.heroIdxs?.length ?? 0) == selectHeros.length &&
+                pre.heroIdxs?.every(hi => selectHeros.includes(hi)) &&
+                (pre.summonIdx ?? -1) == selectSummon &&
+                (pre.supportIdx ?? -1) == selectSupport
+            );
+            if (!preview?.isValid) return this.emit('useCard-invalid', pidx, { socket, tip: '卡牌使用无效' });
+        }
         const player = this.players[pidx];
         const opponent = this.players[pidx ^ 1];
-        const currCard = player.handCards[cardIdx];
-        const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
-        if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
-        this._writeLog(`[${player.name}]使用了[${currCard.name}]`, 'info');
-        player.dice = player.dice.filter((_, i) => !diceSelect[i]);
+        const currCard = getcard ?? player.handCards[cardIdx];
+        if (!getcard) {
+            const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
+            if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
+            this._writeLog(`[${player.name}]使用了[${currCard.name}]`, 'info');
+            player.dice = player.dice.filter((_, i) => !diceSelect[i]);
+        }
         const hidxs = currCard.canSelectSummon != -1 ? [selectSummon] :
             currCard.canSelectSupport != -1 ? [selectSupport] :
                 currCard.canSelectHero == 0 ? [player.hidx] : selectHeros;
@@ -2381,56 +2394,63 @@ export default class GeniusInvokationRoom {
             randomInt: this._randomInt.bind(this),
             slotUse: currCard.type == CARD_TYPE.Equipment,
         });
-        player.playerInfo.isUsedCardPerRound = true;
+        if (getcard && this._hasNotTriggered(cardres.trigger, 'getcard')) return;
         const isAction = currCard.hasSubtype(CARD_SUBTYPE.Action);
-        if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
-        this._detectSkill(pidx, 'card');
-        // await this._execTask();
-        const { minusDiceCard, isFallAtk: ifa, isInvalid, isQuickAction: iqa } = this._detectSlotAndStatus(pidx, 'card', {
-            types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage],
-            hidxs: allHidxs(player.heros),
-            hcard: currCard,
-            isQuickAction: !isAction,
-        })
-        // await this._execTask();
-        this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction: !isAction });
-        // await this._execTask();
-        this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction: !isAction });
-        // await this._execTask();
-        if (isAction) player.isFallAtk = ifa;
-        const cardcmds = cardres.cmds ?? [];
-        const { usedCardIds } = player.playerInfo;
-        if (!usedCardIds.includes(currCard.id)) usedCardIds.push(currCard.id);
+        const cardcmds = (getcard ? cardres.execmds : cardres.cmds) ?? [];
         const isUseSkill = cardcmds.some(({ cmd }) => cmd == 'useSkill');
-        if (currCard.type == CARD_TYPE.Equipment) { // 装备
-            const tarHero = player.heros[hidxs[0]];
-            const explIdx = currCard.UI.description.indexOf('；(');
-            currCard.UI.description = currCard.UI.description.slice(0, explIdx);
-            if (
-                currCard.hasSubtype(CARD_SUBTYPE.Weapon) && tarHero.weaponSlot != null ||
-                currCard.hasSubtype(CARD_SUBTYPE.Artifact) && tarHero.artifactSlot != null ||
-                currCard.hasSubtype(CARD_SUBTYPE.Talent) && tarHero.talentSlot != null ||
-                currCard.hasSubtype(CARD_SUBTYPE.Vehicle) && tarHero.vehicleSlot != null
-            ) {
-                this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', {
-                    isOnlyCombatStatus: true,
-                    hcard: currCard,
-                    slotsDestroy: player.heros.map(h => +(h.hidx == tarHero.hidx)),
-                });
-                // await this._execTask();
-            }
-            if (!cardres?.isDestroy) {
-                if (currCard.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器
-                    if (tarHero.weaponSlot?.id == currCard.id) currCard.setEntityId(tarHero.weaponSlot.entityId);
-                    tarHero.weaponSlot = currCard.setEntityId(this._genEntityId());
-                } else if (currCard.hasSubtype(CARD_SUBTYPE.Artifact)) { // 圣遗物
-                    if (tarHero.artifactSlot?.id == currCard.id) currCard.setEntityId(tarHero.artifactSlot.entityId);
-                    tarHero.artifactSlot = currCard.setEntityId(this._genEntityId());
-                } else if (currCard.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋
-                    tarHero.talentSlot = currCard.setEntityId(tarHero.talentSlot?.entityId ?? this._genEntityId());
-                } else if (currCard.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
-                    if (tarHero.vehicleSlot?.[0].id == currCard.id) currCard.setEntityId(tarHero.vehicleSlot[0].entityId);
-                    tarHero.vehicleSlot = [currCard.setEntityId(this._genEntityId()), this.newSkill(currCard.id * 10 + 1)];
+        let isInvalid = false;
+        let { isQuickAction = !isAction } = options;
+        if (!getcard) {
+            player.playerInfo.isUsedCardPerRound = true;
+            if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
+            this._detectSkill(pidx, 'card');
+            // await this._execTask();
+            const { minusDiceCard, isFallAtk: ifa, isInvalid: inv, isQuickAction: iqa } = this._detectSlotAndStatus(pidx, 'card', {
+                types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage],
+                hidxs: allHidxs(player.heros),
+                hcard: currCard,
+                isQuickAction: !isAction,
+            });
+            isInvalid = inv;
+            isQuickAction || iqa;
+            // await this._execTask();
+            this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction: !isAction });
+            // await this._execTask();
+            this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction: !isAction });
+            // await this._execTask();
+            if (isAction) player.isFallAtk = ifa;
+            const { usedCardIds } = player.playerInfo;
+            if (!usedCardIds.includes(currCard.id)) usedCardIds.push(currCard.id);
+            if (currCard.type == CARD_TYPE.Equipment) { // 装备
+                const tarHero = player.heros[hidxs[0]];
+                const explIdx = currCard.UI.description.indexOf('；(');
+                currCard.UI.description = currCard.UI.description.slice(0, explIdx);
+                if (
+                    currCard.hasSubtype(CARD_SUBTYPE.Weapon) && tarHero.weaponSlot != null ||
+                    currCard.hasSubtype(CARD_SUBTYPE.Artifact) && tarHero.artifactSlot != null ||
+                    currCard.hasSubtype(CARD_SUBTYPE.Talent) && tarHero.talentSlot != null ||
+                    currCard.hasSubtype(CARD_SUBTYPE.Vehicle) && tarHero.vehicleSlot != null
+                ) {
+                    this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', {
+                        isOnlyCombatStatus: true,
+                        hcard: currCard,
+                        slotsDestroy: player.heros.map(h => +(h.hidx == tarHero.hidx)),
+                    });
+                    // await this._execTask();
+                }
+                if (!cardres?.isDestroy) {
+                    if (currCard.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器
+                        if (tarHero.weaponSlot?.id == currCard.id) currCard.setEntityId(tarHero.weaponSlot.entityId);
+                        tarHero.weaponSlot = currCard.setEntityId(this._genEntityId());
+                    } else if (currCard.hasSubtype(CARD_SUBTYPE.Artifact)) { // 圣遗物
+                        if (tarHero.artifactSlot?.id == currCard.id) currCard.setEntityId(tarHero.artifactSlot.entityId);
+                        tarHero.artifactSlot = currCard.setEntityId(this._genEntityId());
+                    } else if (currCard.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋
+                        tarHero.talentSlot = currCard.setEntityId(tarHero.talentSlot?.entityId ?? this._genEntityId());
+                    } else if (currCard.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
+                        if (tarHero.vehicleSlot?.[0].id == currCard.id) currCard.setEntityId(tarHero.vehicleSlot[0].entityId);
+                        tarHero.vehicleSlot = [currCard.setEntityId(this._genEntityId()), this.newSkill(currCard.id * 10 + 1)];
+                    }
                 }
             }
         }
@@ -2446,7 +2466,7 @@ export default class GeniusInvokationRoom {
             const { ndices, phase, willHeals = [], willDamages = [], dmgElements = [], elTips = [] }
                 = this._doCmds(pidx, cardcmds, {
                     withCard: currCard,
-                    isAction,
+                    isAction: !isQuickAction,
                     hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
                     source: currCard.id,
                     isUnshift: true,
@@ -2482,7 +2502,7 @@ export default class GeniusInvokationRoom {
             if (phase?.[1]) {
                 this.taskQueue.addTask('useCard-changePhase', [[() => {
                     player.phase = phase[0];
-                    this.emit('useCard-changePhase', pidx, { isQuickAction: true });
+                    this.emit(`useCard-${currCard.name}-changePhase`, pidx, { isQuickAction: true });
                 }, 0, phase[1]]]);
             } else {
                 player.phase = phase?.[0] ?? player.phase;
@@ -2497,7 +2517,6 @@ export default class GeniusInvokationRoom {
                 dmgElements: hli == 0 ? dmgElements : [],
                 elTips: hli == 0 ? elTips : [],
             }));
-            const isQuickAction = !isAction || iqa;
             const dmgvoLen = damageVOs.length || 1;
             for (let voi = 0; voi < dmgvoLen; ++voi) {
                 const canAction = voi == dmgvoLen - 1 && !isAction;
@@ -2509,7 +2528,7 @@ export default class GeniusInvokationRoom {
                 } else if (!isUseSkill) {
                     this._doActionAfter(pidx, isQuickAction);
                     this._startTimer();
-                    this.emit('useCard', pidx, { canAction, damageVO, isQuickAction, isActionInfo: true });
+                    this.emit(`useCard-${currCard.name}`, pidx, { canAction, damageVO, isQuickAction, isActionInfo: true });
                     await this._execTask();
                 } else {
                     await this._execTask();
@@ -2948,7 +2967,7 @@ export default class GeniusInvokationRoom {
         const { isExec = true, notPreHeal = false, isQuickAction = false, supportCnt = INIT_SUPPORTCNT(), source } = options;
         const { heros } = players[pidx];
         if (heal.some(hl => hl > -1)) {
-            if (!notPreHeal) this._detectStatus(pidx, STATUS_TYPE.Usage, 'pre-heal', { heal, players, hidxs: allHidxs(heros), supportCnt, isQuickAction, isExec });
+            if (!notPreHeal) this._detectStatus(pidx, STATUS_TYPE.Usage, 'pre-heal', { heal, players, hidxs: allHidxs(heros), supportCnt, isQuickAction, isExec, isOnlyExecSts: !isExec });
             heal.forEach((h, hi, ha) => ha[hi] = Math.min(heros[hi].maxHp - heros[hi].hp, h));
             heal.forEach((h, hi) => h > -1 && this._detectSkill(pidx, 'heal', { hidxs: hi, players, heal, isQuickAction, isExec }));
             this._detectSlotAndStatus(pidx, 'heal', { types: STATUS_TYPE.Usage, hidxs: allHidxs(heros), players, heal, isQuickAction, supportCnt, source, isExec });
@@ -4323,6 +4342,9 @@ export default class GeniusInvokationRoom {
                                 p.handCards.push(...p.UI.willGetCard.cards.slice(0, rest));
                                 p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
                                 this.emit('doCmd--getCard-after', cpidx, { isQuickAction: !isAction });
+                                for (const getcard of willGetCard) {
+                                    await this._useCard(cpidx, -1, [], { getcard, isQuickAction: !isAction });
+                                }
                             }]], { isPriority, isUnshift });
                         }
                         for (let i = 0; i < count - restCnt; ++i) {
@@ -4342,7 +4364,7 @@ export default class GeniusInvokationRoom {
                         const scope = ohidxs?.[0] ?? 0;
                         const isRandom = !isAttach;
                         const isNotPublic = mode == CMD_MODE.isNotPublic;
-                        this._writeLog(`[${p.name}]将${cards.length}张牌${isNotPublic ? `【p${cpidx}:${cardStr}】` : ''}${Math.abs(scope) == cards.length ? '' : cnt < 0 ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${cnt < 0 ? '第' : ''}${Math.abs(scope) == cards.length ? '' : `${Math.abs(scope)}张`}` : ''}`);
+                        this._writeLog(`[${p.name}]将${cards.length}张牌${isNotPublic ? `【p${cpidx}:${cardStr}】` : `${cardStr}`}${Math.abs(scope) == cards.length ? '' : cnt < 0 ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${cnt < 0 ? '第' : ''}${Math.abs(scope) == cards.length ? '' : `${Math.abs(scope)}张`}` : ''}`);
                         this.emit('doCmd--addcard', pidx);
                         await delay(1500);
                         const count = cards.length;
@@ -4371,7 +4393,7 @@ export default class GeniusInvokationRoom {
                             cards: [],
                             isNotPublic: false,
                         }
-                        this.emit('doCmd--addcard-after', pidx);
+                        this.emit('doCmd--addcard-after', pidx, { isQuickAction: !isAction });
                     }, 300]]);
                 }
             } else if (cmd == 'discard') {

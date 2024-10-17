@@ -430,7 +430,8 @@ const devOps = (cidx = 0) => {
       attachs.push({ hidx, el, isAdd });
       flag.add('setEl');
     } else if (op.startsWith('%')) { // 血量
-      const [hp = 10, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
+      let [hp, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
+      hp ||= heros[hidx].maxHp;
       hps.push({ hidx, hp });
       flag.add('setHp');
     } else if (op.startsWith('@')) { // 充能

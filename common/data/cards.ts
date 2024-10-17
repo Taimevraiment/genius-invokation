@@ -1989,7 +1989,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 status: ver.gte('v4.8.0') && isUsedCardPerRound ? 303232 : 303224,
                 canSelectHero: heros.map(h => h.artifactSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.artifactSlot, () => hero.artifactSlot!.id) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero?.artifactSlot, () => hero.artifactSlot!.id) }],
                 exec: () => { hero.artifactSlot = null },
             }
         }),
@@ -3186,7 +3186,7 @@ const allCards: Record<number, () => CardBuilder> = {
             trigger: ['getcard'],
             execmds: [
                 { cmd: 'attack', cnt: 2, element: DAMAGE_TYPE.Hydro, isOppo: false },
-                { cmd: 'addCard', card: 112133, cnt: -1, hidxs: [1], isOppo: true },
+                { cmd: 'addCard', card: 112133, cnt: 1, hidxs: [1], isOppo: true },
             ],
         })),
 

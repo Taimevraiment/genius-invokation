@@ -29,6 +29,7 @@ export class GISkill {
     perCnt: number = 0; // 每回合使用次数
     useCnt: number = 0; // 整局技能使用次数
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
+    addition: any[]; // 额外信息
     UI: {
         src: string, // 图片url
         description: string; // 技能描述
@@ -37,13 +38,16 @@ export class GISkill {
     };
     constructor(
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
-        options: { id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version, canSelectSummon?: -1 | 0 | 1 } = {},
+        options: {
+            id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[],
+            ver?: Version, canSelectSummon?: -1 | 0 | 1, adt?: any[],
+        } = {},
         src?: string | string[], handle?: (hevent: SkillHandleEvent, version: VersionCompareFn) => SkillHandleRes | undefined | void
     ) {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], canSelectSummon = -1 } = options;
+        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], canSelectSummon = -1, adt = [] } = options;
         costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         this.UI = {
@@ -56,6 +60,7 @@ export class GISkill {
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
+        this.addition = adt;
         this.handle = hevent => {
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, compareVersionFn(ver)) ?? {};
@@ -109,6 +114,7 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _explains: string[] = [];
     private _readySkillRound: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
+    private _addition: any[] = [];
     constructor(name: string) {
         super();
         this._name = name;
@@ -219,6 +225,10 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._canSelectSummon = canSelectSummon;
         return this;
     }
+    addition(...addition: any[]) {
+        this._addition.push(...addition);
+        return this;
+    }
     done() {
         const elCode = this._id.toString().startsWith('313') ? 0 :
             Math.floor(this._id / 1000 / (this._type == SKILL_TYPE.Vehicle ? 10 : 1)) % 10 as ElementCode;
@@ -242,6 +252,7 @@ export class SkillBuilder extends BaseVersionBuilder {
                 pct: this._perCnt,
                 ver: this._curVersion,
                 canSelectSummon: this._canSelectSummon,
+                adt: this._addition,
             },
             this._src, this._handle);
     }
