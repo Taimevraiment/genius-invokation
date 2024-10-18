@@ -786,8 +786,9 @@ export default class GeniusInvokationRoom {
             }
         }
         for (let i = 0; i < diceLen - scnt; ++i) {
-            if (this.isDev) ++tmpDice[DICE_COST_TYPE.Omni];
-            else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
+            // if (this.isDev) ++tmpDice[DICE_COST_TYPE.Omni];
+            // else 
+            ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
         }
         const ndices: DiceCostType[] = [];
         const heroEle: DiceCostType[] = [...player.heros]
@@ -989,7 +990,6 @@ export default class GeniusInvokationRoom {
         const ahlen = aHeros().length;
         const eHeros = () => opponent().heros;
         const ehlen = eHeros().length;
-        const allHeros = () => [...eHeros(), ...aHeros()];
         const aSummons = () => player().summons;
         const ahidx = () => player().hidx;
         const ehidx = () => opponent().hidx;
@@ -1336,7 +1336,8 @@ export default class GeniusInvokationRoom {
             bWillHeal.forEach((_, awhi, awha) => awha[awhi] = ahealres[awhi]);
             mergeWillHeals(bWillHeal, bhealres);
             skillcmds.push(...(skillres.cmds ?? []));
-            willDamage1.forEach((dmg, di) => { aWillDamages[di] = allHeros()[di].hp > 0 ? [...dmg] : [-1, 0] });
+            const allHeros = players.flatMap(p => p.heros);
+            willDamage1.forEach((dmg, di) => { aWillDamages[di] = allHeros[di].hp > 0 ? [...dmg] : [-1, 0] });
             tasks0.push(...tasks1);
             const stsaftercmds: Cmds[] = [
                 { cmd: 'getStatus', status: skillres.statusAfter, hidxs: skillres.hidxs },
@@ -2573,6 +2574,8 @@ export default class GeniusInvokationRoom {
      * @param options.isDieSwitch 是否为被击倒后重新选择角色
      */
     private async _changeTurn(pidx: number, isQuickAction: boolean, type: string, options: { isDieSwitch?: boolean } = {}) {
+        const isEnd = this.players.some(p => p.heros.every(h => h.hp <= 0)) && this.taskQueue.isTaskEmpty();
+        if (isEnd) return;
         const isDie = !this._hasNotDieSwitch();
         if (!isDie) await wait(() => this.needWait, { maxtime: 2e5 });
         const { isDieSwitch = false } = options;
@@ -2891,7 +2894,6 @@ export default class GeniusInvokationRoom {
                 }
             }
             this.taskQueue.addTask(`heroDie-${damageVO.dmgSource}-${atkname}`, [[() => {
-                if (this._isWin() != -1) return;
                 const tips = ['', ''];
                 for (const cpidx of isDie) {
                     const cplayer = this.players[cpidx];
@@ -2919,13 +2921,15 @@ export default class GeniusInvokationRoom {
                             if (heroDie[cpidx].length == 0) isDie.delete(cpidx);
                             continue;
                         }
-                        this.isDieBackChange = !isQuickAction && cplayer.phase == PHASE.ACTION;
-                        cplayer.status = PLAYER_STATUS.DIESWITCH;
-                        cplayer.UI.info = '请选择出战角色...';
-                        if (!isDie.has(cpidx ^ 1)) this.players[cpidx ^ 1].UI.info = '等待对方选择出战角色......';
                         h.isFront = false;
-                        tips[cpidx] = '请选择出战角色';
-                        if (!isDie.has(cpidx ^ 1)) tips[cpidx ^ 1] = '等待对方选择出战角色';
+                        if (this._isWin() == -1) {
+                            this.isDieBackChange = !isQuickAction && cplayer.phase == PHASE.ACTION;
+                            cplayer.status = PLAYER_STATUS.DIESWITCH;
+                            cplayer.UI.info = '请选择出战角色...';
+                            if (!isDie.has(cpidx ^ 1)) this.players[cpidx ^ 1].UI.info = '等待对方选择出战角色......';
+                            tips[cpidx] = '请选择出战角色';
+                            if (!isDie.has(cpidx ^ 1)) tips[cpidx ^ 1] = '等待对方选择出战角色';
+                        }
                     }
                 }
                 if (isDie.size == 0) return;
@@ -5044,7 +5048,7 @@ export default class GeniusInvokationRoom {
         newStatus.forEach(sts => {
             let cstIdx = getObjIdxById(oriStatus, sts.id);
             const oriSts = oriStatus[cstIdx];
-            if (cstIdx > -1 && oriSts.isTalent != sts.isTalent) { // 如果状态是否带有天赋不同，则重新附属
+            if (cstIdx > -1 && (oriSts.isTalent != sts.isTalent || oriSts.useCnt == 0)) { // 如果状态带有天赋不同或状态已耗尽，则重新附属
                 oriStatus.splice(cstIdx, 1);
                 cstIdx = -1;
             }
