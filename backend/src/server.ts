@@ -1,22 +1,22 @@
+import cors from 'cors';
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-// import cors from 'cors';
 import { AI_ID } from "../../common/constant/gameOption.js";
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
 const app = express();
-// app.use(cors({
-//     origin: [
-//         'http://127.0.0.1:5500',
-//         'http://taim.site',
-//         'http://gi-tcg.taim.site',
-//         'http://7szh.taim.site',
-//         'http://localhost:5500',
-//     ],
-//     methods: ['GET', 'POST']
-// }));
+app.use(cors({
+    origin: [
+        'http://127.0.0.1:5500',
+        'http://taim.site',
+        'http://gi-tcg.taim.site',
+        'http://7szh.taim.site',
+        'http://localhost:5500',
+    ],
+    methods: ['GET', 'POST']
+}));
 
 const httpServer = createServer(app);
 const PORT = 7000;
@@ -269,4 +269,4 @@ io.on('connection', socket => {
 
 });
 
-httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV}端口${PORT}启动......`));
+httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV ?? 'production'}端口${PORT}启动......`));

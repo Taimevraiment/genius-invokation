@@ -641,7 +641,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/92753a699957dc63318f06ab506d7e41_8008667568462089258.png')
         .handle((card, event) => {
             const { trigger = '' } = event;
-            const triggers: Trigger[] = ['getdmg', 'heal'];
+            const triggers: Trigger[] = ['getdmg', 'heal', 'other-getdmg'];
             const isTriggered = card.useCnt >= 12 && card.perCnt > 0;
             if (isTriggered) triggers.push('skilltype1');
             return {
@@ -651,7 +651,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 execmds: isCdt(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
                 minusDiceSkill: isCdt(isTriggered, { skilltype1: [0, 2, 0] }),
                 exec: () => {
-                    if (['getdmg', 'heal'].includes(trigger)) ++card.useCnt;
+                    if (['getdmg', 'heal', 'other-getdmg'].includes(trigger)) ++card.useCnt;
                     else if (trigger == 'skilltype1') {
                         card.useCnt -= 12;
                         --card.perCnt;
@@ -1018,7 +1018,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/166e56c3c68e531c97f4fdfde1adde06_4511818010196081435.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
-            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
+            if (card.perCnt > 0 && heros[hidx] && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
                 const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
                 return {
                     trigger: ['getdmg', 'heal'],

@@ -1482,7 +1482,7 @@ export default class GeniusInvokationRoom {
         }
         if (isExec) {
             this.taskQueue.addStatusAtk(atkStatues);
-            this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), true);
+            this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), { isUnshift: true });
         }
         for (const smn of (isExec ? players : bPlayers)[pidx].summons) {
             if (!oSummonEids.includes(smn.entityId) || (selectSummon != -1 && bPlayers[pidx].summons[selectSummon].entityId != smn.entityId)) continue;
@@ -2126,7 +2126,7 @@ export default class GeniusInvokationRoom {
                         hcardsCnt,
                         isExec,
                     });
-                    if (restDmg == slotresdmg) this.taskQueue.removeTask(hfield.entityId);
+                    if (restDmg == slotresdmg) this.taskQueue.removeTask({ entityId: hfield.entityId });
                     restDmg = slotresdmg;
                     for (const slidx of (hidxs ?? [atkHidx])) {
                         aist[slidx].push(...this._getStatusById(statusOppo).filter(s => s.group == STATUS_GROUP.heroStatus));
@@ -2160,11 +2160,11 @@ export default class GeniusInvokationRoom {
             });
         });
 
-        if (res.atriggers[atkHidx].includes('Crystallize')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(111));
-        if ((res.atriggers[atkHidx].includes('Bloom') && !hasObjById([...aost, ...res.players[pidx].combatStatus], 112081))) {
+        if (atriggers[atkHidx].includes('Crystallize')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(111));
+        if ((atriggers[atkHidx].includes('Bloom') && !hasObjById([...aost, ...res.players[pidx].combatStatus], 112081))) {
             (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(116));
         }
-        if (res.atriggers[atkHidx].includes('Quicken')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(117));
+        if (atriggers[atkHidx].includes('Quicken')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(117));
         const stscmds: Cmds[] = [];
         aheros.forEach((_, i) => {
             if (aist[i].length) stscmds.push({ cmd: 'getStatus', status: aist[i], hidxs: [i] })
@@ -2345,6 +2345,9 @@ export default class GeniusInvokationRoom {
             isQuickAction?: boolean,
         } = {}) {
         const { socket, selectHeros = [], selectSummon = -1, selectSupport = -1, getcard } = options;
+        const player = this.players[pidx];
+        const opponent = this.players[pidx ^ 1];
+        const currCard = getcard ?? player.handCards[cardIdx];
         if (!getcard) {
             const preview = this.previews.find(pre =>
                 pre.type == ACTION_TYPE.UseCard &&
@@ -2355,11 +2358,6 @@ export default class GeniusInvokationRoom {
                 (pre.supportIdx ?? -1) == selectSupport
             );
             if (!preview?.isValid) return this.emit('useCard-invalid', pidx, { socket, tip: '卡牌使用无效' });
-        }
-        const player = this.players[pidx];
-        const opponent = this.players[pidx ^ 1];
-        const currCard = getcard ?? player.handCards[cardIdx];
-        if (!getcard) {
             const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
             if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
             this._writeLog(`[${player.name}]使用了[${currCard.name}]`, 'info');
@@ -3044,7 +3042,8 @@ export default class GeniusInvokationRoom {
         const atkStatus = (group == STATUS_GROUP.heroStatus ? this.players[pidx].heros[ahidx].heroStatus : combatStatus).find(sts => sts.entityId == entityId)!;
         const atkedIdx = isSelf ? ahidx : eFrontIdx;
         if (atkStatus == undefined) {
-            console.error(`@_doStatusAtk: 状态[${atkname}]不存在`);
+            this.taskQueue.removeTask({ source: entityId });
+            console.info(`@_doStatusAtk: 状态[${atkname}]不存在`);
             return true;
         }
         const stsres = atkStatus.handle(atkStatus, {
@@ -3062,7 +3061,11 @@ export default class GeniusInvokationRoom {
             isExecTask: true,
             randomInt: this._randomInt.bind(this),
         });
-        if (!stsres.damage && !stsres.heal && stsres.cmds?.every(({ cmd }) => !['heal', 'revive'].includes(cmd))) {
+        const effectSelf = isSelf || stsres.heal || stsres.cmds?.some(({ cmd }) => cmd == 'heal');
+        if (
+            !stsres.damage && !stsres.heal && stsres.cmds?.every(({ cmd }) => !['heal', 'revive', 'addMaxHp'].includes(cmd)) ||
+            (effectSelf ? aheros : eheros)[effectSelf ? ahidx : eFrontIdx].hp <= 0
+        ) {
             this.emit(`statusAtk-${atkname}-cancel`, pidx, { isQuickAction });
             return true;
         }
@@ -3603,6 +3606,7 @@ export default class GeniusInvokationRoom {
                                 isQuickAction: false,
                                 discards,
                                 hcard,
+                                source: stsres.source,
                             });
                         } else {
                             if (stsres.isAddTask) {
@@ -3679,8 +3683,8 @@ export default class GeniusInvokationRoom {
             }
         }
         if (isExec && !taskMark) {
-            this.taskQueue.addStatusAtk(statusAtks.map(s => ({ ...s, isQuickAction: iqa })), isUnshift, isPriority);
-            this.taskQueue.addStatusAtk(statusAtksPre.map(s => ({ ...s, isQuickAction: iqa })), true, isPriority);
+            this.taskQueue.addStatusAtk(statusAtks.map(s => ({ ...s, isQuickAction: iqa })), { isUnshift, isPriority });
+            this.taskQueue.addStatusAtk(statusAtksPre.map(s => ({ ...s, isQuickAction: iqa })), { isUnshift: true, isPriority });
         }
         if (readySkill > -1) setTimeout(() => this._useSkill(pidx, readySkill, { isReadySkill: true }), 1200);
         let bWillHeals: number[] | undefined;
@@ -5239,9 +5243,9 @@ export default class GeniusInvokationRoom {
         while (!this.taskQueue.isTaskEmpty() && this.taskQueue.isExecuting && !isDieWaiting && this.players.every(p => p.phase != PHASE.PICK_CARD)) {
             const [[peekTaskType]] = this.taskQueue.peekTask();
             if (peekTaskType.includes(stopWithTaskType)) break;
-            const [[taskType, args, isDmg]] = this.taskQueue.getTask();
+            const [[taskType, args, source, isDmg]] = this.taskQueue.getTask();
             if (!this._hasNotDieSwitch() && isDmg) {
-                this.taskQueue.addTask(taskType, args, { isUnshift: true, isDmg });
+                this.taskQueue.addTask(taskType, args, { isUnshift: true, source, isDmg });
                 isDieWaiting = true;
                 break;
             }
@@ -5256,7 +5260,7 @@ export default class GeniusInvokationRoom {
             if (taskType.startsWith('statusAtk-')) {
                 const isExeced = await this.taskQueue.execTask(taskType, [[() => this._doStatusAtk(args as StatusTask)]]);
                 if (!isExeced) {
-                    this.taskQueue.addStatusAtk([args as StatusTask], true);
+                    this.taskQueue.addStatusAtk([args as StatusTask], { isUnshift: true });
                     break;
                 }
             } else {
@@ -5280,8 +5284,8 @@ export default class GeniusInvokationRoom {
         isSwitch?: number, isReadySkill?: boolean, skid?: number, players?: Player[], isExec?: boolean,
     } = {}) {
         const { isSwitch = -1, isReadySkill, skid = -1, players = this.players, isExec = false } = options;
-        if (hidx == -1 || skid == -2) return;
         const player = players[pidx];
+        if (hidx == -1 || skid == -2 || !player) return;
         const heros = player.heros;
         if (isSwitch > -1) {
             if (!isExec) hidx = isSwitch;

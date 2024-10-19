@@ -115,6 +115,7 @@ type StatusTask = {
     isQuickAction?: boolean, // 是否为快速行动
     discards?: Card[], // 舍弃的牌
     hcard?: Card, // 调和或使用的牌
+    source?: number, // 触发该状态的实体id
 }
 
 type Cmds = {
@@ -293,3 +294,10 @@ type PickCard = {
 type PickCardType = 'card' | 'summon';
 
 type VersionCompareFn = ReturnType<typeof compareVersionFn>;
+
+type TaskItem = [
+    string, // 任务名称
+    any[] | StatusTask, // 任务参数
+    number, // 触发该任务的实体id
+    boolean, // 任务是否优先
+];

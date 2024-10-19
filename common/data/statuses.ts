@@ -89,6 +89,7 @@ export type StatusHandleRes = {
     isAddTask?: boolean,
     notPreview?: boolean,
     isFallAtk?: boolean,
+    source?: number,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => StatusExecRes | void,
 };
 
@@ -1539,7 +1540,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((status, event) => {
             const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, hcard, trigger = '', isExecTask = false } = event;
-            if ((trigger == 'other-get-elReaction' && !hasObjById(heros[dmgedHidx]?.heroStatus, status.id) || !hasDmg) && !isExecTask) return;
+            const source = isCdt(trigger == 'other-get-elReaction', getObjById(heros[dmgedHidx]?.heroStatus, status.id)?.entityId);
+            if ((trigger == 'other-get-elReaction' && !source || !hasDmg) && !isExecTask) return;
             const hasPyro = trigger == 'get-elReaction' &&
                 (!!getObjById(eheros, getHidById(status.id))?.talentSlot || hcard?.id == 217031) &&
                 (hasObjById(eCombatStatus, 117032) || isExecTask) &&
@@ -1551,6 +1553,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 isSelf: true,
                 hidxs: [hidx],
                 trigger: ['get-elReaction', 'other-get-elReaction'],
+                source,
                 exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),

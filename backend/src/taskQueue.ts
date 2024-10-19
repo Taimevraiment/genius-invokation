@@ -1,33 +1,35 @@
 import { delay, isCdt } from "../../common/utils/utils.js";
-import { LogType, StatusTask } from "../../typing";
+import { LogType, StatusTask, TaskItem } from "../../typing";
 
 export default class TaskQueue {
-    priorityQueue: [string, any[] | StatusTask, boolean][] | undefined;
-    queue: [string, any[] | StatusTask, boolean][] = [];
+    priorityQueue: TaskItem[] | undefined;
+    queue: TaskItem[] = [];
     isExecuting: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
     isDev: boolean;
+    get queueList() {
+        return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
+    }
     constructor(_writeLog: (log: string, type?: LogType) => void, isDev: boolean) {
         this._writeLog = _writeLog;
         this.isDev = isDev;
     }
     addTask(taskType: string, args: any[] | StatusTask, options: {
-        isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean,
+        isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
     } = {}) {
-        const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false } = options;
+        const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false, source = -1 } = options;
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
         const curQueue = isCdt(this.isExecuting || isPriority, this.priorityQueue) ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.trace('重复task:', taskType);
         }
-        if (isUnshift) curQueue.unshift([taskType, args, isDmg]);
+        if (isUnshift) curQueue.unshift([taskType, args, source, isDmg]);
         else if (addAfterNonDmg) {
             const tidx = this.queue.findIndex(([_, _t, isDmg]) => isDmg);
-            if (tidx > -1) this.queue.splice(tidx, 0, [taskType, args, isDmg]);
-            else this.queue.push([taskType, args, isDmg]);
-        } else curQueue.push([taskType, args, isDmg]);
-        const queueList = `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
-        this._writeLog((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + queueList, 'emit');
+            if (tidx > -1) this.queue.splice(tidx, 0, [taskType, args, source, isDmg]);
+            else this.queue.push([taskType, args, source, isDmg]);
+        } else curQueue.push([taskType, args, source, isDmg]);
+        this._writeLog((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
         this._writeLog('execTask-' + taskType, 'emit');
@@ -45,37 +47,46 @@ export default class TaskQueue {
         if (this.isDev) console.timeEnd('execTask-end-' + taskType);
         return res;
     }
-    getTask(): [[string, any[] | StatusTask, boolean], boolean] {
+    getTask(): [TaskItem, boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
         const res = this.priorityQueue?.shift() ?? this.queue.shift();
-        if (!res) return [['not found', [], false], false];
-        this._writeLog(`getTask:${res[0]}(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`, 'emit');
+        if (!res) return [['not found', [], -1, false], false];
+        this._writeLog(`getTask:${res[0]}${this.queueList}`, 'emit');
         if (this.priorityQueue?.length == 0) {
             this.priorityQueue = undefined;
         }
         return [res, isPriority];
     }
-    peekTask(): [[string, any[] | StatusTask, boolean], boolean] {
+    peekTask(): [TaskItem, boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
         const res = this.priorityQueue?.[0] ?? this.queue[0];
-        if (!res) return [['not found', [], false], false];
+        if (!res) return [['not found', [], -1, false], false];
         return [res, isPriority];
     }
-    removeTask(entityId: number) {
+    removeTask(condition: { entityId?: number, source?: number }) {
+        const { entityId, source = -1 } = condition;
         for (const queue of [this.priorityQueue, this.queue]) {
             if (!queue) continue;
-            const idx = queue.findIndex(([tpn]) => tpn.includes(`${entityId}`));
-            if (idx > -1) queue.splice(idx, 1);
+            const idxs = queue.map(([tpn, , src], idx) => ({ tpn, src, idx })).filter(({ tpn, src }) => {
+                if (entityId) return tpn.includes(`${entityId}`);
+                if (source != -1) return src == source;
+                return false;
+            }).map(v => v.idx).sort((a, b) => b - a);
+            for (const idx of idxs) {
+                this._writeLog(`removeTask:${queue[idx][0]}${this.queueList}`, 'emit');
+                queue.splice(idx, 1);
+            }
         }
     }
     isTaskEmpty() {
         return (this.priorityQueue ?? []).length == 0 && this.queue.length == 0;
     }
-    addStatusAtk(ststask: StatusTask[], isUnshift = false, isPriority = false) {
+    addStatusAtk(ststask: StatusTask[], options: { isUnshift?: boolean, isPriority?: boolean } = {}) {
         if (ststask.length == 0) return;
+        const { isUnshift, isPriority } = options;
         for (const t of ststask) {
             const atkname = `statusAtk-${t.name}(${t.entityId})-p${t.pidx}h${t.hidx}:${t.trigger}`;
-            this.addTask(atkname, t, { isUnshift, isPriority, isDmg: true });
+            this.addTask(atkname, t, { isUnshift, isPriority, isDmg: true, source: t.source });
         }
     }
 }
