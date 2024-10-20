@@ -3216,7 +3216,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     115102: () => new CardBuilder().name('竹星').vehicle().costSame(0).useCnt(2)
-        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Liuyun.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/e58400e1d1d763da8b03886edd298d0e_3195150843851699982.png'),
 
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方｢出战角色｣造成1点物理伤害，抓1张牌。')

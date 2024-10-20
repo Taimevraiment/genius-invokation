@@ -29,6 +29,16 @@
         <div v-else class="edit-container">
             <button class="edit-btn exit" @click.stop="exit">返回</button>
             <button class="edit-btn save" @click.stop="saveDeck">保存</button>
+            <button class="edit-btn share-deck" @click.stop="shareDeck">分享</button>
+            <div class="deck-share-img" v-if="isShowDeckShareImg" ref="deckShareImgRef">
+                <img src="@@/image/deck-share.png" style="width: 100%;height: 100%;">
+                <img class="deck-share-hero-img" v-for="(hero, hidx) in herosDeck" :key="hidx" :src="hero.UI.src"
+                    :style="{ left: `${29.4 + 13.5 * hidx}%` }" />
+                <img class="deck-share-card-img"
+                    v-for="(card, cidx) in cardsDeck.flatMap(c => c.UI.cnt == 1 ? c : new Array(c.UI.cnt).fill(c))"
+                    :style="{ left: `${21 + 9.5 * (cidx % 6)}%`, top: `${32 + 10.9 * Math.floor(cidx / 6)}%` }"
+                    :key="cidx" :src="card.UI.src">
+            </div>
             <div class="edit-deck-btn-group">
                 <button @click.stop="{ currIdx = 0; updateInfo(); }" :class="{ active: currIdx == 0 }">
                     角色
@@ -182,37 +192,16 @@
 <script setup lang="ts">
 import InfoModal from '@/components/InfoModal.vue';
 import {
-    CARD_SUBTYPE,
-    CARD_TAG,
-    CARD_TYPE,
-    CardSubtype,
-    CardType,
-    COST_TYPE,
-    DICE_TYPE,
-    DiceType,
-    ELEMENT_TYPE,
-    ElementType,
-    HERO_LOCAL,
-    HERO_LOCAL_CODE,
-    HeroLocal,
-    HeroTag,
-    INFO_TYPE,
-    PURE_ELEMENT_CODE,
-    PURE_ELEMENT_TYPE,
-    TypeConst,
-    Version,
-    VERSION,
-    WEAPON_TYPE,
-    WeaponType,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, COST_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
+    HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
-    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON,
-    HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
+    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
-import { computed, ref } from 'vue';
+import { computed, Ref, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, parseHero } from '../../../common/data/heros';
@@ -295,6 +284,8 @@ const isShowFilter = ref<boolean>(false);
 const isShowShareCode = ref<boolean>(false);
 const shareCode = ref<string>('');
 const pShareCode = ref<string>('');
+const isShowDeckShareImg = ref<boolean>(false);
+const deckShareImgRef = ref<Ref<HTMLDivElement> | null>(null);
 
 // 获取png图片
 const getPngIcon = (name: string) => {
@@ -331,6 +322,11 @@ const deleteDeck = (did: number) => {
         };
         localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
     }
+}
+
+// 分享卡组
+const shareDeck = () => {
+    isShowDeckShareImg.value = true;
 }
 
 // 重置角色筛选
@@ -648,6 +644,7 @@ const reset = () => {
 const cancel = () => {
     isShowFilter.value = false;
     isShowShareCode.value = false;
+    isShowDeckShareImg.value = false;
     modalInfo.value = NULL_MODAL();
 }
 
@@ -771,6 +768,35 @@ body div {
     left: 50px;
 }
 
+.edit-btn.share-deck {
+    position: absolute;
+    top: 0;
+    left: 100px;
+}
+
+.deck-share-img {
+    position: absolute;
+    height: 100%;
+    left: 50%;
+    transform: translate(-50%);
+    aspect-ratio: 120/163;
+    background-color: #363c5f;
+    z-index: 10;
+}
+
+.deck-share-hero-img {
+    position: absolute;
+    width: 11.7%;
+    top: 10.8%;
+    z-index: -1;
+}
+
+.deck-share-card-img {
+    position: absolute;
+    width: 8%;
+    z-index: -1;
+}
+
 .edit-btn.filter {
     position: absolute;
     bottom: 5px;
@@ -804,7 +830,7 @@ body div {
 }
 
 .deck-name {
-    margin-left: 15%;
+    margin-left: 20%;
     background-color: #daa98a;
     border: 0;
     padding: 5px;
