@@ -30,7 +30,7 @@
             <button class="edit-btn exit" @click.stop="exit">返回</button>
             <button class="edit-btn save" @click.stop="saveDeck">保存</button>
             <button class="edit-btn share-deck" @click.stop="shareDeck">分享</button>
-            <div class="deck-share-img" v-if="isShowDeckShareImg" ref="deckShareImgRef">
+            <div class="deck-share-img" v-if="isShowDeckShareImg">
                 <img src="@@/image/deck-share.png" style="width: 100%;height: 100%;">
                 <img class="deck-share-hero-img" v-for="(hero, hidx) in herosDeck" :key="hidx" :src="hero.UI.src"
                     :style="{ left: `${29.4 + 13.5 * hidx}%` }" />
@@ -201,7 +201,7 @@ import {
     CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
-import { computed, Ref, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, parseHero } from '../../../common/data/heros';
@@ -285,7 +285,6 @@ const isShowShareCode = ref<boolean>(false);
 const shareCode = ref<string>('');
 const pShareCode = ref<string>('');
 const isShowDeckShareImg = ref<boolean>(false);
-const deckShareImgRef = ref<Ref<HTMLDivElement> | null>(null);
 
 // 获取png图片
 const getPngIcon = (name: string) => {
@@ -647,7 +646,6 @@ const cancel = () => {
     isShowDeckShareImg.value = false;
     modalInfo.value = NULL_MODAL();
 }
-
 
 </script>
 
