@@ -206,7 +206,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中挑选1张加入手牌，并且治疗附属角色1点。')
         .src('')
-        .vehicle().costSame(2).handle(() => ({
+        .vehicle().costSame(1).handle(() => ({
             cmds: [{
                 cmd: 'pickCard',
                 cnt: 3,

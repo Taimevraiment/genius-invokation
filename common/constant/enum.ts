@@ -24,6 +24,8 @@ export type PureElementType = TypeConst<typeof PURE_ELEMENT_TYPE>;
 
 export const PURE_ELEMENT_TYPE_KEY: Record<PureElementType, keyof typeof PURE_ELEMENT_TYPE> = swapKeysAndValues(PURE_ELEMENT_TYPE);
 
+export type PureElementTypeKey = keyof typeof PURE_ELEMENT_TYPE;
+
 export const ELEMENT_TYPE = {
     Physical: 'Physical', // 物理 0
     ...PURE_ELEMENT_TYPE,
@@ -45,7 +47,7 @@ export const PURE_ELEMENT_CODE = {
 
 export type PureElementCode = TypeConst<typeof PURE_ELEMENT_CODE>;
 
-export const PURE_ELEMENT_CODE_KEY = swapKeysAndValues(PURE_ELEMENT_CODE);
+export const PURE_ELEMENT_CODE_KEY: Record<PureElementCode, PureElementType> = swapKeysAndValues(PURE_ELEMENT_CODE);
 
 export const ELEMENT_CODE = {
     [ELEMENT_TYPE.Physical]: 0,
@@ -54,7 +56,7 @@ export const ELEMENT_CODE = {
 
 export type ElementCode = TypeConst<typeof ELEMENT_CODE>;
 
-export const ELEMENT_CODE_KEY = swapKeysAndValues(ELEMENT_CODE);
+export const ELEMENT_CODE_KEY: Record<ElementCode, ElementType> = swapKeysAndValues(ELEMENT_CODE);
 
 export const DAMAGE_TYPE = {
     Pierce: 'Pierce', // 穿透

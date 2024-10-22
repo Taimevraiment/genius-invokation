@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
 import {
     ACTION_TYPE, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
-    DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
-    PURE_ELEMENT_TYPE_KEY, Phase, PureElementCode, PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup,
-    StatusType, Version,
+    DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
+    PURE_ELEMENT_TYPE_KEY, Phase,
+    PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup,
+    StatusType, Version
 } from '../../common/constant/enum.js';
 import {
     AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
@@ -531,7 +532,7 @@ export default class GeniusInvokationRoom {
      */
     getActionDev(actionData: {
         cpidx: number, cmds: Cmds[], dices: DiceCostType[], hps: { hidx: number, hp: number }[],
-        clearSts: { hidx: number, stsid: number }[], attachs: { hidx: number, el: number, isAdd: boolean }[],
+        clearSts: { hidx: number, stsid: number }[], attachs: { hidx: number, el: ElementCode, isAdd: boolean }[],
         disCardCnt: number, smnIds: number[], sptIds: number[], seed: string, flag: string
     }) {
         const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, smnIds, sptIds, seed, flag } = actionData;
@@ -550,8 +551,8 @@ export default class GeniusInvokationRoom {
                 else heros[hidx].attachElement = [];
             }
             if (el > 0 && el < 8) {
-                if (hidx >= heros.length) heros.forEach(h => h.attachElement.push(PURE_ELEMENT_CODE_KEY[el as PureElementCode]));
-                else heros[hidx].attachElement.push(PURE_ELEMENT_CODE_KEY[el as PureElementCode]);
+                if (hidx >= heros.length) heros.forEach(h => h.attachElement.push(PURE_ELEMENT_CODE_KEY[el]));
+                else heros[hidx].attachElement.push(PURE_ELEMENT_CODE_KEY[el]);
             }
         }
         for (const { hidx, hp } of hps) {
@@ -1434,6 +1435,33 @@ export default class GeniusInvokationRoom {
 
         bWillAttach.forEach((a, i) => a.push(...aWillAttach[i]));
         bWillDamages.push(aWillDamages);
+        const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
+            .map(xtrgs => xtrgs.map(trgs => trgs.map(trg => trg.startsWith('skill') ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[]));
+        const atkStatues: StatusTask[] = [];
+        const atkStatuesUnshift: StatusTask[] = [];
+        for (let i = 0; i < ahlen; ++i) {
+            const hi = (cahidx + i) % ahlen;
+            afterASkillTrgs[hi].push('status-destroy');
+            const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
+            atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+            if (i == 0) {
+                const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
+                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+            }
+        }
+        for (let i = 0; i < ehlen; ++i) {
+            const hi = (cehidx + i) % ehlen;
+            const h = bPlayers[epidx].heros[hi];
+            if (h.hp > 0) {
+                afterESkillTrgs[hi].push('status-destroy');
+                const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
+                atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+            }
+            if (i == 0) {
+                const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
+                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+            }
+        }
         if (skill) {
             const [_afterAOnlySkillTrgs, afterEOnlySkillTrgs] = [atriggers, etriggers]
                 .map(xtrgs => xtrgs.map(trgs => trgs.filter(trg => trg.startsWith('skill')).map(trg => ('after-' + trg)) as Trigger[]));
@@ -1451,33 +1479,6 @@ export default class GeniusInvokationRoom {
                     }, new Array(ehlen).fill(-1)),
                 });
                 mergeWillHeals(bWillHeal, slotres.willHeals, bPlayers);
-            }
-        }
-        const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
-            .map(xtrgs => xtrgs.map(trgs => trgs.map(trg => trg.startsWith('skill') ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[]));
-        const atkStatues: StatusTask[] = [];
-        const atkStatuesUnshift: StatusTask[] = [];
-        for (let i = 0; i < ehlen; ++i) {
-            const hi = (cehidx + i) % ehlen;
-            const h = bPlayers[epidx].heros[hi];
-            if (h.hp > 0) {
-                afterESkillTrgs[hi].push('status-destroy');
-                const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
-                atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-            }
-            if (i == 0) {
-                const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
-                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-            }
-        }
-        for (let i = 0; i < ahlen; ++i) {
-            const hi = (cahidx + i) % ahlen;
-            afterASkillTrgs[hi].push('status-destroy');
-            const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
-            atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-            if (i == 0) {
-                const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
-                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
         }
         if (isExec) {

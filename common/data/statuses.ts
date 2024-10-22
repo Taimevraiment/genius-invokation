@@ -1,7 +1,7 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
-    ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
+    ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
@@ -220,7 +220,7 @@ const status11505x = (swirlEl: PureElementType) => {
         .type(STATUS_TYPE.AddDamage).iconBg(STATUS_BG_COLOR[swirlEl])
         .description(`我方角色和召唤物所造成的[${ELEMENT_NAME[swirlEl]}伤害]+1。；[useCnt]`)
         .handle(status => ({
-            trigger: [`${STATUS_BG_COLOR_KEY[status.UI.iconBg] as ElementType}-dmg`],
+            trigger: [`${STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementTypeKey}-dmg`],
             addDmgCdt: 1,
             exec: () => { --status.useCnt }
         }));
@@ -512,7 +512,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111123: () => shieldHeroStatus('潜猎护盾', 1, 2),
 
-    111131: (cnt: number = 2) => new StatusBuilder('穿刺幽影').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
+    111131: (cnt: number = 2) => new StatusBuilder('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
         .icon('ski,1').type(STATUS_TYPE.Usage)
         .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。(向下取整)；[useCnt]')
         .handle((status, event) => {
@@ -528,7 +528,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    111133: () => new StatusBuilder('幽影').combatStatus().icon('').useCnt(1)
+    111133: () => new StatusBuilder('强攻破绽').combatStatus().icon('').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle((status, event) => ({
@@ -1259,7 +1259,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
                         trigger: ['skilltype1'],
-                        attachEl: isCdt(isFallAtk, ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType]),
+                        attachEl: isCdt(isFallAtk, ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementTypeKey]),
                         exec: () => { --status.useCnt },
                     }
                 }
@@ -2209,7 +2209,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 pdmg: status.useCnt,
                 hidxs: [hidx],
                 isSelf: true,
-                exec: eStatus => { eStatus && (eStatus.useCnt = 0) }
+                exec: eStatus => { eStatus && --eStatus.useCnt }
             }
         }),
 
