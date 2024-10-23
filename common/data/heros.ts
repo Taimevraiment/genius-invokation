@@ -480,14 +480,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('靶向治疗'))
         .skills(
             new SkillBuilder('弹跳水疗法').description('生成1张【crd112131】，将其置于我方牌库顶部第3张牌的位置，本角色附属3层【sts122】。(触发【crd112131】的效果后，会生成【crd112132】并置入对方牌库; 触发【crd112132】的效果后，会生成【crd112133】并置入我方牌库)')
-                .src('',
+                .src('/image/Skill_S_Sigewinne_01.png',
                     '')
                 .elemental().cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', cnt: -1, card: 112131, hidxs: [3] }], status: [[122, 3]] })),
             new SkillBuilder('过饱和心意注射').description('{dealDmg}，然后[准备技能]：【rsk12135】。')
-                .src('',
+                .src('/image/Skill_S_Sigewinne_02.png',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
             new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。(对每名角色最多生效3次)；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
+                .src('/image/Skill_E_Sigewinne_01_HD.png')
                 .handle(event => {
                     const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
                     const triggers: Trigger[] = [];
@@ -2081,14 +2082,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('')
         .normalSkill(new NormalSkillBuilder('王狼直击'))
         .skills(
-            new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属【sts126031】，召唤【smn126032】。')
+            new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属2层【sts126031】，召唤【smn126032】。')
                 .src('',
                     '')
-                .elemental().damage(1).cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent]], summon: 126032 })),
+                .elemental().damage(1).cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent, 2]], summon: 126032 })),
             new SkillBuilder('黄金侵绞').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并使所有敌方角色附属【sts126031】。')
                 .src('',
                     '')
-                .burst(2).damage(2).cost(3).handle(event => {
+                .burst(2).damage(3).cost(3).handle(event => {
                     const { eheros = [], talent } = event;
                     return {
                         pdmg: 1,

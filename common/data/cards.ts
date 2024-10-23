@@ -781,7 +781,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/6b1e8983b34f821da73f7a93076a501e_3915605735095366427.png')
         .handle((card, event) => {
             const { heros = [], hidxs = [], trigger = '', isExecTask = false } = event;
-            const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && (!isExecTask || heros[hidxs[0]].isFront);
+            const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && (!isExecTask || heros[hidxs[0]]?.isFront);
             return {
                 trigger: ['phase-start', 'getdmg'],
                 execmds: isCdt<Cmds[]>(trigger == 'phase-start', [{ cmd: 'getStatus', status: 301201, hidxs }],
@@ -922,7 +922,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             return {
-                trigger: isCdt(card.perCnt > 0 && heros[hidx].isFront, ['elReaction']),
+                trigger: isCdt(card.perCnt > 0 && heros[hidx]?.isFront, ['elReaction']),
                 cmds: [{ cmd: 'getCard', cnt: 1 }],
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
                 exec: () => { --card.perCnt }
@@ -3117,7 +3117,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，对方的【sts126031】最多可叠加到5次，并且所附属角色不在后台时也会生效。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Planelurker.webp')
         .handle((_, event) => {
-            const { eheros = [] } = event;
+            const { eheros = [], slotUse = false } = event;
+            if (!slotUse) return;
             eheros.forEach(h => h.heroStatus.forEach(sts => sts.id == 126031 && (sts.maxCnt = 5)));
         }),
 
@@ -3171,17 +3172,17 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    112131: () => new CardBuilder().name('激愈水球·大').event()
+    112131: () => new CardBuilder().name('激愈水球·大').event().costSame(0)
         .description('【抓到此牌时：】治疗我方出战角色3点。生成1张【crd112132】，将其置于对方牌库顶部第2张牌的位置。')
-        .src('')
+        .src('crd112131')
         .handle(() => ({
             trigger: ['getcard'],
             execmds: [{ cmd: 'heal', cnt: 3 }, { cmd: 'addCard', card: 112132, cnt: -1, hidxs: [2], isOppo: true }],
         })),
 
-    112132: () => new CardBuilder().name('激愈水球·中').event()
+    112132: () => new CardBuilder().name('激愈水球·中').event().costSame(0)
         .description('【抓到此牌时：】对所在阵营的出战角色造成2点[水元素伤害]。生成1张【crd112133】，将其置于对方牌库顶部。')
-        .src('')
+        .src('crd112132')
         .handle(() => ({
             trigger: ['getcard'],
             execmds: [
@@ -3190,9 +3191,9 @@ const allCards: Record<number, () => CardBuilder> = {
             ],
         })),
 
-    112133: () => new CardBuilder().name('激愈水球·小').event()
-        .src('')
+    112133: () => new CardBuilder().name('激愈水球·小').event().costSame(0)
         .description('【抓到此牌时：】治疗所有我方角色1点，生成【sts112101】。')
+        .src('crd112133')
         .handle((_, event) => ({
             trigger: ['getcard'],
             execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }, { cmd: 'getStatus', status: 112101 }],

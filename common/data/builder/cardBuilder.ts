@@ -26,7 +26,7 @@ export class GICard {
     perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
-    handle: (card: Card, event: CardHandleEvent) => CardHandleRes; // 卡牌发动的效果函数
+    handle: (card: Card, event?: CardHandleEvent) => CardHandleRes; // 卡牌发动的效果函数
     canSelectHero: number; // 能选择角色的数量
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
@@ -68,7 +68,7 @@ export class GICard {
             descriptions: [],
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
-        if (tag?.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
+        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
         else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；(｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；(角色最多装备1件｢圣遗物｣)`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
@@ -126,13 +126,13 @@ export class GICard {
         this.userType = userType;
         this.canSelectHero = canSelectHero;
         this.handle = (card, event) => {
-            const { reset = false } = event;
+            const { reset = false } = event ?? {};
             if (reset) {
                 if (isResetPct) card.perCnt = pct;
                 if (isResetUct) card.useCnt = uct;
                 if (!spReset) return {}
             }
-            return handle?.(card, event, compareVersionFn(ver)) ?? {};
+            return handle?.(card, event ?? {}, compareVersionFn(ver)) ?? {};
         }
         this.useCnt = uct;
         this.perCnt = pct;

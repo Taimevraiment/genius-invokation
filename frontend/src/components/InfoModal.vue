@@ -733,8 +733,8 @@ const showRule = (...desc: string[]) => {
 
 .equipment-icon {
   position: relative;
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   border: 2px solid #525252;
   border-radius: 50%;
   background: #d2d493;

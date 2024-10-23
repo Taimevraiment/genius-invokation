@@ -2197,9 +2197,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .explains('rsk66013', 'rsk66023', 'rsk66033', 'rsk66043')
         .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。'),
 
-    126031: (isTalent: boolean = false) => new StatusBuilder('黄金侵蚀').heroStatus().useCnt(1).maxCnt(isTalent ? 5 : 3)
+    126031: (isTalent: boolean = false, ucnt: number = 1) => new StatusBuilder('黄金侵蚀').heroStatus().useCnt(ucnt).maxCnt(isTalent ? 5 : 3)
         .icon('').type(STATUS_TYPE.Attack).talent(isTalent)
-        .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；[useCnt]')
+        .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)')
         .handle((status, event) => {
             const { heros = [], hidx = -1, eheros = [] } = event;
             const isTalent = eheros.find(h => h.id == getHidById(status.id))?.talentSlot;

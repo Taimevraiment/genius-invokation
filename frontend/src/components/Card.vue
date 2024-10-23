@@ -1,7 +1,7 @@
 <template>
     <div class="card" :class="{ 'mobile-card': isMobile }">
         <div class="card-border"></div>
-        <img class="card-img" :src="card.UI.src" v-if="card?.UI.src?.length > 0" :alt="card.name" />
+        <img class="card-img" :src="getPngIcon(card.UI.src)" v-if="card?.UI.src?.length > 0" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
                 :src="getPngIcon('legend-border')" />
