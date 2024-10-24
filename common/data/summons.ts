@@ -186,7 +186,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     111132: () => new SummonBuilder('极寒的冰枪').useCnt(2).damage(1)
         .description('{defaultAtk，生成1层【sts111131】。}')
-        .src('')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Rosaria.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
@@ -1014,7 +1014,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     126032: () => new SummonBuilder('兽境犬首').useCnt(2).damage(1)
         .description('{defaultAtk，使敌方出战角色附属【sts126031】。}')
-        .src('')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Planelurker.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {

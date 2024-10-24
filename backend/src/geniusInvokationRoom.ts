@@ -1044,6 +1044,8 @@ export default class GeniusInvokationRoom {
         const calcAtk = (oplayers: Player[], res: CalcAtkRes, type: string, stsId: number, skid = -1, isSelf = 0) => {
             if (res.element == DICE_COST_TYPE.Omni) return false;
             const cpidx = pidx ^ +!isSelf;
+            const atkcmds = [...(res.cmds ?? []), ...(res.execmds ?? [])];
+            res.isSelf = !(atkcmds[0].isOppo ?? true);
             const dmgedHidx = +!!res.isSelf ^ isSelf ? cehidx : cahidx;
             const dmgedHlen = +!!res.isSelf ^ isSelf ? ehlen : ahlen;
             const atkHidx = isSelf ? cahidx : cehidx;
@@ -1056,7 +1058,6 @@ export default class GeniusInvokationRoom {
                 });
                 mergeWillHeals(bWillHeal, whl?.[0], oplayers);
             }
-            const atkcmds = [...(res.cmds ?? []), ...(res.execmds ?? [])];
             const { willHeals: whl, willDamages: smndmg, willAttachs: was } = this._doCmds(cpidx, atkcmds, {
                 hidxs: [atkHidx],
                 players: oplayers,
@@ -1072,7 +1073,7 @@ export default class GeniusInvokationRoom {
             });
             was?.forEach((wa, wai) => bWillAttach[wai].push(...wa));
             mergeWillHeals(bWillHeal, whl?.[0], oplayers);
-            const dmgEl = atkcmds.find(({ element }) => element != undefined)?.element;
+            const dmgEl = atkcmds[0].element;
             if (dmgEl) res.element = dmgEl as DamageType;
             if (res.damage == undefined && res.pdmg == undefined && !smndmg) return false;
             const reshidxs = res.hidxs ?? getBackHidxs(oplayers[cpidx ^ +!!res.isSelf].heros);
@@ -1457,6 +1458,10 @@ export default class GeniusInvokationRoom {
                 atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
         }
+        if (isExec) {
+            this.taskQueue.addStatusAtk(atkStatues);
+            this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), { isUnshift: true });
+        }
         if (skill) {
             const [_afterAOnlySkillTrgs, afterEOnlySkillTrgs] = [atriggers, etriggers]
                 .map(xtrgs => xtrgs.map(trgs => trgs.filter(trg => trg.startsWith('skill')).map(trg => ('after-' + trg)) as Trigger[]));
@@ -1466,19 +1471,9 @@ export default class GeniusInvokationRoom {
                     hidxs,
                     players: bPlayers,
                     isExec,
-                    getdmg: bWillDamages.reduce((a, c) => {
-                        return c.slice(epidx * ahlen, epidx * ahlen + ehlen).map(([dmg, pdmg], hi) => {
-                            if (dmg == -1 && pdmg == 0) return a[hi];
-                            return Math.max(0, a[hi]) + Math.max(0, dmg) + pdmg;
-                        });
-                    }, new Array(ehlen).fill(-1)),
                 });
                 mergeWillHeals(bWillHeal, slotres.willHeals, bPlayers);
             }
-        }
-        if (isExec) {
-            this.taskQueue.addStatusAtk(atkStatues);
-            this.taskQueue.addStatusAtk(atkStatuesUnshift.reverse(), { isUnshift: true });
         }
         for (const smn of (isExec ? players : bPlayers)[pidx].summons) {
             if (!oSummonEids.includes(smn.entityId) || (selectSummon != -1 && bPlayers[pidx].summons[selectSummon].entityId != smn.entityId)) continue;
@@ -4361,7 +4356,7 @@ export default class GeniusInvokationRoom {
                             const getcards = willGetCard.slice(0, rest);
                             cplayer.handCards.push(...getcards);
                             for (const getcard of getcards) {
-                                for (const cmds of getcard.handle(getcard).execmds ?? []) {
+                                for (const cmds of getcard.handle(getcard, { heros: cplayer.heros }).execmds ?? []) {
                                     if (!['attack', 'heal'].includes(cmds.cmd)) continue;
                                     tasks.push({ pidx: cpidx, cmds: [cmds], atkname: `${getcard.name}(${getcard.entityId})` });
                                 }

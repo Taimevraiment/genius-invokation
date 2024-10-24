@@ -595,7 +595,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/fcad55ff202d5dc8fa1d782f0b2f3400_3902557354688808483.png')
         .handle((card, event) => {
             const { heros = [], hidxs = [-1], isExecTask = false } = event;
-            const isTriggered = !!heros[hidxs[0]]?.isFront && card.perCnt > 0;
+            const isTriggered = !!heros[hidxs[0]]?.isFront && (heros[hidxs[0]]?.hp ?? 0) > 0 && card.perCnt > 0;
             return {
                 addDmg: 1,
                 trigger: isCdt(!isExecTask || isTriggered, ['after-skill-oppo']),
@@ -3174,7 +3174,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112131: () => new CardBuilder().name('激愈水球·大').event().costSame(0)
         .description('【抓到此牌时：】治疗我方出战角色3点。生成1张【crd112132】，将其置于对方牌库顶部第2张牌的位置。')
-        .src('crd112131')
+        .src('tmp/crd112131')
         .handle(() => ({
             trigger: ['getcard'],
             execmds: [{ cmd: 'heal', cnt: 3 }, { cmd: 'addCard', card: 112132, cnt: -1, hidxs: [2], isOppo: true }],
@@ -3182,7 +3182,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112132: () => new CardBuilder().name('激愈水球·中').event().costSame(0)
         .description('【抓到此牌时：】对所在阵营的出战角色造成2点[水元素伤害]。生成1张【crd112133】，将其置于对方牌库顶部。')
-        .src('crd112132')
+        .src('tmp/crd112132')
         .handle(() => ({
             trigger: ['getcard'],
             execmds: [
@@ -3193,7 +3193,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112133: () => new CardBuilder().name('激愈水球·小').event().costSame(0)
         .description('【抓到此牌时：】治疗所有我方角色1点，生成【sts112101】。')
-        .src('crd112133')
+        .src('tmp/crd112133')
         .handle((_, event) => ({
             trigger: ['getcard'],
             execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }, { cmd: 'getStatus', status: 112101 }],

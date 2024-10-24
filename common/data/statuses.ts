@@ -528,7 +528,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    111133: () => new StatusBuilder('强攻破绽').combatStatus().icon('').useCnt(1)
+    111133: () => new StatusBuilder('强攻破绽').combatStatus().icon('tmp/UI_Gcg_Buff_Rosaria').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle((status, event) => ({
@@ -2198,7 +2198,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。'),
 
     126031: (isTalent: boolean = false, ucnt: number = 1) => new StatusBuilder('黄金侵蚀').heroStatus().useCnt(ucnt).maxCnt(isTalent ? 5 : 3)
-        .icon('').type(STATUS_TYPE.Attack).talent(isTalent)
+        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp').type(STATUS_TYPE.Attack).talent(isTalent)
         .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】(可叠加，最多叠加到3次)')
         .handle((status, event) => {
             const { heros = [], hidx = -1, eheros = [] } = event;
