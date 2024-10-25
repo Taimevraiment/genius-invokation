@@ -3,7 +3,9 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
 import {
-    ACTION_TYPE, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
+    ACTION_TYPE,
+    ActionType,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
     DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
     PURE_ELEMENT_TYPE_KEY, Phase,
     PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup,
@@ -207,19 +209,15 @@ export default class GeniusInvokationRoom {
             this.previews = previews;
             if ( // AI行动
                 (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
-                    flag.includes('reroll') ||
-                    ((flag.includes('useCard') || flag.endsWith('card-after')) && !isChange)
+                    flag.includes('reroll') || flag.includes('reconcile') ||
+                    ((flag.includes('useCard') || flag.includes('card-doDamage') || flag.endsWith('card-after')) && !isChange)
                 ) && cplayer.id == AI_ID
             ) {
                 setTimeout(() => {
-                    const actionType = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero, ACTION_TYPE.EndPhase];
+                    const actionType: ActionType[] = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero];
                     const { pidx: cpidx, dice } = cplayer;
                     while (true) {
                         const [action] = this._randomInArr(actionType);
-                        if (action == ACTION_TYPE.EndPhase) {
-                            this._doEndPhase(cpidx, 'endPhase-ai');
-                            break;
-                        }
                         const pres = previews.filter(p => p.type == action && p.isValid);
                         if (pres.length > 0) {
                             const [preview] = this._randomInArr(pres);
@@ -248,6 +246,10 @@ export default class GeniusInvokationRoom {
                             break;
                         }
                         actionType.splice(actionType.indexOf(action), 1);
+                        if (actionType.length == 0) {
+                            this._doEndPhase(cpidx, 'endPhase-ai');
+                            break;
+                        }
                     }
                 }, 2e3);
             }
@@ -787,9 +789,8 @@ export default class GeniusInvokationRoom {
             }
         }
         for (let i = 0; i < diceLen - scnt; ++i) {
-            // if (this.isDev) ++tmpDice[DICE_COST_TYPE.Omni];
-            // else 
-            ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
+            if (this.isDev) ++tmpDice[DICE_COST_TYPE.Omni];
+            else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
         }
         const ndices: DiceCostType[] = [];
         const heroEle: DiceCostType[] = [...player.heros]
@@ -864,7 +865,7 @@ export default class GeniusInvokationRoom {
         player.dice = this._rollDice(pidx);
         player.handCards = player.handCards.filter((_, ci) => ci != cardIdx);
         ++player.playerInfo.reconcileCnt;
-        this._writeLog(`[${player.name}]【将[${currCard.name}]】进行了调和`);
+        this._writeLog(`[${player.name}]【将[${currCard.name}]】进行了调和`, 'info');
         this._doActionAfter(pidx);
         this.emit(flag, pidx, { isActionInfo: true });
         await delay(1100);
@@ -1564,7 +1565,7 @@ export default class GeniusInvokationRoom {
                     return res;
                 });
             });
-        } else if (skid > 0 || (skid == -2 && isQuickAction)) {
+        } else if (skid > 0) {
             setTimeout(async () => {
                 await this._execTask();
                 this._doActionAfter(pidx, isQuickAction);
@@ -1761,7 +1762,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Cryo)) { // 水冰 冻结
                         res.willDamages[getDmgIdx][0] += +!isAttach;
-                        eist[dmgedHidx].push(this.newStatus(106));
+                        (isAtkSelf ? aist : eist)[dmgedHidx].push(this.newStatus(106));
                         res.elTips[elTipIdx] = ['冻结', dmgElement, attachElement];
                         atriggers.forEach((trg, tri) => {
                             if (tri == atkHidx) trg.push('Frozen');
@@ -2155,7 +2156,7 @@ export default class GeniusInvokationRoom {
 
         if (atriggers[atkHidx].includes('Crystallize')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(111));
         if ((atriggers[atkHidx].includes('Bloom') && !hasObjById([...aost, ...res.players[pidx].combatStatus], 112081))) {
-            (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(116));
+            (isAttach || !isAtkSelf ? eost : aost).push(this.newStatus(116));
         }
         if (atriggers[atkHidx].includes('Quicken')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(117));
         const stscmds: Cmds[] = [];
@@ -4719,6 +4720,7 @@ export default class GeniusInvokationRoom {
                     dmgElement,
                     atkedIdx: isCdt(!atkOppo, atkedIdx),
                     supportCnt,
+                    isQuickAction: !isAction,
                 });
             dmgElements1.forEach((de, dei) => {
                 if (de != DAMAGE_TYPE.Physical && de != DAMAGE_TYPE.Pierce) dmgElements![dei] = de;

@@ -30,7 +30,8 @@
             <button class="edit-btn exit" @click.stop="exit">返回</button>
             <button class="edit-btn save" @click.stop="saveDeck">保存</button>
             <button class="edit-btn share-deck" @click.stop="shareDeck">分享</button>
-            <div class="deck-share-img" v-if="isShowDeckShareImg">
+            <div class="deck-share-img" v-if="isShowDeckShareImg" @click.stop="">
+                <canvas id="deck-share" style="width: 100%;height: 100%;"></canvas>
                 <img src="@@/image/deck-share.png" style="width: 100%;height: 100%;">
                 <img class="deck-share-hero-img" v-for="(hero, hidx) in herosDeck" :key="hidx" :src="hero.UI.src"
                     :style="{ left: `${29.4 + 13.5 * hidx}%` }" />

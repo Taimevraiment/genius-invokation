@@ -158,13 +158,30 @@ export const objToArr = <K extends string | number | symbol, V>(obj: Record<K, V
  * @param wait 防抖频率(ms = 100)
  */
 export const debounce = (fn: (...args: any[]) => any, wait: number = 100) => {
-    let timer: NodeJS.Timeout | undefined;
+    let timer: NodeJS.Timeout | null = null;
     return (...args: any[]) => {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => {
             fn(...args);
-            timer = undefined;
+            timer = null;
         }, wait);
+    };
+};
+
+/**
+ * 节流函数
+ * @param fn 执行函数
+ * @param interval 节流频率(ms = 100)
+ */
+export const throttle = (fn: (...args: any[]) => any, interval: number = 100) => {
+    let lastTime = 0;
+    return function (...args: any[]) {
+        const now = new Date().getTime();
+        const remainTime = interval - (now - lastTime);
+        if (remainTime <= 0) {
+            fn(...args);
+            lastTime = now;
+        }
     };
 };
 

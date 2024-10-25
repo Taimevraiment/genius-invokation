@@ -383,14 +383,15 @@
 
         <div class="dice-change"
           v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && !isHide && isLookon == -1"
-          @mousedown.stop="mousedown()" @mouseup.stop="mouseup">
+          @mousedown.stop="mousedown()" @mouseup.stop="mouseup" @touchmove.stop="selectRerollDiceByMobile"
+          @touchstart.stop="mousedown()" @touchend.stop="mouseup">
           <div class="dice-change-area">
             <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
               <div class="dice" :class="{ 'dice-select': diceSelect[didx] }" @mousedown.stop="mousedown(didx)"
                 @mouseenter.stop="selectRerollDice(didx)">
                 <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
                 <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
-                <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" />
+                <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
               </div>
             </div>
           </div>
@@ -709,6 +710,13 @@ const selectRerollDice = (didx: number) => {
   if (diceChangeEnter == -1) diceChangeEnter = !diceSelect.value[didx];
   emits('update:diceSelect', didx, diceChangeEnter);
 };
+// 选择要重掷的骰子(移动端用)
+const selectRerollDiceByMobile = (e: TouchEvent) => {
+  const { pageX, pageY } = e.touches[0];
+  const ele = document.elementFromPoint(pageX, pageY);
+  if (!ele?.hasAttribute('didx')) return;
+  selectRerollDice(+ele.getAttribute('didx')!);
+}
 // 重掷骰子
 const reroll = () => {
   if (!showRerollBtn.value) return;
