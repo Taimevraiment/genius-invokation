@@ -1,5 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
-import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
+import { CARD_SUBTYPE, CardSubtype, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import { getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
@@ -61,6 +61,13 @@ export type SkillHandleRes = {
     isNotAddTask?: boolean,
     summonTrigger?: Trigger[],
     isForbidden?: boolean,
+    pickCard?: {
+        cnt: number,
+        card?: number[],
+        subtype?: CardSubtype[],
+        mode: number,
+        isOrdered?: boolean,
+    },
     exec?: () => void,
 }
 
@@ -204,18 +211,16 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             return { cmds }
         }),
 
-    3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中挑选1张加入手牌，并且治疗附属角色1点。')
+    3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中[挑选]1张加入手牌，并且治疗附属角色1点。')
         .src('/image/tmp/Btn_Natsaurus_Shamansaurus_ElementalArt.png',
             '')
         .vehicle().costSame(1).handle(() => ({
-            cmds: [{
-                cmd: 'pickCard',
+            pickCard: {
                 cnt: 3,
                 mode: CMD_MODE.getCard,
-                hidxs: [3130051],
-                isAttach: true,
                 subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food],
-            }],
+                isOrdered: true,
+            },
             heal: 1,
         })),
 

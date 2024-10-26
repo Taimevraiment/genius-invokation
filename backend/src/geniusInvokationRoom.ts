@@ -1046,7 +1046,7 @@ export default class GeniusInvokationRoom {
             if (res.element == DICE_COST_TYPE.Omni) return false;
             const cpidx = pidx ^ +!isSelf;
             const atkcmds = [...(res.cmds ?? []), ...(res.execmds ?? [])];
-            res.isSelf = !(atkcmds[0].isOppo ?? true);
+            res.isSelf = !(atkcmds[0]?.isOppo ?? true);
             const dmgedHidx = +!!res.isSelf ^ isSelf ? cehidx : cahidx;
             const dmgedHlen = +!!res.isSelf ^ isSelf ? ehlen : ahlen;
             const atkHidx = isSelf ? cahidx : cehidx;
@@ -1230,14 +1230,21 @@ export default class GeniusInvokationRoom {
             randomInArr: this._randomInArr.bind(this),
         }) ?? {};
         if (isExec) {
-            if (skillres.cmds?.some(({ cmd }) => cmd == 'pickCard')) {
+            if (skillres.pickCard) {
                 if (isPickCard) {
-                    skillres.cmds = skillres.cmds.filter(({ cmd }) => cmd != 'pickCard');
                     if (!skillres.summonPre) skillres.summonPre = [];
                     if (typeof skillres.summonPre == 'number') skillres.summonPre = [skillres.summonPre];
                     if (pickSummon?.length) skillres.summonPre.push(...pickSummon);
                 } else {
-                    this._doCmds(pidx, skillres.cmds.filter(({ cmd }) => cmd == 'pickCard'));
+                    this._doCmds(pidx, [{
+                        cmd: 'pickCard',
+                        cnt: skillres.pickCard.cnt,
+                        mode: skillres.pickCard.mode,
+                        card: skillres.pickCard.card,
+                        subtype: skillres.pickCard.subtype,
+                        isAttach: skillres.pickCard.isOrdered,
+                        hidxs: [skid],
+                    }]);
                     this._execTask();
                     return res;
                 }
@@ -4706,7 +4713,7 @@ export default class GeniusInvokationRoom {
                     }
                     players[pidx].phase = PHASE.PICK_CARD;
                     this.emit(`pickCard-${i}`, pidx);
-                }]]);
+                }]], { isUnshift, isPriority });
             }
         }
         if (!isOnlyGetWillDamages && willDamages != undefined && dmgElement != undefined) {

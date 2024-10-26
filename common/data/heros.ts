@@ -1284,20 +1284,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/16092',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8ef27719f84860001bce5a1f5df2dcd3_8474447068629975560.png')
                 .elemental().cost(3).handle(event => {
-                    const { talent, isExec } = event;
-                    const summonPre: number[] = [];
-                    const cmds: Cmds[] = [];
-                    if (talent) summonPre.push(116094);
-                    if (isExec) {
-                        cmds.push({
-                            cmd: 'pickCard',
-                            card: [116091, 116092, 116093, 116095, 116096],
+                    const { talent } = event;
+                    return {
+                        summonPre: isCdt(!!talent, 116094),
+                        pickCard: {
                             cnt: talent ? 4 : 3,
-                            hidxs: [16092],
                             mode: CMD_MODE.getSummon,
-                        });
+                            card: [116091, 116092, 116093, 116095, 116096],
+                        }
                     }
-                    return { summonPre, cmds }
                 }),
             new SkillBuilder('二刀之形·比翼').description('{dealDmg}。')
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/16093',
