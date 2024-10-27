@@ -2195,4 +2195,4 @@ export const herosTotal = (version: Version = VERSION[0]) => {
 
 export const newHero = (version?: Version) => (id: number) => allHeros[id]?.().id(id).version(version).done() ?? NULL_HERO();
 
-export const parseHero = (shareId: number) => herosTotal().find(h => h.shareId == shareId) ?? NULL_HERO();
+export const parseHero = (shareId: number, version?: Version) => herosTotal(version).find(h => h.shareId == shareId) ?? NULL_HERO();

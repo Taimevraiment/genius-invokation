@@ -101,7 +101,7 @@ io.on('connection', socket => {
                 id: r.id,
                 name: r.name,
                 isStart: r.isStart,
-                version: r.version,
+                version: r.version.value,
                 playerCnt: r.players.length,
                 hasPassWord: r.password != '',
             })),
@@ -185,7 +185,7 @@ io.on('connection', socket => {
         roomList.push(newRoom);
         socket.join(`7szh-${roomId}-p${player.pidx}`);
         emitPlayerAndRoomList();
-        socket.emit('enterRoom', { roomId, players: newRoom.players, version: newRoom.version, countdown: newRoom.countdown.limit });
+        socket.emit('enterRoom', { roomId, players: newRoom.players, version: newRoom.version.value, countdown: newRoom.countdown.limit });
     });
     // 加入房间
     socket.on('enterRoom', data => {
@@ -212,7 +212,7 @@ io.on('connection', socket => {
             socket.join(`7szh-${roomId}-p${(me as Player).pidx}`);
         }
         emitPlayerAndRoomList();
-        socket.emit('enterRoom', { roomId, isLookon, players: room.players, version: room.version, countdown: room.countdown.limit });
+        socket.emit('enterRoom', { roomId, isLookon, players: room.players, version: room.version.value, countdown: room.countdown.limit });
     });
     // 退出房间
     socket.on('exitRoom', () => leaveRoom('exitRoom'));

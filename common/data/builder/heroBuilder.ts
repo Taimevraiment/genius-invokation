@@ -175,7 +175,7 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     normalSkill(normalSkillBuilder: NormalSkillBuilder) {
-        this._normalSkill = normalSkillBuilder.version(this._version);
+        this._normalSkill = normalSkillBuilder.version(this._curVersion);
         return this;
     }
     skills(...skills: SkillBuilder[]) {

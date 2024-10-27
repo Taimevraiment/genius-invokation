@@ -20,7 +20,7 @@ const emit = defineEmits(['create-room', 'create-room-cancel']);
 
 const roomName = ref<string>(''); // 房间名
 const roomPassword = ref<string>(''); // 房间密码
-const version = ref<Version>(VERSION[0]); // 版本
+const version = ref<Version>((JSON.parse(localStorage.getItem('GIdecks') || '[]')[Number(localStorage.getItem('GIdeckIdx') || '0')])?.version ?? VERSION[0]); // 版本
 const countdown = ref<number | string>(''); // 倒计时
 
 const create = () => emit('create-room', roomName.value, version.value, roomPassword.value, +countdown.value || 0);

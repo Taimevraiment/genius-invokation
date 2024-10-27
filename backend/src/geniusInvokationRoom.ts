@@ -23,11 +23,12 @@ import { newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
-import { allHidxs, checkDices, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, mergeWillHeals } from '../../common/utils/gameUtil.js';
+import { allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, mergeWillHeals } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
     ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Hero, LogType, MinusDiceSkill, PickCard,
-    Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger
+    Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger,
+    VersionCompareFn
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -37,7 +38,7 @@ export default class GeniusInvokationRoom {
     io: Server; // socket.io
     id: number; // 房间id
     name: string; // 房间名
-    version: Version; // 游戏版本
+    version: VersionCompareFn; // 游戏版本
     password: string; // 房间密码
     seed: string = ''; // 本局游戏种子(用于处理随机事件)
     players: Player[] = []; // 玩家数组
@@ -70,7 +71,7 @@ export default class GeniusInvokationRoom {
         this.io = io;
         this.id = id;
         this.name = name || `房间${id}`;
-        this.version = version;
+        this.version = compareVersionFn(version);
         this.password = password;
         this.countdown.limit = countdown;
         this.isDev = isDev;
@@ -375,7 +376,7 @@ export default class GeniusInvokationRoom {
         const aiPlayer = this.players[1];
         aiPlayer.heros = [];
         const heroIds = new Set<number>();
-        const heroIdsPool = herosTotal(this.version).map(h => h.id);
+        const heroIdsPool = herosTotal(this.version.value).map(h => h.id);
         while (heroIds.size < 3) {
             const [hid] = this._randomInArr(heroIdsPool);
             if (heroIds.has(hid)) continue;
@@ -383,7 +384,7 @@ export default class GeniusInvokationRoom {
             aiPlayer.heros.push(this.newHero(hid));
         }
         const cardIdsMap = new Map<number, number>();
-        const cardIdsPool = cardsTotal(this.version).map(c => c.id);
+        const cardIdsPool = cardsTotal(this.version.value).map(c => c.id);
         while (aiPlayer.pile.length < DECK_CARD_COUNT) {
             const card = this.newCard(this._randomInArr(cardIdsPool)[0]);
             const cid = card.id;
@@ -406,7 +407,7 @@ export default class GeniusInvokationRoom {
         const d = new Date();
         const format = (n: number) => String(n).padStart(2, '0');
         console.info(`[${this.id}]start-seed:${this.seed}`);
-        this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-${this.version.replace(/\./g, '_')}-r${this.id}-s${this.seed}`;
+        this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-${this.version.value.replace(/\./g, '_')}-r${this.id}-s${this.seed}`;
         this.entityIdIdx = -500000;
         this.isStart = true;
         this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.isDev ? 1 : this._randomInt(PLAYER_COUNT);
@@ -476,9 +477,9 @@ export default class GeniusInvokationRoom {
             case ACTION_TYPE.StartGame:
                 player.deckIdx = deckIdx;
                 if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', cpidx, { socket, tip: '当前出战卡组不完整' });
-                player.heros = heroIds.map(parseHero);
-                player.pile = cardIds.map(parseCard);
-                if (player.heros.some(h => h.version > this.version) || player.pile.some(c => c.version > this.version)) return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
+                player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
+                player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
+                if (player.heros.some(h => this.version.lt(h.version)) || player.pile.some(c => this.version.lt(c.version))) return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
                 player.phase = (player.phase ^ 1) as Phase;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
                     this.start(cpidx, flag);
@@ -4329,7 +4330,7 @@ export default class GeniusInvokationRoom {
                                     if (cardIdx > -1) [wcard] = cplayer.pile.splice(cardIdx, 1);
                                 }
                             } else {
-                                const cardsPool = cardsTotal(this.version).filter(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[]))) && !exclude.includes(c.id));
+                                const cardsPool = cardsTotal(this.version.value).filter(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[]))) && !exclude.includes(c.id));
                                 [wcard] = this._randomInArr(cardsPool);
                             }
                         }
@@ -4598,7 +4599,7 @@ export default class GeniusInvokationRoom {
                 //         (willDamages?.[pidx * players[0].heros.length + hi].reduce((a, b) => a + Math.max(0, b)) ?? 0),
                 //         (cnt || heal) - (cmd == 'revive' ? 0.3 : 0)) : -1;
                 // });
-                notPreHeal[mode] ||= isAttach || cmd == 'revive' || (this.version < 'v5.0.0' && cmd == 'addMaxHp');
+                notPreHeal[mode] ||= isAttach || cmd == 'revive' || (this.version.lt('v5.0.0') && cmd == 'addMaxHp');
                 willHeals1.forEach((hl, hli) => {
                     if (hl > -1) {
                         const hlidx = hli + player.pidx * ceheros.length;
@@ -4687,11 +4688,11 @@ export default class GeniusInvokationRoom {
                     let cardIds: number[] = [];
                     if (isAttach) {
                         for (let i = 0; i < cnt; ++i) {
-                            const cardsIdPool = cardsTotal(this.version).filter(c => (c.hasSubtype(subtype[i]) || c.hasTag(cardTag[i]))).map(c => c.id);
+                            const cardsIdPool = cardsTotal(this.version.value).filter(c => (c.hasSubtype(subtype[i]) || c.hasTag(cardTag[i]))).map(c => c.id);
                             cardIds.push(this._randomInArr(cardsIdPool)[0]);
                         }
                     } else {
-                        const cardsIdPool = cardsTotal(this.version).filter(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[])))).map(c => c.id);
+                        const cardsIdPool = cardsTotal(this.version.value).filter(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[])))).map(c => c.id);
                         cardIds = this._randomInArr((card ? card as number[] : cardsIdPool), cnt);
                     }
                     this.pickModal.skillId = ohidxs?.[0] ?? -1;

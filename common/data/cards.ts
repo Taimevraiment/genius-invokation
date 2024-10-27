@@ -3431,4 +3431,4 @@ export const cardsTotal = (version: Version = VERSION[0]) => {
 
 export const newCard = (version?: Version) => (id: number) => allCards[id]?.().id(id).version(version).done() ?? NULL_CARD();
 
-export const parseCard = (shareId: number) => cardsTotal().find(c => c.shareId == shareId) ?? NULL_CARD();
+export const parseCard = (shareId: number, version?: Version) => cardsTotal(version).find(c => c.shareId == shareId) ?? NULL_CARD();

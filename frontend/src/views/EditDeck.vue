@@ -32,7 +32,7 @@
             <button class="edit-btn share-deck" @click.stop="shareDeck">分享</button>
             <div class="deck-share-img" v-if="isShowDeckShareImg" @click.stop="">
                 <canvas id="deck-share" style="width: 100%;height: 100%;"></canvas>
-                <img src="@@/image/deck-share.png" style="width: 100%;height: 100%;">
+                <img src="@@/image/deck-share.png" style="width: 100%;height: 100%;position: absolute;top: 0;left: 0;">
                 <img class="deck-share-hero-img" v-for="(hero, hidx) in herosDeck" :key="hidx" :src="hero.UI.src"
                     :style="{ left: `${29.4 + 13.5 * hidx}%` }" />
                 <img class="deck-share-card-img"
