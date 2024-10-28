@@ -1965,7 +1965,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 status: 303222,
                 canSelectHero: heros.map(h => h.weaponSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero.weaponSlot, () => hero.weaponSlot!.id) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero?.weaponSlot, () => hero.weaponSlot!.id) }],
                 exec: () => { hero.weaponSlot = null },
             }
         }),

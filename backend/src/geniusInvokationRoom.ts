@@ -1035,7 +1035,7 @@ export default class GeniusInvokationRoom {
         const nonAction = !isExec && player().heros[cahidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction));
         const res = {
             willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal,
-            players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, energyCnt,
+            players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, energyCnt, tarHidx: -1,
         };
         if (skill && (selectSummonInvalid || nonAction)) {
             if (isExec && selectSummonInvalid) this.emit('useSkillSelectSummonInvalid', pidx, { tip: '未选择召唤物' });
@@ -1383,10 +1383,10 @@ export default class GeniusInvokationRoom {
             if (skill.cost[2].cnt == 0) energyCnt[pidx][ahidx()]++;
             else if (skill.cost[2].cnt > 0) energyCnt[pidx][ahidx()] -= skill.cost[2].cnt;
         }
+        const tarHidx = aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).some(([d, p]) => d > -1 || p > 0) ? dmgedHidx : -1;
         if (skill && isExec) {
             players[pidx].isFallAtk = ifa;
             players[pidx].canAction = false;
-            const tarHidx = aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).some(([d, p]) => d > -1 || p > 0) ? dmgedHidx : -1;
             this.taskQueue.addTask(`useSkill-${skill.name}`, [[async () => {
                 assgin(this.players, players);
                 this._writeLog(`[${player().name}][${aHeros()[player().hidx].name}]使用了[${SKILL_TYPE_NAME[skill.type]}][${skill.name}]`, 'info');
@@ -1584,7 +1584,7 @@ export default class GeniusInvokationRoom {
         }
         return {
             willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal, energyCnt,
-            players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, atriggers, etriggers,
+            players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, atriggers, etriggers, tarHidx,
         }
     }
     /**
@@ -4840,7 +4840,7 @@ export default class GeniusInvokationRoom {
                 }
             }
             for (const selectSummon of summonSelects) {
-                const { willHp, willAttachs, summonCnt, supportCnt, willSummons, willSwitch, energyCnt }
+                const { willHp, willAttachs, summonCnt, supportCnt, willSummons, willSwitch, energyCnt, tarHidx }
                     = this._useSkill(pidx, skillId, {
                         isPreview: true,
                         withCard,
@@ -4866,6 +4866,7 @@ export default class GeniusInvokationRoom {
                     willEnergyChange: energyCnt,
                     summonCanSelect,
                     summonIdx: selectSummon,
+                    tarHidx,
                 }
                 previews.push(preview);
                 this._random = curRandom;

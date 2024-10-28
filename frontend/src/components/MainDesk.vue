@@ -152,7 +152,11 @@
             hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt > 0) ||
             hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt > 0">
           </div>
-          <img class="switch-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
+          <img class="hero-center-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
+          <img class="hero-center-icon" style="width: 60%;opacity: 1;" src="@@/image/Select_Ring_01.png"
+            v-if="targetSelect[hgi][hidx]" />
+          <img class="hero-center-icon" style="width: 30%;opacity: 1;" src="@@/image/Select_Check_01.png"
+            v-if="targetSelect[hgi][hidx]" />
           <div class="hero-hp" v-if="(hero?.hp ?? 0) >= 0">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png"
               :style="{ filter: `${hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}` }" />
@@ -231,7 +235,7 @@
                 {{ ists.useCnt < 0 ? ists.roundCnt : ists.useCnt }} </div>
               </div>
               <div v-if="hero.heroStatus.length > 4" :class="{ status: true, 'mobile-status': isMobile }"
-                style="background-color: #faebd767">
+                style="background-color: #faebd767;">
                 <span>···</span>
                 <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
                   {{ hero.heroStatus.length - 3 }}
@@ -609,6 +613,7 @@ const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
 const summonCanSelect = computed<boolean[][]>(() => props.client.summonCanSelect);
 const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
 const slotSelect = computed<boolean[][][][]>(() => props.client.slotSelect);
+const targetSelect = computed<boolean[][]>(() => props.client.targetSelect);
 const isLookon = computed<number>(() => props.isLookon);
 const heros = computed<Hero[][]>(() => {
   if (props.client.isWin < 2) return [opponent?.value?.heros ?? [], player.value.heros];
@@ -1300,7 +1305,7 @@ button:active {
   border-right: 6px solid #ffffff8b;
 }
 
-.switch-icon {
+.hero-center-icon {
   position: absolute;
   left: 50%;
   top: 50%;

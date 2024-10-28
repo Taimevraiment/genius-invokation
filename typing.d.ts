@@ -259,6 +259,7 @@ type Preview = Readonly<ActionData & {
     summonCanSelect?: boolean[][],
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
+    tarHidx?: number,
 }>
 
 type LogType = 'log' | 'system' | 'info' | 'emit';

@@ -43,7 +43,7 @@ export default class GeniusInvokationClient {
     willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
     supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
     summonCnt: number[][] = this._resetSummonCnt(); // 召唤物变化数
-    energyCnt: number[][]; // 充能变化数
+    energyCnt: number[][] = []; // 充能变化数
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
@@ -70,13 +70,14 @@ export default class GeniusInvokationClient {
     handcardsSelect: number = -1; // 被选中的手牌序号
     reconcileValid: boolean[] = []; // 是否允许调和
     heroSelect: number[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 角色是否选中
-    heroCanSelect: boolean[]; // 角色是否可选
+    heroCanSelect: boolean[] = []; // 角色是否可选
     heroSwitchDice: number = INIT_SWITCH_HERO_DICE; // 切换角色所需骰子数
     supportSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否选中
     supportCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(false)); // 支援物是否可选
     summonSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否选中
     summonCanSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(false)); // 召唤物是否可选
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
+    targetSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 目标是否选中
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', skillId: -1 }; // 挑选卡牌
     isDev: boolean; // 是否为开发模式
@@ -112,8 +113,6 @@ export default class GeniusInvokationClient {
             isValid: ver == version,
             error: '当前卡组版本不匹配',
         };
-        this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
-        this.energyCnt = players.map(p => p.heros.map(() => 0));
     }
     get playerIdx() { // 该玩家序号
         return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userid);
@@ -177,8 +176,12 @@ export default class GeniusInvokationClient {
     /**
      * 取消选择
      */
-    cancel(options: { onlyCard?: boolean, notCard?: boolean, notHeros?: boolean, onlyHeros?: boolean, onlySupportAndSummon?: boolean } = {}) {
-        const { onlyCard = false, notCard = false, notHeros = false, onlyHeros = false, onlySupportAndSummon = false } = options;
+    cancel(options: {
+        onlyCard?: boolean, notCard?: boolean, notHeros?: boolean, onlyHeros?: boolean,
+        onlySupportAndSummon?: boolean, notTarget?: boolean,
+    } = {}) {
+        const { onlyCard = false, notCard = false, notHeros = false, onlyHeros = false,
+            onlySupportAndSummon = false, notTarget = false } = options;
         this._resetWillHp();
         if (!onlyCard) {
             if ((!notHeros || onlyHeros) && !onlySupportAndSummon) {
@@ -203,17 +206,20 @@ export default class GeniusInvokationClient {
             this.handcardsSelect = -1;
         }
         if (onlyCard) return;
-        this.modalInfo = NULL_MODAL();
         this.currCard = NULL_CARD();
-        this.currSkill = NULL_SKILL();
         this._resetWillSwitch();
         this._resetWillSummons();
         this._resetSummonCnt();
         this._resetWillAttachs();
         this._resetSupportCnt();
         this._resetEnergyCnt();
-        if (this.phase != PHASE.DICE && this.player.phase != PHASE.DICE) this.resetDiceSelect();
-        this.isValid = false;
+        if (!notTarget) {
+            this.modalInfo = NULL_MODAL();
+            this.currSkill = NULL_SKILL();
+            this._resetTargetSelect();
+            this.isValid = false;
+        }
+        if (this.phase != PHASE.DICE && this.player.phase != PHASE.DICE && !notTarget) this.resetDiceSelect();
         this.isShowSwitchHero = 0;
         this.isShowHistory = false;
         this.isReconcile = false;
@@ -419,10 +425,13 @@ export default class GeniusInvokationClient {
         this.handCardsCnt = handCardsCnt;
         this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
         this.pickModal = pickModal;
-        if (this.statusSelect[0][0].length == 0 && this.players.length > 1 && phase >= PHASE.CHANGE_CARD) {
+        if (flag.includes('startGame')) {
+            this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
+            this.energyCnt = players.map(p => p.heros.map(() => 0));
+            this.targetSelect = players.map(p => p.heros.map(() => false));
             this.statusSelect.forEach((p, pi) => {
                 p.forEach((_, i, a) => {
-                    a[i] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(MAX_STATUS_COUNT).fill(false));
+                    a[i] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => new Array(MAX_STATUS_COUNT).fill(false));
                 });
             });
         }
@@ -558,7 +567,11 @@ export default class GeniusInvokationClient {
      * @param hidx 角色索引idx
      */
     selectHero(pidx: number, hidx: number, force: boolean = false) {
+        if (this.targetSelect[pidx][hidx] && this.currSkill.id > 0) {
+            return this.useSkill(this.currSkill.id);
+        }
         this.cancel({ onlySupportAndSummon: true });
+        this._resetTargetSelect();
         if (this.currCard.canSelectHero == 0 || this.player.status == PLAYER_STATUS.DIESWITCH || force) {
             this.currCard = NULL_CARD();
             if (this.isMobile && this.handcardsSelect > -1) this.mouseleave(this.handcardsSelect, true);
@@ -612,7 +625,7 @@ export default class GeniusInvokationClient {
         if (this.phase != PHASE.ACTION || this.isShowSwitchHero > 1) return true;
         const { id, canSelectHero } = this.currCard;
         if (pidx == 0 || id <= 0 || !this.heroCanSelect[hidx]) {
-            this.cancel();
+            this.cancel({ notTarget: true });
             return true;
         }
         if (this.heroSelect[pidx][hidx] > 1) {
@@ -741,12 +754,12 @@ export default class GeniusInvokationClient {
     /**
      * 使用技能
      * @param skid 选组技能的id -1切换角色
-     * @param options isOnlyRead 是否为只读, isCard 是否为使用卡, isSwitch 是否切换角色, isReadySkill 是否为准备技能, triggers 触发数组(出牌或切换角色时)
+     * @param options isOnlyRead 是否为只读
      */
-    async useSkill(skid: number, options: { isOnlyRead?: boolean, isCard?: boolean, isSwitch?: number, isReadySkill?: boolean } = {}) {
-        const { isOnlyRead = false, isCard = false, isReadySkill = false } = options;
+    async useSkill(skid: number, options: { isOnlyRead?: boolean } = {}) {
+        const { isOnlyRead = false } = options;
         const skidx = this.skills.findIndex(sk => sk.id == skid);
-        const isExec = !isOnlyRead && this.modalInfo.skidx == skidx || isReadySkill;
+        const isExec = !isOnlyRead && this.modalInfo.skidx == skidx;
         if (skid > -1) this.currSkill = this.skills.find(sk => sk.id == skid)!;
         if (this.currCard.id <= 0 && skid > -1) {
             if (!isExec) {
@@ -762,18 +775,12 @@ export default class GeniusInvokationClient {
                 this.modalInfo = NULL_MODAL();
             }
         }
-        if (this.opponent.status == PLAYER_STATUS.DIESWITCH || (!this.canAction && !isReadySkill)) return;
-        if (skid > -1 && (!this.currCard.subType.includes(CARD_SUBTYPE.Action) || !isCard)) {
-            this.currCard = NULL_CARD();
-            this.cancel({ onlyCard: true });
-        }
-        if (skid == -1 || !this.canAction) return;
-
+        if (this.opponent.status == PLAYER_STATUS.DIESWITCH || !this.canAction || skid == -1) return;
         if (isExec) {
             const diceValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
             if (!diceValid || !this.isValid) {
                 this.cancel();
-                return this._sendTip('不符合要求');
+                return this._sendTip('技能不符合要求');
             }
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.UseSkill,
@@ -796,6 +803,9 @@ export default class GeniusInvokationClient {
             this.willSwitch = [...preview.willSwitch!];
             this.summonCanSelect = [...clone(preview.summonCanSelect)!];
             this.energyCnt = [...clone(preview.willEnergyChange)!];
+            this._resetTargetSelect();
+            if ((preview.tarHidx ?? -1) != -1) this.targetSelect[0][preview.tarHidx!] = true;
+            else this.targetSelect[1][this.player.hidx] = true;
             this.isValid = preview.isValid;
             const { canSelectSummon } = this.currSkill;
             if (canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1) {
@@ -1018,6 +1028,9 @@ export default class GeniusInvokationClient {
     private _resetWillHp() {
         return this.willHp = new Array(this.players.flatMap(p => p.heros).length).fill(undefined);
     }
+    /**
+     * 重置切人预览
+     */
     private _resetWillSwitch() {
         return this.willSwitch = Array.from({ length: PLAYER_COUNT }, (_, i) => new Array(this.players[i]?.heros.length ?? 0).fill(false));
     }
@@ -1027,6 +1040,12 @@ export default class GeniusInvokationClient {
     private _resetEnergyCnt() {
         this.energyCnt.forEach(v => v.fill(0));
         return this.energyCnt;
+    }
+    /**
+     * 重置目标选择预览
+     */
+    private _resetTargetSelect() {
+        this.targetSelect.forEach(p => p.fill(false));
     }
     /**
      * 重置骰子选择
@@ -1050,6 +1069,7 @@ export default class GeniusInvokationClient {
             elTips: [],
         }
     }
+
     /**
      * 获取当前出战角色信息
      * @param pidx 玩家idx 默认为playerIdx -1为playerIdx^1
