@@ -719,7 +719,7 @@ export default class GeniusInvokationRoom {
             const player = this.players[pidx];
             this._detectSkill(pidx, 'switch-to', { hidxs: hidx, isQuickAction });
             for (let i = 0; i < player.heros.length; ++i) {
-                const chi = (ohidx + i) % player.heros.length;
+                const chi = (hidx + i) % player.heros.length;
                 const triggers: Trigger[] = [];
                 const types: StatusType[] = [];
                 if (chi == ohidx) {
@@ -1047,7 +1047,7 @@ export default class GeniusInvokationRoom {
             if (res.element == DICE_COST_TYPE.Omni) return false;
             const cpidx = pidx ^ +!isSelf;
             const atkcmds = [...(res.cmds ?? []), ...(res.execmds ?? [])];
-            res.isSelf = !(atkcmds[0]?.isOppo ?? true);
+            res.isSelf ??= !(atkcmds[0]?.isOppo ?? true);
             const dmgedHidx = +!!res.isSelf ^ isSelf ? cehidx : cahidx;
             const dmgedHlen = +!!res.isSelf ^ isSelf ? ehlen : ahlen;
             const atkHidx = isSelf ? cahidx : cehidx;
@@ -1075,7 +1075,7 @@ export default class GeniusInvokationRoom {
             });
             was?.forEach((wa, wai) => bWillAttach[wai].push(...wa));
             mergeWillHeals(bWillHeal, whl?.[0], oplayers);
-            const dmgEl = atkcmds[0].element;
+            const dmgEl = atkcmds[0]?.element;
             if (dmgEl) res.element = dmgEl as DamageType;
             if (res.damage == undefined && res.pdmg == undefined && !smndmg) return false;
             const reshidxs = res.hidxs ?? getBackHidxs(oplayers[cpidx ^ +!!res.isSelf].heros);
@@ -1450,6 +1450,7 @@ export default class GeniusInvokationRoom {
             const { atkStatus: atkhst } = doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1);
             atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             if (i == 0) {
+                if (afterASkillTrgs[hi].includes('other-skill')) afterASkillTrgs[hi].push('after-skill');
                 const { atkStatus: atkcst } = doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
                 atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
             }
