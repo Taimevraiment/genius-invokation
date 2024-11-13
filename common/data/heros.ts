@@ -207,7 +207,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/682e824a7cf31c433eabdf8f101592b1.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/2996ceb349568c064073978f3c45f419_3333678689971567936.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 111111 })),
-            new SkillBuilder('黑金狼噬').description('{dealDmg}，生成【sts111112】。；【本角色在本回合中受到伤害或治疗每累计到2次时：】此技能少花费1个元素骰(最多少花费2个)。')
+            new SkillBuilder('黑金狼噬').description('{dealDmg}，生成【sts111112】。；【本角色在本回合中受到伤害或治疗每累计到2次时：】此技能少花费1个元素骰（最多少花费2个）。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bfa34d0f6363c94bbc3e5a2164196028.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/1156bc48af506ea88c321bfc3e0de56a_8959649322241374469.png')
                 .burst(3).damage(2).cost(3).handle(event => {
@@ -246,14 +246,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Rosaria.png')
         .normalSkill(new NormalSkillBuilder('教会枪术'))
         .skills(
-            new SkillBuilder('噬罪的告解').description('{dealDmg}，生成2层【sts111131】。(触发【sts111131】的效果时，会生成【sts111133】。)')
+            new SkillBuilder('噬罪的告解').description('{dealDmg}，生成2层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）')
                 .src('/image/tmp/Skill_S_Rosaria_01.png',
                     '')
-                .elemental().damage(1).cost(3).handle(() => ({ status: 111131 })),
+                .elemental().damage(1).cost(3).handle(() => ({ statusPre: 111131 })),
             new SkillBuilder('终命的圣礼').description('{dealDmg}，生成2层【sts111131】，召唤【smn111132】。')
                 .src('/image/tmp/Skill_E_Rosaria_01_HD.png',
                     '')
-                .burst(2).damage(1).cost(3).handle(() => ({ status: 111131, summon: 111132 }))
+                .burst(2).damage(1).cost(3).handle(() => ({ statusPre: 111131, summon: 111132 }))
         ),
 
     1201: () => new HeroBuilder(9).name('芭芭拉').mondstadt().hydro().catalyst()
@@ -299,7 +299,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/e/e7/lhrcsp8l0nalp24l55335y1b8pazt8b.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/9cd333219d9081547d9c8f3d16a5b7c3_530937262031086854.png')
                 .burst(3).damage(4).cost(3).handle(() => ({ status: 112032 })),
-            new SkillBuilder('虚实流动').description('【此角色为出战角色，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。(每回合1次)')
+            new SkillBuilder('虚实流动').description('【此角色为出战角色，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。（每回合1次）')
                 .src('https://patchwiki.biligame.com/images/ys/1/12/j3lyz5vb4rhxspzbh9sl9toglxhk5d6.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bc5c12ac6eb36b8d24f03864bf281b87_4261814317325062178.png')
                 .passive().handle(event => ({ trigger: ['active-switch-from'], isNotAddTask: true, isQuickAction: event.skill.useCnt == 0 }))
@@ -479,7 +479,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Sigewinne.png')
         .normalSkill(new NormalSkillBuilder('靶向治疗'))
         .skills(
-            new SkillBuilder('弹跳水疗法').description('生成1张【crd112131】，将其置于我方牌库顶部第3张牌的位置，本角色附属3层【sts122】。(触发【crd112131】的效果后，会生成【crd112132】并置入对方牌库; 触发【crd112132】的效果后，会生成【crd112133】并置入我方牌库)')
+            new SkillBuilder('弹跳水疗法').description('生成1张【crd112131】，将其置于我方牌库顶部第3张牌的位置，本角色附属3层【sts122】。（触发【crd112131】的效果后，会生成【crd112132】并置入对方牌库; 触发【crd112132】的效果后，会生成【crd112133】并置入我方牌库）')
                 .src('/image/tmp/Skill_S_Sigewinne_01.png',
                     '')
                 .elemental().cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', cnt: -1, card: 112131, hidxs: [3] }], status: [[122, 3]] })),
@@ -487,7 +487,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/Skill_S_Sigewinne_02.png',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
-            new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。(对每名角色最多生效3次)；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
+            new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。（对每名角色最多生效3次）；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
                 .src('/image/tmp/Skill_E_Sigewinne_01_HD.png')
                 .handle(event => {
                     const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
@@ -498,7 +498,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         triggers.push('status-destroy');
                         cmds.push({ cmd: 'addMaxHp', cnt: 1, hidxs: [sourceHidx] });
                     }
-                    if (trigger == 'switch-to' && (hasObjById(combatStatus, 112101))) {
+                    if (trigger == 'switch-to' && hasObjById(combatStatus, 112101) && hero.energy < hero.maxEnergy) {
                         triggers.push('switch-to');
                         cmds.push({ cmd: 'getEnergy', cnt: 1, hidxs: [hero.hidx] });
                     }
@@ -582,7 +582,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6230c2cdf9f915b6297d0782e6510ad.png')
         .normalSkill(new NormalSkillBuilder('烟火打扬'))
         .skills(
-            new SkillBuilder('焰硝庭火舞').description('本角色附属【sts113051】。(此技能不产生[充能])')
+            new SkillBuilder('焰硝庭火舞').description('本角色附属【sts113051】。（此技能不产生[充能]）')
                 .src('https://patchwiki.biligame.com/images/ys/4/4d/nxz4yj425tcxv3bevn05eu33wrqv2jr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/cec17a1d299dd83a96a4e2e791a21da4_3223499260532391975.png')
                 .elemental().cost(1).energy(-1).handle(event => ({ status: [[113051, !!event.talent]] })),
@@ -737,7 +737,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/2/2c/b0tlvwd776zbom2sewxulwqzyq2fsa6.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/065f5a0ba4fa470e36c730b94862e27e_5007009973065767790.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ statusOppoPre: 113132 })),
-            new SkillBuilder('纵阵武力统筹').description('【敌方角色受到超载反应伤害后：】生成手牌【crd113131】。(每回合1次)')
+            new SkillBuilder('纵阵武力统筹').description('【敌方角色受到超载反应伤害后：】生成手牌【crd113131】。（每回合1次）')
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/etjv39dbype1nvxty7pn43rlczzrf3p.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a5b60cf0ca11cd6359a6c54c815174e1_907488869279933822.png')
                 .passive().handle(event => {
@@ -1526,7 +1526,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/a/ad/j8mjqzvynh98w3e5qkkxe3li00i0tv5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/91aaf5308bc072b31b6624af8f2ad1f0_601312319464014295.png')
                 .burst(2).damage(4).cost(3).handle(() => ({ status: 121042 })),
-            new SkillBuilder('血契掠影').description('【本角色使用技能后：】对敌方出战角色附属[可用次数]为(本技能最终伤害值-2)的【sts122】。(最多5层)')
+            new SkillBuilder('血契掠影').description('【本角色使用技能后：】对敌方出战角色附属[可用次数]为（本技能最终伤害值-2）的【sts122】。（最多5层）')
                 .src('https://patchwiki.biligame.com/images/ys/8/82/izm590u04twm2v4y5md823l6fqeevof.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/78e32bb625cf50b2f92487f8577bff6b_4076485311764645060.png')
                 .passive().handle(event => {
@@ -1547,8 +1547,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/aead2d2ae3013f2a1de52e4c77dcffa2.png')
         .normalSkill(new NormalSkillBuilder('翻涌').catalyst())
         .skills(
-            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)')
-                .description('随机召唤1种【纯水幻形】。(优先生成不同的类型)', 'v4.3.0')
+            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）')
+                .description('随机召唤1种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
                 .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
@@ -1563,8 +1563,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const summon = randomInArr(ver.lt('v4.3.0') && pools.length == 0 ? opools : pools);
                     return { summon }
                 }),
-            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。(优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】)')
-                .description('随机召唤2种【纯水幻形】。(优先生成不同的类型)', 'v4.3.0')
+            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）')
+                .description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
                 .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
@@ -1638,9 +1638,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e29c46b79a53a6c428d46017eecb52c2.png')
         .normalSkill(new NormalSkillBuilder('碎涛旋跃'))
         .skills(
-            new SkillBuilder('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+3)。然后[舍弃]1张原本元素骰费用最高的手牌。')
-                .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+4)。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v5.0.0')
-                .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1(最多+5)。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v4.8.0')
+            new SkillBuilder('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+3）。然后[舍弃]1张原本元素骰费用最高的手牌。')
+                .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+4）。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v5.0.0')
+                .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+5）。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v4.8.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f5c0f89cf02925ec13e306d11a5f7bd8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/942e3d28310f4395ee7e3f1580268db8_512199522496433076.png')
                 .elemental().damage(1).cost(3).explain('sts122041').handle((event, ver) => {
@@ -1671,7 +1671,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/17912c63d03adfefcb3cc1c262909ffb.png')
         .normalSkill(new NormalSkillBuilder('镰刀旋斩'))
         .skills(
-            new SkillBuilder('狂澜镰击').description('{dealDmg}。；如果有敌方角色附属有【sts106】或【sts122052】，则本角色获得1点[充能]。(每回合1次)')
+            new SkillBuilder('狂澜镰击').description('{dealDmg}。；如果有敌方角色附属有【sts106】或【sts122052】，则本角色获得1点[充能]。（每回合1次）')
                 .src('https://patchwiki.biligame.com/images/ys/1/10/lnygbgud3vpwaeo78le24h55nsbz1ke.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5bcf4aecbc53a844c2a25c980f2ab6ac_2541470900687128535.png')
                 .elemental().damage(3).cost(3).perCnt(1).handle(event => {
@@ -1751,8 +1751,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                     if (useCnt == 0) return { cmds: [{ cmd: 'getCard', cnt: 1, card: 123031 }] }
                 }),
-            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(每回合1次)')
-                .description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(整场牌局限制1次)', 'v5.1.0')
+            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。（每回合1次）')
+                .description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。（整场牌局限制1次）', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/9262db8e7ec7952af306117cb67d668d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/b9854a003c9d7e5b14bed92132391e9e_754640348498205527.png')
                 .passive().handle((event, ver) => {
@@ -1832,7 +1832,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2c69a56d98a6aaf7b24319a362568f9f.png')
         .normalSkill(new NormalSkillBuilder('轰霆翼斩').catalyst())
         .skills(
-            new SkillBuilder('雷墙倾轧').description('对附属有【sts124022】的敌方角色{dealDmg}。(如果敌方不存在符合条件角色，则改为对出战角色造成伤害)')
+            new SkillBuilder('雷墙倾轧').description('对附属有【sts124022】的敌方角色{dealDmg}。（如果敌方不存在符合条件角色，则改为对出战角色造成伤害）')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/1f1b73b917fc25ea3c71c08583037cb1.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/ca84fd08636d380d57da96f9a37e9e7f_7121937516609130674.png')
                 .elemental().damage(3).cost(3).handle(event => {
@@ -1928,7 +1928,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u539vg/91a752a687a07ebac5cd8e8241806cc6.png')
         .normalSkill(new NormalSkillBuilder('渊薮落雷').catalyst())
         .skills(
-            new SkillBuilder('秘渊虚霆').description('{dealDmg}。；如果目标已[附着雷元素]，则夺取对方1点[充能]。(如果夺取时此角色[充能]已满，则改为由下一个[充能]未满的角色获得[充能])')
+            new SkillBuilder('秘渊虚霆').description('{dealDmg}。；如果目标已[附着雷元素]，则夺取对方1点[充能]。（如果夺取时此角色[充能]已满，则改为由下一个[充能]未满的角色获得[充能]）')
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/24062',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/f06197e6de2668bf74bc73a391116c1f_9175472387527320923.png')
                 .elemental().damage(3).cost(3).handle(event => {
@@ -1967,7 +1967,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     summon: 125012,
                     cmds: isCdt(!!event.talent, [{ cmd: 'switch-before' }]),
                 })),
-            new SkillBuilder('机巧伪天狗抄').description('{dealDmg}，触发我方所有【剑影】召唤物效果。(不消耗其[可用次数])')
+            new SkillBuilder('机巧伪天狗抄').description('{dealDmg}，触发我方所有【剑影】召唤物效果。（不消耗其[可用次数]）')
                 .src('https://patchwiki.biligame.com/images/ys/f/fd/ren7lbexbnyvrdvn0aqhbrxx6atdoov.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/75142675f9625abbe1d9686f1a7f59b7_6144574132276306286.png')
                 .burst(3).damage(4).cost(3)
@@ -1998,7 +1998,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('旋尾迅击'))
         .skills(
             new SkillBuilder('盘绕风引').description('{dealDmg}，抓1张牌。')
-                .description('{dealDmg}，抓1张【crd124051】; 然后，手牌中每有1张【crd124051】，抓1张牌(每回合最多抓2张)。', 'v4.8.0')
+                .description('{dealDmg}，抓1张【crd124051】; 然后，手牌中每有1张【crd124051】，抓1张牌（每回合最多抓2张）。', 'v4.8.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/8c6ea09bfd6308bb23bf32d96d640487.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/20afc68783ad98f1da36cc3a5286bee6_5169119727722449200.png')
                 .elemental().damage(3).damage(2, 'v4.8.0').cost(3).perCnt(2).handle((event, ver) => {
@@ -2157,7 +2157,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (event.skill.useCnt > 0) return;
                     return { cmds: [{ cmd: 'getCard', cnt: 1, card: 127032 }] }
                 }),
-            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。(每回合1次)')
+            new SkillBuilder('厄灵之能').description('【此角色受到伤害后：】如果此角色生命值不多于7，则获得1点[充能]。（每回合1次）')
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/27034',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f2fc1e2e7ad6747577d954f3db9012f_2120144226908224970.png')
                 .passive().handle(event => {

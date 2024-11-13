@@ -393,7 +393,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // ｢悬木人｣
-    321024: () => new SupportBuilder().collection().handle((support, event) => {
+    321024: () => new SupportBuilder().round(1).handle((support, event) => {
         const { card, playerInfo: { initCardIds = [] } = {} } = event;
         if (!card || initCardIds.includes(card.id) || card.cost + card.anydice < support.cnt) return;
         return {

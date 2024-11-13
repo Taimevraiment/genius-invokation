@@ -2101,7 +2101,7 @@ export default class GeniusInvokationRoom {
             if (efhero.isFront) {
                 restDmg *= (res.players[pidx].combatStatus
                     .filter(sts => sts.hasType(STATUS_TYPE.MultiDamage))
-                    .reduce((a, sts) => a + (sts.handle(sts)?.multiDmgCdt ?? 0), 0)
+                    .reduce((a, sts) => a + (sts.handle(sts, { skid })?.multiDmgCdt ?? 0), 0)
                     + multiDmg) || 1;
             }
             this._getHeroField(dmgedPidx, { players: res.players, hidx: dmgedHidx }).forEach(hfield => {

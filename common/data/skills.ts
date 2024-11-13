@@ -99,7 +99,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。').elemental().readySkill().damage(3).damage(2, 'v3.8.0'),
 
-    15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}(或被扩散元素的伤害)。').elemental().readySkill().damage(2),
+    15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}（或被扩散元素的伤害）。').elemental().readySkill().damage(2),
 
     15075: () => ski1507x(ELEMENT_TYPE.Cryo),
 
@@ -130,10 +130,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     24044: () => new SkillBuilder('霆电迸发').description('{dealDmg}。').burst().readySkill().damage(2),
 
-    25025: () => new SkillBuilder('长延涤流').description('对下一个敌方后台角色{dealDmg}，然后[准备技能]：【rsk25026】。(敌方没有后台角色时，改为对出战角色造成伤害)')
+    25025: () => new SkillBuilder('长延涤流').description('对下一个敌方后台角色{dealDmg}，然后[准备技能]：【rsk25026】。（敌方没有后台角色时，改为对出战角色造成伤害）')
         .elemental().readySkill().damage(1).handle(() => ({ atkOffset: 1, status: 125023 })),
 
-    25026: () => new SkillBuilder('终幕涤流').description('对上一个敌方后台角色{dealDmg}。(敌方没有后台角色时，改为对出战角色造成伤害)')
+    25026: () => new SkillBuilder('终幕涤流').description('对上一个敌方后台角色{dealDmg}。（敌方没有后台角色时，改为对出战角色造成伤害）')
         .elemental().readySkill().damage(2).handle(() => ({ atkOffset: -1 })),
 
     66013: () => new SkillBuilder('霜刺破袭').description('{dealDmg}，此角色附属【sts126022】。')
@@ -157,7 +157,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
-    1220511: () => new SkillBuilder('水泡战法').description('(需准备1个行动轮)造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
+    1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1220511')
         .vehicle().costSame(1).handle(() => ({ status: 122053 })),
 
@@ -190,7 +190,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             return { cmds: [{ cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true }] }
         }),
 
-    3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。(每回合最多使用1次)')
+    3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。（每回合最多使用1次）')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({

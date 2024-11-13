@@ -70,10 +70,10 @@ export class GICard {
         }
         if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；(牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组)`;
         else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；(｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣)`;
-        else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；(角色最多装备1件｢圣遗物｣)`;
+        else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
             const vehicle = `rsk${id}1`;
-            this.UI.description += `[特技]：【${vehicle}】；【[可用次数]：{useCnt}】；(角色最多装备1个｢特技｣)`;
+            this.UI.description += `[特技]：【${vehicle}】；【[可用次数]：{useCnt}】；（角色最多装备1个｢特技｣）`;
             this.UI.explains.push(vehicle);
             handle ??= (card, event) => {
                 const { skid = -1 } = event;
@@ -81,8 +81,8 @@ export class GICard {
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             };
         } else if (subType?.includes(CARD_SUBTYPE.Food)) {
-            if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；(每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣)`;
-            else this.UI.description += `；(每回合每个角色最多食用1次｢料理｣)`;
+            if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；（每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣）`;
+            else this.UI.description += `；（每回合每个角色最多食用1次｢料理｣）`;
             const ohandle = handle;
             handle = (card, event) => {
                 const res = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
@@ -111,7 +111,7 @@ export class GICard {
                 .replace(/(?<=【)ski(?=】)/g, ski) + `；(牌组中包含【${hro}】，才能加入牌组)`;
             userType = hid;
         } else if (subType?.includes(CARD_SUBTYPE.Legend)) {
-            this.UI.description += `；(整局游戏只能打出一张｢秘传｣卡牌; 这张牌一定在你的起始手牌中)`;
+            this.UI.description += `；（整局游戏只能打出一张｢秘传｣卡牌; 这张牌一定在你的起始手牌中）`;
             this.UI.cnt = 1;
         } else if (subType?.includes(CARD_SUBTYPE.ElementResonance)) {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
