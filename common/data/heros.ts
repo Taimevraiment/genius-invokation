@@ -484,11 +484,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     '')
                 .elemental().cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', cnt: -1, card: 112131, hidxs: [3] }], status: [[122, 3]] })),
             new SkillBuilder('过饱和心意注射').description('{dealDmg}，然后[准备技能]：【rsk12135】。')
-                .src('/image/tmp/Skill_S_Sigewinne_02.png',
+                .src('/image/tmp/Skill_E_Sigewinne_01_HD.png',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
             new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。（对每名角色最多生效3次）；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
-                .src('/image/tmp/Skill_E_Sigewinne_01_HD.png')
+                .src('/image/tmp/Skill_S_Sigewinne_02.png',
+                    '')
                 .handle(event => {
                     const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
                     const triggers: Trigger[] = [];

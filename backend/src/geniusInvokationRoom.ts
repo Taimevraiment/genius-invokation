@@ -6,7 +6,7 @@ import {
     ACTION_TYPE,
     ActionType,
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
-    DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
+    DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
     PURE_ELEMENT_TYPE_KEY, Phase,
     PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup,
     StatusType, Version
@@ -377,20 +377,41 @@ export default class GeniusInvokationRoom {
         aiPlayer.heros = [];
         const heroIds = new Set<number>();
         const heroIdsPool = herosTotal(this.version.value).map(h => h.id);
+        const elMap = arrToObj(Object.values(ELEMENT_TYPE), 0);
+        const lcMap = arrToObj(Object.values(HERO_LOCAL), 0);
         while (heroIds.size < 3) {
             const [hid] = this._randomInArr(heroIdsPool);
             if (heroIds.has(hid)) continue;
             heroIds.add(hid);
             aiPlayer.heros.push(this.newHero(hid));
         }
+        aiPlayer.heros.forEach(h => {
+            ++elMap[h.element];
+            h.tags.forEach(lc => lc in lcMap && ++lcMap[lc]);
+        });
         const cardIdsMap = new Map<number, number>();
         const cardIdsPool = cardsTotal(this.version.value).map(c => c.id);
+        let hasLegend = false;
         while (aiPlayer.pile.length < DECK_CARD_COUNT) {
             const card = this.newCard(this._randomInArr(cardIdsPool)[0]);
             const cid = card.id;
             const cnt = cardIdsMap.get(cid) || 0;
             if (cnt < 2) {
-                if (cid > 200000 && cid < 300000 && !heroIds.has(+card.userType) || card.hasSubtype(CARD_SUBTYPE.Legend)) continue;
+                if (card.hasSubtype(CARD_SUBTYPE.Legend)) {
+                    if (!hasLegend) hasLegend = true;
+                    else continue;
+                }
+                if (card.hasSubtype(CARD_SUBTYPE.ElementResonance)) {
+                    const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
+                    if (element == ELEMENT_TYPE.Physical) continue;
+                    const elCode = PURE_ELEMENT_CODE[element] * 100;
+                    if (![331001 + elCode, 331002 + elCode].includes(cid)) continue;
+                }
+                if (card.hasSubtype(CARD_SUBTYPE.ElementResonance)) {
+                    const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
+                    if (local == undefined || cid != 331800 + HERO_LOCAL_CODE[local]) continue;
+                }
+                if (card.hasSubtype(CARD_SUBTYPE.Talent) && !heroIds.has(+card.userType)) continue;
                 cardIdsMap.set(cid, cnt + 1);
             }
             aiPlayer.pile.push(card);
@@ -1137,10 +1158,10 @@ export default class GeniusInvokationRoom {
             bWillDamages.push(willDamage3);
             doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: oahidx, isOnlyHeroStatus: true }), oahidx, STATUS_GROUP.heroStatus, [...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
             doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: nahidx, isOnlyHeroStatus: true }), nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1);
-            doPreviewHfield(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to'] as Trigger[] : [])], isExec, 1);
+            doPreviewHfield(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec, 1);
             doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: oehidx, isOnlyHeroStatus: true }), oehidx, STATUS_GROUP.heroStatus, [...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec);
             doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: nehidx, isOnlyHeroStatus: true }), nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec);
-            doPreviewHfield(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to'] as Trigger[] : [])], isExec);
+            doPreviewHfield(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec);
             return willKill;
         }
         const doPreviewHfield = (oplayers: Player[], ohfield: (Status | Card)[], hi: number, group: StatusGroup, trgs: Trigger[], isExec: boolean, isSelf = 0) => {
@@ -1153,6 +1174,12 @@ export default class GeniusInvokationRoom {
             } else {
                 oplayers[pidx ^ 1].hidx = cehidx;
                 oplayers[pidx ^ 1].heros.forEach(h => h.isFront = h.hidx == cehidx);
+            }
+            if (group == STATUS_GROUP.heroStatus) {
+                this._detectSkill(cpidx, trgs, { players: oplayers, energyCnt, hidxs: cahidx, isExec });
+            }
+            if (group == STATUS_GROUP.combatStatus) {
+                this._detectSupport(cpidx, trgs, { players: oplayers, supportCnt, energyCnt, hidx: cahidx, isExec });
             }
             const atkStatus: [StatusTask, boolean?][] = [];
             preview_end: for (const hfield of hfields) {
@@ -1204,8 +1231,7 @@ export default class GeniusInvokationRoom {
             cahidx = isSwitch;
             doPreviewHfield(players, this._getHeroField(pidx, { players, hidx: ahidx(), isOnlyHeroStatus: true }), ahidx(), STATUS_GROUP.heroStatus, ['switch-from'], false, 1);
             doPreviewHfield(players, this._getHeroField(pidx, { players, hidx: cahidx, isOnlyHeroStatus: true }), cahidx, STATUS_GROUP.heroStatus, ['switch-to'], false, 1);
-            doPreviewHfield(players, player().combatStatus, cahidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to'], false, 1);
-            this._detectSupport(pidx, 'switch', { players, supportCnt, energyCnt, hidx: cahidx, isExec: false });
+            doPreviewHfield(players, player().combatStatus, cahidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to', 'switch'], false, 1);
         }
         skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, skid, players, isExec });
         if (skill) skid = skill.id;
@@ -1521,10 +1547,10 @@ export default class GeniusInvokationRoom {
         }
         if (isSwitchOppo(skillcmds)) {
             doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: odmgedHidx, isOnlyHeroStatus: true }), odmgedHidx, STATUS_GROUP.heroStatus, ['switch-from', 'switch-to'], isExec);
-            doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, odmgedHidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to'], isExec);
+            doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, odmgedHidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to', 'switch'], isExec);
         }
         if (isSwitchSelf(skillcmds)) {
-            const triggers: Trigger[] = skid == -1 ? dtriggers : ['switch-from', 'switch-to'];
+            const triggers: Trigger[] = skid == -1 ? dtriggers : ['switch-from', 'switch-to', 'switch'];
             doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: ahidx(), isOnlyHeroStatus: true }), ahidx(), STATUS_GROUP.heroStatus, triggers, isExec, 1);
             doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, ahidx(), STATUS_GROUP.combatStatus, triggers, isExec, 1);
         }
@@ -1787,14 +1813,16 @@ export default class GeniusInvokationRoom {
                     } else if (hasEls(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro)) { // 火雷 超载
                         res.willDamages[getDmgIdx][0] += 2;
                         if (efhero.isFront) {
-                            this._doCmds(pidx, [{ cmd: 'switch-after', isOppo: !isAtkSelf }], {
+                            const { isSwitch = -1, isSwitchOppo = -1 } = this._doCmds(pidx, [{ cmd: 'switch-after', isOppo: !isAtkSelf }], {
                                 players: res.players,
                                 isPriority: true,
                                 isUnshift: true,
                                 isExec,
+                                energyCnt,
                                 willSwitch,
                                 supportCnt,
                             });
+                            if (!isExec) this._detectSkill(dmgedPidx, 'switch-to', { players, isExec, hidxs: Math.max(isSwitch, isSwitchOppo), energyCnt });
                         }
                         res.elTips[elTipIdx] = ['超载', dmgElement, attachElement];
                         atriggers.forEach((trg, tri) => {
@@ -4792,7 +4820,7 @@ export default class GeniusInvokationRoom {
     /**
      * 预览技能效果
      * @param pidx 玩家序号
-     * @param skid 技能id
+     * @param skid 技能id -1为切换角色
      * @param options.withCard 卡使用技能
      * @param options.isSwitch 切换目标角色序号
      * @param options.isSummon 召唤物攻击预览

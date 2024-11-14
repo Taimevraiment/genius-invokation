@@ -48,7 +48,7 @@
         </div>
         <div class="info-hero-skill" v-for="(skill, sidx) in skills.filter(
           (sk, i) => type == INFO_TYPE.Card ||
-            type == INFO_TYPE.Hero && sk.type != SKILL_TYPE.Vehicle ||
+            type == INFO_TYPE.Hero && (sk.type != SKILL_TYPE.Vehicle || i > 0) ||
             type == INFO_TYPE.Skill && i == skidx)" :key="sidx">
           <div class="info-hero-skill-title" @click.stop="showDesc(isShowSkill, sidx)">
             <div style="display: flex; flex-direction: row; align-items: center">
@@ -548,6 +548,10 @@ watchEffect(() => {
       ost.UI.descriptions = ost.UI.description.split('；').map(desc => wrapDesc(desc, { obj: ost }));
       combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.id + ost.name));
     });
+    for (const skill of info.value.skills) {
+      skills.value.push(skill);
+      isShowSkill.value.push(type.value == INFO_TYPE.Skill);
+    }
     slotExplain.value = [];
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot, info.value.vehicleSlot?.[0]].forEach(slot => {
       if (slot) {
@@ -558,15 +562,12 @@ watchEffect(() => {
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
         slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
         if (slot.subType.includes(CARD_SUBTYPE.Vehicle)) {
+          skills.value.unshift((info.value as Hero).vehicleSlot![1]);
           skills.value.push((info.value as Hero).vehicleSlot![1]);
           isShowSkill.value.push(type.value == INFO_TYPE.Skill);
         }
       }
     });
-    for (const skill of info.value.skills) {
-      skills.value.push(skill);
-      isShowSkill.value.push(type.value == INFO_TYPE.Skill);
-    }
     skills.value.forEach(skill => {
       skill.UI.descriptions = skill.UI.description.split('；').map(desc => wrapDesc(desc, { obj: skill }));
       skillExplain.value.push(wrapExpl(skill.UI.explains, skill.id + skill.name));
