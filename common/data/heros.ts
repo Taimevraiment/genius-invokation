@@ -2073,7 +2073,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ trigger: ['game-start'], status: 126021 }))
         ),
 
-    2603: () => new HeroBuilder(434).name('黄金王兽').monster().geo()
+    2603: () => new HeroBuilder(434).name('黄金王兽').since('v5.2.0').monster().geo()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_Planelurker.webp')
         .avatar('/image/tmp/UI_Gcg_Char_MonsterIcon_Planelurker.png')
         .normalSkill(new NormalSkillBuilder('王狼直击'))
