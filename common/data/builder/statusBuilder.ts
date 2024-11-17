@@ -48,8 +48,8 @@ export class GIStatus {
         const hid = getHidById(id);
         const el = getElByHid(hid);
         description = description
-            .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `(可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`})`))
-            .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 ? '' : `(可叠加，最多叠加到${maxCnt}回合)`))
+            .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
+            .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
             .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`)
             .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`);

@@ -235,7 +235,7 @@ export class SkillBuilder extends BaseVersionBuilder {
         const element: ElementType = ELEMENT_CODE_KEY[elCode];
         this.costElement(element);
         if (this._costElement == undefined || this._costElement == COST_TYPE.Same) this.dmgElement(element);
-        const readySkillDesc = this._readySkillRound > 0 ? `(需准备${this._readySkillRound}个行动轮)；` : '';
+        const readySkillDesc = this._readySkillRound > 0 ? `（需准备${this._readySkillRound}个行动轮）；` : '';
         const description = readySkillDesc + this._description.get(this._curVersion, '')
             .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)
             .replace(/(?<=【)hro(?=】)/g, `hro${Math.floor(this._id / 10)}`);
