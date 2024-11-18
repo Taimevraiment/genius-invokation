@@ -77,7 +77,7 @@ const getRoomIdx = (rid: number) => getIdxById(rid, roomList);
 const removePlayer = (pid: number) => {
     const time = setTimeout(() => {
         removeById(pid, playerList);
-    }, 60 * 60 * 1000);
+    }, 30 * 1e3);
     removePlayerList.set(pid, {
         time,
         cancel: () => {
@@ -131,7 +131,7 @@ io.on('connection', socket => {
                 me.rid = -1;
                 removeById(pid, room.players, room.watchers);
             }
-            if (room.onlinePlayersCnt <= 0) {
+            if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline)) {
                 room.players.forEach(p => p.rid = -1);
                 if (room.countdown.timer != null) clearInterval(room.countdown.timer);
                 removeById(room.id, roomList);
@@ -216,6 +216,12 @@ io.on('connection', socket => {
     });
     // 退出房间
     socket.on('exitRoom', () => leaveRoom('exitRoom'));
+    // 发送日志
+    socket.on('sendLog', data => {
+        const room = getRoom(data.roomId);
+        const me = getPlayer(pid);
+        room?.exportLog(`>>>由[${me?.name}]发送`);
+    });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {
         const room = getRoom(data.roomId);
@@ -234,6 +240,7 @@ io.on('connection', socket => {
             try {
                 room.getAction(actionData, socket);
             } catch (e) {
+                room.exportLog(e as string);
                 console.error(e);
             }
         }

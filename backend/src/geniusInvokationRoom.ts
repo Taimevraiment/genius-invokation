@@ -148,6 +148,40 @@ export default class GeniusInvokationRoom {
         this.systemLog += log.replace(/\{|\}/g, '') + '\n';
     }
     /**
+     * 导出日志
+     */
+    exportLog(e?: string) {
+        let log = this.systemLog;
+        if (e) {
+            log += '\n' + e;
+            // if (e.includes('发送')) {
+            //     // todo 要写room的各种信息
+            //     log += '\nroomInfo: {\n'
+            //         + `  phase: ${this.phase}\n`
+            //         + `  round: ${this.round}\n`
+            //         + `  startIdx: ${this.startIdx}\n`
+            //         + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
+            //         + `  taskQueue: ${this.taskQueue.queueList}\n`
+            //         + `  isDieBackChange: ${this.isDieBackChange}\n`
+            //         + `  players: [{\n`
+            //         + `    name: ${this.players[0].name}\n`
+            //         + `    isOffline: ${this.players[0].isOffline}\n`
+            //         + `    canAction: ${this.players[0].canAction}\n`
+            //         + `    isFallAtk: ${this.players[0].isFallAtk}\n`
+            //         + `    dice: ${this.players[0].dice.map(d => `[${d}]`).join('')}\n`
+            //         + `    rollCnt: ${this.players[0].rollCnt}\n`
+            //         + `    handCards: ${this.players[0].handCards.map(c => `[${c.name}]`).join('')}\n`
+            //         + `    pile: ${this.players[0].pile.map(c => `[${c.name}]`).join('')}\n`
+            //         + '  }, {\n'
+            //         + `   `
+            //         + '  }]\n}';
+            // }
+        }
+        fs.writeFile(`${__dirname}/../../../logs/${this.seed}.log`, log, err => {
+            if (err) return console.error('err:', err);
+        });
+    }
+    /**
      * 获取预览
      * @param pidx 玩家序号
      */
@@ -561,12 +595,7 @@ export default class GeniusInvokationRoom {
     }) {
         const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, smnIds, sptIds, seed, flag } = actionData;
         if (!this.isDev && !this.seed.endsWith(`-s${seed}`)) return;
-        if (flag.includes('log')) {
-            fs.appendFile(`${__dirname}/../../../logs/${this.seed}.log`, this.systemLog, err => {
-                if (err) return console.error('err:', err);
-            });
-            return;
-        }
+        if (flag.includes('log')) return this.exportLog();
         const player = this.players[cpidx];
         const heros = player.heros;
         for (const { hidx, el, isAdd } of attachs) {
@@ -841,18 +870,13 @@ export default class GeniusInvokationRoom {
         if (player.rollCnt <= 0 || !player.UI.showRerollBtn) return;
         player.dice = this._rollDice(pidx, diceSelect);
         this._writeLog(player.dice.reduce((a, c) => a + `[${ELEMENT_NAME[c].replace(/元素/, '')}]`, `[${player.name}]重投骰子后`), 'system');
-        if (this.phase == PHASE.ACTION) { // 行动阶段重投
-            if (--player.rollCnt <= 0) {
-                player.UI.showRerollBtn = false;
-                setTimeout(() => {
+        if (--player.rollCnt <= 0) {
+            player.UI.showRerollBtn = false;
+            setTimeout(async () => {
+                if (this.phase == PHASE.ACTION) { // 行动阶段重投
                     player.phase = PHASE.ACTION;
                     this.emit(`${flag}-action`, pidx, { isQuickAction: true });
-                }, 800);
-            }
-        } else { // 每回合开始时重投
-            if (--player.rollCnt <= 0) {
-                player.UI.showRerollBtn = false;
-                setTimeout(async () => {
+                } else { // 每回合开始时重投
                     player.phase = PHASE.ACTION_START;
                     if (this.players.every(p => p.phase == PHASE.ACTION_START)) { // 双方都重投完骰子
                         this._doReset();
@@ -861,8 +885,8 @@ export default class GeniusInvokationRoom {
                     } else if (player.id != AI_ID) {
                         this.emit(`${flag}-finish`, pidx, { socket });
                     }
-                }, 800);
-            }
+                }
+            }, 800);
         }
         this.emit(flag, pidx, { socket });
     }
@@ -1600,7 +1624,7 @@ export default class GeniusInvokationRoom {
                     return res;
                 });
             });
-        } else if (skid > 0) {
+        } else if (skid > 0 || skid == -2) {
             setTimeout(async () => {
                 await this._execTask();
                 this._doActionAfter(pidx, isQuickAction);
@@ -2427,7 +2451,7 @@ export default class GeniusInvokationRoom {
         if (getcard && this._hasNotTriggered(cardres.trigger, 'getcard')) return;
         const isAction = currCard.hasSubtype(CARD_SUBTYPE.Action);
         const cardcmds = (getcard ? cardres.execmds : cardres.cmds) ?? [];
-        const isUseSkill = cardcmds.some(({ cmd }) => cmd == 'useSkill');
+        const isUseSkill = cardcmds.some(({ cmd, cnt }) => cmd == 'useSkill' && cnt != -2);
         let isInvalid = false;
         let { isQuickAction = !isAction } = options;
         if (getcard) cardcmds.push({ cmd: 'discard', card: currCard.entityId, cnt: 1, status: 111 })
@@ -2440,7 +2464,7 @@ export default class GeniusInvokationRoom {
                 types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage],
                 hidxs: allHidxs(player.heros),
                 hcard: currCard,
-                isQuickAction: !isAction,
+                isQuickAction,
             });
             isInvalid = inv;
             isQuickAction || iqa;
@@ -2791,6 +2815,7 @@ export default class GeniusInvokationRoom {
             this.players.forEach(player => {
                 player.status = PLAYER_STATUS.WAITING;
                 player.phase = PHASE.DICE;
+                player.rollCnt = INIT_ROLL_COUNT;
                 player.dice = this._rollDice(player.pidx);
                 player.playerInfo.isUsedCardPerRound = false;
                 player.UI.showRerollBtn = true;
@@ -3806,7 +3831,7 @@ export default class GeniusInvokationRoom {
                     getDmg += stsGetDmg;
                     addDiceHero += stsAddDiceHero;
                     minusDiceHero += stsMinusDiceHero;
-                    options.minusDiceCard += stsMinusDiceCard;
+                    options.minusDiceCard = stsMinusDiceCard;
                     nsummons.push(...stsNSummons);
                     pdmgs.push(...stsPdmgs);
                     isInvalid ||= stsIsInvalid;
@@ -3834,7 +3859,7 @@ export default class GeniusInvokationRoom {
                     nsummons.push(...slotNSummons);
                     options.isQuickAction ||= slotIqa;
                     minusDiceHero += slotMinusDiceHero;
-                    options.minusDiceCard += slotMinusDiceCard;
+                    options.minusDiceCard = slotMinusDiceCard;
                     cmds.push(...slotCmds);
                     if (!bWillHeals) bWillHeals = slotWhl;
                     else mergeWillHeals(bWillHeals, slotWhl);
@@ -4271,7 +4296,7 @@ export default class GeniusInvokationRoom {
             const getsts = this._getStatusById(stsargs);
             if (cmd == 'useSkill') {
                 if (isExec) {
-                    this.taskQueue.addTask(`doCmd--useSkill:${cnt}`, [[() => {
+                    this.taskQueue.addTask(`doCmd--useSkill:${cnt}-p${pidx ^ +!!isOppo}`, [[() => {
                         this._useSkill(pidx ^ +!!isOppo, cnt, {
                             withCard,
                             isSwitch,

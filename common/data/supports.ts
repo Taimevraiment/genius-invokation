@@ -428,7 +428,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc && support.cnt >= card.cost - mdc;
         return {
             trigger: triggers,
-            isNotAddTask: trigger != 'phase-end',
+            isNotAddTask: trigger == 'card',
             isLast: true,
             minusDiceCard: isMinus ? card.cost - mdc : 0,
             exec: spt => {
@@ -450,7 +450,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Weapon) && card.cost > mdc && support.cnt >= card.cost - mdc;
         return {
             trigger: triggers,
-            isNotAddTask: trigger != 'phase-end',
+            isNotAddTask: trigger == 'card',
             isLast: true,
             minusDiceCard: isMinus ? card.cost - mdc : 0,
             exec: spt => {

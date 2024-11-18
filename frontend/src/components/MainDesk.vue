@@ -127,6 +127,7 @@
         }" :class="{
           'mobile-hero': isMobile,
           'my': hgi == 1,
+          'oppo': hgi == 0,
           'is-front-oppo': hero?.isFront && phase >= PHASE.DICE && hgi == 0,
           'is-front-my': hero?.isFront && hgi == 1,
           'hero-select': heroSelect[hgi][hidx],
@@ -903,7 +904,7 @@ button:active {
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 @property --front-val {
@@ -916,7 +917,8 @@ button:active {
   --scale-val-will: 1;
   position: relative;
   width: 100%;
-  height: 70%;
+  max-height: 70%;
+  aspect-ratio: 7/12;
   border-radius: 10px;
   margin: 0 5%;
   cursor: pointer;
@@ -927,6 +929,10 @@ button:active {
 
 .hero.my {
   align-self: flex-end;
+}
+
+.hero.oppo {
+  align-self: flex-start;
 }
 
 .hero-hp-bg,
@@ -1646,13 +1652,12 @@ button:active {
   position: absolute;
   left: 50%;
   top: 0;
-  min-width: 100%;
+  /* min-width: 100%;
   min-height: 100%;
-  max-height: 120%;
+  max-height: 120%; */
   transform: translateX(-50%);
-  /* width: 100%;
+  width: 100%;
   height: 100%;
-  object-fit: cover; */
   border-radius: 10px;
 }
 
@@ -1803,7 +1808,7 @@ button:active {
 }
 
 .mobile-hero {
-  width: 20%;
+  max-width: 16%;
 }
 
 .mobile-dices {

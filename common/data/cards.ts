@@ -2101,10 +2101,8 @@ const allCards: Record<number, () => CardBuilder> = {
             const { summons = [], esummons = [], randomInt } = event;
             const cmds: Cmds[] = [];
             if (randomInt) {
-                cmds.push(
-                    { cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] },
-                    { cmd: 'useSkill', cnt: -2, hidxs: [randomInt(esummons.length - 1)], summonTrigger: ['phase-end'], isOppo: true },
-                );
+                if (summons.length) cmds.push({ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] });
+                if (esummons.length) cmds.push({ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(esummons.length - 1)], summonTrigger: ['phase-end'], isOppo: true });
             }
             return { isValid: summons.length + esummons.length >= 2, cmds }
         }),

@@ -3,7 +3,9 @@
     <button v-if="!client.isStart || isLookon > -1 || hasAI" class="exit" @click.stop="exit">
       返回
     </button>
-    <div style="position: absolute;left: 60px;color: white;">[{{ version }}] 房间号{{ roomId }}</div>
+    <div style="position: absolute;left: 60px;color: white;z-index: 6;" @click.stop="sendLog">
+      [{{ version }}] 房间号{{ roomId }} <u>发送日志</u>
+    </div>
     <button v-if="client.isStart && isLookon == -1 && client.phase >= PHASE.ACTION" class="exit" @click.stop="giveup">
       投降
     </button>
@@ -45,7 +47,7 @@
       'mobile-player-display': isMobile,
     }" @click.stop="devOps(1)">
       <p v-if="client.opponent?.name">{{ client.opponent?.name }}</p>
-      <p class="ai-btn" v-if="!client.opponent?.name" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
+      <p class="ai-btn" v-if="!client.opponent?.name && isDev" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
       <p class="ai-btn" v-if="client.opponent.id == AI_ID && client.phase <= PHASE.NOT_BEGIN" style="color: red"
         @click.stop="removeAI">
         -删除bot
@@ -270,6 +272,12 @@ const exit = () => {
   socket.emit('exitRoom');
   if (isLookon.value > -1) router.back();
 };
+// 发送日志
+const sendLog = () => {
+  if (client.value.phase <= PHASE.NOT_BEGIN || isLookon.value != -1) return;
+  socket.emit('sendLog', { roomId });
+  alert('日志已发送');
+}
 // 投降
 const giveup = () => {
   const isConfirm = confirm('确定投降吗？');
