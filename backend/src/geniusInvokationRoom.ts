@@ -23,7 +23,7 @@ import { newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
-import { allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, mergeWillHeals } from '../../common/utils/gameUtil.js';
+import { allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, mergeWillHeals, playerToString } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
     ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Hero, LogType, MinusDiceSkill, PickCard,
@@ -154,28 +154,17 @@ export default class GeniusInvokationRoom {
         let log = this.systemLog;
         if (e) {
             log += '\n' + e;
-            // if (e.includes('发送')) {
-            //     // todo 要写room的各种信息
-            //     log += '\nroomInfo: {\n'
-            //         + `  phase: ${this.phase}\n`
-            //         + `  round: ${this.round}\n`
-            //         + `  startIdx: ${this.startIdx}\n`
-            //         + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
-            //         + `  taskQueue: ${this.taskQueue.queueList}\n`
-            //         + `  isDieBackChange: ${this.isDieBackChange}\n`
-            //         + `  players: [{\n`
-            //         + `    name: ${this.players[0].name}\n`
-            //         + `    isOffline: ${this.players[0].isOffline}\n`
-            //         + `    canAction: ${this.players[0].canAction}\n`
-            //         + `    isFallAtk: ${this.players[0].isFallAtk}\n`
-            //         + `    dice: ${this.players[0].dice.map(d => `[${d}]`).join('')}\n`
-            //         + `    rollCnt: ${this.players[0].rollCnt}\n`
-            //         + `    handCards: ${this.players[0].handCards.map(c => `[${c.name}]`).join('')}\n`
-            //         + `    pile: ${this.players[0].pile.map(c => `[${c.name}]`).join('')}\n`
-            //         + '  }, {\n'
-            //         + `   `
-            //         + '  }]\n}';
-            // }
+            if (e.includes('发送')) {
+                log += '\nroomInfo: {\n'
+                    + `  phase: ${this.phase}\n`
+                    + `  round: ${this.round}\n`
+                    + `  startIdx: ${this.startIdx}\n`
+                    + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
+                    + `  taskQueue: ${this.taskQueue.queueList}\n`
+                    + `  isDieBackChange: ${this.isDieBackChange}\n`
+                    + `  players: [${this.players.map(p => playerToString(p, 2)).join(', ')}]\n`
+                    + `}`;
+            }
         }
         fs.writeFile(`${__dirname}/../../../logs/${this.seed}.log`, log, err => {
             if (err) return console.error('err:', err);

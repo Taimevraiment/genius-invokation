@@ -1383,7 +1383,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/163adc79a3050ea18fc75293e76f1a13_607175307652592237.png'),
 
     322012: () => new CardBuilder(205).name('刘苏').ally().costSame(1)
-        .description('【我方切换角色后：】如果切换到的角色没有[充能]，则使该角色获得1点[充能]。（每回合1次）；[可用次数]：2')
+        .description('【我方切换到一个没有[充能]的角色后：】使我方出战角色获得1点[充能]。（每回合1次）；[可用次数]：2')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/2d2a294488e6a5ecff2af216d1a4a81c_2786433729730992349.png'),
 
     322013: () => new CardBuilder(206).name('花散里').since('v3.7.0').ally().costSame(0)
