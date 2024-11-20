@@ -57,6 +57,7 @@ export default class GeniusInvokationRoom {
     countdown: Countdown = { limit: 0, curr: 0, timer: undefined }; // 倒计时
     isDieBackChange: boolean = true; // 用于记录角色被击倒切换角色后是否转换回合
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', skillId: -1 };// 挑选卡牌信息
+    shareCodes: string[] = ['', '']; // 卡组码
     isDev: boolean = false; // 是否为开发模式
     newStatus: (id: number, ...args: any) => Status;
     newCard: (id: number, ...args: any) => Card;
@@ -515,7 +516,7 @@ export default class GeniusInvokationRoom {
     getAction(actionData: ActionData, socket: Socket) {
         if (this.taskQueue.isExecuting) return;
         const { cpidx = this.currentPlayerIdx, deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
-            diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, flag = 'noflag' } = actionData;
+            diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
         const player = this.players[cpidx];
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
@@ -525,7 +526,9 @@ export default class GeniusInvokationRoom {
                 player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
                 if (player.heros.some(h => this.version.lt(h.version)) || player.pile.some(c => this.version.lt(c.version))) return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
                 player.phase = (player.phase ^ 1) as Phase;
+                if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[cpidx] = shareCode;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
+                    this.players.forEach(p => this._writeLog(`player${p.pidx}[${p.name}]卡组码:${this.shareCodes[p.pidx]}`, 'system'));
                     this.start(cpidx, flag);
                 } else {
                     this.emit(flag, cpidx, { socket });
@@ -1530,10 +1533,10 @@ export default class GeniusInvokationRoom {
             if (skill && skill.type != SKILL_TYPE.Vehicle) strigger.push(`after-skilltype${skill.type}`, 'after-skill')
             strigger.forEach(trg => {
                 const trounds = [0];
-                if (isExec) this._detectSummon(pidx, trg, { csummon: [smn], skid, hcard: withCard });
+                if (isExec) this._detectSummon(pidx, trg, { csummon: [smn], skid, hcard: withCard, isQuickAction });
                 while (trounds.length && !isExec) {
                     const tround = trounds.pop();
-                    const { smnres } = this._detectSummon(pidx, trg, { csummon: [smn], players: bPlayers, skid, tround, hcard: withCard, isExec });
+                    const { smnres } = this._detectSummon(pidx, trg, { csummon: [smn], players: bPlayers, skid, tround, hcard: withCard, isExec: false });
                     const { cmds } = smnres?.exec?.({ summon: smn, heros: bPlayers[pidx].heros, combatStatus: bPlayers[pidx].combatStatus, eCombatStatus: bPlayers[epidx].combatStatus }) ?? {};
                     if (smnres) {
                         const damages: SmnDamageHandle = (isOppo: boolean = true, cnt?: number, element?: DamageType, hidxs?: number[]) => {
@@ -1613,7 +1616,7 @@ export default class GeniusInvokationRoom {
                     return res;
                 });
             });
-        } else if (skid > 0 || skid == -2) {
+        } else if (skid > 0) {
             setTimeout(async () => {
                 await this._execTask();
                 this._doActionAfter(pidx, isQuickAction);
@@ -4010,7 +4013,7 @@ export default class GeniusInvokationRoom {
                                     dmgElements,
                                     elTips,
                                     selected,
-                                }, { atkname: smn.name, summonSelect: selected });
+                                }, { atkname: smn.name, summonSelect: selected, isQuickAction });
                                 const osmnCnt = aSummons.length;
                                 this._updateSummon(pidx, [], this.players, true, { trigger: state, destroy: true });
                                 if (osmnCnt != aSummons.length) {

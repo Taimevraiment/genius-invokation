@@ -218,6 +218,7 @@ type ActionData = {
     deckIdx?: number, // 使用的卡组序号 -1无
     heroIds?: number[], // 卡组角色id
     cardIds?: number[], // 卡组卡牌id
+    shareCode?: string, // 分享码
     flag?: string, // 发起请求的标志
 }
 

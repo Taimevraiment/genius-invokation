@@ -1,5 +1,6 @@
 import { Cmds, Summon, VersionCompareFn } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
+import { MAX_USE_COUNT } from "../../constant/gameOption";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
@@ -53,7 +54,7 @@ export class GISummon {
         this.UI = {
             description: description
                 .replace(/{([^\{\}]*)defaultAtk([^\{\}]*)}/, '【结束阶段：】$1{dealDmg}$2；[useCnt]')
-                .replace(/\[useCnt\]/, '【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `（可叠加，最多叠加到${maxUse}次）` : ''))
+                .replace(/\[useCnt\]/, '【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `（可叠加，${maxUse == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxUse}次`}）` : ''))
                 .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
                 .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
                 .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`),

@@ -514,7 +514,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111131: (cnt: number = 2) => new StatusBuilder('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
         .icon('tmp/UI_Gcg_Buff_Rosaria').type(STATUS_TYPE.Usage)
-        .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）；[useCnt]')
+        .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）')
         .handle((status, event) => {
             const { randomInt, isExecTask, trigger = '' } = event;
             if (!isExecTask && (trigger != 'skill' || !randomInt || randomInt(9) >= status.useCnt)) return;
@@ -802,17 +802,29 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112134: () => readySkillStatus('满满心意药剂冲击', 12135),
 
-    112135: () => new StatusBuilder('应当有适当的休息（生效中）').combatStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+    112135: () => new StatusBuilder('静养').combatStatus().useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+        .icon('/tmp')
         .description('我方｢元素战技｣或召唤物造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
             const { isSummon = -1, sktype = -1 } = event;
             if (isSummon == -1 && sktype != SKILL_TYPE.Elemental) return;
             return {
-                addDmgCdt: 1,
+                addDmgCdt: isCdt(sktype != SKILL_TYPE.Elemental, 1),
+                addDmgType2: 1,
                 trigger: ['dmg'],
                 exec: () => { --status.useCnt },
             }
         }),
+
+    112141: (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().icon('').useCnt(cnt).maxCnt(2)
+        .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
+        .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）'),
+
+    112142: () => new StatusBuilder('咬咬鲨鱼').heroStatus().icon('')
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。'),
+
+    112143: () => new StatusBuilder('啃咬目标').heroStatus().icon('').useCnt(1).maxCnt(MAX_USE_COUNT)
+        .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）'),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 

@@ -334,7 +334,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     311110: () => new CardBuilder(438).name('纯水流华').since('v5.2.0').weapon().costSame(1).perCnt(1)
         .description('【入场时和回合结束时：】角色附属1层【sts122】。；【我方行动前：】所附属角色如果未附属【sts122】，则生成1个随机基础元素骰，并且角色下次造成的伤害+1。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_ChunShui.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/6875a5c89d6dd60c91e5b79ab433a0b3_8573604898930608503.png')
         .handle((card, event) => {
             const { heros = [], hidxs = [], trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
@@ -1164,9 +1164,9 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312031: () => new CardBuilder(439).name('被怜爱的少女').since('v5.2.0').artifact().costSame(1).perCnt(2)
+    312031: () => new CardBuilder(439).name('少女易逝的芳颜').since('v5.2.0').artifact().costSame(1).perCnt(2)
         .description('【附属角色受到圣遗物以外的治疗后：】治疗我方受伤最多的角色1点。（每回合至多触发2次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XiaoShaoNv.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/f2d558606c493ca9b41c6cb9224f4a0c_3510396940887157125.png')
         .handle((card, event) => {
             const { source = -1, heal = [], hidxs = [], heros = [] } = event;
             if (card.perCnt <= 0 || source.toString().startsWith('312') || (heal[hidxs[0]] ?? -1) < 0 || heros.every(h => h.maxHp == h.hp)) return;
@@ -1233,7 +1233,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/34506374c580288b88c38dee3b6af998_278198034630026427.png'),
 
     313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_MingshiLong.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.pngs'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1333,7 +1333,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321024: () => new CardBuilder(441).name('｢悬木人｣').since('v5.2.0').place().costSame(0)
         .description('【我方打出名称不存在于本局最初牌组的牌时：】如果打出的牌元素骰费用不低于此牌的｢极限运动点｣，则生成1个随机基础元素骰，然后此牌累积1个｢极限运动点｣。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_XuanmuRen.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/ee6915d12a55c0a65c9bb6cc9e0d1885_4525633690549389172.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -2096,7 +2096,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332041: () => new CardBuilder(442).name('强劲冲浪拍档！').since('v5.2.0').event().costSame(0)
         .description('【双方场上至少存在合计2个｢召唤物｣时，才能打出：】随机触发我方和敌方各1个｢召唤物｣的｢结束阶段｣效果。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_QiyouLong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/0a500a2d6316ffc96851715d545815da_8008891091384379637.png')
         .handle((_, event) => {
             const { summons = [], esummons = [], randomInt } = event;
             const cmds: Cmds[] = [];
@@ -2230,7 +2230,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333017: () => new CardBuilder(443).name('宝石闪闪').since('v5.2.0').food().costSame(1).canSelectHero(1)
         .description('目标角色获得1点额外最大生命值。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Baoshi.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/a06469da4cbc09f6bba2ae51a6808f23_7880465946055268242.png')
         .handle(() => ({ cmds: [{ cmd: 'addMaxHp', cnt: 1 }] })),
 
     211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(5)
@@ -2347,7 +2347,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     211131: () => new CardBuilder(435).name('代行裁判').since('v5.2.0').talent(1).costCryo(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】使用【ski】，或我方生成【sts111133】后，在手牌中生成1张【crd332002】。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Rosaria.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/bd4108a18f1959114c7437640fd7e25f_8622667424074363979.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const { source = -1, trigger = '' } = event;
@@ -2445,7 +2445,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     212131: () => new CardBuilder(436).name('应当有适当的休息').since('v5.2.0').talent(1).costHydro(3)
         .description('{action}；装备有此牌的【hro】使用【ski】后，使我方接下来2次｢元素战技｣或召唤物造成的伤害+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Sigewinne.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/87596a798d0c90b9c572100e46e3b0e6_5333461488553294390.png')
         .handle(() => ({ trigger: ['skilltype2'], execmds: [{ cmd: 'getStatus', status: 112135 }] })),
 
     213011: () => new CardBuilder(77).name('流火焦灼').talent(1).costPyro(3)
@@ -3113,7 +3113,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     226031: () => new CardBuilder(437).name('异兽侵蚀').since('v5.2.0').talent(1).costGeo(3)
         .description('{action}；装备有此牌的【hro】在场时，对方的【sts126031】最多可叠加到5次，并且所附属角色不在后台时也会生效。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Planelurker.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/e61044db77d2bee655c1d045df887554_5793154205438411376.png')
         .handle((_, event) => {
             const { eheros = [], slotUse = false } = event;
             if (!slotUse) return;
@@ -3172,7 +3172,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112131: () => new CardBuilder().name('激愈水球·大').event().costSame(0)
         .description('【抓到此牌时：】治疗我方出战角色3点。生成1张【crd112132】，将其置于对方牌库顶部第2张牌的位置。')
-        .src('tmp/crd112131')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/47eb08392a0efd5cf6aa29704aa12f38_328269596356756432.png')
         .handle(() => ({
             trigger: ['getcard'],
             execmds: [{ cmd: 'heal', cnt: 3 }, { cmd: 'addCard', card: 112132, cnt: -1, hidxs: [2], isOppo: true }],
@@ -3180,7 +3180,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112132: () => new CardBuilder().name('激愈水球·中').event().costSame(0)
         .description('【抓到此牌时：】对所在阵营的出战角色造成2点[水元素伤害]。生成1张【crd112133】，将其置于对方牌库顶部。')
-        .src('tmp/crd112132')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/222f333f4beff94cffb0b9f4ece05e17_5182172070860859937.png')
         .handle(() => ({
             trigger: ['getcard'],
             execmds: [
@@ -3191,7 +3191,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112133: () => new CardBuilder().name('激愈水球·小').event().costSame(0)
         .description('【抓到此牌时：】治疗所有我方角色1点，生成【sts112101】。')
-        .src('tmp/crd112133')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/a94874bb8e80358f5354d7d64697366f_2676191020837949319.png')
         .handle((_, event) => ({
             trigger: ['getcard'],
             execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }, { cmd: 'getStatus', status: 112101 }],
@@ -3223,7 +3223,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
 
     122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
-        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_HilistrayWater.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
 
     123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).useCnt(1).perCnt(2).tag(CARD_TAG.Barrier)
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）；')

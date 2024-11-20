@@ -1,6 +1,7 @@
 
 import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
+import { MAX_USE_COUNT } from "../constant/gameOption";
 import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
@@ -186,7 +187,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     111132: () => new SummonBuilder('极寒的冰枪').useCnt(2).damage(1)
         .description('{defaultAtk，生成1层【sts111131】。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Rosaria.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/722c71c78b82483790cadd1b0f620f83_4380247943885927570.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
@@ -298,6 +299,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 },
             }
         }),
+
+    112144: () => new SummonBuilder('鲨鲨飞弹').useCnt(2).maxUse(MAX_USE_COUNT).damage(2).description('{defaultAtk。}')
+        .src(''),
 
     113021: () => new SummonBuilder('锅巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),
@@ -1014,7 +1018,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     126032: () => new SummonBuilder('兽境犬首').useCnt(2).damage(1)
         .description('{defaultAtk，使敌方出战角色附属【sts126031】。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Planelurker.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/3e32a0169cd4d974e63d42a9db75e7eb_6960651172648088173.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {

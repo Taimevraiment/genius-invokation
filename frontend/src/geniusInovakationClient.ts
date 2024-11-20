@@ -387,6 +387,7 @@ export default class GeniusInvokationClient {
             deckIdx: this.deckIdx,
             heroIds,
             cardIds,
+            shareCode,
             flag: 'startGame',
         } as ActionData);
     }
