@@ -1,4 +1,4 @@
-import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Support, Trigger } from '../../typing';
+import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
@@ -14,6 +14,7 @@ export type SupportHandleEvent = {
     reset?: boolean,
     card?: Card,
     hcards?: Card[],
+    csummon?: Summon,
     isFirst?: boolean,
     hidxs?: number[],
     playerInfo?: GameInfo,
@@ -405,6 +406,16 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
+    // ｢流泉之众｣
+    321025: () => new SupportBuilder().round(2).handle((_, event) => ({
+        trigger: ['summon-enter'],
+        exec: spt => {
+            const { csummon } = event;
+            if (!csummon) return { isDestroy: false }
+            ++csummon.useCnt;
+            return { isDestroy: --spt.cnt == 0 }
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(() => ({
         trigger: ['phase-start'],

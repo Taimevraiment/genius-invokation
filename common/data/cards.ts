@@ -1178,6 +1178,20 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    312032: () => new CardBuilder(448).name('魔战士的羽面').since('v5.3.0').artifact().costSame(1).perCnt(1)
+        .description('【附属角色使用[特技]后：】获得1点[充能]。（每回合1次)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Mozhanshi.webp')
+        .handle((card, event) => {
+            const { hidxs = [], heros = [] } = event;
+            const hero = heros[hidxs[0]];
+            if (card.perCnt <= 0 || !hero || hero.energy >= hero.maxEnergy) return;
+            return {
+                trigger: ['vehicle'],
+                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
+                exec: () => { --card.perCnt },
+            }
+        }),
+
     312101: () => normalElArtifact(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
 
@@ -1233,6 +1247,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/34506374c580288b88c38dee3b6af998_278198034630026427.png'),
 
     313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp'),
+
+    313006: () => new CardBuilder(449).name('杨腾').since('v5.3.0').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.pngs'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
@@ -1334,6 +1351,10 @@ const allCards: Record<number, () => CardBuilder> = {
     321024: () => new CardBuilder(441).name('｢悬木人｣').since('v5.2.0').place().costSame(0)
         .description('【我方打出名称不存在于本局最初牌组的牌时：】如果打出的牌元素骰费用不低于此牌的｢极限运动点｣，则生成1个随机基础元素骰，然后此牌累积1个｢极限运动点｣。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/ee6915d12a55c0a65c9bb6cc9e0d1885_4525633690549389172.png'),
+
+    321025: () => new CardBuilder(450).name('｢流泉之众｣').since('v5.3.0').place().costSame(2)
+        .description('【我方｢召唤物｣入场时：】使其[可用次数]+1。；[可用次数]：2')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_LiuQuan.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1556,6 +1577,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/76e84615db9526436d399c79aaa9d47a_2755116418615718064.png')
         .handle(() => ({ status: 300005 })),
+
+    330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(1)
+        .description('在双方场上生成【sts300006】，然后我方场上的【sts300006】的｢斗志｣+1。（【sts300006】会将各自阵营对对方造成的伤害记录为｢斗志｣，每回合行动阶段开始时｢斗志｣较高的一方会清空｢斗志｣，使当前出战角色在本回合中造成的伤害+1。）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ShenyeXunli.webp')
+        .handle(() => ({ status: [[300006, 1]], statusOppo: 300006 })),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -2107,6 +2133,10 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: summons.length + esummons.length >= 2, cmds }
         }),
 
+    332042: () => new CardBuilder(452).name('燃素充盈').since('v5.3.0').event().costSame(0)
+        .description('【本回合我方下次角色消耗｢夜魂值｣后：】该角色获得1点｢夜魂值｣。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Ransu.webp'),
+
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png')
@@ -2232,6 +2262,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('目标角色获得1点额外最大生命值。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/a06469da4cbc09f6bba2ae51a6808f23_7880465946055268242.png')
         .handle(() => ({ cmds: [{ cmd: 'addMaxHp', cnt: 1 }] })),
+
+    333018: () => new CardBuilder(452).name('咚咚嘭嘭').since('v5.3.0').food().costSame(1).canSelectHero(1)
+        .description('接下来3次名称不存在于初始牌组中牌加入我方手牌时，目标我方角色治疗自身1点。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_DongDongPengPeng.webp')
+        .handle(() => ({ status: 303315 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -2447,6 +2482,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】后，使我方接下来2次｢元素战技｣或召唤物造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/87596a798d0c90b9c572100e46e3b0e6_5333461488553294390.png')
         .handle(() => ({ trigger: ['skilltype2'], execmds: [{ cmd: 'getStatus', status: 112135 }] })),
+
+    212141: () => new CardBuilder(446).name('夜域赐礼·波涛顶底').since('v5.3.0').talent().costHydro(1)
+        .description('【装备有此牌的〖hro〗切换为｢出战角色｣时：】触发1个随机我方｢召唤物｣的｢结束阶段｣效果。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mualani.webp'),
 
     213011: () => new CardBuilder(77).name('流火焦灼').talent(1).costPyro(3)
         .description('{action}；装备有此牌的【hro】每回合第2次与第3次使用【ski】时，少花费1个[火元素骰]。')
@@ -2672,6 +2711,10 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
         }),
+
+    214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)
+        .description('{action}；【我方触发[雷元素相关反应]后:】本回合【hro】下次造成的伤害+1。(可叠加，最多叠加到+3)')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Clorinde.webp'),
 
     215011: () => new CardBuilder(96).name('混元熵增论').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')

@@ -158,7 +158,7 @@
             v-if="targetSelect[hgi][hidx]" />
           <img class="hero-center-icon" style="width: 30%;opacity: 1;" src="@@/image/Select_Check_01.png"
             v-if="targetSelect[hgi][hidx]" />
-          <div class="hero-hp" v-if="(hero?.hp ?? 0) >= 0">
+          <div class="hero-hp" :class="{ 'mobile-hero-hp': isMobile }" v-if="(hero?.hp ?? 0) >= 0">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png"
               :style="{ filter: `${hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}` }" />
             <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
@@ -1809,6 +1809,10 @@ button:active {
 
 .mobile-hero {
   max-width: 16%;
+}
+
+.mobile-hero-hp {
+  width: 55%;
 }
 
 .mobile-dices {

@@ -973,6 +973,26 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ heal: 2 }))
         ),
 
+    1412: () => new HeroBuilder(445).name('克洛琳德').since('v5.3.0').fontaine().electro().sword()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Clorinde.webp')
+        .avatar('')
+        .normalSkill(new NormalSkillBuilder('逐影之誓').costAny(1).damage(1))
+        .skills(
+            new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')
+                .src('',
+                    '')
+                .elemental().cost(2).handle(event => {
+                    const { hero: { heroStatus } } = event;
+                    const sts122 = getObjById(heroStatus, 122);
+                    const cnt = Math.min(4, sts122?.useCnt ?? 0) || undefined;
+                    return { addDmgCdt: cnt, heal: cnt, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
+                }),
+            new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
+                .src('',
+                    '')
+                .burst(2).damage(3).cost(3).handle(() => ({ status: [[122, 4]] }))
+        ),
+
     1501: () => new HeroBuilder(36).name('砂糖').mondstadt().anemo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')

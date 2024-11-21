@@ -1,6 +1,6 @@
 import { Cmds, Summon, VersionCompareFn } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
-import { MAX_USE_COUNT } from "../../constant/gameOption";
+import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";

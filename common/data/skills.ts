@@ -224,6 +224,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             heal: 1,
         })),
 
+    3130061: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
+        .src('',
+            '')
+        .vehicle().costSame(1).handle(() => ({ cmds: [{ cmd: 'switch-after' }], statusOppo: 301302 })),
+
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();
 

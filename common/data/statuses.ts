@@ -1200,6 +1200,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    114121: () => new StatusBuilder('夜巡').heroStatus().icon('').roundCnt(1)
+        .description('角色受到【ski,1】以外的治疗时，改为附属等量的【sts122】。；【所附属角色使用普通攻击时：】造成的[物理伤害]变为[雷元素伤害]，并使自身附属2层【sts122】。'),
+
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon('buff3').useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
         .description(`【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；[useCnt]`)
         .handle(status => ({
@@ -2372,6 +2375,23 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             });
         }),
 
+    300006: (cnt: number = 0) => new StatusBuilder('斗争之火').combatStatus().useCnt(cnt).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
+        .icon('')
+        .description('此牌会记录本回合你对敌方角色造成的伤害，记为｢斗志｣。；【行动阶段开始时：】若此牌是场上｢斗志｣最高的斗争之火，则清空此牌的｢斗志｣，使我方出战角色本回合造成的伤害+1。')
+        .handle((status, event) => {
+            const { eCombatStatus = [], trigger = '' } = event;
+            const eStsCnt = getObjById(eCombatStatus, 300006)?.useCnt ?? 0;
+            if (trigger == 'phase-start' && eStsCnt > status.useCnt) return;
+            return {
+                trigger: ['dmg', 'phase-start'],
+                cmds: isCdt(trigger == 'phase-start', [{ cmd: 'getStatus', status: 300007 }]),
+                exec: () => {
+                    if (trigger == 'dmg') status.useCnt += 0;
+                    else if (trigger == 'phase-start') status.useCnt = 0;
+                }
+            }
+        }),
+
     301018: () => new StatusBuilder('严格禁令').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]')
         .handle((status, event) => {
@@ -2487,6 +2507,21 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     301301: () => shieldHeroStatus('掘进的收获'),
+
+    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').type(STATUS_TYPE.Usage)
+        .description('【附属角色使用技能后：】如可能，对方[舍弃]1张原本元素骰费用最高的手牌，使附属【crd313006】的敌方角色切换为出战角色。')
+        .handle((_, event) => {
+            const { eheros = [], hcardsCnt = 0 } = event;
+            if (hcardsCnt == 0) return;
+            const cmds: Cmds[] = [{ cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard }];
+            const ehidx = eheros.findIndex(h => h.isFront);
+            for (let i = 0; i < eheros.length; ++i) {
+                const cehidx = (ehidx + i) % eheros.length;
+                if (eheros[cehidx].vehicleSlot?.[0].id != 313006) continue;
+                cmds.push({ cmd: 'switch-to', hidxs: [cehidx] });
+            }
+            return { trigger: ['skill'], cmds }
+        }),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -2959,6 +2994,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 if (event.isMinusDiceSkill) --status.roundCnt;
             },
         })),
+
+    303315: () => new StatusBuilder('咚咚嘭嘭（生效中）').heroStatus().icon('heal').useCnt(3).type(STATUS_TYPE.Usage)
+        .description('名称不存在于初始牌组中牌加入我方手牌时，所附属角色治疗自身1点。；[useCnt]')
+        .handle((status, event) => {
+            const { playerInfo: { initCardIds = [] } = {}, hcard, hidx = -1 } = event;
+            if (!hcard || initCardIds.includes(hcard?.id)) return;
+            return {
+                trigger: ['getcard'],
+                cmds: [{ cmd: 'heal', cnt: 1, hidxs: [hidx] }],
+                exec: () => { --status.useCnt }
+            }
+        }),
 
 };
 

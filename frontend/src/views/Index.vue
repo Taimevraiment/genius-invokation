@@ -71,7 +71,7 @@ import { useRouter } from 'vue-router';
 import { Player, PlayerList, RoomList } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
-const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
 const router = useRouter();
 

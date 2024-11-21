@@ -265,6 +265,8 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
     private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined) | undefined;
     private _description: VersionMap<string> = new VersionMap();
     private _perCnt: number = 0;
+    private _anyCost: number = 2;
+    private _damage: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
     private _explains: string[] = [];
     private _builder: SkillBuilder;
@@ -286,7 +288,7 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
     ];
     constructor(name: string) {
         super();
-        this._builder = new SkillBuilder(name).normal().costAny(2);
+        this._builder = new SkillBuilder(name).normal();
     }
     id(id: number) {
         this._id = id;
@@ -305,8 +307,16 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
         this._weaponType = WEAPON_TYPE.Catalyst;
         return this;
     }
+    costAny(cost: number) {
+        this._anyCost = cost;
+        return this;
+    }
     costElement(costElement: ElementType) {
         if (this._costElement == ELEMENT_TYPE.Physical) this._costElement = costElement;
+        return this;
+    }
+    damage(damage: number) {
+        this._damage = damage;
         return this;
     }
     description(description: string, ver: Version = 'vlatest') {
@@ -335,8 +345,9 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
             .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])
             .cost(1)
+            .costAny(this._anyCost)
             .costElement(this._costElement)
-            .damage(isCatalyst ? 1 : 2)
+            .damage(this._damage || (isCatalyst ? 1 : 2))
             .dmgElement(dmgElement)
             .perCnt(this._perCnt)
             .explain(...this._explains)

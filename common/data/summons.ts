@@ -1,7 +1,7 @@
 
 import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
-import { MAX_USE_COUNT } from "../constant/gameOption";
+import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";

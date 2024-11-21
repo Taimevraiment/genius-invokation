@@ -123,11 +123,11 @@ io.on('connection', socket => {
             if (!room) return console.error(`ERROR@leaveRoom:${eventName}:未找到房间,rid:${me.rid}`);
             const pidx = getIdxById(me.id, room.players);
             if (pidx > -1) {
-                --room.onlinePlayersCnt;
+                if (me.pidx < 2) --room.onlinePlayersCnt;
                 if (room.isStart) me.isOffline = true;
-                if (room.players?.[1]?.id == 1) --room.onlinePlayersCnt;
+                if (room.players?.[1]?.id == AI_ID) --room.onlinePlayersCnt;
             }
-            if (!room.isStart || pidx == -1) {
+            if (!room.isStart || pidx == -1 || me.pidx > 1) {
                 me.rid = -1;
                 removeById(pid, room.players, room.watchers);
             }

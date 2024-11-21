@@ -4051,7 +4051,8 @@ export default class GeniusInvokationRoom {
      * @param state 触发状态
      * @param options switchHeroDiceCnt 切换需要的骰子, hcard 使用的牌, players 最新的玩家信息, skid 使用的技能id
      *                hidx 将要切换的玩家, minusDiceSkill 用技能减骰子, isExecTask 是否执行任务队列, isExec 是否执行, firstPlayer 先手玩家pidx,
-     *                getdmg 受伤量, heal 回血量, getcard 本次摸牌数, discard 本次舍弃牌数, minusDiceSkill 技能当前被x减费后留存的骰子数
+     *                getdmg 受伤量, heal 回血量, getcard 本次摸牌数, discard 本次舍弃牌数, minusDiceSkill 技能当前被x减费后留存的骰子数, 
+     *                csummon 选中的召唤物
      * @returns isQuickAction 是否快速行动, cmds 命令集, exchangeSupport 交换的支援牌, outStatus 出战状态, minusDiceHero 减少切换角色骰子, supportCnt 支援区数量,
      *          minusDiceCard 减少使用卡骰子, minusDiceSkill 用技能减骰子
      */
@@ -4060,14 +4061,14 @@ export default class GeniusInvokationRoom {
             switchHeroDiceCnt?: number, hcard?: Card, players?: Player[], firstPlayer?: number, minusDiceSkill?: number[][], sktype?: SkillType,
             isExec?: boolean, isQuickAction?: boolean, minusDiceCard?: number, csupport?: Support[], hidx?: number, skid?: number,
             minusDiceSkillIds?: number[], isExecTask?: boolean, getdmg?: number[], heal?: number[], discard?: number, supportCnt?: number[][],
-            energyCnt?: number[][],
+            energyCnt?: number[][], csummon?: Summon,
         } = {}) {
         const states: Trigger[] = [];
         if (typeof ostates == 'string') states.push(ostates);
         else states.push(...ostates);
         const { hcard, players = this.players, isExec = true, firstPlayer = -1, hidx = -1, skid = -1, sktype,
             isExecTask = false, csupport, getdmg, heal, discard = 0, minusDiceSkillIds = [], minusDiceSkill = [],
-            supportCnt = INIT_SUPPORTCNT(), energyCnt } = options;
+            supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon } = options;
         let { switchHeroDiceCnt = 0, isQuickAction = false, minusDiceCard = 0 } = options;
         const exchangeSupport: [Support, number][] = [];
         const cmds: Cmds[] = [];
@@ -4093,6 +4094,7 @@ export default class GeniusInvokationRoom {
                     hidx,
                     card: hcard,
                     hcards: players[pidx].handCards.concat(players[pidx].UI.willGetCard.cards),
+                    csummon,
                     isFirst: firstPlayer == pidx,
                     playerInfo: player.playerInfo,
                     eplayerInfo: opponent.playerInfo,
@@ -4418,7 +4420,7 @@ export default class GeniusInvokationRoom {
                             }
                         }
                         for (let i = 0; i < count - restCnt; ++i) {
-                            this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', { players, isExec, isOnlyExecSts: !isExec, isQuickAction: isCdt(!isAction, 2), supportCnt });
+                            this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', { players, isExec, isOnlyExecSts: !isExec, isQuickAction: isCdt(!isAction, 2), supportCnt, hcard: willGetCard[i] });
                             if (isFromPile) this._detectSupport(cpidx ^ 1, 'getcard-oppo', { players, isExec, isQuickAction: !isAction, supportCnt });
                         }
                     }
@@ -5210,6 +5212,7 @@ export default class GeniusInvokationRoom {
                 if (smnres.rCombatStatus) {
                     this._updateStatus(pidx, this._getStatusById(smnres.rCombatStatus), combatStatus, players, { hidx, isExec });
                 }
+                this._detectSupport(pidx, 'summon-enter', { players, csummon: smn, isExec });
             }
         });
         if (isSummon > -1) return assgin(summons, oriSummon);
