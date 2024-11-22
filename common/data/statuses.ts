@@ -50,6 +50,7 @@ export type StatusHandleEvent = {
     isSummon?: number,
     source?: number,
     getdmg?: number[],
+    dmg?: number[],
     slotsDestroy?: number[],
     isSelfRound?: boolean,
     randomInt?: (len?: number) => number,
@@ -306,7 +307,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色受到治疗时：】此效果每有1次[可用次数]，就消耗1次，以抵消1点所受到的治疗。（无法抵消复苏、获得最大生命值或分配生命值引发的治疗）；[useCnt]', 'v5.0.0')
         .handle((status, event) => {
             const { heal = [], hidx = -1 } = event;
-            if (heal[hidx] <= 0) return;
+            if ((heal[hidx] ?? 0) <= 0) return;
             return {
                 trigger: ['pre-heal'],
                 exec: () => {
@@ -820,11 +821,37 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
         .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）'),
 
-    112142: () => new StatusBuilder('咬咬鲨鱼').heroStatus().icon('')
-        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。'),
+    112142: () => new StatusBuilder('咬咬鲨鱼').heroStatus().icon('').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，移除此状态; 此状态被移除时，所附属角色结束【sts112141】。')
+        .handle((status, event) => {
+            const { hidx = -1, heros = [], trigger = '' } = event;
+            const hero = heros[hidx];
+            if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
+            const sts112141 = getObjById(hero.heroStatus, 112141);
+            if (!sts112141?.useCnt) return;
+            return {
+                trigger: ['switch-to', 'switch-oppo'],
+                cmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }],
+                exec: () => {
+                    if (--sts112141.useCnt == 0) {
+                        status.roundCnt = 0;
+                        sts112141.roundCnt = 0;
+                    }
+                }
+            }
+        }),
 
-    112143: () => new StatusBuilder('啃咬目标').heroStatus().icon('').useCnt(1).maxCnt(MAX_USE_COUNT)
-        .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）'),
+    112143: () => new StatusBuilder('啃咬目标').heroStatus().icon('debuff').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+        .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
+        .handle((status, event) => {
+            const { dmgSource = -1 } = event;
+            if (dmgSource != 112144 && dmgSource != getHidById(status.id)) return;
+            return {
+                trigger: ['getdmg'],
+                getDmg: 2 * status.useCnt,
+                exec: () => { status.useCnt = 0 }
+            }
+        }),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -1200,8 +1227,33 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    114121: () => new StatusBuilder('夜巡').heroStatus().icon('').roundCnt(1)
-        .description('角色受到【ski,1】以外的治疗时，改为附属等量的【sts122】。；【所附属角色使用普通攻击时：】造成的[物理伤害]变为[雷元素伤害]，并使自身附属2层【sts122】。'),
+    114121: () => new StatusBuilder('夜巡').heroStatus().icon('').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Enchant)
+        .description('角色受到【ski,1】以外的治疗时，改为附属等量的【sts122】。；【所附属角色使用普通攻击时：】造成的[物理伤害]变为[雷元素伤害]，并使自身附属2层【sts122】。')
+        .handle((_, event) => {
+            const { heal = [], hidx = -1, source = -1, trigger = '' } = event;
+            const triggers: Trigger[] = ['skilltype1'];
+            const cmds: Cmds[] = [];
+            if (trigger == 'skilltype1') {
+                cmds.push({ cmd: 'getStatus', status: [[122, 2]] });
+            } else if (trigger == 'pre-heal' && source != 14122 && (heal[hidx] ?? 0) > 0) {
+                triggers.push('pre-heal');
+                cmds.push({ cmd: 'getStatus', status: [[122, heal[hidx]]] });
+                heal[hidx] = -1;
+            }
+            return {
+                trigger: triggers,
+                attachEl: ELEMENT_TYPE.Electro,
+                cmds,
+            }
+        }),
+
+    114122: () => new StatusBuilder('破夜的明焰（生效中）').heroStatus().icon('buff5').useCnt(1).maxCnt(3).type(STATUS_TYPE.AddDamage)
+        .description('所附属角色下次造成的伤害+1。；（可叠加，最多叠加到+3）')
+        .handle((status, event) => ({
+            trigger: isCdt(event.hasDmg, ['skill']),
+            addDmg: status.useCnt,
+            exec: () => { status.useCnt = 0 },
+        })),
 
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon('buff3').useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
         .description(`【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；[useCnt]`)
@@ -2025,16 +2077,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【此状态存在期间，可以触发1次：】所附属角色受到〖hro〗及其召唤物造成的伤害+1。；（同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。）', 'v4.4.0')
         .handle((status, event, ver) => {
             const { dmgSource = 0 } = event;
-            const getDmg = +(dmgSource == getHidById(status.id) || dmgSource == 124023);
+            if (dmgSource != getHidById(status.id) && dmgSource != 124023) return;
             return {
                 trigger: ['getdmg'],
-                getDmg,
+                getDmg: 1,
                 onlyOne: true,
                 exec: () => {
-                    if (getDmg > 0) {
-                        if (ver.lt('v4.4.0')) --status.perCnt;
-                        else --status.useCnt;
-                    }
+                    if (ver.lt('v4.4.0')) --status.perCnt;
+                    else --status.useCnt;
                 }
             }
         }),
@@ -2379,18 +2429,26 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('')
         .description('此牌会记录本回合你对敌方角色造成的伤害，记为｢斗志｣。；【行动阶段开始时：】若此牌是场上｢斗志｣最高的斗争之火，则清空此牌的｢斗志｣，使我方出战角色本回合造成的伤害+1。')
         .handle((status, event) => {
-            const { eCombatStatus = [], trigger = '' } = event;
+            const { dmg = [], eCombatStatus = [], trigger = '' } = event;
             const eStsCnt = getObjById(eCombatStatus, 300006)?.useCnt ?? 0;
             if (trigger == 'phase-start' && eStsCnt > status.useCnt) return;
             return {
-                trigger: ['dmg', 'phase-start'],
+                trigger: ['after-dmg', 'phase-start'],
                 cmds: isCdt(trigger == 'phase-start', [{ cmd: 'getStatus', status: 300007 }]),
                 exec: () => {
-                    if (trigger == 'dmg') status.useCnt += 0;
+                    if (trigger == 'after-dmg') status.useCnt += dmg.reduce((a, c) => a + Math.max(0, c), 0);
                     else if (trigger == 'phase-start') status.useCnt = 0;
                 }
             }
         }),
+
+    300007: () => new StatusBuilder('斗争之火（生效中）').combatStatus().icon('buff5').roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('本回合中出战角色造成的伤害+1。')
+        .handle((status, event) => ({
+            trigger: isCdt(event.hasDmg, ['skill']),
+            addDmg: 1,
+            exec: () => { --status.roundCnt }
+        })),
 
     301018: () => new StatusBuilder('严格禁令').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]')

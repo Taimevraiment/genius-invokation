@@ -2483,9 +2483,18 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/87596a798d0c90b9c572100e46e3b0e6_5333461488553294390.png')
         .handle(() => ({ trigger: ['skilltype2'], execmds: [{ cmd: 'getStatus', status: 112135 }] })),
 
-    212141: () => new CardBuilder(446).name('夜域赐礼·波涛顶底').since('v5.3.0').talent().costHydro(1)
+    212141: () => new CardBuilder(446).name('夜域赐礼·波涛顶底').since('v5.3.0').talent().costHydro(1).perCnt(1)
         .description('【装备有此牌的〖hro〗切换为｢出战角色｣时：】触发1个随机我方｢召唤物｣的｢结束阶段｣效果。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mualani.webp'),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mualani.webp')
+        .handle((card, event) => {
+            const { summons = [], randomInt } = event;
+            if (!randomInt || card.perCnt <= 0) return;
+            return {
+                trigger: ['switch-to'],
+                execmds: [{ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] }],
+                exec: () => { --card.perCnt }
+            }
+        }),
 
     213011: () => new CardBuilder(77).name('流火焦灼').talent(1).costPyro(3)
         .description('{action}；装备有此牌的【hro】每回合第2次与第3次使用【ski】时，少花费1个[火元素骰]。')
@@ -2713,8 +2722,16 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)
-        .description('{action}；【我方触发[雷元素相关反应]后:】本回合【hro】下次造成的伤害+1。(可叠加，最多叠加到+3)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Clorinde.webp'),
+        .description('{action}；【我方触发[雷元素相关反应]后:】本回合【hro】下次造成的伤害+1。（可叠加，最多叠加到+3）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Clorinde.webp')
+        .handle((_, event) => {
+            const { hidxs = [], heros = [] } = event;
+            if (getObjById(heros[hidxs[0]].heroStatus, 114122)?.useCnt == 3) return;
+            return {
+                trigger: ['elReaction-Electro', 'other-elReaction-Electro'],
+                execmds: [{ cmd: 'getStatus', status: 114122, hidxs }],
+            }
+        }),
 
     215011: () => new CardBuilder(96).name('混元熵增论').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')

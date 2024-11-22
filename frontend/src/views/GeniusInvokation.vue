@@ -443,8 +443,15 @@ const devOps = (cidx = 0) => {
       flag.add('setEl');
     } else if (op.startsWith('%')) { // 血量
       let [hp, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
-      hp ||= heros[hidx].maxHp;
-      hps.push({ hidx, hp });
+      if (hidx > heros.length) {
+        for (let i = 0; i < heros.length; ++i) {
+          const chp = hp || heros[i].maxHp;
+          hps.push({ hidx: i, hp: chp });
+        }
+      } else {
+        hp ||= heros[hidx].maxHp;
+        hps.push({ hidx, hp });
+      }
       flag.add('setHp');
     } else if (op.startsWith('@')) { // 充能
       const [cnt = 3, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);

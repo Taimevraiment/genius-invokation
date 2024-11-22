@@ -1574,7 +1574,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         fdmg = fcnt - ocnt;
                     }
                     if (fdmg <= 0) return;
-                    return { trigger: ['skill'], statusOppo: [[122, fdmg]] }
+                    return { trigger: ['after-skill'], statusOppo: [[122, fdmg]] }
                 })
         ),
 
