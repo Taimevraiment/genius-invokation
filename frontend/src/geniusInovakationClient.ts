@@ -11,7 +11,7 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Summon,
+    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Summon,
 } from "../../typing";
 
 type DeckValid = {
@@ -48,7 +48,7 @@ export default class GeniusInvokationClient {
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
     tip: string = ''; // 提示信息
-    actionInfo: string = ''; // 行动信息
+    actionInfo: ActionInfo = { content: '', card: null }; // 行动信息
     currCard: Card = NULL_CARD(); // 当前选择的卡
     currSkill: Skill = NULL_SKILL(); // 当前选择的技能
     vehicleSkill: Skill | null = null; // 当前特技
@@ -127,7 +127,7 @@ export default class GeniusInvokationClient {
         return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER();
     }
     get canAction() {// 是否可以操作
-        return this.player.canAction && this.tip == '' && this.actionInfo == '' && this.damageVO.dmgSource == 'null';
+        return this.player.canAction && this.tip == '' && this.actionInfo.content == '' && this.damageVO.dmgSource == 'null';
     }
     get heroSwitchDiceColor() { // 切换角色骰子颜色
         return this.heroSwitchDice > INIT_SWITCH_HERO_DICE ? CHANGE_BAD_COLOR :
@@ -167,7 +167,7 @@ export default class GeniusInvokationClient {
     }
     get isShowButton() {
         return this.isLookon == -1 &&
-            (((this.player.status == PLAYER_STATUS.PLAYING && this.canAction && this.tip == '' && this.actionInfo == '' ||
+            (((this.player.status == PLAYER_STATUS.PLAYING && this.canAction && this.tip == '' && this.actionInfo.content == '' ||
                 this.player.status == PLAYER_STATUS.DIESWITCH) &&
                 this.player.phase >= PHASE.CHOOSE_HERO && (this.currCard.id > 0 || this.isShowSwitchHero > 0)) ||
                 this.player.phase == PHASE.CHOOSE_HERO
@@ -424,7 +424,7 @@ export default class GeniusInvokationClient {
         this.pileCnt = pileCnt;
         this.diceCnt = diceCnt;
         this.handCardsCnt = handCardsCnt;
-        this.showRerollBtn = players[this.playerIdx].UI.showRerollBtn;
+        this.showRerollBtn = players[this.playerIdx]?.UI.showRerollBtn ?? false;
         this.pickModal = pickModal;
         if (flag.includes('startGame')) {
             this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
@@ -450,9 +450,9 @@ export default class GeniusInvokationClient {
             this._resetWillSwitch();
         }
         this._sendTip(tip);
-        if (actionInfo != '') {
+        if (actionInfo.content != '') {
             this.actionInfo = actionInfo;
-            setTimeout(() => this.actionInfo = '', 1000);
+            setTimeout(() => this.actionInfo = { content: '', card: null }, 1e3);
         }
         if (slotSelect.length > 0) {
             const [p, h, s] = slotSelect;

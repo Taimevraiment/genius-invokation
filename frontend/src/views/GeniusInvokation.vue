@@ -150,11 +150,14 @@
     </div>
 
     <div class="modal-action" :class="{
-      'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
-      'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo != '',
-      'modal-action-leave': client.actionInfo == '',
+      'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo.content != '',
+      'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo.content != '',
+      'modal-action-leave': client.actionInfo.content == '',
     }">
-      {{ client.actionInfo }}
+      <div>{{ client.actionInfo.content }}</div>
+      <handcard v-if="client.actionInfo.card" style="position: relative;margin-top: 10px;"
+        :card="client.actionInfo.card" :isMobile="isMobile" :isHideCost="true">
+      </handcard>
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
@@ -853,6 +856,7 @@ body {
   padding: 10px;
   pointer-events: none;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: 1s;

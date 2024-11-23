@@ -247,11 +247,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('教会枪术'))
         .skills(
             new SkillBuilder('噬罪的告解').description('{dealDmg}，生成2层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）')
-                .src('/image/tmp/Skill_S_Rosaria_01.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11132',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/71e41a887bf75f12f458ddaea87d1ae4_4540027086914779796.png')
                 .elemental().damage(1).cost(3).handle(() => ({ statusPre: 111131 })),
             new SkillBuilder('终命的圣礼').description('{dealDmg}，生成2层【sts111131】，召唤【smn111132】。')
-                .src('/image/tmp/Skill_E_Rosaria_01_HD.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11133',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/9084652922b62c2033a0ac777811eb5c_1228859002995546833.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ statusPre: 111131, summon: 111132 }))
         ),
@@ -480,15 +480,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('靶向治疗'))
         .skills(
             new SkillBuilder('弹跳水疗法').description('生成1张【crd112131】，将其置于我方牌库顶部第3张牌的位置，本角色附属3层【sts122】。（触发【crd112131】的效果后，会生成【crd112132】并置入对方牌库; 触发【crd112132】的效果后，会生成【crd112133】并置入我方牌库）')
-                .src('/image/tmp/Skill_S_Sigewinne_01.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12132',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/f19c7aee67405f75ab2232607be81ea8_369892106478425408.png')
                 .elemental().cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', cnt: -1, card: 112131, hidxs: [3] }], status: [[122, 3]] })),
             new SkillBuilder('过饱和心意注射').description('{dealDmg}，然后[准备技能]：【rsk12135】。')
-                .src('/image/tmp/Skill_E_Sigewinne_01_HD.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12133',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/dcbf94bb5239ad88636d33ab552a9e80_4185011562027950809.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
             new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。（对每名角色最多生效3次）；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
-                .src('/image/tmp/Skill_S_Sigewinne_02.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12134',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/8a6a3792e47546b5ec81ee636445c4d8_6392784692082623561.png')
                 .passive().handle(event => {
                     const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
@@ -524,11 +524,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
             new SkillBuilder('踏鲨破浪').description('自身附属【sts112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
-                .src('',
+                .src('/image/tmp/Skill_S_Mualani_01.webp',
                     '')
                 .elemental().cost(2).handle(({ hero }) => ({ status: [112142, [112141, 2]], isForbidden: hasObjById(hero.heroStatus, 112141) })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
-                .src('',
+                .src('/image/tmp/Skill_E_Mualani_01.webp',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 112144 })),
         ),
@@ -973,13 +973,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ heal: 2 }))
         ),
 
-    1412: () => new HeroBuilder(445).name('克洛琳德').since('v5.3.0').fontaine().electro().sword()
+    1412: () => new HeroBuilder(445).name('克洛琳德').since('v5.3.0').fontaine().tags(HERO_TAG.ArkheOusia).electro().sword()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Clorinde.webp')
         .avatar('')
         .normalSkill(new NormalSkillBuilder('逐影之誓').costAny(1).damage(1))
         .skills(
             new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')
-                .src('',
+                .src('/image/tmp/Skill_S_Clorinde_01.webp',
                     '')
                 .elemental().cost(2).handle(event => {
                     const { hero: { heroStatus } } = event;
@@ -988,7 +988,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { addDmgCdt: cnt, heal: cnt, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
                 }),
             new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
-                .src('',
+                .src('/image/tmp/Skill_E_Clorinde_01.webp',
                     '')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[122, 4]] }))
         ),
@@ -2114,11 +2114,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('王狼直击'))
         .skills(
             new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属2层【sts126031】，召唤【smn126032】。')
-                .src('/image/tmp/MonsterSkill_S_Planelurker_01.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/26032',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/4e3681910d6030538828aaca2d9a8ec4_807642467059739344.png')
                 .elemental().damage(1).cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent, 2]], summon: 126032 })),
             new SkillBuilder('黄金侵绞').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并使所有敌方角色附属【sts126031】。')
-                .src('/image/tmp/MonsterSkill_E_Planelurker_01_HD.png',
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/26033',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/fa73097822d092389bcf8fff81b90224_4686715611294853097.png')
                 .burst(2).damage(3).cost(3).handle(event => {
                     const { eheros = [], talent } = event;

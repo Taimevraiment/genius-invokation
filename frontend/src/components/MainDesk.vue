@@ -1729,8 +1729,6 @@ button:active {
 .will-getcard-oppo {
   position: absolute;
   background-color: #304260;
-  background-image: url(https://homdgcat.wiki/images/GCG/UI_Gcg_CardBack_01.png);
-  background-size: 100% 100%;
   color: black;
   text-align: center;
   padding-top: 20px;
@@ -1760,8 +1758,6 @@ button:active {
 .will-addcard-oppo {
   position: absolute;
   background-color: #304260;
-  background-image: url(@@/image/card-bg.png);
-  background-size: 100% 100%;
   color: black;
   text-align: center;
   transform: translate(500%, -10%);
@@ -1808,7 +1804,7 @@ button:active {
 }
 
 .mobile-hero {
-  max-width: 16%;
+  max-width: 18%;
 }
 
 .mobile-hero-hp {
@@ -1820,9 +1816,9 @@ button:active {
 }
 
 .mobile-status {
-  width: 14px;
-  height: 14px;
-  line-height: 14px;
+  width: 12px;
+  height: 12px;
+  line-height: 12px;
   margin-right: 1px;
 }
 

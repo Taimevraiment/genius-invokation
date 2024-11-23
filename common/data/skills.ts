@@ -212,7 +212,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中[挑选]1张加入手牌，并且治疗附属角色1点。')
-        .src('/image/tmp/Btn_Natsaurus_Shamansaurus_ElementalArt.png',
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130051',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/80e0cad80855e14a1efebb4b6ba2cd67_801740963269596598.png')
         .vehicle().costSame(1).handle(() => ({
             pickCard: {

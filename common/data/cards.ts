@@ -1170,7 +1170,6 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { source = -1, heal = [], hidxs = [], heros = [] } = event;
             if (card.perCnt <= 0 || source.toString().startsWith('312') || (heal[hidxs[0]] ?? -1) < 0 || heros.every(h => h.maxHp == h.hp)) return;
-            console.log(source);
             return {
                 trigger: ['heal'],
                 execmds: [{ cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(heros) }],
@@ -1247,10 +1246,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/34506374c580288b88c38dee3b6af998_278198034630026427.png'),
 
     313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
-    313006: () => new CardBuilder(449).name('杨腾').since('v5.3.0').vehicle().costSame(0).useCnt(2)
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.pngs'),
+    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2)
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp'),
 
     321001: () => new CardBuilder(179).name('璃月港口').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -2488,7 +2487,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mualani.webp')
         .handle((card, event) => {
             const { summons = [], randomInt } = event;
-            if (!randomInt || card.perCnt <= 0) return;
+            if (!randomInt || card.perCnt <= 0 || summons.length == 0) return;
             return {
                 trigger: ['switch-to'],
                 execmds: [{ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] }],
@@ -2726,7 +2725,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Clorinde.webp')
         .handle((_, event) => {
             const { hidxs = [], heros = [] } = event;
-            if (getObjById(heros[hidxs[0]].heroStatus, 114122)?.useCnt == 3) return;
+            if (getObjById(heros[hidxs[0]]?.heroStatus, 114122)?.useCnt == 3) return;
             return {
                 trigger: ['elReaction-Electro', 'other-elReaction-Electro'],
                 execmds: [{ cmd: 'getStatus', status: 114122, hidxs }],

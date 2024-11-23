@@ -1,30 +1,30 @@
 <template>
     <div class="card" :class="{ 'mobile-card': isMobile }">
         <div class="card-border"></div>
-        <img class="card-img" :src="getPngIcon(card.UI.src)" v-if="card?.UI.src?.length > 0" :alt="card.name" />
+        <img class="card-img" :src="getPngIcon(card.UI.src)" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
                 :src="getPngIcon('legend-border')" />
-            <div class="card-cost" :class="{ 'mobile-card-cost': isMobile }"
+            <div class="card-cost" v-if="!isHideCost" :class="{ 'mobile-card-cost': isMobile }"
                 :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
                 <span>{{ Math.max(0, card.cost - card.costChange) }}</span>
             </div>
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
-                v-if="card.anydice > 0"
+                v-if="card.anydice > 0 && !isHideCost"
                 :style="{ color: card.costChange - card.cost > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
                 <span>{{ card.anydice - Math.max(0, card.costChange - card.cost) }}</span>
             </div>
-            <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0">
+            <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0 && !isHideCost">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
                 <span>{{ card.energy }}</span>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }"
-                v-if="card.subType.includes(CARD_SUBTYPE.Legend)">
+                v-if="card.subType.includes(CARD_SUBTYPE.Legend) && !isHideCost">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
             </div>
@@ -43,10 +43,11 @@ import { CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
 import { CARD_SUBTYPE, COST_TYPE } from '@@@/constant/enum';
 import { Card } from '../../../typing';
 
-const props = defineProps(['card', 'isMobile']);
+const props = defineProps(['card', 'isMobile', 'isHideCost']);
 
 const card = computed<Card>(() => props.card);
 const isMobile = computed<boolean>(() => props.isMobile);
+const isHideCost = computed<boolean>(() => props.isHideCost || false);
 
 // 获取骰子背景
 const getDiceBgIcon = (name: string) => {
@@ -54,7 +55,8 @@ const getDiceBgIcon = (name: string) => {
 };
 
 // 获取png图片
-const getPngIcon = (name: string) => {
+const getPngIcon = (name: string = '') => {
+    if (name == '') return '/image/card-bg.png';
     if (name.startsWith('http')) return name;
     return `/image/${name}.png`;
 };

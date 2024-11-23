@@ -240,8 +240,9 @@ io.on('connection', socket => {
             try {
                 room.getAction(actionData, socket);
             } catch (e) {
-                room.exportLog(e as string);
-                console.error(e);
+                const error: Error = e as Error;
+                console.error(error);
+                room.exportLog(error.message + '\n' + error.stack);
             }
         }
         if (isStart != room.isStart) emitPlayerAndRoomList();

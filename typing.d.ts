@@ -222,6 +222,11 @@ type ActionData = {
     flag?: string, // 发起请求的标志
 }
 
+type ActionInfo = {
+    content: string,
+    card: Card | null,
+}
+
 type ServerData = Readonly<{
     players: Player[],
     previews: Preview[],
@@ -236,7 +241,7 @@ type ServerData = Readonly<{
     handCardsCnt: number[],
     isWin: number,
     tip: string,
-    actionInfo: string,
+    actionInfo: ActionInfo,
     slotSelect: number[],
     heroSelect: number[],
     statusSelect: number[],

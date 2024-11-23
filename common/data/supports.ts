@@ -409,6 +409,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // ｢流泉之众｣
     321025: () => new SupportBuilder().round(2).handle((_, event) => ({
         trigger: ['summon-enter'],
+        supportCnt: -1,
         exec: spt => {
             const { csummon } = event;
             if (!csummon) return { isDestroy: false }

@@ -514,7 +514,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111123: () => shieldHeroStatus('潜猎护盾', 1, 2),
 
     111131: (cnt: number = 2) => new StatusBuilder('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
-        .icon('tmp/UI_Gcg_Buff_Rosaria').type(STATUS_TYPE.Usage)
+        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/111131').type(STATUS_TYPE.Usage)
         .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）')
         .handle((status, event) => {
             const { randomInt, isExecTask, trigger = '' } = event;
@@ -529,7 +529,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    111133: () => new StatusBuilder('强攻破绽').combatStatus().icon('tmp/UI_Gcg_Buff_Crit').useCnt(1)
+    111133: () => new StatusBuilder('强攻破绽').combatStatus().useCnt(1)
+        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/111133')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle((status, event) => {
@@ -804,15 +805,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112134: () => readySkillStatus('满满心意药剂冲击', 12135),
 
     112135: () => new StatusBuilder('静养').combatStatus().useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
-        .icon('/tmp')
+        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112135')
         .description('我方｢元素战技｣或召唤物造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
             const { isSummon = -1, sktype = -1 } = event;
-            if (isSummon == -1 && sktype != SKILL_TYPE.Elemental) return;
             return {
-                addDmgCdt: isCdt(sktype != SKILL_TYPE.Elemental, 1),
+                addDmgCdt: isCdt(isSummon != -1, 1),
                 addDmgType2: 1,
-                trigger: ['dmg'],
+                trigger: isCdt(isSummon != -1 || sktype == SKILL_TYPE.Elemental, ['dmg']),
                 exec: () => { --status.useCnt },
             }
         }),
@@ -821,7 +821,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
         .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）'),
 
-    112142: () => new StatusBuilder('咬咬鲨鱼').heroStatus().icon('').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+    112142: () => new StatusBuilder('咬咬鲨鱼').heroStatus().icon('ski,3').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，移除此状态; 此状态被移除时，所附属角色结束【sts112141】。')
         .handle((status, event) => {
             const { hidx = -1, heros = [], trigger = '' } = event;
@@ -1227,17 +1227,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    114121: () => new StatusBuilder('夜巡').heroStatus().icon('').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Enchant)
+    114121: () => new StatusBuilder('夜巡').heroStatus().icon('ski,1').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Enchant)
         .description('角色受到【ski,1】以外的治疗时，改为附属等量的【sts122】。；【所附属角色使用普通攻击时：】造成的[物理伤害]变为[雷元素伤害]，并使自身附属2层【sts122】。')
         .handle((_, event) => {
             const { heal = [], hidx = -1, source = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['skilltype1'];
             const cmds: Cmds[] = [];
             if (trigger == 'skilltype1') {
-                cmds.push({ cmd: 'getStatus', status: [[122, 2]] });
+                cmds.push({ cmd: 'getStatus', status: [[122, 2]], hidxs: [hidx] });
             } else if (trigger == 'pre-heal' && source != 14122 && (heal[hidx] ?? 0) > 0) {
                 triggers.push('pre-heal');
-                cmds.push({ cmd: 'getStatus', status: [[122, heal[hidx]]] });
+                cmds.push({ cmd: 'getStatus', status: [[122, heal[hidx]]], hidxs: [hidx] });
                 heal[hidx] = -1;
             }
             return {
@@ -3055,13 +3055,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     303315: () => new StatusBuilder('咚咚嘭嘭（生效中）').heroStatus().icon('heal').useCnt(3).type(STATUS_TYPE.Usage)
         .description('名称不存在于初始牌组中牌加入我方手牌时，所附属角色治疗自身1点。；[useCnt]')
-        .handle((status, event) => {
+        .handle((_, event) => {
             const { playerInfo: { initCardIds = [] } = {}, hcard, hidx = -1 } = event;
             if (!hcard || initCardIds.includes(hcard?.id)) return;
             return {
                 trigger: ['getcard'],
                 cmds: [{ cmd: 'heal', cnt: 1, hidxs: [hidx] }],
-                exec: () => { --status.useCnt }
+                exec: eStatus => { eStatus && --eStatus.useCnt }
             }
         }),
 

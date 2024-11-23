@@ -167,7 +167,7 @@ export default class GeniusInvokationRoom {
                     + `}`;
             }
         }
-        fs.writeFile(`${__dirname}/../../../logs/${this.seed}.log`, log, err => {
+        fs.writeFile(`${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}.log`, log, err => {
             if (err) return console.error('err:', err);
         });
     }
@@ -200,172 +200,182 @@ export default class GeniusInvokationRoom {
      * @param options.ohidx 切换前角色序号
      */
     emit(flag: string, pidx: number, options: {
-        socket?: Socket, tip?: string | string[], actionInfo?: string, damageVO?: DamageVO, notPreview?: boolean, notUpdate?: boolean,
+        socket?: Socket, tip?: string | string[], actionInfoContent?: string, damageVO?: DamageVO, notPreview?: boolean, notUpdate?: boolean,
         isQuickAction?: boolean, canAction?: boolean, isChange?: boolean, isActionInfo?: boolean, slotSelect?: number[], ohidx?: number,
         heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], hasReadyskill?: boolean,
+        actionInfoCard?: Card,
     } = {}) {
-        const { socket, tip = '', actionInfo = '', damageVO = -1, notPreview = false, isActionInfo = false, canAction = true,
-            slotSelect = [], heroSelect = [], statusSelect = [], summonSelect = [], supportSelect = [], notUpdate = false,
-            isQuickAction = false, isChange = false, hasReadyskill = false, ohidx } = options;
-        this.players.forEach(p => {
-            p.handCards.forEach((c, ci) => c.cidx = ci);
-            p.heros.forEach(h => {
-                if (!notUpdate) this._updateStatus(p.pidx, [], h.heroStatus, this.players, { hidx: h.hidx, isExec: true, isQuickAction });
-                this._calcSkillChange(p.pidx, h.hidx);
+        try {
+            const { socket, tip = '', actionInfoContent = '', damageVO = -1, notPreview = false, isActionInfo = false, canAction = true,
+                slotSelect = [], heroSelect = [], statusSelect = [], summonSelect = [], supportSelect = [], notUpdate = false,
+                isQuickAction = false, isChange = false, hasReadyskill = false, ohidx, actionInfoCard = null } = options;
+            this.players.forEach(p => {
+                p.handCards.forEach((c, ci) => c.cidx = ci);
+                p.heros.forEach(h => {
+                    if (!notUpdate) this._updateStatus(p.pidx, [], h.heroStatus, this.players, { hidx: h.hidx, isExec: true, isQuickAction });
+                    this._calcSkillChange(p.pidx, h.hidx);
+                });
+                if (!notUpdate) this._updateStatus(p.pidx, [], p.combatStatus, this.players, { hidx: p.hidx, isExec: true, ohidx: isCdt(p.pidx == pidx, ohidx), isQuickAction });
+                this._updateSummon(p.pidx, [], this.players);
+                p.canAction = canAction && (p.pidx == this.currentPlayerIdx || !isChange) &&
+                    (p.pidx != this.currentPlayerIdx || !hasReadyskill) &&
+                    (isQuickAction || p.canAction) && this.taskQueue.isTaskEmpty() &&
+                    this.isStart && p.phase == PHASE.ACTION && p.status == PLAYER_STATUS.PLAYING &&
+                    p.heros[p.hidx].heroStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill)) &&
+                    p.combatStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill));
+                this._calcCardChange(p.pidx);
             });
-            if (!notUpdate) this._updateStatus(p.pidx, [], p.combatStatus, this.players, { hidx: p.hidx, isExec: true, ohidx: isCdt(p.pidx == pidx, ohidx), isQuickAction });
-            this._updateSummon(p.pidx, [], this.players);
-            p.canAction = canAction && (p.pidx == this.currentPlayerIdx || !isChange) &&
-                (p.pidx != this.currentPlayerIdx || !hasReadyskill) &&
-                (isQuickAction || p.canAction) && this.taskQueue.isTaskEmpty() &&
-                this.isStart && p.phase == PHASE.ACTION && p.status == PLAYER_STATUS.PLAYING &&
-                p.heros[p.hidx].heroStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill)) &&
-                p.combatStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill));
-            this._calcCardChange(p.pidx);
-        });
-        const previews: Preview[] = [];
-        // 计算预测行动的所有情况
-        const cplayer = this.players[this.currentPlayerIdx];
-        if (
-            this.phase == PHASE.ACTION && !notPreview && cplayer.canAction && !flag.includes('update') &&
-            this._hasNotDieSwitch() && this.taskQueue.isTaskEmpty() && cplayer.status == PLAYER_STATUS.PLAYING
-        ) {
-            previews.push(...this._getPreview(this.currentPlayerIdx));
-            this.previews = previews;
-            if ( // AI行动
-                (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
-                    flag.includes('reroll') || flag.includes('reconcile') ||
-                    ((flag.includes('useCard') || flag.includes('card-doDamage') || flag.endsWith('card-after')) && !isChange)
-                ) && cplayer.id == AI_ID
+            const previews: Preview[] = [];
+            // 计算预测行动的所有情况
+            const cplayer = this.players[this.currentPlayerIdx];
+            if (
+                this.phase == PHASE.ACTION && !notPreview && cplayer.canAction && !flag.includes('update') &&
+                this._hasNotDieSwitch() && this.taskQueue.isTaskEmpty() && cplayer.status == PLAYER_STATUS.PLAYING
             ) {
-                setTimeout(() => {
-                    const actionType: ActionType[] = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero];
-                    const { pidx: cpidx, dice } = cplayer;
-                    while (true) {
-                        const [action] = this._randomInArr(actionType);
-                        const pres = previews.filter(p => p.type == action && p.isValid);
-                        if (pres.length > 0) {
-                            const [preview] = this._randomInArr(pres);
-                            switch (preview.type) {
-                                case ACTION_TYPE.UseCard:
-                                    this._useCard(cpidx, preview.cardIdxs![0], preview.diceSelect!, {
-                                        selectHeros: preview.heroIdxs,
-                                        selectSummon: preview.summonIdx,
-                                        selectSupport: preview.supportIdx,
-                                    });
-                                    break;
-                                case ACTION_TYPE.UseSkill:
-                                    assgin(dice, dice.filter((_, di) => !preview.diceSelect![di]));
-                                    this._useSkill(cpidx, preview.skillId!, { selectSummon: preview.summonIdx });
-                                    break;
-                                case ACTION_TYPE.Reconcile:
-                                    this._reconcile(cpidx, preview.diceSelect!, preview.cardIdxs![0], 'reconcile-ai');
-                                    break;
-                                case ACTION_TYPE.SwitchHero:
-                                    this._switchHero(cpidx, preview.heroIdxs![0], 'switchHero-ai', { diceSelect: preview.diceSelect });
-                                    break;
-                                default:
-                                    const a: never = preview.type as never;
-                                    throw new Error(`@emit-aiAction: 未知的ActionType[${a}]`);
+                previews.push(...this._getPreview(this.currentPlayerIdx));
+                this.previews = previews;
+                if ( // AI行动
+                    (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
+                        flag.includes('reroll') || flag.includes('reconcile') ||
+                        ((flag.includes('useCard') || flag.includes('card-doDamage') || flag.endsWith('card-after')) && !isChange)
+                    ) && cplayer.id == AI_ID
+                ) {
+                    setTimeout(() => {
+                        const actionType: ActionType[] = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero];
+                        const { pidx: cpidx, dice } = cplayer;
+                        while (true) {
+                            const [action] = this._randomInArr(actionType);
+                            const pres = previews.filter(p => p.type == action && p.isValid);
+                            if (pres.length > 0) {
+                                const [preview] = this._randomInArr(pres);
+                                switch (preview.type) {
+                                    case ACTION_TYPE.UseCard:
+                                        this._useCard(cpidx, preview.cardIdxs![0], preview.diceSelect!, {
+                                            selectHeros: preview.heroIdxs,
+                                            selectSummon: preview.summonIdx,
+                                            selectSupport: preview.supportIdx,
+                                        });
+                                        break;
+                                    case ACTION_TYPE.UseSkill:
+                                        assgin(dice, dice.filter((_, di) => !preview.diceSelect![di]));
+                                        this._useSkill(cpidx, preview.skillId!, { selectSummon: preview.summonIdx });
+                                        break;
+                                    case ACTION_TYPE.Reconcile:
+                                        this._reconcile(cpidx, preview.diceSelect!, preview.cardIdxs![0], 'reconcile-ai');
+                                        break;
+                                    case ACTION_TYPE.SwitchHero:
+                                        this._switchHero(cpidx, preview.heroIdxs![0], 'switchHero-ai', { diceSelect: preview.diceSelect });
+                                        break;
+                                    default:
+                                        const a: never = preview.type as never;
+                                        throw new Error(`@emit-aiAction: 未知的ActionType[${a}]`);
+                                }
+                                break;
                             }
-                            break;
+                            actionType.splice(actionType.indexOf(action), 1);
+                            if (actionType.length == 0) {
+                                this._doEndPhase(cpidx, 'endPhase-ai');
+                                break;
+                            }
                         }
-                        actionType.splice(actionType.indexOf(action), 1);
-                        if (actionType.length == 0) {
-                            this._doEndPhase(cpidx, 'endPhase-ai');
-                            break;
-                        }
-                    }
-                }, 2e3);
+                    }, 2e3);
+                }
             }
-        }
-        // AI挑选卡牌
-        if (cplayer.id == AI_ID && cplayer.phase == PHASE.PICK_CARD && flag.startsWith('pickCard')) {
-            setTimeout(() => this._pickCard(cplayer.pidx, this._randomInt(this.pickModal.cards.length - 1), this.pickModal.skillId), 1e3);
-        }
-        const serverData: ServerData = {
-            players: [],
-            previews: [],
-            phase: this.phase,
-            isStart: this.isStart,
-            round: this.round,
-            currCountdown: this.countdown.curr,
-            log: [],
-            pileCnt: this.players.map(p => p.pile.length),
-            diceCnt: this.players.map(p => p.dice.length),
-            handCardsCnt: this.players.map(p => p.handCards.length),
-            damageVO,
-            tip: typeof tip == 'string' ? tip : '',
-            actionInfo: '',
-            isWin: this.winner,
-            slotSelect,
-            heroSelect,
-            statusSelect,
-            summonSelect,
-            supportSelect,
-            pickModal: this.pickModal,
-            flag: `[${this.id}]${flag}-p${pidx}`,
-        };
-        const _serverDataVO = (pidx: number, tip: string | string[]) => {
-            const log = this.log.map(lg => {
-                const cpidx = +(lg.content.match(/(?<=【p)\d+(?=:)/)?.[0] ?? -1);
-                if (cpidx > -1 && pidx == cpidx) return { content: lg.content.replace(/【p\d+:([^【】]+)】/g, '$1'), type: lg.type };
-                if (cpidx == -1 && pidx == this.currentPlayerIdx) return { content: lg.content.replace(/[【】]/g, ''), type: lg.type };
-                return { content: lg.content.replace(/【[^【】]+】/g, ''), type: lg.type }
-            });
-            return {
-                players: this.players.map(pvo => {
-                    if (pvo.pidx == pidx) {
+            // AI挑选卡牌
+            if (cplayer.id == AI_ID && cplayer.phase == PHASE.PICK_CARD && flag.startsWith('pickCard')) {
+                setTimeout(() => this._pickCard(cplayer.pidx, this._randomInt(this.pickModal.cards.length - 1), this.pickModal.skillId), 1e3);
+            }
+            const serverData: ServerData = {
+                players: [],
+                previews: [],
+                phase: this.phase,
+                isStart: this.isStart,
+                round: this.round,
+                currCountdown: this.countdown.curr,
+                log: [],
+                pileCnt: this.players.map(p => p.pile.length),
+                diceCnt: this.players.map(p => p.dice.length),
+                handCardsCnt: this.players.map(p => p.handCards.length),
+                damageVO,
+                tip: typeof tip == 'string' ? tip : '',
+                actionInfo: { content: '', card: null },
+                isWin: this.winner,
+                slotSelect,
+                heroSelect,
+                statusSelect,
+                summonSelect,
+                supportSelect,
+                pickModal: this.pickModal,
+                flag: `[${this.id}]${flag}-p${pidx}`,
+            };
+            const _serverDataVO = (pidx: number, tip: string | string[]) => {
+                const log = this.log.map(lg => {
+                    const cpidx = +(lg.content.match(/(?<=【p)\d+(?=:)/)?.[0] ?? -1);
+                    if (cpidx > -1 && pidx == cpidx) return { content: lg.content.replace(/【p\d+:([^【】]+)】/g, '$1'), type: lg.type };
+                    if (cpidx == -1 && pidx == this.currentPlayerIdx) return { content: lg.content.replace(/[【】]/g, ''), type: lg.type };
+                    return { content: lg.content.replace(/【[^【】]+】/g, ''), type: lg.type }
+                });
+                return {
+                    players: this.players.map(pvo => {
+                        if (pvo.pidx == pidx) {
+                            return {
+                                ...pvo,
+                                pile: [],
+                            }
+                        }
                         return {
                             ...pvo,
-                            pile: [],
-                        }
-                    }
-                    return {
-                        ...pvo,
-                        UI: {
-                            ...pvo.UI,
-                            willGetCard: {
-                                ...pvo.UI.willGetCard,
-                                cards: pvo.UI.willGetCard.cards.map(c => pvo.UI.willGetCard.isNotPublic ? NULL_CARD() : c)
+                            UI: {
+                                ...pvo.UI,
+                                willGetCard: {
+                                    ...pvo.UI.willGetCard,
+                                    cards: pvo.UI.willGetCard.cards.map(c => pvo.UI.willGetCard.isNotPublic ? NULL_CARD() : c)
+                                },
+                                willAddCard: {
+                                    ...pvo.UI.willAddCard,
+                                    cards: pvo.UI.willAddCard.cards.map(c => pvo.UI.willAddCard.isNotPublic ? NULL_CARD() : c),
+                                }
                             },
-                            willAddCard: {
-                                ...pvo.UI.willAddCard,
-                                cards: pvo.UI.willAddCard.cards.map(c => pvo.UI.willAddCard.isNotPublic ? NULL_CARD() : c),
-                            }
-                        },
-                        pile: [],
-                        playerInfo: {
-                            isUsedLegend: pvo.playerInfo.isUsedLegend,
-                        },
-                        dice: [],
-                        handCards: [],
-                    }
-                }),
-                previews: pidx == this.currentPlayerIdx ? this.previews : [],
-                ...(typeof tip != 'string' ? { tip: tip[pidx] } :
-                    tip.includes('{p}') ? { tip: tip.replace(/{p}/, pidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
-                log: log.map(v => v.content),
-                actionInfo: actionInfo || (isActionInfo ? log.filter(lg => lg.type == 'info').slice(-1)[0]?.content ?? '' : ''),
+                            pile: [],
+                            playerInfo: {
+                                isUsedLegend: pvo.playerInfo.isUsedLegend,
+                            },
+                            dice: [],
+                            handCards: [],
+                        }
+                    }),
+                    previews: pidx == this.currentPlayerIdx ? this.previews : [],
+                    ...(typeof tip != 'string' ? { tip: tip[pidx] } :
+                        tip.includes('{p}') ? { tip: tip.replace(/{p}/, pidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
+                    log: log.map(v => v.content),
+                    actionInfo: {
+                        content: actionInfoContent || (isActionInfo ? log.filter(lg => lg.type == 'info').slice(-1)[0]?.content ?? '' : ''),
+                        card: actionInfoCard,
+                    },
+                }
             }
-        }
-        this._writeLog(serverData.flag, 'emit');
-        if (socket) {
-            socket.emit('getServerInfo', Object.freeze({
-                ...serverData,
-                ..._serverDataVO(pidx, tip),
-            }));
-        } else {
-            this.io.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
-                ...serverData,
-                ..._serverDataVO(pidx, tip),
-            }));
-            this.players.forEach(p => {
-                this.io.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
+            this._writeLog(serverData.flag, 'emit');
+            if (socket) {
+                socket.emit('getServerInfo', Object.freeze({
                     ...serverData,
-                    ..._serverDataVO(p.pidx, tip),
+                    ..._serverDataVO(pidx, tip),
                 }));
-            });
+            } else {
+                this.io.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
+                    ...serverData,
+                    ..._serverDataVO(pidx, tip),
+                }));
+                this.players.forEach(p => {
+                    this.io.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
+                        ...serverData,
+                        ..._serverDataVO(p.pidx, tip),
+                    }));
+                });
+            }
+        } catch (e) {
+            const error: Error = e as Error;
+            console.error(error);
+            this.exportLog(error.message + '\n' + error.stack);
         }
     }
     /**
@@ -2633,7 +2643,13 @@ export default class GeniusInvokationRoom {
                 } else if (!isUseSkill) {
                     this._doActionAfter(pidx, isQuickAction);
                     this._startTimer();
-                    this.emit(`useCard-${currCard.name}`, pidx, { canAction, damageVO, isQuickAction, isActionInfo: true });
+                    this.emit(`useCard-${currCard.name}`, pidx, {
+                        canAction,
+                        damageVO,
+                        isQuickAction,
+                        isActionInfo: true,
+                        actionInfoCard: currCard,
+                    });
                     await this._execTask();
                 } else {
                     await this._execTask();
@@ -4481,7 +4497,15 @@ export default class GeniusInvokationRoom {
                             }
                         }
                         for (let i = 0; i < count - restCnt; ++i) {
-                            this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', { players, isExec, isOnlyExecSts: !isExec, isQuickAction: isCdt(!isAction, 2), supportCnt, hcard: willGetCard[i] });
+                            this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', {
+                                players,
+                                hidxs: allHidxs(cplayer.heros),
+                                isExec,
+                                isOnlyExecSts: !isExec,
+                                isQuickAction: isCdt(!isAction, 2),
+                                supportCnt,
+                                hcard: willGetCard[i],
+                            });
                             if (isFromPile) this._detectSupport(cpidx ^ 1, 'getcard-oppo', { players, isExec, isQuickAction: !isAction, supportCnt });
                         }
                     }
@@ -5202,7 +5226,7 @@ export default class GeniusInvokationRoom {
                 const { isFallAtk = false } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'enter', { players, cStatus: sts, hidxs: [hidx], isExec });
                 player.isFallAtk ||= isFallAtk;
                 oriStatus.push(sts);
-                this._detectSlotAndStatus(pidx, 'get-status', { types: STATUS_TYPE.Usage, source: sts.id, isExec, supportCnt });
+                this._detectSlotAndStatus(pidx, 'get-status', { types: STATUS_TYPE.Usage, hidxs: allHidxs(heros), source: sts.id, isExec, supportCnt });
             }
             const stsres = sts.handle(sts, { heros, hidx });
             if (sts.hasType(STATUS_TYPE.Enchant)) updateAttachEl(heros, hidx, sts.group, oriStatus);
@@ -5246,7 +5270,7 @@ export default class GeniusInvokationRoom {
         pidx: number, nSummon: Summon[], players: Player[], isExec = true,
         options: { isSummon?: number, destroy?: boolean, trigger?: Trigger } = {}
     ) {
-        const { summons, combatStatus, hidx, heros } = players[pidx];
+        const { summons = [], combatStatus = [], hidx = -1, heros = [] } = players[pidx];
         const newSummon: Summon[] = clone(nSummon);
         const oriSummon: Summon[] = clone(summons);
         const { isSummon = -1, destroy = false, trigger } = options;
