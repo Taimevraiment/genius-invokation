@@ -220,7 +220,7 @@ export const HERO_TAG_URL = {
     [HERO_TAG.Inazuma]: '/image/local3.png',
     [HERO_TAG.Sumeru]: '/image/local4.png',
     [HERO_TAG.Fontaine]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/270e3e7772698578d0679b4b60cf03da.png',
-    [HERO_LOCAL.Natlan]: '',
+    [HERO_LOCAL.Natlan]: '/image/local6.png',
     [HERO_LOCAL.Snezhnaya]: '',
     [HERO_TAG.Fatui]: '/image/local8.png',
     [HERO_TAG.Hilichurl]: '/image/local9.png',

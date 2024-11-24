@@ -44,7 +44,7 @@ export type StatusHandleEvent = {
     summons?: Summon[],
     esummons?: Summon[],
     hcards?: Card[],
-    hcardsCnt?: number,
+    ehcards?: Card[],
     pile?: Card[],
     playerInfo?: GameInfo,
     isSummon?: number,
@@ -817,7 +817,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112141: (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().icon('').useCnt(cnt).maxCnt(2)
+    112141: (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
+        .icon('tmp/UI_Gcg_Buff_Nightsoul_Water_1277947879.png')
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
         .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）'),
 
@@ -831,6 +832,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (!sts112141?.useCnt) return;
             return {
                 trigger: ['switch-to', 'switch-oppo'],
+                isAddTask: true,
                 cmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }],
                 exec: () => {
                     if (--sts112141.useCnt == 0) {
@@ -841,7 +843,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112143: () => new StatusBuilder('啃咬目标').heroStatus().icon('debuff').useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+    112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+        .icon('tmp/UI_Gcg_Debuff_Mualani_S_408084341.png')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
         .handle((status, event) => {
             const { dmgSource = -1 } = event;
@@ -1240,11 +1243,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 cmds.push({ cmd: 'getStatus', status: [[122, heal[hidx]]], hidxs: [hidx] });
                 heal[hidx] = -1;
             }
-            return {
-                trigger: triggers,
-                attachEl: ELEMENT_TYPE.Electro,
-                cmds,
-            }
+            return { trigger: triggers, attachEl: ELEMENT_TYPE.Electro, cmds }
         }),
 
     114122: () => new StatusBuilder('破夜的明焰（生效中）').heroStatus().icon('buff5').useCnt(1).maxCnt(3).type(STATUS_TYPE.AddDamage)
@@ -2434,6 +2433,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (trigger == 'phase-start' && eStsCnt > status.useCnt) return;
             return {
                 trigger: ['after-dmg', 'phase-start'],
+                isAddTask: true,
                 cmds: isCdt(trigger == 'phase-start', [{ cmd: 'getStatus', status: 300007 }]),
                 exec: () => {
                     if (trigger == 'after-dmg') status.useCnt += dmg.reduce((a, c) => a + Math.max(0, c), 0);
@@ -2566,19 +2566,23 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301301: () => shieldHeroStatus('掘进的收获'),
 
-    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').type(STATUS_TYPE.Usage)
+    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.Usage)
         .description('【附属角色使用技能后：】如可能，对方[舍弃]1张原本元素骰费用最高的手牌，使附属【crd313006】的敌方角色切换为出战角色。')
-        .handle((_, event) => {
-            const { eheros = [], hcardsCnt = 0 } = event;
-            if (hcardsCnt == 0) return;
-            const cmds: Cmds[] = [{ cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard }];
+        .handle((status, event) => {
+            const { eheros = [], ehcards: { length: ehcardsCnt } = [] } = event;
+            if (ehcardsCnt == 0) return;
+            const cmds: Cmds[] = [];
             const ehidx = eheros.findIndex(h => h.isFront);
             for (let i = 0; i < eheros.length; ++i) {
+                if (ehcardsCnt - cmds.length / 2 <= 0) break;
                 const cehidx = (ehidx + i) % eheros.length;
                 if (eheros[cehidx].vehicleSlot?.[0].id != 313006) continue;
-                cmds.push({ cmd: 'switch-to', hidxs: [cehidx] });
+                cmds.push(
+                    { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true },
+                    { cmd: 'switch-to', hidxs: [cehidx], isOppo: true }
+                );
             }
-            return { trigger: ['skill'], cmds }
+            return { trigger: ['skill'], cmds, exec: () => { --status.useCnt } }
         }),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)

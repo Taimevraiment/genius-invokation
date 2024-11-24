@@ -520,7 +520,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1214: () => new HeroBuilder(444).name('玛拉妮').since('v5.3.0').natlan().hydro().catalyst()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mualani.webp')
-        .avatar('')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Mualani_-833202905.png')
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
             new SkillBuilder('踏鲨破浪').description('自身附属【sts112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
@@ -975,7 +975,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1412: () => new HeroBuilder(445).name('克洛琳德').since('v5.3.0').fontaine().tags(HERO_TAG.ArkheOusia).electro().sword()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Clorinde.webp')
-        .avatar('')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Clorinde_1451199402.png')
         .normalSkill(new NormalSkillBuilder('逐影之誓').costAny(1).damage(1))
         .skills(
             new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')

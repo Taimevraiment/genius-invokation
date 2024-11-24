@@ -23,7 +23,7 @@ import { newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
-import { allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, mergeWillHeals, playerToString } from '../../common/utils/gameUtil.js';
+import { allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
     ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Hero, LogType, MinusDiceSkill, PickCard,
@@ -997,7 +997,7 @@ export default class GeniusInvokationRoom {
         const player = this.players[pidx];
         if (isForbidden) return new Array(player.dice.length).fill(false);
         const skill = this._calcSkillChange(pidx, player.hidx, { isSwitch, skid });
-        if (!skill) throw new Error('@_checkSkill: 技能不存在');
+        if (!skill) throw new Error(`@_checkSkill: 技能不存在\n pidx:${pidx},player.hidx:${player.hidx},skid:${skid}}`);
         let anyDiceCnt = skill.cost[1].cnt - skill.costChange[1];
         let { cnt: elementDiceCnt, type: costType } = skill.cost[0];
         elementDiceCnt -= skill.costChange[0];
@@ -3657,6 +3657,7 @@ export default class GeniusInvokationRoom {
                     summons: player.summons,
                     esummons: opponent.summons,
                     hcards: player.handCards,
+                    ehcards: opponent.handCards,
                     pile: player.pile,
                     playerInfo: player.playerInfo,
                     skid,
@@ -4219,7 +4220,7 @@ export default class GeniusInvokationRoom {
                             const supportHandle = async () => {
                                 const player = this.players[pidx];
                                 const spt = player.supports.find(s => s.entityId == support.entityId);
-                                if (!spt) throw new Error('@supportHandle: support not found');
+                                if (!spt) throw new Error(`@supportHandle: support not found\n suport:${supportToString(support)}`);
                                 const oCnt = spt.cnt;
                                 const oPct = spt.perCnt;
                                 const supportexecres = supportres.exec?.(spt, { isQuickAction: isTriggeredQuick, switchHeroDiceCnt }) ?? { isDestroy: false };
@@ -5439,7 +5440,7 @@ export default class GeniusInvokationRoom {
             this._detectSkill(pidx, 'switch-to', { hidxs: hidx, isExec });
         }
         const curHero = heros[hidx];
-        if (!curHero) throw new Error('@_calcSkillChange: hero not found');
+        if (!curHero) throw new Error(`@_calcSkillChange: hero not found\n pidx:${pidx},hidx:${hidx},skid:${skid},heros:[${heros.map(h => heroToString(h))}]`);
         const rskill = isReadySkill ? this.newSkill(skid) : null;
         const skills = [...curHero.skills.filter(sk => sk.type != SKILL_TYPE.Passive)];
         if (curHero.vehicleSlot) skills.unshift(curHero.vehicleSlot[1]);
