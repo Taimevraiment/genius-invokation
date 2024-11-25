@@ -2433,22 +2433,19 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (trigger == 'phase-start' && eStsCnt > status.useCnt) return;
             return {
                 trigger: ['after-dmg', 'phase-start'],
-                isAddTask: true,
+                isAddTask: trigger == 'phase-start',
                 cmds: isCdt(trigger == 'phase-start', [{ cmd: 'getStatus', status: 300007 }]),
-                exec: () => {
+                exec: eStatus => {
                     if (trigger == 'after-dmg') status.useCnt += dmg.reduce((a, c) => a + Math.max(0, c), 0);
-                    else if (trigger == 'phase-start') status.useCnt = 0;
+                    else if (trigger == 'phase-start' && eStatus) eStatus.useCnt = 0;
                 }
             }
         }),
 
-    300007: () => new StatusBuilder('斗争之火（生效中）').combatStatus().icon('buff5').roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+    300007: () => new StatusBuilder('斗争之火（生效中）').combatStatus().icon('buff5').roundCnt(1)
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合中出战角色造成的伤害+1。')
-        .handle((status, event) => ({
-            trigger: isCdt(event.hasDmg, ['skill']),
-            addDmg: 1,
-            exec: () => { --status.roundCnt }
-        })),
+        .handle(() => ({ trigger: ['skill'], addDmg: 1 })),
 
     301018: () => new StatusBuilder('严格禁令').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]')

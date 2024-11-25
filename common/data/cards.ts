@@ -1577,7 +1577,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/76e84615db9526436d399c79aaa9d47a_2755116418615718064.png')
         .handle(() => ({ status: 300005 })),
 
-    330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(1)
+    330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(0)
         .description('在双方场上生成【sts300006】，然后我方场上的【sts300006】的｢斗志｣+1。（【sts300006】会将各自阵营对对方造成的伤害记录为｢斗志｣，每回合行动阶段开始时｢斗志｣较高的一方会清空｢斗志｣，使当前出战角色在本回合中造成的伤害+1。）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ShenyeXunli.webp')
         .handle(() => ({ status: [[300006, 1]], statusOppo: 300006 })),

@@ -2807,13 +2807,14 @@ export default class GeniusInvokationRoom {
                 hidxs: allHidxs(this.players[cpidx].heros),
                 isQuickAction: true,
             });
-            await this._execTask();
+            // await this._execTask();
             this._detectSummon(cpidx, 'phase-start');
-            await this._execTask();
+            // await this._execTask();
             const { exchangeSupport: ecs } = this._detectSupport(cpidx, 'phase-start', { firstPlayer: this.startIdx, isQuickAction: true });
             exchangeSupprt.push(...ecs);
-            await this._execTask();
+            // await this._execTask();
         }
+        await this._execTask();
         for (const [exspt, pidx] of exchangeSupprt) {
             this.players[pidx].supports.push(exspt);
         }
