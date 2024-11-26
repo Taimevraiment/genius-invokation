@@ -60,7 +60,7 @@ export class GISkill {
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
-        this.addition = adt;
+        this.addition = [...adt];
         this.handle = hevent => {
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
             const handleres = handle?.(hevent, compareVersionFn(ver)) ?? {};
@@ -70,6 +70,7 @@ export class GISkill {
             if (reset) {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;
+                curskill.addition = [...adt];
                 return {};
             }
             let dmgElement = handleres.dmgElement;

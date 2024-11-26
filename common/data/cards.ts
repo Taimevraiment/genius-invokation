@@ -3200,32 +3200,33 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6b2b966c07c54e8d86dd0ef057ae5c4a_6986508112474897949.png')
         .handle((card, event, ver) => {
-            const { heros = [], summons = [], isExec = false } = event;
-            if (!isExec) return;
+            const { heros = [], summons = [] } = event;
             const hidx = getObjIdxById(heros, getHidById(card.id));
             if (hidx == -1) return;
             const hero = heros[hidx];
-            const clocal = hero.tags.pop();
-            let nsummonId = 0;
-            if (clocal == HERO_TAG.ArkhePneuma) {
-                hero.tags.push(HERO_TAG.ArkheOusia);
-                hero.UI.src = hero.UI.srcs[0];
-            } else {
-                hero.tags.push(HERO_TAG.ArkhePneuma);
-                hero.UI.src = hero.UI.srcs[1];
-                nsummonId = 1;
-            }
-            const smnIdx = getObjIdxById(summons, 112111 + (nsummonId ^ 1));
-            if (smnIdx > -1) {
-                const useCnt = summons[smnIdx].useCnt;
-                const entityId = summons[smnIdx].entityId;
-                summons.splice(smnIdx, 1, newSummon(ver.value)(112111 + nsummonId, useCnt).setEntityId(entityId));
-            }
+            const clocal = hero.tags.at(-1);
+            const nsummonId = +(clocal == HERO_TAG.ArkheOusia);
             return {
                 cmds: [
                     { cmd: 'loseSkill', hidxs: [hidx], mode: 1 },
                     { cmd: 'getSkill', hidxs: [hidx], cnt: 12112 + nsummonId * 10, mode: 1 },
-                ]
+                ],
+                exec: () => {
+                    hero.tags.pop();
+                    if (clocal == HERO_TAG.ArkhePneuma) {
+                        hero.tags.push(HERO_TAG.ArkheOusia);
+                        hero.UI.src = hero.UI.srcs[0];
+                    } else {
+                        hero.tags.push(HERO_TAG.ArkhePneuma);
+                        hero.UI.src = hero.UI.srcs[1];
+                    }
+                    const smnIdx = getObjIdxById(summons, 112111 + (nsummonId ^ 1));
+                    if (smnIdx > -1) {
+                        const useCnt = summons[smnIdx].useCnt;
+                        const entityId = summons[smnIdx].entityId;
+                        summons.splice(smnIdx, 1, newSummon(ver.value)(112111 + nsummonId, useCnt).setEntityId(entityId));
+                    }
+                }
             }
         }),
 

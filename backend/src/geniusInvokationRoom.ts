@@ -242,7 +242,15 @@ export default class GeniusInvokationRoom {
                 ) {
                     setTimeout(() => {
                         const actionType: ActionType[] = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero];
-                        const { pidx: cpidx, dice } = cplayer;
+                        const { pidx: cpidx, dice, heros } = cplayer;
+                        if (cplayer.phase == PHASE.DICE) {
+                            this._reroll(dice.map(d => d != DICE_COST_TYPE.Omni && !heros.map(h => h.element).includes(d)), cpidx, 'reroll-ai');
+                            return;
+                        }
+                        if (cplayer.phase == PHASE.PICK_CARD) {
+                            this._pickCard(cpidx, 0, this.pickModal.skillId);
+                            return;
+                        }
                         while (true) {
                             const [action] = this._randomInArr(actionType);
                             const pres = previews.filter(p => p.type == action && p.isValid);
@@ -2622,7 +2630,7 @@ export default class GeniusInvokationRoom {
             } else {
                 player.phase = phase?.[0] ?? player.phase;
             }
-            const damageVOs: DamageVO[] = ((willDamages.length > 0 || elTips.length > 0) && willHeals.length == 0 ? [[]] : willHeals).map((hl, hli) => ({
+            const damageVOs: DamageVO[] = ((willDamages.length > 0 || elTips.some(([n]) => n != '')) && willHeals.length == 0 ? [[]] : willHeals).map((hl, hli) => ({
                 dmgSource: 'card',
                 atkPidx: pidx,
                 atkHidx: -1,
@@ -3003,7 +3011,7 @@ export default class GeniusInvokationRoom {
                         isDie.add(p.pidx);
                         heroDie[p.pidx].push(h.hidx);
                     }
-                } else {
+                } else if (willDamages.length > 0) {
                     willDamages[phidx] = [-1, 0];
                 }
             }
@@ -3035,10 +3043,7 @@ export default class GeniusInvokationRoom {
                         h.vehicleSlot = null;
                         h.attachElement.length = 0;
                         h.energy = 0;
-                        h.skills.forEach(s => {
-                            s.perCnt = 0;
-                            s.useCntPerRound = 0;
-                        });
+                        h.skills.forEach(s => s.handle({ hero: h, skill: s, reset: true }));
                         if (!h.isFront) {
                             heroDie[cpidx].splice(heroDie[cpidx].indexOf(chidx), 1);
                             if (heroDie[cpidx].length == 0) isDie.delete(cpidx);
@@ -4483,20 +4488,7 @@ export default class GeniusInvokationRoom {
                                 p.handCards.push(...getcards);
                                 p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
                                 this.emit('doCmd--getCard-after', cpidx, { isQuickAction: !isAction });
-                                for (const getcard of getcards) {
-                                    await this._useCard(cpidx, -1, [], { getcard, isQuickAction: !isAction });
-                                }
                             }]], { isPriority, isUnshift });
-                        } else {
-                            const rest = MAX_HANDCARDS_COUNT - cplayer.handCards.length;
-                            const getcards = willGetCard.slice(0, rest);
-                            cplayer.handCards.push(...getcards);
-                            for (const getcard of getcards) {
-                                for (const cmds of getcard.handle(getcard, { heros: cplayer.heros }).execmds ?? []) {
-                                    if (!['attack', 'heal'].includes(cmds.cmd)) continue;
-                                    tasks.push({ pidx: cpidx, cmds: [cmds], atkname: `${getcard.name}(${getcard.entityId})` });
-                                }
-                            }
                         }
                         for (let i = 0; i < count - restCnt; ++i) {
                             this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', {
@@ -4509,6 +4501,25 @@ export default class GeniusInvokationRoom {
                                 hcard: willGetCard[i],
                             });
                             if (isFromPile) this._detectSupport(cpidx ^ 1, 'getcard-oppo', { players, isExec, isQuickAction: !isAction, supportCnt });
+                        }
+                        const rest = MAX_HANDCARDS_COUNT - cplayer.handCards.length;
+                        const getcards = willGetCard.slice(0, rest);
+                        if (isExec) {
+                            for (const getcard of getcards) {
+                                this.taskQueue.addTask(`getCard-p${cpidx}-${getcard.name}:getcard`, [[async () => {
+                                    await this._useCard(cpidx, -1, [], { getcard, isQuickAction: !isAction, });
+                                }]]);
+                            }
+                        } else {
+                            cplayer.handCards.push(...getcards);
+                            for (const getcard of getcards) {
+                                const cardres = getcard.handle(getcard, { heros: cplayer.heros, trigger: 'getcard' });
+                                if (this._hasNotTriggered(cardres.trigger, 'getcard')) continue;
+                                for (const cmds of cardres.execmds ?? []) {
+                                    if (!['attack', 'heal'].includes(cmds.cmd)) continue;
+                                    tasks.push({ pidx: cpidx, cmds: [cmds], atkname: `${getcard.name}(${getcard.entityId})` });
+                                }
+                            }
                         }
                     }
                 }
