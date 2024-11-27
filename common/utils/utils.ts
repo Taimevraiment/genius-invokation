@@ -202,13 +202,6 @@ export const swapKeysAndValues = <K extends string | number | symbol, V extends 
 }
 
 /**
- * 获取数组最后一项
- * @param arr 数组
- * @returns 最后一项
- */
-export const getLast = <T>(arr: T[]): T => arr[arr.length - 1];
-
-/**
  * 不改变地址复制一个对象
  * @param target 目标对象
  * @param source 源对象
@@ -236,7 +229,7 @@ export const assgin = <T>(target: T, source: T) => {
         !source?.hasOwnProperty(key) && delete target[key];
     }
     for (const key in source) {
-        if (typeof source[key] === 'object' && source[key] !== null) assgin(target[key], source[key]);
+        if (typeof source[key] === 'object' && source[key] !== null && target[key] !== null) assgin(target[key], source[key]);
         else target[key] = source[key];
     }
 }

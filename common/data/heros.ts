@@ -523,10 +523,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Mualani_-833202905.png')
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
-            new SkillBuilder('踏鲨破浪').description('自身附属【sts112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
+            new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Mualani_01.webp',
                     '')
-                .elemental().cost(2).handle(({ hero }) => ({ status: [112142, [112141, 2]], isForbidden: hasObjById(hero.heroStatus, 112141) })),
+                .elemental().cost(2).handle(({ hero }) => ({
+                    cmds: [{ cmd: 'equip', hidxs: [hero.hidx], card: 112142 }],
+                    status: [[112141, 2]],
+                    isForbidden: hasObjById(hero.heroStatus, 112141)
+                })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
                 .src('/image/tmp/Skill_E_Mualani_01.webp',
                     '')

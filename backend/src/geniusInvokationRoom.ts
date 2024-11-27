@@ -383,7 +383,7 @@ export default class GeniusInvokationRoom {
         } catch (e) {
             const error: Error = e as Error;
             console.error(error);
-            this.exportLog(error.message + '\n' + error.stack);
+            this.exportLog(error.stack);
         }
     }
     /**
@@ -2544,38 +2544,7 @@ export default class GeniusInvokationRoom {
             if (isAction) player.isFallAtk = ifa;
             const { usedCardIds } = player.playerInfo;
             if (!usedCardIds.includes(currCard.id)) usedCardIds.push(currCard.id);
-            if (currCard.type == CARD_TYPE.Equipment) { // 装备
-                const tarHero = player.heros[hidxs[0]];
-                const explIdx = currCard.UI.description.indexOf('；(');
-                currCard.UI.description = currCard.UI.description.slice(0, explIdx);
-                if (
-                    currCard.hasSubtype(CARD_SUBTYPE.Weapon) && tarHero.weaponSlot != null ||
-                    currCard.hasSubtype(CARD_SUBTYPE.Artifact) && tarHero.artifactSlot != null ||
-                    currCard.hasSubtype(CARD_SUBTYPE.Talent) && tarHero.talentSlot != null ||
-                    currCard.hasSubtype(CARD_SUBTYPE.Vehicle) && tarHero.vehicleSlot != null
-                ) {
-                    this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', {
-                        isOnlyCombatStatus: true,
-                        hcard: currCard,
-                        slotsDestroy: player.heros.map(h => +(h.hidx == tarHero.hidx)),
-                    });
-                    // await this._execTask();
-                }
-                if (!cardres?.isDestroy) {
-                    if (currCard.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器
-                        if (tarHero.weaponSlot?.id == currCard.id) currCard.setEntityId(tarHero.weaponSlot.entityId);
-                        tarHero.weaponSlot = currCard.setEntityId(this._genEntityId());
-                    } else if (currCard.hasSubtype(CARD_SUBTYPE.Artifact)) { // 圣遗物
-                        if (tarHero.artifactSlot?.id == currCard.id) currCard.setEntityId(tarHero.artifactSlot.entityId);
-                        tarHero.artifactSlot = currCard.setEntityId(this._genEntityId());
-                    } else if (currCard.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋
-                        tarHero.talentSlot = currCard.setEntityId(tarHero.talentSlot?.entityId ?? this._genEntityId());
-                    } else if (currCard.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
-                        if (tarHero.vehicleSlot?.[0].id == currCard.id) currCard.setEntityId(tarHero.vehicleSlot[0].entityId);
-                        tarHero.vehicleSlot = [currCard.setEntityId(this._genEntityId()), this.newSkill(currCard.id * 10 + 1)];
-                    }
-                }
-            }
+            this._doEquip(pidx, player.heros[hidxs[0]], currCard, { isDestroy: cardres.isDestroy });
         }
         if (isInvalid) {
             this._doActionAfter(pidx);
@@ -3157,6 +3126,46 @@ export default class GeniusInvokationRoom {
         else mergeWillHeals(willHeals, stsheal);
         this._detectSupport(pidx, 'discard', { players, discard: discards.length, isExec, isQuickAction: !isAction, supportCnt });
         return { tasks, willHeals, supportCnt }
+    }
+    /**
+     * 给角色附属装备
+     * @param pidx 玩家序号
+     * @param hero 被装备的角色
+     * @param equipment 装备卡
+     * @param options.isDestroy 是否直接弃置
+     */
+    private _doEquip(pidx: number, hero: Hero, equipment: Card | number, options: { isDestroy?: boolean } = {}) {
+        if (typeof equipment == 'number') equipment = this.newCard(equipment);
+        if (equipment.type != CARD_TYPE.Equipment) return;
+        const { isDestroy = false } = options;
+        const explIdx = equipment.UI.description.indexOf('；(');
+        equipment.UI.description = equipment.UI.description.slice(0, explIdx);
+        if (
+            equipment.hasSubtype(CARD_SUBTYPE.Weapon) && hero.weaponSlot != null ||
+            equipment.hasSubtype(CARD_SUBTYPE.Artifact) && hero.artifactSlot != null ||
+            equipment.hasSubtype(CARD_SUBTYPE.Talent) && hero.talentSlot != null ||
+            equipment.hasSubtype(CARD_SUBTYPE.Vehicle) && hero.vehicleSlot != null
+        ) {
+            this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', {
+                isOnlyCombatStatus: true,
+                hcard: equipment,
+                slotsDestroy: this.players[pidx].heros.map(h => +(h.hidx == hero.hidx)),
+            });
+        }
+        if (!isDestroy) {
+            if (equipment.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器
+                if (hero.weaponSlot?.id == equipment.id) equipment.setEntityId(hero.weaponSlot.entityId);
+                hero.weaponSlot = equipment.setEntityId(this._genEntityId());
+            } else if (equipment.hasSubtype(CARD_SUBTYPE.Artifact)) { // 圣遗物
+                if (hero.artifactSlot?.id == equipment.id) equipment.setEntityId(hero.artifactSlot.entityId);
+                hero.artifactSlot = equipment.setEntityId(this._genEntityId());
+            } else if (equipment.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋
+                hero.talentSlot = equipment.setEntityId(hero.talentSlot?.entityId ?? this._genEntityId());
+            } else if (equipment.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
+                if (hero.vehicleSlot?.[0].id == equipment.id) equipment.setEntityId(hero.vehicleSlot[0].entityId);
+                hero.vehicleSlot = [equipment.setEntityId(this._genEntityId()), this.newSkill(equipment.id * 10 + 1)];
+            }
+        }
     }
     /**
      * 状态攻击
@@ -4504,17 +4513,15 @@ export default class GeniusInvokationRoom {
                         }
                         const rest = MAX_HANDCARDS_COUNT - cplayer.handCards.length;
                         const getcards = willGetCard.slice(0, rest);
-                        if (isExec) {
-                            for (const getcard of getcards) {
+                        if (!isExec) cplayer.handCards.push(...getcards);
+                        for (const getcard of getcards) {
+                            const cardres = getcard.handle(getcard, { heros: cplayer.heros, trigger: 'getcard' });
+                            if (this._hasNotTriggered(cardres.trigger, 'getcard')) continue;
+                            if (isExec) {
                                 this.taskQueue.addTask(`getCard-p${cpidx}-${getcard.name}:getcard`, [[async () => {
                                     await this._useCard(cpidx, -1, [], { getcard, isQuickAction: !isAction, });
                                 }]]);
-                            }
-                        } else {
-                            cplayer.handCards.push(...getcards);
-                            for (const getcard of getcards) {
-                                const cardres = getcard.handle(getcard, { heros: cplayer.heros, trigger: 'getcard' });
-                                if (this._hasNotTriggered(cardres.trigger, 'getcard')) continue;
+                            } else {
                                 for (const cmds of cardres.execmds ?? []) {
                                     if (!['attack', 'heal'].includes(cmds.cmd)) continue;
                                     tasks.push({ pidx: cpidx, cmds: [cmds], atkname: `${getcard.name}(${getcard.entityId})` });
@@ -4854,6 +4861,8 @@ export default class GeniusInvokationRoom {
                     players[pidx].phase = PHASE.PICK_CARD;
                     this.emit(`pickCard-${i}`, pidx);
                 }]], { isUnshift, isPriority });
+            } else if (cmd == 'equip') {
+                this._doEquip(pidx, player.heros[ohidxs![0]], card as Card | number);
             }
         }
         if (!isOnlyGetWillDamages && willDamages != undefined && dmgElement != undefined) {

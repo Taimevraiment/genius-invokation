@@ -301,7 +301,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     112144: () => new SummonBuilder('鲨鲨飞弹').useCnt(2).maxUse(MAX_USE_COUNT).damage(2).description('{defaultAtk。}')
-        .src(''),
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Mualani_2_-1796258607.png'),
 
     113021: () => new SummonBuilder('锅巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),

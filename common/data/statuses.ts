@@ -822,27 +822,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
         .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）'),
 
-    112142: () => new StatusBuilder('咬咬鲨鱼').heroStatus().icon('ski,2').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，移除此状态; 此状态被移除时，所附属角色结束【sts112141】。')
-        .handle((status, event) => {
-            const { hidx = -1, heros = [], trigger = '' } = event;
-            const hero = heros[hidx];
-            if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
-            const sts112141 = getObjById(hero.heroStatus, 112141);
-            if (!sts112141?.useCnt) return;
-            return {
-                trigger: ['switch-to', 'switch-oppo'],
-                isAddTask: true,
-                cmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }],
-                exec: eStatus => {
-                    if (eStatus && --sts112141.useCnt == 0) {
-                        status.roundCnt = 0;
-                        sts112141.roundCnt = 0;
-                    }
-                }
-            }
-        }),
-
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .icon('tmp/UI_Gcg_Debuff_Mualani_S_408084341')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')

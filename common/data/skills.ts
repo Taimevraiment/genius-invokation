@@ -152,6 +152,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png')
         .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
 
+    1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。')
+        .src('')
+        .vehicle().costSame(2).handle(() => ({ cmds: [{ cmd: 'switch-before' }], statusOppo: 112143 })),
+
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1151021',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')

@@ -242,7 +242,7 @@ io.on('connection', socket => {
             } catch (e) {
                 const error: Error = e as Error;
                 console.error(error);
-                room.exportLog(error.message + '\n' + error.stack);
+                room.exportLog(error.stack);
             }
         }
         if (isStart != room.isStart) emitPlayerAndRoomList();

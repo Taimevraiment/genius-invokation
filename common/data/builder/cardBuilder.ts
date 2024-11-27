@@ -73,7 +73,7 @@ export class GICard {
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
             const vehicle = `rsk${id}1`;
-            this.UI.description += `[特技]：【${vehicle}】；【[可用次数]：{useCnt}】；（角色最多装备1个｢特技｣）`;
+            this.UI.description += `[特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}（角色最多装备1个｢特技｣）`;
             this.UI.explains.push(vehicle);
             handle ??= (card, event) => {
                 const { skid = -1 } = event;

@@ -3257,6 +3257,28 @@ const allCards: Record<number, () => CardBuilder> = {
             execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }, { cmd: 'getStatus', status: 112101 }],
         })),
 
+    112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().costSame(0)
+        .src('tmp/UI_Gcg_CardFace_Summon_Mualani_1_-1991372755')
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。；')
+        .handle((_, event) => {
+            const { hidxs = [], heros = [], trigger = '' } = event;
+            const hero = heros[hidxs[0]];
+            if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
+            const sts112141 = getObjById(hero.heroStatus, 112141);
+            if (!sts112141?.useCnt) return;
+            return {
+                trigger: ['switch-to', 'switch-oppo'],
+                isAddTask: true,
+                isDestroy: sts112141.useCnt == 1,
+                execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }],
+                exec: () => {
+                    if (--sts112141.useCnt == 0) {
+                        sts112141.roundCnt = 0;
+                    }
+                }
+            }
+        }),
+
     113131: () => new CardBuilder().name('超量装药弹头').event(true).costPyro(2)
         .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9e3f3602c9eb4929bd9713b86c7fc5a1_5877781091007295306.png')
