@@ -154,7 +154,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。')
         .src('')
-        .vehicle().costSame(2).handle(() => ({ cmds: [{ cmd: 'switch-before' }], statusOppo: 112143 })),
+        .vehicle().cost(1).handle(() => ({ cmds: [{ cmd: 'switch-before' }], statusOppo: 112143 })),
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1151021',

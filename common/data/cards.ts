@@ -2095,7 +2095,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { selectHeros: [hidx] = [], heros = [] } = event;
             return {
-                canSelectHero: heros.map(h => h.vehicleSlot != null),
+                canSelectHero: heros.map(h => h.vehicleSlot != null && h.vehicleSlot[1].useCnt > -1),
                 exec: () => {
                     const vehicleSlot = heros[hidx]?.vehicleSlot;
                     if (vehicleSlot) ++vehicleSlot[0].useCnt;

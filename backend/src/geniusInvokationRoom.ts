@@ -3138,7 +3138,7 @@ export default class GeniusInvokationRoom {
         if (typeof equipment == 'number') equipment = this.newCard(equipment);
         if (equipment.type != CARD_TYPE.Equipment) return;
         const { isDestroy = false } = options;
-        const explIdx = equipment.UI.description.indexOf('；(');
+        const explIdx = equipment.UI.description.indexOf('；（');
         equipment.UI.description = equipment.UI.description.slice(0, explIdx);
         if (
             equipment.hasSubtype(CARD_SUBTYPE.Weapon) && hero.weaponSlot != null ||

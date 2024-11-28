@@ -77,7 +77,7 @@ const getRoomIdx = (rid: number) => getIdxById(rid, roomList);
 const removePlayer = (pid: number) => {
     const time = setTimeout(() => {
         removeById(pid, playerList);
-    }, 30 * 1e3);
+    }, 30 * 60 * 1e3);
     removePlayerList.set(pid, {
         time,
         cancel: () => {

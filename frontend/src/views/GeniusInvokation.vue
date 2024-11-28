@@ -513,6 +513,11 @@ const devOps = (cidx = 0) => {
       const rest = op.slice(1);
       sptIds.push(+rest);
       flag.add('setSupport');
+    } else if (op.startsWith('q')) { // 附属装备
+      const [card = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
+      const hidxs = hidx > heros.length ? heros.map(h => h.hidx) : [hidx];
+      cmds.push({ cmd: 'equip', hidxs, card });
+      flag.add('equip');
     } else { // 摸牌
       const cards: (number | Card)[] = [];
       const isAttach = op.endsWith('~');
