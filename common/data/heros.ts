@@ -19,7 +19,7 @@ import { skillTotal } from './skills.js';
 
 const allHeros: Record<number, () => HeroBuilder> = {
 
-    1101: () => new HeroBuilder(1).name('甘雨').liyue().cryo().bow()
+    1101: () => new HeroBuilder(1).name('甘雨').offline('v1').liyue().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
         .normalSkill(new NormalSkillBuilder('流天射术'))
@@ -71,7 +71,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(4).handle(() => ({ status: 111031 }))
         ),
 
-    1104: () => new HeroBuilder(4).name('重云').liyue().cryo().claymore()
+    1104: () => new HeroBuilder(4).name('重云').offline('v1').liyue().cryo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png')
         .normalSkill(new NormalSkillBuilder('灭邪四式'))

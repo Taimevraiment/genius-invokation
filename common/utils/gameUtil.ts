@@ -1,5 +1,5 @@
 import { Card, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, Version } from "../constant/enum.js";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, Version } from "../constant/enum.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -160,8 +160,11 @@ export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | num
 }
 
 // 比较版本大小
-const compareVersion = (v1: Version, v2: Version) => {
+const compareVersion = (v1: Version, v2: Version | null) => {
     if (v1 === v2) return 0;
+    if (v2 === null || +OFFLINE_VERSION.includes(v1 as OfflineVersion) ^ +OFFLINE_VERSION.includes(v2 as OfflineVersion)) {
+        return -1;
+    }
     if (v1 === 'vlatest') return 1;
     if (v2 === 'vlatest') return -1;
     const v1s = v1.slice(1).split('.').map(Number);
@@ -177,11 +180,12 @@ const compareVersion = (v1: Version, v2: Version) => {
 export const compareVersionFn = (curVersion: Version) => {
     return {
         value: curVersion,
-        lt: (ver: Version) => compareVersion(curVersion, ver) < 0,
-        lte: (ver: Version) => compareVersion(curVersion, ver) <= 0,
-        gt: (ver: Version) => compareVersion(curVersion, ver) > 0,
-        gte: (ver: Version) => compareVersion(curVersion, ver) >= 0,
-        eq: (ver: Version) => compareVersion(curVersion, ver) == 0,
+        isOffline: OFFLINE_VERSION.includes(curVersion as OfflineVersion),
+        lt: (ver: Version | null) => compareVersion(curVersion, ver) < 0,
+        lte: (ver: Version | null) => compareVersion(curVersion, ver) <= 0,
+        gt: (ver: Version | null) => compareVersion(curVersion, ver) > 0,
+        gte: (ver: Version | null) => compareVersion(curVersion, ver) >= 0,
+        eq: (ver: Version | null) => compareVersion(curVersion, ver) == 0,
     }
 }
 

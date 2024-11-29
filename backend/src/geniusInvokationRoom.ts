@@ -4595,11 +4595,11 @@ export default class GeniusInvokationRoom {
                             }
                         }
                     } else {
+                        const hcardsSorted = clone(unselectedCards).sort((a, b) => ((b.cost + b.anydice) - (a.cost + a.anydice)));
                         if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
-                            discards.push(...clone(unselectedCards));
-                            discardIdxs.push(...new Array(unselectedCards.length).fill(0).map((_, ci) => ci));
+                            discards.push(...hcardsSorted);
+                            discardIdxs.push(...hcardsSorted.map(c => c.cidx));
                         } else {
-                            const hcardsSorted = unselectedCards.slice().sort((a, b) => ((b.cost + b.anydice) - (a.cost + a.anydice)));
                             const targetCnt = discardCnt;
                             while (discardCnt > 0) {
                                 if (mode == CMD_MODE.Random) { // 弃置随机手牌

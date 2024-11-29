@@ -1,23 +1,36 @@
-import { DICE_TYPE, DiceType, VERSION, Version } from "../../constant/enum.js";
+import { VersionCompareFn } from "../../../typing.js";
+import { DICE_TYPE, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, VERSION, Version } from "../../constant/enum.js";
+import { compareVersionFn } from "../../utils/gameUtil.js";
 
 export class VersionMap<T> {
-    private _map: [Version, T][] = [];
+    private _map: [VersionCompareFn, T][] = [];
     constructor() { }
     set(map: [Version, T]) {
-        const value = this._map.find(([ver]) => ver == map[0]);
-        if (value) value[1] = map[1];
-        else this._map.push(map);
+        const [version, val] = map;
+        const value = this._map.find(([ver]) => ver.eq(version));
+        if (value) value[1] = val;
+        else this._map.push([compareVersionFn(version), val]);
     }
-    get(version: Version, defaultValue: T) {
-        return this._map.sort(([a], [b]) => a < b ? -1 : 1).find(([ver]) => ver > version)?.[1] ?? defaultValue;
+    get(version: Version, defaultValue: T): T {
+        if (OFFLINE_VERSION.includes(version as OfflineVersion)) {
+            const value = this._map.find(([ver]) => OFFLINE_VERSION.includes(ver.value as OfflineVersion));
+            if (value) return value[1];
+            version = 'vlatest';
+        }
+        return this._map.sort(([a], [b]) => a.lt(b.value) ? -1 : 1).find(([ver]) => ver.gt(version))?.[1] ?? defaultValue;
     }
 }
 
 export class BaseVersionBuilder {
-    protected _version: Version = VERSION[0];
+    protected _version: OnlineVersion = VERSION[0];
+    protected _offlineVersion: OfflineVersion | null = null;
     protected _curVersion: Version = VERSION[0];
-    since(version: Version) {
+    since(version: OnlineVersion) {
         this._version = version;
+        return this;
+    }
+    offline(offlineVersion: OfflineVersion) {
+        this._offlineVersion = offlineVersion;
         return this;
     }
     version(version: Version | undefined) {

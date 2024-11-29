@@ -1,7 +1,7 @@
 import { Card, VersionCompareFn } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
-    HeroLocalCode, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
+    HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
@@ -14,7 +14,8 @@ export class GICard {
     shareId: number; // 分享码id
     entityId: number = -1; // 实体id
     name: string; // 卡牌名
-    version: Version; // 加入的版本
+    version: OnlineVersion; // 加入的版本
+    offlineVersion: OfflineVersion | null; // 线下版本
     cost: number; // 费用
     costChange: number = 0; // 费用变化
     costType: DiceType; // 费用类型
@@ -39,8 +40,8 @@ export class GICard {
         explains: string[], // 要解释的文本
     };
     constructor(
-        id: number, shareId: number, name: string, version: Version, description: string, src: string, cost: number, costType: DiceType,
-        type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0,
+        id: number, shareId: number, name: string, version: OnlineVersion, description: string, src: string, cost: number, costType: DiceType,
+        type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0, offlineVersion: OfflineVersion | null = null,
         handle?: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
@@ -52,6 +53,7 @@ export class GICard {
         this.shareId = shareId;
         this.name = name;
         this.version = version;
+        this.offlineVersion = offlineVersion;
         subType ??= [];
         if (!Array.isArray(subType)) subType = [subType];
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
@@ -185,7 +187,8 @@ export class CardBuilder extends BaseBuilder {
         return this._cnt == -2;
     }
     get notExist() {
-        return this._version > this._curVersion;
+        const version = compareVersionFn(this._curVersion);
+        return version.lt(this._version) && version.lt(this._offlineVersion);
     }
     description(description: string, version: Version = 'vlatest') {
         this._description.set([version, description]);
@@ -333,7 +336,7 @@ export class CardBuilder extends BaseBuilder {
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const energy = this._energy.get(this._curVersion, 0);
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
-            cost, costType, this._type, this._subtype, userType, this._handle,
+            cost, costType, this._type, this._subtype, userType, this._offlineVersion, this._handle,
             {
                 tag: this._tag,
                 uct: useCnt,

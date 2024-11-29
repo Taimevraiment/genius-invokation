@@ -252,7 +252,7 @@ const magicCount = (cnt: number, shareId?: number) => {
 
 const allCards: Record<number, () => CardBuilder> = {
 
-    311101: () => normalWeapon(121).name('魔导绪论')
+    311101: () => normalWeapon(121).name('魔导绪论').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/1abc432f853c6fa24624a92646c62237_7336928583967273301.png'),
 
     311102: () => sacrificialWeapon(122).name('祭礼残章')

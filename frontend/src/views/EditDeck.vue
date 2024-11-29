@@ -9,7 +9,9 @@
                     卡组不完整
                 </div>
                 <div>{{ deck.name }}</div>
-                <div style="height: 1.2rem;">{{ deck.version }}</div>
+                <div style="height: 1.2rem;">
+                    {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体卡' : '' }}{{ deck.version }}
+                </div>
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero">
                     <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name" style="width: 100%;height: 100%;" />
                     <div v-else
@@ -49,8 +51,15 @@
                     卡组
                 </button>
                 <select name="version" id="version" v-model="version" @change="updateInfo()">
-                    <option v-for=" ver in VERSION" :key="ver" :value="ver">{{ ver }}</option>
+                    <option v-for="ver in (isOfflineVersion ? OFFLINE_VERSION : VERSION)" :key="ver" :value="ver">
+                        {{ ver }}
+                    </option>
                 </select>
+                <div>
+                    <input id="isOfflineInput" type="checkbox" :checked="isOfflineVersion"
+                        @change="switchOfflineVersion" />
+                    <label for="isOfflineInput">实体卡</label>
+                </div>
             </div>
             <input v-model="deckName" class="deck-name" />
             <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
@@ -195,7 +204,7 @@
 import InfoModal from '@/components/InfoModal.vue';
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, COST_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
+    HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
@@ -233,8 +242,8 @@ const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera M
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
 const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? VERSION[0]); // 当前版本
-const herosPool = computed<Hero[]>(() => herosTotal(version.value).filter(h => h.id < 3000)); // 选择的角色池
-const cardsPool = computed<Card[]>(() => cardsTotal(version.value).filter(c => c.UI.cnt > 0)); // 选择的卡组池
+const herosPool = computed<Hero[]>(() => herosTotal(version.value)); // 选择的角色池
+const cardsPool = computed<Card[]>(() => cardsTotal(version.value)); // 选择的卡组池
 
 const currIdx = ref<TagIndex>(TAG_INDEX.Hero); // 当前选择的标签页：0角色 1卡组
 const allHeros = ref<Hero[]>([...herosPool.value]); // 可选择角色池
@@ -287,6 +296,7 @@ const isShowShareCode = ref<boolean>(false);
 const shareCode = ref<string>('');
 const pShareCode = ref<string>('');
 const isShowDeckShareImg = ref<boolean>(false);
+const isOfflineVersion = ref<boolean>(false);
 
 // 获取png图片
 const getPngIcon = (name: string) => {
@@ -328,6 +338,17 @@ const deleteDeck = (did: number) => {
 // 分享卡组
 const shareDeck = () => {
     isShowDeckShareImg.value = true;
+}
+
+// 切换线下版
+const switchOfflineVersion = () => {
+    isOfflineVersion.value = !isOfflineVersion.value;
+    if (isOfflineVersion.value) {
+        version.value = OFFLINE_VERSION[0];
+    } else {
+        version.value = VERSION[0];
+    }
+    updateInfo();
 }
 
 // 重置角色筛选
@@ -377,8 +398,8 @@ const resetCardFilter = () => {
 }
 
 const updateInfo = (init = false) => {
+    herosDeck.value = herosDeck.value.map(h => herosPool.value.some(ph => ph.id == h.id) ? h : NULL_HERO());
     if (currIdx.value == TAG_INDEX.Hero || init) {
-        herosDeck.value = herosDeck.value.map(h => h.version <= version.value ? h : NULL_HERO());
         allHeros.value = [];
         const heroIds = herosDeck.value.map(v => v.id);
         herosPool.value.forEach(h => {
@@ -389,7 +410,6 @@ const updateInfo = (init = false) => {
         });
     }
     if (currIdx.value == TAG_INDEX.Card || init) {
-        cardsDeck.value = cardsDeck.value.filter(c => c.version <= version.value);
         allCards.value = [];
         cardsPool.value.forEach(c => {
             const cnt = c.UI.cnt - (cardsDeck.value.find(cd => cd.id == c.id)?.UI.cnt ?? 0);
@@ -406,7 +426,7 @@ const updateInfo = (init = false) => {
         });
     });
     cardsDeck.value = cardsDeck.value.filter(c => {
-        if (c.version > version.value) return false;
+        if (cardsPool.value.every(pc => pc.id != c.id)) return false;
         if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
             return herosDeck.value.map(h => h.id).includes(c.userType as number);
         }
@@ -429,7 +449,7 @@ const updateInfo = (init = false) => {
             else if (c.UI.cnt == -1) c.UI.cnt = 2;
         } else if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
             const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
-            if (element == ELEMENT_TYPE.Physical || ![331001 + PURE_ELEMENT_CODE[element] * 100, 331002 + PURE_ELEMENT_CODE[element] * 100].includes(c.id)) {
+            if (element == ELEMENT_TYPE.Physical || !Array.from({ length: 2 }, (_, i) => 331001 + i + PURE_ELEMENT_CODE[element] * 100).includes(c.id)) {
                 c.UI.cnt = -1;
             } else if (c.UI.cnt == -1) c.UI.cnt = 2;
         } else if (c.hasTag(CARD_TAG.LocalResonance)) { // 所属地区(包括魔物、愚人众)
@@ -456,7 +476,6 @@ const updateInfo = (init = false) => {
         return ftype.value.filter(v => v.tap).map(v => v.val);
     }) as [HeroTag[], ElementType[], WeaponType[]];
     allHeros.value = allHeros.value.filter(h => {
-        if (h.version > version.value) return false;
         const tag = heroFilterRes[0].length == 0 || heroFilterRes[0].every(hl => h.tags.includes(hl));
         const element = heroFilterRes[1].length == 0 || heroFilterRes[1].includes(h.element);
         const weapon = heroFilterRes[2].length == 0 || heroFilterRes[2].includes(h.weaponType);

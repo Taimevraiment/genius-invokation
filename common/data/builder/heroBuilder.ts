@@ -1,5 +1,6 @@
 import { Card, Skill, Status } from "../../../typing";
-import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
+import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
+import { compareVersionFn } from "../../utils/gameUtil.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
 
@@ -8,7 +9,8 @@ export class GIHero {
     shareId: number; // 分享码id
     entityId: number = -1; // 实体id
     name: string; // 角色名
-    version: Version; // 加入的版本
+    version: OnlineVersion; // 加入的版本
+    offlineVersion: OfflineVersion | null; // 线下版本
     tags: HeroTag[]; // 所属
     maxHp: number; // 最大血量
     hp: number; // 当前血量
@@ -33,8 +35,8 @@ export class GIHero {
         isActive: boolean, // 是否发光
     };
     constructor(
-        id: number, shareId: number, name: string, version: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
-        weaponType: WeaponType, src: string | string[], avatar: string | string[], skills: GISkill[] = [],
+        id: number, shareId: number, name: string, version: OnlineVersion, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
+        weaponType: WeaponType, src: string | string[], avatar: string | string[], skills: GISkill[] = [], offlineVersion: OfflineVersion | null = null
     ) {
         this.id = id;
         this.shareId = shareId;
@@ -57,6 +59,7 @@ export class GIHero {
         }
         this.skills.push(...skills);
         this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
+        this.offlineVersion = offlineVersion;
     }
 }
 
@@ -73,7 +76,8 @@ export class HeroBuilder extends BaseBuilder {
         super(shareId ?? -1);
     }
     get notExist() {
-        return this._version > this._curVersion;
+        const version = compareVersionFn(this._curVersion);
+        return version.lt(this._version) && version.lt(this._offlineVersion);
     }
     get notInHeroPool() {
         return this._shareId == -1;

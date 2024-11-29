@@ -359,6 +359,10 @@ export const VERSION = [
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',
 ] as const;
 
-export type Version = typeof VERSION[number] | 'vlatest';
+export type OnlineVersion = typeof VERSION[number] | 'vlatest';
 
+export const OFFLINE_VERSION = ['v1'] as const;
 
+export type OfflineVersion = typeof OFFLINE_VERSION[number];
+
+export type Version = OnlineVersion | OfflineVersion;
