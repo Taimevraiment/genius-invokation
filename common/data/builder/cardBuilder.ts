@@ -7,7 +7,7 @@ import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/
 import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { newSupport } from "../supports.js";
-import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GICard {
     id: number; // 唯一id
@@ -159,7 +159,7 @@ export class GICard {
     }
 }
 
-export class CardBuilder extends BaseBuilder {
+export class CardBuilder extends BaseCostBuilder {
     private _type: CardType = CARD_TYPE.Event;
     private _subtype: CardSubtype[] = [];
     private _tag: CardTag[] = [];
@@ -176,7 +176,6 @@ export class CardBuilder extends BaseBuilder {
     private _isResetPerCnt: boolean = true;
     private _isSpReset: boolean = false;
     private _src: string = '';
-    private _description: VersionMap<string> = new VersionMap();
     private _explains: string[] = [];
     private _cnt: number = 2;
     constructor(shareId?: number) {
@@ -189,10 +188,6 @@ export class CardBuilder extends BaseBuilder {
     get notExist() {
         const version = compareVersionFn(this._curVersion);
         return version.lt(this._version) && version.lt(this._offlineVersion);
-    }
-    description(description: string, version: Version = 'vlatest') {
-        this._description.set([version, description]);
-        return this;
     }
     src(src: string) {
         this._src = src;
@@ -315,7 +310,6 @@ export class CardBuilder extends BaseBuilder {
         return this;
     }
     done() {
-        if (this.notExist) return;
         let userType = this._userType.get(this._curVersion, 0);
         if (this._subtype.includes(CARD_SUBTYPE.Weapon)) {
             userType ||= WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10 as WeaponTypeCode];

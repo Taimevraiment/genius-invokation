@@ -10,7 +10,7 @@
                 </div>
                 <div>{{ deck.name }}</div>
                 <div style="height: 1.2rem;">
-                    {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体卡' : '' }}{{ deck.version }}
+                    {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体版' : '' }}{{ deck.version }}
                 </div>
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero">
                     <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name" style="width: 100%;height: 100%;" />
@@ -50,15 +50,16 @@
                 <button @click.stop="{ currIdx = 1; updateInfo(); }" :class="{ active: currIdx == 1 }">
                     卡组
                 </button>
-                <select name="version" id="version" v-model="version" @change="updateInfo()">
-                    <option v-for="ver in (isOfflineVersion ? OFFLINE_VERSION : VERSION)" :key="ver" :value="ver">
+                <select name="version" id="version" v-model="version" :size="selectSize" @click="clickSelect"
+                    @change="updateInfo()">
+                    <option v-for="ver in versionSelect" :key="ver" :value="ver">
                         {{ ver }}
                     </option>
                 </select>
                 <div>
                     <input id="isOfflineInput" type="checkbox" :checked="isOfflineVersion"
                         @change="switchOfflineVersion" />
-                    <label for="isOfflineInput">实体卡</label>
+                    <label for="isOfflineInput">实体版</label>
                 </div>
             </div>
             <input v-model="deckName" class="deck-name" />
@@ -288,6 +289,7 @@ const heroMoveIcon = ref([
     { name: '↓', handle: (pos: number) => MoveHero(pos, 0) },
     { name: '→', handle: (pos: number) => MoveHero(pos, 1) },
 ]);
+const versionSelect = computed(() => isOfflineVersion.value ? OFFLINE_VERSION : VERSION);
 const heroFilter = ref<HeroFilter>();
 const cardFilter = ref<CardFilter>();
 const filterSelected = ref<string[]>([]);
@@ -297,6 +299,7 @@ const shareCode = ref<string>('');
 const pShareCode = ref<string>('');
 const isShowDeckShareImg = ref<boolean>(false);
 const isOfflineVersion = ref<boolean>(false);
+const selectSize = ref<number>(0);
 
 // 获取png图片
 const getPngIcon = (name: string) => {
@@ -349,6 +352,13 @@ const switchOfflineVersion = () => {
         version.value = VERSION[0];
     }
     updateInfo();
+}
+
+// 点击下拉框
+const clickSelect = () => {
+    if (versionSelect.value.length < 5) return;
+    if (selectSize.value == 0) selectSize.value = 5;
+    else selectSize.value = 0;
 }
 
 // 重置角色筛选
@@ -496,6 +506,7 @@ const getDiceIcon = (name: string) => {
 const toEditDeck = (did: number) => {
     editDeckIdx.value = did;
     version.value = oriDecks.value[did]?.version ?? VERSION[0];
+    isOfflineVersion.value = OFFLINE_VERSION.includes(version.value as OfflineVersion);
     currIdx.value = TAG_INDEX.Hero;
     deckName.value = oriDecks.value[did].name;
     editDeck.value = parseShareCode(oriDecks.value[did].shareCode);
@@ -1223,5 +1234,11 @@ body div {
 ::-webkit-scrollbar-track {
     background: transparent;
 }
-</style>import { DeckVO, InfoVO } from 'typing';
-import { Hero, Card } from '../../../typing';Card, import { DeckVO, InfoVO } from 'typing';
+
+@media screen and (orientation: portrait) {
+    .edit-deck-container {
+        transform-origin: 0 0;
+        transform: rotateZ(90deg) translateY(-100%);
+    }
+}
+</style>

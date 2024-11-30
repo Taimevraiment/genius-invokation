@@ -4,7 +4,7 @@ import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
-import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GIStatus {
     id: number; // 唯一id
@@ -124,10 +124,9 @@ export class GIStatus {
     }
 }
 
-export class StatusBuilder extends BaseVersionBuilder {
+export class StatusBuilder extends BaseBuilder {
     private _id: number = -1;
     private _name: string = '无';
-    private _description: VersionMap<string> = new VersionMap();
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
     private _useCnt: VersionMap<number> = new VersionMap();
@@ -153,10 +152,6 @@ export class StatusBuilder extends BaseVersionBuilder {
     }
     id(id: number) {
         this._id = id;
-        return this;
-    }
-    description(description: string, version: Version = 'vlatest') {
-        this._description.set([version, description]);
         return this;
     }
     heroStatus() {

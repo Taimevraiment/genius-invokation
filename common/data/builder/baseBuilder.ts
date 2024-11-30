@@ -15,34 +15,32 @@ export class VersionMap<T> {
         if (OFFLINE_VERSION.includes(version as OfflineVersion)) {
             const value = this._map.find(([ver]) => OFFLINE_VERSION.includes(ver.value as OfflineVersion));
             if (value) return value[1];
-            version = 'vlatest';
+            version = VERSION[0];
         }
         return this._map.sort(([a], [b]) => a.lt(b.value) ? -1 : 1).find(([ver]) => ver.gt(version))?.[1] ?? defaultValue;
     }
 }
 
-export class BaseVersionBuilder {
-    protected _version: OnlineVersion = VERSION[0];
-    protected _offlineVersion: OfflineVersion | null = null;
+export class BaseBuilder {
     protected _curVersion: Version = VERSION[0];
-    since(version: OnlineVersion) {
-        this._version = version;
-        return this;
-    }
-    offline(offlineVersion: OfflineVersion) {
-        this._offlineVersion = offlineVersion;
-        return this;
-    }
+    protected _description: VersionMap<string> = new VersionMap();
     version(version: Version | undefined) {
         if (version != undefined) this._curVersion = version;
         return this;
     }
+    description(description: string, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(v => this._description.set([v, description]));
+        return this;
+    }
 }
 
-export class BaseBuilder extends BaseVersionBuilder {
+export class BaseCostBuilder extends BaseBuilder {
     protected _id: number = -1;
     protected _shareId: number;
     protected _name: string = '无';
+    protected _version: OnlineVersion = VERSION[0];
+    protected _offlineVersion: OfflineVersion | null = null;
     protected _cost: VersionMap<number> = new VersionMap();
     protected _costType: VersionMap<DiceType> = new VersionMap();
     ;
@@ -57,6 +55,14 @@ export class BaseBuilder extends BaseVersionBuilder {
     }
     name(name: string) {
         this._name = name;
+        return this;
+    }
+    since(version: OnlineVersion) {
+        this._version = version;
+        return this;
+    }
+    offline(offlineVersion: OfflineVersion) {
+        this._offlineVersion = offlineVersion;
         return this;
     }
     cost(cost: number, type: DiceType = DICE_TYPE.Same, version: Version = 'vlatest') {

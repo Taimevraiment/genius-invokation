@@ -2,7 +2,7 @@ import { Card, Support, VersionCompareFn } from "../../../typing";
 import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import { compareVersionFn } from "../../utils/gameUtil.js";
 import { SupportHandleEvent, SupportHandleRes } from "../supports.js";
-import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISupport {
     entityId: number = -1; // 实体id
@@ -38,7 +38,7 @@ export class GISupport {
     }
 }
 
-export class SupportBuilder extends BaseVersionBuilder {
+export class SupportBuilder extends BaseBuilder {
     private _card: Card | undefined;
     private _cnt: number = 0;
     private _perCnt: VersionMap<number> = new VersionMap();

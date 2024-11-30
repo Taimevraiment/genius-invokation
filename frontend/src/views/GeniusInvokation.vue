@@ -4,7 +4,7 @@
       返回
     </button>
     <div style="position: absolute;left: 60px;color: white;z-index: 6;" @click.stop="sendLog">
-      [{{ version }}] 房间号{{ roomId }} <u>发送日志</u>
+      [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}] 房间号{{ roomId }} <u>发送日志</u>
     </div>
     <button v-if="client.isStart && isLookon == -1 && client.phase >= PHASE.ACTION" class="exit" @click.stop="giveup">
       投降
@@ -187,6 +187,8 @@ import {
   DiceCostType,
   DiceCostTypeCode,
   ELEMENT_TYPE,
+  OFFLINE_VERSION,
+  OfflineVersion,
   PHASE,
   PLAYER_STATUS,
   SKILL_TYPE,

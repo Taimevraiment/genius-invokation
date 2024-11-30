@@ -7,7 +7,7 @@ import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn } from "../../utils/gameUtil.js";
 import { clone } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
-import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISkill {
     id: number; // 唯一id
@@ -98,7 +98,7 @@ export class GISkill {
     }
 }
 
-export class SkillBuilder extends BaseVersionBuilder {
+export class SkillBuilder extends BaseBuilder {
     private _name: string = '';
     private _id: number = -1;
     private _type: SkillType = SKILL_TYPE.Passive;
@@ -111,7 +111,6 @@ export class SkillBuilder extends BaseVersionBuilder {
     private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined | void) | undefined;
     private _perCnt: number = 0;
     private _src: string[] = [];
-    private _description: VersionMap<string> = new VersionMap();
     private _explains: string[] = [];
     private _readySkillRound: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
@@ -214,10 +213,6 @@ export class SkillBuilder extends BaseVersionBuilder {
         this._src.push(...srcs.filter(v => v != ''));
         return this;
     }
-    description(description: string, version: Version = 'vlatest') {
-        this._description.set([version, description]);
-        return this;
-    }
     explain(...explains: string[]) {
         this._explains = explains;
         return this;
@@ -260,11 +255,10 @@ export class SkillBuilder extends BaseVersionBuilder {
 
 }
 
-export class NormalSkillBuilder extends BaseVersionBuilder {
+export class NormalSkillBuilder extends BaseBuilder {
     private _id: number = -1;
     private _weaponType: WeaponType | undefined;
     private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined) | undefined;
-    private _description: VersionMap<string> = new VersionMap();
     private _perCnt: number = 0;
     private _anyCost: number = 2;
     private _damage: number = 0;
@@ -296,10 +290,6 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
         this._builder.id(id);
         return this;
     }
-    version(version: Version) {
-        this._builder.version(version);
-        return this;
-    }
     weaponType(weaponType: WeaponType) {
         this._weaponType ??= weaponType;
         return this;
@@ -320,10 +310,6 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
         this._damage = damage;
         return this;
     }
-    description(description: string, ver: Version = 'vlatest') {
-        this._description.set([ver, description]);
-        return this;
-    }
     handle(handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillHandleRes | undefined)) {
         this._handle = handle;
         return this;
@@ -341,7 +327,7 @@ export class NormalSkillBuilder extends BaseVersionBuilder {
         this.costElement(ELEMENT_CODE_KEY[Math.floor(this._id / 1000) % 10 as ElementCode]);
         const isCatalyst = this._weaponType == WEAPON_TYPE.Catalyst;
         const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
-        const description = this._description.get(this._curVersion, '')
+        const description = this._description.get(this._curVersion, '');
         return this._builder
             .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])

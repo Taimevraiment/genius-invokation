@@ -1175,7 +1175,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     114091: () => new StatusBuilder('引雷').heroStatus().icon('debuff').useCnt(2).addCnt(1).maxCnt(4).type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
         .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗或〖smn114092〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
-        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。', 'v5.1.0')
+        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。', 'v5.1.0', 'v1')
         .handle((status, event, ver) => {
             const { skid = -1, isSummon = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];

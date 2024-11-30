@@ -349,6 +349,7 @@ const wrapExplCtt = (content: string) => {
   if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
   const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
   const type = content.slice(0, 3);
+  if (type == 'crd') console.log(version.value, a1, newCard(version.value)(a1));
   return type == 'crd' ? newCard(version.value)(a1) :
     type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
       type == 'rsk' ? newSkill(version.value)(a1) :

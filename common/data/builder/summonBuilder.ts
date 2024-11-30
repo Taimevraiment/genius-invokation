@@ -4,7 +4,7 @@ import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
-import { BaseVersionBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GISummon {
     id: number; // 唯一id
@@ -98,10 +98,9 @@ export const phaseEndAtk = (summon: Summon, event: SummonHandleEvent, healHidxs?
     return { cmds }
 }
 
-export class SummonBuilder extends BaseVersionBuilder {
+export class SummonBuilder extends BaseBuilder {
     private _id: number = -1;
     private _name: string;
-    private _description: VersionMap<string> = new VersionMap();
     private _src: string = '';
     private _useCnt: VersionMap<number> = new VersionMap();
     private _maxUse: number = 0;
@@ -124,10 +123,6 @@ export class SummonBuilder extends BaseVersionBuilder {
     }
     id(id: number) {
         this._id = id;
-        return this;
-    }
-    description(description: string, version: Version = 'vlatest') {
-        this._description.set([version, description]);
         return this;
     }
     src(src: string) {

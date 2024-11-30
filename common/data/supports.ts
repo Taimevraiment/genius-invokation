@@ -438,9 +438,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && artifactCnt >= 6) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc && support.cnt >= card.cost - mdc;
+        if (trigger === 'card' && !isMinus) return;
         return {
             trigger: triggers,
-            isNotAddTask: trigger == 'card',
+            isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
             isLast: true,
             minusDiceCard: isMinus ? card.cost - mdc : 0,
             exec: spt => {
@@ -449,6 +450,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 else if (trigger == 'card' && isMinus) {
                     spt.cnt -= card.cost - mdc;
                     --spt.perCnt;
+                    if (ver.isOffline && spt.card.useCnt > 0) {
+                        --spt.card.useCnt;
+                        return { cmds: [{ cmd: 'getCard', cnt: 1 }], isDestroy: false }
+                    }
                 }
                 return { isDestroy: false }
             }
@@ -460,9 +465,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && weaponTypeCnt >= 3) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Weapon) && card.cost > mdc && support.cnt >= card.cost - mdc;
+        if (trigger == 'card' && !isMinus) return;
         return {
             trigger: triggers,
-            isNotAddTask: trigger == 'card',
+            isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
             isLast: true,
             minusDiceCard: isMinus ? card.cost - mdc : 0,
             exec: spt => {
@@ -471,6 +477,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 else if (trigger == 'card' && isMinus) {
                     spt.cnt -= card.cost - mdc;
                     --spt.perCnt;
+                    if (ver.isOffline && spt.card.useCnt > 0) {
+                        --spt.card.useCnt;
+                        return { cmds: [{ cmd: 'getCard', cnt: 1 }], isDestroy: false }
+                    }
                 }
                 return { isDestroy: false }
             }

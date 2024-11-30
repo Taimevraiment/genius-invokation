@@ -542,7 +542,14 @@ export default class GeniusInvokationRoom {
                 if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', cpidx, { socket, tip: '当前出战卡组不完整' });
                 player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
                 player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
-                if (player.heros.some(h => this.version.lt(h.version)) || player.pile.some(c => this.version.lt(c.version))) return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
+                if (player.heros.some(h => {
+                    const res = this.version.lt(h.version) && this.version.lt(h.offlineVersion);
+                    if (res) console.log(h.name, h.offlineVersion);
+                    return res;
+                }) ||
+                    player.pile.some(c => this.version.lt(c.version) && this.version.lt(c.offlineVersion))) {
+                    return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
+                }
                 player.phase = (player.phase ^ 1) as Phase;
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[cpidx] = shareCode;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始

@@ -1,7 +1,7 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { compareVersionFn } from "../../utils/gameUtil.js";
-import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
 
 export class GIHero {
@@ -36,7 +36,7 @@ export class GIHero {
     };
     constructor(
         id: number, shareId: number, name: string, version: OnlineVersion, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
-        weaponType: WeaponType, src: string | string[], avatar: string | string[], skills: GISkill[] = [], offlineVersion: OfflineVersion | null = null
+        weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null, skills: GISkill[] = []
     ) {
         this.id = id;
         this.shareId = shareId;
@@ -63,7 +63,7 @@ export class GIHero {
     }
 }
 
-export class HeroBuilder extends BaseBuilder {
+export class HeroBuilder extends BaseCostBuilder {
     private _tags: HeroTag[] = [];
     private _maxHp: VersionMap<number> = new VersionMap();
     private _element: ElementType | undefined;
@@ -110,8 +110,8 @@ export class HeroBuilder extends BaseBuilder {
         this._tags.push(HERO_LOCAL.Sumeru);
         return this;
     }
-    fontaine() {
-        this._tags.push(HERO_LOCAL.Fontaine);
+    fontaine(Arkhe: typeof HERO_LOCAL.ArkheOusia | typeof HERO_LOCAL.ArkhePneuma) {
+        this._tags.push(HERO_LOCAL.Fontaine, Arkhe);
         return this;
     }
     natlan() {
@@ -124,6 +124,18 @@ export class HeroBuilder extends BaseBuilder {
     }
     fatui() {
         this._tags.push(HERO_LOCAL.Fatui);
+        return this;
+    }
+    eremite() {
+        this._tags.push(HERO_LOCAL.Eremite);
+        return this;
+    }
+    hilichurl() {
+        this._tags.push(HERO_LOCAL.Monster, HERO_LOCAL.Hilichurl);
+        return this;
+    }
+    consecratedBeast() {
+        this._tags.push(HERO_LOCAL.Monster, HERO_LOCAL.ConsecratedBeast);
         return this;
     }
     physical() {
@@ -179,7 +191,7 @@ export class HeroBuilder extends BaseBuilder {
         return this;
     }
     normalSkill(normalSkillBuilder: NormalSkillBuilder) {
-        this._normalSkill = normalSkillBuilder.version(this._curVersion);
+        this._normalSkill = normalSkillBuilder;
         return this;
     }
     skills(...skills: SkillBuilder[]) {
@@ -200,7 +212,7 @@ export class HeroBuilder extends BaseBuilder {
         const skills: (SkillBuilder | NormalSkillBuilder)[] = this._skills.map(skill => skill.costElement(element));
         if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType).costElement(element));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
-            maxHp, element, this._weaponType, this._src, this._avatar,
+            maxHp, element, this._weaponType, this._src, this._avatar, this._offlineVersion,
             skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
     }
 }

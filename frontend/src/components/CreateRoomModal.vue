@@ -2,7 +2,9 @@
   <div class="create-room-dialogue" @click="cancel">
     <div class="create-room-main" @click.stop="" @keyup.enter="create">
       <select name="version" id="version" v-model="version">
-        <option v-for="ver in VERSION" :key="ver" :value="ver">{{ ver }}</option>
+        <option v-for="ver in [...VERSION, ...OFFLINE_VERSION]" :key="ver" :value="ver">
+          {{ isOfflineVersion(ver) ? '实体版' : '' }}{{ ver }}
+        </option>
       </select>
       <input type="text" placeholder="房间名(选填)" v-model="roomName" />
       <input type="text" placeholder="密码(选填)" v-model="roomPassword" />
@@ -13,7 +15,7 @@
 </template>
 
 <script setup lang='ts'>
-import { VERSION, Version } from '@@@/constant/enum';
+import { OFFLINE_VERSION, OfflineVersion, VERSION, Version } from '@@@/constant/enum';
 import { ref } from 'vue';
 
 const emit = defineEmits(['create-room', 'create-room-cancel']);
@@ -25,6 +27,7 @@ const countdown = ref<number | string>(''); // 倒计时
 
 const create = () => emit('create-room', roomName.value, version.value, roomPassword.value, +countdown.value || 0);
 const cancel = () => emit('create-room-cancel');
+const isOfflineVersion = (version: Version) => OFFLINE_VERSION.includes(version as OfflineVersion);
 </script>
 
 <style scoped>
