@@ -274,6 +274,7 @@ export const ELEMENT_REACTION = {
 export type ElementReaction = TypeConst<typeof ELEMENT_REACTION>;
 
 export const SKILL_TYPE = {
+    PassiveHidden: 0, // 隐藏被动
     Normal: 1, // 普通攻击
     Elemental: 2, // 元素战技
     Burst: 3, // 元素爆发

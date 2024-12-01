@@ -908,6 +908,10 @@ body div {
     background-color: #ffcf77;
 }
 
+input#isOfflineInput:checked {
+    accent-color: #906725;
+}
+
 .heros-deck {
     position: absolute;
     left: 50%;

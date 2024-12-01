@@ -333,6 +333,12 @@ export default class GeniusInvokationRoom {
                         }
                         return {
                             ...pvo,
+                            heros: pvo.heros.map(h => {
+                                h.heroStatus = h.heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
+                                h.skills = h.skills.filter(s => s.type != SKILL_TYPE.PassiveHidden);
+                                return h;
+                            }),
+                            combatStatus: pvo.combatStatus.filter(s => !s.hasType(STATUS_TYPE.Hide)),
                             UI: {
                                 ...pvo.UI,
                                 willGetCard: {
@@ -4713,8 +4719,9 @@ export default class GeniusInvokationRoom {
                 player.UI.showRerollBtn = true;
             } else if (cmd == 'changeDice' && isExec) {
                 const ndice = player.dice.slice();
+                const nel = mode == CMD_MODE.FrontHero ? this._getFrontHero(pidx).element : element ?? DICE_COST_TYPE.Omni
                 for (let i = ndice.length - 1; i >= ndice.length - (cnt || ndice.length); --i) {
-                    ndice[i] = (element ?? DICE_COST_TYPE.Omni) as DiceCostType;
+                    ndice[i] = nel as DiceCostType;
                 }
                 assgin(player.dice, ndice);
                 assgin(player.dice, this._rollDice(pidx));

@@ -12,7 +12,7 @@ import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 export class GISkill {
     id: number; // 唯一id
     name: string; // 技能名
-    type: SkillType; // 技能类型：1普通攻击 2元素战技 3元素爆发 4被动技能 5特技
+    type: SkillType; // 技能类型：0隐藏被动 1普通攻击 2元素战技 3元素爆发 4被动技能 5特技
     damage: number; // 伤害量
     dmgElement: ElementType; // 伤害元素
     cost: [ // 费用列表 [元素骰, 任意骰, 充能]
@@ -136,8 +136,8 @@ export class SkillBuilder extends BaseBuilder {
         this._energyCost.set([version, energy]);
         return this;
     }
-    passive() {
-        this._type = SKILL_TYPE.Passive;
+    passive(isHide: boolean = false) {
+        this._type = isHide ? SKILL_TYPE.PassiveHidden : SKILL_TYPE.Passive;
         return this;
     }
     readySkill(round: number = 1) {
