@@ -984,7 +984,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1412: () => new HeroBuilder(445).name('克洛琳德').since('v5.3.0').fontaine(HERO_TAG.ArkheOusia).electro().sword()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Clorinde.webp')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Clorinde_1451199402.png')
-        .normalSkill(new NormalSkillBuilder('逐影之誓').costAny(1).damage(1))
+        .normalSkill(new NormalSkillBuilder('逐影之誓').damage(1)
+            .description('如果本角色附属【sts114121】，则此技能少花费1个[无色元素骰]。')
+            .handle(event => ({ minusDiceSkill: { skilltype1: isCdt(hasObjById(event.hero.heroStatus, 114121), [0, 1, 0]) } })))
         .skills(
             new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')
                 .src('/image/tmp/Skill_S_Clorinde_01.webp',
@@ -1333,7 +1335,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         summonPre: isCdt(!!talent, 116094),
                         pickCard: {
                             cnt: talent ? 4 : 3,
-                            mode: CMD_MODE.getSummon,
+                            mode: CMD_MODE.GetSummon,
                             card: [116091, 116092, 116093, 116095, 116096],
                         }
                     }

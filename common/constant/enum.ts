@@ -299,10 +299,11 @@ export const CMD_MODE = {
     AllHandCards: 4, // 弃置所有手牌
     TopPileCard: 5, // 弃置牌堆顶的牌
     RandomPileCard: 6, // 弃置牌库中随机一张牌
-    isNotPublic: 7, // 不公开加入牌库的牌
-    isPublic: 8, // 公开抓到的牌
-    getSummon: 9, // 使用技能挑选牌
-    getCard: 10, // 挑选牌
+    IsNotPublic: 7, // 不公开加入牌库的牌
+    IsPublic: 8, // 公开抓到的牌
+    GetSummon: 9, // 使用技能挑选牌
+    GetCard: 10, // 挑选牌
+    RandomAll: 11, // 随机可重复骰子
 } as const;
 
 export const INFO_TYPE = {

@@ -221,7 +221,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().costSame(1).handle(() => ({
             pickCard: {
                 cnt: 3,
-                mode: CMD_MODE.getCard,
+                mode: CMD_MODE.GetCard,
                 subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food],
                 isOrdered: true,
             },

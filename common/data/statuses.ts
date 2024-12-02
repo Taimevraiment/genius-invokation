@@ -49,6 +49,7 @@ export type StatusHandleEvent = {
     playerInfo?: GameInfo,
     isSummon?: number,
     source?: number,
+    sourceHidx?: number,
     getdmg?: number[],
     dmg?: number[],
     slotsDestroy?: number[],
@@ -492,7 +493,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         card.sort((a, b) => b.cidx - a.cidx).forEach(c => hcards.splice(c.cidx, 1));
                         return {
                             cmds: [
-                                { cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.isNotPublic },
+                                { cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.IsNotPublic },
                                 { cmd: 'getCard', cnt: card.length, isAttach: true },
                             ]
                         }
@@ -834,6 +835,24 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: () => { status.useCnt = 0 }
             }
         }),
+
+    112145: () => new StatusBuilder('消耗夜魂值').heroStatus().useCnt(1).type(STATUS_TYPE.Hide, STATUS_TYPE.Usage)
+        .handle((_, event) => ({
+            trigger: ['enter'],
+            isAddTask: true,
+            exec: (eStatus, execEvent = {}) => {
+                if (eStatus) {
+                    const { hidx = -1 } = event;
+                    const { heros = [] } = execEvent;
+                    const hero = heros[hidx];
+                    if (!hero) return;
+                    const sts112141 = getObjById(hero.heroStatus, 112141);
+                    if (!sts112141) return;
+                    --sts112141.useCnt;
+                    --eStatus.useCnt;
+                }
+            }
+        })),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -2542,24 +2561,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301301: () => shieldHeroStatus('掘进的收获'),
 
-    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.Usage)
-        .description('【附属角色使用技能后：】如可能，对方[舍弃]1张原本元素骰费用最高的手牌，使附属【crd313006】的敌方角色切换为出战角色。')
-        .handle((status, event) => {
-            const { eheros = [], ehcards: { length: ehcardsCnt } = [] } = event;
-            if (ehcardsCnt == 0) return;
-            const cmds: Cmds[] = [];
-            const ehidx = eheros.findIndex(h => h.isFront);
-            for (let i = 0; i < eheros.length; ++i) {
-                if (ehcardsCnt - cmds.length / 2 <= 0) break;
-                const cehidx = (ehidx + i) % eheros.length;
-                if (eheros[cehidx].vehicleSlot?.[0].id != 313006) continue;
-                cmds.push(
-                    { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true },
-                    { cmd: 'switch-to', hidxs: [cehidx], isOppo: true }
-                );
-            }
-            return { trigger: ['skill'], cmds, exec: () => { --status.useCnt } }
-        }),
+    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【附属角色处于前台，且敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果，对方可以再连续行动一次，然后对方[舍弃]1张原本元素骰费用最高的手牌，并且生成1个随机基础元素骰。'),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -2914,6 +2917,27 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             cmds: [{ cmd: 'getCard', cnt: 1 }],
             exec: eStatus => { eStatus && --eStatus.useCnt },
         })),
+
+    303238: () => new StatusBuilder('燃素充盈（生效中）').combatStatus().icon('buff2').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【本回合我方下次角色消耗｢夜魂值｣后：】该角色获得1点｢夜魂值｣。')
+        .handle((_, event) => {
+            const { heros = [], source = -1, sourceHidx = -1 } = event;
+            if (source != 112145) return;
+            const hero = heros[sourceHidx];
+            if (!hero) return;
+            const sts112141 = getObjById(hero.heroStatus, 112141);
+            if (!sts112141) return;
+            return {
+                trigger: ['get-status'],
+                isAddTask: true,
+                exec: eStatus => {
+                    if (eStatus) {
+                        ++sts112141.useCnt;
+                        --eStatus.roundCnt;
+                    }
+                }
+            }
+        }),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon('satiety').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)

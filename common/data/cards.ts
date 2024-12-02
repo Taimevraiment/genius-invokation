@@ -93,6 +93,7 @@ export type CardHandleRes = {
     isAddTask?: boolean,
     notPreview?: boolean,
     summonCnt?: number[][],
+    isQuickAction?: boolean,
     exec?: () => CardExecRes | void,
 };
 
@@ -1177,7 +1178,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312032: () => new CardBuilder(448).name('魔战士的羽面').since('v5.3.0').artifact().costSame(1).perCnt(1)
+    312032: () => new CardBuilder(448).name('魔战士的羽面').since('v5.3.0').artifact().costAny(2).perCnt(1)
         .description('【附属角色使用[特技]后：】获得1点[充能]。（每回合1次)')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Mozhanshi.webp')
         .handle((card, event) => {
@@ -1249,7 +1250,24 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
     313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2)
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp'),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp')
+        .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时：】如果敌方出战角色附属【sts301302】，则移除其【sts301302】，我方可以连续行动一次。如可能，[舍弃]原本元素骰费用最高的1张手牌，以获得1个随机基础元素骰。；')
+        .handle((_, event) => {
+            const { eheros = [], ehidx = -1, hcardsCnt = 0 } = event;
+            const isQuickAction = hasObjById(eheros[ehidx]?.heroStatus, 301302);
+            return {
+                cmds: [{ cmd: 'getStatus', status: 301302, isOppo: true }],
+                trigger: ['switch-to'],
+                isQuickAction,
+                execmds: isCdt(hcardsCnt > 0, [
+                    { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard },
+                    { cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random },
+                ]),
+                exec: () => {
+                    if (isQuickAction) --getObjById(eheros[ehidx].heroStatus, 301302)!.useCnt;
+                }
+            }
+        }),
 
     321001: () => new CardBuilder(179).name('璃月港口').offline('v1').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1352,7 +1370,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/ee6915d12a55c0a65c9bb6cc9e0d1885_4525633690549389172.png'),
 
     321025: () => new CardBuilder(450).name('｢流泉之众｣').since('v5.3.0').place().costSame(2)
-        .description('【我方｢召唤物｣入场时：】使其[可用次数]+1。；[可用次数]：2')
+        .description('【我方｢召唤物｣入场时：】使其[可用次数]+1。；[可用次数]：3')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_LiuQuan.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
@@ -2119,9 +2137,9 @@ const allCards: Record<number, () => CardBuilder> = {
             const canSelectPlace = new Set(heros.map(h => h.element)).size < heros.length;
             const canSelectItem = new Set(heros.map(h => h.weaponType)).size < heros.length;
             const canSelectFood = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
-            if (canSelectPlace) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Place, cnt: 3, mode: CMD_MODE.getCard });
-            if (canSelectItem) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Item, cnt: 3, mode: CMD_MODE.getCard });
-            if (canSelectFood) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Food, cnt: 3, mode: CMD_MODE.getCard });
+            if (canSelectPlace) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Place, cnt: 3, mode: CMD_MODE.GetCard });
+            if (canSelectItem) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Item, cnt: 3, mode: CMD_MODE.GetCard });
+            if (canSelectFood) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Food, cnt: 3, mode: CMD_MODE.GetCard });
             if (cmds.length == 0) return { isValid: false }
             return { cmds }
         }),
@@ -2141,7 +2159,8 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332042: () => new CardBuilder(452).name('燃素充盈').since('v5.3.0').event().costSame(0)
         .description('【本回合我方下次角色消耗｢夜魂值｣后：】该角色获得1点｢夜魂值｣。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Ransu.webp'),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Ransu.webp')
+        .handle(() => ({ status: 303238 })),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')
@@ -3266,22 +3285,21 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().costSame(0)
         .src('tmp/UI_Gcg_CardFace_Summon_Mualani_1_-1991372755')
-        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。；')
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。')
         .handle((_, event) => {
-            const { hidxs = [], heros = [], trigger = '' } = event;
+            const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
             const hero = heros[hidxs[0]];
             if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
             const sts112141 = getObjById(hero.heroStatus, 112141);
-            if (!sts112141?.useCnt) return;
+            if (!sts112141) return;
+            const isDestroy = sts112141.useCnt == 1 && !hasObjById(combatStatus, 303238);
             return {
                 trigger: ['switch-to', 'switch-oppo'],
                 isAddTask: true,
-                isDestroy: sts112141.useCnt == 1,
-                execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }],
+                isDestroy,
+                execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }, { cmd: 'getStatus', status: 112145, hidxs }],
                 exec: () => {
-                    if (--sts112141.useCnt == 0) {
-                        sts112141.roundCnt = 0;
-                    }
+                    if (isDestroy) sts112141.roundCnt = 0;
                 }
             }
         }),
@@ -3315,7 +3333,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
 
     123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).useCnt(1).perCnt(2).tag(CARD_TAG.Barrier)
-        .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）；')
+        .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {
             const { heros = [], restDmg = -1, skid = -1, hidxs = [], getdmg = [], trigger = '' } = event;

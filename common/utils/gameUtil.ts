@@ -270,9 +270,9 @@ export const heroToString = (hero: Hero, prefixSpace: number = 1) => {
         + `${prefix}weaponType: ${hero.weaponType}\n`
         + `${prefix}tags: ${hero.tags}\n`
         + `${prefix}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 1)}\n`
-        + `${prefix}artifactSlot: ${cardToString(hero.artifactSlot)}\n`
-        + `${prefix}talentSlot: ${cardToString(hero.talentSlot)}\n`
-        + `${prefix}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0])}\n`
+        + `${prefix}artifactSlot: ${cardToString(hero.artifactSlot, prefixSpace + 1)}\n`
+        + `${prefix}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 1)}\n`
+        + `${prefix}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 1)}\n`
         + `${prefix}heroStatus: [${hero.heroStatus.map(s => statusToString(s, prefixSpace + 1)).join(', ')}]\n`
         + `${prefix}skills: [${hero.skills.map(s => skillToString(s, prefixSpace + 1)).join(', ')}]\n`
         + `${'  '.repeat(prefixSpace - 1)}}`;

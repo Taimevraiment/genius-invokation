@@ -407,7 +407,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // ｢流泉之众｣
-    321025: () => new SupportBuilder().round(2).handle((_, event) => ({
+    321025: () => new SupportBuilder().round(3).handle((_, event) => ({
         trigger: ['summon-enter'],
         supportCnt: -1,
         exec: spt => {
@@ -494,7 +494,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: support => {
                 if (support.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food)) return { isDestroy: false }
                 --support.perCnt;
-                const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }];
+                const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: ver.isOffline ? CMD_MODE.RandomAll : CMD_MODE.Random }];
                 if (ver.gte('v4.1.0') && support.cnt > 0) {
                     --support.cnt;
                     cmds.push({ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Food, isAttach: true });
@@ -851,7 +851,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 参量质变仪
-    323001: () => new SupportBuilder().collection().handle((support, event) => {
+    323001: () => new SupportBuilder().collection().handle((support, event, ver) => {
         const { sktype = SKILL_TYPE.Vehicle } = event;
         if (sktype != SKILL_TYPE.Vehicle) return;
         return {
@@ -859,7 +859,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             supportCnt: support.cnt < 2 ? 1 : -3,
             exec: spt => {
                 if (++spt.cnt < 3) return { isDestroy: false }
-                return { cmds: [{ cmd: 'getDice', cnt: 3, mode: CMD_MODE.Random }], isDestroy: true }
+                return { cmds: [{ cmd: 'getDice', cnt: 3, mode: ver.isOffline ? CMD_MODE.RandomAll : CMD_MODE.Random }], isDestroy: true }
             }
         }
     }),
