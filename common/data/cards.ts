@@ -10,7 +10,6 @@ import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObj
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newSummon } from './summons.js';
-import { newSupport } from './supports.js';
 
 export type CardHandleEvent = {
     pidx?: number,
@@ -67,8 +66,8 @@ export type CardHandleEvent = {
 }
 
 export type CardHandleRes = {
-    support?: Support[],
-    supportOppo?: Support[],
+    support?: (number | [number, ...any])[] | number,
+    supportOppo?: (number | [number, ...any])[] | number,
     cmds?: Cmds[],
     execmds?: Cmds[],
     trigger?: Trigger[],
@@ -1249,22 +1248,26 @@ const allCards: Record<number, () => CardBuilder> = {
     313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
-    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2)
+    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2).isResetPerCnt()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp')
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时：】如果敌方出战角色附属【sts301302】，则移除其【sts301302】，我方可以连续行动一次。如可能，[舍弃]原本元素骰费用最高的1张手牌，以获得1个随机基础元素骰。；')
-        .handle((_, event) => {
-            const { eheros = [], ehidx = -1, hcardsCnt = 0 } = event;
-            const isQuickAction = hasObjById(eheros[ehidx]?.heroStatus, 301302);
+        .handle((card, event) => {
+            const { eheros = [], ehidx = -1, hcardsCnt = 0, trigger = '' } = event;
             return {
                 cmds: [{ cmd: 'getStatus', status: 301302, isOppo: true }],
-                trigger: ['switch-to'],
-                isQuickAction,
-                execmds: isCdt(hcardsCnt > 0, [
+                trigger: ['switch-to', 'change-turn'],
+                isQuickAction: trigger == 'change-turn' && card.perCnt > 0,
+                execmds: isCdt(hcardsCnt > 0 && trigger == 'switch-to', [
                     { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard },
                     { cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random },
                 ]),
                 exec: () => {
-                    if (isQuickAction) --getObjById(eheros[ehidx].heroStatus, 301302)!.useCnt;
+                    if (trigger == 'switch-to' && hasObjById(eheros[ehidx]?.heroStatus, 301302)) {
+                        --getObjById(eheros[ehidx].heroStatus, 301302)!.useCnt;
+                        ++card.perCnt;
+                    } else if (trigger == 'change-turn' && card.perCnt > 0) {
+                        --card.perCnt;
+                    }
                 }
             }
         }),
@@ -1601,9 +1604,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(() => ({ status: 300005 })),
 
     330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(0)
-        .description('在双方场上生成【sts300006】，然后我方场上的【sts300006】的｢斗志｣+1。（【sts300006】会将各自阵营对对方造成的伤害记录为｢斗志｣，每回合行动阶段开始时｢斗志｣较高的一方会清空｢斗志｣，使当前出战角色在本回合中造成的伤害+1。）')
+        .description('在双方场上生成【crd300006】，然后我方场上的【crd300006】的｢斗志｣+1。（【crd300006】会将各自阵营对对方造成的伤害记录为｢斗志｣，每回合行动阶段开始时｢斗志｣较高的一方会清空｢斗志｣，使当前出战角色在本回合中造成的伤害+1。）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ShenyeXunli.webp')
-        .handle(() => ({ status: [[300006, 1]], statusOppo: 300006 })),
+        .handle(() => ({ support: [[300006, 1]], supportOppo: 300006 })),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -2728,7 +2731,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】所召唤的【smn114102】，对生命值不多于6的角色造成的治疗+1，使没有[充能]的角色获得[充能]时获得量+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/da73eb59f8fbd54b1c3da24d494108f7_706910708906017594.png'),
 
-    214111: () => new CardBuilder(362).name('割舍软弱之心').since('v4.6.0').talent(2).costElectro(3).perCnt(1).energy(2).tag(CARD_TAG.NonDefeat)
+    214111: () => new CardBuilder(362).name('割舍软弱之心').since('v4.6.0').talent(2).costElectro(4).costElectro(3, 'v5.3.0')
+        .perCnt(1).energy(2).tag(CARD_TAG.NonDefeat)
         .description('{action}；装备有此牌的【hro】被击倒时：角色[免于被击倒]，并治疗该角色到1点生命值。（每回合1次）；如果装备有此牌的【hro】生命值不多于5，则该角色造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/b53d6688202a139f452bda31939162f8_3511216535123780784.png')
         .handle((card, event) => {
@@ -3285,7 +3289,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().costSame(0)
         .src('tmp/UI_Gcg_CardFace_Summon_Mualani_1_-1991372755')
-        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。')
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。')
         .handle((_, event) => {
             const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
             const hero = heros[hidxs[0]];
@@ -3298,9 +3302,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: true,
                 isDestroy,
                 execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }, { cmd: 'getStatus', status: 112145, hidxs }],
-                exec: () => {
-                    if (isDestroy) sts112141.roundCnt = 0;
-                }
+                exec: () => { isDestroy && (sts112141.roundCnt = 0) }
             }
         }),
 
@@ -3398,6 +3400,10 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
         }),
 
+    300006: () => new CardBuilder().name('斗争之火').place()
+        .description('此牌会记录本回合你对敌方角色造成的伤害，记为｢斗志｣。；【行动阶段开始时：】若此牌是场上｢斗志｣最高的斗争之火，则清空此牌的｢斗志｣，使我方出战角色本回合造成的伤害+1。')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_ShenyeXunli_1484982029.png'),
+
     301020: () => new CardBuilder().name('禁忌知识').event().costSame(0).tag(CARD_TAG.NonReconcile)
         .description('无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/fe20720734d5041d50cf6eab08689916_6711209992824489498.png')
@@ -3478,17 +3484,17 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event, ver) => {
             const { supports = [], esupports = [], randomInArr, isExec = false } = event;
-            const support: Support[] = [];
-            const supportOppo: Support[] = [];
+            const support: number[] = [];
+            const supportOppo: number[] = [];
             if (isExec) {
                 const supportLen = MAX_SUPPORT_COUNT - supports.length;
                 const esupportLen = MAX_SUPPORT_COUNT - esupports.length;
                 const allyPool = cardsTotal(ver.value).filter(c => c.hasSubtype(CARD_SUBTYPE.Ally));
                 for (let i = 0; i < supportLen; ++i) {
-                    support.push(newSupport(ver.value)(randomInArr!(allyPool)[0]));
+                    support.push(randomInArr!(allyPool)[0].id);
                 }
                 for (let i = 0; i < esupportLen; ++i) {
-                    supportOppo.push(newSupport(ver.value)(randomInArr!(allyPool)[0]));
+                    supportOppo.push(randomInArr!(allyPool)[0].id);
                 }
             }
             return { support, supportOppo }

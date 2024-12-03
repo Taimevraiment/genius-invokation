@@ -10,7 +10,9 @@ export type SupportHandleEvent = {
     trigger?: Trigger,
     eheros?: Hero[],
     eCombatStatus?: Status[],
+    eSupports?: Support[],
     heros?: Hero[],
+    supports?: Support[],
     reset?: boolean,
     card?: Card,
     hcards?: Card[],
@@ -74,6 +76,24 @@ const getSortedDices = (dices: DiceCostType[]) => {
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
+    // 斗争之火
+    300006: (cnt: number = 0) => new SupportBuilder().collection(cnt).handle((support, event) => {
+        const { getdmg = [], supports = [], eSupports = [], trigger = '' } = event;
+        const isTriggered = support.cnt > Math.max(...[...supports, ...eSupports].filter(s => s.card.id == support.card.id && s.entityId != support.entityId).map(s => s.cnt));
+        if (trigger == 'phase-start' && !isTriggered) return;
+        return {
+            trigger: ['after-dmg', 'phase-start'],
+            exec: spt => {
+                const cmds: Cmds[] = [];
+                if (trigger == 'after-dmg') spt.cnt += getdmg.reduce((a, c) => a + Math.max(0, c), 0);
+                else if (trigger == 'phase-start') {
+                    spt.cnt = 0;
+                    cmds.push({ cmd: 'getStatus', status: 300007 });
+                }
+                return { cmds, isDestroy: false }
+            }
+        }
+    }),
     // 璃月港口
     321001: () => new SupportBuilder().round(2).handle(() => ({
         trigger: ['phase-end'],

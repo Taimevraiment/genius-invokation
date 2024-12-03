@@ -246,10 +246,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u0263g/d7c932b74ce84dc5fec8c91155dca4b0.png')
         .normalSkill(new NormalSkillBuilder('教会枪术'))
         .skills(
-            new SkillBuilder('噬罪的告解').description('{dealDmg}，生成2层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）')
+            new SkillBuilder('噬罪的告解').description('{dealDmg}，生成1层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）')
+                .description('{dealDmg}，生成2层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）', 'v5.3.0')
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11132',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/71e41a887bf75f12f458ddaea87d1ae4_4540027086914779796.png')
-                .elemental().damage(1).cost(3).handle(() => ({ statusPre: 111131 })),
+                .elemental().damage(1).cost(3).handle((_, ver) => ({ statusPre: [[111131, isCdt(ver.gte('v5.3.0'), 1)]] })),
             new SkillBuilder('终命的圣礼').description('{dealDmg}，生成2层【sts111131】，召唤【smn111132】。')
                 .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11133',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/9084652922b62c2033a0ac777811eb5c_1228859002995546833.png')
@@ -909,10 +910,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/82839e50c43ef6d72676e9b6957fadba.png')
         .normalSkill(new NormalSkillBuilder('狐灵食罪式'))
         .skills(
-            new SkillBuilder('野千役咒·杀生樱').description('召唤【smn114081】。')
+            new SkillBuilder('野千役咒·杀生樱').description('召唤【smn114081】。如果场上原本已存在【smn114081】，则额外使其造成的伤害+1。（最多+1）')
+                .description('召唤【smn114081】。', 'v5.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/3/3d/guf5f3kk06kmo3y0uln71jqsovem8yk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5d52bb5027ee98ea6295c7cbe6f75260_4362138600485261556.png')
-                .elemental().cost(3).handle(() => ({ summon: 114081 })),
+                .elemental().cost(3).handle((event, ver) => ({ summon: [[114081, isCdt(ver.gte('v5.3.0') && hasObjById(event.summons, 114081), 2)]] })),
             new SkillBuilder('大密法·天狐显真').description('{dealDmg}; 如果我方场上存在【smn114081】，则将其消灭，然后生成【sts114083】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ea/8y36keriq61eszpx5mm5ph7fvwa07ad.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b5ebdd77cfd7a6e12d1326c08e8f9214_6239158387266355120.png')
@@ -995,7 +997,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
                     const cnt = Math.min(4, sts122?.useCnt ?? 0) || undefined;
-                    return { addDmgCdt: cnt, heal: cnt, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
+                    return { addDmgCdt: cnt, heal: cnt ?? 0, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
                 }),
             new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
                 .src('/image/tmp/Skill_E_Clorinde_01.webp',
@@ -1653,7 +1655,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('潋波绽破').description('{dealDmg}，目标角色附属【sts122021】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/bb/ejgc07c2acyw7emun013j336cvmksvt.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/72eb60be8d1a88f12671264e29101ad4_5912821621104766081.png')
-                .elemental().damage(2).damage(3, 'v3.7.0').cost(3).handle(event => ({ statusOppo: [[122021, !!event.talent]] })),
+                .elemental().damage(3).damage(2, 'v5.3.0').damage(3, 'v3.7.0').cost(3)
+                .handle(event => ({ statusOppo: [[122021, !!event.talent]] })),
             new SkillBuilder('粼镜折光').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/8/80/1dsnenenx6cm0ojaln742iwx60rzc1r.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/9bd9b0f4cad85c234146ef15518ee57e_5116572838966914686.png')
@@ -1668,7 +1671,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('洄涡锋刃').description('{dealDmg}，然后[准备技能]：【rsk22035】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/24/t9ua2iv40wm0f3yig6vxig7onh3up3n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/84c980b8b25210d2cd1bd9d2377cd932_6861846186263087638.png')
-                .elemental().damage(2).cost(3).handle(() => ({ status: 122032 })),
+                .elemental().damage(1).damage(2, 'v5.3.0').cost(3).handle(() => ({ status: 122032 })),
             new SkillBuilder('激流强震').description('{dealDmg}，在对方场上生成【sts122033】。')
                 .src('https://patchwiki.biligame.com/images/ys/d/d8/oiwyudqa0jod9q7e41b6gsk3ok9g4b8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/190ea01a320f9023eee1656e09528bb2_8501522101938982601.png')

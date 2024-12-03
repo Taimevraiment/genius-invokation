@@ -53,7 +53,7 @@ export class GISummon {
         const hid = getHidById(id);
         this.UI = {
             description: description
-                .replace(/{([^\{\}]*)defaultAtk([^\{\}]*)}/, '【结束阶段：】$1{dealDmg}$2；[useCnt]')
+                .replace(/{([^\{\}]*)defaultAtk((?:\{.+\}|[^\{\}])*)}/, '【结束阶段：】$1{dealDmg}$2；[useCnt]')
                 .replace(/\[useCnt\]/, '【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `（可叠加，${maxUse == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxUse}次`}）` : ''))
                 .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
                 .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
@@ -103,7 +103,7 @@ export class SummonBuilder extends BaseBuilder {
     private _name: string;
     private _src: string = '';
     private _useCnt: VersionMap<number> = new VersionMap();
-    private _maxUse: number = 0;
+    private _maxUse: VersionMap<number> = new VersionMap();
     private _shieldOrHeal: number = 0;
     private _damage: VersionMap<number> = new VersionMap();
     private _pdmg: number = 0;
@@ -133,8 +133,8 @@ export class SummonBuilder extends BaseBuilder {
         this._useCnt.set([version, useCnt]);
         return this;
     }
-    maxUse(maxUse: number) {
-        this._maxUse = maxUse;
+    maxUse(maxUse: number, version: Version = 'vlatest') {
+        this._maxUse.set([version, maxUse]);
         return this;
     }
     shield(shield: number) {
@@ -231,7 +231,7 @@ export class SummonBuilder extends BaseBuilder {
     }
     done() {
         const useCnt = this._useCnt.get(this._curVersion, 0);
-        const maxUse = this._maxUse || useCnt;
+        const maxUse = this._maxUse.get(this._curVersion, 0) || useCnt;
         const description = this._description.get(this._curVersion, '');
         const element = this._element ?? getElByHid(getHidById(this._id));
         const perCnt = this._perCnt.get(this._curVersion, 0);

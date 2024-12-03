@@ -568,6 +568,7 @@ body {
   background-color: red;
   bottom: 95px;
   font-size: medium;
+  z-index: 1;
 }
 
 .card.selected {

@@ -213,8 +213,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，{dealDmg}。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png'),
 
-    112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(2).damage(1).heal(1)
-        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】')
+    112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(4).maxUse(2, 'v5.3.0').damage(1).heal(1)
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；[useCnt]')
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】', 'v5.3.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/4608304a2a01f7f33b59b731543a761b_3713077215425832494.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
@@ -413,7 +414,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
         })),
 
-    114081: () => new SummonBuilder('杀生樱').useCnt(3).maxUse(6).damage(1)
+    114081: (dmg?: number) => new SummonBuilder('杀生樱').useCnt(3).maxUse(6).damage(dmg ?? 1)
         .description('{defaultAtk。}；【我方宣布结束时：】如果此牌的[可用次数]至少为4，则造成1点[雷元素伤害]。（需消耗[可用次数]）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/d63267f4388f521b1481a85ace6de257_3147336152102036232.png')
         .handle((summon, event) => {
@@ -476,7 +477,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    115021: () => new SummonBuilder('蒲公英领域').useCnt(2).damage(1).damage(2, 'v4.2.0').heal(1)
+    115021: () => new SummonBuilder('蒲公英领域').useCnt(3).useCnt(2, 'v5.3.0').damage(1).damage(2, 'v4.2.0').heal(1)
         .description('{defaultAtk，治疗我方出战角色{shield}点。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/13c4609aff96cf57ad218ddf954ecc08_1272742665837129862.png')
         .handle((summon, event) => {

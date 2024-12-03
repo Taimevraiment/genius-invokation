@@ -64,7 +64,7 @@ export default class GeniusInvokationRoom {
     newHero: (id: number) => Hero;
     newSummon: (id: number, ...args: any) => Summon;
     newSkill: (id: number) => Skill;
-    newSupport: (id: number | Card) => Support;
+    newSupport: (id: number | Card, ...args: any) => Support;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
 
@@ -80,9 +80,9 @@ export default class GeniusInvokationRoom {
         this.newCard = newCard(version);
         this.newHero = newHero(version);
         this.newSummon = newSummon(version);
-        this.newSupport = (id: number | Card) => {
-            if (typeof id === 'number') return newSupport(version)(this.newCard(id));
-            return newSupport(version)(id);
+        this.newSupport = (id: number | Card, ...args: any[]) => {
+            if (typeof id === 'number') return newSupport(version)(this.newCard(id), ...args);
+            return newSupport(version)(id, ...args);
         }
         this.newSkill = newSkill(version);
         this.taskQueue = new TaskQueue(this._writeLog.bind(this), isDev);
@@ -290,7 +290,7 @@ export default class GeniusInvokationRoom {
                 }
             }
             // AI挑选卡牌
-            if (cplayer.id == AI_ID && cplayer.phase == PHASE.PICK_CARD && flag.startsWith('pickCard')) {
+            if (cplayer?.id == AI_ID && cplayer?.phase == PHASE.PICK_CARD && flag.startsWith('pickCard')) {
                 setTimeout(() => this._pickCard(cplayer.pidx, this._randomInt(this.pickModal.cards.length - 1), this.pickModal.skillId), 1e3);
             }
             const serverData: ServerData = {
@@ -1356,7 +1356,7 @@ export default class GeniusInvokationRoom {
         this._doCmds(pidx, stsprecmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
         if (skillres.summonPre) this._updateSummon(pidx, this._getSummonById(skillres.summonPre), players, isExec);
         const oSummonEids = players[pidx].summons.map(smn => smn.entityId);
-        if (skillres.heal) {
+        if (skillres.heal != undefined) {
             const { willHeals } = this._doCmds(pidx, [{ cmd: 'heal', cnt: skillres.heal, hidxs: skillres.hidxs ?? [cahidx] }], {
                 players,
                 isExec,
@@ -2301,6 +2301,15 @@ export default class GeniusInvokationRoom {
             mergeWillHeals(res.bWillHeals, hfieldres.bWillHeals);
             res.tasks.push(...hfieldres.tasks);
         }
+        if (atriggers[atkHidx].includes('dmg')) {
+            this._detectSupport(pidx, 'after-dmg', {
+                players: res.players,
+                isExec,
+                skid,
+                sktype,
+                getdmg: getdmg(),
+            });
+        }
 
         if (atriggers[atkHidx].includes('Crystallize')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(111));
         if ((atriggers[atkHidx].includes('Bloom') && !hasObjById([...aost, ...res.players[pidx].combatStatus], 112081))) {
@@ -2585,16 +2594,21 @@ export default class GeniusInvokationRoom {
             if (cardres.hidxs && currCard.type != CARD_TYPE.Equipment) assgin(hidxs, cardres.hidxs);
             if (cardres.support) {
                 if (player.supports.length == MAX_SUPPORT_COUNT) {
-                    if (selectSupport == -1) throw new Error('@_useCard: selectSupport is invalid');
-                    player.supports.splice(selectSupport, 1);
-                    ++destroyedSupportCnt;
+                    if (selectSupport > -1) {
+                        player.supports.splice(selectSupport, 1);
+                        ++destroyedSupportCnt;
+                    } else if (currCard.type == CARD_TYPE.Support) {
+                        throw new Error('@_useCard: selectSupport is invalid');
+                    }
                 }
-                cardres.support.forEach(support => {
-                    player.supports.push(support.setEntityId(this._genEntityId()));
-                    this._detectSupport(pidx, 'enter', { csupport: [support], isQuickAction: true });
+                this._getSupportById(cardres.support).forEach(support => {
+                    if (player.supports.length < MAX_SUPPORT_COUNT) {
+                        player.supports.push(support.setEntityId(this._genEntityId()));
+                        this._detectSupport(pidx, 'enter', { csupport: [support], isQuickAction: true });
+                    }
                 });
             }
-            cardres.supportOppo?.forEach(support => {
+            this._getSupportById(cardres.supportOppo).forEach(support => {
                 if (opponent.supports.length < MAX_SUPPORT_COUNT) {
                     opponent.supports.push(support.setEntityId(this._genEntityId()));
                     this._detectSupport(pidx ^ 1, 'enter', { csupport: [support], isQuickAction: true });
@@ -2699,6 +2713,7 @@ export default class GeniusInvokationRoom {
         this.players[pidx].canAction = false;
         const isChange = !isQuickAction && !isDie &&
             (!isDieSwitch && !isOppoActionEnd || isDieSwitch && this.players[pidx]?.phase < PHASE.ACTION_END) &&
+            !this._detectSlot(pidx ^ +isDieSwitch, 'change-turn').isQuickAction &&
             !this._detectStatus(pidx ^ +isDieSwitch, STATUS_TYPE.Usage, 'change-turn', { isOnlyCombatStatus: true }).isQuickAction;
         if (isChange) {
             this.players[this.currentPlayerIdx].canAction = false;
@@ -3437,7 +3452,14 @@ export default class GeniusInvokationRoom {
             const tcmds: Cmds[] = [];
             const trgs: Trigger[] = [];
             let isAddTask: boolean = false;
+            let isDestroy: boolean = false;
             const isMinusDiceCard = hcard && hcard.cost + hcard.anydice > minusDiceCard;
+            const destroySlot = () => {
+                const hero = player.heros[hidx];
+                if (hero.talentSlot?.entityId == slot.entityId) hero.talentSlot = null;
+                if (hero.vehicleSlot?.[0].entityId == slot.entityId) hero.vehicleSlot = null;
+                this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, hidxs: [hidx], slotsDestroy: player.heros.map(h => +(h.hidx == hidx)) })
+            }
             for (const trigger of triggers) {
                 const slotres = slot.handle(slot, {
                     heros,
@@ -3477,15 +3499,12 @@ export default class GeniusInvokationRoom {
                 trgs.push(trigger);
                 tcmds.push(...(slotres.execmds ?? []));
                 cmds.push(...(slotres.execmds ?? []));
+                isDestroy ||= !!slotres.isDestroy;
                 if (taskMark || (isExec && !slotres.execmds?.length && !slotres.isAddTask)) {
-                    if (slotres.isDestroy) {
-                        const hero = player.heros[hidx];
-                        if (hero.talentSlot?.entityId == slot.entityId) hero.talentSlot = null;
-                        if (hero.vehicleSlot?.[0].entityId == slot.entityId) hero.vehicleSlot = null;
-                        this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, hidxs: [hidx], slotsDestroy: player.heros.map(h => +(h.hidx == hidx)) })
-                    }
+                    if (!taskMark && slotres.isDestroy) destroySlot();
                     slotres.exec?.();
                 }
+                isQuickAction ||= !!!slotres.isQuickAction;
                 isAddTask ||= !!slotres.isAddTask;
                 switchHeroDiceCnt -= slotres.minusDiceHero ?? 0;
                 minusDiceHero += slotres.minusDiceHero ?? 0;
@@ -3560,6 +3579,11 @@ export default class GeniusInvokationRoom {
                             }, { atkname: slot.name, slotSelect, isQuickAction });
                         } else {
                             this.emit(`_doSlot-${slot.name}`, pidx, { slotSelect, isQuickAction });
+                        }
+                        if (isDestroy) {
+                            await delay(intvl + 300);
+                            destroySlot();
+                            this.emit(`_doSlot-${slot.name}-destroy`, pidx);
                         }
                     };
                     task.push([slotHandle, intvl]);
@@ -4207,8 +4231,10 @@ export default class GeniusInvokationRoom {
                     dices: players[pidx].dice,
                     trigger: state,
                     heros: player.heros,
+                    supports: player.supports,
                     eheros: opponent.heros,
                     eCombatStatus: opponent.combatStatus,
+                    eSupports: opponent.supports,
                     hidxs: [player.hidx],
                     hidx,
                     card: hcard,
@@ -5342,6 +5368,7 @@ export default class GeniusInvokationRoom {
             if (csmnIdx > -1) { // 重复生成召唤物
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
+                oriSummon[csmnIdx].damage = smn.damage;
             } else if (oriSummon.length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 oriSummon.push(smn.setEntityId(this._genEntityId()));
                 const { smnres = {} } = this._detectSummon(pidx, 'enter', { players, csummon: [smn], isExec });
@@ -5835,6 +5862,21 @@ export default class GeniusInvokationRoom {
                 return this.newSummon(...(typeof smnargs == 'number' ? [smnargs] : smnargs) as [number, ...any]);
             }
             return smnargs;
+        });
+    }
+    /**
+     * 根据id和参数获取支援物数组
+     * @param summonArgs 状态的id及参数
+     * @returns 状态数组
+     */
+    private _getSupportById(supportArgs: (number | [number, ...any] | Support)[] | number | undefined) {
+        if (supportArgs == undefined) return [];
+        const args = typeof supportArgs == 'number' ? [supportArgs] : supportArgs;
+        return args.map(sptargs => {
+            if (Array.isArray(sptargs) || typeof sptargs == 'number') {
+                return this.newSupport(...(typeof sptargs == 'number' ? [sptargs] : sptargs) as [number, ...any]);
+            }
+            return sptargs;
         });
     }
 }

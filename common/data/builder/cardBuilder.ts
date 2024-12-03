@@ -6,7 +6,6 @@ import {
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
-import { newSupport } from "../supports.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
 export class GICard {
@@ -75,7 +74,13 @@ export class GICard {
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
             const vehicle = `rsk${id}1`;
-            this.UI.description += `[特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}（角色最多装备1个｢特技｣）`;
+            const vehicleDesc = ` [特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}`;
+            if (this.UI.description.includes('{vehicle}')) {
+                this.UI.description = this.UI.description.replace('{vehicle}', vehicleDesc);
+            } else {
+                this.UI.description += (this.UI.description != '' ? '；' : '') + vehicleDesc;
+            }
+            this.UI.description += `；（角色最多装备1个｢特技｣）`;
             this.UI.explains.push(vehicle);
             handle ??= (card, event) => {
                 const { skid = -1 } = event;
@@ -320,7 +325,7 @@ export class CardBuilder extends BaseCostBuilder {
         if (this._type == CARD_TYPE.Support) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {
-                return { support: [newSupport(ver.value)(card)], ...handle?.(card, event, ver) }
+                return { support: card.id, ...handle?.(card, event, ver) }
             };
         }
         const description = this._description.get(this._curVersion, '');
