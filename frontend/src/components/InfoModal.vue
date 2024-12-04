@@ -454,9 +454,9 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
       explains.push(`
         <div style="display:flex;align-items:flex-end;">
             ${nameEl}
-            <div data-v-c8bc3e29 class="skill-cost" style="margin-left:5px;">
-              <img data-v-c8bc3e29 class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}" />
-              <span data-v-c8bc3e29>${expl.cost}</span>
+            <div class="skill-cost" style="margin-left:5px;">
+              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}" />
+              <span>${expl.cost}</span>
             </div>
         </div>
       `);
@@ -833,29 +833,6 @@ const showRule = (...desc: string[]) => {
   font-weight: bold;
 }
 
-.skill-cost {
-  width: 17px;
-  height: 17px;
-  margin: 0 2px;
-  margin-top: 5px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-weight: bolder;
-  -webkit-text-stroke: 1px black;
-}
-
-.skill-cost>.cost-img {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-}
-
-.skill-cost>span {
-  position: absolute;
-}
-
 .info-status,
 .info-equipment {
   margin-top: 2px;
@@ -890,5 +867,37 @@ svg {
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@media screen and (orientation: portrait) {
+  .info-container {
+    width: 25vh;
+    max-height: 50vw;
+  }
+}
+</style>
+
+<style>
+.info-outer-container>.info-container .skill-cost {
+  width: 17px;
+  height: 17px;
+  margin: 0 2px;
+  margin-top: 5px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bolder;
+  -webkit-text-stroke: 1px black;
+}
+
+.info-outer-container>.info-container .skill-cost>.cost-img {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+}
+
+.info-outer-container>.info-container .skill-cost>span {
+  position: absolute;
 }
 </style>

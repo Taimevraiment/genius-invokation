@@ -56,11 +56,11 @@
                         {{ ver }}
                     </option>
                 </select>
-                <div>
+                <!-- <div>
                     <input id="isOfflineInput" type="checkbox" :checked="isOfflineVersion"
                         @change="switchOfflineVersion" />
                     <label for="isOfflineInput">实体版</label>
-                </div>
+                </div> -->
             </div>
             <input v-model="deckName" class="deck-name" />
             <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
@@ -197,8 +197,8 @@
                 </span>
             </div>
         </div>
+        <InfoModal :info="modalInfo" :isMobile="isMobile" :isInGame="false" />
     </div>
-    <InfoModal :info="modalInfo" :isMobile="isMobile" :isInGame="false" />
 </template>
 
 <script setup lang="ts">
@@ -344,15 +344,15 @@ const shareDeck = () => {
 }
 
 // 切换线下版
-const switchOfflineVersion = () => {
-    isOfflineVersion.value = !isOfflineVersion.value;
-    if (isOfflineVersion.value) {
-        version.value = OFFLINE_VERSION[0];
-    } else {
-        version.value = VERSION[0];
-    }
-    updateInfo();
-}
+// const switchOfflineVersion = () => {
+//     isOfflineVersion.value = !isOfflineVersion.value;
+//     if (isOfflineVersion.value) {
+//         version.value = OFFLINE_VERSION[0];
+//     } else {
+//         version.value = VERSION[0];
+//     }
+//     updateInfo();
+// }
 
 // 点击下拉框
 const clickSelect = () => {
@@ -916,7 +916,7 @@ input#isOfflineInput:checked {
     position: absolute;
     left: 50%;
     top: 20%;
-    transform: translate(-50%, -20%);
+    transform: translate(-45%, -20%);
     background-color: #d59b3f;
     width: 80%;
     height: 30%;
@@ -932,7 +932,7 @@ input#isOfflineInput:checked {
     position: absolute;
     left: 50%;
     top: 20%;
-    transform: translate(-50%, -20%);
+    transform: translate(-45%, -20%);
     background-color: #d59b3f;
     width: 80%;
     height: 35%;
@@ -963,7 +963,7 @@ input#isOfflineInput:checked {
     position: absolute;
     left: 50%;
     bottom: 20%;
-    transform: translate(-50%, 20%);
+    transform: translate(-45%, 20%);
     background-color: #d59b3f;
     width: 80%;
     height: 35%;
@@ -1241,6 +1241,8 @@ input#isOfflineInput:checked {
 
 @media screen and (orientation: portrait) {
     .edit-deck-container {
+        height: 95vw;
+        width: 95vh;
         transform-origin: 0 0;
         transform: rotateZ(90deg) translateY(-100%);
     }

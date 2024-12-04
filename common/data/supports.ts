@@ -54,6 +54,7 @@ export type SupportHandleRes = {
 }
 
 export type SupportExecEvent = {
+    csummon?: Summon,
     isExecTask?: boolean,
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
@@ -427,13 +428,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // ｢流泉之众｣
-    321025: () => new SupportBuilder().round(3).handle((_, event) => ({
-        trigger: ['summon-enter'],
+    321025: () => new SupportBuilder().round(3).handle(() => ({
+        trigger: ['summon-generate'],
         supportCnt: -1,
-        exec: spt => {
-            const { csummon } = event;
-            if (!csummon) return { isDestroy: false }
-            ++csummon.useCnt;
+        exec: (spt, execEvent) => {
+            const { csummon, isExecTask = true } = execEvent;
+            if (csummon) ++csummon.useCnt;
+            if (!isExecTask) return { isDestroy: false }
             return { isDestroy: --spt.cnt == 0 }
         }
     })),

@@ -1354,7 +1354,7 @@ export default class GeniusInvokationRoom {
             { cmd: 'getStatus', status: skillres.statusOppoPre, hidxs: skillres.hidxs, isOppo: true },
         ];
         this._doCmds(pidx, stsprecmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
-        if (skillres.summonPre) this._updateSummon(pidx, this._getSummonById(skillres.summonPre), players, isExec);
+        if (skillres.summonPre) this._updateSummon(pidx, this._getSummonById(skillres.summonPre), players, isExec, { supportCnt });
         const oSummonEids = players[pidx].summons.map(smn => smn.entityId);
         if (skillres.heal != undefined) {
             const { willHeals } = this._doCmds(pidx, [{ cmd: 'heal', cnt: skillres.heal, hidxs: skillres.hidxs ?? [cahidx] }], {
@@ -1435,7 +1435,7 @@ export default class GeniusInvokationRoom {
                 { cmd: 'getStatus', status: skillres.statusOppoAfter, hidxs: skillres.hidxs, isOppo: true },
             ];
             this._doCmds(pidx, stsaftercmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
-            if (skillres.summon) this._updateSummon(pidx, this._getSummonById(skillres.summon), players, isExec);
+            if (skillres.summon) this._updateSummon(pidx, this._getSummonById(skillres.summon), players, isExec, { supportCnt });
             if (skillres.isAttach) {
                 const { elTips: elTips2 = [], willAttachs: willAttachs2 = [] } = this._doCmds(pidx, [{ cmd: 'attach', hidxs: [cahidx] }], { players, isExec, isAction: !isQuickAction });
                 for (let i = 0; i < ahlen; ++i) aElTips[i + pidx * ehlen] = elTips2[i + pidx * ehlen];
@@ -1891,7 +1891,7 @@ export default class GeniusInvokationRoom {
                     } else if (hasEls(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Dendro)) { // 火草 燃烧
                         ++res.willDamages[getDmgIdx][0];
                         const cpidx = dmgedPidx ^ 1;
-                        this._updateSummon(cpidx, [this.newSummon(115)], res.players, isExec, { isSummon });
+                        this._updateSummon(cpidx, [this.newSummon(115)], res.players, isExec, { isSummon, supportCnt });
                         res.elTips[elTipIdx] = ['燃烧', dmgElement, attachElement];
                         atriggers.forEach((trg, tri) => {
                             if (tri == atkHidx) trg.push('Burning');
@@ -2067,7 +2067,7 @@ export default class GeniusInvokationRoom {
                     res.isQuickAction ||= hfieldres.isQuickAction;
                     res.isFallAtk ||= hfieldres.isFallAtk;
                     if (hfieldres.nsummons.length > 0) {
-                        this._updateSummon(pidx, hfieldres.nsummons, res.players, isExec, { isSummon });
+                        this._updateSummon(pidx, hfieldres.nsummons, res.players, isExec, { isSummon, supportCnt });
                     }
                     hfieldres.pdmgs.forEach(([pdmg, phidxs, pIsSelf]) => {
                         if (pIsSelf) (phidxs ?? getBackHidxs(aheros)).forEach(hi => res.willDamages[hi + aGetDmgIdxOffset][1] += pdmg);
@@ -2291,7 +2291,7 @@ export default class GeniusInvokationRoom {
             res.isQuickAction ||= hfieldres.isQuickAction;
             res.isFallAtk ||= hfieldres.isFallAtk;
             if (hfieldres.nsummons.length > 0) {
-                this._updateSummon(pidx, hfieldres.nsummons, res.players, isExec, { isSummon });
+                this._updateSummon(pidx, hfieldres.nsummons, res.players, isExec, { isSummon, supportCnt });
             }
             hfieldres.pdmgs.forEach(([pdmg, phidxs, pIsSelf]) => {
                 if (pIsSelf) (phidxs ?? getBackHidxs(aheros)).forEach(hi => res.willDamages[hi + aGetDmgIdxOffset][1] += pdmg);
@@ -3504,7 +3504,7 @@ export default class GeniusInvokationRoom {
                     if (!taskMark && slotres.isDestroy) destroySlot();
                     slotres.exec?.();
                 }
-                isQuickAction ||= !!!slotres.isQuickAction;
+                isQuickAction ||= !!slotres.isQuickAction;
                 isAddTask ||= !!slotres.isAddTask;
                 switchHeroDiceCnt -= slotres.minusDiceHero ?? 0;
                 minusDiceHero += slotres.minusDiceHero ?? 0;
@@ -4264,7 +4264,12 @@ export default class GeniusInvokationRoom {
                 const isExchange = !!supportres.isExchange && (opponent.supports.length + exchangeSupport.filter(v => v[1] == (pidx ^ 1)).length) < 4;
                 if (isExchange) exchangeSupport.push([support, pidx ^ 1]);
                 supportCnt[pidx][stidx] += supportres.supportCnt ?? 0;
-                const supportexecres = supportres.exec?.(clone(support), { isExecTask: false, isQuickAction: isTriggeredQuick, switchHeroDiceCnt }) ?? { isDestroy: false };
+                const supportexecres = supportres.exec?.(clone(support), {
+                    isExecTask: false,
+                    isQuickAction: isTriggeredQuick,
+                    switchHeroDiceCnt,
+                    csummon: isCdt(!isExec, csummon),
+                }) ?? { isDestroy: false };
                 cmdsAll.push(...(supportexecres.cmds ?? []));
                 if (isExec) {
                     if (supportres.isNotAddTask) {
@@ -4290,7 +4295,12 @@ export default class GeniusInvokationRoom {
                                 if (!spt) throw new Error(`@supportHandle: support not found\n suport:${supportToString(support)}`);
                                 const oCnt = spt.cnt;
                                 const oPct = spt.perCnt;
-                                const supportexecres = supportres.exec?.(spt, { isQuickAction: isTriggeredQuick, switchHeroDiceCnt }) ?? { isDestroy: false };
+                                const smnIdx = player.summons.findIndex(smn => smn.entityId == csummon?.entityId);
+                                const supportexecres = supportres.exec?.(spt, {
+                                    isQuickAction: isTriggeredQuick,
+                                    switchHeroDiceCnt,
+                                    csummon: player.summons[smnIdx],
+                                }) ?? { isDestroy: false };
                                 this._writeLog(`[${player.name}][${spt.card.name}]发动`);
                                 this._writeLog(`[${player.name}]${state}:${spt.card.name}(${spt.entityId}).cnt:${oCnt}->${spt.cnt}.perCnt:${oPct}->${spt.perCnt}`, 'system');
                                 const { ndices, willHeals } = this._doCmds(pidx, supportexecres.cmds);
@@ -5352,12 +5362,12 @@ export default class GeniusInvokationRoom {
      */
     private _updateSummon(
         pidx: number, nSummon: Summon[], players: Player[], isExec = true,
-        options: { isSummon?: number, destroy?: boolean, trigger?: Trigger } = {}
+        options: { isSummon?: number, destroy?: boolean, trigger?: Trigger, supportCnt?: number[][] } = {}
     ) {
-        const { summons = [], combatStatus = [], hidx = -1, heros = [] } = players[pidx];
+        const { summons = [], combatStatus = [], hidx = -1, heros = [] } = players[pidx] ?? {};
         const newSummon: Summon[] = clone(nSummon);
         const oriSummon: Summon[] = clone(summons);
-        const { isSummon = -1, destroy = false, trigger } = options;
+        const { isSummon = -1, destroy = false, trigger, supportCnt } = options;
         newSummon.forEach(smn => {
             let csmnIdx = oriSummon.findIndex(osm => osm.id == smn.id);
             const oriSmn = oriSummon[csmnIdx];
@@ -5365,18 +5375,20 @@ export default class GeniusInvokationRoom {
                 oriSummon.splice(csmnIdx, 1);
                 csmnIdx = -1;
             }
+            let csummon: Summon = oriSummon[csmnIdx];
             if (csmnIdx > -1) { // 重复生成召唤物
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
                 oriSummon[csmnIdx].damage = smn.damage;
             } else if (oriSummon.length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
-                oriSummon.push(smn.setEntityId(this._genEntityId()));
+                csummon = smn.setEntityId(this._genEntityId());
+                oriSummon.push(csummon);
                 const { smnres = {} } = this._detectSummon(pidx, 'enter', { players, csummon: [smn], isExec });
                 if (smnres.rCombatStatus) {
                     this._updateStatus(pidx, this._getStatusById(smnres.rCombatStatus), combatStatus, players, { hidx, isExec });
                 }
-                this._detectSupport(pidx, 'summon-enter', { players, csummon: smn, isExec });
             }
+            this._detectSupport(pidx, 'summon-generate', { players, csummon, supportCnt, isExec });
         });
         if (isSummon > -1) return assgin(summons, oriSummon);
         assgin(summons, oriSummon.filter(smn => {
