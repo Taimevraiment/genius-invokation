@@ -248,11 +248,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .skills(
             new SkillBuilder('噬罪的告解').description('{dealDmg}，生成1层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）')
                 .description('{dealDmg}，生成2层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）', 'v5.3.0')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11132',
+                .src('https://patchwiki.biligame.com/images/ys/a/ac/2mx664lxxjofyc3dpqn0fv087g56rwi.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/71e41a887bf75f12f458ddaea87d1ae4_4540027086914779796.png')
                 .elemental().damage(1).cost(3).handle((_, ver) => ({ statusPre: [[111131, isCdt(ver.gte('v5.3.0'), 1)]] })),
             new SkillBuilder('终命的圣礼').description('{dealDmg}，生成2层【sts111131】，召唤【smn111132】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/11133',
+                .src('https://patchwiki.biligame.com/images/ys/4/48/ms5styvozdm37zw7rvuduc0b66khtrt.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/9084652922b62c2033a0ac777811eb5c_1228859002995546833.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ statusPre: 111131, summon: 111132 }))
         ),
@@ -481,15 +481,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('靶向治疗'))
         .skills(
             new SkillBuilder('弹跳水疗法').description('生成1张【crd112131】，将其置于我方牌库顶部第3张牌的位置，本角色附属3层【sts122】。（触发【crd112131】的效果后，会生成【crd112132】并置入对方牌库; 触发【crd112132】的效果后，会生成【crd112133】并置入我方牌库）')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12132',
+                .src('https://patchwiki.biligame.com/images/ys/c/cb/ds8xetx81vimcqf1iplwz39bcocnaom.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/f19c7aee67405f75ab2232607be81ea8_369892106478425408.png')
                 .elemental().cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', cnt: -1, card: 112131, hidxs: [3] }], status: [[122, 3]] })),
             new SkillBuilder('过饱和心意注射').description('{dealDmg}，然后[准备技能]：【rsk12135】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12133',
+                .src('https://patchwiki.biligame.com/images/ys/a/a8/lb2b4b7sa7rdl2ykmlhk7jwmi6a53i6.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/dcbf94bb5239ad88636d33ab552a9e80_4185011562027950809.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
             new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。（对每名角色最多生效3次）；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12134',
+                .src('https://patchwiki.biligame.com/images/ys/5/55/m43lxh8gyu0yaq70sczycvsk9sforzc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/8a6a3792e47546b5ec81ee636445c4d8_6392784692082623561.png')
                 .passive().handle(event => {
                     const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
@@ -2127,11 +2127,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('王狼直击'))
         .skills(
             new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属2层【sts126031】，召唤【smn126032】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/26032',
+                .src('https://patchwiki.biligame.com/images/ys/5/58/7e3q4ziz9klancofuscufqq9o59c250.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/4e3681910d6030538828aaca2d9a8ec4_807642467059739344.png')
                 .elemental().damage(1).cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent, 2]], summon: 126032 })),
             new SkillBuilder('黄金侵绞').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并使所有敌方角色附属【sts126031】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/26033',
+                .src('https://patchwiki.biligame.com/images/ys/e/e8/ii9k22imfs6cv033oudl24jprt04vpd.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/fa73097822d092389bcf8fff81b90224_4686715611294853097.png')
                 .burst(2).damage(3).cost(3).handle(event => {
                     const { eheros = [], talent } = event;

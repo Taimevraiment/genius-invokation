@@ -3,13 +3,10 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
 import {
-    ACTION_TYPE,
-    ActionType,
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DamageType,
-    DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE,
-    PURE_ELEMENT_TYPE_KEY, Phase,
-    PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup,
-    StatusType, Version
+    ACTION_TYPE, ActionType, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE,
+    DICE_COST_TYPE, DICE_TYPE, DamageType, DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE,
+    PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY, Phase,
+    PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SkillType, StatusGroup, StatusType, Version
 } from '../../common/constant/enum.js';
 import {
     AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
@@ -23,12 +20,14 @@ import { newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
-import { allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString } from '../../common/utils/gameUtil.js';
+import {
+    allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById,
+    getTalentIdByHid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString
+} from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
     ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Hero, LogType, MinusDiceSkill, PickCard,
-    Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger,
-    VersionCompareFn
+    Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -101,7 +100,7 @@ export default class GeniusInvokationRoom {
      * @param rt 种子
      * @returns this
      */
-    setSeed(rt: string | number) {
+    private _setSeed(rt: string | number) {
         this.seed = rt.toString();
         this._random = +rt;
         return this;
@@ -477,7 +476,7 @@ export default class GeniusInvokationRoom {
      * @param flag 标志
      */
     start(pidx: number, flag: string) {
-        this.seed = Math.floor(Math.random() * 1e10).toString();
+        this.seed ||= Math.floor(Math.random() * 1e10).toString();
         this._random = +this.seed;
         const d = new Date();
         const format = (n: number) => String(n).padStart(2, '0');
@@ -625,6 +624,10 @@ export default class GeniusInvokationRoom {
         const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, smnIds, sptIds, seed, flag } = actionData;
         if (!this.isDev && !this.seed.endsWith(`-s${seed}`)) return;
         if (flag.includes('log')) return this.exportLog();
+        if (flag.includes('seed')) {
+            if (!this.isStart) this._setSeed(seed);
+            return
+        }
         const player = this.players[cpidx];
         const heros = player.heros;
         for (const { hidx, el, isAdd } of attachs) {
@@ -1856,7 +1859,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Cryo)) { // 水冰 冻结
                         res.willDamages[getDmgIdx][0] += +!isAttach;
-                        (isAtkSelf ? aist : eist)[dmgedHidx].push(this.newStatus(106));
+                        (isAtkSelf || isAttach ? aist : eist)[dmgedHidx].push(this.newStatus(106));
                         res.elTips[elTipIdx] = ['冻结', dmgElement, attachElement];
                         atriggers.forEach((trg, tri) => {
                             if (tri == atkHidx) trg.push('Frozen');
@@ -5474,6 +5477,7 @@ export default class GeniusInvokationRoom {
         clearInterval(this.countdown.timer);
         this.countdown.timer = undefined;
         this.countdown.curr = 0;
+        this.seed = '';
         this.emit('game-end', winnerIdx);
     }
     /**

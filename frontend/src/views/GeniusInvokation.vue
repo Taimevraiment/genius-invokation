@@ -400,7 +400,7 @@ const devOps = (cidx = 0) => {
   if ((client.value.phase < 5 && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');
   let rid = roomId;
-  let seed = 0;
+  let seed: string = '';
   if (opses?.startsWith('--')) {
     const opacity = +opses.slice(2);
     if (opacity == 1) isOpenMask.value = false;
@@ -415,7 +415,7 @@ const devOps = (cidx = 0) => {
     rid = parseInt(opses.slice(2));
     opses = opses.slice(opses.match(/-r\d+/)![0].length);
     if (!opses?.startsWith('-s')) return;
-    seed = parseInt(opses.slice(2));
+    seed = parseInt(opses.slice(2)).toString();
     opses = opses.slice(opses.match(/-s\d+/)![0].length);
     prodEnv = 0;
   }
@@ -439,7 +439,10 @@ const devOps = (cidx = 0) => {
       ops.push(op[0] + op.slice(index + 1).trim());
       op = op.slice(0, index).trim();
     }
-    if (op.startsWith('log')) { // 导出日志
+    if (op.startsWith('seed')) { // 设置种子
+      seed = op.slice(4).trim();
+      flag.add('seed');
+    } else if (op.startsWith('log')) { // 导出日志
       flag.add('log');
     } else if (op.startsWith('&')) { // 附着
       const isAdd = op[1] == '+';

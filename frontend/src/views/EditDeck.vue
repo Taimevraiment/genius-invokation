@@ -356,7 +356,7 @@ const shareDeck = () => {
 
 // 点击下拉框
 const clickSelect = () => {
-    if (versionSelect.value.length < 5) return;
+    if (versionSelect.value.length < 5 || isMobile.value) return;
     if (selectSize.value == 0) selectSize.value = 5;
     else selectSize.value = 0;
 }
