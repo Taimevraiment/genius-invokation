@@ -220,8 +220,8 @@ export default class GeniusInvokationRoom {
                     (p.pidx != this.currentPlayerIdx || !hasReadyskill) &&
                     (isQuickAction || p.canAction) && this.taskQueue.isTaskEmpty() &&
                     this.isStart && p.phase == PHASE.ACTION && p.status == PLAYER_STATUS.PLAYING &&
-                    p.heros[p.hidx].heroStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill)) &&
-                    p.combatStatus.every(sts => !sts.hasType(STATUS_TYPE.ReadySkill));
+                    (p.heros[p.hidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction)) ||
+                        p.heros[p.hidx].heroStatus.every(s => !s.hasType(STATUS_TYPE.ReadySkill)));
                 this._calcCardChange(p.pidx);
             });
             const previews: Preview[] = [];
@@ -553,11 +553,7 @@ export default class GeniusInvokationRoom {
                 if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', cpidx, { socket, tip: '当前出战卡组不完整' });
                 player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
                 player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
-                if (player.heros.some(h => {
-                    const res = this.version.lt(h.version) && this.version.lt(h.offlineVersion);
-                    if (res) console.log(h.name, h.offlineVersion);
-                    return res;
-                }) ||
+                if (player.heros.some(h => this.version.lt(h.version) && this.version.lt(h.offlineVersion)) ||
                     player.pile.some(c => this.version.lt(c.version) && this.version.lt(c.offlineVersion))) {
                     return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
                 }
@@ -2735,7 +2731,8 @@ export default class GeniusInvokationRoom {
         this.emit(`changeTurn-${type}-isChange:${isChange}`, pidx, { tip, isChange });
         await delay(1e3);
         const currPlayer = this.players[this.currentPlayerIdx];
-        const hasReadyskill = [...currPlayer.heros[currPlayer.hidx].heroStatus, ...currPlayer.combatStatus].some(sts => sts.hasType(STATUS_TYPE.ReadySkill));
+        const hasReadyskill = currPlayer.heros[currPlayer.hidx].heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonAction)) &&
+            currPlayer.heros[currPlayer.hidx].heroStatus.some(sts => sts.hasType(STATUS_TYPE.ReadySkill));
         if (!isDie) await this._doActionStart(this.currentPlayerIdx);
         currPlayer.canAction = !isDie;
         this.emit(`changeTurn-${type}-setCanAction:${!isDie}`, pidx, { isChange, hasReadyskill });
@@ -3862,7 +3859,9 @@ export default class GeniusInvokationRoom {
         }
         for (const trigger of triggers) {
             if (cStatus && !taskMark) {
-                detectStatus(cStatus, cStatus.group, hidxs?.[0] ?? player.hidx, trigger);
+                const chidx = hidxs?.[0] ?? player.hidx;
+                if (pheros[chidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction)) && trigger == 'useReadySkill') continue;
+                detectStatus(cStatus, cStatus.group, chidx, trigger);
                 continue;
             }
             for (let i = 0; i < pheros.length; ++i) {
