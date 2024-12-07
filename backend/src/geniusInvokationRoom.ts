@@ -4148,6 +4148,7 @@ export default class GeniusInvokationRoom {
                                 if (changedEl) smn.element = changedEl;
                                 if (ndices) this.players[pidx].dice = ndices;
                                 const selected = [pidx, getObjIdxById(aSummons, smn.id)];
+                                const tround = summonres.tround ?? 0;
                                 await this._doDamage(pidx, {
                                     dmgSource: 'summon',
                                     atkPidx: pidx,
@@ -4158,13 +4159,12 @@ export default class GeniusInvokationRoom {
                                     dmgElements,
                                     elTips,
                                     selected,
-                                }, { atkname: smn.name, summonSelect: selected, isQuickAction });
+                                }, { atkname: smn.name, summonSelect: selected, isQuickAction, canAction: tround == 0 });
                                 const osmnCnt = aSummons.length;
                                 this._updateSummon(pidx, [], this.players, true, { trigger: state, destroy: true });
                                 if (osmnCnt != aSummons.length) {
                                     this.emit(`_doSummon-${smn.name}-updateCnt:${state}`, pidx);
                                 }
-                                const tround = summonres.tround ?? 0;
                                 if (tround > 0) {
                                     const args = clone(Array.from(arguments));
                                     args[2] = {

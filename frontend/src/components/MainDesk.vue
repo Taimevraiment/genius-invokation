@@ -454,7 +454,7 @@ import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
 const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
 const emits = defineEmits([
   'selectChangeCard', 'changeCard', 'reroll', 'selectHero', 'selectUseDice', 'selectSummon', 'selectSupport', 'endPhase',
-  'showHistory', 'update:diceSelect', 'selectCardPick', 'pickCard'
+  'showHistory', 'update:diceSelect', 'selectCardPick', 'pickCard',
 ]);
 
 type Curcnt = { sid: number, val: number, isChange: boolean };
