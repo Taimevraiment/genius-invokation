@@ -1559,7 +1559,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const elements: ElementType[] = [ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro];
             const isValid = elements.includes(heros[hidx]?.element ?? ELEMENT_TYPE.Physical);
             const hidxs = ver.lt('v4.2.0') ? allHidxs(heros) : heros.filter(h => h.attachElement.length > 0).map(h => h.hidx);
-            return { cmds: [{ cmd: 'attach', hidxs, mode: CMD_MODE.FrontHero }], isValid }
+            return { cmds: [{ cmd: 'attach', hidxs }], isValid }
         }),
 
     330004: () => new CardBuilder(221).name('自由的新风').since('v4.1.0').legend().costSame(0)

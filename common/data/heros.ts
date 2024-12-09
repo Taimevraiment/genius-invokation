@@ -488,7 +488,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/a/a8/lb2b4b7sa7rdl2ykmlhk7jwmi6a53i6.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/dcbf94bb5239ad88636d33ab552a9e80_4185011562027950809.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: 112134 })),
-            new SkillBuilder('细致入微的诊疗').description('我方角色受到治疗，使其所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。（对每名角色最多生效3次）；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
+            new SkillBuilder('细致入微的诊疗').description('我方角色所附属的【sts122】被完全移除后，该角色获得1点额外最大生命值。（对每名角色最多生效3次）；【我方切换到本角色时：】如果我方场上存在【sts112101】，则使其[可用次数]-1，本角色获得1点[充能]。')
                 .src('https://patchwiki.biligame.com/images/ys/5/55/m43lxh8gyu0yaq70sczycvsk9sforzc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/8a6a3792e47546b5ec81ee636445c4d8_6392784692082623561.png')
                 .passive().handle(event => {

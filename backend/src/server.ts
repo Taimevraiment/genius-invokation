@@ -41,7 +41,7 @@ process.on('exit', code => console.error(code));
 const isDev = process.env.NODE_ENV == 'development';
 const playerList: ({ id: number, name: string, rid: number } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
-const removePlayerList = new Map(); // 玩家即将离线销毁列表
+const removePlayerList = new Map<number, { time: NodeJS.Timeout, cancel: () => void }>(); // 玩家即将离线销毁列表
 
 // 生成id
 const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number } = {}) => {
@@ -81,7 +81,7 @@ const removePlayer = (pid: number) => {
     removePlayerList.set(pid, {
         time,
         cancel: () => {
-            clearTimeout(removePlayerList.get(pid).time);
+            clearTimeout(removePlayerList.get(pid)?.time);
             removePlayerList.delete(pid);
         }
     });
@@ -115,6 +115,7 @@ io.on('connection', socket => {
         const log = `[${new Date()}]:玩家[${me.name}]` + {
             exitRoom: `离开了房间[${me.rid}]...`,
             disconnect: `断开连接了...`,
+            close: `关闭了连接...`,
         }[eventName];
         console.info(log);
         if (me.rid > 0) {
@@ -152,18 +153,18 @@ io.on('connection', socket => {
             const prevname = player.name;
             if (name != '' && prevname != name) {
                 player.name = name;
-                console.info(`[${new Date()}]:玩家[${prevname}]改名为[${name}]`);
+                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid}改名为[${name}]`);
             } else {
                 username = prevname;
-                console.info(`[${new Date()}]:玩家[${prevname}]重新连接了...`);
+                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid}重新连接了...`);
                 removePlayerList.get(id)?.cancel();
                 if (player.rid > 0 && getRoomIdx(player.rid) > -1) {
-                    console.info(`[${new Date()}]:玩家[${prevname}]重新进入房间[${player.rid}]`);
+                    console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid}重新进入房间[${player.rid}]`);
                     socket.emit('continueGame', { roomId: player.rid });
                 }
             }
         } else {
-            console.info(`[${new Date()}]:新玩家[${name}]连接了...`);
+            console.info(`[${new Date()}]:新玩家[${name}]-pid${pid}连接了...`);
             pid = genId(playerList);
             playerList.push({ id: pid, name, rid: -1 });
         }
@@ -174,6 +175,7 @@ io.on('connection', socket => {
     socket.on('getPlayerAndRoomList', emitPlayerAndRoomList);
     // 断开连接
     socket.on('disconnect', () => leaveRoom('disconnect'));
+    socket.on('close', () => leaveRoom('close'));
     // 创建房间
     socket.on('createRoom', data => {
         const { roomName, version, roomPassword, countdown } = data;
