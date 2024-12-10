@@ -541,67 +541,68 @@ export default class GeniusInvokationRoom {
      * 获取行动
      * @param actionData 行动数据
      * @param socket 发送请求socket
+     * @param pidx 发起行动的玩家序号
      */
-    getAction(actionData: ActionData, socket: Socket) {
+    getAction(actionData: ActionData, socket: Socket, pidx: number = this.currentPlayerIdx) {
         if (this.taskQueue.isExecuting) return;
-        const { cpidx = this.currentPlayerIdx, deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
+        const { deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
             diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
-        const player = this.players[cpidx];
+        const player = this.players[pidx];
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 player.deckIdx = deckIdx;
-                if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', cpidx, { socket, tip: '当前出战卡组不完整' });
+                if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', pidx, { socket, tip: '当前出战卡组不完整' });
                 player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
                 player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
                 if (player.heros.some(h => this.version.lt(h.version) && this.version.lt(h.offlineVersion)) ||
                     player.pile.some(c => this.version.lt(c.version) && this.version.lt(c.offlineVersion))) {
-                    return this.emit('deckVersionError', cpidx, { socket, tip: '当前卡组版本不匹配' });
+                    return this.emit('deckVersionError', pidx, { socket, tip: '当前卡组版本不匹配' });
                 }
                 player.phase = (player.phase ^ 1) as Phase;
-                if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[cpidx] = shareCode;
+                if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
                     this.players.forEach(p => this._writeLog(`player${p.pidx}[${p.name}]卡组码:${this.shareCodes[p.pidx]}`, 'system'));
-                    this.start(cpidx, flag);
+                    this.start(pidx, flag);
                 } else {
-                    this.emit(flag, cpidx, { socket });
+                    this.emit(flag, pidx);
                 }
                 break;
             case ACTION_TYPE.ChangeCard:
-                this._changeCard(cpidx, cardIdxs, socket, flag);
+                this._changeCard(pidx, cardIdxs, socket, flag);
                 break;
             case ACTION_TYPE.ChooseInitHero:
-                this._chooseInitHero(cpidx, heroIdxs[0], socket, flag);
+                this._chooseInitHero(pidx, heroIdxs[0], socket, flag);
                 break;
             case ACTION_TYPE.Reroll:
-                this._reroll(diceSelect, cpidx, flag, socket);
+                this._reroll(diceSelect, pidx, flag, socket);
                 break;
             case ACTION_TYPE.SwitchHero:
-                this._switchHero(cpidx, heroIdxs[0], flag, { socket, diceSelect });
+                this._switchHero(pidx, heroIdxs[0], flag, { socket, diceSelect });
                 break;
             case ACTION_TYPE.UseSkill:
                 const useDices = player.dice.filter((_, di) => diceSelect[di]);
                 const skill = [player.heros[player.hidx].vehicleSlot?.[1], ...player.heros[player.hidx].skills].find(sk => sk?.id == skillId);
                 const isValid = checkDices(useDices, { skill });
-                if (!isValid) this.emit('useSkillDiceInvalid', cpidx, { socket, tip: '骰子不符合要求', notPreview: true });
+                if (!isValid) this.emit('useSkillDiceInvalid', pidx, { socket, tip: '骰子不符合要求', notPreview: true });
                 else {
                     player.dice = player.dice.filter((_, di) => !diceSelect[di]);
-                    this._useSkill(cpidx, skillId, { selectSummon: summonIdx });
+                    this._useSkill(pidx, skillId, { selectSummon: summonIdx });
                 }
                 break;
             case ACTION_TYPE.UseCard:
-                this._useCard(cpidx, cardIdxs[0], diceSelect, { socket, selectHeros: heroIdxs, selectSummon: summonIdx, selectSupport: supportIdx });
+                this._useCard(pidx, cardIdxs[0], diceSelect, { socket, selectHeros: heroIdxs, selectSummon: summonIdx, selectSupport: supportIdx });
                 break;
             case ACTION_TYPE.Reconcile:
-                this._reconcile(cpidx, diceSelect, cardIdxs[0], flag, socket);
+                this._reconcile(pidx, diceSelect, cardIdxs[0], flag, socket);
                 break;
             case ACTION_TYPE.EndPhase:
-                this._doEndPhase(cpidx, flag);
+                this._doEndPhase(pidx, flag);
                 break;
             case ACTION_TYPE.GiveUp:
-                this._giveup(cpidx);
+                this._giveup(pidx);
                 break;
             case ACTION_TYPE.PickCard:
-                this._pickCard(cpidx, cardIdxs[0], skillId);
+                this._pickCard(pidx, cardIdxs[0], skillId);
                 break;
             default:
                 const a: never = actionData.type;
@@ -2946,6 +2947,9 @@ export default class GeniusInvokationRoom {
      * @param pidx 
      */
     private _doStatusDestroy(pidx: number, hidxs: number[], cStatus: Status, hidx: number, isQuickAction?: boolean) {
+        const player = this.players[pidx];
+        const heros = player.heros;
+        this._writeLog(`[${player.name}]弃置${cStatus.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]角色` : '出战'}状态[${cStatus.name}](${cStatus.entityId})`, 'system');
         this._detectSkill(pidx, 'status-destroy', { hidxs, source: cStatus.id, sourceHidx: hidx, isQuickAction });
         this._detectStatus(pidx, STATUS_TYPE.Attack, 'status-destroy', { cStatus, hidxs: [hidx], isUnshift: true, isQuickAction });
     }
@@ -2954,6 +2958,7 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      */
     private _doSummonDestroy(pidx: number, summon: Summon) {
+        this._writeLog(`[${this.players[pidx].name}]弃置召唤物[${summon.name}](${summon.entityId})`, 'system');
         this._detectSummon(pidx, 'summon-destroy', { csummon: [summon], isUnshift: true });
         this._detectSupport(pidx, 'summon-destroy');
     }
@@ -4930,7 +4935,9 @@ export default class GeniusInvokationRoom {
                     this.emit(`pickCard-${i}`, pidx);
                 }]], { isUnshift, isPriority });
             } else if (cmd == 'equip') {
-                this._doEquip(pidx, player.heros[ohidxs![0]], card as Card | number);
+                (ohidxs ?? [(isOppo ? opponent : player).hidx]).forEach(hidx => {
+                    this._doEquip(pidx, player.heros[hidx], card as Card | number);
+                });
             }
         }
         if (!isOnlyGetWillDamages && willDamages != undefined && dmgElement != undefined) {
@@ -5368,7 +5375,7 @@ export default class GeniusInvokationRoom {
         pidx: number, nSummon: Summon[], players: Player[], isExec = true,
         options: { isSummon?: number, destroy?: boolean, trigger?: Trigger, supportCnt?: number[][] } = {}
     ) {
-        const { summons = [], combatStatus = [], hidx = -1, heros = [] } = players[pidx] ?? {};
+        const { summons = [], combatStatus = [], hidx = -1, heros = [], name = '' } = players[pidx] ?? {};
         const newSummon: Summon[] = clone(nSummon);
         const oriSummon: Summon[] = clone(summons);
         const { isSummon = -1, destroy = false, trigger, supportCnt } = options;
@@ -5391,6 +5398,7 @@ export default class GeniusInvokationRoom {
                 if (smnres.rCombatStatus) {
                     this._updateStatus(pidx, this._getStatusById(smnres.rCombatStatus), combatStatus, players, { hidx, isExec });
                 }
+                this._writeLog(`[${name}]召唤[${smn.name}](${smn.entityId})`, 'system');
             }
             this._detectSupport(pidx, 'summon-generate', { players, csummon, supportCnt, isExec });
         });

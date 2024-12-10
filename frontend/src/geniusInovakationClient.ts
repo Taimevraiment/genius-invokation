@@ -383,7 +383,6 @@ export default class GeniusInvokationClient {
         this._resetWillAttachs();
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.StartGame,
-            cpidx: this.playerIdx,
             deckIdx: this.deckIdx,
             heroIds,
             cardIds,
@@ -395,11 +394,7 @@ export default class GeniusInvokationClient {
      * 投降
      */
     giveup() {
-        this.socket.emit('sendToServer', {
-            type: ACTION_TYPE.GiveUp,
-            cpidx: this.playerIdx,
-            flag: 'giveup',
-        } as ActionData);
+        this.socket.emit('sendToServer', { type: ACTION_TYPE.GiveUp, flag: 'giveup' } as ActionData);
     }
     /**
      * 从服务器获取数据
@@ -524,7 +519,6 @@ export default class GeniusInvokationClient {
     changeCard(cardIdxs: number[]) {
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.ChangeCard,
-            cpidx: this.playerIdx,
             cardIdxs,
             flag: 'changeCard',
         } as ActionData);
@@ -599,7 +593,6 @@ export default class GeniusInvokationClient {
             else this.isShowSwitchHero = 1;
             this.socket.emit('sendToServer', {
                 type: ACTION_TYPE.ChooseInitHero,
-                cpidx: this.playerIdx,
                 heroIdxs: [hidx],
                 flag: 'chooseInitHero',
             } as ActionData);
@@ -740,7 +733,6 @@ export default class GeniusInvokationClient {
                 if (this.diceSelect.indexOf(true) == -1) return this._sendTip('骰子不符合要求');
                 this.socket.emit('sendToServer', {
                     type: ACTION_TYPE.Reconcile,
-                    cpidx: this.playerIdx,
                     cardIdxs: [cardIdx],
                     diceSelect: this.diceSelect,
                     flag: 'reconcile',
@@ -841,7 +833,6 @@ export default class GeniusInvokationClient {
         if (!this.isValid) return;
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.SwitchHero,
-            cpidx: this.playerIdx,
             heroIdxs: [hidx],
             diceSelect: this.diceSelect,
             flag: 'switchHero',
@@ -854,7 +845,6 @@ export default class GeniusInvokationClient {
     reroll() {
         this.socket.emit('sendToServer', {
             type: ACTION_TYPE.Reroll,
-            cpidx: this.playerIdx,
             diceSelect: this.diceSelect,
             flag: 'reroll',
         } as ActionData);

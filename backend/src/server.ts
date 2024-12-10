@@ -232,20 +232,17 @@ io.on('connection', socket => {
     });
     // 发送数据到服务器
     socket.on('sendToServer', async (actionData: ActionData) => {
-        const me = getPlayer(pid) ?? getPlayer(actionData.cpidx!);
+        const me = getPlayer(pid);
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;
-        if (isDev) room.getAction(actionData, socket);
-        else {
-            try {
-                room.getAction(actionData, socket);
-            } catch (e) {
-                const error: Error = e as Error;
-                console.error(error);
-                room.exportLog(error.stack);
-            }
+        try {
+            room.getAction(actionData, socket, (me as Player)?.pidx);
+        } catch (e) {
+            const error: Error = e as Error;
+            console.error(error);
+            room.exportLog(error.stack);
         }
         if (isStart != room.isStart) emitPlayerAndRoomList();
     });

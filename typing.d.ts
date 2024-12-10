@@ -208,7 +208,6 @@ type Countdown = {
 
 type ActionData = {
     type: ActionType,
-    cpidx?: number, // 发起请求的玩家序号
     skillId?: number, // 使用的技能id -1无
     cardIdxs?: number[], // 使用/替换的卡牌序号
     heroIdxs?: number[], // 选择的目标角色序号

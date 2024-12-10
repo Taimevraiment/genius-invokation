@@ -52,6 +52,12 @@
         @click.stop="removeAI">
         -删除bot
       </p>
+      <strong v-if="client.opponent.id != -1 && client.opponent.phase == PHASE.NOT_READY" style="color: #ffbaba;">
+        未准备
+      </strong>
+      <strong v-if="client.opponent.id != AI_ID && client.opponent.phase == PHASE.NOT_BEGIN" style="color: #eaff8d;">
+        已准备
+      </strong>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
         {{ handCardsCnt[client.playerIdx ^ 1] }}
       </div>
