@@ -64,10 +64,13 @@ export default class GeniusInvokationRoom {
     newSummon: (id: number, ...args: any) => Summon;
     newSkill: (id: number) => Skill;
     newSupport: (id: number | Card, ...args: any) => Support;
+    leaveRoom: (eventName: string, player?: Player) => void;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
+    private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
 
-    constructor(io: Server, id: number, name: string, version: Version, password: string, countdown: number, isDev: boolean) {
+    constructor(io: Server, id: number, name: string, version: Version, password: string,
+        leaveRoom: (eventName: string, player?: Player) => void, countdown: number, isDev: boolean) {
         this.io = io;
         this.id = id;
         this.name = name || `房间${id}`;
@@ -84,6 +87,7 @@ export default class GeniusInvokationRoom {
             return newSupport(version)(id, ...args);
         }
         this.newSkill = newSkill(version);
+        this.leaveRoom = leaveRoom;
         this.taskQueue = new TaskQueue(this._writeLog.bind(this), isDev);
     }
     get currentPlayerIdx() {
@@ -169,6 +173,18 @@ export default class GeniusInvokationRoom {
         fs.writeFile(`${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}.log`, log, err => {
             if (err) return console.error('err:', err);
         });
+    }
+    /**
+     * 重置心跳
+     * @param pidx 玩家序号
+     */
+    resetHeartBreak(pidx: number) {
+        clearInterval(this._heartBreak[pidx][0]);
+        clearInterval(this._heartBreak[pidx][1]);
+        this._heartBreak[pidx][0] = setTimeout(() => {
+            this.io.to(`7szh-${this.id}-p${pidx}`).emit('getHeartBreak');
+            this._heartBreak[pidx][1] = setTimeout(() => this.leaveRoom('close', this.players[pidx]), 5e3);
+        }, 30 * 1e3);
     }
     /**
      * 获取预览
@@ -319,7 +335,6 @@ export default class GeniusInvokationRoom {
                 const log = this.log.map(lg => {
                     const cpidx = +(lg.content.match(/(?<=【p)\d+(?=:)/)?.[0] ?? -1);
                     if (cpidx > -1 && pidx == cpidx) return { content: lg.content.replace(/【p\d+:([^【】]+)】/g, '$1'), type: lg.type };
-                    if (cpidx == -1 && pidx == this.currentPlayerIdx) return { content: lg.content.replace(/[【】]/g, ''), type: lg.type };
                     return { content: lg.content.replace(/【[^【】]+】/g, ''), type: lg.type }
                 });
                 return {
@@ -338,6 +353,7 @@ export default class GeniusInvokationRoom {
                         }
                         return {
                             ...pvo,
+                            id: -2,
                             heros: clone(pvo.heros).map(h => {
                                 h.heroStatus = h.heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
                                 h.skills = h.skills.filter(s => s.type != SKILL_TYPE.PassiveHidden);
@@ -490,6 +506,7 @@ export default class GeniusInvokationRoom {
         this.winner = -1;
         this.round = 1;
         this.log = [];
+        this.systemLog = '';
         if (this.players[1].id == AI_ID) this._initAI();
         this.players.forEach(p => {
             p.phase = this.phase;
@@ -527,7 +544,8 @@ export default class GeniusInvokationRoom {
             p.handCards = p.pile.splice(0, INIT_HANDCARDS_COUNT).map(c => c.setEntityId(this._genEntityId()));
             p.UI.info = `${this.startIdx == p.pidx ? '我方' : '对方'}先手`;
             this._writeLog(`[${p.name}]获得手牌${p.handCards.map(c => `[${c.name}]`).join('')}`, 'system');
-            this._writeLog(`[${p.name}]牌库：${p.pile.map(c => `[${c.name}]`).join('')}`, 'system')
+            this._writeLog(`[${p.name}]牌库：${p.pile.map(c => `[${c.name}]`).join('')}`, 'system');
+            this.resetHeartBreak(p.pidx);
         });
         if (this.players[1].id == AI_ID) {
             const aiPlayer = this.players[1];
@@ -548,6 +566,7 @@ export default class GeniusInvokationRoom {
         const { deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
             diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
         const player = this.players[pidx];
+        this.resetHeartBreak(pidx);
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 player.deckIdx = deckIdx;
@@ -942,7 +961,7 @@ export default class GeniusInvokationRoom {
         player.dice = this._rollDice(pidx);
         player.handCards = player.handCards.filter((_, ci) => ci != cardIdx);
         ++player.playerInfo.reconcileCnt;
-        this._writeLog(`[${player.name}]【将[${currCard.name}]】进行了调和`, 'info');
+        this._writeLog(`[${player.name}]【p${player.pidx}:将[${currCard.name}]】进行了调和`, 'info');
         this._doActionAfter(pidx);
         this.emit(flag, pidx, { isActionInfo: true });
         await delay(1100);
@@ -5327,7 +5346,7 @@ export default class GeniusInvokationRoom {
                     supportCnt,
                 });
             }
-            if (isExec) this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【p(${sts.entityId})】`);
+            if (isExec) this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`);
             const stsres = sts.handle(sts, { heros, hidx });
             if (sts.hasType(STATUS_TYPE.Enchant)) updateAttachEl(heros, hidx, sts.group, oriStatus);
             if (stsres.onlyOne) {

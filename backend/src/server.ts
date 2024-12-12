@@ -108,9 +108,10 @@ io.on('connection', socket => {
         });
     }
     // 离开房间
-    const leaveRoom = (eventName: string) => {
+    const leaveRoom = (eventName: string, player?: Player) => {
+        if (player) pid = player.id;
         if (pid == -1) return;
-        const me = getPlayer(pid) as Player;
+        const me = player ?? getPlayer(pid) as Player;
         if (!me) return console.error(`ERROR@leaveRoom:${eventName}:未找到玩家,me:${JSON.stringify(me)}`);
         const log = `[${new Date()}]:玩家[${me.name}]` + {
             exitRoom: `离开了房间[${me.rid}]...`,
@@ -181,13 +182,18 @@ io.on('connection', socket => {
         const { roomName, version, roomPassword, countdown } = data;
         const roomId = genId(roomList);
         const me = getPlayer(pid) as Player;
-        const newRoom = new GeniusInvokationRoom(io, roomId, roomName, version, roomPassword, countdown, isDev);
+        const newRoom = new GeniusInvokationRoom(io, roomId, roomName, version, roomPassword, leaveRoom, countdown, isDev);
         const player = newRoom.init(me);
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
         socket.join(`7szh-${roomId}-p${player.pidx}`);
         emitPlayerAndRoomList();
-        socket.emit('enterRoom', { roomId, players: newRoom.players, version: newRoom.version.value, countdown: newRoom.countdown.limit });
+        socket.emit('enterRoom', {
+            roomId,
+            players: newRoom.players.map(p => p.id == me.id ? p : ({ ...p, id: -2 })),
+            version: newRoom.version.value,
+            countdown: newRoom.countdown.limit,
+        });
     });
     // 加入房间
     socket.on('enterRoom', data => {
@@ -214,7 +220,13 @@ io.on('connection', socket => {
             socket.join(`7szh-${roomId}-p${(me as Player).pidx}`);
         }
         emitPlayerAndRoomList();
-        socket.emit('enterRoom', { roomId, isLookon, players: room.players, version: room.version.value, countdown: room.countdown.limit });
+        socket.emit('enterRoom', {
+            roomId,
+            isLookon,
+            players: room.players.map(p => p.id == me.id ? p : ({ ...p, id: -2 })),
+            version: room.version.value,
+            countdown: room.countdown.limit,
+        });
     });
     // 退出房间
     socket.on('exitRoom', () => leaveRoom('exitRoom'));
@@ -256,6 +268,14 @@ io.on('connection', socket => {
         let isStart = room.isStart;
         room.getActionDev(actionData);
         if (isStart != room.isStart) emitPlayerAndRoomList();
+    });
+    // 接收心跳
+    socket.on('sendHeartBreak', () => {
+        const me = getPlayer(pid);
+        if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
+        const room = getRoom(me.rid);
+        if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
+        room.resetHeartBreak((me as Player).pidx);
     });
     // 添加AI
     socket.on('addAI', () => {

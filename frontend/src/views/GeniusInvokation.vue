@@ -389,12 +389,14 @@ onMounted(() => {
   socket.emit('roomInfoUpdate', { roomId });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
+  socket.on('getHeartBreak', () => socket.emit('sendHeartBreak'));
 });
 
 onUnmounted(() => {
   socket.off('roomInfoUpdate');
   socket.off('getServerInfo');
   socket.off('getPlayerAndRoomList', getPlayerList);
+  socket.off('getHeartBreak');
 });
 
 // dev
