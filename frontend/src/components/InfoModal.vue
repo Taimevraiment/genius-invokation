@@ -83,7 +83,8 @@
           <div v-if="isShowSkill[sidx]"
             @click.stop="showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
             <div class="info-hero-skill-explain"
-              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx]" :key="eidx">
+              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx + +(skills[0].type == SKILL_TYPE.Vehicle)]"
+              :key="eidx">
               <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
             </div>
           </div>

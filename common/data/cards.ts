@@ -1248,26 +1248,26 @@ const allCards: Record<number, () => CardBuilder> = {
     313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
-    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2).isResetPerCnt()
+    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2)
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp')
-        .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时：】如果敌方出战角色附属【sts301302】，则移除其【sts301302】，我方可以连续行动一次。如可能，[舍弃]原本元素骰费用最高的1张手牌，以获得1个随机基础元素骰。；')
-        .handle((card, event) => {
-            const { eheros = [], ehidx = -1, hcardsCnt = 0, trigger = '' } = event;
+        .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为｢快速行动｣而非｢战斗行动｣，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
+        .handle((_, event) => {
+            const { eheros = [], ehidx = -1, hcardsCnt = 0 } = event;
+            const isTriggered = hcardsCnt > 0 && hasObjById(eheros[ehidx]?.heroStatus, 301302);
             return {
                 cmds: [{ cmd: 'getStatus', status: 301302, isOppo: true }],
-                trigger: ['switch-to', 'change-turn'],
-                isQuickAction: trigger == 'change-turn' && card.perCnt > 0,
-                execmds: isCdt(hcardsCnt > 0 && trigger == 'switch-to', [
-                    { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard },
-                    { cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random },
-                ]),
+                trigger: ['switch-to', 'active-switch-to'],
+                minusDiceHero: isCdt(isTriggered, 1),
+                isQuickAction: isTriggered,
+                execmds: isCdt(isTriggered, [{ cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard }]),
                 exec: () => {
-                    if (trigger == 'switch-to' && hasObjById(eheros[ehidx]?.heroStatus, 301302)) {
-                        --getObjById(eheros[ehidx].heroStatus, 301302)!.useCnt;
-                        ++card.perCnt;
-                    } else if (trigger == 'change-turn' && card.perCnt > 0) {
-                        --card.perCnt;
-                    }
+                    eheros.forEach(h => {
+                        const sts301302 = getObjById(h.heroStatus, 301302);
+                        if (sts301302) sts301302.useCnt = 0;
+                    });
+                    let { switchHeroDiceCnt = 0 } = event;
+                    if (switchHeroDiceCnt > 0) --switchHeroDiceCnt;
+                    return { switchHeroDiceCnt }
                 }
             }
         }),
@@ -1980,6 +1980,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 cmds: [{ cmd: 'switch-to', hidxs: selectHeros }, { cmd: 'useSkill', cnt: SKILL_TYPE.Normal }],
                 canSelectHero: heros.map(h => !h.isFront && h.hp > 0 && h.heroStatus.every(s => !s.hasType(STATUS_TYPE.NonAction))),
+                notPreview: true,
             }
         }),
 

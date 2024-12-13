@@ -113,11 +113,11 @@ io.on('connection', socket => {
         if (pid == -1) return;
         const me = player ?? getPlayer(pid) as Player;
         if (!me) return console.error(`ERROR@leaveRoom:${eventName}:未找到玩家,me:${JSON.stringify(me)}`);
-        const log = `[${new Date()}]:玩家[${me.name}]` + {
+        const log = `[${new Date()}]:玩家[${me.name}]-pid:${me.id} ` + ({
             exitRoom: `离开了房间[${me.rid}]...`,
             disconnect: `断开连接了...`,
             close: `关闭了连接...`,
-        }[eventName];
+        }[eventName] ?? `未知原因[${eventName}]断开...`);
         console.info(log);
         if (me.rid > 0) {
             socket.leave(`7szh-${me.rid}`);
@@ -154,18 +154,18 @@ io.on('connection', socket => {
             const prevname = player.name;
             if (name != '' && prevname != name) {
                 player.name = name;
-                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid}改名为[${name}]`);
+                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid} 改名为[${name}]`);
             } else {
                 username = prevname;
-                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid}重新连接了...`);
+                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid} 重新连接了...`);
                 removePlayerList.get(id)?.cancel();
                 if (player.rid > 0 && getRoomIdx(player.rid) > -1) {
-                    console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid}重新进入房间[${player.rid}]`);
+                    console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid} 重新进入房间[${player.rid}]`);
                     socket.emit('continueGame', { roomId: player.rid });
                 }
             }
         } else {
-            console.info(`[${new Date()}]:新玩家[${name}]-pid${pid}连接了...`);
+            console.info(`[${new Date()}]:新玩家[${name}]-pid${pid} 连接了...`);
             pid = genId(playerList);
             playerList.push({ id: pid, name, rid: -1 });
         }
@@ -197,14 +197,14 @@ io.on('connection', socket => {
     });
     // 加入房间
     socket.on('enterRoom', data => {
-        const { roomId, roomPassword = '', isForce = false } = data;
+        const { roomId, roomPassword = '' } = data;
         let me = getPlayer(pid)!;
         const room = getRoom(roomId);
         if (!room) return socket.emit('enterRoom', { err: `房间号${roomId}不存在！` });
-        if (room.password != roomPassword && !isForce) return socket.emit('enterRoom', { err: '密码错误！' });
-        if (me.rid > 0 && me.rid != roomId) return socket.emit('enterRoom', { err: `你还有正在进行的游戏！rid:${me.rid}` });
         const pidx = getIdxById(me.id, room.players);
         const isInGame = pidx > -1;
+        if (room.password != roomPassword && !isInGame) return socket.emit('enterRoom', { err: '密码错误！' });
+        if (me.rid > 0 && me.rid != roomId) return socket.emit('enterRoom', { err: `你还有正在进行的游戏！rid:${me.rid}` });
         const isLookon = room.players.length >= 2 && !isInGame;
         if (room.isStart && isInGame) {
             ++room.onlinePlayersCnt;

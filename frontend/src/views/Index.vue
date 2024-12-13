@@ -211,10 +211,7 @@ onMounted(() => {
   });
   // 继续游戏
   socket.on('continueGame', ({ roomId }) => {
-    socket.emit('enterRoom', {
-      roomId,
-      isForce: true,
-    });
+    socket.emit('enterRoom', { roomId });
   });
 });
 

@@ -1339,10 +1339,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     trigger: ['active-switch-to', 'action-start', 'skilltype1'],
                     isQuickAction: trigger == 'active-switch-to' && status.perCnt > 0,
                     attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
-                    exec: () => {
+                    exec: (_, execEvent = {}) => {
                         if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: SKILL_TYPE.Normal }] }
                         if (trigger == 'skilltype1' && status.useCnt > 0) --status.useCnt;
-                        if (trigger == 'active-switch-to' && status.perCnt > 0) --status.perCnt;
+                        if (trigger == 'active-switch-to' && execEvent.isQuickAction && status.perCnt > 0) --status.perCnt;
                     },
                 }
             }),
@@ -2543,8 +2543,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301301: () => shieldHeroStatus('掘进的收获'),
 
-    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .description('【附属角色处于前台，且敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果，对方可以再连续行动一次，然后对方[舍弃]1张原本元素骰费用最高的手牌，并且生成1个随机基础元素骰。'),
+    301302: () => new StatusBuilder('目标').heroStatus().icon('debuff').useCnt(1).type(STATUS_TYPE.Usage)
+        .description('【敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果。'),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon('buff2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
