@@ -846,10 +846,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const { heros = [] } = execEvent;
                     const hero = heros[hidx];
                     if (!hero) return;
+                    --eStatus.useCnt;
                     const sts112141 = getObjById(hero.heroStatus, 112141);
                     if (!sts112141) return;
-                    --sts112141.useCnt;
-                    --eStatus.useCnt;
+                    sts112141.useCnt = Math.max(0, sts112141.useCnt);
                 }
             }
         })),

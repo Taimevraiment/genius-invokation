@@ -69,21 +69,21 @@
     </div>
 
     <MainDesk v-if="client.phase >= PHASE.CHANGE_CARD || client.isWin > -1" :isMobile="isMobile" :canAction="canAction"
-      :afterWinHeros="afterWinHeros" :isLookon="isLookon" :client="client" :version="version"
-      @select-change-card="selectChangeCard" @change-card="changeCard" @reroll="reroll" @select-hero="selectHero"
-      @select-use-dice="selectUseDice" @select-support="selectCardSupport" @select-summon="selectCardSummon"
-      @end-phase="endPhase" @show-history="showHistory" @update:dice-select="updateDiceSelect"
-      @select-card-pick="selectCardPick" @pick-card="pickCard" />
+      :afterWinHeros="afterWinHeros" :isLookon="isLookon" :client="(client as GeniusInvokationClient)"
+      :version="version" @select-change-card="selectChangeCard" @change-card="changeCard" @reroll="reroll"
+      @select-hero="selectHero" @select-use-dice="selectUseDice" @select-support="selectCardSupport"
+      @select-summon="selectCardSummon" @end-phase="endPhase" @show-history="showHistory"
+      @update:dice-select="updateDiceSelect" @select-card-pick="selectCardPick" @pick-card="pickCard" />
 
     <div class="hand-card"
       v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0) || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
-      <handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
+      <Handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
         :class="{ selected: client.handcardsSelect == idx }" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
-      </handcard>
+      </Handcard>
     </div>
 
     <div class="btn-group" v-if="client.isShowButton">
@@ -161,9 +161,9 @@
       'modal-action-leave': client.actionInfo.content == '',
     }">
       <div>{{ client.actionInfo.content }}</div>
-      <handcard v-if="client.actionInfo.card" style="position: relative;margin-top: 10px;"
+      <Handcard v-if="client.actionInfo.card" style="position: relative;margin-top: 10px;"
         :card="client.actionInfo.card" :isMobile="isMobile" :isHideCost="true">
-      </handcard>
+      </Handcard>
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&
@@ -217,7 +217,7 @@ const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
 const version = ref<Version>(cversion); // 版本
 const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * PLAYER_COUNT) : -1); // 是否旁观
-const client = ref(new GeniusInvokationClient(socket, roomId, userid, version.value, cplayers, isMobile.value, countdown, isDev,
+const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(socket, roomId, userid, version.value, cplayers, isMobile.value, countdown, isDev,
   JSON.parse(localStorage.getItem('GIdecks') || '[]'),
   Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value,
 ));

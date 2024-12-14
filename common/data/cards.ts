@@ -1248,7 +1248,7 @@ const allCards: Record<number, () => CardBuilder> = {
     313005: () => new CardBuilder(440).name('暝视龙').since('v5.2.0').vehicle().costSame(2).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
-    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(0).useCnt(2)
+    313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(1).useCnt(2)
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp')
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为｢快速行动｣而非｢战斗行动｣，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
         .handle((_, event) => {

@@ -4,8 +4,7 @@ import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
-    CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE,
-    HANDCARDS_OFFSET_PC,
+    CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC,
 } from "@@@/constant/UIconst";
 import { newSummon } from "@@@/data/summons";
 import { checkDices } from "@@@/utils/gameUtil";
@@ -35,7 +34,7 @@ export default class GeniusInvokationClient {
     isReconcile: boolean = false; // 是否进入调和模式
     willAttachs: ElementType[][] = []; // 将要附着的元素
     willHp: (number | undefined)[] = []; // 总共的血量变化
-    damageVO: Exclude<DamageVO, -1> = this.resetDamageVO(); // 显示伤害
+    damageVO: Exclude<DamageVO, -1> = this._resetDamageVO(); // 显示伤害
     isShowDmg: boolean = false; // 是否显示伤害数
     isShowSwitchHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
@@ -498,14 +497,14 @@ export default class GeniusInvokationClient {
                     this.isShowDmg = false;
                     if (damageVO?.dmgSource == 'summon') this._resetSummonSelect();
                     else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
-                    setTimeout(() => this.resetDamageVO(), 500);
+                    setTimeout(() => this._resetDamageVO(), 500);
                 }, 1100);
             }, 550);
         } else {
             this.players = players;
             if (damageVO != -1 && damageVO?.elTips.some(([v]) => v != '')) {
                 this.damageVO.elTips = damageVO?.elTips ?? [];
-                setTimeout(() => this.resetDamageVO(), 1100);
+                setTimeout(() => this._resetDamageVO(), 1100);
             }
         }
         this.updateHandCardsPos();
@@ -1047,7 +1046,7 @@ export default class GeniusInvokationClient {
     /**
      * 重置damageVO
      */
-    resetDamageVO() {
+    private _resetDamageVO() {
         return this.damageVO = {
             ...this.damageVO,
             dmgSource: 'null',

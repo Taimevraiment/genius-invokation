@@ -10,27 +10,27 @@
           <div>{{ diceCnt[playerIdx ^ 1] }}</div>
         </span>
         {{ pileCnt[playerIdx ^ 1] }}
-        <handcard class="will-getcard-oppo" :class="{
+        <Handcard class="will-getcard-oppo" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
           'will-getcard-oppo-generate': !opponent?.UI.willGetCard.isFromPile
         }" v-if="opponent?.UI.willGetCard"
           :style="{ left: `${getLeft(cidx, opponent?.UI.willGetCard.cards.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willGetCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
-        </handcard>
-        <handcard class="will-addcard-oppo" :class="{ 'mobile-will-card': isMobile }"
+        </Handcard>
+        <Handcard class="will-addcard-oppo" :class="{ 'mobile-will-card': isMobile }"
           v-if="opponent?.UI.willAddCard.cards"
           :style="{ left: `${getLeft(cidx, opponent?.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willAddCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
-        </handcard>
-        <handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
+        </Handcard>
+        <Handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[0].length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willDiscard[0]" :key="cidx">
-        </handcard>
-        <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+        </Handcard>
+        <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[1].length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willDiscard[1]" :key="cidx">
-        </handcard>
+        </Handcard>
       </div>
       <div class="timer" :style="{ 'background-image': currTimeBg }">
         <button class="end-phase" @click.stop="endPhase"
@@ -43,26 +43,26 @@
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
         {{ pileCnt[playerIdx] }}
-        <handcard class="will-getcard-my" :class="{
+        <Handcard class="will-getcard-my" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-my-pile': player.UI.willGetCard.isFromPile,
           'will-getcard-my-generate': !player.UI.willGetCard.isFromPile
         }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willGetCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willGetCard.cards" :key="cidx">
-        </handcard>
-        <handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
+        </Handcard>
+        <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
-        </handcard>
-        <handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+        </Handcard>
+        <Handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player.UI.willDiscard[0].length)}px` }"
           v-for="(card, cidx) in player.UI.willDiscard[0]" :key="cidx">
-        </handcard>
-        <handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+        </Handcard>
+        <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard[1].length)}px` }"
           v-for="(card, cidx) in player.UI.willDiscard[1]" :key="cidx">
-        </handcard>
+        </Handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
         <div v-for="(his, hsidx) in historyInfo" :key="hsidx"
@@ -410,10 +410,10 @@
 
         <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
           <div class="init-cards">
-            <handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
+            <Handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
               :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
               <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
-            </handcard>
+            </Handcard>
           </div>
           <button @click="changeCard" v-if="showChangeCardBtn">
             {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
@@ -423,10 +423,10 @@
         <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
           <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
           <div class="pick-cards">
-            <handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
+            <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
               :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
               <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
-            </handcard>
+            </Handcard>
           </div>
           <button @click="pickCard" v-if="pickCardIdx > -1">确认</button>
         </div>
@@ -441,8 +441,9 @@
 
 <script setup lang='ts'>
 import Handcard from '@/components/Card.vue';
+import GeniusInvokationClient from '@/geniusInovakationClient';
 import {
-  CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+  CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
@@ -451,7 +452,14 @@ import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
 
-const props = defineProps(['isMobile', 'canAction', 'isLookon', 'afterWinHeros', 'client', 'isShowHistory', 'version']);
+const props = defineProps<{
+  isMobile: boolean,
+  canAction: boolean,
+  isLookon: number,
+  afterWinHeros: Hero[][],
+  client: GeniusInvokationClient,
+  version: Version,
+}>();
 const emits = defineEmits([
   'selectChangeCard', 'changeCard', 'reroll', 'selectHero', 'selectUseDice', 'selectSummon', 'selectSupport', 'endPhase',
   'showHistory', 'update:diceSelect', 'selectCardPick', 'pickCard',
@@ -592,7 +600,7 @@ const willDamages = computed<number[][][]>(() => {
   }
   return dmgs;
 });
-const dmgElements = computed<ElementType[][]>(() => wrapArr(props.client.damageVO.dmgElements ?? []));
+const dmgElements = computed<DamageType[][]>(() => wrapArr(props.client.damageVO.dmgElements ?? []));
 const willHeals = computed<number[][]>(() => wrapArr(props.client.damageVO.willHeals ?? []));
 const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wrapArr(props.client.damageVO.elTips ?? []));
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
@@ -613,13 +621,13 @@ const supportCanSelect = computed<boolean[][]>(() => props.client.supportCanSele
 const summonSelect = computed<boolean[][]>(() => props.client.summonSelect);
 const summonCanSelect = computed<boolean[][]>(() => props.client.summonCanSelect);
 const statusSelect = computed<boolean[][][][]>(() => props.client.statusSelect);
-const slotSelect = computed<boolean[][][][]>(() => props.client.slotSelect);
+const slotSelect = computed<boolean[][][]>(() => props.client.slotSelect);
 const targetSelect = computed<boolean[][]>(() => props.client.targetSelect);
 const isLookon = computed<number>(() => props.isLookon);
 const heros = computed<Hero[][]>(() => {
   if (props.client.isWin < 2) return [opponent?.value?.heros ?? [], player.value.heros];
   if (playerIdx.value == 0) return [props.afterWinHeros[1], props.afterWinHeros[0]];
-  return props.afterWinHeros.flat();
+  return props.afterWinHeros;
 });
 const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, player.value.combatStatus]);
 const currTime = computed<number>(() => ((props.client.countdown.limit - props.client.countdown.curr) / props.client.countdown.limit) * 100);

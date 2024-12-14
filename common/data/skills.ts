@@ -1,6 +1,6 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
 import { CARD_SUBTYPE, CardSubtype, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
-import { getObjById } from "../utils/gameUtil.js"
+import { allHidxs, getObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 
@@ -152,9 +152,13 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png')
         .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
 
-    1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。')
+    1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
         .src('')
-        .vehicle().cost(1).handle(() => ({ cmds: [{ cmd: 'switch-before' }], statusOppo: 112143 })),
+        .vehicle().cost(1).handle(event => ({
+            cmds: [{ cmd: 'switch-before' }],
+            status: isCdt(allHidxs(event.heros).length == 1, 112145),
+            statusOppo: 112143,
+        })),
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1151021',
