@@ -335,6 +335,7 @@ export const PLAYER_STATUS = {
     WAITING: 0,
     PLAYING: 1,
     DIESWITCH: 2,
+    OFFLINE: 3,
 } as const;
 
 export type PlayerStatus = TypeConst<typeof PLAYER_STATUS>;

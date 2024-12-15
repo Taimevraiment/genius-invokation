@@ -210,9 +210,7 @@ onMounted(() => {
     followIdx = -1;
   });
   // 继续游戏
-  socket.on('continueGame', ({ roomId }) => {
-    socket.emit('enterRoom', { roomId });
-  });
+  socket.on('continueGame', data => socket.emit('enterRoom', data));
 });
 
 onUnmounted(() => {

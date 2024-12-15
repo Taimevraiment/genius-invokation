@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
 import { AI_ID } from "../../common/constant/gameOption.js";
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
@@ -10,10 +11,12 @@ const app = express();
 app.use(cors({
     origin: [
         'http://127.0.0.1:5500',
+        'http://127.0.0.1:5501',
         'http://taim.site',
         'http://gi-tcg.taim.site',
         'http://7szh.taim.site',
         'http://localhost:5500',
+        'http://localhost:5501',
     ],
     methods: ['GET', 'POST']
 }));
@@ -39,9 +42,9 @@ process.on('uncaughtException', err => console.error(err));
 process.on('exit', code => console.error(code));
 
 const isDev = process.env.NODE_ENV == 'development';
-const playerList: ({ id: number, name: string, rid: number } | Player)[] = []; // 在线玩家列表
+const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
-const removePlayerList = new Map<number, { time: NodeJS.Timeout, cancel: () => void }>(); // 玩家即将离线销毁列表
+const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
 
 // 生成id
 const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number } = {}) => {
@@ -74,15 +77,19 @@ const getRoom = (rid: number) => getById(rid, roomList);
 // 获取房间索引
 const getRoomIdx = (rid: number) => getIdxById(rid, roomList);
 // 玩家离线销毁
-const removePlayer = (pid: number) => {
+const removePlayer = (player: Player) => {
+    const { id: pid, status } = player;
+    player.status = PLAYER_STATUS.OFFLINE;
     const time = setTimeout(() => {
         removeById(pid, playerList);
     }, 30 * 60 * 1e3);
     removePlayerList.set(pid, {
         time,
+        status,
         cancel: () => {
             clearTimeout(removePlayerList.get(pid)?.time);
             removePlayerList.delete(pid);
+            player.status = status;
         }
     });
 }
@@ -125,9 +132,8 @@ io.on('connection', socket => {
             if (!room) return console.error(`ERROR@leaveRoom:${eventName}:未找到房间,rid:${me.rid}`);
             const pidx = getIdxById(me.id, room.players);
             if (pidx > -1) {
-                if (me.pidx < 2) --room.onlinePlayersCnt;
+                if (me.pidx < 2 || room.players?.[1]?.id == AI_ID) --room.onlinePlayersCnt;
                 if (room.isStart) me.isOffline = true;
-                if (room.players?.[1]?.id == AI_ID) --room.onlinePlayersCnt;
             }
             if (!room.isStart || pidx == -1 || me.pidx > 1) {
                 me.rid = -1;
@@ -141,33 +147,38 @@ io.on('connection', socket => {
                 room.emit('leaveRoom', pidx);
             }
         }
-        if (eventName == 'disconnect') removePlayer(me.id);
+        if (eventName != 'exitRoom') removePlayer(me);
         emitPlayerAndRoomList();
     }
     // 登录/改名/重连
     socket.on('login', data => {
         const { id = -1, name = '' } = data;
+        if (name == '') return;
         let username = name;
         pid = id;
         const player = getPlayer(id);
         if (id > 0 && player) {
             const prevname = player.name;
-            if (name != '' && prevname != name) {
+            const playerInfo = `[${new Date()}]:玩家[${prevname}]-pid${pid}`;
+            if (prevname != name) {
                 player.name = name;
-                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid} 改名为[${name}]`);
+                console.info(`${playerInfo} 改名为[${name}]`);
             } else {
                 username = prevname;
-                console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid} 重新连接了...`);
-                removePlayerList.get(id)?.cancel();
+                const leavePlayer = removePlayerList.get(id);
+                if (leavePlayer) {
+                    leavePlayer.cancel();
+                    console.info(`${playerInfo} 重新连接了...`);
+                }
                 if (player.rid > 0 && getRoomIdx(player.rid) > -1) {
-                    console.info(`[${new Date()}]:玩家[${prevname}]-pid${pid} 重新进入房间[${player.rid}]`);
-                    socket.emit('continueGame', { roomId: player.rid });
+                    console.info(`${playerInfo} 重新进入房间[${player.rid}]`);
+                    socket.emit('continueGame', { roomId: player.rid, isLeave: !!leavePlayer });
                 }
             }
         } else {
             console.info(`[${new Date()}]:新玩家[${name}]-pid${pid} 连接了...`);
             pid = genId(playerList);
-            playerList.push({ id: pid, name, rid: -1 });
+            playerList.push({ id: pid, name, rid: -1, status: PLAYER_STATUS.WAITING });
         }
         socket.emit('login', { pid, name: username });
         emitPlayerAndRoomList();
@@ -176,7 +187,6 @@ io.on('connection', socket => {
     socket.on('getPlayerAndRoomList', emitPlayerAndRoomList);
     // 断开连接
     socket.on('disconnect', () => leaveRoom('disconnect'));
-    socket.on('close', () => leaveRoom('close'));
     // 创建房间
     socket.on('createRoom', data => {
         const { roomName, version, roomPassword, countdown } = data;
@@ -197,7 +207,7 @@ io.on('connection', socket => {
     });
     // 加入房间
     socket.on('enterRoom', data => {
-        const { roomId, roomPassword = '' } = data;
+        const { roomId, roomPassword = '', isLeave = true } = data;
         let me = getPlayer(pid)!;
         const room = getRoom(roomId);
         if (!room) return socket.emit('enterRoom', { err: `房间号${roomId}不存在！` });
@@ -206,8 +216,8 @@ io.on('connection', socket => {
         if (room.password != roomPassword && !isInGame) return socket.emit('enterRoom', { err: '密码错误！' });
         if (me.rid > 0 && me.rid != roomId) return socket.emit('enterRoom', { err: `你还有正在进行的游戏！rid:${me.rid}` });
         const isLookon = room.players.length >= 2 && !isInGame;
-        if (room.isStart && isInGame) {
-            ++room.onlinePlayersCnt;
+        if (isInGame) {
+            if (isLeave) ++room.onlinePlayersCnt;
             room.players[pidx].isOffline = false;
             setTimeout(() => room.emit('continueGame', (me as Player).pidx, { socket }), 500);
         } else {
@@ -259,7 +269,7 @@ io.on('connection', socket => {
         if (isStart != room.isStart) emitPlayerAndRoomList();
     });
     // 发送数据到服务器(开发用)
-    socket.on('sendToServerDev', (actionData) => {
+    socket.on('sendToServerDev', actionData => {
         const me = getPlayer(pid);
         if (pid == -1) console.warn(`pidx未找到`);
         if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
@@ -270,13 +280,13 @@ io.on('connection', socket => {
         if (isStart != room.isStart) emitPlayerAndRoomList();
     });
     // 接收心跳
-    socket.on('sendHeartBreak', () => {
-        const me = getPlayer(pid);
-        if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
-        const room = getRoom(me.rid);
-        if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
-        room.resetHeartBreak((me as Player).pidx);
-    });
+    // socket.on('sendHeartBreak', () => {
+    //     const me = getPlayer(pid);
+    //     if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
+    //     const room = getRoom(me.rid);
+    //     if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
+    //     room.resetHeartBreak((me as Player).pidx);
+    // });
     // 添加AI
     socket.on('addAI', () => {
         const me = getPlayer(pid)!;
@@ -294,6 +304,23 @@ io.on('connection', socket => {
     });
 
 
+});
+
+app.get('/detail', (req, res) => {
+    if (req.headers.flag != 'admin') return console.info(`请求失败`);
+    res.json({
+        roomList: roomList.map(r => ({
+            id: r.id,
+            name: r.name,
+            detail: r.string,
+        })),
+        playerList: playerList.map(p => ({
+            id: p.id,
+            name: p.name,
+            rid: p.rid,
+            status: p.status,
+        })),
+    });
 });
 
 httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV ?? 'production'}端口${PORT}启动......`));

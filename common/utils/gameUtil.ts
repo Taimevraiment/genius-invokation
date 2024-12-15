@@ -193,6 +193,8 @@ export const compareVersionFn = (curVersion: Version) => {
 export const playerToString = (player: Player, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
     return `{\n${prefix}name: ${player.name}\n`
+        + `${prefix}id: ${player.id}\n`
+        + `${prefix}pidx: ${player.pidx}\n`
         + `${prefix}isOffline: ${player.isOffline}\n`
         + `${prefix}canAction: ${player.canAction}\n`
         + `${prefix}isFallAtk: ${player.isFallAtk}\n`

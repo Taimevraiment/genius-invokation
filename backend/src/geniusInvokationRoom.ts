@@ -67,7 +67,7 @@ export default class GeniusInvokationRoom {
     leaveRoom: (eventName: string, player?: Player) => void;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
-    private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
+    // private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
 
     constructor(io: Server, id: number, name: string, version: Version, password: string,
         leaveRoom: (eventName: string, player?: Player) => void, countdown: number, isDev: boolean) {
@@ -98,6 +98,29 @@ export default class GeniusInvokationRoom {
     }
     get needWait() {
         return this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting;
+    }
+    get string() {
+        return `{\n`
+            + `  id: ${this.id}\n`
+            + `  name: ${this.name}\n`
+            + `  version: ${this.version.value}\n`
+            + `  password: ${this.password}\n`
+            + `  seed: ${this.seed}\n`
+            + `  players: [${this.players.map(p => playerToString(p, 2)).join(', ')}]\n`
+            + `  watchers: [${this.watchers.map(p => `${p.name}(${p.id})`).join(', ')}]\n`
+            + `  isStart: ${this.isStart}\n`
+            + `  phase: ${this.phase}\n`
+            + `  round: ${this.round}\n`
+            + `  startIdx: ${this.startIdx}\n`
+            + `  winner: ${this.winner}\n`
+            + `  taskQueue: ${this.taskQueue.queueList}\n`
+            + `  entityIdIdx: ${this.entityIdIdx}\n`
+            + `  isDieBackChange: ${this.isDieBackChange}\n`
+            + `  _currentPlayerIdx: ${this._currentPlayerIdx}\n`
+            + `  _random: ${this._random}\n`
+            + `  systemLog:\n`
+            + `${this.systemLog.split('\n').map(l => '    ' + l).join('\n')}\n`
+            + `}`;
     }
     /**
      * 手动设置种子
@@ -178,15 +201,15 @@ export default class GeniusInvokationRoom {
      * 重置心跳
      * @param pidx 玩家序号
      */
-    resetHeartBreak(pidx: number) {
-        if (this.players[pidx].id == AI_ID) return;
-        clearInterval(this._heartBreak[pidx][0]);
-        clearInterval(this._heartBreak[pidx][1]);
-        this._heartBreak[pidx][0] = setTimeout(() => {
-            this.io.to(`7szh-${this.id}-p${pidx}`).emit('getHeartBreak');
-            this._heartBreak[pidx][1] = setTimeout(() => this.leaveRoom('close', this.players[pidx]), 5e3);
-        }, 30 * 1e3);
-    }
+    // resetHeartBreak(pidx: number) {
+    //     if (this.players[pidx].id == AI_ID) return;
+    //     clearInterval(this._heartBreak[pidx][0]);
+    //     clearInterval(this._heartBreak[pidx][1]);
+    //     this._heartBreak[pidx][0] = setTimeout(() => {
+    //         this.io.to(`7szh-${this.id}-p${pidx}`).emit('getHeartBreak');
+    //         this._heartBreak[pidx][1] = setTimeout(() => this.leaveRoom('close', this.players[pidx]), 5e3);
+    //     }, 30 * 1e3);
+    // }
     /**
      * 获取预览
      * @param pidx 玩家序号
@@ -546,7 +569,7 @@ export default class GeniusInvokationRoom {
             p.UI.info = `${this.startIdx == p.pidx ? '我方' : '对方'}先手`;
             this._writeLog(`[${p.name}]获得手牌${p.handCards.map(c => `[${c.name}]`).join('')}`, 'system');
             this._writeLog(`[${p.name}]牌库：${p.pile.map(c => `[${c.name}]`).join('')}`, 'system');
-            this.resetHeartBreak(p.pidx);
+            // this.resetHeartBreak(p.pidx);
         });
         if (this.players[1].id == AI_ID) {
             const aiPlayer = this.players[1];
@@ -567,7 +590,7 @@ export default class GeniusInvokationRoom {
         const { deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
             diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
         const player = this.players[pidx];
-        this.resetHeartBreak(pidx);
+        // this.resetHeartBreak(pidx);
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 player.deckIdx = deckIdx;
