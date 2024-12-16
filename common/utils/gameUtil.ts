@@ -150,8 +150,8 @@ export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | num
         if (hl > -1) {
             if (tarWillHeals[hli] < 0) {
                 if (players) {
-                    --tarWillHeals[hli];
-                    if (hl == 0) --tarWillHeals[hli];
+                    tarWillHeals[hli] = -2;
+                    if (hl == 0) tarWillHeals[hli] = -3;
                 } else tarWillHeals[hli] = hl;
             } else if (!players) tarWillHeals[hli] += hl;
         }

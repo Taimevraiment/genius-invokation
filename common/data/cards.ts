@@ -2668,8 +2668,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png')
         .handle((card, event, ver) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
-            const { heroStatus } = heros[hidx];
-            const stsCnt = getObjById(heroStatus, 114041)?.useCnt ?? 0;
+            const stsCnt = getObjById(heros[hidx]?.heroStatus, 114041)?.useCnt ?? 0;
             let addDmgCdt = 0;
             if (
                 ver.lt('v4.2.0') && [3, 5].includes(stsCnt) ||

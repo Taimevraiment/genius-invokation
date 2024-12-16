@@ -138,6 +138,7 @@ io.on('connection', socket => {
             if (!room.isStart || pidx == -1 || me.pidx > 1) {
                 me.rid = -1;
                 removeById(pid, room.players, room.watchers);
+                if (room.players[0]?.id == AI_ID) --room.onlinePlayersCnt;
             }
             if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline)) {
                 room.players.forEach(p => p.rid = -1);
@@ -159,7 +160,7 @@ io.on('connection', socket => {
         const player = getPlayer(id);
         if (id > 0 && player) {
             const prevname = player.name;
-            const playerInfo = `[${new Date()}]:玩家[${prevname}]-pid${pid}`;
+            const playerInfo = `[${new Date()}]:玩家[${prevname}]-pid:${pid}`;
             if (prevname != name) {
                 player.name = name;
                 console.info(`${playerInfo} 改名为[${name}]`);
@@ -265,6 +266,7 @@ io.on('connection', socket => {
             const error: Error = e as Error;
             console.error(error);
             room.exportLog(error.stack);
+            room.emitError(error.message);
         }
         if (isStart != room.isStart) emitPlayerAndRoomList();
     });
@@ -298,7 +300,7 @@ io.on('connection', socket => {
     socket.on('removeAI', () => {
         const me = getPlayer(pid)!;
         const room = getRoom(me.rid)!;
-        removeById(1, room.players);
+        removeById(AI_ID, room.players);
         room.emit('removeAI', 0);
         emitPlayerAndRoomList();
     });
@@ -313,6 +315,7 @@ app.get('/detail', (req, res) => {
             id: r.id,
             name: r.name,
             detail: r.string,
+            preview: JSON.stringify(r.previews),
         })),
         playerList: playerList.map(p => ({
             id: p.id,

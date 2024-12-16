@@ -160,7 +160,6 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         status: 111082,
                         cmds: isCdt(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
-                        ...(isExecTalent ? { heal: 1.7, hidxs } : {}),
                         exec: () => {
                             if (isExecTalent) --talent.perCnt;
                         }

@@ -311,18 +311,24 @@ import { newSkill } from '@@@/data/skills';
 import { newStatus } from '@@@/data/statuses';
 import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
-import { Card, ExplainContent, GameInfo, Hero, Skill, Status, Summon } from '../../../typing';
+import { Card, ExplainContent, GameInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
 
-const props = defineProps(['info', 'isMobile', 'isInGame', 'round', 'playerInfo']);
+const props = defineProps<{
+  info: InfoVO,
+  isMobile: boolean,
+  isInGame: boolean,
+  round?: number,
+  playerInfo?: GameInfo,
+}>();
 
 const isMobile = computed<boolean>(() => props.isMobile);
 const isInGame = computed<boolean>(() => !!props.isInGame); // 是否在游戏中显示(用于一些游戏实时数据的显示)
 const round = computed<number>(() => props.round ?? 0); // 当前回合
-const playerInfo = computed<GameInfo>(() => props.playerInfo); // 玩家全局信息
+const playerInfo = computed<GameInfo | undefined>(() => props.playerInfo); // 玩家全局信息
 const version = computed<Version>(() => props.info.version); // 版本
 const isShow = computed<boolean>(() => props.info.isShow); // 是否显示
-const type = computed<InfoType>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物
-const info = computed<Hero | Card | Summon>(() => props.info.info); // 展示信息
+const type = computed<InfoType | null>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物
+const info = computed<Hero | Card | Summon | null>(() => props.info.info); // 展示信息
 const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
 const skills = ref<Skill[]>([]); // 展示技能
@@ -369,8 +375,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       if (!isInGame.value || isExplain) return '';
       ctt = ctt
         .replace(/{round}/, `${round.value}`)
-        .replace(/{dessptcnt}/, `${playerInfo.value.destroyedSupport}`)
-        .replace(/{eldmgcnt}/, `${playerInfo.value.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`)
+        .replace(/{dessptcnt}/, `${playerInfo.value?.destroyedSupport}`)
+        .replace(/{eldmgcnt}/, `${playerInfo.value?.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`)
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }

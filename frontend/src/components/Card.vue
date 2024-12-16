@@ -43,7 +43,11 @@ import { CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
 import { CARD_SUBTYPE, COST_TYPE } from '@@@/constant/enum';
 import { Card } from '../../../typing';
 
-const props = defineProps(['card', 'isMobile', 'isHideCost']);
+const props = defineProps<{
+    card: Card,
+    isMobile: boolean,
+    isHideCost?: boolean,
+}>();
 
 const card = computed<Card>(() => props.card);
 const isMobile = computed<boolean>(() => props.isMobile);

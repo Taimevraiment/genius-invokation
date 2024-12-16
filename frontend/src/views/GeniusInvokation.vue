@@ -149,7 +149,7 @@
       <span v-else> {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！</span>
     </h1>
 
-    <h1 v-if="client.error != '' && isDev" class="error">{{ client.error }}</h1>
+    <h1 class="error" v-if="client.error != ''">{{ isDev ? client.error : '发生了错误' }}</h1>
 
     <div class="tip" :class="{ 'tip-enter': client.tip != '', 'tip-leave': client.tip == '' }">
       {{ client.tip }}
@@ -389,6 +389,10 @@ onMounted(() => {
   socket.emit('roomInfoUpdate', { roomId });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
+  socket.on('error', err => {
+    console.error(err);
+    client.value.setError(err);
+  });
   // socket.on('getHeartBreak', () => socket.emit('sendHeartBreak'));
 });
 
@@ -396,6 +400,7 @@ onUnmounted(() => {
   socket.off('roomInfoUpdate');
   socket.off('getServerInfo');
   socket.off('getPlayerAndRoomList', getPlayerList);
+  socket.off('error');
   // socket.off('getHeartBreak');
 });
 

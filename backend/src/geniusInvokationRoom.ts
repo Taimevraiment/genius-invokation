@@ -119,7 +119,7 @@ export default class GeniusInvokationRoom {
             + `  _currentPlayerIdx: ${this._currentPlayerIdx}\n`
             + `  _random: ${this._random}\n`
             + `  systemLog:\n`
-            + `${this.systemLog.split('\n').map(l => '    ' + l).join('\n')}\n`
+            + `${this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
             + `}`;
     }
     /**
@@ -377,7 +377,7 @@ export default class GeniusInvokationRoom {
                         }
                         return {
                             ...pvo,
-                            id: -2,
+                            id: pvo.id != AI_ID ? -2 : pvo.id,
                             heros: clone(pvo.heros).map(h => {
                                 h.heroStatus = h.heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
                                 h.skills = h.skills.filter(s => s.type != SKILL_TYPE.PassiveHidden);
@@ -435,7 +435,15 @@ export default class GeniusInvokationRoom {
             const error: Error = e as Error;
             console.error(error);
             this.exportLog(error.stack);
+            this.emitError(error.message);
         }
+    }
+    /**
+     * 发送错误信息
+     * @param err 错误信息
+     */
+    emitError(err: string) {
+        this.io.to(`7szh-${this.id}`).emit('error', err);
     }
     /**
      * 初始化玩家信息
@@ -594,12 +602,14 @@ export default class GeniusInvokationRoom {
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 player.deckIdx = deckIdx;
-                if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', pidx, { socket, tip: '当前出战卡组不完整' });
-                player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
-                player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
-                if (player.heros.some(h => this.version.lt(h.version) && this.version.lt(h.offlineVersion)) ||
-                    player.pile.some(c => this.version.lt(c.version) && this.version.lt(c.offlineVersion))) {
-                    return this.emit('deckVersionError', pidx, { socket, tip: '当前卡组版本不匹配' });
+                if (this.shareCodes[pidx] != shareCode && heroIds.length > 0 && cardIds.length > 0) {
+                    if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', pidx, { socket, tip: '当前出战卡组不完整' });
+                    player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
+                    player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
+                    if (player.heros.some(h => this.version.lt(h.version) && this.version.lt(h.offlineVersion)) ||
+                        player.pile.some(c => this.version.lt(c.version) && this.version.lt(c.offlineVersion))) {
+                        return this.emit('deckVersionError', pidx, { socket, tip: '当前卡组版本不匹配' });
+                    }
                 }
                 player.phase = (player.phase ^ 1) as Phase;
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
@@ -1282,7 +1292,7 @@ export default class GeniusInvokationRoom {
             const atkStatus: [StatusTask, boolean?][] = [];
             preview_end: for (const hfield of hfields) {
                 const isSts = 'group' in hfield;
-                if (hfield.useCnt == 0 && isSts && !hfield.hasType(STATUS_TYPE.Shield)) continue;
+                if (isSts && hfield.useCnt == 0 && !hfield.hasType(STATUS_TYPE.Shield, STATUS_TYPE.Accumulate)) continue;
                 for (const state of trgs) {
                     const fieldres = hfield.handle(hfield as any, {
                         heros: oplayers[cpidx].heros,
@@ -1291,6 +1301,7 @@ export default class GeniusInvokationRoom {
                         eCombatStatus: oplayers[cpidx ^ 1].combatStatus,
                         hidx: hi,
                         sktype: skill?.type,
+                        skid,
                         trigger: state,
                         dmgedHidx: cehidx,
                         hasDmg: aWillDamages[chidx + cpidx * oplayers[0].heros.length][0] > 0,
@@ -1396,7 +1407,7 @@ export default class GeniusInvokationRoom {
             { cmd: 'getStatus', status: skillres.statusPre, hidxs: skillres.hidxs },
             { cmd: 'getStatus', status: skillres.statusOppoPre, hidxs: skillres.hidxs, isOppo: true },
         ];
-        this._doCmds(pidx, stsprecmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
+        this._doCmds(pidx, stsprecmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction, isExec });
         if (skillres.summonPre) this._updateSummon(pidx, this._getSummonById(skillres.summonPre), players, isExec, { supportCnt });
         const oSummonEids = players[pidx].summons.map(smn => smn.entityId);
         if (skillres.heal != undefined) {
@@ -1545,7 +1556,7 @@ export default class GeniusInvokationRoom {
                 energyCnt,
             });
         if (!isExec) mergeWillHeals(aWillHeal, skillheal);
-        mergeWillHeals(bWillHeal, skillheal, bPlayers);
+        mergeWillHeals(bWillHeal, skillheal);
         const dtriggers: Trigger[] = [];
         if (typeof otriggers == 'string') dtriggers.push(otriggers);
         else dtriggers.push(...otriggers);
@@ -3741,7 +3752,7 @@ export default class GeniusInvokationRoom {
             const stsEntityIds = stses.map(sts => sts.entityId);
             for (const sts of stses) {
                 const isDiffTaskMark = taskMark && ((group == STATUS_GROUP.heroStatus && taskMark[0] != hidx) || taskMark[1] != group || taskMark[2] != sts.entityId);
-                if ((types.length > 0 && !sts.hasType(...types)) || isDiffTaskMark || !stsEntityIds.includes(sts.entityId) || sts.useCnt == 0) continue;
+                if ((types.length > 0 && !sts.hasType(...types)) || isDiffTaskMark || !stsEntityIds.includes(sts.entityId) || (sts.useCnt == 0 && !sts.hasType(STATUS_TYPE.Accumulate))) continue;
                 const isMinusDiceCard = hcard && hcard.cost + hcard.anydice > minusDiceCard;
                 const stsres = sts.handle(sts, {
                     heros: pheros,
@@ -4826,7 +4837,7 @@ export default class GeniusInvokationRoom {
                 assgin(player.dice, this._rollDice(pidx));
             } else if (cmd == 'changeCard' && isExec) {
                 phase = PHASE.CHANGE_CARD;
-            } else if (cmd == 'getStatus' && isExec) {
+            } else if (cmd == 'getStatus') {
                 if (isOppo) {
                     getsts.forEach(sts => {
                         if (sts.group == STATUS_GROUP.heroStatus) {
@@ -5033,17 +5044,17 @@ export default class GeniusInvokationRoom {
         for (let fhidx = 0; fhidx < cheros.length; ++fhidx) {
             const fhero = cheros[fhidx];
             if (heroStatus && heroStatus[fhidx].length) {
-                this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec: true, supportCnt, isQuickAction: !isAction });
+                this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
             }
         }
-        if (combatStatus) this._updateStatus(pidx, combatStatus, player.combatStatus, players, { hidx: ahidx, isExec: true, isQuickAction: !isAction });
+        if (combatStatus) this._updateStatus(pidx, combatStatus, player.combatStatus, players, { hidx: ahidx, isExec, isQuickAction: !isAction });
         for (let fhidx = 0; fhidx < ceheros.length; ++fhidx) {
             const fhero = ceheros[fhidx];
             if (heroStatusOppo && heroStatusOppo[fhidx].length) {
-                this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec: true, supportCnt, isQuickAction: !isAction });
+                this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
             }
         }
-        if (combatStatusOppo) this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, players, { hidx: ehidx, isExec: true, supportCnt, isQuickAction: !isAction });
+        if (combatStatusOppo) this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, players, { hidx: ehidx, isExec, supportCnt, isQuickAction: !isAction });
         return {
             cmds, phase, heros: cheros, eheros: ceheros, willHeals, changedEl, isSwitch, isSwitchOppo, discards,
             willSwitch, supportCnt, elTips, willAttachs, dmgElements, atkedIdx, willDamages, attackPreview, tasks,
@@ -5333,7 +5344,7 @@ export default class GeniusInvokationRoom {
         newStatus.forEach(sts => {
             let cstIdx = getObjIdxById(oriStatus, sts.id);
             const oriSts = oriStatus[cstIdx];
-            if (cstIdx > -1 && (oriSts.isTalent != sts.isTalent || oriSts.useCnt == 0)) { // 如果状态带有天赋不同或状态已耗尽，则重新附属
+            if (cstIdx > -1 && (oriSts.isTalent != sts.isTalent || (oriSts.useCnt == 0 && !oriSts.hasType(STATUS_TYPE.Accumulate)))) { // 如果状态带有天赋不同或状态已耗尽，则重新附属
                 oriStatus.splice(cstIdx, 1);
                 cstIdx = -1;
             }
@@ -5344,16 +5355,23 @@ export default class GeniusInvokationRoom {
                     const cStatus = oriStatus[cstIdx];
                     cStatus.maxCnt = sts.maxCnt;
                     cStatus.perCnt = sts.perCnt;
+                    let oCnt = -1;
+                    let nCnt = -1;
                     if (cStatus.roundCnt > -1) {
+                        oCnt = cStatus.roundCnt;
                         cStatus.roundCnt = Math.max(cStatus.roundCnt, Math.min(cStatus.maxCnt, cStatus.roundCnt + sts.addCnt));
+                        nCnt = cStatus.roundCnt;
                     } else {
                         cStatus.roundCnt = sts.roundCnt;
                     }
                     if (cStatus.useCnt > -1) {
+                        oCnt = cStatus.useCnt;
                         cStatus.useCnt = Math.max(cStatus.useCnt, Math.min(cStatus.maxCnt, cStatus.useCnt + sts.addCnt));
+                        nCnt = cStatus.useCnt;
                     } else {
                         cStatus.useCnt = sts.useCnt;
                     }
+                    if (isExec) this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]` : ''}[${sts.name}]【(${sts.entityId})】 ${oCnt}->${nCnt}`);
                 }
             } else { // 新附属状态
                 if (hasObjById(heros[hidx].heroStatus, 300005) && sts.hasType(STATUS_TYPE.NonAction)) return;
@@ -5369,8 +5387,8 @@ export default class GeniusInvokationRoom {
                     isExec,
                     supportCnt,
                 });
+                if (isExec) this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`);
             }
-            if (isExec) this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`);
             const stsres = sts.handle(sts, { heros, hidx });
             if (sts.hasType(STATUS_TYPE.Enchant)) updateAttachEl(heros, hidx, sts.group, oriStatus);
             if (stsres.onlyOne) {

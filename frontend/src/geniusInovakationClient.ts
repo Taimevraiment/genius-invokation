@@ -173,6 +173,13 @@ export default class GeniusInvokationClient {
             );
     }
     /**
+     * 设置错误信息
+     * @param err 错误信息
+     */
+    setError(err: string) {
+        this.error = err;
+    }
+    /**
      * 取消选择
      */
     cancel(options: {
@@ -377,7 +384,9 @@ export default class GeniusInvokationClient {
         if (!this.isDeckCompleteValid.isValid) return alert(this.isDeckCompleteValid.error);
         if (!this.isDeckVersionValid.isValid) return alert(this.isDeckVersionValid.error);
         console.info(`player[${this.player.name}]:${this.isStart ? 'cancelReady' : 'startGame'}-${this.playerIdx}`);
-        const { heroIds, cardIds } = parseShareCode(shareCode);
+        let heroIds: number[] = [];
+        let cardIds: number[] = [];
+        if (!this.isStart) ({ heroIds, cardIds } = parseShareCode(shareCode));
         this.isStart = !this.isStart;
         this._resetWillAttachs();
         this.socket.emit('sendToServer', {
