@@ -66,7 +66,7 @@
       </div>
       <div class="history-info" v-if="isShowHistory">
         <div v-for="(his, hsidx) in historyInfo" :key="hsidx"
-          :style="{ color: his.match(/(?<=\[)[^\]]+(?=\])/)?.[0] == player.name ? '#e0b97e' : '#63a0e6' }">
+          :style="{ color: his.match(/(?<=\[)[^\]]+(?=\])/)?.[0] == player.name ? '#e0b97e' : '#a3ceff' }">
           {{ his }}
         </div>
       </div>
@@ -120,9 +120,9 @@
       </div>
     </div>
 
-    <div class="heros">
+    <div class="heros" :class="{ 'mobile-heros': isMobile }">
       <div class="hero-group" v-for="(hgroup, hgi) in heros" :key="hgi">
-        <AspectRatioWrapper class="hero" :ratio="7 / 12" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
+        <div class="hero" :ratio="7 / 12" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
           'background-color': hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
         }" :class="{
           'mobile-hero': isMobile,
@@ -317,126 +317,126 @@
                   +{{ Math.ceil(willHeals[hgi][hidx]) }}
                 </div>
               </div>
-        </AspectRatioWrapper>
-      </div>
-    </div>
-
-    <div class="summons">
-      <div class="summon-area" v-if="!!opponent"
-        v-for="(smnArea, saidx) in [[...opponent?.summons, ...willSummons[0]], [...player.summons, ...willSummons[1]]]"
-        :key="saidx">
-        <div class="summon" :class="{
-          'will-attach': summon.UI.isWill,
-          'summon-select': summonSelect[saidx][suidx],
-          'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING,
-          'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
-        }" v-for="(summon, suidx) in smnArea" :key="suidx"
-          @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
-          <div class="summon-img-content">
-            <div class="card-border"></div>
-            <img class="summon-img" :src="summon.UI.src" v-if="summon?.UI.src?.length > 0" :alt="summon.name" />
-            <span v-else>{{ summon.name }}</span>
-            <div style="position: absolute; width: 100%; height: 100%;top: 0;"
-              :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
-          </div>
-          <img class="summon-top-icon" v-if="!summon?.UI.isWill"
-            :src="getPngIcon(summon.maxUse > 10 ? 'Counter' : summon.shieldOrHeal < 0 ? 'Barrier' : 'TimeState')" />
-          <div class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
-            v-if="!summon?.UI.isWill">
-            {{ summon.useCnt }}
-          </div>
-          <div :class="{
-            // 'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
-            // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
-            'will-add': true,
-          }" :style="{
-            'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
-          }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
-            <img
-              v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
-              :src="getSvgIcon('die')" style="height: 16px" />
-            <span>
-              {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
-                summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
-                  (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50) ?
-                  "-" : "" }}
-            </span>
-            <span
-              v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50)">
-              {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
-            </span>
-          </div>
-          <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"
-            :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
-            :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getSvgIcon('heal')" />
-          <div class="summon-bottom-num" v-if="!summon?.UI.isWill">
-            {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="dices" :class="{ 'mobile-dices': isMobile }">
-      <div class="dice-my cursor-point" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []"
-        :key="didx" :class="{ 'dice-select': diceSelect[didx], 'mobile-dice-my': isMobile }"
-        @click.stop="selectUseDice(didx)">
-        <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
-        <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
-        <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" />
-      </div>
-    </div>
+        <div class="summons">
+          <div class="summon-area" v-if="!!opponent"
+            v-for="(smnArea, saidx) in [[...opponent?.summons, ...willSummons[0]], [...player.summons, ...willSummons[1]]]"
+            :key="saidx">
+            <div class="summon" :class="{
+              'will-attach': summon.UI.isWill,
+              'summon-select': summonSelect[saidx][suidx],
+              'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING,
+              'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
+            }" v-for="(summon, suidx) in smnArea" :key="suidx"
+              @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
+              <div class="summon-img-content">
+                <div class="card-border"></div>
+                <img class="summon-img" :src="summon.UI.src" v-if="summon?.UI.src?.length > 0" :alt="summon.name" />
+                <span v-else>{{ summon.name }}</span>
+                <div style="position: absolute; width: 100%; height: 100%;top: 0;"
+                  :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
+              </div>
+              <img class="summon-top-icon" v-if="!summon?.UI.isWill"
+                :src="getPngIcon(summon.maxUse > 10 ? 'Counter' : summon.shieldOrHeal < 0 ? 'Barrier' : 'TimeState')" />
+              <div class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
+                v-if="!summon?.UI.isWill">
+                {{ summon.useCnt }}
+              </div>
+              <div :class="{
+                // 'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
+                // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
+                'will-add': true,
+              }" :style="{
+                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
+              }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
+                <img
+                  v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
+                  :src="getSvgIcon('die')" style="height: 16px" />
+                <span>
+                  {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
+                    summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
+                      (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50) ?
+                      "-" : "" }}
+                </span>
+                <span
+                  v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50)">
+                  {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
+                </span>
+              </div>
+              <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"
+                :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
+                :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getSvgIcon('heal')" />
+              <div class="summon-bottom-num" v-if="!summon?.UI.isWill">
+                {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <div class="dice-change"
-      v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && !isHide && isLookon == -1"
-      @mousedown.stop="mousedown()" @mouseup.stop="mouseup" @touchmove.stop="selectRerollDiceByMobile"
-      @touchstart.stop="mousedown()" @touchend.stop="mouseup">
-      <div class="dice-change-area">
-        <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
-          <div class="dice" :class="{ 'dice-select': diceSelect[didx] }" @mousedown.stop="mousedown(didx)"
-            @mouseenter.stop="selectRerollDice(didx)">
+        <div class="dices" :class="{ 'mobile-dices': isMobile }">
+          <div class="dice-my cursor-point" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []"
+            :key="didx" :class="{ 'dice-select': diceSelect[didx], 'mobile-dice-my': isMobile }"
+            @click.stop="selectUseDice(didx)">
             <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
             <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
-            <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
+            <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" />
           </div>
         </div>
-      </div>
-      <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%">
-        还可重投{{ rollCnt }}轮
-      </div>
-      <button @click="reroll()" :class="{ 'not-show': !showRerollBtn }">
-        {{ diceSelect.some(v => v) ? "重掷" : "确认" }}
-      </button>
-    </div>
 
-    <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
-      <div class="init-cards">
-        <Handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
-          :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
-          <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
-        </Handcard>
-      </div>
-      <button @click="changeCard" v-if="showChangeCardBtn">
-        {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
-      </button>
-    </div>
+        <div class="dice-change"
+          v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && !isHide && isLookon == -1"
+          @mousedown.stop="mousedown()" @mouseup.stop="mouseup" @touchmove.stop="selectRerollDiceByMobile"
+          @touchstart.stop="mousedown()" @touchend.stop="mouseup">
+          <div class="dice-change-area">
+            <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
+              <div class="dice" :class="{ 'dice-select': diceSelect[didx] }" @mousedown.stop="mousedown(didx)"
+                @mouseenter.stop="selectRerollDice(didx)">
+                <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
+                <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
+                <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
+              </div>
+            </div>
+          </div>
+          <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%">
+            还可重投{{ rollCnt }}轮
+          </div>
+          <button @click="reroll()" :class="{ 'not-show': !showRerollBtn }">
+            {{ diceSelect.some(v => v) ? "重掷" : "确认" }}
+          </button>
+        </div>
 
-    <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
-      <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
-      <div class="pick-cards">
-        <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
-          :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
-          <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
-        </Handcard>
-      </div>
-      <button @click="pickCard" v-if="pickCardIdx > -1">确认</button>
-    </div>
-  </div>
+        <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
+          <div class="init-cards">
+            <Handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
+              :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
+              <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
+            </Handcard>
+          </div>
+          <button @click="changeCard" v-if="showChangeCardBtn">
+            {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
+          </button>
+        </div>
 
-  <div v-if="showHideBtn" style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;cursor: pointer;">
-    <img @click="triggerHide" src="@@/svg/lookon.svg" alt="" style="position: absolute;width: 100%;height: 100%;"
-      :style="{ filter: isHide ? '' : 'brightness(10)' }" />
-    <div style="width: 20px;height: 30px;"></div>
-  </div>
+        <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
+          <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
+          <div class="pick-cards">
+            <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
+              :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
+              <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
+            </Handcard>
+          </div>
+          <button @click="pickCard" v-if="pickCardIdx > -1">确认</button>
+        </div>
+      </div>
+
+      <div v-if="showHideBtn" style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;cursor: pointer;">
+        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="" style="position: absolute;width: 100%;height: 100%;"
+          :style="{ filter: isHide ? '' : 'brightness(10)' }" />
+        <div style="width: 20px;height: 30px;"></div>
+      </div>
 </template>
 
 <script setup lang='ts'>
@@ -451,7 +451,6 @@ import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, SLOT_CODE, 
 import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
-import AspectRatioWrapper from './AspectRatioWrapper.vue';
 
 const props = defineProps<{
   isMobile: boolean,
@@ -936,7 +935,7 @@ button:active {
   --scale-val-will: 1;
   position: relative;
   width: 100%;
-  max-height: 70%;
+  aspect-ratio: 7/12;
   border-radius: 10px;
   margin: 0 5%;
   cursor: pointer;
@@ -1820,6 +1819,11 @@ button:active {
 
 .is-change {
   --scale-val-change: 1.5;
+}
+
+.mobile-heros {
+  height: 100%;
+  width: 38%;
 }
 
 .mobile-hero {

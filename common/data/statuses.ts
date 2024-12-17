@@ -400,15 +400,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。（生成此出战状态的技能，也会触发此效果）；【重复生成此出战状态时：】累积2枚｢晚星｣。')
         .handle((status, event) => {
-            const { talent, trigger = '' } = event;
+            const { trigger = '' } = event;
             const isDmg = status.useCnt >= 4 && trigger == 'after-skill';
             const triggers: Trigger[] = ['skill'];
             if (isDmg) triggers.push('after-skill');
+            // const talent = getObjById(heros, 1109)?.talentSlot;
             return {
                 trigger: triggers,
                 damage: isCdt(isDmg, 1),
                 element: DAMAGE_TYPE.Cryo,
-                cmds: isCdt(isDmg && !!talent, [{ cmd: 'getCard', cnt: 1 }]),
+                // cmds: isCdt(isDmg && !!talent, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: eStatus => {
                     if (trigger == 'skill') ++status.useCnt;
                     if (eStatus) eStatus.useCnt -= 4;

@@ -61,6 +61,7 @@ export type CardHandleEvent = {
     selectSummon?: number,
     selectSupport?: number,
     source?: number,
+    dmgSource?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
     randomInt?: (max?: number) => number,
 }
@@ -2362,7 +2363,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
     211091: () => new CardBuilder(288).name('归芒携信').since('v4.3.0').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】在场时，每当【sts111092】造成伤害，就抓1张牌。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/bf34b0aa7f7664582ddb7eacaf1bd9ca_8982816839843813094.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/bf34b0aa7f7664582ddb7eacaf1bd9ca_8982816839843813094.png')
+        .handle((_, event) => {
+            const { dmgSource = -1 } = event;
+            if (dmgSource != 111092) return;
+            return { trigger: ['after-dmg'], execmds: [{ cmd: 'getCard', cnt: 1 }] }
+        }),
 
     211101: () => new CardBuilder(338).name('以有趣相关为要义').since('v4.5.0').talent(1).costCryo(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，我方角色进行｢普通攻击｣后：如果对方场上附属有【sts111101】，则治疗我方出战角色2点。（每回合1次）')

@@ -185,7 +185,7 @@ const getPngIcon = (name: string = '') => {
 
 .mobile-card {
     width: 60px;
-    height: 103px;
+    height: 105px;
 }
 
 .mobile-card-cost,
