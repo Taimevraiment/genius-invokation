@@ -2374,13 +2374,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方角色进行｢普通攻击｣后：如果对方场上附属有【sts111101】，则治疗我方出战角色2点。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/29c5370c3846c6c0a5722ef1f6c94d97_1023653312046109359.png')
         .handle((card, event) => {
-            const { eheros = [] } = event;
-            if (card.perCnt > 0 && hasObjById(eheros.flatMap(h => h.heroStatus), 111101)) {
-                return {
-                    trigger: ['skilltype1', 'other-skilltype1'],
-                    execmds: [{ cmd: 'heal', cnt: 2 }],
-                    exec: () => { --card.perCnt },
-                }
+            const { heros = [], eheros = [] } = event;
+            if (card.perCnt <= 0 || !hasObjById(eheros.flatMap(h => h.heroStatus), 111101)) return;
+            const hero = heros.find(h => h.isFront);
+            if (!hero || hero.hp == hero.maxHp) return;
+            return {
+                trigger: ['skilltype1', 'other-skilltype1'],
+                execmds: [{ cmd: 'heal', cnt: 2 }],
+                exec: () => { --card.perCnt },
             }
         }),
 
@@ -2703,12 +2704,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/3eb3cbf6779afc39d7812e5dd6e504d9_148906889400555580.png')
         .handle((_, event) => {
             const { heros = [] } = event;
-            const hero = heros.find(h => h.isFront)!;
-            if (hero.element == ELEMENT_TYPE.Electro && hasObjById(hero.heroStatus, 114063)) {
-                return {
-                    addDmgCdt: 1,
-                    trigger: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],
-                }
+            const hero = heros.find(h => h.isFront);
+            if (!hero || hero.element != ELEMENT_TYPE.Electro || !hasObjById(hero.heroStatus, 114063)) return;
+            return {
+                addDmgCdt: 1,
+                trigger: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],
             }
         }),
 

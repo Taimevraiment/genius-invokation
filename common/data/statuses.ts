@@ -404,12 +404,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const isDmg = status.useCnt >= 4 && trigger == 'after-skill';
             const triggers: Trigger[] = ['skill'];
             if (isDmg) triggers.push('after-skill');
-            // const talent = getObjById(heros, 1109)?.talentSlot;
             return {
                 trigger: triggers,
                 damage: isCdt(isDmg, 1),
                 element: DAMAGE_TYPE.Cryo,
-                // cmds: isCdt(isDmg && !!talent, [{ cmd: 'getCard', cnt: 1 }]),
                 exec: eStatus => {
                     if (trigger == 'skill') ++status.useCnt;
                     if (eStatus) eStatus.useCnt -= 4;
@@ -464,14 +462,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { isMinusDiceSkill, isExecTask, isExec, trigger = '' } = event;
             return {
-                trigger: ['getcard', 'skilltype2', 'after-skilltype2'],
+                trigger: ['drawcard', 'after-skilltype2'],
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
                 damage: isCdt(isExec || status.useCnt >= 4, 2),
                 element: DAMAGE_TYPE.Physical,
                 exec: eStatus => {
                     if (trigger == 'after-skilltype2' && isExecTask && eStatus) {
                         if (eStatus.useCnt >= 2 && isMinusDiceSkill || eStatus.useCnt >= 4) eStatus.roundCnt = 0;
-                    } else if (trigger == 'getcard') {
+                    } else if (trigger == 'drawcard') {
                         ++status.useCnt;
                     }
                 }
@@ -484,7 +482,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { heros = [], hidx = -1, hcards = [], trigger = '', isExecTask } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const sts111123 = getObjById(heros[hidx]?.heroStatus, 111123);
-            if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('getcard');
+            if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('drawcard');
             return {
                 trigger: triggers,
                 isAddTask: true,
@@ -499,7 +497,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                             ]
                         }
                     }
-                    if (trigger == 'getcard') {
+                    if (trigger == 'drawcard') {
                         if (!eStatus) {
                             if (status.perCnt > -2) return;
                             return { cmds: [{ cmd: 'getStatus', status: 111123 }] }
@@ -2461,7 +2459,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301022: () => new StatusBuilder('赤王陵（生效中）').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('直到本回合结束前，所在阵营每抓1张牌，就立刻生成1张【crd301020】，随机地置入我方牌库中。')
         .handle(() => ({
-            trigger: ['getcard'],
+            trigger: ['drawcard'],
             isAddTask: true,
             exec: () => ({ cmds: [{ cmd: 'addCard', cnt: 1, card: 301020 }] }),
         })),

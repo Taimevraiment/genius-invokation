@@ -9,7 +9,7 @@ export class GIHero {
     shareId: number; // 分享码id
     entityId: number = -1; // 实体id
     name: string; // 角色名
-    version: OnlineVersion; // 加入的版本
+    sinceVersion: OnlineVersion; // 加入的版本
     offlineVersion: OfflineVersion | null; // 线下版本
     tags: HeroTag[]; // 所属
     maxHp: number; // 最大血量
@@ -41,7 +41,7 @@ export class GIHero {
         this.id = id;
         this.shareId = shareId;
         this.name = name;
-        this.version = version;
+        this.sinceVersion = version;
         if (Array.isArray(tags)) this.tags = tags;
         else this.tags = [tags];
         this.maxHp = maxHp;

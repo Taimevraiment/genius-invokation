@@ -350,7 +350,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 赤王陵
     321020: () => new SupportBuilder().collection().handle(support => ({
-        trigger: ['getcard-oppo'],
+        trigger: ['drawcard-oppo'],
         supportCnt: support.cnt < 4 ? 1 : -5,
         exec: spt => {
             ++spt.cnt;

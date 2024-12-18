@@ -13,7 +13,7 @@ export class GICard {
     shareId: number; // 分享码id
     entityId: number = -1; // 实体id
     name: string; // 卡牌名
-    version: OnlineVersion; // 加入的版本
+    sinceVersion: OnlineVersion; // 加入的版本
     offlineVersion: OfflineVersion | null; // 线下版本
     cost: number; // 费用
     costChange: number = 0; // 费用变化
@@ -51,7 +51,7 @@ export class GICard {
         this.id = id;
         this.shareId = shareId;
         this.name = name;
-        this.version = version;
+        this.sinceVersion = version;
         this.offlineVersion = offlineVersion;
         subType ??= [];
         if (!Array.isArray(subType)) subType = [subType];

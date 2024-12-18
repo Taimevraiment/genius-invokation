@@ -606,13 +606,14 @@ export default class GeniusInvokationRoom {
                     if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', pidx, { socket, tip: '当前出战卡组不完整' });
                     player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
                     player.pile = cardIds.map(cid => parseCard(cid, this.version.value));
-                    if (player.heros.some(h => this.version.lt(h.version) && this.version.lt(h.offlineVersion)) ||
-                        player.pile.some(c => this.version.lt(c.version) && this.version.lt(c.offlineVersion))) {
+                    if (player.heros.some(h => this.version.lt(h.sinceVersion) && this.version.lt(h.offlineVersion)) ||
+                        player.pile.some(c => this.version.lt(c.sinceVersion) && this.version.lt(c.offlineVersion))) {
                         return this.emit('deckVersionError', pidx, { socket, tip: '当前卡组版本不匹配' });
                     }
                 }
                 player.phase = (player.phase ^ 1) as Phase;
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
+                if (this.winner > -1 && this.winner < PLAYER_COUNT) this.winner += PLAYER_COUNT;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
                     this.players.forEach(p => this._writeLog(`player${p.pidx}[${p.name}]卡组码:${this.shareCodes[p.pidx]}`, 'system'));
                     this.start(pidx, flag);
@@ -1294,11 +1295,13 @@ export default class GeniusInvokationRoom {
                 oplayers[pidx ^ 1].hidx = cehidx;
                 oplayers[pidx ^ 1].heros.forEach(h => h.isFront = h.hidx == cehidx);
             }
+            trgs = trgs.filter(t => !t.startsWith('other-skill'));
+            const afterOnlyTrgs = trgs.filter(t => t.startsWith('after'));
             if (group == STATUS_GROUP.heroStatus) {
-                this._detectSkill(cpidx, trgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
+                this._detectSkill(cpidx, afterOnlyTrgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
             }
             if (group == STATUS_GROUP.combatStatus) {
-                this._detectSupport(cpidx, trgs, { players: oplayers, supportCnt, energyCnt, hidx: chidx, isExec });
+                this._detectSupport(cpidx, afterOnlyTrgs, { players: oplayers, supportCnt, energyCnt, hidx: chidx, isExec });
             }
             const atkStatus: [StatusTask, boolean?][] = [];
             preview_end: for (const hfield of hfields) {
@@ -1323,7 +1326,7 @@ export default class GeniusInvokationRoom {
                     });
                     const isSelfAtk = +('isSelf' in fieldres && !!fieldres.isSelf);
                     if (this._hasNotTriggered(fieldres.trigger, state)) continue;
-                    const isStsRes = 'damage' in fieldres || 'heal' in fieldres;
+                    const isStsRes = 'damage' in fieldres || 'heal' in fieldres || 'pdmg' in fieldres;
                     if (!isSts || hfield.hasType(STATUS_TYPE.Attack) && isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
                         if (isExec && state.includes('after') && isSts) {
                             atkStatus.push([{
@@ -2453,9 +2456,8 @@ export default class GeniusInvokationRoom {
         const opponent = players[pidx ^ 1];
         const { dice, heros, hidx, summons, combatStatus, playerInfo: { isUsedLegend }, handCards } = player;
         const currCard = handCards[cardIdx];
-        const { cost, canSelectHero, type, userType, energy } = currCard;
-        let { costType, anydice, costChange } = currCard;
-        const ncost = Math.max(0, cost + anydice - costChange);
+        const { cost, canSelectHero, type, userType, energy, costType, anydice, costChange } = currCard;
+        const ncost = Math.max(0, cost - costChange);
         const cardres = currCard.handle(currCard, {
             pidx,
             hidxs: [hidx],
@@ -4630,8 +4632,14 @@ export default class GeniusInvokationRoom {
                                 this.emit('doCmd--getCard-after', cpidx, { isQuickAction: !isAction });
                             }]], { isPriority, isUnshift });
                         }
+                        const atriggers: Trigger[] = ['getcard'];
+                        const etriggers: Trigger[] = ['getcard-oppo'];
+                        if (isFromPile) {
+                            atriggers.push('drawcard');
+                            etriggers.push('drawcard-oppo');
+                        }
                         for (let i = 0; i < count - restCnt; ++i) {
-                            this._detectStatus(cpidx, STATUS_TYPE.Usage, 'getcard', {
+                            this._detectStatus(cpidx, STATUS_TYPE.Usage, atriggers, {
                                 players,
                                 hidxs: allHidxs(cplayer.heros),
                                 isExec,
@@ -4640,7 +4648,7 @@ export default class GeniusInvokationRoom {
                                 supportCnt,
                                 hcard: willGetCard[i],
                             });
-                            if (isFromPile) this._detectSupport(cpidx ^ 1, 'getcard-oppo', { players, isExec, isQuickAction: !isAction, supportCnt });
+                            this._detectSupport(cpidx ^ 1, etriggers, { players, isExec, isQuickAction: !isAction, supportCnt });
                         }
                         const rest = MAX_HANDCARDS_COUNT - cplayer.handCards.length;
                         const getcards = willGetCard.slice(0, rest);
@@ -5553,6 +5561,7 @@ export default class GeniusInvokationRoom {
         this.countdown.timer = undefined;
         this.countdown.curr = 0;
         this.seed = '';
+        this.shareCodes = ['', ''];
         this.emit('game-end', winnerIdx);
     }
     /**

@@ -438,13 +438,9 @@ export default class GeniusInvokationClient {
                     a[i] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => new Array(MAX_STATUS_COUNT).fill(false));
                 });
             });
-        }
-        if (this.slotSelect[0].length == 0 && this.players.length > 1 && phase >= PHASE.CHANGE_CARD) {
             this.slotSelect.forEach((_, pi, pa) => {
-                pa[pi] = Array.from({ length: this.players[+(pi == this.playerIdx)].heros.length }, () => new Array(4).fill(false));
+                pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => new Array(4).fill(false));
             });
-        }
-        if (this.heroSelect[0].length == 0 && this.players.length > 1 && phase >= PHASE.CHANGE_CARD) {
             this.heroSelect.forEach((_, pi, pa) => {
                 pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => 0);
             });
