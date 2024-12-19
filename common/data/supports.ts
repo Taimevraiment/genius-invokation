@@ -13,6 +13,7 @@ export type SupportHandleEvent = {
     eSupports?: Support[],
     heros?: Hero[],
     supports?: Support[],
+    pile?: Card[],
     reset?: boolean,
     card?: Card,
     hcards?: Card[],
@@ -684,16 +685,16 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 迪娜泽黛
     322016: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
-        const { card, minusDiceCard: mdc = 0 } = event;
+        const { card, minusDiceCard: mdc = 0, pile = [] } = event;
         const isMinus = card && card.hasSubtype(CARD_SUBTYPE.Ally) && card.cost > mdc && support.perCnt > 0;
         return {
             trigger: ['card'],
-            isNotAddTask: true,
+            isNotAddTask: support.cnt == 0,
             minusDiceCard: isCdt(isMinus, 1),
             exec: spt => {
                 const cmds: Cmds[] = [];
                 if (isMinus) --spt.perCnt;
-                if (ver.gte('v4.1.0') && spt.cnt > 0) {
+                if (ver.gte('v4.1.0') && spt.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally))) {
                     --spt.cnt;
                     cmds.push({ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Ally, isAttach: true });
                 }

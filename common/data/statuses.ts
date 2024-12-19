@@ -107,6 +107,7 @@ export type StatusExecRes = {
     cmds?: Cmds[],
     switchHeroDiceCnt?: number,
     hidxs?: number[],
+    notInfo?: boolean,
 }
 
 const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
@@ -460,18 +461,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方每抓1张牌后：】此牌累积1层｢压力阶级｣。；【所附属角色使用〖ski,1〗时：】如果｢压力阶级｣至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后｢压力阶级｣至少有4层，则再额外造成2点[物理伤害]。')
         .handle((status, event) => {
-            const { isMinusDiceSkill, isExecTask, isExec, trigger = '' } = event;
+            const { isExecTask, isExec, trigger = '' } = event;
             return {
                 trigger: ['drawcard', 'after-skilltype2'],
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
                 damage: isCdt(isExec || status.useCnt >= 4, 2),
                 element: DAMAGE_TYPE.Physical,
                 exec: eStatus => {
-                    if (trigger == 'after-skilltype2' && isExecTask && eStatus) {
-                        if (eStatus.useCnt >= 2 && isMinusDiceSkill || eStatus.useCnt >= 4) eStatus.roundCnt = 0;
+                    if (trigger == 'after-skilltype2' && isExecTask) {
+                        if (eStatus && eStatus.useCnt >= 2) eStatus.roundCnt = 0;
+                        else if (status.useCnt >= 2) status.roundCnt = 0;
                     } else if (trigger == 'drawcard') {
                         ++status.useCnt;
                     }
+                    return { notInfo: true }
                 }
             }
         }),
@@ -487,9 +490,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: triggers,
                 isAddTask: true,
                 exec: eStatus => {
-                    if (trigger.includes('skilltype') && !eStatus && isExecTask) {
+                    if (trigger.includes('skilltype') && !eStatus) {
                         const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
-                        card.sort((a, b) => b.cidx - a.cidx).forEach(c => hcards.splice(c.cidx, 1));
+                        if (isExecTask) card.sort((a, b) => b.cidx - a.cidx).forEach(c => hcards.splice(c.cidx, 1));
                         return {
                             cmds: [
                                 { cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.IsNotPublic },
@@ -502,10 +505,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                             if (status.perCnt > -2) return;
                             return { cmds: [{ cmd: 'getStatus', status: 111123 }] }
                         }
-                        --eStatus.perCnt;
-                        if (eStatus.perCnt == -3) {
-                            eStatus.perCnt = 0;
-                        }
+                        if (--eStatus.perCnt == -3) eStatus.perCnt = 0;
                     }
                 }
             }

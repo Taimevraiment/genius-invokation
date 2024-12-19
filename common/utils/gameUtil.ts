@@ -61,10 +61,20 @@ export const getAtkHidx = (heros: Hero[]): number => {
 // 获得距离出战角色最近的hidx
 export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
     const livehidxs = allHidxs(heros);
-    for (let i = 0; i < heros.length; ++i) {
-        if (livehidxs.indexOf((hidx + i) % heros.length) > -1) return hidx + i;
+    let minDistance = livehidxs.length;
+    let hidxs: number[] = [];
+    for (const hi of livehidxs) {
+        const distance = Math.min(Math.abs(hi - hidx), hi + heros.length - hidx);
+        if (distance == 0) return hi;
+        if (distance < minDistance) {
+            minDistance = distance;
+            hidxs = [hi];
+        } else if (distance == minDistance) {
+            hidxs.push(hi);
+        }
     }
-    return -1;
+    if (hidxs.length == 0) return -1;
+    return Math.min(...hidxs);
 }
 
 // 获得所有后台角色hidx
