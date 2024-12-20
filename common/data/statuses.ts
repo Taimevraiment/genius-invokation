@@ -482,7 +482,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔; 当前已抓{pct}张牌 〕）。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, hcards = [], trigger = '', isExecTask } = event;
+            const { heros = [], hidx = -1, hcards = [], trigger = '', isExecTask, isExec } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const sts111123 = getObjById(heros[hidx]?.heroStatus, 111123);
             if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('drawcard');
@@ -503,6 +503,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (trigger == 'drawcard') {
                         if (!eStatus) {
                             if (status.perCnt > -2) return;
+                            if (!isExec && --status.perCnt == -3) status.perCnt = 0;
                             return { cmds: [{ cmd: 'getStatus', status: 111123 }] }
                         }
                         if (--eStatus.perCnt == -3) eStatus.perCnt = 0;

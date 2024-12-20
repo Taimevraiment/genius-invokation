@@ -1782,16 +1782,16 @@ export default class GeniusInvokationRoom {
         const epidx = pidx ^ 1;
         const { heros: { length: ahlen } } = players[pidx];
         const { heros: { length: ophlen } } = players[epidx];
-        const { isAttach = false, isSummon = -1, isSwirl = false, isExec = true, multiDmg = 0, skid = -1, isAtkSelf = 0,
-            isReadySkill = false, sktype, minusDiceSkillIds = [], atkId,
+        const { isAttach = false, isSummon = -1, isSwirl = false, isExec = true, skid = -1, isAtkSelf = 0,
+            isReadySkill = false, sktype, minusDiceSkillIds = [], atkId, tasks = [], willSwitch, isQuickAction = false,
             aWillHeals = new Array<number>(ahlen + ophlen).fill(-1), bWillHeals = new Array<number>(ahlen + ophlen).fill(-1),
             usedDice = 0, dmgElements = new Array<DamageType>(ophlen + ahlen).fill(DAMAGE_TYPE.Physical),
             willAttachs = new Array<PureElementType | undefined>(isAtkSelf ? ahlen : ophlen).fill(undefined), isSwitch = -1,
             elTips = new Array(ahlen + ophlen).fill(0).map(() => ['', PURE_ELEMENT_TYPE.Cryo, PURE_ELEMENT_TYPE.Cryo]), minusDiceSkill = [],
             atriggers: atrg = new Array(ahlen).fill(0).map(() => []), etriggers: etrg = new Array(ophlen).fill(0).map(() => []),
-            discards = [], withCard, isChargedAtk = false, isFallAtk = false, supportCnt, energyCnt, willSwitch, isQuickAction = false,
-            tasks = [],
+            discards = [], withCard, isChargedAtk = false, isFallAtk = false, supportCnt, energyCnt,
         } = options;
+        let { multiDmg = 0 } = options;
         let willDamages = damages;
         if (!isSwirl) {
             if (willDamages.length == 0) willDamages = new Array(ahlen + ophlen).fill(0).map(() => [-1, 0]);
@@ -2098,7 +2098,7 @@ export default class GeniusInvokationRoom {
                     const chi = (atkHidx + i) % ahlen;
                     const trgs = atriggers[isSummon > -1 ? atkHidx : chi];
                     const hfieldres = this._detectSlotAndStatus(pidx, trgs, {
-                        types: [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage],
+                        types: [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.MultiDamage],
                         hidxs: chi,
                         players: res.players,
                         isExec,
@@ -2130,6 +2130,7 @@ export default class GeniusInvokationRoom {
                     aost.push(...hfieldres.combatStatus);
                     if (res.willDamages[getDmgIdx][0] > 0) {
                         res.willDamages[getDmgIdx][0] += hfieldres.addDmg;
+                        multiDmg += hfieldres.multiDmg;
                     }
                     res.isQuickAction ||= hfieldres.isQuickAction;
                     res.isFallAtk ||= hfieldres.isFallAtk;
@@ -2277,12 +2278,7 @@ export default class GeniusInvokationRoom {
         }
         if (dmgElement != DAMAGE_TYPE.Pierce && res.willDamages[getDmgIdx][0] > 0) {
             let restDmg = res.willDamages[getDmgIdx][0];
-            if (efhero.isFront) {
-                restDmg *= (res.players[pidx].combatStatus
-                    .filter(sts => sts.hasType(STATUS_TYPE.MultiDamage))
-                    .reduce((a, sts) => a + (sts.handle(sts, { skid })?.multiDmgCdt ?? 0), 0)
-                    + multiDmg) || 1;
-            }
+            if (!isSwirl) restDmg *= multiDmg || 1;
             this._getHeroField(dmgedPidx, { players: res.players, hidx: dmgedHidx }).forEach(hfield => {
                 if ('group' in hfield) {
                     if (hfield.hasType(STATUS_TYPE.Barrier, STATUS_TYPE.Shield)) {
@@ -3746,6 +3742,7 @@ export default class GeniusInvokationRoom {
         const task: [() => void | Promise<void>, number?, number?][] = [];
         let addDmg = 0;
         let getDmg = 0;
+        let multiDmg = 0;
         const nsummons: Summon[] = [];
         const pdmgs: [number, number[] | undefined, boolean][] = [];
         const player = players[pidx];
@@ -3818,6 +3815,9 @@ export default class GeniusInvokationRoom {
                 if (sts.hasType(STATUS_TYPE.AddDamage)) {
                     addDmg += stsres.addDmgCdt ?? 0;
                     getDmg += stsres.getDmg ?? 0;
+                }
+                if (sts.hasType(STATUS_TYPE.MultiDamage)) {
+                    multiDmg += stsres.multiDmgCdt ?? 0;
                 }
                 const isTriggeredQuick = !isQuickAction && stsres.isQuickAction;
                 if (group == STATUS_GROUP.combatStatus && isQuickAction && stsres.isQuickAction && stsres.minusDiceHero == undefined) continue;
@@ -3972,7 +3972,7 @@ export default class GeniusInvokationRoom {
         }
         return {
             isQuickAction, addDiceHero, minusDiceHero, switchHeroDiceCnt, isInvalid, minusDiceCard, task, tasks,
-            addDmg, getDmg, nsummons, aWillHeals, bWillHeals, supportCnt, pdmgs, cmds, isFallAtk: stsFallAtk,
+            addDmg, getDmg, multiDmg, nsummons, aWillHeals, bWillHeals, supportCnt, pdmgs, cmds, isFallAtk: stsFallAtk,
         }
     }
     /**
@@ -4014,6 +4014,7 @@ export default class GeniusInvokationRoom {
         let aWillHeals: number[] | undefined;
         let addDmg = 0;
         let getDmg = 0;
+        let multiDmg = 0;
         const nsummons: Summon[] = [];
         const pdmgs: [number, number[] | undefined, boolean][] = [];
         const heroStatus: Status[] = [];
@@ -4032,11 +4033,12 @@ export default class GeniusInvokationRoom {
                     if (triggers.includes('will-killed') && !isDie && field.hasType(STATUS_TYPE.NonDefeat)) continue;
                     const { isQuickAction: stsIqa, addDiceHero: stsAddDiceHero, minusDiceHero: stsMinusDiceHero,
                         isInvalid: stsIsInvalid, minusDiceCard: stsMinusDiceCard, addDmg: stsAddDmg, getDmg: stsGetDmg,
-                        nsummons: stsNSummons, switchHeroDiceCnt: stsSwitchHeroDiceCnt, aWillHeals: stsAWhl,
+                        nsummons: stsNSummons, switchHeroDiceCnt: stsSwitchHeroDiceCnt, aWillHeals: stsAWhl, multiDmg: stsMultiDmg,
                         bWillHeals: stsBWhl, pdmgs: stsPdmgs, cmds: stsCmds, isFallAtk: stsFallAtk, tasks: ststasks }
                         = this._detectStatus(pidx, types, triggers, { ...options, cStatus: field, hidxs: hidx });
                     addDmg += stsAddDmg;
                     getDmg += stsGetDmg;
+                    multiDmg += stsMultiDmg;
                     addDiceHero += stsAddDiceHero;
                     minusDiceHero += stsMinusDiceHero;
                     options.minusDiceCard = stsMinusDiceCard;
@@ -4087,7 +4089,7 @@ export default class GeniusInvokationRoom {
         }
         return {
             minusDiceCard, switchHeroDiceCnt, addDiceHero, minusDiceHero, isInvalid, cmds, aWillHeals, bWillHeals, isQuickAction,
-            addDmg, getDmg, nsummons, pdmgs, heroStatus, combatStatus, isFallAtk, isDie, tasks,
+            addDmg, getDmg, multiDmg, nsummons, pdmgs, heroStatus, combatStatus, isFallAtk, isDie, tasks,
         }
     }
     /**
@@ -5232,6 +5234,10 @@ export default class GeniusInvokationRoom {
                         }
                     } else if (canSelectHero == 2) hCanSelect = heroCanSelects[heroSelect[0]];
                 }
+                const willSummonChange = INIT_SUMMONCNT();
+                (attackPreview as Preview)?.willSummonChange?.forEach((scnt, si) => scnt.forEach((v, i) => willSummonChange[si][i] += v));
+                (skillPreview as Preview)?.willSummonChange?.forEach((scnt, si) => scnt.forEach((v, i) => willSummonChange[si][i] += v));
+                summonCnt?.forEach((scnt, si) => scnt.forEach((v, i) => willSummonChange[si][i] += v));
                 const preview: Preview = {
                     willSupportChange: supportCnt,
                     ...attackPreview,
@@ -5244,7 +5250,7 @@ export default class GeniusInvokationRoom {
                     heroCanSelect: hCanSelect,
                     supportCanSelect,
                     summonCanSelect,
-                    willSummonChange: summonCnt,
+                    willSummonChange,
                 }
                 previews.push(preview);
                 if (isSupportAvalible && !isValid || canSelectSupport != -1) {

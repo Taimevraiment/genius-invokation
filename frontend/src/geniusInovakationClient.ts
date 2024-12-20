@@ -318,16 +318,10 @@ export default class GeniusInvokationClient {
                     if (!preview1) return;
                     this.isValid = preview1.isValid;
                     if (this.isValid) {
-                        if (canSelectHero == 1) {
-                            this.heroSelect[1][this.heroCanSelect.indexOf(true)] = 1;
-                        }
-                        if (canSelectSummon != -1) {
-                            this.summonSelect[canSelectSummon][0] = true;
-                            this.summonCnt = clone(preview1.willSummonChange) ?? this._resetSummonCnt();
-                        }
-                        if (canSelectSupport != -1) {
-                            this.supportSelect[canSelectSupport][0] = true;
-                        }
+                        if (canSelectHero == 1) this.heroSelect[1][this.heroCanSelect.indexOf(true)] = 1;
+                        if (canSelectSummon != -1) this.summonSelect[canSelectSummon][0] = true;
+                        if (canSelectSupport != -1) this.supportSelect[canSelectSupport][0] = true;
+                        this.summonCnt = clone(preview1.willSummonChange) ?? this._resetSummonCnt();
                     }
                 }
                 if (this.isValid) this.diceSelect = [...preview.diceSelect!];

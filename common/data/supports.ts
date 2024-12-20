@@ -689,7 +689,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const isMinus = card && card.hasSubtype(CARD_SUBTYPE.Ally) && card.cost > mdc && support.perCnt > 0;
         return {
             trigger: ['card'],
-            isNotAddTask: support.cnt == 0,
+            isNotAddTask: ver.lt('v4.1.0') || support.cnt == 0,
             minusDiceCard: isCdt(isMinus, 1),
             exec: spt => {
                 const cmds: Cmds[] = [];

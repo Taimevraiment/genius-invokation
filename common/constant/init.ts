@@ -76,7 +76,7 @@ export const NULL_MODAL = (): InfoVO => ({
     info: null,
 });
 
-export const INIT_SUMMONCNT = () => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
+export const INIT_SUMMONCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
 
-export const INIT_SUPPORTCNT = () => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
+export const INIT_SUPPORTCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
 
