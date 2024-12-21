@@ -61,6 +61,7 @@ export type SkillHandleRes = {
     isNotAddTask?: boolean,
     summonTrigger?: Trigger[],
     isForbidden?: boolean,
+    energy?: number,
     pickCard?: {
         cnt: number,
         card?: number[],
@@ -84,12 +85,12 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             if (hp >= 6) return { addDmgCdt: 1, pdmgSelf: 1 }
         }),
 
-    12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于｢始基力:荒性｣形态，召唤【smn112111】。；(【hro】处于｢始基力:芒性｣形态时，会改为召唤【smn112112】。)')
+    12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于｢始基力:荒性｣形态，召唤【smn112111】。；（【hro】处于｢始基力:芒性｣形态时，会改为召唤【smn112112】。）')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/629f7630db6af1831478699dbe6a04e0.png',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/d605827c81562212ec685c75f8788b85_3866956682696340528.png')
         .elemental().cost(3).handle(event => ({ summon: 112111, status: isCdt(!!event.talent, 112116) })),
 
-    12122: () => new SkillBuilder('孤心沙龙').description('【hro1211】当前处于｢始基力:芒性｣形态，召唤【smn112112】。；(【hro】处于｢始基力:荒性｣形态时，会改为召唤【smn112111】。)')
+    12122: () => new SkillBuilder('孤心沙龙').description('【hro1211】当前处于｢始基力:芒性｣形态，召唤【smn112112】。；（【hro】处于｢始基力:荒性｣形态时，会改为召唤【smn112111】。）')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/3a6b3aa64583eed30205cc6959de0b11.png')
         .elemental().cost(3).handle(event => ({ summon: 112112, status: isCdt(!!event.talent, 112116) })),
 

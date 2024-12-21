@@ -332,7 +332,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(5).damage(4, 'v4.1.0').cost(3).handle((event, ver) => {
                     const { hero: { heroStatus } } = event;
                     if (hasObjById(heroStatus, 112042)) return { addDmgCdt: ver.lt('v4.1.0') ? 3 : 2 }
-                    return { statusOppo: 112043, cmds: [{ cmd: 'getEnergy', cnt: 2 }] }
+                    return { statusOppo: 112043, energy: 2 }
                 }),
             new SkillBuilder('遏浪').description('战斗开始时，初始附属【sts112041】。；角色所附属的【sts112042】效果结束时，重新附属【sts112041】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e6/s9urw8i8oidze3t6kgeivc054cg3ued.png',

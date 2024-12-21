@@ -131,7 +131,7 @@ const readySkillStatus = (name: string, skill: number, shieldStatusId?: number) 
                 --status.useCnt;
                 if (shieldStatusId) {
                     const { heros = [], hidx = -1 } = event;
-                    const shieldStatus = getObjById(heros[hidx].heroStatus, shieldStatusId);
+                    const shieldStatus = getObjById(heros[hidx]?.heroStatus, shieldStatusId);
                     if (shieldStatus) shieldStatus.useCnt = 0;
                 }
             }
@@ -341,7 +341,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Enchant).type(isTalent, STATUS_TYPE.AddDamage)
         .handle((status, event) => {
             const { heros = [], hidx = -1 } = event;
-            const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx].weaponType);
+            const isWeapon = hidx > -1 && ([WEAPON_TYPE.Sword, WEAPON_TYPE.Claymore, WEAPON_TYPE.Polearm] as WeaponType[]).includes(heros[hidx]?.weaponType);
             return {
                 trigger: ['skilltype1'],
                 addDmgType1: isCdt(status.isTalent && isWeapon, 1),
@@ -534,15 +534,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/111133')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
-        .handle((status, event) => {
-            const { hasDmg, skid = -1 } = event;
-            if (skid == -1) return;
-            return {
-                multiDmgCdt: 2,
-                trigger: isCdt(hasDmg, ['skill']),
-                exec: () => { --status.useCnt }
-            }
-        }),
+        .handle((status, event) => ({
+            multiDmgCdt: 2,
+            trigger: isCdt(event.hasDmg, ['skill']),
+            exec: () => { --status.useCnt }
+        })),
 
     112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
         .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver.gte('v4.2.0') && isTalent)
@@ -553,7 +549,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色｢普通攻击｣后：】造成1点[水元素伤害]。；[useCnt]')
         .description('【我方角色｢普通攻击｣后：】造成2点[水元素伤害]。；[useCnt]', 'v3.6.0')
         .handle((_s, _e, ver) => ({
-            damage: ver.lt('v3.6.0') ? 2 : 1,
+            damage: isCdt(ver.lt('v3.6.0'), 2, 1),
             element: DAMAGE_TYPE.Hydro,
             trigger: ['after-skilltype1'],
             exec: eStatus => { eStatus && --eStatus.useCnt },
@@ -565,15 +561,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112032: () => new StatusBuilder('泡影').combatStatus().icon('ski,2').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
-        .handle((status, event) => {
-            const { hasDmg, skid = -1 } = event;
-            if (skid == -1) return;
-            return {
-                multiDmgCdt: 2,
-                trigger: isCdt(hasDmg, ['skill']),
-                exec: () => { --status.useCnt }
-            }
-        }),
+        .handle((status, event) => ({
+            multiDmgCdt: 2,
+            trigger: isCdt(event.hasDmg, ['skill']),
+            exec: () => { --status.useCnt }
+        })),
 
     112041: () => new StatusBuilder('远程状态').heroStatus().icon('ski,3').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【所附属角色进行[重击]后：】目标角色附属【sts112043】。')
@@ -591,16 +583,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const isDuanliu = hasObjById(efHero?.heroStatus, 112043);
             const [afterIdx = -1] = getBackHidxs(eheros);
             const isPenDmg = status.perCnt > 0 && isDuanliu && afterIdx > -1 && trigger == 'skill';
+            const triggers: Trigger[] = ['skill'];
+            if (status.roundCnt == 1) triggers.push('phase-end');
             return {
-                trigger: ['phase-end', 'skill'],
+                trigger: triggers,
                 pdmg: isCdt(isPenDmg, 1),
                 hidxs: isCdt(isPenDmg, [afterIdx]),
                 addDmgCdt: isCdt(isDuanliu, 1),
                 attachEl: ELEMENT_TYPE.Hydro,
                 exec: () => {
-                    if (trigger == 'phase-end' && status.roundCnt == 1) {
-                        return { cmds: [{ cmd: 'getStatus', status: 112041 }] }
-                    }
+                    if (trigger == 'phase-end') return { cmds: [{ cmd: 'getStatus', status: 112041 }] }
                     if (isPenDmg) --status.perCnt;
                     return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: 112043, isOppo: true }]) }
                 },
@@ -613,7 +605,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event, ver) => {
             const { heros = [], hidx = -1, eheros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['killed'];
-            const isTalent = trigger == 'phase-end' && !!getObjById(eheros, getHidById(status.id))?.talentSlot && (ver.lt('v4.1.0') || heros[hidx].isFront);
+            const isTalent = trigger == 'phase-end' && !!getObjById(eheros, getHidById(status.id))?.talentSlot && (ver.lt('v4.1.0') || heros[hidx]?.isFront);
             if (isTalent) triggers.push('phase-end');
             return {
                 trigger: triggers,
@@ -621,11 +613,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 hidxs: isCdt(isTalent, [hidx]),
                 isSelf: isCdt(isTalent, true),
                 exec: () => {
-                    if (trigger == 'killed') {
-                        const nonDestroy = status.type.indexOf(STATUS_TYPE.NonDestroy);
-                        if (nonDestroy > -1) status.type.splice(nonDestroy, 1);
-                        return { cmds: [{ cmd: 'getStatus', status: 112043, hidxs: heros.filter(h => h.isFront).map(h => h.hidx) }] }
-                    }
+                    if (trigger != 'killed') return;
+                    const nonDestroy = status.type.indexOf(STATUS_TYPE.NonDestroy);
+                    if (nonDestroy > -1) status.type.splice(nonDestroy, 1);
+                    return { cmds: [{ cmd: 'getStatus', status: 112043, hidxs: heros.filter(h => h.isFront).map(h => h.hidx) }] }
                 }
             }
         }),
@@ -908,7 +899,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
-                trigger: isCdt(hidx > -1 && heros[hidx].id != getHidById(status.id), ['after-skill']),
+                trigger: isCdt(hidx > -1 && heros[hidx]?.id != getHidById(status.id), ['after-skill']),
             }
         }),
 
@@ -1841,7 +1832,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const { heros = [] } = execEvent;
                     if (!eStatus) return;
                     --eStatus.useCnt;
-                    if (heros[hidx].talentSlot) {
+                    if (heros[hidx]?.talentSlot) {
                         return { cmds: [{ cmd: 'getStatus', status: 121022, hidxs: [hidx], isOppo: true }] }
                     }
                 }
@@ -2204,7 +2195,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             --status.useCnt;
             if (status.useCnt > 0 && dmgElement == DAMAGE_TYPE.Geo) --status.useCnt;
             if (status.useCnt == 0) {
-                const sts126012 = getObjById(heros[hidx].heroStatus, 126012);
+                const sts126012 = getObjById(heros[hidx]?.heroStatus, 126012);
                 if (sts126012) sts126012.useCnt = 0;
             }
             return { restDmg: restDmg - 1 }

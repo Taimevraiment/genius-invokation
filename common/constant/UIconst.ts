@@ -276,7 +276,7 @@ const elReactionExplain: { [key: string]: (...args: any) => string } = {
 }
 const elr = (elrname: string, elOrIsAttach?: string | boolean) => elReactionExplain[elrname](elOrIsAttach);
 
-const diceExpl = (el: DiceCostType) => `花费投出了*[${ELEMENT_NAME[el]}骰]的元素骰，来支付此费用。；(*[万能元素骰]也可以支付此费用。)`
+const diceExpl = (el: DiceCostType) => `花费投出了*[${ELEMENT_NAME[el]}骰]的元素骰，来支付此费用。；（*[万能元素骰]也可以支付此费用。）`
 
 export const RULE_EXPLAIN: { [key: string]: string } = {
     充能: '角色使用\\｢元素爆发｣时，需要消耗‹9›充能。角色使用\\｢元素战技｣或\\｢普通攻击｣后，会获得1点‹9›充能。',

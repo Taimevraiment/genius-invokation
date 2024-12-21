@@ -2433,23 +2433,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     212011: () => new CardBuilder(69).name('光辉的季节').offline('v1').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，【smn112011】会使我方执行｢切换角色｣行动时少花费1个元素骰。（每回合1次）')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png')
-        .handle((card, event) => {
-            let { summons = [], switchHeroDiceCnt = 0 } = event;
-            if (card.perCnt > 0 && hasObjById(summons, 112011)) {
-                return {
-                    trigger: ['active-switch'],
-                    minusDiceHero: 1,
-                    exec: () => {
-                        if (switchHeroDiceCnt > 0) {
-                            --card.perCnt;
-                            --switchHeroDiceCnt;
-                        }
-                        return { switchHeroDiceCnt }
-                    }
-                }
-            }
-        }),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png'),
 
     212021: () => new CardBuilder(70).name('重帘留香').talent(1).costHydro(3).costHydro(4, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【sts112021】，会在我方出战角色受到至少为2的伤害时抵消伤害，并且初始[可用次数]+1。')
@@ -2466,7 +2450,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     212041: () => new CardBuilder(72).name('深渊之灾·凝水盛放').since('v3.7.0').talent(1).costHydro(3).costHydro(4, 'v4.1.0')
         .description('{action}；结束阶段：装备有此牌的【hro】在场时，敌方出战角色附属有【sts112043】，则对其造成1点[穿透伤害]。')
-        .description('{action}；结束阶段：装备有此牌的【hro】在场时，对敌方所有附属有【sts112043】的角色造成1点[穿透伤害]。')
+        .description('{action}；结束阶段：装备有此牌的【hro】在场时，对敌方所有附属有【sts112043】的角色造成1点[穿透伤害]。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e56754de22dbaf1cfb84ce85af588d21_7106803920286784988.png'),
 
     212051: () => new CardBuilder(73).name('匣中玉栉').since('v3.5.0').talent(2).costHydro(3).energy(2)
@@ -3115,7 +3099,7 @@ const allCards: Record<number, () => CardBuilder> = {
     223041: () => new CardBuilder(354).name('熔火铁甲').since('v4.6.0').talent().costPyro(1).perCnt(1)
         .description('【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts123041】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts123041】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
-        .handle((_, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs, element: ELEMENT_TYPE.Pyro }] })),
+        .handle((_, { hidxs }) => ({ cmds: [{ cmd: 'attach', hidxs }] })),
 
     224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
         .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
