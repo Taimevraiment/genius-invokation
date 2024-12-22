@@ -57,6 +57,7 @@ export default class GeniusInvokationRoom {
     isDieBackChange: boolean = true; // 用于记录角色被击倒切换角色后是否转换回合
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', skillId: -1 };// 挑选卡牌信息
     shareCodes: string[] = ['', '']; // 卡组码
+    allowLookon: boolean; // 是否允许观战
     isDev: boolean = false; // 是否为开发模式
     newStatus: (id: number, ...args: any) => Status;
     newCard: (id: number, ...args: any) => Card;
@@ -70,13 +71,14 @@ export default class GeniusInvokationRoom {
     // private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
 
     constructor(io: Server, id: number, name: string, version: Version, password: string,
-        leaveRoom: (eventName: string, player?: Player) => void, countdown: number, isDev: boolean) {
+        leaveRoom: (eventName: string, player?: Player) => void, countdown: number, allowLookon: boolean, isDev: boolean) {
         this.io = io;
         this.id = id;
         this.name = name || `房间${id}`;
         this.version = compareVersionFn(version);
         this.password = password;
         this.countdown.limit = countdown;
+        this.allowLookon = allowLookon;
         this.isDev = isDev;
         this.newStatus = newStatus(version);
         this.newCard = newCard(version);
@@ -106,6 +108,7 @@ export default class GeniusInvokationRoom {
             + `  version: ${this.version.value}\n`
             + `  password: ${this.password}\n`
             + `  seed: ${this.seed}\n`
+            + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
             + `  players: [${this.players.map(p => playerToString(p, 2)).join(', ')}]\n`
             + `  watchers: [${this.watchers.map(p => `${p.name}(${p.id})`).join(', ')}]\n`
             + `  isStart: ${this.isStart}\n`
@@ -244,6 +247,7 @@ export default class GeniusInvokationRoom {
         heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], hasReadyskill?: boolean,
         actionInfoCard?: Card,
     } = {}) {
+        if (pidx < 0) return;
         try {
             const { socket, tip = '', actionInfoContent = '', damageVO = -1, notPreview = false, isActionInfo = false, canAction = true,
                 slotSelect = [], heroSelect = [], statusSelect = [], summonSelect = [], supportSelect = [], notUpdate = false,
@@ -353,37 +357,35 @@ export default class GeniusInvokationRoom {
                 summonSelect,
                 supportSelect,
                 pickModal: this.pickModal,
+                watchers: this.watchers.length,
                 flag: `[${this.id}]${flag}-p${pidx}`,
             };
-            const _serverDataVO = (pidx: number, tip: string | string[]) => {
+            const _serverDataVO = (vopidx: number, tip: string | string[]) => {
                 const log = this.log.map(lg => {
                     const cpidx = +(lg.content.match(/(?<=【p)\d+(?=:)/)?.[0] ?? -1);
-                    if (cpidx > -1 && pidx == cpidx) return { content: lg.content.replace(/【p\d+:([^【】]+)】/g, '$1'), type: lg.type };
+                    if (vopidx == -1 || (cpidx > -1 && vopidx == cpidx)) return { content: lg.content.replace(/【p\d+:([^【】]+)】/g, '$1'), type: lg.type };
                     return { content: lg.content.replace(/【[^【】]+】/g, ''), type: lg.type }
                 });
                 return {
                     players: this.players.map(pvo => {
-                        if (pvo.pidx == pidx) {
+                        const heros = clone(pvo.heros).map(h => {
+                            h.heroStatus = h.heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
+                            h.skills = h.skills.filter(s => s.type != SKILL_TYPE.PassiveHidden);
+                            return h;
+                        });
+                        const combatStatus = pvo.combatStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
+                        if (pvo.pidx == vopidx || vopidx == -1) {
                             return {
                                 ...pvo,
                                 pile: [],
-                                heros: clone(pvo.heros).map(h => {
-                                    h.heroStatus = h.heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
-                                    h.skills = h.skills.filter(s => s.type != SKILL_TYPE.PassiveHidden);
-                                    return h;
-                                }),
-                                combatStatus: pvo.combatStatus.filter(s => !s.hasType(STATUS_TYPE.Hide)),
+                                heros,
+                                combatStatus,
                             }
                         }
                         return {
                             ...pvo,
-                            id: pvo.id != AI_ID ? -2 : pvo.id,
-                            heros: clone(pvo.heros).map(h => {
-                                h.heroStatus = h.heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide));
-                                h.skills = h.skills.filter(s => s.type != SKILL_TYPE.PassiveHidden);
-                                return h;
-                            }),
-                            combatStatus: pvo.combatStatus.filter(s => !s.hasType(STATUS_TYPE.Hide)),
+                            heros,
+                            combatStatus,
                             UI: {
                                 ...pvo.UI,
                                 willGetCard: {
@@ -403,9 +405,9 @@ export default class GeniusInvokationRoom {
                             handCards: [],
                         }
                     }),
-                    previews: pidx == this.currentPlayerIdx ? this.previews : [],
-                    ...(typeof tip != 'string' ? { tip: tip[pidx] } :
-                        tip.includes('{p}') ? { tip: tip.replace(/{p}/, pidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
+                    previews: vopidx == this.currentPlayerIdx ? this.previews : [],
+                    ...(typeof tip != 'string' ? { tip: tip[vopidx] } :
+                        tip.includes('{p}') ? { tip: tip.replace(/{p}/, vopidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
                     log: log.map(v => v.content),
                     actionInfo: {
                         content: actionInfoContent || (isActionInfo ? log.filter(lg => lg.type == 'info').slice(-1)[0]?.content ?? '' : ''),
@@ -422,7 +424,7 @@ export default class GeniusInvokationRoom {
             } else {
                 this.io.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
                     ...serverData,
-                    ..._serverDataVO(pidx, tip),
+                    ..._serverDataVO(-1, tip),
                 }));
                 this.players.forEach(p => {
                     this.io.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
@@ -467,7 +469,7 @@ export default class GeniusInvokationRoom {
         }
         this.players.forEach((p, pi) => p.pidx = pi);
         console.info(`init-rid:${this.id}-[${newPlayer.name}]-pid:${newPlayer.id}-pidx:${pidx}`);
-        this.emit(`player[${player.name}] enter room `, pidx);
+        this.emit(`player[${player.name}] enter room`, pidx);
         return player;
     }
     /**
@@ -575,6 +577,7 @@ export default class GeniusInvokationRoom {
             }
             p.handCards = p.pile.splice(0, INIT_HANDCARDS_COUNT).map(c => c.setEntityId(this._genEntityId()));
             p.UI.info = `${this.startIdx == p.pidx ? '我方' : '对方'}先手`;
+            this._writeLog(`player${p.pidx}[${p.name}]卡组码: ${this.shareCodes[p.pidx]}`, 'system')
             this._writeLog(`[${p.name}]获得手牌${p.handCards.map(c => `[${c.name}]`).join('')}`, 'system');
             this._writeLog(`[${p.name}]牌库：${p.pile.map(c => `[${c.name}]`).join('')}`, 'system');
             // this.resetHeartBreak(p.pidx);
@@ -615,7 +618,6 @@ export default class GeniusInvokationRoom {
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
                 if (this.winner > -1 && this.winner < PLAYER_COUNT) this.winner += PLAYER_COUNT;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
-                    this.players.forEach(p => this._writeLog(`player${p.pidx}[${p.name}]卡组码:${this.shareCodes[p.pidx]}`, 'system'));
                     this.start(pidx, flag);
                 } else {
                     this.emit(flag, pidx);
@@ -874,6 +876,7 @@ export default class GeniusInvokationRoom {
             this.emit(flag, pidx, { isQuickAction: isQuickAction && this.taskQueue.isTaskEmpty(), ohidx, isActionInfo: true });
         }, 1e3]], { isUnshift: true });
         this._doCmds(pidx, cmds);
+        await this._execTask();
         if (isDieSwitch) {
             const { cmds: killedicmds } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'killed', { isOnlyHeroStatus: true, hidxs: [ohidx] });
             const { cmds: killedocmds } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'killed', { isOnlyCombatStatus: true });

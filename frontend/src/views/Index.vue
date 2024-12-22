@@ -143,9 +143,9 @@ const cancelCreateRoom = () => {
 };
 
 // 创建房间
-const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number) => {
+const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon });
 };
 
 // 打开加入房间界面
@@ -192,7 +192,7 @@ onMounted(() => {
   });
   socket.on('getPlayerAndRoomList', getPlayerAndRoomList);
   // 进入房间
-  socket.on('enterRoom', ({ roomId, isLookon, players, version, countdown, err }) => {
+  socket.on('enterRoom', ({ roomId, isLookon, players, version, countdown, allowLookon, err }) => {
     if (err) return alert(err);
     if (isLookon) alert('游戏已满员！进入成为旁观者');
     router.push({
@@ -204,6 +204,7 @@ onMounted(() => {
         players,
         version,
         countdown,
+        allowLookon,
         follow: players.find((p: Player) => p.id == followIdx)?.pidx,
       },
     });

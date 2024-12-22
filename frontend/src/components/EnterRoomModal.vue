@@ -17,11 +17,14 @@ const props = defineProps({
     default: -1,
   },
 });
-const emit = defineEmits(['enter-room', 'enter-room-cancel']);
+const emit = defineEmits<{
+  'enter-room': [roomId: string, options: { roomPassword: string }],
+  'enter-room-cancel': [],
+}>();
 const roomId = ref<string>(props.selectRoomId == -1 ? '' : props.selectRoomId.toString()); // 房间号
 const roomPassword = ref<string>(''); // 房间密码
 
-const enter = () => emit('enter-room', roomId.value, roomPassword.value);
+const enter = () => emit('enter-room', roomId.value, { roomPassword: roomPassword.value });
 const cancel = () => emit('enter-room-cancel');
 </script>
 

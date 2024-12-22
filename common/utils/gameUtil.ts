@@ -1,5 +1,6 @@
 import { Card, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, Version } from "../constant/enum.js";
+import { SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -314,7 +315,7 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
     return `{\n${prefix}name: ${skill.name}\n`
         + `${prefix}id: ${skill.id}\n`
-        + `${prefix}type: ${skill.type}\n`
+        + `${prefix}type: ${SKILL_TYPE_NAME[skill.type]}\n`
         + `${prefix}damage: ${skill.damage}\n`
         + `${prefix}dmgElement: ${skill.dmgElement}\n`
         + `${prefix}cost: [${skill.cost.map(c => c.cnt)}]\n`

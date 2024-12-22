@@ -131,6 +131,7 @@ export const SKILL_TYPE_NAME = {
     [SKILL_TYPE.Burst]: '元素爆发',
     [SKILL_TYPE.Passive]: '被动技能',
     [SKILL_TYPE.Vehicle]: '特技',
+    [SKILL_TYPE.PassiveHidden]: '隐藏被动',
 } as const;
 
 export const SKILL_TYPE_ABBR = {

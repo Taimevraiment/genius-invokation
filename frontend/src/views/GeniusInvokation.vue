@@ -6,6 +6,10 @@
     <div style="position: absolute;left: 60px;color: white;z-index: 6;" @click.stop="sendLog">
       [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}] 房间号{{ roomId }} <u>发送日志</u>
     </div>
+    <div class="lookon-count" v-if="client.watchers > 0">
+      <img src="@@/svg/lookon.svg" alt="旁观人数" />
+      <div>{{ client.watchers }}</div>
+    </div>
     <button v-if="client.isStart && isLookon == -1 && client.phase >= PHASE.ACTION" class="exit" @click.stop="giveup">
       投降
     </button>
@@ -203,7 +207,7 @@ import {
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { debounce } from '@@@/utils/utils';
+import { debounce, isCdt } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
 const router = useRouter();
@@ -216,14 +220,16 @@ const socket: Socket = getSocket(isDev);
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
 const version = ref<Version>(cversion); // 版本
-const isLookon = ref<number>(cisLookon ? follow ?? Math.floor(Math.random() * PLAYER_COUNT) : -1); // 是否旁观
-const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(socket, roomId, userid, version.value, cplayers, isMobile.value, countdown, isDev,
+const isLookon = ref<number>(cisLookon ? (follow ?? Math.floor(Math.random() * PLAYER_COUNT)) : -1); // 是否旁观
+const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
+  socket, roomId, userid, version.value,
+  cplayers, isMobile.value, countdown, isDev,
   JSON.parse(localStorage.getItem('GIdecks') || '[]'),
-  Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value,
+  Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value
 ));
 
-const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt);
-const canAction = computed<boolean>(() => client.value.canAction); // 是否可以操作
+const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
+const canAction = computed<boolean>(() => client.value.canAction && isLookon.value == -1); // 是否可以操作
 const afterWinHeros = ref<Hero[][]>([]); // 游戏结束后显示的角色信息
 const hasAI = ref<boolean>(false); // 是否有AI
 
@@ -281,7 +287,6 @@ const enterEditDeck = () => {
 // 返回
 const exit = () => {
   socket.emit('exitRoom');
-  if (isLookon.value > -1) router.back();
 };
 // 发送日志
 const sendLog = () => {
@@ -386,7 +391,7 @@ const getPlayerList = ({ plist }: { plist: Player[] }) => {
   if (me?.rid == -1) router.back();
 };
 onMounted(() => {
-  socket.emit('roomInfoUpdate', { roomId });
+  socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value) });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
   socket.on('error', err => {
@@ -958,6 +963,23 @@ body {
   transform: translateX(-50%);
   cursor: pointer;
   z-index: 6;
+}
+
+.lookon-count {
+  position: absolute;
+  left: 60px;
+  top: 1.2em;
+  color: white;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  z-index: 6;
+}
+
+.lookon-count>img {
+  width: 30px;
+  height: 20px;
+  filter: grayscale(1) brightness(10);
 }
 
 .debug-mask {

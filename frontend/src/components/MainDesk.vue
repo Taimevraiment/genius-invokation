@@ -433,7 +433,7 @@
       </div>
 
       <div v-if="showHideBtn" style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;cursor: pointer;">
-        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="" style="position: absolute;width: 100%;height: 100%;"
+        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="显/隐" style="position: absolute;width: 100%;height: 100%;"
           :style="{ filter: isHide ? '' : 'brightness(10)' }" />
         <div style="width: 20px;height: 30px;"></div>
       </div>
@@ -490,7 +490,7 @@ const wrapArr = <T>(arr: T[], reverse: boolean = false) => {
   return [a1, a0];
 }
 
-const playerIdx = computed<number>(() => Math.max(props.isLookon, props.client.playerIdx));
+const playerIdx = computed<number>(() => props.client.playerIdx);
 const player = computed<Player>(() => {
   const players: Player[] = props.client.players;
   if (statusCurcnt.value.length == 0) statusCurcnt.value = players.map(p => p.heros.map(() => [genChangeProxy(12), genChangeProxy(12)]));
@@ -855,14 +855,14 @@ const mouseup = () => {
 
 .pile {
   position: relative;
-  border-top: 3px solid black;
-  border-right: 3px solid black;
-  border-bottom: 3px solid black;
+  border-top: 3px solid #d7c578;
+  border-right: 3px solid #d7c578;
+  border-bottom: 3px solid #d7c578;
   border-top-right-radius: 7px;
   border-bottom-right-radius: 7px;
   height: 20%;
   width: 100%;
-  background-color: #003da0;
+  background-color: #49485c;
   color: white;
   display: flex;
   flex-direction: column;

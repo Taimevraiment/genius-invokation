@@ -247,6 +247,7 @@ type ServerData = Readonly<{
     summonSelect: number[],
     supportSelect: number[],
     pickModal: PickCard,
+    watchers: number,
     flag: string,
 }>
 

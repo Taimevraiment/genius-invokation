@@ -9,6 +9,11 @@
       <input type="text" placeholder="房间名(选填)" v-model="roomName" />
       <input type="text" placeholder="密码(选填)" v-model="roomPassword" />
       <input type="number" placeholder="倒计时(秒)(选填)" v-model="countdown" />
+      <div style="margin-top: 5%;">
+        <input type="checkbox" id="allowLookon" style="width: fit-content;height: 100%;" :checked="allowLookon"
+          @click="allowLookon = !allowLookon" />
+        <label for="allowLookon" style="cursor: pointer;">是否允许观战</label>
+      </div>
       <button style="margin: 5% 0" @click="create">创建</button>
     </div>
   </div>
@@ -18,14 +23,18 @@
 import { OFFLINE_VERSION, OfflineVersion, VERSION, Version } from '@@@/constant/enum';
 import { ref } from 'vue';
 
-const emit = defineEmits(['create-room', 'create-room-cancel']);
+const emit = defineEmits<{
+  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean],
+  'create-room-cancel': []
+}>();
 
 const roomName = ref<string>(''); // 房间名
 const roomPassword = ref<string>(''); // 房间密码
 const version = ref<Version>((JSON.parse(localStorage.getItem('GIdecks') || '[]')[Number(localStorage.getItem('GIdeckIdx') || '0')])?.version ?? VERSION[0]); // 版本
 const countdown = ref<number | string>(''); // 倒计时
+const allowLookon = ref<boolean>(true); // 是否允许观战
 
-const create = () => emit('create-room', roomName.value, version.value, roomPassword.value, +countdown.value || 0);
+const create = () => emit('create-room', roomName.value, version.value, roomPassword.value, +countdown.value || 0, allowLookon.value);
 const cancel = () => emit('create-room-cancel');
 const isOfflineVersion = (version: Version) => OFFLINE_VERSION.includes(version as OfflineVersion);
 </script>
@@ -41,6 +50,7 @@ const isOfflineVersion = (version: Version) => OFFLINE_VERSION.includes(version 
   display: flex;
   justify-content: center;
   align-items: center;
+  user-select: none;
 }
 
 .create-room-main {

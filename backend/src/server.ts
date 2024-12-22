@@ -3,7 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
-import { AI_ID } from "../../common/constant/gameOption.js";
+import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
@@ -130,22 +130,21 @@ io.on('connection', socket => {
             socket.leave(`7szh-${me.rid}`);
             const room = getRoom(me.rid);
             if (!room) return console.error(`ERROR@leaveRoom:${eventName}:未找到房间,rid:${me.rid}`);
-            const pidx = getIdxById(me.id, room.players);
-            if (pidx > -1) {
-                if (me.pidx < 2 || room.players?.[1]?.id == AI_ID) --room.onlinePlayersCnt;
+            if (me.pidx > -1) {
+                --room.onlinePlayersCnt;
                 if (room.isStart) me.isOffline = true;
             }
-            if (!room.isStart || pidx == -1 || me.pidx > 1) {
+            if (!room.isStart || me.pidx == -1) {
                 me.rid = -1;
                 removeById(pid, room.players, room.watchers);
                 if (room.players[0]?.id == AI_ID) --room.onlinePlayersCnt;
             }
             if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline)) {
-                room.players.forEach(p => p.rid = -1);
+                [...room.players, ...room.watchers].forEach(p => p.rid = -1);
                 if (room.countdown.timer != null) clearInterval(room.countdown.timer);
                 removeById(room.id, roomList);
             } else {
-                room.emit('leaveRoom', pidx);
+                room.emit('leaveRoom', me.pidx > -1 ? me.pidx : PLAYER_COUNT);
             }
         }
         if (eventName != 'exitRoom') removePlayer(me);
@@ -156,7 +155,6 @@ io.on('connection', socket => {
         const { id = -1, name = '' } = data;
         if (name == '') return;
         let username = name;
-        pid = id;
         const player = getPlayer(id);
         if (id > 0 && player) {
             const prevname = player.name;
@@ -169,18 +167,20 @@ io.on('connection', socket => {
                 const leavePlayer = removePlayerList.get(id);
                 if (leavePlayer) {
                     leavePlayer.cancel();
+                    pid = id;
                     console.info(`${playerInfo} 重新连接了...`);
                 }
-                if (player.rid > 0 && getRoomIdx(player.rid) > -1) {
+                if (pid == id && player.rid > 0 && getRoomIdx(player.rid) > -1) {
                     console.info(`${playerInfo} 重新进入房间[${player.rid}]`);
                     socket.emit('continueGame', { roomId: player.rid, isLeave: !!leavePlayer });
                 }
             }
         } else {
-            console.info(`[${new Date()}]:新玩家[${name}]-pid${pid} 连接了...`);
             pid = genId(playerList);
+            console.info(`[${new Date()}]:新玩家[${name}]-pid${pid} 连接了...`);
             playerList.push({ id: pid, name, rid: -1, status: PLAYER_STATUS.WAITING });
         }
+        if (id > 0 && player && pid != id) return console.info(`WARN@login:非法的登录 pid:${pid}, id:${id}`);
         socket.emit('login', { pid, name: username });
         emitPlayerAndRoomList();
     });
@@ -190,10 +190,10 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown } = data;
+        const { roomName, version, roomPassword, countdown, allowLookon } = data;
         const roomId = genId(roomList);
         const me = getPlayer(pid) as Player;
-        const newRoom = new GeniusInvokationRoom(io, roomId, roomName, version, roomPassword, leaveRoom, countdown, isDev);
+        const newRoom = new GeniusInvokationRoom(io, roomId, roomName, version, roomPassword, leaveRoom, countdown, allowLookon, isDev);
         const player = newRoom.init(me);
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
@@ -201,7 +201,7 @@ io.on('connection', socket => {
         emitPlayerAndRoomList();
         socket.emit('enterRoom', {
             roomId,
-            players: newRoom.players.map(p => p.id == me.id ? p : ({ ...p, id: -2 })),
+            players: newRoom.players,
             version: newRoom.version.value,
             countdown: newRoom.countdown.limit,
         });
@@ -215,13 +215,14 @@ io.on('connection', socket => {
         const pidx = getIdxById(me.id, room.players);
         const isInGame = pidx > -1;
         if (room.password != roomPassword && !isInGame) return socket.emit('enterRoom', { err: '密码错误！' });
-        if (me.rid > 0 && me.rid != roomId) return socket.emit('enterRoom', { err: `你还有正在进行的游戏！rid:${me.rid}` });
-        const isLookon = room.players.length >= 2 && !isInGame;
+        if (me.rid > 0 && me.rid != roomId && getRoom(me.rid)) return socket.emit('enterRoom', { err: `你还有正在进行的游戏！rid:${me.rid}` });
+        const isLookon = room.players.length == PLAYER_COUNT && !isInGame;
         if (isInGame) {
             if (isLeave) ++room.onlinePlayersCnt;
             room.players[pidx].isOffline = false;
             setTimeout(() => room.emit('continueGame', (me as Player).pidx, { socket }), 500);
         } else {
+            if (isLookon && !room.allowLookon) return socket.emit('enterRoom', { err: '该房间不允许观战！' });
             me = room.init(me);
             playerList[getPlayerIdx(pid)] = me;
         }
@@ -234,7 +235,7 @@ io.on('connection', socket => {
         socket.emit('enterRoom', {
             roomId,
             isLookon,
-            players: room.players.map(p => p.id == me.id ? p : ({ ...p, id: -2 })),
+            players: room.players,
             version: room.version.value,
             countdown: room.countdown.limit,
         });
@@ -249,9 +250,10 @@ io.on('connection', socket => {
     });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {
-        const room = getRoom(data.roomId);
+        const { roomId, pidx } = data;
+        const room = getRoom(roomId);
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
-        room.emit('roomInfoUpdate', data.pidx || 0);
+        room.emit('roomInfoUpdate', pidx ?? getIdxById(pid, room.players), { socket });
     });
     // 发送数据到服务器
     socket.on('sendToServer', async (actionData: ActionData) => {
@@ -314,6 +316,7 @@ app.get('/detail', (req, res) => {
         roomList: roomList.map(r => ({
             id: r.id,
             name: r.name,
+            isStart: r.isStart,
             detail: r.string,
             preview: JSON.stringify(r.previews),
         })),
