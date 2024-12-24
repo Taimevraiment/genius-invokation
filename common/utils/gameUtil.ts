@@ -203,130 +203,156 @@ export const compareVersionFn = (curVersion: Version) => {
 // 将玩家信息对象转换为字符串
 export const playerToString = (player: Player, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
-    return `{\n${prefix}name: ${player.name}\n`
-        + `${prefix}id: ${player.id}\n`
-        + `${prefix}pidx: ${player.pidx}\n`
-        + `${prefix}isOffline: ${player.isOffline}\n`
-        + `${prefix}canAction: ${player.canAction}\n`
-        + `${prefix}isFallAtk: ${player.isFallAtk}\n`
-        + `${prefix}dice: ${player.dice.map(d => `[${d}]`).join('')}\n`
-        + `${prefix}rollCnt: ${player.rollCnt}\n`
-        + `${prefix}status: ${player.status}\n`
-        + `${prefix}handCards: ${player.handCards.map(c => `[${c.name}]`).join('')}\n`
-        + `${prefix}pile: ${player.pile.map(c => `[${c.name}]`).join('')}\n`
-        + `${prefix}combatStatus: [${player.combatStatus.map(s => statusToString(s, prefixSpace + 1)).join(', ')}]\n`
-        + `${prefix}heros: [${player.heros.map(s => heroToString(s, prefixSpace + 1)).join(', ')}]\n`
-        + `${prefix}summons: [${player.summons.map(s => summonToString(s, prefixSpace + 1)).join(', ')}]\n`
-        + `${prefix}supports: [${player.supports.map(s => supportToString(s, prefixSpace + 1)).join(', ')}]\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    const prefix1 = '  '.repeat(prefixSpace + 1);
+    return `${prefix}{\n`
+        + `${prefix1}name: ${player.name}\n`
+        + `${prefix1}id: ${player.id}\n`
+        + `${prefix1}pidx: ${player.pidx}\n`
+        + `${prefix1}isOffline: ${player.isOffline}\n`
+        + `${prefix1}canAction: ${player.canAction}\n`
+        + `${prefix1}isFallAtk: ${player.isFallAtk}\n`
+        + `${prefix1}dice: ${player.dice.map(d => `[${d}]`).join('')}\n`
+        + `${prefix1}rollCnt: ${player.rollCnt}\n`
+        + `${prefix1}status: ${player.status}\n`
+        + `${prefix1}handCards: ${player.handCards.map(c => `[${c.name}]`).join('')}\n`
+        + `${prefix1}pile: ${player.pile.map(c => `[${c.name}]`).join('')}\n`
+        + `${prefix1}combatStatus: [\n`
+        + `${player.combatStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
+        + `${prefix1}]\n`
+        + `${prefix1}heros: [\n`
+        + `${player.heros.map(s => heroToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
+        + `${prefix1}]\n`
+        + `${prefix1}summons: [\n`
+        + `${player.summons.map(s => summonToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
+        + `${prefix1}]\n`
+        + `${prefix1}supports: [\n`
+        + `${player.supports.map(s => supportToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
+        + `${prefix1}]\n`
+        + `${prefix}}\n`;
 }
 
 export const statusToString = (sts: Status, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
-    return `{\n${prefix}name: ${sts.name}\n`
-        + `${prefix}id: ${sts.id}\n`
-        + `${prefix}entityId: ${sts.entityId}\n`
-        + `${prefix}useCnt: ${sts.useCnt}\n`
-        + `${prefix}perCnt: ${sts.perCnt}\n`
-        + `${prefix}maxCnt: ${sts.maxCnt}\n`
-        + `${prefix}roundCnt: ${sts.roundCnt}\n`
-        + `${prefix}addCnt: ${sts.addCnt}\n`
-        + `${prefix}type: ${sts.type}\n`
-        + `${prefix}isTalent: ${sts.isTalent}\n`
-        + `${prefix}addition: [${sts.addition}]\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    const prefix1 = '  '.repeat(prefixSpace + 1);
+    return `${prefix}{\n`
+        + `${prefix1}name: ${sts.name}\n`
+        + `${prefix1}id: ${sts.id}\n`
+        + `${prefix1}entityId: ${sts.entityId}\n`
+        + `${prefix1}useCnt: ${sts.useCnt}\n`
+        + `${prefix1}perCnt: ${sts.perCnt}\n`
+        + `${prefix1}maxCnt: ${sts.maxCnt}\n`
+        + `${prefix1}roundCnt: ${sts.roundCnt}\n`
+        + `${prefix1}addCnt: ${sts.addCnt}\n`
+        + `${prefix1}type: ${sts.type}\n`
+        + `${prefix1}isTalent: ${sts.isTalent}\n`
+        + `${prefix1}addition: [${sts.addition}]\n`
+        + `${prefix}}\n`;
 }
 
 export const summonToString = (smn: Summon, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
-    return `{\n${prefix}name: ${smn.name}\n`
-        + `${prefix}id: ${smn.id}\n`
-        + `${prefix}entityId: ${smn.entityId}\n`
-        + `${prefix}useCnt: ${smn.useCnt}\n`
-        + `${prefix}maxUse: ${smn.maxUse}\n`
-        + `${prefix}perCnt: ${smn.perCnt}\n`
-        + `${prefix}damage: ${smn.damage}\n`
-        + `${prefix}element: ${smn.element}\n`
-        + `${prefix}pdmg: ${smn.pdmg}\n`
-        + `${prefix}shieldOrHeal: ${smn.shieldOrHeal}\n`
-        + `${prefix}isDestroy: ${smn.isDestroy}\n`
-        + `${prefix}isTalent: ${smn.isTalent}\n`
-        + `${prefix}addition: [${smn.addition}]\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    const prefix1 = '  '.repeat(prefixSpace + 1);
+    return `${prefix}{\n`
+        + `${prefix1}name: ${smn.name}\n`
+        + `${prefix1}id: ${smn.id}\n`
+        + `${prefix1}entityId: ${smn.entityId}\n`
+        + `${prefix1}useCnt: ${smn.useCnt}\n`
+        + `${prefix1}maxUse: ${smn.maxUse}\n`
+        + `${prefix1}perCnt: ${smn.perCnt}\n`
+        + `${prefix1}damage: ${smn.damage}\n`
+        + `${prefix1}element: ${smn.element}\n`
+        + `${prefix1}pdmg: ${smn.pdmg}\n`
+        + `${prefix1}shieldOrHeal: ${smn.shieldOrHeal}\n`
+        + `${prefix1}isDestroy: ${smn.isDestroy}\n`
+        + `${prefix1}isTalent: ${smn.isTalent}\n`
+        + `${prefix1}addition: [${smn.addition}]\n`
+        + `${prefix}}\n`;
 }
 
 export const supportToString = (spt: Support, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
-    return `{\n${prefix}name: ${spt.card.name}\n`
-        + `${prefix}id: ${spt.card.id}\n`
-        + `${prefix}entityId: ${spt.entityId}\n`
-        + `${prefix}cnt: ${spt.cnt}\n`
-        + `${prefix}perCnt: ${spt.perCnt}\n`
-        + `${prefix}type: ${spt.type}\n`
-        + `${prefix}heal: ${spt.heal}\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    const prefix1 = '  '.repeat(prefixSpace + 1);
+    return `${prefix}{\n`
+        + `${prefix1}name: ${spt.card.name}\n`
+        + `${prefix1}id: ${spt.card.id}\n`
+        + `${prefix1}entityId: ${spt.entityId}\n`
+        + `${prefix1}cnt: ${spt.cnt}\n`
+        + `${prefix1}perCnt: ${spt.perCnt}\n`
+        + `${prefix1}type: ${spt.type}\n`
+        + `${prefix1}heal: ${spt.heal}\n`
+        + `${prefix}}\n`;
 }
 
 export const heroToString = (hero: Hero, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
-    return `{\n${prefix}name: ${hero.name}\n`
-        + `${prefix}id: ${hero.id}\n`
-        + `${prefix}entityId: ${hero.entityId}\n`
-        + `${prefix}hp: ${hero.hp}\n`
-        + `${prefix}maxHp: ${hero.maxHp}\n`
-        + `${prefix}element: ${hero.element}\n`
-        + `${prefix}energy: ${hero.energy}\n`
-        + `${prefix}maxEnergy: ${hero.maxEnergy}\n`
-        + `${prefix}hidx: ${hero.hidx}\n`
-        + `${prefix}isFront: ${hero.isFront}\n`
-        + `${prefix}attachElement: ${hero.attachElement}\n`
-        + `${prefix}weaponType: ${hero.weaponType}\n`
-        + `${prefix}tags: ${hero.tags}\n`
-        + `${prefix}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 1)}\n`
-        + `${prefix}artifactSlot: ${cardToString(hero.artifactSlot, prefixSpace + 1)}\n`
-        + `${prefix}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 1)}\n`
-        + `${prefix}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 1)}\n`
-        + `${prefix}heroStatus: [${hero.heroStatus.map(s => statusToString(s, prefixSpace + 1)).join(', ')}]\n`
-        + `${prefix}skills: [${hero.skills.map(s => skillToString(s, prefixSpace + 1)).join(', ')}]\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    const prefix1 = '  '.repeat(prefixSpace + 1);
+    return `${prefix}{\n`
+        + `${prefix1}name: ${hero.name}\n`
+        + `${prefix1}id: ${hero.id}\n`
+        + `${prefix1}entityId: ${hero.entityId}\n`
+        + `${prefix1}hp: ${hero.hp}\n`
+        + `${prefix1}maxHp: ${hero.maxHp}\n`
+        + `${prefix1}element: ${hero.element}\n`
+        + `${prefix1}energy: ${hero.energy}\n`
+        + `${prefix1}maxEnergy: ${hero.maxEnergy}\n`
+        + `${prefix1}hidx: ${hero.hidx}\n`
+        + `${prefix1}isFront: ${hero.isFront}\n`
+        + `${prefix1}attachElement: ${hero.attachElement}\n`
+        + `${prefix1}weaponType: ${hero.weaponType}\n`
+        + `${prefix1}tags: ${hero.tags}\n`
+        + `${prefix1}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 2, false)}\n`
+        + `${prefix1}artifactSlot: ${cardToString(hero.artifactSlot, prefixSpace + 2, false)}\n`
+        + `${prefix1}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 2, false)}\n`
+        + `${prefix1}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 2, false)}`
+        + `${prefix1}heroStatus: [\n`
+        + `${hero.heroStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
+        + `${prefix1}]\n`
+        + `${prefix1}skills: [\n`
+        + `${hero.skills.map(s => skillToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
+        + `${prefix1}]\n`
+        + `${prefix}}\n`;
 }
 
-export const cardToString = (card: Card | null | undefined, prefixSpace: number = 1) => {
+export const cardToString = (card: Card | null | undefined, prefixSpace: number = 1, wrap: boolean = true) => {
     const prefix = '  '.repeat(prefixSpace);
+    const prefix1 = '  '.repeat(prefixSpace + 1);
     if (!card) return 'null';
-    return `{\n${prefix}name: ${card.name}\n`
-        + `${prefix}id: ${card.id}\n`
-        + `${prefix}entityId: ${card.entityId}\n`
-        + `${prefix}cost: ${card.cost}\n`
-        + `${prefix}costType: ${card.costType}\n`
-        + `${prefix}costChange: ${card.costChange}\n`
-        + `${prefix}type: ${card.type}\n`
-        + `${prefix}subType: ${card.subType}\n`
-        + `${prefix}tag: ${card.tag}\n`
-        + `${prefix}userType: ${card.userType}\n`
-        + `${prefix}useCnt: ${card.useCnt}\n`
-        + `${prefix}perCnt: ${card.perCnt}\n`
-        + `${prefix}energy: ${card.energy}\n`
-        + `${prefix}anydice: ${card.anydice}\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    return `${wrap ? prefix : ''}{\n`
+        + `${prefix1}name: ${card.name}\n`
+        + `${prefix1}id: ${card.id}\n`
+        + `${prefix1}entityId: ${card.entityId}\n`
+        + `${prefix1}cost: ${card.cost}\n`
+        + `${prefix1}costType: ${card.costType}\n`
+        + `${prefix1}costChange: ${card.costChange}\n`
+        + `${prefix1}type: ${card.type}\n`
+        + `${prefix1}subType: ${card.subType}\n`
+        + `${prefix1}tag: ${card.tag}\n`
+        + `${prefix1}userType: ${card.userType}\n`
+        + `${prefix1}useCnt: ${card.useCnt}\n`
+        + `${prefix1}perCnt: ${card.perCnt}\n`
+        + `${prefix1}energy: ${card.energy}\n`
+        + `${prefix1}anydice: ${card.anydice}\n`
+        + `${prefix}}\n`;
 }
 
 export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
-    return `{\n${prefix}name: ${skill.name}\n`
-        + `${prefix}id: ${skill.id}\n`
-        + `${prefix}type: ${SKILL_TYPE_NAME[skill.type]}\n`
-        + `${prefix}damage: ${skill.damage}\n`
-        + `${prefix}dmgElement: ${skill.dmgElement}\n`
-        + `${prefix}cost: [${skill.cost.map(c => c.cnt)}]\n`
-        + `${prefix}attachElement: ${skill.attachElement}\n`
-        + `${prefix}isForbidden: ${skill.isForbidden}\n`
-        + `${prefix}dmgChange: ${skill.dmgChange}\n`
-        + `${prefix}costChange: ${JSON.stringify(skill.costChange)}\n`
-        + `${prefix}useCntPerRound: ${skill.useCntPerRound}\n`
-        + `${prefix}perCnt: ${skill.perCnt}\n`
-        + `${prefix}useCnt: ${skill.useCnt}\n`
-        + `${prefix}addition: [${skill.addition}]\n`
-        + `${'  '.repeat(prefixSpace - 1)}}`;
+    const prefix1 = '  '.repeat(prefixSpace + 1);
+    return `${prefix}{\n`
+        + `${prefix1}name: ${skill.name}\n`
+        + `${prefix1}id: ${skill.id}\n`
+        + `${prefix1}type: ${SKILL_TYPE_NAME[skill.type]}\n`
+        + `${prefix1}damage: ${skill.damage}\n`
+        + `${prefix1}dmgElement: ${skill.dmgElement}\n`
+        + `${prefix1}cost: [${skill.cost.map(c => c.cnt)}]\n`
+        + `${prefix1}attachElement: ${skill.attachElement}\n`
+        + `${prefix1}isForbidden: ${skill.isForbidden}\n`
+        + `${prefix1}dmgChange: ${skill.dmgChange}\n`
+        + `${prefix1}costChange: ${JSON.stringify(skill.costChange)}\n`
+        + `${prefix1}useCntPerRound: ${skill.useCntPerRound}\n`
+        + `${prefix1}perCnt: ${skill.perCnt}\n`
+        + `${prefix1}useCnt: ${skill.useCnt}\n`
+        + `${prefix1}addition: [${skill.addition}]\n`
+        + `${prefix}}\n`;
 }
 

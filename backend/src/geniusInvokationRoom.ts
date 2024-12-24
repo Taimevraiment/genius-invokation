@@ -109,7 +109,9 @@ export default class GeniusInvokationRoom {
             + `  password: ${this.password}\n`
             + `  seed: ${this.seed}\n`
             + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
-            + `  players: [${this.players.map(p => playerToString(p, 2)).join(', ')}]\n`
+            + `  players: [\n`
+            + `${this.players.map(p => playerToString(p, 2)).join('') || '    \n'}`
+            + `  ]\n`
             + `  watchers: [${this.watchers.map(p => `${p.name}(${p.id})`).join(', ')}]\n`
             + `  isStart: ${this.isStart}\n`
             + `  phase: ${this.phase}\n`
@@ -122,7 +124,8 @@ export default class GeniusInvokationRoom {
             + `  _currentPlayerIdx: ${this._currentPlayerIdx}\n`
             + `  _random: ${this._random}\n`
             + `  systemLog:\n`
-            + `${this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
+            + `${this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}`
+            + `  \n`
             + `}`;
     }
     /**

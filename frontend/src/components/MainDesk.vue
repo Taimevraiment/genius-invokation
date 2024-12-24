@@ -855,9 +855,9 @@ const mouseup = () => {
 
 .pile {
   position: relative;
-  border-top: 3px solid #d7c578;
-  border-right: 3px solid #d7c578;
-  border-bottom: 3px solid #d7c578;
+  border-top: 2px solid #d7c578;
+  border-right: 2px solid #d7c578;
+  border-bottom: 2px solid #d7c578;
   border-top-right-radius: 7px;
   border-bottom-right-radius: 7px;
   height: 20%;
