@@ -187,13 +187,14 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/a4249ebb8a68e2843cdd2fa78937912c_2796631322062911422.png'),
 
     111132: () => new SummonBuilder('极寒的冰枪').useCnt(2).damage(1)
-        .description('{defaultAtk，生成1层【sts111131】。}')
+        .description('{defaultAtk，生成2层【sts111131】。}')
+        .description('{defaultAtk，生成1层【sts111131】。}', 'v5.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/722c71c78b82483790cadd1b0f620f83_4380247943885927570.png')
-        .handle((summon, event) => ({
+        .handle((summon, event, ver) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon, event);
-                cmds.push({ cmd: 'getStatus', status: [[111131, 1]] })
+                cmds.push({ cmd: 'getStatus', status: [[111131, isCdt(ver.lt('v5.3.0'), 1)]] })
                 return { cmds }
             }
         })),

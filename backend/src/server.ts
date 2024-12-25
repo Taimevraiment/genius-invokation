@@ -246,7 +246,7 @@ io.on('connection', socket => {
     socket.on('sendLog', data => {
         const room = getRoom(data.roomId);
         const me = getPlayer(pid);
-        room?.exportLog(`>>>由[${me?.name}]发送`);
+        room?.exportLog(`>>>由[${me?.name}]发送\n问题描述：${data.description}`);
     });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {

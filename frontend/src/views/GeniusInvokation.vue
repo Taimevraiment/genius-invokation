@@ -291,7 +291,8 @@ const exit = () => {
 // 发送日志
 const sendLog = () => {
   if (client.value.phase <= PHASE.NOT_BEGIN || isLookon.value != -1) return;
-  socket.emit('sendLog', { roomId });
+  const description = prompt('发生了什么问题');
+  socket.emit('sendLog', { roomId, description });
   alert('日志已发送');
 }
 // 投降

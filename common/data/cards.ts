@@ -2865,7 +2865,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (isTriggered) triggers.push('Geo-dmg');
             } else {
                 const hero = heros[hidx];
-                isTriggered = hero.hp >= 7 && hero.isFront && sktype != SKILL_TYPE.Vehicle;
+                isTriggered = hero && hero.hp >= 7 && hero.isFront && sktype != SKILL_TYPE.Vehicle;
                 if (isTriggered) triggers.push('dmg');
             }
             if (isTriggered) return { trigger: triggers, addDmgCdt: 1 }

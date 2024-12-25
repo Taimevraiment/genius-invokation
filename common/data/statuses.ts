@@ -1236,11 +1236,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     114122: () => new StatusBuilder('破夜的明焰（生效中）').heroStatus().icon('buff5').useCnt(1).maxCnt(3).type(STATUS_TYPE.AddDamage)
-        .description('所附属角色下次造成的伤害+1。；[useCnt]')
+        .description('所附属角色下次造成的伤害+1。；（可叠加，最多叠加到+3）')
         .handle((status, event) => ({
             trigger: isCdt(event.hasDmg, ['skill']),
-            addDmg: 1,
-            exec: () => { --status.useCnt },
+            addDmg: status.useCnt,
+            exec: () => { status.useCnt = 0 },
         })),
 
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon('buff3').useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
@@ -1622,7 +1622,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     117032: (isTalent: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus().icon('ski,3')
-        .type(STATUS_TYPE.AddDamage).roundCnt(2).roundCnt(3, isTalent).talent(isTalent)
+        .type(STATUS_TYPE.AddDamage).roundCnt(isTalent ? 3 : 2).talent(isTalent)
         .description('【我方引发元素反应时：】伤害额外+1。；[roundCnt]')
         .handle(() => ({ trigger: ['elReaction'], addDmgCdt: 1 })),
 

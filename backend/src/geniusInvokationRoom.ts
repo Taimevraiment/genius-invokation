@@ -99,7 +99,7 @@ export default class GeniusInvokationRoom {
         this._currentPlayerIdx = (val + PLAYER_COUNT) % PLAYER_COUNT;
     }
     get needWait() {
-        return this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting;
+        return this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting && this.players.every(p => p.status != PLAYER_STATUS.DIESWITCH);
     }
     get string() {
         return `{\n`
@@ -124,8 +124,7 @@ export default class GeniusInvokationRoom {
             + `  _currentPlayerIdx: ${this._currentPlayerIdx}\n`
             + `  _random: ${this._random}\n`
             + `  systemLog:\n`
-            + `${this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}`
-            + `  \n`
+            + `${this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
             + `}`;
     }
     /**
@@ -185,22 +184,35 @@ export default class GeniusInvokationRoom {
      */
     exportLog(e?: string) {
         let log = this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1');
+        let reporterInfo = '';
         if (e) {
             log += '\n' + e;
             if (e.includes('发送')) {
-                log += '\nroomInfo: {\n'
+                reporterInfo += '\nroomInfo: {\n'
                     + `  phase: ${this.phase}\n`
                     + `  round: ${this.round}\n`
                     + `  startIdx: ${this.startIdx}\n`
                     + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
                     + `  taskQueue: ${this.taskQueue.queueList}\n`
                     + `  isDieBackChange: ${this.isDieBackChange}\n`
-                    + `  players: [${this.players.map(p => playerToString(p, 2)).join(', ')}]\n`
+                    + `  players: [\n`
+                    + `${this.players.map(p => playerToString(p, 2)).join('')}\n`
+                    + `  ]\n`
                     + `}`;
             }
         }
-        fs.writeFile(`${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}.log`, log, err => {
-            if (err) return console.error('err:', err);
+        const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}.log`;
+        fs.access(path, fs.constants.F_OK, notExist => {
+            if (notExist) {
+                log += reporterInfo;
+                fs.writeFile(path, log, err => {
+                    if (err) return console.error('err:', err);
+                });
+            } else {
+                fs.appendFile(path, reporterInfo, err => {
+                    if (err) return console.error('err:', err);
+                });
+            }
         });
     }
     /**
@@ -448,7 +460,7 @@ export default class GeniusInvokationRoom {
      * @param err 错误信息
      */
     emitError(err: string) {
-        this.io.to(`7szh-${this.id}`).emit('error', err);
+        this.io.to([`7szh-${this.id}`, `7szh-${this.id}-p0`, `7szh-${this.id}-p1`]).emit('error', err);
     }
     /**
      * 初始化玩家信息

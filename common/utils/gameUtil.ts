@@ -208,6 +208,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}name: ${player.name}\n`
         + `${prefix1}id: ${player.id}\n`
         + `${prefix1}pidx: ${player.pidx}\n`
+        + `${prefix1}hidx: ${player.hidx}\n`
         + `${prefix1}isOffline: ${player.isOffline}\n`
         + `${prefix1}canAction: ${player.canAction}\n`
         + `${prefix1}isFallAtk: ${player.isFallAtk}\n`
@@ -300,10 +301,10 @@ export const heroToString = (hero: Hero, prefixSpace: number = 1) => {
         + `${prefix1}attachElement: ${hero.attachElement}\n`
         + `${prefix1}weaponType: ${hero.weaponType}\n`
         + `${prefix1}tags: ${hero.tags}\n`
-        + `${prefix1}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 2, false)}\n`
-        + `${prefix1}artifactSlot: ${cardToString(hero.artifactSlot, prefixSpace + 2, false)}\n`
-        + `${prefix1}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 2, false)}\n`
-        + `${prefix1}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 2, false)}`
+        + `${prefix1}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 1, false)}`
+        + `${prefix1}artifactSlot: ${cardToString(hero.artifactSlot, prefixSpace + 1, false)}`
+        + `${prefix1}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 1, false)}`
+        + `${prefix1}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 1, false)}`
         + `${prefix1}heroStatus: [\n`
         + `${hero.heroStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
         + `${prefix1}]\n`
@@ -316,7 +317,7 @@ export const heroToString = (hero: Hero, prefixSpace: number = 1) => {
 export const cardToString = (card: Card | null | undefined, prefixSpace: number = 1, wrap: boolean = true) => {
     const prefix = '  '.repeat(prefixSpace);
     const prefix1 = '  '.repeat(prefixSpace + 1);
-    if (!card) return 'null';
+    if (!card) return 'null\n';
     return `${wrap ? prefix : ''}{\n`
         + `${prefix1}name: ${card.name}\n`
         + `${prefix1}id: ${card.id}\n`
