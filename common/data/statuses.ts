@@ -840,7 +840,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     --eStatus.useCnt;
                     const sts112141 = getObjById(hero.heroStatus, 112141);
                     if (!sts112141) return;
-                    sts112141.useCnt = Math.max(0, sts112141.useCnt);
+                    sts112141.useCnt = Math.max(0, sts112141.useCnt - 1);
                 }
             }
         })),
@@ -1599,7 +1599,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack)
-        .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色1点[穿透伤害]。；[useCnt]')
+        .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色造成1点[穿透伤害]。；[useCnt]')
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((status, event) => {
             const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, hcard, trigger = '', isExecTask = false } = event;
@@ -1622,7 +1622,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     117032: (isTalent: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus().icon('ski,3')
-        .type(STATUS_TYPE.AddDamage).roundCnt(isTalent ? 3 : 2).talent(isTalent)
+        .type(STATUS_TYPE.AddDamage).roundCnt(2).roundCnt(3, isTalent).talent(isTalent)
         .description('【我方引发元素反应时：】伤害额外+1。；[roundCnt]')
         .handle(() => ({ trigger: ['elReaction'], addDmgCdt: 1 })),
 

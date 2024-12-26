@@ -160,9 +160,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         status: 111082,
                         cmds: isCdt(isExecTalent, [{ cmd: 'revive', cnt: 2, hidxs }]),
-                        exec: () => {
-                            if (isExecTalent) --talent.perCnt;
-                        }
+                        exec: () => { isExecTalent && --talent.perCnt }
                     }
                 })
         ),
@@ -320,9 +318,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         status: 112042,
                         statusOppo: 112043,
-                        exec: () => {
-                            if (sts112041 > -1) heroStatus.splice(sts112041, 1);
-                        }
+                        exec: () => { sts112041 > -1 && heroStatus.splice(sts112041, 1) }
                     }
                 }),
             new SkillBuilder('极恶技·尽灭闪').description('依据【hro】当前所处状态，进行不同的攻击：；【远程状态·魔弹一闪】：{dealDmg}，返还2点[充能]，目标角色附属【sts112043】。；【近战状态·尽灭水光】：造成{dmg+2}点[水元素伤害]。')
@@ -356,7 +352,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).damage(3, 'v3.6.0').cost(3).handle((event, ver) => {
                     const { talent, summons = [], heros = [] } = event;
                     const smn112051 = getObjById(summons, 112051);
-                    const summon = isCdt<[number, ...any][]>(ver.gte('v4.2.0') && talent && !smn112051, [[112051, 1]]);
+                    const summon = isCdt<[number, number][]>(ver.gte('v4.2.0') && talent && !smn112051, [[112051, 1]]);
                     if (talent && smn112051) ++smn112051.useCnt;
                     return {
                         summon,
@@ -1166,7 +1162,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('抟风秘道').description('{dealDmg}，召唤【smn115093】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/ca/da9v501c8j71zqew4flylr7hmqq5r31.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c992b62ec652ce301ab6e9895aac1284_9109457382282902369.png')
-                .burst(2).damage(1).cost(3).handle(event => ({ summon: [[115093, event.talent]] }))
+                .burst(2).damage(1).cost(3).handle(event => ({ summon: [[115093, !!event.talent]] }))
         ),
 
     1510: () => new HeroBuilder(408).name('闲云').since('v5.0.0').liyue().anemo().catalyst()
@@ -1412,7 +1408,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                             if (ist117031) ++ist117031.useCnt;
                         });
                     }
-                    return { status: [[117032, talent && elements.includes(ELEMENT_TYPE.Hydro)]] }
+                    return { status: [[117032, !!talent && elements.includes(ELEMENT_TYPE.Hydro)]] }
                 })
         ),
 
@@ -1793,7 +1789,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (ver.lt('v5.1.0')) {
                         const isSmned = hasObjById(summons, 123031);
                         return {
-                            summon: [[123031, talent]],
+                            summon: [[123031, !!talent]],
                             status: isCdt(!isSmned, [[123033, talent ? 2 : 1]]),
                         }
                     }

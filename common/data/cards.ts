@@ -1252,8 +1252,12 @@ const allCards: Record<number, () => CardBuilder> = {
     313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(1).useCnt(2)
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp')
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为｢快速行动｣而非｢战斗行动｣，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
-        .handle((_, event) => {
-            const { eheros = [], ehidx = -1, hcardsCnt = 0 } = event;
+        .handle((card, event) => {
+            const { eheros = [], ehidx = -1, hcardsCnt = 0, skid = -1, trigger = '' } = event;
+            if (trigger == 'vehicle') {
+                if (skid != +`${card.id}1`) return;
+                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+            }
             const isTriggered = hcardsCnt > 0 && hasObjById(eheros[ehidx]?.heroStatus, 301302);
             return {
                 cmds: [{ cmd: 'getStatus', status: 301302, isOppo: true }],
@@ -1607,7 +1611,15 @@ const allCards: Record<number, () => CardBuilder> = {
     330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(0)
         .description('在双方场上生成【crd300006】，然后我方场上的【crd300006】的｢斗志｣+1。（【crd300006】会将各自阵营对对方造成的伤害记录为｢斗志｣，每回合行动阶段开始时｢斗志｣较高的一方会清空｢斗志｣，使当前出战角色在本回合中造成的伤害+1。）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ShenyeXunli.webp')
-        .handle(() => ({ support: [[300006, 1]], supportOppo: 300006 })),
+        .handle((_, event) => {
+            const { supports = [], esupports = [] } = event;
+            const spt300006 = supports.find(s => s.card.id == 300006);
+            return {
+                support: isCdt(!spt300006, [[300006, 1]]),
+                supportOppo: isCdt(esupports.every(s => s.card.id != 300006), 300006),
+                exec: () => { spt300006 && ++spt300006.cnt }
+            }
+        }),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -2855,20 +2867,19 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
         .handle((_, event, ver) => {
             const { heros = [], hidxs: [hidx] = [], combatStatus = [], sktype = SKILL_TYPE.Vehicle, isSummon = -1 } = event;
-            let isTriggered = false;
-            const triggers: Trigger[] = [];
             if (ver.lt('v4.8.0')) {
                 const fhero = heros.find(h => h.isFront);
                 const istShield = fhero?.heroStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
                 const ostShield = combatStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
-                isTriggered = (istShield || ostShield) && isSummon > -1;
-                if (isTriggered) triggers.push('Geo-dmg');
-            } else {
-                const hero = heros[hidx];
-                isTriggered = hero && hero.hp >= 7 && hero.isFront && sktype != SKILL_TYPE.Vehicle;
-                if (isTriggered) triggers.push('dmg');
+                if ((!istShield && !ostShield) || isSummon == -1) return;
+                return { trigger: ['Geo-dmg'], addDmgCdt: 1 }
             }
-            if (isTriggered) return { trigger: triggers, addDmgCdt: 1 }
+            const hero = heros[hidx];
+            if (!hero || hero.hp < 7) return;
+            const triggers: Trigger[] = [];
+            if (hero.isFront && sktype != SKILL_TYPE.Vehicle) triggers.push('dmg');
+            if (isSummon > -1) triggers.push('Geo-dmg')
+            return { trigger: triggers, addDmgCdt: 1 }
         }),
 
     216041: () => new CardBuilder(105).name('神性之陨').since('v4.0.0').talent(1).costGeo(3)

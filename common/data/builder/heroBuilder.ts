@@ -209,10 +209,10 @@ export class HeroBuilder extends BaseCostBuilder {
     done() {
         const maxHp = this._maxHp.get(this._curVersion, 10);
         const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
-        const skills: (SkillBuilder | NormalSkillBuilder)[] = this._skills.map(skill => skill.costElement(element));
-        if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType).costElement(element));
+        const skills: (SkillBuilder | NormalSkillBuilder)[] = this._skills.slice();
+        if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
             maxHp, element, this._weaponType, this._src, this._avatar, this._offlineVersion,
-            skills.map((skill, skidx) => skill.id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
+            skills.map((skill, skidx) => skill.costElement(element).id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
     }
 }

@@ -83,11 +83,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { getdmg = [], supports = [], eSupports = [], trigger = '' } = event;
         const isTriggered = support.cnt > Math.max(...[...supports, ...eSupports].filter(s => s.card.id == support.card.id && s.entityId != support.entityId).map(s => s.cnt));
         if (trigger == 'phase-start' && !isTriggered) return;
+        const supportCnt = isCdt(trigger == 'after-dmg', getdmg.reduce((a, c) => a + Math.max(0, c), 0));
         return {
             trigger: ['after-dmg', 'phase-start'],
+            supportCnt,
             exec: spt => {
                 const cmds: Cmds[] = [];
-                if (trigger == 'after-dmg') spt.cnt += getdmg.reduce((a, c) => a + Math.max(0, c), 0);
+                if (trigger == 'after-dmg') spt.cnt += supportCnt ?? 0;
                 else if (trigger == 'phase-start') {
                     spt.cnt = 0;
                     cmds.push({ cmd: 'getStatus', status: 300007 });

@@ -203,7 +203,7 @@ export default class GeniusInvokationRoom {
         }
         const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}.log`;
         fs.access(path, fs.constants.F_OK, notExist => {
-            if (notExist) {
+            if (notExist || log.includes('>>>')) {
                 log += reporterInfo;
                 fs.writeFile(path, log, err => {
                     if (err) return console.error('err:', err);
@@ -1143,6 +1143,7 @@ export default class GeniusInvokationRoom {
         const ehlen = eHeros().length;
         const aSummons = () => player().summons;
         const ahidx = () => player().hidx;
+        const ohidx = oplayers[pidx].hidx;
         const ehidx = () => opponent().hidx;
         const aCombatStatus = () => player().combatStatus;
         const odmgedHidx = ehidx();
@@ -1526,7 +1527,9 @@ export default class GeniusInvokationRoom {
             this._doCmds(pidx, stsaftercmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
             if (skillres.summon) this._updateSummon(pidx, this._getSummonById(skillres.summon), players, isExec, { supportCnt });
             if (skillres.isAttach) {
-                const { elTips: elTips2 = [], willAttachs: willAttachs2 = [] } = this._doCmds(pidx, [{ cmd: 'attach', hidxs: [cahidx] }], { players, isExec, isAction: !isQuickAction });
+                const { elTips: elTips2 = [], willAttachs: willAttachs2 = [] } = this._doCmds(pidx,
+                    [{ cmd: 'attach', hidxs: [ohidx], element: oplayers[pidx].heros[ohidx].element }],
+                    { players, isExec, isAction: !isQuickAction });
                 for (let i = 0; i < ahlen; ++i) aElTips[i + pidx * ehlen] = elTips2[i + pidx * ehlen];
                 for (let i = 0; i < ahlen; ++i) aWillAttach[i + pidx * ehlen].push(...willAttachs2[i + pidx * ehlen]);
             }
@@ -1551,8 +1554,8 @@ export default class GeniusInvokationRoom {
         ];
         this._doCmds(pidx, stscmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
         if (skill && !isExec) {
-            if (skill.cost[2].cnt == 0) energyCnt[pidx][ahidx()]++;
-            else if (skill.cost[2].cnt > 0) energyCnt[pidx][ahidx()] -= skill.cost[2].cnt;
+            if (skill.cost[2].cnt == 0) energyCnt[pidx][ohidx]++;
+            else if (skill.cost[2].cnt > 0) energyCnt[pidx][ohidx] -= skill.cost[2].cnt;
         }
         const tarHidx = aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).some(([d, p]) => d > -1 || p > 0) ? dmgedHidx : -1;
         if (skill && isExec) {
@@ -1749,7 +1752,7 @@ export default class GeniusInvokationRoom {
                     if (osmn.length - 1 < si || (pi == pidx && nsmn[si]?.handle(nsmn[si], { skid }).willSummon)) return 0;
                     const smnCnt = getObjById(nsmn, osmn[si].id)?.useCnt ?? 0;
                     let res = smnCnt - osmn[si].useCnt;
-                    if (res == 0 && nsummons.some(s => s.id == nsmn[si].id)) res += 0.3;
+                    if (res == 0 && pi == pidx && nsummons.some(s => s.id == nsmn[si].id)) res += 0.3;
                     return res;
                 });
             });
@@ -2339,65 +2342,68 @@ export default class GeniusInvokationRoom {
             });
             res.willDamages[getDmgIdx][0] = restDmg;
         }
-        for (let i = 0; i < ahlen; ++i) {
-            const chi = (atkHidx + i) % ahlen;
-            const trgs = atriggers[isSummon > -1 ? atkHidx : chi];
-            if (!trgs.includes('dmg') && !trgs.includes('other-dmg')) continue;
-            const hfieldres = this._detectSlotAndStatus(pidx, 'after-dmg', {
-                types: [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage],
-                hidxs: chi,
-                players: res.players,
-                isExec,
-                isOnlyExecSts: !isExec,
-                sktype,
-                skid,
-                isChargedAtk,
-                isFallAtk,
-                isSummon,
-                dmgedHidx,
-                dmgSource: skid > -1 ? (atkId ?? afhero.id) : isSummon,
-                dmgElement,
-                minusDiceSkillIds,
-                minusDiceSkill,
-                hasDmg: res.willDamages[getDmgIdx][0] > 0,
-                discards,
-                hcard: withCard,
-                supportCnt,
-                willSwitch,
-                energyCnt,
-                isUnshift: trgs.some(trg => trg.includes('get') && !trg.includes('oppo')),
-                isQuickAction: res.isQuickAction,
-                ehidx: dmgedHidx,
-                summons: asummons,
-                usedDice,
-                dmg: getdmg(),
-            });
-            aist[chi].push(...hfieldres.heroStatus);
-            aost.push(...hfieldres.combatStatus);
-            if (res.willDamages[getDmgIdx][0] > 0) {
-                res.willDamages[getDmgIdx][0] += hfieldres.addDmg;
+        if (!isAtkSelf) {
+            for (let i = 0; i < ahlen; ++i) {
+                const chi = (atkHidx + i) % ahlen;
+                const trgs = atriggers[isSummon > -1 ? atkHidx : chi];
+                if (!trgs.includes('dmg') && !trgs.includes('other-dmg')) continue;
+                const hfieldres = this._detectSlotAndStatus(pidx, 'after-dmg', {
+                    types: [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage],
+                    hidxs: chi,
+                    players: res.players,
+                    isExec,
+                    isOnlyExecSts: !isExec,
+                    sktype,
+                    skid,
+                    isChargedAtk,
+                    isFallAtk,
+                    isSummon,
+                    dmgedHidx,
+                    dmgSource: skid > -1 ? (atkId ?? afhero.id) : isSummon,
+                    dmgElement,
+                    minusDiceSkillIds,
+                    minusDiceSkill,
+                    hasDmg: res.willDamages[getDmgIdx][0] > 0,
+                    discards,
+                    hcard: withCard,
+                    supportCnt,
+                    willSwitch,
+                    energyCnt,
+                    isUnshift: trgs.some(trg => trg.includes('get') && !trg.includes('oppo')),
+                    isQuickAction: res.isQuickAction,
+                    ehidx: dmgedHidx,
+                    summons: asummons,
+                    usedDice,
+                    dmg: getdmg(),
+                });
+                aist[chi].push(...hfieldres.heroStatus);
+                aost.push(...hfieldres.combatStatus);
+                if (res.willDamages[getDmgIdx][0] > 0) {
+                    res.willDamages[getDmgIdx][0] += hfieldres.addDmg;
+                }
+                res.isQuickAction ||= hfieldres.isQuickAction;
+                res.isFallAtk ||= hfieldres.isFallAtk;
+                if (hfieldres.nsummons.length > 0) {
+                    this._updateSummon(pidx, hfieldres.nsummons, res.players, isExec, { isSummon, supportCnt });
+                }
+                hfieldres.pdmgs.forEach(([pdmg, phidxs, pIsSelf]) => {
+                    if (pIsSelf) (phidxs ?? getBackHidxs(aheros)).forEach(hi => res.willDamages[hi + aGetDmgIdxOffset][1] += pdmg);
+                    else (phidxs ?? getBackHidxs(eheros)).forEach(hi => res.willDamages[hi + getDmgIdxOffset][1] += pdmg);
+                });
+                mergeWillHeals(res.aWillHeals, hfieldres.aWillHeals);
+                mergeWillHeals(res.bWillHeals, hfieldres.bWillHeals);
+                res.tasks.push(...hfieldres.tasks);
             }
-            res.isQuickAction ||= hfieldres.isQuickAction;
-            res.isFallAtk ||= hfieldres.isFallAtk;
-            if (hfieldres.nsummons.length > 0) {
-                this._updateSummon(pidx, hfieldres.nsummons, res.players, isExec, { isSummon, supportCnt });
+            if (atriggers[atkHidx].includes('dmg')) {
+                this._detectSupport(pidx, 'after-dmg', {
+                    players: res.players,
+                    isExec,
+                    skid,
+                    sktype,
+                    getdmg: getdmg(),
+                    supportCnt,
+                });
             }
-            hfieldres.pdmgs.forEach(([pdmg, phidxs, pIsSelf]) => {
-                if (pIsSelf) (phidxs ?? getBackHidxs(aheros)).forEach(hi => res.willDamages[hi + aGetDmgIdxOffset][1] += pdmg);
-                else (phidxs ?? getBackHidxs(eheros)).forEach(hi => res.willDamages[hi + getDmgIdxOffset][1] += pdmg);
-            });
-            mergeWillHeals(res.aWillHeals, hfieldres.aWillHeals);
-            mergeWillHeals(res.bWillHeals, hfieldres.bWillHeals);
-            res.tasks.push(...hfieldres.tasks);
-        }
-        if (atriggers[atkHidx].includes('dmg')) {
-            this._detectSupport(pidx, 'after-dmg', {
-                players: res.players,
-                isExec,
-                skid,
-                sktype,
-                getdmg: getdmg(),
-            });
         }
 
         if (atriggers[atkHidx].includes('Crystallize')) (isAttach || isAtkSelf ? eost : aost).push(this.newStatus(111));
@@ -3361,7 +3367,7 @@ export default class GeniusInvokationRoom {
             if (cmdheal) willHeals = cmdheal;
             if (ndices) this.players[pidx].dice = ndices;
         }
-        this._writeLog(`[${this.players[pidx].name}][${atkname}]发动${oCnt != -1 ? ` ${oCnt}->${atkStatus.useCnt}` : ''}`, 'info');
+        this._writeLog(`[${this.players[pidx].name}][${atkname}]发动${oCnt != -1 ? ` ${oCnt}->${atkStatus.useCnt}` : ''}`);
         const whLen = willHeals.length || 1;
         for (let hli = 0; hli < whLen; ++hli) {
             const hl = willHeals[hli];
@@ -5447,7 +5453,9 @@ export default class GeniusInvokationRoom {
                     isExec,
                     supportCnt,
                 });
-                if (isExec && isLog) this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`);
+                if (isExec && isLog) {
+                    this._writeLog(`[${player.name}]${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`, isCdt(sts.hasType(STATUS_TYPE.Hide), 'system'));
+                }
             }
             const stsres = sts.handle(sts, { heros, hidx });
             if (sts.hasType(STATUS_TYPE.Enchant)) updateAttachEl(heros, hidx, sts.group, oriStatus);
