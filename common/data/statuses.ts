@@ -677,7 +677,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112081: () => new StatusBuilder('金杯的丰馈').combatStatus().icon('ski,1').type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【敌方角色受到绽放反应时：】我方不再生成【sts116】，而是改为召唤【smn112082】。')
-        .handle(() => ({ trigger: ['Bloom'], summon: 112082 })),
+        .handle(() => ({ trigger: ['Bloom-oppo'], summon: 112082 })),
 
     112083: () => new StatusBuilder('永世流沔').heroStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；[useCnt]')

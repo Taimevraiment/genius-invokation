@@ -353,12 +353,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { talent, summons = [], heros = [] } = event;
                     const smn112051 = getObjById(summons, 112051);
                     const summon = isCdt<[number, number][]>(ver.gte('v4.2.0') && talent && !smn112051, [[112051, 1]]);
-                    if (talent && smn112051) ++smn112051.useCnt;
                     return {
                         summon,
                         cmds: [{ cmd: 'getStatus', status: 112052 }],
                         heal: isCdt(ver.gte('v3.6.0'), 1),
                         hidxs: allHidxs(heros),
+                        exec: () => { talent && smn112051 && ++smn112051.useCnt }
                     }
                 })
         ),
@@ -759,7 +759,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 0) return;
-                    return { trigger: ['Overload', 'other-Overload'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
+                    return { trigger: ['Overload-oppo'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
                 })
         ),
 
