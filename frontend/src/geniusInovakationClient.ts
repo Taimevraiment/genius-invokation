@@ -300,14 +300,6 @@ export default class GeniusInvokationClient {
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
                 if (this.isValid) this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
                 if (
-                    this.willHp.some(v => v != undefined) ||
-                    this.willSummons.some(smns => smns.length > 0) ||
-                    this.summonCnt.some(smns => smns.some(v => v != 0)) ||
-                    this.willSwitch.some(ws => ws.some(v => v))
-                ) {
-                    this.currSkill.id = -2;
-                }
-                if (
                     canSelectHero == 1 && this.heroCanSelect.filter(v => v).length == 1 ||
                     canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1 ||
                     canSelectSupport != -1 && this.players[+(canSelectSupport == this.playerIdx)].supports.length == 1
@@ -324,7 +316,16 @@ export default class GeniusInvokationClient {
                         if (canSelectSupport != -1) this.supportSelect[canSelectSupport][0] = true;
                         this.summonCnt = clone(preview1.willSummonChange) ?? this._resetSummonCnt();
                         this.willHp = preview1.willHp?.slice() ?? this._resetWillHp();
+                        this.willSummons = clone(preview1.willSummons) ?? this._resetWillSummons();
                     }
+                }
+                if (
+                    this.willHp.some(v => v != undefined) ||
+                    this.willSummons.some(smns => smns.length > 0) ||
+                    this.summonCnt.some(smns => smns.some(v => v != 0)) ||
+                    this.willSwitch.some(ws => ws.some(v => v))
+                ) {
+                    this.currSkill.id = -2;
                 }
                 if (this.isValid) this.diceSelect = [...preview.diceSelect!];
             }

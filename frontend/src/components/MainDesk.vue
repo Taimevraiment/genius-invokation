@@ -572,7 +572,7 @@ const willDamages = computed<number[][][]>(() => {
     const isAtker = playerIdx.value == atkPidx.value;
     const atkHeroDOM = heroDOMs.value[+isAtker * props.client.players[playerIdx.value ^ 1].heros.length + atkHidx.value];
     const { width: parentWidth = 0 } = atkHeroDOM?.parentElement?.getBoundingClientRect() ?? {};
-    const { width, height } = atkHeroDOM.getBoundingClientRect();
+    const { width, height } = atkHeroDOM?.getBoundingClientRect() ?? {};
     const widthDiff = (tarHidx.value - atkHidx.value) * (width + 0.1 * parentWidth);
     const heightDiff = height / 0.35 * 0.5 * (isAtker ? -1 : 1);
     const deg = Math.atan2(widthDiff, -heightDiff) * (180 / Math.PI) - (isAtker ? 0 : 180);

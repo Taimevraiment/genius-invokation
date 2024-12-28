@@ -158,20 +158,20 @@ io.on('connection', socket => {
         const player = getPlayer(id);
         if (id > 0 && player) {
             const prevname = player.name;
-            const playerInfo = `[${new Date()}]:玩家[${prevname}]-pid:${pid}`;
+            const playerInfo = () => `[${new Date()}]:玩家[${prevname}]-pid:${pid}`;
             if (prevname != name) {
                 player.name = name;
-                console.info(`${playerInfo} 改名为[${name}]`);
+                console.info(`${playerInfo()} 改名为[${name}]`);
             } else {
                 username = prevname;
                 const leavePlayer = removePlayerList.get(id);
                 if (leavePlayer) {
                     leavePlayer.cancel();
                     pid = id;
-                    console.info(`${playerInfo} 重新连接了...`);
+                    console.info(`${playerInfo()} 重新连接了...`);
                 }
                 if (pid == id && player.rid > 0 && getRoomIdx(player.rid) > -1) {
-                    console.info(`${playerInfo} 重新进入房间[${player.rid}]`);
+                    console.info(`${playerInfo()} 重新进入房间[${player.rid}]`);
                     socket.emit('continueGame', { roomId: player.rid, isLeave: !!leavePlayer });
                 }
             }
@@ -245,8 +245,11 @@ io.on('connection', socket => {
     // 发送日志
     socket.on('sendLog', data => {
         const room = getRoom(data.roomId);
+        if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
         const me = getPlayer(pid);
-        room?.exportLog(`>>>由[${me?.name}]发送\n问题描述：${data.description}`);
+        if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
+        room.setReporterLog(me.name, data.message);
+        room.exportLog();
     });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {
@@ -267,8 +270,7 @@ io.on('connection', socket => {
         } catch (e) {
             const error: Error = e as Error;
             console.error(error);
-            room.exportLog(error.stack);
-            room.emitError(error.message);
+            room.emitError(error);
         }
         if (isStart != room.isStart) emitPlayerAndRoomList();
     });

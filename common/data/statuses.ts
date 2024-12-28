@@ -721,9 +721,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Neuvillette_S.webp')
         .description('【〖hro〗进行｢普通攻击｣后：】治疗【hro】2点，然后如果【hro】是我方｢出战角色｣，则[准备技能]：【rsk12104】。；[useCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1 } = event;
+            const { heros = [], skid } = event;
+            if (skid != 12101) return;
             const hid = getHidById(status.id);
-            if (heros[hidx]?.id != hid) return;
             return {
                 heal: 2,
                 hidxs: [getObjIdxById(heros, hid)],
@@ -769,10 +769,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: ['dmg', 'dmg-Swirl'],
                 addDmg: 1,
-                addDmgCdt: isCdt(sktype == SKILL_TYPE.Vehicle, 1),
-                exec: () => {
-                    if (trigger == 'dmg') --status.useCnt
-                },
+                addDmgCdt: isCdt(sktype == SKILL_TYPE.Vehicle || trigger == 'dmg-Swirl', 1),
+                exec: () => { --status.useCnt },
             }
         }),
 

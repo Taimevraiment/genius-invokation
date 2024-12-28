@@ -108,8 +108,11 @@ export class GICard {
                 const cnt = hid * 10 + (userType as number) + 1;
                 handle = (card, event) => {
                     const { slotUse = false } = event;
-                    if (slotUse) return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }
-                    return ohandle?.(card, event, compareVersionFn(ver));
+                    const ohandleres = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
+                    if (slotUse && !ohandleres.cmds?.some(({ cmd }) => cmd == 'useSkill')) {
+                        return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }
+                    }
+                    return ohandleres;
                 }
             }
             this.UI.description = this.UI.description

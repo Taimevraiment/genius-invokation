@@ -2502,13 +2502,23 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d419604605c1acde00b841ecf8c82864_58733338663118408.png')
         .handle((_, event) => {
             const { sktype = SKILL_TYPE.Vehicle, hidxs } = event;
-            if (sktype != SKILL_TYPE.Vehicle) return;
-            return { trigger: ['elReaction-Hydro', 'other-elReaction-Hydro'], status: 112103, hidxs }
+            if (sktype == SKILL_TYPE.Vehicle) return;
+            return {
+                trigger: ['elReaction-Hydro', 'other-elReaction-Hydro'],
+                status: 112103,
+                hidxs,
+            }
         }),
 
     212111: () => new CardBuilder(373).name('｢诸君听我颂，共举爱之杯！｣').since('v4.7.0').talent(1).costHydro(3)
         .description('{action}；装备有此牌的【hro】使用【ski】时，会对自身附属【sts112116】。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/fb5f84b550dcdcfcff9197573aee45a8_1289322499384647153.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/fb5f84b550dcdcfcff9197573aee45a8_1289322499384647153.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx = -1] = [] } = event;
+            const hero = heros[hidx];
+            if (!hero || hero.tags.includes(HERO_TAG.ArkheOusia)) return;
+            return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt: 12122 }] }
+        }),
 
     212131: () => new CardBuilder(436).name('应当有适当的休息').since('v5.2.0').talent(1).costHydro(3)
         .description('{action}；装备有此牌的【hro】使用【ski】后，使我方接下来2次｢元素战技｣或召唤物造成的伤害+1。')
