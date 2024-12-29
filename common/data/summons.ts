@@ -340,7 +340,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (!isExec) smn.useCnt = -100;
                     else if (trigger == 'after-skilltype1') {
-                        smn.isDestroy = SUMMON_DESTROY_TYPE.RoundEnd;
+                        smn.isDestroy = SUMMON_DESTROY_TYPE.Used;
                         smn.useCnt = 0;
                     }
                     return { cmds: [{ cmd: 'attack', cnt }] }

@@ -116,7 +116,7 @@ export default class GeniusInvokationRoom {
             + `  ]\n`
             + `  watchers: [${this.watchers.map(p => `${p.name}(${p.id})`).join(', ')}]\n`
             + `  isStart: ${this.isStart}\n`
-            + `  phase: ${this.phase}\n`
+            + `  phase: ${Object.keys(PHASE)[this.phase]}\n`
             + `  round: ${this.round}\n`
             + `  startIdx: ${this.startIdx}\n`
             + `  winner: ${this.winner}\n`
@@ -198,7 +198,7 @@ export default class GeniusInvokationRoom {
      * 导出日志
      */
     exportLog() {
-        const log = this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1') +
+        const log = this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1') + '\n' +
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}`).join('\n') + '\n' +
             this.roomInfoLog;
@@ -1200,7 +1200,7 @@ export default class GeniusInvokationRoom {
         const calcAtk = (oplayers: Player[], res: CalcAtkRes, type: string, stsId: number, skid = -1, isSelf = 0) => {
             if (res.element == DICE_COST_TYPE.Omni) return false;
             const cpidx = pidx ^ +!isSelf;
-            const atkcmds = [...(res?.cmds ?? []), ...(res?.execmds ?? []), ...(res.exec?.()?.cmds ?? [])];
+            const atkcmds = [...(res?.cmds ?? []), ...(res?.execmds ?? []), ...(isCdt(type != 'summon', () => res.exec?.()?.cmds) ?? [])];
             res.isSelf ??= !(atkcmds[0]?.isOppo ?? true);
             const dmgedHidx = +!!res.isSelf ^ isSelf ? cehidx : cahidx;
             const dmgedHlen = +!!res.isSelf ^ isSelf ? ehlen : ahlen;
@@ -1319,12 +1319,12 @@ export default class GeniusInvokationRoom {
                 oplayers[pidx ^ 1].heros.forEach(h => h.isFront = h.hidx == cehidx);
             }
             trgs = trgs.filter(t => !t.startsWith('other-skill'));
-            const afterOnlyTrgs = trgs.filter(t => t.startsWith('after'));
+            const afterAndSwitchTrgs = trgs.filter(t => t.startsWith('after') || t.includes('switch'));
             if (group == STATUS_GROUP.heroStatus) {
-                this._detectSkill(cpidx, afterOnlyTrgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
+                this._detectSkill(cpidx, afterAndSwitchTrgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
             }
             if (group == STATUS_GROUP.combatStatus) {
-                this._detectSupport(cpidx, afterOnlyTrgs, { players: oplayers, supportCnt, energyCnt, hidx: chidx, isExec });
+                this._detectSupport(cpidx, afterAndSwitchTrgs, { players: oplayers, supportCnt, energyCnt, hidx: chidx, isExec });
             }
             const atkStatus: [StatusTask, boolean?][] = [];
             preview_end: for (const hfield of hfields) {
@@ -3498,7 +3498,7 @@ export default class GeniusInvokationRoom {
                                 args[2] = {
                                     ...(args[2] ?? {}),
                                     isExecTask: true,
-                                    cskill: i,
+                                    cskid: skill.id,
                                     hidxs: hidx,
                                     players: undefined,
                                     heros: undefined,
@@ -3531,7 +3531,7 @@ export default class GeniusInvokationRoom {
                             this._doCmds(pidx, cmds, { players, isExec });
                         }
                     } else {
-                        this._doCmds(pidx, cmds, { players, energyCnt, isExec: false });
+                        this._doCmds(pidx, cmds, { players, energyCnt, isExec });
                     }
                 }
             }
@@ -3831,190 +3831,191 @@ export default class GeniusInvokationRoom {
         } else {
             hidxs = [hidxs];
         }
-        const detectStatus = (stses: Status | Status[], group: StatusGroup, hidx: number, trigger: Trigger) => {
+        const detectStatus = (stses: Status | Status[], group: StatusGroup, hidx: number, triggers: Trigger[]) => {
             if (!Array.isArray(stses)) stses = [stses];
             const stsEntityIds = stses.map(sts => sts.entityId);
             for (const sts of stses) {
                 const isDiffTaskMark = taskMark && ((group == STATUS_GROUP.heroStatus && taskMark[0] != hidx) || taskMark[1] != group || taskMark[2] != sts.entityId);
                 if ((types.length > 0 && !sts.hasType(...types)) || isDiffTaskMark || !stsEntityIds.includes(sts.entityId) || (sts.useCnt == 0 && !sts.hasType(STATUS_TYPE.Accumulate))) continue;
                 const isMinusDiceCard = hcard && hcard.cost + hcard.anydice > minusDiceCard;
-                const stsres = sts.handle(sts, {
-                    heros: pheros,
-                    combatStatus: player.combatStatus,
-                    eheros: peheros,
-                    eCombatStatus: opponent.combatStatus,
-                    hidx,
-                    dmgedHidx,
-                    trigger,
-                    phase: player.phase,
-                    hcard,
-                    talent: isCdt(!isExec || hcard?.id == getTalentIdByHid(getHidById(sts.id)), hcard) ??
-                        getObjById(pheros, getHidById(sts.id))?.talentSlot,
-                    discards,
-                    heal,
-                    summons: player.summons,
-                    esummons: opponent.summons,
-                    hcards: player.handCards,
-                    ehcards: opponent.handCards,
-                    pile: player.pile,
-                    playerInfo: player.playerInfo,
-                    skid,
-                    sktype,
-                    isSummon,
-                    isFallAtk,
-                    isChargedAtk,
-                    dmgSource,
-                    hasDmg,
-                    dmgElement,
-                    source,
-                    sourceHidx,
-                    minusDiceCard,
-                    isMinusDiceCard,
-                    isMinusDiceTalent: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == pheros[hidx]?.id,
-                    isMinusDiceWeapon: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Weapon),
-                    isMinusDiceArtifact: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Artifact),
-                    isMinusDiceSkill: minusDiceSkillIds.includes(sts.entityId),
-                    minusDiceSkill,
-                    getdmg,
-                    dmg,
-                    slotsDestroy,
-                    isExec,
-                    isExecTask: !!taskMark,
-                    isSelfRound: this.currentPlayerIdx == pidx,
-                    randomInt: this._randomInt.bind(this),
-                    randomInArr: this._randomInArr.bind(this),
-                });
-                if (this._hasNotTriggered(stsres.trigger, trigger)) continue;
-                if (sts.hasType(STATUS_TYPE.AddDamage)) {
-                    addDmg += stsres.addDmgCdt ?? 0;
-                    getDmg += stsres.getDmg ?? 0;
-                }
-                if (sts.hasType(STATUS_TYPE.MultiDamage)) {
-                    multiDmg += stsres.multiDmgCdt ?? 0;
-                }
-                const isTriggeredQuick = !isQuickAction && stsres.isQuickAction;
-                if (group == STATUS_GROUP.combatStatus && isQuickAction && stsres.isQuickAction && stsres.minusDiceHero == undefined) continue;
-                addDiceHero += stsres.addDiceHero ?? 0;
-                minusDiceHero += stsres.minusDiceHero ?? 0;
-                minusDiceCard += stsres.minusDiceCard ?? 0;
-                nsummons.push(...this._getSummonById(stsres.summon));
-                if (!sts.hasType(STATUS_TYPE.Attack) && stsres.pdmg) pdmgs.push([stsres.pdmg, stsres.hidxs, !!stsres.isSelf]);
-                isInvalid ||= stsres.isInvalid ?? false;
-                isQuickAction ||= (hcard && !hcard.hasSubtype(CARD_SUBTYPE.Action)) || !!stsres.isQuickAction;
-                stsFallAtk ||= !!stsres.isFallAtk;
-                if (isExec || isOnlyExecSts) {
-                    const oCnt = sts.useCnt;
-                    const oPct = sts.perCnt;
-                    const stsexecres = stsres.exec?.(undefined, { switchHeroDiceCnt, isQuickAction: isTriggeredQuick });
-                    switchHeroDiceCnt = stsexecres?.switchHeroDiceCnt ?? switchHeroDiceCnt;
-                    const stscmds = [...(stsres.cmds ?? []), ...(stsexecres?.cmds ?? [])];
-                    if (isExec || !stsres.notPreview) (stsres.isAddTask ? taskcmds : cmds).push(...stscmds);
-                    if (!sts.hasType(STATUS_TYPE.Attack) && stsres.heal) {
-                        const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }], { players, source: sts.id });
-                        aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
+                for (const trigger of triggers) {
+                    const stsres = sts.handle(sts, {
+                        heros: pheros,
+                        combatStatus: player.combatStatus,
+                        eheros: peheros,
+                        eCombatStatus: opponent.combatStatus,
+                        hidx,
+                        dmgedHidx,
+                        trigger,
+                        phase: player.phase,
+                        hcard,
+                        talent: isCdt(!isExec || hcard?.id == getTalentIdByHid(getHidById(sts.id)), hcard) ??
+                            getObjById(pheros, getHidById(sts.id))?.talentSlot,
+                        discards,
+                        heal,
+                        summons: player.summons,
+                        esummons: opponent.summons,
+                        hcards: player.handCards,
+                        ehcards: opponent.handCards,
+                        pile: player.pile,
+                        playerInfo: player.playerInfo,
+                        skid,
+                        sktype,
+                        isSummon,
+                        isFallAtk,
+                        isChargedAtk,
+                        dmgSource,
+                        hasDmg,
+                        dmgElement,
+                        source,
+                        sourceHidx,
+                        minusDiceCard,
+                        isMinusDiceCard,
+                        isMinusDiceTalent: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == pheros[hidx]?.id,
+                        isMinusDiceWeapon: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Weapon),
+                        isMinusDiceArtifact: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Artifact),
+                        isMinusDiceSkill: minusDiceSkillIds.includes(sts.entityId),
+                        minusDiceSkill,
+                        getdmg,
+                        dmg,
+                        slotsDestroy,
+                        isExec,
+                        isExecTask: !!taskMark,
+                        isSelfRound: this.currentPlayerIdx == pidx,
+                        randomInt: this._randomInt.bind(this),
+                        randomInArr: this._randomInArr.bind(this),
+                    });
+                    if (this._hasNotTriggered(stsres.trigger, trigger)) continue;
+                    if (sts.hasType(STATUS_TYPE.AddDamage)) {
+                        addDmg += stsres.addDmgCdt ?? 0;
+                        getDmg += stsres.getDmg ?? 0;
                     }
-                    if (isExec && !isOnlyExecSts) {
-                        if (
-                            (types.includes(STATUS_TYPE.Attack) && !trigger.startsWith('after') &&
-                                (stsres.damage || stsres.pdmg || stsres.heal)) ||
-                            stscmds.some(({ cmd }) => ['heal', 'revive', 'addMaxHp'].includes(cmd))
-                        ) {
-                            (isUnshift ? statusAtksPre : statusAtks).push({
-                                id: sts.id,
-                                name: sts.name,
-                                entityId: sts.entityId,
-                                group,
-                                pidx,
-                                isSelf: +!!stsres.isSelf,
-                                trigger,
-                                hidx,
-                                skid,
-                                isQuickAction,
-                                discards,
-                                hcard,
-                                source: stsres.source,
-                            });
-                        } else {
-                            if (stsres.isAddTask) {
-                                let intvl = 1000;
-                                if (stsres.damage || stsres.pdmg) intvl += 1000;
-                                if (!taskMark) {
-                                    const args = clone(Array.from(arguments));
-                                    args[3] = {
-                                        ...(args[3] ?? {}),
-                                        taskMark: [hidx, group, sts.entityId],
-                                        players: undefined,
-                                    };
-                                    this.taskQueue.addTask(`status-${sts.name}(${sts.entityId}):${trigger}`, args, { isUnshift, isDmg: true });
-                                } else {
-                                    const statusHandle = async () => {
-                                        const { hidx: ahidx, dice, heros, combatStatus } = this.players[pidx];
-                                        const { ndices } = this._doCmds(pidx, stscmds, {
-                                            hidxs: [group == STATUS_GROUP.combatStatus ? ahidx : hidx],
-                                            withCard: hcard,
-                                            trigger,
-                                            source: sts.id,
-                                        });
-                                        if (ndices) assgin(dice, ndices);
-                                        const statuses = group == STATUS_GROUP.heroStatus ?
-                                            this.players[pidx].heros[hidx].heroStatus :
-                                            this.players[pidx].combatStatus;
-                                        const curStatus = statuses.find(s => s.entityId == sts.entityId);
-                                        if (!curStatus) return;
-                                        stsres.exec?.(curStatus, { heros, combatStatus });
-                                        if (!curStatus.hasType(STATUS_TYPE.TempNonDestroy, STATUS_TYPE.Accumulate) && (curStatus.useCnt == 0 || curStatus.roundCnt == 0)) {
-                                            curStatus.type.push(STATUS_TYPE.TempNonDestroy);
-                                        }
-                                        const useCntChange = `${oCnt}->${sts.useCnt}`;
-                                        const perCntChange = `${oPct}->${sts.perCnt}`;
-                                        this._writeLog(`[${player.name}]${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${useCntChange}` : ''}${sts.perCnt != -1 ? `.perCnt:${perCntChange}` : ''}`, 'system');
-                                        if (!curStatus.hasType(STATUS_TYPE.Hide)) this._writeLog(`[${this.players[pidx].name}][${curStatus.name}]发动${oCnt != sts.useCnt ? ` ${useCntChange}` : ''}`, stsexecres?.notInfo ? 'system' : 'info');
-                                        const flag = `_doStatus-${group == STATUS_GROUP.heroStatus ? 'hero' : 'combat'}Status-task-${curStatus.name}`;
-                                        const curStatusIdx = statuses.filter(s => !s.hasType(STATUS_TYPE.Hide)).findIndex(s => s.entityId == sts.entityId);
-                                        if (curStatusIdx == -1) intvl = 0;
-                                        this.emit(flag, pidx, {
-                                            isActionInfo: true,
-                                            isQuickAction: !!isQuickAction,
-                                            statusSelect: isCdt(curStatusIdx > -1, [pidx, group, hidx, curStatusIdx]),
-                                        });
-                                        if ((curStatus.useCnt == 0 || curStatus.roundCnt == 0) && !curStatus.hasType(STATUS_TYPE.Accumulate)) {
-                                            await delay(intvl + 300);
-                                            curStatus.type.splice(curStatus.type.indexOf(STATUS_TYPE.TempNonDestroy), 1);
-                                            this.emit(flag + '-destroy', pidx);
-                                        }
-                                    };
-                                    task.push([statusHandle, intvl]);
-                                }
-                            } else {
-                                this._writeLog(`[${player.name}]${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${oCnt}->${sts.useCnt}` : ''}${sts.perCnt != -1 ? `.perCnt:${oPct}->${sts.perCnt}` : ''}`, 'system');
-                                this._writeLog(`[${this.players[pidx].name}][${sts.name}]发动${oCnt != sts.useCnt ? ` ${oCnt}->${sts.useCnt}` : ''}`);
-                                this._doCmds(pidx, stscmds, { players, hidxs: [hidx], withCard: hcard, source: sts.id });
-                            }
+                    if (sts.hasType(STATUS_TYPE.MultiDamage)) {
+                        multiDmg += stsres.multiDmgCdt ?? 0;
+                    }
+                    const isTriggeredQuick = !isQuickAction && stsres.isQuickAction;
+                    if (group == STATUS_GROUP.combatStatus && isQuickAction && stsres.isQuickAction && stsres.minusDiceHero == undefined) continue;
+                    addDiceHero += stsres.addDiceHero ?? 0;
+                    minusDiceHero += stsres.minusDiceHero ?? 0;
+                    minusDiceCard += stsres.minusDiceCard ?? 0;
+                    nsummons.push(...this._getSummonById(stsres.summon));
+                    if (!sts.hasType(STATUS_TYPE.Attack) && stsres.pdmg) pdmgs.push([stsres.pdmg, stsres.hidxs, !!stsres.isSelf]);
+                    isInvalid ||= stsres.isInvalid ?? false;
+                    isQuickAction ||= (hcard && !hcard.hasSubtype(CARD_SUBTYPE.Action)) || !!stsres.isQuickAction;
+                    stsFallAtk ||= !!stsres.isFallAtk;
+                    if (isExec || isOnlyExecSts) {
+                        const oCnt = sts.useCnt;
+                        const oPct = sts.perCnt;
+                        const stsexecres = stsres.exec?.(undefined, { switchHeroDiceCnt, isQuickAction: isTriggeredQuick });
+                        switchHeroDiceCnt = stsexecres?.switchHeroDiceCnt ?? switchHeroDiceCnt;
+                        const stscmds = [...(stsres.cmds ?? []), ...(stsexecres?.cmds ?? [])];
+                        if (isExec || !stsres.notPreview) (stsres.isAddTask ? taskcmds : cmds).push(...stscmds);
+                        if (!sts.hasType(STATUS_TYPE.Attack) && stsres.heal) {
+                            const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }], { players, source: sts.id });
+                            aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
                         }
-                        if (trigger == 'useReadySkill') {
-                            if (isExec) players[pidx].canAction = false;
-                            readySkill = stsres.skill ?? -1;
+                        if (isExec && !isOnlyExecSts) {
+                            if (
+                                (types.includes(STATUS_TYPE.Attack) && !trigger.startsWith('after') &&
+                                    (stsres.damage || stsres.pdmg || stsres.heal)) ||
+                                stscmds.some(({ cmd }) => ['heal', 'revive', 'addMaxHp'].includes(cmd))
+                            ) {
+                                (isUnshift ? statusAtksPre : statusAtks).push({
+                                    id: sts.id,
+                                    name: sts.name,
+                                    entityId: sts.entityId,
+                                    group,
+                                    pidx,
+                                    isSelf: +!!stsres.isSelf,
+                                    trigger,
+                                    hidx,
+                                    skid,
+                                    isQuickAction,
+                                    discards,
+                                    hcard,
+                                    source: stsres.source,
+                                });
+                            } else {
+                                if (stsres.isAddTask) {
+                                    let intvl = 1000;
+                                    if (stsres.damage || stsres.pdmg) intvl += 1000;
+                                    if (!taskMark) {
+                                        const args = clone(Array.from(arguments));
+                                        args[3] = {
+                                            ...(args[3] ?? {}),
+                                            taskMark: [hidx, group, sts.entityId],
+                                            players: undefined,
+                                        };
+                                        this.taskQueue.addTask(`status-${sts.name}(${sts.entityId}):${trigger}`, args, { isUnshift, isDmg: true });
+                                    } else {
+                                        const statusHandle = async () => {
+                                            const { hidx: ahidx, dice, heros, combatStatus } = this.players[pidx];
+                                            const { ndices } = this._doCmds(pidx, stscmds, {
+                                                hidxs: [group == STATUS_GROUP.combatStatus ? ahidx : hidx],
+                                                withCard: hcard,
+                                                trigger,
+                                                source: sts.id,
+                                            });
+                                            if (ndices) assgin(dice, ndices);
+                                            const statuses = group == STATUS_GROUP.heroStatus ?
+                                                this.players[pidx].heros[hidx].heroStatus :
+                                                this.players[pidx].combatStatus;
+                                            const curStatus = statuses.find(s => s.entityId == sts.entityId);
+                                            if (!curStatus) return;
+                                            stsres.exec?.(curStatus, { heros, combatStatus });
+                                            if (!curStatus.hasType(STATUS_TYPE.TempNonDestroy, STATUS_TYPE.Accumulate) && (curStatus.useCnt == 0 || curStatus.roundCnt == 0)) {
+                                                curStatus.type.push(STATUS_TYPE.TempNonDestroy);
+                                            }
+                                            const useCntChange = `${oCnt}->${sts.useCnt}`;
+                                            const perCntChange = `${oPct}->${sts.perCnt}`;
+                                            this._writeLog(`[${player.name}]${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${useCntChange}` : ''}${sts.perCnt != -1 ? `.perCnt:${perCntChange}` : ''}`, 'system');
+                                            if (!curStatus.hasType(STATUS_TYPE.Hide)) this._writeLog(`[${this.players[pidx].name}][${curStatus.name}]发动${oCnt != sts.useCnt ? ` ${useCntChange}` : ''}`, stsexecres?.notInfo ? 'system' : 'info');
+                                            const flag = `_doStatus-${group == STATUS_GROUP.heroStatus ? 'hero' : 'combat'}Status-task-${curStatus.name}`;
+                                            const curStatusIdx = statuses.filter(s => !s.hasType(STATUS_TYPE.Hide)).findIndex(s => s.entityId == sts.entityId);
+                                            if (curStatusIdx == -1) intvl = 0;
+                                            this.emit(flag, pidx, {
+                                                isActionInfo: true,
+                                                isQuickAction: !!isQuickAction,
+                                                statusSelect: isCdt(curStatusIdx > -1, [pidx, group, hidx, curStatusIdx]),
+                                            });
+                                            if ((curStatus.useCnt == 0 || curStatus.roundCnt == 0) && !curStatus.hasType(STATUS_TYPE.Accumulate)) {
+                                                await delay(intvl + 300);
+                                                curStatus.type.splice(curStatus.type.indexOf(STATUS_TYPE.TempNonDestroy), 1);
+                                                this.emit(flag + '-destroy', pidx);
+                                            }
+                                        };
+                                        task.push([statusHandle, intvl]);
+                                    }
+                                } else {
+                                    this._writeLog(`[${player.name}]${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${oCnt}->${sts.useCnt}` : ''}${sts.perCnt != -1 ? `.perCnt:${oPct}->${sts.perCnt}` : ''}`, 'system');
+                                    this._writeLog(`[${this.players[pidx].name}][${sts.name}]发动${oCnt != sts.useCnt ? ` ${oCnt}->${sts.useCnt}` : ''}`);
+                                    this._doCmds(pidx, stscmds, { players, hidxs: [hidx], withCard: hcard, source: sts.id });
+                                }
+                            }
+                            if (trigger == 'useReadySkill') {
+                                if (isExec) players[pidx].canAction = false;
+                                readySkill = stsres.skill ?? -1;
+                            }
                         }
                     }
                 }
             }
         }
-        for (const trigger of triggers) {
-            if (cStatus && !taskMark) {
-                const chidx = hidxs?.[0] ?? player.hidx;
-                if (pheros[chidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction)) && trigger == 'useReadySkill') continue;
-                detectStatus(cStatus, cStatus.group, chidx, trigger);
-                continue;
+        if (cStatus && !taskMark) {
+            const chidx = hidxs?.[0] ?? player.hidx;
+            if (!pheros[chidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction)) || !triggers.includes('useReadySkill')) {
+                detectStatus(cStatus, cStatus.group, chidx, triggers);
             }
+        } else {
             for (let i = 0; i < pheros.length; ++i) {
                 const hidx = (i + (fhidx ?? player.hidx)) % pheros.length;
                 const chero = pheros[hidx];
-                if (chero.heroStatus.some(sts => sts.hasType(STATUS_TYPE.NonAction)) && trigger == 'useReadySkill') continue;
+                if (chero.heroStatus.some(sts => sts.hasType(STATUS_TYPE.NonAction)) && triggers.includes('useReadySkill')) continue;
                 if ((hidxs ?? [hidx]).includes(hidx)) {
                     if (!isOnlyCombatStatus && (chero.isFront || !isOnlyFront)) {
-                        detectStatus(chero.heroStatus, STATUS_GROUP.heroStatus, hidx, trigger);
+                        detectStatus(chero.heroStatus, STATUS_GROUP.heroStatus, hidx, triggers);
                     }
-                    if (i == 0 && !isOnlyHeroStatus) detectStatus(player.combatStatus, STATUS_GROUP.combatStatus, hidx, trigger);
+                    if (i == 0 && !isOnlyHeroStatus) detectStatus(player.combatStatus, STATUS_GROUP.combatStatus, hidx, triggers);
                 }
             }
         }
@@ -5370,8 +5371,7 @@ export default class GeniusInvokationRoom {
             this._random = curRandom;
             const players = clone(this.players);
             const switchHeroDiceCnt = this._calcHeroSwitchDice(pidx, hidx, player.hidx);
-            let isQuickAction = false;
-            isQuickAction = this._detectSkill(pidx, 'active-switch-from', { hidxs: player.hidx, isExec: false }).isQuickAction;
+            let { isQuickAction } = this._detectSkill(pidx, 'active-switch-from', { hidxs: player.hidx, isExec: false });
             isQuickAction = this._detectSlotAndStatus(pidx, 'active-switch-from', { isQuickAction, types: STATUS_TYPE.Usage, hidxs: [player.hidx], isExec: false }).isQuickAction;
             isQuickAction = this._detectSlotAndStatus(pidx, 'active-switch-to', { isQuickAction, types: STATUS_TYPE.Usage, hidxs: [hidx], isExec: false }).isQuickAction;
             isQuickAction = this._detectSummon(pidx, 'active-switch-from', { isQuickAction, isExec: false }).isQuickAction;
@@ -5651,38 +5651,44 @@ export default class GeniusInvokationRoom {
      * @param stopWithTaskType 任务类型为此时不执行
      */
     private async _execTask(stopWithTaskType: string = '#') {
-        if (this.taskQueue.isExecuting || this.taskQueue.isTaskEmpty()) return;
-        this.taskQueue.isExecuting = true;
-        let isDieWaiting = false;
-        while (!this.taskQueue.isTaskEmpty() && this.taskQueue.isExecuting && !isDieWaiting && this.players.every(p => p.phase != PHASE.PICK_CARD)) {
-            const [[peekTaskType]] = this.taskQueue.peekTask();
-            if (peekTaskType.includes(stopWithTaskType)) break;
-            const [[taskType, args, source, isDmg]] = this.taskQueue.getTask();
-            if (!this._hasNotDieSwitch() && isDmg) {
-                this.taskQueue.addTask(taskType, args, { isUnshift: true, source, isDmg });
-                isDieWaiting = true;
-                break;
-            }
-            if (taskType == 'not found' || !taskType || !args) break;
-            let task: [() => void | Promise<void>, number?, number?][] | undefined;
-            if (taskType.startsWith('status-')) task = this._detectStatus(...(args as Parameters<typeof this._detectStatus>)).task;
-            else if (taskType.startsWith('support-')) task = this._detectSupport(...(args as Parameters<typeof this._detectSupport>)).task;
-            else if (taskType.startsWith('summon-')) task = this._detectSummon(...(args as Parameters<typeof this._detectSummon>)).task;
-            else if (taskType.startsWith('slot-')) task = this._detectSlot(...(args as Parameters<typeof this._detectSlot>)).task;
-            else if (taskType.startsWith('skill-')) task = this._detectSkill(...(args as Parameters<typeof this._detectSkill>)).task;
-            else task = args as [() => void, number?, number?][];
-            if (taskType.startsWith('statusAtk-')) {
-                const isExeced = await this.taskQueue.execTask(taskType, [[() => this._doStatusAtk(args as StatusTask)]]);
-                if (!isExeced) {
-                    this.taskQueue.addStatusAtk([args as StatusTask], { isUnshift: true });
+        try {
+            if (this.taskQueue.isExecuting || this.taskQueue.isTaskEmpty()) return;
+            this.taskQueue.isExecuting = true;
+            let isDieWaiting = false;
+            while (!this.taskQueue.isTaskEmpty() && this.taskQueue.isExecuting && !isDieWaiting && this.players.every(p => p.phase != PHASE.PICK_CARD)) {
+                const [[peekTaskType]] = this.taskQueue.peekTask();
+                if (peekTaskType.includes(stopWithTaskType)) break;
+                const [[taskType, args, source, isDmg]] = this.taskQueue.getTask();
+                if (!this._hasNotDieSwitch() && isDmg) {
+                    this.taskQueue.addTask(taskType, args, { isUnshift: true, source, isDmg });
+                    isDieWaiting = true;
                     break;
                 }
-            } else {
-                if (task == undefined) continue;
-                await this.taskQueue.execTask(taskType, task);
+                if (taskType == 'not found' || !taskType || !args) break;
+                let task: [() => void | Promise<void>, number?, number?][] | undefined;
+                if (taskType.startsWith('status-')) task = this._detectStatus(...(args as Parameters<typeof this._detectStatus>)).task;
+                else if (taskType.startsWith('support-')) task = this._detectSupport(...(args as Parameters<typeof this._detectSupport>)).task;
+                else if (taskType.startsWith('summon-')) task = this._detectSummon(...(args as Parameters<typeof this._detectSummon>)).task;
+                else if (taskType.startsWith('slot-')) task = this._detectSlot(...(args as Parameters<typeof this._detectSlot>)).task;
+                else if (taskType.startsWith('skill-')) task = this._detectSkill(...(args as Parameters<typeof this._detectSkill>)).task;
+                else task = args as [() => void, number?, number?][];
+                if (taskType.startsWith('statusAtk-')) {
+                    const isExeced = await this.taskQueue.execTask(taskType, [[() => this._doStatusAtk(args as StatusTask)]]);
+                    if (!isExeced) {
+                        this.taskQueue.addStatusAtk([args as StatusTask], { isUnshift: true });
+                        break;
+                    }
+                } else {
+                    if (task == undefined) continue;
+                    await this.taskQueue.execTask(taskType, task);
+                }
             }
+            this.taskQueue.isExecuting = false;
+        } catch (e) {
+            const error: Error = e as Error;
+            console.error(error);
+            this.emitError(error);
         }
-        this.taskQueue.isExecuting = false;
     }
     /**
     * 计算技能的变化伤害和骰子消耗

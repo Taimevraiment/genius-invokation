@@ -2305,7 +2305,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/a06469da4cbc09f6bba2ae51a6808f23_7880465946055268242.png')
         .handle(() => ({ cmds: [{ cmd: 'addMaxHp', cnt: 1 }] })),
 
-    333018: () => new CardBuilder(452).name('咚咚嘭嘭').since('v5.3.0').food().costSame(1).canSelectHero(1)
+    333018: () => new CardBuilder(453).name('咚咚嘭嘭').since('v5.3.0').food().costSame(1).canSelectHero(1)
         .description('接下来3次名称不存在于初始牌组中牌加入我方手牌时，目标我方角色治疗自身1点。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_DongDongPengPeng.webp')
         .handle(() => ({ status: 303315 })),
@@ -2545,8 +2545,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { heros = [], hidxs: [hidx] = [-1] } = event;
             if (hidx == -1) return;
-            const { skills: [, { useCnt = 0 }] } = heros[hidx];
-            const isMinus = useCnt == 1 || (ver.gte('v4.7.0') && useCnt == 2);
+            const { skills: [, { useCntPerRound = 0 }] } = heros[hidx];
+            const isMinus = useCntPerRound == 1 || (ver.gte('v4.7.0') && useCntPerRound == 2);
             return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }) }
         }),
 
@@ -2560,6 +2560,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     213041: () => new CardBuilder(80).name('一触即发').since('v3.7.0').talent(1).costPyro(3)
         .description('{action}；【〖hro〗｢普通攻击｣后：】如果此牌和【smn113041】仍在场，则引爆【smn113041】，造成4点[火元素伤害]。')
+        .description('{action}；【〖hro〗｢普通攻击｣后：】如果此牌和【smn113041】仍在场，则引爆【smn113041】，造成3点[火元素伤害]。', 'v4.2.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2a48f2862634d319b9165838de944561_3946596064567874908.png'),
 
     213051: () => new CardBuilder(81).name('长野原龙势流星群').talent(1).costPyro(1).costPyro(2, 'v4.7.0')
