@@ -1,4 +1,4 @@
-import { BLCOK_WORDS } from "../constant/gameOption.js";
+import { BLOCK_WORDS } from "../constant/gameOption.js";
 
 /**
  * 深拷贝函数
@@ -61,7 +61,7 @@ export const genShareCode = (ids: number[], salt = 0): string => {
     }
     farr.push(salt);
     const res = btoa(String.fromCharCode(...farr));
-    if (BLCOK_WORDS.some(v => v.test(res))) return genShareCode(ids, salt + 1);
+    if (BLOCK_WORDS.some(v => v.test(res))) return genShareCode(ids, salt + 1);
     return res;
 }
 

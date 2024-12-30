@@ -685,10 +685,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('隐具魔术箭').description('{dealDmg}，召唤【smn113101】，累积1层【sts113102】。；如果本角色生命值至少为6，则对自身造成1点[穿透伤害]。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1d65a51c36eca7169247316ff7e14a89.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5e46c170e7ce41c20bf76c27c4a16d89_689217131128119675.png')
-                .normal().damage(2).cost(3).handle(event => {
-                    const { hero: { hp } } = event;
-                    return { pdmgSelf: isCdt(hp >= 6, 1), summon: 113101, status: 113102 }
-                }),
+                .normal().damage(2).cost(3).handle(event => ({ pdmgSelf: isCdt(event.hero.hp >= 6, 1), summon: 113101, status: 113102 })),
             new SkillBuilder('眩惑光戏法').description('{dealDmg}。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f86fcf037ad32d9973e84673f33f2b2b.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/22ed66987bb301d836569cf8fd4fc845_378167615829921519.png')

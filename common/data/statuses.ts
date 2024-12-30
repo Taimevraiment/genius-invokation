@@ -810,7 +810,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112141: (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
         .icon('tmp/UI_Gcg_Buff_Nightsoul_Water_1277947879')
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
-        .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）'),
+        .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）')
+        .handle((status, event) => {
+            const { hidx = -1, source = -1, sourceHidx = -1 } = event;
+            if (hidx == -1 || source != 112145 || sourceHidx != hidx) return;
+            return { trigger: ['get-status'], exec: () => { --status.useCnt } }
+        }),
 
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .icon('tmp/UI_Gcg_Debuff_Mualani_S_408084341')
@@ -826,22 +831,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112145: () => new StatusBuilder('消耗｢夜魂值｣').heroStatus().useCnt(1).type(STATUS_TYPE.Hide, STATUS_TYPE.Usage)
-        .handle((_, event) => ({
-            trigger: ['enter'],
-            isAddTask: true,
-            exec: (eStatus, execEvent = {}) => {
-                if (eStatus) {
-                    const { hidx = -1 } = event;
-                    const { heros = [] } = execEvent;
-                    const hero = heros[hidx];
-                    if (!hero) return;
-                    --eStatus.useCnt;
-                    const sts112141 = getObjById(hero.heroStatus, 112141);
-                    if (!sts112141) return;
-                    sts112141.useCnt = Math.max(0, sts112141.useCnt - 1);
-                }
-            }
-        })),
+        .handle(status => ({ trigger: ['enter'], exec: () => { --status.useCnt } })),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -871,9 +861,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    113041: () => new StatusBuilder('兔兔伯爵').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
+        .description('【我方出战角色受到伤害时：】抵消2点伤害。；[useCnt]').barrierCnt(2),
+
     113051: (isTalent: boolean = false) => new StatusBuilder('庭火焰硝').heroStatus().icon('buff4')
         .useCnt(3).useCnt(2, 'v4.7.0').useCnt(3, 'v4.7.0', isTalent).useCnt(2, 'v4.2.0')
-        .type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).talent(isTalent)
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).type(isTalent, STATUS_TYPE.Attack).talent(isTalent)
         .description(`所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；[useCnt]`)
         .handle((status, event) => {
             const { trigger = '' } = event;
@@ -894,15 +887,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【hro】以外的我方角色使用技能后：造成1点[火元素伤害]。；[roundCnt]')
         .handle((status, event) => {
             const { heros = [], hidx = -1 } = event;
+            if (hidx == -1 || heros[hidx]?.id == getHidById(status.id)) return;
             return {
+                trigger: ['after-skill'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
-                trigger: isCdt(hidx > -1 && heros[hidx]?.id != getHidById(status.id), ['after-skill']),
             }
         }),
-
-    113041: () => new StatusBuilder('兔兔伯爵').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
-        .description('【我方出战角色受到伤害时：】抵消2点伤害。；[useCnt]').barrierCnt(2),
 
     113061: (isTalent: boolean = false) => new StatusBuilder('爆裂火花').heroStatus().icon('buff5').useCnt(1).useCnt(2, isTalent)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
@@ -936,7 +927,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => ({ cmds: isCdt(event.isChargedAtk, [{ cmd: 'getStatus', status: 113072, isOppo: true }]) })
         })),
 
-    113072: () => new StatusBuilder('血梅香').combatStatus().useCnt(1).type(STATUS_TYPE.Attack)
+    113072: () => new StatusBuilder('血梅香').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp')
         .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]')
         .handle(() => ({
@@ -964,6 +955,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { isChargedAtk = false, isMinusDiceSkill = false, trigger = '' } = event;
             return {
                 trigger: ['skilltype1', 'phase-end'],
+                isAddTask: trigger == 'phase-end',
                 minusDiceSkill: isCdt(isChargedAtk && status.perCnt > 0, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }),
                 exec: () => {
                     if (trigger == 'phase-end') return { cmds: [{ cmd: 'getStatus', status: 113081 }] }
@@ -981,7 +973,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const hid = getHidById(status.id);
             const hero = getObjById(heros, hid);
             if (['enter', 'getdmg', 'other-getdmg', 'heal'].includes(trigger)) {
-                if (status.hasType(STATUS_TYPE.Barrier) && (hero?.isFront || (hero?.hp ?? 0) - (getdmg[hero?.hidx ?? -1] ?? 0) <= 0)) {
+                if (!hero) return;
+                if (status.hasType(STATUS_TYPE.Barrier) && (hero.isFront || hero.hp - (getdmg[hero.hidx] ?? 0) <= 0)) {
                     status.type = [STATUS_TYPE.Usage];
                 }
                 return;

@@ -2520,7 +2520,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt: 12122 }] }
         }),
 
-    212131: () => new CardBuilder(436).name('应当有适当的休息').since('v5.2.0').talent(1).costHydro(3)
+    212131: () => new CardBuilder(436).name('应有适当的休息').since('v5.2.0').talent(1).costHydro(3)
         .description('{action}；装备有此牌的【hro】使用【ski】后，使我方接下来2次｢元素战技｣或召唤物造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/87596a798d0c90b9c572100e46e3b0e6_5333461488553294390.png')
         .handle(() => ({ trigger: ['skilltype2'], execmds: [{ cmd: 'getStatus', status: 112135 }] })),
@@ -2564,9 +2564,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2a48f2862634d319b9165838de944561_3946596064567874908.png'),
 
     213051: () => new CardBuilder(81).name('长野原龙势流星群').talent(1).costPyro(1).costPyro(2, 'v4.7.0')
-        .description('{action}；装备有此牌的【hro】生成的【sts113051】触发后：额外造成1点[火元素伤害]。')
+        .description('{action}；装备有此牌的【hro】生成的【sts113051】触发后：额外造成1点[火元素伤害]。', 'v4.2.0', 'vlatest')
         .description('{action}；装备有此牌的【hro】生成的【sts113051】初始[可用次数]+1，且触发后：额外造成1点[火元素伤害]。', 'v4.7.0')
-        .description('{action}；装备有此牌的【hro】生成的【sts113051】触发后：额外造成1点[火元素伤害]。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/126c63df7d92e7d9c0a815a7a54558fc_6536428182837399330.png'),
 
     213061: () => new CardBuilder(82).name('砰砰礼物').since('v3.4.0').talent(1).costPyro(3)
@@ -2600,12 +2599,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；【结束阶段：】如果装备有此牌的【hro】生命值不多于6，则治疗该角色2点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/161a55bb8e3e5141557f38536579e897_3725263134237782114.png')
         .handle((_, event) => {
-            const { heros = [], hidxs = [] } = event;
-            if ((heros[hidxs[0]]?.hp ?? 10) <= 6) {
-                return {
-                    trigger: ['phase-end'],
-                    execmds: [{ cmd: 'heal', cnt: 2, hidxs }]
-                }
+            const { heros = [], hidxs = [], isExecTask = false } = event;
+            if ((heros[hidxs[0]]?.hp ?? 10) > 6 && isExecTask) return;
+            return {
+                trigger: ['phase-end'],
+                execmds: [{ cmd: 'heal', cnt: 2, hidxs }]
             }
         }),
 
@@ -2613,11 +2611,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，【hro】自身和【smn113101】对具有‹3火元素附着›的角色造成的伤害+2。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/be471c09e294aaf12766ee17b624ddcc_5013564012859422460.png')
         .handle((card, event) => {
-            const { heros = [], eAttachments = [], hidxs: [hidx] = [], ehidx = -1 } = event;
+            const { eAttachments = [], ehidx = -1, dmgSource = -1, isSummon = -1 } = event;
             const isAttachPyro = eAttachments[ehidx]?.includes(ELEMENT_TYPE.Pyro);
-            if (card.perCnt > 0 && heros[hidx]?.isFront && isAttachPyro) {
+            if (card.perCnt > 0 && isAttachPyro && (dmgSource == getHidById(card.id) || isSummon == 113101)) {
                 return {
-                    trigger: ['skill'],
+                    trigger: ['dmg'],
                     addDmgCdt: 2,
                     exec: () => { --card.perCnt },
                 }
@@ -2625,7 +2623,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     213111: () => new CardBuilder(323).name('僚佐的才巧').since('v4.4.0').talent(2).costPyro(3).energy(2)
-        .description('{action}；装备有此牌的【hro】生成的【sts113111】，初始[可用次数]+1。')
+        .description('{action}；装备有此牌的【hro】生成的【sts113112】，初始[可用次数]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/d1ba5d6f1a7bdb24e95ca829357df03a_6674733466390586160.png'),
 
     213121: () => new CardBuilder(374).name('地狱里摇摆').since('v4.7.0').talent(0).costPyro(1).anydice(2).perCnt(1)

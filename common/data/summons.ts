@@ -361,20 +361,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     113101: () => new SummonBuilder('怪笑猫猫帽').useCnt(1).maxUse(2).damage(1).description('{defaultAtk。}')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png')
-        .handle((summon, event) => ({
-            trigger: ['phase-end'],
-            exec: execEvent => {
-                const { summon: smn = summon } = execEvent;
-                const { talent } = event;
-                smn.useCnt = Math.max(0, smn.useCnt - 1);
-                if (talent && talent.perCnt > 0) {
-                    --talent.perCnt;
-                    return { cmds: [{ cmd: 'attack', cnt: smn.damage + 2 }] }
-                }
-                return { cmds: [{ cmd: 'attack' }] }
-            }
-        })),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png'),
 
     114011: (isTalent: boolean = false) => new SummonBuilder('奥兹').useCnt(2).damage(1).talent(isTalent)
         .description(`{defaultAtk。}${isTalent ? '；【hro】｢普通攻击｣后：造成2点[雷元素伤害]。（需消耗[可用次数]）' : ''}`)

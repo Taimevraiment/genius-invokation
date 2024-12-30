@@ -288,14 +288,17 @@ export default class GeniusInvokationClient {
                 const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
                 if (!preview) throw new Error('卡牌预览未找到');
                 this.diceSelect.fill(false);
-                this.heroCanSelect = [...(preview.heroCanSelect ?? [])];
-                this.summonCanSelect = clone(preview.summonCanSelect!);
-                this.supportCanSelect = clone(preview.supportCanSelect!.slice());
-                this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
-                this.willAttachs = clone(preview.willAttachs) ?? this._resetWillAttachs();
-                this.willSummons = clone(preview.willSummons) ?? this._resetWillSummons();
-                this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
-                this.energyCnt = clone(preview.willEnergyChange) ?? this._resetEnergyCnt();
+                const setPreview = (pre: Preview) => {
+                    this.heroCanSelect = [...(pre.heroCanSelect ?? [])];
+                    this.summonCanSelect = clone(pre.summonCanSelect!);
+                    this.supportCanSelect = clone(pre.supportCanSelect!.slice());
+                    this.willHp = pre.willHp?.slice() ?? this._resetWillHp();
+                    this.willAttachs = clone(pre.willAttachs) ?? this._resetWillAttachs();
+                    this.willSummons = clone(pre.willSummons) ?? this._resetWillSummons();
+                    this.willSwitch = clone(pre.willSwitch) ?? this._resetWillSwitch();
+                    this.energyCnt = clone(pre.willEnergyChange) ?? this._resetEnergyCnt();
+                }
+                setPreview(preview);
                 const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                 this.isValid = preview.isValid && canSelectHero == 0 && canSelectSummon == -1 && canSelectSupport == -1;
                 if (this.isValid) this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
@@ -315,8 +318,7 @@ export default class GeniusInvokationClient {
                         if (canSelectSummon != -1) this.summonSelect[canSelectSummon][0] = true;
                         if (canSelectSupport != -1) this.supportSelect[canSelectSupport][0] = true;
                         this.summonCnt = clone(preview1.willSummonChange) ?? this._resetSummonCnt();
-                        this.willHp = preview1.willHp?.slice() ?? this._resetWillHp();
-                        this.willSummons = clone(preview1.willSummons) ?? this._resetWillSummons();
+                        setPreview(preview1);
                     }
                 }
                 if (
