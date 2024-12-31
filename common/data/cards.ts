@@ -2680,7 +2680,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png')
         .handle((card, event, ver) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
-            const stsCnt = getObjById(heros[hidx]?.heroStatus, 114041)?.useCnt ?? 0;
+            const stsCnt = (getObjById(heros[hidx]?.heroStatus, 114041)?.useCnt ?? 0) - (ver.gte('v4.8.0') ? 1 : 0);
             let addDmgCdt = 0;
             if (
                 ver.lt('v4.2.0') && [3, 5].includes(stsCnt) ||
@@ -2689,12 +2689,11 @@ const allCards: Record<number, () => CardBuilder> = {
             ) {
                 addDmgCdt = 1;
             } else if (ver.gte('v4.8.0') && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
+            if (addDmgCdt == 0) return;
             return {
                 trigger: ['skilltype2'],
                 addDmgCdt,
-                exec: () => {
-                    if (ver.gte('v4.8.0')) --card.perCnt;
-                }
+                exec: () => { ver.gte('v4.8.0') && --card.perCnt }
             }
         }),
 

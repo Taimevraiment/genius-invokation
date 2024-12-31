@@ -728,8 +728,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6387793092d6e4fbf598834d1c4735b0_3596019311060413612.png')
                 .burst(2).damage(3).dmgElement(DAMAGE_TYPE.Physical).cost(3).handle(() => ({
                     pdmg: 2,
-                    status: 113123,
                     cmds: [{ cmd: 'discard', mode: CMD_MODE.AllHandCards }],
+                    status: 113123,
                 }))
         ),
 
@@ -843,12 +843,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('捉浪').description('本角色附属【sts114051】，并[准备技能]：【rsk14054】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e5/k9meeap7ei7ox3q9yx4b6803v79m6om.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/ab87d12b9075094e4ddc0637d3d938ba_5680751413245970029.png')
-                .elemental().cost(3).handle((event, ver) => {
-                    const { talent } = event;
-                    const status = [114051, 114055];
-                    if (ver.gte('v4.2.0') && talent) status.push(114052);
-                    return { status }
-                }),
+                .elemental().cost(3).handle(() => ({ status: [114051, 114055] })),
             new SkillBuilder('斫雷').description('{dealDmg}，生成【sts114053】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e8/738iv8ypner8eho40gwxipqfr6hzfdg.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/12/09/12109492/de30554b41553d6c58e6922c47937862_5183453852325935866.png')

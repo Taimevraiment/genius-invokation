@@ -1049,12 +1049,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113134: () => new StatusBuilder('尖兵协同战法（生效中）').combatStatus().icon('buff2').useCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方造成的[火元素伤害]或[雷元素伤害]+1。（包括角色引发的扩散伤害）；[useCnt]')
-        .handle((status, { trigger = '' }) => ({
+        .handle(status => ({
             trigger: ['Pyro-dmg', 'Electro-dmg', 'Pyro-dmg-Swirl', 'Electro-dmg-Swirl'],
             addDmgCdt: 1,
-            exec: () => {
-                if (!trigger.endsWith('Swirl')) --status.useCnt;
-            },
+            exec: () => { --status.useCnt },
         })),
 
     114021: () => new StatusBuilder('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
@@ -1094,8 +1092,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     114051: () => readySkillShieldStatus('捉浪·涛拥之守').handle((_s, _e, ver) => {
-        if (ver.gte('v4.2.0')) return;
-        return { trigger: ['getdmg'], exec: () => ({ cmds: [{ cmd: 'getStatus', status: 114052 }] }) }
+        if (ver.lt('v4.2.0')) return { trigger: ['getdmg'], exec: () => ({ cmds: [{ cmd: 'getStatus', status: 114052 }] }) }
     }),
 
     114052: () => new StatusBuilder('奔潮引电').heroStatus().icon('buff3').useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
@@ -1103,9 +1100,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => ({
             trigger: ['skilltype1'],
             minusDiceSkill: { skilltype1: [0, 1, 0] },
-            exec: () => {
-                if (event.isMinusDiceSkill) --status.useCnt;
-            }
+            exec: () => { event.isMinusDiceSkill && --status.useCnt }
         })),
 
     114053: () => new StatusBuilder('雷兽之盾').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.Barrier)

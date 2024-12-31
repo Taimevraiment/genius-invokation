@@ -12,7 +12,7 @@
       <div style="margin-top: 5%;">
         <input type="checkbox" id="allowLookon" style="width: fit-content;height: 100%;" :checked="allowLookon"
           @click="allowLookon = !allowLookon" />
-        <label for="allowLookon" style="cursor: pointer;">是否允许观战</label>
+        <label for="allowLookon" style="cursor: pointer;">允许观战</label>
       </div>
       <button style="margin: 5% 0" @click="create">创建</button>
     </div>

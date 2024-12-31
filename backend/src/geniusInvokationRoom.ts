@@ -876,7 +876,7 @@ export default class GeniusInvokationRoom {
                 const triggers: Trigger[] = [];
                 const types: StatusType[] = [];
                 if (chi == ohidx) {
-                    triggers.push('active-switch-from', 'switch-from');
+                    triggers.push('switch-from');
                     types.push(STATUS_TYPE.ReadySkill, STATUS_TYPE.Attack);
                 } else if (chi == hidx) {
                     triggers.push('switch-to');
@@ -1187,13 +1187,24 @@ export default class GeniusInvokationRoom {
         const energyCnt: number[][] = players.map(p => p.heros.map(() => 0));
         const willSummons: Summon[][] = [[], []];
         const selectSummonInvalid = skill && skill.canSelectSummon != -1 && selectSummon == -1;
-        const nonAction = !isExec && player().heros[cahidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction));
+        const nonAction = player().heros[isSwitch > -1 ? isSwitch : cahidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction));
         const res = {
             willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal,
             players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, energyCnt, tarHidx: -1,
         };
         if (skill && (selectSummonInvalid || nonAction)) {
-            if (isExec && selectSummonInvalid) this.emit('useSkillSelectSummonInvalid', pidx, { tip: '未选择召唤物' });
+            if (isExec) {
+                if (selectSummonInvalid) this.emit('useSkillSelectSummonInvalid', pidx, { tip: '未选择召唤物' });
+                if (nonAction) {
+                    setTimeout(async () => {
+                        await this._execTask();
+                        this._doActionAfter(pidx, isQuickAction);
+                        await this._execTask();
+                        await this._changeTurn(pidx, isQuickAction, 'useSkill');
+                        await this._execTask();
+                    }, 0);
+                }
+            }
             return res;
         }
         const isSwitchSelf = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && !cmds.isOppo);
@@ -4103,7 +4114,7 @@ export default class GeniusInvokationRoom {
         let isFallAtk = false;
         let isDie = true;
         for (const hidx of hidxs) {
-            const heroField = this._getHeroField(pidx, { players, hidx, hcard, includeCombatStatus: triggers.includes('switch-to') });
+            const heroField = this._getHeroField(pidx, { players, hidx, hcard, includeCombatStatus: triggers.some(trg => trg.includes('switch-to')) });
             for (const field of heroField) {
                 if ('group' in field) {
                     if (triggers.includes('will-killed') && !isDie && field.hasType(STATUS_TYPE.NonDefeat)) continue;
