@@ -27,6 +27,7 @@ export type CardHandleEvent = {
     summons?: Summon[],
     esummons?: Summon[],
     switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
     hcards?: Card[],
     hcardsCnt?: number,
     ehcardsCnt?: number,
@@ -99,7 +100,6 @@ export type CardHandleRes = {
 
 export type CardExecRes = {
     hidxs?: number[],
-    switchHeroDiceCnt?: number,
 }
 
 const normalWeapon = (shareId: number) => {
@@ -370,7 +370,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [], skid = -1, sktype = SKILL_TYPE.Vehicle } = event;
             let isAddDmg = card.perCnt > 0 && skid > -1 && sktype != SKILL_TYPE.Vehicle;
             if (isAddDmg) {
-                const cskill = heros[hidx].skills.find(sk => sk.id == skid);
+                const cskill = heros[hidx]?.skills.find(sk => sk.id == skid);
                 if (cskill) isAddDmg &&= cskill.damage > 0 && cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
             }
             return {
@@ -973,7 +973,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const isGetDice = trigger == 'skill' && dicesCnt <= hcardsCnt && (card.perCnt >> 1 & 1) == 1;
             const execmds: Cmds[] = [];
             if (isGetCard) execmds.push({ cmd: 'getCard', cnt: 1 });
-            if (isGetDice) execmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx].element });
+            if (isGetDice) execmds.push({ cmd: 'getDice', cnt: 1, element: heros[hidx]?.element });
             return {
                 trigger: ['skill', 'skilltype1'],
                 execmds,
@@ -1020,7 +1020,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
             if (card.perCnt > 0 && heros[hidx] && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
-                const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
+                const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx]?.element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
                 return {
                     trigger: ['getdmg', 'heal'],
                     execmds: [execmds[card.useCnt]],
@@ -1036,8 +1036,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/8d877f34a6ce748ac2f474d83fa05785_4045703223333362794.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], heal = [], trigger = '' } = event;
-            if (card.perCnt > 0 && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
-                const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx].element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
+            if (card.perCnt > 0 && heros[hidx] && (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0)) {
+                const execmds: Cmds[] = [{ cmd: 'getDice', element: heros[hidx]?.element, cnt: 1 }, { cmd: 'getCard', cnt: 1 }];
                 return {
                     trigger: ['getdmg', 'heal'],
                     isAddTask: true,
@@ -1180,7 +1180,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312032: () => new CardBuilder(448).name('魔战士的羽面').since('v5.3.0').artifact().costAny(2).perCnt(1)
         .description('【附属角色使用[特技]后：】获得1点[充能]。（每回合1次)')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Mozhanshi.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/7a6508ce85f6e89913c30f37d158150e_142786359709140614.png')
         .handle((card, event) => {
             const { hidxs = [], heros = [] } = event;
             const hero = heros[hidxs[0]];
@@ -1250,18 +1250,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
     313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(1).useCnt(2)
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_RongyiLong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/9a5a0408639062f81d7ed4007eea7a19_7598137844845621529.png')
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为｢快速行动｣而非｢战斗行动｣，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
         .handle((card, event) => {
-            const { eheros = [], ehidx = -1, hcardsCnt = 0, skid = -1, trigger = '' } = event;
+            const { eheros = [], ehidx = -1, hcardsCnt = 0, skid = -1, switchHeroDiceCnt = 0, trigger = '' } = event;
             if (trigger == 'vehicle') {
                 if (skid != +`${card.id}1`) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             }
-            const isTriggered = hcardsCnt > 0 && hasObjById(eheros[ehidx]?.heroStatus, 301302);
+            const triggers: Trigger[] = ['switch-to'];
+            const isTriggered = hcardsCnt > 0 && hasObjById(eheros[ehidx]?.heroStatus, 301302) && switchHeroDiceCnt > 0;
+            if (isTriggered) triggers.push('minus-switch-to');
             return {
                 cmds: [{ cmd: 'getStatus', status: 301302, isOppo: true }],
-                trigger: ['switch-to', 'active-switch-to'],
+                trigger: triggers,
                 minusDiceHero: isCdt(isTriggered, 1),
                 isQuickAction: isTriggered,
                 execmds: isCdt(isTriggered, [{ cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard }]),
@@ -1270,9 +1272,6 @@ const allCards: Record<number, () => CardBuilder> = {
                         const sts301302 = getObjById(h.heroStatus, 301302);
                         if (sts301302) sts301302.useCnt = 0;
                     });
-                    let { switchHeroDiceCnt = 0 } = event;
-                    if (switchHeroDiceCnt > 0) --switchHeroDiceCnt;
-                    return { switchHeroDiceCnt }
                 }
             }
         }),
@@ -1379,7 +1378,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321025: () => new CardBuilder(450).name('｢流泉之众｣').since('v5.3.0').place().costSame(2)
         .description('【我方｢召唤物｣入场时：】使其[可用次数]+1。；[可用次数]：3')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_LiuQuan.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/15deff457845725502df383e62e7c440_8867444785716505365.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1610,7 +1609,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(0)
         .description('在双方场上生成【crd300006】，然后我方场上的【crd300006】的｢斗志｣+1。（【crd300006】会将各自阵营对对方造成的伤害记录为｢斗志｣，每回合行动阶段开始时｢斗志｣较高的一方会清空｢斗志｣，使当前出战角色在本回合中造成的伤害+1。）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ShenyeXunli.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/d672bab118d384d06e9422e74c47b50b_903174325403791558.png')
         .handle((_, event) => {
             const { supports = [], esupports = [] } = event;
             const spt300006 = supports.find(s => s.card.id == 300006);
@@ -1836,7 +1835,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('从最多2个我方后台角色身上，转移1点[充能]到我方出战角色。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/567c17051137fdd9e5c981ea584df298_4305321690584111415.png')
         .handle((_, event) => {
-            const { heros = [], hidxs: [fhidx] = [] } = event;
+            const { heros = [], hidxs: [fhidx = -1] = [] } = event;
             let isNeedEnergy = true;
             let hasEnergy = false;
             heros.forEach(h => {
@@ -1854,7 +1853,7 @@ const allCards: Record<number, () => CardBuilder> = {
                         --h.energy;
                         ++getEnergy;
                     }
-                    heros[fhidx].energy = Math.min(heros[fhidx].energy + getEnergy, heros[fhidx].maxEnergy);
+                    if (fhidx > -1) heros[fhidx].energy = Math.min(heros[fhidx].energy + getEnergy, heros[fhidx].maxEnergy);
                 }
             }
         }),
@@ -2176,7 +2175,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332042: () => new CardBuilder(452).name('燃素充盈').since('v5.3.0').event().costSame(0)
         .description('【本回合我方下次角色消耗｢夜魂值｣后：】该角色获得1点｢夜魂值｣。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Ransu.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/068e20b26575d73b69a1b0b9913bfad4_976865676378334660.png')
         .handle(() => ({ status: 303238 })),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
@@ -2307,7 +2306,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333018: () => new CardBuilder(453).name('咚咚嘭嘭').since('v5.3.0').food().costSame(1).canSelectHero(1)
         .description('接下来3次名称不存在于初始牌组中牌加入我方手牌时，目标我方角色治疗自身1点。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_DongDongPengPeng.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/1c24dbdc3c8e0b65b342ea2b88412222_1756624425919028253.png')
         .handle(() => ({ status: 303315 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
@@ -2347,18 +2346,15 @@ const allCards: Record<number, () => CardBuilder> = {
     211051: () => new CardBuilder(65).name('寒天宣命祝词').offline('v1').talent().costCryo(2).perCnt(1)
         .description('装备有此牌的【hro】生成的【sts111052】会使所附魔角色造成的[冰元素伤害]+1。；切换到装备有此牌的【hro】时：少花费1个元素骰。（每回合1次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/7d706fd25ab0b3c4f8cca3af08d8a07b_2913232629544868049.png')
-        .handle((card, event) => ({
-            trigger: ['active-switch-to'],
-            minusDiceHero: card.perCnt,
-            exec: () => {
-                let { switchHeroDiceCnt = 0 } = event;
-                if (card.perCnt > 0 && switchHeroDiceCnt > 0) {
-                    --card.perCnt;
-                    --switchHeroDiceCnt;
-                }
-                return { switchHeroDiceCnt }
-            },
-        })),
+        .handle((card, event) => {
+            const { switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0 || card.perCnt <= 0) return;
+            return {
+                trigger: ['minus-switch-to'],
+                minusDiceHero: 1,
+                exec: () => { --card.perCnt },
+            }
+        }),
 
 
     211061: () => new CardBuilder(66).name('战欲涌现').since('v3.5.0').talent(2).costCryo(3).energy(2)
@@ -2527,7 +2523,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     212141: () => new CardBuilder(446).name('夜域赐礼·波涛顶底').since('v5.3.0').talent().costHydro(1).perCnt(1)
         .description('【装备有此牌的〖hro〗切换为｢出战角色｣时：】触发1个随机我方｢召唤物｣的｢结束阶段｣效果。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mualani.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/92151754bedb92e5b3e0f97b6a83325d_6443479384111696580.png')
         .handle((card, event) => {
             const { summons = [], randomInt } = event;
             if (!randomInt || card.perCnt <= 0 || summons.length == 0) return;
@@ -2762,7 +2758,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)
         .description('{action}；【我方触发[雷元素相关反应]后:】本回合【hro】下次造成的伤害+1。（可叠加，最多叠加到+3）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Clorinde.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/fe3f64e0a6220b41d9db19a6cbb7c8e8_815543173218385253.png')
         .handle((_, event) => {
             const { hidxs = [], heros = [] } = event;
             if (getObjById(heros[hidxs[0]]?.heroStatus, 114122)?.useCnt == 3) return;
@@ -2947,7 +2943,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png')
         .handle((_, event) => {
             const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
-            if (isChargedAtk && hasObjById(heros[hidx].heroStatus, 117021)) {
+            if (isChargedAtk && hasObjById(heros[hidx]?.heroStatus, 117021)) {
                 return { trigger: ['skilltype1'], minusDiceSkill: { skilltype1: [0, 0, 1] } }
             }
         }),
@@ -2972,18 +2968,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】为出战角色，我方进行｢切换角色｣行动时：少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d00693f2246c912c56900d481e37104a_1436874897141676884.png')
         .handle((card, event) => {
-            if (card.perCnt <= 0) return;
+            const { switchHeroDiceCnt = 0 } = event;
+            if (card.perCnt <= 0 || switchHeroDiceCnt == 0) return;
             return {
-                trigger: ['active-switch-from'],
+                trigger: ['minus-switch-from'],
                 minusDiceHero: 1,
-                exec: () => {
-                    let { switchHeroDiceCnt = 0 } = event;
-                    if (switchHeroDiceCnt > 0) {
-                        --card.perCnt;
-                        --switchHeroDiceCnt;
-                    }
-                    return { switchHeroDiceCnt }
-                }
+                exec: () => { --card.perCnt }
             }
         }),
 
@@ -3297,7 +3287,7 @@ const allCards: Record<number, () => CardBuilder> = {
         })),
 
     112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().costSame(0)
-        .src('tmp/UI_Gcg_CardFace_Summon_Mualani_1_-1991372755')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/d5b28af6dee07cf37bb2bfaa757a4656_5892221598902559399.png')
         .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。')
         .handle((_, event) => {
             const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
@@ -3411,7 +3401,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     300006: () => new CardBuilder().name('斗争之火').place()
         .description('此牌会记录本回合你对敌方角色造成的伤害，记为｢斗志｣。；【行动阶段开始时：】若此牌是场上｢斗志｣最高的斗争之火，则清空此牌的｢斗志｣，使我方出战角色本回合造成的伤害+1。')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_ShenyeXunli_1484982029.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2e88a5df59e2b48de1bc62d60dd1ba5b_5370407805539882566.png'),
 
     301020: () => new CardBuilder().name('禁忌知识').event().costSame(0).tag(CARD_TAG.NonReconcile)
         .description('无法使用此牌进行元素调和，且每回合最多只能打出1张｢禁忌知识｣。；对我方出战角色造成1点[穿透伤害]，抓1张牌。')
@@ -3524,10 +3514,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            const { heros = [], hidxs: [hidx = -1] = [] } = event;
             if (hidx == -1) return;
             const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }];
-            if (ver.lt('v4.8.0') || !hasObjById(heros[hidx].heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
+            if (ver.lt('v4.8.0') || !hasObjById(heros[hidx]?.heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
             return { cmds, status: isCdt(ver.gte('v4.8.0'), 303231) }
         }),
 

@@ -515,21 +515,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1214: () => new HeroBuilder(444).name('玛拉妮').since('v5.3.0').natlan().hydro().catalyst()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mualani.webp')
-        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Mualani_-833202905.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/1088c1bedbeeba3217e8ae968bad7191_4305921354282696376.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u502gh/751d43f3f0f8c0c7ff15116b7a6286c8.png')
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
             new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
-                .src('/image/tmp/Skill_S_Mualani_01.webp',
-                    '')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12142',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/c0769da88723a8460722bf3f9b45a36d_6871593320341772759.png')
                 .elemental().cost(2).handle(({ hero }) => ({
                     cmds: [{ cmd: 'equip', hidxs: [hero.hidx], card: 112142 }],
                     status: [[112141, 2]],
                     isForbidden: hasObjById(hero.heroStatus, 112141)
                 })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
-                .src('/image/tmp/Skill_E_Mualani_01.webp',
-                    '')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12143',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/ef6e70eabb280577276038ef5de4b953_998934977401309909.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 112144 })),
         ),
 
@@ -971,15 +971,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1412: () => new HeroBuilder(445).name('克洛琳德').since('v5.3.0').fontaine(HERO_TAG.ArkheOusia).electro().sword()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Clorinde.webp')
-        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Clorinde_1451199402.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/adef4ee6c8ae0b4db618caf0e86531ff_6176090203850156704.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u502gh/c61c0c32057a97d78f2a1c88d228642e.png')
         .normalSkill(new NormalSkillBuilder('逐影之誓').damage(1)
             .description('如果本角色附属【sts114121】，则此技能少花费1个[无色元素骰]。')
             .handle(event => ({ minusDiceSkill: { skilltype1: isCdt(hasObjById(event.hero.heroStatus, 114121), [0, 1, 0]) } })))
         .skills(
             new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')
-                .src('/image/tmp/Skill_S_Clorinde_01.webp',
-                    '')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/14122',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/46fcc98c1a7293e393ee520246fb2693_4818683097172627285.png')
                 .elemental().cost(2).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
@@ -987,8 +987,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { addDmgCdt: cnt, heal: cnt ?? 0, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
                 }),
             new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
-                .src('/image/tmp/Skill_E_Clorinde_01.webp',
-                    '')
+                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/14123',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/01/01/258999284/69cf1e122a47e7f9be17f270561b3e97_8748368510268606258.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[122, 4]] }))
         ),
 

@@ -31,6 +31,8 @@ export type StatusHandleEvent = {
     skid?: number,
     hasDmg?: boolean,
     dmgSource?: number,
+    switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
     minusDiceCard?: number,
     isMinusDiceCard?: boolean,
     isMinusDiceTalent?: boolean,
@@ -96,16 +98,13 @@ export type StatusHandleRes = {
 };
 
 export type StatusExecEvent = {
-    switchHeroDiceCnt?: number,
     heros?: Hero[],
     combatStatus?: Status[],
     summons?: Summon[],
-    isQuickAction?: boolean,
 }
 
 export type StatusExecRes = {
     cmds?: Cmds[],
-    switchHeroDiceCnt?: number,
     hidxs?: number[],
     notInfo?: boolean,
 }
@@ -808,7 +807,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112141: (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
-        .icon('tmp/UI_Gcg_Buff_Nightsoul_Water_1277947879')
+        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112141')
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
         .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）')
         .handle((status, event) => {
@@ -818,7 +817,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
-        .icon('tmp/UI_Gcg_Debuff_Mualani_S_408084341')
+        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112143')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
         .handle((status, event) => {
             const { dmgSource = -1 } = event;
@@ -1231,19 +1230,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon('buff3').useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
         .description(`【我方执行｢切换角色｣行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。' : ''}；[useCnt]`)
-        .handle(status => ({
-            minusDiceHero: 1,
-            trigger: ['active-switch-from'],
-            exec: (_, execEvent = {}) => {
-                const { switchHeroDiceCnt = 0 } = execEvent;
-                if (switchHeroDiceCnt == 0) return { switchHeroDiceCnt }
-                --status.useCnt;
-                return {
-                    switchHeroDiceCnt: switchHeroDiceCnt - 1,
-                    cmds: isCdt(status.isTalent, [{ cmd: 'getStatus', status: 115033 }]),
+        .handle((status, event) => {
+            const { switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0) return;
+            return {
+                minusDiceHero: 1,
+                trigger: ['minus-switch-from'],
+                exec: () => {
+                    --status.useCnt;
+                    return { cmds: isCdt(status.isTalent, [{ cmd: 'getStatus', status: 115033 }]) }
                 }
             }
-        })),
+        }),
 
     115033: () => new StatusBuilder('协鸣之风').combatStatus().icon('buff3').roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -1260,21 +1258,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
         .description('所附属角色造成的[物理伤害]变为[风元素伤害]，且角色造成的[风元素伤害]+1。；【所附属角色进行[下落攻击]时：】伤害额外+2。；【所附属角色为出战角色，我方执行｢切换角色｣行动时：】少花费1个元素骰。（每回合1次）；[roundCnt]')
         .handle((status, event) => {
-            const { isFallAtk = false, trigger = '' } = event;
+            const { isFallAtk = false, switchHeroDiceCnt = 0, trigger = '' } = event;
+            const triggers: Trigger[] = ['Anemo-dmg'];
+            if (switchHeroDiceCnt > 0 && status.perCnt > 0) triggers.push('minus-switch-from');
             return {
                 addDmg: 1,
                 addDmgCdt: isCdt(isFallAtk, 2),
-                minusDiceHero: status.perCnt,
-                trigger: ['Anemo-dmg', 'active-switch-from'],
+                minusDiceHero: 1,
+                trigger: triggers,
                 attachEl: ELEMENT_TYPE.Anemo,
-                exec: (_, execEvent = {}) => {
-                    if (trigger == 'active-switch-from' && status.perCnt > 0) {
-                        const { switchHeroDiceCnt = 0 } = execEvent;
-                        if (switchHeroDiceCnt == 0) return { switchHeroDiceCnt }
-                        --status.perCnt;
-                        return { switchHeroDiceCnt: switchHeroDiceCnt - 1 }
-                    }
-                },
+                exec: () => { trigger == 'minus-switch-from' && --status.perCnt },
             }
         }),
 
@@ -1303,7 +1296,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣; 本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
-                const { isFallAtk = false, trigger = '' } = event;
+                const { isFallAtk = false, isQuickAction: iqa, trigger = '' } = event;
                 if (ver.lt('v4.8.0')) {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
@@ -1312,14 +1305,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         exec: () => { --status.useCnt },
                     }
                 }
+                const isQuickAction = trigger == 'minus-switch-to' && !iqa && status.perCnt > 0;
                 return {
-                    trigger: ['active-switch-to', 'action-start', 'skilltype1'],
-                    isQuickAction: trigger == 'active-switch-to' && status.perCnt > 0,
+                    trigger: ['minus-switch-to', 'action-start', 'skilltype1'],
+                    isQuickAction,
                     attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
-                    exec: (_, execEvent = {}) => {
+                    exec: () => {
                         if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: SKILL_TYPE.Normal }] }
                         if (trigger == 'skilltype1' && status.useCnt > 0) --status.useCnt;
-                        if (trigger == 'active-switch-to' && execEvent.isQuickAction && status.perCnt > 0) --status.perCnt;
+                        if (isQuickAction) --status.perCnt;
                     },
                 }
             }),
@@ -1344,16 +1338,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115062: () => new StatusBuilder('倾落').heroStatus().icon('buff6').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Usage)
         .description('下次从该角色执行｢切换角色｣行动时少花费1个元素骰，并且造成1点[风元素伤害]。；[useCnt]')
         .handle(() => ({
-            trigger: ['active-switch-from'],
+            trigger: ['minus-switch-from'],
             damage: 1,
             element: DAMAGE_TYPE.Anemo,
             minusDiceHero: 1,
-            exec: (eStatus, execEvent = {}) => {
-                if (eStatus) --eStatus.useCnt;
-                const { switchHeroDiceCnt = 0 } = execEvent;
-                if (switchHeroDiceCnt == 0) return { switchHeroDiceCnt }
-                return { switchHeroDiceCnt: switchHeroDiceCnt - 1 }
-            }
+            exec: eStatus => { eStatus && --eStatus.useCnt }
         })),
 
     115071: (swirlEl: PureElementType) => readySkillStatus('风风轮', 15074).addition(swirlEl)
@@ -1413,16 +1402,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     115101: () => new StatusBuilder('步天梯').combatStatus().icon('buff3').useCnt(1).maxCnt(2).type(STATUS_TYPE.Usage)
         .description('【我方执行｢切换角色｣行动时：】少花费1个元素骰。；[useCnt]')
-        .handle(status => ({
-            minusDiceHero: 1,
-            trigger: ['active-switch-from'],
-            exec: (_, execEvent = {}) => {
-                const { switchHeroDiceCnt = 0 } = execEvent;
-                if (switchHeroDiceCnt == 0) return { switchHeroDiceCnt }
-                --status.useCnt;
-                return { switchHeroDiceCnt: switchHeroDiceCnt - 1 }
+        .handle((status, event) => {
+            const { switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0) return;
+            return {
+                minusDiceHero: 1,
+                trigger: ['minus-switch-from'],
+                exec: () => { --status.useCnt }
             }
-        })),
+        }),
 
     115103: () => new StatusBuilder('踏风腾跃').heroStatus().icon('ski,2').useCnt(1)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
@@ -2617,17 +2605,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     302303: () => new StatusBuilder('红羽团扇（生效中）').combatStatus().icon('buff2')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('本回合中，我方执行的下次｢切换角色｣行动视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。')
-        .handle(status => ({
-            minusDiceHero: 1,
-            isQuickAction: true,
-            trigger: ['active-switch-from'],
-            exec: (_, execEvent = {}) => {
-                const { switchHeroDiceCnt = 0, isQuickAction = false } = execEvent;
-                if (switchHeroDiceCnt == 0 && !isQuickAction) return { switchHeroDiceCnt }
-                --status.useCnt;
-                return { switchHeroDiceCnt: Math.max(0, switchHeroDiceCnt - 1) }
+        .handle((status, event) => {
+            const { isQuickAction, switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0 && isQuickAction) return;
+            return {
+                minusDiceHero: 1,
+                isQuickAction: true,
+                trigger: ['minus-switch-from'],
+                exec: () => { --status.useCnt }
             }
-        })),
+        }),
 
     303112: () => new StatusBuilder('元素共鸣：粉碎之冰（生效中）').heroStatus().icon('buff2')
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
@@ -2702,32 +2689,29 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303202: () => new StatusBuilder('换班时间（生效中）').combatStatus().icon('buff2')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。')
-        .handle(status => ({
-            minusDiceHero: 1,
-            trigger: ['active-switch-from'],
-            exec: (_, execEvent = {}) => {
-                let { switchHeroDiceCnt = 0 } = execEvent;
-                if (switchHeroDiceCnt > 0) {
-                    --status.useCnt;
-                    --switchHeroDiceCnt;
-                }
-                return { switchHeroDiceCnt }
+        .handle((status, event) => {
+            const { switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0) return;
+            return {
+                minusDiceHero: 1,
+                trigger: ['minus-switch-from'],
+                exec: () => { --status.useCnt }
             }
-        })),
+        }),
 
     303205: () => coolDownStatus('本大爷还没有输！', 332005),
 
     303206: () => new StatusBuilder('交给我吧！（生效中）').combatStatus().icon('buff3')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。')
-        .handle(status => ({
-            isQuickAction: true,
-            trigger: ['active-switch-from'],
-            exec: (_, execEvent = {}) => {
-                const { isQuickAction = false } = execEvent;
-                if (isQuickAction) --status.useCnt
-            },
-        })),
+        .handle((status, event) => {
+            if (event.isQuickAction) return;
+            return {
+                isQuickAction: true,
+                trigger: ['minus-switch-from'],
+                exec: () => { --status.useCnt },
+            }
+        }),
 
     303207: () => new StatusBuilder('鹤归之时（生效中）').combatStatus().icon('buff3')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

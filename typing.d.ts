@@ -187,17 +187,19 @@ type TrgGet = 'get-' | '';
 type TrgOther = 'other-' | '';
 type TrgAfter = 'after-' | '';
 type TrgActive = 'active-' | '';
+type TrgDice = 'add-' | 'minus-' | '';
 
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
     'end-phase' | 'any-end-phase' | `${TrgOther | TrgAfter}skill${TrgOppo}` | `${TrgOther | TrgAfter}skilltype${SkillType}` |
-    `${TrgActive}switch` | `${TrgActive}switch-to` | `${TrgActive}switch-from` | 'card' | `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` |
+    `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
+    `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
     `${TrgOther | TrgGet}elReaction-${TrgEl}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' | 'calc' |
-    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` |
-    'change-turn' | 'turn-end' | `${TrgActive}switch${TrgOppo}` | 'hcard-calc' | 'get-status' | 'summon-generate' | `drawcard${TrgOppo}` |
-    `${keyof typeof ELEMENT_REACTION}${TrgOppo}` | '';
+    'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | `${TrgOther}vehicle${TrgOppo}` |
+    'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' | 'summon-generate' | `drawcard${TrgOppo}` |
+    '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

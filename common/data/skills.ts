@@ -237,8 +237,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         })),
 
     3130061: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
-        .src('',
-            '')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130063',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
         .vehicle().costSame(1).handle(() => ({ cmds: [{ cmd: 'switch-after' }], statusOppo: 301302 })),
 
 }

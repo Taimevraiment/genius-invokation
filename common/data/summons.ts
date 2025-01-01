@@ -24,6 +24,8 @@ export type SummonHandleEvent = {
     tround?: number,
     isExecTask?: boolean,
     isSummon?: number,
+    switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
 }
 
 export type SummonHandleRes = {
@@ -54,15 +56,12 @@ export type SummonExecEvent = {
     summon?: Summon,
     heros?: Hero[],
     eheros?: Hero[],
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
     combatStatus?: Status[],
     eCombatStatus?: Status[],
 }
 
 export type SummonExecRes = {
     cmds?: Cmds[],
-    switchHeroDiceCnt?: number,
 }
 
 const crd12702summon = () => {
@@ -203,25 +202,21 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；[useCnt]')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png')
         .handle((summon, event) => {
-            const { heros, talent, trigger = '' } = event;
+            const { heros, talent, switchHeroDiceCnt = 0, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             const isTalent = talent && talent.perCnt > 0;
-            if (isTalent) triggers.push('active-switch');
+            if (isTalent && switchHeroDiceCnt > 0) triggers.push('minus-switch');
             return {
                 trigger: triggers,
-                isNotAddTask: trigger == 'active-switch',
+                isNotAddTask: trigger == 'minus-switch',
                 minusDiceHero: isCdt(isTalent, 1),
                 exec: execEvent => {
-                    let { summon: smn = summon, switchHeroDiceCnt = 0 } = execEvent;
+                    let { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') {
                         smn.useCnt = Math.max(0, smn.useCnt - 1);
                         return { cmds: [{ cmd: 'heal', hidxs: allHidxs(heros) }, { cmd: 'attach' }] }
                     }
-                    if (trigger == 'active-switch' && switchHeroDiceCnt > 0) {
-                        --switchHeroDiceCnt;
-                        --talent!.perCnt;
-                    }
-                    return { switchHeroDiceCnt }
+                    if (trigger == 'minus-switch') --talent!.perCnt;
                 },
             }
         }),
@@ -319,7 +314,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     112144: () => new SummonBuilder('鲨鲨飞弹').useCnt(2).maxUse(MAX_USE_COUNT).damage(2).description('{defaultAtk。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Mualani_2_-1796258607.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2cac5c299862a3ba055935093fd9baa1_2832493176442019382.png'),
 
     113021: () => new SummonBuilder('锅巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),
@@ -606,26 +601,26 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。（每回合1次）', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
         .handle((summon, event, ver) => {
-            const { heros = [], isFallAtk = false, isMinusDiceSkill, trigger = '' } = event;
+            const { heros = [], isFallAtk = false, isMinusDiceSkill, isQuickAction, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             let minusDiceCdt = isFallAtk;
             if (ver.lt('v4.8.0')) {
                 triggers.push('skilltype1');
                 minusDiceCdt &&= summon.perCnt > 0;
             } else {
-                triggers.push('active-switch');
+                if (!isQuickAction && summon.perCnt > 0) triggers.push('minus-switch');
                 minusDiceCdt &&= !!getObjById(heros, getHidById(summon.id))?.talentSlot;
             }
             return {
                 minusDiceSkill: isCdt(minusDiceCdt, { skilltype1: [0, 1, 0] }),
                 isNotAddTask: trigger != 'phase-end',
                 trigger: triggers,
-                isQuickAction: ver.gte('v4.8.0') && summon.perCnt > 0,
+                isQuickAction: trigger == 'minus-switch',
                 exec: execEvent => {
-                    const { summon: smn = summon, isQuickAction = false } = execEvent;
+                    const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn, event);
                     if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
-                    if (trigger == 'active-switch' && isQuickAction) --smn.perCnt;
+                    if (trigger == 'minus-switch') --smn.perCnt;
                 }
             }
         }),
@@ -920,18 +915,16 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/8df8ffcdace3033ced5ccedc1dc7da68_5001323349681512527.png')
         .handle((summon, event) => {
             const { trigger = '' } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (summon.perCnt > 0) triggers.push('add-switch-oppo');
             return {
                 addDiceHero: summon.perCnt,
                 isNotAddTask: trigger != 'phase-end',
-                trigger: ['phase-end', 'active-switch-oppo'],
+                trigger: triggers,
                 exec: execEvent => {
-                    let { summon: smn = summon, switchHeroDiceCnt = 0 } = execEvent;
+                    let { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn, event);
-                    if (trigger == 'active-switch-oppo' && smn.perCnt > 0) {
-                        --smn.perCnt;
-                        ++switchHeroDiceCnt;
-                    }
-                    return { switchHeroDiceCnt }
+                    if (trigger == 'add-switch-oppo') --smn.perCnt;
                 }
             }
         }),
