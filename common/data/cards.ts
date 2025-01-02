@@ -1258,7 +1258,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (skid != +`${card.id}1`) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             }
-            const triggers: Trigger[] = ['switch-to'];
+            const triggers: Trigger[] = [];
             const isTriggered = hcardsCnt > 0 && hasObjById(eheros[ehidx]?.heroStatus, 301302) && switchHeroDiceCnt > 0;
             if (isTriggered) triggers.push('minus-switch-to');
             return {

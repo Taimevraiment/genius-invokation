@@ -157,7 +157,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
 
     1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
-        .src('')
+        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1121422')
         .vehicle().cost(1).handle(event => ({
             cmds: [{ cmd: 'switch-before' }],
             status: isCdt(allHidxs(event.heros).length == 1, 112145),
