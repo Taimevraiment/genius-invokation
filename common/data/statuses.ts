@@ -94,6 +94,7 @@ export type StatusHandleRes = {
     notPreview?: boolean,
     isFallAtk?: boolean,
     source?: number,
+    notInfo?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => StatusExecRes | void,
 };
 
@@ -106,7 +107,6 @@ export type StatusExecEvent = {
 export type StatusExecRes = {
     cmds?: Cmds[],
     hidxs?: number[],
-    notInfo?: boolean,
 }
 
 const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
@@ -466,6 +466,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
                 damage: isCdt(isExec || status.useCnt >= 4, 2),
                 element: DAMAGE_TYPE.Physical,
+                notInfo: true,
                 exec: eStatus => {
                     if (trigger == 'after-skilltype2' && isExecTask) {
                         if (eStatus && eStatus.useCnt >= 2) eStatus.roundCnt = 0;
@@ -473,7 +474,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     } else if (trigger == 'drawcard') {
                         ++status.useCnt;
                     }
-                    return { notInfo: true }
                 }
             }
         }),
@@ -813,7 +813,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { hidx = -1, source = -1, sourceHidx = -1 } = event;
             if (hidx == -1 || source != 112145 || sourceHidx != hidx) return;
-            return { trigger: ['get-status'], exec: () => { --status.useCnt } }
+            return { trigger: ['get-status'], notInfo: true, exec: () => { --status.useCnt } }
         }),
 
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
@@ -3000,7 +3000,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    303315: () => new StatusBuilder('咚咚嘭嘭（生效中）').heroStatus().icon('heal').useCnt(3).type(STATUS_TYPE.Usage)
+    303315: () => new StatusBuilder('咚咚嘭嘭（生效中）').heroStatus().icon('buff2').useCnt(3).type(STATUS_TYPE.Usage)
         .description('名称不存在于初始牌组中牌加入我方手牌时，所附属角色治疗自身1点。；[useCnt]')
         .handle((_, event) => {
             const { playerInfo: { initCardIds = [] } = {}, hcard, hidx = -1 } = event;

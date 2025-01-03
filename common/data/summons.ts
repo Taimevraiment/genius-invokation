@@ -201,25 +201,14 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     112011: () => new SummonBuilder('歌声之环').useCnt(2).heal(1)
         .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；[useCnt]')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d406a937bb6794a26ac46bf1fc9cfe3b_7906063991052689263.png')
-        .handle((summon, event) => {
-            const { heros, talent, switchHeroDiceCnt = 0, trigger = '' } = event;
-            const triggers: Trigger[] = ['phase-end'];
-            const isTalent = talent && talent.perCnt > 0;
-            if (isTalent && switchHeroDiceCnt > 0) triggers.push('minus-switch');
-            return {
-                trigger: triggers,
-                isNotAddTask: trigger == 'minus-switch',
-                minusDiceHero: isCdt(isTalent, 1),
-                exec: execEvent => {
-                    let { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') {
-                        smn.useCnt = Math.max(0, smn.useCnt - 1);
-                        return { cmds: [{ cmd: 'heal', hidxs: allHidxs(heros) }, { cmd: 'attach' }] }
-                    }
-                    if (trigger == 'minus-switch') --talent!.perCnt;
-                },
-            }
-        }),
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
+                return { cmds: [{ cmd: 'heal', hidxs: allHidxs(event.heros) }, { cmd: 'attach' }] }
+            },
+        })),
 
     112031: () => new SummonBuilder('虚影').useCnt(1).damage(1).shield(1).statusId().roundEnd()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，{dealDmg}。')

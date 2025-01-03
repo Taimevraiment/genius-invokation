@@ -93,6 +93,7 @@ export type CardHandleRes = {
     restDmg?: number,
     isAddTask?: boolean,
     notPreview?: boolean,
+    forcePreview?: boolean,
     summonCnt?: number[][],
     isQuickAction?: boolean,
     exec?: () => CardExecRes | void,
@@ -1762,7 +1763,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const isOppo = chp > 0;
                     const cmd = !isOppo ? 'attack' : 'heal';
                     const element = isCdt(!isOppo, DAMAGE_TYPE.Pierce);
-                    cmds.push({ cmd, cnt: Math.abs(chp), element, isOppo, hidxs: [i], isAttach: isOppo });
+                    cmds.push({ cmd, cnt: Math.abs(chp), element, isOppo: false, hidxs: [i], isAttach: isOppo });
                 }
             }
             cmds.push({ cmd: 'heal', cnt: 1, hidxs, mode: 1 });
@@ -2441,7 +2442,16 @@ const allCards: Record<number, () => CardBuilder> = {
 
     212011: () => new CardBuilder(69).name('光辉的季节').offline('v1').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，【smn112011】会使我方执行｢切换角色｣行动时少花费1个元素骰。（每回合1次）')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png'),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png')
+        .handle((card, event) => {
+            const { summons = [], switchHeroDiceCnt = 0 } = event;
+            if (card.perCnt <= 0 || !hasObjById(summons, 112011) || switchHeroDiceCnt == 0) return;
+            return {
+                trigger: ['minus-switch'],
+                minusDiceHero: 1,
+                exec: () => { --card.perCnt }
+            }
+        }),
 
     212021: () => new CardBuilder(70).name('重帘留香').talent(1).costHydro(3).costHydro(4, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【sts112021】，会在我方出战角色受到至少为2的伤害时抵消伤害，并且初始[可用次数]+1。')
@@ -2526,10 +2536,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/92151754bedb92e5b3e0f97b6a83325d_6443479384111696580.png')
         .handle((card, event) => {
             const { summons = [], randomInt } = event;
-            if (!randomInt || card.perCnt <= 0 || summons.length == 0) return;
+            if (!randomInt || card.perCnt <= 0 || summons.length == 0) return { notPreview: true };
             return {
                 trigger: ['switch-to'],
                 execmds: [{ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] }],
+                notPreview: true,
                 exec: () => { --card.perCnt }
             }
         }),
