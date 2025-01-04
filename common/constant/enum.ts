@@ -197,6 +197,7 @@ export const STATUS_TYPE = {
     NonAction: 'NonAction', // 无法行动 14
     TempNonDestroy: 'TempNonDestroy', // 暂时不消失 15
     ConditionalEnchant: 'ConditionalEnchant', // 条件附魔 16
+    NightSoul: 'NightSoul', // 夜魂加持 17
 } as const;
 
 export type StatusType = TypeConst<typeof STATUS_TYPE>;

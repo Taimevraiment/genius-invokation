@@ -3270,15 +3270,24 @@ export default class GeniusInvokationRoom {
     } = {}) {
         const { isExec = true, notPreHeal = false, isQuickAction = false, supportCnt = INIT_SUPPORTCNT(), source } = options;
         const { heros } = players[pidx];
+        const tmpHeals = new Array(heros.length).fill(0);
         if (heal.some(hl => hl > -1)) {
-            if (!notPreHeal) this._detectStatus(pidx, STATUS_TYPE.Usage, 'pre-heal', { heal, players, hidxs: allHidxs(heros), supportCnt, source, isQuickAction, isExec, isOnlyExecSts: !isExec });
-            heal.forEach((h, hi, ha) => ha[hi] = Math.min(heros[hi].maxHp - heros[hi].hp, h));
+            if (!notPreHeal) {
+                this._detectSkill(pidx, 'pre-heal', { heal, players, hidxs: allHidxs(heros), source, isQuickAction, isExec });
+                this._detectStatus(pidx, STATUS_TYPE.Usage, 'pre-heal', { heal, players, hidxs: allHidxs(heros), supportCnt, source, isQuickAction, isExec, isOnlyExecSts: !isExec });
+            }
+            heal.forEach((h, hi, ha) => {
+                if (h == -1) return;
+                ha[hi] = Math.min(heros[hi].maxHp - heros[hi].hp, h);
+                tmpHeals[hi] += ha[hi];
+                heros[hi].hp += ha[hi];
+            });
             heal.forEach((h, hi) => h > -1 && this._detectSkill(pidx, 'heal', { hidxs: hi, players, heal, isQuickAction, isExec }));
             this._detectSlotAndStatus(pidx, 'heal', { types: STATUS_TYPE.Usage, hidxs: allHidxs(heros), players, heal, isQuickAction, supportCnt, source, isExec });
             this._detectSupport(pidx, 'heal', { heal, players, isQuickAction, supportCnt, isExec });
             this._detectSupport(pidx ^ 1, 'heal-oppo', { heal, players, isQuickAction, supportCnt, isExec });
         }
-        return { supportCnt }
+        return { tmpHeals }
     }
     /**
      * 弃牌后的处理
@@ -4593,11 +4602,12 @@ export default class GeniusInvokationRoom {
         let discards: Card[] | undefined;
         let attackPreview: Preview | undefined;
         const tasks: AtkTask[] = [];
-        const elTips: [string, PureElementType, PureElementType][] = Array.from({ length: player.heros.length + opponent.heros.length }, () => ['', ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Cryo]);
+        const elTips: [string, PureElementType, PureElementType][] = Array.from({ length: cheros.length + ceheros.length }, () => ['', ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Cryo]);
         let willDamages: number[][] | undefined;
         let dmgElement: DamageType | undefined;
         let dmgElements: DamageType[] | undefined;
         let willAttachs: PureElementType[][] | undefined;
+        const tmpDamages: number[] = new Array(cheros.length).fill(0);
         let atkOppo: boolean = true;
         let atkedIdx: number = -1;
         const willHeals0: { mode: number, heals: number[] } = { mode: 0, heals: new Array(cheros.length + ceheros.length).fill(-1) };
@@ -5063,6 +5073,14 @@ export default class GeniusInvokationRoom {
                         atkOppo = atkOppo1;
                         atkedIdx = hidx;
                     }
+                    if (dmgElement == DAMAGE_TYPE.Pierce) {
+                        const selfDmg = willDamages?.slice(ceheros.length).map(([, pdmg]) => pdmg);
+                        cheros.forEach((h, hi) => {
+                            if (h.hp <= 0 || !selfDmg?.[hi] || selfDmg[hi] <= 0) return;
+                            h.hp -= selfDmg[hi] - tmpDamages[hi];
+                            tmpDamages[hi] = selfDmg[hi];
+                        });
+                    }
                 });
             } else if (cmd == 'pickCard' && isExec) {
                 this.taskQueue.addTask(`pickCard-${i}`, [[() => {
@@ -5102,6 +5120,7 @@ export default class GeniusInvokationRoom {
                 });
             }
         }
+
         if (!isOnlyGetWillDamages && willDamages != undefined && dmgElement != undefined) {
             const { players: players1, willDamages: willDamage1, elTips: elTips1,
                 dmgElements: dmgElements1, willHeal: willHeal1, willAttachs: willAttachs1 }
@@ -5141,19 +5160,23 @@ export default class GeniusInvokationRoom {
             }
         }
         if (willHeals0.heals.some(v => v != -1)) willHeals.push(willHeals0.heals.slice());
+        const tmpHeals = new Array(cheros.length).fill(0);
         willHeals.forEach((whl, whli) => {
             if (!notDetect[whli]) {
                 const willheal = whl.slice(pidx * ceheros.length, pidx * ceheros.length + cheros.length);
-                this._detectHeal(pidx, willheal, players, {
+                const { tmpHeals: tmpheals } = this._detectHeal(pidx, willheal, players, {
                     isExec,
                     notPreHeal: notPreHeal[whli],
                     isQuickAction: !isAction,
                     supportCnt,
                     source,
                 });
+                tmpHeals.forEach((_, hli, hla) => hla[hli] += tmpheals[hli]);
                 willheal.forEach((hl, hli) => whl[pidx * ceheros.length + hli] = hl);
             }
         });
+        tmpHeals.forEach((th, thi) => cheros[thi].hp -= th);
+        tmpDamages.forEach((td, hi) => cheros[hi].hp += td);
         if (attackPreview?.willHp) {
             willHeals.forEach(whls => {
                 whls.forEach((whl, whli) => {

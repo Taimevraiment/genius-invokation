@@ -614,7 +614,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色造成的伤害+1】。；【角色使用｢元素战技｣后：】角色额外获得1点[充能]。（每回合1次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e1938c4cf6e50cfcb65d67ef10bc16a3_1486330508550781744.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             if (!hero) return;
             return {
@@ -1560,7 +1560,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方出战角色的元素类型为‹1冰›/‹2水›/‹3火›/‹4雷›/‹7草›时，才能打出：】对我方所有角色，附着我方出战角色类型的元素。', 'v4.2.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/f11867042dd52c75e73d7b2e68b03430_7080334454031898922.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            const { heros = [], hidxs: [hidx] = [] } = event;
             const elements: ElementType[] = [ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro];
             const isValid = elements.includes(heros[hidx]?.element ?? ELEMENT_TYPE.Physical);
             const hidxs = ver.lt('v4.2.0') ? allHidxs(heros) : heros.filter(h => h.attachElement.length > 0).map(h => h.hidx);
@@ -2203,8 +2203,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色1点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/bb5528c89decc6e54ade58e1c672cbfa_4113972688843190708.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            const canSelectHero = event.heros?.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 1 }], canSelectHero }
         }),
 
@@ -2212,8 +2211,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色2点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/f1026f0a187267e7484d04885e62558a_1248842015783359733.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            const canSelectHero = event.heros?.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 2 }], canSelectHero }
         }),
 
@@ -2221,8 +2219,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色1点，两回合内结束阶段再治疗此角色1点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/915af5fee026a95d6001559c3a1737ff_7749997812479443913.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            const canSelectHero = event.heros?.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 1 }], status: 303305, canSelectHero }
         }),
 
@@ -2238,11 +2235,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { heros = [], hidxs, combatStatus = [] } = event;
             const canSelectHero = heros.map(h => h.hp <= 0 && !hasObjById(combatStatus, 303307));
-            return {
-                cmds: [{ cmd: 'revive', cnt: 1, hidxs }],
-                status: 303307,
-                canSelectHero,
-            }
+            return { cmds: [{ cmd: 'revive', cnt: 1, hidxs }], status: 303307, canSelectHero }
         }),
 
     333010: () => new CardBuilder(274).name('刺身拼盘').since('v3.7.0').food().costSame(1).canSelectHero(1)
@@ -2254,8 +2247,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('本回合中，所有我方角色下一次｢元素战技｣造成的伤害+2。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/ebc939f0b5695910118e65f9acfc95ff_8938771284871719730.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const hidxs = heros.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
+            const hidxs = event.heros?.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
             return { status: 303309, hidxs }
         }),
 
@@ -2263,8 +2255,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('本回合中，所有我方角色下次受到伤害-2。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/371abd087dfb6c3ec9435668d927ee75_1853952407602581228.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const hidxs = heros.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
+            const hidxs = event.heros?.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
             return { status: 303310, hidxs }
         }),
 
@@ -2272,8 +2263,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('本回合中，所有我方角色下次使用技能时少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/21ece93fa784b810495128f6f0b14c59_4336812734349949596.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const hidxs = heros.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
+            const hidxs = event.heros?.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
             return { status: 303311, hidxs }
         }),
 
@@ -2281,8 +2271,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色2点，3回合内结束阶段再治疗此角色1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/9001508071c110f4b13088edeb22c8b4_7346504108686077875.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            const canSelectHero = event.heros?.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 2 }], status: 303312, canSelectHero }
         }),
 
@@ -2290,8 +2279,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色1点，该角色接下来3次受到伤害后再治疗其1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/287f535c9a60620259bb149a75a3a001_7028948017645858669.png')
         .handle((_, event) => {
-            const { heros = [] } = event;
-            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            const canSelectHero = event.heros?.map(h => h.hp < h.maxHp && h.hp > 0);
             return { cmds: [{ cmd: 'heal', cnt: 1 }], status: 303313, canSelectHero }
         }),
 
@@ -2329,7 +2317,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】后：治疗自身2点。（每回合1次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png')
         .handle((card, event) => {
-            const { heros = [], hidxs, hidxs: [hidx] = [-1] } = event;
+            const { heros = [], hidxs, hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             if (card.perCnt <= 0 || !hero || hero.hp == hero.maxHp) return;
             return {
@@ -2520,7 +2508,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时，会对自身附属【sts112116】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/fb5f84b550dcdcfcff9197573aee45a8_1289322499384647153.png')
         .handle((_, event) => {
-            const { heros = [], hidxs: [hidx = -1] = [] } = event;
+            const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             if (!hero || hero.tags.includes(HERO_TAG.ArkheOusia)) return;
             return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt: 12122 }] }
@@ -2550,8 +2538,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】每回合第2次使用【ski】时，少花费1个[火元素骰]。', 'v4.7.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/5d72a776e175c52de3c4ebb113f2b9e7_2138984540269318755.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
-            if (hidx == -1) return;
+            const { heros = [], hidxs: [hidx] = [] } = event;
+            if (!heros[hidx]) return;
             const { skills: [, { useCntPerRound = 0 }] } = heros[hidx];
             const isMinus = useCntPerRound == 1 || (ver.gte('v4.7.0') && useCntPerRound == 2);
             return { trigger: ['skill'], minusDiceSkill: isCdt(isMinus, { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }) }
@@ -3009,15 +2997,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts121022】或【sts121022,1】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [-1], restDmg = -1 } = event;
-            if (hidx == -1) return;
+            const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
             const hero = heros[hidx];
+            if (!hero) return;
             if (restDmg > -1) {
                 if (restDmg < 3 || card.perCnt == 0) return { restDmg }
                 --card.perCnt;
                 return { restDmg: restDmg - 1, statusOppo: [[121022, +(hero.element != ELEMENT_TYPE.Cryo)]] }
             }
-            return { isValid: hero?.id == getHidById(card.id), cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
+            return { isValid: hero.id == getHidById(card.id), cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
         }),
 
     221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
@@ -3304,15 +3292,15 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
             const hero = heros[hidxs[0]];
             if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
-            const sts112141 = getObjById(hero.heroStatus, 112141);
-            if (!sts112141) return;
-            const isDestroy = sts112141.useCnt == 1 && !hasObjById(combatStatus, 303238);
+            const nightSoul = getObjById(hero.heroStatus, 112141);
+            if (!nightSoul) return;
+            const isDestroy = nightSoul.useCnt == 1 && !hasObjById(combatStatus, 303238);
             return {
                 trigger: ['switch-to', 'switch-oppo'],
                 isAddTask: true,
                 isDestroy,
                 execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }, { cmd: 'getStatus', status: 112145, hidxs }],
-                exec: () => { isDestroy && (sts112141.roundCnt = 0) }
+                exec: () => { isDestroy && (nightSoul.roundCnt = 0) }
             }
         }),
 
@@ -3344,7 +3332,7 @@ const allCards: Record<number, () => CardBuilder> = {
     122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
 
-    123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).useCnt(1).perCnt(2).tag(CARD_TAG.Barrier)
+    123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).tag(CARD_TAG.Barrier).useCnt(1).perCnt(2)
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {

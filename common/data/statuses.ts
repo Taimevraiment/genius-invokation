@@ -215,8 +215,6 @@ const card332024sts = (minusCnt: number) => {
         });
 }
 
-
-
 const status11505x = (swirlEl: PureElementType) => {
     return new StatusBuilder('风物之诗咏·' + ELEMENT_NAME[swirlEl][0]).combatStatus().icon('buff4').useCnt(2)
         .type(STATUS_TYPE.AddDamage).iconBg(STATUS_BG_COLOR[swirlEl])
@@ -260,6 +258,15 @@ const continuousActionHandle = (status: Status, event: StatusHandleEvent): Statu
         },
     }
 }
+
+const nightSoul = (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
+    .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage, STATUS_TYPE.NightSoul)
+    .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）')
+    .handle((status, event) => {
+        const { hidx = -1, source = -1, sourceHidx = -1 } = event;
+        if (hidx == -1 || source != 112145 || sourceHidx != hidx) return;
+        return { trigger: ['get-status'], notInfo: true, exec: () => { --status.useCnt } }
+    });
 
 const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
@@ -806,15 +813,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112141: (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
-        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112141')
-        .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage)
-        .description('所附属角色可累积｢夜魂值｣。（最多累积到2点）')
-        .handle((status, event) => {
-            const { hidx = -1, source = -1, sourceHidx = -1 } = event;
-            if (hidx == -1 || source != 112145 || sourceHidx != hidx) return;
-            return { trigger: ['get-status'], notInfo: true, exec: () => { --status.useCnt } }
-        }),
+    112141: (cnt: number = 0) => nightSoul(cnt).icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112141'),
 
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112143')
@@ -2868,14 +2867,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (source != 112145) return;
             const hero = heros[sourceHidx];
             if (!hero) return;
-            const sts112141 = getObjById(hero.heroStatus, 112141);
-            if (!sts112141) return;
+            const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+            if (!nightSoul) return;
             return {
                 trigger: ['get-status'],
                 isAddTask: true,
                 exec: eStatus => {
                     if (eStatus) {
-                        ++sts112141.useCnt;
+                        ++nightSoul.useCnt;
                         --eStatus.roundCnt;
                     }
                 }
