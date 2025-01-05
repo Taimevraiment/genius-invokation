@@ -2433,6 +2433,19 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('角色造成的伤害+1。；[roundCnt]')
         .handle(() => ({ addDmg: 1 })),
 
+    301024: (cnt: number = 1) => new StatusBuilder('｢花羽会｣（生效中）').heroStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
+        .icon('buff3').type(STATUS_TYPE.Usage)
+        .description('下次切换至前台时，回复1个对应元素的骰子。（可叠加，每次触发一层）')
+        .handle((_, event) => {
+            const { heros = [], hidx = -1 } = event;
+            return {
+                trigger: ['switch-to'],
+                cmds: [{ cmd: 'getDice', cnt: 1, element: heros[hidx]?.element }],
+                isAddTask: true,
+                exec: eStatus => { eStatus && --eStatus.useCnt }
+            }
+        }),
+
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
         .description('根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。'),
 
