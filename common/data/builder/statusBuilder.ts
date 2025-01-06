@@ -178,8 +178,7 @@ export class StatusBuilder extends BaseBuilder {
         return this;
     }
     typeOverride(...types: StatusType[]) {
-        this._type = [];
-        this._type.push(...types);
+        this._type = [...types];
         return this;
     }
     useCnt(useCnt: number, cdt: boolean): StatusBuilder;

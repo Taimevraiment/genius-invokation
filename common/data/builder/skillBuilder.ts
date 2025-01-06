@@ -4,7 +4,7 @@ import {
     SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
-import { compareVersionFn } from "../../utils/gameUtil.js";
+import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
 import { clone } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
@@ -29,6 +29,7 @@ export class GISkill {
     perCnt: number = 0; // 每回合使用次数
     useCnt: number = 0; // 整局技能使用次数
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
+    canSelectHero: -1 | 0 | 1; // 能选择的角色 -1不能选择 0能选择敌方 1能选择我方
     addition: any[]; // 额外信息
     UI: {
         src: string, // 图片url
@@ -40,18 +41,25 @@ export class GISkill {
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
         options: {
             id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[],
-            ver?: Version, canSelectSummon?: -1 | 0 | 1, adt?: any[],
+            ver?: Version, canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: any[],
         } = {},
         src?: string | string[], handle?: (hevent: SkillHandleEvent, version: VersionCompareFn) => SkillHandleRes | undefined | void
     ) {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], canSelectSummon = -1, adt = [] } = options;
+        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], adt = [],
+            canSelectSummon = -1, canSelectHero = -1,
+        } = options;
         costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
+        const hid = getHidById(id);
+        description = description
+            .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害')
+            .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
+            .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`);
         this.UI = {
-            description: description.replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害'),
+            description,
             src: (Array.isArray(src) ? src : [src]).filter(v => v != '')[0] ?? '',
             explains: [...(description.match(/(?<=【)[^【】]+(?=】)/g) ?? []), ...expl],
             descriptions: [],
@@ -60,6 +68,7 @@ export class GISkill {
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
+        this.canSelectHero = canSelectHero;
         this.addition = [...adt];
         this.handle = hevent => {
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
@@ -114,6 +123,7 @@ export class SkillBuilder extends BaseBuilder {
     private _explains: string[] = [];
     private _readySkillRound: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
+    private _canSelectHero: -1 | 0 | 1 = -1;
     private _addition: any[] = [];
     constructor(name: string) {
         super();
@@ -221,6 +231,10 @@ export class SkillBuilder extends BaseBuilder {
         this._canSelectSummon = canSelectSummon;
         return this;
     }
+    canSelectHero(canSelectHero: 0 | 1) {
+        this._canSelectHero = canSelectHero;
+        return this;
+    }
     addition(...addition: any[]) {
         this._addition.push(...addition);
         return this;
@@ -248,6 +262,7 @@ export class SkillBuilder extends BaseBuilder {
                 pct: this._perCnt,
                 ver: this._curVersion,
                 canSelectSummon: this._canSelectSummon,
+                canSelectHero: this._canSelectHero,
                 adt: this._addition,
             },
             this._src, this._handle);

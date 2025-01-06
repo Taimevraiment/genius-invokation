@@ -5,7 +5,7 @@ import {
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 
@@ -1053,6 +1053,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.useCnt },
         })),
 
+    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(3).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        // .icon('ski,1').iconBg(DEBUFF_BG_COLOR)
+        .icon('tmp/UI_Gcg_Debuff_Arlecchino_S_-2121114989')
+        .description('【我方出战角色受伤后：】我方出战角色和敌方【hro】均附属2层【sts122】。；[useCnt]')
+        .handle((status, event) => {
+            const { eheros = [] } = event;
+            const cmds: Cmds[] = [{ cmd: 'getStatus', status: [[122, 2]] }];
+            const ehero = getObjById(eheros, 1314);
+            if (ehero) cmds.push({ cmd: 'getStatus', status: [[122, 2]], hidxs: [ehero.hidx], isOppo: true });
+            return { trigger: ['getdmg'], cmds, exec: () => { --status.useCnt } }
+        }),
+
+    113142: () => enchantStatus(ELEMENT_TYPE.Pyro).useCnt(1).typeOverride(STATUS_TYPE.Hide, STATUS_TYPE.Enchant),
+
     114021: () => new StatusBuilder('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
         .description('【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；[roundCnt]')
         .handle(() => ({
@@ -1748,6 +1762,40 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     trigger: ['card'],
                     exec: () => { --status.useCnt },
                 }
+            }
+        }),
+
+    117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage)
+        .icon('tmp/UI_Gcg_Buff_Kinich_E_1336192241')
+        .description('【我方触发燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】。；[roundCnt]')
+        .handle((_, event) => {
+            return {
+                trigger: ['other-vehicle', 'Burning', 'other-Burning'],
+                isAddTask: true,
+                exec: () => {
+                    const { heros = [], hidx = -1 } = event;
+                    const nightSoul = heros[hidx]?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                    if (!nightSoul) return;
+                    nightSoul.useCnt = Math.min(nightSoul.maxCnt, nightSoul.useCnt + 1);
+                    if (nightSoul.useCnt == 2) return { cmds: [{ cmd: 'getStatus', status: 117094 }] }
+                }
+            }
+        }),
+
+    117092: () => nightSoul().icon('tmp/UI_Gcg_Buff_Nightsoul_Grass_-1140240785'),
+
+    117094: () => new StatusBuilder('钩锁准备').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign)
+        .icon('tmp/UI_Gcg_Buff_Kinich_S_-2124271304')
+        .description('【我方选择行动前，若附属角色为出战角色：】对[距离我方出战角色最近的角色]造成3点[草元素伤害]。；[useCnt]')
+        .handle((_, event) => {
+            const { heros = [], hidx = -1, eheros = [] } = event;
+            if (!heros[hidx]?.isFront) return;
+            return {
+                damage: 3,
+                element: DAMAGE_TYPE.Dendro,
+                hidxs: [getNearestHidx(hidx, eheros)],
+                trigger: ['action-start'],
+                exec: eStatus => { eStatus && --eStatus.useCnt },
             }
         }),
 

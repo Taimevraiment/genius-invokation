@@ -14,7 +14,7 @@ export const allHidxs = (heros?: Hero[], options: {
     for (let i = 0; i < heros.length; ++i) {
         const hi = (hidx + i) % heros.length;
         const h = heros[hi];
-        if (isAll || include == hi || ((isDie ? h.hp < 0 : h.hp >= 0) && exclude != hi && cdt(h))) hidxs.push(hi);
+        if (isAll || include == hi || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) hidxs.push(hi);
     }
     return hidxs;
 }
@@ -80,12 +80,7 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
 
 // 获得所有后台角色hidx
 export const getBackHidxs = (heros: Hero[], frontIdx: number = heros.findIndex(h => h.isFront)): number[] => {
-    const hidxs: number[] = [];
-    for (let i = 1; i < heros.length; ++i) {
-        const hidx = (frontIdx + i) % heros.length;
-        if (heros[hidx].hp > 0) hidxs.push(hidx);
-    }
-    return hidxs;
+    return allHidxs(heros, { exclude: frontIdx });
 }
 
 // 检查骰子是否合法

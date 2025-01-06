@@ -32,6 +32,7 @@ export type SkillHandleEvent = {
     isExecTask?: boolean,
     source?: number,
     sourceHidx?: number,
+    selectHero?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 

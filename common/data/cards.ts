@@ -1381,6 +1381,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方｢召唤物｣入场时：】使其[可用次数]+1。；[可用次数]：3')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/15deff457845725502df383e62e7c440_8867444785716505365.png'),
 
+    321026: () => new CardBuilder(458).name('｢花羽会｣').since('v5.4.0').place().costSame(0)
+        .description('我方[舍弃]2张卡牌后：我方下一个后台角色获得1层“下次切换至前台时，回复1个对应元素的骰子。”（可叠加，每次触发一层）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_HuaYu.webp'),
+
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8b291b7aa846d8e987a9c7d60af3cffb_7229054083686130166.png'),
@@ -2179,6 +2183,18 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/068e20b26575d73b69a1b0b9913bfad4_976865676378334660.png')
         .handle(() => ({ status: 303238 })),
 
+    332043: () => new CardBuilder(459).name('小嵴锋龙！发现宝藏！').since('v5.4.0').event().costSame(1)
+        .description('向双方牌组中放入2张【crd332042】，随后双方各抓2张牌。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_JifengLong.webp')
+        .handle(() => ({
+            cmds: [
+                { cmd: 'addCard', cnt: 2, card: 332042 },
+                { cmd: 'addCard', cnt: 2, card: 332042, isOppo: true },
+                { cmd: 'getCard', cnt: 2 },
+                { cmd: 'getCard', cnt: 2, isOppo: true },
+            ]
+        })),
+
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png')
@@ -2297,6 +2313,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('接下来3次名称不存在于初始牌组中牌加入我方手牌时，目标我方角色治疗自身1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/1c24dbdc3c8e0b65b342ea2b88412222_1756624425919028253.png')
         .handle(() => ({ status: 303315 })),
+
+    333019: () => new CardBuilder(460).name('温泉时光').since('v5.4.0').food().costSame(1).canSelectHero(1)
+        .description('治疗目标角色1点，我方场上每有一个召唤物，则额外治疗1点。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_WenQuan.webp')
+        .handle((_, event) => {
+            const { summons: { length } = [], heros = [] } = event;
+            const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
+            return { cmds: [{ cmd: 'heal', cnt: 1 + length }], canSelectHero }
+        }),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -2643,6 +2668,21 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
+    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent().event(true).costPyro(1).tag(CARD_TAG.Barrier)
+        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Arlecchino.webp')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
+            if (restDmg > -1) {
+                const sts122 = getObjById(heros[hidx].heroStatus, 122);
+                if (!sts122) return { restDmg }
+                const cnt = Math.min(restDmg, sts122.useCnt);
+                sts122.useCnt -= cnt;
+                return { restDmg: restDmg - cnt }
+            }
+            return { status: [[122, 3]] }
+        }),
+
     214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
         .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】｢普通攻击｣后造成2点[雷元素伤害]。（需消耗[可用次数]）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png'),
@@ -2980,6 +3020,22 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方触发【sts117082】的效果后：将1张所[舍弃]卡牌的复制加入你的手牌。如果该牌为｢场地｣牌，则使本回合中我方下次打出｢场地｣时少花费2个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/10ea9432a97b89788ede72906f5af735_8657249785871520397.png'),
 
+    217091: () => new CardBuilder(457).name('索报皆偿').since('v5.4.0').talent().costDendro(1).perCnt(1)
+        .description('装备有此牌的【hro】切换至前台或使用【ski,1】时：若我方手牌不多于对方，则窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Kinich.webp')
+        .handle((card, event) => {
+            const { hcardsCnt = 0, ehcardsCnt = 0 } = event;
+            if (card.perCnt <= 0 || ehcardsCnt == 0 || hcardsCnt > ehcardsCnt) return;
+            return {
+                trigger: ['switch-to', 'skilltype2'],
+                execmds: [
+                    { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true, isAttach: true },
+                    { cmd: 'getCard', cnt: 1, isOppo: true },
+                ],
+                exec: () => { --card.perCnt }
+            }
+        }),
+
     221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png')
@@ -3292,7 +3348,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
             const hero = heros[hidxs[0]];
             if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
-            const nightSoul = getObjById(hero.heroStatus, 112141);
+            const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
             if (!nightSoul) return;
             const isDestroy = nightSoul.useCnt == 1 && !hasObjById(combatStatus, 303238);
             return {

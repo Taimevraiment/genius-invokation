@@ -520,7 +520,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
             new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12142',
+                .src('https://patchwiki.biligame.com/images/ys/c/cf/6st36uogdsny0hmvb5j4uqh1i9lj27n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/c0769da88723a8460722bf3f9b45a36d_6871593320341772759.png')
                 .elemental().cost(2).handle(({ hero }) => ({
                     cmds: [{ cmd: 'equip', hidxs: [hero.hidx], card: 112142 }],
@@ -528,7 +528,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     isForbidden: hasObjById(hero.heroStatus, 112141)
                 })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/12143',
+                .src('https://patchwiki.biligame.com/images/ys/2/20/deylgtgmao0abaizxdec4d3ya8ivhoq.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/ef6e70eabb280577276038ef5de4b953_998934977401309909.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 112144 })),
         ),
@@ -760,6 +760,48 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
+    1314: () => new HeroBuilder(454).name('阿蕾奇诺').since('v5.4.0').fatui().pyro().polearm()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Arlecchino.webp')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Arlecchino_176472631.png')
+        .normalSkill(new NormalSkillBuilder('斩首之邀').description('若可能，消耗目标至多4层【sts122】，提高等量伤害。')
+            .handle(event => {
+                const { eheros = [] } = event;
+                const sts122 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122);
+                if (!sts122) return;
+                const addDmgCdt = Math.min(4, sts122.useCnt);
+                return { addDmgCdt, exec: () => { sts122.useCnt -= addDmgCdt } }
+            }))
+        .skills(
+            new SkillBuilder('万相化灰').description('在对方场上生成3层【sts113141】，然后{dealDmg}。')
+                .src('', '')
+                .elemental().damage(2).cost(3).handle(() => ({ statusOppo: 113141 })),
+            new SkillBuilder('厄月将升').description('{dealDmg}，移除自身所有【sts122】，每移除1层，治疗自身1点。')
+                .src('', '')
+                .burst(2).damage(4).cost(3).handle(event => {
+                    const { hero: { heroStatus } } = event;
+                    const sts122 = getObjById(heroStatus, 122);
+                    const heal = sts122?.useCnt;
+                    return { heal, exec: () => { sts122 && (sts122.useCnt = 0) } }
+                }),
+            new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；自身附属【sts122】时：角色造成的[物理伤害]变为[火元素伤害]。')
+                .src('', '')
+                .passive().handle(event => {
+                    const { hero, heal = [], source = -1, sourceHidx = -1, trigger = '' } = event;
+                    if (trigger == 'pre-heal' && source != 13142) heal[hero.hidx] = -1;
+                    if (source != 122 || sourceHidx != hero.hidx) return;
+                    return {
+                        trigger: ['get-status', 'status-destroy'],
+                        isNotAddTask: true,
+                        cmds: isCdt(trigger == 'get-status', [{ cmd: 'getStatus', status: 113142, hidxs: [hero.hidx] }]),
+                        exec: () => {
+                            if (trigger != 'status-destroy') return;
+                            const sts = getObjById(hero.heroStatus, 113142);
+                            if (sts) sts.useCnt = 0;
+                        }
+                    }
+                })
+        ),
+
     1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/195563531/41fc0a943f93c80bdcf24dbce13a0956_3894833720039304594.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e4166ac0aa3f216c59ff3e8a5e44fa70.png')
@@ -978,7 +1020,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             .handle(event => ({ minusDiceSkill: { skilltype1: isCdt(hasObjById(event.hero.heroStatus, 114121), [0, 1, 0]) } })))
         .skills(
             new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/14122',
+                .src('https://patchwiki.biligame.com/images/ys/b/b7/agbainwvpxydyft7odt4jvvjlawtjhc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/46fcc98c1a7293e393ee520246fb2693_4818683097172627285.png')
                 .elemental().cost(2).handle(event => {
                     const { hero: { heroStatus } } = event;
@@ -987,7 +1029,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { addDmgCdt: cnt, heal: cnt ?? 0, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
                 }),
             new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
-                .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/14123',
+                .src('https://patchwiki.biligame.com/images/ys/2/25/rky0mg25hu7cdg7imhukjzv1kof8zfo.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/01/01/258999284/69cf1e122a47e7f9be17f270561b3e97_8748368510268606258.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[122, 4]] }))
         ),
@@ -1490,6 +1532,22 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/203718fd9317e4c089e8ae572c04e40e.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/40b352ac9244264e9eecf3413512fae2_1420990360545160672.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [117081, [117082, 2]] }))
+        ),
+
+    1709: () => new HeroBuilder(455).name('基尼奇').since('v5.4.0').natlan().dendro().claymore()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Kinich.webp')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kinich_205659600.png')
+        .normalSkill(new NormalSkillBuilder('夜阳斗技'))
+        .skills(
+            new SkillBuilder('悬猎·游骋高狩').description('附属【sts117091】并进入【sts117092】。{dealDmg}，然后选一个我方角色与其交换位置。')
+                .src('', '')
+                .elemental().damage(2).cost(3).canSelectHero(1).handle(event => ({
+                    cmds: [{ cmd: 'exchangePos', hidxs: [event.hero.hidx, event.selectHero ?? -1] }],
+                    status: [117091, 117092],
+                })),
+            new SkillBuilder('向伟大圣龙致意').description('{dealDmg}，召唤【smn117093】。')
+                .src('', '')
+                .burst(2).damage(1).cost(3).handle(() => ({ summon: 117093 })),
         ),
 
     2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()

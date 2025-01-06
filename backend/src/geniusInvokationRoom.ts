@@ -660,8 +660,13 @@ export default class GeniusInvokationRoom {
                 const isValid = checkDices(useDices, { skill });
                 if (!isValid) this.emit('useSkillDiceInvalid', pidx, { socket, tip: '骰子不符合要求', notPreview: true });
                 else {
+                    const odice = player.dice.slice();
                     player.dice = player.dice.filter((_, di) => !diceSelect[di]);
-                    this._useSkill(pidx, skillId, { selectSummon: summonIdx });
+                    const { invalidInfo } = this._useSkill(pidx, skillId, { selectSummon: summonIdx, selectHero: heroIdxs[0] });
+                    if (invalidInfo.flag != '') {
+                        player.dice = odice;
+                        this.emit(invalidInfo.flag, pidx, { socket, tip: invalidInfo.tip, notPreview: true });
+                    }
                 }
                 break;
             case ACTION_TYPE.UseCard:
@@ -1116,16 +1121,18 @@ export default class GeniusInvokationRoom {
      * @param options.isQuickAction 是否为快速行动
      * @param options.tasks 切换角色前生成的攻击任务(如弃弹头)
      * @param options.willHeals 使用卡/召唤物回血
+     * @param options.selectHero 使用技能时选择的角色序号
      */
     private _useSkill(pidx: number, skid: number | SkillType, options: {
         isPreview?: boolean, withCard?: Card, isSwitch?: number, isReadySkill?: boolean, otriggers?: Trigger | Trigger[],
         willDamages?: number[][], dmgElement?: DamageType, isSummon?: number, atkedIdx?: number, players?: Player[],
         selectSummon?: number, supportCnt?: number[][], pickSummon?: Summon[], isPickCard?: boolean, isQuickAction?: boolean,
-        tasks?: AtkTask[], willHeals?: number[][],
+        tasks?: AtkTask[], willHeals?: number[][], selectHero?: number,
     } = {}) {
         const { isPreview = false, withCard, isSwitch = -1, isReadySkill = false, otriggers = [],
             willDamages, dmgElement, willHeals, isSummon = -1, atkedIdx, players: cplayers = this.players,
             selectSummon = -1, supportCnt = INIT_SUPPORTCNT(), pickSummon, isPickCard, tasks: pretasks,
+            selectHero = -1,
         } = options;
         let isExec = !isPreview || isReadySkill;
         const epidx = pidx ^ 1;
@@ -1181,14 +1188,17 @@ export default class GeniusInvokationRoom {
         const energyCnt: number[][] = players.map(p => p.heros.map(() => 0));
         const willSummons: Summon[][] = [[], []];
         const selectSummonInvalid = skill && skill.canSelectSummon != -1 && selectSummon == -1;
+        const selectHeroInvalid = skill && skill.canSelectHero != -1 && selectHero == -1;
         const nonAction = player().heros[isSwitch > -1 ? isSwitch : cahidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction));
+        const invalidInfo = { flag: '', tip: '' };
         const res = {
-            willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal,
-            players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, energyCnt, tarHidx: -1,
+            willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal, players,
+            summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, energyCnt, tarHidx: -1, invalidInfo,
         };
-        if (skill && (selectSummonInvalid || nonAction)) {
+        if (skill && (selectSummonInvalid || selectHeroInvalid || nonAction)) {
             if (isExec) {
-                if (selectSummonInvalid) this.emit('useSkillSelectSummonInvalid', pidx, { tip: '未选择召唤物' });
+                if (selectSummonInvalid) res.invalidInfo = { flag: 'useSkillSelectSummonInvalid', tip: '未选择召唤物' };
+                if (selectHeroInvalid) res.invalidInfo = { flag: 'useSkillSelectHeroInvalid', tip: '未选择角色' };
                 if (nonAction) {
                     setTimeout(async () => {
                         await this._execTask();
@@ -1416,6 +1426,7 @@ export default class GeniusInvokationRoom {
             pile: player().pile,
             trigger: `skilltype${skill.type}`,
             talent: aHeros()[cahidx].talentSlot,
+            selectHero,
             randomInArr: this._randomInArr.bind(this),
         }) ?? {};
         if (isExec && skillres.pickCard) {
@@ -1784,8 +1795,8 @@ export default class GeniusInvokationRoom {
             }, 0);
         }
         return {
-            willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal, energyCnt,
-            players, summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, atriggers, etriggers, tarHidx,
+            willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal, energyCnt, players,
+            summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, atriggers, etriggers, tarHidx, invalidInfo,
         }
     }
     /**
@@ -2755,7 +2766,6 @@ export default class GeniusInvokationRoom {
                     isAction: !isQuickAction,
                     hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
                     source: currCard.id,
-                    isUnshift: true,
                 });
             if (cardres.hidxs && currCard.type != CARD_TYPE.Equipment) assgin(hidxs, cardres.hidxs);
             if (cardres.support) {
@@ -4823,7 +4833,7 @@ export default class GeniusInvokationRoom {
                             isNotPublic: false,
                         }
                         this.emit('doCmd--addcard-after', pidx, { isQuickAction: !isAction });
-                    }, 300]]);
+                    }, 300]], { isPriority, isUnshift });
                 }
             } else if (cmd == 'discard') {
                 if (discards == undefined) discards = [];
@@ -5126,6 +5136,13 @@ export default class GeniusInvokationRoom {
                 (ohidxs ?? [(isOppo ? opponent : player).hidx]).forEach(hidx => {
                     this._doEquip(pidx, player.heros[hidx], card as Card | number, { isExec });
                 });
+            } else if (cmd == 'exchangePos') {
+                const [h1 = -1, h2 = -1] = ohidxs ?? [];
+                if (h1 == -1 || h2 == -1) throw new Error('@_doCmds-exchangePos: hidxs is undefined');
+                [cheros[h1], cheros[h2]] = [cheros[h2], cheros[h1]];
+                cheros[h1].hidx = h1;
+                cheros[h2].hidx = h2;
+                if (cheros[h2].isFront) player.hidx = h2;
             }
         }
 
@@ -5258,8 +5275,10 @@ export default class GeniusInvokationRoom {
             const hero = clone(this.players)[pidx].heros[hidx];
             const skill = hero.skills.find(sk => sk.id == skillId) ?? hero.vehicleSlot?.[1];
             const summonCanSelect: boolean[][] = this.players.map(() => new Array(MAX_SUMMON_COUNT).fill(false));
+            const heroCanSelect: boolean[] = this.players[pidx].heros.map(h => !h.isFront);
             let skillForbidden = true;
-            const summonSelects = [-1];
+            const summonSelects: number[] = [];
+            const heroSelects: number[] = getBackHidxs(this.players[pidx].heros);
             if (skill) {
                 if (skill.type == SKILL_TYPE.Passive || skill.type == SKILL_TYPE.PassiveHidden) continue;
                 const isLen = skill.cost[0].cnt + skill.cost[1].cnt - skill.costChange[0] - skill.costChange[1] > dice.length;
@@ -5271,15 +5290,21 @@ export default class GeniusInvokationRoom {
                     }, {} as Record<DiceCostType, number>)))) < skill.cost[0].cnt - skill.costChange[0];
                 const isEnergy = skill.cost[2].cnt > 0 && skill.cost[2].cnt > energy;
                 const needSelectSmn = skill.canSelectSummon != -1 && summons.length == 0;
+                const needSelectHero = skill.canSelectHero != -1 && allHidxs(this.players[pidx].heros).length == 1;
                 const skillres = skill.handle({ skill, hero });
                 skillForbidden = isWaiting || this.phase != PHASE.ACTION || isNonAction || isLen || isElDice || isEnergy || !!skillres.isForbidden;
-                skill.isForbidden = skillForbidden || needSelectSmn;
+                skill.isForbidden = skillForbidden || needSelectSmn || needSelectHero;
                 if (skill.canSelectSummon != -1 && !skillForbidden) {
                     summonCanSelect[skill.canSelectSummon].fill(true);
-                    summonSelects.push(...summons.map((_, smni) => smni));
+                    summonSelects.push(...[this.players[pidx ^ 1].summons, summons][skill.canSelectSummon].map((_, smni) => smni));
+                }
+                if (skill.canSelectHero == -1 || skillForbidden) {
+                    heroCanSelect.fill(false);
+                    heroSelects.length = 0;
                 }
             }
-            for (const selectSummon of summonSelects) {
+            if (summonSelects.length + heroSelects.length == 0) summonSelects.push(-1);
+            for (const [tag, selectItem] of [...summonSelects.map(s => ['smn', s]), ...heroSelects.map(h => ['hero', h])] as [string, number][]) {
                 const { willHp, willAttachs, summonCnt, supportCnt, willSummons, willSwitch, energyCnt, tarHidx }
                     = this._useSkill(pidx, skillId, {
                         isPreview: true,
@@ -5290,7 +5315,8 @@ export default class GeniusInvokationRoom {
                         dmgElement,
                         otriggers: isCdt(skillId == -1, ['switch-from', 'switch-to']),
                         atkedIdx,
-                        selectSummon,
+                        selectSummon: isCdt(tag == 'smn', selectItem),
+                        selectHero: isCdt(tag == 'hero', selectItem),
                         tasks,
                         willHeals,
                     });
@@ -5307,7 +5333,9 @@ export default class GeniusInvokationRoom {
                     willSwitch,
                     willEnergyChange: energyCnt,
                     summonCanSelect,
-                    summonIdx: selectSummon,
+                    heroCanSelect,
+                    summonIdx: isCdt(tag == 'smn', selectItem),
+                    heroIdxs: isCdt(tag == 'hero', [selectItem]),
                     tarHidx,
                 }
                 previews.push(preview);
@@ -5538,6 +5566,7 @@ export default class GeniusInvokationRoom {
                 const { isFallAtk = false } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'enter', { players, cStatus: sts, hidxs: [hidx], isExec });
                 player.isFallAtk ||= isFallAtk;
                 oStatus.push(sts);
+                this._detectSkill(pidx, 'get-status', { players, hidxs: allHidxs(heros), source: sts.id, sourceHidx: hidx, isExec });
                 this._detectSlotAndStatus(pidx, 'get-status', {
                     types: STATUS_TYPE.Usage,
                     players,

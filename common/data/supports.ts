@@ -434,6 +434,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: spt => {
                 const ncnt = spt.cnt + discardCnt;
                 spt.cnt = ncnt % 2;
+                if (ncnt < 2) return;
                 return { cmds: [{ cmd: 'getStatus', status: [[301024, Math.floor(ncnt / 2)]] }] }
             }
         }

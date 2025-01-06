@@ -2,7 +2,7 @@
 import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
-import { allHidxs, getAtkHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getAtkHidx, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -774,6 +774,25 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     117051: () => new SummonBuilder('游丝徵灵').useCnt(1).damage(1).heal(1)
         .description('{defaultAtk，治疗我方出战角色{shield}点。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/42b6402e196eec814b923ac88b2ec3e6_7208177288974921556.png'),
+
+    117093: () => new SummonBuilder('伟大圣龙阿乔').useCnt(2).damage(1)
+        .description('{defaultAtk，然后对敌方下一个角色造成1点[草元素伤害]。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Kinich_-264330016.png')
+        .handle((summon, event) => {
+            const { tround = 0, eheros = [] } = event;
+            const backHidxs = getBackHidxs(eheros);
+            const hasTround = tround == 0 && backHidxs.length > 0;
+            return {
+                trigger: ['phase-end'],
+                tround: isCdt(hasTround, 1),
+                exec: execEvent => {
+                    const { summon: smn = summon } = execEvent;
+                    if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    if (tround == 0) return { cmds: [{ cmd: 'attack' }] };
+                    return { cmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro, hidxs: [backHidxs[0]] }] }
+                }
+            }
+        }),
 
     121011: () => new SummonBuilder('冰萤').useCnt(2).maxUse(3).damage(1)
         .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。')
