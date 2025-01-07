@@ -1765,19 +1765,22 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage)
+    117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round)
         .icon('tmp/UI_Gcg_Buff_Kinich_E_1336192241')
         .description('【我方触发燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】。；[roundCnt]')
         .handle((_, event) => {
+            const { heros = [], hidx = -1, trigger = '' } = event;
             return {
-                trigger: ['other-vehicle', 'Burning', 'other-Burning'],
-                isAddTask: true,
+                trigger: ['other-vehicle', 'Burning', 'other-Burning', 'turn-end'],
                 exec: () => {
-                    const { heros = [], hidx = -1 } = event;
                     const nightSoul = heros[hidx]?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return;
+                    if (trigger == 'turn-end') {
+                        nightSoul.roundCnt = 0;
+                        return;
+                    }
                     nightSoul.useCnt = Math.min(nightSoul.maxCnt, nightSoul.useCnt + 1);
-                    if (nightSoul.useCnt == 2) return { cmds: [{ cmd: 'getStatus', status: 117094 }] }
+                    if (nightSoul.useCnt == 2) return { cmds: [{ cmd: 'getStatus', status: 117094, hidxs: [hidx] }] }
                 }
             }
         }),

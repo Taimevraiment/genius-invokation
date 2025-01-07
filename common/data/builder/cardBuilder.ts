@@ -230,8 +230,8 @@ export class CardBuilder extends BaseCostBuilder {
     talent(skillIdx: number = -1, version: Version = 'vlatest') {
         if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Talent);
         if (skillIdx != -1) {
-            if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Action);
-            this._userType.set([version, skillIdx]);
+            if (version == 'vlatest' || skillIdx == -2) this.subtype(CARD_SUBTYPE.Action);
+            if (skillIdx > -1) this._userType.set([version, skillIdx]);
         }
         return this.equipment();
     }

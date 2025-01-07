@@ -779,17 +779,16 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk，然后对敌方下一个角色造成1点[草元素伤害]。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Kinich_-264330016.png')
         .handle((summon, event) => {
-            const { tround = 0, eheros = [] } = event;
+            const { eheros = [] } = event;
             const backHidxs = getBackHidxs(eheros);
-            const hasTround = tround == 0 && backHidxs.length > 0;
             return {
                 trigger: ['phase-end'],
-                tround: isCdt(hasTround, 1),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (!hasTround) smn.useCnt = Math.max(0, smn.useCnt - 1);
-                    if (tround == 0) return { cmds: [{ cmd: 'attack' }] };
-                    return { cmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro, hidxs: [backHidxs[0]] }] }
+                    smn.useCnt = Math.max(0, smn.useCnt - 1);
+                    const cmds: Cmds[] = [{ cmd: 'attack' }];
+                    if (backHidxs.length > 0) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro, hidxs: [backHidxs[0]] });
+                    return { cmds }
                 }
             }
         }),

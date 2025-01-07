@@ -774,7 +774,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .skills(
             new SkillBuilder('万相化灰').description('在对方场上生成3层【sts113141】，然后{dealDmg}。')
                 .src('', '')
-                .elemental().damage(2).cost(3).handle(() => ({ statusOppo: 113141 })),
+                .elemental().damage(2).cost(3).handle(() => ({ statusOppoPre: 113141 })),
             new SkillBuilder('厄月将升').description('{dealDmg}，移除自身所有【sts122】，每移除1层，治疗自身1点。')
                 .src('', '')
                 .burst(2).damage(4).cost(3).handle(event => {
@@ -787,7 +787,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('', '')
                 .passive().handle(event => {
                     const { hero, heal = [], source = -1, sourceHidx = -1, trigger = '' } = event;
-                    if (trigger == 'pre-heal' && source != 13142) heal[hero.hidx] = -1;
+                    if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                     if (source != 122 || sourceHidx != hero.hidx) return;
                     return {
                         trigger: ['get-status', 'status-destroy'],
@@ -1543,7 +1543,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('', '')
                 .elemental().damage(2).cost(3).canSelectHero(1).handle(event => ({
                     cmds: [{ cmd: 'exchangePos', hidxs: [event.hero.hidx, event.selectHero ?? -1] }],
-                    status: [117091, 117092],
+                    statusPre: [117091, 117092],
                 })),
             new SkillBuilder('向伟大圣龙致意').description('{dealDmg}，召唤【smn117093】。')
                 .src('', '')

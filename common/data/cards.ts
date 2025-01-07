@@ -2330,7 +2330,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             if (ver.gte('v3.7.0')) return;
             const { heros = [] } = event;
-            const hero = getObjById(heros, getHidById(card.id));
+            const hero = getObjById(heros, card.userType as number);
             return { addDmgCdt: isCdt(!!hero?.skills[2].useCnt, 1) }
         }),
 
@@ -2633,7 +2633,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { eAttachments = [], ehidx = -1, dmgSource = -1, isSummon = -1 } = event;
             const isAttachPyro = eAttachments[ehidx]?.includes(ELEMENT_TYPE.Pyro);
-            if (card.perCnt > 0 && isAttachPyro && (dmgSource == getHidById(card.id) || isSummon == 113101)) {
+            if (card.perCnt > 0 && isAttachPyro && (dmgSource == card.userType || isSummon == 113101)) {
                 return {
                     trigger: ['dmg'],
                     addDmgCdt: 2,
@@ -2668,19 +2668,18 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent().event(true).costPyro(1).tag(CARD_TAG.Barrier)
-        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
+    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(1).tag(CARD_TAG.Barrier).perCnt(-1)
+        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。；使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Arlecchino.webp')
-        .handle((_, event) => {
+        .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
             if (restDmg > -1) {
                 const sts122 = getObjById(heros[hidx].heroStatus, 122);
                 if (!sts122) return { restDmg }
-                const cnt = Math.min(restDmg, sts122.useCnt);
-                sts122.useCnt -= cnt;
-                return { restDmg: restDmg - cnt }
+                --sts122.useCnt;
+                return { restDmg: restDmg - 1 }
             }
-            return { status: [[122, 3]] }
+            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: [[122, 3]] }
         }),
 
     214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
@@ -3061,16 +3060,15 @@ const allCards: Record<number, () => CardBuilder> = {
                 --card.perCnt;
                 return { restDmg: restDmg - 1, statusOppo: [[121022, +(hero.element != ELEMENT_TYPE.Cryo)]] }
             }
-            return { isValid: hero.id == getHidById(card.id), cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
+            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
         }),
 
     221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
         .description('我方出战角色为【hro】时，才能打出：使其附属【sts121034】。；装备有此牌的【hro】触发【sts121034】后：对敌方出战角色附属【sts121022】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png')
         .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
-            if (hidx == -1) return;
-            return { isValid: heros[hidx]?.id == getHidById(card.id), status: 121034 }
+            const { heros = [] } = event;
+            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: 121034 }
         }),
 
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
@@ -3136,7 +3134,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png')
         .handle((card, event) => {
             const { heros = [], trigger = '' } = event;
-            if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 123022) || trigger == 'will-killed') {
+            if (!hasObjById(getObjById(heros, card.userType as number)?.heroStatus, 123022) || trigger == 'will-killed') {
                 return { trigger: ['will-killed'], status: 123024, isDestroy: true }
             }
         }),
@@ -3168,7 +3166,10 @@ const allCards: Record<number, () => CardBuilder> = {
     224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
         .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
-        .handle(() => ({ status: 124014, cmds: [{ cmd: 'heal', cnt: 3 }] })),
+        .handle((card, event) => {
+            const { heros = [] } = event;
+            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: 124014, cmds: [{ cmd: 'heal', cnt: 3 }] }
+        }),
 
     224021: () => new CardBuilder(296).name('悲号回唱').since('v4.3.0').talent(1).talent(-1, 'v4.4.0').costElectro(3).costSame(0, 'v4.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，附属有【sts124022】的敌方角色受到伤害时：我方抓1张牌。（每回合1次）')
@@ -3189,7 +3190,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const hero = heros[hidx];
             const cnt = (getObjById(hero.heroStatus, 124032)?.useCnt ?? 0) + 1;
-            return { isValid: hero?.id == getHidById(card.id), status: [[124032, true, cnt]] }
+            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: [[124032, true, cnt]] }
         }),
 
     224041: () => new CardBuilder(341).name('雷萤浮闪').since('v4.5.0').talent(1).costElectro(3).perCnt(1)
@@ -3210,7 +3211,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/caa9283f50c2093abad5c6ba1bf73335_6393422977381042780.png').
         handle((card, event) => {
             const { heros = [], slotUse = false, trigger = '' } = event;
-            if (!hasObjById(getObjById(heros, getHidById(card.id))?.heroStatus, 124061) || trigger == 'will-killed') {
+            if (!hasObjById(getObjById(heros, card.userType as number)?.heroStatus, 124061) || trigger == 'will-killed') {
                 const cmds: Cmds[] = [{ cmd: 'getEnergy', cnt: -1, isOppo: true }];
                 return { trigger: ['will-killed'], cmds, execmds: cmds, isDestroy: !slotUse }
             }
@@ -3238,20 +3239,21 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://patchwiki.biligame.com/images/ys/9/9f/ijpaagvk7o9jh1pzb933vl9l2l4islk.png')
         .handle((card, event) => {
             const { skid = -1 } = event;
-            if (getHidById(skid) != getHidById(card.id)) return;
-            return {
-                trigger: ['kill'],
-                execmds: [{ cmd: 'getStatus', status: [126011, 126012] }],
-            }
+            if (getHidById(skid) != card.userType) return;
+            return { trigger: ['kill'], execmds: [{ cmd: 'getStatus', status: [126011, 126012] }] }
         }),
 
     226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png')
-        .handle((_, event) => {
+        .handle((card, event) => {
             const { heros = [] } = event;
             const element = [...new Set(heros.map(h => h.element))];
-            return { status: 126022, cmds: [{ cmd: 'getDice', cnt: element.length, element }] }
+            return {
+                isValid: !!getObjById(heros, card.userType as number)?.isFront,
+                status: 126022,
+                cmds: [{ cmd: 'getDice', cnt: element.length, element }],
+            }
         }),
 
     226031: () => new CardBuilder(437).name('异兽侵蚀').since('v5.2.0').talent(1).costGeo(3)
@@ -3370,7 +3372,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
         .handle((card, event) => {
             const { heros = [] } = event;
-            const hero = getObjById(heros, getHidById(card.id));
+            const hero = getObjById(heros, card.userType as number);
             if (!hero) return;
             const cmds: Cmds[] = [{ cmd: 'useSkill', cnt: 14032 }];
             if (!hero.isFront) cmds.unshift({ cmd: 'switch-to', hidxs: [hero.hidx] });

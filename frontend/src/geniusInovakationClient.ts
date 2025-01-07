@@ -542,7 +542,7 @@ export default class GeniusInvokationClient {
             }
             this.diceSelect = preview.diceSelect!.slice();
             this.heroCanSelect = preview.heroCanSelect!.slice();
-            this.heroSelect[1] = this.heroSelect[1].map((_, hidx) => +!!preview.heroIdxs!.includes(hidx));
+            this.heroSelect[1].forEach((_, hidx, harr) => harr[hidx] = +!!preview.heroIdxs!.includes(hidx));
             this.willHp = preview.willHp?.slice() ?? this._resetWillHp();
             this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
             this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
@@ -770,7 +770,9 @@ export default class GeniusInvokationClient {
         if (this.opponent.status == PLAYER_STATUS.DIESWITCH || !this.canAction || skid == -1) return;
         if (isExec) {
             const diceValid = checkDices(this.player.dice.filter((_, di) => this.diceSelect[di]), { skill: this.currSkill });
-            if (!diceValid || !this.isValid) {
+            const summonSelectValid = this.currSkill.canSelectSummon == -1 || this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1) > -1;
+            const heroSelectValid = this.currSkill.canSelectHero == -1 || this.heroSelect[1].indexOf(1) > -1;
+            if (!diceValid || !this.isValid || !summonSelectValid || !heroSelectValid) {
                 this.cancel();
                 return this._sendTip('技能不符合要求');
             }
@@ -797,16 +799,14 @@ export default class GeniusInvokationClient {
             this.summonCanSelect = [...clone(preview.summonCanSelect)!];
             this.heroCanSelect = [...clone(preview.heroCanSelect)!];
             this.energyCnt = [...clone(preview.willEnergyChange)!];
+            this.heroSelect[1].forEach((_, i, a) => a[i] = +(preview.heroIdxs?.[0] == i));
             this._resetTargetSelect();
             if ((preview.tarHidx ?? -1) != -1) this.targetSelect[0][preview.tarHidx!] = true;
             else this.targetSelect[1][this.player.hidx] = true;
             this.isValid = preview.isValid;
-            const { canSelectSummon, canSelectHero } = this.currSkill;
+            const { canSelectSummon } = this.currSkill;
             const heroSelects = this.player.heros.filter(h => !h.isFront && h.hp > 0).map(h => h.hidx);
-            if (
-                canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1 ||
-                canSelectHero == 1 && heroSelects.length == 1
-            ) {
+            if (canSelectSummon != -1 && this.players[+(canSelectSummon == this.playerIdx)].summons.length == 1) {
                 const preview1 = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skid && (pre.summonIdx == 0 || pre.heroIdxs?.[0] == heroSelects[0]));
                 if (preview1) {
                     this.isValid = preview1.isValid;
@@ -817,14 +817,8 @@ export default class GeniusInvokationClient {
                         this.summonCnt = [...clone(preview1.willSummonChange)!];
                         this.supportCnt = [...clone(preview1.willSupportChange)!];
                         this.willSwitch = [...preview1.willSwitch!];
-                        if (canSelectSummon != -1) {
-                            this.summonCanSelect = [...clone(preview1.summonCanSelect)!];
-                            this.summonSelect[canSelectSummon][0] = true;
-                        }
-                        if (canSelectHero == 1) {
-                            this.heroCanSelect = [...clone(preview1.heroCanSelect)!];
-                            this.heroSelect[1].forEach((_, i, a) => a[i] = +heroSelects.includes(i));
-                        }
+                        this.summonCanSelect = [...clone(preview1.summonCanSelect)!];
+                        this.summonSelect[canSelectSummon][0] = true;
                     }
                 }
             }

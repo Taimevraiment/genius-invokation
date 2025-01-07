@@ -149,9 +149,9 @@
           <div class="hero-shield2" v-if="hero.hp >= 0 && (
             hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier)) ||
             hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||
-            hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt > 0 ||
-            hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt > 0) ||
-            hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt > 0">
+            hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
+            hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt != 0) ||
+            hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt != 0">
           </div>
           <img class="hero-center-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <img class="hero-center-icon" style="width: 60%;opacity: 1;" src="@@/image/Select_Ring_01.png"
@@ -495,54 +495,56 @@ const player = computed<Player>(() => {
   const players: Player[] = props.client.players;
   if (statusCurcnt.value.length == 0) statusCurcnt.value = players.map(p => p.heros.map(() => [genChangeProxy(12), genChangeProxy(12)]));
   if (hpCurcnt.value.length == 0) hpCurcnt.value = players.map(p => genChangeProxy(p.heros.length));
-  players.forEach((p, pidx) => {
-    const pi = pidx ^ playerIdx.value ^ 1;
-    p.heros.forEach((h, hi) => {
-      if (hpCurcnt.value[pi][hi].val != h.hp) {
-        if (hpCurcnt.value[pi][hi].sid == h.id) {
-          setTimeout(() => {
-            hpCurcnt.value[pi][hi] = { sid: h.id, val: h.hp, isChange: true };
-            setTimeout(() => hpCurcnt.value[pi][hi].isChange = false, 300);
-          }, 200);
-        } else {
-          hpCurcnt.value[pi][hi] = { sid: h.id, val: h.hp, isChange: false };
-        }
-      }
-      [h.heroStatus, (p.hidx == hi ? p.combatStatus : [])].forEach((hst, hsti) => {
-        hst.forEach((s, si) => {
-          const val = Math.max(s.roundCnt, s.useCnt);
-          if (statusCurcnt.value[pi][hi][hsti][si].val != val) {
-            if (statusCurcnt.value[pi][hi][hsti][si].sid == s.id) {
-              statusCurcnt.value[pi][hi][hsti][si] = { sid: s.id, val, isChange: true };
-              setTimeout(() => statusCurcnt.value[pi][hi][hsti][si].isChange = false, 300);
-            } else {
-              statusCurcnt.value[pi][hi][hsti][si] = { sid: s.id, val, isChange: false };
-            }
+  if (props.client.phase > PHASE.NOT_BEGIN) {
+    players.forEach((p, pidx) => {
+      const pi = pidx ^ playerIdx.value ^ 1;
+      p.heros.forEach((h, hi) => {
+        if (hpCurcnt.value[pi][hi].val != h.hp) {
+          if (hpCurcnt.value[pi][hi].sid == h.id) {
+            setTimeout(() => {
+              hpCurcnt.value[pi][hi] = { sid: h.id, val: h.hp, isChange: true };
+              setTimeout(() => hpCurcnt.value[pi][hi].isChange = false, 300);
+            }, 200);
+          } else {
+            hpCurcnt.value[pi][hi] = { sid: h.id, val: h.hp, isChange: false };
           }
+        }
+        [h.heroStatus, (p.hidx == hi ? p.combatStatus : [])].forEach((hst, hsti) => {
+          hst.forEach((s, si) => {
+            const val = Math.max(s.roundCnt, s.useCnt);
+            if (statusCurcnt.value[pi][hi][hsti][si].val != val) {
+              if (statusCurcnt.value[pi][hi][hsti][si].sid == s.id) {
+                statusCurcnt.value[pi][hi][hsti][si] = { sid: s.id, val, isChange: true };
+                setTimeout(() => statusCurcnt.value[pi][hi][hsti][si].isChange = false, 300);
+              } else {
+                statusCurcnt.value[pi][hi][hsti][si] = { sid: s.id, val, isChange: false };
+              }
+            }
+          });
         });
       });
-    });
-    p.supports.forEach((st, sti) => {
-      if (supportCurcnt.value[pi][sti].val != st.cnt) {
-        if (supportCurcnt.value[pi][sti].sid == st.entityId) {
-          supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: true };
-          setTimeout(() => supportCurcnt.value[pi][sti].isChange = false, 300);
-        } else {
-          supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: false };
+      p.supports.forEach((st, sti) => {
+        if (supportCurcnt.value[pi][sti].val != st.cnt) {
+          if (supportCurcnt.value[pi][sti].sid == st.entityId) {
+            supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: true };
+            setTimeout(() => supportCurcnt.value[pi][sti].isChange = false, 300);
+          } else {
+            supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: false };
+          }
         }
-      }
-    });
-    p.summons.forEach((smn, smni) => {
-      if (summonCurcnt.value[pi][smni].val != smn.useCnt) {
-        if (summonCurcnt.value[pi][smni].sid == smn.id) {
-          summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
-          setTimeout(() => summonCurcnt.value[pi][smni].isChange = false, 300);
-        } else {
-          summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
+      });
+      p.summons.forEach((smn, smni) => {
+        if (summonCurcnt.value[pi][smni].val != smn.useCnt) {
+          if (summonCurcnt.value[pi][smni].sid == smn.id) {
+            summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
+            setTimeout(() => summonCurcnt.value[pi][smni].isChange = false, 300);
+          } else {
+            summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
+          }
         }
-      }
+      });
     });
-  });
+  }
   return players[playerIdx.value];
 });
 const version = computed<Version>(() => props.version);
