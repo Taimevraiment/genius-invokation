@@ -1742,10 +1742,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const sts116 = getObjById(ost, 116);
                     if (sts116) --sts116.useCnt;
                     else --getObjById(smns, 112082)!.useCnt;
-                    const thero = getObjById(hs, getHidById(status.id))!;
-                    const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
-                    if (talent && talent.perCnt > 0) {
-                        --talent.perCnt;
+                    const thero = getObjById(hs, getHidById(status.id));
+                    if (thero) {
+                        const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
+                        if (talent && talent.perCnt > 0) {
+                            --talent.perCnt;
+                        }
                     }
                     return { cmds }
                 }
@@ -1768,7 +1770,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round)
         .icon('tmp/UI_Gcg_Buff_Kinich_E_1336192241')
         .description('【我方触发燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】。；[roundCnt]')
-        .handle((_, event) => {
+        .handle((status, event) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
             return {
                 trigger: ['other-vehicle', 'Burning', 'other-Burning', 'turn-end'],
@@ -1776,7 +1778,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const nightSoul = heros[hidx]?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return;
                     if (trigger == 'turn-end') {
-                        nightSoul.roundCnt = 0;
+                        if (status.roundCnt == 1) nightSoul.roundCnt = 0;
                         return;
                     }
                     nightSoul.useCnt = Math.min(nightSoul.maxCnt, nightSoul.useCnt + 1);
@@ -2243,8 +2245,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { heros = [], hidx = -1, skid = -1, trigger = '' } = event;
             const hero = heros[hidx];
+            if (!hero) return;
             const triggers: Trigger[] = [];
-            const sts126022 = getObjById(hero?.heroStatus, 126022);
+            const sts126022 = getObjById(hero.heroStatus, 126022);
             if (sts126022) triggers.push('Cryo-getdmg', 'Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg');
             const isSkill = skid == 26022 && trigger.startsWith('elReaction-Geo:');
             if (isSkill) triggers.push('elReaction-Geo');
@@ -2310,8 +2313,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         status.useCnt = 0;
                         return;
                     }
-                    if (hidx == -1) return;
                     const hero = heros[hidx];
+                    if (!hero) return;
                     const maxCnt = status.maxCnt + +!!hero.talentSlot;
                     if (trigger == 'phase-end') {
                         if (status.useCnt == maxCnt) {

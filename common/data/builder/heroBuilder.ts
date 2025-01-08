@@ -61,6 +61,9 @@ export class GIHero {
         this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
         this.offlineVersion = offlineVersion;
     }
+    get equipments() {
+        return [this.weaponSlot, this.artifactSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null];
+    }
 }
 
 export class HeroBuilder extends BaseCostBuilder {

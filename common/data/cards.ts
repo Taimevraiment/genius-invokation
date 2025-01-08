@@ -3188,8 +3188,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/ec966272143de66e191950a6016cf14f_3693512171806066057.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
-            const hero = heros[hidx];
-            const cnt = (getObjById(hero.heroStatus, 124032)?.useCnt ?? 0) + 1;
+            const cnt = (getObjById(heros[hidx]?.heroStatus, 124032)?.useCnt ?? 0) + 1;
             return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: [[124032, true, cnt]] }
         }),
 

@@ -327,8 +327,8 @@
             :key="saidx">
             <div class="summon" :class="{
               'will-attach': summon.UI.isWill,
-              'summon-select': summonSelect[saidx][suidx],
-              'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING,
+              'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
+              'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING && !summon.UI.isWill,
               'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
             }" v-for="(summon, suidx) in smnArea" :key="suidx"
               @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
@@ -466,7 +466,7 @@ const emits = defineEmits<{
   reroll: [],
   selectHero: [pidx: number, hidx: number],
   selectUseDice: [],
-  selectSummon: [pidx: number, suidx: number, isNotShow: boolean],
+  selectSummon: [pidx: number, suidx: number],
   selectSupport: [pidx: number, siidx: number],
   endPhase: [],
   showHistory: [],
@@ -781,7 +781,8 @@ const selectUseDice = (didx: number) => {
 };
 // 显示召唤物信息/选择卡牌目标
 const showSummonInfo = (pidx: number, suidx: number, isNotShow: boolean) => {
-  emits('selectSummon', pidx, suidx, isNotShow);
+  if(isNotShow) return;
+  emits('selectSummon', pidx, suidx);
 };
 // 显示场地信息/选择卡牌目标
 const showSupportInfo = (pidx: number, siidx: number) => {

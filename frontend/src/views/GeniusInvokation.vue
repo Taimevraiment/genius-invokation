@@ -323,9 +323,9 @@ const selectHero = (pidx: number, hidx: number) => {
   }
 };
 // 选择召唤物
-const selectCardSummon = (pidx: number, suidx: number, isNotShow: boolean) => {
+const selectCardSummon = (pidx: number, suidx: number) => {
   client.value.selectCardSummon(pidx, suidx);
-  if (!isNotShow) client.value.showSummonInfo(pidx, suidx);
+  client.value.showSummonInfo(pidx, suidx);
 };
 // 选择支援物
 const selectCardSupport = (pidx: number, siidx: number) => {
