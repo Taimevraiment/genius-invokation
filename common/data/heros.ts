@@ -773,10 +773,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             }))
         .skills(
             new SkillBuilder('万相化灰').description('在对方场上生成3层【sts113141】，然后{dealDmg}。')
-                .src('', '')
+                .src('/image/tmp/Skill_S_Arlecchino_01.webp', '')
                 .elemental().damage(2).cost(3).handle(() => ({ statusOppoPre: 113141 })),
             new SkillBuilder('厄月将升').description('{dealDmg}，移除自身所有【sts122】，每移除1层，治疗自身1点。')
-                .src('', '')
+                .src('/image/tmp/Skill_E_Arlecchino_01.webp', '')
                 .burst(2).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
@@ -784,7 +784,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { heal, exec: () => { sts122 && (sts122.useCnt = 0) } }
                 }),
             new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；自身附属【sts122】时：角色造成的[物理伤害]变为[火元素伤害]。')
-                .src('', '')
+                .src('/image/tmp/UI_Talent_S_Arlecchino_07.webp', '')
                 .passive().handle(event => {
                     const { hero, heal = [], source = -1, sourceHidx = -1, trigger = '' } = event;
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
@@ -1540,13 +1540,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('夜阳斗技'))
         .skills(
             new SkillBuilder('悬猎·游骋高狩').description('附属【sts117091】并进入【sts117092】。{dealDmg}，然后选一个我方角色与其交换位置。')
-                .src('', '')
+                .src('/image/tmp/Skill_S_Kinich_01.webp', '')
                 .elemental().damage(2).cost(3).canSelectHero(1).handle(event => ({
                     cmds: [{ cmd: 'exchangePos', hidxs: [event.hero.hidx, event.selectHero ?? -1] }],
                     statusPre: [117091, 117092],
                 })),
             new SkillBuilder('向伟大圣龙致意').description('{dealDmg}，召唤【smn117093】。')
-                .src('', '')
+                .src('/image/tmp/Skill_E_Kinich_01.webp', '')
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 117093 })),
         ),
 
