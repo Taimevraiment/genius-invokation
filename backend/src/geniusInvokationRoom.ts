@@ -887,7 +887,7 @@ export default class GeniusInvokationRoom {
             this._detectSlotAndStatus(pidx ^ 1, 'switch-oppo', { hidxs: opponent.hidx, types: [STATUS_TYPE.Usage], isQuickAction });
             if (player.heros[ohidx].hp == 0) player.heros[ohidx].hp = -1;
             this.emit(flag, pidx, { isQuickAction, ohidx, isActionInfo: true });
-        }, 1e3]], { isUnshift: true });
+        }, 1e3]], { isUnshift: true, orderAfter: 'minus-switch' });
         this._doCmds(pidx, cmds);
         await this._execTask();
         if (isDieSwitch) {
@@ -3758,7 +3758,7 @@ export default class GeniusInvokationRoom {
                             let elTips: [string, PureElementType, PureElementType][] = [];
                             if (!isAddTask || tcmds.length > 0) {
                                 const { ndices, willHeals: cmdwh, atkedIdxs: [atkedIdx] = [hidx], bWillDamages: wdmg = [], bDmgElements: del = [], elTips: elt = [] }
-                                    = this._doCmds(pidx, tcmds, { source: slot.id, isAction: !isQuickAction });
+                                    = this._doCmds(pidx, tcmds, { source: slot.id, isAction: !isQuickAction, isPriority: true });
                                 if (ndices != undefined) players[pidx].dice = ndices;
                                 willHeals = cmdwh?.[0] ?? [];
                                 tarHidx = atkedIdx;
@@ -3818,7 +3818,7 @@ export default class GeniusInvokationRoom {
         const tasks: AtkTask[] = [];
         if (!isExec) {
             const { willHeals: cmdheal, tasks: cmdtasks = [] } = this._doCmds(pidx, cmds, {
-                players, getdmg, supportCnt, willSwitch, energyCnt, isExec: false, source: cSlot?.id,
+                players, getdmg, supportCnt, willSwitch, energyCnt, isExec: false, source: cSlot?.id, isPriority: true,
             });
             willHeals = cmdheal?.reduce((a, c) => {
                 c.forEach((hl, hli) => {
@@ -3982,7 +3982,9 @@ export default class GeniusInvokationRoom {
                         const stscmds = [...(stsres.cmds ?? []), ...(stsexecres?.cmds ?? [])];
                         if (isExec || !stsres.notPreview) (stsres.isAddTask ? taskcmds : cmds).push(...stscmds);
                         if (!sts.hasType(STATUS_TYPE.Attack) && stsres.heal) {
-                            const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }], { players, source: sts.id });
+                            const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }], {
+                                players, source: sts.id, isPriority: true,
+                            });
                             aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
                         }
                         if (isExec && !isOnlyExec) {
@@ -4026,6 +4028,7 @@ export default class GeniusInvokationRoom {
                                                 withCard: hcard,
                                                 trigger,
                                                 source: sts.id,
+                                                isPriority: true,
                                             });
                                             if (ndices) assgin(dice, ndices);
                                             const statuses = group == STATUS_GROUP.heroStatus ?
@@ -4060,7 +4063,7 @@ export default class GeniusInvokationRoom {
                                 } else {
                                     this._writeLog(`[${player.name}]${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${oCnt}->${sts.useCnt}` : ''}${sts.perCnt != -1 ? `.perCnt:${oPct}->${sts.perCnt}` : ''}`, 'system');
                                     this._writeLog(`[${this.players[pidx].name}][${sts.name}]发动${oCnt != sts.useCnt ? ` ${oCnt}->${sts.useCnt}` : ''}`, isCdt(sts.hasType(STATUS_TYPE.Hide) || stsres.notInfo, 'system'));
-                                    this._doCmds(pidx, stscmds, { players, hidxs: [hidx], withCard: hcard, source: sts.id });
+                                    this._doCmds(pidx, stscmds, { players, hidxs: [hidx], withCard: hcard, source: sts.id, isPriority: true });
                                 }
                             }
                             if (trigger == 'useReadySkill') {
@@ -4301,7 +4304,7 @@ export default class GeniusInvokationRoom {
                             combatStatus: player.combatStatus,
                             eCombatStatus: players[pidx ^ 1].combatStatus,
                         }) ?? {};
-                        const { changedEl } = this._doCmds(pidx, cmds, { heros, isExec });
+                        const { changedEl } = this._doCmds(pidx, cmds, { heros, isExec, isPriority: true });
                         if (changedEl) summon.element = changedEl;
                         smncmds.push(...cmds);
                     }
@@ -4309,7 +4312,7 @@ export default class GeniusInvokationRoom {
                 }
                 if (summonres.cmds) {
                     smncmds.push(...summonres.cmds);
-                    this._doCmds(pidx, summonres.cmds, { heros, isExec });
+                    this._doCmds(pidx, summonres.cmds, { heros, isExec, isPriority: true });
                 }
                 let intvl = 1000;
                 if (isExec) {
@@ -4356,6 +4359,7 @@ export default class GeniusInvokationRoom {
                                         heal: isCdt(smn.shieldOrHeal > 0, smn.shieldOrHeal),
                                         damages,
                                         isSummon: smn.id,
+                                        isPriority: true,
                                     });
                                 if (changedEl) smn.element = changedEl;
                                 if (ndices) this.players[pidx].dice = ndices;

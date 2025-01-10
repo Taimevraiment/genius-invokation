@@ -7,28 +7,31 @@ export default class TaskQueue {
     isExecuting: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
     isDev: boolean;
-    get queueList() {
-        return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
-    }
     constructor(_writeLog: (log: string, type?: LogType) => void, isDev: boolean) {
         this._writeLog = _writeLog;
         this.isDev = isDev;
     }
+    get queueList() {
+        return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
+    }
     addTask(taskType: string, args: any[] | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
+        orderAfter?: string,
     } = {}) {
-        const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false, source = -1 } = options;
+        const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false, source = -1, orderAfter = '' } = options;
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
         const curQueue = isCdt(this.isExecuting || isPriority, this.priorityQueue) ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.trace('重复task:', taskType);
         }
-        if (isUnshift) curQueue.unshift([taskType, args, source, isDmg]);
-        else if (addAfterNonDmg) {
-            const tidx = this.queue.findIndex(([_, _t, isDmg]) => isDmg);
-            if (tidx > -1) this.queue.splice(tidx, 0, [taskType, args, source, isDmg]);
-            else this.queue.push([taskType, args, source, isDmg]);
-        } else curQueue.push([taskType, args, source, isDmg]);
+        const tidx = addAfterNonDmg ? this.queue.findIndex(([, , isDmg]) => isDmg) :
+            orderAfter != '' ? this.queue.findLastIndex(([taskType]) => taskType.includes(orderAfter)) :
+                -1;
+        if (tidx > -1) this.queue.splice(tidx + 1, 0, [taskType, args, source, isDmg]);
+        else {
+            if (isUnshift) curQueue.unshift([taskType, args, source, isDmg]);
+            else curQueue.push([taskType, args, source, isDmg]);
+        }
         this._writeLog((isUnshift ? 'unshift' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
