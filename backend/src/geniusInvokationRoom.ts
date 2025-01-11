@@ -696,9 +696,11 @@ export default class GeniusInvokationRoom {
     getActionDev(actionData: {
         cpidx: number, cmds: Cmds[], dices: DiceCostType[], hps: { hidx: number, hp: number }[],
         clearSts: { hidx: number, stsid: number }[], attachs: { hidx: number, el: ElementCode, isAdd: boolean }[],
+        setStsCnt: { hidx: number, stsid: number, type: string, val: number }[],
+        setSmnCnt: { smnid: number, type: string, val: number }[],
         disCardCnt: number, smnIds: number[], sptIds: number[], seed: string, flag: string
     }) {
-        const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, smnIds, sptIds, seed, flag } = actionData;
+        const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, setStsCnt, setSmnCnt, smnIds, sptIds, seed, flag } = actionData;
         if (flag.includes('seed')) {
             if (!this.isStart) this._setSeed(seed);
             return;
@@ -730,6 +732,14 @@ export default class GeniusInvokationRoom {
                 player.combatStatus.splice(0, MAX_STATUS_COUNT);
             }
         }
+        for (const { hidx, stsid, type, val } of setStsCnt) {
+            const hero = heros[hidx];
+            const sts = [...player.combatStatus, ...(hero?.heroStatus ?? [])].find(s => s.id == stsid);
+            if (!sts) continue;
+            if (type == 'p') sts.perCnt = val;
+            else if (type == 'u') sts.useCnt = val;
+            else if (type == 'r') sts.roundCnt = val;
+        }
         if (dices) player.dice = dices;
         if (disCardCnt < 0) player.handCards.splice(disCardCnt, 10);
         this._doCmds(cpidx, cmds);
@@ -737,6 +747,12 @@ export default class GeniusInvokationRoom {
         else if (smnIds[0] < 0) player.summons.splice(smnIds[0]);
         else if (smnIds.length > 0) {
             this._updateSummon(cpidx, smnIds.map(smnid => this.newSummon(smnid)), this.players);
+        }
+        for (const { smnid, type, val } of setSmnCnt) {
+            const smn = player.summons.find(s => s.id == smnid);
+            if (!smn) continue;
+            if (type == 'p') smn.perCnt = val;
+            else if (type == 'u') smn.useCnt = val;
         }
         if (sptIds[0] == 0) player.supports = [];
         else if (sptIds[0] < 0) player.supports.splice(sptIds[0]);

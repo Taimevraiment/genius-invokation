@@ -2742,8 +2742,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/3eb3cbf6779afc39d7812e5dd6e504d9_148906889400555580.png')
         .handle((_, event) => {
             const { heros = [] } = event;
-            const hero = heros.find(h => h.isFront);
-            if (!hero || hero.element != ELEMENT_TYPE.Electro || !hasObjById(hero.heroStatus, 114063)) return;
+            if (!heros.find(h => h.isFront && h.element == ELEMENT_TYPE.Electro && hasObjById(h.heroStatus, 114063))) return;
             return {
                 addDmgCdt: 1,
                 trigger: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],

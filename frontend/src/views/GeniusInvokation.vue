@@ -451,6 +451,8 @@ const devOps = (cidx = 0) => {
   const attachs: { hidx: number, el: number, isAdd: boolean }[] = [];
   const hps: { hidx: number, hp: number }[] = [];
   const clearSts: { hidx: number, stsid: number }[] = [];
+  const setStsCnt: { hidx: number, stsid: number, type: string, val: number }[] = [];
+  const setSmnCnt: { smnid: number, type: string, val: number }[] = [];
   const smnIds: number[] = [];
   const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
@@ -513,8 +515,12 @@ const devOps = (cidx = 0) => {
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态
-      const [stsid = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
-      if (stsid <= 0) {
+      const isSetCnt = op[1] == '+';
+      const setType = op[2];
+      const [stsid = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]/).map(h);
+      if (isSetCnt) {
+        setStsCnt.push({ hidx, stsid, type: setType, val });
+      } else if (stsid <= 0) {
         clearSts.push({ hidx, stsid });
       } else {
         cmds.push({ cmd: 'getStatus', hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx], status: stsid });
@@ -532,8 +538,14 @@ const devOps = (cidx = 0) => {
       flag.add('addCard');
       cmds.push({ cmd: 'addCard', card: cid, isAttach, cnt, hidxs });
     } else if (op.startsWith('m')) { // 召唤物
-      const rest = op.slice(1);
-      smnIds.push(+rest);
+      const isSetCnt = op[1] == '+';
+      const setType = op[2];
+      const [smnid = 0, val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
+      if (isSetCnt) {
+        setSmnCnt.push({ smnid, type: setType, val });
+      } else {
+        smnIds.push(smnid);
+      }
       flag.add('setSummon');
     } else if (op.startsWith('p')) { // 支援物
       const rest = op.slice(1);
@@ -553,7 +565,10 @@ const devOps = (cidx = 0) => {
       flag.add('getCard');
     }
   }
-  socket.emit('sendToServerDev', { cpidx, rid, seed, dices, cmds, attachs, hps, clearSts, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&') });
+  socket.emit('sendToServerDev', {
+    cpidx, rid, seed, dices, cmds, attachs, hps, clearSts, setStsCnt, setSmnCnt,
+    smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&'),
+  });
 };
 </script>
 

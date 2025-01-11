@@ -495,7 +495,7 @@ const player = computed<Player>(() => {
   const players: Player[] = props.client.players;
   if (statusCurcnt.value.length == 0) statusCurcnt.value = players.map(p => p.heros.map(() => [genChangeProxy(12), genChangeProxy(12)]));
   if (hpCurcnt.value.length == 0) hpCurcnt.value = players.map(p => genChangeProxy(p.heros.length));
-  if (props.client.phase > PHASE.NOT_BEGIN) {
+  if (props.client.phase > PHASE.NOT_BEGIN && hpCurcnt.value.length > 0) {
     players.forEach((p, pidx) => {
       const pi = pidx ^ playerIdx.value ^ 1;
       p.heros.forEach((h, hi) => {
@@ -781,7 +781,7 @@ const selectUseDice = (didx: number) => {
 };
 // 显示召唤物信息/选择卡牌目标
 const showSummonInfo = (pidx: number, suidx: number, isNotShow: boolean) => {
-  if(isNotShow) return;
+  if (isNotShow) return;
   emits('selectSummon', pidx, suidx);
 };
 // 显示场地信息/选择卡牌目标
