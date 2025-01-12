@@ -426,11 +426,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { summon: smn = summon } = execEvent;
-                smn.useCnt = Math.max(0, smn.useCnt - 1);
                 const { heros = [] } = event;
                 const fhero = heros.find(h => h.isFront);
-                if (!fhero) throw new Error('fhero is undefined');
+                if (!fhero) return;
+                const { summon: smn = summon } = execEvent;
+                smn.useCnt = Math.max(0, smn.useCnt - 1);
                 return {
                     cmds: [
                         { cmd: 'heal', cnt: isCdt(fhero.hp <= 6 && smn.isTalent, smn.shieldOrHeal + 1) },
@@ -441,18 +441,18 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     115011: (isTalent: boolean = false) => new SummonBuilder('大型风灵').useCnt(3).damage(2).talent(isTalent)
-        .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；此召唤物在场时：如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
+        .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；【此召唤物在场时：】如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png')
         .handle((summon, event) => {
             const { trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const changeElTrg = ELEMENT_TYPE[summon.element] + '-dmg' as Trigger;
+            const changeElTrgs = ['-dmg', '-dmg-Swirl'].map(t => ELEMENT_TYPE[summon.element] + t) as Trigger[];
             if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
-            const isTalent = summon.isTalent && summon.element != ELEMENT_TYPE.Anemo && trigger == changeElTrg;
-            if (isTalent) triggers.push(changeElTrg);
+            const isTalent = summon.isTalent && summon.element != ELEMENT_TYPE.Anemo && changeElTrgs.some(t => t == trigger);
+            if (isTalent) triggers.push(...changeElTrgs);
             return {
                 trigger: triggers,
-                isNotAddTask: isTalent || trigger.startsWith('elReaction-Anemo'),
+                isNotAddTask: isTalent,
                 addDmgCdt: isCdt(isTalent, 1),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
@@ -491,7 +491,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
             return {
                 trigger: triggers,
-                isNotAddTask: trigger.startsWith('elReaction-Anemo'),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') {
@@ -515,7 +514,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
             return {
                 trigger: triggers,
-                isNotAddTask: trigger.startsWith('elReaction-Anemo'),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return phaseEndAtk(smn, event);

@@ -697,7 +697,7 @@ export default class GeniusInvokationRoom {
         cpidx: number, cmds: Cmds[], dices: DiceCostType[], hps: { hidx: number, hp: number }[],
         clearSts: { hidx: number, stsid: number }[], attachs: { hidx: number, el: ElementCode, isAdd: boolean }[],
         setStsCnt: { hidx: number, stsid: number, type: string, val: number }[],
-        setSmnCnt: { smnid: number, type: string, val: number }[],
+        setSmnCnt: { smnidx: number, type: string, val: number }[],
         disCardCnt: number, smnIds: number[], sptIds: number[], seed: string, flag: string
     }) {
         const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, setStsCnt, setSmnCnt, smnIds, sptIds, seed, flag } = actionData;
@@ -748,8 +748,8 @@ export default class GeniusInvokationRoom {
         else if (smnIds.length > 0) {
             this._updateSummon(cpidx, smnIds.map(smnid => this.newSummon(smnid)), this.players);
         }
-        for (const { smnid, type, val } of setSmnCnt) {
-            const smn = player.summons.find(s => s.id == smnid);
+        for (const { smnidx, type, val } of setSmnCnt) {
+            const smn = player.summons[smnidx];
             if (!smn) continue;
             if (type == 'p') smn.perCnt = val;
             else if (type == 'u') smn.useCnt = val;
@@ -1262,7 +1262,7 @@ export default class GeniusInvokationRoom {
             const dmgedHidxs = atkedIdxs ?? [+!!res.isSelf ^ isSelf ? cehidx : cahidx];
             const dmgEl = atkcmds[0]?.element;
             if (dmgEl) res.element = dmgEl as DamageType;
-            if (res.damage == undefined && res.pdmg == undefined && !smndmg) return false;
+            if (res.damage == undefined && res.pdmg == undefined && smndmg) return false;
             const reshidxs = res.hidxs ?? getBackHidxs(oplayers[cpidx ^ +!!res.isSelf].heros);
             const willDamages = smndmg ?? [new Array(dmgedHlen).fill(0).map<number[]>((_, i) => [
                 i == dmgedHidxs[0] ? (res.damage ?? -1) : -1,
@@ -1372,6 +1372,7 @@ export default class GeniusInvokationRoom {
                         eheros: oplayers[cpidx ^ 1].heros,
                         eCombatStatus: oplayers[cpidx ^ 1].combatStatus,
                         hidx: hi,
+                        ehidx: cehidx,
                         sktype: skill?.type,
                         skid,
                         trigger: state,
@@ -2264,24 +2265,24 @@ export default class GeniusInvokationRoom {
             mergeWillHeals(res.bWillHeals, hfieldres.bWillHeals);
             res.tasks.push(...hfieldres.tasks);
         }
-        if (!isSwirl) {
-            const asmnres = this._detectSummon(atkPidx, atriggers[atkHidx], {
-                csummon: asummons,
-                hasDmg: true,
-                isExec,
-                heros: atkheros,
-                minusDiceSkillIds,
-                minusDiceSkill,
-                skid,
-                isSummon,
-                supportCnt,
-                willSwitch,
-                energyCnt,
-                isQuickAction: res.isQuickAction,
-            });
-            if (res.willDamages[getDmgIdx][0] > 0) res.willDamages[getDmgIdx][0] += asmnres.addDmg;
-            mergeWillHeals(res.bWillHeals, asmnres.willHeals);
-        }
+
+        const asmnres = this._detectSummon(atkPidx, atriggers[atkHidx], {
+            csummon: asummons,
+            hasDmg: true,
+            isExec,
+            heros: atkheros,
+            minusDiceSkillIds,
+            minusDiceSkill,
+            skid,
+            isSummon,
+            supportCnt,
+            willSwitch,
+            energyCnt,
+            isQuickAction: res.isQuickAction,
+        });
+        if (res.willDamages[getDmgIdx][0] > 0) res.willDamages[getDmgIdx][0] += asmnres.addDmg;
+        mergeWillHeals(res.bWillHeals, asmnres.willHeals);
+
         const asptres = this._detectSupport(atkPidx, atriggers[atkHidx], {
             players: res.players,
             isExec,
@@ -3206,7 +3207,10 @@ export default class GeniusInvokationRoom {
                     if (willDamages[phidx]?.[1]) logs.push(`${logPrefix}[${p.name}][${h.name}]造成${willDamages[phidx][1]}点穿透伤害`);
                     if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}][${h.name}]治疗${Math.ceil(heal)}点`);
                     // 被击倒
-                    if (h.hp == 0 && h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) && !h.talentSlot?.hasTag(CARD_TAG.NonDefeat)) {
+                    if (h.hp == 0 &&
+                        h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) &&
+                        (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.perCnt <= 0)
+                    ) {
                         this.players[p.pidx ^ 1].canAction = false;
                         isDie.add(p.pidx);
                         heroDie[p.pidx].push(h.hidx);
@@ -4656,7 +4660,7 @@ export default class GeniusInvokationRoom {
         let attackPreview: Preview | undefined;
         const tasks: AtkTask[] = [];
         const elTips: [string, PureElementType, PureElementType][] = Array.from({ length: cheros.length + ceheros.length }, () => ['', ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Cryo]);
-        const aWillDamages: number[][][] = [];
+        let aWillDamages: number[][][] | undefined;
         let bWillDamages: number[][] | undefined;
         const aDmgElements: DamageType[] = [];
         let bDmgElements: DamageType[] | undefined;
@@ -5018,7 +5022,7 @@ export default class GeniusInvokationRoom {
                     getsts.forEach(sts => {
                         if (sts.group == STATUS_GROUP.heroStatus) {
                             if (!heroStatusOppo) heroStatusOppo = new Array(ceheros.length).fill(0).map(() => []);
-                            (cmds[i]?.hidxs ?? [ehidx]).forEach(fhidx => heroStatusOppo?.[fhidx].push(sts));
+                            (cmds[i]?.hidxs ?? [ehidx]).forEach(fhidx => heroStatusOppo![fhidx].push(sts));
                         } else {
                             if (!combatStatusOppo) combatStatusOppo = [];
                             combatStatusOppo.push(sts);
@@ -5101,6 +5105,7 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'attack') {
                 const atkOppo1 = isOppo ?? true;
                 const epidx = pidx ^ +atkOppo1;
+                if (!aWillDamages) aWillDamages = [];
                 if (!bWillDamages) bWillDamages = new Array(player.heros.length + opponent.heros.length).fill(0).map(() => [-1, 0]);
                 if (!bDmgElements) bDmgElements = new Array(players.flatMap(p => p.heros).length).fill(DAMAGE_TYPE.Physical);
                 if (!willAttachs) willAttachs = new Array(player.heros.length + opponent.heros.length).fill(0).map(() => []);
@@ -5123,7 +5128,7 @@ export default class GeniusInvokationRoom {
                     } = damages?.(atkOppo1, dmgcnt, element as DamageType | undefined, ohidxs) ?? {};
                     if (atkOppo1) wdmgs.push(...Array.from({ length: players[epidx ^ 1].heros.length }, () => [-1, 0]));
                     else wdmgs.unshift(...Array.from({ length: players[epidx ^ 1].heros.length }, () => [-1, 0]));
-                    aWillDamages.push(wdmgs);
+                    aWillDamages!.push(wdmgs);
                     cWillDamages.push(wdmgs);
                     cDmgElements.push(dmgel);
                     if (dmgel == DAMAGE_TYPE.Pierce) {

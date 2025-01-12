@@ -20,7 +20,8 @@ export const allHidxs = (heros?: Hero[], options: {
 }
 
 // 获取受伤最多的角色的hidxs(只有一个number的数组)
-export const getMaxHertHidxs = (heros: Hero[], options: { fhidx?: number, isBack?: boolean } = {}): number[] => {
+export const getMaxHertHidxs = (heros?: Hero[], options: { fhidx?: number, isBack?: boolean } = {}): number[] => {
+    heros ??= [];
     const { fhidx = heros.findIndex(h => h.isFront), isBack = false } = options;
     if (fhidx == -1) return [];
     const maxHert = Math.max(...heros.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.maxHp - h.hp));

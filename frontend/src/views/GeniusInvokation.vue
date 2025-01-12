@@ -394,6 +394,7 @@ const getPlayerList = ({ plist }: { plist: Player[] }) => {
   if (me?.rid == -1) router.back();
 };
 onMounted(() => {
+  client.value.initSelect();
   socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value) });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
@@ -452,7 +453,7 @@ const devOps = (cidx = 0) => {
   const hps: { hidx: number, hp: number }[] = [];
   const clearSts: { hidx: number, stsid: number }[] = [];
   const setStsCnt: { hidx: number, stsid: number, type: string, val: number }[] = [];
-  const setSmnCnt: { smnid: number, type: string, val: number }[] = [];
+  const setSmnCnt: { smnidx: number, type: string, val: number }[] = [];
   const smnIds: number[] = [];
   const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
@@ -542,7 +543,7 @@ const devOps = (cidx = 0) => {
       const setType = op[2];
       const [smnid = 0, val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
       if (isSetCnt) {
-        setSmnCnt.push({ smnid, type: setType, val });
+        setSmnCnt.push({ smnidx: smnid, type: setType, val });
       } else {
         smnIds.push(smnid);
       }
@@ -587,6 +588,7 @@ body {
   position: relative;
   user-select: none;
   overflow: hidden;
+  font-family: 'HYWenHei 85W';
 }
 
 .player-info {
@@ -716,7 +718,6 @@ body {
   justify-content: center;
   align-items: center;
   color: white;
-  font-weight: bolder;
   font-size: medium;
   -webkit-text-stroke: 1px black;
 }

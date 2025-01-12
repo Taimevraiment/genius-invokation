@@ -413,7 +413,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       }
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == ctt) ?? [];
       if (subtype) wpicon ||= `<img style='width:18px;transform:translateY(20%);' src='${CARD_SUBTYPE_URL[subtype]}'/>`;
-      const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
+      // const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
+      const underline = isUnderline == '' ? `text-decoration: underline;cursor:pointer;` : '';
       const marginLeft = el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same ? 'margin-left:2px;' : '';
       return `${wpicon}<span style='color:${color};${underline}margin-right:2px;${marginLeft}'>${ctt}</span>`;
     })
@@ -608,6 +609,7 @@ const showRule = (...desc: string[]) => {
   align-items: flex-start;
   user-select: none;
   pointer-events: none;
+  font-family: 'HYWenHei 85W';
 }
 
 .info-container {
@@ -637,7 +639,6 @@ const showRule = (...desc: string[]) => {
   margin-bottom: 5px;
   line-height: 20px;
   color: white;
-  font-weight: bolder;
   font-size: medium;
   display: inline-block;
   -webkit-text-stroke: 1px black;
@@ -667,7 +668,6 @@ const showRule = (...desc: string[]) => {
   margin-left: -5px;
   font-size: medium;
   color: white;
-  font-weight: bolder;
   display: inline-block;
   -webkit-text-stroke: 1px black;
 }
@@ -894,7 +894,6 @@ svg {
   justify-content: center;
   align-items: center;
   color: white;
-  font-weight: bolder;
   -webkit-text-stroke: 1px black;
 }
 

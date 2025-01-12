@@ -2760,12 +2760,11 @@ const allCards: Record<number, () => CardBuilder> = {
     214091: () => new CardBuilder(94).name('脉冲的魔女').since('v4.0.0').offline('v1').talent().costElectro(1).perCnt(1)
         .description('切换到装备有此牌的【hro】后：使敌方出战角色附属【sts114091】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/608b48c391745b8cbae976d971b8b8c0_2956537094434701939.png')
-        .handle((card, event) => {
-            const { ehidx = -1 } = event;
+        .handle(card => {
             if (card.perCnt <= 0) return;
             return {
                 trigger: ['switch-to'],
-                execmds: [{ cmd: 'getStatus', status: 114091, hidxs: [ehidx], isOppo: true }],
+                execmds: [{ cmd: 'getStatus', status: 114091, isOppo: true }],
                 exec: () => { --card.perCnt },
             }
         }),
@@ -2794,7 +2793,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)
-        .description('{action}；【我方触发[雷元素相关反应]后:】本回合【hro】下次造成的伤害+1。（可叠加，最多叠加到+3）')
+        .description('{action}；【我方触发[雷元素相关反应]后：】本回合【hro】下次造成的伤害+1。（可叠加，最多叠加到+3）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/fe3f64e0a6220b41d9db19a6cbb7c8e8_815543173218385253.png')
         .handle((_, event) => {
             const { hidxs = [], heros = [] } = event;

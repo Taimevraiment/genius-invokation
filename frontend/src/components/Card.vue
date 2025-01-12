@@ -85,6 +85,7 @@ const getPngIcon = (name: string = '') => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    font-family: 'HYWenHei 85W';
 }
 
 .card-img {
@@ -120,7 +121,6 @@ const getPngIcon = (name: string = '') => {
     width: 30px;
     height: 30px;
     color: white;
-    font-weight: bold;
     text-align: center;
     line-height: 30px;
     -webkit-text-stroke: 1px black;
@@ -134,7 +134,6 @@ const getPngIcon = (name: string = '') => {
     left: -25px;
     top: 30px;
     color: white;
-    font-weight: bold;
     text-align: center;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
@@ -147,7 +146,7 @@ const getPngIcon = (name: string = '') => {
     width: 30px;
     height: 30px;
     left: 20px;
-    top: 5px;
+    top: 6px;
 }
 
 .card-energy>span {

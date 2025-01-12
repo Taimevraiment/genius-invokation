@@ -204,8 +204,8 @@
               'el-tip-leave': elTips[hgi][hidx][0] == '',
             }" :style="{
               color: ELEMENT_COLOR[elTips[hgi][hidx][1]],
-              fontWeight: 'bolder',
-              '-webkit-text-stroke': `1px${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`,
+              // fontWeight: 'bolder',
+              '-webkit-text-stroke': `0.5px ${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`,
             }">
               {{ elTips[hgi][hidx][0] }}
             </div>
@@ -578,7 +578,7 @@ const willDamages = computed<number[][][]>(() => {
     const widthDiff = (tarHidx.value - atkHidx.value) * (width + 0.1 * parentWidth);
     const heightDiff = height / 0.35 * 0.5 * (isAtker ? -1 : 1);
     const deg = Math.atan2(widthDiff, -heightDiff) * (180 / Math.PI) - (isAtker ? 0 : 180);
-    const atkAnime = atkHeroDOM.animate([{
+    const atkAnime = atkHeroDOM?.animate([{
       offset: 0.3,
       transform: `rotate(${deg}deg) scale(1.3)`,
       zIndex: 5,
@@ -607,7 +607,7 @@ const willDamages = computed<number[][][]>(() => {
       }], { duration: 175 });
       setTimeout(() => tarAnime.cancel(), 175);
     }, 525);
-    setTimeout(() => atkAnime.cancel(), 700);
+    setTimeout(() => atkAnime?.cancel(), 700);
     setTimeout(() => isAnimating = false, 3000);
   }
   return dmgs;
@@ -823,6 +823,7 @@ const mouseup = () => {
   left: 0;
   height: 75%;
   width: 100%;
+  font-family: 'HYWenHei 85W';
 }
 
 .side {
@@ -839,7 +840,6 @@ const mouseup = () => {
   width: 50%;
   aspect-ratio: 1/1;
   color: white;
-  font-weight: bolder;
   -webkit-text-stroke: 1px black;
   margin-bottom: 5px;
   cursor: pointer;
@@ -904,6 +904,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: 'HYWenHei 85W';
 }
 
 button:active {
@@ -984,7 +985,6 @@ button:active {
 
 .hero-hp-cnt {
   color: white;
-  font-weight: bolder;
   -webkit-text-stroke: black 1px;
   z-index: 1;
   padding-right: 2px;
@@ -1074,8 +1074,7 @@ button:active {
   /* color: #a80000; */
   /* background-color: #c67b7b; */
   color: white;
-  -webkit-text-stroke: 0.5px black;
-  font-weight: bold;
+  -webkit-text-stroke: 0.8px black;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1102,7 +1101,7 @@ button:active {
   align-items: center;
 } */
 
-.will-destroy {
+/* .will-destroy {
   position: absolute;
   top: -5px;
   left: -5px;
@@ -1116,7 +1115,7 @@ button:active {
   display: flex;
   justify-content: center;
   align-items: center;
-}
+} */
 
 .will-add {
   position: absolute;
@@ -1125,7 +1124,6 @@ button:active {
   min-width: 35px;
   height: 20px;
   line-height: 20px;
-  font-weight: bold;
   /* border-radius: 10px;
   color: #22a800;
   background-color: #7bc67c; */
@@ -1135,7 +1133,7 @@ button:active {
   border-image-slice: 20 25 fill;
   border-image-width: 7px;
   color: white;
-  -webkit-text-stroke: 0.5px black;
+  -webkit-text-stroke: 1px black;
   z-index: 1;
 }
 
@@ -1154,7 +1152,6 @@ button:active {
   top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  font-weight: bold;
   transition: all 1s;
 }
 
@@ -1204,8 +1201,7 @@ button:active {
   transition: 0.5s;
   font-size: 0;
   box-sizing: border-box;
-  -webkit-text-stroke: 0.5px black;
-  font-weight: bold;
+  -webkit-text-stroke: 0.8px black;
   /* background-image: url(@@/image/Attack.png); */
   background-size: 100%;
 }
@@ -1431,7 +1427,6 @@ button:active {
   line-height: 25px;
   transform: translate(35%, -30%) scale(var(--scale-val-change));
   color: white;
-  font-weight: bolder;
   font-size: medium;
   -webkit-text-stroke: 1px black;
   transition: 0.2s;
@@ -1460,7 +1455,6 @@ button:active {
   line-height: 25px;
   transform: translate(-35%, 30%);
   color: white;
-  font-weight: bolder;
   font-size: medium;
   -webkit-text-stroke: 1px black;
   z-index: 1;

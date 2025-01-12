@@ -234,10 +234,10 @@ body {
   position: relative;
   user-select: none;
   overflow: hidden;
+  font-family: 'HYWenHei 85W';
 }
 
 .title {
-  font-weight: bolder;
   font-size: 25px;
   width: 100%;
   text-align: center;
@@ -264,6 +264,7 @@ button {
   padding: 5px 10px;
   width: 100px;
   border: 3px outset #0093c4;
+  font-family: 'HYWenHei 85W';
 }
 
 button:hover {

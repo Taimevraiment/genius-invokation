@@ -268,12 +268,12 @@ const elReactionExplain: { [key: string]: (...args: any) => string } = {
     感电: (isAttach = false) => `【感电】：${!isAttach ? '本伤害+1，对目标以外的所有敌方角色造成1点穿透伤害' : '没有效果'}`,
     超导: (isAttach = false) => `【超导】：${!isAttach ? '本伤害+1，对目标以外的所有敌方角色造成1点穿透伤害' : '没有效果'}`,
     超载: (isAttach = false) => `【超载】：${!isAttach ? '本伤害+1，' : ''}目标强制切换到下一个角色`,
-    冻结: (isAttach = false) => `【冻结】：${!isAttach ? '本伤害+1，' : ''}使目标本回合无法行动(受到物理伤害或火元素伤害后提前解除，但是伤害+2)`,
-    燃烧: (isAttach = false) => `【燃烧】：${!isAttach ? '本伤害+1，' : ''}生成回合结束时造成1点火元素伤害的\\[燃烧烈焰](可用次数1，最多叠加到2)`,
+    冻结: (isAttach = false) => `【冻结】：${!isAttach ? '本伤害+1，' : ''}使目标本回合无法行动（受到物理伤害或火元素伤害后提前解除，但是伤害+2）`,
+    燃烧: (isAttach = false) => `【燃烧】：${!isAttach ? '本伤害+1，' : ''}生成回合结束时造成1点火元素伤害的\\[燃烧烈焰]（可用次数1，最多叠加到2）`,
     绽放: (isAttach = false) => `【绽放】：${!isAttach ? '本伤害+1，' : ''}生成使下次火元素或雷元素伤害+2的\\[草原核]`,
     原激化: (isAttach = false) => `【原激化】：${!isAttach ? '本伤害+1，' : ''}生成使下2次草元素或雷元素伤害+1的\\[激化领域]`,
     扩散: (el: string) => `【扩散(${el})】：对目标以外的所有敌方角色造成1点${el}元素伤害`,
-    结晶: (el: string) => `【结晶(${el})】：本伤害+1，我方出战角色获得1点护盾(可叠加，最多2点)`,
+    结晶: (el: string) => `【结晶(${el})】：本伤害+1，我方出战角色获得1点护盾（可叠加，最多2点）`,
 }
 const elr = (elrname: string, elOrIsAttach?: string | boolean) => elReactionExplain[elrname](elOrIsAttach);
 

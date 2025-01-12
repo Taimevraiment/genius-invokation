@@ -1205,8 +1205,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Electro,
-                heal: 1,
-                hidxs: getMaxHertHidxs(event.heros ?? []),
+                cmds: [{ cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(event.heros) }],
                 trigger: ['switch-from'],
                 exec: eStatus => {
                     if (eStatus) {

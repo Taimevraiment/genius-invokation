@@ -692,6 +692,7 @@ body div {
     height: 95vh;
     background-color: #daa98a;
     overflow: hidden;
+    font-family: 'HYWenHei 85W';
 }
 
 .edit-deck-list {
@@ -889,6 +890,7 @@ body div {
     margin: 5px;
     border-radius: 10px;
     cursor: pointer;
+    font-family: 'HYWenHei 85W';
 }
 
 .edit-deck-btn-group button:hover,
@@ -1037,7 +1039,6 @@ input#isOfflineInput:checked {
 .hero-hp-cnt {
     position: absolute;
     color: white;
-    font-weight: bolder;
     -webkit-text-stroke: black 1px;
     z-index: 1;
     padding-right: 2px;

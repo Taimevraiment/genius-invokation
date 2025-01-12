@@ -430,7 +430,7 @@ export default class GeniusInvokationClient {
         this.pickModal = pickModal;
         this.watchers = watchers;
         if (flag.includes('startGame')) {
-            this._initSelect(players);
+            this.initSelect(players);
         }
         if (this.willSwitch[0].length == 0 && phase >= PHASE.CHANGE_CARD) {
             this._resetWillSwitch();
@@ -468,7 +468,7 @@ export default class GeniusInvokationClient {
             }
         } catch (e) {
             console.error(e);
-            this._initSelect(players);
+            this.initSelect(players);
         }
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
@@ -819,6 +819,7 @@ export default class GeniusInvokationClient {
                         this.willSwitch = [...preview1.willSwitch!];
                         this.summonCanSelect = [...clone(preview1.summonCanSelect)!];
                         this.summonSelect[canSelectSummon][0] = true;
+                        this.energyCnt = [...clone(preview1.willEnergyChange)!];
                     }
                 }
             }
@@ -1069,20 +1070,20 @@ export default class GeniusInvokationClient {
      * 初始化闪光数组
      * @param players 玩家数组
      */
-    private _initSelect(players: Player[] = this.players) {
+    initSelect(players: Player[] = this.players) {
         this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
-        this.energyCnt = players.map(p => p.heros.map(() => 0));
-        this.targetSelect = players.map(p => p.heros.map(() => false));
+        this.energyCnt = players.map(p => p?.heros.map(() => 0) ?? []);
+        this.targetSelect = players.map(p => p?.heros.map(() => false) ?? []);
         this.statusSelect.forEach((p, pi) => {
             p.forEach((_, i, a) => {
-                a[i] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => new Array(MAX_STATUS_COUNT).fill(false));
+                a[i] = Array.from({ length: players[+(pi == this.playerIdx)]?.heros.length ?? 0 }, () => new Array(MAX_STATUS_COUNT).fill(false));
             });
         });
         this.slotSelect.forEach((_, pi, pa) => {
-            pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => new Array(4).fill(false));
+            pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)]?.heros.length ?? 0 }, () => new Array(4).fill(false));
         });
         this.heroSelect.forEach((_, pi, pa) => {
-            pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)].heros.length }, () => 0);
+            pa[pi] = Array.from({ length: players[+(pi == this.playerIdx)]?.heros.length ?? 0 }, () => 0);
         });
     }
 
