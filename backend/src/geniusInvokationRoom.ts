@@ -3145,8 +3145,11 @@ export default class GeniusInvokationRoom {
         const heros = player.heros;
         this._writeLog(`[${player.name}]弃置${cStatus.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]角色` : '出战'}状态[${cStatus.name}](${cStatus.entityId})`, 'system');
         cStatus.entityId = 1;
-        this._detectSkill(pidx, 'status-destroy', { hidxs, source: cStatus.id, sourceHidx: hidx, isQuickAction });
+        // 被移除的状态触发
         this._detectStatus(pidx, STATUS_TYPE.Attack, 'status-destroy', { cStatus, hidxs: [hidx], isUnshift: true, isQuickAction });
+        // 其他状态因被移除状态触发
+        this._detectSkill(pidx, 'status-destroy', { hidxs, source: cStatus.id, sourceHidx: hidx, isQuickAction });
+        this._detectSlotAndStatus(pidx, 'status-destroy', { types: STATUS_TYPE.Usage, source: cStatus.id, sourceHidx: hidx, isQuickAction });
     }
     /**
      * 召唤物消失时发动
@@ -3927,6 +3930,7 @@ export default class GeniusInvokationRoom {
                 if ((types.length > 0 && !sts.hasType(...types)) || isDiffTaskMark || !stsEntityIds.includes(sts.entityId) || (sts.useCnt == 0 && !sts.hasType(STATUS_TYPE.Accumulate))) continue;
                 const isMinusDiceCard = hcard && hcard.cost + hcard.anydice > minusDiceCard;
                 for (const trigger of triggers) {
+                    if (trigger == 'status-destroy' && cStatus?.id == source && cStatus.entityId == 1) break;
                     const stsres = sts.handle(sts, {
                         heros: pheros,
                         combatStatus: player.combatStatus,

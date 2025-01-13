@@ -743,6 +743,10 @@ body {
   justify-content: center;
 }
 
+.menu button {
+  font-family: 'HYWenHei 85W';
+}
+
 .start {
   padding: 5px;
   background-color: #0077ff;

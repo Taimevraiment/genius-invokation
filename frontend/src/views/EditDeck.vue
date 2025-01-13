@@ -1064,7 +1064,6 @@ input#isOfflineInput:checked {
     top: 0;
     text-align: center;
     color: white;
-    font-weight: bold;
     width: 20px;
     height: 20px;
     line-height: 20px;
@@ -1092,7 +1091,6 @@ input#isOfflineInput:checked {
     top: 30px;
     text-align: center;
     color: white;
-    font-weight: bold;
     width: 20px;
     height: 20px;
     line-height: 20px;

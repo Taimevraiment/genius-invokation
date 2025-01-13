@@ -192,15 +192,18 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5f3971c1d0665eb3d72f68415c3da8ae_6268200576026280012.png')
         .vehicle().damage(2).costAny(2),
 
-    3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
+    3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
+        .description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。', 'v5.4.0')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
-        .vehicle().damage(1).costSame(2).handle(event => {
+        .vehicle().damage(1).costSame(2).handle((event, ver) => {
             const { hcards = [], ehcards = [], trigger = '' } = event;
             if (trigger == 'calc') return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
             const maxDice = ehcards.reduce((a, b) => Math.max(a, b.cost + b.anydice), 0);
             const [{ cidx = -1 } = {}] = ehcards.filter(c => c.cost + c.anydice == maxDice);
-            return { cmds: [{ cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true }] }
+            const cmds: Cmds[] = [{ cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true }];
+            if (ver.gte('v5.4.0')) cmds.push({ cmd: 'getCard', cnt: 1, isOppo: true });
+            return { cmds }
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。（每回合最多使用1次）')

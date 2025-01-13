@@ -2668,7 +2668,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(1).tag(CARD_TAG.Barrier).perCnt(-1)
+    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(2).tag(CARD_TAG.Barrier).perCnt(-1)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。；使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Arlecchino.webp')
         .handle((card, event) => {
@@ -2966,7 +2966,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    216091: () => new CardBuilder(423).name('落染五色').since('v5.1.0').talent(1).costGeo(3)
+    216091: () => new CardBuilder(423).name('落染五色').since('v5.1.0').talent(1).costGeo(4).costGeo(3, 'v5.4.0')
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中[挑选]1个并召唤。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 

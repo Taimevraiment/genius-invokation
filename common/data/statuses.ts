@@ -829,7 +829,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112145: () => new StatusBuilder('消耗｢夜魂值｣').heroStatus().useCnt(1).type(STATUS_TYPE.Hide, STATUS_TYPE.Usage)
-        .handle(status => ({ trigger: ['enter'], exec: () => { --status.useCnt } })),
+        .handle(status => ({ trigger: ['enter'], exec: () => { status.useCnt = 0 } })),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -1053,15 +1053,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { --status.useCnt },
         })),
 
-    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(3).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(5).type(STATUS_TYPE.Usage)
         // .icon('ski,1').iconBg(DEBUFF_BG_COLOR)
         .icon('tmp/UI_Gcg_Debuff_Arlecchino_S_-2121114989')
-        .description('【我方出战角色受伤后：】我方出战角色和敌方【hro】均附属2层【sts122】。；[useCnt]')
+        .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属1层【sts122】。；[useCnt]')
         .handle((status, event) => {
-            const { eheros = [] } = event;
-            const cmds: Cmds[] = [{ cmd: 'getStatus', status: [[122, 2]] }];
+            const { eheros = [], getdmg = [] } = event;
+            const cmds: Cmds[] = [{ cmd: 'getStatus', status: 122, hidxs: getdmg.map((d, i) => ({ d, i })).filter(v => v.d > -1).map(v => v.i) }];
             const ehero = getObjById(eheros, 1314);
-            if (ehero) cmds.push({ cmd: 'getStatus', status: [[122, 2]], hidxs: [ehero.hidx], isOppo: true });
+            if (ehero) cmds.push({ cmd: 'getStatus', status: 122, hidxs: [ehero.hidx], isOppo: true });
             return { trigger: ['getdmg'], cmds, exec: () => { --status.useCnt } }
         }),
 
@@ -1286,15 +1286,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115042: () => new StatusBuilder('降魔·忿怒显相').heroStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
         .description('【所附属角色使用〖ski,1〗时：】少花费1个[风元素骰]。；[useCnt]；【所附属角色不再附属〖sts115041〗时：】移除此效果。')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, isMinusDiceSkill = false, trigger = '' } = event;
-            const hasSts115041 = getObjById(heros[hidx]?.heroStatus, 115041);
+            const { isMinusDiceSkill = false, source = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['skilltype2'];
-            if (trigger == 'phase-end' && (hasSts115041?.roundCnt ?? 0) <= 1) triggers.push('phase-end');
+            if (trigger == 'status-destroy' && source == 115041) triggers.push('status-destroy');
             return {
                 trigger: triggers,
                 minusDiceSkill: { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Anemo },
                 exec: () => {
-                    if (trigger == 'phase-end') status.useCnt = 0;
+                    if (trigger == 'status-destroy') status.useCnt = 0;
                     else if (isMinusDiceSkill) --status.useCnt;
                 }
             }
@@ -1768,11 +1767,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round)
         .icon('tmp/UI_Gcg_Buff_Kinich_E_1336192241')
-        .description('【我方触发燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】。；[roundCnt]')
+        .description('【敌方受到燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】，随后消耗2点｢夜魂值｣。；[roundCnt]')
         .handle((status, event) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
             return {
-                trigger: ['other-vehicle', 'Burning', 'other-Burning', 'turn-end'],
+                trigger: ['other-vehicle', 'Burning-oppo', 'turn-end'],
                 exec: () => {
                     const nightSoul = heros[hidx]?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return;
@@ -1781,7 +1780,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         return;
                     }
                     nightSoul.useCnt = Math.min(nightSoul.maxCnt, nightSoul.useCnt + 1);
-                    if (nightSoul.useCnt == 2) return { cmds: [{ cmd: 'getStatus', status: 117094, hidxs: [hidx] }] }
+                    if (nightSoul.useCnt == 2) {
+                        return {
+                            cmds: [
+                                { cmd: 'getStatus', status: 117094, hidxs: [hidx] },
+                                { cmd: 'getStatus', status: 112145, hidxs: [hidx] },
+                                { cmd: 'getStatus', status: 112145, hidxs: [hidx] },
+                            ]
+                        }
+                    }
                 }
             }
         }),
@@ -2440,7 +2447,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     300007: () => new StatusBuilder('斗争之火（生效中）').heroStatus().icon('buff5').roundCnt(1)
-        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .type(STATUS_TYPE.AddDamage)
         .description('本回合中出战角色造成的伤害+1。')
         .handle(() => ({ trigger: ['skill'], addDmg: 1 })),
 

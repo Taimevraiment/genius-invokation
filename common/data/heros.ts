@@ -763,21 +763,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1314: () => new HeroBuilder(454).name('阿蕾奇诺').since('v5.4.0').fatui().pyro().polearm()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Arlecchino.webp')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Arlecchino_176472631.png')
-        .normalSkill(new NormalSkillBuilder('斩首之邀').description('若可能，消耗目标至多4层【sts122】，提高等量伤害。')
+        .normalSkill(new NormalSkillBuilder('斩首之邀').description('若可能，消耗目标至多3层【sts122】，提高等量伤害。')
             .handle(event => {
                 const { eheros = [] } = event;
                 const sts122 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122);
                 if (!sts122) return;
-                const addDmgCdt = Math.min(4, sts122.useCnt);
+                const addDmgCdt = Math.min(3, sts122.useCnt);
                 return { addDmgCdt, exec: () => { sts122.useCnt -= addDmgCdt } }
             }))
         .skills(
-            new SkillBuilder('万相化灰').description('在对方场上生成3层【sts113141】，然后{dealDmg}。')
+            new SkillBuilder('万相化灰').description('在对方场上生成5层【sts113141】，然后{dealDmg}。')
                 .src('/image/tmp/Skill_S_Arlecchino_01.webp', '')
                 .elemental().damage(2).cost(3).handle(() => ({ statusOppoPre: 113141 })),
             new SkillBuilder('厄月将升').description('{dealDmg}，移除自身所有【sts122】，每移除1层，治疗自身1点。')
                 .src('/image/tmp/Skill_E_Arlecchino_01.webp', '')
-                .burst(2).damage(4).cost(3).handle(event => {
+                .burst(3).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
                     const heal = sts122?.useCnt;
@@ -1207,7 +1207,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('朝起鹤云').description('{dealDmg}，生成【sts115101】，本角色附属【sts115104】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6d/ri0edrmy086b2ia85dya1xh5x7thc22.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1914d2cb4199cd49e28604f105b1e57d_5159935908470746953.png')
-                .elemental().damage(2).cost(3).handle(() => ({ status: [115101, 115104] })),
+                .elemental().damage(1).damage(2, 'v5.4.0').cost(3).handle(() => ({ status: [115101, 115104] })),
             new SkillBuilder('暮集竹星').description('{dealDmg}，治疗所有我方角色1点，生成手牌【crd115102】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1c/qartvv52tlakx38vhaucxgm3zb9xlnn.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/9defe82ef629b59ef3c373d3ba64e492_2031181392714657327.png')
@@ -1539,7 +1539,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kinich_205659600.png')
         .normalSkill(new NormalSkillBuilder('夜阳斗技'))
         .skills(
-            new SkillBuilder('悬猎·游骋高狩').description('附属【sts117091】并进入【sts117092】。{dealDmg}，然后选一个我方角色与其交换位置。')
+            new SkillBuilder('悬猎·游骋高狩').description('选一个我方角色，自身附属【sts117091】并进入【sts117092】。{dealDmg}，然后与所选角色交换位置。')
                 .src('/image/tmp/Skill_S_Kinich_01.webp', '')
                 .elemental().damage(2).cost(3).canSelectHero(1).handle(event => ({
                     cmds: [{ cmd: 'exchangePos', hidxs: [event.hero.hidx, event.selectHero ?? -1] }],
@@ -1857,7 +1857,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2304: () => new HeroBuilder(351).name('铁甲熔火帝皇').since('v4.6.0').maxHp(6).monster().pyro()
+    2304: () => new HeroBuilder(351).name('铁甲熔火帝皇').since('v4.6.0').maxHp(5).maxHp(6, 'v5.4.0').monster().pyro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e96a9a84bdc0f1d2171010770f0605f0_3000155239481283018.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/713d2c89ff5f8e8e8b7da465857dc70f.png')
         .normalSkill(new NormalSkillBuilder('重钳碎击'))
