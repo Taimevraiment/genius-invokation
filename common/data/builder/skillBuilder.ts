@@ -344,7 +344,7 @@ export class NormalSkillBuilder extends BaseBuilder {
         const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
         const description = this._description.get(this._curVersion, '');
         return this._builder
-            .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]。${description}`)
+            .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]${description.startsWith('，') ? '' : '。'}${description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])
             .cost(1)
             .costAny(this._anyCost)

@@ -219,11 +219,15 @@ const status11505x = (swirlEl: PureElementType) => {
     return new StatusBuilder('风物之诗咏·' + ELEMENT_NAME[swirlEl][0]).combatStatus().icon('buff4').useCnt(2)
         .type(STATUS_TYPE.AddDamage).iconBg(STATUS_BG_COLOR[swirlEl])
         .description(`我方角色和召唤物所造成的[${ELEMENT_NAME[swirlEl]}伤害]+1。；[useCnt]`)
-        .handle(status => ({
-            trigger: [`${STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementTypeKey}-dmg`],
-            addDmgCdt: 1,
-            exec: () => { --status.useCnt }
-        }));
+        .handle((status, event) => {
+            const { sktype = SKILL_TYPE.Vehicle, isSummon = -1 } = event;
+            if (sktype == SKILL_TYPE.Vehicle && isSummon == -1) return;
+            return {
+                trigger: [`${STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementTypeKey}-dmg`],
+                addDmgCdt: 1,
+                exec: () => { --status.useCnt }
+            }
+        });
 }
 
 const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
@@ -423,7 +427,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111101: () => new StatusBuilder('瞬时剪影').heroStatus().icon('cryo-dice').useCnt(2).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
-        .description(`【结束阶段：】对所附属角色造成1点[冰元素伤害]; 如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；[useCnt]`)
+        .description(`【结束阶段：】对所附属角色造成1点[冰元素伤害]\\；如果[可用次数]仅剩余1且所附属角色具有[冰元素附着]，则此伤害+1。；[useCnt]`)
         .handle((status, event) => {
             const { heros = [], hidx = -1 } = event;
             const isAddDmg = heros[hidx]?.attachElement.includes(ELEMENT_TYPE.Cryo) && status.useCnt == 1;
@@ -486,7 +490,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
-        .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔; 当前已抓{pct}张牌 〕）。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
+        .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
             const { heros = [], hidx = -1, hcards = [], trigger = '', isExecTask, isExec } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
@@ -697,7 +701,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112091: (act: number = 1) => new StatusBuilder('破局').heroStatus().useCnt(1).maxCnt(3).addCnt(act)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.ConditionalEnchant).icon('buff').iconBg(STATUS_BG_COLOR[ELEMENT_TYPE.Hydro])
-        .description('此状态初始具有1层｢破局｣; 重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并抓1张牌。')
+        .description('此状态初始具有1层｢破局｣\\；重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并抓1张牌。')
         .handle((status, event) => {
             const { trigger = '' } = event;
             const triggers: Trigger[] = [];
@@ -782,7 +786,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112116: () => new StatusBuilder('万众瞩目').heroStatus().icon('buff3').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
-        .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点; 如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；[useCnt]')
+        .description('【角色进行｢普通攻击｣时：】使角色造成的造成的[物理伤害]变为[水元素伤害]。如果角色处于｢荒｣形态，则治疗我方所有后台角色1点\\；如果角色处于｢芒｣形态，则此伤害+2，但是对一位受伤最少的我方角色造成1点[穿透伤害]。；[useCnt]')
         .handle((status, event) => {
             const { heros = [], hidx = -1 } = event;
             if (!heros[hidx]) return;
@@ -847,7 +851,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113031: (isTalent: boolean = false) => new StatusBuilder('鼓舞领域').combatStatus().icon('ski,2').roundCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
-        .description(`【我方角色使用技能时：】${isTalent ? '' : '如果该角色生命值至少为7，则'}使此伤害额外+2; 技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；[roundCnt]`)
+        .description(`【我方角色使用技能时：】${isTalent ? '' : '如果该角色生命值至少为7，则'}使此伤害额外+2\\；技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；[roundCnt]`)
         .handle((status, event) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
             const fHero = heros[hidx];
@@ -965,7 +969,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113092: () => readySkillStatus('焚落踢', 13095).icon('ski,2'),
 
     113094: () => new StatusBuilder('净焰剑狱之护').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Usage).summonId(113093)
-        .description('【〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。')
+        .description('【〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害\\；然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。')
         .handle((status, event) => {
             const { restDmg = 0, heros = [], hidx = -1, getdmg = [], trigger = '' } = event;
             const hid = getHidById(status.id);
@@ -1182,8 +1186,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114091: () => new StatusBuilder('引雷').heroStatus().icon('debuff').useCnt(2).addCnt(1).maxCnt(4).type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
-        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗或〖smn114092〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
-        .description('此状态初始具有2层｢引雷｣; 重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。', 'v5.1.0', 'v1')
+        .description('此状态初始具有2层｢引雷｣\\；重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗或〖smn114092〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
+        .description('此状态初始具有2层｢引雷｣\\；重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。', 'v5.1.0', 'v1')
         .handle((status, event, ver) => {
             const { skid = -1, isSummon = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
@@ -1304,7 +1308,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             .heroStatus().icon('buff').useCnt(1).iconBg(STATUS_BG_COLOR[swirlEl]).perCnt(1).perCnt(0, 'v4.8.0')
             .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.ConditionalEnchant)
             .type(ver => ver.gte('v4.8.0'), STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill)
-            .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣; 本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
+            .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣\\；本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
                 const { isFallAtk = false, isQuickAction: iqa, trigger = '' } = event;
@@ -1338,7 +1342,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115050: () => status11505x(ELEMENT_TYPE.Electro),
 
     115061: () => new StatusBuilder('优风倾姿').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
-        .description('【所附属角色进行｢普通攻击｣时：】造成的伤害+2; 如果敌方存在后台角色，则此技能改为对下一个敌方后台角色造成伤害。；[useCnt]')
+        .description('【所附属角色进行｢普通攻击｣时：】造成的伤害+2\\；如果敌方存在后台角色，则此技能改为对下一个敌方后台角色造成伤害。；[useCnt]')
         .handle((status, event) => ({
             addDmgType1: 2,
             trigger: ['skilltype1'],
@@ -1348,9 +1352,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     115062: () => new StatusBuilder('倾落').heroStatus().icon('buff6').useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Usage)
         .description('下次从该角色执行｢切换角色｣行动时少花费1个元素骰，并且造成1点[风元素伤害]。；[useCnt]')
-        .handle(() => ({
-            trigger: ['minus-switch-from'],
-            damage: 1,
+        .handle((_, event) => ({
+            trigger: ['minus-switch-from', 'switch-from'],
+            damage: isCdt(event.trigger == 'switch-from', 1),
             element: DAMAGE_TYPE.Anemo,
             minusDiceHero: 1,
             exec: eStatus => { eStatus && --eStatus.useCnt }
@@ -1930,8 +1934,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle(() => ({ attachEl: ELEMENT_TYPE.Hydro, addDmg: 1 })),
 
     122041: () => new StatusBuilder('深噬之域').combatStatus().icon('ski,3').useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
-        .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命; 如果其中存在原本元素骰费用值相同的牌，则额外获得1点; 如果3张均相同，再额外获得1点。', 'v5.0.0')
+        .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
+        .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。', 'v5.0.0')
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], hcard, heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];

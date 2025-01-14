@@ -400,7 +400,9 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
     .replace(/(?<!\\)‹(\d+)(.*?)›/g, (_, c: string, v: string) => {
       const color = ELEMENT_CODE_KEY[+c as ElementCode];
       return `${wrapedIcon(color)}<span style='color:${ELEMENT_COLOR[color]};'>${v.replace(" style='color:white;'", '')}</span>`;
-    }).replace(/(?<!\\)(\*?)\[(.*?)\]/g, (_, isUnderline: string, ctt: string) => {
+    })
+    .replace(/(?<!\\)‹(#\w{6})(.*?)›/g, (_, c: string, v: string) => `<span style='color:${c};'>${v.replace(" style='color:white;'", '')}</span>`)
+    .replace(/(?<!\\)(\*?)\[(.*?)\]/g, (_, isUnderline: string, ctt: string) => {
       const [el] = objToArr(ELEMENT_NAME).find(([, v]) => ['元素', '伤害', '骰'].some(v => ctt.includes(v)) ? ctt.includes(v) : ctt == v) ?? [];
       const color = el == undefined ? 'white' : ELEMENT_COLOR[el];
       let wpicon = wrapedIcon(el, ctt.includes('骰'));
@@ -441,7 +443,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
 // 变白色：【】｢｣
 // 下划线（有规则解释，如果可能前面会有图标）：[]
 // 解析名字并加入解释：〖〗【】
-// 有某些特殊颜色（如 冰/水/火/雷）：‹nxxx› n为字体元素颜色 + 前面的图标 xxx为内容
+// 有某些特殊颜色（如 冰/水/火/雷）：‹nxxx› n为1.字体元素颜色+前面的图标 2.直接用颜色#yyyyyy xxx为内容
 // 卡牌上一些实时信息：〔〕
 // 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
@@ -471,7 +473,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
     } else {
       explains.push(nameEl);
     }
-    explains.push(...expl.UI.description.split('；').map(desc => wrapDesc(desc, { isExplain: true, obj: expl })));
+    explains.push(...expl.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true, obj: expl })));
     container.push(explains);
     if (expl.UI.explains.length > 0) {
       container.push(...wrapExpl(expl.UI.explains, memo));
@@ -485,7 +487,7 @@ const wrapRule = (...desc: string[]) => {
   [...new Set(desc.join('').replace(/<img[^<>]+>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
     if (title in RULE_EXPLAIN) {
       ruleExplain.value.push(`<div style='font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`, { isExplain: true })}</div>`);
-      ruleExplain.value.push(...RULE_EXPLAIN[title].split('；').map(desc => wrapDesc(desc, { isExplain: true })));
+      ruleExplain.value.push(...RULE_EXPLAIN[title].split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true })));
     }
   });
 }
@@ -529,11 +531,11 @@ watchEffect(() => {
   isShowSkill.value = [];
   skillExplain.value = [];
   if (info.value && 'costType' in info.value) { // 卡牌
-    info.value.UI.descriptions = info.value.UI.description.split('；').map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' }));
+    info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' }));
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     if (info.value.subType.includes(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(+`${info.value.id}1`);
-      vehicle.UI.descriptions = vehicle.UI.description.split('；').map(desc => wrapDesc(desc, { obj: vehicle }));
+      vehicle.UI.descriptions = vehicle.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: vehicle }));
       skills.value.push(vehicle);
       isShowSkill.value.push(true);
       skillExplain.value = [wrapExpl(vehicle.UI.explains, vehicle.id + vehicle.name)];
@@ -541,7 +543,7 @@ watchEffect(() => {
   }
   if (info.value && 'maxUse' in info.value) { // 召唤物
     smnExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
-    info.value.UI.descriptions = (info.value.UI.description as string).split('；').map(desc => wrapDesc(desc, { obj: info.value as Summon }));
+    info.value.UI.descriptions = (info.value.UI.description as string).split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Summon }));
     const onceDesc = info.value.UI.descriptions.findIndex(v => v.includes('入场时：'));
     if (onceDesc > -1) info.value.UI.descriptions.splice(onceDesc, 1);
   }
@@ -549,11 +551,11 @@ watchEffect(() => {
     heroStatusExplain.value = [];
     combatStatusExplain.value = [];
     info.value.heroStatus.forEach(ist => {
-      ist.UI.descriptions = ist.UI.description.split('；').map(desc => wrapDesc(desc, { obj: ist }));
+      ist.UI.descriptions = ist.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: ist }));
       heroStatusExplain.value.push(wrapExpl(ist.UI.explains, ist.id + ist.name));
     });
     combatStatus.value.forEach(ost => {
-      ost.UI.descriptions = ost.UI.description.split('；').map(desc => wrapDesc(desc, { obj: ost }));
+      ost.UI.descriptions = ost.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: ost }));
       combatStatusExplain.value.push(wrapExpl(ost.UI.explains, ost.id + ost.name));
     });
     for (const skill of info.value.skills) {
@@ -563,7 +565,7 @@ watchEffect(() => {
     slotExplain.value = [];
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot, info.value.vehicleSlot?.[0]].forEach(slot => {
       if (slot) {
-        const desc = slot.UI.description.split('；').map(desc => wrapDesc(desc, { obj: slot, type: 'slot' }));
+        const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' }));
         const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
@@ -577,7 +579,7 @@ watchEffect(() => {
       }
     });
     skills.value.forEach(skill => {
-      skill.UI.descriptions = skill.UI.description.split('；').map(desc => wrapDesc(desc, { obj: skill }));
+      skill.UI.descriptions = skill.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: skill }));
       skillExplain.value.push(wrapExpl(skill.UI.explains, skill.id + skill.name));
     });
     isHeroStatus.value = new Array(info.value.heroStatus.length).fill(false);

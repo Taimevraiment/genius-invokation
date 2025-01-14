@@ -4689,7 +4689,6 @@ export default class GeniusInvokationRoom {
                             isReadySkill: isAttach,
                             otriggers: summonTrigger,
                             selectSummon: ohidxs?.[0],
-                            isQuickAction: !isAction,
                         });
                     }]]);
                 } else {

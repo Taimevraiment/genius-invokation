@@ -1370,7 +1370,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/1b4eb98d6fba0e8a0746a356a5d3f34c_7076497852083287608.png'),
 
     321023: () => new CardBuilder(429).name('特佩利舞台').since('v5.1.0').place().costSame(0)
-        .description('【我方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【敌方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【行动阶段开始时：】如果此牌有至少3点｢瞩目｣，则生成1个随机基础元素骰; 如果此牌有至少1点｢瞩目｣，将1个元素骰转换为[万能元素骰]。')
+        .description('【我方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【敌方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【行动阶段开始时：】如果此牌有至少3点｢瞩目｣，则生成1个随机基础元素骰\\；如果此牌有至少1点｢瞩目｣，将1个元素骰转换为[万能元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4b25dc7789eb47de50bf4f6d6001cfe6_5614159247725037900.png'),
 
     321024: () => new CardBuilder(441).name('｢悬木人｣').since('v5.2.0').place().costSame(0)
@@ -1462,7 +1462,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f0c19a49595f68895e309e5bf5760c1f_8058110322505961900.png'),
 
     322018: () => new CardBuilder(211).name('老章').since('v3.8.0').offline('v1').ally().costSame(1)
-        .description('【我方打出｢武器｣手牌时：】少花费1个元素骰; 我方场上每有一个已装备｢武器｣的角色，就额外少花费1个元素骰。（每回合1次）')
+        .description('【我方打出｢武器｣手牌时：】少花费1个元素骰\\；我方场上每有一个已装备｢武器｣的角色，就额外少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/c332425d700b588ed93ae01f9817e568_3896726709346713005.png'),
 
     322019: () => new CardBuilder(212).name('塞塔蕾').since('v4.0.0').ally().costSame(1)
@@ -1470,8 +1470,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/b4a9b32d9ff26697821d3cf0f2444ef7_7283838166930329300.png'),
 
     322020: () => new CardBuilder(213).name('弥生七月').since('v4.1.0').offline('v1').ally().costSame(1)
-        .description('【我方打出｢圣遗物｣手牌时：】少花费1个元素骰; 如果我方场上已有2个装备｢圣遗物｣的角色，就额外少花费1个元素骰。（每回合1次）')
-        .description('【我方打出｢圣遗物｣手牌时：】少花费1个元素骰; 如果我方场上每有1个装备｢圣遗物｣的角色，就额外少花费1个元素骰。（每回合1次）', 'v4.6.0')
+        .description('【我方打出｢圣遗物｣手牌时：】少花费1个元素骰\\；如果我方场上已有2个装备｢圣遗物｣的角色，就额外少花费1个元素骰。（每回合1次）')
+        .description('【我方打出｢圣遗物｣手牌时：】少花费1个元素骰\\；如果我方场上每有1个装备｢圣遗物｣的角色，就额外少花费1个元素骰。（每回合1次）', 'v4.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/09820a12324bca69fe30277287462e2f_7162251245504180312.png'),
 
     322021: () => new CardBuilder(311).name('玛梅赫').since('v4.3.0').ally().costSame(0)
@@ -1771,7 +1771,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
             cmds.push({ cmd: 'heal', cnt: 1, hidxs, mode: 1 });
-            return { isValid: heros.some(h => h.hp < h.maxHp), cmds }
+            return { cmds }
         }),
 
     332001: () => new CardBuilder(241).name('最好的伙伴！').offline('v1').event().costAny(2)
@@ -2485,7 +2485,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e56754de22dbaf1cfb84ce85af588d21_7106803920286784988.png'),
 
     212051: () => new CardBuilder(73).name('匣中玉栉').since('v3.5.0').talent(2).costHydro(3).energy(2)
-        .description('{action}；装备有此牌的【hro】使用【ski】时：召唤一个[可用次数]为1的【smn112051】; 如果【smn112051】已在场，则改为使其[可用次数]+1。；【sts112052】存在期间，【smn112051】造成的伤害+1。')
+        .description('{action}；装备有此牌的【hro】使用【ski】时：召唤一个[可用次数]为1的【smn112051】\\；如果【smn112051】已在场，则改为使其[可用次数]+1。；【sts112052】存在期间，【smn112051】造成的伤害+1。')
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果【smn112051】已在场，则改为使其[可用次数]+1。；【sts112052】存在期间，【smn112051】造成的伤害+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/5e980c377a2142322435bb4487b4f8fc_5354100201913685764.png'),
 
@@ -3182,7 +3182,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     224031: () => new CardBuilder(326).name('明珠固化').since('v4.4.0').talent().costSame(0)
-        .description('我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts124032】; 如果已附属【sts124032】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts124032】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。')
+        .description('我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts124032】\\；如果已附属【sts124032】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts124032】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/ec966272143de66e191950a6016cf14f_3693512171806066057.png')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
@@ -3342,7 +3342,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().costSame(0)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/d5b28af6dee07cf37bb2bfaa757a4656_5892221598902559399.png')
-        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌; 此牌被弃置时，所附属角色结束【sts112141】。')
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【sts112141】。')
         .handle((_, event) => {
             const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
             const hero = heros[hidxs[0]];

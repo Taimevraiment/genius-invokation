@@ -234,7 +234,6 @@ body {
   position: relative;
   user-select: none;
   overflow: hidden;
-  font-family: 'HYWenHei 85W';
 }
 
 .title {
@@ -242,6 +241,7 @@ body {
   width: 100%;
   text-align: center;
   margin: 20px 0;
+  font-weight: bolder;
 }
 
 .title-mobile {
@@ -264,7 +264,6 @@ button {
   padding: 5px 10px;
   width: 100px;
   border: 3px outset #0093c4;
-  font-family: 'HYWenHei 85W';
 }
 
 button:hover {

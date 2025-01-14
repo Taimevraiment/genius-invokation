@@ -88,7 +88,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
     111062: () => new SummonBuilder('光降之剑').maxUse(1000).damage(3).damage(2, 'v3.8.0').physical().plus().roundEnd()
-        .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}; 每有1点｢能量层数｣，都使次伤害+1。（影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。）')
+        .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点｢能量层数｣，都使次伤害+1。（影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {
             const { heros = [], isExec = true, trigger = '' } = event;
@@ -137,7 +137,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     111081: () => new SummonBuilder('寒病鬼差').useCnt(3).perCnt(1).perCnt(0, 'v4.7.0').damage(1)
-        .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点; 【每回合1次：】再治疗我方出战角色1点。')
+        .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点\\；【每回合1次：】再治疗我方出战角色1点。')
         .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
         .handle((summon, event = {}, ver) => {
@@ -333,7 +333,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     113093: () => new SummonBuilder('净焰剑狱领域').useCnt(3).damage(1).spReset()
-        .description('{defaultAtk。}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害; 然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。（每回合1次）')
+        .description('{defaultAtk。}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害\\；然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((summon, event) => {
             const { reset = false } = event;
@@ -421,7 +421,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/fe4516935ffa9eb9b193411113fa823f_372775257521707079.png'),
 
     114102: (isTalent: boolean = false) => new SummonBuilder('灯中幽精').useCnt(2).heal(2).talent(isTalent).plus(isTalent)
-        .description(`【结束阶段：】治疗我方出战角色{shield}点，并使其获得1点[充能]。${isTalent ? '；治疗生命值不多于6的角色时，治疗量+1; 使没有[充能]的角色获得[充能]时，获得量+1。' : ''}；[useCnt]`)
+        .description(`【结束阶段：】治疗我方出战角色{shield}点，并使其获得1点[充能]。${isTalent ? '；治疗生命值不多于6的角色时，治疗量+1\\；使没有[充能]的角色获得[充能]时，获得量+1。' : ''}；[useCnt]`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/c8209ff8f2c21e01e4e05203385410d7_8366905551575281519.png')
         .handle((summon, event) => ({
             trigger: ['phase-end'],
@@ -890,7 +890,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png'),
 
     123031: (isTalent: boolean = false) => new SummonBuilder('厄灵·炎之魔蝎').useCnt(2).damage(1).plus(isTalent).talent(isTalent)
-        .description(`{defaultAtk${isTalent ? '; 如果本回合中【hro】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
+        .description(`{defaultAtk${isTalent ? '\\；如果本回合中【hro】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
         .handle((summon, event) => {
             const { heros = [], trigger = '' } = event;

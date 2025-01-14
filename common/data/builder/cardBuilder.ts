@@ -116,7 +116,7 @@ export class GICard {
                 }
             }
             this.UI.description = this.UI.description
-                .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次【ski】。`)
+                .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次‹#d5bb49【ski】›。`)
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
                 .replace(/(?<=【)ski(?=】)/g, ski) + `；（牌组中包含【${hro}】，才能加入牌组）`;
             userType = hid;

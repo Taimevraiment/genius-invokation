@@ -114,7 +114,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     15078: () => ski1507x(ELEMENT_TYPE.Electro),
 
-    16074: () => new SkillBuilder('长枪开相').description('{dealDmg}; 如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
+    16074: () => new SkillBuilder('长枪开相').description('{dealDmg}\\；如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
         .elemental().readySkill().damage(2).handle(event => {
             const { playerInfo: { discardCnt = 0, reconcileCnt = 0 } = {} } = event;
             return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
