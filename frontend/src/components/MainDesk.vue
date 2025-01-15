@@ -291,7 +291,8 @@
                   style="height: 16px; padding-left: 3px" />
                 <span
                   :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hgi][hidx] ?? 0) > 0 && (willHp[hgi][hidx] ?? 0) % 1 == 0 ? '5px' : '0'}` }">
-                  {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{ Math.abs(Math.ceil(willHp[hgi][hidx] ?? 0) % 100) }}
+                  {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{
+                    Math.min(100, Math.abs(Math.ceil(willHp[hgi][hidx] ?? 0)) % 100) }}
                 </span>
               </div>
               <div class="damages">
@@ -943,7 +944,7 @@ button:active {
   border-radius: 10px;
   margin: 0 5%;
   cursor: pointer;
-  transition: --front-val 0.3s;
+  transition: --front-val 0.3s, box-shadow 0.5s;
   background: black;
   transform: translateY(var(--front-val)) scale(var(--scale-val-will));
 }

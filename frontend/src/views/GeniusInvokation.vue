@@ -192,17 +192,17 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
-    COST_TYPE,
-    DICE_COST_TYPE_CODE_KEY,
-    DiceCostType,
-    DiceCostTypeCode,
-    ELEMENT_TYPE,
-    OFFLINE_VERSION,
-    OfflineVersion,
-    PHASE,
-    PLAYER_STATUS,
-    SKILL_TYPE,
-    Version
+  COST_TYPE,
+  DICE_COST_TYPE_CODE_KEY,
+  DiceCostType,
+  DiceCostTypeCode,
+  ELEMENT_TYPE,
+  OFFLINE_VERSION,
+  OfflineVersion,
+  PHASE,
+  PLAYER_STATUS,
+  SKILL_TYPE,
+  Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';

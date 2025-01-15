@@ -97,6 +97,7 @@ export class GICard {
                 return {
                     ...res,
                     status: [...ressts, 303300],
+                    notPreview: true,
                 }
             }
         } else if (subType?.includes(CARD_SUBTYPE.Talent)) {

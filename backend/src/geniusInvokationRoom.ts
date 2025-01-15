@@ -1262,7 +1262,7 @@ export default class GeniusInvokationRoom {
             const dmgedHidxs = atkedIdxs ?? [+!!res.isSelf ^ isSelf ? cehidx : cahidx];
             const dmgEl = atkcmds[0]?.element;
             if (dmgEl) res.element = dmgEl as DamageType;
-            if (res.damage == undefined && res.pdmg == undefined && smndmg) return false;
+            if (res.damage == undefined && res.pdmg == undefined && !smndmg) return false;
             const reshidxs = res.hidxs ?? getBackHidxs(oplayers[cpidx ^ +!!res.isSelf].heros);
             const willDamages = smndmg ?? [new Array(dmgedHlen).fill(0).map<number[]>((_, i) => [
                 i == dmgedHidxs[0] ? (res.damage ?? -1) : -1,
@@ -4633,7 +4633,7 @@ export default class GeniusInvokationRoom {
         } = {}
     ): {
         cmds?: Cmds[], ndices?: DiceCostType[], phase?: Phase, heros?: Hero[], eheros?: Hero[], willHeals?: number[][],
-        changedEl?: ElementType, isSwitch?: number, isSwitchOppo?: number, discards?: Card[], willSwitch?: boolean[][],
+        changedEl?: ElementType, isSwitch?: number, isSwitchOppo?: number, willSwitch?: boolean[][],
         supportCnt?: number[][], elTips?: [string, PureElementType, PureElementType][], willAttachs?: PureElementType[][],
         aWillDamages?: number[][][], bWillDamages?: number[][], aDmgElements?: DamageType[], bDmgElements?: DamageType[],
         atkedIdxs?: number[], attackPreview?: Preview, tasks?: AtkTask[],
@@ -4660,7 +4660,6 @@ export default class GeniusInvokationRoom {
         const notPreHeal: boolean[] = [];
         const notDetect: boolean[] = [];
         let changedEl: ElementType | undefined;
-        let discards: Card[] | undefined;
         let attackPreview: Preview | undefined;
         const tasks: AtkTask[] = [];
         const elTips: [string, PureElementType, PureElementType][] = Array.from({ length: cheros.length + ceheros.length }, () => ['', ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Cryo]);
@@ -4878,14 +4877,14 @@ export default class GeniusInvokationRoom {
                     }, 300]], { isPriority, isUnshift });
                 }
             } else if (cmd == 'discard') {
-                if (discards == undefined) discards = [];
+                const discards: Card[] = [];
                 let discardCnt = cnt || 1;
                 const cpidx = pidx ^ +!!isOppo;
                 const cplayer = players[cpidx];
                 const unselectedCards = cplayer.handCards.filter(c => c.entityId != withCard?.entityId);
-                const discardIdxs = ohidxs ?? [];
+                const discardIdxs = (ohidxs ?? []).map(ci => unselectedCards[ci].entityId);
                 if (discardIdxs.length > 0) {
-                    discards.push(...clone(unselectedCards.filter((_, ci) => discardIdxs.includes(ci))));
+                    discards.push(...clone(unselectedCards.filter(c => discardIdxs.includes(c.entityId))));
                 } else {
                     if (typeof card == 'number') {
                         const targetCard = unselectedCards.find(c => c.id == card || c.entityId == card);
@@ -4894,15 +4893,13 @@ export default class GeniusInvokationRoom {
                             let curIdx = -1;
                             while (discardCnt-- > 0) {
                                 discards.push(clone(targetCard));
-                                curIdx = unselectedCards.findIndex((c, ci) => ci > curIdx && c.id == targetCard.id);
-                                discardIdxs.push(curIdx);
+                                curIdx = unselectedCards.findIndex((c, ci) => ci > curIdx && (c.id == targetCard.id || c.entityId == targetCard.entityId));
                             }
                         }
                     } else {
                         const hcardsSorted = clone(unselectedCards).sort((a, b) => ((b.cost + b.anydice) - (a.cost + a.anydice)));
                         if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
                             discards.push(...hcardsSorted);
-                            discardIdxs.push(...hcardsSorted.map(c => c.cidx));
                         } else {
                             const targetCnt = discardCnt;
                             while (discardCnt > 0) {
@@ -4910,7 +4907,6 @@ export default class GeniusInvokationRoom {
                                     const didx = this._randomInt(unselectedCards.length - 1);
                                     const [discard] = unselectedCards.splice(didx, 1);
                                     discards.push(clone(discard));
-                                    discardIdxs.push(didx);
                                 } else if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
                                     if (hcardsSorted.length == 0) break;
                                     const maxCost = hcardsSorted[0].cost + hcardsSorted[0].anydice;
@@ -4918,7 +4914,6 @@ export default class GeniusInvokationRoom {
                                     const didx = unselectedCards.findIndex(c => c.cidx == cdidx);
                                     const [discard] = unselectedCards.splice(didx, 1);
                                     discards.push(clone(discard));
-                                    discardIdxs.push(didx);
                                     hcardsSorted.splice(hcardsSorted.findIndex(c => c.cidx == didx), 1);
                                 } else if (mode == CMD_MODE.TopPileCard) { // 弃置牌堆顶的牌 
                                     if (cplayer.pile.length == 0) break;
@@ -4934,8 +4929,8 @@ export default class GeniusInvokationRoom {
                             }
                         }
                     }
-                    hidxs = [...discardIdxs];
-                    cmds[i].hidxs = [...discardIdxs];
+                    // hidxs = [...discardIdxs];
+                    // cmds[i].hidxs = [...discardIdxs];
                 }
                 if (discards.length > 0) {
                     const isDiscardHand = mode == CMD_MODE.Random || mode == CMD_MODE.AllHandCards || mode == CMD_MODE.HighHandCard || card || ohidxs;
@@ -4948,8 +4943,8 @@ export default class GeniusInvokationRoom {
                         this.taskQueue.addTask(`doCmd--discard-p${cpidx}:${cardNames}`, [[async () => {
                             const p = this.players[cpidx];
                             if (isDiscardHand) { // 舍弃手牌
-                                discardIdxs.forEach(dcidx => p.UI.willDiscard[0].push(p.handCards[dcidx]));
-                                assgin(p.handCards, p.handCards.filter((_, dcidx) => !discardIdxs.includes(dcidx)));
+                                discards.forEach(dc => p.UI.willDiscard[0].push(dc));
+                                assgin(p.handCards, p.handCards.filter(dc => !discards.map(c => c.entityId).includes(dc.entityId)));
                             } else { // 舍弃牌库中的牌
                                 p.UI.willDiscard[1].push(...p.pile.filter((_, dcidx) => discardIdxs.includes(dcidx)));
                                 p.pile = p.pile.filter((_, dcidx) => !discardIdxs.includes(dcidx));
@@ -4975,7 +4970,7 @@ export default class GeniusInvokationRoom {
                                 notDetect[0] = true;
                             }
                         }
-                        assgin(players[cpidx].handCards, players[cpidx].handCards.filter((_, dcidx) => !discardIdxs.includes(dcidx)));
+                        assgin(players[cpidx].handCards, players[cpidx].handCards.filter(dc => !discards.map(c => c.entityId).includes(dc.entityId)));
                     }
                 }
             } else if (cmd == 'getDice' && isExec) {
@@ -5181,6 +5176,8 @@ export default class GeniusInvokationRoom {
                         if (!attackPreview) attackPreview = atkPreview;
                         else {
                             const { willHp: whp, willAttachs: wa } = atkPreview;
+                            if (!attackPreview?.willHp) attackPreview.willHp = new Array(cheros.length + ceheros.length).fill(undefined);
+                            if (!attackPreview?.willAttachs) attackPreview.willAttachs = Array.from({ length: cheros.length + ceheros.length }, () => []);
                             attackPreview?.willHp?.forEach((_, whpi, whpa) => {
                                 if (whpa[whpi] == undefined) whpa[whpi] = whp?.[whpi];
                                 else whpa[whpi] += whp?.[whpi] ?? 0;
@@ -5264,16 +5261,19 @@ export default class GeniusInvokationRoom {
         });
         tmpHeals.forEach((th, thi) => cheros[thi].hp -= th);
         tmpDamages.forEach((td, hi) => cheros[hi].hp += td);
-        if (attackPreview?.willHp) {
-            willHeals.forEach(whls => {
-                whls.forEach((whl, whli) => {
-                    if (whl > 0) {
-                        if (attackPreview.willHp![whli] == undefined) attackPreview!.willHp![whli] = whl;
-                        else attackPreview.willHp![whli] += whl;
+        willHeals.forEach(whls => {
+            whls.forEach((whl, whli) => {
+                if (whl > -1) {
+                    if (!attackPreview) attackPreview = { type: 'use-card', isValid: true, willHp: new Array(cheros.length + ceheros.length).fill(undefined) };
+                    if (!attackPreview?.willHp) attackPreview.willHp = new Array(cheros.length + ceheros.length).fill(undefined);
+                    if (attackPreview.willHp[whli] != 100) {
+                        if (attackPreview.willHp[whli] == undefined) attackPreview!.willHp![whli] = whl;
+                        else attackPreview.willHp[whli] += whl;
+                        attackPreview.willHp[whli] ||= 100;
                     }
-                });
+                }
             });
-        }
+        });
         if (withCard && tasks.length && !isExec) {
             const { willHp: taskwhp, willAttachs: taskwa } = this._useSkill(pidx, -2, { isPreview: true, players, tasks });
             attackPreview?.willHp?.forEach((_, whpi, whpa) => {
@@ -5299,7 +5299,7 @@ export default class GeniusInvokationRoom {
         }
         if (combatStatusOppo) this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, players, { hidx: ehidx, isExec, supportCnt, isQuickAction: !isAction });
         return {
-            cmds, phase, heros: cheros, eheros: ceheros, willHeals, changedEl, isSwitch, isSwitchOppo, discards,
+            cmds, phase, heros: cheros, eheros: ceheros, willHeals, changedEl, isSwitch, isSwitchOppo,
             willSwitch, supportCnt, elTips, willAttachs, aDmgElements, bDmgElements, aWillDamages, bWillDamages,
             attackPreview, atkedIdxs, tasks,
         }

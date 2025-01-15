@@ -254,7 +254,7 @@ type ServerData = Readonly<{
     flag: string,
 }>
 
-type Preview = Readonly<ActionData & {
+type Preview = ActionData & {
     isValid: boolean,
     willHp?: (number | undefined)[],
     willAttachs?: ElementType[][],
@@ -269,7 +269,7 @@ type Preview = Readonly<ActionData & {
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
     tarHidx?: number,
-}>
+}
 
 type LogType = 'log' | 'system' | 'info' | 'emit';
 
