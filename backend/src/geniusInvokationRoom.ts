@@ -662,7 +662,11 @@ export default class GeniusInvokationRoom {
                 else {
                     const odice = player.dice.slice();
                     player.dice = player.dice.filter((_, di) => !diceSelect[di]);
-                    const { invalidInfo } = this._useSkill(pidx, skillId, { selectSummon: summonIdx, selectHero: heroIdxs[0] });
+                    const { invalidInfo } = this._useSkill(pidx, skillId, {
+                        selectSummon: summonIdx,
+                        selectHero: heroIdxs[0],
+                        isChargedAtk: odice.length % 2 == 0,
+                    });
                     if (invalidInfo.flag != '') {
                         player.dice = odice;
                         this.emit(invalidInfo.flag, pidx, { socket, tip: invalidInfo.tip, notPreview: true });
@@ -885,7 +889,7 @@ export default class GeniusInvokationRoom {
             this._detectSkill(pidx, 'switch-to', { hidxs: hidx, isQuickAction });
             for (let i = 0; i < player.heros.length; ++i) {
                 const chi = (hidx + i) % player.heros.length;
-                const triggers: Trigger[] = [];
+                const triggers: Trigger[] = ['switch'];
                 const types: StatusType[] = [];
                 if (chi == ohidx) {
                     triggers.push('switch-from');
@@ -1138,12 +1142,13 @@ export default class GeniusInvokationRoom {
      * @param options.tasks 切换角色前生成的攻击任务(如弃弹头)
      * @param options.willHeals 使用卡/召唤物回血
      * @param options.selectHero 使用技能时选择的角色序号
+     * @param options.isChargedAtk 是否为重击
      */
     private _useSkill(pidx: number, skid: number | SkillType, options: {
         isPreview?: boolean, withCard?: Card, isSwitch?: number, isReadySkill?: boolean, otriggers?: Trigger | Trigger[],
         willDamages?: number[][][], dmgElements?: DamageType[], isSummon?: number, atkedIdxs?: number[], players?: Player[],
         selectSummon?: number, supportCnt?: number[][], pickSummon?: Summon[], isPickCard?: boolean, isQuickAction?: boolean,
-        tasks?: AtkTask[], willHeals?: number[][], selectHero?: number,
+        tasks?: AtkTask[], willHeals?: number[][], selectHero?: number, isChargedAtk?: boolean,
     } = {}) {
         const { isPreview = false, withCard, isSwitch = -1, isReadySkill = false, otriggers = [],
             willDamages, dmgElements, willHeals, isSummon = -1, atkedIdxs, players: cplayers = this.players,
@@ -1172,13 +1177,13 @@ export default class GeniusInvokationRoom {
         if (!isExec && withCard?.type == CARD_TYPE.Equipment && withCard.hasSubtype(CARD_SUBTYPE.Talent)) {
             aHeros()[ahidx()].talentSlot = withCard;
         }
+        let { isQuickAction = false, isChargedAtk = player().dice.length % 2 == 0 } = options;
         // 判断准备技能和切换角色的技能
-        let skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, isSwitch, skid, players, isExec });
+        let skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, isSwitch, skid, players, isExec, isChargedAtk });
         if (skill) skid = skill.id;
         const willAttachPre: PureElementType[][] = players.flatMap(p => Array.from({ length: p.heros.length }, () => []));
         const skillcmds: Cmds[] = [];
-        let { isQuickAction = false } = options;
-        const isChargedAtk = skill?.type == SKILL_TYPE.Normal && ((player().dice.length + (!isPreview ? (withCard ? withCard.cost - withCard.costChange : skill.cost[0].cnt + skill.cost[1].cnt - skill.costChange[0] - skill.costChange[1]) : 0)) % 2) == 0;
+        // const isChargedAtk = skill?.type == SKILL_TYPE.Normal && ((player().dice.length + (!isPreview ? (withCard ? withCard.cost + withCard.anydice - withCard.costChange : skill.cost[0].cnt + skill.cost[1].cnt - skill.costChange[0] - skill.costChange[1]) : 0)) % 2) == 0;
         const isFallAtk = skill?.type == SKILL_TYPE.Normal && (player().isFallAtk || isSwitch > -1);
         const reviveCnt = players.map(p => {
             return p.heros.map(h => {
@@ -1423,7 +1428,8 @@ export default class GeniusInvokationRoom {
             if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(players, this._getHeroField(pidx, { players, hidx: cahidx, isOnlyHeroStatus: true }), cahidx, STATUS_GROUP.heroStatus, ['switch-to'], false, 1));
             if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(players, player().combatStatus, cahidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to', 'switch'], false, 1));
         }
-        skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, skid, players, isExec });
+        skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, skid, players, isExec, isChargedAtk });
+        isChargedAtk &&= skill?.type == SKILL_TYPE.Normal;
         if (skill) skid = skill.id;
         const skillres = skill?.handle({
             skill,
@@ -2747,8 +2753,10 @@ export default class GeniusInvokationRoom {
         const isUseSkill = cardcmds.some(({ cmd, cnt }) => cmd == 'useSkill' && cnt != -2);
         let isInvalid = false;
         let { isQuickAction = !isAction } = options;
-        if (getcard) cardcmds.push({ cmd: 'discard', card: currCard.entityId, cnt: 1, status: 111 })
-        else {
+        if (getcard) {
+            cardcmds.push({ cmd: 'discard', card: currCard.entityId, cnt: 1, status: 111 });
+            cardcmds.reverse();
+        } else {
             player.playerInfo.isUsedCardPerRound = true;
             if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
             this._detectSkill(pidx, 'card');
@@ -2786,6 +2794,7 @@ export default class GeniusInvokationRoom {
                     isAction: !isQuickAction,
                     hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
                     source: currCard.id,
+                    isUnshift: !!getcard,
                 });
             if (cardres.hidxs && currCard.type != CARD_TYPE.Equipment) assgin(hidxs, cardres.hidxs);
             if (cardres.support) {
@@ -2858,8 +2867,10 @@ export default class GeniusInvokationRoom {
                     }
                     await this._execTask();
                 }
-                if (isAction && !isUseSkill) this._changeTurn(pidx, isQuickAction, 'useCard');
-                else if (canAction) this._doActionStart(pidx);
+                if (!getcard) {
+                    if (isAction && !isUseSkill) this._changeTurn(pidx, isQuickAction, 'useCard');
+                    else if (canAction) this._doActionStart(pidx);
+                }
             }
         }
     }
@@ -4688,6 +4699,7 @@ export default class GeniusInvokationRoom {
                             isReadySkill: isAttach,
                             otriggers: summonTrigger,
                             selectSummon: ohidxs?.[0],
+                            isChargedAtk: player.dice.length + (withCard ? withCard.cost + withCard.anydice - withCard.costChange : 0) % 2 == 0,
                         });
                     }]]);
                 } else {
@@ -4959,7 +4971,7 @@ export default class GeniusInvokationRoom {
                                 if (!isAttach) this._doDiscard(pidx, discards!, { isAction });
                                 else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { isPriority: true, isUnshift: true });
                             }
-                        }]]);
+                        }]], { isPriority, isUnshift });
                     } else {
                         if (!isAttach && !stsargs) {
                             const { tasks: distasks, willHeals: disheal } = this._doDiscard(pidx, discards, { players, isAction, isExec, supportCnt });
@@ -5855,12 +5867,14 @@ export default class GeniusInvokationRoom {
     * @param options.skid 使用的技能id
     * @param options.players 玩家数组
     * @param options.isExec 是否执行
+    * @param options.isChargedAtk 是否为重击
     */
     private _calcSkillChange(pidx: number, hidx: number, options: {
-        isSwitch?: number, isReadySkill?: boolean, skid?: number, players?: Player[], isExec?: boolean,
+        isSwitch?: number, isReadySkill?: boolean, skid?: number, players?: Player[], isExec?: boolean, isChargedAtk?: boolean,
     } = {}) {
         const { isSwitch = -1, isReadySkill, skid = -1, players = this.players, isExec = false } = options;
         const player = players[pidx];
+        const { isChargedAtk = player.dice.length % 2 == 0 } = options;
         if (hidx == -1 || skid == -2 || !player) return;
         const heros = player.heros;
         if (isSwitch > -1 && !isExec) hidx = isSwitch;
@@ -5931,7 +5945,7 @@ export default class GeniusInvokationRoom {
                 eheros: players[pidx ^ 1]?.heros,
                 hidxs: [hidx],
                 hidx,
-                isChargedAtk: (player.dice.length & 1) == 0,
+                isChargedAtk,
                 isFallAtk: player.isFallAtk,
                 hcards: player.handCards,
                 trigger: 'calc',
@@ -5943,7 +5957,7 @@ export default class GeniusInvokationRoom {
             const smnres = smn.handle(smn, {
                 heros,
                 hidx,
-                isChargedAtk: (player.dice.length & 1) == 0,
+                isChargedAtk,
                 isFallAtk: player.isFallAtk,
                 trigger: 'calc',
             });

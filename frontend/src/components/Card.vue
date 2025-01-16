@@ -1,6 +1,6 @@
 <template>
     <div class="card" :class="{ 'mobile-card': isMobile }">
-        <div class="card-border"></div>
+        <div class="card-border" v-if="!isHideBorder"></div>
         <img class="card-img" :src="getPngIcon(card.UI.src)" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
@@ -47,11 +47,13 @@ const props = defineProps<{
     card: Card,
     isMobile: boolean,
     isHideCost?: boolean,
+    isHideBorder?: boolean,
 }>();
 
 const card = computed<Card>(() => props.card);
 const isMobile = computed<boolean>(() => props.isMobile);
 const isHideCost = computed<boolean>(() => props.isHideCost || false);
+const isHideBorder = computed<boolean>(() => props.isHideBorder || false);
 
 // 获取骰子背景
 const getDiceBgIcon = (name: string) => {
@@ -85,7 +87,7 @@ const getPngIcon = (name: string = '') => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-family: 'HYWenHei 85W';
+    font-family: HYWenHei;
 }
 
 .card-img {
@@ -124,6 +126,8 @@ const getPngIcon = (name: string = '') => {
     text-align: center;
     line-height: 30px;
     -webkit-text-stroke: 1px black;
+    font-family: sans-serif;
+    font-weight: bold;
     z-index: 1;
 }
 
@@ -137,6 +141,8 @@ const getPngIcon = (name: string = '') => {
     text-align: center;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
+    font-family: sans-serif;
+    font-weight: bold;
     z-index: 1;
 }
 

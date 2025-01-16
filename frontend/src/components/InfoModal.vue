@@ -611,7 +611,7 @@ const showRule = (...desc: string[]) => {
   align-items: flex-start;
   user-select: none;
   pointer-events: none;
-  font-family: 'HYWenHei 85W';
+  font-family: HYWenHei;
 }
 
 .info-container {
@@ -644,6 +644,8 @@ const showRule = (...desc: string[]) => {
   font-size: medium;
   display: inline-block;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
 }
 
 .cost-img {
@@ -672,6 +674,8 @@ const showRule = (...desc: string[]) => {
   color: white;
   display: inline-block;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
 }
 
 .info-card-energy>span,
@@ -897,6 +901,8 @@ svg {
   align-items: center;
   color: white;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
 }
 
 .info-outer-container>.info-container .skill-cost>.cost-img {

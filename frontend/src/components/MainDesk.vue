@@ -824,7 +824,7 @@ const mouseup = () => {
   left: 0;
   height: 75%;
   width: 100%;
-  font-family: 'HYWenHei 85W';
+  font-family: HYWenHei;
 }
 
 .side {
@@ -842,6 +842,8 @@ const mouseup = () => {
   aspect-ratio: 1/1;
   color: white;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
   margin-bottom: 5px;
   cursor: pointer;
 }
@@ -905,7 +907,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: 'HYWenHei 85W';
+  font-family: HYWenHei;
 }
 
 button:active {
@@ -986,7 +988,9 @@ button:active {
 
 .hero-hp-cnt {
   color: white;
-  -webkit-text-stroke: black 1px;
+  -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
   z-index: 1;
   padding-right: 2px;
   transform: scale(var(--scale-val-change));
@@ -1076,6 +1080,8 @@ button:active {
   /* background-color: #c67b7b; */
   color: white;
   -webkit-text-stroke: 0.8px black;
+  font-family: sans-serif;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1135,6 +1141,8 @@ button:active {
   border-image-width: 7px;
   color: white;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
   z-index: 1;
 }
 
@@ -1203,6 +1211,8 @@ button:active {
   font-size: 0;
   box-sizing: border-box;
   -webkit-text-stroke: 0.8px black;
+  font-family: sans-serif;
+  font-weight: bold;
   /* background-image: url(@@/image/Attack.png); */
   background-size: 100%;
 }
@@ -1430,6 +1440,8 @@ button:active {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
   transition: 0.2s;
   z-index: 1;
 }
@@ -1458,6 +1470,8 @@ button:active {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
   z-index: 1;
 }
 
@@ -1866,7 +1880,7 @@ button:active {
 }
 
 .mobile-outstatus {
-  bottom: -17px;
+  bottom: -14px;
 }
 
 .mobile-will-card {

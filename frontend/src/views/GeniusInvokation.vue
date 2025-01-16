@@ -588,7 +588,7 @@ body {
   position: relative;
   user-select: none;
   overflow: hidden;
-  font-family: 'HYWenHei 85W';
+  font-family: HYWenHei;
 }
 
 .player-info {
@@ -720,6 +720,8 @@ body {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
+  font-family: sans-serif;
+  font-weight: bold;
 }
 
 .cost-img {
@@ -744,7 +746,7 @@ body {
 }
 
 .menu button {
-  font-family: 'HYWenHei 85W';
+  font-family: HYWenHei;
 }
 
 .start {

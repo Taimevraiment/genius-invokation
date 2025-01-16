@@ -692,7 +692,7 @@ body div {
     height: 95vh;
     background-color: #daa98a;
     overflow: hidden;
-    font-family: 'HYWenHei 85W';
+    font-family: HYWenHei;
 }
 
 .edit-deck-list {
@@ -890,7 +890,7 @@ body div {
     margin: 5px;
     border-radius: 10px;
     cursor: pointer;
-    font-family: 'HYWenHei 85W';
+    font-family: HYWenHei;
 }
 
 .edit-deck-btn-group button:hover,
@@ -1039,7 +1039,9 @@ input#isOfflineInput:checked {
 .hero-hp-cnt {
     position: absolute;
     color: white;
-    -webkit-text-stroke: black 1px;
+    -webkit-text-stroke: 1px black;
+    font-family: sans-serif;
+    font-weight: bold;
     z-index: 1;
     padding-right: 2px;
 }
@@ -1068,6 +1070,8 @@ input#isOfflineInput:checked {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
+    font-family: sans-serif;
+    font-weight: bold;
     z-index: 1;
 }
 
@@ -1095,6 +1099,8 @@ input#isOfflineInput:checked {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
+    font-family: sans-serif;
+    font-weight: bold;
     z-index: 1;
 }
 
