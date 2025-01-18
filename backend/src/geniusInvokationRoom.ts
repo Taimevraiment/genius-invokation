@@ -26,7 +26,7 @@ import {
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
-    ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Hero, LogType, MinusDiceSkill, PickCard,
+    ActionData, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
     Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
@@ -34,7 +34,7 @@ import TaskQueue from './taskQueue.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default class GeniusInvokationRoom {
-    private io: Server; // socket.io
+    private io?: Server; // socket.io
     id: number; // 房间id
     name: string; // 房间名
     version: VersionCompareFn; // 游戏版本
@@ -60,20 +60,18 @@ export default class GeniusInvokationRoom {
     private pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', skillId: -1 };// 挑选卡牌信息
     private shareCodes: string[] = ['', '']; // 卡组码
     allowLookon: boolean; // 是否允许观战
-    private isDev: boolean = false; // 是否为开发模式
+    private env: Env; // 环境
     private newStatus: (id: number, ...args: any) => Status;
     private newCard: (id: number, ...args: any) => Card;
     private newHero: (id: number) => Hero;
     private newSummon: (id: number, ...args: any) => Summon;
     private newSkill: (id: number) => Skill;
     private newSupport: (id: number | Card, ...args: any) => Support;
-    leaveRoom: (eventName: string, player?: Player) => void;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
     // private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
 
-    constructor(io: Server, id: number, name: string, version: Version, password: string,
-        leaveRoom: (eventName: string, player?: Player) => void, countdown: number, allowLookon: boolean, isDev: boolean) {
+    constructor(id: number, name: string, version: Version, password: string, countdown: number, allowLookon: boolean, env: Env, io?: Server) {
         this.io = io;
         this.id = id;
         this.name = name || `房间${id}`;
@@ -81,7 +79,7 @@ export default class GeniusInvokationRoom {
         this.password = password;
         this.countdown.limit = countdown;
         this.allowLookon = allowLookon;
-        this.isDev = isDev;
+        this.env = env;
         this.newStatus = newStatus(version);
         this.newCard = newCard(version);
         this.newHero = newHero(version);
@@ -91,8 +89,10 @@ export default class GeniusInvokationRoom {
             return newSupport(version)(id, ...args);
         }
         this.newSkill = newSkill(version);
-        this.leaveRoom = leaveRoom;
-        this.taskQueue = new TaskQueue(this._writeLog.bind(this), isDev);
+        this.taskQueue = new TaskQueue(this._writeLog.bind(this), this.isDev);
+    }
+    get isDev() {
+        return this.env === 'dev';
     }
     get currentPlayerIdx() {
         return this._currentPlayerIdx;
@@ -191,6 +191,7 @@ export default class GeniusInvokationRoom {
      * @param isOnlySystem 是否只记录为系统日志
      */
     private _writeLog(log: string, type: LogType = 'log') {
+        if (this.env == 'test') return;
         if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/{[^\{\}]+}/g, ''), type });
         this.systemLog += log.replace(/\{|\}/g, '') + '\n';
     }
@@ -293,6 +294,7 @@ export default class GeniusInvokationRoom {
             ) {
                 previews.push(...this._getPreview(this.currentPlayerIdx));
                 this.previews = previews;
+                if (this.env == 'test') return;
                 if ( // AI行动
                     (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
                         flag.includes('reroll') || flag.includes('reconcile') ||
@@ -438,12 +440,12 @@ export default class GeniusInvokationRoom {
                     ..._serverDataVO(pidx, tip),
                 }));
             } else {
-                this.io.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
+                this.io?.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
                     ...serverData,
                     ..._serverDataVO(-1, tip),
                 }));
                 this.players.forEach(p => {
-                    this.io.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
+                    this.io?.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
                         ...serverData,
                         ..._serverDataVO(p.pidx, tip),
                     }));
@@ -461,7 +463,7 @@ export default class GeniusInvokationRoom {
      */
     emitError(err: Error) {
         if (err.stack) this.errorLog.push(err.stack);
-        this.io.to([`7szh-${this.id}`, `7szh-${this.id}-p0`, `7szh-${this.id}-p1`]).emit('error', err.message);
+        this.io?.to([`7szh-${this.id}`, `7szh-${this.id}-p0`, `7szh-${this.id}-p1`]).emit('error', err.message);
         this.exportLog();
     }
     /**
@@ -542,8 +544,8 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      * @param flag 标志
      */
-    start(pidx: number, flag: string) {
-        this.seed ||= Math.floor(Math.random() * 1e10).toString();
+    start(pidx: number, flag: string, seed?: string) {
+        this.seed ||= isCdt(this.env == 'test', seed) ?? Math.floor(Math.random() * 1e10).toString();
         this._random = +this.seed;
         const d = new Date();
         const format = (n: number) => String(n).padStart(2, '0');
@@ -612,18 +614,17 @@ export default class GeniusInvokationRoom {
     /**
      * 获取行动
      * @param actionData 行动数据
-     * @param socket 发送请求socket
      * @param pidx 发起行动的玩家序号
+     * @param socket 发送请求socket
      */
-    getAction(actionData: ActionData, socket: Socket, pidx: number = this.currentPlayerIdx) {
+    getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket) {
         if (this.taskQueue.isExecuting) return;
-        const { deckIdx = -1, heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
+        const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
             diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
         const player = this.players[pidx];
         // this.resetHeartBreak(pidx);
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
-                player.deckIdx = deckIdx;
                 if (this.shareCodes[pidx] != shareCode && heroIds.length > 0 && cardIds.length > 0) {
                     if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', pidx, { socket, tip: '当前出战卡组不完整' });
                     player.heros = heroIds.map(hid => parseHero(hid, this.version.value));
@@ -643,10 +644,10 @@ export default class GeniusInvokationRoom {
                 }
                 break;
             case ACTION_TYPE.ChangeCard:
-                this._changeCard(pidx, cardIdxs, socket, flag);
+                this._changeCard(pidx, cardIdxs, flag, socket);
                 break;
             case ACTION_TYPE.ChooseInitHero:
-                this._chooseInitHero(pidx, heroIdxs[0], socket, flag);
+                this._chooseInitHero(pidx, heroIdxs[0], flag, socket);
                 break;
             case ACTION_TYPE.Reroll:
                 this._reroll(diceSelect, pidx, flag, socket);
@@ -709,7 +710,7 @@ export default class GeniusInvokationRoom {
             if (!this.isStart) this._setSeed(seed);
             return;
         }
-        if (!this.isDev && !this.seed.endsWith(`-s${seed}`)) return;
+        if (this.env == 'prod' && !this.seed.endsWith(`-s${seed}`)) return;
         if (flag.includes('log')) return this.exportLog({ isShowRoomInfo: false });
         const player = this.players[cpidx];
         const heros = player.heros;
@@ -774,7 +775,7 @@ export default class GeniusInvokationRoom {
      * @param cardIdxs 要替换的手牌序号
      * @param flag flag
      */
-    private _changeCard(pidx: number, cardIdxs: number[], socket: Socket, flag: string) { // 换牌
+    private _changeCard(pidx: number, cardIdxs: number[], flag: string, socket?: Socket) { // 换牌
         const player = this.players[pidx];
         const handCardsLen = player.handCards.length;
         const blackIds = new Set<number>();
@@ -816,7 +817,7 @@ export default class GeniusInvokationRoom {
      * @param socket socket
      * @param flag flag
      */
-    private _chooseInitHero(pidx: number, hidx: number, socket: Socket, flag: string) {
+    private _chooseInitHero(pidx: number, hidx: number, flag: string, socket?: Socket) {
         const player = this.players[pidx];
         player.hidx = hidx;
         if (player.heros[hidx].isFront) { // 确认选择
@@ -2754,7 +2755,7 @@ export default class GeniusInvokationRoom {
         let isInvalid = false;
         let { isQuickAction = !isAction } = options;
         if (getcard) {
-            cardcmds.push({ cmd: 'discard', card: currCard.entityId, cnt: 1, status: 111 });
+            cardcmds.push({ cmd: 'discard', card: currCard.entityId, cnt: 1, isAttach: true });
             cardcmds.reverse();
         } else {
             player.playerInfo.isUsedCardPerRound = true;
@@ -4888,10 +4889,11 @@ export default class GeniusInvokationRoom {
                         this.emit('doCmd--addcard-after', pidx, { isQuickAction: !isAction });
                     }, 300]], { isPriority, isUnshift });
                 }
-            } else if (cmd == 'discard') {
+            } else if (['discard', 'stealCard'].includes(cmd)) {
+                const isDiscard = cmd == 'discard';
                 const discards: Card[] = [];
                 let discardCnt = cnt || 1;
-                const cpidx = pidx ^ +!!isOppo;
+                const cpidx = pidx ^ +!!isOppo ^ +(cmd == 'stealCard');
                 const cplayer = players[cpidx];
                 const unselectedCards = cplayer.handCards.filter(c => c.entityId != withCard?.entityId);
                 const discardIdxs = (ohidxs ?? []).map(ci => unselectedCards[ci].entityId);
@@ -4922,7 +4924,8 @@ export default class GeniusInvokationRoom {
                                 } else if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
                                     if (hcardsSorted.length == 0) break;
                                     const maxCost = hcardsSorted[0].cost + hcardsSorted[0].anydice;
-                                    const cdidx = this._randomInArr(unselectedCards.filter(c => c.cost + c.anydice == maxCost))[0].cidx;
+                                    const maxCostCards = unselectedCards.filter(c => c.cost + c.anydice == maxCost);
+                                    const [{ cidx: cdidx }] = isDiscard ? this._randomInArr(maxCostCards) : maxCostCards;
                                     const didx = unselectedCards.findIndex(c => c.cidx == cdidx);
                                     const [discard] = unselectedCards.splice(didx, 1);
                                     discards.push(clone(discard));
@@ -4947,7 +4950,7 @@ export default class GeniusInvokationRoom {
                 if (discards.length > 0) {
                     const isDiscardHand = mode == CMD_MODE.Random || mode == CMD_MODE.AllHandCards || mode == CMD_MODE.HighHandCard || card || ohidxs;
                     if (isExec) {
-                        if (!isAttach) {
+                        if (isDiscard) {
                             cplayer.playerInfo.discardCnt += discards.length;
                             cplayer.playerInfo.discardIds.push(...discards.map(c => c.id));
                         }
@@ -4961,19 +4964,19 @@ export default class GeniusInvokationRoom {
                                 p.UI.willDiscard[1].push(...p.pile.filter((_, dcidx) => discardIdxs.includes(dcidx)));
                                 p.pile = p.pile.filter((_, dcidx) => !discardIdxs.includes(dcidx));
                             }
-                            this._writeLog(`[${p.name}]${isAttach ? '被夺取了' : '舍弃了'}${cardNames}`);
+                            this._writeLog(`[${p.name}]${isDiscard ? '舍弃了' : '被夺取了'}${cardNames}`);
                             this.emit('doCmd--discard', pidx);
                             const getcard = clone(p.UI.willDiscard[0]);
                             await delay(1500);
                             p.UI.willDiscard.forEach((_, i, a) => a[i] = []);
                             this.emit('doCmd--discard-after', pidx, { isQuickAction: !isAction });
-                            if (!stsargs) {
-                                if (!isAttach) this._doDiscard(pidx, discards!, { isAction });
+                            if (!isAttach) {
+                                if (isDiscard) this._doDiscard(pidx, discards!, { isAction });
                                 else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { isPriority: true, isUnshift: true });
                             }
                         }]], { isPriority, isUnshift });
                     } else {
-                        if (!isAttach && !stsargs) {
+                        if (!isAttach && isDiscard) {
                             const { tasks: distasks, willHeals: disheal } = this._doDiscard(pidx, discards, { players, isAction, isExec, supportCnt });
                             tasks.push(...distasks);
                             if (disheal) {

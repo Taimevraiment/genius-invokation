@@ -10,7 +10,8 @@
                 </div>
                 <div>{{ deck.name }}</div>
                 <div style="height: 1.2rem;">
-                    {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体版' : '' }}{{ deck.version }}
+                    {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体版' : '' }}{{
+                        compareVersionFn(deck.version).value }}
                 </div>
                 <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero">
                     <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name" style="width: 100%;height: 100%;" />
@@ -50,7 +51,7 @@
                 <button @click.stop="{ currIdx = 1; updateInfo(); }" :class="{ active: currIdx == 1 }">
                     卡组
                 </button>
-                <select name="version" id="version" v-model="version" :size="selectSize" @click="clickSelect"
+                <select name="version" id="version" v-model="version" :size="selectSize" @click.stop="clickSelect"
                     @change="updateInfo()">
                     <option v-for="ver in versionSelect" :key="ver" :value="ver">
                         {{ ver }}
@@ -181,6 +182,11 @@
             <button class="edit-btn filter" @click.stop="showFilter">筛选</button>
             <button class="edit-btn reset" @click="reset">重置</button>
             <div class="filter-condition" v-if="isShowFilter" @click.stop="">
+                <select name="sinceVersion" class="filter-select" v-model="sinceVersionFilter" @change="updateInfo()">
+                    <option v-for="ver in sinceVersionSelect" :key="ver" :value="ver">
+                        {{ ver }}
+                    </option>
+                </select>
                 <div v-for="(htitle, hidx) in [heroFilter, cardFilter][currIdx]" :key="hidx">
                     <div class="filter-title">{{ htitle.name }}</div>
                     <div class="filter-tags">
@@ -219,6 +225,7 @@ import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, parseHero } from '../../../common/data/heros';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
 import { Card, Hero, InfoVO } from '../../../typing';
+import { compareVersionFn } from '@@@/utils/gameUtil';
 
 type Filter<T> = {
     name: string,
@@ -242,7 +249,8 @@ const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera M
 
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
-const version = ref<Version>(oriDecks.value[editDeckIdx.value]?.version ?? VERSION[0]); // 当前版本
+const oriVersion = computed(() => oriDecks.value[editDeckIdx.value]?.version ?? 'vlatest');
+const version = ref<Version>(compareVersionFn(oriVersion.value).value); // 当前版本
 const herosPool = computed<Hero[]>(() => herosTotal(version.value)); // 选择的角色池
 const cardsPool = computed<Card[]>(() => cardsTotal(version.value)); // 选择的卡组池
 
@@ -300,6 +308,8 @@ const pShareCode = ref<string>('');
 const isShowDeckShareImg = ref<boolean>(false);
 const isOfflineVersion = ref<boolean>(false);
 const selectSize = ref<number>(0);
+const sinceVersionSelect = computed(() => ['实装版本'].concat(versionSelect.value.filter(ver => compareVersionFn(ver).lte(version.value))));
+const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 
 // 获取png图片
 const getPngIcon = (name: string) => {
@@ -318,7 +328,7 @@ const saveDeck = () => {
     updateShareCode();
     oriDecks.value[editDeckIdx.value] = {
         name: deckName.value || '默认卡组',
-        version: version.value,
+        version: version.value == VERSION[0] ? 'vlatest' : version.value,
         shareCode: shareCode.value,
     }
     localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
@@ -476,7 +486,8 @@ const updateInfo = (init = false) => {
         const st = cardFilterRes[1].length == 0 || cardFilterRes[1].every(v => c.hasSubtype(v));
         const co = cardFilterRes[2].length == 0 || cardFilterRes[2].includes(c.cost + c.anydice);
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
-        return t && st && co && ct;
+        const sinceVersion = sinceVersionFilter.value == '实装版本' || c.sinceVersion == sinceVersionFilter.value;
+        return t && st && co && ct && sinceVersion;
     }).sort((a, b) => {
         if (a.UI.cnt == -1 && b.UI.cnt != -1) return 1;
         if (a.UI.cnt != -1 && b.UI.cnt == -1) return -1;
@@ -489,11 +500,13 @@ const updateInfo = (init = false) => {
         const tag = heroFilterRes[0].length == 0 || heroFilterRes[0].every(hl => h.tags.includes(hl));
         const element = heroFilterRes[1].length == 0 || heroFilterRes[1].includes(h.element);
         const weapon = heroFilterRes[2].length == 0 || heroFilterRes[2].includes(h.weaponType);
-        return tag && element && weapon;
+        const sinceVersion = sinceVersionFilter.value == '实装版本' || h.sinceVersion == sinceVersionFilter.value;
+        return tag && element && weapon && sinceVersion;
     });
-    filterSelected.value = [heroFilter, cardFilter][currIdx.value].value
-        ?.filter(ftype => ftype.value.filter(v => v.tap).length > 0)
-        .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => v.name)) ?? [];
+    filterSelected.value = (sinceVersionFilter.value == '实装版本' ? [] : [sinceVersionFilter.value])
+        .concat([heroFilter, cardFilter][currIdx.value].value
+            ?.filter(ftype => ftype.value.filter(v => v.tap).length > 0)
+            .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => v.name)) ?? []);
 }
 
 
@@ -505,7 +518,7 @@ const getDiceIcon = (name: string) => {
 // 进入编辑卡组界面
 const toEditDeck = (did: number) => {
     editDeckIdx.value = did;
-    version.value = oriDecks.value[did]?.version ?? VERSION[0];
+    version.value = compareVersionFn(oriVersion.value).value;
     isOfflineVersion.value = OFFLINE_VERSION.includes(version.value as OfflineVersion);
     currIdx.value = TAG_INDEX.Hero;
     deckName.value = oriDecks.value[did].name;
@@ -669,6 +682,7 @@ const pasteShareCode = () => {
 const reset = () => {
     if (currIdx.value == 0) resetHeroFilter();
     else resetCardFilter();
+    sinceVersionFilter.value = sinceVersionSelect.value[0];
     updateInfo();
 }
 
@@ -677,6 +691,7 @@ const cancel = () => {
     isShowShareCode.value = false;
     isShowDeckShareImg.value = false;
     modalInfo.value = NULL_MODAL();
+    selectSize.value = 0;
 }
 
 </script>
@@ -908,6 +923,7 @@ body div {
     border-radius: 5px;
     border: 3px solid #583a01;
     background-color: #ffcf77;
+    font-family: HYWenHei;
 }
 
 input#isOfflineInput:checked {
@@ -1194,6 +1210,16 @@ input#isOfflineInput:checked {
     padding: 5px;
 }
 
+.filter-select {
+    margin: 5px;
+    padding: 5px 0;
+    border-radius: 5px;
+    border: 3px solid #343b7d;
+    background-color: #3a457d;
+    color: white;
+    font-family: HYWenHei;
+}
+
 .filter-title {
     padding: 5px;
     font-weight: bolder;
@@ -1237,7 +1263,7 @@ input#isOfflineInput:checked {
 
 ::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background: #8caee1d0;
+    background: #dec19dd1;
 }
 
 ::-webkit-scrollbar-track {

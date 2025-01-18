@@ -1,5 +1,5 @@
 import { Card, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, Version } from "../constant/enum.js";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, VERSION, Version } from "../constant/enum.js";
 import { SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { arrToObj, objToArr } from "./utils.js";
 
@@ -186,7 +186,7 @@ const compareVersion = (v1: Version, v2: Version | null) => {
 // 比较版本大小
 export const compareVersionFn = (curVersion: Version) => {
     return {
-        value: curVersion,
+        value: curVersion == 'vlatest' ? VERSION[0] : curVersion,
         isOffline: OFFLINE_VERSION.includes(curVersion as OfflineVersion),
         lt: (ver: Version | null) => compareVersion(curVersion, ver) < 0,
         lte: (ver: Version | null) => compareVersion(curVersion, ver) <= 0,

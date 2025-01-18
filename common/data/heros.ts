@@ -2278,6 +2278,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
 }
 
 export const herosTotal = (version: Version = VERSION[0]) => {
+    if (version == 'vlatest') version = VERSION[0];
     const heros: Hero[] = [];
     for (const idx in allHeros) {
         const heroBuilder = allHeros[idx]().version(version);

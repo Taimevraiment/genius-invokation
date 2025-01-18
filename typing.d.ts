@@ -45,7 +45,6 @@ type Player = {
     isFallAtk: boolean, // 是否为下落攻击状态
     canAction: boolean, // 是否可以行动
     playerInfo: GameInfo,
-    deckIdx: number, // 出战卡组id
     isOffline: boolean,
     UI: {
         info: string, // 右上角提示信息
@@ -133,9 +132,9 @@ type Cmds = {
     summonTrigger?: Trigger[],
 }
 
-type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' |
-    'switch-before' | 'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeElement' | 'useSkill' |
-    'changePattern' | 'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos';
+type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
+    'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeElement' | 'useSkill' | 'changePattern' |
+    'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -217,7 +216,6 @@ type ActionData = {
     summonIdx?: number, // 选择的召唤物序号 -1无
     supportIdx?: number, // 选择的支援物序号 -1无
     diceSelect?: boolean[], // 使用/替换的骰子序号
-    deckIdx?: number, // 使用的卡组序号 -1无
     heroIds?: number[], // 卡组角色id
     cardIds?: number[], // 卡组卡牌id
     shareCode?: string, // 分享码
@@ -311,3 +309,5 @@ type TaskItem = [
     number, // 触发该任务的实体id
     boolean, // 任务是否优先
 ];
+
+type Env = 'prod' | 'dev' | 'test';

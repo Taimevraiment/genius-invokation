@@ -197,11 +197,9 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {
-            const { hcards = [], ehcards = [], trigger = '' } = event;
+            const { hcards = [], trigger = '' } = event;
             if (trigger == 'calc') return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
-            const maxDice = ehcards.reduce((a, b) => Math.max(a, b.cost + b.anydice), 0);
-            const [{ cidx = -1 } = {}] = ehcards.filter(c => c.cost + c.anydice == maxDice);
-            const cmds: Cmds[] = [{ cmd: 'discard', cnt: 1, hidxs: [cidx], isOppo: true, isAttach: true }];
+            const cmds: Cmds[] = [{ cmd: 'stealCard', cnt: 1, mode: CMD_MODE.HighHandCard }];
             if (ver.gte('v5.4.0')) cmds.push({ cmd: 'getCard', cnt: 1, isOppo: true });
             return { cmds }
         }),

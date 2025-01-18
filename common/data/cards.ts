@@ -3026,7 +3026,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['switch-to', 'skilltype2'],
                 execmds: [
-                    { cmd: 'discard', cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true, isAttach: true },
+                    { cmd: 'stealCard', cnt: 1, mode: CMD_MODE.HighHandCard },
                     { cmd: 'getCard', cnt: 1, isOppo: true },
                 ],
                 exec: () => { --card.perCnt }
@@ -3584,6 +3584,7 @@ const allCards: Record<number, () => CardBuilder> = {
 }
 
 export const cardsTotal = (version: Version = VERSION[0]) => {
+    if (version == 'vlatest') version = VERSION[0];
     const cards: Card[] = [];
     for (const id in allCards) {
         const cardBuilder = allCards[id]().version(version);

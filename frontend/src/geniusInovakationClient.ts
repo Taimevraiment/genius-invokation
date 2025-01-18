@@ -7,7 +7,7 @@ import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC,
 } from "@@@/constant/UIconst";
 import { newSummon } from "@@@/data/summons";
-import { checkDices } from "@@@/utils/gameUtil";
+import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Summon,
@@ -82,12 +82,14 @@ export default class GeniusInvokationClient {
     watchers: number = 0; // 观战人数
     isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
+    emit: (actionData: ActionData) => void; // 发送事件
 
     constructor(
         socket: Socket, roomId: number, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
     ) {
         this.socket = socket;
+        this.emit = data => socket.emit('sendToServer', data);
         this.roomId = roomId;
         this.userid = userid;
         this.version = version;
@@ -110,7 +112,7 @@ export default class GeniusInvokationClient {
             error: '当前出战卡组不完整',
         };
         this.isDeckVersionValid = {
-            isValid: ver == version,
+            isValid: compareVersionFn(ver).value == version,
             error: '当前卡组版本不匹配',
         };
     }
@@ -338,7 +340,7 @@ export default class GeniusInvokationClient {
      */
     useCard() {
         if (!this.isValid) return;
-        this.socket.emit('sendToServer', {
+        this.emit({
             type: ACTION_TYPE.UseCard,
             cardIdxs: [this.handcardsSelect],
             diceSelect: this.diceSelect,
@@ -346,7 +348,7 @@ export default class GeniusInvokationClient {
             supportIdx: this.supportSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             summonIdx: this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             flag: 'useCard',
-        } as ActionData);
+        });
         this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
         this.player.handCards = this.player.handCards.filter((_, ci) => ci != this.handcardsSelect);
         this.cancel();
@@ -388,20 +390,19 @@ export default class GeniusInvokationClient {
         if (!this.isStart) ({ heroIds, cardIds } = parseShareCode(shareCode));
         this.isStart = !this.isStart;
         this._resetWillAttachs();
-        this.socket.emit('sendToServer', {
+        this.emit({
             type: ACTION_TYPE.StartGame,
-            deckIdx: this.deckIdx,
             heroIds,
             cardIds,
             shareCode,
             flag: 'startGame',
-        } as ActionData);
+        });
     }
     /**
      * 投降
      */
     giveup() {
-        this.socket.emit('sendToServer', { type: ACTION_TYPE.GiveUp, flag: 'giveup' } as ActionData);
+        this.emit({ type: ACTION_TYPE.GiveUp, flag: 'giveup' });
     }
     /**
      * 从服务器获取数据
@@ -512,11 +513,7 @@ export default class GeniusInvokationClient {
      * @param cardIdxs 要换的卡的索引数组
      */
     changeCard(cardIdxs: number[]) {
-        this.socket.emit('sendToServer', {
-            type: ACTION_TYPE.ChangeCard,
-            cardIdxs,
-            flag: 'changeCard',
-        } as ActionData);
+        this.emit({ type: ACTION_TYPE.ChangeCard, cardIdxs, flag: 'changeCard' });
     }
     /**
      * 选择出战角色
@@ -590,11 +587,7 @@ export default class GeniusInvokationClient {
             this.cancel({ onlyCard: true, notHeros: true });
             if (this.player.heros[hidx]?.isFront) this.modalInfo = NULL_MODAL();
             else this.isShowSwitchHero = 1;
-            this.socket.emit('sendToServer', {
-                type: ACTION_TYPE.ChooseInitHero,
-                heroIdxs: [hidx],
-                flag: 'chooseInitHero',
-            } as ActionData);
+            this.emit({ type: ACTION_TYPE.ChooseInitHero, heroIdxs: [hidx], flag: 'chooseInitHero' });
         } else {
             if ((this.isShowSwitchHero > 1 || this.currSkill.canSelectHero == 1) && pidx == 1 && this.heroCanSelect[hidx]) {
                 this.heroSelect[1].forEach((_, hi, ha) => ha[hi] = +(hi == hidx));
@@ -730,12 +723,12 @@ export default class GeniusInvokationClient {
                 this._resetHeroCanSelect();
             } else {
                 if (this.diceSelect.indexOf(true) == -1) return this._sendTip('骰子不符合要求');
-                this.socket.emit('sendToServer', {
+                this.emit({
                     type: ACTION_TYPE.Reconcile,
                     cardIdxs: [cardIdx],
                     diceSelect: this.diceSelect,
                     flag: 'reconcile',
-                } as ActionData);
+                });
                 this.cancel();
             }
         } else {
@@ -776,14 +769,14 @@ export default class GeniusInvokationClient {
                 this.cancel();
                 return this._sendTip('技能不符合要求');
             }
-            this.socket.emit('sendToServer', {
+            this.emit({
                 type: ACTION_TYPE.UseSkill,
                 skillId: skid,
                 diceSelect: this.diceSelect,
                 summonIdx: this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
                 heroIdxs: [this.heroSelect[1].indexOf(1)],
                 flag: `useSkill-${this.currSkill.name}-${this.playerIdx}`,
-            } as ActionData);
+            });
             this.player.dice = this.player.dice.filter((_, i) => !this.diceSelect[i]);
             this.cancel();
             return;
@@ -837,23 +830,19 @@ export default class GeniusInvokationClient {
             return;
         }
         if (!this.isValid) return;
-        this.socket.emit('sendToServer', {
+        this.emit({
             type: ACTION_TYPE.SwitchHero,
             heroIdxs: [hidx],
             diceSelect: this.diceSelect,
             flag: 'switchHero',
-        } as ActionData);
+        });
         this.cancel();
     }
     /**
      * 重投骰子
      */
     reroll() {
-        this.socket.emit('sendToServer', {
-            type: ACTION_TYPE.Reroll,
-            diceSelect: this.diceSelect,
-            flag: 'reroll',
-        } as ActionData);
+        this.emit({ type: ACTION_TYPE.Reroll, diceSelect: this.diceSelect, flag: 'reroll' });
         this.resetDiceSelect();
     }
     /**
@@ -882,12 +871,12 @@ export default class GeniusInvokationClient {
      */
     pickCard() {
         if (this.pickModal.selectIdx == -1) return;
-        this.socket.emit('sendToServer', {
+        this.emit({
             type: ACTION_TYPE.PickCard,
             cardIdxs: [this.pickModal.selectIdx],
             skillId: this.pickModal.skillId,
             flag: 'pickCard',
-        } as ActionData);
+        });
         this.cancel();
     }
     /**
@@ -929,7 +918,7 @@ export default class GeniusInvokationClient {
      */
     endPhase() {
         if (this.player.status == PLAYER_STATUS.WAITING || !this.canAction || this.phase != PHASE.ACTION) return;
-        this.socket.emit('sendToServer', { type: ACTION_TYPE.EndPhase, flag: 'endPhase' } as ActionData);
+        this.emit({ type: ACTION_TYPE.EndPhase, flag: 'endPhase' });
         this.cancel();
     }
     /**

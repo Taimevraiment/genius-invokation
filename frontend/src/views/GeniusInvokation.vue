@@ -17,7 +17,7 @@
 
     <div class="menu">
       <button v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN" class="start" @click.stop="startGame">
-        {{ client.player?.phase == PHASE.NOT_READY ? "准备开始" : "取消准备" }}
+        {{ client.player?.phase == PHASE.NOT_READY ? '准备开始' : '取消准备' }}
       </button>
       <button v-if="isLookon == -1 && client.player?.phase == PHASE.NOT_READY" class="deck-open"
         @click.stop="enterEditDeck">

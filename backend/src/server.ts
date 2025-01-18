@@ -193,7 +193,7 @@ io.on('connection', socket => {
         const { roomName, version, roomPassword, countdown, allowLookon } = data;
         const roomId = genId(roomList);
         const me = getPlayer(pid) as Player;
-        const newRoom = new GeniusInvokationRoom(io, roomId, roomName, version, roomPassword, leaveRoom, countdown, allowLookon, isDev);
+        const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', io);
         const player = newRoom.init(me);
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
@@ -266,7 +266,7 @@ io.on('connection', socket => {
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;
         try {
-            room.getAction(actionData, socket, (me as Player)?.pidx);
+            room.getAction(actionData, (me as Player)?.pidx, socket);
         } catch (e) {
             const error: Error = e as Error;
             console.error(error);

@@ -25,6 +25,7 @@ export class BaseBuilder {
     protected _curVersion: Version = VERSION[0];
     protected _description: VersionMap<string> = new VersionMap();
     version(version: Version | undefined) {
+        if (version == 'vlatest') version = VERSION[0];
         if (version != undefined) this._curVersion = version;
         return this;
     }

@@ -21,6 +21,7 @@
 
 <script setup lang='ts'>
 import { OFFLINE_VERSION, OfflineVersion, VERSION, Version } from '@@@/constant/enum';
+import { compareVersionFn } from '@@@/utils/gameUtil';
 import { ref } from 'vue';
 
 const emit = defineEmits<{
@@ -30,7 +31,8 @@ const emit = defineEmits<{
 
 const roomName = ref<string>(''); // 房间名
 const roomPassword = ref<string>(''); // 房间密码
-const version = ref<Version>((JSON.parse(localStorage.getItem('GIdecks') || '[]')[Number(localStorage.getItem('GIdeckIdx') || '0')])?.version ?? VERSION[0]); // 版本
+const oriVersion: Version = (JSON.parse(localStorage.getItem('GIdecks') || '[]')[Number(localStorage.getItem('GIdeckIdx') || '0')])?.version ?? 'vlatest';
+const version = ref<Version>(compareVersionFn(oriVersion).value); // 版本
 const countdown = ref<number | string>(''); // 倒计时
 const allowLookon = ref<boolean>(true); // 是否允许观战
 
