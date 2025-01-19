@@ -61,7 +61,7 @@ export const genShareCode = (ids: number[], salt = 0): string => {
     }
     farr.push(salt);
     const fstr = String.fromCharCode(...farr);
-    const res = typeof window == 'undefined' ? Buffer.from(fstr).toString('base64') : btoa(fstr);
+    const res = typeof window == 'undefined' ? Buffer.from(fstr, 'latin1').toString('base64') : btoa(fstr);
     if (BLOCK_WORDS.some(v => v.test(res))) return genShareCode(ids, salt + 1);
     return res;
 }
@@ -72,7 +72,7 @@ export const genShareCode = (ids: number[], salt = 0): string => {
  * @returns 解析后对象 {heroIds: number[], cardIds: number[]}
  */
 export const parseShareCode = (code: string): { heroIds: number[], cardIds: number[] } => {
-    code = typeof window == 'undefined' ? Buffer.from(code, 'base64').toString() : atob(code);
+    code = typeof window == 'undefined' ? Buffer.from(code, 'base64').toString('latin1') : atob(code);
     const salt = code.split('').slice(-1)[0]?.charCodeAt(0) ?? 0;
     const ores = code.split('').map(v => ((v.charCodeAt(0) - salt + 256) % 256).toString(2).padStart(8, '0')).join('');
     let str1 = '';

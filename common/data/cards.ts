@@ -2892,12 +2892,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4c6332fd42d6edc64633a44aa900b32f_248861550176006555.png')
         .handle((card, event) => {
             const { heros = [], combatStatus = [] } = event;
-            if (hasObjById(combatStatus, 116021) && card.perCnt > 0) {
-                return {
-                    trigger: ['skilltype1'],
-                    execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
-                    exec: () => { --card.perCnt },
-                }
+            if (!hasObjById(combatStatus, 116021) || card.perCnt <= 0) return;
+            return {
+                trigger: ['skilltype1'],
+                execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
+                exec: () => { --card.perCnt },
             }
         }),
 

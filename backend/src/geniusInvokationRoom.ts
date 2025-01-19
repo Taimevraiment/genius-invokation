@@ -619,8 +619,8 @@ export default class GeniusInvokationRoom {
      */
     getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket) {
         if (this.taskQueue.isExecuting) return;
-        const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [],
-            diceSelect = [], skillId = -1, summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
+        const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
+            summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
         const player = this.players[pidx];
         // this.resetHeartBreak(pidx);
         switch (actionData.type) {
@@ -657,7 +657,7 @@ export default class GeniusInvokationRoom {
                 break;
             case ACTION_TYPE.UseSkill:
                 const useDices = player.dice.filter((_, di) => diceSelect[di]);
-                const skill = [player.heros[player.hidx].vehicleSlot?.[1], ...player.heros[player.hidx].skills].find(sk => sk?.id == skillId);
+                const skill = [player.heros[player.hidx].vehicleSlot?.[1], ...player.heros[player.hidx].skills].find(sk => sk?.id == skillId || sk?.type == skillId);
                 const isValid = checkDices(useDices, { skill });
                 if (!isValid) this.emit('useSkillDiceInvalid', pidx, { socket, tip: '骰子不符合要求', notPreview: true });
                 else {
@@ -1003,7 +1003,7 @@ export default class GeniusInvokationRoom {
                     if (this.players.every(p => p.phase == PHASE.ACTION_START)) { // 双方都重投完骰子
                         this._doReset();
                         await delay(1e3);
-                        this._doPhaseStart(flag, pidx);
+                        await this._doPhaseStart(flag, pidx);
                     } else if (player.id != AI_ID) {
                         this.emit(`${flag}-finish`, pidx, { socket });
                     }
@@ -3047,7 +3047,7 @@ export default class GeniusInvokationRoom {
         this._startTimer();
         this.emit(flag, pidx, { tip: '{p}回合开始' });
         await delay(1e3);
-        this._doActionStart(this.startIdx);
+        await this._doActionStart(this.startIdx);
     }
     /**
      * 回合结束阶段
@@ -3401,7 +3401,7 @@ export default class GeniusInvokationRoom {
         if (typeof equipment == 'number') equipment = this.newCard(equipment);
         if (equipment.type != CARD_TYPE.Equipment) return;
         const { isDestroy = false, isExec = true } = options;
-        const explIdx = equipment.UI.description.lastIndexOf('；（');
+        const explIdx = equipment.UI.description.lastIndexOf('；〔g（');
         equipment.UI.description = equipment.UI.description.slice(0, explIdx);
         if (isExec && (
             equipment.hasSubtype(CARD_SUBTYPE.Weapon) && hero.weaponSlot != null ||

@@ -795,7 +795,7 @@ export default class GeniusInvokationClient {
             this.heroSelect[1].forEach((_, i, a) => a[i] = +(preview.heroIdxs?.[0] == i));
             this._resetTargetSelect();
             if ((preview.tarHidx ?? -1) != -1) this.targetSelect[0][preview.tarHidx!] = true;
-            else this.targetSelect[1][this.player.hidx] = true;
+            else if (preview.isValid) this.targetSelect[1][this.player.hidx] = true;
             this.isValid = preview.isValid;
             const { canSelectSummon } = this.currSkill;
             const heroSelects = this.player.heros.filter(h => !h.isFront && h.hp > 0).map(h => h.hidx);

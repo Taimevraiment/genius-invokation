@@ -1481,9 +1481,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             minusDiceSkill: isCdt(status.perCnt > 0, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Geo }),
             trigger: ['skilltype1'],
             attachEl: ELEMENT_TYPE.Geo,
-            exec: () => {
-                if (status.perCnt > 0 && event.isMinusDiceSkill) --status.perCnt;
-            },
+            exec: () => { status.perCnt > 0 && event.isMinusDiceSkill && --status.perCnt },
         })),
 
     116032: () => shieldCombatStatus('玉璋护盾'),

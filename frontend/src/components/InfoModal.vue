@@ -369,6 +369,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   const wrapName = (_: string, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`;
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
+    .replace(/〔g(.+)〕/g, (_, ctt: string) => isInGame.value ? '' : ctt)
     .replace(/〔(\[.+\])?(.+)〕/g, (_, f: string, ctt: string) => {
       const flag = (f || '').slice(1, -1);
       if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';
@@ -531,7 +532,7 @@ watchEffect(() => {
   isShowSkill.value = [];
   skillExplain.value = [];
   if (info.value && 'costType' in info.value) { // 卡牌
-    info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' }));
+    info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' })).filter(v => v != '');
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     if (info.value.subType.includes(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(+`${info.value.id}1`);
@@ -565,7 +566,7 @@ watchEffect(() => {
     slotExplain.value = [];
     [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot, info.value.vehicleSlot?.[0]].forEach(slot => {
       if (slot) {
-        const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' }));
+        const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
         const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
         const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));

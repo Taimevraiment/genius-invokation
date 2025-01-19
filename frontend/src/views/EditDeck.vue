@@ -1088,7 +1088,7 @@ input#isOfflineInput:checked {
     -webkit-text-stroke: 1px black;
     font-family: sans-serif;
     font-weight: bold;
-    z-index: 1;
+    z-index: 3;
 }
 
 .card-cost>span,
@@ -1117,7 +1117,7 @@ input#isOfflineInput:checked {
     -webkit-text-stroke: 1px black;
     font-family: sans-serif;
     font-weight: bold;
-    z-index: 1;
+    z-index: 3;
 }
 
 .card-cnt {
@@ -1166,6 +1166,7 @@ input#isOfflineInput:checked {
     left: 5px;
     min-width: 12px;
     text-align: center;
+    z-index: 3;
 }
 
 .forbidden {
