@@ -28,22 +28,62 @@ const startGame = async (room, shareCode0, shareCode1 = shareCode0) => {
     // await delay(500);
     // execAll(i => room.getAction({ type: ACTION_TYPE.Reroll, diceSelect: room.players[i].dice.map(() => false) }, i));
 }
+const changeFrontHero = (player, hidx) => {
+    const { heros } = player;
+    heros[player.hidx].isFront = false;
+    heros[hidx].isFront = true;
+    player.hidx = hidx;
+}
 
 describe('hero', function () {
     this.timeout(1e5);
-    let room = new geniusInvokationRoom(1, 'test', 'vlatest', '', false, 'test');
+    let room = new geniusInvokationRoom(1, 'test', 'vlatest', '', 0, false, 'test');
     beforeEach(async () => {
-        room = new geniusInvokationRoom(1, 'test', 'vlatest', '', false, 'test');
+        room = new geniusInvokationRoom(1, 'test', 'vlatest', '', 0, false, 'test');
         room.init({ id: 2, name: 'test1' });
         room.init({ id: 3, name: 'test2' });
         await startGame(room, 'AAAQhAIIAEAwhXkIB1CQhnoIB2CgiXsIB5CwinwIB6DAi34IB7Dgj38IB/DwkIAJCAAA');
-    });
-    it('普攻', async () => {
         await wait(() => room.phase == PHASE.ACTION && room.players.some(p => p.canAction));
+    });
+    it('普攻', done => {
         const player = room.players[room.currentPlayerIdx];
         const opponent = room.players[room.currentPlayerIdx ^ 1];
         room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
-        await wait(() => room.needWait);
-        expect(opponent.heros[opponent.hidx].hp).to.equal(8);
+        room.testDmgFn.push(() => {
+            expect(opponent.heros[opponent.hidx].hp).equal(8);
+            done();
+        });
+    });
+    describe('甘雨', () => {
+        it('冰莲', done => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            room.getActionDev({ cpidx: opponent.pidx, cmds: [{ cmd: 'getStatus', status: 111012 }] });
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
+            room.testDmgFn.push(() => {
+                expect(opponent.heros[opponent.hidx].hp).equal(9);
+                done();
+            });
+        });
+        it('霜华矢', done => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            changeFrontHero(player, 0);
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 11013, diceSelect: player.dice.map((_, i) => i < 5) });
+            room.testDmgFn.push(() => {
+                expect(opponent.heros.map(h => h.hp)).eql([8, 8, 8]);
+                done();
+            });
+        });
+        // it('冰灵珠', async () => {
+        //     const opponent = room.players[room.currentPlayerIdx ^ 1];
+        //     room.getActionDev({ cpidx: 1, smnIds: [111011] });
+        //     await wait(() => room.needWait);
+        //     room.getAction({ type: ACTION_TYPE.EndPhase }, 1);
+        //     await wait(() => room.needWait);
+        //     room.getAction({ type: ACTION_TYPE.EndPhase }, 0);
+        //     await wait(() => room.needWait);
+        //     expect(opponent.heros.map(h => h.hp)).eql([9, 9, 9]);
+        // });
     });
 });

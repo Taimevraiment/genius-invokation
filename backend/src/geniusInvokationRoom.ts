@@ -69,6 +69,8 @@ export default class GeniusInvokationRoom {
     private newSupport: (id: number | Card, ...args: any) => Support;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
+    testDmgFn: (() => void)[] = []; // 伤害测试用
+    testTaskFn: (() => void)[] = []; // 任务测试用
     // private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
 
     constructor(id: number, name: string, version: Version, password: string, countdown: number, allowLookon: boolean, env: Env, io?: Server) {
@@ -199,6 +201,7 @@ export default class GeniusInvokationRoom {
      * 导出日志
      */
     exportLog(options: { isShowRoomInfo?: boolean } = {}) {
+        if (this.env == 'test') return;
         const { isShowRoomInfo = true } = options;
         let log = this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1') + '\n' +
             this.errorLog.join('\n') + '\n' +
@@ -487,7 +490,7 @@ export default class GeniusInvokationRoom {
             this.watchers.push(player);
         }
         this.players.forEach((p, pi) => p.pidx = pi);
-        console.info(`init-rid:${this.id}-[${newPlayer.name}]-pid:${newPlayer.id}-pidx:${pidx}`);
+        if (this.env != 'test') console.info(`init-rid:${this.id}-[${newPlayer.name}]-pid:${newPlayer.id}-pidx:${pidx}`);
         this.emit(`player[${player.name}] enter room`, pidx);
         return player;
     }
@@ -549,11 +552,11 @@ export default class GeniusInvokationRoom {
         this._random = +this.seed;
         const d = new Date();
         const format = (n: number) => String(n).padStart(2, '0');
-        console.info(`[${this.id}]start-seed:${this.seed}`);
+        if (this.env != 'test') console.info(`[${this.id}]start-seed:${this.seed}`);
         this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-${this.version.value.replace(/\./g, '_')}-r${this.id}-s${this.seed}`;
         this.entityIdIdx = -500000;
         this.isStart = true;
-        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.isDev ? 1 : this._randomInt(PLAYER_COUNT);
+        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.env != 'prod' ? 1 : this._randomInt(PLAYER_COUNT);
         this.startIdx = this.currentPlayerIdx;
         this.phase = PHASE.CHANGE_CARD;
         this.winner = -1;
@@ -705,7 +708,8 @@ export default class GeniusInvokationRoom {
         setSmnCnt: { smnidx: number, type: string, val: number }[],
         disCardCnt: number, smnIds: number[], sptIds: number[], seed: string, flag: string
     }) {
-        const { cpidx, cmds, dices, attachs, hps, disCardCnt, clearSts, setStsCnt, setSmnCnt, smnIds, sptIds, seed, flag } = actionData;
+        const { cpidx, cmds, dices, attachs = [], hps = [], disCardCnt = 0, clearSts = [], setStsCnt = [],
+            setSmnCnt = [], smnIds = [], sptIds = [], seed = '', flag = '' } = actionData;
         if (flag.includes('seed')) {
             if (!this.isStart) this._setSeed(seed);
             return;
@@ -3300,6 +3304,7 @@ export default class GeniusInvokationRoom {
             canAction,
             isQuickAction: isQuickAction && isDie.size == 0,
         });
+        if (this.env == 'test') this.testDmgFn.forEach(f => f());
         await delay(intvl);
     }
     /**
