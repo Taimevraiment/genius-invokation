@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import geniusInvokationRoom from '../dist/backend/src/geniusInvokationRoom.js';
 import { ACTION_TYPE, DICE_COST_TYPE, PHASE } from '../dist/common/constant/enum.js';
-import { parseShareCode, wait } from '../dist/common/utils/utils.js';
+import { delay, parseShareCode, wait } from '../dist/common/utils/utils.js';
 
 const execAll = async fn => { for (let i = 0; i < 2; ++i) await fn(i) }
 const startGame = async (room, shareCode0, shareCode1 = shareCode0) => {
@@ -10,6 +10,7 @@ const startGame = async (room, shareCode0, shareCode1 = shareCode0) => {
         const { heroIds, cardIds } = parseShareCode(shareCode[i]);
         room.getAction({ type: ACTION_TYPE.StartGame, heroIds, cardIds, shareCode: shareCode[i] }, i);
     });
+    // 以下为直接跳到行动阶段
     room.phase = PHASE.ACTION;
     room.players.forEach(p => {
         p.phase = PHASE.ACTION;
@@ -75,15 +76,18 @@ describe('hero', function () {
                 done();
             });
         });
-        // it('冰灵珠', async () => {
-        //     const opponent = room.players[room.currentPlayerIdx ^ 1];
-        //     room.getActionDev({ cpidx: 1, smnIds: [111011] });
-        //     await wait(() => room.needWait);
-        //     room.getAction({ type: ACTION_TYPE.EndPhase }, 1);
-        //     await wait(() => room.needWait);
-        //     room.getAction({ type: ACTION_TYPE.EndPhase }, 0);
-        //     await wait(() => room.needWait);
-        //     expect(opponent.heros.map(h => h.hp)).eql([9, 9, 9]);
-        // });
+        it('冰灵珠', async () => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            opponent.phase = PHASE.ACTION_END;
+            room.getActionDev({ cpidx: 1, smnIds: [111011] });
+            player.canAction = true;
+            player.status = 1;
+            await wait(() => room.needWait);
+            room.getAction({ type: ACTION_TYPE.EndPhase }, player.pidx);
+            await delay(900);
+            await wait(() => room.needWait);
+            expect(opponent.heros.map(h => h.hp)).eql([9, 9, 9]);
+        });
     });
 });

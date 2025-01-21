@@ -619,7 +619,7 @@ const showRule = (...desc: string[]) => {
   position: relative;
   width: 25vw;
   max-height: 50vh;
-  border: 2px solid black;
+  border: 2px solid #25364d;
   border-radius: 5px;
   background-color: #3e4d69e7;
   padding: 10px 5px;

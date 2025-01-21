@@ -1523,19 +1523,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
         .description('我方角色造成的[岩元素伤害]+1。；[roundCnt]')
         .handle((_, event) => {
-            const { sktype = SKILL_TYPE.Vehicle, talent } = event;
+            const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
-            const isTalent = !!talent && talent.perCnt > 0;
-            return {
-                trigger: ['Geo-dmg'],
-                addDmgCdt: 1,
-                exec: () => {
-                    if (isTalent) {
-                        --talent.perCnt;
-                        return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
-                    }
-                }
-            }
+            return { trigger: ['Geo-dmg'], addDmgCdt: 1 }
         }),
 
     116071: () => readySkillShieldStatus('旋云护盾'),
@@ -1547,13 +1537,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('我方角色进行｢普通攻击｣时：如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]')
         .description('我方角色进行｢普通攻击｣时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]】', 'v4.8.0')
         .handle((status, event, ver) => {
-            const { hcards: { length: hcardsCnt } = [], heros = [] } = event;
+            const { hcards: { length: hcardsCnt } = [], heros = [], isMinusDiceSkill } = event;
+            const isTriggered = ver.gte('v4.8.0') || isMinusDiceSkill;
             return {
                 trigger: ['skilltype1'],
                 minusDiceSkill: isCdt(hcardsCnt <= 1, { skilltype1: [0, 0, 1] }),
                 addDmgType1: isCdt(ver.lt('v4.8.0'), 1),
-                addDmgCdt: isCdt(hcardsCnt == 0 && !!getObjById(heros, getHidById(status.id))?.talentSlot, 2),
-                exec: () => { --status.useCnt }
+                addDmgCdt: isCdt(hcardsCnt == 0 && !!getObjById(heros, getHidById(status.id))?.talentSlot && isTriggered, 2),
+                exec: () => { isTriggered && --status.useCnt }
             }
         }),
 
@@ -2298,7 +2289,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】（可叠加，最多叠加到3次）')
         .handle((status, event) => {
             const { heros = [], hidx = -1, eheros = [] } = event;
-            const isTalent = eheros.find(h => h.id == getHidById(status.id))?.talentSlot;
+            const isTalent = getObjById(eheros, getHidById(status.id))?.talentSlot;
             if (heros[hidx]?.isFront && !isTalent) return;
             return {
                 trigger: ['phase-end'],

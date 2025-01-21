@@ -541,7 +541,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('逆焰之刃').description('{dealDmg}。每回合第三次使用本技能时，伤害+2。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ef/e4f6sb7ammsholnhufv95kmtfozj9fs.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/7651d152d160362e7c75ce224f92298c_5143713055633145888.png')
-                .elemental().damage(3).cost(3).handle(event => ({ addDmgCdt: isCdt(event.skill.useCnt == 2, 2) })),
+                .elemental().damage(3).cost(3).handle(event => ({ addDmgCdt: isCdt(event.skill.useCntPerRound == 2, 2) })),
             new SkillBuilder('黎明').description('{dealDmg}，本角色附属【sts113011】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/58/6jikt2165rekj99qwm3999hb6qsy04o.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/25bdbe8a9495cdc4f48c2a223d06fac1_8334072998945792701.png')

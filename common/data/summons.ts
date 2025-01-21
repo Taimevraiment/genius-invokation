@@ -38,7 +38,6 @@ export type SummonHandleRes = {
     addDmgCdt?: number,
     rCombatStatus?: (number | [number, ...any])[] | number,
     isNotAddTask?: boolean,
-    damage?: number,
     element?: ElementType,
     pdmg?: number,
     hidxs?: number[],

@@ -18,7 +18,6 @@ export type CardHandleEvent = {
     pile?: Card[],
     eheros?: Hero[],
     eCombatStatus?: Status[],
-    eAttachments?: ElementType[][],
     epile?: Card[],
     hidxs?: number[],
     reset?: boolean,
@@ -2631,8 +2630,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，【hro】自身和【smn113101】对具有‹3火元素附着›的角色造成的伤害+2。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/be471c09e294aaf12766ee17b624ddcc_5013564012859422460.png')
         .handle((card, event) => {
-            const { eAttachments = [], ehidx = -1, dmgSource = -1, isSummon = -1 } = event;
-            const isAttachPyro = eAttachments[ehidx]?.includes(ELEMENT_TYPE.Pyro);
+            const { eheros = [], ehidx = -1, dmgSource = -1, isSummon = -1 } = event;
+            const isAttachPyro = eheros[ehidx]?.attachElement?.includes(ELEMENT_TYPE.Pyro);
             if (card.perCnt > 0 && isAttachPyro && (dmgSource == card.userType || isSummon == 113101)) {
                 return {
                     trigger: ['dmg'],
@@ -2936,16 +2935,22 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】每回合第2次及以后使用【ski】时：如果触发【sts116054】，伤害额外+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png')
         .handle((_, event) => {
-            const { heros = [], hidxs: [hidx] = [], isChargedAtk = false } = event;
-            const { heroStatus, skills: [{ useCntPerRound }] } = heros[hidx] ?? {};
-            if (isChargedAtk && useCntPerRound >= 1 && hasObjById(heroStatus, 116054)) {
+            const { heros = [], hidxs: [hidx] = [-1], isChargedAtk = false } = event;
+            if (!heros[hidx]) return;
+            const { heroStatus, skills: [{ useCntPerRound }] } = heros[hidx];
+            if (isChargedAtk && useCntPerRound >= 2 && hasObjById(heroStatus, 116054)) {
                 return { trigger: ['skilltype1'], addDmgCdt: 1 }
             }
         }),
 
     216061: () => new CardBuilder(292).name('犬奔·疾如风').since('v4.3.0').talent(1).costGeo(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts116061】，抓1张牌。（每回合1次）')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png')
+        .handle((card, event) => {
+            const { combatStatus = [], sktype = SKILL_TYPE.Vehicle } = event;
+            if (!hasObjById(combatStatus, 116061) || card.perCnt <= 0 || sktype == SKILL_TYPE.Vehicle) return;
+            return { trigger: ['Geo-dmg', 'other-Geo-dmg'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => { --card.perCnt } }
+        }),
 
     216071: () => new CardBuilder(375).name('庄谐并举').since('v4.7.0').talent(2).costGeo(3).energy(2)
         .description('{action}；装备有此牌的【hro】在场，且我方触发【sts116073】时：如果我方没有手牌，则使此次技能伤害+2。')

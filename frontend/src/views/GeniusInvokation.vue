@@ -80,7 +80,7 @@
       @update:dice-select="updateDiceSelect" @select-card-pick="selectCardPick" @pick-card="pickCard" />
 
     <div class="hand-card"
-      v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0) || client.isWin > -1"
+      v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0 && client.isShowSwitchHero < 2) || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
       <Handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
