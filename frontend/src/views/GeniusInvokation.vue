@@ -115,7 +115,7 @@
         </div>
         <div class="skill-cost" v-if="client.player.phase == PHASE.ACTION"
           :style="{ marginTop: '10px', opacity: +(client.isShowSwitchHero >= 2) }">
-          <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
+          <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
           <span :style="{ zIndex: 1, color: client.heroSwitchDiceColor }">
             {{ client.heroSwitchDice }}
           </span>
@@ -131,14 +131,14 @@
             <div class="skill-btn" style="left: 2px;top: 2px;width: 90%;height: 90%;border: 2px solid transparent;">
             </div>
           </div>
-          <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0"
-            :alt="SKILL_TYPE_ABBR[skill.type]" />
+          <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0" :alt="SKILL_TYPE_ABBR[skill.type]"
+            draggable="false" />
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
           <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop="useSkill(skill.id, true)"></div>
         </div>
         <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx"
           :style="{ color: skill.style.costColors[cidx] }">
-          <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[cost.type])" />
+          <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[cost.type])" draggable="false" />
           <span style="z-index: 1">{{ skill.CurrCnts[cidx] }}</span>
         </div>
       </div>

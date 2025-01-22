@@ -89,5 +89,18 @@ describe('hero', function () {
             await wait(() => room.needWait);
             expect(opponent.heros.map(h => h.hp)).eql([9, 9, 9]);
         });
+        // it('唯此一心', async () => {
+        //     const player = room.players[room.currentPlayerIdx];
+        //     const opponent = room.players[room.currentPlayerIdx ^ 1];
+        //     changeFrontHero(player, 0);
+        //     player.heros[0].skills[2].useCnt++;
+        //     room.getActionDev({ cpidx: room.currentPlayerIdx, cmds: [{ cmd: 'getCard', cnt: 1, card: 211011 }] });
+        //     await delay(900);
+        //     await wait(() => room.needWait);
+        //     room.getAction({ type: ACTION_TYPE.UseCard, cardIdxs: [5] });
+        //     await delay(900);
+        //     await wait(() => room.needWait);
+        //     expect(opponent.heros.map(h => h.hp)).eql([8, 7, 7]);
+        // });
     });
 });

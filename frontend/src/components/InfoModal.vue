@@ -688,7 +688,7 @@ const showRule = (...desc: string[]) => {
 
 .info-card-type {
   display: inline-block;
-  border: 2px solid black;
+  border: 2px solid #25364d;
   border-radius: 5px;
   background-color: #898989dd;
   padding: 0 5px;
@@ -707,7 +707,7 @@ const showRule = (...desc: string[]) => {
 }
 
 .info-hero-tag>span {
-  border: 2px solid black;
+  border: 2px solid #25364d;
   border-radius: 5px;
   margin: 1px;
   padding: 0 3px;
@@ -717,7 +717,7 @@ const showRule = (...desc: string[]) => {
 .info-hero-skill,
 .info-status>.status,
 .info-equipment>.equipment {
-  border: 2px solid black;
+  border: 2px solid #25364d;
   margin-top: 3px;
   transition: 1s;
   border-radius: 4px;
@@ -726,7 +726,7 @@ const showRule = (...desc: string[]) => {
 .info-hero-skill-title,
 .status-title,
 .equipment-title {
-  border: 2px solid black;
+  border: 2px solid #25364d;
   margin: 1px;
   padding: 1px 3px;
   display: flex;

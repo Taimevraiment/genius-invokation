@@ -1058,13 +1058,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(5).type(STATUS_TYPE.Usage)
-        // .icon('ski,1').iconBg(DEBUFF_BG_COLOR)
         .icon('tmp/UI_Gcg_Debuff_Arlecchino_S_-2121114989')
         .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属1层【sts122】。；[useCnt]')
         .handle((status, event) => {
             const { eheros = [], getdmg = [] } = event;
             const cmds: Cmds[] = [{ cmd: 'getStatus', status: 122, hidxs: getdmg.map((d, i) => ({ d, i })).filter(v => v.d > -1).map(v => v.i) }];
-            const ehero = getObjById(eheros, 1314);
+            const ehero = getObjById(eheros, getHidById(status.id));
             if (ehero) cmds.push({ cmd: 'getStatus', status: 122, hidxs: [ehero.hidx], isOppo: true });
             return { trigger: ['getdmg'], cmds, exec: () => { --status.useCnt } }
         }),
