@@ -1349,7 +1349,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
-                .passive().handle(() => ({ trigger: ['Crystallize', 'other-Crystallize'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
+                .passive().handle(() => ({ trigger: ['Crystallize-oppo'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
         ),
 
     1609: () => new HeroBuilder(420).name('千织').since('v5.1.0').inazuma().geo().sword()
@@ -1387,10 +1387,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/1bfdd645a02ea655cf3d4fa34d468a36_6197207334476477244.png')
                 .elemental().damage(3).cost(3).handle(event => {
                     const { talent } = event;
-                    if (talent && talent.perCnt > 0) {
-                        --talent.perCnt;
-                        return { statusPre: 117012 };
-                    }
+                    if (!talent || talent.perCnt <= 0) return;
+                    return { statusPre: 117012, exec: () => { --talent.perCnt } };
                 }),
             new SkillBuilder('猫猫秘宝').description('{dealDmg}，召唤【smn117011】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/ca/hthhze7cs9vq6uazr06lqu2dhserw7n.png',
@@ -1434,15 +1432,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/b/b2/hiqeufp1d8c37jqo8maxpkvjuiu32lq.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ab5d92e19144f4e483bce180409d0ecf_4393685660579955496.png')
                 .burst(2).damage(4).cost(3).handle(event => {
-                    const { hero: { heroStatus }, talent, heros = [], eheros = [] } = event;
+                    const { talent, heros = [] } = event;
                     const elements = heros.filter(h => h.hp > 0).map(h => h.element);
-                    if (elements.includes(ELEMENT_TYPE.Electro) && talent && !hasObjById(heroStatus, 117032)) {
-                        eheros.forEach(h => {
-                            const ist117031 = getObjById(h.heroStatus, 117031);
-                            if (ist117031) ++ist117031.useCnt;
-                        });
-                    }
-                    return { status: [[117032, !!talent && elements.includes(ELEMENT_TYPE.Hydro)]] }
+                    return { statusAfter: [[117032, !!talent, elements.includes(ELEMENT_TYPE.Hydro)]] }
                 })
         ),
 

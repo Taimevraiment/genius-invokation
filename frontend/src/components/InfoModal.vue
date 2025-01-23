@@ -1,5 +1,6 @@
 <template>
   <div class="info-outer-container">
+    <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name">
     <div class="info-container" :class="{ 'mobile-font': isMobile }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
@@ -61,12 +62,11 @@
               <span class="info-skill-costs">
                 <div>{{ skill.name }}</div>
                 <div>
-                  <div class="skill-cost" v-for="(cost, cidx) in (skill as Skill).cost.filter(c => c.cnt > 0)"
-                    :key="cidx" :style="{
-                      color: cidx < 2 && (skill.costChange[cidx] as number) > 0 ?
-                        CHANGE_GOOD_COLOR : cidx < 2 && (skill.costChange[cidx] as number) < 0 ?
-                          CHANGE_BAD_COLOR : 'white'
-                    }">
+                  <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx" :style="{
+                    color: cidx < 2 && (skill.costChange[cidx] as number) > 0 ?
+                      CHANGE_GOOD_COLOR : cidx < 2 && (skill.costChange[cidx] as number) < 0 ?
+                        CHANGE_BAD_COLOR : 'white'
+                  }">
                     <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[cost.type])" />
                     <span>{{ Math.max(cost.cnt - (cidx < 2 ? (skill.costChange[cidx] as number) : 0), 0) }}</span>
                   </div>
@@ -613,6 +613,11 @@ const showRule = (...desc: string[]) => {
   user-select: none;
   pointer-events: none;
   font-family: HYWenHei;
+}
+
+.info-img {
+  width: 10vw;
+  margin-right: 5px;
 }
 
 .info-container {

@@ -2984,7 +2984,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { isChargedAtk = false, heros = [], hidxs: [hidx] = [] } = event;
             if (isChargedAtk && hasObjById(heros[hidx]?.heroStatus, 117021)) {
-                return { trigger: ['skilltype1'], minusDiceSkill: { skilltype1: [0, 0, 1] } }
+                return { trigger: ['skilltype1'], minusDiceSkill: { skilltype1: [0, 1, 0] } }
             }
         }),
 

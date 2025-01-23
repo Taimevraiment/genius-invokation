@@ -1362,7 +1362,7 @@ export default class GeniusInvokationRoom {
                 oplayers[pidx ^ 1].heros.forEach(h => h.isFront = h.hidx == cehidx);
             }
             trgs = trgs.filter(t => !t.startsWith('other-skill'));
-            const afterAndSwitchTrgs = trgs.filter(t => t.startsWith('after') || t.includes('switch'));
+            const afterAndSwitchTrgs = trgs.filter(t => /^after|switch/.test(t));
             if (group == STATUS_GROUP.heroStatus) {
                 this._detectSkill(cpidx, afterAndSwitchTrgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
             }
@@ -1389,7 +1389,8 @@ export default class GeniusInvokationRoom {
                         dmgedHidx: cehidx,
                         hasDmg: aWillDamages[chidx + cpidx * oplayers[0].heros.length][0] > 0,
                         isChargedAtk: isSelf ? isChargedAtk : false,
-                        talent: isCdt(!isExec || withCard?.id == getTalentIdByHid(oplayers[cpidx].heros[hi].id), withCard) ?? oplayers[cpidx].heros[hi].talentSlot,
+                        talent: isCdt(!isExec || withCard?.id == getTalentIdByHid(getHidById(hfield.id)), withCard) ??
+                            getObjById(oplayers[cpidx].heros, getHidById(hfield.id))?.talentSlot,
                         isExec,
                         randomInt: this._randomInt.bind(this),
                     });
@@ -1397,7 +1398,7 @@ export default class GeniusInvokationRoom {
                     if (this._hasNotTriggered(fieldres.trigger, state)) continue;
                     const isStsRes = 'damage' in fieldres || 'heal' in fieldres || 'pdmg' in fieldres;
                     if (!isSts || hfield.hasType(STATUS_TYPE.Attack) && isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
-                        if (isExec && state.includes('after') && isSts) {
+                        if (isExec && /after|elReaction|destroy/i.test(state) && isSts) {
                             atkStatus.push([{
                                 id: hfield.id,
                                 name: hfield.name,
@@ -1676,7 +1677,7 @@ export default class GeniusInvokationRoom {
         bWillDamages.push(aWillDamages);
         const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
             .map(xtrgs => xtrgs.map(trgs => trgs
-                .filter(trg => trg.includes('skill'))
+                .filter(trg => /skill|elReaction/i.test(trg))
                 .map(trg => trg.startsWith('skill') ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[])
             );
         const atkStatues: StatusTask[] = [];
@@ -2339,7 +2340,7 @@ export default class GeniusInvokationRoom {
             const chi = (dmgedHidx + i) % ehlen;
             const trgs = etriggers[chi];
             const hfieldres = this._detectSlotAndStatus(dmgedPidx, trgs, {
-                types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage],
+                types: [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage],
                 hidxs: chi,
                 players: res.players,
                 isExec,
@@ -3479,14 +3480,15 @@ export default class GeniusInvokationRoom {
             hcards: handCards,
             discards,
             hcard,
+            talent: getObjById(aheros, getHidById(atkStatus.id))?.talentSlot,
             isExecTask: true,
             randomInt: this._randomInt.bind(this),
         });
         const effectSelf = isSelf || stsres.heal || stsres.cmds?.some(({ cmd }) => cmd == 'heal');
         stsres.exec?.();
         if (
-            !stsres.damage && !stsres.heal && !stsres.pdmg &&
-            (stsres.cmds ?? []).every(({ cmd }) => !['heal', 'revive', 'addMaxHp'].includes(cmd)) ||
+            (!stsres.damage && !stsres.heal && !stsres.pdmg &&
+                (stsres.cmds ?? []).every(({ cmd }) => !['heal', 'revive', 'addMaxHp'].includes(cmd))) ||
             (effectSelf ? aheros : eheros)[effectSelf ? ahidx : eFrontIdx].hp <= 0
         ) {
             this.emit(`statusAtk-${atkname}-cancel`, pidx, { isQuickAction });
@@ -3619,7 +3621,7 @@ export default class GeniusInvokationRoom {
                             } else {
                                 const skillHandle = async () => {
                                     this._writeLog(`[${players[pidx].name}][${hero.name}][${skill.name}]发动`, 'info');
-                                    const { willHeals = [] } = this._doCmds(pidx, cmds);
+                                    const { willHeals = [] } = this._doCmds(pidx, cmds, { isAction: !isQuickAction });
                                     const heroSelect = [pidx, hidx];
                                     if (willHeals[0]?.length) {
                                         await this._doDamage(pidx, {
@@ -3639,10 +3641,10 @@ export default class GeniusInvokationRoom {
                                 task.push([skillHandle, 1e3]);
                             }
                         } else {
-                            this._doCmds(pidx, cmds, { players, isExec });
+                            this._doCmds(pidx, cmds, { players, isExec, isAction: !isQuickAction });
                         }
                     } else {
-                        this._doCmds(pidx, cmds, { players, energyCnt, isExec });
+                        this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
                     }
                 }
             }
@@ -5697,7 +5699,7 @@ export default class GeniusInvokationRoom {
         });
         assgin(oStatus, oStatus.sort((a, b) => Math.sign(a.summonId) - Math.sign(b.summonId))
             .filter(sts => {
-                const isNotDestroy = ((sts.useCnt != 0 || sts.hasType(STATUS_TYPE.Accumulate)) && sts.roundCnt != 0) || sts.hasType(STATUS_TYPE.TempNonDestroy);
+                const isNotDestroy = ((sts.useCnt != 0 || sts.hasType(STATUS_TYPE.Accumulate, STATUS_TYPE.Attack)) && sts.roundCnt != 0) || sts.hasType(STATUS_TYPE.TempNonDestroy);
                 if (isExec && !isNotDestroy && sts.entityId != 1) this._doStatusDestroy(pidx, allHidxs(heros), sts, hidx, isQuickAction);
                 return isNotDestroy || (sts.hasType(STATUS_TYPE.Attack, STATUS_TYPE.NonDefeat) && sts.roundCnt != 0);
             }));

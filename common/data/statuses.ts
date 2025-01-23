@@ -1555,12 +1555,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。（每回合1次）；[roundCnt]')
-        .handle(() => ({
-            damage: 1,
-            element: DAMAGE_TYPE.Dendro,
-            trigger: ['elReaction-Dendro'],
-            exec: eStatus => { eStatus && --eStatus.useCnt },
-        })),
+        .handle((_, event) => {
+            const { sktype = SKILL_TYPE.Vehicle, isExecTask } = event;
+            if (sktype == SKILL_TYPE.Vehicle && !isExecTask) return;
+            return {
+                damage: 1,
+                element: DAMAGE_TYPE.Dendro,
+                trigger: ['elReaction-Dendro'],
+                exec: eStatus => { eStatus && --eStatus.useCnt },
+            }
+        }),
 
     117021: () => new StatusBuilder('通塞识').heroStatus().icon('buff').useCnt(3)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.ConditionalEnchant)
@@ -1584,7 +1588,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if ((trigger == 'other-get-elReaction' && !source || !hasDmg) && !isExecTask) return;
             const hasPyro = trigger == 'get-elReaction' &&
                 (!!getObjById(eheros, getHidById(status.id))?.talentSlot || hcard?.id == 217031) &&
-                (hasObjById(eCombatStatus, 117032) || isExecTask) &&
+                hasObjById(eCombatStatus, 117032) &&
                 eheros.some(h => h.element == ELEMENT_TYPE.Pyro);
             return {
                 damage: isCdt(hasPyro, 1),
@@ -1598,10 +1602,23 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117032: (isTalent: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus().icon('ski,3')
-        .type(STATUS_TYPE.AddDamage).roundCnt(2).roundCnt(3, isTalent).talent(isTalent)
+    117032: (isTalent: boolean = false, hasHydro: boolean = false) => new StatusBuilder('摩耶之殿').combatStatus().icon('ski,3')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).roundCnt(2).roundCnt(3, isTalent && hasHydro).talent(isTalent)
         .description('【我方引发元素反应时：】伤害额外+1。；[roundCnt]')
-        .handle(() => ({ trigger: ['elReaction'], addDmgCdt: 1 })),
+        .handle((status, event) => {
+            const { trigger = '', heros = [], eheros = [] } = event;
+            return {
+                trigger: ['elReaction', 'enter'],
+                addDmgCdt: 1,
+                exec: () => {
+                    if (!status.isTalent || heros.every(h => h.element != ELEMENT_TYPE.Electro) || trigger != 'enter') return;
+                    eheros.forEach(h => {
+                        const ist117031 = getObjById(h.heroStatus, 117031);
+                        if (ist117031) ++ist117031.useCnt;
+                    });
+                }
+            }
+        }),
 
     117043: () => new StatusBuilder('桂子仙机').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Attack)
         .description('【我方切换角色后：】造成1点[草元素伤害]，治疗我方出战角色1点。；[useCnt]')
@@ -1627,7 +1644,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117053: () => new StatusBuilder('无欲气护盾').combatStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Shield)
         .description('提供1点[护盾]，保护我方出战角色。；【此效果被移除，或被重复生成时：】造成1点[草元素伤害]，治疗我方出战角色1点。')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, combatStatus = [] } = event;
+            const { heros = [], hidx = -1, combatStatus = [], talent } = event;
             const fhero = heros[hidx];
             if (!fhero) return;
             const hid = getHidById(status.id);
@@ -1635,13 +1652,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (status.useCnt == 0) triggers.push('status-destroy');
             if (fhero.id == hid) triggers.push('after-skilltype3');
             if (hasObjById(combatStatus, 117052)) triggers.push('phase-start');
-            const isTalent = !!getObjById(heros, hid)?.talentSlot;
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
                 heal: 1,
                 trigger: triggers,
-                exec: eStatus => eStatus && ({ cmds: isCdt(isTalent, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }]) }),
+                exec: eStatus => eStatus && ({ cmds: isCdt(!!talent, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }]) }),
             }
         }),
 
