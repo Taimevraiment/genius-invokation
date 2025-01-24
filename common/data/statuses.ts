@@ -1689,10 +1689,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 element: DAMAGE_TYPE.Dendro,
                 trigger: ['switch-from'],
                 exec: eStatus => {
-                    if (eStatus) {
-                        --eStatus.useCnt;
-                        return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
-                    }
+                    if (eStatus) --eStatus.useCnt;
+                    return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
                 },
             }
         }),
@@ -1707,9 +1705,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             element: DAMAGE_TYPE.Dendro,
             isSelf: true,
             trigger: ['card'],
+            isAddTask: true,
             exec: eStatus => {
-                --status.perCnt;
-                if (eStatus) {
+                if (!eStatus) return;
+                if (eStatus.perCnt > -1) {
+                    --eStatus.perCnt;
+                } else {
                     --eStatus.useCnt;
                     eStatus.perCnt = 0;
                 }

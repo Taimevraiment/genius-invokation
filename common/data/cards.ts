@@ -3001,8 +3001,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png'),
 
     217061: () => new CardBuilder(293).name('正理').since('v4.3.0').talent(2).costDendro(3).energy(2)
-        .description('{action}；装备有此牌的【hro】使用【ski】时，如果消耗了持续回合至少为1的【sts117061】，则总是附属持续回合为3的【sts117061】，并且抓1张牌。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png'),
+        .description('{action}；装备有此牌的【hro】使用【ski】时，如果消耗了[持续回合]至少为1的【sts117061】，则总是附属[持续回合]为3的【sts117061】，并且抓1张牌。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx] = [-1] } = event;
+            const sts117061 = getObjById(heros[hidx]?.heroStatus, 117061);
+            if (sts117061) return { trigger: ['skilltype3'], execmds: [{ cmd: 'getCard', cnt: 1 }] }
+        }),
 
     217071: () => new CardBuilder(340).name('沿途百景会心').since('v4.5.0').talent(1).costDendro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】为出战角色，我方进行｢切换角色｣行动时：少花费1个元素骰。（每回合1次）')

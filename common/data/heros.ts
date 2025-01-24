@@ -1484,14 +1484,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { heroStatus }, talent } = event;
                     const sts117061 = getObjById(heroStatus, 117061);
                     const rcnt = sts117061?.roundCnt ?? 0;
-                    const isTriggered = talent && !!sts117061;
                     return {
-                        status: isCdt(!sts117061, [[117061, 3 - (isTriggered ? 0 : rcnt)]]),
+                        status: isCdt(!sts117061, [[117061, 3]]),
                         addDmgCdt: rcnt,
-                        cmds: isCdt(isTriggered, [{ cmd: 'getCard', cnt: 1 }]),
-                        exec: () => {
-                            if (sts117061) sts117061.roundCnt = 3 - (isTriggered ? 0 : rcnt);
-                        }
+                        exec: () => { sts117061 && (sts117061.roundCnt = 3 - (!!talent ? 0 : rcnt)) }
                     }
                 })
         ),

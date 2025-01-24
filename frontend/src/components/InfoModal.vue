@@ -1,6 +1,6 @@
 <template>
   <div class="info-outer-container">
-    <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name">
+    <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
     <div class="info-container" :class="{ 'mobile-font': isMobile }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
