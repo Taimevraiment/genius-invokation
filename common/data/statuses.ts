@@ -399,9 +399,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: ['after-skill'],
                 heal: isCdt(isHeal, 2),
-                exec: eStatus => {
-                    if (isHeal && eStatus) --eStatus.useCnt;
-                }
+                exec: eStatus => { isHeal && eStatus && --eStatus.useCnt }
             }
         }),
 
@@ -445,10 +443,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, event) => {
             const { heros = [], hidx = -1 } = event;
             if (hidx == -1) return;
-            let res: StatusHandleRes = {};
             const curHp = heros[hidx]?.hp ?? 0;
-            if (curHp >= 6) res = { pdmg: 1, hidxs: [hidx], isSelf: true };
-            else res = { heal: 2 };
+            const res: StatusHandleRes = curHp >= 6 ? { pdmg: 1, hidxs: [hidx], isSelf: true } : { heal: 2 };
             return {
                 trigger: ['after-skilltype1', 'skilltype1'],
                 minusDiceSkill: isCdt(curHp >= 6, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Cryo }),
@@ -1734,9 +1730,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { summons = [], pile = [], hcard, combatStatus = [], talent } = event;
             if (pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) return;
             const cmds: Cmds[] = [{ cmd: 'discard', mode: CMD_MODE.TopPileCard }];
-            if (talent && talent.perCnt > 0) {
+            const isPlace = talent && talent.perCnt > 0 && pile[0].hasSubtype(CARD_SUBTYPE.Place);
+            if (talent) {
                 cmds.push({ cmd: 'getCard', cnt: 1, card: pile[0].id });
-                if (pile[0].hasSubtype(CARD_SUBTYPE.Place)) cmds.push({ cmd: 'getStatus', status: 117083 });
+                if (isPlace) cmds.push({ cmd: 'getStatus', status: 117083 });
             }
             return {
                 trigger: ['action-start', 'action-start-oppo'],
@@ -1752,9 +1749,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const thero = getObjById(hs, getHidById(status.id));
                     if (thero) {
                         const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
-                        if (talent && talent.perCnt > 0) {
-                            --talent.perCnt;
-                        }
+                        if (talent && isPlace) --talent.perCnt;
                     }
                     return { cmds }
                 }

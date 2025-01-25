@@ -867,11 +867,11 @@ export default class GeniusInvokationRoom {
         const ohidx = player.hidx;
         if (isDieSwitch) { // 被击倒后选择出战角色
             isQuickAction = !this.isDieBackChange;
-            const isOppoActioning = this.players[pidx ^ 1].phase == PHASE.ACTION && isQuickAction;
-            player.UI.info = isOppoActioning ? '对方行动中....' : '';
+            const isOppoActioning = opponent.phase == PHASE.ACTION && isQuickAction;
+            player.UI.info = isOppoActioning ? '对方行动中....' : '我方行动中....';
             player.status = PLAYER_STATUS.WAITING;
             const isActioning = player.phase == PHASE.ACTION && !isQuickAction;
-            this.players[pidx ^ 1].UI.info = isActioning ? '对方行动中....' : player.phase > PHASE.ACTION ? '对方结束已结束回合...' : '';
+            opponent.UI.info = isActioning ? '对方行动中....' : player.phase > PHASE.ACTION ? '对方结束已结束回合...' : '我方行动中....';
             if (isOppoActioning) this.players[this.currentPlayerIdx].canAction = true;
         } else if (diceSelect != undefined) { // 主动切换角色
             ({ isQuickAction } = this._calcHeroSwitch(pidx, hidx, ohidx, true));
@@ -2941,7 +2941,7 @@ export default class GeniusInvokationRoom {
             this.players[this.currentPlayerIdx].status = PLAYER_STATUS.PLAYING;
             if (type != 'endPhase') {
                 this.players.forEach(p => {
-                    if (p.pidx == this.currentPlayerIdx) p.UI.info = '';
+                    if (p.pidx == this.currentPlayerIdx) p.UI.info = '我方行动中....';
                     else p.UI.info = '对方行动中....';
                 });
             }
@@ -3053,7 +3053,7 @@ export default class GeniusInvokationRoom {
         this.players.forEach(p => {
             p.phase = PHASE.ACTION;
             if (p.pidx == this.startIdx) {
-                p.UI.info = '我方行动';
+                p.UI.info = '我方行动中....';
                 p.canAction = true;
             } else p.UI.info = '对方行动中....';
         });
@@ -3292,7 +3292,6 @@ export default class GeniusInvokationRoom {
                         }
                     }
                 }
-                if (isDie.size == 0) return;
                 this.emit(`heroDie-${damageVO.dmgSource}-${atkname}`, pidx, {
                     tip: tips,
                     notPreview: true,
@@ -3535,6 +3534,7 @@ export default class GeniusInvokationRoom {
         if (!atkStatus.hasType(STATUS_TYPE.Accumulate) && (atkStatus.useCnt == 0 || atkStatus.roundCnt == 0)) {
             atkStatus.type.splice(atkStatus.type.indexOf(STATUS_TYPE.Attack), 1);
         }
+        this._updateSummon(pidx, [], this.players, true, { destroy: 1 });
         this.emit(`statusAtk-${atkname}-after`, pidx);
         return true;
     }
@@ -4170,8 +4170,8 @@ export default class GeniusInvokationRoom {
             tasks.push(...cmdtasks);
         }
         return {
-            isQuickAction, switchHeroDiceCnt, isInvalid, minusDiceCard, task, tasks,
-            addDmg, getDmg, multiDmg, nsummons, aWillHeals, bWillHeals, supportCnt, pdmgs, cmds, isFallAtk: stsFallAtk,
+            isQuickAction, switchHeroDiceCnt, isInvalid, minusDiceCard, task, tasks, addDmg, getDmg, multiDmg,
+            nsummons, aWillHeals, bWillHeals, supportCnt, pdmgs, cmds, isFallAtk: stsFallAtk,
         }
     }
     /**
@@ -5741,7 +5741,7 @@ export default class GeniusInvokationRoom {
         });
         if (isSummon > -1) return assgin(summons, oriSummon);
         assgin(summons, oriSummon.filter(smn => {
-            if (smn.statusId > 0 && smn.useCnt > 0) { // 召唤物有关联状态
+            if (smn.statusId > 0) { // 召唤物有关联状态
                 const nSmnStatus = this.newStatus(smn.statusId, smn.id);
                 const group = nSmnStatus.group;
                 const statuses = [heros[hidx].heroStatus, combatStatus][group];
@@ -5749,7 +5749,7 @@ export default class GeniusInvokationRoom {
                 smnStatus.useCnt = smn.useCnt;
                 this._updateStatus(pidx, [smnStatus], statuses, players, { hidx, isExec, isLog: false });
             }
-            if (!destroy || destroy != smn.entityId) return true;
+            if (destroy != 1 && (!destroy || destroy != smn.entityId)) return true;
             if ( // 召唤物消失
                 (smn.useCnt == 0 &&
                     (smn.isDestroy == SUMMON_DESTROY_TYPE.Used ||
