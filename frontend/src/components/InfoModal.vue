@@ -350,7 +350,7 @@ const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
     isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] :
     getPngIcon(ELEMENT_ICON[el]);
   if (el == STATUS_TYPE.Shield) url = SHIELD_ICON_URL;
-  return `<img style='width:18px;transform:translateY(20%);' src='${url}'/>`;
+  return `<img style='width:1em;transform:translateY(20%) scale(1.4);margin:0 0.2em' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
   if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
@@ -416,10 +416,11 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       }
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == ctt) ?? [];
       if (subtype) wpicon ||= `<img style='width:18px;transform:translateY(20%);' src='${CARD_SUBTYPE_URL[subtype]}'/>`;
-      // const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
-      const underline = isUnderline == '' ? `text-decoration: underline;cursor:pointer;` : '';
-      const marginLeft = el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same ? 'margin-left:2px;' : '';
-      return `${wpicon}<span style='color:${color};${underline}margin-right:2px;${marginLeft}'>${ctt}</span>`;
+      const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
+      // const underline = isUnderline == '' ? `text-decoration: underline;cursor:pointer;` : '';
+      // const marginLeft = el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same ? 'margin-left:2px;' : '';
+      // return `${wpicon}<span style='color:${color};${underline}margin-right:2px;${marginLeft}'>${ctt}</span>`;
+      return `${wpicon}<span style='color:${color};${underline}'>${ctt}</span>`;
     })
     .replace(/\\/g, '');
   if (obj && typeof obj != 'string') {
@@ -613,6 +614,7 @@ const showRule = (...desc: string[]) => {
   user-select: none;
   pointer-events: none;
   font-family: HYWenHei;
+  line-height: 1.4em;
 }
 
 .info-img {

@@ -87,10 +87,16 @@ export class GISummon {
         this.entityId = id;
         return this;
     }
+    addUseCnt(n: number = 1) {
+        this.useCnt = Math.max(this.useCnt, Math.min(this.maxUse, this.useCnt + n));
+    }
+    minusUseCnt(n: number = 1) {
+        this.useCnt = Math.max(0, this.useCnt - n);
+    }
 }
 
 export const phaseEndAtk = (summon: Summon, event: SummonHandleEvent, healHidxs?: number[]): SummonHandleRes => {
-    if (summon.isDestroy == SUMMON_DESTROY_TYPE.Used) summon.useCnt = Math.max(0, summon.useCnt - 1);
+    if (summon.isDestroy == SUMMON_DESTROY_TYPE.Used) summon.minusUseCnt();
     else if (!event.isExec) summon.useCnt = -100;
     const cmds: Cmds[] = [];
     if (summon.damage >= 0) cmds.push({ cmd: 'attack' });

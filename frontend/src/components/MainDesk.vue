@@ -433,9 +433,9 @@
         </div>
       </div>
 
-      <div v-if="showHideBtn" style="position: absolute;top: 5%;right: 10%;z-index: 5;width: 10%;cursor: pointer;">
-        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="显/隐" style="position: absolute;width: 100%;height: 100%;"
-          :style="{ filter: isHide ? '' : 'brightness(10)' }" />
+      <div v-if="showHideBtn" class="display-btn" :class="{ 'hide-btn': isHide }">
+        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="显/隐"
+          style="position: absolute;width: 100%;height: 100%;" />
         <div style="width: 20px;height: 30px;"></div>
       </div>
 </template>
@@ -1831,6 +1831,26 @@ button:active {
 
 .is-change {
   --scale-val-change: 1.5;
+}
+
+.display-btn {
+  position: absolute;
+  top: 5%;
+  right: 10%;
+  z-index: 5;
+  width: 10%;
+  cursor: pointer;
+  filter: brightness(10);
+}
+
+.hide-btn::before {
+  content: '/';
+  position: absolute;
+  left: 48%;
+  top: 30%;
+  transform: scale(2.5);
+  z-index: 1;
+  pointer-events: none;
 }
 
 .mobile-heros {

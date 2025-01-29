@@ -26,6 +26,8 @@ export type SummonHandleEvent = {
     isSummon?: number,
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
+    dmgedHidx?: number,
+    getdmg?: number[],
 }
 
 export type SummonHandleRes = {
@@ -86,7 +88,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     111051: () => new SummonBuilder('霜见雪关扉').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
-    111062: () => new SummonBuilder('光降之剑').maxUse(1000).damage(3).damage(2, 'v3.8.0').physical().plus().roundEnd()
+    111062: () => new SummonBuilder('光降之剑').maxUse(MAX_USE_COUNT).damage(3).damage(2, 'v3.8.0').physical().plus().roundEnd()
         .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点｢能量层数｣，都使次伤害+1。（影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {
@@ -789,43 +791,29 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    121011: () => new SummonBuilder('冰萤').useCnt(2).maxUse(3).damage(1)
+    121011: (cnt: number = 2) => new SummonBuilder('冰萤').useCnt(cnt).maxUse(3).damage(1)
         .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。')
         .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
         .handle((summon, event, ver) => {
-            const { trigger = '', heros = [], talent, isExec = true } = event;
+            const { trigger = '', heros = [], dmgedHidx = -1, talent, getdmg = [] } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const hero = heros[getAtkHidx(heros)];
-            if (!hero) return;
-            const isHero = hero?.id == getHidById(summon.id);
-            const isTalent = isHero && talent && talent.perCnt == -1;
-            if (ver.lt('v4.1.0') || isHero) triggers.push('get-elReaction');
-            if (!isExec && trigger == 'get-elReaction' && (ver.lt('v4.1.0') || isHero)) {
-                summon.useCnt = Math.max(0, summon.useCnt - 1);
-            }
-            const isTalentTrg = ['after-skilltype1', 'after-skilltype2'].includes(trigger);
-            if (isHero) {
-                triggers.push('skilltype1');
-                if (isTalent && isTalentTrg) {
-                    triggers.push(trigger);
-                }
-                if (!isExec && trigger == 'after-skilltype1') {
-                    summon.useCnt = Math.max(summon.useCnt, Math.min(summon.maxUse, summon.useCnt + 1));
-                }
-            }
+            const atkHero = heros[getAtkHidx(heros)];
+            const dmgedHero = heros[dmgedHidx];
+            const isAtkHero = atkHero?.id == getHidById(summon.id);
+            const isDmgedHero = dmgedHero?.id == getHidById(summon.id) && (getdmg[dmgedHidx] ?? -1) != -1;
+            const isTalent = isAtkHero && talent && talent.perCnt == -1 && ['after-skilltype1', 'after-skilltype2'].includes(trigger);
+            if (ver.lt('v4.1.0') || isDmgedHero) triggers.push('get-elReaction');
+            if (trigger == 'get-elReaction' && (ver.lt('v4.1.0') || isDmgedHero)) summon.minusUseCnt();
+            if (isAtkHero && isTalent) triggers.push(trigger);
             return {
                 trigger: triggers,
                 isNotAddTask: !isTalent && trigger != 'phase-end',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (isTalent || trigger.includes('skilltype1')) {
-                        smn.useCnt = Math.max(smn.useCnt, Math.min(smn.maxUse, smn.useCnt + 1));
-                        if (isTalent && isTalentTrg) {
-                            talent.perCnt = 0;
-                            return { cmds: [{ cmd: 'attack', cnt: 2 }] }
-                        }
-                        return;
+                    if (isTalent) {
+                        talent.perCnt = 0;
+                        return { cmds: [{ cmd: 'attack', cnt: 2 }] }
                     }
                     if (trigger == 'phase-end') return phaseEndAtk(smn, event);
                 }
@@ -960,9 +948,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             const hero = getObjById(heros, getHidById(summon.id));
             if (hero?.isFront) {
                 triggers.push('get-elReaction');
-                if (!isExec && trigger == 'get-elReaction') {
-                    summon.useCnt = Math.max(0, summon.useCnt - 1);
-                }
+                if (!isExec && trigger == 'get-elReaction') summon.minusUseCnt();
             }
             if ((hero?.talentSlot?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
             return {

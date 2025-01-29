@@ -1541,7 +1541,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/549d1869ad1f7d1d27fb5c733a239373_8053361497142459397.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/22a03af7f319a9d1583bc8d33781c241.png')
-        .normalSkill(new NormalSkillBuilder('冰萤棱锥').catalyst())
+        .normalSkill(new NormalSkillBuilder('冰萤棱锥').catalyst().handle(event => {
+            if (hasObjById(event.summons, 121011)) return { summon: [[121011, 1]] }
+        }))
         .skills(
             new SkillBuilder('虚雾摇唤').description('{dealDmg}，召唤【smn121011】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/63/ba46nzqmjmyf97k0w9u5f70ll5b6xwh.png',
