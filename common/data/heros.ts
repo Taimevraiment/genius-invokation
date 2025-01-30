@@ -487,27 +487,32 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/55/m43lxh8gyu0yaq70sczycvsk9sforzc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/8a6a3792e47546b5ec81ee636445c4d8_6392784692082623561.png')
                 .passive().handle(event => {
-                    const { hero, sourceHidx = -1, source = -1, combatStatus = [], skill, trigger = '' } = event;
-                    const triggers: Trigger[] = [];
+                    const { hero, heros = [], sourceHidx = -1, source = -1, combatStatus = [], trigger = '' } = event;
+                    const triggers: Trigger[] = ['game-start', 'revive', 'killed'];
                     const cmds: Cmds[] = [];
-                    if (trigger == 'status-destroy' && source == 122) {
-                        if (skill.addition[sourceHidx] == 3) return;
+                    if (trigger == 'status-destroy' && source == 122 && hasObjById(heros[sourceHidx]?.heroStatus, 112136)) {
                         triggers.push('status-destroy');
-                        cmds.push({ cmd: 'addMaxHp', cnt: 1, hidxs: [sourceHidx] });
                     }
                     if (trigger == 'switch-to' && hasObjById(combatStatus, 112101) && hero.energy < hero.maxEnergy) {
                         triggers.push('switch-to');
                         cmds.push({ cmd: 'getEnergy', cnt: 1, hidxs: [hero.hidx] });
                     }
+                    if (['game-start', 'revive'].includes(trigger)) {
+                        cmds.push({ cmd: 'getStatus', status: 112136, hidxs: allHidxs(heros) });
+                    }
                     return {
                         trigger: triggers,
                         cmds,
+                        isNotAddTask: !['switch-to', 'status-destroy'].includes(trigger),
                         exec: () => {
-                            if (trigger == 'status-destroy') {
-                                skill.addition[sourceHidx] = (skill.addition[sourceHidx] ?? 0) + 1;
-                            } else if (trigger == 'switch-to') {
+                            if (trigger == 'switch-to') {
                                 const sts112101 = getObjById(combatStatus, 112101);
                                 if (sts112101 && --sts112101.useCnt == 0) sts112101.type.length = 0;
+                            } else if (trigger == 'killed') {
+                                heros.forEach(h => {
+                                    const sts112136 = getObjById(h.heroStatus, 112136);
+                                    if (sts112136) sts112136.useCnt = 0;
+                                });
                             }
                         }
                     }

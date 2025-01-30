@@ -489,7 +489,7 @@ export default class GeniusInvokationClient {
                     this.summonSelect[+(saidx == this.playerIdx)][suidx] = true;
                 } else if (damageVO?.dmgSource == 'status') {
                     const [spidx, sgroup, shidx, sidx] = damageVO.selected ?? [-1, -1, -1, -1];
-                    this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
+                    if (sidx > -1) this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
                 }
                 setTimeout(() => {
                     this.isShowDmg = false;

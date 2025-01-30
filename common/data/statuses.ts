@@ -813,6 +813,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    112136: () => new StatusBuilder('细致入微的诊疗').heroStatus().useCnt(3).type(STATUS_TYPE.Hide, STATUS_TYPE.Usage)
+        .handle((_, event) => {
+            const { hidx = -1, source = -1, sourceHidx = -1, isExecTask } = event;
+            if ((hidx != sourceHidx || source != 122) && !isExecTask) return;
+            return {
+                trigger: ['status-destroy'],
+                cmds: [{ cmd: 'addMaxHp', cnt: 1, hidxs: [hidx] }],
+                exec: eStatus => { eStatus && --eStatus.useCnt },
+            }
+        }),
+
     112141: (cnt: number = 0) => nightSoul(cnt).icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112141'),
 
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)

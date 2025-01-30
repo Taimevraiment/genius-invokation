@@ -1280,6 +1280,17 @@ export default class GeniusInvokationRoom {
             const dmgedHidxs = atkedIdxs ?? [+!!res.isSelf ^ isSelf ? cehidx : cahidx];
             const dmgEl = atkcmds[0]?.element;
             calcTasks(tasks, oplayers, cpidx);
+            oplayers.forEach(p => {
+                p.heros.forEach(h => {
+                    h.heroStatus.forEach(s => {
+                        if (s.useCnt == 0 && !s.hasType(STATUS_TYPE.Accumulate)) {
+                            const { bWillHeals: sdhl } = this._detectStatus(p.pidx, STATUS_TYPE.Usage, 'status-destroy',
+                                { hidxs: allHidxs(p.heros), source: s.id, sourceHidx: h.hidx, isExec: false, isOnlyExec: true });
+                            mergeWillHeals(bWillHeal, sdhl, oplayers);
+                        }
+                    });
+                });
+            });
             if (dmgEl) res.element = dmgEl as DamageType;
             if (res.damage == undefined && res.pdmg == undefined && !smndmg) return false;
             const reshidxs = res.hidxs ?? getBackHidxs(oplayers[cpidx ^ +!!res.isSelf].heros);
@@ -1344,10 +1355,10 @@ export default class GeniusInvokationRoom {
                 }
                 bWillDamages.push(willDamage3);
                 calcTasks(tasks3, oplayers, cpidx);
-                let { isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: oahidx, isOnlyHeroStatus: true }), oahidx, STATUS_GROUP.heroStatus, [...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
+                let { isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: oahidx, isOnlyHeroStatus: true }), oahidx, STATUS_GROUP.heroStatus, ['status-destroy', ...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: nahidx, isOnlyHeroStatus: true }), nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec, 1));
-                if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: oehidx, isOnlyHeroStatus: true }), oehidx, STATUS_GROUP.heroStatus, [...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec));
+                if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: oehidx, isOnlyHeroStatus: true }), oehidx, STATUS_GROUP.heroStatus, ['status-destroy', ...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: nehidx, isOnlyHeroStatus: true }), nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec));
             });
@@ -1401,7 +1412,7 @@ export default class GeniusInvokationRoom {
                     if (this._hasNotTriggered(fieldres.trigger, state)) continue;
                     const isStsRes = 'damage' in fieldres || 'heal' in fieldres || 'pdmg' in fieldres;
                     if (!isSts || hfield.hasType(STATUS_TYPE.Attack) && isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
-                        if (isExec && /after|elReaction|destroy/i.test(state) && isSts) {
+                        if (isExec && /after|elReaction|destroy|getdmg/i.test(state) && isSts) {
                             atkStatus.push([{
                                 id: hfield.id,
                                 name: hfield.name,
@@ -1412,7 +1423,7 @@ export default class GeniusInvokationRoom {
                                 trigger: state,
                                 hidx: hi,
                                 skid,
-                            }]);
+                            }, state == 'getdmg']);
                         }
                         if (!isStsRes) fieldres.element = undefined;
                         if (fieldres.notPreview || calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, skid, isSelf)) {
@@ -1673,7 +1684,7 @@ export default class GeniusInvokationRoom {
         bWillDamages.push(aWillDamages);
         const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
             .map(xtrgs => xtrgs.map(trgs => trgs
-                .filter(trg => /skill|elReaction/i.test(trg))
+                .filter(trg => /skill|elReaction|getdmg/i.test(trg))
                 .map(trg => trg.startsWith('skill') ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[])
             );
         const atkStatues: StatusTask[] = [];
@@ -3165,7 +3176,11 @@ export default class GeniusInvokationRoom {
     }
     /**
      * 状态被移除时发动
-     * @param pidx 
+     * @param pidx
+     * @param hidxs 检测的角色索引
+     * @param cStatus 被移除的状态
+     * @param hidx 被移除状态的角色索引
+     * @param isQuickAction 是否是快速行动
      */
     private _doStatusDestroy(pidx: number, hidxs: number[], cStatus: Status, hidx: number, isQuickAction?: boolean) {
         const player = this.players[pidx];
@@ -3211,17 +3226,18 @@ export default class GeniusInvokationRoom {
      * @param options.cmds 命令集(目前用于技能充能)
      * @param options.heroSelect 角色亮起
      * @param options.summonDestroy 召唤物被销毁
+     * @param options.isActionInfo 是否显示行动信息
      */
     private async _doDamage(pidx: number, damageVO: DamageVO, options: {
         slotSelect?: number[], summonSelect?: number[], canAction?: boolean, skid?: number,
         isQuickAction?: boolean, atkname?: string, supportSelect?: number[], cmds?: Cmds[],
-        heroSelect?: number[], summonDestroy?: number,
+        heroSelect?: number[], summonDestroy?: number, isActionInfo?: boolean,
     } = {}) {
         if (damageVO == -1) return;
         const isDie = new Set<number>();
         const heroDie: number[][] = this.players.map(() => []);
         const { slotSelect, summonSelect, supportSelect, heroSelect, canAction = true, isQuickAction = false,
-            atkname = '', cmds = [], skid = -1, summonDestroy } = options;
+            atkname = '', cmds = [], skid = -1, summonDestroy, isActionInfo = true } = options;
         const { atkPidx, atkHidx, dmgElements = [], willDamages = [], willHeals = [] } = damageVO;
         const intvl = willDamages.every(([d, p]) => d == -1 && p == 0) && willHeals.every(h => h == -1) ? 1e3 : 2250;
         const logPrefix = `[${this.players[atkPidx].name}]${atkHidx > -1 ? `[${this.players[atkPidx].heros[atkHidx].name}]` : `[${atkname.replace(/\(\-\d+\)/, '')}`}]对`;
@@ -3259,6 +3275,7 @@ export default class GeniusInvokationRoom {
                 if (cpidx != pidx) {
                     this._detectSlotAndStatus(pidx, 'kill', { types: STATUS_TYPE.Usage, hidxs: allHidxs(this.players[pidx].heros), skid, isUnshift: true });
                 }
+                this._detectSkill(cpidx, 'killed', { hidxs: heroDie[cpidx] });
             }
             this.taskQueue.addTask(`heroDie-${damageVO.dmgSource}-${atkname}`, [[() => {
                 const tips = ['', ''];
@@ -3304,10 +3321,9 @@ export default class GeniusInvokationRoom {
             }]], { addAfterNonDmg: true });
         }
         this._doCmds(pidx, cmds);
-        const isActionInfo = ['skill', 'status', 'card'].includes(damageVO.dmgSource);
         this.emit(`${damageVO.dmgSource}-doDamage-${atkname}`, pidx, {
             damageVO,
-            isActionInfo,
+            isActionInfo: isActionInfo && ['skill', 'status', 'card'].includes(damageVO.dmgSource),
             slotSelect,
             summonSelect,
             supportSelect,
@@ -3519,11 +3535,16 @@ export default class GeniusInvokationRoom {
             if (cmdheal) willHeals = cmdheal;
             if (ndices) this.players[pidx].dice = ndices;
         }
-        this._writeLog(`[${this.players[pidx].name}][${atkname}]发动${oCnt != -1 ? ` ${oCnt}->${atkStatus.useCnt}` : ''}`);
+        if (!atkStatus.hasType(STATUS_TYPE.Hide)) {
+            this._writeLog(`[${this.players[pidx].name}][${atkname}]发动${oCnt != -1 ? ` ${oCnt}->${atkStatus.useCnt}` : ''}`);
+        }
         const whLen = willHeals.length || 1;
         for (let hli = 0; hli < whLen; ++hli) {
             const hl = willHeals[hli];
             const canAction = hli == whLen - 1;
+            const selectedIdx = atkStatus.group == STATUS_GROUP.heroStatus ?
+                getObjIdxById(aheros[ahidx].heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide)), atkStatus.id) :
+                getObjIdxById(this.players[pidx].combatStatus.filter(s => !s.hasType(STATUS_TYPE.Hide)), atkStatus.id);
             await this._doDamage(pidx ^ isSelf, {
                 dmgSource: 'status',
                 atkPidx: pidx ^ isSelf,
@@ -3533,8 +3554,8 @@ export default class GeniusInvokationRoom {
                 dmgElements,
                 elTips,
                 willHeals: hl,
-                selected: [pidx, atkStatus.group, ahidx, atkStatus.group == STATUS_GROUP.heroStatus ? getObjIdxById(aheros[ahidx].heroStatus, atkStatus.id) : getObjIdxById(this.players[pidx].combatStatus, atkStatus.id)],
-            }, { atkname, canAction, isQuickAction });
+                selected: isCdt(selectedIdx > -1, [pidx, atkStatus.group, ahidx, selectedIdx]),
+            }, { atkname, canAction, isQuickAction, isActionInfo: false });
         }
         if (!atkStatus.hasType(STATUS_TYPE.Accumulate) && (atkStatus.useCnt == 0 || atkStatus.roundCnt == 0)) {
             atkStatus.type.splice(atkStatus.type.indexOf(STATUS_TYPE.Attack), 1);
@@ -4036,9 +4057,12 @@ export default class GeniusInvokationRoom {
                         const stscmds = [...(stsres.cmds ?? []), ...(stsexecres?.cmds ?? [])];
                         if (isExec || !stsres.notPreview) (stsres.isAddTask ? taskcmds : cmds).push(...stscmds);
                         if (!sts.hasType(STATUS_TYPE.Attack) && stsres.heal) {
-                            const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }], {
-                                players, source: sts.id, isPriority: true,
-                            });
+                            const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }],
+                                { players, source: sts.id, isPriority: true });
+                            aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
+                        } else if (stscmds.some(({ cmd }) => ['heal', 'addMaxHp'].includes(cmd))) {
+                            const { willHeals: cmdheal = [] } = this._doCmds(pidx, stscmds.filter(({ cmd }) => ['heal', 'addMaxHp'].includes(cmd)),
+                                { players, source: sts.id, isPriority: true });
                             aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
                         }
                         if (isExec && !isOnlyExec) {
@@ -4269,9 +4293,7 @@ export default class GeniusInvokationRoom {
                     if (!bWillHeals) bWillHeals = slotWhl;
                     else mergeWillHeals(bWillHeals, slotWhl);
                     tasks.push(...slottasks);
-                    if (triggers.includes('will-killed') && field.hasTag(CARD_TAG.NonDefeat)) {
-                        isDie = false;
-                    }
+                    if (triggers.includes('will-killed') && field.hasTag(CARD_TAG.NonDefeat)) isDie = false;
                 }
             }
             ({ minusDiceCard, switchHeroDiceCnt } = options);
