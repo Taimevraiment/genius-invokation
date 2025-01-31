@@ -69,7 +69,7 @@ export class GICard {
             descriptions: [],
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
-        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；〔g（牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组）〕`;
+        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组）`;
         else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
@@ -119,14 +119,14 @@ export class GICard {
             this.UI.description = this.UI.description
                 .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次‹#f4dca2【ski】›。`)
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
-                .replace(/(?<=【)ski(?=】)/g, ski) + `；〔g（牌组中包含【${hro}】，才能加入牌组）〕`;
+                .replace(/(?<=【)ski(?=】)/g, ski) + `；（牌组中包含【${hro}】，才能加入牌组）`;
             userType = hid;
         } else if (subType?.includes(CARD_SUBTYPE.Legend)) {
-            this.UI.description += `；（整局游戏只能打出一张｢秘传｣卡牌; 这张牌一定在你的起始手牌中）`;
+            this.UI.description += `；（整局游戏只能打出一张｢秘传｣卡牌\\；这张牌一定在你的起始手牌中）`;
             this.UI.cnt = 1;
         } else if (subType?.includes(CARD_SUBTYPE.ElementResonance)) {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
-            this.UI.description += `；〔g（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）〕`;
+            this.UI.description += `；（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）`;
         }
         this.UI.description = this.UI.description.replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`).replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         this.cost = cost;

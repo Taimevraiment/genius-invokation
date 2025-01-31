@@ -191,7 +191,7 @@
                     <div class="filter-title">{{ htitle.name }}</div>
                     <div class="filter-tags">
                         <span class="filter-tag" :class="{ 'active': val.tap }" v-for="(val, sidx) in htitle.value"
-                            :key="sidx" @click.stop="selectFilter(hidx, sidx)">
+                            :style="{ color: val.color }" :key="sidx" @click.stop="selectFilter(hidx, sidx)">
                             {{ val.name }}
                         </span>
                     </div>
@@ -216,7 +216,7 @@ import {
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
-    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
+    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_NAME_KEY, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
 import { computed, ref } from 'vue';
@@ -233,6 +233,7 @@ type Filter<T> = {
         name: string,
         val: T,
         tap: boolean,
+        color: string,
     }[]
 }
 type HeroFilter = [Filter<HeroTag>, Filter<ElementType>, Filter<WeaponType>];
@@ -389,6 +390,7 @@ const resetHeroFilter = () => {
             name,
             val: heroVal[aidx][i],
             tap: false,
+            color: aidx == 1 ? ELEMENT_COLOR[ELEMENT_NAME_KEY[name + '元素']] : 'white',
         })),
     })) as HeroFilter;
 }
@@ -1239,6 +1241,7 @@ input#isOfflineInput:checked {
     border-radius: 5px;
     cursor: pointer;
     box-sizing: border-box;
+    color: white;
 }
 
 .filter-tag:active,

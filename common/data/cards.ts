@@ -2668,7 +2668,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(2).tag(CARD_TAG.Barrier).perCnt(-1)
-        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。；使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
+        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Arlecchino.webp')
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;

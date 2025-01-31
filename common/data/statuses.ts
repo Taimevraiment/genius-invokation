@@ -1,7 +1,7 @@
 import { AddDiceSkill, Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
-    ElementCode, ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
+    ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
@@ -1849,16 +1849,31 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    121022: (type: number = 0) => new StatusBuilder(['严寒', '炽热'][type]).heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
-        .icon(ELEMENT_ICON[ELEMENT_CODE_KEY[[1, 3][type] as ElementCode]] + '-dice').iconBg(DEBUFF_BG_COLOR).perCnt(-type)
-        .description(`【结束阶段：】对所附属角色造成1点[${['冰', '火'][type]}元素伤害]。；[useCnt]；所附属角色被附属【sts121022${[',1', ''][type]}】时，移除此效果。`)
-        .handle(status => ({
-            damage: 1,
-            element: status.perCnt == 0 ? DAMAGE_TYPE.Cryo : DAMAGE_TYPE.Pyro,
-            isSelf: true,
-            trigger: ['phase-end'],
-            exec: eStatus => { eStatus && --eStatus.useCnt },
-        })),
+    121022: () => new StatusBuilder('严寒').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
+        .icon('cryo-dice').iconBg(DEBUFF_BG_COLOR)
+        .description('【结束阶段：】对所附属角色造成1点[冰元素伤害]。；[useCnt]；所附属角色被附属【sts163011】时，移除此效果。')
+        .handle((_, event) => {
+            const { trigger = '', heros = [], hidx = -1 } = event;
+            if (trigger == 'enter') {
+                return {
+                    trigger: ['enter'],
+                    exec: () => {
+                        const sts163011 = getObjById(heros[hidx]?.heroStatus, 163011);
+                        if (sts163011) {
+                            sts163011.roundCnt = 0;
+                            sts163011.useCnt = 0;
+                        }
+                    }
+                }
+            }
+            return {
+                damage: 1,
+                element: DAMAGE_TYPE.Cryo,
+                isSelf: true,
+                trigger: ['phase-end'],
+                exec: eStatus => { eStatus && --eStatus.useCnt },
+            }
+        }),
 
     121031: () => new StatusBuilder('四迸冰锥').heroStatus().icon('buff6').useCnt(1).type(STATUS_TYPE.Usage)
         .description('【我方角色｢普通攻击｣时：】对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]')
@@ -1880,7 +1895,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (!eStatus) return;
                     --eStatus.useCnt;
                     if (heros[hidx]?.talentSlot) {
-                        return { cmds: [{ cmd: 'getStatus', status: 121022, hidxs: [hidx], isOppo: true }] }
+                        return { cmds: [{ cmd: 'getStatus', status: 121022, isOppo: true }] }
                     }
                 }
             }
@@ -2414,6 +2429,32 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { skid = -1 } = event;
             if (skid != 1270321) return;
             return { trigger: ['vehicle'], addDmgCdt: 1, exec: () => { --status.useCnt } }
+        }),
+
+    163011: () => new StatusBuilder('炽热').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
+        .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR)
+        .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]；所附属角色被附属【sts121022】时，移除此效果。')
+        .handle((_, event) => {
+            const { trigger = '', heros = [], hidx = -1 } = event;
+            if (trigger == 'enter') {
+                return {
+                    trigger: ['enter'],
+                    exec: () => {
+                        const sts121022 = getObjById(heros[hidx]?.heroStatus, 121022);
+                        if (sts121022) {
+                            sts121022.roundCnt = 0;
+                            sts121022.useCnt = 0;
+                        }
+                    }
+                }
+            }
+            return {
+                damage: 1,
+                element: DAMAGE_TYPE.Pyro,
+                isSelf: true,
+                trigger: ['phase-end'],
+                exec: eStatus => { eStatus && --eStatus.useCnt },
+            }
         }),
 
     300001: () => new StatusBuilder('旧时庭园（生效中）').combatStatus().icon('buff2').roundCnt(1)

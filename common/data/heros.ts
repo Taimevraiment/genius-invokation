@@ -2260,10 +2260,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/36f1358533325d377d6a4e99eec5918f_6190662149106536998.png')
         .normalSkill(new NormalSkillBuilder('红莲之蛾').catalyst())
         .skills(
-            new SkillBuilder('烬灭之鞭').description('{dealDmg}，目标角色附属【sts121022,1】。')
+            new SkillBuilder('烬灭之鞭').description('{dealDmg}，目标角色附属【sts163011】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/fa766b02212311a6f0d15c0904b7af40.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/5ebe47ad42ad678785def13a30f485ad_5687308121190951050.png')
-                .elemental().damage(2).cost(3).handle(() => ({ statusOppo: [[121022, 1]] })),
+                .elemental().damage(2).cost(3).handle(() => ({ statusOppo: 163011 })),
             new SkillBuilder('燃焰旋织').description('{dealDmg}。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/1dee7d6a7c6efeb3621013c59f051c31.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/456005ca57b543d460e516403de7dd7b_5879470454090240332.png')

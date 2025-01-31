@@ -570,7 +570,7 @@ watchEffect(() => {
         const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
         const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
-        const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时：'));
+        const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时'));
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
         slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
         if (slot.subType.includes(CARD_SUBTYPE.Vehicle)) {
