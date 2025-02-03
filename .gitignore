@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # 私钥
-# secretKey.ts
+secretKey.ts
