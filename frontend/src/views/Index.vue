@@ -66,12 +66,13 @@ import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import { getSocket } from '@/store/socket';
 import { Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
-import secretKey from '@@@/constant/secretKey';
+// import secretKey from '@@@/constant/secretKey';
 import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Player, PlayerList, RoomList } from '../../../typing';
 
+const secretKey = '';
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);

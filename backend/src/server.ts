@@ -4,10 +4,11 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
-import serverSecretKey from '../../common/constant/secretKey.js';
+// import serverSecretKey from '../../common/constant/secretKey.js';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
+const serverSecretKey = '';
 const app = express();
 app.use(cors({
     origin: [

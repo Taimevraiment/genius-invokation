@@ -215,13 +215,14 @@ import {
   Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
-import secretKey from '@@@/constant/secretKey';
+// import secretKey from '@@@/constant/secretKey';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { debounce, isCdt, parseShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
+const secretKey = '';
 const router = useRouter();
 const route = useRoute();
 
