@@ -15,8 +15,8 @@
     </button>
     <div class="player-info">{{ client.player?.UI.info }}</div>
 
-    <div class="menu">
-      <button v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN" class="start" @click.stop="startGame">
+    <div class="menu" v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN">
+      <button class="start" @click.stop="startGame">
         {{ client.player?.phase == PHASE.NOT_READY ? '准备开始' : '取消准备' }}
       </button>
       <button v-if="isLookon == -1 && client.player?.phase == PHASE.NOT_READY" class="deck-open"
@@ -28,6 +28,12 @@
       </div>
       <div class="warn" v-if="!client.isDeckVersionValid.isValid && isLookon == -1">
         {{ client.isDeckVersionValid.error }}
+      </div>
+      <div class="curr-deck">
+        <div class="hero-avatar">
+          <img v-for="(avatar, aidx) in currDeck.avatars" :key="aidx" :src="avatar" />
+        </div>
+        当前卡组: <span class="deck-name">{{ currDeck.name }}</span>
       </div>
     </div>
 
@@ -82,11 +88,15 @@
     <div class="hand-card"
       v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0 && client.isShowSwitchHero < 2) || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
-      :style="{ transform: `translateX(-${12 * client.handcardsPos.length}px)` }">
+      :style="client.handcardsGroupOffset">
       <Handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
-        :class="{ selected: client.handcardsSelect == idx }" :card="card" :isMobile="isMobile"
+        :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
+      </Handcard>
+      <Handcard v-for="(card, idx) in client.player.UI.willGetCard.cards.filter(c => c.UI.class?.includes('over'))"
+        :key="`${idx}-${card.id}-myhandcard-over`" :card="card" :isMobile="isMobile" :class="card.UI.class ?? ''"
+        :style="{ left: `${client.handcardsOverPos[idx]}px` }">
       </Handcard>
     </div>
 
@@ -205,9 +215,11 @@ import {
   Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
+import secretKey from '@@@/constant/secretKey';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
+import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { debounce, isCdt } from '@@@/utils/utils';
+import { debounce, isCdt, parseShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
 const router = useRouter();
@@ -230,6 +242,14 @@ const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
 const canAction = computed<boolean>(() => client.value.canAction && isLookon.value == -1); // 是否可以操作
+const currDeck = computed(() => { // 当前出战卡组
+  const deck = client.value.decks[client.value.editDeckIdx];
+  const { heroIds } = parseShareCode(deck.shareCode);
+  return {
+    name: deck.name,
+    avatars: heroIds.map(hid => parseHero(hid).UI.avatar),
+  }
+});
 const afterWinHeros = ref<Hero[][]>([]); // 游戏结束后显示的角色信息
 const hasAI = ref<boolean>(false); // 是否有AI
 
@@ -293,7 +313,7 @@ const sendLog = () => {
   if (client.value.phase <= PHASE.NOT_BEGIN || isLookon.value != -1) return;
   const description = prompt('发生了什么问题');
   if (description != null) {
-    socket.emit('sendLog', { roomId, description });
+    socket.emit('sendLog', { roomId, description, secretKey });
     alert('日志已发送');
   }
 }
@@ -395,7 +415,7 @@ const getPlayerList = ({ plist }: { plist: Player[] }) => {
 };
 onMounted(() => {
   client.value.initSelect();
-  socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value) });
+  socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value), secretKey });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
   socket.on('error', err => {
@@ -508,7 +528,7 @@ const devOps = (cidx = 0) => {
         const mode = midx == -1 ? 0 : (parseInt(rest.slice(midx + 1)) || 0);
         const cnt = cidx == -1 ? 1 : (parseInt(rest.slice(cidx + 1)) || 1);
         const card = cdidx == -1 ? undefined : (parseInt(rest.slice(cdidx + 2)) || undefined);
-        const hidxs = hidx == -1 ? undefined : (parseInt(rest.slice(cdidx + 1)) || undefined)?.toString().split('').map(Number) || undefined;
+        const hidxs = hidx == -1 ? undefined : (parseInt(rest.slice(hidx + 1)) || 0)?.toString().split('').map(Number) || undefined;
         const dcmds: Cmds[] = [{ cmd: 'discard', mode, cnt, card, hidxs }];
         cmds.push(...dcmds);
       } else {
@@ -610,6 +630,7 @@ body {
   bottom: 95px;
   font-size: medium;
   z-index: 1;
+  transition: .3s;
 }
 
 .card.selected {
@@ -795,6 +816,25 @@ body {
   background: linear-gradient(to right, transparent, #feb4b4 50%, transparent);
 }
 
+.curr-deck {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  color: white;
+  text-align: center;
+}
+
+.hero-avatar {
+  width: 200px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.hero-avatar>img {
+  width: 30%;
+}
+
 .exit {
   position: absolute;
   top: 0;
@@ -918,7 +958,7 @@ body {
   background-color: #254162b9;
   border: 5px solid #1c3149b9;
   border-radius: 10px;
-  z-index: 2;
+  z-index: 5;
 }
 
 .modal-action-my {
@@ -1124,5 +1164,112 @@ body {
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.will-getcard-my-pile {
+  animation: getcard-my-pile 1.5s linear forwards;
+}
+
+@keyframes getcard-my-pile {
+  0% {
+    transform: perspective(500px) translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
+  }
+
+  40% {
+    transform: translateY(-50vh);
+  }
+
+  80% {
+    transform: translateY(-50vh);
+  }
+}
+
+.will-getcard-my-generate {
+  animation: getcard-my-generate 1.5s linear forwards;
+}
+
+@keyframes getcard-my-generate {
+  0% {
+    transform: translateY(-50vh);
+    opacity: 0;
+  }
+
+  40% {
+    transform: translateY(-50vh);
+    opacity: 1;
+  }
+
+  75% {
+    transform: translateY(-50vh);
+  }
+}
+
+.will-getcard-my-pile-over {
+  animation: getcard-my-pile-over 1.5s linear forwards;
+}
+
+@keyframes getcard-my-pile-over {
+  0% {
+    transform: perspective(500px) translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
+  }
+
+  40% {
+    transform: translateY(-50vh);
+  }
+
+  85% {
+    transform: translateY(-50vh);
+  }
+
+  100% {
+    transform: translateY(-50vh);
+    opacity: 0;
+  }
+}
+
+.will-getcard-my-generate-over {
+  animation: getcard-my-generate-over 1.5s linear forwards;
+}
+
+@keyframes getcard-my-generate-over {
+  0% {
+    transform: translateY(-50vh);
+    opacity: 0;
+  }
+
+  40% {
+    transform: translateY(-50vh);
+    opacity: 1;
+  }
+
+  85% {
+    transform: translateY(-50vh);
+  }
+
+  100% {
+    transform: translateY(-50vh);
+    opacity: 0;
+  }
+}
+
+.will-discard-hcard-my {
+  animation: discard-hcard-my 1.5s linear forwards;
+}
+
+@keyframes discard-hcard-my {
+  40% {
+    transform: translateY(-50vh);
+    opacity: 1;
+  }
+
+  80% {
+    transform: translateY(-50vh);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-50vh);
+    opacity: 0;
+  }
 }
 </style>

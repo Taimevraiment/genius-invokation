@@ -24,12 +24,12 @@
           v-for="(card, cidx) in opponent?.UI.willAddCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
         </Handcard>
         <Handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[0].length)}px` }"
-          v-for="(card, cidx) in opponent?.UI.willDiscard[0]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard.hcards.length)}px` }"
+          v-for="(card, cidx) in opponent?.UI.willDiscard.hcards" :key="cidx">
         </Handcard>
         <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard[1].length)}px` }"
-          v-for="(card, cidx) in opponent?.UI.willDiscard[1]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard.pile.length)}px` }"
+          v-for="(card, cidx) in opponent?.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
       <div class="timer" :style="{ 'background-image': currTimeBg }">
@@ -43,25 +43,25 @@
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
         {{ pileCnt[playerIdx] }}
-        <Handcard class="will-getcard-my" :class="{
+        <!-- <Handcard class="will-getcard-my" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-my-pile': player.UI.willGetCard.isFromPile,
           'will-getcard-my-generate': !player.UI.willGetCard.isFromPile
         }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willGetCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willGetCard.cards" :key="cidx">
-        </Handcard>
+        </Handcard> -->
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
         </Handcard>
-        <Handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player.UI.willDiscard[0].length)}px` }"
-          v-for="(card, cidx) in player.UI.willDiscard[0]" :key="cidx">
-        </Handcard>
+        <!-- <Handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player.UI.willDiscard.hcards.length)}px` }"
+          v-for="(card, cidx) in player.UI.willDiscard.hcards" :key="cidx">
+        </Handcard> -->
         <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard[1].length)}px` }"
-          v-for="(card, cidx) in player.UI.willDiscard[1]" :key="cidx">
+          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard.pile.length)}px` }"
+          v-for="(card, cidx) in player.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
@@ -1748,14 +1748,6 @@ button:active {
   transform: rotate(90deg);
 }
 
-.will-getcard-my-pile {
-  animation: getcard-my-pile 1.5s linear forwards;
-}
-
-.will-getcard-my-generate {
-  animation: getcard-my-generate 1.5s linear forwards;
-}
-
 .will-getcard-oppo {
   position: absolute;
   background-color: #304260;
@@ -1802,15 +1794,6 @@ button:active {
   background-color: #a7bbdd;
   transform: rotate(90deg);
   animation: discard-pile 1.5s linear forwards;
-}
-
-.will-discard-hcard-my {
-  position: absolute;
-  color: black;
-  text-align: center;
-  background-color: #a7bbdd;
-  transform: rotate(90deg);
-  animation: discard-hcard-my 1.5s linear forwards;
 }
 
 .will-discard-hcard-oppo {
@@ -1983,43 +1966,6 @@ svg {
   }
 }
 
-@keyframes getcard-my-pile {
-  20% {
-    transform: translate(calc(50vw + 50%), -10%);
-    z-index: 5;
-  }
-
-  80% {
-    transform: translate(calc(50vw + 50%), -10%);
-    z-index: 5;
-  }
-
-  100% {
-    transform: translate(calc(50vw + 50%), 200%);
-  }
-}
-
-@keyframes getcard-my-generate {
-  0% {
-    transform: translate(calc(50vw + 50%), -10%);
-    opacity: 0;
-  }
-
-  20% {
-    opacity: 1;
-    z-index: 5;
-  }
-
-  80% {
-    transform: translate(calc(50vw + 50%), -10%);
-    z-index: 5;
-  }
-
-  100% {
-    transform: translate(calc(50vw + 50%), 200%);
-  }
-}
-
 @keyframes getcard-oppo-pile {
   50% {
     transform: translate(1100%, -50%);
@@ -2088,28 +2034,6 @@ svg {
 
   100% {
     transform-origin: center center;
-    transform: translate(calc(50vw + 50%), -10%) scale(0);
-    opacity: 0;
-    z-index: 5;
-  }
-}
-
-@keyframes discard-hcard-my {
-  0% {
-    transform: translate(calc(50vw + 50%), 200%);
-  }
-
-  20% {
-    transform: translate(calc(50vw + 50%), -10%);
-    z-index: 5;
-  }
-
-  80% {
-    transform: translate(calc(50vw + 50%), -10%);
-    z-index: 5;
-  }
-
-  100% {
     transform: translate(calc(50vw + 50%), -10%) scale(0);
     opacity: 0;
     z-index: 5;

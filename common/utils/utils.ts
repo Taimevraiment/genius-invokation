@@ -95,11 +95,15 @@ export const parseShareCode = (code: string): { heroIds: number[], cardIds: numb
 /**
  * 延迟函数
  * @param time 延迟时间(ms = 0)
+ * @param fn 延迟后的执行函数
  */
-export const delay = (time: number = 0) => {
-    if (time == 0) return;
+export const delay = (time: number = -1, fn: () => any = () => { }) => {
+    if (time < 0) return fn?.();
     return new Promise<void>(resolve => {
-        setTimeout(resolve, time);
+        setTimeout(async () => {
+            await fn();
+            resolve();
+        }, time);
     });
 }
 

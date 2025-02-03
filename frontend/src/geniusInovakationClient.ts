@@ -1,16 +1,17 @@
 import type { Socket } from "socket.io-client";
 
-import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, Version } from "@@@/constant/enum";
-import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
+import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_TYPE, Version } from "@@@/constant/enum";
+import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
+import secretKey from "@@@/constant/secretKey";
 import {
-    CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC,
+    CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC, SLOT_CODE_KEY,
 } from "@@@/constant/UIconst";
 import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Summon,
+    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon,
 } from "../../typing";
 
 type DeckValid = {
@@ -66,6 +67,8 @@ export default class GeniusInvokationClient {
     handcardsGap: number; // 手牌间隔
     handcardsOffset: number; // 手牌偏移
     handcardsPos: number[]; // 手牌位置
+    handcardsOverPos: number[] = []; // 超出限额的手牌位置
+    handcardsGroupOffset: Record<string, string> = {}; // 手牌组偏移
     handcardsSelect: number = -1; // 被选中的手牌序号
     reconcileValid: boolean[] = []; // 是否允许调和
     heroSelect: number[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 角色是否选中
@@ -89,7 +92,7 @@ export default class GeniusInvokationClient {
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
     ) {
         this.socket = socket;
-        this.emit = data => socket.emit('sendToServer', data);
+        this.emit = data => socket.emit('sendToServer', data, secretKey);
         this.roomId = roomId;
         this.userid = userid;
         this.version = version;
@@ -129,7 +132,16 @@ export default class GeniusInvokationClient {
         return this.players[this.playerIdx ^ 1] ?? INIT_PLAYER();
     }
     get canAction() {// 是否可以操作
-        return this.player.canAction && this.tip == '' && this.actionInfo.content == '' && this.damageVO.dmgSource == 'null';
+        return this.player.canAction &&
+            this.tip == '' &&
+            this.actionInfo.content == '' &&
+            this.damageVO.dmgSource == 'null' &&
+            this.players.every(p =>
+                p.UI.willGetCard.cards.length == 0 &&
+                p.UI.willAddCard.cards.length == 0 &&
+                p.UI.willDiscard.hcards.length == 0 &&
+                p.UI.willDiscard.pile.length == 0
+            );
     }
     get heroSwitchDiceColor() { // 切换角色骰子颜色
         return this.heroSwitchDice > INIT_SWITCH_HERO_DICE ? CHANGE_BAD_COLOR :
@@ -235,9 +247,46 @@ export default class GeniusInvokationClient {
     }
     /**
      * 更新手牌位置
+     * @param player 最新的玩家数据
      */
-    updateHandCardsPos() {
-        this.handcardsPos = this.player.handCards.map((_, ci) => ci * this.handcardsGap);
+    updateHandCardsPos(player: Player) {
+        const isGetCard = (c: Card) => c.UI.class?.includes('getcard');
+        const newCardIdxs = player.handCards.filter(isGetCard);
+        const validNewCardIdxs = newCardIdxs.filter(c => !c.UI.class?.includes('over'));
+        let overloadIdx = -1;
+        this.handcardsPos = player.handCards.map(c => {
+            const newCidxGap = isGetCard(c) ? 0 : validNewCardIdxs.filter(v => v.cidx < c.cidx).length;
+            const newGroupOffset = isGetCard(c) ? 12 * newCardIdxs.length : 0;
+            if (isGetCard(c)) overloadIdx = c.cidx;
+            return (c.cidx - newCidxGap) * this.handcardsGap - newGroupOffset;
+        });
+        this.handcardsOverPos = [];
+        if (overloadIdx == -1) overloadIdx = MAX_HANDCARDS_COUNT / 2 - Math.ceil(newCardIdxs.length / 2);
+        player.UI.willGetCard.cards
+            .filter(c => c.UI.class?.includes('over'))
+            .forEach((_, ci) => this.handcardsOverPos.push((ci + overloadIdx + 1) * this.handcardsGap));
+        const isDiscard = (c: Card) => c.UI.class?.includes('discard');
+        const discardIdxs = player.handCards.filter(isDiscard).map(c => c.cidx);
+        if (newCardIdxs.length + discardIdxs.length) {
+            setTimeout(() => {
+                this.handcardsPos = this.player.handCards.map(c => {
+                    const discardCidxGap = isDiscard(c) ? 0 : discardIdxs.filter(v => v < c.cidx).length;
+                    return (c.cidx - discardCidxGap) * this.handcardsGap;
+                });
+                this.handcardsGroupOffset = { transform: `translateX(-${12 * (this.handcardsPos.length - discardIdxs.length)}px)` }
+            }, 1200);
+            setTimeout(() => {
+                this.player.handCards = this.player.handCards.filter(c => !isDiscard(c));
+                this.player.handCards.forEach((c, ci) => c.cidx = ci);
+                this.handcardsPos = this.player.handCards.map(c => c.cidx * this.handcardsGap);
+                this.players.forEach(p => {
+                    p.handCards.forEach(c => delete c.UI.class);
+                    p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
+                    p.UI.willAddCard = { cards: [], isNotPublic: false };
+                    p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
+                });
+            }, 1500);
+        }
     }
     /**
      * 展示选择卡的信息
@@ -424,9 +473,9 @@ export default class GeniusInvokationClient {
         this.countdown.curr = currCountdown;
         if (this.countdown.timer != undefined) clearInterval(this.countdown.timer);
         if (currCountdown > 0) this.countdown.timer = setInterval(() => --this.countdown.curr, 1e3);
-        this.pileCnt = pileCnt;
         this.diceCnt = diceCnt;
-        this.handCardsCnt = handCardsCnt;
+        setTimeout(() => this.pileCnt = pileCnt, players.some(p => p.UI.willAddCard.cards.length) ? 1500 : 0);
+        setTimeout(() => this.handCardsCnt = handCardsCnt, players.some(p => p.UI.willDiscard.hcards.length + p.UI.willDiscard.pile.length) ? 1500 : 0);
         this.showRerollBtn = players[this.playerIdx]?.UI.showRerollBtn ?? false;
         this.pickModal = pickModal;
         this.watchers = watchers;
@@ -441,35 +490,51 @@ export default class GeniusInvokationClient {
             this.actionInfo = actionInfo;
             setTimeout(() => this.actionInfo = { content: '', card: null }, 1e3);
         }
-        try {
-            if (slotSelect.length > 0) {
-                const [p, h, s] = slotSelect;
-                this.slotSelect[+(p == this.playerIdx)][h][s] = true;
-                setTimeout(() => this._resetSlotSelect(), 500);
+        const setSelect = (retry = 0) => {
+            try {
+                if (slotSelect.length > 0) {
+                    const [p, h, s, isDestroy] = slotSelect;
+                    this.slotSelect[+(p == this.playerIdx)][h][s] = true;
+                    setTimeout(() => this._resetSlotSelect(), 500);
+                    if (isDestroy) setTimeout(() => this.players[p].heros[h][SLOT_CODE_KEY[s]] = null, 800);
+                }
+                if (heroSelect.length > 0) {
+                    const [p, h] = heroSelect;
+                    this.heroSelect[+(p == this.playerIdx)][h] = 1;
+                    setTimeout(() => this._resetHeroSelect(), 500);
+                }
+                if (statusSelect.length > 0) {
+                    const [p, g, h, s] = statusSelect;
+                    this.statusSelect[+(p == this.playerIdx)][g][h][s] = true;
+                    setTimeout(() => this._resetStatusSelect(), 500);
+                }
+                if (summonSelect.length > 0) {
+                    const [p, s, isDestroy] = summonSelect;
+                    this.summonSelect[+(p == this.playerIdx)][s] = true;
+                    setTimeout(() => this._resetSummonSelect(), 500);
+                    if (isDestroy) setTimeout(() => this.players[p].summons.splice(s, 1), 2240);
+                }
+                if (supportSelect.length > 0) {
+                    const [p, s, isDestroy] = supportSelect;
+                    this.supportSelect[+(p == this.playerIdx)][s] = true;
+                    setTimeout(() => this._resetSupportSelect(), 500);
+                    if (isDestroy) setTimeout(() => this.players[p].supports.splice(s, 1), 1e3);
+                }
+            } catch (e) {
+                this.initSelect(players);
+                if (retry < 2) {
+                    console.warn(e);
+                    setSelect(retry + 1);
+                } else console.error(e);
             }
-            if (heroSelect.length > 0) {
-                const [p, h] = heroSelect;
-                this.heroSelect[+(p == this.playerIdx)][h] = 1;
-                setTimeout(() => this._resetHeroSelect(), 500);
-            }
-            if (statusSelect.length > 0) {
-                const [p, g, h, s] = statusSelect;
-                this.statusSelect[+(p == this.playerIdx)][g][h][s] = true;
-                setTimeout(() => this._resetStatusSelect(), 500);
-            }
-            if (summonSelect.length > 0) {
-                const [p, s] = summonSelect;
-                this.summonSelect[+(p == this.playerIdx)][s] = true;
-                setTimeout(() => this._resetSummonSelect(), 500);
-            }
-            if (supportSelect.length > 0) {
-                const [p, s] = supportSelect;
-                this.supportSelect[+(p == this.playerIdx)][s] = true;
-                setTimeout(() => this._resetSupportSelect(), 500);
-            }
-        } catch (e) {
-            console.error(e);
-            this.initSelect(players);
+        }
+        setSelect();
+        const stsDestroy = (s: Status) => s.type.includes(STATUS_TYPE.Accumulate) || !(s.useCnt == 0 || s.roundCnt == 0);
+        const destroySts = () => {
+            this.players.forEach(p => {
+                p.heros.forEach(h => h.heroStatus = h.heroStatus.filter(stsDestroy));
+                p.combatStatus = p.combatStatus.filter(stsDestroy);
+            });
         }
         if (hasDmg) {
             this.damageVO.dmgSource = damageVO?.dmgSource ?? 'null';
@@ -479,8 +544,8 @@ export default class GeniusInvokationClient {
             this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
             this.isShowDmg = true;
             setTimeout(() => {
+                this.updateHandCardsPos(players[this.playerIdx]);
                 this.players = players;
-                this.updateHandCardsPos();
                 this.damageVO.elTips = damageVO?.elTips ?? [];
                 this.damageVO.willDamages = damageVO?.willDamages ?? [];
                 this.damageVO.willHeals = damageVO?.willHeals ?? [];
@@ -491,21 +556,23 @@ export default class GeniusInvokationClient {
                     const [spidx, sgroup, shidx, sidx] = damageVO.selected ?? [-1, -1, -1, -1];
                     if (sidx > -1) this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
                 }
-                setTimeout(() => {
-                    this.isShowDmg = false;
-                    if (damageVO?.dmgSource == 'summon') this._resetSummonSelect();
-                    else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
-                    setTimeout(() => this._resetDamageVO(), 500);
-                }, 1100);
             }, 550);
+            setTimeout(() => {
+                this.isShowDmg = false;
+                if (damageVO?.dmgSource == 'summon') this._resetSummonSelect();
+                else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
+            }, 1650);
+            setTimeout(() => this._resetDamageVO(), 2150);
+            setTimeout(() => destroySts(), 2550);
         } else {
+            this.updateHandCardsPos(players[this.playerIdx]);
             this.players = players;
             if (damageVO != -1 && damageVO?.elTips.some(([v]) => v != '')) {
                 this.damageVO.elTips = damageVO?.elTips ?? [];
                 setTimeout(() => this._resetDamageVO(), 1100);
             }
+            setTimeout(() => destroySts(), 1300)
         }
-        this.updateHandCardsPos();
         this.log = [...log];
     }
     /**

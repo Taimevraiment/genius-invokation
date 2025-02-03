@@ -579,7 +579,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 常九爷
     322009: () => new SupportBuilder().collection().handle((support, event) => {
         const { sktype = SKILL_TYPE.Vehicle } = event;
-        if (sktype != SKILL_TYPE.Vehicle) return;
+        if (sktype == SKILL_TYPE.Vehicle) return;
         return {
             trigger: ['Physical-dmg', 'Physical-getdmg', 'Pierce-dmg', 'Pierce-getdmg', 'elReaction', 'get-elReaction'],
             supportCnt: support.cnt < 2 ? 1 : -3,
@@ -850,7 +850,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 参量质变仪
     323001: () => new SupportBuilder().collection().handle((support, event, ver) => {
         const { sktype = SKILL_TYPE.Vehicle } = event;
-        if (sktype != SKILL_TYPE.Vehicle) return;
+        if (sktype == SKILL_TYPE.Vehicle) return;
         return {
             trigger: ['el-dmg', 'el-getdmg'],
             supportCnt: support.cnt < 2 ? 1 : -3,

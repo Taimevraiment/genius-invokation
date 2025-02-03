@@ -59,7 +59,11 @@ type Player = {
             cards: Card[], // 即将加入牌库的卡
             isNotPublic: boolean, // 是否公开
         },
-        willDiscard: Card[][], // 即将舍弃的卡 [手牌, 牌库]
+        willDiscard: { // 即将舍弃的卡
+            hcards: Card[], // 手牌
+            pile: Card[], // 牌库
+            isNotPublic: boolean, // 是否公开
+        },
         atkhidx: number, // 攻击角色序号
         tarhidx: number, // 受击角色序号
     }
@@ -134,7 +138,8 @@ type Cmds = {
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeElement' | 'useSkill' | 'changePattern' |
-    'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard';
+    'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
+    'putCard';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡

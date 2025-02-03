@@ -366,7 +366,7 @@ const wrapExplCtt = (content: string) => {
 }
 type WrapExplainType = 'slot' | 'card' | 'support' | '';
 const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
-  const wrapName = (_: string, ctt: string) => `<span style='color:white;'>${wrapExplCtt(ctt).name}</span>`;
+  const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite == '' ? ` style='color:white;'` : ''}>${wrapExplCtt(ctt).name}</span>`;
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
     .replace(/〔g(.+)〕/g, (_, ctt: string) => isInGame.value ? '' : ctt)
@@ -383,8 +383,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       }
       return `<span style="color:#d5bb49;">${ctt}</span>`
     })
-    .replace(/(?<!\\)〖(.*?)〗/g, wrapName)
-    .replace(/(?<!\\)【(.*?)】/g, wrapName)
+    .replace(/(?<!\\)(\*?)〖(.*?)〗/g, wrapName)
+    .replace(/(?<!\\)(\*?)【(.*?)】/g, wrapName)
     .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
       let icon = '';
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == word) ?? [];
@@ -570,7 +570,7 @@ watchEffect(() => {
         const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
         const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
         slot.UI.descriptions = isActionTalent ? desc.slice(2) : desc;
-        const onceDesc = slot.UI.descriptions.findIndex(v => v.includes('入场时'));
+        const onceDesc = slot.UI.descriptions.findIndex(v => /入场时|才能打出/.test(v));
         if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
         slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
         if (slot.subType.includes(CARD_SUBTYPE.Vehicle)) {
@@ -614,7 +614,11 @@ const showRule = (...desc: string[]) => {
   user-select: none;
   pointer-events: none;
   font-family: HYWenHei;
-  line-height: 1.4em;
+}
+
+[class$="-desc"],
+[class$="-explain"] {
+  line-height: 140%;
 }
 
 .info-img {

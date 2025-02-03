@@ -488,7 +488,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, hcards = [], trigger = '', isExecTask, isExec } = event;
+            const { heros = [], hidx = -1, hcards = [], trigger = '', isExec } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const sts111123 = getObjById(heros[hidx]?.heroStatus, 111123);
             if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('drawcard');
@@ -498,10 +498,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: eStatus => {
                     if (trigger.includes('skilltype') && !eStatus) {
                         const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
-                        if (isExecTask) card.sort((a, b) => b.cidx - a.cidx).forEach(c => hcards.splice(c.cidx, 1));
                         return {
                             cmds: [
-                                { cmd: 'addCard', card, hidxs: [-card.length], mode: CMD_MODE.IsNotPublic },
+                                { cmd: 'putCard', card, hidxs: [-card.length] },
                                 { cmd: 'getCard', cnt: card.length, isAttach: true },
                             ]
                         }
@@ -1068,11 +1067,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('tmp/UI_Gcg_Debuff_Arlecchino_S_-2121114989')
         .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属1层【sts122】。；[useCnt]')
         .handle((status, event) => {
-            const { eheros = [], getdmg = [] } = event;
-            const cmds: Cmds[] = [{ cmd: 'getStatus', status: 122, hidxs: getdmg.map((d, i) => ({ d, i })).filter(v => v.d > -1).map(v => v.i) }];
+            const { hidx = -1, heros = [], eheros = [], getdmg = [] } = event;
+            const hidxs: number[] = [];
+            for (let i = 0; i < getdmg.length; ++i) {
+                if (hidxs.length >= status.useCnt) break;
+                const hi = (hidx + i) % heros.length;
+                if ((getdmg[hi] ?? -1) > -1) hidxs.push(hi);
+            }
+            const cmds: Cmds[] = [{ cmd: 'getStatus', status: 122, hidxs }];
             const ehero = getObjById(eheros, getHidById(status.id));
             if (ehero) cmds.push({ cmd: 'getStatus', status: 122, hidxs: [ehero.hidx], isOppo: true });
-            return { trigger: ['getdmg'], cmds, exec: () => { --status.useCnt } }
+            return { trigger: ['getdmg'], cmds, exec: () => { status.useCnt -= hidxs.length } }
         }),
 
     113142: () => enchantStatus(ELEMENT_TYPE.Pyro).useCnt(1).typeOverride(STATUS_TYPE.Hide, STATUS_TYPE.Enchant),
@@ -1812,7 +1817,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     117094: () => new StatusBuilder('钩锁准备').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign)
         .icon('tmp/UI_Gcg_Buff_Kinich_S_-2124271304')
-        .description('【我方选择行动前，若附属角色为出战角色：】对[距离我方出战角色最近的角色]造成3点[草元素伤害]。；[useCnt]')
+        .description('【我方选择行动前，若附属角色为出战角色：】对最近的敌方角色造成3点[草元素伤害]。；[useCnt]')
         .handle((_, event) => {
             const { heros = [], hidx = -1, eheros = [] } = event;
             if (!heros[hidx]?.isFront) return;
@@ -1921,7 +1926,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, _, ver) => ({
             addDiceHero: isCdt(ver.gte('v4.8.0') || status.isTalent, 1),
             getDmg: isCdt(ver.lt('v4.8.0') || status.isTalent, 1),
-            trigger: ['Hydro-getdmg', 'active-switch-from'],
+            trigger: ['Hydro-getdmg', 'add-switch-from'],
             onlyOne: true,
         })),
 

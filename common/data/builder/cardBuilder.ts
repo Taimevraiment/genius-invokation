@@ -37,6 +37,7 @@ export class GICard {
         cnt: number, // 卡牌数量，默认为2
         descriptions: string[], // 处理后的技能描述
         explains: string[], // 要解释的文本
+        class?: string, // 动画的class
     };
     constructor(
         id: number, shareId: number, name: string, version: OnlineVersion, description: string, src: string, cost: number, costType: DiceType,

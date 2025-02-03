@@ -59,7 +59,11 @@ export const INIT_PLAYER: () => Player = () => ({
             isRandom: true,
             isNotPublic: false,
         },
-        willDiscard: [[], []],
+        willDiscard: {
+            hcards: [],
+            pile: [],
+            isNotPublic: false,
+        },
     },
 });
 

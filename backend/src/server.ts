@@ -4,6 +4,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
+import serverSecretKey from '../../common/constant/secretKey.js';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
@@ -152,8 +153,8 @@ io.on('connection', socket => {
     }
     // 登录/改名/重连
     socket.on('login', data => {
-        const { id = -1, name = '' } = data;
-        if (name == '') return;
+        const { id = -1, name = '', secretKey } = data;
+        if (name == '' || (!isDev && secretKey != serverSecretKey)) return;
         let username = name;
         const player = getPlayer(id);
         if (id > 0 && player) {
@@ -190,7 +191,8 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown, allowLookon } = data;
+        const { roomName, version, roomPassword, countdown, allowLookon, secretKey } = data;
+        if (!isDev && secretKey != serverSecretKey) return;
         const roomId = genId(roomList);
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', io);
@@ -208,7 +210,8 @@ io.on('connection', socket => {
     });
     // 加入房间
     socket.on('enterRoom', data => {
-        const { roomId, roomPassword = '', isLeave = true } = data;
+        const { roomId, roomPassword = '', isLeave = true, secretKey } = data;
+        if (!isDev && secretKey != serverSecretKey) return;
         let me = getPlayer(pid)!;
         const room = getRoom(roomId);
         if (!room) return socket.emit('enterRoom', { err: `房间号${roomId}不存在！` });
@@ -244,6 +247,7 @@ io.on('connection', socket => {
     socket.on('exitRoom', () => leaveRoom('exitRoom'));
     // 发送日志
     socket.on('sendLog', data => {
+        if (!isDev && data.secretKey != serverSecretKey) return;
         const room = getRoom(data.roomId);
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
         const me = getPlayer(pid);
@@ -253,13 +257,15 @@ io.on('connection', socket => {
     });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {
-        const { roomId, pidx } = data;
+        const { roomId, pidx, secretKey } = data;
+        if (!isDev && secretKey != serverSecretKey) return;
         const room = getRoom(roomId);
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
         room.emit('roomInfoUpdate', pidx ?? getIdxById(pid, room.players), { socket });
     });
     // 发送数据到服务器
-    socket.on('sendToServer', async (actionData: ActionData) => {
+    socket.on('sendToServer', async (actionData: ActionData, secretKey: string) => {
+        if (!isDev && secretKey != serverSecretKey) return;
         const me = getPlayer(pid);
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);
@@ -313,7 +319,7 @@ io.on('connection', socket => {
 });
 
 app.get('/detail', (req, res) => {
-    if (req.headers.flag != 'admin') return console.info(`[${new Date()}]请求失败，headers:${JSON.stringify(req.headers)}`);
+    if (req.headers.flag != serverSecretKey) return console.info(`[${new Date()}]请求失败，headers:${JSON.stringify(req.headers)}`);
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,

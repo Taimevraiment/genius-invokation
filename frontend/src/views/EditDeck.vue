@@ -260,7 +260,7 @@ const allHeros = ref<Hero[]>([...herosPool.value]); // 可选择角色池
 const allCards = ref<Card[]>([...cardsPool.value]); // 可选择卡池
 const herosDeck = ref<Hero[]>([]); // 当前角色组
 const cardsDeck = ref<Card[]>([]); // 当前卡组
-const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => {
+const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => { // 卡组列表
     const { heroIds, cardIds } = parseShareCode(deck.shareCode);
     return {
         name: deck.name,
@@ -278,7 +278,7 @@ const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => {
         }),
         cardIds,
     }
-})); // 卡组列表
+}));
 const deckName = ref<string>(''); // 卡组名字
 const editDeck = ref<{ heroIds: number[], cardIds: number[] }>({ heroIds: [], cardIds: [] }); // 当前编辑卡组
 const deckIdx = ref<number>(Number(localStorage.getItem('GIdeckIdx') || 0)); // 出战卡组id

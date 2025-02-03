@@ -66,6 +66,7 @@ import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import { getSocket } from '@/store/socket';
 import { Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import secretKey from '@@@/constant/secretKey';
 import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -93,7 +94,7 @@ const playerStatus = ref([
 let followIdx: number = -1; // 跟随的玩家id
 
 if (username.value != '' && userid.value > 0) {
-  socket.emit('login', { id: userid.value, name: username.value });
+  socket.emit('login', { id: userid.value, name: username.value, secretKey });
 }
 
 // 初始化卡组
@@ -116,7 +117,7 @@ const register = () => {
   isShowEditName.value = false;
   inputName.value = '';
   localStorage.setItem('7szh_username', username.value);
-  socket.emit('login', { id: userid.value, name: username.value });
+  socket.emit('login', { id: userid.value, name: username.value, secretKey });
 };
 
 // 显示改名界面
@@ -145,7 +146,7 @@ const cancelCreateRoom = () => {
 // 创建房间
 const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, secretKey });
 };
 
 // 打开加入房间界面
@@ -172,7 +173,7 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
   if (!room) return console.error(`room${roomId} not found`);
   if (follow > -1) followIdx = follow;
   if (room.hasPassWord && roomPassword == '') return openEnterRoom(room.id);
-  socket.emit('enterRoom', { roomId: Number(roomId), roomPassword, isForce });
+  socket.emit('enterRoom', { roomId: Number(roomId), roomPassword, isForce, secretKey });
 };
 
 // 获取玩家和房间列表

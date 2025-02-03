@@ -282,7 +282,7 @@ export class StatusBuilder extends BaseBuilder {
                 const { restDmg = -1, summon, getdmg = [], hidx = -1 } = event;
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
                 if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
-                if (summon && summon.statusId != -1 && this._summonId != -1) summon.useCnt = Math.max(0, summon.useCnt - this._barrierUsage);
+                if (summon && summon.statusId != -1 && this._summonId != -1) summon.minusUseCnt(this._barrierUsage);
                 if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
                 return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
             } : (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => this._handle?.(status, event, ver) ?? {};
