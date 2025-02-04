@@ -66,7 +66,7 @@ import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import { getSocket } from '@/store/socket';
 import { Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
-import { genShareCode, getSecretKey } from '@@@/utils/utils';
+import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Player, PlayerList, RoomList } from '../../../typing';
@@ -75,7 +75,6 @@ const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
 const router = useRouter();
-let secretKey = '';
 
 const userid = ref<number>(Number(localStorage.getItem('7szh_userid') || '-1')); // 玩家id
 const username = ref<string>(localStorage.getItem('7szh_username') || ''); // 昵称
@@ -94,7 +93,7 @@ const playerStatus = ref([
 let followIdx: number = -1; // 跟随的玩家id
 
 if (username.value != '' && userid.value > 0) {
-  socket.emit('login', { id: userid.value, name: username.value, secretKey });
+  socket.emit('login', { id: userid.value, name: username.value });
 }
 
 // 初始化卡组
@@ -117,7 +116,7 @@ const register = () => {
   isShowEditName.value = false;
   inputName.value = '';
   localStorage.setItem('7szh_username', username.value);
-  socket.emit('login', { id: userid.value, name: username.value, secretKey });
+  socket.emit('login', { id: userid.value, name: username.value });
 };
 
 // 显示改名界面
@@ -146,7 +145,7 @@ const cancelCreateRoom = () => {
 // 创建房间
 const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, secretKey });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon });
 };
 
 // 打开加入房间界面
@@ -173,7 +172,7 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
   if (!room) return console.error(`room${roomId} not found`);
   if (follow > -1) followIdx = follow;
   if (room.hasPassWord && roomPassword == '') return openEnterRoom(room.id);
-  socket.emit('enterRoom', { roomId: Number(roomId), roomPassword, isForce, secretKey });
+  socket.emit('enterRoom', { roomId: Number(roomId), roomPassword, isForce });
 };
 
 // 获取玩家和房间列表
@@ -185,7 +184,6 @@ const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomLi
   }));
 };
 onMounted(async () => {
-  secretKey = await getSecretKey('secretKey');
   // 获取登录pid
   socket.on('login', ({ pid, name }) => {
     userid.value = pid;
@@ -217,10 +215,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  socket.off('login');
-  socket.off('getPlayerAndRoomList', getPlayerAndRoomList);
-  socket.off('enterRoom');
-  socket.off('continueGame');
+  socket.removeAllListeners();
 });
 </script>
 

@@ -8,7 +8,7 @@ import {
 } from "@@@/constant/UIconst";
 import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
-import { clone, getSecretKey, isCdt, parseShareCode } from "@@@/utils/utils";
+import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon,
 } from "../../typing";
@@ -17,8 +17,6 @@ type DeckValid = {
     isValid: boolean,
     error: string,
 }
-
-const secretKey = await getSecretKey('secretKey');
 
 export default class GeniusInvokationClient {
     socket: Socket;
@@ -93,7 +91,7 @@ export default class GeniusInvokationClient {
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
     ) {
         this.socket = socket;
-        this.emit = data => socket.emit('sendToServer', data, secretKey);
+        this.emit = data => socket.emit('sendToServer', data);
         this.roomId = roomId;
         this.userid = userid;
         this.version = version;
@@ -251,6 +249,7 @@ export default class GeniusInvokationClient {
      * @param player 最新的玩家数据
      */
     updateHandCardsPos(player: Player) {
+        if (!this.isStart) return;
         const isGetCard = (c: Card) => c.UI.class?.includes('getcard');
         const newCardIdxs = player.handCards.filter(isGetCard);
         const validNewCardIdxs = newCardIdxs.filter(c => !c.UI.class?.includes('over'));

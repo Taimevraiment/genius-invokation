@@ -218,7 +218,7 @@ import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { debounce, getSecretKey, isCdt, parseShareCode } from '@@@/utils/utils';
+import { debounce, isCdt, parseShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
 const router = useRouter();
@@ -227,7 +227,6 @@ const route = useRoute();
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow, isDev } = history.state;
 const socket: Socket = getSocket(isDev);
-let secretKey = '';
 
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
@@ -313,7 +312,7 @@ const sendLog = () => {
   if (client.value.phase <= PHASE.NOT_BEGIN || isLookon.value != -1) return;
   const description = prompt('发生了什么问题');
   if (description != null) {
-    socket.emit('sendLog', { roomId, description, secretKey });
+    socket.emit('sendLog', { roomId, description });
     alert('日志已发送');
   }
 }
@@ -411,14 +410,15 @@ const removeAI = () => {
 
 const getPlayerList = ({ plist }: { plist: Player[] }) => {
   const me = plist.find(p => p.id == userid);
-  if (me?.rid == -1) router.back();
+  if ((me?.rid ?? -1) == -1) router.back();
 };
 onMounted(async () => {
-  secretKey = await getSecretKey('secretKey');
   client.value.initSelect();
-  socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value), secretKey });
+  socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value) });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));
   socket.on('getPlayerAndRoomList', getPlayerList);
+  socket.on('updatePlayers', players => client.value.players = players);
+  socket.on('updateSocketRoom', () => socket.emit('updateSocketRoom'));
   socket.on('error', err => {
     console.error(err);
     client.value.setError(err);
@@ -427,11 +427,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  socket.off('roomInfoUpdate');
-  socket.off('getServerInfo');
-  socket.off('getPlayerAndRoomList', getPlayerList);
-  socket.off('error');
-  // socket.off('getHeartBreak');
+  socket.removeAllListeners();
 });
 
 // dev

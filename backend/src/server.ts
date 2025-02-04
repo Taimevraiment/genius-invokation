@@ -2,7 +2,7 @@ import cors from 'cors';
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import { PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
+import { PHASE, PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
 import { getSecretKey } from '../../common/utils/utils.js';
 import { ActionData, Player } from "../../typing";
@@ -82,9 +82,7 @@ const getRoomIdx = (rid: number) => getIdxById(rid, roomList);
 const removePlayer = (player: Player) => {
     const { id: pid, status } = player;
     player.status = PLAYER_STATUS.OFFLINE;
-    const time = setTimeout(() => {
-        removeById(pid, playerList);
-    }, 30 * 60 * 1e3);
+    const time = setTimeout(() => removeById(pid, playerList), 30 * 60 * 1e3);
     removePlayerList.set(pid, {
         time,
         status,
@@ -122,14 +120,13 @@ io.on('connection', socket => {
         if (pid == -1) return;
         const me = player ?? getPlayer(pid) as Player;
         if (!me) return console.error(`ERROR@leaveRoom:${eventName}:未找到玩家,me:${JSON.stringify(me)}`);
-        const log = `[${new Date()}]:玩家[${me.name}]-pid:${me.id} ` + ({
+        const log = `[${new Date()}]:玩家[${me.name}]-pid:${me.id}-rid:${me.rid} ` + ({
             exitRoom: `离开了房间[${me.rid}]...`,
             disconnect: `断开连接了...`,
             close: `关闭了连接...`,
         }[eventName] ?? `未知原因[${eventName}]断开...`);
         console.info(log);
         if (me.rid > 0) {
-            socket.leave(`7szh-${me.rid}`);
             const room = getRoom(me.rid);
             if (!room) return console.error(`ERROR@leaveRoom:${eventName}:未找到房间,rid:${me.rid}`);
             if (me.pidx > -1) {
@@ -140,6 +137,7 @@ io.on('connection', socket => {
                 me.rid = -1;
                 removeById(pid, room.players, room.watchers);
                 if (room.players[0]?.id == AI_ID) --room.onlinePlayersCnt;
+                if (me.pidx != -1) room.players.forEach(p => p.phase = PHASE.NOT_READY);
             }
             if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline)) {
                 [...room.players, ...room.watchers].forEach(p => p.rid = -1);
@@ -154,8 +152,8 @@ io.on('connection', socket => {
     }
     // 登录/改名/重连
     socket.on('login', data => {
-        const { id = -1, name = '', secretKey } = data;
-        if (name == '' || (!isDev && secretKey != serverSecretKey)) return;
+        const { id = -1, name = '' } = data;
+        if (name == '') return;
         let username = name;
         const player = getPlayer(id);
         if (id > 0 && player) {
@@ -192,8 +190,7 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown, allowLookon, secretKey } = data;
-        if (!isDev && secretKey != serverSecretKey) return;
+        const { roomName, version, roomPassword, countdown, allowLookon } = data;
         const roomId = genId(roomList);
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', io);
@@ -211,12 +208,11 @@ io.on('connection', socket => {
     });
     // 加入房间
     socket.on('enterRoom', data => {
-        const { roomId, roomPassword = '', isLeave = true, secretKey } = data;
-        if (!isDev && secretKey != serverSecretKey) return;
+        const { roomId, roomPassword = '', isLeave = true } = data;
         let me = getPlayer(pid)!;
         const room = getRoom(roomId);
         if (!room) return socket.emit('enterRoom', { err: `房间号${roomId}不存在！` });
-        const pidx = getIdxById(me.id, room.players);
+        const pidx = getById(me.id, room.players)?.pidx ?? -1;
         const isInGame = pidx > -1;
         if (room.password != roomPassword && !isInGame) return socket.emit('enterRoom', { err: '密码错误！' });
         if (me.rid > 0 && me.rid != roomId && getRoom(me.rid)) return socket.emit('enterRoom', { err: `你还有正在进行的游戏！rid:${me.rid}` });
@@ -248,7 +244,6 @@ io.on('connection', socket => {
     socket.on('exitRoom', () => leaveRoom('exitRoom'));
     // 发送日志
     socket.on('sendLog', data => {
-        if (!isDev && data.secretKey != serverSecretKey) return;
         const room = getRoom(data.roomId);
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
         const me = getPlayer(pid);
@@ -258,15 +253,22 @@ io.on('connection', socket => {
     });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {
-        const { roomId, pidx, secretKey } = data;
-        if (!isDev && secretKey != serverSecretKey) return;
+        const { roomId, pidx } = data;
         const room = getRoom(roomId);
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
-        room.emit('roomInfoUpdate', pidx ?? getIdxById(pid, room.players), { socket });
+        room.emit('roomInfoUpdate', pidx ?? getById(pid, room.players)?.pidx, { socket });
+    });
+    // 更新socket监听的房间
+    socket.on('updateSocketRoom', () => {
+        const me = getPlayer(pid);
+        if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
+        socket.leave(`7szh-${me.rid}-p${(me as Player).pidx}`);
+        const room = getRoom(me.rid);
+        if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
+        socket.join(`7szh-${me.rid}-p${getIdxById(pid, room.players)}`);
     });
     // 发送数据到服务器
-    socket.on('sendToServer', async (actionData: ActionData, secretKey: string) => {
-        if (!isDev && secretKey != serverSecretKey) return;
+    socket.on('sendToServer', async (actionData: ActionData) => {
         const me = getPlayer(pid);
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
         const room = getRoom(me.rid);

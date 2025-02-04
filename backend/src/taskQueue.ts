@@ -1,15 +1,15 @@
 import { delay, isCdt } from "../../common/utils/utils.js";
-import { LogType, StatusTask, TaskItem } from "../../typing";
+import { Env, LogType, StatusTask, TaskItem } from "../../typing";
 
 export default class TaskQueue {
     priorityQueue: TaskItem[] | undefined;
     queue: TaskItem[] = [];
     isExecuting: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
-    isDev: boolean;
-    constructor(_writeLog: (log: string, type?: LogType) => void, isDev: boolean) {
+    env: Env;
+    constructor(_writeLog: (log: string, type?: LogType) => void, env: Env) {
         this._writeLog = _writeLog;
-        this.isDev = isDev;
+        this.env = env;
     }
     get queueList() {
         return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
@@ -36,18 +36,18 @@ export default class TaskQueue {
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
         this._writeLog('execTask-' + taskType, 'emit');
-        if (this.isDev) console.time('execTask-end-' + taskType);
+        if (this.env == 'dev') console.time('execTask-end-' + taskType);
         if (!this.priorityQueue && this.queue.length > 0) {
             this.priorityQueue = [];
         }
         let res = true;
         for (const [func, after = 0, before = 0] of funcs) {
-            await delay(before);
+            if (this.env != 'test') await delay(before);
             res = !!await func();
-            await delay(after);
+            if (this.env != 'test') await delay(after);
         }
         this.isExecuting = true;
-        if (this.isDev) console.timeEnd('execTask-end-' + taskType);
+        if (this.env == 'dev') console.timeEnd('execTask-end-' + taskType);
         return res;
     }
     getTask(): [TaskItem, boolean] {

@@ -245,9 +245,9 @@ export const assgin = <T>(target: T, source: T) => {
  */
 export const getSecretKey = async (name: string) => {
     try {
-        const secretKey = (await import(`../constant/${name}.js`)).default;
+        const secretKey = (await import(`../constant/${name}.${typeof window == 'undefined' ? 'js' : 'ts'}`)).default;
         return secretKey;
     } catch {
-        return '';
+        return 'wrong';
     }
 }
