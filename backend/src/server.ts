@@ -4,11 +4,10 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
-// import serverSecretKey from '../../common/constant/secretKey.js';
+import { getSecretKey } from '../../common/utils/utils.js';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
-const serverSecretKey = '';
 const app = express();
 app.use(cors({
     origin: [
@@ -43,6 +42,7 @@ process.on('uncaughtException', err => console.error(err));
 
 process.on('exit', code => console.error(code));
 
+const serverSecretKey = await getSecretKey('secretKey');
 const isDev = process.env.NODE_ENV == 'development';
 const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表

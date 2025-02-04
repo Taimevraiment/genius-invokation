@@ -3,13 +3,12 @@ import type { Socket } from "socket.io-client";
 import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
-// import secretKey from "@@@/constant/secretKey";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC, SLOT_CODE_KEY,
 } from "@@@/constant/UIconst";
 import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
-import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
+import { clone, getSecretKey, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon,
 } from "../../typing";
@@ -19,7 +18,7 @@ type DeckValid = {
     error: string,
 }
 
-const secretKey = '';
+const secretKey = await getSecretKey('secretKey');
 
 export default class GeniusInvokationClient {
     socket: Socket;

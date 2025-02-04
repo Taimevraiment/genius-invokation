@@ -215,20 +215,19 @@ import {
   Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
-// import secretKey from '@@@/constant/secretKey';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
 import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { debounce, isCdt, parseShareCode } from '@@@/utils/utils';
+import { debounce, getSecretKey, isCdt, parseShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
-const secretKey = '';
 const router = useRouter();
 const route = useRoute();
 
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow, isDev } = history.state;
 const socket: Socket = getSocket(isDev);
+let secretKey = '';
 
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
@@ -414,7 +413,8 @@ const getPlayerList = ({ plist }: { plist: Player[] }) => {
   const me = plist.find(p => p.id == userid);
   if (me?.rid == -1) router.back();
 };
-onMounted(() => {
+onMounted(async () => {
+  secretKey = await getSecretKey('secretKey');
   client.value.initSelect();
   socket.emit('roomInfoUpdate', { roomId, pidx: isCdt(isLookon.value > -1, isLookon.value), secretKey });
   socket.on('getServerInfo', data => client.value.getServerInfo(data));

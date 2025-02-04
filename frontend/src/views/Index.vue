@@ -66,17 +66,16 @@ import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import { getSocket } from '@/store/socket';
 import { Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
-// import secretKey from '@@@/constant/secretKey';
-import { genShareCode } from '@@@/utils/utils';
+import { genShareCode, getSecretKey } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Player, PlayerList, RoomList } from '../../../typing';
 
-const secretKey = '';
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
 const router = useRouter();
+let secretKey = '';
 
 const userid = ref<number>(Number(localStorage.getItem('7szh_userid') || '-1')); // 玩家id
 const username = ref<string>(localStorage.getItem('7szh_username') || ''); // 昵称
@@ -185,7 +184,8 @@ const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomLi
     status: p.rid < 0 ? 0 : roomList.value.find(r => r.id == p.rid)?.isStart ? 2 : 1,
   }));
 };
-onMounted(() => {
+onMounted(async () => {
+  secretKey = await getSecretKey('secretKey');
   // 获取登录pid
   socket.on('login', ({ pid, name }) => {
     userid.value = pid;

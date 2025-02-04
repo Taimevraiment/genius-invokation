@@ -239,3 +239,15 @@ export const assgin = <T>(target: T, source: T) => {
         else target[key] = source[key];
     }
 }
+
+/**
+ * 获取密钥
+ */
+export const getSecretKey = async (name: string) => {
+    try {
+        const secretKey = (await import(`../constant/${name}.js`)).default;
+        return secretKey;
+    } catch {
+        return '';
+    }
+}
