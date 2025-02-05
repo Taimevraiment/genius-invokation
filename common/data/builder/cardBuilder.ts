@@ -120,7 +120,8 @@ export class GICard {
             this.UI.description = this.UI.description
                 .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次‹#f4dca2【ski】›。`)
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
-                .replace(/(?<=【)ski(?=】)/g, ski) + `；（牌组中包含【${hro}】，才能加入牌组）`;
+                .replace(/(?<=【)ski(?=】)/g, ski)
+                + `；（牌组中包含【${hro}】，才能加入牌组）`;
             userType = hid;
         } else if (subType?.includes(CARD_SUBTYPE.Legend)) {
             this.UI.description += `；（整局游戏只能打出一张｢秘传｣卡牌\\；这张牌一定在你的起始手牌中）`;

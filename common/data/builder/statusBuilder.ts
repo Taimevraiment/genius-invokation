@@ -52,12 +52,17 @@ export class GIStatus {
             .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
             .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`)
-            .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`);
+            .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
+            .replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         this.UI = {
             description,
             icon: icon.replace(/ski,(\d)/, `ski${hid},$1`),
             iconBg: icbg,
-            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)|(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []), ...expl],
+            explains: [
+                ...(description.match(/(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []),
+                ...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []),
+                ...expl,
+            ],
             descriptions: [],
         }
         this.addCnt = act;

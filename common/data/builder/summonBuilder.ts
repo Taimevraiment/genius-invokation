@@ -57,7 +57,8 @@ export class GISummon {
                 .replace(/\[useCnt\]/, '【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `（可叠加，${maxUse == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxUse}次`}）` : ''))
                 .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
                 .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
-                .replace(/(?<=【)hro(?=】)|(?<=〖)hro(?=〗)/g, `hro${hid}`),
+                .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
+                .replace(/(?<=【)hro(?=】)/g, `hro${hid}`),
             src,
             hasPlus: pls,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],

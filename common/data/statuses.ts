@@ -95,6 +95,7 @@ export type StatusHandleRes = {
     isFallAtk?: boolean,
     source?: number,
     notInfo?: boolean,
+    notLog?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => StatusExecRes | void,
 };
 
@@ -269,7 +270,7 @@ const nightSoul = (cnt: number = 0) => new StatusBuilder('夜魂加持').heroSta
     .handle((status, event) => {
         const { hidx = -1, source = -1, sourceHidx = -1 } = event;
         if (hidx == -1 || source != 112145 || sourceHidx != hidx) return;
-        return { trigger: ['get-status'], notInfo: true, exec: () => { --status.useCnt } }
+        return { trigger: ['get-status'], notLog: true, exec: () => { --status.useCnt } }
     });
 
 const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
@@ -473,7 +474,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
                 damage: isCdt(isExec || status.useCnt >= 4, 2),
                 element: DAMAGE_TYPE.Physical,
-                notInfo: true,
+                notLog: true,
                 exec: eStatus => {
                     if (trigger == 'after-skilltype2' && isExecTask) {
                         if (eStatus && eStatus.useCnt >= 2) eStatus.roundCnt = 0;
@@ -495,6 +496,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: triggers,
                 isAddTask: true,
+                notInfo: true,
                 exec: eStatus => {
                     if (trigger.includes('skilltype') && !eStatus) {
                         const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
@@ -1079,8 +1081,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (ehero) cmds.push({ cmd: 'getStatus', status: 122, hidxs: [ehero.hidx], isOppo: true });
             return { trigger: ['getdmg'], cmds, exec: () => { status.useCnt -= hidxs.length } }
         }),
-
-    113142: () => enchantStatus(ELEMENT_TYPE.Pyro).useCnt(1).typeOverride(STATUS_TYPE.Hide, STATUS_TYPE.Enchant),
 
     114021: () => new StatusBuilder('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
         .description('【所附属角色使用｢普通攻击｣或｢元素战技｣后：】造成2点[雷元素伤害]。；[roundCnt]')
@@ -1970,10 +1970,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
             const { discards = [], hcard, heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];
-            if (ver.gte('v5.0.0')) triggers.push('phase-end');
+            if (ver.gte('v5.0.0') && status.perCnt != 0) triggers.push('phase-end');
             return {
                 trigger: triggers,
                 isAddTask: true,
+                notInfo: true,
                 exec: (eStatus, execEvent = {}) => {
                     const notAtk = eStatus == undefined;
                     const { heros: hs = heros } = execEvent;

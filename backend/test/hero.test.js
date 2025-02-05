@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import geniusInvokationRoom from '../dist/backend/src/geniusInvokationRoom.js';
 import { ACTION_TYPE, DICE_COST_TYPE, PHASE } from '../dist/common/constant/enum.js';
-import { delay, parseShareCode, wait } from '../dist/common/utils/utils.js';
+import { parseShareCode, wait } from '../dist/common/utils/utils.js';
 
 const execAll = async fn => { for (let i = 0; i < 2; ++i) await fn(i) }
 const startGame = async (room, shareCode0, shareCode1 = shareCode0) => {
@@ -35,6 +35,7 @@ const changeFrontHero = (player, hidx) => {
     heros[hidx].isFront = true;
     player.hidx = hidx;
 }
+const roomWait = room => wait(() => room.needWait, { isImmediate: false, freq: 10 });
 
 describe('hero', function () {
     this.timeout(1e5);
@@ -49,32 +50,32 @@ describe('hero', function () {
     it('普攻', done => {
         const player = room.players[room.currentPlayerIdx];
         const opponent = room.players[room.currentPlayerIdx ^ 1];
-        room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
         room.testDmgFn.push(() => {
             expect(opponent.heros[opponent.hidx].hp).equal(8);
             done();
         });
+        room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
     });
     describe('甘雨', () => {
         it('冰莲', done => {
             const player = room.players[room.currentPlayerIdx];
             const opponent = room.players[room.currentPlayerIdx ^ 1];
-            room.getActionDev({ cpidx: opponent.pidx, cmds: [{ cmd: 'getStatus', status: 111012 }] });
-            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
             room.testDmgFn.push(() => {
                 expect(opponent.heros[opponent.hidx].hp).equal(9);
                 done();
             });
+            room.getActionDev({ cpidx: opponent.pidx, cmds: [{ cmd: 'getStatus', status: 111012 }] });
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
         });
         it('霜华矢', done => {
             const player = room.players[room.currentPlayerIdx];
             const opponent = room.players[room.currentPlayerIdx ^ 1];
-            changeFrontHero(player, 0);
-            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 11013, diceSelect: player.dice.map((_, i) => i < 5) });
             room.testDmgFn.push(() => {
                 expect(opponent.heros.map(h => h.hp)).eql([8, 8, 8]);
                 done();
             });
+            changeFrontHero(player, 0);
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 11013, diceSelect: player.dice.map((_, i) => i < 5) });
         });
         it('冰灵珠', async () => {
             const player = room.players[room.currentPlayerIdx];
@@ -83,24 +84,21 @@ describe('hero', function () {
             room.getActionDev({ cpidx: 1, smnIds: [111011] });
             player.canAction = true;
             player.status = 1;
-            await wait(() => room.needWait);
             room.getAction({ type: ACTION_TYPE.EndPhase }, player.pidx);
-            await delay(900);
-            await wait(() => room.needWait);
+            await roomWait(room);
             expect(opponent.heros.map(h => h.hp)).eql([9, 9, 9]);
         });
-        // it('唯此一心', async () => {
-        //     const player = room.players[room.currentPlayerIdx];
-        //     const opponent = room.players[room.currentPlayerIdx ^ 1];
-        //     changeFrontHero(player, 0);
-        //     player.heros[0].skills[2].useCnt++;
-        //     room.getActionDev({ cpidx: room.currentPlayerIdx, cmds: [{ cmd: 'getCard', cnt: 1, card: 211011 }] });
-        //     await delay(900);
-        //     await wait(() => room.needWait);
-        //     room.getAction({ type: ACTION_TYPE.UseCard, cardIdxs: [5] });
-        //     await delay(900);
-        //     await wait(() => room.needWait);
-        //     expect(opponent.heros.map(h => h.hp)).eql([8, 7, 7]);
-        // });
+        it('唯此一心', () => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            changeFrontHero(player, 0);
+            player.heros[0].skills[2].useCnt++;
+            room.getActionDev({ cpidx: room.currentPlayerIdx, cmds: [{ cmd: 'getCard', cnt: 1, card: 211011 }] });
+            room.testDmgFn.push(() => {
+                expect(opponent.heros.map(h => h.hp)).eql([8, 7, 7]);
+                done();
+            });
+            room.getAction({ type: ACTION_TYPE.UseCard, cardIdxs: [5] });
+        });
     });
 });

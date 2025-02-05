@@ -770,11 +770,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Arlecchino_176472631.png')
         .normalSkill(new NormalSkillBuilder('斩首之邀').description('，若可能，消耗目标至多3层【sts122】，提高等量伤害。')
             .handle(event => {
-                const { eheros = [] } = event;
+                const { eheros = [], hero } = event;
+                const dmgElement = isCdt(hasObjById(hero.heroStatus, 122), DAMAGE_TYPE.Pyro);
                 const sts122 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122);
-                if (!sts122) return;
+                if (!sts122) return { dmgElement }
                 const addDmgCdt = Math.min(3, sts122.useCnt);
-                return { addDmgCdt, exec: () => { sts122.useCnt -= addDmgCdt } }
+                return { dmgElement, addDmgCdt, exec: () => { sts122.useCnt -= addDmgCdt } }
             }))
         .skills(
             new SkillBuilder('万相化灰').description('在对方场上生成5层【sts113141】，然后{dealDmg}。')
@@ -791,19 +792,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；自身附属【sts122】时：角色造成的[物理伤害]变为[火元素伤害]。')
                 .src('/image/tmp/UI_Talent_S_Arlecchino_07.webp', '')
                 .passive().handle(event => {
-                    const { hero, heal = [], source = -1, sourceHidx = -1, trigger = '' } = event;
+                    const { hero, heal = [], source = -1, trigger = '' } = event;
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
-                    if (source != 122 || sourceHidx != hero.hidx) return;
-                    return {
-                        trigger: ['get-status', 'status-destroy'],
-                        isNotAddTask: true,
-                        cmds: isCdt(trigger == 'get-status', [{ cmd: 'getStatus', status: 113142, hidxs: [hero.hidx] }]),
-                        exec: () => {
-                            if (trigger != 'status-destroy') return;
-                            const sts = getObjById(hero.heroStatus, 113142);
-                            if (sts) sts.useCnt = 0;
-                        }
-                    }
                 })
         ),
 

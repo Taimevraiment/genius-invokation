@@ -3125,15 +3125,12 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['vehicle', 'other-vehicle'],
                 minusDiceSkill: { skilltype5: [0, 0, 1] },
-                exec: () => {
-                    const { isMinusDiceSkill } = event;
-                    if (isMinusDiceSkill) --card.perCnt;
-                }
+                exec: () => { event.isMinusDiceSkill && --card.perCnt }
             }
         }),
 
     223011: () => new CardBuilder(115).name('悉数讨回').talent(1).costPyro(3)
-        .description('{action}；装备有此牌的【hro】生成的【sts123011】获得以下效果：；初始[持续回合]+1，并且使所附属角色造成的[物理伤害]变为[火元素伤害]。')
+        .description('{action}；装备有此牌的【hro】生成的【sts123011】获得以下效果：；初始[可用次数]+1，并且使所附属角色造成的[物理伤害]变为[火元素伤害]。')
         .src('https://patchwiki.biligame.com/images/ys/4/4b/p2lmo1107n5nwc2pulpjkurlixa2o4h.png'),
 
     223021: () => new CardBuilder(116).name('烬火重燃').since('v3.7.0').offline('v1').talent().costPyro(2)

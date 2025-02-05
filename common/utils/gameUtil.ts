@@ -211,7 +211,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}dice: ${player.dice.map(d => `[${d}]`).join('')}\n`
         + `${prefix1}rollCnt: ${player.rollCnt}\n`
         + `${prefix1}status: ${player.status}\n`
-        + `${prefix1}handCards: ${player.handCards.map(c => `[${c.name}]`).join('')}\n`
+        + `${prefix1}handCards: ${player.handCards.map(c => `[${c.name}](${c.entityId})`).join('')}\n`
         + `${prefix1}pile: ${player.pile.map(c => `[${c.name}]`).join('')}\n`
         + `${prefix1}combatStatus: [\n`
         + `${player.combatStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`

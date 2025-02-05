@@ -155,9 +155,9 @@
           </div>
           <img class="hero-center-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <img class="hero-center-icon" style="width: 60%;opacity: 1;" src="@@/image/Select_Ring_01.png"
-            v-if="targetSelect[hgi][hidx]" />
+            v-if="targetSelect?.[hgi]?.[hidx]" />
           <img class="hero-center-icon" style="width: 30%;opacity: 1;" src="@@/image/Select_Check_01.png"
-            v-if="targetSelect[hgi][hidx]" />
+            v-if="targetSelect?.[hgi]?.[hidx]" />
           <div class="hero-hp" :class="{ 'mobile-hero-hp': isMobile }" v-if="(hero?.hp ?? 0) >= 0">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png"
               :style="{ filter: `${hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}` }" />
