@@ -33,6 +33,7 @@ export type SkillHandleEvent = {
     source?: number,
     sourceHidx?: number,
     selectHero?: number,
+    restDmg?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 
@@ -63,6 +64,7 @@ export type SkillHandleRes = {
     summonTrigger?: Trigger[],
     isForbidden?: boolean,
     energy?: number,
+    restDmg?: number,
     pickCard?: {
         cnt: number,
         card?: number[],

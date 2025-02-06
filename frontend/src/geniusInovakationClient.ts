@@ -6,6 +6,8 @@ import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NU
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC, SLOT_CODE_KEY,
 } from "@@@/constant/UIconst";
+import { parseCard } from "@@@/data/cards";
+import { parseHero } from "@@@/data/heros";
 import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
@@ -114,7 +116,7 @@ export default class GeniusInvokationClient {
             error: '当前出战卡组不完整',
         };
         this.isDeckVersionValid = {
-            isValid: compareVersionFn(ver).value == version,
+            isValid: compareVersionFn(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
             error: '当前卡组版本不匹配',
         };
     }
@@ -286,6 +288,8 @@ export default class GeniusInvokationClient {
                     p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
                 });
             }, 1500);
+        } else {
+            this.handcardsGroupOffset = { transform: `translateX(-${12 * (this.handcardsPos.length)}px)` }
         }
     }
     /**
@@ -623,7 +627,7 @@ export default class GeniusInvokationClient {
      * @param hidx 角色索引idx
      */
     selectHero(pidx: number, hidx: number) {
-        if (this.targetSelect[pidx][hidx] && this.currSkill.id > 0) {
+        if (this.targetSelect[pidx]?.[hidx] && this.currSkill.id > 0) {
             return this.useSkill(this.currSkill.id);
         }
         this.cancel({ onlySupportAndSummon: true });

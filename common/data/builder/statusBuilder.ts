@@ -1,4 +1,4 @@
-import { Status, VersionCompareFn } from "../../../typing";
+import { Status, Trigger, VersionCompareFn } from "../../../typing";
 import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
@@ -83,15 +83,21 @@ export class GIStatus {
                     if (dmg > -1) restDmg = dmg;
                     rest = { ...other };
                 }
-                if (restDmg <= 0) return { restDmg, ...rest };
+                if (restDmg < 0) return rest;
                 const shieldDmg = Math.min(restDmg, status.useCnt);
                 status.useCnt -= shieldDmg;
-                return { restDmg: restDmg - shieldDmg, ...rest };
+                return { restDmg: restDmg - shieldDmg, ...rest, trigger: ['reduce-dmg'] };
             }
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             // this.icon = 'shield';
             // this.iconBg = '#9268db';
             this.UI.icon = BARRIER_ICON_URL;
+            thandle = (status, event = {}) => {
+                const { restDmg = -1 } = event;
+                const handleres = handle?.(status, event, compareVersionFn(ver)) ?? {};
+                if (restDmg == -1) return handleres;
+                return { ...handleres, trigger: ['reduce-dmg'] };
+            }
         }
         if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
             if (icon.startsWith('buff')) {
@@ -126,6 +132,15 @@ export class GIStatus {
     }
     hasType(...types: StatusType[]): boolean {
         return this.type.some(v => types.includes(v));
+    }
+    minusUseCnt(n: number = 1) {
+        const ncnt = this.useCnt - n;
+        if (ncnt < 0) throw new Error(`${this.name}(${this.entityId}).useCnt < 0`);
+        this.useCnt = ncnt;
+    }
+    dispose() {
+        this.useCnt = 0;
+        this.roundCnt = 0;
     }
 }
 
@@ -283,13 +298,20 @@ export class StatusBuilder extends BaseBuilder {
             if (cdt(compareVersionFn(this._curVersion))) this._type.push(...types);
         });
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
-            (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => {
-                const { restDmg = -1, summon, getdmg = [], hidx = -1 } = event;
-                if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { restDmg }
-                if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
-                if (summon && summon.statusId != -1 && this._summonId != -1) summon.minusUseCnt(this._barrierUsage);
-                if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
-                return { restDmg: Math.max(0, restDmg - this._barrierCnt) }
+            (status: Status, event: StatusHandleEvent, ver: VersionCompareFn): StatusHandleRes => {
+                const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;
+                const trigger: Trigger[] = ['reduce-dmg'];
+                if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { trigger, restDmg }
+                const summon = summons.find(smn => smn.id == status.summonId);
+                return {
+                    trigger,
+                    restDmg: Math.max(0, restDmg - this._barrierCnt),
+                    exec: () => {
+                        if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
+                        if (summon && summon.statusId != -1 && this._summonId != -1) summon.minusUseCnt(this._barrierUsage);
+                        if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
+                    }
+                }
             } : (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => this._handle?.(status, event, ver) ?? {};
         return new GIStatus(this._id, this._name, description, icon, this._group, this._type,
             useCnt, maxCnt, roundCnt, handle,

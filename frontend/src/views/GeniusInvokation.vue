@@ -830,6 +830,7 @@ body {
 
 .hero-avatar>img {
   width: 30%;
+  filter: drop-shadow(0 0 2px white);
 }
 
 .exit {

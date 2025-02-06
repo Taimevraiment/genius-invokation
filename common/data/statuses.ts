@@ -11,7 +11,6 @@ import { StatusBuilder } from "./builder/statusBuilder.js";
 
 export type StatusHandleEvent = {
     restDmg?: number,
-    summon?: Summon,
     hidx?: number,
     heros?: Hero[],
     combatStatus?: Status[],
@@ -991,19 +990,16 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
             if (trigger == 'switch-to') {
                 const toHero = heros[hidx];
-                if (status.hasType(STATUS_TYPE.Barrier) && (toHero.id == hid || toHero.hp <= 0)) {
-                    status.type = [STATUS_TYPE.Usage];
-                } else {
-                    status.type = [STATUS_TYPE.Barrier, STATUS_TYPE.Usage];
-                }
+                status.type = [STATUS_TYPE.Usage];
+                if (toHero.id != hid && toHero.hp > 0) status.type.push(STATUS_TYPE.Barrier);
                 return;
             }
             if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
-            --status.useCnt;
             return {
+                restDmg: restDmg - 1,
                 pdmg: isCdt(hero.hp >= 7, 1),
                 hidxs: isCdt(hero.hp >= 7, [getObjIdxById(heros, hid)]),
-                restDmg: restDmg - 1,
+                exec: () => { --status.useCnt }
             }
         }),
 
@@ -1133,12 +1129,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114053: () => new StatusBuilder('雷兽之盾').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.Barrier)
         .description('【我方角色｢普通攻击｣后：】造成1点[雷元素伤害]。；【我方角色受到至少为3的伤害时：】抵消其中1点伤害。；[roundCnt]')
         .handle((_, event) => {
-            const { restDmg = 0 } = event;
+            const { restDmg = -1 } = event;
+            if (restDmg >= 0) return { trigger: ['reduce-dmg'], restDmg: restDmg < 3 ? restDmg : restDmg - 1 }
             return {
+                trigger: ['after-skilltype1'],
                 damage: 1,
                 element: DAMAGE_TYPE.Electro,
-                trigger: ['after-skilltype1'],
-                restDmg: restDmg < 3 ? restDmg : restDmg - 1,
             }
         }),
 
@@ -1467,11 +1463,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     116011: () => new StatusBuilder('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
         .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；[useCnt]')
         .handle((status, event) => {
-            const { restDmg = 0, heros = [] } = event;
-            if (restDmg > 0) {
+            const { restDmg = -1, heros = [] } = event;
+            if (restDmg >= 0) {
                 if (restDmg < 2) return { restDmg }
-                --status.useCnt;
-                return { restDmg: restDmg - 1 }
+                return { restDmg: restDmg - 1, exec: () => { --status.useCnt } }
             }
             if (!getObjById(heros, getHidById(status.id))?.talentSlot) return;
             return { trigger: ['Geo-dmg'], addDmgCdt: 1 }
@@ -2036,12 +2031,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage).type(isTalent, STATUS_TYPE.Enchant).talent(isTalent)
         .description('所附属角色受到的伤害-1，造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
-            const { restDmg = 0 } = event;
-            if (restDmg > 0) --status.useCnt;
+            const { restDmg = -1 } = event;
             return {
                 addDmg: 1,
-                restDmg: Math.max(0, restDmg - 1),
-                trigger: ['skill'],
+                restDmg: isCdt(restDmg > -1, Math.max(0, restDmg - 1)),
+                trigger: ['skill', 'reduce-dmg'],
                 attachEl: isCdt(status.isTalent, ELEMENT_TYPE.Pyro),
                 exec: () => { --status.useCnt },
             }
@@ -2152,9 +2146,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { restDmg = -1, heros = [], hidx = -1, isSummon = -1 } = event;
             if (restDmg >= 0) {
                 if (restDmg == 0) return { restDmg }
-                if (isSummon > -1 && status.perCnt > 0) --status.perCnt;
-                else --status.useCnt;
-                return { restDmg: restDmg - 1 }
+                const smnDmg = isSummon > -1 && status.perCnt > 0;
+                return { restDmg: restDmg - 1, exec: () => { smnDmg ? --status.perCnt : --status.useCnt } }
             }
             const hero = heros[hidx];
             if (!hero || !hero.isFront) return;
@@ -2260,13 +2253,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { restDmg = -1, dmgElement, heros = [], hidx = -1 } = event;
             if (restDmg <= 0) return { restDmg }
-            --status.useCnt;
-            if (status.useCnt > 0 && dmgElement == DAMAGE_TYPE.Geo) --status.useCnt;
-            if (status.useCnt == 0) {
-                const sts126012 = getObjById(heros[hidx]?.heroStatus, 126012);
-                if (sts126012) sts126012.useCnt = 0;
+            return {
+                restDmg: restDmg - 1,
+                exec: () => {
+                    --status.useCnt;
+                    if (status.useCnt > 0 && dmgElement == DAMAGE_TYPE.Geo) --status.useCnt;
+                    if (status.useCnt == 0) {
+                        const sts126012 = getObjById(heros[hidx]?.heroStatus, 126012);
+                        if (sts126012) sts126012.useCnt = 0;
+                    }
+                }
             }
-            return { restDmg: restDmg - 1 }
         }),
 
     126012: () => new StatusBuilder('坚岩之力').heroStatus().icon('buff4').perCnt(1)

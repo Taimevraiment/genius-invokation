@@ -144,7 +144,11 @@ export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.fl
 // 根据角色id获取天赋id
 export const getTalentIdByHid = (hid: number): number => {
     if (hid == 2602) return 226022;
-    return +`2${hid}1`
+    return +`2${hid}1`;
+}
+// 根据特技卡id获取特技技能id
+export const getVehicleIdByCid = (hid: number): number => {
+    return +`${hid}1`;
 }
 
 // 合并预回血

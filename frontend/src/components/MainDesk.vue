@@ -132,7 +132,7 @@
           'is-front-my': hero?.isFront && hgi == 1,
           'hero-select': heroSelect[hgi][hidx],
           'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
-          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx]),
+          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
@@ -1603,7 +1603,8 @@ button:active {
 }
 
 .dice-select {
-  box-shadow: 0 0 10px #ffeb56b8, 0 0 40px #ffeb56b8 inset;
+  /* box-shadow: 0 0 10px #ffeb56b8, 0 0 40px #ffeb56b8 inset; */
+  filter: drop-shadow(0 0 5px #ffeb56);
 }
 
 .hero-can-select,

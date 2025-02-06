@@ -125,7 +125,7 @@ export class SkillBuilder extends BaseBuilder {
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectHero: -1 | 0 | 1 = -1;
     private _addition: any[] = [];
-    constructor(name: string) {
+    constructor(name: string = '') {
         super();
         this._name = name;
     }

@@ -794,7 +794,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { hero, heal = [], source = -1, trigger = '' } = event;
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
-                })
+                }),
+            new SkillBuilder().passive(true).handle(event => {
+                const { restDmg = -1, hero } = event;
+                const sts122 = getObjById(hero.heroStatus, 122);
+                if (restDmg == -1 || !sts122) return;
+                if (restDmg == 0) return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg }
+                return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg: restDmg - 1, exec: () => { --sts122.useCnt } }
+            })
         ),
 
     1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()

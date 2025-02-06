@@ -4,7 +4,7 @@ import {
     HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
-import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
+import { compareVersionFn, getHidById, getVehicleIdByCid } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -74,7 +74,7 @@ export class GICard {
         else if (subType?.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
         else if (subType?.includes(CARD_SUBTYPE.Vehicle)) {
-            const vehicle = `rsk${id}1`;
+            const vehicle = `rsk${getVehicleIdByCid(id)}`;
             const vehicleDesc = ` [特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}`;
             if (this.UI.description.includes('{vehicle}')) {
                 this.UI.description = this.UI.description.replace('{vehicle}', vehicleDesc);
@@ -85,7 +85,7 @@ export class GICard {
             this.UI.explains.push(vehicle);
             handle ??= (card, event) => {
                 const { skid = -1 } = event;
-                if (skid != +`${card.id}1`) return;
+                if (skid != getVehicleIdByCid(card.id)) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             };
         } else if (subType?.includes(CARD_SUBTYPE.Food)) {
@@ -129,6 +129,15 @@ export class GICard {
         } else if (subType?.includes(CARD_SUBTYPE.ElementResonance)) {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
             this.UI.description += `；（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）`;
+        }
+        if (tag.includes(CARD_TAG.Barrier)) {
+            const ohandle = handle;
+            handle = (card, event) => {
+                const { restDmg = -1 } = event;
+                const res = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
+                if (restDmg == -1) return res;
+                return { ...res, trigger: ['reduce-dmg'] }
+            }
         }
         this.UI.description = this.UI.description.replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`).replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         this.cost = cost;

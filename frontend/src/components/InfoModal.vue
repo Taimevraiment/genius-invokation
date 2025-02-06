@@ -308,6 +308,7 @@ import { newStatus } from '@@@/data/statuses';
 import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
 import { Card, ExplainContent, GameInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
+import { getVehicleIdByCid } from '@@@/utils/gameUtil';
 
 const props = defineProps<{
   info: InfoVO,
@@ -532,7 +533,7 @@ watchEffect(() => {
     info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' })).filter(v => v != '');
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     if (info.value.subType.includes(CARD_SUBTYPE.Vehicle)) {
-      const vehicle = newSkill(version.value)(+`${info.value.id}1`);
+      const vehicle = newSkill(version.value)(getVehicleIdByCid(info.value.id));
       vehicle.UI.descriptions = vehicle.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: vehicle }));
       skills.value.push(vehicle);
       isShowSkill.value.push(true);

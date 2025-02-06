@@ -6,7 +6,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newSummon } from './summons.js';
@@ -146,27 +146,25 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
         .handle(() => ({ addDmg: 1, status: [[stsId, name]] }));
 }
 
-const barrierWeaponHandle = (card: Card, event: CardHandleEvent): CardHandleRes => {
-    const { hcards = [], hcardsCnt = hcards.length, restDmg = -1, getdmg = [],
-        hidxs: [hidx] = [], sktype = SKILL_TYPE.Vehicle, isExec = true, trigger = '' } = event;
+const barrierWeaponHandle = (card: Card, event: CardHandleEvent): CardHandleRes | undefined => {
+    const { hcards = [], hcardsCnt = hcards.length, restDmg = -1, sktype = SKILL_TYPE.Vehicle } = event;
     if (restDmg > -1) {
         if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return { restDmg }
-        ++card.useCnt;
-        if (!isExec) --card.perCnt;
-        return { restDmg: restDmg - 1 }
-    }
-    const triggers: Trigger[] = [];
-    if (card.useCnt > 0 && sktype != SKILL_TYPE.Vehicle) triggers.push('dmg');
-    if ((getdmg[hidx] ?? -1) > 0 && card.perCnt > 0 && hcardsCnt > 0) triggers.push('getdmg');
-    return {
-        trigger: triggers,
-        addDmgCdt: isCdt(card.useCnt > 0, 1),
-        execmds: isCdt<Cmds[]>(trigger == 'dmg', [{ cmd: 'getCard', cnt: card.useCnt }],
-            isCdt(trigger == 'getdmg', [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }])),
-        exec: () => {
-            if (trigger == 'dmg') card.useCnt = 0;
-            else if (trigger == 'getdmg') --card.perCnt;
+        return {
+            restDmg: restDmg - 1,
+            execmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }],
+            exec: () => {
+                ++card.useCnt;
+                --card.perCnt;
+            }
         }
+    }
+    if (card.useCnt == 0 || sktype == SKILL_TYPE.Vehicle) return;
+    return {
+        trigger: ['dmg'],
+        addDmgCdt: 1,
+        execmds: [{ cmd: 'getCard', cnt: card.useCnt }],
+        exec: () => { card.useCnt = 0 }
     }
 }
 
@@ -1255,7 +1253,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { eheros = [], ehidx = -1, hcardsCnt = 0, skid = -1, switchHeroDiceCnt = 0, trigger = '' } = event;
             if (trigger == 'vehicle') {
-                if (skid != +`${card.id}1`) return;
+                if (skid != getVehicleIdByCid(card.id)) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             }
             const triggers: Trigger[] = [];
@@ -2667,19 +2665,10 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(2).tag(CARD_TAG.Barrier)
+    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。；使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Arlecchino.webp')
-        .handle((card, event) => {
-            const { heros = [], hidxs: [hidx] = [], restDmg = -1 } = event;
-            if (restDmg > -1) {
-                const sts122 = getObjById(heros[hidx].heroStatus, 122);
-                if (!sts122 || restDmg == 0) return { restDmg }
-                --sts122.useCnt;
-                return { restDmg: restDmg - 1 }
-            }
-            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: [[122, 3]] }
-        }),
+        .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
     214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
         .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】｢普通攻击｣后造成2点[雷元素伤害]。（需消耗[可用次数]）')
@@ -3064,8 +3053,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (!hero) return;
             if (restDmg > -1) {
                 if (restDmg < 3 || card.perCnt == 0) return { restDmg }
-                --card.perCnt;
-                return { restDmg: restDmg - 1, statusOppo: [[121022, +(hero.element != ELEMENT_TYPE.Cryo)]] }
+                return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => { --card.perCnt } }
             }
             return { isValid: !!getObjById(heros, card.userType as number)?.isFront, cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
         }),
@@ -3144,7 +3132,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     223031: () => new CardBuilder(295).name('魔蝎烈祸').since('v4.3.0').talent(2).costPyro(3).energy(2)
-        .description('{action}；装备有此牌的【hro】在场，我方使用【rsk1230311】击倒敌方角色后：将一张【crd123031】加入手牌。；回合结束时：生成1层【sts123032】、')
+        .description('{action}；装备有此牌的【hro】在场，我方使用【rsk1230311】击倒敌方角色后：将一张【crd123031】加入手牌。；【回合结束时：】生成1层【sts123032】、')
         .description('{action}；装备有此牌的【hro】生成的【smn123031】在【hro】使用过｢普通攻击｣或｢元素战技｣的回合中，造成的伤害+1。；【smn123031】的减伤效果改为每回合至多2次。', 'v5.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/031bfa06becb52b34954ea500aabc799_7419173290621234199.png')
         .handle((_, event, ver) => {
@@ -3397,20 +3385,18 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {
-            const { heros = [], restDmg = -1, skid = -1, hidxs = [], getdmg = [], trigger = '' } = event;
+            const { heros = [], restDmg = -1, skid = -1, hidxs = [], trigger = '' } = event;
             if (trigger == 'vehicle') {
-                if (skid != +`${card.id}1`) return;
+                if (skid != getVehicleIdByCid(card.id)) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
             }
+            if (restDmg == -1) return;
             const isBarrier = card.perCnt > 0 && !!heros[hidxs[0]]?.energy;
-            if (restDmg >= 0) {
-                if (!isBarrier || restDmg == 0) return { restDmg }
-                --card.perCnt;
-                return { restDmg: restDmg - 1 }
-            }
+            if (!isBarrier || restDmg == 0) return { restDmg }
             return {
-                trigger: isCdt(isBarrier && getdmg[hidxs[0]] > 0, ['getdmg']),
+                restDmg: restDmg - 1,
                 execmds: [{ cmd: 'getEnergy', cnt: -1, hidxs }, { cmd: 'getStatus', status: 123032 }],
+                exec: () => { --card.perCnt }
             }
         }),
 
@@ -3455,7 +3441,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (card.perCnt <= 0) return;
                 return { trigger: ['switch-to'], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }], exec: () => { --card.perCnt } };
             }
-            if (skid != +`${card.id}1` || hasObjById(combatStatus, 127033)) return;
+            if (skid != getVehicleIdByCid(card.id) || hasObjById(combatStatus, 127033)) return;
             return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
         }),
 
