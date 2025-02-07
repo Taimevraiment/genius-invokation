@@ -85,8 +85,7 @@ export class GIStatus {
                 }
                 if (restDmg < 0) return rest;
                 const shieldDmg = Math.min(restDmg, status.useCnt);
-                status.useCnt -= shieldDmg;
-                return { restDmg: restDmg - shieldDmg, ...rest, trigger: ['reduce-dmg'] };
+                return { restDmg: restDmg - shieldDmg, ...rest, trigger: ['reduce-dmg'], exec: () => status.minusUseCnt(shieldDmg) };
             }
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             // this.icon = 'shield';
@@ -307,7 +306,7 @@ export class StatusBuilder extends BaseBuilder {
                     trigger,
                     restDmg: Math.max(0, restDmg - this._barrierCnt),
                     exec: () => {
-                        if (status.useCnt > 0) status.useCnt = Math.max(0, status.useCnt - this._barrierUsage);
+                        if (status.useCnt > 0) status.minusUseCnt(this._barrierUsage);
                         if (summon && summon.statusId != -1 && this._summonId != -1) summon.minusUseCnt(this._barrierUsage);
                         if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
                     }

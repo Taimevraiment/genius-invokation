@@ -12,7 +12,9 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon,
+    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill,
+    Status,
+    Summon
 } from "../../typing";
 
 type DeckValid = {
@@ -281,16 +283,18 @@ export default class GeniusInvokationClient {
                 this.player.handCards = this.player.handCards.filter(c => !isDiscard(c));
                 this.player.handCards.forEach((c, ci) => c.cidx = ci);
                 this.handcardsPos = this.player.handCards.map(c => c.cidx * this.handcardsGap);
-                this.players.forEach(p => {
-                    p.handCards.forEach(c => delete c.UI.class);
-                    p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
-                    p.UI.willAddCard = { cards: [], isNotPublic: false };
-                    p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
-                });
+                this.players.forEach(p => p.handCards.forEach(c => delete c.UI.class));
             }, 1500);
         } else {
             this.handcardsGroupOffset = { transform: `translateX(-${12 * (this.handcardsPos.length)}px)` }
         }
+        setTimeout(() => {
+            this.players.forEach(p => {
+                p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
+                p.UI.willAddCard = { cards: [], isNotPublic: false };
+                p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
+            });
+        }, 1500);
     }
     /**
      * 展示选择卡的信息
@@ -533,8 +537,11 @@ export default class GeniusInvokationClient {
             }
         }
         setSelect();
-        const stsDestroy = (s: Status) => s.type.includes(STATUS_TYPE.Accumulate) || !(s.useCnt == 0 || s.roundCnt == 0);
-        const destroySts = () => {
+        const destroySts = (hasDmg: boolean = false) => {
+            const stsDestroy = (s: Status) =>
+                s.type.includes(STATUS_TYPE.Accumulate) ||
+                !(s.useCnt == 0 || s.roundCnt == 0) ||
+                (!hasDmg && s.type.includes(STATUS_TYPE.Attack));
             this.players.forEach(p => {
                 p.heros.forEach(h => h.heroStatus = h.heroStatus.filter(stsDestroy));
                 p.combatStatus = p.combatStatus.filter(stsDestroy);
@@ -553,13 +560,25 @@ export default class GeniusInvokationClient {
                 this.damageVO.elTips = damageVO?.elTips ?? [];
                 this.damageVO.willDamages = damageVO?.willDamages ?? [];
                 this.damageVO.willHeals = damageVO?.willHeals ?? [];
-                if (damageVO?.dmgSource == 'summon') {
-                    const [saidx, suidx] = damageVO.selected ?? [-1, -1];
-                    this.summonSelect[+(saidx == this.playerIdx)][suidx] = true;
-                } else if (damageVO?.dmgSource == 'status') {
-                    const [spidx, sgroup, shidx, sidx] = damageVO.selected ?? [-1, -1, -1, -1];
-                    if (sidx > -1) this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
+                const setDmgSelect = (retry = 0) => {
+                    try {
+                        if (damageVO?.dmgSource == 'summon') {
+                            const [saidx, suidx] = damageVO.selected ?? [-1, -1];
+                            this.summonSelect[+(saidx == this.playerIdx)][suidx] = true;
+                        } else if (damageVO?.dmgSource == 'status') {
+                            const [spidx, sgroup, shidx, sidx] = damageVO.selected ?? [-1, -1, -1, -1];
+                            if (sidx > -1) this.statusSelect[+(spidx == this.playerIdx)][sgroup][shidx][sidx] = true;
+                            setTimeout(() => destroySts(true), 2000);
+                        }
+                    } catch (e) {
+                        this.initSelect(players);
+                        if (retry < 2) {
+                            console.warn(e);
+                            setDmgSelect(retry + 1);
+                        } else console.error(e);
+                    }
                 }
+                setDmgSelect();
             }, 550);
             setTimeout(() => {
                 this.isShowDmg = false;
@@ -567,7 +586,6 @@ export default class GeniusInvokationClient {
                 else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
             }, 1650);
             setTimeout(() => this._resetDamageVO(), 2150);
-            setTimeout(() => destroySts(), 2550);
         } else {
             this.updateHandCardsPos(players[this.playerIdx]);
             this.players = players;
@@ -575,7 +593,7 @@ export default class GeniusInvokationClient {
                 this.damageVO.elTips = damageVO?.elTips ?? [];
                 setTimeout(() => this._resetDamageVO(), 1100);
             }
-            setTimeout(() => destroySts(), 1300)
+            // setTimeout(() => destroySts(), 1300);
         }
         this.log = [...log];
     }

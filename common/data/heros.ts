@@ -509,10 +509,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                                 const sts112101 = getObjById(combatStatus, 112101);
                                 if (sts112101 && --sts112101.useCnt == 0) sts112101.type.length = 0;
                             } else if (trigger == 'killed') {
-                                heros.forEach(h => {
-                                    const sts112136 = getObjById(h.heroStatus, 112136);
-                                    if (sts112136) sts112136.useCnt = 0;
-                                });
+                                heros.forEach(h => getObjById(h.heroStatus, 112136)?.dispose());
                             }
                         }
                     }
@@ -787,7 +784,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
                     const heal = sts122?.useCnt;
-                    return { heal, exec: () => { sts122 && (sts122.useCnt = 0) } }
+                    return { heal, exec: () => sts122?.dispose() }
                 }),
             new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；自身附属【sts122】时：角色造成的[物理伤害]变为[火元素伤害]。')
                 .src('/image/tmp/UI_Talent_S_Arlecchino_07.webp', '')
@@ -800,7 +797,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 const sts122 = getObjById(hero.heroStatus, 122);
                 if (restDmg == -1 || !sts122) return;
                 if (restDmg == 0) return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg }
-                return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg: restDmg - 1, exec: () => { --sts122.useCnt } }
+                return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
             })
         ),
 
@@ -1028,7 +1025,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
                     const cnt = Math.min(4, sts122?.useCnt ?? 0) || undefined;
-                    return { addDmgCdt: cnt, heal: cnt ?? 0, status: 114121, exec: () => { sts122 && (sts122.useCnt = 0) } }
+                    return { addDmgCdt: cnt, heal: cnt ?? 0, status: 114121, exec: () => sts122?.dispose() }
                 }),
             new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/25/rky0mg25hu7cdg7imhukjzv1kof8zfo.png',
@@ -1134,12 +1131,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(7).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts115061 = getObjById(heroStatus, 115061);
-                    return {
-                        addDmgCdt: isCdt(!!sts115061, 1),
-                        exec: () => {
-                            if (sts115061) sts115061.useCnt = 0;
-                        }
-                    }
+                    return { addDmgCdt: isCdt(!!sts115061, 1), exec: () => sts115061?.dispose() }
                 })
         ),
 
@@ -1885,8 +1877,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         exec: () => {
                             if (trigger == 'game-start') return;
                             for (const sts of [...heros.flatMap(h => h.heroStatus), ...combatStatus]) {
-                                if (!sts.hasType(STATUS_TYPE.Shield)) continue;
-                                sts.useCnt = 0;
+                                if (sts.hasType(STATUS_TYPE.Shield)) sts.useCnt = 0;
                             }
                             if (hero.talentSlot && hero.talentSlot.perCnt > 0) --hero.talentSlot.perCnt;
                         }

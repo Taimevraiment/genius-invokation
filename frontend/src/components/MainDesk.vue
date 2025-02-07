@@ -1603,8 +1603,7 @@ button:active {
 }
 
 .dice-select {
-  /* box-shadow: 0 0 10px #ffeb56b8, 0 0 40px #ffeb56b8 inset; */
-  filter: drop-shadow(0 0 5px #ffeb56);
+  box-shadow: 0 0 10px #ffeb56b8, 0 0 40px #ffeb56b8 inset;
 }
 
 .hero-can-select,
