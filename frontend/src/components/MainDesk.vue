@@ -43,22 +43,10 @@
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
         {{ pileCnt[playerIdx] }}
-        <!-- <Handcard class="will-getcard-my" :class="{
-          'mobile-will-card': isMobile,
-          'will-getcard-my-pile': player.UI.willGetCard.isFromPile,
-          'will-getcard-my-generate': !player.UI.willGetCard.isFromPile
-        }" :card="card" :isMobile="isMobile"
-          :style="{ left: `${getLeft(cidx, player.UI.willGetCard.cards.length)}px` }"
-          v-for="(card, cidx) in player.UI.willGetCard.cards" :key="cidx">
-        </Handcard> -->
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
         </Handcard>
-        <!-- <Handcard class="will-discard-hcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player.UI.willDiscard.hcards.length)}px` }"
-          v-for="(card, cidx) in player.UI.willDiscard.hcards" :key="cidx">
-        </Handcard> -->
         <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard.pile.length)}px` }"
           v-for="(card, cidx) in player.UI.willDiscard.pile" :key="cidx">
@@ -1773,7 +1761,7 @@ button:active {
   text-align: center;
   background-color: #a7bbdd;
   transform: translate(500%, -10%);
-  animation: addcard 1.2s linear;
+  animation: addcard 1.5s linear;
   opacity: 0;
 }
 
@@ -1783,7 +1771,7 @@ button:active {
   color: black;
   text-align: center;
   transform: translate(500%, -10%);
-  animation: addcard 1.2s linear;
+  animation: addcard 1.5s linear;
   opacity: 0;
 }
 

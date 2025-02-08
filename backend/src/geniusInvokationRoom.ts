@@ -69,7 +69,7 @@ export default class GeniusInvokationRoom {
     private newSupport: (id: number | Card, ...args: any) => Support;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
-    private delay: (time?: number, fn?: () => any) => void;
+    private delay: (time?: number, fn?: () => any) => Promise<void> | void;
     testDmgFn: (() => void)[] = []; // 伤害测试用
     testTaskFn: (() => void)[] = []; // 任务测试用
     // private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
@@ -915,13 +915,12 @@ export default class GeniusInvokationRoom {
             for (let i = 0; i < player.heros.length; ++i) {
                 const chi = (hidx + i) % player.heros.length;
                 const triggers: Trigger[] = ['switch'];
-                const types: StatusType[] = [];
+                const types: StatusType[] = [STATUS_TYPE.Usage, STATUS_TYPE.Attack];
                 if (chi == ohidx) {
                     triggers.push('switch-from');
-                    types.push(STATUS_TYPE.ReadySkill, STATUS_TYPE.Attack);
+                    types.push(STATUS_TYPE.ReadySkill);
                 } else if (chi == hidx) {
                     triggers.push('switch-to');
-                    types.push(STATUS_TYPE.Usage, STATUS_TYPE.Attack);
                 } else continue;
                 this._detectSlotAndStatus(pidx, triggers, { hidxs: chi, types, fhidx: ohidx, isQuickAction });
             }
@@ -1431,7 +1430,7 @@ export default class GeniusInvokationRoom {
                     if (this._hasNotTriggered(fieldres.trigger, state)) continue;
                     const isStsRes = 'damage' in fieldres || 'heal' in fieldres || 'pdmg' in fieldres;
                     if (!isSts || hfield.hasType(STATUS_TYPE.Attack) && isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
-                        if (isExec && /after|elReaction|destroy|getdmg/i.test(state) && isSts) {
+                        if (isExec && /after|elReaction|getdmg/i.test(state) && isSts) {
                             atkStatus.push([{
                                 id: hfield.id,
                                 name: hfield.name,
@@ -2635,6 +2634,7 @@ export default class GeniusInvokationRoom {
         const opponent = players[pidx ^ 1];
         const { dice, heros, hidx, summons, combatStatus, playerInfo: { isUsedLegend }, handCards } = player;
         const currCard = handCards[cardIdx];
+        if (!currCard) throw new Error(`@_checkCard:p${pidx}的卡牌${cardIdx}不存在,${handCards.map(c => `[${c.name}]`)}`);
         const { cost, canSelectHero, type, userType, energy, costType, anydice, costChange } = currCard;
         const ncost = Math.max(0, cost - costChange);
         const cardres = currCard.handle(currCard, {
@@ -2912,8 +2912,8 @@ export default class GeniusInvokationRoom {
                     await this._execTask();
                 }
             }
-            if (!getcard) {
-                if (isAction && !isUseSkill) this._changeTurn(pidx, isQuickAction, 'useCard');
+            if (!getcard && !isUseSkill) {
+                if (isAction) this._changeTurn(pidx, isQuickAction, 'useCard');
                 else this._doActionStart(pidx);
             }
         }
@@ -3334,7 +3334,7 @@ export default class GeniusInvokationRoom {
                     notPreview: true,
                     isQuickAction: isQuickAction && isDie.size == 0,
                 });
-            }]], { addAfterNonDmg: true });
+            }]], { addAfterNonDmg: true, isUnshift: true });
         }
         this._doCmds(pidx, cmds);
         this.emit(`${damageVO.dmgSource}-doDamage-${atkname}`, pidx, {
@@ -4680,7 +4680,7 @@ export default class GeniusInvokationRoom {
         }
         ndices.push(...newDice);
         ndices.splice(MAX_DICE_COUNT, MAX_DICE_COUNT);
-        this.players[pidx].dice = [...ndices];
+        assgin(this.players[pidx].dice, ndices);
         return this._rollDice(pidx);
     }
     /**

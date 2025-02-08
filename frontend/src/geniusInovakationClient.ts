@@ -289,12 +289,17 @@ export default class GeniusInvokationClient {
             this.handcardsGroupOffset = { transform: `translateX(-${12 * (this.handcardsPos.length)}px)` }
         }
         setTimeout(() => {
-            this.players.forEach(p => {
-                p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
-                p.UI.willAddCard = { cards: [], isNotPublic: false };
-                p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
-            });
-        }, 1500);
+            const hasGetCard = this.players.some(p => p.UI.willGetCard.cards.length);
+            const hasAddCard = this.players.some(p => p.UI.willAddCard.cards.length);
+            const hasDiscard = this.players.some(p => p.UI.willDiscard.hcards.length + p.UI.willDiscard.pile.length);
+            setTimeout(() => {
+                this.players.forEach(p => {
+                    if (hasGetCard) p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
+                    if (hasAddCard) p.UI.willAddCard = { cards: [], isNotPublic: false };
+                    if (hasDiscard) p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
+                });
+            }, 1500);
+        });
     }
     /**
      * 展示选择卡的信息

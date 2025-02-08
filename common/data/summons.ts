@@ -924,8 +924,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/552ec062eef427f9a1986f92ee19c716_8843394885297317371.png')
         .handle((summon, event) => {
             const { eheros = [] } = event;
-            const sts124022Idx = eheros.findIndex(h => hasObjById(h.heroStatus, 124022));
-            const hidxs = isCdt(sts124022Idx > -1, [sts124022Idx]);
+            const sts124022hidx = eheros.find(h => hasObjById(h.heroStatus, 124022))?.hidx ?? -1;
+            const hidxs = isCdt(sts124022hidx != -1, [sts124022hidx]);
             return {
                 trigger: ['phase-end'],
                 exec: execEvent => {
@@ -943,24 +943,22 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。（最多叠加到3）；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png')
         .handle((summon, event) => {
-            const { trigger = '', heros = [], isExec = true } = event;
+            const { trigger = '', heros = [], dmgedHidx = -1, getdmg = [] } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hero = getObjById(heros, getHidById(summon.id));
-            if (hero?.isFront) {
-                triggers.push('get-elReaction');
-                if (!isExec && trigger == 'get-elReaction') summon.minusUseCnt();
-            }
             if ((hero?.talentSlot?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
+            const isHero = hero?.isFront && (getdmg[dmgedHidx] ?? -1) != -1;
+            if (isHero && trigger == 'get-elReaction') {
+                triggers.push('get-elReaction');
+                summon.minusUseCnt();
+            }
             return {
                 trigger: triggers,
                 isNotAddTask: trigger == 'get-elReaction',
                 exec: execEvent => {
                     const { summon: smn = summon, heros: hrs = heros, eCombatStatus = [] } = execEvent;
-                    phaseEndAtk(smn, event);
-                    if (smn.useCnt == 0) {
-                        const sts124044 = getObjIdxById(eCombatStatus, 124044) ?? -1;
-                        if (sts124044 > -1) eCombatStatus.splice(sts124044, 1);
-                    }
+                    if (trigger != 'get-elReaction') phaseEndAtk(smn, event);
+                    if (smn.useCnt == 0) getObjById(eCombatStatus, 124044)?.dispose();
                     if (trigger == 'get-elReaction') return;
                     const chero = getObjById(hrs, getHidById(smn.id));
                     if (trigger == 'action-start' && chero?.talentSlot) --chero.talentSlot.perCnt;

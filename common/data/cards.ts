@@ -6,7 +6,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 import { newSummon } from './summons.js';
@@ -3055,7 +3055,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (restDmg < 3 || card.perCnt == 0) return { restDmg }
                 return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => { --card.perCnt } }
             }
-            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
+            return { isValid: isTalentFront(heros, card), cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
         }),
 
     221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
@@ -3063,7 +3063,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png')
         .handle((card, event) => {
             const { heros = [] } = event;
-            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: 121034 }
+            return { isValid: isTalentFront(heros, card), status: 121034 }
         }),
 
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
@@ -3160,7 +3160,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
         .handle((card, event) => {
             const { heros = [] } = event;
-            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: 124014, cmds: [{ cmd: 'heal', cnt: 3 }] }
+            return { isValid: isTalentFront(heros, card), status: 124014, cmds: [{ cmd: 'heal', cnt: 3 }] }
         }),
 
     224021: () => new CardBuilder(296).name('悲号回唱').since('v4.3.0').talent(1).talent(-1, 'v4.4.0').costElectro(3).costSame(0, 'v4.4.0').perCnt(1)
@@ -3181,7 +3181,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [], hidxs: [hidx] = [] } = event;
             const cnt = (getObjById(heros[hidx]?.heroStatus, 124032)?.useCnt ?? 0) + 1;
-            return { isValid: !!getObjById(heros, card.userType as number)?.isFront, status: [[124032, true, cnt]] }
+            return { isValid: isTalentFront(heros, card), status: [[124032, true, cnt]] }
         }),
 
     224041: () => new CardBuilder(341).name('雷萤浮闪').since('v4.5.0').talent(1).costElectro(3).perCnt(1)
@@ -3241,7 +3241,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [] } = event;
             const element = [...new Set(heros.map(h => h.element))];
             return {
-                isValid: !!getObjById(heros, card.userType as number)?.isFront,
+                isValid: isTalentFront(heros, card),
                 status: 126022,
                 cmds: [{ cmd: 'getDice', cnt: element.length, element }],
             }

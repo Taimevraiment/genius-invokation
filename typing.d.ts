@@ -312,7 +312,7 @@ type TaskItem = [
     string, // 任务名称
     any[] | StatusTask, // 任务参数
     number, // 触发该任务的实体id
-    boolean, // 任务是否优先
+    boolean, // 任务是否为有伤害任务
 ];
 
 type Env = 'prod' | 'dev' | 'test';

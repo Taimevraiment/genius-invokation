@@ -80,7 +80,7 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
 }
 
 // 获得所有后台角色hidx
-export const getBackHidxs = (heros: Hero[], frontIdx: number = heros.findIndex(h => h.isFront)): number[] => {
+export const getBackHidxs = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1): number[] => {
     return allHidxs(heros, { exclude: frontIdx });
 }
 
@@ -140,6 +140,9 @@ export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
 
 // 根据角色id获取元素
 export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];
+
+// 天赋卡是否需要角色为出战角色
+export const isTalentFront = (heros: Hero[], card: Card) => !!getObjById(heros, card.userType as number)?.isFront;
 
 // 根据角色id获取天赋id
 export const getTalentIdByHid = (hid: number): number => {

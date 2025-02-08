@@ -2108,14 +2108,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     124021: () => new StatusBuilder('雷霆探针').combatStatus().icon('ski,3')
         .type(STATUS_TYPE.Sign, STATUS_TYPE.Usage).iconBg(DEBUFF_BG_COLOR).perCnt(1)
         .description('【所在阵营角色使用技能后：】对所在阵营出战角色附属【sts124022】。（每回合1次）')
-        .handle(status => ({
-            trigger: ['skill'],
-            exec: () => {
-                if (status.perCnt <= 0) return;
-                --status.perCnt;
-                return { cmds: [{ cmd: 'getStatus', status: 124022 }] }
+        .handle(status => {
+            if (status.perCnt <= 0) return;
+            return {
+                trigger: ['skill'],
+                cmds: [{ cmd: 'getStatus', status: 124022 }],
+                exec: () => { --status.perCnt }
             }
-        })),
+        }),
 
     124022: () => new StatusBuilder('雷鸣探知').heroStatus().icon('debuff').useCnt(1).perCnt(1, 'v4.4.0')
         .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).notReset()
@@ -2147,11 +2147,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
             const hero = heros[hidx];
             if (!hero || !hero.isFront) return;
-            return {
-                trigger: ['end-phase'],
-                isAddTask: true,
-                exec: () => ({ cmds: [{ cmd: 'getCard', cnt: 1 }] })
-            }
+            return { trigger: ['end-phase'], isAddTask: true, cmds: [{ cmd: 'getCard', cnt: 1 }] }
         }),
 
     124042: (useCnt: number = 0) => new StatusBuilder('雷萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
@@ -2175,7 +2171,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    124052: (useCnt: number = -1) => new StatusBuilder('雷锥陷阱').combatStatus().icon('ski,2').useCnt(useCnt).maxCnt(3)
+    124052: (useCnt: number = 0) => new StatusBuilder('雷锥陷阱').combatStatus().icon('ski,2').useCnt(useCnt).maxCnt(3)
         .type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
         .description('【所在阵营的角色使用技能后：】对所在阵营的出战角色造成2点[雷元素伤害]。；【[可用次数]：初始为创建时所弃置的〖crd124051〗张数。（最多叠加到3）】')
         .handle(() => ({
@@ -2217,11 +2213,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: () => {
                     status.minusUseCnt();
                     const talent = getObjById(eheros, getHidById(status.id))?.talentSlot;
-                    if (status.useCnt == 0 && talent && talent.perCnt > 0) {
+                    if (heros[hidx]?.isFront && status.useCnt == 0 && talent && talent.perCnt > 0) {
                         --talent.perCnt;
-                        const all = allHidxs(heros);
-                        const hidxs = [all[(all.indexOf(hidx) + 1) % all.length]];
-                        return { cmds: [{ cmd: 'getStatus', status: 125021, hidxs }] }
+                        return { cmds: [{ cmd: 'getStatus', status: 125021, hidxs: getBackHidxs(heros).slice(0, 1) }] }
                     }
                 }
             }
@@ -2253,10 +2247,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: () => {
                     status.minusUseCnt();
                     if (status.useCnt > 0 && dmgElement == DAMAGE_TYPE.Geo) status.minusUseCnt();
-                    if (status.useCnt == 0) {
-                        const sts126012 = getObjById(heros[hidx]?.heroStatus, 126012);
-                        if (sts126012) sts126012.useCnt = 0;
-                    }
+                    if (status.useCnt == 0) getObjById(heros[hidx]?.heroStatus, 126012)?.dispose();
                 }
             }
         }),
@@ -2268,9 +2259,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             addDmg: status.perCnt,
             trigger: ['skill'],
             attachEl: ELEMENT_TYPE.Geo,
-            exec: () => {
-                if (status.perCnt > 0) --status.perCnt;
-            },
+            exec: () => { status.perCnt > 0 && --status.perCnt },
         })),
 
     126021: () => new StatusBuilder('磐岩百相·元素汲取').heroStatus().icon('buff2').useCnt(0).maxCnt(4)
@@ -2299,7 +2288,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     if (sts126022 && trigger.endsWith('getdmg')) sts126022.minusUseCnt();
                     const isDrawed = status.perCnt != 0;
                     hero.UI.src = hero.UI.srcs[drawElCode];
-                    const oels = status.perCnt;
+                    // const oels = status.perCnt;
                     let els = -status.perCnt;
                     if ((els >> drawElCode - 1 & 1) == 0) {
                         els |= 1 << drawElCode - 1;
@@ -2307,7 +2296,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         status.perCnt = -els;
                     }
                     const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, element: ELEMENT_CODE_KEY[drawElCode] }];
-                    if (oels == status.perCnt) cmds.push({ cmd: 'getStatus', status: 126022, hidxs: [hidx] })
+                    // if (oels == status.perCnt) cmds.push({ cmd: 'getStatus', status: 126022, hidxs: [hidx] })
                     if (isDrawed) cmds.push({ cmd: 'loseSkill', hidxs: [hidx], mode: 2 });
                     cmds.push({ cmd: 'getSkill', hidxs: [hidx], cnt: 66003 + drawElCode * 10, mode: 2 });
                     return { cmds }
@@ -2408,7 +2397,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['card', 'discard'],
                 exec: () => {
                     if (++status.useCnt == 4) {
-                        status.roundCnt = 0;
+                        status.dispose();
                         return {
                             cmds: [{
                                 cmd: 'getStatus',

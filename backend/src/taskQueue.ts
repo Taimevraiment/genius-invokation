@@ -24,7 +24,7 @@ export default class TaskQueue {
         if (curQueue.some(([tpn]) => tpn == taskType)) {
             console.trace('重复task:', taskType);
         }
-        const tidx = addAfterNonDmg ? this.queue.findIndex(([, , isDmg]) => isDmg) :
+        const tidx = addAfterNonDmg ? this.queue.findLastIndex(([, , , isdmg]) => !isdmg) :
             orderAfter != '' ? this.queue.findLastIndex(([taskType]) => taskType.includes(orderAfter)) :
                 -1;
         if (tidx > -1) this.queue.splice(tidx + 1, 0, [taskType, args, source, isDmg]);

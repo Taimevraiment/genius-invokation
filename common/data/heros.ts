@@ -1914,9 +1914,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/ca84fd08636d380d57da96f9a37e9e7f_7121937516609130674.png')
                 .elemental().damage(3).cost(3).handle(event => {
                     const { eheros = [] } = event;
-                    const sts124022Idx = eheros.findIndex(h => hasObjById(h.heroStatus, 124022));
-                    if (sts124022Idx == -1) return;
-                    return { atkTo: sts124022Idx }
+                    const sts124022hidx = eheros.find(h => hasObjById(h.heroStatus, 124022))?.hidx;
+                    if (sts124022hidx == undefined) return;
+                    return { atkTo: sts124022hidx }
                 }),
             new SkillBuilder('轰雷禁锢').description('{dealDmg}，召唤【smn124023】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/924d4e27f199d95cde09b26ce36d6e8b.png',
@@ -1985,7 +1985,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ba3107753a28bf55c7279482d9b0c9ed.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/0e1110651dbff69343c8e40bf3c7e93f_6498390434174190990.png')
                 .elemental().damage(3).cost(3).handle(() => ({ cmds: [{ cmd: 'addCard', card: 124051, cnt: 1, hidxs: [2] }] })),
-            new SkillBuilder('雷锥散射').description('{dealDmg}，弃置手牌中最多3张【crd124051】，在对方场上生成【sts124052】。')
+            new SkillBuilder('雷锥散射').description('{dealDmg}，[舍弃]手牌中最多3张【crd124051】，在对方场上生成【sts124052】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4d58f950df06a277f43a21dcdfa58eb0.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/54dc8816d5fb42528ba84eaefb1a8068_7565040194931804591.png')
                 .burst(2).damage(3).cost(3).handle(event => {
@@ -2066,7 +2066,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('终天闭幕曲').description('{dealDmg}，所有敌方后台角色附属【sts125021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/dc176e73075e38839e1557815da53cc8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/ea18fc2d49dac1d270821cc0f318aa9e_7299667602196853258.png')
-                .burst(2).damage(5).cost(4).handle(({ eheros = [] }) => ({ statusOppo: 125021, hidxs: getBackHidxs(eheros) }))
+                .burst(2).damage(5).cost(4).handle(event => ({ statusOppo: 125021, hidxs: getBackHidxs(event.eheros) }))
         ),
 
     2503: () => new HeroBuilder(370).name('圣骸飞蛇').since('v4.7.0').monster().consecratedBeast().anemo()
