@@ -5,7 +5,7 @@ import {
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 
@@ -732,7 +732,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const hid = getHidById(status.id);
             return {
                 heal: 2,
-                hidxs: [getObjIdxById(heros, hid)],
+                hidxs: [getObjById(heros, hid)?.hidx ?? -1],
                 trigger: ['after-skilltype1'],
                 exec: (eStatus, execEvent = {}) => {
                     const { heros: hs = [] } = execEvent;
@@ -998,7 +998,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 restDmg: restDmg - 1,
                 pdmg: isCdt(hero.hp >= 7, 1),
-                hidxs: isCdt(hero.hp >= 7, [getObjIdxById(heros, hid)]),
+                hidxs: isCdt(hero.hp >= 7, [getObjById(heros, hid)?.hidx ?? -1]),
                 exec: () => status.minusUseCnt()
             }
         }),
@@ -2329,24 +2329,25 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本角色造成或受到元素伤害后：】累积1层｢活化激能｣。（最多累积3层）；【结束阶段：】如果｢活化激能｣层数已达到上限，就将其清空。同时，角色失去所有[充能]。')
         .handle((status, event) => {
             const { trigger = '', heros = [], hidx = -1 } = event;
+            const triggers: Trigger[] = ['skilltype3'];
+            const hero = heros[hidx];
+            if (!hero) return;
+            const maxCnt = status.maxCnt + +!!hero.talentSlot;
+            if (status.useCnt == maxCnt) triggers.push('phase-end');
+            else triggers.push('el-dmg', 'el-getdmg');
             return {
-                trigger: ['el-dmg', 'el-getdmg', 'phase-end', 'skilltype3'],
-                exec: () => {
+                trigger: triggers,
+                isAddTask: trigger == 'phase-end',
+                exec: eStatus => {
                     if (trigger == 'skilltype3') {
                         status.useCnt = 0;
                         return;
                     }
-                    const hero = heros[hidx];
-                    if (!hero) return;
-                    const maxCnt = status.maxCnt + +!!hero.talentSlot;
                     if (trigger == 'phase-end') {
-                        if (status.useCnt == maxCnt) {
-                            status.useCnt = 0;
-                            return { cmds: [{ cmd: 'getEnergy', cnt: -hero.energy, hidxs: [hidx] }] }
-                        }
-                    } else if (status.useCnt < maxCnt) {
-                        ++status.useCnt;
+                        if (eStatus) eStatus.useCnt = 0;
+                        return { cmds: [{ cmd: 'getEnergy', cnt: -hero.energy, hidxs: [hidx] }] }
                     }
+                    if (status.useCnt < maxCnt) ++status.useCnt;
                 },
             }
         }),
@@ -2357,11 +2358,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { hcard, isMinusDiceCard } = event;
             if (isMinusDiceCard && hcard?.id == 127021) {
-                return {
-                    trigger: ['card'],
-                    minusDiceCard: 1,
-                    exec: () => status.minusUseCnt()
-                }
+                return { trigger: ['card'], minusDiceCard: 1, exec: () => status.minusUseCnt() }
             }
         }),
 
@@ -2377,8 +2374,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 heal: sts127026?.useCnt ?? 0,
                 exec: (_, execEvent = {}) => {
                     const { combatStatus = [] } = execEvent;
-                    const sts127026 = getObjById(combatStatus, 127026);
-                    if (sts127026) sts127026.useCnt = 0;
+                    getObjById(combatStatus, 127026)?.dispose();
                 }
             }
         }),
@@ -2396,16 +2392,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: ['card', 'discard'],
                 exec: () => {
-                    if (++status.useCnt == 4) {
-                        status.dispose();
-                        return {
-                            cmds: [{
-                                cmd: 'getStatus',
-                                status: [127027, 127028],
-                                hidxs: [getObjIdxById(heros, getHidById(status.id))],
-                            }]
-                        }
-                    }
+                    status.useCnt += +!!(hcard?.id == 127021) || Math.min(MAX_SUMMON_COUNT - summons.length, discards.filter(c => c.id == 127021).length);
+                    if (status.useCnt < 4) return;
+                    status.dispose();
+                    const hidxs = [getObjById(heros, getHidById(status.id))?.hidx ?? -1];
+                    return { cmds: [{ cmd: 'getStatus', status: [127027, 127028], hidxs }] }
                 }
             }
         }),
@@ -2462,19 +2453,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]')
         .handle(continuousActionHandle),
 
-    300003: () => new StatusBuilder('裁定之时（生效中）').combatStatus().icon('debuff')
-        .useCnt(3).roundCnt(1).type(STATUS_TYPE.Usage)
-        .description('本回合中，我方打出的事件牌无效。；[useCnt]')
-        .handle((status, event) => {
-            const { hcard } = event;
-            if (hcard?.type == CARD_TYPE.Event) {
-                return {
-                    trigger: ['card'],
-                    isInvalid: true,
-                    exec: () => status.minusUseCnt()
-                }
-            }
-        }),
+    300003: () => new StatusBuilder('裁定之时（生效中）').combatStatus()
+        .useCnt(3).roundCnt(1).type(STATUS_TYPE.NonEvent)
+        .description('本回合中，我方打出的事件牌无效。；[useCnt]'),
 
     300004: () => new StatusBuilder('抗争之日·碎梦之时（生效中）').heroStatus()
         .useCnt(4).roundCnt(1).type(STATUS_TYPE.Barrier)
@@ -2494,19 +2475,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合中出战角色造成的伤害+1。')
         .handle(() => ({ trigger: ['skill'], addDmg: 1 })),
 
-    301018: () => new StatusBuilder('严格禁令').combatStatus().icon('debuff').roundCnt(1).type(STATUS_TYPE.Usage)
-        .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]')
-        .handle((status, event) => {
-            const { hcard } = event;
-            const isInvalid = hcard?.type == CARD_TYPE.Event;
-            return {
-                trigger: ['card'],
-                isInvalid,
-                exec: () => {
-                    if (isInvalid) --status.roundCnt;
-                }
-            }
-        }),
+    301018: () => new StatusBuilder('严格禁令').combatStatus()
+        .useCnt(1).roundCnt(1).type(STATUS_TYPE.NonEvent)
+        .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]'),
 
     301019: () => new StatusBuilder('悠远雷暴').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
         .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp')

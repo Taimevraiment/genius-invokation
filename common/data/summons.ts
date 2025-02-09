@@ -2,9 +2,9 @@
 import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
-import { allHidxs, getAtkHidx, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
-import { phaseEndAtk, SummonBuilder } from "./builder/summonBuilder.js";
+import { SummonBuilder } from "./builder/summonBuilder.js";
 
 export type SummonHandleEvent = {
     trigger?: Trigger,
@@ -27,6 +27,7 @@ export type SummonHandleEvent = {
     switchHeroDiceCnt?: number,
     isQuickAction?: boolean,
     dmgedHidx?: number,
+    atkHidx?: number,
     getdmg?: number[],
 }
 
@@ -88,34 +89,33 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     111051: () => new SummonBuilder('霜见雪关扉').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
-    111062: () => new SummonBuilder('光降之剑').maxUse(MAX_USE_COUNT).damage(3).damage(2, 'v3.8.0').physical().plus().roundEnd()
+    111062: () => new SummonBuilder('光降之剑').maxUse(MAX_USE_COUNT).damage(3).damage(2, 'v3.8.0').physical().collection().plus().roundEnd()
         .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点｢能量层数｣，都使次伤害+1。（影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {
-            const { heros = [], isExec = true, trigger = '' } = event;
-            const fhero = getObjById(heros, getHidById(summon.id));
+            const { heros = [], atkHidx = -1, isExec = true, trigger = '' } = event;
+            const hero = getObjById(heros, getHidById(summon.id));
             if (['enter', 'summon-destroy'].includes(trigger)) {
-                fhero?.skills.forEach(skill => {
+                hero?.skills.forEach(skill => {
                     if (skill.type == SKILL_TYPE.Normal || skill.type == SKILL_TYPE.Elemental) {
                         skill.cost[2].cnt = trigger == 'enter' ? -1 : 0;
                     }
                 });
                 return;
             }
-            const hero = heros[getAtkHidx(heros)];
-            if (hero?.id == fhero?.id && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
-                summon.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
+            const fhero = heros[atkHidx];
+            if (fhero?.id == hero?.id && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
+                summon.useCnt += !!fhero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
             }
             return {
                 trigger: ['phase-end', 'skilltype1', 'skilltype2'],
                 isNotAddTask: trigger != 'phase-end',
                 exec: execEvent => {
-                    const { summon: smn = summon, heros: hs = heros } = execEvent;
+                    const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') {
                         return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
                     }
-                    const hero = hs[getAtkHidx(hs)];
-                    if (hero?.id == getHidById(smn.id)) {
+                    if (fhero?.id == hero?.id) {
                         smn.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
                     }
                 },
@@ -132,7 +132,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger != 'phase-end',
                 trigger: ['Cryo-getdmg-oppo', 'Physical-getdmg-oppo', 'phase-end'],
                 exec: execEvent => {
-                    if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon, event);
+                    if (trigger == 'phase-end') return (execEvent.summon ?? summon).phaseEndAtk(event);
                 },
             }
         }),
@@ -142,10 +142,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
         .handle((summon, event = {}, ver) => {
-            const { heros = [], trigger = '', tround = 0, isExec = true } = event;
+            const { heros = [], atkHidx = -1, trigger = '', tround = 0, isExec = true } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = getMaxHertHidxs(heros);
-            const fhero = heros[getAtkHidx(heros)];
+            const fhero = heros[atkHidx];
             const isHeal = fhero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
             const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && fhero.hp < fhero.maxHp;
             if (isHeal) triggers.push('after-skilltype1');
@@ -163,7 +163,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         return { cmds: trdcmds }
                     }
                     if (trigger == 'after-skilltype1') return { cmds: skcmds }
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                 },
             }
         }),
@@ -177,7 +177,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 const { summon: smn = summon, combatStatus = [] } = execEvent;
                 const sts111092 = getObjById(combatStatus, 111092);
                 if (sts111092) ++sts111092.useCnt;
-                return phaseEndAtk(smn, event);
+                return smn.phaseEndAtk(event);
             }
         })),
 
@@ -192,7 +192,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event, ver) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon, event);
+                const { cmds = [] } = (execEvent.summon ?? summon).phaseEndAtk(event);
                 cmds.push({ cmd: 'getStatus', status: [[111131, isCdt(ver.lt('v5.3.0'), 1)]] })
                 return { cmds }
             }
@@ -205,7 +205,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
-                phaseEndAtk(smn, event);
+                smn.phaseEndAtk(event);
                 return { cmds: [{ cmd: 'heal', hidxs: allHidxs(event.heros) }, { cmd: 'attach' }] }
             },
         })),
@@ -222,7 +222,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
-                phaseEndAtk(smn, event);
+                smn.phaseEndAtk(event);
                 const { heros = [] } = event;
                 const hero = getObjById(heros, getHidById(smn.id));
                 const isTalent = !!hero?.talentSlot && hasObjById(hero?.heroStatus, 112052);
@@ -238,7 +238,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             trigger: ['phase-end', 'skilltype1'],
             isNotAddTask: event.trigger == 'skilltype1',
             exec: execEvent => {
-                if (event.trigger == 'phase-end') return phaseEndAtk(execEvent.summon ?? summon, event);
+                if (event.trigger == 'phase-end') return (execEvent.summon ?? summon).phaseEndAtk(event);
             },
         })),
 
@@ -255,7 +255,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    phaseEndAtk(smn, event);
+                    smn.phaseEndAtk(event);
                     return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }] };
                 },
             }
@@ -272,7 +272,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 tround: isCdt(hasTround, 1),
                 exec: execEvent => {
                     const { summon: smn = summon, heros: hs = heros } = execEvent;
-                    if (!hasTround) phaseEndAtk(smn, event);
+                    if (!hasTround) smn.phaseEndAtk(event);
                     const cmds: Cmds[] = [{ cmd: 'attack' }];
                     if (tround == 0) return { cmds }
                     cmds.push({ cmd: 'attack', element: DAMAGE_TYPE.Pierce, hidxs: getMinHertHidxs(hs), cnt: 1, isOppo: false });
@@ -292,7 +292,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 tround: isCdt(hasTround, 1),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (!hasTround) phaseEndAtk(smn, event);
+                    if (!hasTround) smn.phaseEndAtk(event);
                     if (tround == 0) return { cmds: [{ cmd: 'heal', hidxs: allHidxs(heros) }] }
                     return { cmds: [{ cmd: 'heal', hidxs: getMaxHertHidxs(heros) }] }
                 },
@@ -309,10 +309,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png')
         .handle((summon, event, ver) => {
-            const { heros = [], trigger = '', isExec = true } = event;
+            const { heros = [], atkHidx = -1, trigger = '', isExec = true } = event;
             const triggers: Trigger[] = [];
             if (summon.useCnt == 0) triggers.push('phase-end');
-            const hero = heros[getAtkHidx(heros)];
+            const hero = heros[atkHidx];
             const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver.lt('v4.2.0') ? 3 : 4);
             if (cnt) triggers.push('after-skilltype1');
             return {
@@ -337,7 +337,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (reset) return { trigger: ['enter'], rCombatStatus: 113094 }
             return {
                 trigger: ['phase-end'],
-                exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
+                exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
             }
         }),
 
@@ -348,17 +348,17 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description(`{defaultAtk。}${isTalent ? '；【hro】｢普通攻击｣后：造成2点[雷元素伤害]。（需消耗[可用次数]）' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png')
         .handle((summon, event) => {
-            const { heros = [], trigger = '' } = event;
+            const { heros = [], atkHidx = -1, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
-            let cnt = isCdt(trigger != 'phase-end', 2);
-            if (heros[getAtkHidx(heros)]?.id == getHidById(summon.id) && summon.isTalent) {
+            const cnt = isCdt(trigger != 'phase-end', 2);
+            if (heros[atkHidx]?.id == getHidById(summon.id) && summon.isTalent) {
                 triggers.push('after-skilltype1');
             }
             return {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    phaseEndAtk(smn, event);
+                    smn.phaseEndAtk(event);
                     return { cmds: [{ cmd: 'attack', cnt }] };
                 },
             }
@@ -370,7 +370,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon, event);
+                const { cmds = [] } = (execEvent.summon ?? summon).phaseEndAtk(event);
                 return { cmds: [...cmds, { cmd: 'getStatus', status: 114063 }] }
             }
         })),
@@ -381,7 +381,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon, event);
+                const { cmds = [] } = (execEvent.summon ?? summon).phaseEndAtk(event);
                 return { cmds: [...cmds, { cmd: 'getStatus', status: 114063 }] }
             }
         })),
@@ -392,7 +392,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             addDmgType3: 1,
             trigger: ['phase-end'],
-            exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
+            exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
         })),
 
     114081: (dmg?: number) => new SummonBuilder('杀生樱').useCnt(3).maxUse(6).damage(dmg ?? 1)
@@ -403,7 +403,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (summon.useCnt >= 4) triggers.push('end-phase');
             return {
                 trigger: triggers,
-                exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
+                exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
             }
         }),
 
@@ -423,7 +423,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 const fhero = heros.find(h => h.isFront);
                 if (!fhero) return;
                 const { summon: smn = summon } = execEvent;
-                phaseEndAtk(smn, event);
+                smn.phaseEndAtk(event);
                 return {
                     cmds: [
                         { cmd: 'heal', cnt: isCdt(fhero.hp <= 6 && smn.isTalent, smn.shieldOrHeal + 1) },
@@ -449,7 +449,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 addDmgCdt: isCdt(isTalent, 1),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
                         const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
@@ -469,7 +469,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger == 'Anemo-dmg',
                 addDmgCdt: isCdt(isTalent, 1),
                 exec: execEvent => {
-                    if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon, event);
+                    if (trigger == 'phase-end') return (execEvent.summon ?? summon).phaseEndAtk(event);
                 }
             }
         }),
@@ -486,7 +486,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') {
-                        phaseEndAtk(smn, event);
+                        smn.phaseEndAtk(event);
                         return { cmds: [{ cmd: 'attack' }, { cmd: 'switch-to', hidxs: [getNearestHidx(hidx, heros)], isOppo: true }] };
                     }
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
@@ -508,7 +508,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
                         const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
@@ -525,7 +525,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => {
                 const { heros = [] } = event;
                 const { summon: smn = summon } = execEvent;
-                return phaseEndAtk(smn, event, getMaxHertHidxs(heros));
+                return smn.phaseEndAtk(event, getMaxHertHidxs(heros));
             }
         })),
 
@@ -545,7 +545,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger.includes('-getdmg'),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger.includes('-getdmg') && smn.element == ELEMENT_TYPE.Anemo) {
                         const element = ELEMENT_TYPE[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
                         return { cmds: [{ cmd: 'changeElement', element }] };
@@ -566,7 +566,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger == 'Anemo-getdmg-oppo',
                 trigger: triggers,
                 exec: execEvent => {
-                    if (trigger == 'phase-end') return phaseEndAtk(execEvent?.summon ?? summon, event);
+                    if (trigger == 'phase-end') return (execEvent.summon ?? summon).phaseEndAtk(event);
                     if (['phase-start', 'enter'].includes(trigger)) return { cmds: [{ cmd: 'getDice', cnt: 1, element: ELEMENT_TYPE.Anemo }] }
                 },
             }
@@ -597,7 +597,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isQuickAction: trigger == 'minus-switch',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
                     if (trigger == 'minus-switch') --smn.perCnt;
                 }
@@ -615,7 +615,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger == 'getdmg',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (smn.perCnt <= 0 || trigger != 'getdmg' || hero?.hidx == undefined || hero.hp <= 0) return;
                     --smn.perCnt;
                     return { cmds: [{ cmd: 'getStatus', status: 116054, hidxs: [hero.hidx] }] }
@@ -629,7 +629,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon, event);
+                const { cmds = [] } = (execEvent.summon ?? summon).phaseEndAtk(event);
                 const { heros = [] } = event;
                 if (heros.filter(h => h.element == ELEMENT_TYPE.Geo).length >= 2) {
                     cmds.push({ cmd: 'getStatus', status: 111 })
@@ -645,7 +645,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             trigger: ['phase-end'],
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
-                phaseEndAtk(smn, event);
+                smn.phaseEndAtk(event);
                 return { cmds: [{ cmd: 'attack' }, { cmd: 'getCard', cnt: 1, card: 116081, isAttach: true }] }
             }
         })),
@@ -658,7 +658,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             isNotAddTask: event.trigger == 'enter',
             exec: execEvent => {
                 const { trigger = '' } = event;
-                if (trigger == 'phase-end') return phaseEndAtk(execEvent.summon ?? summon, event);
+                if (trigger == 'phase-end') return (execEvent.summon ?? summon).phaseEndAtk(event);
                 return { cmds: [{ cmd: 'getStatus', status: 116098, hidxs: [getObjIdxById(event.heros, getHidById(summon.id))] }] }
             }
         })),
@@ -674,7 +674,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger == 'after-skill') {
                         --smn.perCnt;
                         return { cmds: [{ cmd: 'switch-after' }] }
@@ -694,7 +694,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     --smn.perCnt;
                     return { cmds: [{ cmd: 'attack' }] }
                 },
@@ -719,7 +719,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 addDmgCdt: isCdt(isAddDmg, 1),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger == 'Geo-dmg') --smn.perCnt;
                 }
             }
@@ -739,7 +739,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger != 'phase-end',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
                 }
             }
@@ -762,7 +762,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 const { heros = [] } = event;
                 const { summon: smn = summon } = execEvent;
                 const isLast = smn.isTalent && smn.useCnt == 1;
-                phaseEndAtk(smn, event);
+                smn.phaseEndAtk(event);
                 const cmds: Cmds[] = [{ cmd: 'attack', cnt: isCdt(isLast, smn.damage + 1) }];
                 const hidxs = getMaxHertHidxs(heros);
                 if (hidxs.length > 0) cmds.push({ cmd: 'heal', cnt: isCdt(isLast, smn.shieldOrHeal + 1), hidxs });
@@ -784,7 +784,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: ['phase-end'],
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    const { cmds = [] } = phaseEndAtk(smn, event);
+                    const { cmds = [] } = smn.phaseEndAtk(event);
                     if (backHidxs.length > 0) cmds.push({ cmd: 'attack', hidxs: [backHidxs[0]] });
                     return { cmds }
                 }
@@ -796,9 +796,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
         .handle((summon, event, ver) => {
-            const { trigger = '', heros = [], dmgedHidx = -1, talent, getdmg = [] } = event;
+            const { trigger = '', heros = [], atkHidx = -1, dmgedHidx = -1, talent, getdmg = [] } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const atkHero = heros[getAtkHidx(heros)];
+            const atkHero = heros[atkHidx];
             const dmgedHero = heros[dmgedHidx];
             const isAtkHero = atkHero?.id == getHidById(summon.id);
             const isDmgedHero = dmgedHero?.id == getHidById(summon.id) && (getdmg[dmgedHidx] ?? -1) != -1;
@@ -815,7 +815,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         talent.perCnt = 0;
                         return { cmds: [{ cmd: 'attack', cnt: 2 }] }
                     }
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                 }
             }
         }),
@@ -828,7 +828,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => {
                 const { hidx = -1, eheros = [] } = event;
                 const { summon: smn = summon } = execEvent;
-                phaseEndAtk(smn, event);
+                smn.phaseEndAtk(event);
                 return { cmds: [{ cmd: 'attack', hidxs: [getNearestHidx(hidx, eheros)] }] }
             }
         })),
@@ -838,7 +838,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
             trigger: ['phase-end'],
-            exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
+            exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
         })),
 
     122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
@@ -846,7 +846,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
             trigger: ['phase-end'],
-            exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
+            exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
         })),
 
     122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
@@ -858,7 +858,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             return {
                 willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
                 trigger,
-                exec: execEvent => phaseEndAtk(execEvent?.summon ?? summon, event),
+                exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
             }
         }),
 
@@ -867,7 +867,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
         .handle((summon, event) => ({
             trigger: ['phase-end', 'end-phase'],
-            exec: execEvent => phaseEndAtk(execEvent.summon ?? summon, event),
+            exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
         })),
 
     123021: () => new SummonBuilder('黯火炉心').useCnt(2).damage(1).pdmg(1)
@@ -886,7 +886,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     const hero = heros[hidx];
                     if (trigger == 'phase-end') {
-                        phaseEndAtk(smn, event);
+                        smn.phaseEndAtk(event);
                         let addDmg = 0;
                         if (hero.hp > 0) {
                             addDmg = +(smn.isTalent && hero.skills.some(sk => (sk.type == SKILL_TYPE.Normal || sk.type == SKILL_TYPE.Elemental) && sk.useCnt > 0));
@@ -913,7 +913,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     let { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') return phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger == 'add-switch-oppo') --smn.perCnt;
                 }
             }
@@ -930,7 +930,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: ['phase-end'],
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    phaseEndAtk(smn, event);
+                    smn.phaseEndAtk(event);
                     return { cmds: [{ cmd: 'attack', hidxs }] }
                 },
             }
@@ -957,7 +957,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 isNotAddTask: trigger == 'get-elReaction',
                 exec: execEvent => {
                     const { summon: smn = summon, heros: hrs = heros, eCombatStatus = [] } = execEvent;
-                    if (trigger != 'get-elReaction') phaseEndAtk(smn, event);
+                    if (trigger != 'get-elReaction') smn.phaseEndAtk(event);
                     if (smn.useCnt == 0) getObjById(eCombatStatus, 124044)?.dispose();
                     if (trigger == 'get-elReaction') return;
                     const chero = getObjById(hrs, getHidById(smn.id));
@@ -978,7 +978,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') smn.phaseEndAtk(event);
                     return { cmds: [{ cmd: 'attack' }] }
                 },
             }
@@ -995,7 +995,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') phaseEndAtk(smn, event);
+                    if (trigger == 'phase-end') smn.phaseEndAtk(event);
                     return { cmds: [{ cmd: 'attack' }] }
                 },
             }
@@ -1007,7 +1007,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { cmds = [] } = phaseEndAtk(execEvent?.summon ?? summon, event);
+                const { cmds = [] } = (execEvent.summon ?? summon).phaseEndAtk(event);
                 cmds.push({ cmd: 'getStatus', status: [[126031, !!event.talent]], isOppo: true })
                 return { cmds }
             }

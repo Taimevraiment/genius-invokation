@@ -2200,18 +2200,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('生命流束').description('{dealDmg}，抓1张【crd127021】，生成1层【sts127026】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a2598b6377145054026356571e3494d6.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6b6af66686864e881e180633491577b7_1337053029698647969.png')
-                .elemental().damage(2).cost(3).handle(() => ({
-                    cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
-                    statusPre: 127026,
-                })),
+                .elemental().damage(2).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }], statusPre: 127026 })),
             new SkillBuilder('终景迸落').description('{dealDmg}，抓1张【crd127021】，生成2层【sts127026】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e2b183c009d60ca57023829db15c23fb.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/67a564cb356fc0cfddb1f98658d35573_3718187889744663164.png')
-                .burst(2).damage(2).cost(3).handle(() => ({
-                    cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }],
-                    statusPre: [[127026, 2]],
-                })),
-            new SkillBuilder('增殖感召').description('战斗开始时，生成5张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。')
+                .burst(2).damage(2).cost(3).handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, card: 127021, isAttach: true }], statusPre: [[127026, 2]] })),
+            new SkillBuilder('增殖感召').description('战斗开始时，生成5张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得1点[护盾]。')
                 .description('战斗开始时，生成6张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png')

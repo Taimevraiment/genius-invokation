@@ -1,5 +1,5 @@
 import { Status, Trigger, VersionCompareFn } from "../../../typing";
-import { STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
@@ -75,7 +75,7 @@ export class GIStatus {
             // this.icon = 'shield2';
             // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
             this.UI.icon = SHIELD_ICON_URL;
-            thandle = (status, event = {}) => {
+            thandle = (status, event) => {
                 let { restDmg = -1 } = event;
                 let rest: StatusHandleRes = {};
                 if (handle) {
@@ -91,11 +91,17 @@ export class GIStatus {
             // this.icon = 'shield';
             // this.iconBg = '#9268db';
             this.UI.icon = BARRIER_ICON_URL;
-            thandle = (status, event = {}) => {
+            thandle = (status, event) => {
                 const { restDmg = -1 } = event;
                 const handleres = handle?.(status, event, compareVersionFn(ver)) ?? {};
                 if (restDmg == -1) return handleres;
                 return { ...handleres, trigger: ['reduce-dmg'] };
+            }
+        } else if (type.includes(STATUS_TYPE.NonEvent)) {
+            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/300003';
+            thandle = (status, event) => {
+                if (event.hcard?.type != CARD_TYPE.Event) return;
+                return { trigger: ['card'], isInvalid: true, exec: () => status.minusUseCnt() }
             }
         }
         if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {

@@ -3417,7 +3417,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_5016592096671426026.png')
         .handle((_, event) => {
             const { summons = [] } = event;
-            if (summons.length == 4) return { isValid: false }
+            if (summons.length == MAX_SUMMON_COUNT) return { isValid: false }
             let summon = 127022;
             while (hasObjById(summons, summon)) ++summon;
             return { trigger: ['discard'], summon }
@@ -3430,8 +3430,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const hid = getHidById(card.id);
             const talent = getObjById(heros, hid)?.talentSlot;
             if (trigger == 'card' && hcard?.id == getTalentIdByHid(hid)) {
-                if (card.perCnt == 0) ++card.perCnt;
-                return;
+                return { trigger: ['card'], exec: () => { card.perCnt == 0 && ++card.perCnt } };
             }
             if (slotUse || reset) {
                 if (!talent && card.perCnt == 1) --card.perCnt;
@@ -3442,7 +3441,14 @@ const allCards: Record<number, () => CardBuilder> = {
                 return { trigger: ['switch-to'], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }], exec: () => { --card.perCnt } };
             }
             if (skid != getVehicleIdByCid(card.id) || hasObjById(combatStatus, 127033)) return;
-            return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+            return {
+                trigger: ['vehicle'],
+                isDestroy: card.useCnt == 1,
+                exec: () => {
+                    --card.useCnt;
+                    if (!talent && card.perCnt == 1) --card.perCnt;
+                },
+            }
         }),
 
     300006: () => new CardBuilder().name('斗争之火').place()

@@ -93,6 +93,8 @@
         :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
+        <img src="https://gi-tcg-assets.guyutongxue.site/api/v2/images/300003" alt=""
+          v-if="card.type == CARD_TYPE.Event && isNonEvent" style="position: absolute;top: 10%;width: 50%;opacity: .8;">
       </Handcard>
       <Handcard v-for="(card, idx) in client.player.UI.willGetCard.cards.filter(c => c.UI.class?.includes('over'))"
         :key="`${idx}-${card.id}-myhandcard-over`" :card="card" :isMobile="isMobile" :class="card.UI.class ?? ''"
@@ -202,6 +204,7 @@ import MainDesk from '@/components/MainDesk.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
+  CARD_TYPE,
   COST_TYPE,
   DICE_COST_TYPE_CODE_KEY,
   DiceCostType,
@@ -212,6 +215,7 @@ import {
   PHASE,
   PLAYER_STATUS,
   SKILL_TYPE,
+  STATUS_TYPE,
   Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
@@ -241,6 +245,7 @@ const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
 const canAction = computed<boolean>(() => client.value.canAction && isLookon.value == -1); // 是否可以操作
+const isNonEvent = computed<boolean>(() => client.value.player.combatStatus.some(s => s.type.includes(STATUS_TYPE.NonEvent))); // 是否使事件牌失效
 const currDeck = computed(() => { // 当前出战卡组
   const deck = client.value.decks[client.value.editDeckIdx];
   const { heroIds } = parseShareCode(deck.shareCode);

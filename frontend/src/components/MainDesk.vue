@@ -328,8 +328,7 @@
                 <div style="position: absolute; width: 100%; height: 100%;top: 0;"
                   :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
               </div>
-              <img class="summon-top-icon" v-if="!summon?.UI.isWill"
-                :src="getPngIcon(summon.maxUse > 10 ? 'Counter' : summon.shieldOrHeal < 0 ? 'Barrier' : 'TimeState')" />
+              <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.icon)" />
               <div class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
                 v-if="!summon?.UI.isWill">
                 {{ summon.useCnt }}

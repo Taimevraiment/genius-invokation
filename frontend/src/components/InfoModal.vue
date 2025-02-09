@@ -49,7 +49,7 @@
         </div>
         <div class="info-hero-skill" v-for="(skill, sidx) in skills.filter(
           (sk, i) => type == INFO_TYPE.Card ||
-            type == INFO_TYPE.Hero && (sk.type != SKILL_TYPE.Vehicle || i > 0) ||
+            type == INFO_TYPE.Hero && sk.type != SKILL_TYPE.PassiveHidden && (sk.type != SKILL_TYPE.Vehicle || i > 0) ||
             type == INFO_TYPE.Skill && i == skidx)" :key="sidx">
           <div class="info-hero-skill-title" @click.stop="showDesc(isShowSkill, sidx)">
             <div style="display: flex; flex-direction: row; align-items: center">

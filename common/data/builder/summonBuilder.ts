@@ -26,6 +26,7 @@ export class GISummon {
         src: string; // 图片url
         description: string; // 描述
         descriptions: string[], // 处理后的技能描述
+        icon: string, // 右上角图标
         hasPlus: boolean, // 是否有加号
         isWill: boolean, // 是否为将要生成的召唤物
         explains: string[], // 要解释的文本
@@ -36,7 +37,7 @@ export class GISummon {
         handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: any[], pdmg?: number, isDestroy?: SummonDestroyType,
-            stsId?: number, spReset?: boolean, expl?: string[], pls?: boolean, ver?: Version,
+            stsId?: number, spReset?: boolean, expl?: string[], icon?: string, pls?: boolean, ver?: Version,
         } = {}
     ) {
         this.id = id;
@@ -48,7 +49,7 @@ export class GISummon {
         this.element = element;
         const {
             pct = 0, isTalent = false, adt = [], pdmg = 0, isDestroy = 0, stsId = -1,
-            spReset = false, expl = [], pls = false, ver = VERSION[0],
+            spReset = false, expl = [], icon = '', pls = false, ver = VERSION[0],
         } = options;
         const hid = getHidById(id);
         this.UI = {
@@ -60,6 +61,7 @@ export class GISummon {
                 .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
                 .replace(/(?<=【)hro(?=】)/g, `hro${hid}`),
             src,
+            icon,
             hasPlus: pls,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             isWill: false,
@@ -80,7 +82,7 @@ export class GISummon {
             if (handle) return handle(summon, event, compareVersionFn(ver)) ?? {};
             return {
                 trigger: ['phase-end'],
-                exec: execEvent => phaseEndAtk(execEvent.summon ?? summon, event),
+                exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
             }
         };
     }
@@ -88,21 +90,20 @@ export class GISummon {
         this.entityId = id;
         return this;
     }
+    phaseEndAtk(event: SummonHandleEvent, healHidxs?: number[]): SummonHandleRes {
+        if (this.isDestroy == SUMMON_DESTROY_TYPE.Used) this.minusUseCnt();
+        else if (!event.isExec) this.useCnt = -100;
+        const cmds: Cmds[] = [];
+        if (this.damage >= 0) cmds.push({ cmd: 'attack' });
+        if (this.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });
+        return { cmds }
+    }
     addUseCnt(n: number = 1) {
         this.useCnt = Math.max(this.useCnt, Math.min(this.maxUse, this.useCnt + n));
     }
     minusUseCnt(n: number = 1) {
         this.useCnt = Math.max(0, this.useCnt - n);
     }
-}
-
-export const phaseEndAtk = (summon: Summon, event: SummonHandleEvent, healHidxs?: number[]): SummonHandleRes => {
-    if (summon.isDestroy == SUMMON_DESTROY_TYPE.Used) summon.minusUseCnt();
-    else if (!event.isExec) summon.useCnt = -100;
-    const cmds: Cmds[] = [];
-    if (summon.damage >= 0) cmds.push({ cmd: 'attack' });
-    if (summon.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });
-    return { cmds }
 }
 
 export class SummonBuilder extends BaseBuilder {
@@ -120,6 +121,7 @@ export class SummonBuilder extends BaseBuilder {
     private _addition: any[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
     private _statusId: number = -1;
+    private _icon: string = 'TimeState';
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
@@ -146,6 +148,7 @@ export class SummonBuilder extends BaseBuilder {
     }
     shield(shield: number) {
         this._shieldOrHeal = -shield;
+        this._icon = 'Barrier';
         return this;
     }
     heal(heal: number) {
@@ -208,6 +211,10 @@ export class SummonBuilder extends BaseBuilder {
         this._statusId = stsId ?? -2;
         return this;
     }
+    collection() {
+        this._icon = 'Counter';
+        return this;
+    }
     plus(plus: boolean = true) {
         this._hasPlus = plus;
         return this;
@@ -255,6 +262,7 @@ export class SummonBuilder extends BaseBuilder {
                 stsId,
                 spReset: this._spReset,
                 expl: this._explains,
+                icon: this._icon,
                 pls: this._hasPlus,
                 ver: this._curVersion,
             }
