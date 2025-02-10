@@ -1,7 +1,7 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
-import { allHidxs, getBackHidxs, getMaxHertHidxs } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 
@@ -420,14 +420,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         supportCnt: -1,
         exec: (spt, execEvent) => {
             const { csummon, isExecTask = true } = execEvent;
-            if (csummon) ++csummon.useCnt;
+            csummon?.addUseCnt(true);
             if (!isExecTask) return;
             return { isDestroy: --spt.cnt == 0 }
         }
     })),
     // ｢花羽会｣
     321026: () => new SupportBuilder().collection().handle((_, event) => {
-        const { discardCnt = 1 } = event;
+        const { discardCnt = 1, heros } = event;
         return {
             trigger: ['discard'],
             supportCnt: discardCnt,
@@ -435,7 +435,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 const ncnt = spt.cnt + discardCnt;
                 spt.cnt = ncnt % 2;
                 if (ncnt < 2) return;
-                return { cmds: [{ cmd: 'getStatus', status: [[301024, Math.floor(ncnt / 2)]] }] }
+                return { cmds: [{ cmd: 'getStatus', status: [[301024, Math.floor(ncnt / 2)]], hidxs: getNextBackHidx(heros) }] }
             }
         }
     }),
@@ -473,7 +473,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     spt.cnt -= card.cost - mdc;
                     --spt.perCnt;
                     if (ver.isOffline && spt.card.useCnt > 0) {
-                        --spt.card.useCnt;
+                        spt.card.minusUseCnt();
                         return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
                     }
                 }
@@ -499,7 +499,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     spt.cnt -= card.cost - mdc;
                     --spt.perCnt;
                     if (ver.isOffline && spt.card.useCnt > 0) {
-                        --spt.card.useCnt;
+                        spt.card.minusUseCnt();
                         return { cmds: [{ cmd: 'getCard', cnt: 1 }] }
                     }
                 }
@@ -932,7 +932,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             trigger: triggers,
             supportCnt: isCdt(support.card.useCnt == 2, -1),
             exec: spt => {
-                if (++spt.card.useCnt == 3) {
+                if (spt.card.addUseCnt() == 3) {
                     --spt.perCnt;
                     --spt.cnt;
                     spt.card.useCnt = 0;

@@ -1,7 +1,8 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE, SUMMON_DESTROY_TYPE, VERSION, Version
+    HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE,
+    VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
@@ -118,7 +119,7 @@ const sacrificialWeapon = (shareId: number) => {
                 addDmg: 1,
                 trigger: isCdt(card.perCnt > 0, ['skilltype2']),
                 execmds: isCdt(card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element }]),
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         });
 }
@@ -130,7 +131,7 @@ const skywardWeapon = (shareId: number) => {
             addDmg: 1,
             addDmgCdt: card.perCnt,
             trigger: isCdt(card.perCnt > 0, ['skilltype1']),
-            exec: () => { --card.perCnt }
+            exec: () => card.minusPerCnt()
         }));
 }
 
@@ -154,8 +155,8 @@ const barrierWeaponHandle = (card: Card, event: CardHandleEvent): CardHandleRes 
             restDmg: restDmg - 1,
             execmds: [{ cmd: 'discard', mode: CMD_MODE.HighHandCard }],
             exec: () => {
-                ++card.useCnt;
-                --card.perCnt;
+                card.addUseCnt();
+                card.minusPerCnt();
             }
         }
     }
@@ -180,7 +181,7 @@ const normalElArtifact = (shareId: number, element: PureElementType) => {
                 trigger: ['skill', 'card'],
                 exec: () => {
                     if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -201,7 +202,7 @@ const advancedElArtifact = (shareId: number, element: PureElementType) => {
                 cnt: 2,
                 exec: () => {
                     if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skill' && isMinusDiceSkill)) {
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -263,12 +264,11 @@ const allCards: Record<number, () => CardBuilder> = {
     311104: () => new CardBuilder(124).name('千夜浮梦').since('v3.7.0').weapon().costSame(3).perCnt(2)
         .description('【角色造成的伤害+1】。；【我方角色引发元素反应时：】造成的伤害+1。（每回合最多触发2次）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a56d5cf80b505c42a3643534d3dc2821_8758750260465224130.png')
-        .handle(card => ({
-            addDmg: 1,
-            addDmgCdt: isCdt(card.perCnt > 0, 1),
-            trigger: isCdt(card.perCnt > 0, ['elReaction']),
-            exec: () => { --card.perCnt }
-        })),
+        .handle((card, event) => {
+            const { sktype = SKILL_TYPE.Vehicle } = event;
+            if (sktype == SKILL_TYPE.Vehicle || card.perCnt <= 0) return { addDmg: 1 }
+            return { addDmg: 1, addDmgCdt: 1, trigger: ['elReaction'], exec: () => card.minusPerCnt() }
+        }),
 
     311105: () => new CardBuilder(125).name('盈满之实').since('v3.8.0').weapon().costAny(3)
         .description('【角色造成的伤害+1】。；【入场时：】抓2张牌。')
@@ -282,7 +282,7 @@ const allCards: Record<number, () => CardBuilder> = {
             addDmg: card.useCnt,
             trigger: isCdt(card.useCnt < 2, ['phase-end']),
             isAddTask: true,
-            exec: () => { ++card.useCnt }
+            exec: () => { card.addUseCnt() },
         })),
 
     311107: () => new CardBuilder(300).name('图莱杜拉的回忆').since('v4.3.0').weapon().costSame(3).perCnt(2)
@@ -294,7 +294,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmg: 1,
                 trigger: isCdt(card.perCnt > 0 && isMinusDiceSkill, ['skilltype1']),
                 minusDiceSkill: isCdt(card.perCnt > 0 && isChargedAtk, { skilltype1: [0, 1, 0] }),
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -310,8 +310,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: isMinus,
                 execmds: isCdt(isMinus && card.useCnt == 1, [{ cmd: 'getStatus', status: 301108 }]),
                 exec: () => {
-                    if (card.useCnt < 2) ++card.useCnt;
-                    if (card.useCnt >= 2) --card.perCnt;
+                    if (card.useCnt < 2) card.addUseCnt();
+                    if (card.useCnt >= 2) card.minusPerCnt();
                 }
             }
         }),
@@ -327,7 +327,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['getdmg', 'heal'],
                 execmds: [{ cmd: 'getStatus', status: 301111 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -348,7 +348,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: true,
                 cmds: [{ cmd: 'getStatus', status: 122, hidxs }],
                 execmds,
-                exec: () => { trigger == 'action-start' && --card.perCnt },
+                exec: () => { trigger == 'action-start' && card.minusPerCnt() },
             }
         }),
 
@@ -375,7 +375,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmg: 1,
                 addDmgCdt: isCdt(isAddDmg, 2),
                 trigger: isCdt(isAddDmg, ['skill']),
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -405,8 +405,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 execmds: isCdt(trigger == 'skill' && card.useCnt > 0, [{ cmd: 'getCard', cnt: card.useCnt }]),
                 exec: () => {
                     if (trigger == 'card') {
-                        ++card.useCnt;
-                        --card.perCnt;
+                        card.addUseCnt();
+                        card.minusPerCnt();
                     } else if (trigger == 'skill') {
                         card.useCnt = 0;
                     }
@@ -443,7 +443,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['skill'],
                 execmds: isCdt(isTriggered, [{ cmd: 'getStatus', status: 121013 }]),
                 exec: () => {
-                    if (isTriggered) --card.perCnt;
+                    if (isTriggered) card.minusPerCnt();
                 }
             }
         }),
@@ -484,7 +484,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: isCdt(!initCardIds.includes(cardId) && !usedCardIds.includes(cardId), ['card']),
                 addDmg: Math.min(3, Math.floor(Math.log2(card.useCnt))),
-                exec: () => { ++card.useCnt }
+                exec: () => { card.addUseCnt() },
             }
         }),
 
@@ -497,7 +497,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2618b55f8449904277794039473df17c_5042678227170067991.png'),
 
     311402: () => new CardBuilder(138).name('千岩长枪').weapon().costSame(3)
-        .description('【角色造成的伤害+1】。；【入场时：】队伍中每有一名｢璃月｣角色，此牌就为附属的角色提供1点[护盾]。（最多3点）')
+        .description('【角色造成的伤害+1】。；【入场时：】队伍中每有1名｢璃月｣角色，此牌就为附属的角色提供1点[护盾]。（最多3点）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/7b6b74c3444f624f117f8e05344d27ec_6292708375904670698.png')
         .handle((_, event, ver) => {
             const { heros } = event;
@@ -526,7 +526,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     if (card.perCnt == 0 || trigger != 'skilltype2') return;
                     if (ost) {
                         ++ost.useCnt;
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -538,8 +538,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [], hidxs = [], slotUse = false } = event;
             const cmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy == 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
-            if (slotUse && cmds) --card.perCnt;
-            return { addDmg: 1, cmds, trigger: ['phase-start'], execmds: cmds, exec: () => { --card.perCnt } }
+            if (slotUse && cmds) card.minusPerCnt();
+            return { addDmg: 1, cmds, trigger: ['phase-start'], execmds: cmds, exec: () => card.minusPerCnt() }
         }),
 
     311406: () => senlin1Weapon(142, '贯月矢', 301104).since('v4.1.0').offline('v1')
@@ -552,9 +552,7 @@ const allCards: Record<number, () => CardBuilder> = {
             addDmg: 1 + card.useCnt,
             trigger: ['skill'],
             isAddTask: true,
-            exec: () => {
-                if (card.useCnt < 2) ++card.useCnt;
-            }
+            exec: () => { card.useCnt < 2 && card.addUseCnt() },
         })),
 
     311408: () => new CardBuilder(355).name('公义的酬报').since('v4.6.0').weapon().costSame(2).useCnt(0)
@@ -571,9 +569,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmgType3: 2,
                 execmds: isCdt(card.useCnt >= 2, [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
                 isAddTask: true,
-                exec: () => {
-                    if (++card.useCnt >= 3) card.useCnt -= 3;
-                }
+                exec: () => { card.addUseCnt() >= 3 && card.minusUseCnt(3) }
             }
         }),
 
@@ -600,7 +596,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: isCdt(!isExecTask || isTriggered, ['after-skill-oppo']),
                 isAddTask: true,
                 execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs }]),
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -618,7 +614,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmg: 1,
                 trigger: isCdt(card.perCnt > 0 && hero.energy < hero.maxEnergy, ['skilltype2']),
                 execmds: [{ cmd: 'getEnergy', cnt: 1 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -629,7 +625,7 @@ const allCards: Record<number, () => CardBuilder> = {
             addDmg: 1,
             trigger: isCdt(card.perCnt > 0, ['skilltype1']),
             execmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }],
-            exec: () => { --card.perCnt }
+            exec: () => card.minusPerCnt()
         })),
 
     311507: () => senlin2Weapon(327, '原木刀', 301107).since('v4.4.0')
@@ -650,11 +646,12 @@ const allCards: Record<number, () => CardBuilder> = {
                 execmds: isCdt(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
                 minusDiceSkill: isCdt(isTriggered, { skilltype1: [0, 2, 0] }),
                 exec: () => {
-                    if (['getdmg', 'heal', 'other-getdmg'].includes(trigger)) ++card.useCnt;
-                    else if (trigger == 'skilltype1') {
-                        card.useCnt -= 12;
-                        --card.perCnt;
+                    if (trigger == 'skilltype1') {
+                        card.minusUseCnt(12);
+                        card.minusPerCnt();
+                        return;
                     }
+                    card.addUseCnt();
                 }
             }
         }),
@@ -669,7 +666,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype1'],
                 execmds: [{ cmd: 'heal', cnt: 1, hidxs }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -683,7 +680,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype2'],
                 execmds: [{ cmd: 'heal', cnt: 2, hidxs }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -696,7 +693,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype3'],
                 execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -711,7 +708,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['kill'],
                 execmds: [{ cmd: 'getDice', cnt: 2, element: DICE_COST_TYPE.Omni }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -724,7 +721,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['elReaction'],
                 execmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -739,7 +736,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype3'],
                 execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -762,7 +759,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['other-skilltype3', 'skilltype3'],
                 execmds: isCdt(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
                 exec: () => {
-                    if (trigger == 'skilltype3' && card.perCnt > 0) --card.perCnt;
+                    if (trigger == 'skilltype3' && card.perCnt > 0) card.minusPerCnt();
                 }
             }
         }),
@@ -786,7 +783,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 execmds: isCdt<Cmds[]>(trigger == 'phase-start', [{ cmd: 'getStatus', status: 301201, hidxs }],
                     isCdt<Cmds[]>(isGetDmg, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }])),
                 exec: () => {
-                    if (isGetDmg) --card.perCnt;
+                    if (isGetDmg) card.minusPerCnt();
                 }
             }
         }),
@@ -803,7 +800,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['skilltype1', 'card'],
                 exec: () => {
                     if (trigger == 'card' && isMinusDiceTalent || trigger == 'skilltype1' && isMinusDiceSkill) {
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -822,7 +819,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 execmds: isCdt(trigger == 'switch-to', [{ cmd: 'getStatus', status: 301203 }]),
                 exec: () => {
                     if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusDiceSkill)) {
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -840,7 +837,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['skilltype2', 'card'],
                 exec: () => {
                     if (trigger == 'card' && isMinusDiceTalent || trigger == 'skilltype2' && isMinusDiceSkill) {
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -861,7 +858,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['skilltype2', 'card'],
                 exec: () => {
                     if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype2' && isMinusDiceSkill)) {
-                        --card.perCnt;
+                        card.minusPerCnt();
                     }
                 }
             }
@@ -881,8 +878,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => {
                     if (trigger == 'heal') {
                         card.perCnt = Math.max(card.useCnt * 3 - 6, card.perCnt - allHeal);
-                        card.useCnt += Math.floor(-card.perCnt / 3);
-                        card.perCnt %= 3;
+                        card.addUseCntMod(Math.floor(-card.perCnt / 3), 3);
                     } else if (trigger == 'dmg' && sktype != SKILL_TYPE.Vehicle) {
                         card.useCnt = 0;
                     }
@@ -906,8 +902,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => {
                     if (trigger == 'heal') {
                         card.perCnt = Math.max(card.useCnt * 3 - 6, card.perCnt - allHeal);
-                        card.useCnt += Math.floor(-card.perCnt / 3);
-                        card.perCnt %= 3;
+                        card.addUseCntMod(Math.floor(-card.perCnt / 3), 3);
                     } else if (trigger == 'dmg' && sktype != SKILL_TYPE.Vehicle) {
                         card.useCnt = 0;
                     }
@@ -924,7 +919,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: isCdt(card.perCnt > 0 && heros[hidx]?.isFront, ['elReaction']),
                 cmds: [{ cmd: 'getCard', cnt: 1 }],
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -946,7 +941,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: isCdt(card.perCnt > 0 && heros[hidx]?.isFront, ['elReaction']),
                 cmds,
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -958,7 +953,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype1'],
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -991,7 +986,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['getdmg'],
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -1006,9 +1001,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['getdmg', 'phase-end'],
                 isAddTask: card.perCnt == 0,
                 execmds: isCdt<Cmds[]>(isHeal, [{ cmd: 'heal', cnt: 1, hidxs }], isCdt(isGetCard, [{ cmd: 'getCard', cnt: 1 }])),
-                exec: () => {
-                    if (isGetCard) --card.perCnt;
-                }
+                exec: () => { isGetCard && card.minusPerCnt() }
             }
         }),
 
@@ -1022,9 +1015,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 return {
                     trigger: ['getdmg', 'heal'],
                     execmds: [execmds[card.useCnt]],
-                    exec: () => {
-                        if (++card.useCnt == 2) --card.perCnt;
-                    }
+                    exec: () => { card.addUseCnt() == 2 && card.minusPerCnt() }
                 }
             }
         }),
@@ -1040,9 +1031,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     trigger: ['getdmg', 'heal'],
                     isAddTask: true,
                     execmds: isCdt(card.useCnt != 2, [execmds[card.useCnt % 3]]),
-                    exec: () => {
-                        if (++card.useCnt == 4) --card.perCnt;
-                    }
+                    exec: () => { card.addUseCnt() == 4 && card.minusPerCnt() }
                 }
             }
         }),
@@ -1061,13 +1050,13 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: isPhaseEnd,
                 exec: () => {
                     if (isPhaseEnd) {
-                        ++card.useCnt;
+                        card.addUseCnt();
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
-                        card.useCnt = Math.max(0, card.useCnt - (hcard.cost + hcard.anydice - mdc));
+                        card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
                         const skill = heros[hidx]?.skills.find(sk => sk.id == skid)?.cost ?? [{ cnt: 0 }, { cnt: 0 }];
                         const skillcost = skill[0].cnt + skill[1].cnt;
-                        card.useCnt = Math.max(0, card.useCnt - (skillcost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]));
+                        card.minusUseCnt(skillcost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]);
                     }
                 }
             }
@@ -1087,13 +1076,13 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: isPhaseEnd,
                 exec: () => {
                     if (isPhaseEnd) {
-                        card.useCnt = Math.min(4, card.useCnt + 2);
+                        card.addUseCntMax(2, 4);
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
-                        card.useCnt = Math.max(0, card.useCnt - (hcard.cost + hcard.anydice - mdc));
+                        card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
                         const skill = heros[hidx]?.skills.find(sk => sk.id == skid)?.cost ?? [{ cnt: 0 }, { cnt: 0 }];
                         const skillcost = skill[0].cnt + skill[1].cnt;
-                        card.useCnt = Math.max(0, card.useCnt - (skillcost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]));
+                        card.minusUseCnt(skillcost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1])
                     }
                 }
             }
@@ -1109,9 +1098,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['Dendro-getdmg-oppo'],
                 execmds: isCdt(card.useCnt + 1 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
                 isAddTask: true,
-                exec: () => {
-                    if (++card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
-                }
+                exec: () => { card.addUseCnt() >= hcardsCnt && card.perCnt > 0 && card.minusPerCnt() }
             }
         }),
 
@@ -1125,10 +1112,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['Dendro-getdmg-oppo', 'elReaction-Dendro'],
                 execmds: isCdt(card.useCnt + 2 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
                 isAddTask: true,
-                exec: () => {
-                    card.useCnt += 2;
-                    if (card.useCnt >= hcardsCnt && card.perCnt > 0) --card.perCnt;
-                }
+                exec: () => { card.addUseCnt(2) >= hcardsCnt && card.perCnt > 0 && card.minusPerCnt() }
             }
         }),
 
@@ -1142,7 +1126,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['skilltype1'],
                 minusDiceSkill: { skilltype1: [0, 0, 1] },
                 exec: () => {
-                    if (isMinusDiceSkill) --card.perCnt;
+                    if (isMinusDiceSkill) card.minusPerCnt();
                 }
             }
         }),
@@ -1159,7 +1143,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     { cmd: 'changeDice', cnt: 2 },
                     { cmd: 'getStatus', status: 301204 },
                 ],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -1172,7 +1156,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['heal'],
                 execmds: [{ cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(heros) }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -1186,7 +1170,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['vehicle'],
                 execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -1254,7 +1238,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { eheros = [], ehidx = -1, hcardsCnt = 0, skid = -1, switchHeroDiceCnt = 0, trigger = '' } = event;
             if (trigger == 'vehicle') {
                 if (skid != getVehicleIdByCid(card.id)) return;
-                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
             }
             const triggers: Trigger[] = [];
             const isTriggered = hcardsCnt > 0 && hasObjById(eheros[ehidx]?.heroStatus, 301302) && switchHeroDiceCnt > 0;
@@ -1459,7 +1443,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f0c19a49595f68895e309e5bf5760c1f_8058110322505961900.png'),
 
     322018: () => new CardBuilder(211).name('老章').since('v3.8.0').offline('v1').ally().costSame(1)
-        .description('【我方打出｢武器｣手牌时：】少花费1个元素骰\\；我方场上每有一个已装备｢武器｣的角色，就额外少花费1个元素骰。（每回合1次）')
+        .description('【我方打出｢武器｣手牌时：】少花费1个元素骰\\；我方场上每有1个已装备｢武器｣的角色，就额外少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/c332425d700b588ed93ae01f9817e568_3896726709346713005.png'),
 
     322019: () => new CardBuilder(212).name('塞塔蕾').since('v4.0.0').ally().costSame(1)
@@ -1709,7 +1693,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 status: 303172,
                 exec: () => {
                     combatStatus.forEach(ost => (ost.id == 116 || ost.id == 117) && ++ost.useCnt);
-                    summons.forEach(smn => smn.id == 115 && ++smn.useCnt);
+                    summons.forEach(smn => smn.id == 115 && smn.addUseCnt(true));
                 }
             }
         }),
@@ -1920,13 +1904,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { pidx = -1, summons = [], selectSummon = -1 } = event;
             const summonCnt = INIT_SUMMONCNT();
             if (selectSummon > -1 && pidx > -1) summonCnt[pidx][selectSummon] = 1;
-            return {
-                summonCnt,
-                exec: () => {
-                    const selectSmn = summons[selectSummon];
-                    if (selectSmn) ++selectSmn.useCnt;
-                }
-            }
+            return { summonCnt, exec: () => summons[selectSummon]?.addUseCnt(true) }
         }),
 
     332013: () => new CardBuilder(253).name('送你一程').offline('v1').event().costAny(2).canSelectSummon(0)
@@ -1941,10 +1919,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 summonCnt,
                 exec: () => {
                     const selectSmn = esummons[selectSummon];
-                    if (ver.lt('v3.7.0')) {
-                        selectSmn.isDestroy = SUMMON_DESTROY_TYPE.Used;
-                        selectSmn.useCnt = 0;
-                    } else selectSmn.useCnt = Math.max(0, selectSmn.useCnt - 2);
+                    if (ver.lt('v3.7.0')) selectSmn.dispose();
+                    else selectSmn.minusUseCnt(2);
                 }
             }
         }),
@@ -1959,8 +1935,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 summonCnt,
                 exec: () => {
                     const { summons = [], esummons = [] } = event;
-                    summons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
-                    esummons.forEach(smn => (smn.useCnt = 0, smn.isDestroy = SUMMON_DESTROY_TYPE.Used));
+                    summons.forEach(smn => smn.dispose());
+                    esummons.forEach(smn => smn.dispose());
                 }
             }
         }),
@@ -2063,7 +2039,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     332025: () => new CardBuilder(315).name('野猪公主').since('v4.3.0').event().costSame(0)
-        .description('【本回合中，我方每有一张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。（最多获得2个）；（角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果）')
+        .description('【本回合中，我方每有1张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。（最多获得2个）；（角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/7721cfea320d981f2daa537b95bb7bc1_3900294074977500858.png')
         .handle(() => ({ status: 303225 })),
 
@@ -2109,8 +2085,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 isValid: esupports.length + esummons.length >= 4,
                 summonCnt,
                 exec: () => {
-                    summons.forEach(smn => smn.useCnt = Math.max(0, smn.useCnt - 1));
-                    esummons.forEach(smn => smn.useCnt = Math.max(0, smn.useCnt - 1));
+                    summons.forEach(smn => smn.minusUseCnt());
+                    esummons.forEach(smn => smn.minusUseCnt());
                 }
             }
         }),
@@ -2345,7 +2321,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype2'],
                 execmds: [{ cmd: 'heal', cnt: 2, hidxs }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2363,7 +2339,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['minus-switch-to'],
                 minusDiceHero: 1,
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2400,7 +2376,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype1', 'other-skilltype1'],
                 execmds: [{ cmd: 'heal', cnt: 2 }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2415,9 +2391,9 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: trigger != 'skill',
                 exec: () => {
                     if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] >= 0) {
-                        ++card.useCnt;
+                        card.addUseCnt();
                     } else if (trigger == 'skill' && card.useCnt >= 3) {
-                        card.useCnt -= 3;
+                        card.minusUseCnt(3);
                     }
                 }
             }
@@ -2431,7 +2407,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skill'],
                 execmds: [{ cmd: 'getCard', cnt: 1 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -2446,7 +2422,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: triggers,
                 execmds: [{ cmd: 'getCard', cnt: 1, card: 332002 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -2459,7 +2435,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['minus-switch'],
                 minusDiceHero: 1,
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -2551,7 +2527,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['switch-to'],
                 execmds: [{ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: ['phase-end'] }],
                 notPreview: true,
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -2634,7 +2610,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 return {
                     trigger: ['dmg'],
                     addDmgCdt: 2,
-                    exec: () => { --card.perCnt },
+                    exec: () => card.minusPerCnt(),
                 }
             }
         }),
@@ -2648,7 +2624,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/219c7c6843e4ead2ab8ab2ce7044f5c3_8151320593747508491.png')
         .handle((card, { hcards = [], hcard }) => {
             if ((hcards.length - +(card.entityId == hcard?.entityId)) > 1 || card.perCnt <= 0) return;
-            return { trigger: ['skill'], addDmgCdt: 2, exec: () => { --card.perCnt } }
+            return { trigger: ['skill'], addDmgCdt: 2, exec: () => card.minusPerCnt() }
         }),
 
     213131: () => new CardBuilder(398).name('尖兵协同战法').since('v4.8.0').talent().costPyro(2)
@@ -2686,7 +2662,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype2'],
                 execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs.slice(0, 1) }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2715,7 +2691,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype2'],
                 addDmgCdt,
-                exec: () => { ver.gte('v4.8.0') && --card.perCnt }
+                exec: () => { ver.gte('v4.8.0') && card.minusPerCnt() }
             }
         }),
 
@@ -2753,7 +2729,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['switch-to'],
                 execmds: [{ cmd: 'getStatus', status: 114091, isOppo: true }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2775,17 +2751,17 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmgCdt: isCdt((heros[hidx]?.hp ?? 10) <= 5, 1),
                 execmds: isCdt(isRevive, [{ cmd: 'revive', cnt: 1 }]),
                 exec: () => {
-                    if (isRevive) --card.perCnt;
+                    if (isRevive) card.minusPerCnt();
                 }
             }
         }),
 
     214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)
-        .description('{action}；【我方触发[雷元素相关反应]后：】本回合【hro】下次造成的伤害+1。（可叠加，最多叠加到+3）')
+        .description('{action}；【我方角色引发[雷元素相关反应]后：】本回合【hro】下次造成的伤害+1。（可叠加，最多叠加到+3）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/fe3f64e0a6220b41d9db19a6cbb7c8e8_815543173218385253.png')
         .handle((_, event) => {
-            const { hidxs = [], heros = [] } = event;
-            if (getObjById(heros[hidxs[0]]?.heroStatus, 114122)?.useCnt == 3) return;
+            const { hidxs = [], heros = [], sktype = SKILL_TYPE.Vehicle } = event;
+            if (sktype == SKILL_TYPE.Vehicle || getObjById(heros[hidxs[0]]?.heroStatus, 114122)?.useCnt == 3) return;
             return {
                 trigger: ['elReaction-Electro', 'other-elReaction-Electro'],
                 execmds: [{ cmd: 'getStatus', status: 114122, hidxs }],
@@ -2840,7 +2816,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['Swirl'],
                 execmds: [{ cmd: 'getCard', cnt: 2 }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2864,8 +2840,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: trigger == 'switch',
                 exec: () => {
                     if (trigger == 'switch') {
-                        ++card.useCnt;
-                        --card.perCnt;
+                        card.addUseCnt();
+                        card.minusPerCnt();
                     } else if (trigger == 'skilltype1') card.useCnt = 0;
                 }
             }
@@ -2884,7 +2860,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype1'],
                 execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(heros) }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -2938,7 +2914,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { combatStatus = [], sktype = SKILL_TYPE.Vehicle } = event;
             if (!hasObjById(combatStatus, 116061) || card.perCnt <= 0 || sktype == SKILL_TYPE.Vehicle) return;
-            return { trigger: ['Geo-dmg', 'other-Geo-dmg'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => { --card.perCnt } }
+            return { trigger: ['Geo-dmg', 'other-Geo-dmg'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => card.minusPerCnt() }
         }),
 
     216071: () => new CardBuilder(375).name('庄谐并举').since('v4.7.0').talent(2).costGeo(3).energy(2)
@@ -2955,7 +2931,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skill'],
                 execmds: [{ cmd: 'getCard', cnt: 2, card: 116081, isAttach: true }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -3007,7 +2983,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['minus-switch-from'],
                 minusDiceHero: 1,
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -3027,7 +3003,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     { cmd: 'stealCard', cnt: 1, mode: CMD_MODE.HighHandCard },
                     { cmd: 'getCard', cnt: 1, isOppo: true },
                 ],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -3053,7 +3029,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (!hero) return;
             if (restDmg > -1) {
                 if (restDmg < 3 || card.perCnt == 0) return { restDmg }
-                return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => { --card.perCnt } }
+                return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => card.minusPerCnt() }
             }
             return { isValid: isTalentFront(heros, card), cmds: [{ cmd: 'getDice', cnt: 3, element: hero.element }] }
         }),
@@ -3101,7 +3077,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['skilltype2'],
                 execmds: [{ cmd: 'heal', cnt: Math.max(...hcards.filter(c => c.entityId != hcard?.entityId).map(c => c.cost + c.anydice)) }],
-                exec: () => { --card.perCnt },
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -3113,7 +3089,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 trigger: ['vehicle', 'other-vehicle'],
                 minusDiceSkill: { skilltype5: [0, 0, 1] },
-                exec: () => { event.isMinusDiceSkill && --card.perCnt }
+                exec: () => { event.isMinusDiceSkill && card.minusPerCnt() }
             }
         }),
 
@@ -3172,7 +3148,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { dmg = [], eheros = [], isExecTask = false } = event;
             const [ehero] = eheros.filter(h => hasObjById(h.heroStatus, 124022));
             if (!isExecTask && (!ehero || (dmg[ehero.hidx] ?? -1) < 0)) return;
-            return { trigger: ['getdmg-oppo'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => { --card.perCnt } }
+            return { trigger: ['getdmg-oppo'], execmds: [{ cmd: 'getCard', cnt: 1 }], exec: () => card.minusPerCnt() }
         }),
 
     224031: () => new CardBuilder(326).name('明珠固化').since('v4.4.0').talent().costSame(0)
@@ -3388,7 +3364,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], restDmg = -1, skid = -1, hidxs = [], trigger = '' } = event;
             if (trigger == 'vehicle') {
                 if (skid != getVehicleIdByCid(card.id)) return;
-                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
             }
             if (restDmg == -1) return;
             const isBarrier = card.perCnt > 0 && !!heros[hidxs[0]]?.energy;
@@ -3396,7 +3372,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 restDmg: restDmg - 1,
                 execmds: [{ cmd: 'getEnergy', cnt: -1, hidxs }, { cmd: 'getStatus', status: 123032 }],
-                exec: () => { --card.perCnt }
+                exec: () => card.minusPerCnt()
             }
         }),
 
@@ -3430,23 +3406,23 @@ const allCards: Record<number, () => CardBuilder> = {
             const hid = getHidById(card.id);
             const talent = getObjById(heros, hid)?.talentSlot;
             if (trigger == 'card' && hcard?.id == getTalentIdByHid(hid)) {
-                return { trigger: ['card'], exec: () => { card.perCnt == 0 && ++card.perCnt } };
+                return { trigger: ['card'], exec: () => { card.perCnt == 0 && card.addPerCnt() } };
             }
             if (slotUse || reset) {
-                if (!talent && card.perCnt == 1) --card.perCnt;
+                if (!talent && card.perCnt == 1) card.minusPerCnt();
                 return;
             }
             if (talent && trigger == 'switch-to') {
                 if (card.perCnt <= 0) return;
-                return { trigger: ['switch-to'], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }], exec: () => { --card.perCnt } };
+                return { trigger: ['switch-to'], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }], exec: () => card.minusPerCnt() };
             }
             if (skid != getVehicleIdByCid(card.id) || hasObjById(combatStatus, 127033)) return;
             return {
                 trigger: ['vehicle'],
                 isDestroy: card.useCnt == 1,
                 exec: () => {
-                    --card.useCnt;
-                    if (!talent && card.perCnt == 1) --card.perCnt;
+                    card.minusUseCnt();
+                    if (!talent && card.perCnt == 1) card.minusPerCnt();
                 },
             }
         }),

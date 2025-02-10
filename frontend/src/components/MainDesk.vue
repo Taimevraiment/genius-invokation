@@ -1967,12 +1967,12 @@ svg {
 
 @keyframes getcard-oppo-generate {
   0% {
-    transform: translate(calc(50vw + 50%), 0%);
+    transform: translate(calc(50vw - 50%), 0%);
     opacity: 0;
   }
 
   50% {
-    transform: translate(calc(50vw + 50%), 0%);
+    transform: translate(calc(50vw - 50%), 0%);
     opacity: 1;
     z-index: 5;
   }
@@ -1987,19 +1987,19 @@ svg {
   0% {
     z-index: 5;
     opacity: 0;
-    transform: translate(calc(50vw + 50%), -10%);
+    transform: translate(calc(50vw - 50%), -10%);
   }
 
   30% {
     z-index: 5;
     opacity: 1;
-    transform: translate(calc(50vw + 50%), -10%);
+    transform: translate(calc(50vw - 50%), -10%);
   }
 
   50% {
     z-index: 5;
     opacity: 1;
-    transform: translate(calc(50vw + 50%), -10%);
+    transform: translate(calc(50vw - 50%), -10%);
   }
 
   100% {
@@ -2010,18 +2010,18 @@ svg {
 
 @keyframes discard-pile {
   20% {
-    transform: translate(calc(50vw + 50%), -10%);
+    transform: translate(calc(50vw - 50%), -10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(calc(50vw + 50%), -10%);
+    transform: translate(calc(50vw - 50%), -10%);
     z-index: 5;
   }
 
   100% {
     transform-origin: center center;
-    transform: translate(calc(50vw + 50%), -10%) scale(0);
+    transform: translate(calc(50vw - 50%), -10%) scale(0);
     opacity: 0;
     z-index: 5;
   }
@@ -2033,17 +2033,17 @@ svg {
   }
 
   20% {
-    transform: translate(calc(50vw + 50%), 10%);
+    transform: translate(calc(50vw - 50%), 10%);
     z-index: 5;
   }
 
   80% {
-    transform: translate(calc(50vw + 50%), 10%);
+    transform: translate(calc(50vw - 50%), 10%);
     z-index: 5;
   }
 
   100% {
-    transform: translate(calc(50vw + 50%), 10%) scale(0);
+    transform: translate(calc(50vw - 50%), 10%) scale(0);
     opacity: 0;
     z-index: 5;
   }

@@ -1,8 +1,8 @@
 <template>
     <div class="card" :class="{ 'mobile-card': isMobile }">
         <div class="card-border" v-if="!isHideBorder"></div>
+        <img class="card-img" :src="getPngIcon()" :alt="card.name" style="transform: rotateY(180deg);" />
         <img class="card-img" :src="getPngIcon(card.UI.src)" :alt="card.name" />
-        <img class="card-img" :src="getPngIcon()" :alt="card.name" style="z-index: -5;" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
                 :src="getPngIcon('legend-border')" />
@@ -88,6 +88,7 @@ const getPngIcon = (name: string = '') => {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    backface-visibility: hidden;
     font-family: HYWenHei;
 }
 

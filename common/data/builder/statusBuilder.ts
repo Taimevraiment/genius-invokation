@@ -85,7 +85,7 @@ export class GIStatus {
                 }
                 if (restDmg < 0) return rest;
                 const shieldDmg = Math.min(restDmg, status.useCnt);
-                return { restDmg: restDmg - shieldDmg, ...rest, trigger: ['reduce-dmg'], exec: () => status.minusUseCnt(shieldDmg) };
+                return { restDmg: restDmg - shieldDmg, ...rest, trigger: ['reduce-dmg'], exec: () => { status.minusUseCnt(shieldDmg) } };
             }
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             // this.icon = 'shield';
@@ -101,7 +101,7 @@ export class GIStatus {
             this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/300003';
             thandle = (status, event) => {
                 if (event.hcard?.type != CARD_TYPE.Event) return;
-                return { trigger: ['card'], isInvalid: true, exec: () => status.minusUseCnt() }
+                return { trigger: ['card'], isInvalid: true, exec: () => { status.minusUseCnt() } }
             }
         }
         if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
@@ -138,12 +138,33 @@ export class GIStatus {
     hasType(...types: StatusType[]): boolean {
         return this.type.some(v => types.includes(v));
     }
-    minusUseCnt(n: number = 1) {
+    addUseCnt(ignoreMax: boolean): void
+    addUseCnt(n?: number, ignoreMax?: boolean): void
+    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false) {
+        if (typeof n == 'boolean' && n) ++this.useCnt;
+        else {
+            if (n == false) n = 1;
+            if (ignoreMax) this.useCnt += n;
+            else this.useCnt = Math.max(this.useCnt, Math.min(this.maxCnt, this.useCnt + n));
+        }
+    }
+    minusUseCnt(n: number = 1): number {
         const ncnt = this.useCnt - n;
         if (ncnt < 0) throw new Error(`${this.name}(${this.entityId}).useCnt < 0`);
         this.useCnt = ncnt;
+        return this.useCnt;
     }
-    dispose() {
+    minusPerCnt(n: number = 1): number {
+        this.perCnt = Math.max(0, this.perCnt - n);
+        return this.perCnt;
+    }
+    addRoundCnt(n: number = 1, max?: number): void {
+        this.roundCnt = Math.min(max ?? Infinity, this.roundCnt + n);
+    }
+    minusRoundCnt(n: number = 1): void {
+        this.roundCnt = Math.max(0, this.roundCnt - n);
+    }
+    dispose(): void {
         this.useCnt = 0;
         this.roundCnt = 0;
     }

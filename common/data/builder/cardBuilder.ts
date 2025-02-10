@@ -86,7 +86,7 @@ export class GICard {
             handle ??= (card, event) => {
                 const { skid = -1 } = event;
                 if (skid != getVehicleIdByCid(card.id)) return;
-                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => { --card.useCnt } }
+                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
             };
         } else if (subType.includes(CARD_SUBTYPE.Food)) {
             if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；（每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣）`;
@@ -176,6 +176,27 @@ export class GICard {
     }
     hasTag(...tags: CardTag[]): boolean {
         return this.tag.some(v => tags.includes(v));
+    }
+    addUseCnt(n: number = 1): number {
+        this.useCnt += n;
+        return this.useCnt;
+    }
+    addUseCntMod(n: number, mod: number) {
+        this.addUseCnt(n);
+        this.useCnt %= mod;
+    }
+    addUseCntMax(n: number, max: number) {
+        this.addUseCnt(n);
+        this.useCnt = Math.min(max, this.useCnt);
+    }
+    minusUseCnt(n: number = 1) {
+        this.useCnt = Math.max(0, this.useCnt - n);
+    }
+    addPerCnt(n: number = 1) {
+        this.perCnt += n;
+    }
+    minusPerCnt(n: number = 1) {
+        this.perCnt -= n;
     }
 }
 

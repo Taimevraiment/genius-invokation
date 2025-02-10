@@ -98,11 +98,32 @@ export class GISummon {
         if (this.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });
         return { cmds }
     }
-    addUseCnt(n: number = 1) {
-        this.useCnt = Math.max(this.useCnt, Math.min(this.maxUse, this.useCnt + n));
+    addUseCnt(ignoreMax: boolean): void
+    addUseCnt(n?: number, ignoreMax?: boolean): void
+    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false) {
+        if (typeof n == 'boolean' && n) ++this.useCnt;
+        else {
+            if (n == false) n = 1;
+            if (ignoreMax) this.useCnt += n;
+            else this.useCnt = Math.max(this.useCnt, Math.min(this.maxUse, this.useCnt + n));
+        }
     }
     minusUseCnt(n: number = 1) {
         this.useCnt = Math.max(0, this.useCnt - n);
+    }
+    addPerCnt(n: number = 1) {
+        this.perCnt += n;
+    }
+    minusPerCnt(n: number = 1) {
+        this.perCnt = Math.max(0, this.perCnt - n);
+    }
+    dispose(isExec: boolean = true) {
+        if (isExec) {
+            this.isDestroy = SUMMON_DESTROY_TYPE.Used;
+            this.useCnt = 0;
+        } else {
+            this.useCnt = -100;
+        }
     }
 }
 

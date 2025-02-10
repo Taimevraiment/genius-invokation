@@ -3301,12 +3301,7 @@ export default class GeniusInvokationRoom {
                     for (const chidx of heroDie[cpidx]) {
                         const h = cplayer.heros[chidx];
                         h.hp = -1;
-                        h.heroStatus.forEach(sts => {
-                            if (!sts.hasType(STATUS_TYPE.NonDestroy)) {
-                                sts.useCnt = 0;
-                                sts.roundCnt = 0;
-                            }
-                        });
+                        h.heroStatus.forEach(sts => !sts.hasType(STATUS_TYPE.NonDestroy) && sts.dispose());
                         h.talentSlot = null;
                         h.artifactSlot = null;
                         h.weaponSlot = null;
@@ -4769,6 +4764,7 @@ export default class GeniusInvokationRoom {
                             isReadySkill: isAttach,
                             otriggers: summonTrigger,
                             selectSummon: ohidxs?.[0],
+                            isQuickAction: isCdt(!!withCard, !isAction),
                             isChargedAtk: (player.dice.length + (withCard ? withCard.cost + withCard.anydice - withCard.costChange : 0)) % 2 == 0,
                         });
                     }]]);

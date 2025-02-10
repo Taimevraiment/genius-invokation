@@ -38,7 +38,7 @@ export const getMaxHertHidxs = (heros?: Hero[], options: { fhidx?: number, isBac
     return hidxs;
 }
 
-// 获取受伤最少的角色的hidxs(只有一个number的数组)
+// 获取受伤最少的角色的hidx(只有一个number的数组)
 export const getMinHertHidxs = (heros: Hero[], fhidx?: number): number[] => {
     fhidx = fhidx ?? heros.findIndex(h => h.isFront);
     if (fhidx == -1) return [];
@@ -82,6 +82,11 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
 // 获得所有后台角色hidx
 export const getBackHidxs = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1): number[] => {
     return allHidxs(heros, { exclude: frontIdx });
+}
+
+// 获得下一个后台角色hidx(只有一个number的数组)
+export const getNextBackHidx = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1): number[] => {
+    return getBackHidxs(heros, frontIdx).slice(0, 1);
 }
 
 // 检查骰子是否合法

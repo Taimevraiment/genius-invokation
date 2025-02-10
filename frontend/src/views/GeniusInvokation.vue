@@ -1175,10 +1175,14 @@ body {
 
 @keyframes getcard-my-pile {
   0% {
-    transform: perspective(500px) translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
+    transform: translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
   }
 
   40% {
+    transform: translateY(-50vh) rotateY(180deg);
+  }
+
+  60% {
     transform: translateY(-50vh);
   }
 

@@ -1,6 +1,6 @@
 
 import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_DESTROY_TYPE, Version } from "../constant/enum.js";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
@@ -105,7 +105,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             }
             const fhero = heros[atkHidx];
             if (fhero?.id == hero?.id && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
-                summon.useCnt += !!fhero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
+                summon.addUseCnt(!!fhero.talentSlot && trigger == 'skilltype2' ? 3 : 2);
             }
             return {
                 trigger: ['phase-end', 'skilltype1', 'skilltype2'],
@@ -116,7 +116,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
                     }
                     if (fhero?.id == hero?.id) {
-                        smn.useCnt += !!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2;
+                        smn.addUseCnt(!!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2);
                     }
                 },
             }
@@ -159,7 +159,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (tround == 1) {
-                        --smn.perCnt;
+                        smn.minusPerCnt();
                         return { cmds: trdcmds }
                     }
                     if (trigger == 'after-skilltype1') return { cmds: skcmds }
@@ -320,10 +320,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (!isExec) smn.useCnt = -100;
-                    else if (trigger == 'after-skilltype1') {
-                        smn.isDestroy = SUMMON_DESTROY_TYPE.Used;
-                        smn.useCnt = 0;
-                    }
+                    else if (trigger == 'after-skilltype1') smn.dispose();
                     return { cmds: [{ cmd: 'attack', cnt }] }
                 },
             }
@@ -598,8 +595,8 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
-                    if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
-                    if (trigger == 'minus-switch') --smn.perCnt;
+                    if (trigger == 'skilltype1' && isMinusDiceSkill) smn.minusPerCnt();
+                    if (trigger == 'minus-switch') smn.minusPerCnt();
                 }
             }
         }),
@@ -617,7 +614,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (smn.perCnt <= 0 || trigger != 'getdmg' || hero?.hidx == undefined || hero.hp <= 0) return;
-                    --smn.perCnt;
+                    smn.minusPerCnt();
                     return { cmds: [{ cmd: 'getStatus', status: 116054, hidxs: [hero.hidx] }] }
                 },
             }
@@ -676,7 +673,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger == 'after-skill') {
-                        --smn.perCnt;
+                        smn.minusPerCnt();
                         return { cmds: [{ cmd: 'switch-after' }] }
                     }
                 }
@@ -695,7 +692,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
-                    --smn.perCnt;
+                    smn.minusPerCnt();
                     return { cmds: [{ cmd: 'attack' }] }
                 },
             }
@@ -720,7 +717,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
-                    if (trigger == 'Geo-dmg') --smn.perCnt;
+                    if (trigger == 'Geo-dmg') smn.minusPerCnt();
                 }
             }
         }),
@@ -740,7 +737,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
-                    if (trigger == 'skilltype1' && isMinusDiceSkill) --smn.perCnt;
+                    if (trigger == 'skilltype1' && isMinusDiceSkill) smn.minusPerCnt();
                 }
             }
         }),
@@ -914,7 +911,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     let { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
-                    if (trigger == 'add-switch-oppo') --smn.perCnt;
+                    if (trigger == 'add-switch-oppo') smn.minusPerCnt();
                 }
             }
         }),

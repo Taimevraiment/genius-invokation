@@ -507,7 +507,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         exec: () => {
                             if (trigger == 'switch-to') {
                                 const sts112101 = getObjById(combatStatus, 112101);
-                                if (sts112101 && --sts112101.useCnt == 0) sts112101.type.length = 0;
+                                if (sts112101?.minusUseCnt() == 0) sts112101.type.length = 0;
                             } else if (trigger == 'killed') {
                                 heros.forEach(h => getObjById(h.heroStatus, 112136)?.dispose());
                             }
@@ -772,7 +772,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 const sts122 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122);
                 if (!sts122) return { dmgElement }
                 const addDmgCdt = Math.min(3, sts122.useCnt);
-                return { dmgElement, addDmgCdt, exec: () => { sts122.useCnt -= addDmgCdt } }
+                return { dmgElement, addDmgCdt, exec: () => sts122.minusUseCnt(addDmgCdt) }
             }))
         .skills(
             new SkillBuilder('万相化灰').description('在对方场上生成5层【sts113141】，然后{dealDmg}。')
@@ -1553,7 +1553,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2102: () => new HeroBuilder(277).name('「女士」').since('v4.3.0').fatui().cryo()
+    2102: () => new HeroBuilder(277).name('｢女士｣').since('v4.3.0').fatui().cryo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/f5904898779c5de0fd9cf2f207f5d2f8_1917054016449064269.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/b433655430a3f8d58e2e9f73b83567a3.png')
         .normalSkill(new NormalSkillBuilder('霜锋霰舞').catalyst())
@@ -1671,7 +1671,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/37dedea23dfa78e8fb4e356bb4a4bed4_1738280724029210097.png')
                 .burst(3).damage(4).damage(2, 'v4.2.0').cost(3).handle((event, ver) => {
                     const { talent, summons = [] } = event;
-                    if (talent) summons.forEach(smn => ++smn.useCnt);
+                    if (talent) summons.forEach(smn => smn.addUseCnt(true));
                     return { addDmgCdt: summons.length * (ver.lt('v4.2.0') ? 2 : 1) }
                 })
         ),
