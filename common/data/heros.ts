@@ -358,7 +358,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         cmds: [{ cmd: 'getStatus', status: 112052 }],
                         heal: isCdt(ver.gte('v3.6.0'), 1),
                         hidxs: allHidxs(heros),
-                        exec: () => { talent && smn112051 && ++smn112051.useCnt }
+                        exec: () => { talent && smn112051?.addUseCnt(true) }
                     }
                 })
         ),
@@ -1382,7 +1382,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().damage(3).cost(3).handle(event => {
                     const { talent } = event;
                     if (!talent || talent.perCnt <= 0) return;
-                    return { statusPre: 117012, exec: () => { --talent.perCnt } };
+                    return { statusPre: 117012, exec: () => talent.minusPerCnt() };
                 }),
             new SkillBuilder('猫猫秘宝').description('{dealDmg}，召唤【smn117011】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/ca/hthhze7cs9vq6uazr06lqu2dhserw7n.png',
@@ -1877,9 +1877,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         exec: () => {
                             if (trigger == 'game-start') return;
                             for (const sts of [...heros.flatMap(h => h.heroStatus), ...combatStatus]) {
-                                if (sts.hasType(STATUS_TYPE.Shield)) sts.useCnt = 0;
+                                if (sts.hasType(STATUS_TYPE.Shield)) sts.dispose();
                             }
-                            if (hero.talentSlot && hero.talentSlot.perCnt > 0) --hero.talentSlot.perCnt;
+                            if (hero.talentSlot && hero.talentSlot.perCnt > 0) hero.talentSlot.minusPerCnt();
                         }
                     }
                 })
@@ -1942,7 +1942,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (skill.perCnt <= 0 || !sts124032) return;
                     return {
                         exec: () => {
-                            ++sts124032.useCnt;
+                            sts124032.addUseCnt();
                             --skill.perCnt;
                         }
                     }

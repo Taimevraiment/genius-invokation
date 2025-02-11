@@ -194,7 +194,7 @@ const card332016sts = (element: ElementType) => {
             exec: eStatus => {
                 if (eStatus && eStatus.perCnt > 0) {
                     eStatus.minusUseCnt();
-                    --eStatus.perCnt;
+                    eStatus.minusPerCnt();
                 }
             }
         }));
@@ -380,11 +380,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 addDmgCdt: 1,
                 trigger: isCdt(sktype != SKILL_TYPE.Vehicle, ['Cryo-dmg', 'Cryo-dmg-Swirl']),
                 exec: () => {
-                    if (status.perCnt > 0 && sktype == SKILL_TYPE.Normal) {
-                        --status.perCnt;
-                    } else {
-                        status.minusUseCnt();
-                    }
+                    if (status.perCnt > 0 && sktype == SKILL_TYPE.Normal) status.minusPerCnt();
+                    else status.minusUseCnt();
                 }
             }
         }),
@@ -479,7 +476,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         if (eStatus && eStatus.useCnt >= 2) eStatus.dispose();
                         else if (status.useCnt >= 2) status.dispose();
                     } else if (trigger == 'drawcard') {
-                        status.addUseCnt(true);
+                        status.addUseCnt();
                     }
                 }
             }
@@ -599,7 +596,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 attachEl: ELEMENT_TYPE.Hydro,
                 exec: () => {
                     if (trigger == 'phase-end') return { cmds: [{ cmd: 'getStatus', status: 112041 }] }
-                    if (isPenDmg) --status.perCnt;
+                    if (isPenDmg) status.minusPerCnt();
                     return { cmds: isCdt(isChargedAtk, [{ cmd: 'getStatus', status: 112043, isOppo: true }]) }
                 },
             }
@@ -968,7 +965,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceSkill: isCdt(isChargedAtk && status.perCnt > 0, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }),
                 exec: () => {
                     if (trigger == 'phase-end') return { cmds: [{ cmd: 'getStatus', status: 113081 }] }
-                    if (trigger == 'skilltype1' && isMinusDiceSkill) --status.perCnt;
+                    if (trigger == 'skilltype1' && isMinusDiceSkill) status.minusPerCnt();
                 }
             }
         }),
@@ -1163,11 +1160,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: ['other-skilltype3', 'skilltype3'],
                 exec: () => {
-                    if (trigger == 'skilltype3') {
-                        status.useCnt = 0;
-                    } else if (trigger == 'other-skilltype3') {
-                        status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
-                    }
+                    if (trigger == 'skilltype3') status.useCnt = 0;
+                    else if (trigger == 'other-skilltype3') status.addUseCnt();
                 }
             }
         }),
@@ -1201,7 +1195,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: triggers,
                 getDmg: status.useCnt,
                 exec: () => {
-                    if (trigger == 'phase-end') status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
+                    if (trigger == 'phase-end') status.addUseCnt();
                     else if (trigger == 'getdmg') status.dispose();
                 },
             }
@@ -1218,7 +1212,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: ['switch-from'],
                 exec: eStatus => {
                     eStatus?.minusUseCnt();
-                    eStatus && --eStatus.perCnt;
+                    eStatus?.minusPerCnt();
                 }
             }
         }),
@@ -1329,7 +1323,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     exec: () => {
                         if (trigger == 'action-start') return { cmds: [{ cmd: 'useSkill', cnt: SKILL_TYPE.Normal }] }
                         if (trigger == 'skilltype1' && status.useCnt > 0) status.minusUseCnt();
-                        if (isQuickAction) --status.perCnt;
+                        if (isQuickAction) status.minusPerCnt();
                     },
                 }
             }),
@@ -1502,7 +1496,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['skilltype1'],
             exec: () => {
                 if (status.perCnt <= 0) return;
-                --status.perCnt;
+                status.minusPerCnt();
                 return { cmds: [{ cmd: 'getStatus', status: 116054 }] }
             }
         })),
@@ -1613,7 +1607,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 addDmgCdt: 1,
                 exec: () => {
                     if (!status.isTalent || heros.every(h => h.element != ELEMENT_TYPE.Electro) || trigger != 'enter') return;
-                    eheros.forEach(h => getObjById(h.heroStatus, 117031)?.addUseCnt(true));
+                    eheros.forEach(h => getObjById(h.heroStatus, 117031)?.addUseCnt());
                 }
             }
         }),
@@ -1703,7 +1697,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: eStatus => {
                 if (!eStatus) return;
                 if (eStatus.perCnt > -1) {
-                    --eStatus.perCnt;
+                    eStatus.minusPerCnt();
                 } else {
                     eStatus.minusUseCnt();
                     eStatus.perCnt = 0;
@@ -1747,7 +1741,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     const thero = getObjById(hs, getHidById(status.id));
                     if (thero) {
                         const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
-                        if (talent && isPlace) --talent.perCnt;
+                        if (talent && isPlace) talent.minusPerCnt();
                     }
                     return { cmds }
                 }
@@ -1980,7 +1974,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         }
                         if (eStatus!.useCnt < 2) {
                             eStatus!.addition[eStatus!.useCnt] = cost;
-                            ++eStatus!.useCnt;
+                            eStatus!.addUseCnt();
                         } else {
                             ++cnt;
                             if (cost1 == cost2 || cost == cost1 || cost == cost2) ++cnt;
@@ -2118,7 +2112,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 getDmg: 1,
                 onlyOne: true,
                 exec: () => {
-                    if (ver.lt('v4.4.0')) --status.perCnt;
+                    if (ver.lt('v4.4.0')) status.minusPerCnt();
                     else status.minusUseCnt();
                 }
             }
@@ -2151,7 +2145,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['card'],
             exec: () => {
                 const { esummons = [] } = event;
-                status.useCnt = Math.min(status.maxCnt, status.useCnt + 1);
+                status.addUseCnt();
                 const summon = getObjById(esummons, 124041);
                 if (status.useCnt >= 3 && summon && summon.useCnt < 3) {
                     summon.addUseCnt();
@@ -2203,7 +2197,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     status.minusUseCnt();
                     const talent = getObjById(eheros, getHidById(status.id))?.talentSlot;
                     if (heros[hidx]?.isFront && status.useCnt == 0 && talent && talent.perCnt > 0) {
-                        --talent.perCnt;
+                        talent.minusPerCnt();
                         return { cmds: [{ cmd: 'getStatus', status: 125021, hidxs: getNextBackHidx(heros) }] }
                     }
                 }
@@ -2886,7 +2880,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 isAddTask: trigger != 'card',
                 exec: eStatus => {
                     if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) {
-                        if (eStatus) ++eStatus.useCnt;
+                        eStatus?.addUseCnt();
                     } else if (trigger == 'card' && isMinus) {
                         status.dispose();
                     }
@@ -2921,7 +2915,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: isCdt(source != 303236, ['getdice-oppo']),
                 isAddTask: true,
                 cmds: isCdt(status.useCnt == 1, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
-                exec: eStatus => { eStatus && (eStatus.useCnt = (eStatus.useCnt + 1) % 2) },
+                exec: eStatus => eStatus?.addUseCntMod(2),
             }
         }),
 
@@ -2948,8 +2942,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 isAddTask: true,
                 exec: eStatus => {
                     if (eStatus) {
-                        ++nightSoul.useCnt;
-                        --eStatus.roundCnt;
+                        nightSoul.addUseCnt();
+                        eStatus.minusRoundCnt();
                     }
                 }
             }

@@ -382,11 +382,7 @@ const allCards: Record<number, () => CardBuilder> = {
     311205: () => new CardBuilder(130).name('终末嗟叹之诗').since('v3.7.0').weapon().costSame(3)
         .description('【角色造成的伤害+1】。；【角色使用｢元素爆发｣后：】生成【sts301102】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fc5f899e61c9236a1319ea0f3c8b7a64_3821389462721294816.png')
-        .handle(() => ({
-            addDmg: 1,
-            trigger: ['skilltype3'],
-            execmds: [{ cmd: 'getStatus', status: 301102 }],
-        })),
+        .handle(() => ({ addDmg: 1, trigger: ['skilltype3'], execmds: [{ cmd: 'getStatus', status: 301102 }] })),
 
     311206: () => senlin1Weapon(131, '王下近侍', 301103).since('v4.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/c667e01fa50b448958eff1d077a7ce1b_1806864451648421284.png'),
@@ -525,7 +521,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => {
                     if (card.perCnt == 0 || trigger != 'skilltype2') return;
                     if (ost) {
-                        ++ost.useCnt;
+                        ost.addUseCnt(true);
                         card.minusPerCnt();
                     }
                 }
@@ -878,7 +874,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => {
                     if (trigger == 'heal') {
                         card.perCnt = Math.max(card.useCnt * 3 - 6, card.perCnt - allHeal);
-                        card.addUseCntMod(Math.floor(-card.perCnt / 3), 3);
+                        card.addUseCntMod(3, Math.floor(-card.perCnt / 3));
                     } else if (trigger == 'dmg' && sktype != SKILL_TYPE.Vehicle) {
                         card.useCnt = 0;
                     }
@@ -902,7 +898,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => {
                     if (trigger == 'heal') {
                         card.perCnt = Math.max(card.useCnt * 3 - 6, card.perCnt - allHeal);
-                        card.addUseCntMod(Math.floor(-card.perCnt / 3), 3);
+                        card.addUseCntMod(3, Math.floor(-card.perCnt / 3));
                     } else if (trigger == 'dmg' && sktype != SKILL_TYPE.Vehicle) {
                         card.useCnt = 0;
                     }
@@ -1076,7 +1072,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 isAddTask: isPhaseEnd,
                 exec: () => {
                     if (isPhaseEnd) {
-                        card.addUseCntMax(2, 4);
+                        card.addUseCntMax(4, 2);
                     } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
                         card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
                     } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
@@ -1692,7 +1688,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 status: 303172,
                 exec: () => {
-                    combatStatus.forEach(ost => (ost.id == 116 || ost.id == 117) && ++ost.useCnt);
+                    combatStatus.forEach(ost => (ost.id == 116 || ost.id == 117) && ost.addUseCnt());
                     summons.forEach(smn => smn.id == 115 && smn.addUseCnt(true));
                 }
             }

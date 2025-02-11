@@ -140,13 +140,17 @@ export class GIStatus {
     }
     addUseCnt(ignoreMax: boolean): void
     addUseCnt(n?: number, ignoreMax?: boolean): void
-    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false) {
+    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false): void {
         if (typeof n == 'boolean' && n) ++this.useCnt;
         else {
             if (n == false) n = 1;
-            if (ignoreMax) this.useCnt += n;
+            if (ignoreMax || this.maxCnt == 0) this.useCnt += n;
             else this.useCnt = Math.max(this.useCnt, Math.min(this.maxCnt, this.useCnt + n));
         }
+    }
+    addUseCntMod(mod: number, n?: number): void {
+        this.addUseCnt(n);
+        this.useCnt %= mod;
     }
     minusUseCnt(n: number = 1): number {
         const ncnt = this.useCnt - n;
@@ -155,14 +159,16 @@ export class GIStatus {
         return this.useCnt;
     }
     minusPerCnt(n: number = 1): number {
-        this.perCnt = Math.max(0, this.perCnt - n);
+        this.perCnt -= n;
         return this.perCnt;
     }
     addRoundCnt(n: number = 1, max?: number): void {
         this.roundCnt = Math.min(max ?? Infinity, this.roundCnt + n);
     }
     minusRoundCnt(n: number = 1): void {
-        this.roundCnt = Math.max(0, this.roundCnt - n);
+        const nrcnt = this.roundCnt - n;
+        if (nrcnt < 0) throw new Error(`${this.name}(${this.entityId}).roundCnt < 0`);
+        this.roundCnt = nrcnt;
     }
     dispose(): void {
         this.useCnt = 0;

@@ -2637,7 +2637,7 @@ export default class GeniusInvokationRoom {
         const currCard = handCards[cardIdx];
         if (!currCard) throw new Error(`@_checkCard:p${pidx}的卡牌${cardIdx}不存在,${handCards.map(c => `[${c.name}]`)}`);
         const { cost, canSelectHero, type, userType, energy, costType, anydice, costChange } = currCard;
-        const ncost = Math.max(0, cost - costChange);
+        const ncost = Math.max(0, cost + anydice - costChange);
         const cardres = currCard.handle(currCard, {
             pidx,
             hidxs: [heroIdx ?? hidx],
@@ -2714,14 +2714,14 @@ export default class GeniusInvokationRoom {
             res.diceSelect[didx] = true;
             res.isValid = true;
         } else {
-            const isLen = ncost + anydice - costChange > dice.length;
+            const isLen = ncost <= dice.length;
             const isElDice = (costType != DICE_TYPE.Same ?
                 dice.filter(d => d == DICE_COST_TYPE.Omni || d == costType || costType == DICE_TYPE.Any).length :
                 dice.filter(d => d == DICE_COST_TYPE.Omni).length + Math.max(0, ...Object.values(dice.reduce((a, c) => {
                     if (c != DICE_COST_TYPE.Omni) a[c] = (a[c] ?? 0) + 1;
                     return a;
-                }, {} as Record<DiceCostType, number>)))) < ncost - costChange;
-            res.isValid = !isLen && !isElDice;
+                }, {} as Record<DiceCostType, number>)))) >= ncost - anydice;
+            res.isValid = isLen && isElDice;
             if (res.isValid) res.diceSelect = this._selectDice(player, costType, ncost, anydice);
         }
         return res;
@@ -2811,6 +2811,7 @@ export default class GeniusInvokationRoom {
                 types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.NonEvent],
                 hidxs: allHidxs(player.heros),
                 hcard: currCard,
+                equipHidx: hidxs[0],
                 isQuickAction,
             });
             isInvalid = inv;
@@ -4243,12 +4244,12 @@ export default class GeniusInvokationRoom {
         minusDiceSkillIds?: number[], minusDiceSkill?: number[][], phase?: number, sktype?: SkillType, isEffectStatus?: boolean,
         discards?: Card[], cStatus?: Status, isSwitchAtk?: boolean, dmgSource?: number, dmgedHidx?: number, isOnlyFront?: boolean,
         hasDmg?: boolean, source?: number, isOnlyExec?: boolean, fhidx?: number, dmgElement?: DamageType, isPriority?: boolean,
-        hcardsCnt?: number, energyCnt?: number[][], sourceHidx?: number, isOnlyHeroStatus?: boolean, restDmg?: number,
+        hcardsCnt?: number, energyCnt?: number[][], sourceHidx?: number, isOnlyHeroStatus?: boolean, restDmg?: number, equipHidx?: number,
     }) {
         const triggers: Trigger[] = [];
         if (typeof otrigger == 'string') triggers.push(otrigger);
         else triggers.push(...otrigger);
-        const { players = this.players, hcard } = options;
+        const { players = this.players, hcard, equipHidx } = options;
         const { hidx: ahidx, heros, combatStatus: aCombatStatus } = players[pidx];
         let { types = [], hidxs = [ahidx], switchHeroDiceCnt, restDmg } = options;
         if (Array.isArray(hidxs)) {
@@ -4277,7 +4278,9 @@ export default class GeniusInvokationRoom {
         let isFallAtk = false;
         let isDie = true;
         for (const hidx of hidxs) {
-            const heroField = this._getHeroField(pidx, { players, hidx, hcard, includeCombatStatus: triggers.some(trg => trg.includes('switch-to')) });
+            const heroField = this._getHeroField(pidx, {
+                players, hidx, hcard, equipHidx, includeCombatStatus: triggers.some(trg => trg.includes('switch-to')),
+            });
             for (const field of heroField) {
                 if ('group' in field) {
                     if (triggers.includes('will-killed') && !isDie && field.hasType(STATUS_TYPE.NonDefeat)) continue;
@@ -4963,6 +4966,7 @@ export default class GeniusInvokationRoom {
                 const cpidx = pidx ^ +!!isOppo ^ +(cmd == 'stealCard');
                 const cplayer = players[cpidx];
                 const unselectedCards = cplayer.handCards.filter(c => c.entityId != withCard?.entityId).sort((a, b) => b.entityId - a.entityId);
+                if (cmd == 'stealCard' && unselectedCards.length == 0) continue;
                 const discardIdxs = (ohidxs ?? []).map(ci => cplayer.handCards.filter(c => c.entityId != withCard?.entityId)[ci].entityId);
                 if (discardIdxs.length > 0) {
                     discards.push(...clone(unselectedCards.filter(c => discardIdxs.includes(c.entityId))));
@@ -5705,7 +5709,7 @@ export default class GeniusInvokationRoom {
                     }
                     if (cStatus.useCnt > -1) {
                         oCnt = cStatus.useCnt;
-                        cStatus.useCnt = Math.max(cStatus.useCnt, Math.min(cStatus.maxCnt, cStatus.useCnt + sts.addCnt));
+                        cStatus.addUseCnt(sts.addCnt);
                         nCnt = cStatus.useCnt;
                     } else {
                         cStatus.useCnt = sts.useCnt;
@@ -6284,23 +6288,27 @@ export default class GeniusInvokationRoom {
      * @param options.hidx 角色序号(默认出战角色)
      * @param options.isOnlyHeroStatus 是否只获取角色状态
      * @param options.hcard 打出的为将要装备的牌
+     * @param options.includeCombatStatus 是否获取出战状态
+     * @param options.equipHidx 将要装备牌的角色索引
      * @returns 角色区域数组
      */
     private _getHeroField(pidx: number, options: {
-        players?: Player[], hidx?: number, isOnlyHeroStatus?: boolean, hcard?: Card, includeCombatStatus?: boolean
+        players?: Player[], hidx?: number, isOnlyHeroStatus?: boolean, hcard?: Card, includeCombatStatus?: boolean,
+        equipHidx?: number,
     } = {}) {
-        const { players = this.players, isOnlyHeroStatus = false, hcard, includeCombatStatus = false } = options;
+        const { players = this.players, isOnlyHeroStatus, hcard, includeCombatStatus, equipHidx } = options;
         const { heros, combatStatus, hidx: ahidx } = players[pidx];
         const { hidx = ahidx } = options;
         const hero = heros[hidx] ?? this._getFrontHero(pidx, { players });
         if (!hero) return [];
         const field: (Card | Status)[] = [...hero.heroStatus];
-        if (hero.weaponSlot && !hcard?.hasSubtype(CARD_SUBTYPE.Weapon)) field.push(hero.weaponSlot);
-        if (hero.artifactSlot && !hcard?.hasSubtype(CARD_SUBTYPE.Artifact)) field.push(hero.artifactSlot);
+        const isEquip = hcard && hidx == equipHidx;
+        if (hero.weaponSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Weapon))) field.push(hero.weaponSlot);
+        if (hero.artifactSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Artifact))) field.push(hero.artifactSlot);
+        if (hero.vehicleSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Vehicle))) field.push(hero.vehicleSlot[0]);
         if (hero.talentSlot) field.push(hero.talentSlot);
-        if (hero.vehicleSlot && !hcard?.hasSubtype(CARD_SUBTYPE.Vehicle)) field.push(hero.vehicleSlot[0]);
         field.sort((a, b) => b.entityId - a.entityId);
-        if (hcard && !hcard.hasSubtype(CARD_SUBTYPE.Talent)) field.push(hcard);
+        if (hcard && !hcard.hasSubtype(CARD_SUBTYPE.Talent) && hidx == equipHidx) field.push(hcard);
         if (includeCombatStatus || (hidx == ahidx && !isOnlyHeroStatus)) field.push(...combatStatus);
         return field;
     }

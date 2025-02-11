@@ -176,7 +176,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => {
                 const { summon: smn = summon, combatStatus = [] } = execEvent;
                 const sts111092 = getObjById(combatStatus, 111092);
-                if (sts111092) ++sts111092.useCnt;
+                sts111092?.addUseCnt();
                 return smn.phaseEndAtk(event);
             }
         })),
@@ -958,7 +958,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     if (smn.useCnt == 0) getObjById(eCombatStatus, 124044)?.dispose();
                     if (trigger == 'get-elReaction') return;
                     const chero = getObjById(hrs, getHidById(smn.id));
-                    if (trigger == 'action-start' && chero?.talentSlot) --chero.talentSlot.perCnt;
+                    if (trigger == 'action-start') chero?.talentSlot?.minusPerCnt();
                     return { cmds: [{ cmd: 'attack' }] }
                 }
             }

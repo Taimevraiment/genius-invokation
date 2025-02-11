@@ -181,21 +181,21 @@ export class GICard {
         this.useCnt += n;
         return this.useCnt;
     }
-    addUseCntMod(n: number, mod: number) {
+    addUseCntMod(mod: number, n?: number): void {
         this.addUseCnt(n);
         this.useCnt %= mod;
     }
-    addUseCntMax(n: number, max: number) {
+    addUseCntMax(max: number, n?: number): void {
         this.addUseCnt(n);
         this.useCnt = Math.min(max, this.useCnt);
     }
-    minusUseCnt(n: number = 1) {
+    minusUseCnt(n: number = 1): void {
         this.useCnt = Math.max(0, this.useCnt - n);
     }
-    addPerCnt(n: number = 1) {
+    addPerCnt(n: number = 1): void {
         this.perCnt += n;
     }
-    minusPerCnt(n: number = 1) {
+    minusPerCnt(n: number = 1): void {
         this.perCnt -= n;
     }
 }
