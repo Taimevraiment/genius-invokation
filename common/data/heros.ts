@@ -783,10 +783,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
-                    const heal = sts122?.useCnt;
-                    return { heal, exec: () => sts122?.dispose() }
+                    return { heal: sts122?.useCnt ?? 0, exec: () => sts122?.dispose() }
                 }),
-            new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；自身附属【sts122】时：角色造成的[物理伤害]变为[火元素伤害]。')
+            new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；【自身附属〖sts122〗时：】角色造成的[物理伤害]变为[火元素伤害]。')
                 .src('/image/tmp/UI_Talent_S_Arlecchino_07.webp', '')
                 .passive().handle(event => {
                     const { hero, heal = [], source = -1, trigger = '' } = event;

@@ -93,7 +93,7 @@
         :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
-        <img src="https://gi-tcg-assets.guyutongxue.site/api/v2/images/300003" alt=""
+        <img src="https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp" alt=""
           v-if="card.type == CARD_TYPE.Event && isNonEvent" style="position: absolute;top: 10%;width: 50%;opacity: .8;">
       </Handcard>
       <Handcard v-for="(card, idx) in client.player.UI.willGetCard.cards.filter(c => c.UI.class?.includes('over'))"

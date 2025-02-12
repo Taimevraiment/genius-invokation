@@ -753,15 +753,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112114: () => new StatusBuilder('普世欢腾').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage)
         .description('【我方出战角色受到伤害或治疗后：】叠加1点【sts112115】。；[roundCnt]')
-        .handle((_, event) => {
-            const { heal = [], hidx = -1, trigger = '' } = event;
-            const triggers: Trigger[] = ['getdmg'];
-            if (trigger == 'heal' && (heal[hidx] ?? 0) > 0) triggers.push('heal');
-            return {
-                trigger: triggers,
-                exec: () => ({ cmds: [{ cmd: 'getStatus', status: 112115 }] }),
-            }
-        }),
+        .handle(() => ({
+            trigger: ['getdmg', 'heal'],
+            exec: () => ({ cmds: [{ cmd: 'getStatus', status: 112115 }] }),
+        })),
 
     112115: () => new StatusBuilder('狂欢值').combatStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
@@ -978,7 +973,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { restDmg = 0, heros = [], hidx = -1, getdmg = [], trigger = '' } = event;
             const hid = getHidById(status.id);
             const hero = getObjById(heros, hid);
-            if (['enter', 'getdmg', 'other-getdmg', 'heal'].includes(trigger)) {
+            if (['enter', 'getdmg', 'other-getdmg', 'heal', 'other-heal'].includes(trigger)) {
                 if (!hero) return;
                 if (status.hasType(STATUS_TYPE.Barrier) && (hero.isFront || hero.hp - (getdmg[hero.hidx] ?? 0) <= 0)) {
                     status.type = [STATUS_TYPE.Usage];
@@ -2869,7 +2864,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303228: () => new StatusBuilder('机关铸成之链（生效中）').heroStatus().icon('buff3').useCnt(0).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【所附属角色每次受到伤害或治疗后：】累积1点｢备战度｣（最多累积2点）。；【我方打出原本费用不多于｢备战度｣的｢武器｣或｢圣遗物｣时:】移除此状态，以免费打出该牌。')
         .handle((status, event) => {
-            const { hcard, trigger = '', heal = [], hidx = -1, isMinusDiceWeapon, isMinusDiceArtifact } = event;
+            const { hcard, trigger = '', isMinusDiceWeapon, isMinusDiceArtifact } = event;
             const isMinus = (isMinusDiceWeapon || isMinusDiceArtifact) && status.useCnt >= (hcard?.cost ?? 3);
             const triggers: Trigger[] = [];
             if (status.useCnt < 2) triggers.push('getdmg', 'heal');
@@ -2879,7 +2874,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceCard: isCdt(isMinus, status.useCnt),
                 isAddTask: trigger != 'card',
                 exec: eStatus => {
-                    if (trigger == 'getdmg' || trigger == 'heal' && heal[hidx] > 0) {
+                    if (trigger == 'getdmg' || trigger == 'heal') {
                         eStatus?.addUseCnt();
                     } else if (trigger == 'card' && isMinus) {
                         status.dispose();
@@ -2919,8 +2914,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    303237: () => new StatusBuilder('噔噔！（生效中）').combatStatus().icon('buff3').useCnt(1).type(STATUS_TYPE.Round)
-        .description('【结束阶段：】抓1张牌。；[useCnt]')
+    303237: () => new StatusBuilder('噔噔！（生效中）').combatStatus().icon('buff3').useCnt(1)
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).description('【结束阶段：】抓1张牌。；[useCnt]')
         .handle(() => ({
             trigger: ['phase-end'],
             isAddTask: true,

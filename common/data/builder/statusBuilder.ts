@@ -98,7 +98,7 @@ export class GIStatus {
                 return { ...handleres, trigger: ['reduce-dmg'] };
             }
         } else if (type.includes(STATUS_TYPE.NonEvent)) {
-            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/300003';
+            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp';
             thandle = (status, event) => {
                 if (event.hcard?.type != CARD_TYPE.Event) return;
                 return { trigger: ['card'], isInvalid: true, exec: () => { status.minusUseCnt() } }
