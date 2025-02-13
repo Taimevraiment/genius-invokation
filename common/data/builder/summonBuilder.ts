@@ -73,6 +73,7 @@ export class GISummon {
         this.pdmg = pdmg;
         this.isDestroy = isDestroy;
         this.statusId = stsId;
+        if (this.UI.src == '#') this.UI.src = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
         this.handle = (summon, event = {}) => {
             const { reset = false, trigger = '' } = event;
             if (reset) {

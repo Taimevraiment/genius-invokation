@@ -5,6 +5,7 @@ export default class TaskQueue {
     priorityQueue: TaskItem[] | undefined;
     queue: TaskItem[] = [];
     isExecuting: boolean = false;
+    isDieWaiting: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
     env: Env;
     constructor(_writeLog: (log: string, type?: LogType) => void, env: Env) {
@@ -13,6 +14,12 @@ export default class TaskQueue {
     }
     get queueList() {
         return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
+    }
+    init() {
+        this.priorityQueue = undefined;
+        this.queue = [];
+        this.isExecuting = false;
+        this.isDieWaiting = false;
     }
     addTask(taskType: string, args: any[] | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,

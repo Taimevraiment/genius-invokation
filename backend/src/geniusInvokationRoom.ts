@@ -585,6 +585,7 @@ export default class GeniusInvokationRoom {
         this.systemLog = '';
         this.errorLog = [];
         this.reporterLog = [];
+        this.taskQueue.init();
         if (this.players[1].id == AI_ID) this._initAI();
         this.players.forEach(p => {
             p.phase = this.phase;
@@ -893,6 +894,7 @@ export default class GeniusInvokationRoom {
             const isActioning = player.phase == PHASE.ACTION && !isQuickAction;
             opponent.UI.info = isActioning ? '对方行动中....' : player.phase > PHASE.ACTION ? '对方结束已结束回合...' : '我方行动中....';
             if (isOppoActioning) this.players[this.currentPlayerIdx].canAction = true;
+            this.taskQueue.isDieWaiting = false;
         } else if (diceSelect != undefined) { // 主动切换角色
             ({ isQuickAction } = this._calcHeroSwitch(pidx, hidx, ohidx, true));
             for (let i = 0; i < player.heros.length; ++i) {
@@ -1256,8 +1258,8 @@ export default class GeniusInvokationRoom {
             }
             return res;
         }
-        const isSwitchSelf = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && !cmds.isOppo);
-        const isSwitchOppo = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && cmds.isOppo);
+        // const isSwitchSelf = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && !cmds.isOppo);
+        // const isSwitchOppo = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && cmds.isOppo);
         const calcTasks = (tasks: AtkTask[], cplayers: Player[], cpidx: number) => {
             tasks.some(task => {
                 const { cmds: [{ cmd }], cmds, pidx: tpidx } = task;
@@ -1679,7 +1681,7 @@ export default class GeniusInvokationRoom {
                 });
             }]], { isPriority: true, isUnshift: true });
         }
-        const { willHeals: skillheal, isSwitch: swc = -1, isSwitchOppo: swco = -1, tasks = [] }
+        const { willHeals: skillheal, tasks = [] }
             = this._doCmds(pidx, skillcmds, {
                 players: bPlayers,
                 isExec: false,
@@ -1692,8 +1694,8 @@ export default class GeniusInvokationRoom {
         const dtriggers: Trigger[] = [];
         if (typeof otriggers == 'string') dtriggers.push(otriggers);
         else dtriggers.push(...otriggers);
-        cahidx = isSwitchSelf(skillcmds) && swc > -1 ? swc : skid == -1 && dtriggers.includes('switch-to') ? isSwitch : ahidx();
-        cehidx = isSwitchOppo(skillcmds) && swco > -1 ? swco : dmgedHidx;
+        cahidx = skid == -1 && dtriggers.includes('switch-to') ? isSwitch : bPlayers[pidx].hidx;
+        cehidx = bPlayers[pidx ^ 1].hidx;
         dmgedHidx = cehidx;
         tasks.push(...tasks0);
         if (!isExec) {
@@ -3011,7 +3013,7 @@ export default class GeniusInvokationRoom {
      */
     private _doActionAfter(pidx: number, isQuickAction: boolean = false) {
         this._detectSkill(pidx, 'action-after', { type: SKILL_TYPE.Passive, isQuickAction });
-        this._detectStatus(pidx, [STATUS_TYPE.Attack, STATUS_TYPE.Usage], 'action-after', { isOnlyFront: true, isQuickAction });
+        this._detectSlotAndStatus(pidx, 'action-after', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], isOnlyFront: true, isQuickAction });
         this._detectSupport(pidx, 'action-after', { isQuickAction });
         this._detectSupport(pidx ^ 1, 'action-after-oppo', { isQuickAction });
     }
@@ -3331,7 +3333,7 @@ export default class GeniusInvokationRoom {
                     notPreview: true,
                     isQuickAction: isQuickAction && isDie.size == 0,
                 });
-            }]], { addAfterNonDmg: true, isUnshift: true });
+            }]], { orderAfter: 'switch', isUnshift: true });
         }
         this._doCmds(pidx, cmds);
         this.emit(`${damageVO.dmgSource}-doDamage-${atkname}`, pidx, {
@@ -3689,7 +3691,7 @@ export default class GeniusInvokationRoom {
                                             elTips: [],
                                         }, { atkname: skill.name, heroSelect, isQuickAction });
                                     } else {
-                                        this.emit(`_doSkill-${skill.name}`, pidx, { heroSelect, isQuickAction, isActionInfo: true });
+                                        this.emit(`_doSkill-${skill.name}:${trigger}`, pidx, { heroSelect, isQuickAction, isActionInfo: true });
                                     }
                                 }
                                 task.push([skillHandle, 1e3]);
@@ -3889,13 +3891,14 @@ export default class GeniusInvokationRoom {
                                     elTips,
                                 }, { atkname: slot.name, slotSelect, isQuickAction });
                             } else {
-                                this.emit(`_doSlot-${slot.name}(${slot.entityId})`, pidx, { slotSelect, isQuickAction });
+                                this.emit(`_doSlot-${slot.name}(${slot.entityId}):${trigger}`, pidx, { slotSelect, isQuickAction });
                             }
                             if (isDestroy) destroySlot();
                         };
                         task.push([slotHandle, 800]);
                     }
                 }
+                if (slotres.isOrTrigger) break;
             }
         }
         if (cSlot) {
@@ -5925,16 +5928,15 @@ export default class GeniusInvokationRoom {
         try {
             if (this.taskQueue.isExecuting || this.taskQueue.isTaskEmpty()) return;
             this.taskQueue.isExecuting = true;
-            let isDieWaiting = false;
-            while (!this.taskQueue.isTaskEmpty() && this.taskQueue.isExecuting && !isDieWaiting && this.players.every(p => p.phase != PHASE.PICK_CARD)) {
+            while (!this.taskQueue.isTaskEmpty() && this.taskQueue.isExecuting && !this.taskQueue.isDieWaiting && this.players.every(p => p.phase != PHASE.PICK_CARD)) {
                 const [[peekTaskType]] = this.taskQueue.peekTask();
                 if (peekTaskType.includes(stopWithTaskType)) break;
                 const [[taskType, args, source, isDmg]] = this.taskQueue.getTask();
-                if (!this._hasNotDieSwitch() && isDmg) {
+                if (!this._hasNotDieSwitch() && this.taskQueue.isDieWaiting) {
                     this.taskQueue.addTask(taskType, args, { isUnshift: true, source, isDmg });
-                    isDieWaiting = true;
                     break;
                 }
+                if (taskType.includes('heroDie')) this.taskQueue.isDieWaiting = true;
                 if (taskType == 'not found' || !taskType || !args) break;
                 let task: [() => void | Promise<void>, number?, number?][] | undefined;
                 if (taskType.startsWith('status-')) task = this._detectStatus(...(args as Parameters<typeof this._detectStatus>)).task;

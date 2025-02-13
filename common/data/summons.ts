@@ -773,7 +773,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     117093: () => new SummonBuilder('伟大圣龙阿乔').useCnt(2).damage(1)
         .description('{defaultAtk，然后对敌方下一个角色造成1点[草元素伤害]。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Kinich_-264330016.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/3490c9f20c262433875fd6e584e6d627_7543779796581839169.png')
         .handle((summon, event) => {
             const { eheros = [] } = event;
             const backHidxs = getBackHidxs(eheros);
@@ -839,7 +839,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
-        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Raptor.webp')
+        .src('#')
         .handle((summon, event) => ({
             willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
             trigger: ['phase-end'],
@@ -848,7 +848,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
-        .src('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Frog.webp')
+        .src('#')
         .handle((summon, event) => {
             const trigger: Trigger[] = [];
             if (summon.useCnt == 0) trigger.push('phase-end');

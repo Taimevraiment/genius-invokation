@@ -763,8 +763,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1314: () => new HeroBuilder(454).name('阿蕾奇诺').since('v5.4.0').fatui().pyro().polearm()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Arlecchino.webp')
-        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Arlecchino_176472631.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/6d1379337d377cb94b3a5df789c57af0_4432986078863302985.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u8c1lh/2b18a446223227da615ba874800e6a7e.png')
         .normalSkill(new NormalSkillBuilder('斩首之邀').description('，若可能，消耗目标至多3层【sts122】，提高等量伤害。')
             .handle(event => {
                 const { eheros = [], hero } = event;
@@ -776,17 +776,20 @@ const allHeros: Record<number, () => HeroBuilder> = {
             }))
         .skills(
             new SkillBuilder('万相化灰').description('在对方场上生成5层【sts113141】，然后{dealDmg}。')
-                .src('/image/tmp/Skill_S_Arlecchino_01.webp', '')
+                .src('https://patchwiki.biligame.com/images/ys/d/d5/ggy5txvitobnp70gsp8u761qxv84y43.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/7810c834269545540dea50ba88c3a25c_6894619581902279780.png')
                 .elemental().damage(2).cost(3).handle(() => ({ statusOppoPre: 113141 })),
             new SkillBuilder('厄月将升').description('{dealDmg}，移除自身所有【sts122】，每移除1层，治疗自身1点。')
-                .src('/image/tmp/Skill_E_Arlecchino_01.webp', '')
+                .src('https://patchwiki.biligame.com/images/ys/d/da/cucu0jsa375iqeeh9xzfeohcueq6gcc.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/deb7835cea5aa6a48d80b8880ead635b_7631695322014410848.png')
                 .burst(3).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts122 = getObjById(heroStatus, 122);
                     return { heal: sts122?.useCnt ?? 0, exec: () => sts122?.dispose() }
                 }),
             new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；【自身附属〖sts122〗时：】角色造成的[物理伤害]变为[火元素伤害]。')
-                .src('/image/tmp/UI_Talent_S_Arlecchino_07.webp', '')
+                .src('https://patchwiki.biligame.com/images/ys/5/54/pxn17pilom6vwve4bs6vsemh1dvt89k.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a2a8eb8cafea01ec4461915fe495127c_5101380063673897230.png')
                 .passive().handle(event => {
                     const { hero, heal = [], source = -1, trigger = '' } = event;
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
@@ -1516,18 +1519,20 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1709: () => new HeroBuilder(455).name('基尼奇').since('v5.4.0').natlan().dendro().claymore()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Kinich.webp')
-        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kinich_205659600.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/4656f4ff645d719e6621821c16038822_3079189442707648158.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u8c1lh/afdcc3827593f09ace6932ea92516f9d.png')
         .normalSkill(new NormalSkillBuilder('夜阳斗技'))
         .skills(
             new SkillBuilder('悬猎·游骋高狩').description('选一个我方角色，自身附属【sts117091】并进入【sts117092】。{dealDmg}，然后与所选角色交换位置。')
-                .src('/image/tmp/Skill_S_Kinich_01.webp', '')
+                .src('https://patchwiki.biligame.com/images/ys/a/a2/08equlc0irtfiur6id02qiwromqwpl5.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/cccdba35b77374e5ef8c19c7d429f985_1146383664533306901.png')
                 .elemental().damage(2).cost(3).canSelectHero(1).handle(event => ({
                     cmds: [{ cmd: 'exchangePos', hidxs: [event.hero.hidx, event.selectHero ?? -1] }],
-                    statusPre: [117091, 117092],
+                    statusPre: [117092, 117091],
                 })),
             new SkillBuilder('向伟大圣龙致意').description('{dealDmg}，召唤【smn117093】。')
-                .src('/image/tmp/Skill_E_Kinich_01.webp', '')
+                .src('https://patchwiki.biligame.com/images/ys/1/1d/n9v0lfr4q0xiampd0miscmsqnfloqjt.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/1a120150229bd26a62ef3ce3dae3b478_6999667122640021034.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 117093 })),
         ),
 

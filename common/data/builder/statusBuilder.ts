@@ -103,7 +103,12 @@ export class GIStatus {
                 if (event.hcard?.type != CARD_TYPE.Event) return;
                 return { trigger: ['card'], isInvalid: true, exec: () => { status.minusUseCnt() } }
             }
+        } else if (type.includes(STATUS_TYPE.NightSoul)) {
+            const element = ['', 'Ice', 'Water', 'Fire', 'Elec', 'Wind', 'Rock', 'Grass'][Math.floor(id / 1e3) % 10];
+            this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nightsoul_${element}.webp`;
         }
+        if (this.UI.icon == '#') this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
+        else if (this.UI.icon == 'dot') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp';
         if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
             if (icon.startsWith('buff')) {
                 if (icon == 'buff2') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Buff.webp';

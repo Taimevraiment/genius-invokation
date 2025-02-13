@@ -517,8 +517,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111123: () => shieldHeroStatus('潜猎护盾', 1, 2),
 
-    111131: (cnt: number = 2) => new StatusBuilder('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT)
-        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/111131').type(STATUS_TYPE.Usage)
+    111131: (cnt: number = 2) => new StatusBuilder('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT).icon('#').type(STATUS_TYPE.Usage)
         .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）')
         .handle((status, event) => {
             const { randomInt, isExecTask, trigger = '' } = event;
@@ -533,8 +532,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    111133: () => new StatusBuilder('强攻破绽').combatStatus().useCnt(1)
-        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/111133')
+    111133: () => new StatusBuilder('强攻破绽').combatStatus().useCnt(1).icon('#')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.MultiDamage, STATUS_TYPE.Sign)
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle((status, event) => ({
@@ -720,8 +718,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             trigger: ['after-skilltype1'],
         })),
 
-    112101: (cnt: number = 1) => new StatusBuilder('源水之滴').combatStatus().useCnt(cnt).maxCnt(3).type(STATUS_TYPE.Attack)
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Neuvillette_S.webp')
+    112101: (cnt: number = 1) => new StatusBuilder('源水之滴').combatStatus().useCnt(cnt).maxCnt(3).type(STATUS_TYPE.Attack).icon('#')
         .description('【〖hro〗进行｢普通攻击｣后：】治疗【hro】2点，然后如果【hro】是我方｢出战角色｣，则[准备技能]：【rsk12104】。；[useCnt]')
         .handle((status, event) => {
             const { heros = [], skid } = event;
@@ -759,8 +756,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     112115: () => new StatusBuilder('狂欢值').combatStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Furina_E_02.webp')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).icon('#')
         .description('我方造成的伤害+1。（包括角色引发的扩散伤害）；[useCnt]')
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
@@ -792,8 +788,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     112134: () => readySkillStatus('满满心意药剂冲击', 12135),
 
-    112135: () => new StatusBuilder('静养').combatStatus().useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
-        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112135')
+    112135: () => new StatusBuilder('静养').combatStatus().useCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).icon('#')
         .description('我方｢元素战技｣或召唤物造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
             const { isSummon = -1, sktype = -1 } = event;
@@ -816,10 +811,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112141: (cnt: number = 0) => nightSoul(cnt).icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112141'),
+    112141: nightSoul,
 
-    112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
-        .icon('https://gi-tcg-assets.guyutongxue.site/api/v2/images/112143')
+    112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage).icon('#')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
         .handle((status, event) => {
             const { dmgSource = -1 } = event;
@@ -928,8 +922,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => ({ cmds: isCdt(event.isChargedAtk, [{ cmd: 'getStatus', status: 113072, isOppo: true }]) })
         })),
 
-    113072: () => new StatusBuilder('血梅香').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp')
+    113072: () => new StatusBuilder('血梅香').heroStatus().useCnt(1).type(STATUS_TYPE.Attack).icon('dot')
         .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]')
         .handle(() => ({
             damage: 1,
@@ -1053,8 +1046,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { status.minusUseCnt() },
         })),
 
-    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(5).type(STATUS_TYPE.Usage)
-        .icon('tmp/UI_Gcg_Debuff_Arlecchino_S_-2121114989')
+    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(5).type(STATUS_TYPE.Usage).icon('#')
         .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属1层【sts122】。；[useCnt]')
         .handle((status, event) => {
             const { hidx = -1, heros = [], eheros = [], getdmg = [] } = event;
@@ -1569,9 +1561,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack)
+    117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('#')
         .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色造成1点[穿透伤害]。；[useCnt]')
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nahida_S.webp')
         .handle((status, event) => {
             const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, hcard, trigger = '', isExecTask = false } = event;
             const source = isCdt(trigger == 'other-get-elReaction', getObjById(heros[dmgedHidx]?.heroStatus, status.id)?.entityId);
@@ -1756,8 +1747,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round)
-        .icon('tmp/UI_Gcg_Buff_Kinich_E_1336192241')
+    117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).icon('#')
         .description('【敌方受到燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】，随后消耗2点｢夜魂值｣。；[roundCnt]')
         .handle((status, event) => {
             const { heros = [], hidx = -1, trigger = '' } = event;
@@ -1784,10 +1774,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117092: () => nightSoul().icon('tmp/UI_Gcg_Buff_Nightsoul_Grass_-1140240785'),
+    117092: nightSoul,
 
-    117094: () => new StatusBuilder('钩锁准备').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign)
-        .icon('tmp/UI_Gcg_Buff_Kinich_S_-2124271304')
+    117094: () => new StatusBuilder('钩锁准备').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign).icon('#')
         .description('【我方选择行动前，若附属角色为出战角色：】对最近的敌方角色造成3点[草元素伤害]。；[useCnt]')
         .handle((_, event) => {
             const { heros = [], hidx = -1, eheros = [] } = event;
@@ -2287,7 +2276,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害后：】如果角色当前未汲取该元素的力量，则移除此状态，然后角色[汲取对应元素的力量]。'),
 
     126031: (isTalent: boolean = false, ucnt: number = 1) => new StatusBuilder('黄金侵蚀').heroStatus().useCnt(ucnt).maxCnt(isTalent ? 5 : 3)
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp').type(STATUS_TYPE.Attack)
+        .icon('dot').type(STATUS_TYPE.Attack)
         .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】（可叠加，最多叠加到3次）')
         .handle((status, event) => {
             const { heros = [], hidx = -1, eheros = [] } = event;
@@ -2302,8 +2291,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_FungusRaptor_S.webp')
+    127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon('#')
         .description('【本角色造成或受到元素伤害后：】累积1层｢活化激能｣。（最多累积3层）；【结束阶段：】如果｢活化激能｣层数已达到上限，就将其清空。同时，角色失去所有[充能]。')
         .handle((status, event) => {
             const { trigger = '', heros = [], hidx = -1 } = event;
@@ -2455,8 +2443,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(1).roundCnt(1).type(STATUS_TYPE.NonEvent)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]'),
 
-    301019: () => new StatusBuilder('悠远雷暴').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
-        .icon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp')
+    301019: () => new StatusBuilder('悠远雷暴').heroStatus().useCnt(1).type(STATUS_TYPE.Attack).icon('dot')
         .description('【结束阶段：】对所附属角色造成2点[穿透伤害]。；[useCnt]')
         .handle((_, event) => {
             const { hidx = -1 } = event;

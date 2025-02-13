@@ -96,6 +96,7 @@ export type CardHandleRes = {
     forcePreview?: boolean,
     summonCnt?: number[][],
     isQuickAction?: boolean,
+    isOrTrigger?: boolean,
     exec?: () => CardExecRes | void,
 };
 
@@ -519,10 +520,17 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色造成的伤害+1】。；【每回合自动触发1次：】如果所附属角色没有[充能]，就使其获得1点[充能]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1ed5905877be45aca0e92093e3b5fdbe_7752495456460826672.png')
         .handle((card, event) => {
-            const { heros = [], hidxs = [], slotUse = false } = event;
-            const cmds = isCdt<Cmds[]>(heros[hidxs[0]]?.energy == 0, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
+            const { heros = [], hidxs = [], slotUse } = event;
+            const isTriggered = card.perCnt > 0 && heros[hidxs[0]]?.energy == 0;
+            const cmds = isCdt<Cmds[]>(isTriggered, [{ cmd: 'getEnergy', cnt: 1, hidxs }]);
             if (slotUse && cmds) card.minusPerCnt();
-            return { addDmg: 1, cmds, trigger: ['phase-start'], execmds: cmds, exec: () => card.minusPerCnt() }
+            return {
+                addDmg: 1,
+                cmds,
+                trigger: isCdt(isTriggered, ['action-start', 'action-after']),
+                execmds: cmds,
+                exec: () => card.minusPerCnt(),
+            }
         }),
 
     311406: () => senlin1Weapon(142, '贯月矢', 301104).since('v4.1.0').offline('v1')
@@ -533,9 +541,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/15/258999284/972e1ba2e544111bc0069697539b707e_7547101337974467153.png')
         .handle(card => ({
             addDmg: 1 + card.useCnt,
-            trigger: ['skill'],
+            trigger: isCdt(card.useCnt < 2, ['skill']),
             isAddTask: true,
-            exec: () => { card.useCnt < 2 && card.addUseCnt() },
+            exec: () => { card.addUseCnt() },
         })),
 
     311408: () => new CardBuilder(355).name('公义的酬报').since('v4.6.0').weapon().costSame(2).useCnt(0)
@@ -579,7 +587,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: isCdt(!isExecTask || isTriggered, ['after-skill-oppo']),
                 isAddTask: true,
                 execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs }]),
-                exec: () => card.minusPerCnt()
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -597,7 +605,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 addDmg: 1,
                 trigger: isCdt(card.perCnt > 0 && hero.energy < hero.maxEnergy, ['skilltype2']),
                 execmds: [{ cmd: 'getEnergy', cnt: 1 }],
-                exec: () => card.minusPerCnt()
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -608,7 +616,7 @@ const allCards: Record<number, () => CardBuilder> = {
             addDmg: 1,
             trigger: isCdt(card.perCnt > 0, ['skilltype1']),
             execmds: [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }],
-            exec: () => card.minusPerCnt()
+            exec: () => card.minusPerCnt(),
         })),
 
     311507: () => senlin2Weapon(327, '原木刀', 301107).since('v4.4.0')
@@ -618,14 +626,16 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方角色受到伤害或治疗后：】此牌累积1点｢湖光｣。；【角色进行｢普通攻击｣时：】如果已有12点｢湖光｣，则消耗12点，使此技能少花费2个[无色元素骰]且造成的伤害+1，并且治疗所附属角色1点。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/92753a699957dc63318f06ab506d7e41_8008667568462089258.png')
         .handle((card, event) => {
-            const { trigger = '' } = event;
+            const { heal = [], getdmg = [], trigger = '' } = event;
             const triggers: Trigger[] = ['getdmg', 'heal', 'other-getdmg', 'other-heal'];
             const isTriggered = card.useCnt >= 12 && card.perCnt > 0;
             if (isTriggered) triggers.push('skilltype1');
+            const cnt = heal.concat(getdmg).filter(v => v >= 0).length;
             return {
                 trigger: triggers,
                 isAddTask: trigger != 'skilltype1',
-                addDmgCdt: isCdt(trigger == 'skilltype1', 1),
+                addDmgCdt: isCdt(isTriggered && trigger == 'skilltype1', 1),
+                isOrTrigger: true,
                 execmds: isCdt(isTriggered && trigger == 'skilltype1', [{ cmd: 'heal', cnt: 1 }]),
                 minusDiceSkill: isCdt(isTriggered, { skilltype1: [0, 2, 0] }),
                 exec: () => {
@@ -634,7 +644,7 @@ const allCards: Record<number, () => CardBuilder> = {
                         card.minusPerCnt();
                         return;
                     }
-                    card.addUseCnt();
+                    card.addUseCnt(cnt);
                 }
             }
         }),
@@ -1350,7 +1360,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321026: () => new CardBuilder(458).name('｢花羽会｣').since('v5.4.0').place().costSame(0)
         .description('【我方[舍弃]2张卡牌后：】我方下一个后台角色获得1层“下次切换至前台时，回复1个对应元素的骰子。”（可叠加，每次触发一层）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_HuaYu.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/635fd5e4f710374bb0ee919f77dd1776_8605976792632571882.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -2144,7 +2154,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332043: () => new CardBuilder(459).name('小嵴锋龙！发现宝藏！').since('v5.4.0').event().costSame(1)
         .description('向双方牌组中放入2张【crd332042】，随后双方各抓2张牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_JifengLong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/7f43e01235d3b59c48ac6d9ebd803748_5052551949082854888.png')
         .handle(() => ({
             cmds: [
                 { cmd: 'addCard', cnt: 2, card: 332042 },
@@ -2275,7 +2285,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333019: () => new CardBuilder(460).name('温泉时光').since('v5.4.0').food().costSame(1).canSelectHero(1)
         .description('治疗目标角色1点，我方场上每有1个召唤物，则额外治疗1点。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_WenQuan.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/930a4ce59c928b77102192d730b2594b_856448637254416810.png')
         .handle((_, event) => {
             const { summons: { length } = [], heros = [] } = event;
             const canSelectHero = heros.map(h => h.hp < h.maxHp && h.hp > 0);
@@ -2629,7 +2639,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。；使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Arlecchino.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/9770a329be6b9be3965bc3240c531cb4_511464347620244194.png')
         .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
     214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
@@ -2979,7 +2989,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     217091: () => new CardBuilder(457).name('索报皆偿').since('v5.4.0').talent().costDendro(1).perCnt(1)
         .description('装备有此牌的【hro】切换至前台或使用【ski,1】时：若我方手牌不多于对方，则窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Kinich.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a47cc0e0df6da9b518948c51861e73ab_5159453302126122992.png')
         .handle((card, event) => {
             const { hcardsCnt = 0, ehcardsCnt = 0 } = event;
             if (card.perCnt <= 0 || ehcardsCnt == 0 || hcardsCnt > ehcardsCnt) return;
