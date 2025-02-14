@@ -1,7 +1,7 @@
 import { Cmds, Hero, Trigger } from '../../typing';
 import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getBackHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { NormalSkillBuilder, SkillBuilder } from './builder/skillBuilder.js';
@@ -525,7 +525,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/c/cf/6st36uogdsny0hmvb5j4uqh1i9lj27n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/c0769da88723a8460722bf3f9b45a36d_6871593320341772759.png')
                 .elemental().cost(2).handle(({ hero }) => ({
-                    cmds: [{ cmd: 'equip', hidxs: [hero.hidx], card: 112142 }],
+                    equip: 112142,
                     status: [[112141, 2]],
                     isForbidden: hasObjById(hero.heroStatus, 112141)
                 })),
@@ -1373,6 +1373,19 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(5).cost(3)
         ),
 
+    1610: () => new HeroBuilder(461).name('卡齐娜').since('v5.5.0').natlan().geo().polearm()
+        .src('/image/tmp/UI_Gcg_CardFace_Char_Avatar_Kachina_2038694556.png')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kachina_1710153075.png')
+        .normalSkill(new NormalSkillBuilder('嵴之啮咬'))
+        .skills(
+            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116101】，并进入【sts116102】，并获得2点｢夜魂值｣。')
+                .src('/image/tmp/Skill_S_Kachina_01.webp')
+                .elemental().cost(2).handle(() => ({ equip: 116101, status: [[116102, 2]] })),
+            new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116103】。')
+                .src('/image/tmp/Skill_E_Kachina_01.webp')
+                .burst(2).damage(1).cost(3).handle(() => ({ status: 116103 }))
+        ),
+
     1701: () => new HeroBuilder(47).name('柯莱').offline('v1').sumeru().dendro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/cca275e9c7e6fa6cf61c5e1d6768db9d_4064677380613373250.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a0f79ba2105b03a5b72e01c14c1ee79c.png')
@@ -1534,6 +1547,31 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/1/1d/n9v0lfr4q0xiampd0miscmsqnfloqjt.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/1a120150229bd26a62ef3ce3dae3b478_6999667122640021034.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 117093 })),
+        ),
+
+    1710: () => new HeroBuilder(462).name('艾梅莉埃').since('v5.5.0').fontaine(HERO_TAG.ArkhePneuma).dendro().polearm()
+        .src('/image/tmp/UI_Gcg_CardFace_Char_Avatar_Emilie_-145625492.png')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Emilie_-544801855.png')
+        .normalSkill(new NormalSkillBuilder('逐影枪术·改').handle(({ talent }) => ({ dmgElement: isCdt(!!talent, DAMAGE_TYPE.Dendro) })))
+        .skills(
+            new SkillBuilder('撷萃调香').description('生成【smn117101】。')
+                .src('/image/tmp/Skill_S_Emilie_01.webp')
+                .elemental().cost(3).handle(() => ({ summon: 117101 })),
+            new SkillBuilder('香氛演绎').description('{dealDmg}。移除场上的【柔灯之匣】。生成【smn117103】。')
+                .src('/image/tmp/Skill_E_Emilie_01.webp')
+                .burst(2).damage(2).cost(3).handle(event => ({
+                    summon: 117103,
+                    exec: () => event.summons?.forEach(smn => getHidById(smn.id) == 1710 && smn.dispose()),
+                })),
+            new SkillBuilder('余薰').description('【我方造成燃烧反应伤害后：】触发1次我方【smn115】的回合结束效果。（每回合1次）')
+                .src('/image/tmp/UI_Talent_S_Emilie_05.webp')
+                .passive().handle(event => {
+                    if (event.skill.useCntPerRound > 0) return;
+                    return {
+                        trigger: ['Bloom', 'other-Bloom'],
+                        cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: ['phase-end'] }],
+                    }
+                })
         ),
 
     2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()

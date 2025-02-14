@@ -1535,6 +1535,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ addDmgType1: 1, attachEl: ELEMENT_TYPE.Geo })),
 
+    116102: nightSoul,
+
+    116103: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2)
+        .description('【此牌在场时：】我方【smn116104】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
+        .handle((status, event) => {
+            if (event.skid != 1161011) return;
+            return { addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
+        }),
+
     117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。（每回合1次）；[roundCnt]')
         .handle((_, event) => {

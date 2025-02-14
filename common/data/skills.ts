@@ -1,6 +1,6 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
 import { CARD_SUBTYPE, CardSubtype, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
-import { allHidxs, getObjById } from "../utils/gameUtil.js"
+import { allHidxs, getNextBackHidx, getObjById, hasObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 
@@ -40,6 +40,7 @@ export type SkillHandleEvent = {
 export type SkillHandleRes = {
     status?: (number | [number, ...any])[] | number,
     statusOppo?: (number | [number, ...any])[] | number,
+    equip?: number,
     summon?: (number | [number, ...any])[] | number,
     trigger?: Trigger[],
     isAttach?: boolean,
@@ -172,6 +173,13 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1151021',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
+
+    1161011: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
+        .src()
+        .vehicle().damage(1).costSame(1).handle(({ heros, combatStatus }) => ({
+            pdmg: hasObjById(combatStatus, 116103) ? 2 : 1,
+            hidxs: getNextBackHidx(heros),
+        })),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1220511')

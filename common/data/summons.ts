@@ -2,7 +2,7 @@
 import { Card, Cmds, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -93,7 +93,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点｢能量层数｣，都使次伤害+1。（影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event = {}) => {
-            const { heros = [], atkHidx = -1, isExec = true, trigger = '' } = event;
+            const { heros = [], talent, isExec = true, trigger = '' } = event;
             const hero = getObjById(heros, getHidById(summon.id));
             if (['enter', 'summon-destroy'].includes(trigger)) {
                 hero?.skills.forEach(skill => {
@@ -103,21 +103,16 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 });
                 return;
             }
-            const fhero = heros[atkHidx];
-            if (fhero?.id == hero?.id && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
-                summon.addUseCnt(!!fhero.talentSlot && trigger == 'skilltype2' ? 3 : 2);
+            if (hero?.isFront && !isExec && ['skilltype1', 'skilltype2'].includes(trigger)) {
+                summon.addUseCnt(!!talent && trigger == 'skilltype2' ? 3 : 2);
             }
             return {
                 trigger: ['phase-end', 'skilltype1', 'skilltype2'],
                 isNotAddTask: trigger != 'phase-end',
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
-                    if (trigger == 'phase-end') {
-                        return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
-                    }
-                    if (fhero?.id == hero?.id) {
-                        smn.addUseCnt(!!hero.talentSlot && trigger == 'skilltype2' ? 3 : 2);
-                    }
+                    if (trigger == 'phase-end') return { cmds: [{ cmd: 'attack', cnt: smn.damage + smn.useCnt }] }
+                    if (hero?.isFront) smn.addUseCnt(!!talent && trigger == 'skilltype2' ? 3 : 2);
                 },
             }
         }),
@@ -223,9 +218,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => {
                 const { summon: smn = summon } = execEvent;
                 smn.phaseEndAtk(event);
-                const { heros = [] } = event;
+                const { heros = [], talent } = event;
                 const hero = getObjById(heros, getHidById(smn.id));
-                const isTalent = !!hero?.talentSlot && hasObjById(hero?.heroStatus, 112052);
+                const isTalent = !!talent && hasObjById(hero?.heroStatus, 112052);
                 return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }, { cmd: 'heal' }] }
             }
         })),
@@ -246,9 +241,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【我方宣布结束时：】如果此牌的[可用次数]至少为2，则造成2点[草元素伤害]。（需消耗[可用次数]）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/865915f8734cdc641df43198eb728497_5603461429712047360.png')
         .handle((summon, event) => {
-            const { heros = [] } = event;
-            const hero = getObjById(heros, getHidById(summon.id));
-            const isTalent = !!hero?.talentSlot;
             const triggers: Trigger[] = ['phase-end'];
             if (summon.useCnt >= 2) triggers.push('end-phase');
             return {
@@ -256,7 +248,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
                     smn.phaseEndAtk(event);
-                    return { cmds: [{ cmd: 'attack', cnt: isCdt(isTalent, smn.damage + 1) }] };
+                    return { cmds: [{ cmd: 'attack', cnt: isCdt(!!event.talent, smn.damage + 1) }] };
                 },
             }
         }),
@@ -309,11 +301,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png')
         .handle((summon, event, ver) => {
-            const { heros = [], atkHidx = -1, trigger = '', isExec = true } = event;
+            const { heros = [], atkHidx = -1, talent, trigger = '', isExec = true } = event;
             const triggers: Trigger[] = [];
             if (summon.useCnt == 0) triggers.push('phase-end');
             const hero = heros[atkHidx];
-            const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!hero?.talentSlot, ver.lt('v4.2.0') ? 3 : 4);
+            const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!talent, ver.lt('v4.2.0') ? 3 : 4);
             if (cnt) triggers.push('after-skilltype1');
             return {
                 trigger: triggers,
@@ -345,10 +337,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description(`{defaultAtk。}${isTalent ? '；【hro】｢普通攻击｣后：造成2点[雷元素伤害]。（需消耗[可用次数]）' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png')
         .handle((summon, event) => {
-            const { heros = [], atkHidx = -1, trigger = '' } = event;
+            const { heros = [], trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             const cnt = isCdt(trigger != 'phase-end', 2);
-            if (heros[atkHidx]?.id == getHidById(summon.id) && summon.isTalent) {
+            if (getObjById(heros, getHidById(summon.id))?.isFront && summon.isTalent) {
                 triggers.push('after-skilltype1');
             }
             return {
@@ -392,7 +384,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
         })),
 
-    114081: (dmg?: number) => new SummonBuilder('杀生樱').useCnt(3).maxUse(6).damage(dmg ?? 1)
+    114081: (dmg: number = 1) => new SummonBuilder('杀生樱').useCnt(3).maxUse(6).damage(dmg)
         .description('{defaultAtk。}；【我方宣布结束时：】如果此牌的[可用次数]至少为4，则造成1点[雷元素伤害]。（需消耗[可用次数]）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/d63267f4388f521b1481a85ace6de257_3147336152102036232.png')
         .handle((summon, event) => {
@@ -448,8 +440,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
-                        return { cmds: [{ cmd: 'changeElement', element }] };
+                        smn.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                     }
                 }
             }
@@ -459,14 +450,14 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk，治疗我方出战角色{shield}点。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/13c4609aff96cf57ad218ddf954ecc08_1272742665837129862.png')
         .handle((summon, event) => {
-            const { heros = [], trigger = '' } = event;
-            const isTalent = !!getObjById(heros, getHidById(summon.id))?.talentSlot;
+            const { talent, trigger = '' } = event;
             return {
                 trigger: ['phase-end', 'Anemo-dmg'],
                 isNotAddTask: trigger == 'Anemo-dmg',
-                addDmgCdt: isCdt(isTalent, 1),
+                addDmgCdt: isCdt(!!talent, 1),
                 exec: execEvent => {
-                    if (trigger == 'phase-end') return (execEvent.summon ?? summon).phaseEndAtk(event);
+                    const { summon: smn = summon } = execEvent;
+                    if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                 }
             }
         }),
@@ -487,8 +478,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                         return { cmds: [{ cmd: 'attack' }, { cmd: 'switch-to', hidxs: [getNearestHidx(hidx, heros)], isOppo: true }] };
                     }
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
-                        return { cmds: [{ cmd: 'changeElement', element }] };
+                        smn.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                     }
                 }
             }
@@ -507,8 +497,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
-                        return { cmds: [{ cmd: 'changeElement', element }] };
+                        smn.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                     }
                 }
             }
@@ -544,8 +533,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                     const { summon: smn = summon } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event);
                     if (trigger.includes('-getdmg') && smn.element == ELEMENT_TYPE.Anemo) {
-                        const element = ELEMENT_TYPE[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
-                        return { cmds: [{ cmd: 'changeElement', element }] };
+                        smn.element = ELEMENT_TYPE[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
                     }
                 },
             }
@@ -577,7 +565,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。（每回合1次）', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
         .handle((summon, event, ver) => {
-            const { heros = [], isFallAtk = false, isMinusDiceSkill, isQuickAction, trigger = '' } = event;
+            const { talent, isFallAtk = false, isMinusDiceSkill, isQuickAction, trigger = '' } = event;
             const triggers: Trigger[] = ['phase-end'];
             let minusDiceCdt = isFallAtk;
             if (ver.lt('v4.8.0')) {
@@ -585,7 +573,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 minusDiceCdt &&= summon.perCnt > 0;
             } else {
                 if (!isQuickAction && summon.perCnt > 0) triggers.push('minus-switch');
-                minusDiceCdt &&= !!getObjById(heros, getHidById(summon.id))?.talentSlot;
+                minusDiceCdt &&= !!talent;
             }
             return {
                 minusDiceSkill: isCdt(minusDiceCdt, { skilltype1: [0, 1, 0] }),
@@ -744,6 +732,17 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     116097: () => new SummonBuilder('千织的自动制御人形').description('千织拥有多种自动制御人形，不但能自动发起攻击，还会提供多种增益效果。'),
 
+    116104: () => new SummonBuilder('冲天转转·脱离').useCnt(1).damage(1)
+        .description('{defaultAtk，对下一个敌方后台角色造成1点[穿透伤害]。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Kachina_-1200666569.png')
+        .handle((summon, event) => {
+            const { heros, talent } = event;
+            const { cmds } = summon.phaseEndAtk(event);
+            if (talent) cmds?.push({ cmd: 'getCard', cnt: 1 });
+            const hidxs = getNextBackHidx(heros);
+            return { cmds, pdmg: 1, hidxs }
+        }),
+
     117011: () => new SummonBuilder('柯里安巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png'),
 
@@ -774,15 +773,63 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     117093: () => new SummonBuilder('伟大圣龙阿乔').useCnt(2).damage(1)
         .description('{defaultAtk，然后对敌方下一个角色造成1点[草元素伤害]。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/3490c9f20c262433875fd6e584e6d627_7543779796581839169.png')
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { eheros = [] } = event;
+                const { summon: smn = summon } = execEvent;
+                const { cmds = [] } = smn.phaseEndAtk(event);
+                const backHidxs = getNextBackHidx(eheros);
+                if (backHidxs.length > 0) cmds.push({ cmd: 'attack', hidxs: backHidxs });
+                return { cmds }
+            }
+        })),
+
+    117101: () => new SummonBuilder('柔灯之匣·一阶').useCnt(3).maxUse(6).damage(1)
+        .description('{defaultAtk。；【我方造成燃烧反应伤害后：】此牌升级为【smn117102】。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_1_-376351845.png')
         .handle((summon, event) => {
-            const { eheros = [] } = event;
-            const backHidxs = getBackHidxs(eheros);
+            const { talent, heros, trigger = '' } = event;
+            const triggers: Trigger[] = ['Bloom', 'other-Bloom', 'phase-end'];
+            if (talent && getObjById(heros, getHidById(summon.id))?.isFront) triggers.push('after-skilltype1');
             return {
-                trigger: ['phase-end'],
+                trigger: triggers,
+                exec: execEvent => {
+                    if (trigger.includes('Bloom')) return { cmds: [{ cmd: 'changeSummon', cnt: 117102, hidxs: [summon.id] }] }
+                    const { summon: smn = summon } = execEvent;
+                    return smn.phaseEndAtk(event);
+                }
+            }
+        }),
+
+    117102: (cnt: number = 3) => new SummonBuilder('柔灯之匣·二阶').useCnt(cnt).maxUse(6).damage(2).description('{defaultAtk。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_2_825775385.png')
+        .handle((summon, event) => {
+            const { talent, heros } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (talent && getObjById(heros, getHidById(summon.id))?.isFront) triggers.push('after-skilltype1');
+            return {
+                trigger: triggers,
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;
+                    return smn.phaseEndAtk(event);
+                }
+            }
+        }),
+
+    117103: () => new SummonBuilder('柔灯之匣·三阶').useCnt(1).damage(1).description('{对敌方全体defaultAtk。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_3_-1733244062.png')
+        .handle((summon, event) => {
+            const { talent, heros } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (talent && getObjById(heros, getHidById(summon.id))?.isFront) triggers.push('after-skilltype1');
+            return {
+                trigger: triggers,
+                exec: execEvent => {
+                    const { eheros = [] } = event;
+                    const { summon: smn = summon } = execEvent;
                     const { cmds = [] } = smn.phaseEndAtk(event);
-                    if (backHidxs.length > 0) cmds.push({ cmd: 'attack', hidxs: [backHidxs[0]] });
+                    getBackHidxs(eheros).forEach(hi => cmds.push({ cmd: 'attack', hidxs: [hi] }));
                     return { cmds }
                 }
             }
@@ -940,10 +987,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。（最多叠加到3）；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png')
         .handle((summon, event) => {
-            const { trigger = '', heros = [], dmgedHidx = -1, getdmg = [] } = event;
+            const { trigger = '', heros = [], talent, dmgedHidx = -1, getdmg = [] } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hero = getObjById(heros, getHidById(summon.id));
-            if ((hero?.talentSlot?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
+            if ((talent?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
             const isHero = hero?.isFront && (getdmg[dmgedHidx] ?? -1) != -1;
             if (isHero && trigger == 'get-elReaction') {
                 triggers.push('get-elReaction');

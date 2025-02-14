@@ -1470,9 +1470,10 @@ export default class GeniusInvokationRoom {
         skill = this._calcSkillChange(pidx, cahidx, { isReadySkill, skid, players, isExec, isChargedAtk });
         isChargedAtk &&= skill?.type == SKILL_TYPE.Normal;
         if (skill) skid = skill.id;
+        const hero = aHeros()[cahidx];
         const skillres = skill?.handle({
             skill,
-            hero: aHeros()[cahidx],
+            hero,
             heros: aHeros(),
             combatStatus: aCombatStatus(),
             eheros: eHeros(),
@@ -1646,11 +1647,12 @@ export default class GeniusInvokationRoom {
                 }
             });
         });
-        const stscmds: Cmds[] = [
+        const hfieldcmds: Cmds[] = [
+            { cmd: 'equip', hidxs: skillres.hidxs ?? [hero.hidx], card: skillres.equip },
             { cmd: 'getStatus', status: skillres.status, hidxs: skillres.hidxs },
             { cmd: 'getStatus', status: skillres.statusOppo, hidxs: skillres.hidxs, isOppo: true },
         ];
-        this._doCmds(pidx, stscmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
+        this._doCmds(pidx, hfieldcmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
         const tarHidx = aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).some(([d, p]) => d > -1 || p > 0) ? dmgedHidx : -1;
         if (skill && isExec) {
             players[pidx].isFallAtk = ifa;
@@ -1758,7 +1760,7 @@ export default class GeniusInvokationRoom {
             }
         }
         for (const smn of (isExec ? players : bPlayers)[pidx].summons) {
-            if (!oSummonEids.includes(smn.entityId) || (selectSummon != -1 && bPlayers[pidx].summons[selectSummon].entityId != smn.entityId)) continue;
+            if (!oSummonEids.includes(smn.entityId) || (selectSummon != -1 && (bPlayers[pidx].summons[selectSummon] ?? bPlayers[pidx].summons.find(s => s.id == selectSummon))?.entityId != smn.entityId)) continue;
             const strigger = [...dtriggers, ...(skillres.summonTrigger ?? [])];
             if (skill && skill.type != SKILL_TYPE.Vehicle) strigger.push(`after-skilltype${skill.type}`, 'after-skill')
             strigger.forEach(trg => {
@@ -4426,8 +4428,7 @@ export default class GeniusInvokationRoom {
                             combatStatus: player.combatStatus,
                             eCombatStatus: players[pidx ^ 1].combatStatus,
                         }) ?? {};
-                        const { changedEl } = this._doCmds(pidx, cmds, { players, isExec, isPriority: true });
-                        if (changedEl) summon.element = changedEl;
+                        this._doCmds(pidx, cmds, { players, isExec, isPriority: true });
                         smncmds.push(...cmds);
                     }
                     continue;
@@ -4463,6 +4464,7 @@ export default class GeniusInvokationRoom {
                                 eCombatStatus,
                             });
                             this._writeLog(`[${player.name}]${state}:${smn.name}${oCnt != -1 ? `.useCnt:${oCnt}→${smn.useCnt}` : ''}${smn.perCnt != -1 ? `.perCnt:${oPct}→${smn.perCnt}` : ''}`, 'system');
+                            const selected = [pidx, getObjIdxById(aSummons, smn.id), +(smn.useCnt == 0 && state == 'phase-end')];
                             if (smnexecres?.cmds) {
                                 const damages: SmnDamageHandle = (isOppo: boolean = true, cnt?: number, element?: DamageType, hidxs?: number[]) => {
                                     const dmgElement = element ?? smn.element;
@@ -4474,7 +4476,7 @@ export default class GeniusInvokationRoom {
                                         ]),
                                     }
                                 }
-                                const { changedEl, ndices, atkedIdxs: [tarHidx] = [-1], bWillDamages: willDamages = [],
+                                const { ndices, atkedIdxs: [tarHidx] = [-1], bWillDamages: willDamages = [],
                                     willHeals: [willHeals] = [], bDmgElements: dmgElements = [], elTips = [] }
                                     = this._doCmds(pidx, smnexecres.cmds, {
                                         heal: isCdt(smn.shieldOrHeal > 0, smn.shieldOrHeal),
@@ -4482,9 +4484,7 @@ export default class GeniusInvokationRoom {
                                         isSummon: smn.id,
                                         isUnshift: true,
                                     });
-                                if (changedEl) smn.element = changedEl;
                                 if (ndices) this.players[pidx].dice = ndices;
-                                const selected = [pidx, getObjIdxById(aSummons, smn.id), +(smn.useCnt == 0 && state == 'phase-end')];
                                 const tround = summonres.tround ?? 0;
                                 await this._doDamage(pidx, {
                                     dmgSource: 'summon',
@@ -4512,6 +4512,8 @@ export default class GeniusInvokationRoom {
                                     };
                                     this.taskQueue.addTask(`summon-${smn.name}(${smn.entityId})r${tround}:${state}`, args, { isUnshift: true, isDmg: true });
                                 }
+                            } else {
+                                this.emit(`_doSummon-${smn.name}(${smn.entityId}):${state}`, pidx, { summonSelect: selected, isQuickAction });
                             }
                         };
                         task.push([summonHandle1, 1e3]);
@@ -4713,7 +4715,7 @@ export default class GeniusInvokationRoom {
      * @param options withCard 是否使用卡, hidxs 角色索引组, heal 回血量, isExec 是否执行, heros 角色组, eheros 敌方角色组,
      *                ahidx 攻击角色序号, ehidx 受击角色序号, isAction 是否为战斗行动, source 触发来源id, getdmg 受到的伤害
      *                trigger 触发命令的时机, isPriority 是否为优先命令
-     * @returns ndices 骰子, phase 阶段, heros 角色组, eheros 敌方角色组, heroStatus 获得角色状态, willHeals 回血组, changedEl 变化元素
+     * @returns ndices 骰子, phase 阶段, heros 角色组, eheros 敌方角色组, heroStatus 获得角色状态, willHeals 回血组,
      */
     private _doCmds(pidx: number, cmds?: Cmds[],
         options: {
@@ -4725,10 +4727,9 @@ export default class GeniusInvokationRoom {
         } = {}
     ): {
         cmds?: Cmds[], ndices?: DiceCostType[], phase?: Phase, heros?: Hero[], eheros?: Hero[], willHeals?: number[][],
-        changedEl?: ElementType, isSwitch?: number, isSwitchOppo?: number, willSwitch?: boolean[][],
-        supportCnt?: number[][], elTips?: [string, PureElementType, PureElementType][], willAttachs?: PureElementType[][],
-        aWillDamages?: number[][][], bWillDamages?: number[][], aDmgElements?: DamageType[], bDmgElements?: DamageType[],
-        atkedIdxs?: number[], attackPreview?: Preview, tasks?: AtkTask[],
+        isSwitch?: number, isSwitchOppo?: number, willSwitch?: boolean[][], supportCnt?: number[][], willAttachs?: PureElementType[][],
+        elTips?: [string, PureElementType, PureElementType][], aWillDamages?: number[][][], bWillDamages?: number[][],
+        aDmgElements?: DamageType[], bDmgElements?: DamageType[], atkedIdxs?: number[], attackPreview?: Preview, tasks?: AtkTask[],
     } {
         const { players = this.players } = options;
         const player = players[pidx];
@@ -4751,7 +4752,6 @@ export default class GeniusInvokationRoom {
         let willHeals: number[][] = [];
         const notPreHeal: boolean[] = [];
         const notDetect: boolean[] = [];
-        let changedEl: ElementType | undefined;
         let attackPreview: Preview | undefined;
         const tasks: AtkTask[] = [];
         const elTips: [string, PureElementType, PureElementType][] = Array.from({ length: cheros.length + ceheros.length }, () => ['', ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Cryo]);
@@ -5155,8 +5155,10 @@ export default class GeniusInvokationRoom {
                 });
                 if (cnt == 0) cmds[i].cnt = heal;
                 if (isExec && cmd == 'revive') this._detectSkill(pidx, 'revive', { hidxs });
-            } else if (cmd == 'changeElement') {
-                changedEl = element as ElementType;
+            } else if (cmd == 'changeSummon') {
+                const osummon = player.summons[ohidxs?.[0] ?? -1] ?? player.summons.find(s => s.id == ohidxs?.[0]);
+                if (!osummon) continue;
+                player.summons.splice(getObjIdxById(player.summons, osummon.id), 1, this.newSummon(cnt, osummon.useCnt).setEntityId(osummon.entityId));
             } else if (cmd == 'changePattern') {
                 if (hidxs == undefined) throw new Error('hidxs is undefined');
                 const newPattern = this.newHero(cnt);
@@ -5322,6 +5324,7 @@ export default class GeniusInvokationRoom {
                     this.emit(`pickCard-${i}`, pidx);
                 }]], { isUnshift, isPriority });
             } else if (cmd == 'equip') {
+                if (!card) continue;
                 (ohidxs ?? [(isOppo ? opponent : player).hidx]).forEach(hidx => {
                     this._doEquip(pidx, player.heros[hidx], card as Card | number, { isExec });
                 });
@@ -5398,9 +5401,8 @@ export default class GeniusInvokationRoom {
         }
         if (combatStatusOppo) this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, players, { hidx: ehidx, isExec, supportCnt, isQuickAction: !isAction });
         return {
-            cmds, phase, heros: cheros, eheros: ceheros, willHeals, changedEl, isSwitch, isSwitchOppo,
-            willSwitch, supportCnt, elTips, willAttachs, aDmgElements, bDmgElements, aWillDamages, bWillDamages,
-            attackPreview, atkedIdxs, tasks,
+            cmds, phase, heros: cheros, eheros: ceheros, willHeals, isSwitch, isSwitchOppo, willSwitch, supportCnt,
+            elTips, willAttachs, aDmgElements, bDmgElements, aWillDamages, bWillDamages, attackPreview, atkedIdxs, tasks,
         }
     }
     /**
@@ -5808,7 +5810,7 @@ export default class GeniusInvokationRoom {
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
                 oriSummon[csmnIdx].damage = smn.damage;
-            } else if (oriSummon.length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
+            } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(this._genEntityId());
                 oriSummon.push(csummon);
                 const { smnres = {} } = this._detectSummon(pidx, 'enter', { players, csummon: [smn], isExec });

@@ -1,10 +1,10 @@
 import { Card, VersionCompareFn } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
-    HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
+    HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
-import { compareVersionFn, getHidById, getVehicleIdByCid } from "../../utils/gameUtil.js";
+import { compareVersionFn, getHidById, getVehicleIdByCid, hasObjById } from "../../utils/gameUtil.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -83,11 +83,7 @@ export class GICard {
             }
             this.UI.description += `；（角色最多装备1个｢特技｣）`;
             this.UI.explains.push(vehicle);
-            handle ??= (card, event) => {
-                const { skid = -1 } = event;
-                if (skid != getVehicleIdByCid(card.id)) return;
-                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
-            };
+            handle ??= card => ({ trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() });
         } else if (subType.includes(CARD_SUBTYPE.Food)) {
             if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；（每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣）`;
             else this.UI.description += `；（每回合每个角色最多食用1次｢料理｣）`;
@@ -219,6 +215,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _src: string = '';
     private _explains: string[] = [];
     private _cnt: number = 2;
+    private _isUseNightSoul: boolean = false;
     constructor(shareId?: number) {
         super(shareId ?? -1);
         if (shareId == undefined) this._cnt = -2;
@@ -256,8 +253,9 @@ export class CardBuilder extends BaseCostBuilder {
         this._subtype.push(CARD_SUBTYPE.Artifact);
         return this.equipment();
     }
-    vehicle() {
+    vehicle(isUseNightSoul: boolean = false) {
         this._subtype.push(CARD_SUBTYPE.Vehicle);
+        this._isUseNightSoul = isUseNightSoul;
         return this.equipment();
     }
     talent(skillIdx: number = -1, version: Version = 'vlatest') {
@@ -364,12 +362,33 @@ export class CardBuilder extends BaseCostBuilder {
                 return { support: card.id, ...handle?.(card, event, ver) }
             };
         }
-        const description = this._description.get(this._curVersion, '');
+        const description = this._description.get(this._curVersion, '') +
+            (this._isUseNightSoul ? '；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【sts112141】。' : '');
         const cost = this._cost.get(this._curVersion, 0);
         const costType = this._costType.get(this._curVersion, DICE_TYPE.Same);
         const useCnt = this._useCnt.get(this._curVersion, -1);
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const energy = this._energy.get(this._curVersion, 0);
+        if (this._isUseNightSoul) {
+            const ohandle = this._handle;
+            this._handle = (card, event, ver) => {
+                const res = ohandle?.(card, event, ver);
+                if (!res?.trigger) return res;
+                const { hidxs = [], heros = [], combatStatus = [], source = -1, trigger = '' } = event;
+                const hero = heros[hidxs[0]];
+                if (!hero) return;
+                const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                if (!nightSoul) return;
+                if (trigger == 'get-status' && source == 112145) {
+                    if (hasObjById(combatStatus, 303238) || nightSoul.useCnt > 1) return;
+                    return { trigger: ['get-status'], isDestroy: true, exec: () => nightSoul.dispose() }
+                }
+                return {
+                    ...res,
+                    execmds: [...(res?.execmds ?? []), { cmd: 'getStatus', status: 112145, hidxs }],
+                }
+            }
+        }
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
             cost, costType, this._type, this._subtype, userType, this._offlineVersion, this._handle,
             {

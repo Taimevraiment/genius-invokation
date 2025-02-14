@@ -10,7 +10,6 @@ import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
-import { newSummon } from './summons.js';
 
 export type CardHandleEvent = {
     pidx?: number,
@@ -1231,9 +1230,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/9a5a0408639062f81d7ed4007eea7a19_7598137844845621529.png')
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为｢快速行动｣而非｢战斗行动｣，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
         .handle((card, event) => {
-            const { eheros = [], dmgedHidx = -1, hcardsCnt = 0, skid = -1, switchHeroDiceCnt = 0, trigger = '' } = event;
+            const { eheros = [], dmgedHidx = -1, hcardsCnt = 0, switchHeroDiceCnt = 0, trigger = '' } = event;
             if (trigger == 'vehicle') {
-                if (skid != getVehicleIdByCid(card.id)) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
             }
             const triggers: Trigger[] = [];
@@ -2935,6 +2933,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中[挑选]1个并召唤。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 
+    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent(-2).costSame(0)
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【此牌在场时：】我方【crd116101】或【smn116104】触发效果后，抓1张牌。')
+        .src('/image/tmp/UI_Gcg_CardFace_Modify_Talent_Kachina_-298830647.png'),
+
     217011: () => new CardBuilder(107).name('飞叶迴斜').offline('v1').talent(1).costDendro(4).costDendro(3, 'v3.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。（每回合1次）')
         .src('https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png'),
@@ -3002,6 +3004,10 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => card.minusPerCnt()
             }
         }),
+
+    217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent(-2).costSame(0)
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；所附属角色造成的[物理伤害]变为[草元素伤害]。；【装备有此牌的〖hro〗｢普通攻击｣后：】我方｢柔灯之匣｣立刻行动一次。')
+        .src('/image/tmp/UI_Gcg_CardFace_Modify_Talent_Emilie_2014980344.png'),
 
     221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
@@ -3248,8 +3254,8 @@ const allCards: Record<number, () => CardBuilder> = {
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0)
         .description('在｢始基力:荒性｣和｢始基力:芒性｣之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6b2b966c07c54e8d86dd0ef057ae5c4a_6986508112474897949.png')
-        .handle((card, event, ver) => {
-            const { heros = [], summons = [] } = event;
+        .handle((card, event) => {
+            const { heros = [] } = event;
             const hidx = getObjIdxById(heros, getHidById(card.id));
             if (hidx == -1) return;
             const hero = heros[hidx];
@@ -3259,6 +3265,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 cmds: [
                     { cmd: 'loseSkill', hidxs: [hidx], mode: 1 },
                     { cmd: 'getSkill', hidxs: [hidx], cnt: 12112 + nsummonId * 10, mode: 1 },
+                    { cmd: 'changeSummon', cnt: 112111 + nsummonId, hidxs: [112111 + (nsummonId ^ 1)] },
                 ],
                 exec: () => {
                     hero.tags.pop();
@@ -3268,12 +3275,6 @@ const allCards: Record<number, () => CardBuilder> = {
                     } else {
                         hero.tags.push(HERO_TAG.ArkhePneuma);
                         hero.UI.src = hero.UI.srcs[1];
-                    }
-                    const smnIdx = getObjIdxById(summons, 112111 + (nsummonId ^ 1));
-                    if (smnIdx > -1) {
-                        const useCnt = summons[smnIdx].useCnt;
-                        const entityId = summons[smnIdx].entityId;
-                        summons.splice(smnIdx, 1, newSummon(ver.value)(112111 + nsummonId, useCnt).setEntityId(entityId));
                     }
                 }
             }
@@ -3306,22 +3307,17 @@ const allCards: Record<number, () => CardBuilder> = {
             execmds: [{ cmd: 'heal', cnt: 1, hidxs: allHidxs(event.heros) }, { cmd: 'getStatus', status: 112101 }],
         })),
 
-    112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().costSame(0)
+    112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle(true).costSame(0)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/d5b28af6dee07cf37bb2bfaa757a4656_5892221598902559399.png')
-        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【sts112141】。')
+        .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。')
         .handle((_, event) => {
-            const { hidxs = [], heros = [], combatStatus = [], trigger = '' } = event;
+            const { hidxs = [], heros = [], trigger = '' } = event;
             const hero = heros[hidxs[0]];
-            if (!hero || trigger == 'switch-oppo' && !hero.isFront) return;
-            const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
-            if (!nightSoul) return;
-            const isDestroy = nightSoul.useCnt == 1 && !hasObjById(combatStatus, 303238);
+            if (trigger == 'switch-oppo' && !hero.isFront) return;
             return {
                 trigger: ['switch-to', 'switch-oppo'],
                 isAddTask: true,
-                isDestroy,
-                execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }, { cmd: 'getStatus', status: 112145, hidxs }],
-                exec: () => { isDestroy && (nightSoul.roundCnt = 0) }
+                execmds: [{ cmd: 'getStatus', status: 112143, isOppo: true }],
             }
         }),
 
@@ -3350,6 +3346,19 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
         .handle(() => ({ cmds: [{ cmd: 'attack', element: DAMAGE_TYPE.Physical, cnt: 1 }, { cmd: 'getCard', cnt: 1 }] })),
 
+    116101: () => new CardBuilder().name('冲天转转').vehicle(true).costSame(0)
+        .description('【附属角色切换至后台时：】消耗1点｢夜魂值｣，召唤【smn116104】。')
+        .handle((_, event) => {
+            const { heros = [], hidxs: [hidx] = [-1], trigger = '' } = event;
+            if (trigger == 'vehicle') return { trigger: ['vehicle'], status: 112145 }
+            return {
+                trigger: ['switch-from'],
+                isAddTask: true,
+                summon: 116104,
+                execmds: isCdt(!!heros[hidx]?.talentSlot, [{ cmd: 'getCard', cnt: 1 }]),
+            }
+        }),
+
     122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
 
@@ -3357,9 +3366,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {
-            const { heros = [], restDmg = -1, skid = -1, hidxs = [], trigger = '' } = event;
+            const { heros = [], restDmg = -1, hidxs = [], trigger = '' } = event;
             if (trigger == 'vehicle') {
-                if (skid != getVehicleIdByCid(card.id)) return;
                 return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
             }
             if (restDmg == -1) return;

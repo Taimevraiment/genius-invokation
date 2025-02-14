@@ -205,8 +205,8 @@ export const HERO_LOCAL_NAME = {
     [HERO_LOCAL.Fatui]: '愚人众',
     [HERO_TAG.Hilichurl]: '丘丘人',
     [HERO_TAG.Eremite]: '镀金旅团',
-    [HERO_TAG.ArkheOusia]: '始基力:荒性',
-    [HERO_TAG.ArkhePneuma]: '始基力:芒性',
+    [HERO_TAG.ArkheOusia]: '始基力：荒性',
+    [HERO_TAG.ArkhePneuma]: '始基力：芒性',
     [HERO_TAG.ConsecratedBeast]: '圣骸兽',
 } as const;
 
