@@ -735,13 +735,18 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     116104: () => new SummonBuilder('冲天转转·脱离').useCnt(1).damage(1)
         .description('{defaultAtk，对下一个敌方后台角色造成1点[穿透伤害]。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Kachina_-1200666569.png')
-        .handle((summon, event) => {
-            const { heros, talent } = event;
-            const { cmds } = summon.phaseEndAtk(event);
-            if (talent) cmds?.push({ cmd: 'getCard', cnt: 1 });
-            const hidxs = getNextBackHidx(heros);
-            return { cmds, pdmg: 1, hidxs }
-        }),
+        .handle((summon, event) => ({
+            trigger: ['phase-end'],
+            exec: execEvent => {
+                const { eheros, talent } = event;
+                const { summon: smn = summon } = execEvent;
+                const { cmds } = smn.phaseEndAtk(event);
+                const hidxs = getNextBackHidx(eheros);
+                if (hidxs.length) cmds?.push({ cmd: 'attack', element: DAMAGE_TYPE.Pierce, cnt: 1, hidxs });
+                if (talent) cmds?.push({ cmd: 'getCard', cnt: 1 });
+                return { cmds }
+            }
+        })),
 
     117011: () => new SummonBuilder('柯里安巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png'),
@@ -790,12 +795,12 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_1_-376351845.png')
         .handle((summon, event) => {
             const { talent, heros, trigger = '' } = event;
-            const triggers: Trigger[] = ['Bloom', 'other-Bloom', 'phase-end'];
+            const triggers: Trigger[] = ['Burning', 'other-Burning', 'phase-end'];
             if (talent && getObjById(heros, getHidById(summon.id))?.isFront) triggers.push('after-skilltype1');
             return {
                 trigger: triggers,
                 exec: execEvent => {
-                    if (trigger.includes('Bloom')) return { cmds: [{ cmd: 'changeSummon', cnt: 117102, hidxs: [summon.id] }] }
+                    if (trigger.includes('Burning')) return { cmds: [{ cmd: 'changeSummon', cnt: 117102, hidxs: [summon.id] }] }
                     const { summon: smn = summon } = execEvent;
                     return smn.phaseEndAtk(event);
                 }

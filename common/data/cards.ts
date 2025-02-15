@@ -61,6 +61,7 @@ export type CardHandleEvent = {
     selectSummon?: number,
     selectSupport?: number,
     source?: number,
+    sourceHidx?: number,
     dmgSource?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
     randomInt?: (max?: number) => number,
@@ -2635,8 +2636,8 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿还').since('v5.4.0').talent(-2).costPyro(2)
-        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。；使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
+    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿…').since('v5.4.0').talent(-2).costPyro(2)
+        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/9770a329be6b9be3965bc3240c531cb4_511464347620244194.png')
         .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
@@ -2935,7 +2936,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent(-2).costSame(0)
         .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【此牌在场时：】我方【crd116101】或【smn116104】触发效果后，抓1张牌。')
-        .src('/image/tmp/UI_Gcg_CardFace_Modify_Talent_Kachina_-298830647.png'),
+        .src('tmp/UI_Gcg_CardFace_Modify_Talent_Kachina_-298830647'),
 
     217011: () => new CardBuilder(107).name('飞叶迴斜').offline('v1').talent(1).costDendro(4).costDendro(3, 'v3.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。（每回合1次）')
@@ -3007,7 +3008,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent(-2).costSame(0)
         .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；所附属角色造成的[物理伤害]变为[草元素伤害]。；【装备有此牌的〖hro〗｢普通攻击｣后：】我方｢柔灯之匣｣立刻行动一次。')
-        .src('/image/tmp/UI_Gcg_CardFace_Modify_Talent_Emilie_2014980344.png'),
+        .src('tmp/UI_Gcg_CardFace_Modify_Talent_Emilie_2014980344'),
 
     221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
@@ -3349,8 +3350,7 @@ const allCards: Record<number, () => CardBuilder> = {
     116101: () => new CardBuilder().name('冲天转转').vehicle(true).costSame(0)
         .description('【附属角色切换至后台时：】消耗1点｢夜魂值｣，召唤【smn116104】。')
         .handle((_, event) => {
-            const { heros = [], hidxs: [hidx] = [-1], trigger = '' } = event;
-            if (trigger == 'vehicle') return { trigger: ['vehicle'], status: 112145 }
+            const { heros = [], hidxs: [hidx] = [-1] } = event;
             return {
                 trigger: ['switch-from'],
                 isAddTask: true,

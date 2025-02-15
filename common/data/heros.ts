@@ -521,13 +521,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u502gh/751d43f3f0f8c0c7ff15116b7a6286c8.png')
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
-            new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
+            new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/c/cf/6st36uogdsny0hmvb5j4uqh1i9lj27n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/c0769da88723a8460722bf3f9b45a36d_6871593320341772759.png')
-                .elemental().cost(2).handle(({ hero }) => ({
+                .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
                     equip: 112142,
                     status: [[112141, 2]],
-                    isForbidden: hasObjById(hero.heroStatus, 112141)
+                    isForbidden: hasObjById(heroStatus, 112141)
                 })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/20/deylgtgmao0abaizxdec4d3ya8ivhoq.png',
@@ -1378,9 +1378,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kachina_1710153075.png')
         .normalSkill(new NormalSkillBuilder('嵴之啮咬'))
         .skills(
-            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116101】，并进入【sts116102】，并获得2点｢夜魂值｣。')
+            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116101】，并进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Kachina_01.webp')
-                .elemental().cost(2).handle(() => ({ equip: 116101, status: [[116102, 2]] })),
+                .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
+                    equip: 116101,
+                    status: [[116102, 2]],
+                    isForbidden: hasObjById(heroStatus, 116102),
+                })),
             new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116103】。')
                 .src('/image/tmp/Skill_E_Kachina_01.webp')
                 .burst(2).damage(1).cost(3).handle(() => ({ status: 116103 }))
@@ -1561,14 +1565,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/Skill_E_Emilie_01.webp')
                 .burst(2).damage(2).cost(3).handle(event => ({
                     summon: 117103,
-                    exec: () => event.summons?.forEach(smn => getHidById(smn.id) == 1710 && smn.dispose()),
+                    exec: () => event.summons?.forEach(smn => getHidById(smn.id) == 1710 && smn.dispose(event.isExec)),
                 })),
             new SkillBuilder('余薰').description('【我方造成燃烧反应伤害后：】触发1次我方【smn115】的回合结束效果。（每回合1次）')
                 .src('/image/tmp/UI_Talent_S_Emilie_05.webp')
                 .passive().handle(event => {
                     if (event.skill.useCntPerRound > 0) return;
                     return {
-                        trigger: ['Bloom', 'other-Bloom'],
+                        trigger: ['Burning', 'other-Burning'],
                         cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: ['phase-end'] }],
                     }
                 })

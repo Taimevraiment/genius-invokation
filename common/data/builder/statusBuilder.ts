@@ -175,8 +175,8 @@ export class GIStatus {
         if (nrcnt < 0) throw new Error(`${this.name}(${this.entityId}).roundCnt < 0`);
         this.roundCnt = nrcnt;
     }
-    dispose(): void {
-        this.useCnt = 0;
+    dispose(isOnlyRoundCnt: boolean = false): void {
+        if (!isOnlyRoundCnt) this.useCnt = 0;
         this.roundCnt = 0;
     }
 }

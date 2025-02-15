@@ -1537,11 +1537,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116102: nightSoul,
 
-    116103: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2)
-        .description('【此牌在场时：】我方【smn116104】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
+    116103: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2).type(STATUS_TYPE.AddDamage).icon('ski,2')
+        .description('【此牌在场时：】我方【rsk1161011】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
         .handle((status, event) => {
             if (event.skid != 1161011) return;
-            return { addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
+            return { trigger: ['Geo-dmg'], addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
         }),
 
     117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)

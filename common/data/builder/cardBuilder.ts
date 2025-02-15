@@ -373,15 +373,14 @@ export class CardBuilder extends BaseCostBuilder {
             const ohandle = this._handle;
             this._handle = (card, event, ver) => {
                 const res = ohandle?.(card, event, ver);
-                if (!res?.trigger) return res;
-                const { hidxs = [], heros = [], combatStatus = [], source = -1, trigger = '' } = event;
+                const { hidxs = [], heros = [], combatStatus = [], source = -1, sourceHidx = -1, trigger = '' } = event;
                 const hero = heros[hidxs[0]];
-                if (!hero) return;
+                if (!hero) return res;
                 const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
-                if (!nightSoul) return;
-                if (trigger == 'get-status' && source == 112145) {
-                    if (hasObjById(combatStatus, 303238) || nightSoul.useCnt > 1) return;
-                    return { trigger: ['get-status'], isDestroy: true, exec: () => nightSoul.dispose() }
+                if (!nightSoul) return res;
+                if (trigger == 'get-status' && source == 112145 && sourceHidx == hidxs[0] &&
+                    !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
+                    return { trigger: ['get-status'], isDestroy: true, exec: () => { nightSoul.dispose(true) } }
                 }
                 return {
                     ...res,

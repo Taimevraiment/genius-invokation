@@ -51,7 +51,7 @@ export default class GeniusInvokationClient {
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
     tip: string = ''; // 提示信息
-    actionInfo: ActionInfo = { content: '', card: null }; // 行动信息
+    actionInfo: ActionInfo = { content: '' }; // 行动信息
     currCard: Card = NULL_CARD(); // 当前选择的卡
     currSkill: Skill = NULL_SKILL(); // 当前选择的技能
     vehicleSkill: Skill | null = null; // 当前特技
@@ -501,7 +501,8 @@ export default class GeniusInvokationClient {
         this._sendTip(tip);
         if (actionInfo.content != '') {
             this.actionInfo = actionInfo;
-            setTimeout(() => this.actionInfo = { content: '', card: null }, 1e3);
+            setTimeout(() => this.actionInfo.isShow = false, 800);
+            setTimeout(() => this.actionInfo = { content: '' }, 1e3);
         }
         const setSelect = (retry = 0) => {
             try {

@@ -176,10 +176,13 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1161011: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src()
-        .vehicle().damage(1).costSame(1).handle(({ heros, combatStatus }) => ({
-            pdmg: hasObjById(combatStatus, 116103) ? 2 : 1,
-            hidxs: getNextBackHidx(heros),
-        })),
+        .vehicle().damage(1).costSame(1).handle(event => {
+            const { eheros, combatStatus, hero: { hidx } } = event;
+            const hidxs = getNextBackHidx(eheros);
+            const cmds: Cmds[] = [{ cmd: 'getStatus', status: 112145, hidxs: [hidx] }];
+            if (hidxs.length == 0) return { cmds }
+            return { pdmg: hasObjById(combatStatus, 116103) ? 2 : 1, hidxs, cmds }
+        }),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1220511')

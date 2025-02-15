@@ -42,17 +42,20 @@ export default class TaskQueue {
         this._writeLog((isUnshift ? 'unshift' : isPriority ? 'priotity' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
     }
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
-        this._writeLog('execTask-' + taskType, 'emit');
+        this._writeLog('execTask-start-' + taskType, 'emit');
         if (this.env == 'dev') console.time('execTask-end-' + taskType);
         if (!this.priorityQueue && this.queue.length > 0) {
             this.priorityQueue = [];
         }
         let res = true;
+        let duration = 0;
         for (const [func, after = 0, before = 0] of funcs) {
             if (this.env != 'test') await delay(before);
             res = !!await func();
             if (this.env != 'test') await delay(after);
+            duration += before + after;
         }
+        this._writeLog(`execTask-end-${taskType}:${duration}ms`, 'emit');
         this.isExecuting = true;
         if (this.env == 'dev') console.timeEnd('execTask-end-' + taskType);
         return res;

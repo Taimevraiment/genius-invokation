@@ -172,11 +172,19 @@
     </div>
 
     <div class="modal-action" :class="{
-      'modal-action-my': client.player?.status == PLAYER_STATUS.PLAYING && client.actionInfo.content != '',
-      'modal-action-oppo': client.opponent?.status == PLAYER_STATUS.PLAYING && client.actionInfo.content != '',
-      'modal-action-leave': client.actionInfo.content == '',
+      'modal-action-my': !client.actionInfo.isOppo && client.actionInfo.isShow,
+      'modal-action-oppo': client.actionInfo.isOppo && client.actionInfo.isShow,
+      'modal-action-my-leave': !client.actionInfo.isOppo && !client.actionInfo.isShow,
+      'modal-action-oppo-leave': client.actionInfo.isOppo && !client.actionInfo.isShow,
     }">
-      <div>{{ client.actionInfo.content }}</div>
+      <div class="modal-action-skill" v-if="client.actionInfo.skill">
+        <img :src="client.actionInfo.skill.avatar" alt="">
+        <div class="modal-action-skill-info">
+          <div style="font-size: 1.2em;">{{ client.actionInfo.skill.name }}</div>
+          <div style="color: #f4dca2;">{{ client.actionInfo.skill.type }}</div>
+        </div>
+      </div>
+      <div v-else>{{ client.actionInfo.content }}</div>
       <Handcard v-if="client.actionInfo.card" style="position: relative;margin-top: 10px;"
         :card="client.actionInfo.card" :isMobile="isMobile" :isHideCost="true">
       </Handcard>
@@ -956,7 +964,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: 1s;
+  transition: .5s;
   color: white;
   background-color: #254162b9;
   border: 5px solid #1c3149b9;
@@ -966,14 +974,39 @@ body {
 
 .modal-action-my {
   left: 20px;
+  opacity: 1;
 }
 
 .modal-action-oppo {
   right: 20px;
+  opacity: 1;
 }
 
-.modal-action-leave {
+.modal-action-my-leave {
+  left: 0;
   opacity: 0;
+}
+
+.modal-action-oppo-leave {
+  right: 0;
+  opacity: 0;
+}
+
+.modal-action-skill {
+  display: flex;
+}
+
+.modal-action-skill>img {
+  width: 30%;
+  height: 30%;
+  margin-right: 10px;
+}
+
+.modal-action-skill-info {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
 }
 
 .btn-group {
