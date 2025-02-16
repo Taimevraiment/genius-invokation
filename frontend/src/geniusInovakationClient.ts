@@ -84,7 +84,7 @@ export default class GeniusInvokationClient {
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     targetSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 目标是否选中
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
-    pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'card', skillId: -1 }; // 挑选卡牌
+    pickModal: PickCard = { phase: PHASE.ACTION, cards: [], selectIdx: -1, cardType: 'card', skillId: -1 }; // 挑选卡牌
     watchers: number = 0; // 观战人数
     isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
@@ -681,7 +681,10 @@ export default class GeniusInvokationClient {
         if (this.player.phase == PHASE.CHOOSE_HERO && pidx == 1) { // 选择初始出战角色
             this.cancel({ onlyCard: true, notHeros: true });
             if (this.player.heros[hidx]?.isFront) this.modalInfo = NULL_MODAL();
-            else this.isShowSwitchHero = 1;
+            else {
+                this.isShowSwitchHero = 1;
+                this.targetSelect[pidx].forEach((_, hi, ha) => ha[hi] = hi == hidx);
+            }
             this.emit({ type: ACTION_TYPE.ChooseInitHero, heroIdxs: [hidx], flag: 'chooseInitHero' });
         } else {
             if ((this.isShowSwitchHero > 1 || this.currSkill.canSelectHero == 1) && pidx == 1 && this.heroCanSelect[hidx]) {
@@ -953,6 +956,7 @@ export default class GeniusInvokationClient {
                 type: {
                     card: INFO_TYPE.Card,
                     summon: INFO_TYPE.Summon,
+                    support: INFO_TYPE.Support,
                 }[cardType],
                 info: cardType == 'summon' ? newSummon(this.version)(this.pickModal.cards[pcidx].id) : this.pickModal.cards[pcidx],
             }

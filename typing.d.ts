@@ -203,7 +203,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | '';
+    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 
@@ -227,18 +227,13 @@ type ActionData = {
     flag?: string, // 发起请求的标志
 }
 
-type ActionInfoSkill = { // 使用技能时
-    avatar: string, // 角色头像
-    name: string, // 技能名称
-    type: string, // 技能类型
-}
-
 type ActionInfo = {
     content: string, // 提示词
     card?: Card, // 使用卡时的卡牌
     isOppo?: boolean, // 是否对方角色
     isShow?: boolean, // 是否显示
-    skill?: ActionInfoSkill // 使用技能时
+    avatar?: string, // 角色头像
+    subContent?: string, // 提示词
 }
 
 type ServerData = Readonly<{
@@ -307,13 +302,15 @@ type AtkTask = {
 }
 
 type PickCard = {
+    phase: Phase,
     cards: Card[],
     selectIdx: number,
     cardType: PickCardType,
     skillId: number,
+    isQuickAction?: boolean,
 }
 
-type PickCardType = 'card' | 'summon';
+type PickCardType = 'card' | 'summon' | 'support';
 
 type VersionCompareFn = ReturnType<typeof compareVersionFn>;
 

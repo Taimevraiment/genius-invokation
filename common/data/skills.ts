@@ -35,6 +35,7 @@ export type SkillHandleEvent = {
     selectHero?: number,
     restDmg?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
+    getCardIds?: (filter?: (card: Card) => boolean) => number[],
 }
 
 export type SkillHandleRes = {
@@ -256,6 +257,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130063',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
         .vehicle().costSame(1).handle(() => ({ cmds: [{ cmd: 'switch-after' }], statusOppo: 301302 })),
+
+    3130071: () => new SkillBuilder('浪船·迅击炮').description('{dealDmg}。')
+        .src()
+        .vehicle().damage(2).costSame(1),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

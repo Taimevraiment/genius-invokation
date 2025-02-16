@@ -1,10 +1,12 @@
 import { Card, VersionCompareFn } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
-    HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode,
+    HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode,
+    STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getHidById, getVehicleIdByCid, hasObjById } from "../../utils/gameUtil.js";
+import { isCdt } from "../../utils/utils.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -45,7 +47,7 @@ export class GICard {
         handle?: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
-            canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number,
+            canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
             isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version
         } = {}
     ) {
@@ -57,7 +59,7 @@ export class GICard {
         subType ??= [];
         if (!Array.isArray(subType)) subType = [subType];
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
-            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0] } = options;
+            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -83,13 +85,44 @@ export class GICard {
             }
             this.UI.description += `；（角色最多装备1个｢特技｣）`;
             this.UI.explains.push(vehicle);
-            handle ??= card => ({ trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() });
+            const ohandle = handle;
+            if (isUseNightSoul) {
+                handle = (card, event, ver) => {
+                    const res = ohandle?.(card, event, ver);
+                    const { hidxs = [], heros = [], combatStatus = [], source = -1, sourceHidx = -1, trigger = '' } = event;
+                    const hero = heros[hidxs[0]];
+                    if (!hero) return res;
+                    const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                    if (!nightSoul) return res;
+                    if (trigger == 'get-status' && source == 112145 && sourceHidx == hidxs[0] &&
+                        !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
+                        return { trigger: ['get-status'], isDestroy: true, exec: () => { nightSoul.dispose(true) } }
+                    }
+                    return {
+                        ...res,
+                        execmds: [...(res?.execmds ?? []), { cmd: 'getStatus', status: 112145, hidxs }],
+                    }
+                }
+            } else {
+                handle = (card, event, ver) => {
+                    const res = ohandle?.(card, event, ver) ?? {};
+                    if (event.trigger != 'vehicle' || res.trigger?.includes('vehicle')) return res;
+                    return {
+                        trigger: ['vehicle'],
+                        isDestroy: card.useCnt == 1,
+                        exec: () => {
+                            card.minusUseCnt();
+                            return isCdt(!res.trigger, () => res.exec?.());
+                        },
+                    }
+                }
+            }
         } else if (subType.includes(CARD_SUBTYPE.Food)) {
             if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；（每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣）`;
             else this.UI.description += `；（每回合每个角色最多食用1次｢料理｣）`;
             const ohandle = handle;
-            handle = (card, event) => {
-                const res = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
+            handle = (card, event, ver) => {
+                const res = ohandle?.(card, event, ver) ?? {};
                 const ressts = typeof res?.status == 'number' ? [res.status] : res?.status ?? [];
                 return {
                     ...res,
@@ -104,9 +137,9 @@ export class GICard {
                 if (!this.UI.explains.includes(ski)) this.UI.explains.unshift(ski);
                 const ohandle = handle;
                 const cnt = hid * 10 + (userType as number) + 1;
-                handle = (card, event) => {
+                handle = (card, event, ver) => {
                     const { slotUse = false } = event;
-                    const ohandleres = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
+                    const ohandleres = ohandle?.(card, event, ver) ?? {};
                     if (slotUse && !ohandleres.cmds?.some(({ cmd }) => cmd == 'useSkill')) {
                         return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }
                     }
@@ -128,9 +161,9 @@ export class GICard {
         }
         if (tag.includes(CARD_TAG.Barrier)) {
             const ohandle = handle;
-            handle = (card, event) => {
+            handle = (card, event, ver) => {
                 const { restDmg = -1 } = event;
-                const res = ohandle?.(card, event, compareVersionFn(ver)) ?? {};
+                const res = ohandle?.(card, event, ver) ?? {};
                 if (restDmg == -1) return res;
                 return { ...res, trigger: ['reduce-dmg'] }
             }
@@ -369,25 +402,6 @@ export class CardBuilder extends BaseCostBuilder {
         const useCnt = this._useCnt.get(this._curVersion, -1);
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const energy = this._energy.get(this._curVersion, 0);
-        if (this._isUseNightSoul) {
-            const ohandle = this._handle;
-            this._handle = (card, event, ver) => {
-                const res = ohandle?.(card, event, ver);
-                const { hidxs = [], heros = [], combatStatus = [], source = -1, sourceHidx = -1, trigger = '' } = event;
-                const hero = heros[hidxs[0]];
-                if (!hero) return res;
-                const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
-                if (!nightSoul) return res;
-                if (trigger == 'get-status' && source == 112145 && sourceHidx == hidxs[0] &&
-                    !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
-                    return { trigger: ['get-status'], isDestroy: true, exec: () => { nightSoul.dispose(true) } }
-                }
-                return {
-                    ...res,
-                    execmds: [...(res?.execmds ?? []), { cmd: 'getStatus', status: 112145, hidxs }],
-                }
-            }
-        }
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
             cost, costType, this._type, this._subtype, userType, this._offlineVersion, this._handle,
             {
@@ -405,6 +419,7 @@ export class CardBuilder extends BaseCostBuilder {
                 isResetPct: this._isResetPerCnt,
                 spReset: this._isSpReset,
                 ver: this._curVersion,
+                isUseNightSoul: this._isUseNightSoul,
             });
     }
 }

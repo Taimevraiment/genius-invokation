@@ -306,6 +306,7 @@ export const CMD_MODE = {
     GetSummon: 9, // 使用技能挑选牌
     GetCard: 10, // 挑选牌
     RandomAll: 11, // 随机可重复骰子
+    GetSupport: 12 // 挑选支援物
 } as const;
 
 export const INFO_TYPE = {

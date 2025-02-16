@@ -36,6 +36,7 @@ export type SupportHandleEvent = {
     discardCnt?: number,
     epile?: Card[],
     isExecTask?: boolean,
+    getCardIds?: (filter?: (card: Card) => boolean) => number[],
 }
 
 export type SupportHandleRes = {
@@ -439,6 +440,25 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
+    // ｢烟谜主｣
+    321027: () => new SupportBuilder().collection(0).handle((support, event) => ({
+        trigger: support.cnt > 0 ? ['pick'] : ['phase-start'],
+        exec: spt => {
+            const { trigger, getCardIds } = event;
+            if (trigger == 'phase-start') {
+                return {
+                    isDestroy: true,
+                    cmds: [{
+                        cmd: 'pickCard',
+                        cnt: 3,
+                        card: getCardIds?.(c => c.type == CARD_TYPE.Support && c.cost == 2),
+                        mode: CMD_MODE.GetSupport,
+                    }],
+                }
+            }
+            --spt.cnt;
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(() => ({
         trigger: ['phase-start'],

@@ -72,7 +72,7 @@
             <div class="card-border"></div>
             <img class="support-img"
               :style="{ top: support.card.subType.includes(CARD_SUBTYPE.Ally) && isMobile ? '100%' : '60%' }"
-              :src="support.card.UI.src" v-if="support.card.UI.src.length > 0" :alt="support.card.name" />
+              :src="getPngIcon(support.card.UI.src)" v-if="support.card.UI.src.length > 0" :alt="support.card.name" />
             <span v-else>{{ support.card.name }}</span>
             <div style="position: absolute; width: 100%; height: 100%"
               :class="{ 'support-can-use': support.perCnt > 0 }">
@@ -188,8 +188,7 @@
           </div>
           <div class="attach-element">
             <div class="el-tip" v-if="elTips[hgi][hidx] != undefined" :class="{
-              'el-tip-enter': elTips[hgi][hidx][0] != '',
-              'el-tip-leave': elTips[hgi][hidx][0] == '',
+              'el-tip-anime': elTips[hgi][hidx][0] != '',
             }" :style="{
               color: ELEMENT_COLOR[elTips[hgi][hidx][1]],
               // fontWeight: 'bolder',
@@ -743,6 +742,7 @@ const selectCardPick = (pcidx: number) => {
 // 挑选卡牌
 const pickCard = () => {
   emits('pickCard');
+  isHide.value = true;
 }
 // 选择要消费的骰子
 const selectUseDice = (didx: number) => {
@@ -1144,19 +1144,12 @@ button:active {
 
 .el-tip {
   position: absolute;
-  opacity: 1;
-  top: -5px;
   left: 50%;
   transform: translateX(-50%);
-  transition: all 1s;
 }
 
-.el-tip-enter {
-  top: -10px;
-}
-
-.el-tip-leave {
-  opacity: 0;
+.el-tip-anime {
+  animation: eltips 1s linear forwards;
 }
 
 .attach-element img {
@@ -1953,6 +1946,28 @@ svg {
   }
 }
 
+@keyframes eltips {
+  0% {
+    top: 0px;
+    opacity: 0;
+  }
+
+  50% {
+    top: -8px;
+    opacity: 1;
+  }
+
+  80% {
+    top: -8px;
+    opacity: 1;
+  }
+
+  100% {
+    top: -8px;
+    opacity: 0;
+  }
+}
+
 @keyframes getcard-oppo-pile {
   50% {
     transform: translate(1100%, -50%);
@@ -2003,8 +2018,9 @@ svg {
   }
 
   100% {
-    transform: translate(-500%, 0) rotate(-90deg);
+    z-index: 5;
     opacity: 0;
+    transform: translate(-500%, 0) rotate(-90deg) rotateY(180deg);
   }
 }
 

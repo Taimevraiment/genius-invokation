@@ -177,14 +177,13 @@
       'modal-action-my-leave': !client.actionInfo.isOppo && !client.actionInfo.isShow,
       'modal-action-oppo-leave': client.actionInfo.isOppo && !client.actionInfo.isShow,
     }">
-      <div class="modal-action-skill" v-if="client.actionInfo.skill">
-        <img :src="client.actionInfo.skill.avatar" alt="">
-        <div class="modal-action-skill-info">
-          <div style="font-size: 1.2em;">{{ client.actionInfo.skill.name }}</div>
-          <div style="color: #f4dca2;">{{ client.actionInfo.skill.type }}</div>
+      <div class="modal-action-content" v-if="client.actionInfo.content != ''">
+        <img v-if="client.actionInfo.avatar" :src="client.actionInfo.avatar" alt="">
+        <div class="modal-action-content-info">
+          <div style="font-size: 1.2em;">{{ client.actionInfo.content }}</div>
+          <div v-if="client.actionInfo.subContent" style="color: #f4dca2;">{{ client.actionInfo.subContent }}</div>
         </div>
       </div>
-      <div v-else>{{ client.actionInfo.content }}</div>
       <Handcard v-if="client.actionInfo.card" style="position: relative;margin-top: 10px;"
         :card="client.actionInfo.card" :isMobile="isMobile" :isHideCost="true">
       </Handcard>
@@ -956,7 +955,7 @@ body {
 .modal-action {
   position: absolute;
   top: 40px;
-  max-width: 20%;
+  max-width: 30%;
   min-height: 10%;
   padding: 10px;
   pointer-events: none;
@@ -967,7 +966,7 @@ body {
   transition: .5s;
   color: white;
   background-color: #254162b9;
-  border: 5px solid #1c3149b9;
+  border: 3px solid #1c3149b9;
   border-radius: 10px;
   z-index: 5;
 }
@@ -992,17 +991,17 @@ body {
   opacity: 0;
 }
 
-.modal-action-skill {
+.modal-action-content {
   display: flex;
 }
 
-.modal-action-skill>img {
-  width: 30%;
-  height: 30%;
+.modal-action-content>img {
+  width: 15%;
+  height: 15%;
   margin-right: 10px;
 }
 
-.modal-action-skill-info {
+.modal-action-content-info {
   position: relative;
   display: flex;
   flex-direction: column;

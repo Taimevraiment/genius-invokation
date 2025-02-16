@@ -62,9 +62,14 @@
               <span class="info-skill-costs">
                 <div>{{ skill.name }}</div>
                 <div>
-                  <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx">
+                  <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx" :style="{
+                    color: type == INFO_TYPE.Skill && cidx < 2 && (skill.costChange[cidx] as number) > 0 ?
+                      CHANGE_GOOD_COLOR : type == INFO_TYPE.Skill && cidx < 2 && (skill.costChange[cidx] as number) < 0 ?
+                        CHANGE_BAD_COLOR : 'white'
+                  }">
                     <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[cost.type])" />
-                    <span>{{ cost.cnt }}</span>
+                    <span>{{ Math.max(cost.cnt - (type == INFO_TYPE.Skill && cidx < 2 ? (skill.costChange[cidx] as
+                      number) : 0), 0) }}</span>
                   </div>
                 </div>
               </span>
@@ -293,7 +298,7 @@
 import { computed, ref, watchEffect } from 'vue';
 
 import {
-  CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
+  CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
   ELEMENT_NAME, ELEMENT_URL, ElementColorKey, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SHIELD_ICON_URL, SKILL_TYPE_ABBR,
   SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';

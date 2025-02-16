@@ -65,6 +65,7 @@ export type CardHandleEvent = {
     dmgSource?: number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
     randomInt?: (max?: number) => number,
+    getCardIds?: (filter?: (card: Card) => boolean) => number[],
 }
 
 export type CardHandleRes = {
@@ -1230,11 +1231,8 @@ const allCards: Record<number, () => CardBuilder> = {
     313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(1).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/9a5a0408639062f81d7ed4007eea7a19_7598137844845621529.png')
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为｢快速行动｣而非｢战斗行动｣，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
-        .handle((card, event) => {
-            const { eheros = [], dmgedHidx = -1, hcardsCnt = 0, switchHeroDiceCnt = 0, trigger = '' } = event;
-            if (trigger == 'vehicle') {
-                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
-            }
+        .handle((_, event) => {
+            const { eheros = [], dmgedHidx = -1, hcardsCnt = 0, switchHeroDiceCnt = 0 } = event;
             const triggers: Trigger[] = [];
             const isTriggered = hcardsCnt > 0 && hasObjById(eheros[dmgedHidx]?.heroStatus, 301302) && switchHeroDiceCnt > 0;
             if (isTriggered) triggers.push('minus-switch-to');
@@ -1252,6 +1250,11 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
         }),
+
+    313007: () => new CardBuilder(465).name('浪船').since('v5.5.0').vehicle().costSame(0).useCnt(2)
+        .src('tmp/UI_Gcg_CardFace_Modify_Vehicle_LangChuan_1441176747')
+        .description('【附属角色切换至后台时：】此牌[可用次数]+1。')
+        .handle(card => ({ trigger: ['switch-from'], isAddTask: true, exec: () => { card.addUseCnt() } })),
 
     321001: () => new CardBuilder(179).name('璃月港口').offline('v1').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1360,6 +1363,10 @@ const allCards: Record<number, () => CardBuilder> = {
     321026: () => new CardBuilder(458).name('｢花羽会｣').since('v5.4.0').place().costSame(0)
         .description('【我方[舍弃]2张卡牌后：】我方下一个后台角色获得1层“下次切换至前台时，回复1个对应元素的骰子。”（可叠加，每次触发一层）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/635fd5e4f710374bb0ee919f77dd1776_8605976792632571882.png'),
+
+    321027: () => new CardBuilder(466).name('｢烟谜主｣').since('v5.5.0').place().costSame(0)
+        .description('此牌初始具有5点灵觉。；【我方[挑选]后：】灵觉-1。；【回合开始时：】若灵觉为0，则移除自身，然后从3个随机2费支援牌中[挑选]一个生成。')
+        .src('tmp/UI_Gcg_CardFace_Assist_Location_YanmiZhu_1307857034'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -3366,10 +3373,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {
-            const { heros = [], restDmg = -1, hidxs = [], trigger = '' } = event;
-            if (trigger == 'vehicle') {
-                return { trigger: ['vehicle'], isDestroy: card.useCnt == 1, exec: () => card.minusUseCnt() }
-            }
+            const { heros = [], restDmg = -1, hidxs = [] } = event;
             if (restDmg == -1) return;
             const isBarrier = card.perCnt > 0 && !!heros[hidxs[0]]?.energy;
             if (!isBarrier || restDmg == 0) return { restDmg }
@@ -3420,15 +3424,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (card.perCnt <= 0) return;
                 return { trigger: ['switch-to'], execmds: [{ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Dendro }], exec: () => card.minusPerCnt() };
             }
-            if (skid != getVehicleIdByCid(card.id) || hasObjById(combatStatus, 127033)) return;
-            return {
-                trigger: ['vehicle'],
-                isDestroy: card.useCnt == 1,
-                exec: () => {
-                    card.minusUseCnt();
-                    if (!talent && card.perCnt == 1) card.minusPerCnt();
-                },
-            }
+            if (skid != getVehicleIdByCid(card.id) || hasObjById(combatStatus, 127033)) return { trigger: ['vehicle'] };
+            return { exec: () => { !talent && card.perCnt == 1 && card.minusPerCnt() } }
         }),
 
     300006: () => new CardBuilder().name('斗争之火').place()
