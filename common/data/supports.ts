@@ -80,7 +80,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
     // 斗争之火
     300006: (cnt: number = 0) => new SupportBuilder().collection(cnt).handle((support, event) => {
-        const { getdmg = [], supports = [], eSupports = [], trigger = '' } = event;
+        const { getdmg = [], supports = [], eSupports = [], trigger } = event;
         const isTriggered = support.cnt > Math.max(...[...supports, ...eSupports].filter(s => s.card.id == support.card.id && s.entityId != support.entityId).map(s => s.cnt));
         if (trigger == 'phase-start' && !isTriggered) return;
         const supportCnt = isCdt(trigger == 'after-dmg', getdmg.reduce((a, c) => a + Math.max(0, c), 0));
@@ -110,7 +110,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 群玉阁
     321003: () => new SupportBuilder().permanent().handle((_, event, ver) => {
-        const { hcards = [], trigger = '' } = event;
+        const { hcards = [], trigger } = event;
         const triggers: Trigger[] = ['phase-dice'];
         if (ver.gte('v4.5.0') && hcards.length <= 3) triggers.push('phase-start');
         return {
@@ -182,7 +182,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 须弥城
     321010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { dices = [], hcards = [], isMinusDiceTalent = false, isMinusDiceSkill = false, trigger = '' } = event;
+        const { dices = [], hcards = [], isMinusDiceTalent, isMinusDiceSkill, trigger } = event;
         if (dices.length > hcards.length || support.perCnt <= 0) return;
         return {
             minusDiceSkill: { skill: [0, 0, 1] },
@@ -257,7 +257,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 风龙废墟
     321015: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
-        const { heros = [], hidxs: [hidx] = [], trigger = '', isMinusDiceTalent = false, isMinusDiceSkill = false } = event;
+        const { heros = [], hidxs: [hidx] = [], trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
         const isCardMinus = isMinusDiceTalent && support.perCnt > 0;
         const skills = heros[hidx]?.skills.filter(v => v.type != SKILL_TYPE.Passive).map(skill => {
             if (support.perCnt > 0 && skill.cost[0].cnt + skill.cost[1].cnt >= 4) return [0, 0, 1];
@@ -306,7 +306,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 梅洛彼得堡
     321018: () => new SupportBuilder().collection().handle((support, event) => {
-        const { hidxs: [hidx] = [], getdmg = [], heal = [], trigger = '' } = event;
+        const { hidxs: [hidx] = [], getdmg = [], heal = [], trigger } = event;
         const triggers: Trigger[] = [];
         if (trigger == 'getdmg' && getdmg[hidx] > 0 && support.cnt < 4) triggers.push('getdmg');
         if (trigger == 'heal' && heal[hidx] > 0 && support.cnt < 4) triggers.push('heal');
@@ -326,7 +326,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 清籁岛
     321019: () => new SupportBuilder().round(2).handle((_, event) => {
-        const { heal = [], trigger = '' } = event;
+        const { heal = [], trigger } = event;
         const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl > 0).map(v => v.hli);
         return {
             trigger: ['heal', 'heal-oppo', 'phase-end'],
@@ -354,7 +354,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 中央实验室遗址
     321021: () => new SupportBuilder().collection().handle((_, event) => {
-        const { discardCnt = 1, trigger = '' } = event;
+        const { discardCnt = 1, trigger } = event;
         return {
             trigger: ['discard', 'reconcile'],
             supportCnt: discardCnt,
@@ -452,7 +452,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                         cmd: 'pickCard',
                         cnt: 3,
                         card: getCardIds?.(c => c.type == CARD_TYPE.Support && c.cost == 2),
-                        mode: CMD_MODE.GetSupport,
+                        mode: CMD_MODE.UseCard,
                     }],
                 }
             }
@@ -476,7 +476,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 蒂玛乌斯
     322003: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
-        const { card, trigger = '', minusDiceCard: mdc = 0, playerInfo: { artifactCnt = 0 } = {} } = event;
+        const { card, trigger, minusDiceCard: mdc = 0, playerInfo: { artifactCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && artifactCnt >= 6) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc && support.cnt >= card.cost - mdc;
@@ -502,7 +502,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 瓦格纳
     322004: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
-        const { card, trigger = '', minusDiceCard: mdc = 0, playerInfo: { weaponTypeCnt = 0 } = {} } = event;
+        const { card, trigger, minusDiceCard: mdc = 0, playerInfo: { weaponTypeCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && weaponTypeCnt >= 3) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Weapon) && card.cost > mdc && support.cnt >= card.cost - mdc;
@@ -613,7 +613,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 艾琳
     322010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
-        const { heros = [], hidxs: [hidx] = [-1], isMinusDiceSkill = false } = event;
+        const { heros = [], hidxs: [hidx] = [-1], isMinusDiceSkill } = event;
         const skills = heros[hidx]?.skills.map(skill => {
             if (skill.useCntPerRound > 0) return [0, 0, 1];
             return [0, 0, 0];
@@ -659,7 +659,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 花散里
     322013: () => new SupportBuilder().collection().handle((support, event) => {
-        const { card, trigger = '', minusDiceCard: mdc = 0 } = event;
+        const { card, trigger, minusDiceCard: mdc = 0 } = event;
         const isMinus = support.cnt >= 3 && card && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Artifact) && card.cost > mdc;
         return {
             trigger: ['summon-destroy', 'card'],
@@ -772,7 +772,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 婕德
     322022: () => new SupportBuilder().collection().handle((support, event, ver) => {
-        const { trigger = '', playerInfo: { destroyedSupport = 0 } = {} } = event;
+        const { trigger, playerInfo: { destroyedSupport = 0 } = {} } = event;
         if (trigger == 'enter') {
             support.cnt = Math.min(6, destroyedSupport);
             return;
@@ -835,7 +835,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 亚瑟先生
     322026: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discardCnt = 1, trigger = '', epile = [] } = event;
+        const { discardCnt = 1, trigger, epile = [] } = event;
         if (+(support.cnt >= 2) ^ +(trigger == 'phase-end' && epile.length > 0)) return;
         return {
             trigger: ['discard', 'reconcile', 'phase-end'],
@@ -882,7 +882,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 便携营养袋
     323002: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { card, trigger = '' } = event;
+        const { card, trigger } = event;
         if (trigger != 'enter' && (support.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food))) return;
         return {
             trigger: ['card', 'enter'],
@@ -966,7 +966,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 苦舍桓
     323008: () => new SupportBuilder().collection().perCnt(1).handle((support, event) => {
-        const { hcards = [], trigger = '', isMinusDiceSkill = false } = event;
+        const { hcards = [], trigger, isMinusDiceSkill } = event;
         if (trigger == 'phase-start' && (support.cnt >= 2 || hcards.length == 0)) return;
         if (support.perCnt == 0 && (trigger == 'card' || (trigger == 'skill' && support.cnt == 0))) return;
         return {

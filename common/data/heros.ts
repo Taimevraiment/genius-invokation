@@ -791,7 +791,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/54/pxn17pilom6vwve4bs6vsemh1dvt89k.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a2a8eb8cafea01ec4461915fe495127c_5101380063673897230.png')
                 .passive().handle(event => {
-                    const { hero, heal = [], source = -1, trigger = '' } = event;
+                    const { hero, heal = [], source = -1, trigger } = event;
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                 }),
             new SkillBuilder().passive(true).handle(event => {
@@ -1378,16 +1378,16 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kachina_1710153075.png')
         .normalSkill(new NormalSkillBuilder('嵴之啮咬'))
         .skills(
-            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116101】，并进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
+            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116102】，并进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Kachina_01.webp')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
-                    equip: 116101,
-                    status: [[116102, 2]],
-                    isForbidden: hasObjById(heroStatus, 116102),
+                    equip: 116102,
+                    status: [[116104, 2]],
+                    isForbidden: hasObjById(heroStatus, 116104),
                 })),
-            new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116103】。')
+            new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116101】。')
                 .src('/image/tmp/Skill_E_Kachina_01.webp')
-                .burst(2).damage(1).cost(3).handle(() => ({ status: 116103 }))
+                .burst(2).damage(3).cost(3).handle(() => ({ status: 116101 }))
         ),
 
     1701: () => new HeroBuilder(47).name('柯莱').offline('v1').sumeru().dendro().bow()
@@ -1563,7 +1563,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(3).handle(() => ({ summon: 117101 })),
             new SkillBuilder('香氛演绎').description('{dealDmg}。移除场上的【柔灯之匣】。生成【smn117103】。')
                 .src('/image/tmp/Skill_E_Emilie_01.webp')
-                .burst(2).damage(2).cost(3).handle(event => ({
+                .burst(2).damage(1).cost(3).handle(event => ({
                     summon: 117103,
                     exec: () => event.summons?.forEach(smn => getHidById(smn.id) == 1710 && smn.dispose(event.isExec)),
                 })),
@@ -1908,7 +1908,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/8/87/qph3kacdek5tjt4zh3awlfttsdtv5sm.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/ff758e8c9934e346c98ad5e864cc097e_6735052592007467103.png')
                 .passive().handle(event => {
-                    const { hero, heros = [], combatStatus = [], trigger = '' } = event;
+                    const { hero, heros = [], combatStatus = [], trigger } = event;
                     let stsCnt = 0;
                     if (trigger == 'game-start') stsCnt = 5;
                     else if (trigger == 'action-after') {

@@ -147,7 +147,7 @@ export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
 export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];
 
 // 天赋卡是否需要角色为出战角色
-export const isTalentFront = (heros: Hero[], card: Card) => !!getObjById(heros, card.userType as number)?.isFront;
+export const isTalentFront = (heros: Hero[] | undefined, card: Card) => !!getObjById(heros, card.userType as number)?.isFront;
 
 // 根据角色id获取天赋id
 export const getTalentIdByHid = (hid: number): number => {

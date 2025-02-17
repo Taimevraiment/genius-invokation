@@ -143,7 +143,7 @@ const senlin1Status = (name: string) => {
         .description('【角色在本回合中，下次对角色打出｢天赋｣或使用｢元素战技｣时：】少花费2个元素骰。')
         .handle((status, event) => {
             if (status.roundCnt <= 0) return;
-            const { trigger = '', isMinusDiceTalent, isMinusDiceSkill = false } = event;
+            const { trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
             return {
                 minusDiceSkill: { skilltype2: [0, 0, 2] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 2),
@@ -251,7 +251,7 @@ const coolDownStatus = (name: string, cardId?: number) => {
 }
 
 const continuousActionHandle = (status: Status, event: StatusHandleEvent): StatusHandleRes | void => {
-    const { trigger = '' } = event;
+    const { trigger } = event;
     if (trigger != 'kill' && status.useCnt == -1) return;
     return {
         trigger: ['change-turn', 'kill'],
@@ -406,7 +406,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方角色使用技能后：】累积1枚｢晚星｣。；如果｢晚星｣已有至少4枚，则消耗4枚｢晚星｣，造成1点[冰元素伤害]。（生成此出战状态的技能，也会触发此效果）；【重复生成此出战状态时：】累积2枚｢晚星｣。')
         .handle((status, event) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             const isDmg = status.useCnt >= 4 && trigger == 'after-skill';
             const triggers: Trigger[] = ['skill'];
             if (isDmg) triggers.push('after-skill');
@@ -464,7 +464,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方每抓1张牌后：】此牌累积1层｢压力阶级｣。；【所附属角色使用〖ski,1〗时：】如果｢压力阶级｣至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后｢压力阶级｣至少有4层，则再额外造成2点[物理伤害]。')
         .handle((status, event) => {
-            const { isExecTask, isExec, trigger = '' } = event;
+            const { isExecTask, isExec, trigger } = event;
             return {
                 trigger: ['drawcard', 'after-skilltype2'],
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
@@ -485,7 +485,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用｢普通攻击｣或｢元素战技｣后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, hcards = [], trigger = '', isExec } = event;
+            const { heros = [], hidx = -1, hcards = [], trigger, isExec } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const sts111123 = getObjById(heros[hidx]?.heroStatus, 111123);
             if (!sts111123 || sts111123.useCnt < sts111123.maxCnt) triggers.push('drawcard');
@@ -494,7 +494,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 isAddTask: true,
                 notInfo: true,
                 exec: eStatus => {
-                    if (trigger.includes('skilltype') && !eStatus) {
+                    if (trigger?.includes('skilltype') && !eStatus) {
                         const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
                         return {
                             cmds: [
@@ -520,7 +520,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111131: (cnt: number = 2) => new StatusBuilder('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT).icon('#').type(STATUS_TYPE.Usage)
         .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）')
         .handle((status, event) => {
-            const { randomInt, isExecTask, trigger = '' } = event;
+            const { randomInt, isExecTask, trigger } = event;
             if (!isExecTask && (trigger != 'skill' || !randomInt || randomInt(9) >= status.useCnt)) return;
             return {
                 trigger: ['skill'],
@@ -579,7 +579,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
         .description('角色造成的[物理伤害]转换为[水元素伤害]。；【角色进行[重击]后：】目标角色附属【sts112043】。；角色对附属有【sts112043】的角色造成的伤害+1;；【角色对已附属有断流的角色使用技能后：】对下一个敌方后台角色造成1点[穿透伤害]。（每回合至多2次）；[roundCnt]')
         .handle((status, event) => {
-            const { isChargedAtk, eheros = [], trigger = '' } = event;
+            const { isChargedAtk, eheros = [], trigger } = event;
             const efHero = eheros.find(h => h.isFront);
             const isDuanliu = hasObjById(efHero?.heroStatus, 112043);
             const [afterIdx = -1] = getBackHidxs(eheros);
@@ -604,7 +604,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy).type(ver => ver.gte('v4.1.0'), STATUS_TYPE.Sign)
         .description('【所附属角色被击倒后：】对所在阵营的出战角色附属【断流】。')
         .handle((status, event, ver) => {
-            const { heros = [], hidx = -1, eheros = [], trigger = '' } = event;
+            const { heros = [], hidx = -1, eheros = [], trigger } = event;
             const triggers: Trigger[] = ['killed'];
             const isTalent = trigger == 'phase-end' && !!getObjById(eheros, getHidById(status.id))?.talentSlot && (ver.lt('v4.1.0') || heros[hidx]?.isFront);
             if (isTalent) triggers.push('phase-end');
@@ -625,7 +625,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112052: () => new StatusBuilder('仪来羽衣').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
         .description('所附属角色｢普通攻击｣造成的伤害+1。；【所附属角色｢普通攻击｣后：】治疗所有我方角色1点。；[roundCnt]')
         .handle((_, event) => {
-            const { heros = [], trigger = '' } = event;
+            const { heros = [], trigger } = event;
             return {
                 addDmgType1: 1,
                 trigger: ['skilltype1', 'after-skilltype1'],
@@ -694,7 +694,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.ConditionalEnchant).icon('buff').iconBg(STATUS_BG_COLOR[ELEMENT_TYPE.Hydro])
         .description('此状态初始具有1层｢破局｣\\；重复附属时，叠加1层｢破局｣。｢破局｣最多可以叠加到3层。；【结束阶段：】叠加1层｢破局｣。；【所附属角色｢普通攻击｣时：】如果｢破局｣已有2层，则消耗2层｢破局｣，使造成的[物理伤害]转换为[水元素伤害]，并抓1张牌。')
         .handle((status, event) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             const triggers: Trigger[] = [];
             if (status.useCnt < status.maxCnt) triggers.push('phase-end');
             if (status.useCnt >= 2) triggers.push('skilltype1');
@@ -759,7 +759,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).icon('#')
         .description('我方造成的伤害+1。（包括角色引发的扩散伤害）；[useCnt]')
         .handle((status, event) => {
-            const { sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
+            const { sktype = SKILL_TYPE.Vehicle, trigger } = event;
             return {
                 trigger: ['dmg', 'dmg-Swirl'],
                 addDmg: 1,
@@ -846,7 +846,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).talent(isTalent)
         .description(`【我方角色使用技能时：】${isTalent ? '' : '如果该角色生命值至少为7，则'}使此伤害额外+2\\；技能结算后，如果该角色生命值不多于6，则治疗该角色2点。；[roundCnt]`)
         .handle((status, event) => {
-            const { heros = [], hidx = -1, trigger = '' } = event;
+            const { heros = [], hidx = -1, trigger } = event;
             const fHero = heros[hidx];
             if (!fHero) return;
             return {
@@ -863,20 +863,17 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(3).useCnt(2, 'v4.7.0').useCnt(3, 'v4.7.0', isTalent).useCnt(2, 'v4.2.0')
         .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant).type(isTalent, STATUS_TYPE.Attack).talent(isTalent)
         .description(`所附属角色｢普通攻击｣伤害+1，造成的[物理伤害]变为[火元素伤害]。${isTalent ? '；【所附属角色使用｢普通攻击｣后：】造成1点[火元素伤害]。' : ''}；[useCnt]`)
-        .handle((status, event) => {
-            const { trigger = '' } = event;
-            return {
-                trigger: ['skilltype1', 'after-skilltype1'],
-                addDmgType1: 1,
-                damage: isCdt(status.isTalent && trigger.endsWith('skilltype1'), 1),
-                element: DAMAGE_TYPE.Pyro,
-                attachEl: ELEMENT_TYPE.Pyro,
-                exec: eStatus => {
-                    if (!status.isTalent) status.minusUseCnt();
-                    else eStatus?.minusUseCnt();
-                },
-            }
-        }),
+        .handle((status, event) => ({
+            trigger: ['skilltype1', 'after-skilltype1'],
+            addDmgType1: 1,
+            damage: isCdt(status.isTalent && event.trigger?.endsWith('skilltype1'), 1),
+            element: DAMAGE_TYPE.Pyro,
+            attachEl: ELEMENT_TYPE.Pyro,
+            exec: eStatus => {
+                if (!status.isTalent) status.minusUseCnt();
+                else eStatus?.minusUseCnt();
+            },
+        })),
 
     113052: () => new StatusBuilder('琉金火光').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
         .description('【hro】以外的我方角色使用技能后：造成1点[火元素伤害]。；[roundCnt]')
@@ -946,7 +943,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     113082: () => new StatusBuilder('灼灼').heroStatus().icon('ski,2').roundCnt(2).perCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
         .description('【角色进行[重击]时：】少花费1个[火元素骰]。（每回合1次）；【结束阶段：】角色附属【sts113081】。；[roundCnt]')
         .handle((status, event) => {
-            const { isChargedAtk = false, isMinusDiceSkill = false, trigger = '' } = event;
+            const { isChargedAtk, isMinusDiceSkill, trigger } = event;
             return {
                 trigger: ['skilltype1', 'phase-end'],
                 isAddTask: trigger == 'phase-end',
@@ -1077,7 +1074,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【结束阶段：】累积1级｢凭依｣，如果｢凭依｣级数至少为8，则｢凭依｣级数-6。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2。')
         .description('【结束阶段：】累积1级｢凭依｣。；【根据｢凭依｣级数，提供效果：】；大于等于2级：[物理伤害]转化为[雷元素伤害];；大于等于4级：造成的伤害+2;；大于等于6级：｢凭依｣级数-4。', 'v4.8.0')
         .handle((status, event, ver) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             const isAttachEl = status.useCnt >= 2;
             const triggers: Trigger[] = ['phase-end', 'skilltype3'];
             if (ver.gte('v4.8.0')) triggers.push('skilltype2');
@@ -1127,7 +1124,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114063: () => new StatusBuilder('鸣煌护持').heroStatus().icon('buff5').useCnt(2).type(STATUS_TYPE.AddDamage)
         .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
-            const { sktype = SKILL_TYPE.Vehicle, hasDmg = false } = event;
+            const { sktype = SKILL_TYPE.Vehicle, hasDmg } = event;
             const trigger: Trigger[] = [];
             if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(sktype)) {
                 trigger.push(`skilltype${sktype}` as Trigger);
@@ -1143,7 +1140,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114072: () => new StatusBuilder('诸愿百眼之轮').heroStatus().icon('ski,2').useCnt(0).maxCnt(3).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Accumulate)
         .description('【其他我方角色使用｢元素爆发｣后：】累积1点｢愿力｣。（最多累积3点）；【所附属角色使用〖ski,2〗时：】消耗所有｢愿力｣，每点｢愿力｣使造成的伤害+1。')
         .handle((status, event) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             return {
                 trigger: ['other-skilltype3', 'skilltype3'],
                 exec: () => {
@@ -1175,7 +1172,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('此状态初始具有2层｢引雷｣\\；重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗或〖smn114092〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。')
         .description('此状态初始具有2层｢引雷｣\\；重复附属时，叠加1层｢引雷｣。｢引雷｣最多可以叠加到4层。；【结束阶段：】叠加1层｢引雷｣。；【所附属角色受到〖ski,1〗伤害时：】移除此状态，每层｢引雷｣使此伤害+1。', 'v5.1.0', 'v1')
         .handle((status, event, ver) => {
-            const { skid = -1, isSummon = -1, trigger = '' } = event;
+            const { skid = -1, isSummon = -1, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             if (skid == 14092 || (ver.gte('v5.1.0') && isSummon == 114092)) triggers.push('getdmg');
             return {
@@ -1207,7 +1204,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114121: () => new StatusBuilder('夜巡').heroStatus().icon('ski,1').roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Enchant)
         .description('角色受到【ski,1】以外的治疗时，改为附属等量的【sts122】。；【所附属角色使用普通攻击时：】造成的[物理伤害]变为[雷元素伤害]，并使自身附属2层【sts122】。')
         .handle((_, event) => {
-            const { heal = [], hidx = -1, source = -1, trigger = '' } = event;
+            const { heal = [], hidx = -1, source = -1, trigger } = event;
             const triggers: Trigger[] = ['skilltype1'];
             const cmds: Cmds[] = [];
             if (trigger == 'skilltype1') {
@@ -1256,7 +1253,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Enchant)
         .description('所附属角色造成的[物理伤害]变为[风元素伤害]，且角色造成的[风元素伤害]+1。；【所附属角色进行[下落攻击]时：】伤害额外+2。；【所附属角色为出战角色，我方执行｢切换角色｣行动时：】少花费1个元素骰。（每回合1次）；[roundCnt]')
         .handle((status, event) => {
-            const { isFallAtk = false, switchHeroDiceCnt = 0, trigger = '' } = event;
+            const { isFallAtk, switchHeroDiceCnt = 0, trigger } = event;
             const triggers: Trigger[] = ['Anemo-dmg'];
             if (switchHeroDiceCnt > 0 && status.perCnt > 0) triggers.push('minus-switch-from');
             return {
@@ -1272,7 +1269,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115042: () => new StatusBuilder('降魔·忿怒显相').heroStatus().icon('buff2').useCnt(2).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
         .description('【所附属角色使用〖ski,1〗时：】少花费1个[风元素骰]。；[useCnt]；【所附属角色不再附属〖sts115041〗时：】移除此效果。')
         .handle((status, event) => {
-            const { isMinusDiceSkill = false, source = -1, trigger = '' } = event;
+            const { isMinusDiceSkill, source = -1, trigger } = event;
             const triggers: Trigger[] = ['skilltype2'];
             if (trigger == 'status-destroy' && source == 115041) triggers.push('status-destroy');
             return {
@@ -1293,7 +1290,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             .description(`【我方下次通过｢切换角色｣行动切换到所附属角色时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。；【我方选择行动前：】如果所附属角色为｢出战角色｣，则直接使用｢普通攻击｣\\；本次｢普通攻击｣造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
-                const { isFallAtk = false, isQuickAction: iqa, trigger = '' } = event;
+                const { isFallAtk, isQuickAction: iqa, trigger } = event;
                 if (ver.lt('v4.8.0')) {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
@@ -1370,7 +1367,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115091: () => new StatusBuilder('疾风示现').heroStatus().icon('buff').useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.ConditionalEnchant)
         .description('【所附属角色进行[重击]时：】少花费1个[无色元素骰]，造成的[物理伤害]变为[风元素伤害]，并且使目标角色附属【sts115092】；[useCnt]')
         .handle((status, event) => {
-            const { isChargedAtk = false } = event;
+            const { isChargedAtk } = event;
             if (!isChargedAtk) return;
             return {
                 trigger: ['skilltype1'],
@@ -1535,14 +1532,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色｢普通攻击｣造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ addDmgType1: 1, attachEl: ELEMENT_TYPE.Geo })),
 
-    116102: nightSoul,
-
-    116103: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2).type(STATUS_TYPE.AddDamage).icon('ski,2')
-        .description('【此牌在场时：】我方【rsk1161011】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
+    116101: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2).type(STATUS_TYPE.AddDamage).icon('ski,2')
+        .description('【此牌在场时：】我方【crd116102】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
         .handle((status, event) => {
-            if (event.skid != 1161011) return;
+            if (event.skid != 1161021) return;
             return { trigger: ['Geo-dmg'], addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
         }),
+
+    116104: nightSoul,
 
     117012: () => new StatusBuilder('新叶').combatStatus().icon('buff6').useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。（每回合1次）；[roundCnt]')
@@ -1573,7 +1570,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('#')
         .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色造成1点[穿透伤害]。；[useCnt]')
         .handle((status, event) => {
-            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg = false, hcard, trigger = '', isExecTask = false } = event;
+            const { heros = [], eheros = [], hidx = -1, eCombatStatus = [], dmgedHidx = -1, hasDmg, hcard, trigger, isExecTask } = event;
             const source = isCdt(trigger == 'other-get-elReaction', getObjById(heros[dmgedHidx]?.heroStatus, status.id)?.entityId);
             if ((trigger == 'other-get-elReaction' && !source || !hasDmg) && !isExecTask) return;
             const hasPyro = trigger == 'get-elReaction' &&
@@ -1596,7 +1593,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).roundCnt(2).roundCnt(3, isTalent && hasHydro).talent(isTalent)
         .description('【我方引发元素反应时：】伤害额外+1。；[roundCnt]')
         .handle((status, event) => {
-            const { trigger = '', heros = [], eheros = [] } = event;
+            const { trigger, heros = [], eheros = [] } = event;
             return {
                 trigger: ['elReaction', 'enter'],
                 addDmgCdt: 1,
@@ -1651,21 +1648,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117061: (rcnt: number = 2) => new StatusBuilder('琢光镜').heroStatus().icon('ski,2').roundCnt(rcnt).maxCnt(3)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Enchant)
         .description('角色造成的[物理伤害]变为[草元素伤害]。；【角色｢普通攻击｣后：】造成1点[草元素伤害]。如果此技能为[重击]，则使此状态的[持续回合]+1。；[roundCnt]')
-        .handle((status, event) => {
-            const { isChargedAtk = false } = event;
-            return {
-                attachEl: ELEMENT_TYPE.Dendro,
-                trigger: ['skilltype1', 'after-skilltype1'],
-                damage: 1,
-                element: DAMAGE_TYPE.Dendro,
-                exec: () => { isChargedAtk && status.addRoundCnt(1, status.maxCnt) }
-            }
-        }),
+        .handle((status, event) => ({
+            attachEl: ELEMENT_TYPE.Dendro,
+            trigger: ['skilltype1', 'after-skilltype1'],
+            damage: 1,
+            element: DAMAGE_TYPE.Dendro,
+            exec: () => { event.isChargedAtk && status.addRoundCnt(1, status.maxCnt) }
+        })),
 
     117071: () => new StatusBuilder('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
         .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, isExecTask = false } = event;
+            const { heros = [], hidx = -1, isExecTask } = event;
             if (heros[hidx]?.id != getHidById(status.id) && !isExecTask) return;
             return {
                 damage: 1,
@@ -1759,7 +1753,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).icon('#')
         .description('【敌方受到燃烧或我方其他角色使用特技后：】附属角色获得1点｢夜魂值｣。；【当｢夜魂值｣等于2点时：】附属角色附属【sts117094】，随后消耗2点｢夜魂值｣。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, trigger = '' } = event;
+            const { heros = [], hidx = -1, trigger } = event;
             return {
                 trigger: ['other-vehicle', 'Burning-oppo', 'turn-end'],
                 exec: () => {
@@ -1808,7 +1802,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【行动阶段开始时：】如果所附属角色生命值不多于4，则移除此效果。；【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。【此效果被移除时：】所附属角色转换为[｢焚尽的炽炎魔女｣]形态。')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, trigger = '' } = event;
+            const { heros = [], hidx = -1, trigger } = event;
             const triggers: Trigger[] = ['will-killed', 'skilltype3'];
             if ((heros[hidx]?.hp ?? 10) <= 4) triggers.push('phase-start');
             return {
@@ -1827,7 +1821,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('cryo-dice').iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成1点[冰元素伤害]。；[useCnt]；所附属角色被附属【sts163011】时，移除此效果。')
         .handle((_, event) => {
-            const { trigger = '', heros = [], hidx = -1 } = event;
+            const { trigger, heros = [], hidx = -1 } = event;
             if (trigger == 'enter') {
                 return {
                     trigger: ['enter'],
@@ -1936,7 +1930,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。', 'v5.0.0')
         .addition(-1, -1, 0, 0).handle((status, event, ver) => {
-            const { discards = [], hcard, heros = [], trigger = '' } = event;
+            const { discards = [], hcard, heros = [], trigger } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];
             if (ver.gte('v5.0.0') && status.perCnt != 0) triggers.push('phase-end');
             return {
@@ -2303,7 +2297,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     127011: () => new StatusBuilder('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon('#')
         .description('【本角色造成或受到元素伤害后：】累积1层｢活化激能｣。（最多累积3层）；【结束阶段：】如果｢活化激能｣层数已达到上限，就将其清空。同时，角色失去所有[充能]。')
         .handle((status, event) => {
-            const { trigger = '', heros = [], hidx = -1 } = event;
+            const { trigger, heros = [], hidx = -1 } = event;
             const triggers: Trigger[] = ['skilltype3'];
             const hero = heros[hidx];
             if (!hero) return;
@@ -2387,7 +2381,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]；所附属角色被附属【sts121022】时，移除此效果。')
         .handle((_, event) => {
-            const { trigger = '', heros = [], hidx = -1 } = event;
+            const { trigger, heros = [], hidx = -1 } = event;
             if (trigger == 'enter') {
                 return {
                     trigger: ['enter'],
@@ -2550,7 +2544,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色下次使用技能或打出｢天赋｣时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
             if (status.useCnt <= 0) return;
-            const { trigger = '', isMinusDiceSkill = false, isMinusDiceTalent = false } = event;
+            const { trigger, isMinusDiceSkill, isMinusDiceTalent } = event;
             return {
                 minusDiceSkill: { skill: [0, 0, 1] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 1),
@@ -2594,7 +2588,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【对角色打出｢天赋｣或角色使用技能时：】少花费3个元素骰。；[useCnt]')
         .handle((status, event) => {
             if (status.useCnt <= 0) return;
-            const { trigger = '', isMinusDiceSkill = false, isMinusDiceTalent = false } = event;
+            const { trigger, isMinusDiceSkill, isMinusDiceTalent } = event;
             return {
                 minusDiceSkill: { skill: [0, 0, 3] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 3),
@@ -2859,7 +2853,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303228: () => new StatusBuilder('机关铸成之链（生效中）').heroStatus().icon('buff3').useCnt(0).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【所附属角色每次受到伤害或治疗后：】累积1点｢备战度｣（最多累积2点）。；【我方打出原本费用不多于｢备战度｣的｢武器｣或｢圣遗物｣时:】移除此状态，以免费打出该牌。')
         .handle((status, event) => {
-            const { hcard, trigger = '', isMinusDiceWeapon, isMinusDiceArtifact } = event;
+            const { hcard, trigger, isMinusDiceWeapon, isMinusDiceArtifact } = event;
             const isMinus = (isMinusDiceWeapon || isMinusDiceArtifact) && status.useCnt >= (hcard?.cost ?? 3);
             const triggers: Trigger[] = [];
             if (status.useCnt < 2) triggers.push('getdmg', 'heal');

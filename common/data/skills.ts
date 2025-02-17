@@ -175,14 +175,14 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
-    1161011: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
+    1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src()
-        .vehicle().damage(1).costSame(1).handle(event => {
+        .vehicle().damage(2).costSame(1).handle(event => {
             const { eheros, combatStatus, hero: { hidx } } = event;
             const hidxs = getNextBackHidx(eheros);
             const cmds: Cmds[] = [{ cmd: 'getStatus', status: 112145, hidxs: [hidx] }];
             if (hidxs.length == 0) return { cmds }
-            return { pdmg: hasObjById(combatStatus, 116103) ? 2 : 1, hidxs, cmds }
+            return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs, cmds }
         }),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
@@ -212,11 +212,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {
-            const { hcards = [], trigger = '' } = event;
-            if (trigger == 'calc') return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
+            const { hcards = [] } = event;
             const cmds: Cmds[] = [{ cmd: 'stealCard', cnt: 1, mode: CMD_MODE.HighHandCard }];
             if (ver.gte('v5.4.0')) cmds.push({ cmd: 'getCard', cnt: 1, isOppo: true });
-            return { cmds }
+            return { cmds, minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。（每回合最多使用1次）')

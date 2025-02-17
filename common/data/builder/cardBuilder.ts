@@ -98,6 +98,9 @@ export class GICard {
                         !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
                         return { trigger: ['get-status'], isDestroy: true, exec: () => { nightSoul.dispose(true) } }
                     }
+                    if (trigger == 'slot-destroy') {
+                        return { trigger: ['slot-destroy'], exec: () => { nightSoul.dispose(true) } }
+                    }
                     return {
                         ...res,
                         execmds: [...(res?.execmds ?? []), { cmd: 'getStatus', status: 112145, hidxs }],
