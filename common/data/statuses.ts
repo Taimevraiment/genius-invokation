@@ -3055,6 +3055,32 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    303317: () => new StatusBuilder('奇瑰之汤·助佑（生效中）').heroStatus().roundCnt(1).icon('buff2')
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('本回合中，该角色下次使用技能时少花费2个元素骰。')
+        .handle((status, event) => ({
+            trigger: ['skill'],
+            minusDiceSkill: { skill: [0, 0, 2] },
+            exec: () => { event.isMinusDiceSkill && status.minusRoundCnt() },
+        })),
+
+    303318: () => new StatusBuilder('奇瑰之汤·激愤（生效中）').heroStatus().roundCnt(1).icon('buff2')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('本回合中，该角色下一次造成的伤害+2。')
+        .handle((status, event) => ({
+            addDmg: 2,
+            trigger: isCdt(event.hasDmg, ['skill']),
+            exec: () => status.minusRoundCnt(),
+        })),
+
+    303319: () => new StatusBuilder('奇瑰之汤·宁静（生效中）').heroStatus().useCnt(1).roundCnt(1)
+        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
+        .description('本回合中，该角色下次受到的伤害-2。').barrierCnt(2),
+
+    303320: () => new StatusBuilder('奇瑰之汤·安神（生效中）').heroStatus()
+        .useCnt(3).roundCnt(1).type(STATUS_TYPE.Barrier)
+        .description('本回合中，该我方角色受到的伤害-1。；[useCnt]'),
+
 };
 
 export const newStatus = (version?: Version) => (id: number, ...args: any) => statusTotal[id](...args).id(id).version(version).done();

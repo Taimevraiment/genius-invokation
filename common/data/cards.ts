@@ -2287,7 +2287,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { cmds: [{ cmd: 'heal', cnt: 1 + length }], canSelectHero }
         }),
 
-    333020: () => new CardBuilder(468).name('奇瑰之汤').since('v5.5.0').food().costSame(0).canSelectHero(1)
+    333020: () => new CardBuilder(468).name('奇瑰之汤').since('v5.5.0').food().costSame(1).canSelectHero(1)
         .description('从3个随机效果中[挑选]1个，对目标角色生效。')
         .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
         .handle(() => ({
@@ -3549,17 +3549,35 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332035: () => magicCount(0),
 
-    333021: () => new CardBuilder().name('奇瑰之汤·疗愈'),
+    333021: () => new CardBuilder().name('奇瑰之汤·疗愈').food().costSame(0).canSelectHero(1)
+        .description('治疗目标角色2点。')
+        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .handle(() => ({ cmds: [{ cmd: 'heal', cnt: 2 }] })),
 
-    333022: () => new CardBuilder().name('奇瑰之汤·助佑'),
+    333022: () => new CardBuilder().name('奇瑰之汤·助佑').food().costSame(0).canSelectHero(1)
+        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .description('本回合中，目标角色下次使用技能时少花费2个元素骰。')
+        .handle(() => ({ status: 303317 })),
 
-    333023: () => new CardBuilder().name('奇瑰之汤·激愤'),
+    333023: () => new CardBuilder().name('奇瑰之汤·激愤').food().costSame(0).canSelectHero(1)
+        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .description('本回合中，目标角色下一次造成的伤害+2。')
+        .handle(() => ({ status: 303318 })),
 
-    333024: () => new CardBuilder().name('奇瑰之汤·宁静'),
+    333024: () => new CardBuilder().name('奇瑰之汤·宁静').food().costSame(0).canSelectHero(1)
+        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .description('本回合中，目标角色下次受到的伤害-2。')
+        .handle(() => ({ status: 303319 })),
 
-    333025: () => new CardBuilder().name('奇瑰之汤·安神'),
+    333025: () => new CardBuilder().name('奇瑰之汤·安神').food().costSame(0).canSelectHero(1)
+        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .description('本回合中，目标我方角色受到的伤害-1。（最多生效3次）')
+        .handle(() => ({ status: 303320 })),
 
-    333026: () => new CardBuilder().name('奇瑰之汤·鼓舞'),
+    333026: () => new CardBuilder().name('奇瑰之汤·鼓舞').food().costSame(0).canSelectHero(1)
+        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .description('目标角色获得1点额外最大生命值。')
+        .handle(() => ({ cmds: [{ cmd: 'addMaxHp', cnt: 1 }] })),
 
 }
 

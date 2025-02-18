@@ -6,10 +6,11 @@
         <span>{{ client.round }}</span>
       </div>
       <div class="pile">
-        <span>
+        <img src="@@/image/card-bg.png" alt="" class="pile-bg">
+        <span class="dice-cnt">
           <div>{{ diceCnt[playerIdx ^ 1] }}</div>
         </span>
-        {{ pileCnt[playerIdx ^ 1] }}
+        <div style="position: relative;">{{ pileCnt[playerIdx ^ 1] }}</div>
         <Handcard class="will-getcard-oppo" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
@@ -39,10 +40,11 @@
         </button>
       </div>
       <div class="pile">
-        <span>
+        <img src="@@/image/card-bg.png" alt="" class="pile-bg">
+        <span class="dice-cnt">
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
-        {{ pileCnt[playerIdx] }}
+        <div style="position: relative;">{{ pileCnt[playerIdx] }}</div>
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
@@ -391,7 +393,7 @@
             还可重投{{ rollCnt }}轮
           </div>
           <button @click="reroll()" :class="{ 'not-show': !showRerollBtn }">
-            {{ diceSelect.some(v => v) ? "重掷" : "确认" }}
+            {{diceSelect.some(v => v) ? "重掷" : "确认"}}
           </button>
         </div>
 
@@ -403,7 +405,7 @@
             </Handcard>
           </div>
           <button @click="changeCard" v-if="showChangeCardBtn">
-            {{ initCardsSelect.some(v => v) ? "换牌" : "确认手牌" }}
+            {{initCardsSelect.some(v => v) ? "换牌" : "确认手牌"}}
           </button>
         </div>
 
@@ -743,6 +745,7 @@ const selectCardPick = (pcidx: number) => {
 const pickCard = () => {
   emits('pickCard');
   isHide.value = true;
+  setTimeout(() => isHide.value = false, 1e3);
 }
 // 选择要消费的骰子
 const selectUseDice = (didx: number) => {
@@ -863,7 +866,13 @@ const mouseup = () => {
   align-items: center;
 }
 
-.pile>span {
+.pile-bg {
+  position: absolute;
+  height: 200%;
+  transform: translate(-40%) rotate(90deg);
+}
+
+.dice-cnt {
   width: 55%;
   aspect-ratio: 1/1.1;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
@@ -873,7 +882,7 @@ const mouseup = () => {
   align-items: center;
 }
 
-.pile>span>div {
+.dice-cnt>div {
   width: 90%;
   height: 90%;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);

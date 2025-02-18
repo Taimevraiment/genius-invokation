@@ -111,14 +111,14 @@ export default class GeniusInvokationClient {
         this.handcardsGap = isMobile ? HANDCARDS_GAP_MOBILE : HANDCARDS_GAP_PC;
         this.handcardsOffset = isMobile ? HANDCARDS_OFFSET_MOBILE : HANDCARDS_OFFSET_PC;
         this.handcardsPos = this.player.handCards.map((_, ci) => ci * this.handcardsGap);
-        const { shareCode = 'null', version: ver } = this.decks[this.deckIdx] ?? {};
+        const { shareCode = 'null', version: ver = 'null' } = this.decks[this.deckIdx] ?? {};
         const { heroIds, cardIds } = parseShareCode(shareCode);
         this.isDeckCompleteValid = {
             isValid: !heroIds.includes(0) && cardIds.length == DECK_CARD_COUNT,
             error: '当前出战卡组不完整',
         };
         this.isDeckVersionValid = {
-            isValid: compareVersionFn(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
+            isValid: ver == 'null' || compareVersionFn(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
             error: '当前卡组版本不匹配',
         };
     }

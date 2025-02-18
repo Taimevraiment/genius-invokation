@@ -217,6 +217,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}id: ${player.id}\n`
         + `${prefix1}pidx: ${player.pidx}\n`
         + `${prefix1}hidx: ${player.hidx}\n`
+        + `${prefix1}phase: ${player.phase}\n`
         + `${prefix1}isOffline: ${player.isOffline}\n`
         + `${prefix1}canAction: ${player.canAction}\n`
         + `${prefix1}isFallAtk: ${player.isFallAtk}\n`

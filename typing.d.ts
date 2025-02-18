@@ -306,6 +306,7 @@ type PickCard = {
     selectIdx: number,
     cardType: PickCardType,
     skillId: number,
+    hidxs?: number[],
     phase?: Phase,
     isQuickAction?: boolean,
 }

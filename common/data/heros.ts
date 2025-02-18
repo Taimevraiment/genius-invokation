@@ -1558,9 +1558,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Emilie_-544801855.png')
         .normalSkill(new NormalSkillBuilder('逐影枪术·改').handle(({ talent }) => ({ dmgElement: isCdt(!!talent, DAMAGE_TYPE.Dendro) })))
         .skills(
-            new SkillBuilder('撷萃调香').description('生成【smn117101】。')
+            new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
                 .src('/image/tmp/Skill_S_Emilie_01.webp')
-                .elemental().cost(3).handle(() => ({ summon: 117101 })),
+                .elemental().cost(3).handle(({ summons }) => ({ summon: 117101 + +hasObjById(summons, 117102) })),
             new SkillBuilder('香氛演绎').description('{dealDmg}。移除场上的【柔灯之匣】。生成【smn117103】。')
                 .src('/image/tmp/Skill_E_Emilie_01.webp')
                 .burst(2).damage(1).cost(3).handle(event => ({
