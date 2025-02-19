@@ -252,7 +252,7 @@ const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
 const canAction = computed<boolean>(() => client.value.canAction && isLookon.value == -1); // 是否可以操作
-const isNonEvent = computed<boolean>(() => client.value.player.combatStatus.some(s => s.type.includes(STATUS_TYPE.NonEvent))); // 是否使事件牌失效
+const isNonEvent = computed<boolean>(() => client.value.player.combatStatus.some(s => s.hasType(STATUS_TYPE.NonEvent))); // 是否使事件牌失效
 const currDeck = computed(() => { // 当前出战卡组
   const deck = client.value.decks[client.value.editDeckIdx];
   const { heroIds } = parseShareCode(deck.shareCode);

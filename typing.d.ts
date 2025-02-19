@@ -95,6 +95,7 @@ type MinusDiceSkill = {
     skilltype3?: number[],
     skilltype5?: number[],
     elDice?: PureElementType,
+    isAll?: boolean, // 是否对其他角色生效
 }
 
 type AddDiceSkill = {

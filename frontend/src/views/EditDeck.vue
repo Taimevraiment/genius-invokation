@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 <div class="edit-btn-group">
-                    <span v-for="( icon, cidx ) in deckListEditIcon" :key="cidx" class="edit-list-icon"
+                    <span v-for="(icon, cidx) in deckListEditIcon" :key="cidx" class="edit-list-icon"
                         @click.stop="icon.handle(did)">
                         {{ icon.name }}
                     </span>
@@ -111,8 +111,8 @@
                         :key="dcidx" @click.stop="showCardInfo(dcard.id)">
                         <div class="card-img-content">
                             <span class="card-img">{{ dcard.name }}</span>
-                            <img class="card-img" :src="dcard.UI.src" v-if="dcard?.UI.src?.length > 0" :alt="dcard.name"
-                                draggable="false" />
+                            <img class="card-img" :src="getPngIcon(dcard.UI.src)" v-if="dcard?.UI.src?.length > 0"
+                                :alt="dcard.name" draggable="false" />
                             <img class="legend-border" v-if="dcard.hasSubtype(CARD_SUBTYPE.Legend)"
                                 :src="getPngIcon('legend-border')" />
                         </div>
@@ -145,7 +145,7 @@
                         v-for="(dtcard, dtcidx) in allCards" :key="dtcidx" @click.stop="showCardInfo(dtcard.id)">
                         <div class="card-img-content">
                             <span class="card-img">{{ dtcard.name }}</span>
-                            <img class="card-img" :src="dtcard.UI.src" v-if="dtcard?.UI.src?.length > 0"
+                            <img class="card-img" :src="getPngIcon(dtcard.UI.src)" v-if="dtcard?.UI.src?.length > 0"
                                 :alt="dtcard.name" draggable="false" />
                             <img class="legend-border" v-if="dtcard.hasSubtype(CARD_SUBTYPE.Legend)"
                                 :src="getPngIcon('legend-border')" />

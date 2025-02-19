@@ -6,6 +6,9 @@ import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NU
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC, SLOT_CODE_KEY,
 } from "@@@/constant/UIconst";
+import { GICard } from "@@@/data/builder/cardBuilder";
+import { GIHero } from "@@@/data/builder/heroBuilder";
+import { GIStatus } from "@@@/data/builder/statusBuilder";
 import { parseCard } from "@@@/data/cards";
 import { parseHero } from "@@@/data/heros";
 import { newSummon } from "@@@/data/summons";
@@ -357,10 +360,10 @@ export default class GeniusInvokationClient {
                 this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
                 this.energyCnt = clone(preview.willEnergyChange) ?? this._resetEnergyCnt();
                 this.isValid = preview.isValid;
+                this.heroCanSelect = clone(preview.heroCanSelect) ?? this._resetHeroCanSelect();
+                this.summonCanSelect = clone(preview.summonCanSelect) ?? this._resetSummonCanSelect();
+                this.supportCanSelect = clone(preview.supportCanSelect) ?? this._resetSupportCanSelect();
                 if (this.isValid) {
-                    this.heroCanSelect = [...(preview.heroCanSelect ?? [])];
-                    this.summonCanSelect = clone(preview.summonCanSelect!);
-                    this.supportCanSelect = clone(preview.supportCanSelect!.slice());
                     const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                     if (canSelectHero == 1 && preview.heroIdxs) this.heroSelect[1][preview.heroIdxs[0]] = 1;
                     if (preview.summonIdx) this.summonSelect[canSelectSummon][preview.summonIdx] = true;
@@ -486,6 +489,15 @@ export default class GeniusInvokationClient {
             setTimeout(() => this.actionInfo.isShow = false, 800);
             setTimeout(() => this.actionInfo = { content: '' }, 1e3);
         }
+        players.forEach(p => {
+            p.combatStatus.forEach(s => Reflect.setPrototypeOf(s, GIStatus.prototype));
+            p.heros.forEach(h => {
+                Reflect.setPrototypeOf(h, GIHero.prototype);
+                h.heroStatus.forEach(s => Reflect.setPrototypeOf(s, GIStatus.prototype));
+                h.equipments.forEach(s => s && Reflect.setPrototypeOf(s, GICard.prototype));
+            });
+            p.handCards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
+        });
         const setSelect = (retry = 0) => {
             try {
                 if (slotSelect.length > 0) {
@@ -527,9 +539,9 @@ export default class GeniusInvokationClient {
         setSelect();
         const destroySts = (hasDmg: boolean = false) => {
             const stsDestroy = (s: Status) =>
-                s.type.includes(STATUS_TYPE.Accumulate) ||
+                s.hasType(STATUS_TYPE.Accumulate) ||
                 !(s.useCnt == 0 || s.roundCnt == 0) ||
-                (!hasDmg && s.type.includes(STATUS_TYPE.Attack));
+                (!hasDmg && s.hasType(STATUS_TYPE.Attack));
             this.players.forEach(p => {
                 p.heros.forEach(h => h.heroStatus = h.heroStatus.filter(stsDestroy));
                 p.combatStatus = p.combatStatus.filter(stsDestroy);
@@ -660,7 +672,7 @@ export default class GeniusInvokationClient {
             }
         }
         if (this.isLookon > -1) return;
-        if (this.currSkill.canSelectHero == -1 && (!this.currCard.subType.includes(CARD_SUBTYPE.Action) || this.currCard.canSelectHero == 0)) {
+        if (this.currSkill.canSelectHero == -1 && (!this.currCard.hasSubtype(CARD_SUBTYPE.Action) || this.currCard.canSelectHero == 0)) {
             this.currSkill = NULL_SKILL();
         }
         this._resetWillSummons();
@@ -668,12 +680,15 @@ export default class GeniusInvokationClient {
         this._resetWillAttachs();
         if (this.player.phase == PHASE.CHOOSE_HERO && pidx == 1) { // 选择初始出战角色
             this.cancel({ onlyCard: true, notHeros: true });
-            if (this.player.heros[hidx]?.isFront) this.modalInfo = NULL_MODAL();
-            else {
+            if (this.player.heros[hidx]?.isFront) {
+                this.modalInfo = NULL_MODAL();
+                this.emit({ type: ACTION_TYPE.ChooseInitHero, heroIdxs: [hidx], flag: 'chooseInitHero' });
+            } else {
                 this.isShowSwitchHero = 1;
                 this.targetSelect[pidx].forEach((_, hi, ha) => ha[hi] = hi == hidx);
+                this.player.heros.forEach(h => h.isFront = h.hidx == hidx);
+                this.player.hidx = hidx;
             }
-            this.emit({ type: ACTION_TYPE.ChooseInitHero, heroIdxs: [hidx], flag: 'chooseInitHero' });
         } else {
             if ((this.isShowSwitchHero > 1 || this.currSkill.canSelectHero == 1) && pidx == 1 && this.heroCanSelect[hidx]) {
                 if (this.heroSelect[1][hidx] > 0) return this.switchHero();
@@ -1036,6 +1051,7 @@ export default class GeniusInvokationClient {
      */
     private _resetSupportCanSelect() {
         this.supportCanSelect.forEach(v => v.fill(false));
+        return this.supportCanSelect;
     }
     /**
      * 重置支援物预览
@@ -1054,6 +1070,7 @@ export default class GeniusInvokationClient {
      */
     private _resetSummonCanSelect() {
         this.summonCanSelect.forEach(v => v.fill(false));
+        return this.summonCanSelect;
     }
     /**
      * 重置召唤物次数预览

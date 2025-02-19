@@ -18,7 +18,7 @@
             <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
             <span>{{ (info as Card).energy }}</span>
           </div>
-          <div class="info-card-legend" v-if="(info as Card).subType.includes(CARD_SUBTYPE.Legend)">
+          <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
             <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
           </div>
         </div>
@@ -26,19 +26,19 @@
         <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
           {{ CARD_SUBTYPE_NAME[subtype] }}
         </div>
-        <div v-if="(info as Card).subType.includes(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
+        <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
           {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
         </div>
         <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
         </div>
         <div class="info-card-explain"
-          v-for="(expl, eidx) in skillExplain.filter(() => !(info as Card).subType.includes(CARD_SUBTYPE.Vehicle))"
+          v-for="(expl, eidx) in skillExplain.filter(() => !(info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))"
           :key="eidx" style="margin-top: 5px">
           <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
         </div>
       </div>
       <div v-if="type == INFO_TYPE.Hero || type == INFO_TYPE.Skill ||
-        (type == INFO_TYPE.Card && (info as Card).subType.includes(CARD_SUBTYPE.Vehicle))">
+        (type == INFO_TYPE.Card && (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))">
         <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
         <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
           <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
@@ -91,12 +91,9 @@
           </div>
         </div>
         <div v-if="type == INFO_TYPE.Skill && skills[skidx].type != SKILL_TYPE.Vehicle">
-          <div class="info-equipment"
-            v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).vehicleSlot">
+          <div class="info-equipment" v-if="(info as Hero).equipments.length > 0">
             <div class="title">—— 角色装备 ——</div>
-            <div class="equipment"
-              v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot, (info as Hero).vehicleSlot?.[0]].filter(s => s).sort((a, b) => b!.entityId - a!.entityId)"
-              :key="slidx">
+            <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
               <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
                 <span class="equipment-title-left">
                   <div class="equipment-icon">
@@ -122,7 +119,7 @@
           </div>
           <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
             <div class="title">—— 角色状态 ——</div>
-            <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))"
+            <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))"
               :key="ist.id" class="status">
               <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
                 <span class="status-title-left">
@@ -133,7 +130,7 @@
                     }" />
                     <div v-else style="color: white;">{{ ist.name[0] }}</div>
                     <div class="status-cnt"
-                      v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                      v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
                       {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
                     </div>
                     <span>{{ ist.name }}</span>
@@ -153,7 +150,7 @@
           </div>
           <div v-if="combatStatus.length > 0" class="info-status">
             <div class="title">—— 阵营出战状态 ——</div>
-            <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ost.id"
+            <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
               class="status">
               <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
                 <span class="status-title-left">
@@ -163,7 +160,7 @@
                       :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? getSvgFilter(ost.UI.iconBg) : '' }" />
                     <div v-else style="color: white;">{{ ost.name[0] }}</div>
                     <div class="status-cnt"
-                      v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                      v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
                       {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
                     </div>
                     <span>{{ ost.name }}</span>
@@ -194,13 +191,10 @@
       </div>
     </div>
     <div class="info-container" :class="{ 'mobile-font': isMobile }" @click.stop=""
-      v-if="isShow && type == INFO_TYPE.Hero && ((info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).vehicleSlot || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
-      <div class="info-equipment"
-        v-if="(info as Hero).weaponSlot || (info as Hero).talentSlot || (info as Hero).artifactSlot || (info as Hero).vehicleSlot">
+      v-if="isShow && type == INFO_TYPE.Hero && ((info as Hero).equipments.length > 0 || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
+      <div class="info-equipment" v-if="(info as Hero).equipments.length > 0">
         <div class="title">—— 角色装备 ——</div>
-        <div class="equipment"
-          v-for="(slot, slidx) in [(info as Hero).weaponSlot, (info as Hero).artifactSlot, (info as Hero).talentSlot, (info as Hero).vehicleSlot?.[0]].filter(s => s).sort((a, b) => b!.entityId - a!.entityId)"
-          :key="slidx">
+        <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
           <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
             <span class="equipment-title-left">
               <div class="equipment-icon">
@@ -228,8 +222,8 @@
       </div>
       <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
         <div class="title">—— 角色状态 ——</div>
-        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))"
-          :key="ist.id" class="status">
+        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ist.id"
+          class="status">
           <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
             <span class="status-title-left">
               <div class="status-icon">
@@ -237,8 +231,7 @@
                 <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)"
                   :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? getSvgFilter(ist.UI.iconBg) : '' }" />
                 <div v-else style="color: white;">{{ ist.name[0] }}</div>
-                <div class="status-cnt"
-                  v-if="!ist.type.includes(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                <div class="status-cnt" v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
                   {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
                 </div>
                 <span>{{ ist.name }}</span>
@@ -257,7 +250,7 @@
       </div>
       <div v-if="combatStatus.length > 0" class="info-status">
         <div class="title">—— 阵营出战状态 ——</div>
-        <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.type.includes(STATUS_TYPE.Hide))" :key="ost.id"
+        <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
           class="status">
           <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
             <span class="status-title-left">
@@ -266,8 +259,7 @@
                 <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
                   :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? getSvgFilter(ost.UI.iconBg) : '' }" />
                 <div v-else style="color: white;">{{ ost.name[0] }}</div>
-                <div class="status-cnt"
-                  v-if="!ost.type.includes(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                <div class="status-cnt" v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
                   {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
                 </div>
                 <span>{{ ost.name }}</span>
@@ -537,7 +529,7 @@ watchEffect(() => {
   if (info.value && 'costType' in info.value) { // 卡牌
     info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' })).filter(v => v != '');
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
-    if (info.value.subType.includes(CARD_SUBTYPE.Vehicle)) {
+    if (info.value.hasSubtype(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(getVehicleIdByCid(info.value.id));
       vehicle.UI.descriptions = vehicle.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: vehicle }));
       skills.value.push(vehicle);
@@ -567,19 +559,17 @@ watchEffect(() => {
       isShowSkill.value.push(type.value == INFO_TYPE.Skill);
     }
     slotExplain.value = [];
-    [info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot, info.value.vehicleSlot?.[0]].forEach(slot => {
-      if (slot) {
-        const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
-        const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
-        slot.UI.descriptions = isActionTalent ? desc.slice(1 + +desc[1].includes('立刻使用一次')) : desc;
-        const onceDesc = slot.UI.descriptions.findIndex(v => /入场时(?:：|，)|才能打出/.test(v));
-        if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
-        slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
-        if (slot.subType.includes(CARD_SUBTYPE.Vehicle)) {
-          skills.value.unshift((info.value as Hero).vehicleSlot![1]);
-          skills.value.push((info.value as Hero).vehicleSlot![1]);
-          isShowSkill.value.push(type.value == INFO_TYPE.Skill);
-        }
+    info.value.equipments.forEach(slot => {
+      const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
+      const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.hasSubtype(v));
+      slot.UI.descriptions = isActionTalent ? desc.slice(1 + +desc[1].includes('立刻使用一次')) : desc;
+      const onceDesc = slot.UI.descriptions.findIndex(v => /入场时(?:：|，)|才能打出/.test(v));
+      if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
+      slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
+      if (slot.hasSubtype(CARD_SUBTYPE.Vehicle)) {
+        skills.value.unshift((info.value as Hero).vehicleSlot![1]);
+        skills.value.push((info.value as Hero).vehicleSlot![1]);
+        isShowSkill.value.push(type.value == INFO_TYPE.Skill);
       }
     });
     skills.value.forEach(skill => {
@@ -588,7 +578,7 @@ watchEffect(() => {
     });
     isHeroStatus.value = new Array(info.value.heroStatus.length).fill(false);
     isCombatStatus.value = new Array(combatStatus.value.length).fill(false);
-    isEquipment.value = new Array([info.value.weaponSlot, info.value.artifactSlot, info.value.talentSlot, info.value.vehicleSlot?.[0]].filter(s => s).length).fill(false);
+    isEquipment.value = new Array(info.value.equipments.length).fill(false);
   }
 });
 

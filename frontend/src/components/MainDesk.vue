@@ -73,7 +73,7 @@
           <div class="support-img-content">
             <div class="card-border"></div>
             <img class="support-img"
-              :style="{ top: support.card.subType.includes(CARD_SUBTYPE.Ally) && isMobile ? '100%' : '60%' }"
+              :style="{ top: support.card.hasSubtype(CARD_SUBTYPE.Ally) && isMobile ? '100%' : '60%' }"
               :src="getPngIcon(support.card.UI.src)" v-if="support.card.UI.src.length > 0" :alt="support.card.name" />
             <span v-else>{{ support.card.name }}</span>
             <div style="position: absolute; width: 100%; height: 100%"
@@ -126,7 +126,7 @@
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content" :class="{
-            'hero-shield7': hero.hp >= 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.type.includes(STATUS_TYPE.Shield) && sts.useCnt > 0),
+            'hero-shield7': hero.hp >= 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0),
           }">
             <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
             <div v-else class="hero-name">{{ hero?.name }}</div>
@@ -137,8 +137,8 @@
           <div class="hero-freeze" style="background-color: #716446de"
             v-if="hero.hp >= 0 && hero.heroStatus.some(ist => ist.id == 116033)"></div>
           <div class="hero-shield2" v-if="hero.hp >= 0 && (
-            hero.heroStatus.some(ist => ist.type.includes(STATUS_TYPE.Barrier)) ||
-            hero.isFront && combatStatuses[hgi].some(ost => ost.type.includes(STATUS_TYPE.Barrier)) ||
+            hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier)) ||
+            hero.isFront && combatStatuses[hgi].some(ost => ost.hasType(STATUS_TYPE.Barrier)) ||
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
             hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt != 0) ||
             hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt != 0">
@@ -189,15 +189,21 @@
             </div>
           </div>
           <div class="attach-element">
-            <div class="el-tip" v-if="elTips[hgi][hidx] != undefined" :class="{
-              'el-tip-anime': elTips[hgi][hidx][0] != '',
-            }" :style="{
-              color: ELEMENT_COLOR[elTips[hgi][hidx][1]],
-              // fontWeight: 'bolder',
-              '-webkit-text-stroke': `0.5px ${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`,
-            }">
-              {{ elTips[hgi][hidx][0] }}
-            </div>
+            <template v-if="elTips[hgi][hidx] != undefined && elTips[hgi][hidx][0] != ''">
+              <img :src="ELEMENT_URL[elTips[hgi][hidx][1]]" alt="" style="width: 20px;"
+                :class="{ 'el-tip-anime-left-icon': elTips[hgi][hidx][0] != '' }">
+              <img :src="ELEMENT_URL[elTips[hgi][hidx][2]]" alt="" style="width: 20px;"
+                :class="{ 'el-tip-anime-right-icon': elTips[hgi][hidx][0] != '' }">
+              <div class="el-tip" :class="{
+                'el-tip-anime': elTips[hgi][hidx][0] != '',
+              }" :style="{
+                color: ELEMENT_COLOR[elTips[hgi][hidx][2]],
+                // fontWeight: 'bolder',
+                '-webkit-text-stroke': `0.5px ${ELEMENT_COLOR[elTips[hgi][hidx][1]]}`,
+              }">
+                {{ elTips[hgi][hidx][0] }}
+              </div>
+            </template>
             <template v-if="hero.hp >= 0">
               <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
               <img class="will-attach"
@@ -221,7 +227,7 @@
                 :class="{ 'status-can-use': ists.perCnt > 0 }"></div>
               <div class="status-cnt"
                 :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hgi][hidx][0][isti].isChange }"
-                v-if="!ists.type.includes(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
+                v-if="!ists.hasType(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
                 {{ ists.useCnt < 0 ? ists.roundCnt : ists.useCnt }} </div>
               </div>
               <div v-if="hero.heroStatus.length > 4" :class="{ status: true, 'mobile-status': isMobile }"
@@ -250,7 +256,7 @@
                   :class="{ 'status-can-use': osts.perCnt > 0 }"></div>
                 <div class="status-cnt"
                   :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hgi][hidx][1][osti].isChange }"
-                  v-if="!osts.type.includes(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
+                  v-if="!osts.hasType(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
                   {{ osts.useCnt < 0 ? osts.roundCnt : osts.useCnt }} </div>
                 </div>
                 <div v-if="combatStatuses[hgi].length > 4" :class="{ status: true, 'mobile-status': isMobile }"
@@ -1158,7 +1164,15 @@ button:active {
 }
 
 .el-tip-anime {
-  animation: eltips 1s linear forwards;
+  animation: eltips 1.5s linear forwards;
+}
+
+.el-tip-anime-left-icon {
+  animation: eltips-left-icon 1.5s linear forwards;
+}
+
+.el-tip-anime-right-icon {
+  animation: eltips-right-icon 1.5s linear forwards;
 }
 
 .attach-element img {
@@ -1961,7 +1975,12 @@ svg {
     opacity: 0;
   }
 
-  50% {
+  40% {
+    top: 0px;
+    opacity: 0;
+  }
+
+  65% {
     top: -8px;
     opacity: 1;
   }
@@ -1974,6 +1993,26 @@ svg {
   100% {
     top: -8px;
     opacity: 0;
+  }
+}
+
+@keyframes eltips-left-icon {
+  40% {
+    transform: translateX(80%) scale(0);
+  }
+
+  100% {
+    transform: translateX(80%) scale(0);
+  }
+}
+
+@keyframes eltips-right-icon {
+  40% {
+    transform: translateX(-80%) scale(0);
+  }
+
+  100% {
+    transform: translateX(-80%) scale(0);
   }
 }
 

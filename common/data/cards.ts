@@ -714,7 +714,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [] } = event;
             const hidxs = getBackHidxs(heros);
-            const isTriggered = heros.filter(h => hidxs.includes(h.hidx)).some(h => h.energy < h.maxEnergy);
+            const isTriggered = heros.some(h => hidxs.includes(h.hidx) && h.energy < h.maxEnergy);
             if (card.perCnt <= 0 || !isTriggered) return;
             return {
                 trigger: ['skilltype3'],
@@ -726,24 +726,25 @@ const allCards: Record<number, () => CardBuilder> = {
     312007: () => new CardBuilder(154).name('华饰之兜').since('v3.5.0').artifact().costSame(1).costAny(2, 'v4.0.0')
         .description('【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/82dc7fbd9334da0ca277b234c902a394_6676194364878839414.png')
-        .handle((_, { hidxs }) => ({
-            trigger: ['other-skilltype3'],
-            execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
-        })),
+        .handle((_, event) => {
+            const { hidxs, hero } = event;
+            if (!hero || hero.energy >= hero.maxEnergy) return;
+            return { trigger: ['other-skilltype3'], execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }] }
+        }),
 
     312008: () => new CardBuilder(155).name('绝缘之旗印').since('v3.7.0').artifact().costSame(2).costAny(3, 'v4.0.0').perCnt(1).perCnt(0, 'v4.1.0')
         .description('【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。；角色使用｢元素爆发｣造成的伤害+2。（每回合1次）')
         .description('【其他我方角色使用｢元素爆发｣后：】所附属角色获得1点[充能]。；角色使用｢元素爆发｣造成的伤害+2。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/361399b0aa575a2805da6765d3c0e17c_4972333427190668688.png')
         .handle((card, event, ver) => {
-            const { hidxs, trigger } = event;
+            const { hidxs, hero, trigger } = event;
+            if (trigger == 'other-skilltype3' && (!hero || hero.energy >= hero.maxEnergy)) return;
+            const isAddDmg = ver.lt('v4.1.0') || card.perCnt > 0;
             return {
-                addDmgType3: isCdt(ver.lt('v4.1.0') || card.perCnt > 0, 2),
+                addDmgType3: isCdt(isAddDmg, 2),
                 trigger: ['other-skilltype3', 'skilltype3'],
                 execmds: isCdt(trigger == 'other-skilltype3', [{ cmd: 'getEnergy', cnt: 1, hidxs }]),
-                exec: () => {
-                    if (trigger == 'skilltype3' && card.perCnt > 0) card.minusPerCnt();
-                }
+                exec: () => { trigger == 'skilltype3' && isAddDmg && card.minusPerCnt() }
             }
         }),
 
@@ -765,9 +766,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 trigger: ['phase-start', 'getdmg'],
                 execmds: isCdt<Cmds[]>(trigger == 'phase-start', [{ cmd: 'getStatus', status: 301201, hidxs }],
                     isCdt<Cmds[]>(isGetDmg, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.FrontHero }])),
-                exec: () => {
-                    if (isGetDmg) card.minusPerCnt();
-                }
+                exec: () => { isGetDmg && card.minusPerCnt() }
             }
         }),
 
@@ -2137,10 +2136,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/7f43e01235d3b59c48ac6d9ebd803748_5052551949082854888.png')
         .handle(() => ({
             cmds: [
-                { cmd: 'addCard', cnt: 2, card: 332042 },
                 { cmd: 'addCard', cnt: 2, card: 332042, isOppo: true },
-                { cmd: 'getCard', cnt: 2 },
+                { cmd: 'addCard', cnt: 2, card: 332042 },
                 { cmd: 'getCard', cnt: 2, isOppo: true },
+                { cmd: 'getCard', cnt: 2 },
             ]
         })),
 
@@ -2318,8 +2317,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】后：治疗自身2点。（每回合1次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png')
         .handle((card, event) => {
-            const { heros = [], hidxs, hidxs: [hidx] = [] } = event;
-            const hero = heros[hidx];
+            const { hero, hidxs } = event;
             if (card.perCnt <= 0 || !hero || hero.hp == hero.maxHp) return;
             return {
                 trigger: ['skilltype2'],
@@ -2898,9 +2896,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】每回合第2次及以后使用【ski】时：如果触发【sts116054】，伤害额外+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png')
         .handle((_, event) => {
-            const { heros = [], hidxs: [hidx] = [-1], isChargedAtk } = event;
-            if (!heros[hidx]) return;
-            const { heroStatus, skills: [{ useCntPerRound }] } = heros[hidx];
+            const { hero, isChargedAtk } = event;
+            if (!hero) return;
+            const { heroStatus, skills: [{ useCntPerRound }] } = hero;
             if (isChargedAtk && useCntPerRound >= 2 && hasObjById(heroStatus, 116054)) {
                 return { trigger: ['skilltype1'], addDmgCdt: 1 }
             }
@@ -2971,9 +2969,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时，如果消耗了[持续回合]至少为1的【sts117061】，则总是附属[持续回合]为3的【sts117061】，并且抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png')
         .handle((_, event) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
-            const sts117061 = getObjById(heros[hidx]?.heroStatus, 117061);
-            if (sts117061) return { trigger: ['skilltype3'], execmds: [{ cmd: 'getCard', cnt: 1 }] }
+            if (!hasObjById(event.hero?.heroStatus, 117061)) return;
+            return { trigger: ['skilltype3'], execmds: [{ cmd: 'getCard', cnt: 1 }] }
         }),
 
     217071: () => new CardBuilder(340).name('沿途百景会心').since('v4.5.0').talent(1).costDendro(3).perCnt(1)
@@ -3093,7 +3090,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (card.perCnt <= 0) return;
             return {
                 trigger: ['vehicle', 'other-vehicle'],
-                minusDiceSkill: { skilltype5: [0, 0, 1] },
+                minusDiceSkill: { skilltype5: [0, 0, 1], isAll: true },
                 exec: () => { event.isMinusDiceSkill && card.minusPerCnt() }
             }
         }),
@@ -3350,15 +3347,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
     116102: () => new CardBuilder().name('冲天转转').vehicle(true).costSame(0)
         .description('【附属角色切换至后台时：】消耗1点｢夜魂值｣，召唤【smn116103】。')
-        .handle((_, event) => {
-            const { heros = [], hidxs: [hidx] = [-1] } = event;
-            return {
-                trigger: ['switch-from'],
-                isAddTask: true,
-                summon: 116103,
-                execmds: isCdt(!!heros[hidx]?.talentSlot, [{ cmd: 'getCard', cnt: 1 }]),
-            }
-        }),
+        .handle((_, event) => ({
+            trigger: ['switch-from'],
+            isAddTask: true,
+            summon: 116103,
+            execmds: isCdt(!!event.hero?.talentSlot, [{ cmd: 'getCard', cnt: 1 }]),
+        })),
 
     122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
@@ -3536,10 +3530,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png')
         .handle((_, event, ver) => {
-            const { heros = [], hidxs: [hidx = -1] = [] } = event;
-            if (hidx == -1) return;
+            const { hero } = event;
+            if (!hero) return;
             const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }];
-            if (ver.lt('v4.8.0') || !hasObjById(heros[hidx]?.heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
+            if (ver.lt('v4.8.0') || !hasObjById(hero.heroStatus, 303231)) cmds.push({ cmd: 'heal', cnt: 1 });
             return { cmds, status: isCdt(ver.gte('v4.8.0'), 303231) }
         }),
 

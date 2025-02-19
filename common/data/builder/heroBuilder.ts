@@ -61,8 +61,9 @@ export class GIHero {
         this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
         this.offlineVersion = offlineVersion;
     }
-    get equipments() {
-        return [this.weaponSlot, this.artifactSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null];
+    get equipments(): Card[] {
+        return [this.weaponSlot, this.artifactSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null]
+            .filter(s => s != null).sort((a, b) => b.entityId - a.entityId);
     }
 }
 

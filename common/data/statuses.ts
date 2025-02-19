@@ -5,7 +5,7 @@ import {
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY } from "../constant/UIconst.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 
@@ -1535,7 +1535,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     116101: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2).type(STATUS_TYPE.AddDamage).icon('ski,2')
         .description('【此牌在场时：】我方【crd116102】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
         .handle((status, event) => {
-            if (event.skid != 1161021) return;
+            if (event.skid != getVehicleIdByCid(116102)) return;
             return { trigger: ['Geo-dmg'], addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
         }),
 

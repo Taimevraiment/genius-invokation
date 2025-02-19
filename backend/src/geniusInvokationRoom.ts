@@ -848,12 +848,9 @@ export default class GeniusInvokationRoom {
     private _chooseInitHero(pidx: number, hidx: number, flag: string, socket?: Socket) {
         const player = this.players[pidx];
         player.hidx = hidx;
-        if (player.heros[hidx].isFront) { // 确认选择
-            player.phase = PHASE.DICE;
-            this._writeLog(`[${player.name}]选择[${player.heros[hidx].name}]出战`);
-        } else { // 预选
-            player.heros.forEach(h => h.isFront = h.hidx == hidx);
-        }
+        player.heros[hidx].isFront = true;
+        player.phase = PHASE.DICE;
+        this._writeLog(`[${player.name}]选择[${player.heros[hidx].name}]出战`);
         if (this.players.every(p => p.phase == PHASE.DICE || p.id == AI_ID)) { // 双方都选完出战角色
             this.phase = PHASE.DICE;
             this.players.forEach(player => {
@@ -978,7 +975,7 @@ export default class GeniusInvokationRoom {
         if (isInit) { // 投掷阶段检测
             player.heros.forEach((h, hi) => {
                 for (const slot of h.equipments) {
-                    if (slot == null || diceLen == 0) continue;
+                    if (diceLen == 0) continue;
                     const slotres = slot.handle(slot, { heros: player.heros, hidxs: [hi], trigger: 'phase-dice' });
                     if (this._hasNotTriggered(slotres.trigger, 'phase-dice')) continue;
                     const { element = DICE_COST_TYPE.Omni, cnt = 0 } = slotres;
@@ -2005,7 +2002,7 @@ export default class GeniusInvokationRoom {
                 const elTipIdx = dmgedPidx * ehlen + dmgedHidx;
                 if (dmgElement == ELEMENT_TYPE.Anemo) { // 扩散
                     res.willAttachs[dmgedHidx] = dmgElement;
-                    res.elTips[elTipIdx] = ['扩散', dmgElement, attachElement];
+                    res.elTips[elTipIdx] = ['扩散', attachElement, dmgElement];
                     atriggers.forEach((trg, tri) => {
                         if (!isSelf) {
                             if (tri == atkHidx) trg.push('Swirl');
@@ -2024,7 +2021,7 @@ export default class GeniusInvokationRoom {
                 } else if (dmgElement == ELEMENT_TYPE.Geo) { // 结晶
                     res.willAttachs[dmgedHidx] = dmgElement;
                     ++res.willDamages[getDmgIdx][0];
-                    res.elTips[elTipIdx] = ['结晶', dmgElement, attachElement];
+                    res.elTips[elTipIdx] = ['结晶', attachElement, dmgElement];
                     atriggers.forEach((trg, tri) => {
                         if (!isSelf) {
                             if (tri == atkHidx) trg.push('Crystallize');
@@ -2048,7 +2045,7 @@ export default class GeniusInvokationRoom {
                         dmgedfhero.attachElement = [ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Dendro];
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro)) { // 水火 蒸发
                         res.willDamages[getDmgIdx][0] += isAttach ? 0 : 2;
-                        res.elTips[elTipIdx] = ['蒸发', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['蒸发', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Vaporize');
@@ -2065,7 +2062,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Cryo)) { // 冰火 融化
                         res.willDamages[getDmgIdx][0] += isAttach ? 0 : 2;
-                        res.elTips[elTipIdx] = ['融化', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['融化', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Melt');
@@ -2089,7 +2086,7 @@ export default class GeniusInvokationRoom {
                                 ++dmg[idx];
                             }
                         }
-                        res.elTips[elTipIdx] = ['感电', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['感电', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('ElectroCharged');
@@ -2113,7 +2110,7 @@ export default class GeniusInvokationRoom {
                                 ++dmg[idx];
                             }
                         }
-                        res.elTips[elTipIdx] = ['超导', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['超导', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Superconduct');
@@ -2131,7 +2128,7 @@ export default class GeniusInvokationRoom {
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Cryo)) { // 水冰 冻结
                         res.willDamages[getDmgIdx][0] += +!isAttach;
                         eist[dmgedHidx].push(this.newStatus(106));
-                        res.elTips[elTipIdx] = ['冻结', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['冻结', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Frozen');
@@ -2148,7 +2145,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro)) { // 水草 绽放
                         ++res.willDamages[getDmgIdx][0];
-                        res.elTips[elTipIdx] = ['绽放', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['绽放', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Bloom');
@@ -2177,7 +2174,7 @@ export default class GeniusInvokationRoom {
                             });
                             if (!isExec) this._detectSkill(dmgedPidx, 'switch-to', { players, isExec, hidxs: Math.max(isSwitch, isSwitchOppo), energyCnt });
                         }
-                        res.elTips[elTipIdx] = ['超载', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['超载', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Overload');
@@ -2196,7 +2193,7 @@ export default class GeniusInvokationRoom {
                         ++res.willDamages[getDmgIdx][0];
                         const cpidx = dmgedPidx ^ 1;
                         this._updateSummon(cpidx, [this.newSummon(115)], res.players, isExec, { isSummon, supportCnt });
-                        res.elTips[elTipIdx] = ['燃烧', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['燃烧', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Burning');
@@ -2213,7 +2210,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro)) { // 雷草 原激化
                         ++res.willDamages[getDmgIdx][0];
-                        res.elTips[elTipIdx] = ['原激化', dmgElement, attachElement];
+                        res.elTips[elTipIdx] = ['原激化', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
                             if (!isSelf) {
                                 if (tri == atkHidx) trg.push('Quicken');
@@ -2671,9 +2668,8 @@ export default class GeniusInvokationRoom {
                     });
                     const slotsDestroy: number[] = dmgedheros.map(() => 0);
                     const slotDestroyHidxs = dieHeros.filter(h => {
-                        const isDie = h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) &&
-                            fieldIsDie && h.equipments.some(s => s != null);
-                        if (isDie) slotsDestroy[h.hidx] += h.equipments.reduce((a, c) => a + +!c, 0);
+                        const isDie = h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) && fieldIsDie && h.equipments.length > 0;
+                        if (isDie) slotsDestroy[h.hidx] += h.equipments.length;
                         return isDie;
                     }).map(v => v.hidx);
                     if (slotDestroyHidxs.length > 0) {
@@ -3128,7 +3124,7 @@ export default class GeniusInvokationRoom {
                 rCombatStatus.push(...this._getStatusById(sts));
             });
             player.heros.forEach(h => {
-                h.equipments.forEach(slot => slot?.handle(slot, { reset: true })); // 重置装备
+                h.equipments.forEach(slot => slot.handle(slot, { reset: true })); // 重置装备
                 h.heroStatus.forEach(sts => sts.handle(sts, { reset: true })); // 重置角色状态
             });
             player.combatStatus.forEach(sts => sts.handle(sts, { reset: true })); // 重置出战状态
@@ -3576,18 +3572,8 @@ export default class GeniusInvokationRoom {
         const { isDestroy, isExec = true } = options;
         const explIdx = equipment.UI.description.lastIndexOf('；（');
         if (explIdx > -1) equipment.UI.description = equipment.UI.description.slice(0, explIdx);
-        if (isExec && (
-            equipment.hasSubtype(CARD_SUBTYPE.Weapon) && hero.weaponSlot != null ||
-            equipment.hasSubtype(CARD_SUBTYPE.Artifact) && hero.artifactSlot != null ||
-            equipment.hasSubtype(CARD_SUBTYPE.Talent) && hero.talentSlot != null ||
-            equipment.hasSubtype(CARD_SUBTYPE.Vehicle) && hero.vehicleSlot != null ||
-            isDestroy)
-        ) {
-            const destroySlot = (isDestroy ? equipment :
-                equipment.hasSubtype(CARD_SUBTYPE.Weapon) ? hero.weaponSlot :
-                    equipment.hasSubtype(CARD_SUBTYPE.Artifact) ? hero.artifactSlot :
-                        equipment.hasSubtype(CARD_SUBTYPE.Talent) ? hero.talentSlot :
-                            hero.vehicleSlot![0]) as Card;
+        if (isExec && (hero.equipments.some(s => s.subType[0] == equipment.subType[0]) || isDestroy)) {
+            const destroySlot = isDestroy ? equipment : hero.equipments.find(s => s.subType[0] == equipment.subType[0])!;
             this._doSlotDestroy(pidx, hero.hidx, destroySlot);
         }
         if (!isDestroy) {
@@ -4025,7 +4011,7 @@ export default class GeniusInvokationRoom {
             if (taskMark) {
                 hidxs[0] = heros.find(h => h.entityId == taskMark[4])!.hidx;
                 const hero = heros[hidxs[0]];
-                cSlot = hero.equipments.find(s => s?.entityId == cSlot?.entityId);
+                cSlot = hero.equipments.find(s => s.entityId == cSlot!.entityId);
             }
             detectSlot(cSlot, hidxs[0] ?? player.hidx);
         } else {
@@ -4036,7 +4022,7 @@ export default class GeniusInvokationRoom {
                 }
                 const fHero = heros[hidx];
                 const slots = fHero.equipments.slice();
-                if (hcard && hcard.userType == fHero.id && slots.every(slot => slot?.id != hcard.id)) slots.push(hcard);
+                if (hcard && hcard.userType == fHero.id && slots.every(slot => slot.id != hcard.id)) slots.push(hcard);
                 for (const slot of slots) {
                     detectSlot(slot, hidx);
                 }
@@ -6154,9 +6140,10 @@ export default class GeniusInvokationRoom {
             }
         }
         const costChangeList: [number, number][][][] = [...genSkillArr([[], [], []])]; // [有色骰, 无色骰, 元素骰]
-        const calcCostChange = <T extends { minusDiceSkill?: MinusDiceSkill }>(res: T, entityId: number) => {
+        const calcCostChange = <T extends { minusDiceSkill?: MinusDiceSkill }>(res: T, entityId: number, isOther = false) => {
             if (!res.minusDiceSkill) return;
-            const { minusDiceSkill: { skill = [0, 0, 0], skills: mskills = [], elDice } } = res;
+            const { minusDiceSkill: { skill = [0, 0, 0], skills: mskills = [], elDice, isAll } } = res;
+            if (isOther && !isAll) return;
             costChange.forEach((_, i) => {
                 const curSkill = skills[i];
                 for (let j = 0; j < 3; ++j) {
@@ -6180,6 +6167,7 @@ export default class GeniusInvokationRoom {
         for (const hfield of heroField) {
             const fieldres = hfield.handle(hfield as any, {
                 heros,
+                hero: player.heros[hidx],
                 eheros: players[pidx ^ 1]?.heros,
                 hidxs: [hidx],
                 hidx,
@@ -6206,8 +6194,7 @@ export default class GeniusInvokationRoom {
                     trigger: 'calc',
                 });
                 if (!fieldres.trigger?.some(trg => trg.startsWith('other'))) continue;
-                calcDmgChange(fieldres);
-                calcCostChange(fieldres, hfield.entityId);
+                calcCostChange(fieldres, hfield.entityId, true);
             }
         }
         player.summons.forEach(smn => {
@@ -6320,16 +6307,12 @@ export default class GeniusInvokationRoom {
                     isMinusDiceArtifact,
                 })?.minusDiceCard ?? 0;
             }
-            const heroField = this._getHeroField(pidx);
-            for (const hfield of heroField) {
-                costChange[ci] += getMinusDiceCard(hfield, curHero.hidx);
-            }
-            for (let i = 0; i < player.heros.length - 1; ++i) {
-                const hidx = (player.hidx + 1 + i) % player.heros.length;
-                player.heros[hidx].heroStatus.forEach(sts => {
-                    costChange[ci] += getMinusDiceCard(sts, hidx);
-                });
-            }
+            allHidxs(player.heros).forEach(hidx => {
+                const heroField = this._getHeroField(pidx, { hidx });
+                for (const hfield of heroField) {
+                    costChange[ci] += getMinusDiceCard(hfield, hidx);
+                }
+            });
             player.summons.forEach(smn => {
                 costChange[ci] += smn.handle(smn, {
                     heros: player.heros,
