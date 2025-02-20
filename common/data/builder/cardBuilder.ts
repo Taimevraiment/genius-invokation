@@ -213,10 +213,6 @@ export class GICard {
         this.useCnt += n;
         return this.useCnt;
     }
-    addUseCntMod(mod: number, n?: number): void {
-        this.addUseCnt(n);
-        this.useCnt %= mod;
-    }
     addUseCntMax(max: number, n?: number): void {
         this.addUseCnt(n);
         this.useCnt = Math.min(max, this.useCnt);

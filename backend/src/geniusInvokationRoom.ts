@@ -1000,13 +1000,10 @@ export default class GeniusInvokationRoom {
             else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
         }
         const ndices: DiceCostType[] = [];
-        const heroEle: DiceCostType[] = [...player.heros]
-            .filter(h => h.element != ELEMENT_TYPE.Physical)
-            .map(h => h.element as PureElementType);
-        const weight = ([el, cnt]: [DiceCostType, number]) => {
-            return DICE_WEIGHT.indexOf(el) - +(el == DICE_COST_TYPE.Omni) * 400 - +heroEle.includes(el) * 200 - cnt * 10;
-        }
-        const restDice = objToArr(tmpDice).filter(([, v]) => v > 0).sort((a, b) => weight(a) - weight(b));
+        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +player.heros.map(h => h.element).includes(d);
+        const restDice = objToArr(tmpDice).filter(([, v]) => v > 0).sort((a, b) => {
+            return effDice(b[0]) - effDice(a[0]) || b[1] - a[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0])
+        });
         for (const idx in restDice) {
             while (restDice[idx][1]-- > 0) {
                 ndices.push(restDice[idx][0]);
@@ -1267,8 +1264,6 @@ export default class GeniusInvokationRoom {
             }
             return res;
         }
-        // const isSwitchSelf = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && !cmds.isOppo);
-        // const isSwitchOppo = (cmds: Cmds[]) => cmds.some(cmds => cmds.cmd.includes('switch') && cmds.isOppo);
         const calcTasks = (tasks: AtkTask[], cplayers: Player[], cpidx: number) => {
             tasks.some(task => {
                 const { cmds: [{ cmd }], cmds, pidx: tpidx } = task;
@@ -1540,7 +1535,8 @@ export default class GeniusInvokationRoom {
             const pierceDmg = skillreshidxs.includes(di) ? (skillres.pdmg ?? 0) : 0;
             return [elDmg, pierceDmg]
         })] : undefined);
-        const dmgEl = dmgElements ?? (skill ? [skillres.dmgElement ?? (skill.attachElement != ELEMENT_TYPE.Physical ? skill.attachElement : skill.dmgElement)] : undefined);
+        const { dmgElement: skiDmgEl = undefined } = skill ? this._detectSkill(pidx, 'skill', { type: [SKILL_TYPE.Passive, SKILL_TYPE.PassiveHidden], hidxs: cahidx, players, isExec }) : {};
+        const dmgEl = dmgElements ?? (skill ? [skiDmgEl ?? skillres.dmgElement ?? (skill.attachElement != ELEMENT_TYPE.Physical ? skill.attachElement : skill.dmgElement)] : undefined);
         const stsprecmds: Cmds[] = [
             { cmd: 'getStatus', status: skillres.statusPre, hidxs: skillres.hidxs },
             { cmd: 'getStatus', status: skillres.statusOppoPre, hidxs: skillres.hidxs, isOppo: true },
@@ -3699,6 +3695,7 @@ export default class GeniusInvokationRoom {
     *                isQuickAction 是否为快速行动, card 打出的卡牌, energyCnt 充能变化, source 触发id, sourceHidx 触发的角色序号hidx,
     *                restDmg 减伤
     * @returns isQuickAction: 是否为快速行动, heros 变化后的我方角色组, eheros 变化后的对方角色组, isTriggered 是否触发被动, restDmg 减伤
+    *          dmgElement 被动附魔
     */
     private _detectSkill(pidx: number, otrigger: Trigger | Trigger[],
         options: {
@@ -3712,6 +3709,7 @@ export default class GeniusInvokationRoom {
             isExecTask, heros = players[pidx].heros, eheros = players[pidx ^ 1].heros, cskid = -1, energyCnt, isOnlyExec } = options;
         let { hidxs = allHidxs(heros), isQuickAction, type = [], restDmg } = options;
         let isTriggered = false;
+        let dmgElement: ElementType | undefined;
         const cmds: Cmds[] = [];
         const task: [() => void | Promise<void>, number?, number?][] = [];
         if (!Array.isArray(hidxs)) hidxs = [hidxs];
@@ -3747,6 +3745,7 @@ export default class GeniusInvokationRoom {
                     isTriggered = true;
                     isQuickAction ||= !!skillres.isQuickAction;
                     restDmg = skillres.restDmg;
+                    dmgElement = skillres.dmgElement;
                     cmds.push(...(skillres.cmds ?? []));
                     cmds.push({ cmd: 'getStatus', status: skillres.status, hidxs: [hidx] });
                     cmds.push({ cmd: 'getStatus', status: skillres.statusOppo, isOppo: true });
@@ -3809,7 +3808,7 @@ export default class GeniusInvokationRoom {
                 }
             }
         }
-        return { isQuickAction, cmds, isTriggered, task, restDmg }
+        return { isQuickAction, cmds, isTriggered, task, restDmg, dmgElement }
     }
     /**
      * 检测装备发动
@@ -3832,7 +3831,7 @@ export default class GeniusInvokationRoom {
         isExec?: boolean, usedDice?: number, isQuickAction?: boolean, getdmg?: number[], dmg?: number[], isEffectStatus?: boolean,
         minusDiceSkillIds?: number[], minusDiceSkill?: number[][], cSlot?: Card | null, supportCnt?: number[][], sktype?: SkillType,
         hcardsCnt?: number, energyCnt?: number[][], source?: number, dmgSource?: number, isOnlyExec?: boolean, restDmg?: number,
-        orderAfter?: string, sourceHidx?: number,
+        orderAfter?: string, sourceHidx?: number, hasDmg?: boolean,
     } = {}) {
         const triggers: Trigger[] = [];
         if (typeof otriggers == 'string') triggers.push(otriggers);
@@ -3842,7 +3841,7 @@ export default class GeniusInvokationRoom {
             isChargedAtk, isFallAtk = players[pidx].isFallAtk, isExec = true, isSummon = -1, minusDiceSkill = [],
             skid = -1, sktype, usedDice = 0, getdmg, dmg, isEffectStatus, energyCnt, source, dmgSource, orderAfter,
             supportCnt = INIT_SUPPORTCNT(), willSwitch = players.map(p => p.heros.map(() => false)), isOnlyExec,
-            sourceHidx } = options;
+            sourceHidx, hasDmg } = options;
         const player = players[pidx];
         const opponent = players[pidx ^ 1];
         let { switchHeroDiceCnt = 0, minusDiceCard = 0, hidxs = [player.hidx], cSlot,
@@ -3874,6 +3873,7 @@ export default class GeniusInvokationRoom {
                 this._doSlotDestroy(pidx, hidx, slot, { players });
             }
             for (const trigger of triggers) {
+                if (taskMark && taskMark[3] != trigger) continue;
                 const slotres = slot.handle(slot, {
                     heros,
                     hero: heros[hidx],
@@ -3910,6 +3910,7 @@ export default class GeniusInvokationRoom {
                     sourceHidx,
                     dmgSource,
                     restDmg,
+                    hasDmg,
                     isExecTask: !!taskMark,
                     randomInt: this._randomInt.bind(this),
                 });
@@ -5207,9 +5208,15 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'changeDice' && isExec) {
                 const cpidx = pidx ^ +!!isOppo;
                 const cplayer = players[cpidx];
-                const ndice = cplayer.dice.slice();
-                const nel = mode == CMD_MODE.FrontHero ? this._getFrontHero(pidx).element : element ?? DICE_COST_TYPE.Omni
-                for (let i = ndice.length - 1; i >= ndice.length - (cnt || ndice.length); --i) {
+                const nel = mode == CMD_MODE.FrontHero ? this._getFrontHero(pidx).element : element ?? DICE_COST_TYPE.Omni;
+                let ndice = cplayer.dice.slice();
+                const diceCnt = arrToObj(DICE_WEIGHT, 0);
+                ndice.forEach(d => ++diceCnt[d]);
+                const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +cplayer.heros.map(h => h.element).includes(d);
+                ndice = objToArr(diceCnt)
+                    .sort((a, b) => effDice(a[0]) - effDice(b[0]) || a[1] - b[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
+                    .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
+                for (let i = 0; i < cnt || ndice.length; ++i) {
                     ndice[i] = nel as DiceCostType;
                 }
                 assgin(cplayer.dice, ndice);

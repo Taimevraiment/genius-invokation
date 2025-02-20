@@ -1,7 +1,7 @@
 import { Cmds, Hero, Trigger } from '../../typing';
 import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { NormalSkillBuilder, SkillBuilder } from './builder/skillBuilder.js';
@@ -767,12 +767,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u8c1lh/2b18a446223227da615ba874800e6a7e.png')
         .normalSkill(new NormalSkillBuilder('斩首之邀').description('，若可能，消耗目标至多3层【sts122】，提高等量伤害。')
             .handle(event => {
-                const { eheros = [], hero } = event;
-                const dmgElement = isCdt(hasObjById(hero.heroStatus, 122), DAMAGE_TYPE.Pyro);
-                const sts122 = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122);
-                if (!sts122) return { dmgElement }
+                const sts122 = getObjById(event.eheros?.find(h => h.isFront)?.heroStatus, 122);
+                if (!sts122) return;
                 const addDmgCdt = Math.min(3, sts122.useCnt);
-                return { dmgElement, addDmgCdt, exec: () => sts122.minusUseCnt(addDmgCdt) }
+                return { addDmgCdt, exec: () => sts122.minusUseCnt(addDmgCdt) }
             }))
         .skills(
             new SkillBuilder('万相化灰').description('在对方场上生成5层【sts113141】，然后{dealDmg}。')
@@ -795,8 +793,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                 }),
             new SkillBuilder().passive(true).handle(event => {
-                const { restDmg = -1, hero } = event;
+                const { restDmg = -1, hero, trigger } = event;
                 const sts122 = getObjById(hero.heroStatus, 122);
+                if (trigger == 'skill' && sts122) return { trigger: ['skill'], dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
                 if (restDmg == -1 || !sts122) return;
                 if (restDmg == 0) return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg }
                 return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
@@ -1556,7 +1555,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1710: () => new HeroBuilder(462).name('艾梅莉埃').since('v5.5.0').fontaine(HERO_TAG.ArkhePneuma).dendro().polearm()
         .src('/image/tmp/UI_Gcg_CardFace_Char_Avatar_Emilie_-145625492.png')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Emilie_-544801855.png')
-        .normalSkill(new NormalSkillBuilder('逐影枪术·改').handle(({ talent }) => ({ dmgElement: isCdt(!!talent, DAMAGE_TYPE.Dendro) })))
+        .normalSkill(new NormalSkillBuilder('逐影枪术·改'))
         .skills(
             new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
                 .src('/image/tmp/Skill_S_Emilie_01.webp')
@@ -1565,7 +1564,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/Skill_E_Emilie_01.webp')
                 .burst(2).damage(1).cost(3).handle(event => ({
                     summon: 117103,
-                    exec: () => event.summons?.forEach(smn => getHidById(smn.id) == 1710 && smn.dispose(event.isExec)),
+                    exec: () => event.summons?.forEach(smn => [117101, 117102].includes(smn.id) && smn.dispose(event.isExec)),
                 })),
             new SkillBuilder('余薰').description('【我方造成燃烧反应伤害后：】触发1次我方【smn115】的回合结束效果。（每回合1次）')
                 .src('/image/tmp/UI_Talent_S_Emilie_05.webp')
@@ -1575,7 +1574,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         trigger: ['Burning', 'other-Burning'],
                         cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: ['phase-end'] }],
                     }
-                })
+                }),
+            new SkillBuilder().passive(true).handle(event => {
+                const { talent } = event;
+                return { trigger: ['skill'], dmgElement: isCdt(!!talent, DAMAGE_TYPE.Dendro), isNotAddTask: true }
+            })
         ),
 
     2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()

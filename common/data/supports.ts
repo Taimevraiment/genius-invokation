@@ -208,9 +208,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     dices.push(...pdices.slice(2));
                     spt.perCnt = -pdices.slice(0, 2).map(v => DICE_WEIGHT.indexOf(v) + 1).join('');
                     spt.cnt = pdices.slice(0, 2).length;
-                    return;
-                }
-                if (trigger == 'phase-start') {
+                } else if (trigger == 'phase-start') {
                     const element = spt.perCnt.toString().slice(1).split('').map(v => DICE_WEIGHT[Number(v) - 1]);
                     spt.cnt = 0;
                     spt.perCnt = 0;
@@ -588,9 +586,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                             dices.push(pdices.shift()!);
                         }
                     }
-                    return;
-                }
-                if (trigger == 'phase-start') {
+                } else if (trigger == 'phase-start') {
                     return { cmds: [{ cmd: 'getCard', cnt: 2 }, { cmd: 'getDice', cnt: 2, element: DICE_COST_TYPE.Omni }], isDestroy: true }
                 }
             }
