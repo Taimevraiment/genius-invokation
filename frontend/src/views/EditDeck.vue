@@ -205,6 +205,7 @@
         </div>
         <InfoModal :info="modalInfo" :isMobile="isMobile" :isInGame="false" />
     </div>
+    <div class="debug-mask" v-if="maskOpacity != 0" :style="{ opacity: maskOpacity }"></div>
 </template>
 
 <script setup lang="ts">
@@ -247,6 +248,7 @@ type TagIndex = TypeConst<typeof TAG_INDEX>;
 const router = useRouter();
 
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)); // 是否为手机
+const maskOpacity = ref(+(history.state.maskOpacity ?? 0));
 
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
@@ -1257,6 +1259,17 @@ input#isOfflineInput:checked {
 
 .mobile-card-deck {
     width: 65px;
+}
+
+.debug-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #dedede;
+    z-index: 50;
+    pointer-events: none;
 }
 
 ::-webkit-scrollbar {

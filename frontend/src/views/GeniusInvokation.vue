@@ -313,7 +313,7 @@ const startGame = () => {
 };
 // 查看卡组
 const enterEditDeck = () => {
-  router.push({ name: 'editDeck' });
+  router.push({ name: 'editDeck', state: { maskOpacity: isOpenMask.value ? maskOpacity.value : 0 } });
 };
 // 返回
 const exit = () => {

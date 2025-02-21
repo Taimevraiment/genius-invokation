@@ -407,9 +407,7 @@ export default class GeniusInvokationClient {
      */
     mouseenter(idx: number, force = false) {
         if (this.isMobile && !force) return;
-        this.handcardsPos.forEach((_, cpi, cpa) => {
-            if (cpi > idx) cpa[cpi] += this.handcardsOffset;
-        });
+        this.handcardsPos.forEach((_, cpi, cpa) => { cpi > idx && (cpa[cpi] += this.handcardsOffset) });
     }
     /**
      * 鼠标离开卡

@@ -198,7 +198,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'end-phase' | 'any-end-phase' | `${TrgOther | TrgAfter}skill${TrgOppo}` | `${TrgOther | TrgAfter}skilltype${SkillType}` |
     `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
     `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
-    `${TrgOther | TrgGet}elReaction-${TrgEl}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
+    `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |

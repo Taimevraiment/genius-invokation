@@ -2543,7 +2543,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【所附属角色下次使用技能或打出｢天赋｣时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
-            if (status.useCnt <= 0) return;
             const { trigger, isMinusDiceSkill, isMinusDiceTalent } = event;
             return {
                 minusDiceSkill: { skill: [0, 0, 1] },

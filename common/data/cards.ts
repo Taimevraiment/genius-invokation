@@ -1027,8 +1027,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【结束阶段：】如果所附属的角色在后台，则此牌累积1点｢报酬｣。（最多累积2点）；【对角色打出｢天赋｣或角色使用｢元素战技｣时：】此牌每有1点｢报酬｣，就将其消耗，以少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0f7dfce291215155b3a48a56c8c996c4_3799856037595257577.png')
         .handle((card, event) => {
-            const { hero, hcard, trigger, isMinusDiceTalent, isMinusDiceSkill,
-                minusDiceCard: mdc = 0, minusDiceSkill = [], skid = -1 } = event;
+            const { hero, hcard, trigger, isMinusDiceTalent, isMinusDiceSkill, minusDiceCard: mdc = 0, minusDiceSkill = [], skid } = event;
             const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 2 && !hero?.isFront;
             return {
                 minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
@@ -1053,8 +1052,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【结束阶段：】如果所附属的角色在后台，则此牌累积2点｢报酬｣。（最多累积4点）；【对角色打出｢天赋｣或角色使用｢元素战技｣时：】此牌每有1点｢报酬｣，就将其消耗，以少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/bbe185732644f5d29e9097985c4c09a8_8068337050754144727.png')
         .handle((card, event) => {
-            const { hero, hcard, trigger, isMinusDiceTalent, isMinusDiceSkill,
-                minusDiceCard: mdc = 0, minusDiceSkill = [], skid = -1 } = event;
+            const { hero, hcard, trigger, isMinusDiceTalent, isMinusDiceSkill, minusDiceCard: mdc = 0, minusDiceSkill = [], skid } = event;
             const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 4 && !hero?.isFront;
             return {
                 minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
@@ -1079,13 +1077,17 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色为出战角色，敌方受到[草元素伤害]后：】累积1枚｢花冠水晶｣。如果｢花冠水晶｣大于等于我方手牌数，则生成1个随机基础元素骰。（每回合至多生成2个）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e431910b741b3723c64334265ce3e93e_3262613974155239712.png')
         .handle((card, event) => {
-            const { hero, hcards: { length: hcardsCnt } = [] } = event;
+            const { hero, hcardsCnt = 0 } = event;
             if (!hero?.isFront) return;
+            const isGetDice = card.useCnt + 1 >= hcardsCnt && card.perCnt > 0;
             return {
                 trigger: ['Dendro-getdmg-oppo'],
-                execmds: isCdt(card.useCnt + 1 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
+                execmds: isCdt(isGetDice, [{ cmd: 'getDice', cnt: 1, mode: CMD_MODE.Random }]),
                 isAddTask: true,
-                exec: () => { card.addUseCnt() >= hcardsCnt && card.perCnt > 0 && card.minusPerCnt() }
+                exec: () => {
+                    card.addUseCnt();
+                    if (isGetDice) card.minusPerCnt();
+                }
             }
         }),
 
@@ -1095,11 +1097,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, hcards: { length: hcardsCnt } = [] } = event;
             if (!hero?.isFront) return;
+            const isGetDice = card.useCnt + 2 >= hcardsCnt && card.perCnt > 0;
             return {
-                trigger: ['Dendro-getdmg-oppo', 'elReaction-Dendro'],
-                execmds: isCdt(card.useCnt + 2 >= hcardsCnt && card.perCnt > 0, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
+                trigger: ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'],
+                execmds: isCdt(isGetDice, [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }]),
                 isAddTask: true,
-                exec: () => { card.addUseCnt(2) >= hcardsCnt && card.perCnt > 0 && card.minusPerCnt() }
+                exec: () => {
+                    card.addUseCnt(2);
+                    if (isGetDice) card.minusPerCnt();
+                }
             }
         }),
 
@@ -1107,14 +1113,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色使用｢普通攻击｣时：】如果我方手牌数量不多于2，则少消耗1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/7c41bdc8b55d96ceafee346cd339e564_7638181105517812729.png')
         .handle((card, event) => {
-            const { hcards: { length: hcardsCnt } = [], isMinusDiceSkill } = event;
+            const { hcardsCnt = 0, isMinusDiceSkill } = event;
             if (hcardsCnt > 2 || card.perCnt <= 0) return;
             return {
                 trigger: ['skilltype1'],
                 minusDiceSkill: { skilltype1: [0, 0, 1] },
-                exec: () => {
-                    if (isMinusDiceSkill) card.minusPerCnt();
-                }
+                exec: () => { isMinusDiceSkill && card.minusPerCnt() }
             }
         }),
 
@@ -1122,8 +1126,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方切换到所附属角色后：】[舍弃]原本元素骰费用最高的1张手牌，将2个元素骰转换为[万能元素骰]，并使角色下次使用技能或打出｢天赋｣时少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/a304d1400ed0bcb463f93b2be2558833_8026218308357759960.png')
         .handle((card, event) => {
-            const { hcards = [], hidxs } = event;
-            if (card.perCnt <= 0 || !hcards.length) return;
+            const { hcardsCnt = 0, hidxs } = event;
+            if (card.perCnt <= 0 || hcardsCnt == 0) return;
             return {
                 trigger: ['switch-to'],
                 execmds: [
@@ -1140,7 +1144,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/f2d558606c493ca9b41c6cb9224f4a0c_3510396940887157125.png')
         .handle((card, event) => {
             const { source = -1, heros = [] } = event;
-            if (card.perCnt <= 0 || source.toString().startsWith('312') || heros.every(h => h.maxHp == h.hp)) return;
+            if (card.perCnt <= 0 || source.toString().startsWith('312') || heros.every(h => h.hp >= h.maxHp)) return;
             return {
                 trigger: ['heal'],
                 execmds: [{ cmd: 'heal', cnt: 1, hidxs: getMaxHertHidxs(heros) }],

@@ -626,7 +626,7 @@ export default class GeniusInvokationRoom {
             p.handCards = p.pile.splice(0, INIT_HANDCARDS_COUNT).map(c => c.setEntityId(this._genEntityId()));
             p.UI.info = `${this.startIdx == p.pidx ? '我方' : '对方'}先手`;
             this._writeLog(`player${p.pidx}[${p.name}]卡组码: ${this.shareCodes[p.pidx]}`, 'system')
-            this._writeLog(`[${p.name}]获得手牌${p.handCards.map(c => `[${c.name}]`).join('')}`, 'system');
+            this._writeLog(`[${p.name}]获得手牌${p.handCards.map(c => `[${c.name}](${c.entityId})`).join('')}`, 'system');
             this._writeLog(`[${p.name}]牌库：${p.pile.map(c => `[${c.name}]`).join('')}`, 'system');
             // this.resetHeartBreak(p.pidx);
         });
@@ -829,7 +829,7 @@ export default class GeniusInvokationRoom {
                 this.emit(flag + '-action', pidx, { isQuickAction: true });
             });
         } else {
-            this._writeLog(player.handCards.reduce((a, c) => a + `[${c.name}]`, `[${player.name}]换牌后手牌为`), 'system');
+            this._writeLog(player.handCards.reduce((a, c) => a + `[${c.name}](${c.entityId})`, `[${player.name}]换牌后手牌为`), 'system');
             player.UI.info = `${this.startIdx == player.pidx ? '我方' : '对方'}先手，等待对方选择......`;
             this.delay(1e3, () => {
                 player.phase = PHASE.CHOOSE_HERO;
@@ -2241,7 +2241,7 @@ export default class GeniusInvokationRoom {
                             if (tri == atkHidx) trgs.push(...elReactionTriggers);
                             else trgs.push(...otherElReactionTriggers);
                         }
-                        trgs.push('get-elReaction-oppo');
+                        trgs.push(...otherElReactionTriggers.map(t => t.replace('other', 'get') + '-oppo' as Trigger));
                     });
                     etriggers.forEach((trgs, tri) => {
                         if (isSelf) {
@@ -2896,9 +2896,9 @@ export default class GeniusInvokationRoom {
             isInvalid = inv;
             isQuickAction || iqa;
             // await this._execTask();
-            this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction: !isAction });
+            this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction });
             // await this._execTask();
-            this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction: !isAction });
+            this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction });
             // await this._execTask();
             if (isAction) player.isFallAtk = ifa;
             const { usedCardIds } = player.playerInfo;
@@ -3643,7 +3643,7 @@ export default class GeniusInvokationRoom {
                 ]),
                 atkedIdx,
                 this.players,
-                { isAtkSelf: isSelf, skid, atkId: atkStatus.id }
+                { isAtkSelf: isSelf, skid, atkId: atkStatus.id, isQuickAction }
             );
         isQuickAction ||= iqa;
         assgin(this.players, players1);
@@ -5216,7 +5216,7 @@ export default class GeniusInvokationRoom {
                 ndice = objToArr(diceCnt)
                     .sort((a, b) => effDice(a[0]) - effDice(b[0]) || a[1] - b[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
                     .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
-                for (let i = 0; i < cnt || ndice.length; ++i) {
+                for (let i = 0; i < Math.min(cnt || ndice.length, ndice.length); ++i) {
                     ndice[i] = nel as DiceCostType;
                 }
                 assgin(cplayer.dice, ndice);
