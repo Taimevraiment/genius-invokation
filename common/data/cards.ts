@@ -1231,7 +1231,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const isTriggered = hcardsCnt > 0 && hasObjById(eheros[dmgedHidx]?.heroStatus, 301302) && switchHeroDiceCnt > 0;
             if (isTriggered) triggers.push('minus-switch-to');
             return {
-                statusOppo: 301302,
+                cmds: [{ cmd: 'getStatus', status: 301302, isOppo: true }],
                 trigger: triggers,
                 minusDiceHero: isCdt(isTriggered, 1),
                 isQuickAction: isTriggered,

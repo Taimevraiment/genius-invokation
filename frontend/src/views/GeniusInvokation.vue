@@ -83,7 +83,8 @@
       :version="version" @select-change-card="selectChangeCard" @change-card="changeCard" @reroll="reroll"
       @select-hero="selectHero" @select-use-dice="selectUseDice" @select-support="selectCardSupport"
       @select-summon="selectCardSummon" @end-phase="endPhase" @show-history="showHistory"
-      @update:dice-select="updateDiceSelect" @select-card-pick="selectCardPick" @pick-card="pickCard" />
+      @update:dice-select="updateDiceSelect" @select-card-pick="selectCardPick" @pick-card="pickCard"
+      @update:is-show-end-phase="updateIsShowEndPhase" />
 
     <div class="hand-card"
       v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0 && client.isShowSwitchHero < 2) || client.isWin > -1"
@@ -403,6 +404,10 @@ const updateDiceSelect = (didx: number, newVal?: boolean) => {
   if (didx == -1) client.value.resetDiceSelect();
   if (newVal == undefined) client.value.diceSelect.forEach((_, i, a) => a[i] = i == didx);
   else client.value.diceSelect[didx] = newVal;
+}
+// 更新isShowEndPhase
+const updateIsShowEndPhase = (newVal: boolean) => {
+  client.value.isShowEndPhase = newVal;
 }
 // 切换旁观人
 const lookonTo = (idx: number) => {

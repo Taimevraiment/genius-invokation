@@ -93,7 +93,6 @@ export type StatusHandleRes = {
     notPreview?: boolean,
     isFallAtk?: boolean,
     source?: number,
-    notInfo?: boolean,
     notLog?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => StatusExecRes | void,
 };
@@ -492,7 +491,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: triggers,
                 isAddTask: true,
-                notInfo: true,
                 exec: eStatus => {
                     if (trigger?.includes('skilltype') && !eStatus) {
                         const card = clone(hcards).sort((a, b) => b.cost + b.anydice - a.cost - a.anydice).slice(0, 2);
@@ -1535,7 +1533,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     116101: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(2).type(STATUS_TYPE.AddDamage).icon('ski,2')
         .description('【此牌在场时：】我方【crd116102】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
         .handle((status, event) => {
-            if (event.skid != getVehicleIdByCid(116102)) return;
+            const { skid = -1, isSummon = -1 } = event;
+            if (skid != getVehicleIdByCid(116102) && isSummon != 116103) return;
             return { trigger: ['Geo-dmg'], addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
         }),
 
@@ -1936,7 +1935,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 trigger: triggers,
                 isAddTask: true,
-                notInfo: true,
                 exec: (eStatus, execEvent = {}) => {
                     const notAtk = eStatus == undefined;
                     const { heros: hs = heros } = execEvent;
@@ -3045,8 +3043,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303315: () => new StatusBuilder('咚咚嘭嘭（生效中）').heroStatus().icon('buff2').useCnt(3).type(STATUS_TYPE.Usage)
         .description('名称不存在于初始牌组中牌加入我方手牌时，所附属角色治疗自身1点。；[useCnt]')
         .handle((_, event) => {
-            const { playerInfo: { initCardIds = [] } = {}, hcard, hidx = -1 } = event;
-            if (!hcard || initCardIds.includes(hcard?.id)) return;
+            const { heros = [], playerInfo: { initCardIds = [] } = {}, hcard, hidx = -1 } = event;
+            if (!hcard || initCardIds.includes(hcard?.id) || heros[hidx].hp == heros[hidx].maxHp) return;
             return {
                 trigger: ['getcard'],
                 cmds: [{ cmd: 'heal', cnt: 1, hidxs: [hidx] }],

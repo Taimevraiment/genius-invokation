@@ -34,9 +34,11 @@
         </Handcard>
       </div>
       <div class="timer" :style="{ 'background-image': currTimeBg }">
-        <button class="end-phase" @click.stop="endPhase"
-          :class="{ forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1 }">
-          结束
+        <button class="end-phase" @click.stop="endPhase" :class="{
+          'confirm-end-phase': isShowEndPhase,
+          forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1
+        }">
+          {{ isShowEndPhase ? '确认' : '结束' }}
         </button>
       </div>
       <div class="pile">
@@ -55,9 +57,8 @@
         </Handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
-        <div v-for="(his, hsidx) in historyInfo" :key="hsidx"
-          :style="{ color: his.match(/(?<=\[)[^\]]+(?=\])/)?.[0] == player.name ? '#e0b97e' : '#a3ceff' }">
-          {{ his }}
+        <div v-for="(his, hsidx) in historyInfo" :key="hsidx" :style="{ color: his.color }">
+          {{ his.ctt }}
         </div>
       </div>
     </div>
@@ -468,7 +469,8 @@ const emits = defineEmits<{
   'update:diceSelect': [didx: number, val?: boolean],
   selectCardPick: [pcidx: number],
   pickCard: [],
-}>()
+  'update:isShowEndPhase': [val: boolean],
+}>();
 
 type Curcnt = { sid: number, val: number, isChange: boolean };
 const genChangeProxy = (length: number) => Array.from({ length }, () => ({ sid: 0, val: 0, isChange: false }));
@@ -640,7 +642,13 @@ const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, 
 const currTime = computed<number>(() => ((props.client.countdown.limit - props.client.countdown.curr) / props.client.countdown.limit) * 100);
 const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value.status == PLAYER_STATUS.WAITING ? '#2b6aff' : '#ffb36d'} ${currTime.value + 5}%)`);
 const isShowHistory = computed<boolean>(() => props.client.isShowHistory);
-const historyInfo = computed<string[]>(() => props.client.log);
+const getColor = (ctt: string) => {
+  const preffix = ctt.match(/(?<=\[)[^\]]+(?=\])/)?.[0];
+  if (preffix == '我方') return '#e0b97e';
+  if (preffix == '对方') return '#a3ceff';
+  return 'white';
+}
+const historyInfo = computed<{ ctt: string, color: string }[]>(() => props.client.log.map(lg => ({ ctt: lg, color: getColor(lg) })));
 const initCards = computed<Card[]>(() => player.value.handCards);
 const dices = computed<DiceCostType[]>(() => player.value.dice);
 const diceSelect = computed<boolean[]>(() => props.client.diceSelect);
@@ -650,7 +658,8 @@ const showChangeCardBtn = ref<boolean>(true);
 const showHideBtn = computed<boolean>(() =>
   (player.value.phase == PHASE.DICE && (phase.value == PHASE.DICE || phase.value == PHASE.ACTION)) ||
   player.value.phase == PHASE.CHANGE_CARD || player.value.phase == PHASE.PICK_CARD);
-const isHide = ref<boolean>(false);
+const isShowEndPhase = computed<boolean>(() => props.client.isShowEndPhase); // 是否显示确认结束回合按钮
+const isHide = ref<boolean>(false); // 显示/隐藏换手牌、换骰子、挑选界面
 
 let diceChangeEnter: -1 | boolean = -1;
 let isMouseDown: boolean = false;
@@ -793,10 +802,11 @@ const showHistory = () => {
 const triggerHide = () => {
   isHide.value = !isHide.value;
 }
-// 结束回合
+// 确认结束回合
 const endPhase = () => {
   if (player.value.status == PLAYER_STATUS.WAITING || !canAction) return;
-  emits('endPhase');
+  if (!isShowEndPhase.value) emits('update:isShowEndPhase', !isShowEndPhase.value);
+  else emits('endPhase');
 }
 // 鼠标按下
 const mousedown = (didx: number = -1) => {
@@ -1921,6 +1931,11 @@ button:active {
   width: 90%;
   border-radius: inherit;
   font-size: 12px;
+}
+
+.confirm-end-phase {
+  background-color: #ff6822;
+  border: 3px outset #e14f00;
 }
 
 .cursor-point {

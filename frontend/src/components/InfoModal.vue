@@ -18,7 +18,7 @@
             <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
             <span>{{ (info as Card).energy }}</span>
           </div>
-          <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
+          <div class="info-card-legend" v-if="(info as Card).subType.includes(CARD_SUBTYPE.Legend)">
             <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
           </div>
         </div>
@@ -26,19 +26,19 @@
         <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
           {{ CARD_SUBTYPE_NAME[subtype] }}
         </div>
-        <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
+        <div v-if="(info as Card).subType.includes(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
           {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
         </div>
         <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
         </div>
         <div class="info-card-explain"
-          v-for="(expl, eidx) in skillExplain.filter(() => !(info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))"
+          v-for="(expl, eidx) in skillExplain.filter(() => !(info as Card).subType.includes(CARD_SUBTYPE.Vehicle))"
           :key="eidx" style="margin-top: 5px">
           <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
         </div>
       </div>
       <div v-if="type == INFO_TYPE.Hero || type == INFO_TYPE.Skill ||
-        (type == INFO_TYPE.Card && (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))">
+        (type == INFO_TYPE.Card && (info as Card).subType.includes(CARD_SUBTYPE.Vehicle))">
         <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
         <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
           <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
@@ -529,7 +529,7 @@ watchEffect(() => {
   if (info.value && 'costType' in info.value) { // 卡牌
     info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' })).filter(v => v != '');
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
-    if (info.value.hasSubtype(CARD_SUBTYPE.Vehicle)) {
+    if (info.value.subType.includes(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(getVehicleIdByCid(info.value.id));
       vehicle.UI.descriptions = vehicle.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: vehicle }));
       skills.value.push(vehicle);
@@ -561,12 +561,12 @@ watchEffect(() => {
     slotExplain.value = [];
     info.value.equipments.forEach(slot => {
       const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
-      const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.hasSubtype(v));
+      const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.subType.includes(v));
       slot.UI.descriptions = isActionTalent ? desc.slice(1 + +desc[1].includes('立刻使用一次')) : desc;
       const onceDesc = slot.UI.descriptions.findIndex(v => /入场时(?:：|，)|才能打出/.test(v));
       if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
       slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
-      if (slot.hasSubtype(CARD_SUBTYPE.Vehicle)) {
+      if (slot.subType.includes(CARD_SUBTYPE.Vehicle)) {
         skills.value.unshift((info.value as Hero).vehicleSlot![1]);
         skills.value.push((info.value as Hero).vehicleSlot![1]);
         isShowSkill.value.push(type.value == INFO_TYPE.Skill);

@@ -45,6 +45,7 @@ export default class GeniusInvokationClient {
     isShowDmg: boolean = false; // 是否显示伤害数
     isShowSwitchHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
+    isShowEndPhase: boolean = false; // 是否显示确认结束回合按钮
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
     willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
     supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
@@ -208,6 +209,7 @@ export default class GeniusInvokationClient {
         onlySupportAndSummon?: boolean, notTarget?: boolean, notSummonSelect?: boolean,
     } = {}) {
         const { onlyCard, notCard, notHeros, onlyHeros, onlySupportAndSummon, notTarget, notSummonSelect } = options;
+        this.isShowEndPhase = false;
         this._resetWillHp();
         if (!onlyCard) {
             if ((!notHeros || onlyHeros) && !onlySupportAndSummon) {
@@ -255,7 +257,7 @@ export default class GeniusInvokationClient {
      * @param player 最新的玩家数据
      */
     updateHandCardsPos(player: Player) {
-        if (!this.isStart) return;
+        if (!this.isStart || !player) return;
         const isGetCard = (c: Card) => c.UI.class?.includes('getcard');
         const newCardIdxs = player.handCards.filter(isGetCard);
         const validNewCardIdxs = newCardIdxs.filter(c => !c.UI.class?.includes('over'));
@@ -325,6 +327,7 @@ export default class GeniusInvokationClient {
      * @param cardIdx 选择的卡牌序号
      */
     selectCard(cardIdx: number) {
+        this.isShowEndPhase = false;
         if (this.phase < PHASE.CHANGE_CARD) return;
         if (this.player.status == PLAYER_STATUS.PLAYING) this.reconcile(false, cardIdx);
         this.currSkill = NULL_SKILL();
@@ -482,7 +485,7 @@ export default class GeniusInvokationClient {
             this._resetWillSwitch();
         }
         this._sendTip(tip);
-        if (actionInfo.content != '') {
+        if (actionInfo.content != '' || !!actionInfo.card) {
             this.actionInfo = actionInfo;
             setTimeout(() => this.actionInfo.isShow = false, 800);
             setTimeout(() => this.actionInfo = { content: '' }, 1e3);
@@ -849,6 +852,7 @@ export default class GeniusInvokationClient {
      * @param options isOnlyRead 是否为只读
      */
     async useSkill(skid: number, options: { isOnlyRead?: boolean } = {}) {
+        this.isShowEndPhase = false;
         const { isOnlyRead = false } = options;
         const skidx = this.skills.findIndex(sk => sk.id == skid);
         const isExec = !isOnlyRead && this.modalInfo.skidx == skidx;

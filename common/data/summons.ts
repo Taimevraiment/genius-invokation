@@ -9,6 +9,7 @@ import { SummonBuilder } from "./builder/summonBuilder.js";
 export type SummonHandleEvent = {
     trigger?: Trigger,
     heros?: Hero[],
+    combatStatus?: Status[],
     eheros?: Hero[],
     hidx?: number,
     reset?: boolean,
@@ -737,11 +738,11 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             trigger: ['phase-end'],
             exec: execEvent => {
-                const { eheros, talent } = event;
+                const { eheros, talent, combatStatus } = event;
                 const { summon: smn = summon } = execEvent;
                 const { cmds } = smn.phaseEndAtk(event);
                 const hidxs = getNextBackHidx(eheros);
-                if (hidxs.length) cmds?.push({ cmd: 'attack', element: DAMAGE_TYPE.Pierce, cnt: 1, hidxs });
+                if (hidxs.length) cmds?.push({ cmd: 'attack', element: DAMAGE_TYPE.Pierce, cnt: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs });
                 if (talent) cmds?.push({ cmd: 'getCard', cnt: 1 });
                 return { cmds }
             }

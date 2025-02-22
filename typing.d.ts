@@ -229,7 +229,7 @@ type ActionData = {
 }
 
 type ActionInfo = {
-    content: string, // 提示词
+    content?: string, // 提示词
     card?: Card, // 使用卡时的卡牌
     isOppo?: boolean, // 是否对方角色
     isShow?: boolean, // 是否显示
