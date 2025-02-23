@@ -1275,16 +1275,13 @@ input#isOfflineInput:checked {
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
-    background: transparent;
+    background: #cb7b19d1;
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
     border-radius: 10px;
     background: #dec19dd1;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
 }
 
 @media screen and (orientation: portrait) {

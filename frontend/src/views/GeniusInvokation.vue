@@ -452,7 +452,7 @@ const maskOpacity = ref<number>(0.7);
 // const isOpenMask = ref<boolean>(true);
 const isOpenMask = ref<boolean>(false);
 const devOps = (cidx = 0) => {
-  if ((client.value.phase < 5 && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
+  if ((client.value.phase < PHASE.DICE && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');
   let rid = roomId;
   let seed: string = '';
@@ -487,6 +487,7 @@ const devOps = (cidx = 0) => {
   const clearSts: { hidx: number, stsid: number }[] = [];
   const setStsCnt: { hidx: number, stsid: number, type: string, val: number }[] = [];
   const setSmnCnt: { smnidx: number, type: string, val: number }[] = [];
+  const setSptCnt: { sptidx: number, type: string, val: number }[] = [];
   const smnIds: number[] = [];
   const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
@@ -575,15 +576,15 @@ const devOps = (cidx = 0) => {
       const isSetCnt = op[1] == '+';
       const setType = op[2];
       const [smnid = 0, val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
-      if (isSetCnt) {
-        setSmnCnt.push({ smnidx: smnid, type: setType, val });
-      } else {
-        smnIds.push(smnid);
-      }
+      if (isSetCnt) setSmnCnt.push({ smnidx: smnid, type: setType, val });
+      else smnIds.push(smnid);
       flag.add('setSummon');
     } else if (op.startsWith('p')) { // 支援物
-      const rest = op.slice(1);
-      sptIds.push(+rest);
+      const isSetCnt = op[1] == '+';
+      const setType = op[2];
+      const [sptid = 0, val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
+      if (isSetCnt) setSptCnt.push({ sptidx: sptid, type: setType, val });
+      else sptIds.push(sptid);
       flag.add('setSupport');
     } else if (op.startsWith('q')) { // 附属装备
       const [card = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
@@ -600,7 +601,7 @@ const devOps = (cidx = 0) => {
     }
   }
   socket.emit('sendToServerDev', {
-    cpidx, rid, seed, dices, cmds, attachs, hps, clearSts, setStsCnt, setSmnCnt,
+    cpidx, rid, seed, dices, cmds, attachs, hps, clearSts, setStsCnt, setSmnCnt, setSptCnt,
     smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&'),
   });
 };

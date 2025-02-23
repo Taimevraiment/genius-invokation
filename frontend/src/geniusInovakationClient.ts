@@ -498,6 +498,7 @@ export default class GeniusInvokationClient {
                 h.equipments.forEach(s => s && Reflect.setPrototypeOf(s, GICard.prototype));
             });
             p.handCards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
+            p.supports.forEach(s => Reflect.setPrototypeOf(s.card, GICard.prototype));
         });
         const setSelect = (retry = 0) => {
             try {
@@ -520,14 +521,22 @@ export default class GeniusInvokationClient {
                 if (summonSelect.length > 0) {
                     const [p, s, isDestroy] = summonSelect;
                     this.summonSelect[+(p == this.playerIdx)][s] = true;
+                    const smnEid = this.players[p].summons[s]?.entityId;
                     setTimeout(() => this._resetSummonSelect(), 500);
-                    if (isDestroy) setTimeout(() => this.players[p].summons.splice(s, 1), 2240);
+                    if (isDestroy) setTimeout(() => {
+                        if (this.players[p].summons[s]?.entityId != smnEid) return;
+                        this.players[p].summons.splice(s, 1);
+                    }, 2240);
                 }
                 if (supportSelect.length > 0) {
                     const [p, s, isDestroy] = supportSelect;
                     this.supportSelect[+(p == this.playerIdx)][s] = true;
+                    const sptEid = this.players[p].supports[s].entityId;
                     setTimeout(() => this._resetSupportSelect(), 500);
-                    if (isDestroy) setTimeout(() => this.players[p].supports.splice(s, 1), 1e3);
+                    if (isDestroy) setTimeout(() => {
+                        if (this.players[p].supports[s]?.entityId != sptEid) return;
+                        this.players[p].supports.splice(s, 1);
+                    }, 1e3);
                 }
             } catch (e) {
                 this.initSelect(players);

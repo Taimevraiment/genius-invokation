@@ -62,8 +62,8 @@ export class GIHero {
         this.offlineVersion = offlineVersion;
     }
     get equipments(): Card[] {
-        return [this.weaponSlot, this.artifactSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null]
-            .filter(s => s != null).sort((a, b) => b.entityId - a.entityId);
+        const slots = [this.weaponSlot, this.artifactSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null].filter(s => s != null) as Card[];
+        return slots.sort((a, b) => b.entityId - a.entityId);
     }
 }
 

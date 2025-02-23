@@ -1936,6 +1936,7 @@ button:active {
 .confirm-end-phase {
   background-color: #ff6822;
   border: 3px outset #e14f00;
+  color: white;
 }
 
 .cursor-point {

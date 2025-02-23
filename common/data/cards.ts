@@ -1251,8 +1251,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321002: () => new CardBuilder(180).name('骑士团图书馆').offline('v1').place().costSame(0).costSame(1, 'v4.5.0')
         .description('【入场时：】选择任意元素骰重投。；【投掷阶段：】获得额外一次重投机会。')
-        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/cedc39cd65a6fde9ec51971973328b74_5542237863639059092.png')
-        .handle(() => ({ cmds: [{ cmd: 'reroll', cnt: 1 }] })),
+        .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/cedc39cd65a6fde9ec51971973328b74_5542237863639059092.png'),
 
     321003: () => new CardBuilder(181).name('群玉阁').place().costSame(0)
         .description('【行动阶段开始时：】如果我方手牌数不多于3，则弃置此牌，生成1个[万能元素骰]。；【投掷阶段：】2个元素骰初始总是投出我方出战角色类型的元素。')
@@ -1306,8 +1305,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321015: () => new CardBuilder(193).name('风龙废墟').since('v4.2.0').place().costSame(2)
         .description('【入场时：】从牌组中随机抽取一张｢天赋｣牌。；【我方打出｢天赋｣牌，或我方角色使用原本元素骰消耗至少为4的技能时：】少花费1个元素骰。（每回合1次）；[可用次数]：3')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/1812234f8a4cbd2445ce3bc1387df37c_4843239005964574553.png')
-        .handle(() => ({ cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Talent, isAttach: true }] })),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/1812234f8a4cbd2445ce3bc1387df37c_4843239005964574553.png'),
 
     321016: () => new CardBuilder(309).name('湖中垂柳').since('v4.3.0').place().costSame(1)
         .description('【结束阶段：】如果我方手牌数量不多于2，则抓2张牌。；[可用次数]：2')
@@ -1461,8 +1459,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     322024: () => new CardBuilder(358).name('太郎丸').since('v4.6.0').ally().costAny(2)
         .description('【入场时：】生成4张【crd302202】，均匀地置入我方牌库中。；我方打出2张【crd302202】后：弃置此牌，召唤【smn302201】。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png')
-        .handle(() => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 302202, isAttach: true }] })),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png'),
 
     322025: () => new CardBuilder(359).name('白手套和渔夫').since('v4.6.0').ally().costSame(0)
         .description('【结束阶段：】生成1张【crd302203】，随机将其置入我方牌库顶部5张牌之中。；如果此牌的[可用次数]仅剩1次，则抓1张牌。；[可用次数]：2')
