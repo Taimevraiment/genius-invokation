@@ -1336,7 +1336,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/1b4eb98d6fba0e8a0746a356a5d3f34c_7076497852083287608.png'),
 
     321023: () => new CardBuilder(429).name('特佩利舞台').since('v5.1.0').place().costSame(0)
-        .description('【我方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【敌方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【行动阶段开始时：】如果此牌有至少3点｢瞩目｣，则生成1个随机基础元素骰\\；如果此牌有至少1点｢瞩目｣，将1个元素骰转换为[万能元素骰]。')
+        .description('【我方打出名称不存在于本局最初牌组的牌时：】此牌累积1点｢瞩目｣。；【敌方打出名称不存在于本局最初牌组的牌时：】此牌扣除1点｢瞩目｣。；【行动阶段开始时：】如果此牌有至少3点｢瞩目｣，则生成1个随机基础元素骰\\；如果此牌有至少1点｢瞩目｣，将1个元素骰转换为[万能元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4b25dc7789eb47de50bf4f6d6001cfe6_5614159247725037900.png'),
 
     321024: () => new CardBuilder(441).name('｢悬木人｣').since('v5.2.0').place().costSame(0)
@@ -1348,7 +1348,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/15deff457845725502df383e62e7c440_8867444785716505365.png'),
 
     321026: () => new CardBuilder(458).name('｢花羽会｣').since('v5.4.0').place().costSame(0)
-        .description('【我方[舍弃]2张卡牌后：】我方下一个后台角色获得1层“下次切换至前台时，回复1个对应元素的骰子。”（可叠加，每次触发一层）')
+        .description('【我方[舍弃]2张卡牌后：】我方下一个后台角色获得1层“下次切换至前台时，回复1个对应元素的骰子”。（可叠加，每次触发一层）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/635fd5e4f710374bb0ee919f77dd1776_8605976792632571882.png'),
 
     321027: () => new CardBuilder(466).name('｢烟谜主｣').since('v5.5.0').place().costSame(0)

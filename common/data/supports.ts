@@ -345,8 +345,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         trigger: ['drawcard-oppo'],
         supportCnt: support.cnt < 4 ? 1 : -5,
         exec: spt => {
-            ++spt.cnt;
-            if (spt.cnt < 4) return;
+            if (++spt.cnt < 4) return;
             return {
                 cmds: [
                     { cmd: 'addCard', cnt: 2, card: 301020, hidxs: [2], isOppo: true },
@@ -357,25 +356,25 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         },
     })),
     // 中央实验室遗址
-    321021: () => new SupportBuilder().collection().handle((_, event) => {
+    321021: () => new SupportBuilder().collection().handle((support, event) => {
         const { discardCnt = 1, trigger } = event;
         return {
             trigger: ['discard', 'reconcile'],
-            supportCnt: discardCnt,
+            supportCnt: support.cnt + discardCnt < 9 ? discardCnt : -10,
             exec: spt => {
                 const ocnt = spt.cnt;
                 if (trigger == 'reconcile') ++spt.cnt;
                 else if (trigger == 'discard') spt.cnt += discardCnt;
-                const dcnt = Math.floor(spt.cnt / 3) - Math.floor(ocnt / 3);
-                if (dcnt == 0) return;
-                return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }], isDestroy: spt.cnt >= 9 }
+                const cnt = Math.floor(spt.cnt / 3) - Math.floor(ocnt / 3);
+                if (cnt == 0) return;
+                return { cmds: [{ cmd: 'getDice', cnt, element: DICE_COST_TYPE.Omni }], isDestroy: spt.cnt >= 9 }
             },
         }
     }),
     // 圣火竞技场
-    321022: () => new SupportBuilder().collection().handle(() => ({
+    321022: () => new SupportBuilder().collection().handle(support => ({
         trigger: ['skill', 'vehicle'],
-        supportCnt: 1,
+        supportCnt: support.cnt < 5 ? 1 : -7,
         exec: spt => {
             ++spt.cnt;
             const cmds: Cmds[] = [];
@@ -387,9 +386,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 特佩利舞台
     321023: () => new SupportBuilder().collection().handle((support, event) => {
-        const { trigger = '', card, playerInfo: { initCardIds: acids = [] } = {}, eplayerInfo: { initCardIds: ecids = [] } = {} } = event;
+        const { trigger = '', card = support.card, playerInfo: { initCardIds: acids = [] } = {},
+            eplayerInfo: { initCardIds: ecids = [] } = {} } = event;
         const triggers: Trigger[] = [];
-        if (['card', 'enter'].includes(trigger) && !acids.includes(card?.id ?? support.card.id)) triggers.push(trigger);
+        if (['card', 'enter'].includes(trigger) && !acids.includes(card.id)) triggers.push(trigger);
         else if (card && trigger == 'ecard' && support.cnt > 0 && !ecids.includes(card.id)) triggers.push(trigger);
         if (support.cnt > 0) triggers.push('phase-start');
         return {
@@ -424,9 +424,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         trigger: ['summon-generate'],
         supportCnt: -1,
         exec: (spt, execEvent) => {
-            const { csummon, isExecTask = true } = execEvent;
-            csummon?.addUseCnt(true);
-            if (!isExecTask) return;
+            execEvent.csummon?.addUseCnt(true);
             return { isDestroy: --spt.cnt == 0 }
         }
     })),
@@ -449,18 +447,19 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         trigger: support.cnt > 0 ? ['pick'] : ['phase-start'],
         exec: spt => {
             const { trigger, getCardIds } = event;
-            if (trigger == 'phase-start') {
-                return {
-                    isDestroy: true,
-                    cmds: [{
-                        cmd: 'pickCard',
-                        cnt: 3,
-                        card: getCardIds?.(c => c.type == CARD_TYPE.Support && c.cost == 2),
-                        mode: CMD_MODE.UseCard,
-                    }],
-                }
+            if (trigger == 'pick') {
+                --spt.cnt;
+                return;
             }
-            --spt.cnt;
+            return {
+                isDestroy: true,
+                cmds: [{
+                    cmd: 'pickCard',
+                    cnt: 3,
+                    card: getCardIds?.(c => c.type == CARD_TYPE.Support && c.cost == 2),
+                    mode: CMD_MODE.UseCard,
+                }],
+            }
         }
     })),
     // 派蒙
@@ -484,7 +483,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && artifactCnt >= 6) triggers.push('enter');
         const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc && support.cnt >= card.cost - mdc;
-        if (trigger === 'card' && !isMinus) return;
+        if (trigger == 'card' && !isMinus) return;
         return {
             trigger: triggers,
             isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
@@ -531,15 +530,21 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 卯师傅
-    322005: () => new SupportBuilder().permanent(1).perCnt(1).handle((_, event, ver) => {
-        const { card } = event;
+    322005: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
+        const { card, pile = [] } = event;
+        if (!card?.hasSubtype(CARD_SUBTYPE.Food)) return;
+        const isGetDice = support.perCnt > 0;
+        const isGetCard = support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Food));
+        if (!isGetDice && !isGetCard) return;
         return {
             trigger: ['card'],
             exec: spt => {
-                if (spt.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food)) return;
-                --spt.perCnt;
-                const cmds: Cmds[] = [{ cmd: 'getDice', cnt: 1, mode: ver.isOffline ? CMD_MODE.RandomAll : CMD_MODE.Random }];
-                if (ver.gte('v4.1.0') && spt.cnt > 0) {
+                const cmds: Cmds[] = [];
+                if (isGetDice) {
+                    --spt.perCnt;
+                    cmds.push({ cmd: 'getDice', cnt: 1, mode: ver.isOffline ? CMD_MODE.RandomAll : CMD_MODE.Random });
+                }
+                if (ver.gte('v4.1.0') && isGetCard) {
                     --spt.cnt;
                     cmds.push({ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Food, isAttach: true });
                 }

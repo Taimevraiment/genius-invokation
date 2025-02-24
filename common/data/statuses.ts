@@ -700,8 +700,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 trigger: triggers,
                 attachEl: isCdt(status.useCnt >= 2 && trigger == 'skilltype1', ELEMENT_TYPE.Hydro),
                 cmds: isCdt(trigger == 'skilltype1', [{ cmd: 'getCard', cnt: 1 }]),
-                exec: () => {
-                    if (trigger == 'skilltype1') status.minusUseCnt(2);
+                isAddTask: trigger == 'skilltype1',
+                exec: eStatus => {
+                    if (trigger == 'skilltype1') eStatus?.minusUseCnt(2);
                     else if (trigger == 'phase-end') status.addUseCnt();
                 }
             }
