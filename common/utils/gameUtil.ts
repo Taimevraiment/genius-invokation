@@ -198,6 +198,7 @@ const compareVersion = (v1: Version, v2: Version | null) => {
 // 比较版本大小
 export const compareVersionFn = (curVersion: Version) => {
     return {
+        ver: curVersion,
         value: curVersion == 'vlatest' ? VERSION[0] : curVersion,
         isOffline: OFFLINE_VERSION.includes(curVersion as OfflineVersion),
         lt: (ver: Version | null) => compareVersion(curVersion, ver) < 0,

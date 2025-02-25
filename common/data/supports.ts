@@ -443,7 +443,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // ｢烟谜主｣
-    321027: () => new SupportBuilder().collection(5).handle((support, event) => ({
+    321027: () => new SupportBuilder().collection(4).handle((support, event) => ({
         trigger: support.cnt > 0 ? ['pick'] : ['phase-start'],
         exec: spt => {
             const { trigger, getCardIds } = event;

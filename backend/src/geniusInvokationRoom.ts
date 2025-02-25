@@ -980,10 +980,10 @@ export default class GeniusInvokationRoom {
         let diceLen = isInit ? INIT_DICE_COUNT : dices.length;
         dices.forEach((d, di) => !diceIdxs.includes(di) && ++tmpDice[d]);
         if (isInit) { // 投掷阶段检测
-            player.heros.forEach((h, hi) => {
+            player.heros.forEach(h => {
                 for (const slot of h.equipments) {
                     if (diceLen == 0) continue;
-                    const slotres = slot.handle(slot, { heros: player.heros, hidxs: [hi], trigger: 'phase-dice' });
+                    const slotres = slot.handle(slot, { heros: player.heros, trigger: 'phase-dice' });
                     if (this._hasNotTriggered(slotres.trigger, 'phase-dice')) continue;
                     const { element = DICE_COST_TYPE.Omni, cnt = 0 } = slotres;
                     const dcnt = Math.min(diceLen, cnt);
@@ -1422,11 +1422,11 @@ export default class GeniusInvokationRoom {
                 for (const state of trgs) {
                     const fieldres = hfield.handle(hfield as any, {
                         heros: oplayers[cpidx].heros,
+                        hero: oplayers[cpidx].heros[hi],
                         combatStatus: oplayers[cpidx].combatStatus,
                         summons: oplayers[cpidx].summons,
                         eheros: oplayers[cpidx ^ 1].heros,
                         eCombatStatus: oplayers[cpidx ^ 1].combatStatus,
-                        hidxs: isCdt(hfield.type == CARD_TYPE.Equipment, [hi]),
                         hidx: hi,
                         sktype: skill?.type,
                         skid,
@@ -2722,7 +2722,6 @@ export default class GeniusInvokationRoom {
         const ncost = Math.max(0, cost + anydice - costChange);
         const cardres = currCard.handle(currCard, {
             pidx,
-            hidxs: [heroIdx ?? hidx],
             heros,
             hero: heros[heroIdx ?? hidx],
             combatStatus,
@@ -2853,9 +2852,8 @@ export default class GeniusInvokationRoom {
         const oSupportCnt = player.supports.length;
         const slotUse = currCard.type == CARD_TYPE.Equipment;
         const cardres = currCard.handle(currCard, {
-            hidxs,
             heros: player.heros,
-            hero: player.heros[hidxs[0]],
+            hero: player.heros[selectHeros?.[0] ?? player.hidx],
             combatStatus: player.combatStatus,
             eheros: opponent.heros,
             eCombatStatus: opponent.combatStatus,
@@ -3101,6 +3099,7 @@ export default class GeniusInvokationRoom {
         this._detectSkill(pidx, 'action-after', { type: SKILL_TYPE.Passive, isQuickAction });
         this._detectSlotAndStatus(pidx, 'action-after', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], isOnlyFront: true, isQuickAction });
         this._detectSupport(pidx, 'action-after', { isQuickAction });
+        this._detectSkill(pidx ^ 1, 'action-after-oppo', { type: SKILL_TYPE.Passive, isQuickAction });
         this._detectSlotAndStatus(pidx ^ 1, 'action-after-oppo', { types: STATUS_TYPE.Usage, isOnlyFront: true, isQuickAction });
         this._detectSupport(pidx ^ 1, 'action-after-oppo', { isQuickAction });
     }
@@ -3884,7 +3883,6 @@ export default class GeniusInvokationRoom {
                     hero: heros[hidx],
                     combatStatus: player.combatStatus,
                     pile: player.pile,
-                    hidxs: [hidx],
                     eheros,
                     dmgedHidx,
                     ehcardsCnt: opponent.handCards.length,
@@ -4493,6 +4491,7 @@ export default class GeniusInvokationRoom {
                     trigger: state,
                     heros,
                     combatStatus: player.combatStatus,
+                    summons: player.summons,
                     eheros,
                     hidx,
                     isChargedAtk,
@@ -6194,7 +6193,6 @@ export default class GeniusInvokationRoom {
                 heros,
                 hero: player.heros[hidx],
                 eheros: players[pidx ^ 1]?.heros,
-                hidxs: [hidx],
                 hidx,
                 isChargedAtk,
                 isFallAtk: player.isFallAtk,
@@ -6210,8 +6208,8 @@ export default class GeniusInvokationRoom {
             for (const hfield of heroField) {
                 const fieldres = hfield.handle(hfield as any, {
                     heros,
+                    hero: heros[hidx],
                     eheros: players[pidx ^ 1]?.heros,
-                    hidxs: [hidx],
                     hidx,
                     isChargedAtk,
                     isFallAtk: player.isFallAtk,

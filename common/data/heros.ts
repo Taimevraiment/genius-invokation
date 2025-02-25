@@ -19,7 +19,7 @@ import { skillTotal } from './skills.js';
 
 const allHeros: Record<number, () => HeroBuilder> = {
 
-    1101: () => new HeroBuilder(1).name('甘雨').offline('v1').liyue().cryo().bow()
+    1101: () => new HeroBuilder(1).name('甘雨').offline('v1').maxHp(12).maxHp(10, 'v5.5.0').liyue().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
         .normalSkill(new NormalSkillBuilder('流天射术'))
@@ -336,7 +336,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 112041 }))
         ),
 
-    1205: () => new HeroBuilder(13).name('珊瑚宫心海').since('v3.5.0').inazuma().hydro().catalyst()
+    1205: () => new HeroBuilder(13).name('珊瑚宫心海').since('v3.5.0').maxHp(12).maxHp(10, 'v5.5.0').inazuma().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/89d5a757e494bded4020080c075bf32e_3429989759479851369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a3d326e3d228b0a9413cc26893d20c60.png')
         .normalSkill(new NormalSkillBuilder('水有常形'))
@@ -470,7 +470,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ trigger: ['game-start'], cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }] }))
         ),
 
-    1213: () => new HeroBuilder(433).name('希格雯').since('v5.2.0').fontaine(HERO_TAG.ArkheOusia).hydro().bow()
+    1213: () => new HeroBuilder(433).name('希格雯').since('v5.2.0').maxHp(12).maxHp(10, 'v5.5.0').fontaine(HERO_TAG.ArkheOusia).hydro().bow()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u0263g/8abf0e180b4dad16808966a1995ab08e.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u0263g/2576f665c6de5e7cc3c16ce1773f90e8.png')
         .normalSkill(new NormalSkillBuilder('靶向治疗'))
@@ -626,7 +626,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(3).cost(3).handle(() => ({ statusOppo: 113063 }))
         ),
 
-    1307: () => new HeroBuilder(23).name('胡桃').since('v3.7.0').liyue().pyro().polearm()
+    1307: () => new HeroBuilder(23).name('胡桃').since('v3.7.0').maxHp(12).maxHp(10, 'v5.5.0').liyue().pyro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fb95dbcb2f4ad804f1c3bbe767c3595e_5336167659518462076.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/ada775c7d535074ed9b2b77ec3070978.png')
         .normalSkill(new NormalSkillBuilder('往生秘传枪法'))
@@ -1049,7 +1049,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(event => ({ summonPre: [[115011, !!event.talent]] }))
         ),
 
-    1502: () => new HeroBuilder(37).name('琴').offline('v1').mondstadt().anemo().sword()
+    1502: () => new HeroBuilder(37).name('琴').offline('v1').maxHp(12).maxHp(10, 'v5.5.0').mondstadt().anemo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/88b869ceca8108bfd6dd14a68d5e9610_2290626250490650584.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9dd710fa45f1d7df996331ca92b2ae3a.png')
         .normalSkill(new NormalSkillBuilder('西风剑术'))
@@ -1064,7 +1064,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).burst(3, 'v4.2.0').cost(4).handle(event => ({ summon: 115021, heal: 2, hidxs: allHidxs(event.heros) }))
         ),
 
-    1503: () => new HeroBuilder(38).name('温迪').since('v3.7.0').mondstadt().anemo().bow()
+    1503: () => new HeroBuilder(38).name('温迪').since('v3.7.0').maxHp(12).maxHp(10, 'v5.5.0').mondstadt().anemo().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b8d0f177c157908bbe1ef65774d5a4e5_6672388573788855956.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0ad1fda4450c4aa9949706c37324ee11.png')
         .normalSkill(new NormalSkillBuilder('神代射术'))
@@ -1227,7 +1227,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1602: () => new HeroBuilder(43).name('诺艾尔').offline('v1').mondstadt().geo().claymore()
+    1602: () => new HeroBuilder(43).name('诺艾尔').offline('v1').maxHp(12).maxHp(10, 'v5.5.0').mondstadt().geo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e985b9bc4ec19c9e982c5b018ebbd74e_3315904207091435338.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a1163fe769ec8e0e244e952e8f7c9f9d.png')
         .normalSkill(new NormalSkillBuilder('西风剑术·女仆'))
@@ -1242,7 +1242,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(4).handle(() => ({ status: 116022 }))
         ),
 
-    1603: () => new HeroBuilder(44).name('钟离').since('v3.7.0').liyue().geo().polearm()
+    1603: () => new HeroBuilder(44).name('钟离').since('v3.7.0').maxHp(12).maxHp(10, 'v5.5.0').liyue().geo().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/025bfe8320c376254bec54a9507ad33a_604601120081367211.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1f8e8ca48f32c190a937fc519e706b92.png')
         .normalSkill(new NormalSkillBuilder('岩雨'))
@@ -1560,18 +1560,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
                 .src('/image/tmp/Skill_S_Emilie_01.webp')
                 .elemental().cost(3).handle(({ summons }) => ({ summon: 117101 + +hasObjById(summons, 117102) })),
-            new SkillBuilder('香氛演绎').description('{dealDmg}。移除场上的【柔灯之匣】。生成【smn117103】。')
+            new SkillBuilder('香氛演绎').description('{dealDmg}。召唤【smn117103】。')
                 .src('/image/tmp/Skill_E_Emilie_01.webp')
-                .burst(2).damage(1).cost(3).handle(event => ({
-                    summon: 117103,
-                    exec: () => event.summons?.forEach(smn => [117101, 117102].includes(smn.id) && smn.dispose(event.isExec)),
-                })),
-            new SkillBuilder('余薰').description('【我方造成燃烧反应伤害后：】触发1次我方【smn115】的回合结束效果。（每回合1次）')
+                .burst(2).damage(1).cost(3).handle(() => ({ summon: 117103 })),
+            new SkillBuilder('余薰').description('【我方〖smn115〗入场时：】下次双方行动后，触发一次【smn115】的回合结束效果。（每回合2次）')
                 .src('/image/tmp/UI_Talent_S_Emilie_05.webp')
                 .passive().handle(event => {
-                    if (event.skill.useCntPerRound > 0) return;
+                    const { skill: { useCntPerRound }, summons } = event;
+                    if (useCntPerRound > 1 || !hasObjById(summons, 115)) return;
                     return {
-                        trigger: ['Burning', 'other-Burning'],
+                        trigger: ['action-after', 'action-after-oppo'],
+                        isNotAddTask: true,
                         cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: ['phase-end'] }],
                     }
                 }),

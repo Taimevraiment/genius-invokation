@@ -10,6 +10,7 @@ export type SummonHandleEvent = {
     trigger?: Trigger,
     heros?: Hero[],
     combatStatus?: Status[],
+    summons?: Summon[],
     eheros?: Hero[],
     hidx?: number,
     reset?: boolean,
@@ -743,7 +744,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
                 const { cmds } = smn.phaseEndAtk(event);
                 const hidxs = getNextBackHidx(eheros);
                 if (hidxs.length) cmds?.push({ cmd: 'attack', element: DAMAGE_TYPE.Pierce, cnt: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs });
-                if (talent) cmds?.push({ cmd: 'getCard', cnt: 1 });
+                if (talent && talent.perCnt > 0) {
+                    cmds?.push({ cmd: 'getCard', cnt: 1 });
+                    talent.minusPerCnt();
+                }
                 return { cmds }
             }
         })),
@@ -794,9 +798,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。；【我方造成燃烧反应伤害后：】此牌升级为【smn117102】。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_1_-376351845.png')
         .handle((summon, event) => {
-            const { talent, heros, trigger } = event;
+            const { talent, heros, summons, trigger } = event;
             const triggers: Trigger[] = ['Burning', 'other-Burning', 'phase-end'];
-            if (talent && getObjById(heros, getHidById(summon.id))?.isFront) triggers.push('after-skilltype1');
+            if (talent && getObjById(heros, getHidById(summon.id))?.isFront && !hasObjById(summons, 117103)) triggers.push('after-skilltype1');
             return {
                 trigger: triggers,
                 exec: execEvent => {
@@ -810,9 +814,9 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     117102: (cnt: number = 3) => new SummonBuilder('柔灯之匣·二阶').useCnt(cnt).maxUse(6).damage(2).description('{defaultAtk。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_2_825775385.png')
         .handle((summon, event) => {
-            const { talent, heros } = event;
+            const { talent, heros, summons } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (talent && getObjById(heros, getHidById(summon.id))?.isFront) triggers.push('after-skilltype1');
+            if (talent && getObjById(heros, getHidById(summon.id))?.isFront && !hasObjById(summons, 117103)) triggers.push('after-skilltype1');
             return {
                 trigger: triggers,
                 exec: execEvent => {

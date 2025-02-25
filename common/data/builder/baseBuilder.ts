@@ -17,7 +17,7 @@ export class VersionMap<T> {
             if (value) return value[1];
             version = VERSION[0];
         }
-        return this._map.sort(([a], [b]) => a.lt(b.value) ? -1 : 1).find(([ver]) => ver.gt(version))?.[1] ?? defaultValue;
+        return this._map.sort(([a], [b]) => a.lt(b.ver) ? -1 : 1).find(([ver]) => ver.gt(version))?.[1] ?? defaultValue;
     }
 }
 

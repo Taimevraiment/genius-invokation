@@ -89,12 +89,11 @@ export class GICard {
             if (isUseNightSoul) {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver);
-                    const { hidxs = [], heros = [], combatStatus = [], source = -1, sourceHidx = -1, trigger = '' } = event;
-                    const hero = heros[hidxs[0]];
+                    const { hero, combatStatus = [], source = -1, sourceHidx = -1, trigger = '' } = event;
                     if (!hero) return res;
                     const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return res;
-                    if (trigger == 'get-status' && source == 112145 && sourceHidx == hidxs[0] &&
+                    if (trigger == 'get-status' && source == 112145 && sourceHidx == hero.hidx &&
                         !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
                         return { trigger: ['get-status'], isDestroy: true, exec: () => { nightSoul.dispose(true) } }
                     }
@@ -103,7 +102,7 @@ export class GICard {
                     }
                     return {
                         ...res,
-                        execmds: [...(res?.execmds ?? []), { cmd: 'getStatus', status: 112145, hidxs }],
+                        execmds: [...(res?.execmds ?? []), { cmd: 'getStatus', status: 112145, hidxs: [hero.hidx] }],
                     }
                 }
             } else {
@@ -238,7 +237,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _energy: VersionMap<number> = new VersionMap();
     private _anydice: number = 0;
     private _handle: ((card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void) | undefined;
-    private _canSelectHero: number = 0;
+    private _canSelectHero: VersionMap<number> = new VersionMap();
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
     private _isResetUseCnt: boolean = false;
@@ -273,7 +272,7 @@ export class CardBuilder extends BaseCostBuilder {
     }
     equipment() {
         this._type = CARD_TYPE.Equipment;
-        this._canSelectHero = 1;
+        this._canSelectHero.set(['vlatest', 1]);
         return this;
     }
     weapon(weaponType?: WeaponType) {
@@ -352,8 +351,8 @@ export class CardBuilder extends BaseCostBuilder {
         this._anydice = anydice;
         return this;
     }
-    canSelectHero(canSelectHero: number) {
-        this._canSelectHero = canSelectHero;
+    canSelectHero(canSelectHero: number, version: Version = 'vlatest') {
+        this._canSelectHero.set([version, canSelectHero]);
         return this;
     }
     canSelectSummon(canSelectSummon: 0 | 1) {
@@ -401,6 +400,7 @@ export class CardBuilder extends BaseCostBuilder {
         const useCnt = this._useCnt.get(this._curVersion, -1);
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const energy = this._energy.get(this._curVersion, 0);
+        const canSelectHero = this._canSelectHero.get(this._curVersion, 0);
         return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
             cost, costType, this._type, this._subtype, userType, this._offlineVersion, this._handle,
             {
@@ -413,7 +413,7 @@ export class CardBuilder extends BaseCostBuilder {
                 cnt: this._cnt,
                 canSelectSummon: this._canSelectSummon,
                 canSelectSupport: this._canSelectSupport,
-                canSelectHero: this._canSelectHero,
+                canSelectHero,
                 isResetUct: this._isResetUseCnt,
                 isResetPct: this._isResetPerCnt,
                 spReset: this._isSpReset,
