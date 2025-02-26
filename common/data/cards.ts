@@ -2674,11 +2674,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { heros = [] } = event;
             if (ver.gte('v4.2.0') && card.perCnt <= 0) return;
-            const nhidxs = allHidxs(heros, { cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && h.energy < h.maxEnergy });
-            if (nhidxs.length == 0) return;
+            const hidxs = allHidxs(heros, { cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && h.energy < h.maxEnergy, limit: 1 });
+            if (hidxs.length == 0) return;
             return {
                 trigger: ['skilltype2'],
-                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: nhidxs.slice(0, 1) }],
+                execmds: [{ cmd: 'getEnergy', cnt: 1, hidxs }],
                 exec: () => card.minusPerCnt(),
             }
         }),

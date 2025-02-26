@@ -2952,7 +2952,8 @@ export default class GeniusInvokationRoom {
                 }
             });
             if (destroyedSupportCnt) this._doSupportDestroy(pidx, destroyedSupportCnt);
-            this._updateSummon(pidx, this._getSummonById(cardres.summon));
+            this._updateSummon(pidx, this._getSummonById(cardres.summon), this.players, true, { destroy: 1 });
+            this._updateSummon(pidx ^ 1, [], this.players, true, { destroy: 1 });
             const stscmds: Cmds[] = [
                 { cmd: 'getStatus', status: cardres.status, hidxs: cardres.hidxs ?? hidxs },
                 { cmd: 'getStatus', status: cardres.statusOppo, hidxs: cardres.hidxs ?? [opponent.hidx], isOppo: true },
@@ -3141,7 +3142,6 @@ export default class GeniusInvokationRoom {
         this.players.forEach(p => p.rollCnt = INIT_ROLL_COUNT);
         this.emit(flag + '-init', pidx, { tip: `第${this.round}轮开始` });
         this._writeLog(`第${this.round}轮开始`);
-        const exchangeSupprt: [Support, number][] = [];
         await this.delay(1250);
         for (const cpidx of [this.startIdx, this.startIdx ^ 1]) {
             if (this.round == 1) { // 检测游戏开始 game-start
@@ -3159,14 +3159,10 @@ export default class GeniusInvokationRoom {
             // await this._execTask();
             this._detectSummon(cpidx, 'phase-start');
             // await this._execTask();
-            const { exchangeSupport: ecs } = this._detectSupport(cpidx, 'phase-start', { firstPlayer: this.startIdx, isQuickAction: true });
-            exchangeSupprt.push(...ecs);
+            this._detectSupport(cpidx, 'phase-start', { firstPlayer: this.startIdx, isQuickAction: true });
             // await this._execTask();
         }
         await this._execTask();
-        for (const [exspt, pidx] of exchangeSupprt) {
-            this.players[pidx].supports.push(exspt);
-        }
         await wait(() => this.players.every(p => p.phase == PHASE.ACTION_START) &&
             this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting, { maxtime: 6e6 });
         // 回合开始阶段结束，进入行动阶段 phase-action
@@ -4634,7 +4630,7 @@ export default class GeniusInvokationRoom {
      *                hidx 将要切换的玩家, minusDiceSkill 用技能减骰子, isExecTask 是否执行任务队列, isExec 是否执行, firstPlayer 先手玩家pidx,
      *                getdmg 受伤量, heal 回血量, getcard 本次摸牌数, discardCnt 本次舍弃牌数, minusDiceSkill 技能当前被x减费后留存的骰子数, 
      *                csummon 选中的召唤物
-     * @returns isQuickAction 是否快速行动, cmds 命令集, exchangeSupport 交换的支援牌, outStatus 出战状态, minusDiceHero 减少切换角色骰子, supportCnt 支援区数量,
+     * @returns isQuickAction 是否快速行动, cmds 命令集, outStatus 出战状态, minusDiceHero 减少切换角色骰子, supportCnt 支援区数量,
      *          minusDiceCard 减少使用卡骰子, minusDiceSkill 用技能减骰子
      */
     private _detectSupport(pidx: number, ostates: Trigger | Trigger[],
@@ -4651,7 +4647,6 @@ export default class GeniusInvokationRoom {
             isExecTask, csupport, getdmg, heal, discardCnt = 0, minusDiceSkillIds = [], minusDiceSkill = [],
             supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon } = options;
         let { switchHeroDiceCnt = 0, isQuickAction = false, minusDiceCard = 0 } = options;
-        const exchangeSupport: [Support, number][] = [];
         const cmdsAll: Cmds[] = [];
         const task: [() => void | Promise<void>, number?, number?][] = [];
         const player = players[pidx];
@@ -4700,8 +4695,6 @@ export default class GeniusInvokationRoom {
                 isQuickAction ||= !!supportres.isQuickAction;
                 switchHeroDiceCnt = Math.max(0, switchHeroDiceCnt - (supportres.minusDiceHero ?? 0));
                 minusDiceCard += supportres.minusDiceCard ?? 0;
-                const isExchange = !!supportres.isExchange && (opponent.supports.length + exchangeSupport.filter(v => v[1] == (pidx ^ 1)).length) < 4;
-                if (isExchange) exchangeSupport.push([support, pidx ^ 1]);
                 supportCnt[pidx][stidx] += supportres.supportCnt ?? 0;
                 const supportexecres = supportres.exec?.(clone(support), {
                     isExecTask: false,
@@ -4712,7 +4705,7 @@ export default class GeniusInvokationRoom {
                     if (supportres.isNotAddTask) {
                         const supportexecres = supportres.exec?.(support, { isExecTask: true }) ?? {};
                         this._doCmds(pidx, supportexecres.cmds)
-                        if (supportexecres.isDestroy && (!supportres.isExchange || isExchange)) destroys.push(stidx);
+                        if (supportexecres.isDestroy) destroys.push(stidx);
                     } else {
                         if (!isExecTask) {
                             const args = clone(Array.from(arguments));
@@ -4731,12 +4724,16 @@ export default class GeniusInvokationRoom {
                                 const oCnt = spt.cnt;
                                 const oPct = spt.perCnt;
                                 const smnIdx = player.summons.findIndex(smn => smn.entityId == csummon?.entityId);
-                                const supportexecres = supportres.exec?.(spt, { isExecTask: true, csummon: player.summons[smnIdx] }) ?? {};
+                                const supportexecres = supportres.exec?.(spt, {
+                                    isExecTask: true,
+                                    csummon: player.summons[smnIdx],
+                                    supports: player.supports,
+                                    eSupports: opponent.supports,
+                                }) ?? {};
                                 this._writeLog(`[${player.name}](${player.pidx})[${spt.card.name}]发动${oCnt != spt.cnt ? ` ${oCnt}→${spt.cnt}` : ''}`);
                                 this._writeLog(`[${player.name}](${player.pidx})${state}:${spt.card.name}(${spt.entityId}).cnt:${oCnt}→${spt.cnt}.perCnt:${oPct}→${spt.perCnt}`, 'system');
                                 const { willHeals } = this._doCmds(pidx, supportexecres.cmds);
                                 if (supportres.summon) this._updateSummon(pidx, this._getSummonById(supportres.summon), this.players);
-                                supportexecres.isDestroy &&= (!supportres.isExchange || isExchange);
                                 const supportSelect = [pidx, player.supports.findIndex(s => s.entityId == spt.entityId), +!!supportexecres.isDestroy];
                                 if (willHeals?.length) {
                                     willHeals.forEach(async wh => {
@@ -4783,7 +4780,7 @@ export default class GeniusInvokationRoom {
             willHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
             tasks.push(...cmdtasks);
         }
-        return { isQuickAction, exchangeSupport, switchHeroDiceCnt, supportCnt, minusDiceCard, willSummons, willHeals, task, tasks }
+        return { isQuickAction, switchHeroDiceCnt, supportCnt, minusDiceCard, willSummons, willHeals, task, tasks }
     }
     /**
      * 获取骰子

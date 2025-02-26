@@ -5,16 +5,20 @@ import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
 export const allHidxs = (heros?: Hero[], options: {
-    isDie?: boolean, exclude?: number, include?: number, isAll?: boolean, cdt?: (h: Hero) => boolean,
+    isDie?: boolean, exclude?: number, include?: number, isAll?: boolean,
+    cdt?: (h: Hero) => boolean, limit?: number,
 } = {}): number[] => {
-    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true } = options;
+    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true, limit = 0 } = options;
     const hidx = heros?.findIndex(h => h.isFront) ?? -1;
     if (!heros || hidx == -1) return [];
     const hidxs: number[] = [];
     for (let i = 0; i < heros.length; ++i) {
         const hi = (hidx + i) % heros.length;
         const h = heros[hi];
-        if (isAll || include == hi || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) hidxs.push(hi);
+        if (isAll || include == hi || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) {
+            hidxs.push(hi);
+            if (hidxs.length == limit) break;
+        }
     }
     return hidxs;
 }
@@ -80,13 +84,13 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
 }
 
 // 获得所有后台角色hidx
-export const getBackHidxs = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1): number[] => {
-    return allHidxs(heros, { exclude: frontIdx });
+export const getBackHidxs = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1, limit?: number): number[] => {
+    return allHidxs(heros, { exclude: frontIdx, limit });
 }
 
 // 获得下一个后台角色hidx(只有一个number的数组)
 export const getNextBackHidx = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1): number[] => {
-    return getBackHidxs(heros, frontIdx).slice(0, 1);
+    return getBackHidxs(heros, frontIdx, 1);
 }
 
 // 检查骰子是否合法

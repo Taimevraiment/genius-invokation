@@ -2060,7 +2060,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { eheros = [], heros = [] } = event;
                     const ehero = eheros.find(h => h.isFront);
                     if (!ehero?.attachElement.includes(ELEMENT_TYPE.Electro) || ehero.energy == 0) return;
-                    const hidxs = allHidxs(heros, { cdt: h => h.energy < h.maxEnergy }).slice(0, 1);
+                    const hidxs = allHidxs(heros, { cdt: h => h.energy < h.maxEnergy, limit: 1 });
                     return { cmds: [{ cmd: 'getEnergy', cnt: -1, isOppo: true }, { cmd: 'getEnergy', cnt: 1, hidxs }] }
                 }),
             new SkillBuilder('狂迸骇雷').description('{dealDmg}。如果目标[充能]不多于1，造成的伤害+2。')
