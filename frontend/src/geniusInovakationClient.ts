@@ -369,9 +369,10 @@ export default class GeniusInvokationClient {
                 if (this.isValid) {
                     const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                     if (canSelectHero == 1 && preview.heroIdxs) this.heroSelect[1][preview.heroIdxs[0]] = 1;
-                    if (preview.summonIdx) this.summonSelect[canSelectSummon][preview.summonIdx] = true;
-                    if (preview.supportIdx) this.supportSelect[canSelectSupport][preview.supportIdx] = true;
+                    if (preview.summonIdx != undefined) this.summonSelect[canSelectSummon][preview.summonIdx] = true;
+                    if (preview.supportIdx != undefined) this.supportSelect[canSelectSupport][preview.supportIdx] = true;
                     this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
+                    this.supportCnt = clone(preview.willSupportChange) ?? this._resetSupportCnt();
                     this.diceSelect = [...preview.diceSelect!];
                 }
                 if (
@@ -775,7 +776,7 @@ export default class GeniusInvokationClient {
         if (newVal) {
             this.summonSelect[pidx].forEach((_, i, a) => a[i] = i == suidx);
             this.showSummonInfo(pidx, suidx);
-        }
+        } else if (this.currSkill.id <= 0) return this.useCard();
         if (this.currSkill.id > 0) return this.selectSkillSummon(suidx, newVal);
         const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.cardIdxs![0] == this.currCard.cidx && pre.summonIdx == (newVal ? suidx : -1));
         this.isValid = !!preview?.isValid;

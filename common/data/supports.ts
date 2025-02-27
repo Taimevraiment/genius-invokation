@@ -1,6 +1,5 @@
 import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
-import { MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
@@ -54,6 +53,8 @@ export type SupportHandleRes = {
     isNotAddTask?: boolean,
     isOrTrigger?: boolean,
     isLast?: boolean,
+    isExchange?: boolean,
+    isAfterSkill?: boolean,
     summon?: (number | [number, ...any])[] | number,
 }
 
@@ -605,19 +606,20 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 常九爷
-    322009: () => new SupportBuilder().collection().handle((support, event) => {
-        const { sktype = SKILL_TYPE.Vehicle } = event;
-        if (sktype == SKILL_TYPE.Vehicle) return;
-        return {
-            trigger: ['Physical-dmg', 'Physical-getdmg', 'Pierce-dmg', 'Pierce-getdmg', 'elReaction', 'get-elReaction'],
-            supportCnt: support.cnt < 2 ? 1 : -3,
-            isOrTrigger: true,
-            exec: spt => {
-                if (++spt.cnt < 3) return;
-                return { cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: true }
-            }
+    322009: () => new SupportBuilder().collection().handle(support => ({
+        trigger: [
+            'Physical-dmg', 'Physical-getdmg', 'Physical-getdmg-oppo',
+            'Pierce-dmg', 'Pierce-getdmg', 'Pierce-getdmg-oppo',
+            'elReaction', 'get-elReaction', 'get-elReaction-oppo',
+        ],
+        isAfterSkill: true,
+        supportCnt: support.cnt < 2 ? 1 : -3,
+        isOrTrigger: true,
+        exec: spt => {
+            if (++spt.cnt < 3) return;
+            return { cmds: [{ cmd: 'getCard', cnt: 2 }], isDestroy: true }
         }
-    }),
+    })),
     // 艾琳
     322010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
@@ -669,27 +671,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 鲸井小弟
-    322014: () => new SupportBuilder().permanent().handle((support, event) => {
-        const { supports = [], eSupports = [], isFirst } = event;
-        const spts = (spts: Support[]) => spts.filter(s => s.card.id == support.card.id);
-        const sptIdx = spts(supports).findIndex(s => s.card.entityId == support.card.entityId);
-        const isExchange = (isFirst && eSupports.length < MAX_SUPPORT_COUNT) ||
-            (!isFirst && eSupports.length - Math.min(MAX_SUPPORT_COUNT - supports.length, spts(eSupports).length) + sptIdx < MAX_SUPPORT_COUNT);
-        return {
-            trigger: ['phase-start'],
-            exec: (spt, execEvent) => {
-                const { isExecTask, supports = [], eSupports = [] } = execEvent;
-                if (isExecTask && isExchange) {
-                    const sptIdx = supports.findIndex(s => s.card.entityId == spt.card.entityId);
-                    if (sptIdx > -1) {
-                        supports.splice(sptIdx, 1);
-                        eSupports.push(spt);
-                    }
-                }
-                return { cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }] }
-            }
-        }
-    }),
+    322014: () => new SupportBuilder().permanent().handle(() => ({
+        trigger: ['phase-start'],
+        isExchange: true,
+        exec: () => ({ cmds: [{ cmd: 'getDice', cnt: 1, element: DICE_COST_TYPE.Omni }] })
+    })),
     // 旭东
     322015: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         const { card, minusDiceCard: mdc = 0 } = event;

@@ -1404,7 +1404,7 @@ button:active {
   padding-top: 10%;
   box-sizing: border-box;
   cursor: pointer;
-  transition: box-shadow 0.5s;
+  transition: box-shadow 0.4s;
   transform: scale(var(--scale-val-will));
   background-color: black;
   border-radius: 10%;
