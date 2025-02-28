@@ -370,7 +370,7 @@ export default class GeniusInvokationClient {
                     const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
                     if (canSelectHero == 1 && preview.heroIdxs) this.heroSelect[1][preview.heroIdxs[0]] = 1;
                     if (preview.summonIdx != undefined) this.summonSelect[canSelectSummon][preview.summonIdx] = true;
-                    if (preview.supportIdx != undefined) this.supportSelect[canSelectSupport][preview.supportIdx] = true;
+                    if (preview.supportIdx != undefined) this.supportSelect[Math.abs(canSelectSupport)][preview.supportIdx] = true;
                     this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
                     this.supportCnt = clone(preview.willSupportChange) ?? this._resetSupportCnt();
                     this.diceSelect = [...preview.diceSelect!];

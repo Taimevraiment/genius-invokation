@@ -213,9 +213,9 @@
             </template>
           </div>
           <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp >= 0">
-            <div
-              :class="{ status: true, 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[0]?.[hidx]?.[isti] }"
-              v-for="(ists, isti) in hero.heroStatus.filter((_, stsi) => hero.heroStatus.length <= 4 || stsi < 4)"
+            <div class="status"
+              :class="{ 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[0]?.[hidx]?.[isti] }"
+              v-for="(ists, isti) in hero.heroStatus.filter((_, stsi) => hero.heroStatus.length <= 4 || stsi < 3)"
               :key="ists.id">
               <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
               </div>
@@ -231,9 +231,9 @@
                 v-if="!ists.hasType(STATUS_TYPE.Sign) && (ists.useCnt >= 0 || ists.roundCnt >= 0)">
                 {{ ists.useCnt < 0 ? ists.roundCnt : ists.useCnt }} </div>
               </div>
-              <div v-if="hero.heroStatus.length > 4" :class="{ status: true, 'mobile-status': isMobile }"
+              <div v-if="hero.heroStatus.length > 4" class="status" :class="{ 'mobile-status': isMobile }"
                 style="background-color: #faebd767;">
-                <span>···</span>
+                <span>…</span>
                 <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
                   {{ hero.heroStatus.length - 3 }}
                 </div>
@@ -241,9 +241,9 @@
             </div>
             <div class="outstatus" :class="{ 'mobile-outstatus': isMobile }"
               v-if="phase >= PHASE.DICE && hero.hp >= 0 && hero.isFront">
-              <div
-                :class="{ status: true, 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[1]?.[hidx]?.[osti] }"
-                v-for="(osts, osti) in combatStatuses[hgi].filter((_, stsi) => combatStatuses[hgi].length <= 4 || stsi < 4)"
+              <div class="status"
+                :class="{ 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[1]?.[hidx]?.[osti] }"
+                v-for="(osts, osti) in combatStatuses[hgi].filter((_, stsi) => combatStatuses[hgi].length <= 4 || stsi < 3)"
                 :key="osts.id">
                 <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }"
                   :style="{ background: osts.UI.iconBg }">
@@ -260,9 +260,9 @@
                   v-if="!osts.hasType(STATUS_TYPE.Sign) && (osts.useCnt >= 0 || osts.roundCnt >= 0)">
                   {{ osts.useCnt < 0 ? osts.roundCnt : osts.useCnt }} </div>
                 </div>
-                <div v-if="combatStatuses[hgi].length > 4" :class="{ status: true, 'mobile-status': isMobile }"
+                <div v-if="combatStatuses[hgi].length > 4" class="status" :class="{ 'mobile-status': isMobile }"
                   style="background-color: #faebd767">
-                  <span>···</span>
+                  <span>…</span>
                   <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
                     {{ combatStatuses[hgi].length - 3 }}
                   </div>

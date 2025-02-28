@@ -2291,29 +2291,63 @@ export default class GeniusInvokationRoom {
                 }
             }
         }
-        etriggers.forEach((trg, tidx) => {
-            const [elDmg, pierceDmg] = res.willDamages[tidx + getDmgIdxOffset];
-            const isOtherGetDmg = res.willDamages.slice(getDmgIdxOffset, getDmgIdxOffset + ehlen)
-                .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
-            if (isOtherGetDmg) trg.push('other-getdmg');
-            if (elDmg > 0 || pierceDmg > 0) {
-                trg.push('getdmg');
-                if (dmgElement != ELEMENT_TYPE.Physical) trg.push('el-getdmg');
-                if (elDmg > 0) trg.push(`${trgEl}-getdmg`);
-                if (pierceDmg > 0) trg.push('Pierce-getdmg');
+        const assignDmgTrigger = (triggers: Trigger[][], isA: boolean) => {
+            const admgIdxOffset = isA ? aGetDmgIdxOffset : getDmgIdxOffset;
+            triggers.forEach((trg, tidx) => {
+                const [elDmg, pierceDmg] = res.willDamages[tidx + admgIdxOffset];
+                const isOtherGetDmg = res.willDamages.slice(admgIdxOffset, admgIdxOffset + ehlen)
+                    .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
+                if (isOtherGetDmg) trg.push('other-getdmg');
+                if (elDmg > 0 || pierceDmg > 0) {
+                    trg.push('getdmg');
+                    if (dmgElement != ELEMENT_TYPE.Physical) trg.push('el-getdmg');
+                    if (elDmg > 0) trg.push(`${trgEl}-getdmg`);
+                    if (pierceDmg > 0) trg.push('Pierce-getdmg');
+                }
+            });
+            if (!isSwirl) {
+                const edmgIdxOffset = isA ? getDmgIdxOffset : aGetDmgIdxOffset;
+                const wdmgs = res.willDamages.slice(edmgIdxOffset, edmgIdxOffset + ehlen);
+                if (wdmgs.some(dmg => dmg[0] > -1 || dmg[1] > 0)) {
+                    triggers.forEach((trgs, ti) => {
+                        if (!isSelf && isA) {
+                            if (ti == atkHidx) trgs.push('dmg');
+                            else trgs.push('other-dmg');
+                        }
+                        trgs.push('getdmg-oppo');
+                        if (dmgElement != ELEMENT_TYPE.Physical) {
+                            if (ti == atkHidx && !isSelf) trgs.push('el-dmg');
+                            trgs.push('el-getdmg-oppo');
+                        }
+                    });
+                    if (wdmgs.some(dmg => dmg[0] > -1)) {
+                        triggers.forEach((trgs, ti) => {
+                            if (!isSelf && isA) {
+                                if (ti == atkHidx) trgs.push(`${trgEl}-dmg`);
+                                else trgs.push(`other-${trgEl}-dmg`);
+                            }
+                            trgs.push(`${trgEl}-getdmg-oppo`);
+                        });
+                    }
+                    if (wdmgs.some(dmg => dmg[1] > 0)) {
+                        triggers.forEach((trgs, ti) => {
+                            if (!isSelf && isA) {
+                                if (ti == atkHidx) trgs.push('Pierce-dmg');
+                                else trgs.push('other-Pierce-dmg');
+                            }
+                            trgs.push('Pierce-getdmg-oppo');
+                        });
+                    }
+                }
             }
-        });
-        atriggers.forEach((trg, tidx) => {
-            const [elDmg, pierceDmg] = res.willDamages[tidx + aGetDmgIdxOffset];
-            const isOtherGetDmg = res.willDamages.slice(aGetDmgIdxOffset, aGetDmgIdxOffset + ehlen)
-                .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
-            if (isOtherGetDmg) trg.push('other-getdmg');
-            if (elDmg > 0 || pierceDmg > 0) {
-                trg.push('getdmg');
-                if (elDmg > 0) trg.push(`${trgEl}-getdmg`);
-                if (pierceDmg > 0) trg.push('Pierce-getdmg');
-            }
-        });
+        }
+        const assignDmgTriggerAll = () => {
+            assignDmgTrigger(etriggers, false);
+            assignDmgTrigger(atriggers, true);
+            etriggers.forEach((t, ti) => res.etriggers[ti] = [...new Set([...res.etriggers[ti], ...t])]);
+            if (!isSwirl) atriggers.forEach((t, ti) => res.atriggers[ti] = [...new Set([...res.atriggers[ti], ...t])]);
+        }
+        assignDmgTriggerAll();
         const getdmg = () => res.willDamages
             .slice(getDmgIdxOffset, getDmgIdxOffset + ehlen)
             .map(([dmg, pdmg]) => dmg == -1 && pdmg == 0 ? -1 : Math.max(0, dmg) + pdmg);
@@ -2325,38 +2359,6 @@ export default class GeniusInvokationRoom {
             atriggers[atkHidx].push(`${trgEl}-dmg-Swirl` as Trigger, 'dmg-Swirl');
             etriggers[dmgedHidx].push(`${trgEl}-getdmg-Swirl` as Trigger);
         } else {
-            const eWillDamage = res.willDamages.slice(getDmgIdxOffset, getDmgIdxOffset + ehlen);
-            if (eWillDamage.some(dmg => dmg[0] > -1 || dmg[1] > 0)) {
-                atriggers.forEach((trgs, ti) => {
-                    if (!isAttach && !isAtkSelf) {
-                        if (ti == atkHidx) trgs.push('dmg');
-                        else trgs.push('other-dmg');
-                    }
-                    trgs.push('getdmg-oppo');
-                    if (dmgElement != ELEMENT_TYPE.Physical) {
-                        if (ti == atkHidx && !isAttach && !isAtkSelf) trgs.push('el-dmg');
-                        trgs.push('el-getdmg-oppo');
-                    }
-                });
-                if (eWillDamage.some(dmg => dmg[0] > -1)) {
-                    atriggers.forEach((trgs, ti) => {
-                        if (!isAttach && !isAtkSelf) {
-                            if (ti == atkHidx) trgs.push(`${trgEl}-dmg`);
-                            else trgs.push(`other-${trgEl}-dmg`);
-                        }
-                        trgs.push(`${trgEl}-getdmg-oppo`);
-                    });
-                }
-                if (eWillDamage.some(dmg => dmg[1] > 0)) {
-                    atriggers.forEach((trgs, ti) => {
-                        if (!isAttach && !isAtkSelf) {
-                            if (ti == atkHidx) trgs.push('Pierce-dmg');
-                            else trgs.push('other-Pierce-dmg');
-                        }
-                        trgs.push('Pierce-getdmg-oppo');
-                    });
-                }
-            }
             if (skid > -1 && sktype != undefined) {
                 const sktrg = sktype == SKILL_TYPE.Vehicle ? 'vehicle' : 'skill';
                 atriggers.forEach((trg, ti) => {
@@ -2548,10 +2550,7 @@ export default class GeniusInvokationRoom {
                 energyCnt,
                 isQuickAction: res.isQuickAction,
             });
-
-            atriggers.forEach((t, ti) => res.atriggers[ti] = [...new Set([...res.atriggers[ti], ...t])]);
         }
-        etriggers.forEach((t, ti) => res.etriggers[ti] = [...new Set([...res.etriggers[ti], ...t])]);
 
         if (isAttachElement == 'attach') dmgedfhero.attachElement.push(dmgElement as PureElementType);
         else if (isAttachElement == 'consume') dmgedfhero.attachElement.shift();
@@ -2661,32 +2660,8 @@ export default class GeniusInvokationRoom {
             }
         }
 
+        assignDmgTriggerAll();
 
-        etriggers.forEach((trg, tidx) => {
-            const [elDmg, pierceDmg] = res.willDamages[tidx + getDmgIdxOffset];
-            const isOtherGetDmg = res.willDamages.slice(getDmgIdxOffset, getDmgIdxOffset + ehlen)
-                .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
-            if (isOtherGetDmg) trg.push('other-getdmg');
-            if (elDmg > 0 || pierceDmg > 0) {
-                trg.push('getdmg');
-                if (dmgElement != ELEMENT_TYPE.Physical) trg.push('el-getdmg');
-                if (elDmg > 0) trg.push(`${trgEl}-getdmg`);
-                if (pierceDmg > 0) trg.push('Pierce-getdmg');
-            }
-            etriggers[tidx] = [...new Set(trg)];
-        });
-        atriggers.forEach((trg, tidx) => {
-            const [elDmg, pierceDmg] = res.willDamages[tidx + aGetDmgIdxOffset];
-            const isOtherGetDmg = res.willDamages.slice(aGetDmgIdxOffset, aGetDmgIdxOffset + ehlen)
-                .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
-            if (isOtherGetDmg) trg.push('other-getdmg');
-            if (elDmg > 0 || pierceDmg > 0) {
-                trg.push('getdmg');
-                if (elDmg > 0) trg.push(`${trgEl}-getdmg`);
-                if (pierceDmg > 0) trg.push('Pierce-getdmg');
-            }
-            atriggers[tidx] = [...new Set(trg)];
-        });
         if (atriggers[atkHidx].includes('Crystallize-oppo')) aost.push(this.newStatus(111));
         if (atriggers[atkHidx].includes('Bloom-oppo') && !hasObjById([...aost, ...res.players[atkPidx].combatStatus], 112081)) {
             aost.push(this.newStatus(116));

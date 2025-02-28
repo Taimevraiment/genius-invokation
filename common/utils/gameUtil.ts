@@ -1,4 +1,4 @@
-import { Card, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
+import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, VERSION, Version } from "../constant/enum.js";
 import { SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { arrToObj, objToArr } from "./utils.js";
@@ -231,6 +231,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}status: ${player.status}\n`
         + `${prefix1}handCards: ${player.handCards.map(c => `[${c.name}](${c.entityId})`).join('')}\n`
         + `${prefix1}pile: ${player.pile.map(c => `[${c.name}]`).join('')}\n`
+        + `${prefix1}playerInfo: ${playerInfoToString(player.playerInfo, prefixSpace + 2)}\n`
         + `${prefix1}combatStatus: [\n`
         + `${player.combatStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
         + `${prefix1}]\n`
@@ -244,6 +245,28 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${player.supports.map(s => supportToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
         + `${prefix1}]\n`
         + `${prefix}}\n`;
+}
+
+export const playerInfoToString = (playerInfo: GameInfo, prefixSpace: number = 1) => {
+    const prefix = '  '.repeat(prefixSpace - 1);
+    const prefix1 = '  '.repeat(prefixSpace);
+    return `{\n`
+        + `${prefix1}isUsedLegend: ${playerInfo.isUsedLegend}\n`
+        + `${prefix1}artifactCnt: ${playerInfo.artifactCnt}\n`
+        + `${prefix1}artifactTypeCnt: ${playerInfo.artifactTypeCnt}\n`
+        + `${prefix1}weaponCnt: ${playerInfo.weaponCnt}\n`
+        + `${prefix1}weaponTypeCnt: ${playerInfo.weaponTypeCnt}\n`
+        + `${prefix1}talentCnt: ${playerInfo.talentCnt}\n`
+        + `${prefix1}talentTypeCnt: ${playerInfo.talentTypeCnt}\n`
+        + `${prefix1}usedCardIds: ${playerInfo.usedCardIds}\n`
+        + `${prefix1}destroyedSupport: ${playerInfo.destroyedSupport}\n`
+        + `${prefix1}oppoGetElDmgType: ${playerInfo.oppoGetElDmgType}\n`
+        + `${prefix1}discardCnt: ${playerInfo.discardCnt}\n`
+        + `${prefix1}reconcileCnt: ${playerInfo.reconcileCnt}\n`
+        + `${prefix1}discardIds: ${playerInfo.discardIds}\n`
+        + `${prefix1}initCardIds: ${playerInfo.initCardIds}\n`
+        + `${prefix1}isUsedCardPerRound: ${playerInfo.isUsedCardPerRound}\n`
+        + `${prefix}}`;
 }
 
 export const statusToString = (sts: Status, prefixSpace: number = 1) => {

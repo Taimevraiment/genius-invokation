@@ -248,7 +248,7 @@ io.on('connection', socket => {
         if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
         const me = getPlayer(pid);
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
-        room.setReporterLog(me.name, data.message);
+        room.setReporterLog(me.name, data.description);
         room.exportLog();
     });
     // 房间信息更新

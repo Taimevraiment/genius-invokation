@@ -691,18 +691,17 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322016: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
         const { card, minusDiceCard: mdc = 0, pile = [] } = event;
         const isMinus = card && card.hasSubtype(CARD_SUBTYPE.Ally) && card.cost > mdc && support.perCnt > 0;
+        const isGetCard = ver.gte('v4.1.0') && support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally));
         return {
             trigger: ['card'],
-            isNotAddTask: ver.lt('v4.1.0') || support.cnt == 0,
+            isNotAddTask: !isGetCard,
             minusDiceCard: isCdt(isMinus, 1),
             exec: spt => {
-                const cmds: Cmds[] = [];
                 if (isMinus) --spt.perCnt;
-                if (ver.gte('v4.1.0') && spt.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally))) {
+                if (isGetCard) {
                     --spt.cnt;
-                    cmds.push({ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Ally, isAttach: true });
+                    return { cmds: [{ cmd: 'getCard', cnt: 1, subtype: CARD_SUBTYPE.Ally, isAttach: true }] }
                 }
-                return { cmds }
             }
         }
     }),
@@ -800,7 +799,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const [el] = objToArr(PURE_ELEMENT_TYPE_KEY).find(([, elname]) => elname == trigger.slice(0, trigger.indexOf('-getdmg-oppo'))) ?? [];
         return {
             trigger: triggers,
-            supportCnt: isCdt(el != undefined && (oppoGetElDmgType >> PURE_ELEMENT_CODE[el] & 1) == 0, 1),
+            supportCnt: isCdt(el && (oppoGetElDmgType >> PURE_ELEMENT_CODE[el] & 1) == 0, 1),
             exec: spt => {
                 if (trigger == 'phase-end' && spt.cnt >= 3) {
                     return { cmds: [{ cmd: 'getCard', cnt: spt.cnt }], isDestroy: true }
@@ -812,10 +811,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 太郎丸
     322024: () => new SupportBuilder().collection().handle((support, event) => {
         if (event.trigger == 'enter') {
-            return {
-                trigger: ['enter'],
-                exec: () => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 302202, isAttach: true }] })
-            }
+            return { trigger: ['enter'], exec: () => ({ cmds: [{ cmd: 'addCard', cnt: 4, card: 302202, isAttach: true }] }) }
         }
         if (event.card?.id != 302202) return;
         return {
