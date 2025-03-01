@@ -305,8 +305,7 @@ export const CMD_MODE = {
     IsPublic: 8, // 公开抓到的牌
     GetSummon: 9, // 使用技能挑选牌
     GetCard: 10, // 挑选牌
-    RandomAll: 11, // 随机可重复骰子
-    UseCard: 12 // 挑选并打出牌
+    UseCard: 11 // 挑选并打出牌
 } as const;
 
 export const INFO_TYPE = {

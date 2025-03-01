@@ -1571,7 +1571,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         trigger: ['action-after', 'action-after-oppo'],
                         isNotAddTask: true,
-                        cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: ['phase-end'] }],
+                        cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: 'phase-end' }],
                     }
                 }),
             new SkillBuilder().passive(true).handle(event => {

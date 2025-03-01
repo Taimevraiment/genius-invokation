@@ -528,6 +528,10 @@ watchEffect(() => {
   skillExplain.value = [];
   if (info.value && 'costType' in info.value) { // 卡牌
     info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' })).filter(v => v != '');
+    if (type.value == INFO_TYPE.Support) { // 支援物
+      const onceDesc = info.value.UI.descriptions.findIndex(v => v.includes('入场时：'));
+      if (onceDesc > -1) info.value.UI.descriptions.splice(onceDesc, 1);
+    }
     skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     if (info.value.hasSubtype(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(getVehicleIdByCid(info.value.id));

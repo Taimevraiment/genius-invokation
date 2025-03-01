@@ -134,7 +134,7 @@ type Cmds = {
     cardTag?: CardTag | CardTag[],
     status?: (number | [number, ...any] | Status)[] | number,
     isOppo?: boolean,
-    summonTrigger?: Trigger[],
+    summonTrigger?: Trigger | Trigger[],
 }
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |

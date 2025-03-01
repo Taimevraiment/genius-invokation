@@ -1,4 +1,4 @@
-import { Card, VersionCompareFn } from "../../../typing";
+import { Card, Trigger, VersionCompareFn } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
     HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode,
@@ -9,6 +9,8 @@ import { compareVersionFn, getHidById, getVehicleIdByCid, hasObjById } from "../
 import { isCdt } from "../../utils/utils.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
+
+type CardBuilderHandleRes = Omit<CardHandleRes, 'trigger'> & { trigger?: Trigger | Trigger[] };
 
 export class GICard {
     id: number; // 唯一id
@@ -44,7 +46,7 @@ export class GICard {
     constructor(
         id: number, shareId: number, name: string, version: OnlineVersion, description: string, src: string, cost: number, costType: DiceType,
         type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0, offlineVersion: OfflineVersion | null = null,
-        handle?: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void,
+        handle?: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
@@ -185,7 +187,9 @@ export class GICard {
                 if (isResetUct) card.useCnt = uct;
                 if (!spReset) return {}
             }
-            return handle?.(card, event ?? {}, compareVersionFn(ver)) ?? {};
+            const res = handle?.(card, event ?? {}, compareVersionFn(ver)) ?? {};
+            if (res.trigger != undefined && !Array.isArray(res.trigger)) res.trigger = [res.trigger];
+            return res as CardHandleRes;
         }
         this.useCnt = uct;
         this.perCnt = pct;
@@ -236,7 +240,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _energy: VersionMap<number> = new VersionMap();
     private _anydice: number = 0;
-    private _handle: ((card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void) | undefined;
+    private _handle: ((card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void) | undefined;
     private _canSelectHero: VersionMap<number> = new VersionMap();
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
@@ -363,7 +367,7 @@ export class CardBuilder extends BaseCostBuilder {
         this._canSelectSupport = canSelectSupport;
         return this;
     }
-    handle(handle: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardHandleRes | undefined | void) {
+    handle(handle: (card: Card, event: CardHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

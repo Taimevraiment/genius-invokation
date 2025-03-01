@@ -116,8 +116,8 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
         const [elDice, anyDice] = skill.cost;
         const [elMinus, anyMinus] = skill.costChange;
         if (diceLen != elDice.cnt + anyDice.cnt - elMinus - anyMinus) return false;
-        if (elDice.type != COST_TYPE.Same) {
-            const elDiceValid = diceCnt[elDice.type] + diceCnt[DICE_COST_TYPE.Omni] >= elDice.cnt - elMinus;
+        if (elDice.type != COST_TYPE.Same || elDice.cnt == 0) {
+            const elDiceValid = elDice.cnt == 0 || (elDice.type != COST_TYPE.Same && diceCnt[elDice.type] + diceCnt[DICE_COST_TYPE.Omni] >= elDice.cnt - elMinus);
             const anyDiceValid = diceCntArr.reduce((a, b) => a + b[1], 0) - elDice.cnt + elMinus == anyDice.cnt - anyMinus;
             return elDiceValid && anyDiceValid;
         }
