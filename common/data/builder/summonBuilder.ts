@@ -1,10 +1,12 @@
-import { Cmds, Summon, VersionCompareFn } from "../../../typing";
+import { Cmds, Summon, Trigger, VersionCompareFn } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+
+type SummonBuilderHandleRes = Omit<SummonHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
 export class GISummon {
     id: number; // 唯一id
@@ -34,7 +36,7 @@ export class GISummon {
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
         shieldOrHeal: number, damage: number, element: ElementType,
-        handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined,
+        handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: any[], pdmg?: number, isDestroy?: SummonDestroyType,
             stsId?: number, spReset?: boolean, expl?: string[], icon?: string, pls?: boolean, ver?: Version,
@@ -75,16 +77,23 @@ export class GISummon {
         this.statusId = stsId;
         if (this.UI.src == '#') this.UI.src = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
         this.handle = (summon, event = {}) => {
-            const { reset = false, trigger = '' } = event;
+            const { reset, trigger } = event;
             if (reset) {
                 summon.perCnt = pct;
                 if (!spReset && trigger != 'enter') return {}
             }
-            if (handle) return handle(summon, event, compareVersionFn(ver)) ?? {};
-            return {
-                trigger: ['phase-end'],
-                exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
+            if (!handle) {
+                return {
+                    triggers: ['phase-end'],
+                    exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
+                }
             }
+            const builderRes = handle(summon, event, compareVersionFn(ver)) ?? {};
+            const res: SummonHandleRes = {
+                ...builderRes,
+                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
+            }
+            return res;
         };
     }
     setEntityId(id: number): Summon {
@@ -147,7 +156,7 @@ export class SummonBuilder extends BaseBuilder {
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
-    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined) | undefined;
+    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
         this._name = name;
@@ -261,7 +270,7 @@ export class SummonBuilder extends BaseBuilder {
         this._isDestroy = SUMMON_DESTROY_TYPE.UsedRoundEnd;
         return this;
     }
-    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonHandleRes | undefined) {
+    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined) {
         this._handle = handle;
         return this;
     }

@@ -43,7 +43,7 @@ export type SkillHandleRes = {
     statusOppo?: (number | [number, ...any])[] | number,
     equip?: number,
     summon?: (number | [number, ...any])[] | number,
-    trigger?: Trigger[],
+    triggers?: Trigger[],
     isAttach?: boolean,
     pdmg?: number,
     pdmgSelf?: number,
@@ -63,7 +63,7 @@ export type SkillHandleRes = {
     atkTo?: number,
     minusDiceSkill?: MinusDiceSkill,
     isNotAddTask?: boolean,
-    summonTrigger?: Trigger[],
+    summonTriggers?: Trigger[],
     isForbidden?: boolean,
     energy?: number,
     restDmg?: number,
@@ -222,7 +222,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({
-            summonTrigger: 'phase-end',
+            summonTriggers: 'phase-end',
             isForbidden: event.skill.perCnt == 0,
             exec: () => { --event.skill.perCnt },
         })),

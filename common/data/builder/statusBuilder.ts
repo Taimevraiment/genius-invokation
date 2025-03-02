@@ -6,6 +6,8 @@ import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.j
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
+type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
+
 export class GIStatus {
     id: number; // 唯一id
     entityId: number = -1; // 实体id
@@ -30,7 +32,8 @@ export class GIStatus {
     };
     constructor(
         id: number, name: string, description: string, icon: string, group: StatusGroup, type: StatusType[],
-        useCnt: number, maxCnt: number, roundCnt: number, handle?: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined,
+        useCnt: number, maxCnt: number, roundCnt: number,
+        handle?: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
             isTalent?: boolean, isReset?: boolean, adt?: any[], ver?: Version,
@@ -70,14 +73,14 @@ export class GIStatus {
         this.perCnt = pct;
         this.isTalent = isTalent;
         this.addition = adt;
-        let thandle = handle ?? (() => ({}));
+        let thandle: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
             // this.icon = 'shield2';
             // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
             this.UI.icon = SHIELD_ICON_URL;
             thandle = (status, event) => {
                 let { restDmg = -1 } = event;
-                let rest: StatusHandleRes = {};
+                let rest: StatusBuilderHandleRes = {};
                 if (handle) {
                     const { restDmg: dmg = -1, ...other } = handle(status, event, compareVersionFn(ver)) ?? {};
                     if (dmg > -1) restDmg = dmg;
@@ -85,7 +88,7 @@ export class GIStatus {
                 }
                 if (restDmg < 0) return rest;
                 const shieldDmg = Math.min(restDmg, status.useCnt);
-                return { restDmg: restDmg - shieldDmg, ...rest, trigger: ['reduce-dmg'], exec: () => { status.minusUseCnt(shieldDmg) } };
+                return { restDmg: restDmg - shieldDmg, ...rest, triggers: 'reduce-dmg', exec: () => { status.minusUseCnt(shieldDmg) } };
             }
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             // this.icon = 'shield';
@@ -95,13 +98,13 @@ export class GIStatus {
                 const { restDmg = -1 } = event;
                 const handleres = handle?.(status, event, compareVersionFn(ver)) ?? {};
                 if (restDmg == -1) return handleres;
-                return { ...handleres, trigger: ['reduce-dmg'] };
+                return { ...handleres, triggers: 'reduce-dmg' }
             }
         } else if (type.includes(STATUS_TYPE.NonEvent)) {
             this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp';
             thandle = (status, event) => {
                 if (event.hcard?.type != CARD_TYPE.Event) return;
-                return { trigger: ['card'], isInvalid: true, exec: () => { status.minusUseCnt() } }
+                return { triggers: 'card', isInvalid: true, exec: () => { status.minusUseCnt() } }
             }
         } else if (type.includes(STATUS_TYPE.NightSoul)) {
             const element = ['', 'Ice', 'Water', 'Fire', 'Elec', 'Wind', 'Rock', 'Grass'][Math.floor(id / 1e3) % 10];
@@ -133,7 +136,12 @@ export class GIStatus {
                 if (isReset) status.perCnt = pct;
                 return {}
             }
-            return thandle(status, event, compareVersionFn(ver)) ?? {};
+            const handleRes = thandle(status, event, compareVersionFn(ver)) ?? {};
+            const res: StatusHandleRes = {
+                ...handleRes,
+                triggers: Array.isArray(handleRes.triggers) ? handleRes.triggers : handleRes.triggers ? [handleRes.triggers] : undefined,
+            }
+            return res;
         }
     }
     setEntityId(id: number): Status {
@@ -198,7 +206,7 @@ export class StatusBuilder extends BaseBuilder {
     private _summonId: number = -1;
     private _addition: any[] = [];
     private _isReset: boolean = true;
-    private _handle: ((status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined | void) | undefined;
+    private _handle: ((status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionCompareFn) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: VersionCompareFn) => boolean, number][] = [];
     private _barrierCnt: number = 1;
@@ -304,7 +312,7 @@ export class StatusBuilder extends BaseBuilder {
         this._isReset = false;
         return this;
     }
-    handle(handle: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusHandleRes | undefined | void) {
+    handle(handle: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }
@@ -335,13 +343,13 @@ export class StatusBuilder extends BaseBuilder {
             if (cdt(compareVersionFn(this._curVersion))) this._type.push(...types);
         });
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
-            (status: Status, event: StatusHandleEvent, ver: VersionCompareFn): StatusHandleRes => {
+            (status: Status, event: StatusHandleEvent, ver: VersionCompareFn): StatusBuilderHandleRes => {
                 const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;
-                const trigger: Trigger[] = ['reduce-dmg'];
-                if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { trigger, restDmg }
+                const triggers: Trigger = 'reduce-dmg';
+                if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { triggers, restDmg }
                 const summon = summons.find(smn => smn.id == status.summonId);
                 return {
-                    trigger,
+                    triggers,
                     restDmg: Math.max(0, restDmg - this._barrierCnt),
                     exec: () => {
                         if (status.useCnt > 0) status.minusUseCnt(this._barrierUsage);

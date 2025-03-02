@@ -501,6 +501,7 @@ export default class GeniusInvokationClient {
             p.handCards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
             p.supports.forEach(s => Reflect.setPrototypeOf(s.card, GICard.prototype));
         });
+        pickModal.cards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
         const setSelect = (retry = 0) => {
             try {
                 if (slotSelect.length > 0) {

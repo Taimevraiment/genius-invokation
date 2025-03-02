@@ -10,7 +10,7 @@ import { isCdt } from "../../utils/utils.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
-type CardBuilderHandleRes = Omit<CardHandleRes, 'trigger'> & { trigger?: Trigger | Trigger[] };
+type CardBuilderHandleRes = Omit<CardHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
 export class GICard {
     id: number; // 唯一id
@@ -97,10 +97,10 @@ export class GICard {
                     if (!nightSoul) return res;
                     if (trigger == 'get-status' && source == 112145 && sourceHidx == hero.hidx &&
                         !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
-                        return { trigger: ['get-status'], isDestroy: true, exec: () => { nightSoul.dispose(true) } }
+                        return { triggers: 'get-status', isDestroy: true, exec: () => { nightSoul.dispose(true) } }
                     }
                     if (trigger == 'slot-destroy') {
-                        return { trigger: ['slot-destroy'], exec: () => { nightSoul.dispose(true) } }
+                        return { triggers: 'slot-destroy', exec: () => { nightSoul.dispose(true) } }
                     }
                     return {
                         ...res,
@@ -110,13 +110,13 @@ export class GICard {
             } else {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver) ?? {};
-                    if (event.trigger != 'vehicle' || res.trigger?.includes('vehicle')) return res;
+                    if (event.trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
                     return {
-                        trigger: ['vehicle'],
+                        triggers: 'vehicle',
                         isDestroy: card.useCnt == 1,
                         exec: () => {
                             card.minusUseCnt();
-                            return isCdt(!res.trigger, () => res.exec?.());
+                            return isCdt(!res.triggers, () => res.exec?.());
                         },
                     }
                 }
@@ -145,7 +145,7 @@ export class GICard {
                     const { slotUse = false } = event;
                     const ohandleres = ohandle?.(card, event, ver) ?? {};
                     if (slotUse && !ohandleres.cmds?.some(({ cmd }) => cmd == 'useSkill')) {
-                        return { trigger: ['skill'], cmds: [{ cmd: 'useSkill', cnt }] }
+                        return { triggers: 'skill', cmds: [{ cmd: 'useSkill', cnt }] }
                     }
                     return ohandleres;
                 }
@@ -169,7 +169,7 @@ export class GICard {
                 const { restDmg = -1 } = event;
                 const res = ohandle?.(card, event, ver) ?? {};
                 if (restDmg == -1) return res;
-                return { ...res, trigger: ['reduce-dmg'] }
+                return { ...res, triggers: 'reduce-dmg' }
             }
         }
         this.UI.description = this.UI.description.replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`).replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
@@ -187,9 +187,12 @@ export class GICard {
                 if (isResetUct) card.useCnt = uct;
                 if (!spReset) return {}
             }
-            const res = handle?.(card, event ?? {}, compareVersionFn(ver)) ?? {};
-            if (res.trigger != undefined && !Array.isArray(res.trigger)) res.trigger = [res.trigger];
-            return res as CardHandleRes;
+            const builderRes = handle?.(card, event ?? {}, compareVersionFn(ver)) ?? {};
+            const res: CardHandleRes = {
+                ...builderRes,
+                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
+            }
+            return res;
         }
         this.useCnt = uct;
         this.perCnt = pct;

@@ -9,7 +9,7 @@ import { clone } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
-type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTrigger'> & { summonTrigger?: Trigger | Trigger[] };
+type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
 
 export class GISkill {
     id: number; // 唯一id
@@ -74,9 +74,13 @@ export class GISkill {
         this.addition = [...adt];
         this.handle = hevent => {
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
-            const handleres = handle?.(hevent, compareVersionFn(ver)) ?? {};
-            if (handleres.summonTrigger != undefined && !Array.isArray(handleres.summonTrigger)) handleres.summonTrigger = [handleres.summonTrigger];
-            if (isReadySkill) return handleres as SkillHandleRes;
+            const builderRes = handle?.(hevent, compareVersionFn(ver)) ?? {};
+            const res: SkillHandleRes = {
+                ...builderRes,
+                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
+                summonTriggers: Array.isArray(builderRes.summonTriggers) ? builderRes.summonTriggers : builderRes.summonTriggers ? [builderRes.summonTriggers] : undefined,
+            }
+            if (isReadySkill) return res;
             const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];
             if (!curskill) throw new Error(`@skill_constructor: 未找到技能, skid:${id}, hero:${hero.name}`);
             if (reset) {
@@ -85,8 +89,8 @@ export class GISkill {
                 curskill.addition = [...adt];
                 return {};
             }
-            let dmgElement = handleres.dmgElement;
-            let atkOffset = handleres.atkOffset;
+            let dmgElement = res.dmgElement;
+            let atkOffset = res.atkOffset;
             for (const ist of hero.heroStatus) {
                 const event = { ...clone(hevent), hidx: hero.hidx };
                 delete event.minusDiceSkill;
@@ -97,15 +101,15 @@ export class GISkill {
                 if (stsres.atkOffset) atkOffset = stsres.atkOffset;
             }
             return {
-                ...handleres,
+                ...res,
                 dmgElement,
                 atkOffset,
                 exec: () => {
-                    handleres.exec?.();
+                    res.exec?.();
                     ++curskill.useCnt;
                     ++curskill.useCntPerRound;
                 }
-            } as SkillHandleRes
+            }
         }
     }
 }

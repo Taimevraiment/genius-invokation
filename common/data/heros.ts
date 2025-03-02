@@ -104,7 +104,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png')
                 .passive().handle(event => {
                     const { hero: { talentSlot } } = event;
-                    return { trigger: ['switch-to'], status: [[111052, 1, +!!talentSlot]] }
+                    return { triggers: 'switch-to', status: [[111052, 1, +!!talentSlot]] }
                 })
         ),
 
@@ -211,7 +211,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { skill: { perCnt }, trigger = '' } = event;
                     return {
                         status: isCdt(trigger == 'skilltype3', 111112),
-                        trigger: isCdt(perCnt < 4, ['getdmg', 'heal']),
+                        triggers: isCdt(perCnt < 4, ['getdmg', 'heal']),
                         minusDiceSkill: { skilltype3: [0, 0, Math.floor(perCnt / 2)] },
                         exec: () => {
                             if (['getdmg', 'heal'].includes(trigger)) ++event.hero.skills[2].perCnt;
@@ -300,7 +300,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('虚实流动').description('【此角色为出战角色，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。（每回合1次）')
                 .src('https://patchwiki.biligame.com/images/ys/1/12/j3lyz5vb4rhxspzbh9sl9toglxhk5d6.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/bc5c12ac6eb36b8d24f03864bf281b87_4261814317325062178.png')
-                .passive().handle(event => ({ trigger: ['active-switch-from'], isNotAddTask: true, isQuickAction: event.skill.useCnt == 0 }))
+                .passive().handle(event => ({ triggers: 'active-switch-from', isNotAddTask: true, isQuickAction: event.skill.useCnt == 0 }))
         ),
 
     1204: () => new HeroBuilder(12).name('达达利亚').since('v3.7.0').fatui().hydro().bow()
@@ -333,7 +333,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('遏浪').description('战斗开始时，初始附属【sts112041】。；角色所附属的【sts112042】效果结束时，重新附属【sts112041】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e6/s9urw8i8oidze3t6kgeivc054cg3ued.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b32057264f488d0df6429a135d5ce3e5_4144919367463512201.png')
-                .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 112041 }))
+                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 112041 }))
         ),
 
     1205: () => new HeroBuilder(13).name('珊瑚宫心海').since('v3.5.0').maxHp(12).maxHp(10, 'v5.5.0').inazuma().hydro().catalyst()
@@ -429,7 +429,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('破局').description('战斗开始时，初始附属【sts112091】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/9d80088a6e6cb7f8913f3bc14e6f48ab.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/3d521526d51c8e9b090a046c0187ace9_6247094106411719876.png')
-                .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 112091 }))
+                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 112091 }))
         ),
 
     1210: () => new HeroBuilder(335).name('那维莱特').since('v4.5.0').fontaine(HERO_TAG.ArkhePneuma).hydro().catalyst()
@@ -467,7 +467,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('始基力：圣俗杂座').id(12115).description('战斗开始时，生成手牌【crd112113】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/02b8738828b4ce238059cd8d47a56267.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/5ee50826cdd9cb5c1d48d55b04f84aa1_187435207931585226.png')
-                .passive().handle(() => ({ trigger: ['game-start'], cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }] }))
+                .passive().handle(() => ({ triggers: 'game-start', cmds: [{ cmd: 'getCard', cnt: 1, card: 112113 }] }))
         ),
 
     1213: () => new HeroBuilder(433).name('希格雯').since('v5.2.0').maxHp(12).maxHp(10, 'v5.5.0').fontaine(HERO_TAG.ArkheOusia).hydro().bow()
@@ -501,7 +501,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         cmds.push({ cmd: 'getStatus', status: 112136, hidxs: allHidxs(heros) });
                     }
                     return {
-                        trigger: triggers,
+                        triggers,
                         cmds,
                         isNotAddTask: !['switch-to', 'status-destroy'].includes(trigger),
                         exec: () => {
@@ -758,7 +758,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 0) return;
-                    return { trigger: ['Overload-oppo'], cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
+                    return { triggers: 'Overload-oppo', cmds: [{ cmd: 'getCard', cnt: 1, card: 113131 }] }
                 })
         ),
 
@@ -795,10 +795,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder().passive(true).handle(event => {
                 const { restDmg = -1, hero, trigger } = event;
                 const sts122 = getObjById(hero.heroStatus, 122);
-                if (trigger == 'skill' && sts122) return { trigger: ['skill'], dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
+                if (trigger == 'skill' && sts122) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
                 if (restDmg == -1 || !sts122) return;
-                if (restDmg == 0) return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg }
-                return { trigger: ['reduce-dmg'], isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
+                if (restDmg == 0) return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg }
+                return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
             })
         ),
 
@@ -874,7 +874,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('行度誓惩').description('战斗开始时，初始附属【sts114041】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/71/7jaouwue7o0q82ndc0f2da0sw5nxc4d.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c61b597d14d7915b53d8bf462e8ad609_6351825637878214573.png')
-                .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 114041 }))
+                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 114041 }))
         ),
 
     1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').liyue().electro().claymore()
@@ -931,7 +931,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('诸愿百眼之轮').description('战斗开始时，初始附属【sts114072】。')
                 .src('https://patchwiki.biligame.com/images/ys/0/0f/5ardhper4s2i541lmywmazv31hfn0q9.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2df2771f98519d3d46ad0551977ca99a_7788585308123167206.png')
-                .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 114072 }))
+                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 114072 }))
         ),
 
     1408: () => new HeroBuilder(33).name('八重神子').since('v3.7.0').inazuma().electro().catalyst()
@@ -1344,7 +1344,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
-                .passive().handle(() => ({ trigger: ['Crystallize-oppo'], cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
+                .passive().handle(() => ({ triggers: 'Crystallize-oppo', cmds: [{ cmd: 'addCard', cnt: 3, card: 116081 }] }))
         ),
 
     1609: () => new HeroBuilder(420).name('千织').since('v5.1.0').inazuma().geo().sword()
@@ -1569,14 +1569,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { skill: { useCntPerRound }, summons } = event;
                     if (useCntPerRound > 1 || !hasObjById(summons, 115)) return;
                     return {
-                        trigger: ['action-after', 'action-after-oppo'],
+                        triggers: ['action-after', 'action-after-oppo'],
                         isNotAddTask: true,
                         cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: 'phase-end' }],
                     }
                 }),
             new SkillBuilder().passive(true).handle(event => {
-                const { talent } = event;
-                return { trigger: ['skill'], dmgElement: isCdt(!!talent, DAMAGE_TYPE.Dendro), isNotAddTask: true }
+                if (!event.talent) return;
+                return { triggers: 'skill', dmgElement: DAMAGE_TYPE.Dendro, isNotAddTask: true }
             })
         ),
 
@@ -1616,7 +1616,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ heal: 2 })),
             new SkillBuilder('邪眼之威').description('战斗开始时，初始附属【sts121021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ed9acfc03544bd410106bc9bd50f3c49.png')
-                .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 121021 }))
+                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 121021 }))
         ),
 
     2103: () => new HeroBuilder(321).name('无相之冰').since('v4.4.0').maxHp(8).monster().cryo()
@@ -1635,7 +1635,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('冰晶核心').description('战斗开始时，初始附属【sts121034】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fd/mgyby1c37lbykdol0uuyzduyugfmb0f.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/5e08c69f4911a028c4a559c1de33a4d9_7840872634290634295.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 121034 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 121034 }))
         ),
 
     2104: () => new HeroBuilder(397).name('愚人众·霜役人').since('v4.8.0').fatui().cryo()
@@ -1663,7 +1663,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         fdmg = fcnt - ocnt;
                     }
                     if (fdmg <= 0) return;
-                    return { trigger: ['after-skill'], statusOppo: [[122, fdmg]] }
+                    return { triggers: 'after-skill', statusOppo: [[122, fdmg]] }
                 })
         ),
 
@@ -1756,7 +1756,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('水之新生').description('战斗开始时，初始附属【sts122031】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/bc/361y0pjxizeur4u3r6dolnbu9hdc12m.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/9783051b9763b8f81a40693a8581356b_6481810639931260223.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 122031 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 122031 }))
         ),
 
     2204: () => new HeroBuilder(368).name('吞星之鲸').since('v4.7.0').maxHp(5).monster().hydro()
@@ -1789,7 +1789,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('无尽食欲').description('战斗开始时，生成【sts122041】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a9e29da334dce66803ef9edb13b8e8d9.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/66b604a5c6cc6b3ca21c5bee7bee28a5_2353476581760344471.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 122041 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 122041 }))
         ),
 
     2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').hilichurl().hydro()
@@ -1831,7 +1831,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('潜行大师').description('战斗开始时，初始附属【sts123011】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/7c/13bz5tmyohu7u0xeu56llgv6lp81vlv.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6c9ca6c9b2ecc89b7f6c4d5b6004afea_7794139484811179967.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 123011 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 123011 }))
         ),
 
     2302: () => new HeroBuilder(56).name('深渊咏者·渊火').since('v3.7.0').offline('v1').maxHp(6).monster().pyro()
@@ -1850,7 +1850,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('火之新生').description('战斗开始时，初始附属【sts123022】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fa/8adfhj3wss2apzgmrqqg3zz3cbi92tf.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/24722a3923aa2362a5ecdaa248a3f37b_100670191008092035.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 123022 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 123022 }))
         ),
 
     2303: () => new HeroBuilder(285).name('镀金旅团·炽沙叙事人').since('v4.3.0').eremite().pyro()
@@ -1885,7 +1885,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { hp, hidx }, skill: { useCnt, useCntPerRound }, getdmg = [] } = event;
                     if (hp - getdmg[hidx] > 7) return;
                     if (ver.lt('v5.1.0') && useCnt || ver.gte('v5.1.0') && useCntPerRound) return;
-                    return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
+                    return { triggers: 'getdmg', cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
         ),
 
@@ -1920,7 +1920,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (stsCnt == 0) return;
                     stsCnt += getObjById(hero.heroStatus, 123041)?.useCnt ?? 0;
                     return {
-                        trigger: ['game-start', 'action-after'],
+                        triggers: ['game-start', 'action-after'],
                         status: [[123041, stsCnt]],
                         exec: () => {
                             if (trigger == 'game-start') return;
@@ -1949,7 +1949,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('雷晶核心').description('战斗开始时，初始附属【sts124014】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/13/4tkgv2y83mfzyyum8iifx9wqsjfj8af.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/84c224cb71bd755ebeb0ab587bf22901_3554738173380528607.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 124014 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 124014 }))
         ),
 
     2402: () => new HeroBuilder(286).name('雷音权现').since('v4.3.0').monster().electro()
@@ -1973,7 +1973,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('雷霆探知').description('战斗开始时，在敌方场上生成【sts124021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/85101cecf76e834437a758fc19093700.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/eb1d94ce0af17b97f756f8c126a5863a_674902409578889354.png')
-                .passive().handle(() => ({ trigger: ['game-start'], statusOppo: 124021 }))
+                .passive().handle(() => ({ triggers: 'game-start', statusOppo: 124021 }))
         ),
 
     2403: () => new HeroBuilder(322).name('千年珍珠骏麟').since('v4.4.0').maxHp(8).monster().electro()
@@ -2002,7 +2002,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('明珠甲胄').description('战斗开始时，本角色附属【sts124032】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fc/0v3wnltquhqgjaig2kp4o6qicrstkwl.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/17/258999284/34245e37e3d9881e1ac466ba3058fead_3899055182644035950.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 124032 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 124032 }))
         ),
 
     2404: () => new HeroBuilder(337).name('愚人众·雷萤术士').since('v4.5.0').fatui().electro()
@@ -2045,7 +2045,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('不朽亡骸·雷').description('回合结束时，生成两张【crd124051】，随机置入我方牌库顶部10张牌中。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f2c9fb8d451bc79e309ce9f397738a39.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/02cbaf22d48774e6e7cff5203e9562eb_9127079687708650066.png')
-                .passive().handle(() => ({ trigger: ['turn-end'], cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
+                .passive().handle(() => ({ triggers: 'turn-end', cmds: [{ cmd: 'addCard', card: 124051, cnt: 2, hidxs: [10] }] }))
         ),
 
     2406: () => new HeroBuilder(421).name('深渊咏者·紫电').since('v5.1.0').maxHp(6).monster().electro()
@@ -2070,7 +2070,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('雷之新生').description('战斗开始时，初始附属【sts124061】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f2/38qfb9pun8odt1sp4anaytzwzsitth7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/07e9c627e0391e19a7a610b4505a827a_6922644027589193780.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 124061 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 124061 }))
         ),
 
     2501: () => new HeroBuilder(58).name('魔偶剑鬼').monster().anemo()
@@ -2148,7 +2148,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('不朽亡骸·风').description('战斗开始时，生成6张【crd124051】，均匀放入牌库。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b20cdf60cef51f689592487d6587d353.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/3f113b01a3fbab406f2ddb81d9a2a019_675662049327994953.png')
-                .passive().handle(() => ({ trigger: ['game-start'], cmds: [{ cmd: 'addCard', cnt: 6, card: 124051, isAttach: true }] }))
+                .passive().handle(() => ({ triggers: 'game-start', cmds: [{ cmd: 'addCard', cnt: 6, card: 124051, isAttach: true }] }))
         ),
 
     2601: () => new HeroBuilder(59).name('丘丘岩盔王').maxHp(8).hilichurl().geo()
@@ -2167,7 +2167,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('魔化：岩盔').description('战斗开始时，初始附属【sts126011】和【sts126012】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3e/i50gzgkih3a45yl3df7hvq6143bw6r9.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/60d5501fc29ffb28bc6d2a435b463b2a_6974894146119719968.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: [126011, 126012] }))
+                .passive().handle(() => ({ triggers: 'game-start', status: [126011, 126012] }))
         ),
 
     2602: () => new HeroBuilder(278).name('若陀龙王').since('v4.3.0').monster().geo()
@@ -2194,7 +2194,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('磐岩百相').description('战斗开始时，初始附属【sts126021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/c7dc740570a4a65821767e0e2ba83529.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/3c29d28a60d100687cf9968a3a278e4d_5040009350976601315.png')
-                .passive().handle(() => ({ trigger: ['game-start'], status: 126021 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 126021 }))
         ),
 
     2603: () => new HeroBuilder(434).name('黄金王兽').since('v5.2.0').monster().geo()
@@ -2237,7 +2237,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('活化激能').description('战斗开始时，初始附属【sts127011】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/79/q3o61yegls3thng3z7dns2sykg2voci.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/f72847095bda0ccb92781ed3f1c1bb4e_1629774298046012918.png')
-                .passive().handle(() => ({ trigger: ['game-start', 'revive'], status: 127011 }))
+                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 127011 }))
         ),
 
     2702: () => new HeroBuilder(371).name('阿佩普的绿洲守望者').since('v4.7.0').monster().dendro()
@@ -2257,7 +2257,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .description('战斗开始时，生成6张【crd127021】，随机放入牌库。我方召唤4个【smn127022】后，此角色附属【sts127027】，并获得2点[护盾]。', 'v5.1.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/665265a425ebbddf512f6c93f35e725d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/d5084bf33845c72c75d6b590a21b3f93_3778267969787494418.png')
-                .passive().handle((_, ver) => ({ trigger: ['game-start'], status: 127029, cmds: [{ cmd: 'addCard', cnt: ver.lt('v5.1.0') ? 6 : 5, card: 127021 }] }))
+                .passive().handle((_, ver) => ({ triggers: 'game-start', status: 127029, cmds: [{ cmd: 'addCard', cnt: ver.lt('v5.1.0') ? 6 : 5, card: 127021 }] }))
         ),
 
     2703: () => new HeroBuilder(422).name('镀金旅团·叶轮舞者').since('v5.1.0').eremite().dendro()
@@ -2282,7 +2282,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { hero: { hp, hidx }, skill: { useCntPerRound }, getdmg = [] } = event;
                     if (hp - getdmg[hidx] > 7 || useCntPerRound) return;
-                    return { trigger: ['getdmg'], cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
+                    return { triggers: 'getdmg', cmds: [{ cmd: 'getEnergy', cnt: 1, hidxs: [hidx] }] }
                 })
         ),
 
