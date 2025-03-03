@@ -1362,7 +1362,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/635fd5e4f710374bb0ee919f77dd1776_8605976792632571882.png'),
 
     321027: () => new CardBuilder(466).name('｢烟谜主｣').since('v5.5.0').place().costSame(0)
-        .description('此牌初始具有4点【灵觉】。；【我方[挑选]后：灵觉】-1。；【回合开始时：】若【灵觉】为0，则移除自身，然后从3个随机2费支援牌中[挑选]一个生成。')
+        .description('此牌初始具有4点【灵觉】。；【我方[挑选]后：灵觉】-1。；【行动阶段开始时：】若【灵觉】为0，则移除自身，然后从3个随机元素骰费用为2的支援牌中[挑选]一个生成。')
         .src('tmp/UI_Gcg_CardFace_Assist_Location_YanmiZhu_1307857034'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
@@ -1526,17 +1526,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/cd9d8158b2361b984da8c061926bb636_390832108951639145.png')
         .handle((_, event) => {
             const { heros = [] } = event;
-            const isValid = heros.some(h => h.weaponSlot != null || h.artifactSlot != null);
-            return { status: 300001, isValid }
+            return { status: 300001, isValid: heros.some(h => h.weaponSlot != null || h.artifactSlot != null) }
         }),
 
     330002: () => new CardBuilder(219).name('磐岩盟契').since('v3.8.0').legend().costSame(0)
         .description('【我方剩余元素骰数量为0时，才能打出：】生成2个不同的基础元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/194eb0cdc9200aca52848d54b971743f_2099934631074713677.png')
-        .handle((_, event) => {
-            const { dicesCnt = 10 } = event;
-            return { cmds: [{ cmd: 'getDice', cnt: 2, mode: CMD_MODE.Random }], isValid: dicesCnt == 0 }
-        }),
+        .handle((_, event) => ({ cmds: [{ cmd: 'getDice', cnt: 2, mode: CMD_MODE.Random }], isValid: event.dicesCnt == 0 })),
 
     330003: () => new CardBuilder(220).name('愉舞欢游').since('v4.0.0').legend().costSame(0)
         .description('【我方出战角色的元素类型为‹1冰›/‹2水›/‹3火›/‹4雷›/‹7草›时，才能打出：】对我方所有具有元素附着的角色，附着我方出战角色类型的元素。')
@@ -1545,8 +1541,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { hero, heros } = event;
             const elements: ElementType[] = [ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro];
-            const isValid = elements.includes(hero?.element ?? ELEMENT_TYPE.Physical);
-            const hidxs = ver.lt('v4.2.0') ? allHidxs(heros) : heros?.filter(h => h.attachElement.length > 0).map(h => h.hidx);
+            const hidxs = allHidxs(heros, { cdt: h => ver.lt('v4.2.0') || h.attachElement.length > 0 });
+            const isValid = !!hero && elements.includes(hero.element) && hidxs.length > 0;
             return { cmds: [{ cmd: 'attach', hidxs }], isValid }
         }),
 
@@ -1616,26 +1612,16 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/4111a176d3936db8220047ff52e37c40_264497451263620555.png'),
 
     331202: () => new CardBuilder(226).name('元素共鸣：愈疗之水').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costHydro(1)
-        .canSelectHero(1).canSelectHero(0, 'v5.5.0')
-        .description('选择一个我方角色获得1点额外最大生命值，然后，所有我方角色获得1点最大生命值。')
-        .description('治疗我方出战角色2点。然后，治疗我方所有后台角色1点。', 'v5.5.0')
+        .description('治疗我方出战角色2点。然后，治疗我方所有后台角色1点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/2735fa558713779ca2f925701643157a_7412042337637299588.png')
-        .handle((_, event, ver) => {
-            const { heros = [], hero, selectHeros } = event;
-            if (ver.lt('v5.5.0')) {
-                return {
-                    cmds: [
-                        { cmd: 'heal', cnt: 2, hidxs: [hero?.hidx ?? -1] },
-                        { cmd: 'heal', cnt: 1, hidxs: getBackHidxs(heros) },
-                    ],
-                    isValid: heros.some(h => h.hp < h.maxHp),
-                }
-            }
+        .handle((_, event) => {
+            const { heros = [], hero } = event;
             return {
                 cmds: [
-                    { cmd: 'addMaxHp', cnt: 1, hidxs: selectHeros },
-                    { cmd: 'addMaxHp', cnt: 1, hidxs: allHidxs(heros) }
-                ]
+                    { cmd: 'heal', cnt: 2, hidxs: [hero?.hidx ?? -1] },
+                    { cmd: 'heal', cnt: 1, hidxs: getBackHidxs(heros) },
+                ],
+                isValid: heros.some(h => h.hp < h.maxHp),
             }
         }),
 
@@ -1651,7 +1637,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/d7a7653168cd80943a50578aa1251f7a_1527724411934371635.png'),
 
     331402: () => new CardBuilder(230).name('元素共鸣：强能之雷').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costElectro(1)
-        .description('我方前台角色和下一名充能未满的角色获得1点[充能]。')
+        .description('我方出战角色和下一名充能未满的角色获得1点[充能]。')
         .description('我方一名充能未满的角色获得1点[充能]。（出战角色优先）', 'v5.5.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/24c0eec5aa696696abeacd2a9ab2e443_2548840222933909920.png')
         .handle((_, event, ver) => {
@@ -1672,7 +1658,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f3fdbb9e308bfd69c04aa4e6681ad71d_7543590216853591638.png'),
 
     331502: () => new CardBuilder(232).name('元素共鸣：迅捷之风').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costAnemo(1)
-        .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。；我方下次触发扩散反应时对后台角色造成的伤害+1。')
+        .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。；我方下次触发扩散反应时对目标以外的所有敌方角色造成的伤害+1。')
         .description('切换到目标角色，并生成1点[万能元素骰]。', 'v5.5.0').canSelectHero(1, 'v5.5.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/707f537df32de90d61b3ac8e8dcd4daf_7351067372939949818.png')
         .handle((_, event, ver) => {
@@ -1690,7 +1676,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/cdd36a350467dd02ab79a4c49f07ba7f_4199152511760822055.png'),
 
     331602: () => new CardBuilder(234).name('元素共鸣：坚定之岩').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costGeo(1)
-        .description('为我方提供3点[护盾]。')
+        .description('为我方出战角色提供3点[护盾]。')
         .description('本回合中，我方角色下一次造成[岩元素伤害]后：如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。', 'v5.5.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/504be5406c58bbc3e269ceb8780eaa54_8358329092517997158.png')
         .handle(() => ({ status: 303162 })),
@@ -1714,9 +1700,11 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
             const cmds: Cmds[] = [];
-            if (hasObjById(combatStatus, 117)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Electro });
-            else if (hasObjById(combatStatus, 116)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Hydro });
+            const hasSts117 = hasObjById(combatStatus, 117);
+            if (hasSts117) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Electro });
+            if ((getObjById(combatStatus, 116)?.useCnt ?? 0) > +hasSts117) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Hydro });
             if (hasObjById(summons, 115)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Pyro });
+            cmds.forEach((_, i, a) => a[i].mode = i);
             return { cmds, isValid: cmds.length > 0 }
         }),
 

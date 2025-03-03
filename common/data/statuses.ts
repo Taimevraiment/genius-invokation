@@ -1773,6 +1773,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    117104: () => new StatusBuilder('余薰（生效中）').heroStatus().useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon('buff3')
+        .description('【双方角色使用技能后：】触发1次我方【smn115】的回合结束效果。')
+        .handle((_, event) => {
+            if (!hasObjById(event.summons, 115)) return;
+            return {
+                triggers: ['after-skill', 'after-skill-oppo'],
+                isAddTask: true,
+                cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: 'phase-end' }],
+                exec: eStatus => { eStatus?.minusUseCnt() },
+            }
+        }),
+
     121012: (useCnt: number = 0) => new StatusBuilder('流萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
         .description('为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn121011】，则额外提供其[可用次数]的[护盾]。（最多额外提供3点[护盾]）'),
 
@@ -2659,13 +2671,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     303133: () => new StatusBuilder('元素共鸣：迅捷之风（生效中）').combatStatus().icon('buff2')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣，并且少花费1个元素骰。')
+        .description('【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。')
         .handle((status, event) => {
-            const { isQuickAction, switchHeroDiceCnt = 0 } = event;
-            if (switchHeroDiceCnt == 0 && isQuickAction) return;
+            const { switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0) return;
             return {
                 minusDiceHero: 1,
-                isQuickAction: true,
                 triggers: 'minus-switch-from',
                 exec: () => { status.minusUseCnt() }
             }
@@ -2673,21 +2684,30 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     303134: () => new StatusBuilder('元素共鸣：迅捷之风（生效中）').combatStatus().icon('buff2')
         .useCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
-        .description('我方下次触发扩散反应时对后台角色造成的伤害+1。')
+        .description('我方下次触发扩散反应时对目标以外的所有敌方角色造成的伤害+1。')
+        .handle((status, event) => ({
+            triggers: ['dmg-Swirl'],
+            addDmgCdt: 1,
+            exec: () => { event.isSwirlExec && status.minusUseCnt() },
+        })),
+
+    303136: () => new StatusBuilder('元素共鸣：迅捷之风（生效中）').combatStatus().icon('buff2')
+        .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。')
         .handle((status, event) => {
-            const { ehidx, dmgedHidx, isSwirlExec, heros } = event;
-            if (allHidxs(heros).length == 1) return;
+            const { isQuickAction } = event;
+            if (isQuickAction) return;
             return {
-                triggers: ['Swirl', 'dmg-Swirl'],
-                addDmgCdt: isCdt(dmgedHidx != ehidx, 1),
-                exec: () => { isSwirlExec && status.minusUseCnt() },
+                isQuickAction: true,
+                triggers: 'minus-switch-from',
+                exec: () => { status.minusUseCnt() }
             }
         }),
 
     303162: () => new StatusBuilder('元素共鸣：坚定之岩（生效中）').combatStatus().icon('buff2', 'v5.5.0')
         .type(ver => ver.gte('v5.5.0'), STATUS_TYPE.Shield).useCnt(3)
         .type(ver => ver.lt('v5.5.0'), STATUS_TYPE.Usage, STATUS_TYPE.Sign).useCnt(1, 'v5.5.0').roundCnt(1, 'v5.5.0')
-        .description('为我方提供3点[护盾]。')
+        .description('为我方出战角色提供3点[护盾]。')
         .description('【本回合中，我方角色下一次造成[岩元素伤害]后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。', 'v5.5.0')
         .handle((_, event, ver) => {
             if (ver.gte('v5.5.0')) return;

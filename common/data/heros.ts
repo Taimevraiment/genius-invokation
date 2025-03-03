@@ -1563,16 +1563,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('香氛演绎').description('{dealDmg}。召唤【smn117103】。')
                 .src('/image/tmp/Skill_E_Emilie_01.webp')
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 117103 })),
-            new SkillBuilder('余薰').description('【我方〖smn115〗入场时：】下次双方行动后，触发一次【smn115】的回合结束效果。（每回合2次）')
+            new SkillBuilder('余薰').description('【我方〖smn115〗入场时：】下次双方角色使用技能后，触发一次【smn115】的回合结束效果。（每回合2次）')
                 .src('/image/tmp/UI_Talent_S_Emilie_05.webp')
                 .passive().handle(event => {
-                    const { skill: { useCntPerRound }, summons } = event;
-                    if (useCntPerRound > 1 || !hasObjById(summons, 115)) return;
-                    return {
-                        triggers: ['action-after', 'action-after-oppo'],
-                        isNotAddTask: true,
-                        cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: 'phase-end' }],
-                    }
+                    const { skill: { useCntPerRound } } = event;
+                    if (useCntPerRound > 1) return;
+                    return { triggers: ['Burning-oppo'], status: 117104 }
                 }),
             new SkillBuilder().passive(true).handle(event => {
                 if (!event.talent) return;

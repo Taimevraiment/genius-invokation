@@ -462,7 +462,7 @@ export default class GeniusInvokationClient {
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
             watchers, flag } = data;
         if (this.isDev) console.info(flag);
-        const hasDmg = damageVO != -1 && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
+        const hasDmg = damageVO && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
         if ((this.isLookon > -1 && this.isLookon != this.playerIdx) || players.length == 0) return;
         this.previews = previews;
@@ -601,7 +601,7 @@ export default class GeniusInvokationClient {
         } else {
             this.updateHandCardsPos(players[this.playerIdx]);
             this.players = players;
-            if (damageVO != -1 && damageVO?.elTips.some(([v]) => v != '')) {
+            if (damageVO && damageVO?.elTips.some(([v]) => v != '')) {
                 this.damageVO.elTips = damageVO?.elTips ?? [];
                 setTimeout(() => this._resetDamageVO(), 1100);
             }

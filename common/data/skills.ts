@@ -177,7 +177,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src()
-        .vehicle().damage(2).costGeo(1).handle(event => {
+        .vehicle().damage(2).costAny(1).handle(event => {
             const { eheros, combatStatus, hero: { hidx } } = event;
             const hidxs = getNextBackHidx(eheros);
             const cmds: Cmds[] = [{ cmd: 'getStatus', status: 112145, hidxs: [hidx] }];
