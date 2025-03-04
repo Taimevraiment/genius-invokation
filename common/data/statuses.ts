@@ -2817,8 +2817,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，我方下一次打出｢武器｣手牌时：】少花费2个元素骰。')
         .handle((status, event) => {
-            const { isMinusDiceWeapon } = event;
-            if (!isMinusDiceWeapon) return;
+            if (!event.isMinusDiceWeapon) return;
             return {
                 minusDiceCard: 2,
                 triggers: 'card',

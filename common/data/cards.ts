@@ -1592,11 +1592,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/d672bab118d384d06e9422e74c47b50b_903174325403791558.png')
         .handle((_, event) => {
             const { supports = [], esupports = [] } = event;
-            const spt300006 = supports.find(s => s.card.id == 300006);
+            const spt = supports.find(s => s.card.id == 300006);
             return {
-                support: isCdt(!spt300006, [[300006, 1]]),
+                support: isCdt(!spt, [[300006, 1]]),
                 supportOppo: isCdt(esupports.every(s => s.card.id != 300006), 300006),
-                exec: () => { spt300006 && ++spt300006.cnt }
+                exec: () => { spt && ++spt.cnt }
             }
         }),
 
@@ -1669,7 +1669,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     canSelectHero: heros.map(h => !h.isFront && h.hp > 0),
                 }
             }
-            return { status: [303133, 303134] }
+            return { status: [303133, 303134, 303136] }
         }),
 
     331601: () => elCard(233, ELEMENT_TYPE.Geo)
@@ -1712,10 +1712,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png')
-        .handle((_, event, ver) => {
-            const { heros = [] } = event;
-            return { isValid: ver.lt('v4.1.0') || allHidxs(heros).length > 1, status: 303181 }
-        }),
+        .handle((_, event, ver) => ({ isValid: ver.lt('v4.1.0') || allHidxs(event.heros).length > 1, status: 303181 })),
 
     331802: () => new CardBuilder(238).name('岩与契约').since('v3.7.0').tag(CARD_TAG.LocalResonance).costAny(3)
         .description('【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。')
@@ -1774,10 +1771,7 @@ const allCards: Record<number, () => CardBuilder> = {
     332002: () => new CardBuilder(242).name('换班时间').offline('v1').event().costSame(0)
         .description('【我方下次执行｢切换角色｣行动时：】少花费1个元素骰。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/c512c490a548f8322503c59c9d87c89a_5960770686347735037.png')
-        .handle((_, event) => {
-            const { heros = [] } = event;
-            return { isValid: allHidxs(heros).length > 1, status: 303202 }
-        }),
+        .handle((_, event) => ({ isValid: allHidxs(event.heros).length > 1, status: 303202 })),
 
     332003: () => new CardBuilder(243).name('一掷乾坤').offline('v1').event().costSame(0)
         .description('选择任意元素骰【重投】，可重投2次。')
@@ -1805,26 +1799,19 @@ const allCards: Record<number, () => CardBuilder> = {
     332006: () => new CardBuilder(246).name('交给我吧！').offline('v1').event().costSame(0)
         .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/182f87b4ad80bc18e051098c8d73ba98_7868509334361476394.png')
-        .handle((_, event) => {
-            const { heros = [] } = event;
-            return { isValid: allHidxs(heros).length > 1, status: 303206 }
-        }),
+        .handle((_, event) => ({ isValid: allHidxs(event.heros).length > 1, status: 303206 })),
 
     332007: () => new CardBuilder(247).name('鹤归之时').offline('v1').event().costSame(1)
         .description('【我方下一次使用技能后：】将下一个我方后台角色切换到场上。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/4b9215f7e25ed9581698b45f67164395_8716418184979886737.png')
-        .handle((_, event) => {
-            const { heros = [] } = event;
-            return { isValid: allHidxs(heros).length > 1, status: 303207 }
-        }),
+        .handle((_, event) => ({ isValid: allHidxs(event.heros).length > 1, status: 303207 })),
 
     332008: () => new CardBuilder(248).name('星天之兆').offline('v1').event().costAny(2)
         .description('我方当前出战角色【获得1点[充能]】。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/e6e557f4dd2762ecb727e14c66bafb57_828613557415004800.png')
         .handle((_, event) => {
             const { hero } = event;
-            if (!hero) return;
-            return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], isValid: hero.energy < hero.maxEnergy }
+            return { cmds: [{ cmd: 'getEnergy', cnt: 1 }], isValid: hero && hero.energy < hero.maxEnergy }
         }),
 
     332009: () => new CardBuilder(249).name('白垩之术').offline('v1').event().costSame(0)
@@ -1832,27 +1819,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/567c17051137fdd9e5c981ea584df298_4305321690584111415.png')
         .handle((_, event) => {
             const { heros = [], hero } = event;
-            let isNeedEnergy = true;
-            let hasEnergy = false;
-            heros.forEach(h => {
-                if (h.isFront) isNeedEnergy = h.energy < h.maxEnergy;
-                else hasEnergy ||= h.energy > 0;
-            });
-            return {
-                isValid: isNeedEnergy && hasEnergy,
-                exec: () => {
-                    let getEnergy = 0;
-                    const fhidx = hero?.hidx ?? -1;
-                    for (let i = 1; i < heros.length; ++i) {
-                        const h = heros[(i + fhidx) % heros.length];
-                        if (getEnergy >= 2) break;
-                        if (h.energy == 0) continue;
-                        --h.energy;
-                        ++getEnergy;
-                    }
-                    if (fhidx > -1) heros[fhidx].energy = Math.min(heros[fhidx].energy + getEnergy, heros[fhidx].maxEnergy);
-                }
+            if (!hero) return;
+            const cmds: Cmds[] = [];
+            for (const hidx of getBackHidxs(heros, hero.hidx, Math.min(2, hero.maxEnergy - hero.energy))) {
+                if (heros[hidx].energy > 0) cmds.push({ cmd: 'getEnergy', cnt: -1, hidxs: [hidx] });
             }
+            if (cmds.length > 0) cmds.push({ cmd: 'getEnergy', cnt: cmds.length, hidxs: [hero.hidx] });
+            return { isValid: cmds.length > 0, cmds }
         }),
 
     332010: () => new CardBuilder(250).name('诸武精通').event().costSame(0).canSelectHero(2)
@@ -1968,8 +1941,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png')
         .handle((_, event) => {
             const { eCombatStatus = [], randomInArr, isExec } = event;
-            if (!isExec || !randomInArr) return;
             const stsIds = [303216, 303217, 303218, 303219].filter(sid => !hasObjById(eCombatStatus, sid));
+            if (stsIds.length == 0) return { isValid: false }
+            if (!isExec || !randomInArr) return;
             return { statusOppo: randomInArr(stsIds) }
         }),
 
@@ -2001,7 +1975,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { hcards: { length: hcardsCnt } = [], ehcardsCnt = 0 } = event;
             const cmds: Cmds[] = [];
-            if (hcardsCnt < 4) cmds.push({ cmd: 'getCard', cnt: 4 - hcardsCnt });
+            if (hcardsCnt < 5) cmds.push({ cmd: 'getCard', cnt: 4 - hcardsCnt });
             if (ehcardsCnt < 4) cmds.push({ cmd: 'getCard', cnt: 4 - ehcardsCnt, isOppo: true });
             return { cmds, isValid: cmds.length > 0 }
         }),
@@ -2019,7 +1993,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 status: 303222,
                 canSelectHero: heros.map(h => h.weaponSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero?.weaponSlot, () => hero!.weaponSlot!.id) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: hero?.weaponSlot?.id }],
                 exec: () => { hero!.weaponSlot = null },
             }
         }),
@@ -2029,8 +2003,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/fa58de973ea4811ffe1812487dfb51c4_1089814927914226900.png')
         .handle((_, event) => {
             const { dicesCnt = 0, ephase = -1 } = event;
-            const isValid = dicesCnt >= 8 && ephase <= PHASE.ACTION;
-            return { isValid, status: 303223 }
+            return { isValid: dicesCnt >= 8 && ephase <= PHASE.ACTION, status: 303223 }
         }),
 
     332024: () => new CardBuilder(264).name('琴音之诗').since('v4.2.0').event().costSame(0).canSelectHero(1)

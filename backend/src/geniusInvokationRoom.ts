@@ -1806,14 +1806,13 @@ export default class GeniusInvokationRoom {
                 .map(xtrgs => xtrgs.map(trgs => trgs.filter(trg => trg.startsWith('skill')).map(trg => ('after-' + trg)) as Trigger[]));
             for (let i = 0; i < ehlen; ++i) {
                 const hidxs = (dmgedHidx + i) % ehlen;
-                const slotres = this._detectSlotAndStatus(epidx, afterEOnlySkillTrgs[hidxs], {
+                this._detectSlotAndStatus(epidx, afterEOnlySkillTrgs[hidxs], {
                     types: STATUS_TYPE.Usage,
                     hidxs,
                     players: bPlayers,
                     isExec,
                     isOnlyHeroStatus: true,
                 });
-                mergeWillHeals(bWillHeal, slotres.bWillHeals, bPlayers);
             }
         }
         for (const smn of (isExec ? players : bPlayers)[pidx].summons) {
@@ -1907,7 +1906,7 @@ export default class GeniusInvokationRoom {
                     const smnCnt = nsmn?.useCnt ?? 0;
                     let res = smnCnt - osmns[si].useCnt;
                     if (res == 0 && pi == pidx && nsummons.some(s => s.id == nsmns[si].id)) res += 0.3;
-                    if (res < -50 || smnCnt <= 0 && nsmn?.isDestroy == SUMMON_DESTROY_TYPE.Used) this._doSummonDestroy(pi, osmns[si], { isExec, supportCnt });
+                    if (res < -50 || smnCnt <= 0 && nsmn?.isDestroy == SUMMON_DESTROY_TYPE.Used) this._doSummonDestroy(pi, osmns[si], { isExec, supportCnt, isQuickAction });
                     return res;
                 });
             });
@@ -3005,8 +3004,8 @@ export default class GeniusInvokationRoom {
                 }
             });
             if (destroyedSupportCnt) this._doSupportDestroy(pidx, destroyedSupportCnt);
-            this._updateSummon(pidx, this._getSummonById(cardres.summon), this.players, true, { destroy: 1 });
-            this._updateSummon(pidx ^ 1, [], this.players, true, { destroy: 1 });
+            this._updateSummon(pidx, this._getSummonById(cardres.summon), this.players, true, { isQuickAction, destroy: 1 });
+            this._updateSummon(pidx ^ 1, [], this.players, true, { isQuickAction, destroy: 1 });
             const stscmds: Cmds[] = [
                 { cmd: 'getStatus', status: cardres.status, hidxs: cardres.hidxs ?? hidxs },
                 { cmd: 'getStatus', status: cardres.statusOppo, hidxs: cardres.hidxs ?? [opponent.hidx], isOppo: true },
@@ -3358,11 +3357,12 @@ export default class GeniusInvokationRoom {
      * 召唤物消失时发动
      * @param pidx 玩家序号
      */
-    private _doSummonDestroy(pidx: number, summon: Summon, options: { isExec?: boolean, supportCnt?: number[][] } = {}) {
-        const { isExec = true, supportCnt } = options;
+    private _doSummonDestroy(pidx: number, summon: Summon, options: { isExec?: boolean, supportCnt?: number[][], isQuickAction?: boolean } = {}) {
+        const { isExec = true, supportCnt, isQuickAction } = options;
         if (isExec) this._writeLog(`[${this.players[pidx].name}](${pidx})弃置召唤物[${summon.name}](${summon.entityId})`, 'system');
-        this._detectSummon(pidx, 'summon-destroy', { csummon: [summon], isExec, supportCnt, isUnshift: true });
-        this._detectSupport(pidx, 'summon-destroy', { isExec, supportCnt });
+        this._detectSummon(pidx, 'summon-destroy', { csummon: [summon], isExec, supportCnt, isQuickAction, isUnshift: true });
+        this._detectSupport(pidx, 'summon-destroy', { isExec, supportCnt, isQuickAction });
+        this._detectSupport(pidx ^ 1, 'summon-destroy', { isExec, supportCnt, isQuickAction });
     }
     /**
      * 支援物消失时发动
@@ -5276,8 +5276,8 @@ export default class GeniusInvokationRoom {
                         if ((cnt > 0 && h.energy < h.maxEnergy) || (cnt < 0 && h.energy > 0)) {
                             const pcnt = Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
                             h.energy += pcnt;
-                            if (isExec) {
-                                this._writeLog(`[${player.name}](${player.pidx})[${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点充能`, 'system');
+                            if (isExec && pcnt != 0) {
+                                this._writeLog(`[${player.name}](${player.pidx})[${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点充能`);
                             } else {
                                 energyCnt[pidx ^ +!!isOppo][hi] += pcnt;
                             }
@@ -5842,7 +5842,7 @@ export default class GeniusInvokationRoom {
                     }
                 }
             }
-            if (heroSelects.length == 0) heroSelects.push([]);
+            if (heroSelects.length == 0 || canSelectHero > 1) heroSelects.unshift([]);
             for (const heroSelect of heroSelects) {
                 let isValid = diceValid && canSelectHero == heroSelect.length && canSelectSummon == -1 && canSelectSupport == -1;
                 const supportCanSelect: boolean[][] = players.map(() => new Array(MAX_SUPPORT_COUNT).fill(false));
@@ -6088,12 +6088,12 @@ export default class GeniusInvokationRoom {
      */
     private _updateSummon(
         pidx: number, nSummon: Summon[], players: Player[] = this.players, isExec = true,
-        options: { isSummon?: number, destroy?: number, trigger?: Trigger, supportCnt?: number[][] } = {}
+        options: { isSummon?: number, destroy?: number, trigger?: Trigger, supportCnt?: number[][], isQuickAction?: boolean } = {}
     ) {
         const { summons = [], combatStatus = [], hidx = -1, heros = [], name = '' } = players[pidx] ?? {};
         const newSummon: Summon[] = clone(nSummon);
         const oriSummon: Summon[] = clone(summons);
-        const { isSummon = -1, destroy = 0, trigger, supportCnt } = options;
+        const { isSummon = -1, destroy = 0, trigger, supportCnt, isQuickAction } = options;
         newSummon.forEach(smn => {
             let csmnIdx = oriSummon.findIndex(osm => osm.id == smn.id);
             const oriSmn = oriSummon[csmnIdx];
@@ -6150,7 +6150,7 @@ export default class GeniusInvokationRoom {
                         }
                     }
                 }
-                if (isExec) this._doSummonDestroy(pidx, smn);
+                if (isExec) this._doSummonDestroy(pidx, smn, { isQuickAction });
                 return false;
             }
             return true;

@@ -8,9 +8,9 @@ export const allHidxs = (heros?: Hero[], options: {
     isDie?: boolean, exclude?: number, include?: number, isAll?: boolean,
     cdt?: (h: Hero) => boolean, limit?: number,
 } = {}): number[] => {
-    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true, limit = 0 } = options;
+    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true, limit = -1 } = options;
     const hidx = heros?.findIndex(h => h.isFront) ?? -1;
-    if (!heros || hidx == -1) return [];
+    if (!heros || hidx == -1 || limit == 0) return [];
     const hidxs: number[] = [];
     for (let i = 0; i < heros.length; ++i) {
         const hi = (hidx + i) % heros.length;

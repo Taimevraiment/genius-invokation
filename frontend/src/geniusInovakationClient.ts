@@ -729,9 +729,7 @@ export default class GeniusInvokationClient {
             this.cancel({ notTarget: true, notSummonSelect: true });
             return true;
         }
-        if (this.heroSelect[pidx][hidx] > 1) {
-            this.heroSelect[pidx][hidx] = 0;
-        } else if (this.heroSelect[pidx][hidx] > 0) {
+        if (this.heroSelect[pidx][hidx] > 0) {
             this.useCard();
         } else {
             const selected = this.heroSelect[pidx].filter(v => v > 0).length;
