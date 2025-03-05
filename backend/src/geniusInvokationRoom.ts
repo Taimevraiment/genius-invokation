@@ -2934,7 +2934,7 @@ export default class GeniusInvokationRoom {
         if (getCard && this._hasNotTriggered(cardres.triggers, 'getcard')) return;
         const isAction = currCard.hasSubtype(CARD_SUBTYPE.Action);
         const cardcmds = (getCard ? cardres.execmds : cardres.cmds) ?? [];
-        const isUseSkill = cardcmds.some(({ cmd, cnt }) => cmd == 'useSkill' && cnt != -2);
+        const isUseSkill = cardcmds.some(({ cmd, cnt = 0 }) => cmd == 'useSkill' && cnt > 0);
         let isInvalid = false;
         let { isQuickAction = !isAction } = options;
         if (getCard) {
@@ -3556,7 +3556,8 @@ export default class GeniusInvokationRoom {
             const cardres = card.handle(card, { summons, trigger: 'discard', isExec });
             if (this._hasNotTriggered(cardres.triggers, 'discard')) continue;
             if (cardres.cmds) {
-                const { bWillDamages = [] } = this._doCmds(pidx, cardres.cmds, { players: clone(players), isAction, isExec: false, supportCnt });
+                const { bWillDamages = [] } = this._doCmds(pidx, cardres.cmds,
+                    { players: isCdt(!isExec, clone(players)), isAction, isExec, supportCnt });
                 if (bWillDamages.length > 0) {
                     const atkname = `${card.name}(${card.entityId})`;
                     tasks.push({ pidx, cmds: cardres.cmds, atkname });
@@ -3970,7 +3971,7 @@ export default class GeniusInvokationRoom {
                 isDestroy ||= !!slotres.isDestroy;
                 if (slot.hasTag(CARD_TAG.Barrier)) restDmg = slotres.restDmg;
                 if (taskMark || (!isExec && isOnlyExec) || (isExec && !slotres.execmds?.length && !slotres.isAddTask)) {
-                    if (!taskMark && slotres.isDestroy) destroySlot();
+                    if (!taskMark && slotres.isDestroy && isExec) destroySlot();
                     slotres.exec?.();
                 }
                 isQuickAction ||= !!slotres.isQuickAction;
@@ -4942,7 +4943,7 @@ export default class GeniusInvokationRoom {
             if (cmd == 'useSkill') {
                 if (isExec) {
                     this.taskQueue.addTask(`doCmd--useSkill:${cnt}-p${pidx ^ +!!isOppo}`, [[() => {
-                        this._useSkill(pidx ^ +!!isOppo, cnt, {
+                        this._useSkill(pidx ^ +!!isOppo, cnt || -2, {
                             isSwitch,
                             isReadySkill: isAttach,
                             otriggers: summonTrigger,
@@ -5235,7 +5236,7 @@ export default class GeniusInvokationRoom {
                             p.handCards.forEach((c, ci) => c.cidx = ci);
                             p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
                             if (!isAttach) {
-                                if (isDiscard) this._doDiscard(pidx, discards!, { isAction });
+                                if (isDiscard) this._doDiscard(pidx, discards, { isAction });
                                 else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { isPriority: true, isUnshift: true });
                             }
                         }, 1500]], { isPriority, isUnshift });

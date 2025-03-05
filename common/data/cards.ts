@@ -221,13 +221,12 @@ const magicCount = (cnt: number, shareId?: number) => {
     return new CardBuilder(shareId).name(`幻戏${cnt > 0 ? `倒计时：${cnt}` : '开始！'}`).event().costSame(cnt)
         .description(`将我方所有元素骰转换为[万能元素骰]，抓4张牌。${cnt > 0 ? '；此牌在手牌或牌库中被[舍弃]后：将1张元素骰费用比此卡少1个的｢幻戏倒计时｣放置到你的牌库顶。' : ''}`)
         .src(`https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Event_Event_MagicCount${cnt}.webp`)
-        .handle((_, event) => {
-            const { trigger } = event;
-            const cmds: Cmds[] = trigger == 'discard' ?
+        .handle((_, event) => ({
+            triggers: isCdt(cnt > 0, 'discard'),
+            cmds: event.trigger == 'discard' ?
                 [{ cmd: 'addCard', cnt: 1, card: 332036 - cnt, hidxs: [1] }] :
-                [{ cmd: 'changeDice' }, { cmd: 'getCard', cnt: 4 }];
-            return { triggers: isCdt(cnt > 0, 'discard'), cmds }
-        })
+                [{ cmd: 'changeDice' }, { cmd: 'getCard', cnt: 4 }]
+        }));
 }
 
 // 31xxxx：装备
@@ -1700,9 +1699,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
             const cmds: Cmds[] = [];
-            const hasSts117 = hasObjById(combatStatus, 117);
-            if (hasSts117) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Electro });
-            if ((getObjById(combatStatus, 116)?.useCnt ?? 0) > +hasSts117) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Hydro });
+            if (hasObjById(combatStatus, 116)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Hydro });
+            if (hasObjById(combatStatus, 117)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Electro });
             if (hasObjById(summons, 115)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Pyro });
             cmds.forEach((_, i, a) => a[i].mode = i);
             return { cmds, isValid: cmds.length > 0 }
@@ -2015,13 +2013,14 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 status: ver.gte('v4.8.0') && isUsedCardPerRound ? 303232 : 303224,
                 canSelectHero: heros.map(h => h.artifactSlot != null),
-                cmds: [{ cmd: 'getCard', cnt: 1, card: isCdt(!!hero?.artifactSlot, () => hero!.artifactSlot!.id) }],
+                cmds: [{ cmd: 'getCard', cnt: 1, card: hero?.artifactSlot?.id }],
                 exec: () => { hero!.artifactSlot = null },
             }
         }),
 
     332025: () => new CardBuilder(315).name('野猪公主').since('v4.3.0').event().costSame(0)
-        .description('【本回合中，我方每有1张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。（最多获得2个）；（角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果）')
+        .description('【本回合中，我方每有1张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。（最多获得2个）；（角色被击倒时弃置装备牌，或者覆盖装备｢武器｣｢圣遗物｣或｢特技｣，都可以触发此效果）')
+        .description('【本回合中，我方每有1张装备在角色身上的｢装备牌｣被弃置时：】获得1个[万能元素骰]。（最多获得2个）；（角色被击倒时弃置装备牌，或者覆盖装备｢武器｣或｢圣遗物｣，都可以触发此效果）', 'v5.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/7721cfea320d981f2daa537b95bb7bc1_3900294074977500858.png')
         .handle(() => ({ status: 303225 })),
 
@@ -2047,14 +2046,14 @@ const allCards: Record<number, () => CardBuilder> = {
     332029: () => new CardBuilder(332).name('净觉花').since('v4.4.0').event().costSame(0).canSelectSupport(1)
         .description('选择一张我方支援区的牌，将其弃置。然后，在我方手牌中随机生成2张支援牌。；【本回合中，我方下次打出支援牌时：】少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/ce12f855ad452ad6af08c0a4068ec8fb_3736050498099832800.png')
-        .handle((_, event) => {
-            const { supports = [], selectSupport = -1, isExec } = event;
-            if (isExec) supports.splice(selectSupport, 1)
-            return {
-                status: 303229,
-                cmds: [{ cmd: 'getCard', cnt: 2, subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally, CARD_SUBTYPE.Item] }],
+        .handle((_, event) => ({
+            status: 303229,
+            cmds: [{ cmd: 'getCard', cnt: 2, subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally, CARD_SUBTYPE.Item] }],
+            exec: () => {
+                const { supports = [], selectSupport = -1 } = event;
+                supports.splice(selectSupport, 1);
             }
-        }),
+        })),
 
     332030: () => new CardBuilder(347).name('可控性去危害化式定向爆破').since('v4.5.0').event().costSame(1)
         .description('【对方支援区和召唤物区的卡牌数量总和至少为4时，才能打出：】双方所有召唤物的[可用次数]-1。')
@@ -2094,15 +2093,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('选择一个装备在我方角色的｢特技｣装备牌，使其[可用次数]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/d6bc8f4595323b94a240d692f60e9587_6859675329237579153.png')
         .handle((_, event) => {
-            const { selectHeros: [hidx] = [], heros = [] } = event;
+            const { hero, heros = [] } = event;
             return {
-                canSelectHero: heros.map(h => h.vehicleSlot != null && h.vehicleSlot[1].useCnt > -1),
-                exec: () => { heros[hidx]?.vehicleSlot?.[0]?.addUseCnt() },
+                canSelectHero: heros.map(h => h.vehicleSlot != null && h.vehicleSlot[0].useCnt > -1),
+                exec: () => { hero?.vehicleSlot?.[0]?.addUseCnt() },
             }
         }),
 
     332040: () => new CardBuilder(430).name('镀金旅团的茶歇').since('v5.1.0').event().costSame(2)
-        .description('如果我方存在相同元素类型的角色，则从3张｢场地｣中[挑选]1张加入手牌;；如果我方存在相同武器类型的角色，则从3张｢道具｣中[挑选]1张加入手牌;；如果我方存在相同所属势力的角色，则从3张｢料理｣中[挑选]1张加入手牌。')
+        .description('如果我方存在相同元素类型的角色，则从3张｢场地｣中[挑选]1张加入手牌\\；；如果我方存在相同武器类型的角色，则从3张｢道具｣中[挑选]1张加入手牌\\；；如果我方存在相同所属势力的角色，则从3张｢料理｣中[挑选]1张加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/d95d31b9e43e517d1044e7b6bfdea685_4585783706555955668.png')
         .handle((_, event) => {
             const { heros = [] } = event;
@@ -2113,8 +2112,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (canSelectPlace) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Place, cnt: 3, mode: CMD_MODE.GetCard });
             if (canSelectItem) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Item, cnt: 3, mode: CMD_MODE.GetCard });
             if (canSelectFood) cmds.push({ cmd: 'pickCard', subtype: CARD_SUBTYPE.Food, cnt: 3, mode: CMD_MODE.GetCard });
-            if (cmds.length == 0) return { isValid: false }
-            return { cmds }
+            return { isValid: cmds.length > 0, cmds }
         }),
 
     332041: () => new CardBuilder(442).name('强劲冲浪拍档！').since('v5.2.0').event().costSame(0)
@@ -2124,8 +2122,8 @@ const allCards: Record<number, () => CardBuilder> = {
             const { summons = [], esummons = [], randomInt } = event;
             const cmds: Cmds[] = [];
             if (randomInt) {
-                if (summons.length) cmds.push({ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: 'phase-end' });
-                if (esummons.length) cmds.push({ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(esummons.length - 1)], summonTrigger: 'phase-end', isOppo: true });
+                if (summons.length) cmds.push({ cmd: 'useSkill', hidxs: [randomInt(summons.length - 1)], summonTrigger: 'phase-end' });
+                if (esummons.length) cmds.push({ cmd: 'useSkill', hidxs: [randomInt(esummons.length - 1)], summonTrigger: 'phase-end', isOppo: true });
             }
             return { isValid: summons.length + esummons.length >= 2, cmds }
         }),
@@ -2212,7 +2210,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('复苏目标角色，并治疗此角色1点。').tag(CARD_TAG.Revive)
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/981cc0d2da6a2dc2b535b1ee25a77622_592021532068551671.png')
         .handle((_, event) => {
-            const { heros = [], selectHeros, combatStatus = [] } = event;
+            const { heros = [], selectHeros, combatStatus } = event;
             const canSelectHero = heros.map(h => h.hp <= 0 && !hasObjById(combatStatus, 303307));
             return { cmds: [{ cmd: 'revive', cnt: 1, hidxs: selectHeros }], status: 303307, canSelectHero }
         }),
@@ -2225,26 +2223,17 @@ const allCards: Record<number, () => CardBuilder> = {
     333011: () => new CardBuilder(275).name('唐杜尔烤鸡').since('v3.7.0').food().costAny(2)
         .description('本回合中，所有我方角色下一次｢元素战技｣造成的伤害+2。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/ebc939f0b5695910118e65f9acfc95ff_8938771284871719730.png')
-        .handle((_, event) => {
-            const hidxs = event.heros?.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
-            return { status: 303309, hidxs }
-        }),
+        .handle((_, event) => ({ status: 303309, hidxs: allHidxs(event.heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
 
     333012: () => new CardBuilder(276).name('黄油蟹蟹').since('v3.7.0').food().costAny(2)
         .description('本回合中，所有我方角色下次受到伤害-2。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/371abd087dfb6c3ec9435668d927ee75_1853952407602581228.png')
-        .handle((_, event) => {
-            const hidxs = event.heros?.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
-            return { status: 303310, hidxs }
-        }),
+        .handle((_, event) => ({ status: 303310, hidxs: allHidxs(event.heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
 
     333013: () => new CardBuilder(318).name('炸鱼薯条').since('v4.3.0').food().costAny(2)
         .description('本回合中，所有我方角色下次使用技能时少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/21ece93fa784b810495128f6f0b14c59_4336812734349949596.png')
-        .handle((_, event) => {
-            const hidxs = event.heros?.filter(h => !hasObjById(h.heroStatus, 303300) && h.hp > 0).map(h => h.hidx);
-            return { status: 303311, hidxs }
-        }),
+        .handle((_, event) => ({ status: 303311, hidxs: allHidxs(event.heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
 
     333014: () => new CardBuilder(333).name('松茸酿肉卷').since('v4.4.0').food().costSame(2).canSelectHero(1)
         .description('治疗目标角色2点，3回合内结束阶段再治疗此角色1点。')
@@ -2522,7 +2511,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (!randomInt || card.perCnt <= 0 || summons.length == 0) return { notPreview: true };
             return {
                 triggers: 'switch-to',
-                execmds: [{ cmd: 'useSkill', cnt: -2, hidxs: [randomInt(summons.length - 1)], summonTrigger: 'phase-end' }],
+                execmds: [{ cmd: 'useSkill', hidxs: [randomInt(summons.length - 1)], summonTrigger: 'phase-end' }],
                 notPreview: true,
                 exec: () => card.minusPerCnt()
             }

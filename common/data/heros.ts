@@ -1568,7 +1568,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 1) return;
-                    return { triggers: ['Burning-oppo'], status: 117104 }
+                    return { triggers: ['Burning-oppo'], isNotAddTask: true, status: 117104 }
                 }),
             new SkillBuilder().passive(true).handle(event => {
                 if (!event.talent) return;

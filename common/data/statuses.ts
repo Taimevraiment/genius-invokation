@@ -2857,7 +2857,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303226: () => new StatusBuilder('坍陷与契机（生效中）').combatStatus().icon('debuff').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，双方牌手进行｢切换角色｣行动时：】需要额外花费1个元素骰。')
-        .handle(() => ({ triggers: 'active-switch-from', addDiceHero: 1 })),
+        .handle(() => ({ triggers: 'add-switch-from', addDiceHero: 1 })),
 
     303227: () => new StatusBuilder('四叶印').heroStatus().icon('buff3')
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
@@ -2865,10 +2865,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, event) => ({
             triggers: 'phase-end',
             isAddTask: true,
-            exec: () => {
-                const { hidx = -1 } = event;
-                return { cmds: [{ cmd: 'switch-to', hidxs: [hidx] }] }
-            }
+            exec: () => ({ cmds: [{ cmd: 'switch-to', hidxs: [event.hidx ?? -1] }] }),
         })),
 
     303228: () => new StatusBuilder('机关铸成之链（生效中）').heroStatus().icon('buff3').useCnt(0).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
@@ -3039,7 +3036,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     303312: () => new StatusBuilder('松茸酿肉卷（生效中）').heroStatus().icon('heal').useCnt(3).type(STATUS_TYPE.Round)
-        .description('【结束阶段：】治疗该角色1点。[useCnt]')
+        .description('【结束阶段：】治疗该角色1点。；[useCnt]')
         .handle((_, { hidx = -1 }) => ({
             triggers: 'phase-end',
             cmds: [{ cmd: 'heal', cnt: 1, hidxs: [hidx] }],
