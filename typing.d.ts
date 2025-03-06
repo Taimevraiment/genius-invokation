@@ -180,6 +180,7 @@ type DamageVO = {
     willDamages: number[][], // 造成伤害
     dmgElements: DamageType[], // 元素伤害类型
     elTips: [string, PureElementType, PureElementType][], // 元素反应提示
+    curPlayers?: Player[], // 当前玩家数组
     selected?: number[], // 伤害来源闪光(状态/召唤物)
 };
 

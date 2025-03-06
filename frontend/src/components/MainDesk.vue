@@ -103,7 +103,7 @@
               {{ Math.abs(supportCnt[getGroup(saidx)][siidx]) }}
             </span>
           </div>
-          <img class="support-bottom-icon" v-if="support.heal > 0" :src="getSvgIcon('heal')" />
+          <img class="support-bottom-icon" v-if="support.heal > 0" :src="getPngIcon('Element_Heal')" />
           <div class="support-bottom-num" v-if="support.heal > 0">
             {{ support.heal }}
           </div>
@@ -364,7 +364,7 @@
               </div>
               <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"
                 :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
-                :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getSvgIcon('heal')" />
+                :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getPngIcon('Element_Heal')" />
               <div class="summon-bottom-num" v-if="!summon?.UI.isWill">
                 {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
               </div>

@@ -582,13 +582,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/fcad55ff202d5dc8fa1d782f0b2f3400_3902557354688808483.png')
         .handle((card, event) => {
             const { hero, isExecTask } = event;
-            if (!hero) return;
-            const isTriggered = !!hero?.isFront && (hero?.hp ?? 0) > 0 && card.perCnt > 0;
+            const isTriggered = hero && !!hero.isFront && hero.hp > 0 && card.perCnt > 0;
             return {
                 addDmg: 1,
                 triggers: isCdt(!isExecTask || isTriggered, 'after-skill-oppo'),
                 isAddTask: true,
-                execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs: [hero.hidx] }]),
+                execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs: [hero!.hidx] }]),
                 exec: () => card.minusPerCnt(),
             }
         }),
@@ -1702,7 +1701,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (hasObjById(combatStatus, 116)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Hydro });
             if (hasObjById(combatStatus, 117)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Electro });
             if (hasObjById(summons, 115)) cmds.push({ cmd: 'attack', cnt: 1, element: DAMAGE_TYPE.Pyro });
-            cmds.forEach((_, i, a) => a[i].mode = i);
+            cmds.forEach((v, i) => v.mode = i);
             return { cmds, isValid: cmds.length > 0 }
         }),
 

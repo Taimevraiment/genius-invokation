@@ -1373,8 +1373,8 @@ export default class GeniusInvokationRoom {
                         }
                     });
                 });
-                calcRes.atriggers.forEach((atrg, ati) => atrg.push(...(res.isSelf ? etriggers3 : atriggers3)[ati]));
-                calcRes.etriggers.forEach((etrg, eti) => etrg.push(...(res.isSelf ? atriggers3 : etriggers3)[eti]));
+                calcRes.atriggers.forEach((atrg, ati) => atrg.push(...atriggers3[ati]));
+                calcRes.etriggers.forEach((etrg, eti) => etrg.push(...etriggers3[eti]));
                 assgin(oplayers, players3);
                 const nahidx = oplayers[pidx].hidx;
                 const isSwitchSelf = nahidx != cahidx;
@@ -1392,10 +1392,10 @@ export default class GeniusInvokationRoom {
                 bWillDamages.push(willDamage3);
                 calcTasks(tasks3, oplayers, cpidx);
                 let { isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: oahidx, isOnlyHeroStatus: true }), oahidx, STATUS_GROUP.heroStatus, ['status-destroy', ...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
-                if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: nahidx, isOnlyHeroStatus: true }), nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1));
+                if (!isPreviewEnd && isSwitchSelf) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: nahidx, isOnlyHeroStatus: true }), nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec, 1));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: oehidx, isOnlyHeroStatus: true }), oehidx, STATUS_GROUP.heroStatus, ['status-destroy', ...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec));
-                if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: nehidx, isOnlyHeroStatus: true }), nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec));
+                if (!isPreviewEnd && isSwitchOppo) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: nehidx, isOnlyHeroStatus: true }), nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec));
             });
             return calcRes;
@@ -1467,6 +1467,7 @@ export default class GeniusInvokationRoom {
                                 trigger: state,
                                 hidx: hi,
                                 skid,
+                                isQuickAction,
                             }, state == 'getdmg']);
                         }
                         if (!isStsRes) fieldres.element = undefined;
@@ -2010,7 +2011,7 @@ export default class GeniusInvokationRoom {
         const dmgedfhero = dmgedheros[dmgedHidx];
         if (dmgedfhero.hp <= 0) return res;
         const getDmgIdxOffset = ehlen * dmgedPidx;
-        const aGetDmgIdxOffset = ahlen * atkPidx;
+        const aGetDmgIdxOffset = ahlen * pidx;
         const getDmgIdx = dmgedHidx + getDmgIdxOffset;
         const atkHidx = isSwitch > -1 ? isSwitch : getAtkHidx(aheros);
         const afhero = aheros[atkHidx];
@@ -2311,8 +2312,10 @@ export default class GeniusInvokationRoom {
                 if (isOtherGetDmg) trg.push('other-getdmg');
                 if (elDmg > 0 || pierceDmg > 0) {
                     trg.push('getdmg');
-                    if (dmgElement != ELEMENT_TYPE.Physical) trg.push('el-getdmg');
-                    if (elDmg > 0) trg.push(`${trgEl}-getdmg`);
+                    if (elDmg > 0) {
+                        if (dmgElement != ELEMENT_TYPE.Physical) trg.push('el-getdmg');
+                        trg.push(`${trgEl}-getdmg`);
+                    }
                     if (pierceDmg > 0) trg.push('Pierce-getdmg');
                 }
             });
@@ -2383,7 +2386,7 @@ export default class GeniusInvokationRoom {
         atkheros.forEach((_, hi) => {
             this._detectSkill(atkPidx, atriggers[hi], {
                 hidxs: hi,
-                heros: atkheros,
+                players: res.players,
                 isExec,
                 getdmg: agetdmg(),
                 dmg: getdmg(),
@@ -2448,7 +2451,7 @@ export default class GeniusInvokationRoom {
         const asmnres = this._detectSummon(atkPidx, atriggers[atkHidx], {
             csummon: asummons,
             isExec,
-            heros: atkheros,
+            players: res.players,
             minusDiceSkillIds,
             minusDiceSkill,
             skid,
@@ -3401,10 +3404,11 @@ export default class GeniusInvokationRoom {
         const { slotSelect, summonSelect, supportSelect, heroSelect, canAction = true, isQuickAction,
             atkname = '', cmds = [], skid = -1, isActionInfo, actionInfo,
         } = options;
-        const { atkPidx, atkHidx, dmgElements = [], willDamages = [], willHeals = [] } = damageVO;
+        const { atkPidx, atkHidx, dmgElements = [], willDamages = [], willHeals = [], curPlayers } = damageVO;
         const intvl = willDamages.every(([d, p]) => d == -1 && p == 0) && willHeals.every(h => h == -1) ? 1e3 : 2250;
         const logPrefix = `[${this.players[atkPidx].name}](${atkPidx})${atkHidx > -1 ? `[${this.players[atkPidx].heros[atkHidx].name}]` : `[${atkname.replace(/\(\-\d+\)/, '')}]`}对`;
         const logs: string[] = [];
+        if (curPlayers) assgin(this.players, curPlayers, 'hp');
         for (const p of this.players) {
             for (let offset = 0; offset < p.heros.length; ++offset) {
                 const h = p.heros[(p.hidx + offset) % p.heros.length];
@@ -3680,7 +3684,7 @@ export default class GeniusInvokationRoom {
         }
         const stsreshidxs = stsres.hidxs ?? getBackHidxs(isSelf ? aheros : eheros);
         const atkedIdx = isSelf ? ahidx : (stsres.hidxs?.[0] ?? eFrontIdx);
-        const { willDamages, dmgElements, players: players1, elTips, isQuickAction: iqa }
+        const { willDamages, dmgElements, players: players1, elTips, isQuickAction: iqa, etriggers: etriggers1 }
             = this._calcDamage(
                 pidx,
                 (stsres.element ?? ELEMENT_TYPE.Physical) as ElementType,
@@ -3706,6 +3710,7 @@ export default class GeniusInvokationRoom {
         if (!atkStatus.hasType(STATUS_TYPE.Hide)) {
             this._writeLog(`[${this.players[pidx].name}](${pidx})[${atkname}]发动${oCnt != atkStatus.useCnt ? ` ${oCnt}→${atkStatus.useCnt}` : ''}`);
         }
+        this._detectStatus(pidx ^ 1 ^ isSelf, STATUS_TYPE.Attack, etriggers1[atkedIdx], { hidxs: atkedIdx, isOnlyHeroStatus: true, isQuickAction });
         const whLen = willHeals.length || 1;
         const selectedIdx = atkStatus.group == STATUS_GROUP.heroStatus ?
             getObjIdxById(aheros[ahidx].heroStatus.filter(s => !s.hasType(STATUS_TYPE.Hide)), atkStatus.id) :
@@ -5490,7 +5495,8 @@ export default class GeniusInvokationRoom {
                         willDamages: willDamages1,
                         dmgElements: dmgElements1,
                         elTips: elTips1,
-                    }
+                        curPlayers: players1,
+                    };
                     if (damageVOs[mode] == undefined) damageVOs[mode] = damageVO;
                     else {
                         damageVOs[mode] = {
