@@ -5,7 +5,7 @@ import {
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
-import { clone } from "../../utils/utils.js";
+import { clone, convertToArray, isCdt } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -62,7 +62,7 @@ export class GISkill {
             .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`);
         this.UI = {
             description,
-            src: (Array.isArray(src) ? src : [src]).filter(v => v != '')[0] ?? '',
+            src: convertToArray(src).filter(v => v != '')[0] ?? '',
             explains: [...(description.match(/(?<=【)[^【】]+(?=】)/g) ?? []), ...expl],
             descriptions: [],
         };
@@ -77,8 +77,8 @@ export class GISkill {
             const builderRes = handle?.(hevent, compareVersionFn(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
-                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
-                summonTriggers: Array.isArray(builderRes.summonTriggers) ? builderRes.summonTriggers : builderRes.summonTriggers ? [builderRes.summonTriggers] : undefined,
+                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
+                summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }
             if (isReadySkill) return res;
             const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];

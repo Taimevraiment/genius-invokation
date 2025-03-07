@@ -264,6 +264,20 @@ export const DICE_WEIGHT = [ // 骰子的优先级权重(越低越优先)
     DICE_COST_TYPE.Anemo,
 ];
 
+export const REACTION_COLOR = {
+    融化: '#f1d08e',
+    蒸发: '#f6bd6f',
+    感电: '#c0a7e5',
+    超导: '#bcb4ff',
+    超载: '#f198a3',
+    冻结: '#93d6e4',
+    燃烧: '#e1a530',
+    绽放: '#51a271',
+    原激化: '#43b36a',
+    扩散: '#84e3c1',
+    结晶: '#fabf54',
+} as const;
+
 const elReactionExplain: { [key: string]: (...args: any) => string } = {
     融化: (isAttach = false) => `【融化】：${!isAttach ? '本伤害+2' : '没有效果'}`,
     蒸发: (isAttach = false) => `【融化】：${!isAttach ? '本伤害+2' : '没有效果'}`,

@@ -1,6 +1,7 @@
 import { Card, Support, Trigger, VersionCompareFn } from "../../../typing";
 import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import { compareVersionFn } from "../../utils/gameUtil.js";
+import { convertToArray, isCdt } from "../../utils/utils.js";
 import { SupportHandleEvent, SupportHandleRes } from "../supports.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -34,7 +35,7 @@ export class GISupport {
             const builderRes = handle?.(support, event, compareVersionFn(ver)) ?? {};
             const res: SupportHandleRes = {
                 ...builderRes,
-                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
+                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
             }
             return res;
         };

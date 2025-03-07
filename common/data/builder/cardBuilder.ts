@@ -6,7 +6,7 @@ import {
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getHidById, getVehicleIdByCid, hasObjById } from "../../utils/gameUtil.js";
-import { isCdt } from "../../utils/utils.js";
+import { convertToArray, isCdt } from "../../utils/utils.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -59,7 +59,7 @@ export class GICard {
         this.sinceVersion = version;
         this.offlineVersion = offlineVersion;
         subType ??= [];
-        if (!Array.isArray(subType)) subType = [subType];
+        subType = convertToArray(subType);
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
             isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul } = options;
         const hid = getHidById(id);
@@ -190,7 +190,7 @@ export class GICard {
             const builderRes = handle?.(card, event ?? {}, compareVersionFn(ver)) ?? {};
             const res: CardHandleRes = {
                 ...builderRes,
-                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
+                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
             }
             return res;
         }

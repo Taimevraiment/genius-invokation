@@ -243,6 +243,15 @@ export const assgin = <T>(target: T, source: T, exclude?: string | string[]) => 
 }
 
 /**
+ * 将对象或对象数组转换为对象数组
+ * @param obj 对象或对象数组
+ * @returns 对象数组
+ */
+export const convertToArray = <T>(obj: T | T[]): T[] => {
+    return Array.isArray(obj) ? obj : [obj];
+}
+
+/**
  * 获取密钥
  */
 export const getSecretKey = async (name: string) => {

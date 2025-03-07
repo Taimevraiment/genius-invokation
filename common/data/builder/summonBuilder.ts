@@ -3,6 +3,7 @@ import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERS
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
+import { convertToArray, isCdt } from "../../utils/utils.js";
 import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -91,7 +92,7 @@ export class GISummon {
             const builderRes = handle(summon, event, compareVersionFn(ver)) ?? {};
             const res: SummonHandleRes = {
                 ...builderRes,
-                triggers: Array.isArray(builderRes.triggers) ? builderRes.triggers : builderRes.triggers ? [builderRes.triggers] : undefined,
+                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
             }
             return res;
         };

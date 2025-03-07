@@ -3,6 +3,7 @@ import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION,
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
+import { convertToArray, isCdt } from "../../utils/utils.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
@@ -139,7 +140,7 @@ export class GIStatus {
             const handleRes = thandle(status, event, compareVersionFn(ver)) ?? {};
             const res: StatusHandleRes = {
                 ...handleRes,
-                triggers: Array.isArray(handleRes.triggers) ? handleRes.triggers : handleRes.triggers ? [handleRes.triggers] : undefined,
+                triggers: isCdt(handleRes.triggers, convertToArray(handleRes.triggers) as Trigger[]),
             }
             return res;
         }

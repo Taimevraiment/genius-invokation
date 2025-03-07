@@ -640,7 +640,6 @@ body {
   justify-content: center;
   position: absolute;
   left: 30%;
-  background-color: red;
   bottom: 95px;
   font-size: medium;
   z-index: 1;
@@ -701,6 +700,10 @@ body {
   font-size: medium;
   cursor: pointer;
   box-sizing: border-box;
+}
+
+.skill-btn:hover {
+  filter: brightness(1.05);
 }
 
 .skill-img {

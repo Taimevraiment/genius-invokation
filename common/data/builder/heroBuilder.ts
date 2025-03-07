@@ -1,6 +1,7 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { compareVersionFn } from "../../utils/gameUtil.js";
+import { convertToArray } from "../../utils/utils.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
 
@@ -42,14 +43,13 @@ export class GIHero {
         this.shareId = shareId;
         this.name = name;
         this.sinceVersion = version;
-        if (Array.isArray(tags)) this.tags = tags;
-        else this.tags = [tags];
+        this.tags = convertToArray(tags);
         this.maxHp = maxHp;
         this.hp = maxHp;
         this.element = element;
         this.weaponType = weaponType;
-        src = Array.isArray(src) ? src : [src];
-        avatar = Array.isArray(avatar) ? avatar : [avatar];
+        src = convertToArray(src);
+        avatar = convertToArray(avatar);
         this.UI = {
             src: src[0],
             srcs: src,

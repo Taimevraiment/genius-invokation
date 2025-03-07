@@ -198,9 +198,10 @@
               <div class="el-tip" :class="{
                 'el-tip-anime': elTips[hgi][hidx][0] != '',
               }" :style="{
-                color: ELEMENT_COLOR[elTips[hgi][hidx][2]],
+                color: REACTION_COLOR[elTips[hgi][hidx][0]]
+                // color: ELEMENT_COLOR[elTips[hgi][hidx][2]],
                 // fontWeight: 'bolder',
-                '-webkit-text-stroke': `0.5px ${ELEMENT_COLOR[elTips[hgi][hidx][1]]}`,
+                // '-webkit-text-stroke': `0.5px ${ELEMENT_COLOR[elTips[hgi][hidx][1]]}`,
               }">
                 {{ elTips[hgi][hidx][0] }}
               </div>
@@ -443,7 +444,7 @@ import {
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
-import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
