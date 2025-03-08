@@ -196,7 +196,7 @@ type TrgActive = 'active-' | '';
 type TrgDice = 'add-' | 'minus-' | '';
 
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
-    'end-phase' | 'any-end-phase' | `${TrgOther | TrgAfter}skill${TrgOppo}` | `${TrgOther | TrgAfter}skilltype${SkillType}` |
+    'end-phase' | 'any-end-phase' | `${TrgAfter}${TrgOther}skill${TrgOppo}` | `${TrgOther | TrgAfter}skilltype${SkillType}` |
     `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
     `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |

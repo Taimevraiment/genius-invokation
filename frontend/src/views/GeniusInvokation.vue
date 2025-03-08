@@ -90,7 +90,7 @@
       v-if="((client.player?.phase ?? PHASE.NOT_READY) >= PHASE.CHOOSE_HERO && client.currSkill.id < 0 && client.isShowSwitchHero < 2) || client.isWin > -1"
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="client.handcardsGroupOffset">
-      <Handcard v-for="(card, idx) in client.player.handCards" :key="`${idx}-${card.id}-myhandcard`"
+      <Handcard v-for="(card, idx) in client.player.handCards" :key="`${card.entityId}-myhandcard`"
         :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
@@ -98,7 +98,7 @@
           v-if="card.type == CARD_TYPE.Event && isNonEvent" style="position: absolute;top: 3%;width: 30%;opacity: .8;">
       </Handcard>
       <Handcard v-for="(card, idx) in client.player.UI.willGetCard.cards.filter(c => c.UI.class?.includes('over'))"
-        :key="`${idx}-${card.id}-myhandcard-over`" :card="card" :isMobile="isMobile" :class="card.UI.class ?? ''"
+        :key="`${card.entityId}-myhandcard-over`" :card="card" :isMobile="isMobile" :class="card.UI.class ?? ''"
         :style="{ left: `${client.handcardsOverPos[idx]}px` }">
       </Handcard>
     </div>

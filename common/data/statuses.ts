@@ -1778,7 +1778,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, event) => {
             if (!hasObjById(event.summons, 115)) return;
             return {
-                triggers: ['after-skill', 'after-skill-oppo'],
+                triggers: ['after-skill', 'after-other-skill', 'after-skill-oppo'],
                 isAddTask: true,
                 cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: 'phase-end' }],
                 exec: eStatus => { eStatus?.minusUseCnt() },

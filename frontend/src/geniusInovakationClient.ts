@@ -15,9 +15,7 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill,
-    Status,
-    Summon
+    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon
 } from "../../typing";
 
 type DeckValid = {
@@ -71,6 +69,7 @@ export default class GeniusInvokationClient {
     handCardsCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 手牌数量
     isMobile: boolean; // 是否为手机
     diceSelect: boolean[]; // 骰子是否选中
+    initcardsPos: string[] = []; // 换牌手牌位置
     handcardsGap: number; // 手牌间隔
     handcardsOffset: number; // 手牌偏移
     handcardsPos: number[]; // 手牌位置
@@ -306,6 +305,33 @@ export default class GeniusInvokationClient {
         });
     }
     /**
+     * 更新初始手牌位置
+     * @param player 最新的玩家数据
+     */
+    updateInitCardsPos(player: Player) {
+        const width = this.isMobile ? 60 : 90;
+        const isChangedCard = (c: Card) => c.UI.class == 'changed-card';
+        const isChangeCard = (c: Card) => c.UI.class == 'change-card';
+        const { handCards } = player;
+        const changeCards = handCards.filter(isChangeCard);
+        const changedCards = handCards.filter(isChangedCard);
+        const handCardsLen = handCards.length - changeCards.length;
+        this.initcardsPos = handCards.map(c => {
+            const idx = isChangeCard(c) ?
+                c.cidx - changedCards.filter(v => v.cidx < c.cidx).length :
+                c.cidx - changeCards.filter(v => v.cidx < c.cidx).length;
+            return `calc(${idx * width}px + ${idx + 1} * (100% - ${handCardsLen * width}px) / ${handCardsLen + 1})`;
+        });
+        setTimeout(() => {
+            this.initcardsPos = this.player.handCards.map(c => {
+                const idx = isChangedCard(c) ?
+                    c.cidx - changeCards.filter(v => v.cidx < c.cidx).length :
+                    c.cidx - changedCards.filter(v => v.cidx < c.cidx).length;
+                return `calc(${idx * width}px + ${idx + 1} * (100% - ${handCardsLen * width}px) / ${handCardsLen + 1})`;
+            });
+        });
+    }
+    /**
      * 展示选择卡的信息
      * @param idx 选择卡的索引idx
      * @param val 是否为选中
@@ -481,10 +507,9 @@ export default class GeniusInvokationClient {
         this.watchers = watchers;
         if (flag.includes('startGame') || flag.includes('roomInfoUpdate')) {
             this.initSelect(players);
-        }
-        if (this.willSwitch[0].length == 0 && phase >= PHASE.CHANGE_CARD) {
-            this._resetWillSwitch();
-        }
+            this.updateInitCardsPos(players[this.playerIdx]);
+        } else if (flag.includes('changeCard')) this.updateInitCardsPos(players[this.playerIdx]);
+        if (this.willSwitch[0].length == 0 && phase >= PHASE.CHANGE_CARD) this._resetWillSwitch();
         this._sendTip(tip);
         if (actionInfo.content != '' || !!actionInfo.card) {
             this.actionInfo = actionInfo;

@@ -126,18 +126,19 @@
           'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx]),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
-          <div class="hero-img-content" :class="{
-            'hero-shield7': hero.hp >= 0 && [...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0),
-          }">
+          <div class="hero-img-content">
             <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
             <div v-else class="hero-name">{{ hero?.name }}</div>
           </div>
-          <div class="hero-freeze" v-if="hero.hp >= 0 && hero.heroStatus.some(ist => ist.id == 106)">
+          <div class="hero-freeze" v-if="hero.heroStatus.some(ist => ist.id == 106)">
             <img :src="getPngIcon('freeze-bg')" />
           </div>
-          <div class="hero-freeze" style="background-color: #716446de"
-            v-if="hero.hp >= 0 && hero.heroStatus.some(ist => ist.id == 116033)"></div>
-          <div class="hero-shield2" v-if="hero.hp >= 0 && (
+          <div class="hero-freeze" style="background-color: #716446de" v-if="hasObjById(hero.heroStatus, 116033)">
+          </div>
+          <div class="hero-shield7"
+            v-if="[...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0)">
+          </div>
+          <div class="hero-shield2" v-if="(
             hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier)) ||
             hero.isFront && combatStatuses[hgi].some(ost => ost.hasType(STATUS_TYPE.Barrier)) ||
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
@@ -407,8 +408,9 @@
 
         <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
           <div class="init-cards">
-            <Handcard class="init-card" v-for="(card, cidx) in initCards" :key="`${cidx}-${card.id}`" :card="card"
-              :isMobile="isMobile" @click.stop="selectChangeCard(cidx)">
+            <Handcard :class="['init-card', card.UI.class ?? '']" v-for="(card, cidx) in initCards"
+              :key="`${card.entityId}-initcard`" :card="card" :isMobile="isMobile" @click.stop="selectChangeCard(cidx)"
+              :style="{ left: client.initcardsPos[cidx], top: '25%' }">
               <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
             </Handcard>
           </div>
@@ -420,8 +422,9 @@
         <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
           <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
           <div class="pick-cards">
-            <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${cidx}-${card.id}`" :card="card"
-              :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
+            <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${card.entityId}-pickcard`"
+              :card="card" :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }"
+              @click.stop="selectCardPick(cidx)">
               <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
             </Handcard>
           </div>
@@ -446,6 +449,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
 import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
+import { hasObjById } from '@@@/utils/gameUtil';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
 
@@ -1348,8 +1352,8 @@ button:active {
   height: 108%;
   transform: translate(-50%, -50%);
   border-radius: inherit;
-  border-left: 6px solid #ffffff8b;
-  border-right: 6px solid #ffffff8b;
+  border-left: 6px solid #bff6ffbb;
+  border-right: 6px solid #bff6ffbb;
 }
 
 .hero-center-icon {
@@ -1363,8 +1367,15 @@ button:active {
 }
 
 .hero-shield7 {
-  border-radius: 3px !important;
-  border: 5px solid #fffdd2e9 !important;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 92%;
+  height: 95%;
+  transform: translate(-50%, -50%);
+  border-radius: 5px;
+  border: 4px solid #fffdd2e9;
+  background-color: #fffdd239;
   z-index: 1;
 }
 
@@ -1453,6 +1464,7 @@ button:active {
   transform: translate(35%, -30%) scale(var(--scale-val-change));
   color: white;
   font-size: medium;
+  letter-spacing: -2px;
   -webkit-text-stroke: 1px black;
   font-family: sans-serif;
   font-weight: bold;
@@ -1483,6 +1495,7 @@ button:active {
   transform: translate(-35%, 30%);
   color: white;
   font-size: medium;
+  letter-spacing: -2px;
   -webkit-text-stroke: 1px black;
   font-family: sans-serif;
   font-weight: bold;
@@ -1654,20 +1667,19 @@ button:active {
 
 .init-cards,
 .pick-cards {
+  position: relative;
   width: 100%;
   height: 70%;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
 }
 
 .init-card,
 .pick-card {
-  position: relative;
+  position: absolute;
   cursor: pointer;
   text-align: center;
   background-color: #a7bbdd;
+  transition: .75s;
 }
 
 .init-card-content {
@@ -1679,6 +1691,39 @@ button:active {
   border: 2px solid black;
   overflow: hidden;
   box-sizing: border-box;
+}
+
+.changed-card {
+  animation: changed-card linear forwards .75s;
+}
+
+@keyframes changed-card {
+  50% {
+    transform: perspective(500px) translate(-1000%, 100%) rotate(90deg) rotateY(180deg);
+  }
+
+  100% {
+    transform: perspective(500px) translate(-1000%, 100%) rotate(90deg) rotateY(180deg);
+  }
+}
+
+.change-card {
+  transform: perspective(500px) translate(-1000%, 100%) rotate(90deg) rotateY(180deg);
+  animation: change-card linear forwards .75s;
+}
+
+@keyframes change-card {
+  0% {
+    transform: perspective(500px) translate(-1000%, 100%) rotate(90deg) rotateY(180deg);
+  }
+
+  50% {
+    transform: perspective(500px) translate(-1000%, 100%) rotate(90deg) rotateY(180deg);
+  }
+
+  100% {
+    transform: initial;
+  }
 }
 
 .hero-img-content {
@@ -1746,8 +1791,15 @@ button:active {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(30deg);
   width: 80%;
+  animation: forwards init-select .2s;
+}
+
+@keyframes init-select {
+  to {
+    transform: translate(-50%, -50%);
+  }
 }
 
 .will-getcard-my {
@@ -1992,12 +2044,12 @@ svg {
     opacity: 0;
   }
 
-  40% {
+  15% {
     top: 0px;
     opacity: 0;
   }
 
-  65% {
+  40% {
     top: -8px;
     opacity: 1;
   }
