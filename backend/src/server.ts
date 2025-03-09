@@ -220,7 +220,7 @@ io.on('connection', socket => {
         if (isInGame) {
             if (isLeave) ++room.onlinePlayersCnt;
             room.players[pidx].isOffline = false;
-            setTimeout(() => room.emit('continueGame', (me as Player).pidx, { socket }), 500);
+            setTimeout(() => room.emit('continueGame', (me as Player).pidx), 500);
         } else {
             if (isLookon && !room.allowLookon) return socket.emit('enterRoom', { err: '该房间不允许观战！' });
             me = room.init(me);

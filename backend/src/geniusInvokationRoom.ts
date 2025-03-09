@@ -1252,6 +1252,7 @@ export default class GeniusInvokationRoom {
         const summonCnt: number[][] = INIT_SUMMONCNT();
         const energyCnt: number[][] = players.map(p => p.heros.map(() => 0));
         const willSummons: Summon[][] = [[], []];
+        const changedSummons: (Summon | undefined)[][] = [[], []];
         const selectSummonInvalid = skill && skill.canSelectSummon != -1 && selectSummon == -1;
         const selectHeroInvalid = skill && skill.canSelectHero != -1 && selectHero == -1;
         const nonAction = player().heros[isSwitch > -1 ? isSwitch : cahidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction));
@@ -1259,6 +1260,7 @@ export default class GeniusInvokationRoom {
         const res = {
             willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal, players,
             summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, energyCnt, tarHidx: -1, invalidInfo,
+            changedSummons,
         };
         if (skill && (selectSummonInvalid || selectHeroInvalid || nonAction)) {
             if (isExec) {
@@ -1783,9 +1785,7 @@ export default class GeniusInvokationRoom {
                 energyCnt,
             });
         mergeWillHeals(bWillHeal, skillheal);
-        const dtriggers: Trigger[] = [];
-        if (typeof otriggers == 'string') dtriggers.push(otriggers);
-        else dtriggers.push(...otriggers);
+        const dtriggers: Trigger[] = [...convertToArray(otriggers)];
         cahidx = skid == -1 && dtriggers.includes('switch-to') ? isSwitch : bPlayers[pidx].hidx;
         cehidx = bPlayers[pidx ^ 1].hidx;
         dmgedHidx = cehidx;
@@ -1796,6 +1796,9 @@ export default class GeniusInvokationRoom {
         }
         bWillAttach.forEach((a, i) => a.push(...aWillAttach[i]));
         bWillDamages.push(aWillDamages);
+        bPlayers[pidx].summons.forEach(smn => {
+            atriggers[cahidx].forEach(trg => calcSummonAtk(bPlayers, smn, trg, 1));
+        });
         const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
             .map(xtrgs => xtrgs.map(trgs => trgs
                 .filter(trg => /skill|elReaction|dmg/i.test(trg))
@@ -1912,9 +1915,9 @@ export default class GeniusInvokationRoom {
                 if (isKilled < 0) return isKilled;
                 return bPlayers[whpidx].heros[whhidx].hp + Math.max(0, bWillHeal[i]) - hero.hp;
             });
-            willSummons[0] = bPlayers[epidx].summons.filter(wsmn => this.players[epidx].summons.every(smn => smn.id != wsmn.id))
+            willSummons[0] = bPlayers[epidx].summons.filter(wsmn => this.players[epidx].summons.every(smn => smn.entityId != wsmn.entityId))
                 .map(wsmn => (wsmn.UI.isWill = true, wsmn));
-            willSummons[1] = bPlayers[pidx].summons.filter(wsmn => this.players[pidx].summons.every(smn => smn.id != wsmn.id))
+            willSummons[1] = bPlayers[pidx].summons.filter(wsmn => this.players[pidx].summons.every(smn => smn.entityId != wsmn.entityId))
                 .map(wsmn => {
                     const nsmn = this._getSummonById(wsmn.handle(wsmn, { skid }).willSummon)[0] ?? wsmn;
                     nsmn.UI.isWill = true;
@@ -1925,11 +1928,18 @@ export default class GeniusInvokationRoom {
                 const osmns = oplayers[pi].summons;
                 const nsmns = bPlayers[pi].summons;
                 smna[pi] = smns.map((_, si) => {
+                    if (osmns[si]) {
+                        if (osmns[si].id == nsmns[si].id) changedSummons[pi][si] = undefined;
+                        else {
+                            nsmns[si].UI.isWill = true;
+                            changedSummons[pi][si] = nsmns[si];
+                        }
+                    }
                     if (osmns.length - 1 < si || (pi == pidx && nsmns[si]?.handle(nsmns[si], { skid }).willSummon)) return 0;
-                    const nsmn = getObjById(nsmns, osmns[si].id);
+                    const nsmn = nsmns.find(s => s.entityId == osmns[si].entityId);
                     const smnCnt = nsmn?.useCnt ?? 0;
                     let res = smnCnt - osmns[si].useCnt;
-                    if (res == 0 && pi == pidx && nsummons.some(s => s.id == nsmns[si].id)) res += 0.3;
+                    if (res == 0 && pi == pidx && nsummons.some(s => s.entityId == nsmns[si].entityId)) res += 0.3;
                     if (res < -50 || smnCnt <= 0 && nsmn?.isDestroy == SUMMON_DESTROY_TYPE.Used) this._doSummonDestroy(pi, osmns[si], { isExec, supportCnt, isQuickAction });
                     return res;
                 });
@@ -1946,6 +1956,7 @@ export default class GeniusInvokationRoom {
         return {
             willHp, willAttachs: bWillAttach, elTips: aElTips, dmgElements: aDmgElements, willHeal: aWillHeal, energyCnt, players,
             summonCnt, supportCnt, willSummons, willSwitch, willDamages: aWillDamages, atriggers, etriggers, tarHidx, invalidInfo,
+            changedSummons,
         }
     }
     /**
@@ -4601,10 +4612,6 @@ export default class GeniusInvokationRoom {
                     }
                     continue;
                 }
-                if (summonres.cmds) {
-                    smncmds.push(...summonres.cmds);
-                    this._doCmds(pidx, summonres.cmds, { heros, isExec, isPriority: true });
-                }
                 if (isExec) {
                     if (!isExecTask) {
                         const args = clone(Array.from(arguments));
@@ -5786,7 +5793,7 @@ export default class GeniusInvokationRoom {
             const selects = [...summonSelects.map(s => ['smn', s]), ...heroSelects.map(h => ['hero', h])] as [string, number][];
             if (selects.length == 0) selects.push(['default', -1]);
             for (const [tag, selectItem] of selects) {
-                const { willHp, willAttachs, summonCnt, supportCnt, willSummons, willSwitch, energyCnt, tarHidx }
+                const { willHp, willAttachs, summonCnt, supportCnt, willSummons, willSwitch, energyCnt, tarHidx, changedSummons }
                     = this._useSkill(pidx, skillId, {
                         players,
                         isPreview: true,
@@ -5812,6 +5819,7 @@ export default class GeniusInvokationRoom {
                     willSummonChange: summonCnt,
                     willSupportChange: supportCnt,
                     willSummons,
+                    changedSummons,
                     willSwitch,
                     willEnergyChange: energyCnt,
                     summonCanSelect,

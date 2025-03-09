@@ -35,7 +35,6 @@ export type SummonHandleEvent = {
 
 export type SummonHandleRes = {
     triggers?: Trigger[],
-    cmds?: Cmds[],
     addDmg?: number,
     addDmgType1?: number,
     addDmgType2?: number,
@@ -140,7 +139,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
         .handle((summon, event = {}, ver) => {
-            const { heros = [], atkHidx = -1, trigger, tround = 0, isExec = true } = event;
+            const { heros = [], atkHidx = -1, trigger, tround = 0 } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = getMaxHertHidxs(heros);
             const fhero = heros[atkHidx];
@@ -152,7 +151,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
             if (hasTround || tround == 1) trdcmds.push({ cmd: 'heal', cnt: 1 });
             return {
                 triggers,
-                cmds: isCdt(isHeal && !isExec, [...skcmds, ...trdcmds]),
                 tround: isCdt(hasTround, 1),
                 exec: execEvent => {
                     const { summon: smn = summon } = execEvent;

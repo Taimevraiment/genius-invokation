@@ -269,6 +269,7 @@ type Preview = ActionData & {
     willAttachs?: ElementType[][],
     willSwitch?: boolean[][],
     willSummons?: Summon[][],
+    changedSummons?: (Summon | undefined)[][],
     willSummonChange?: number[][],
     willSupportChange?: number[][],
     willEnergyChange?: number[][],

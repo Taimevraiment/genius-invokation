@@ -5,23 +5,23 @@
         <img class="card-img" :src="getPngIcon(card.UI.src)" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
-                :src="getPngIcon('legend-border')" />
+                :src="getPngIcon('legend-border')" draggable="false" />
             <div class="card-cost" v-if="!isHideCost" :class="{ 'mobile-card-cost': isMobile }"
                 :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" />
+                    :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" draggable="false" />
                 <span>{{ Math.max(0, card.cost - card.costChange) }}</span>
             </div>
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
                 v-if="card.anydice > 0 && !isHideCost"
                 :style="{ color: card.costChange - card.cost > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" />
+                    :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
                 <span>{{ card.anydice - Math.max(0, card.costChange - card.cost) }}</span>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0 && !isHideCost">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
+                    :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" draggable="false" />
                 <span>{{ card.energy }}</span>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }"

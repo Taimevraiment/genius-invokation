@@ -139,11 +139,11 @@
       <div class="skill" :class="{ 'skill-will': canAction && client.currSkill.id == skill.id }"
         v-for="skill in client.skills" :key="skill.id">
         <div class="skill-btn" :class="{ 'skill-vehicle': skill.type == SKILL_TYPE.Vehicle }"
-          @click.stop="useSkill(skill.id, false)" :style="{ boxShadow: skill.style.fullEnergy }">
-          <div class="skill3-bg" v-if="skill.isNotFullEnergy" :style="{ background: skill.style.notFullEnergy }">
-            <div class="skill-btn" style="left: 2px;top: 2px;width: 90%;height: 90%;border: 2px solid transparent;">
-            </div>
+          @click.stop="useSkill(skill.id)" :style="{ boxShadow: skill.style.fullEnergy }">
+          <img class="skill-bg" :src="getPngIcon('skill_btn_bg')" alt="" />
+          <div class="skill3-bg" :style="{ background: skill.style.notFullEnergy }">
           </div>
+          <img class="skill3-btn" :src="getPngIcon('skill3_btn_bg')" alt="" />
           <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0" :alt="SKILL_TYPE_ABBR[skill.type]"
             draggable="false" />
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
@@ -271,10 +271,10 @@ const getDiceBgIcon = (name: string) => {
 };
 
 // 获取png图片
-// const getPngIcon = (name: string) => {
-//   if (name.startsWith('http')) return name;
-//   return `/image/${name}.png`;
-// };
+const getPngIcon = (name: string) => {
+  if (name.startsWith('http')) return name;
+  return `/image/${name}.png`;
+};
 
 // 获取svg图片
 // const getSvgIcon = (name: string) => {
@@ -380,7 +380,7 @@ const reconcile = (bool: boolean) => {
   client.value.reconcile(bool, client.value.handcardsSelect);
 };
 // 使用技能
-const useSkill = (skid: number, isOnlyRead: boolean) => {
+const useSkill = (skid: number, isOnlyRead?: boolean) => {
   client.value.useSkill(skid, { isOnlyRead });
 };
 // 切换角色
@@ -679,9 +679,23 @@ body {
 
 .skill3-bg {
   position: absolute;
-  width: 108%;
-  height: 108%;
+  width: 105%;
+  height: 105%;
   border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+
+.skill3-btn {
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
 }
 
 .skill-btn {
@@ -689,12 +703,9 @@ body {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background-color: #efbb61;
-  border: 2px solid #9b8868;
+  /* background-color: #efbb61;
+  border: 2px solid #9b8868; */
   margin-bottom: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   color: #fceacf;
   font-weight: bolder;
   font-size: medium;
@@ -706,22 +717,41 @@ body {
   filter: brightness(1.05);
 }
 
+.skill-btn:active {
+  filter: brightness(1.1);
+}
+
+.skill-bg {
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+
 .skill-img {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  height: 80%;
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
 }
 
 .skill-forbidden {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  width: 85%;
+  height: 85%;
   border-radius: 50%;
   background-color: #7e5f2ab9;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
 }
 
 .switch-button {

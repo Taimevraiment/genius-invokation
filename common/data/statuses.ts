@@ -1781,7 +1781,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 triggers: ['after-skill', 'after-other-skill', 'after-skill-oppo'],
                 isAddTask: true,
                 cmds: [{ cmd: 'useSkill', hidxs: [115], summonTrigger: 'phase-end' }],
-                exec: eStatus => { eStatus?.minusUseCnt() },
+                exec: eStatus => { eStatus?.minusUseCnt() }
             }
         }),
 

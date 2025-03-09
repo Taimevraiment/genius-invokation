@@ -44,6 +44,7 @@ export default class GeniusInvokationClient {
     isShowSwitchHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
     isShowEndPhase: boolean = false; // 是否显示确认结束回合按钮
+    changedSummons: (Summon | undefined)[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 召唤物变化
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
     willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
     supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
@@ -174,7 +175,7 @@ export default class GeniusInvokationClient {
                     .filter(([c]) => c).map(([, c]) => c),
                 isNotFullEnergy: skill.cost[2].cnt > 0 && fhero.energy < skill.cost[2].cnt,
                 style: {
-                    fullEnergy: skill.cost[2].cnt > 0 && fhero.energy >= skill.cost[2].cnt ? `0px 0px 8px 3px ${elColor}` : '',
+                    fullEnergy: skill.cost[2].cnt > 0 && fhero.energy >= skill.cost[2].cnt ? `0px 0px 10px 5px ${elColor}` : '',
                     notFullEnergy: `linear-gradient(to top, ${elColor} 0%, ${elColor} ${energyPer}%, transparent ${energyPer}%, transparent 100%)`,
                     costColors: skill.cost.map((cost, cidx) => ({
                         cnt: cost.cnt,
@@ -889,7 +890,7 @@ export default class GeniusInvokationClient {
         this.isShowEndPhase = false;
         const { isOnlyRead = false } = options;
         const skidx = this.skills.findIndex(sk => sk.id == skid);
-        const isExec = !isOnlyRead && this.modalInfo.skidx == skidx;
+        const isExec = !isOnlyRead && this.modalInfo.skidx == skidx && this.isValid;
         if (skid > -1) this.currSkill = this.skills.find(sk => sk.id == skid)!;
         if (this.currCard.id <= 0 && skid > -1 && !isExec) {
             this.modalInfo = {
@@ -929,6 +930,7 @@ export default class GeniusInvokationClient {
             this.willHp = [...preview.willHp!.slice()];
             this.willAttachs = [...clone(preview.willAttachs)!];
             this.willSummons = [...clone(preview.willSummons)!];
+            this.changedSummons = [...clone(preview.changedSummons)!];
             this.summonCnt = [...clone(preview.willSummonChange)!];
             this.supportCnt = [...clone(preview.willSupportChange)!];
             this.willSwitch = [...preview.willSwitch!];
@@ -1118,6 +1120,7 @@ export default class GeniusInvokationClient {
      * 重置召唤物预览
      */
     private _resetWillSummons(): Summon[][] {
+        this.changedSummons.forEach(smns => smns.fill(undefined));
         return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
     }
     /**

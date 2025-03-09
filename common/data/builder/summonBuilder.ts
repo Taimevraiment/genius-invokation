@@ -4,7 +4,7 @@ import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { SummonHandleEvent, SummonHandleRes } from "../summons.js";
+import { SummonExecRes, SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type SummonBuilderHandleRes = Omit<SummonHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
@@ -101,7 +101,7 @@ export class GISummon {
         this.entityId = id;
         return this;
     }
-    phaseEndAtk(event: SummonHandleEvent, healHidxs?: number[]): SummonHandleRes {
+    phaseEndAtk(event: SummonHandleEvent, healHidxs?: number[]): SummonExecRes {
         if (this.isDestroy == SUMMON_DESTROY_TYPE.Used) this.minusUseCnt();
         else if (!event.isExec) this.useCnt = -100;
         const cmds: Cmds[] = [];

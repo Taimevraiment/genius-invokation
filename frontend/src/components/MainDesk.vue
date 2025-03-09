@@ -144,6 +144,7 @@
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
             hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt != 0) ||
             hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt != 0">
+            <img :src="getPngIcon('Shield2')" alt="" style="width: 100%;height: 100%;">
           </div>
           <img class="hero-center-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <img class="hero-center-icon" style="width: 60%;opacity: 1;" src="@@/image/Select_Ring_01.png"
@@ -321,9 +322,7 @@
         </div>
 
         <div class="summons">
-          <div class="summon-area" v-if="!!opponent"
-            v-for="(smnArea, saidx) in [[...opponent?.summons, ...willSummons[0]], [...player.summons, ...willSummons[1]]]"
-            :key="saidx">
+          <div class="summon-area" v-if="!!opponent" v-for="(smnArea, saidx) in smnAreas" :key="saidx">
             <div class="summon" :class="{
               'will-attach': summon.UI.isWill,
               'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
@@ -390,8 +389,8 @@
           @touchstart.stop="mousedown()" @touchend.stop="mouseup">
           <div class="dice-change-area">
             <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
-              <div class="dice" :class="{ 'dice-select': diceSelect[didx] }" @mousedown.stop="mousedown(didx)"
-                @mouseenter.stop="selectRerollDice(didx)">
+              <div class="dice" :class="{ 'dice-select': diceSelect[didx] }" @pointerdown="mousedown(didx)"
+                @pointerenter="selectRerollDice(didx)">
                 <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
                 <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
                 <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
@@ -620,6 +619,17 @@ const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wr
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
 const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch.flat()));
+const smnAreas = computed(() => {
+  const { client: { player, opponent, changedSummons } } = props;
+  const areas = [[...opponent?.summons, ...willSummons.value[0]], [...player.summons, ...willSummons.value[1]]];
+  [changedSummons[opponent?.pidx], changedSummons[player.pidx]].forEach((smns, smnsi) => {
+    smns?.forEach((smn, smni) => {
+      if (smn == undefined) return;
+      areas[smnsi].splice(smni, 1, smn);
+    });
+  });
+  return areas;
+});
 const isShowSwitchHero = computed<number>(() => props.client.isShowSwitchHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
 const canAction = computed<boolean>(() => props.canAction);
@@ -1348,12 +1358,12 @@ button:active {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 108%;
+  width: 120%;
   height: 108%;
   transform: translate(-50%, -50%);
-  border-radius: inherit;
-  border-left: 6px solid #bff6ffbb;
-  border-right: 6px solid #bff6ffbb;
+  /* border-radius: inherit;
+  border-left: 5px solid #bff6ffbb;
+  border-right: 5px solid #bff6ffbb; */
 }
 
 .hero-center-icon {
@@ -1370,12 +1380,13 @@ button:active {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 92%;
-  height: 95%;
+  width: 101%;
+  height: 102%;
   transform: translate(-50%, -50%);
   border-radius: 5px;
-  border: 4px solid #fffdd2e9;
-  background-color: #fffdd239;
+  border: 2px solid #fffdd2e9;
+  box-shadow: 0 0 15px 5px #fffdd2e9 inset;
+  box-sizing: border-box;
   z-index: 1;
 }
 
