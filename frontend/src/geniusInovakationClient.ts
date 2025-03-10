@@ -45,6 +45,7 @@ export default class GeniusInvokationClient {
     isShowHistory: boolean = false; // 是否显示历史信息
     isShowEndPhase: boolean = false; // 是否显示确认结束回合按钮
     changedSummons: (Summon | undefined)[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 召唤物变化
+    changedHeros: (string | undefined)[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 角色变化
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
     willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
     supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
@@ -388,6 +389,8 @@ export default class GeniusInvokationClient {
                 this.willAttachs = clone(preview.willAttachs) ?? this._resetWillAttachs();
                 this.willSummons = clone(preview.willSummons) ?? this._resetWillSummons();
                 this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
+                if (preview.changedSummons) this.changedSummons = clone(preview.changedSummons);
+                if (preview.changedHeros) this.changedHeros = clone(preview.changedHeros);
                 this.energyCnt = clone(preview.willEnergyChange) ?? this._resetEnergyCnt();
                 this.isValid = preview.isValid;
                 this.heroCanSelect = clone(preview.heroCanSelect) ?? this._resetHeroCanSelect();
@@ -931,6 +934,7 @@ export default class GeniusInvokationClient {
             this.willAttachs = [...clone(preview.willAttachs)!];
             this.willSummons = [...clone(preview.willSummons)!];
             this.changedSummons = [...clone(preview.changedSummons)!];
+            this.changedHeros = [...clone(preview.changedHeros)!];
             this.summonCnt = [...clone(preview.willSummonChange)!];
             this.supportCnt = [...clone(preview.willSupportChange)!];
             this.willSwitch = [...preview.willSwitch!];
@@ -1117,10 +1121,11 @@ export default class GeniusInvokationClient {
         return this.summonCnt = INIT_SUMMONCNT();
     }
     /**
-     * 重置召唤物预览
+     * 重置召唤物预览/召唤物变化/角色变化
      */
     private _resetWillSummons(): Summon[][] {
         this.changedSummons.forEach(smns => smns.fill(undefined));
+        this.changedHeros.forEach(srcs => srcs.fill(undefined));
         return this.willSummons = new Array(PLAYER_COUNT).fill(0).map(() => []);
     }
     /**

@@ -194,7 +194,9 @@
         client.summonCanSelect.some(s => s.some(s => s)) ||
         client.supportCanSelect.some(s => s.some(s => s)) ||
         client.isShowSwitchHero >= 2 ||
-        client.willHp.some(v => v != undefined))">
+        client.willHp.some(v => v != undefined) ||
+        client.changedSummons.some(s => s.some(s => s)) ||
+        client.changedHeros.some(h => h.some(h => h)))">
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
 

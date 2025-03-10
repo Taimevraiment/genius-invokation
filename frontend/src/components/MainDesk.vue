@@ -123,11 +123,17 @@
           'is-front-my': hero?.isFront && hgi == 1,
           'hero-select': heroSelect[hgi][hidx],
           'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
-          'active-willhp': canAction && (willHp[hgi][hidx] != undefined || (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 || willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx]),
+          'active-willhp': canAction && (
+            willHp[hgi][hidx] != undefined ||
+            (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) &&
+            hgi == 1 || willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
+          ),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>
           <div class="hero-img-content">
-            <img class="hero-img" :src="hero.UI.src" v-if="hero?.UI.src?.length > 0" :alt="hero.name" />
+            <img :class="['hero-img', { blink: changedHeros[getGroup(hgi)][hidx] }]"
+              :src="changedHeros[getGroup(hgi)][hidx] || hero.UI.src" v-if="hero?.UI.src?.length > 0"
+              :alt="hero.name" />
             <div v-else class="hero-name">{{ hero?.name }}</div>
           </div>
           <div class="hero-freeze" v-if="hero.heroStatus.some(ist => ist.id == 106)">
@@ -327,7 +333,7 @@
               'will-attach': summon.UI.isWill,
               'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
               'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING && !summon.UI.isWill,
-              'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
+              'active-summoncnt': canAction && (summonCnt[getGroup(saidx)][suidx] != 0 || changedSummons[getGroup(saidx)][suidx]),
             }" v-for="(summon, suidx) in smnArea" :key="suidx"
               @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
               <div class="summon-img-content">
@@ -619,6 +625,7 @@ const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wr
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
 const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch.flat()));
+const changedSummons = computed<(Summon | undefined)[][]>(() => props.client.changedSummons);
 const smnAreas = computed(() => {
   const { client: { player, opponent, changedSummons } } = props;
   const areas = [[...opponent?.summons, ...willSummons.value[0]], [...player.summons, ...willSummons.value[1]]];
@@ -630,6 +637,7 @@ const smnAreas = computed(() => {
   });
   return areas;
 });
+const changedHeros = computed<(string | undefined)[][]>(() => props.client.changedHeros);
 const isShowSwitchHero = computed<number>(() => props.client.isShowSwitchHero);
 const isShowDmg = computed<boolean>(() => props.client.isShowDmg);
 const canAction = computed<boolean>(() => props.canAction);
@@ -974,7 +982,7 @@ button:active {
   margin: 0 5%;
   cursor: pointer;
   transition: --front-val 0.3s, box-shadow 0.5s;
-  background: black;
+  background: white;
   transform: translateY(var(--front-val)) scale(var(--scale-val-will));
 }
 
@@ -1211,7 +1219,12 @@ button:active {
 }
 
 .blink {
+  --blink-opacity: 0.5;
   animation: blink 1s linear infinite alternate;
+}
+
+.hero-img.blink {
+  --blink-opacity: 0.9;
 }
 
 .damages {
@@ -2037,7 +2050,7 @@ svg {
 
 @keyframes blink {
   0% {
-    opacity: 0.5;
+    opacity: var(--blink-opacity);
   }
 
   50% {
@@ -2045,7 +2058,7 @@ svg {
   }
 
   100% {
-    opacity: 0.5;
+    opacity: var(--blink-opacity);
   }
 }
 

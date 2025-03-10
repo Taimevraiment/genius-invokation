@@ -582,12 +582,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/fcad55ff202d5dc8fa1d782f0b2f3400_3902557354688808483.png')
         .handle((card, event) => {
             const { hero, isExecTask } = event;
-            const isTriggered = hero && !!hero.isFront && hero.hp > 0 && card.perCnt > 0;
+            if (!hero) return;
+            const isTriggered = !!hero.isFront && hero.hp > 0 && card.perCnt > 0;
             return {
                 addDmg: 1,
                 triggers: isCdt(!isExecTask || isTriggered, 'after-skill-oppo'),
                 isAddTask: true,
-                execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs: [hero!.hidx] }]),
+                execmds: isCdt(isTriggered, [{ cmd: 'heal', cnt: 1, hidxs: [hero.hidx] }]),
                 exec: () => card.minusPerCnt(),
             }
         }),

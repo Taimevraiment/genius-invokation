@@ -1219,7 +1219,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (switchHeroDiceCnt == 0) return;
             return {
                 minusDiceHero: 1,
-                triggers: 'minus-switch-from',
+                triggers: 'minus-switch',
                 exec: () => {
                     status.minusUseCnt();
                     return { cmds: isCdt(status.isTalent, [{ cmd: 'getStatus', status: 115033 }]) }
@@ -1386,7 +1386,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { switchHeroDiceCnt = 0 } = event;
             if (switchHeroDiceCnt == 0) return;
-            return { minusDiceHero: 1, triggers: 'minus-switch-from', exec: () => { status.minusUseCnt() } }
+            return { minusDiceHero: 1, triggers: 'minus-switch', exec: () => { status.minusUseCnt() } }
         }),
 
     115103: () => new StatusBuilder('踏风腾跃').heroStatus().icon('ski,2').useCnt(1)
@@ -2646,7 +2646,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 minusDiceHero: 1,
                 isQuickAction: true,
-                triggers: 'minus-switch-from',
+                triggers: 'minus-switch',
                 exec: () => status.minusRoundCnt(),
             }
         }),
@@ -2677,7 +2677,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (switchHeroDiceCnt == 0) return;
             return {
                 minusDiceHero: 1,
-                triggers: 'minus-switch-from',
+                triggers: 'minus-switch',
                 exec: () => { status.minusUseCnt() }
             }
         }),
@@ -2695,8 +2695,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【我方下次执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。')
         .handle((status, event) => {
-            const { isQuickAction } = event;
-            if (isQuickAction) return;
+            if (event.isQuickAction) return;
             return {
                 isQuickAction: true,
                 triggers: 'minus-switch-from',
@@ -2767,7 +2766,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (switchHeroDiceCnt == 0) return;
             return {
                 minusDiceHero: 1,
-                triggers: 'minus-switch-from',
+                triggers: 'minus-switch',
                 exec: () => { status.minusUseCnt() }
             }
         }),
@@ -2857,7 +2856,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303226: () => new StatusBuilder('坍陷与契机（生效中）').combatStatus().icon('debuff').roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，双方牌手进行｢切换角色｣行动时：】需要额外花费1个元素骰。')
-        .handle(() => ({ triggers: 'add-switch-from', addDiceHero: 1 })),
+        .handle(() => ({ triggers: 'add-switch', addDiceHero: 1 })),
 
     303227: () => new StatusBuilder('四叶印').heroStatus().icon('buff3')
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign)

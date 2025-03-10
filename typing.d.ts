@@ -85,7 +85,7 @@ type Status = GIStatus;
 
 type Hero = GIHero;
 
-type Skill = GISkill
+type Skill = GISkill;
 
 type MinusDiceSkill = {
     skill?: number[],
@@ -273,6 +273,7 @@ type Preview = ActionData & {
     willSummonChange?: number[][],
     willSupportChange?: number[][],
     willEnergyChange?: number[][],
+    changedHeros?: (string | undefined)[][],
     heroCanSelect?: boolean[],
     supportCanSelect?: boolean[][],
     summonCanSelect?: boolean[][],
