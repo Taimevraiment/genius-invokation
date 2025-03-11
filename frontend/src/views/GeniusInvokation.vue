@@ -740,6 +740,8 @@ body {
   border-radius: 50%;
   top: 50%;
   left: 50%;
+  text-align: center;
+  align-content: center;
   transform: translate(-50%, -50%);
   box-sizing: border-box;
 }

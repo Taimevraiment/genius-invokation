@@ -51,7 +51,8 @@ describe('hero', function () {
         const player = room.players[room.currentPlayerIdx];
         const opponent = room.players[room.currentPlayerIdx ^ 1];
         room.testDmgFn.push(() => {
-            expect(opponent.heros[opponent.hidx].hp).equal(8);
+            const hero = opponent.heros[opponent.hidx];
+            expect(hero.hp).equal(hero.maxHp - 2);
             done();
         });
         room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
@@ -61,7 +62,8 @@ describe('hero', function () {
             const player = room.players[room.currentPlayerIdx];
             const opponent = room.players[room.currentPlayerIdx ^ 1];
             room.testDmgFn.push(() => {
-                expect(opponent.heros[opponent.hidx].hp).equal(9);
+                const hero = opponent.heros[opponent.hidx];
+                expect(hero.hp).equal(hero.maxHp - 1);
                 done();
             });
             room.getActionDev({ cpidx: opponent.pidx, cmds: [{ cmd: 'getStatus', status: 111012 }] });
@@ -71,7 +73,7 @@ describe('hero', function () {
             const player = room.players[room.currentPlayerIdx];
             const opponent = room.players[room.currentPlayerIdx ^ 1];
             room.testDmgFn.push(() => {
-                expect(opponent.heros.map(h => h.hp)).eql([8, 8, 8]);
+                expect(opponent.heros.map(h => h.hp)).eql(opponent.heros.map(h => h.maxHp - 2));
                 done();
             });
             changeFrontHero(player, 0);
@@ -86,7 +88,7 @@ describe('hero', function () {
             player.status = 1;
             room.getAction({ type: ACTION_TYPE.EndPhase }, player.pidx);
             await roomWait(room);
-            expect(opponent.heros.map(h => h.hp)).eql([9, 9, 9]);
+            expect(opponent.heros.map(h => h.hp)).eql(opponent.heros.map(h => h.maxHp - 1));
         });
         it('唯此一心', () => {
             const player = room.players[room.currentPlayerIdx];
@@ -95,10 +97,19 @@ describe('hero', function () {
             player.heros[0].skills[2].useCnt++;
             room.getActionDev({ cpidx: room.currentPlayerIdx, cmds: [{ cmd: 'getCard', cnt: 1, card: 211011 }] });
             room.testDmgFn.push(() => {
-                expect(opponent.heros.map(h => h.hp)).eql([8, 7, 7]);
+                expect(opponent.heros.map(h => h.hp)).eql(opponent.heros.map(h => h.maxHp - 2 - +!h.isFront));
                 done();
             });
             room.getAction({ type: ACTION_TYPE.UseCard, cardIdxs: [5] });
+        });
+        it('众降天华', () => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            room.testDmgFn.push(() => {
+                expect(opponent.heros.map(h => h.hp)).eql(opponent.heros.map(h => h.maxHp - 1 - +!h.isFront));
+                done();
+            });
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 4, diceSelect: player.dice.map((_, i) => i < 3) });
         });
     });
 });

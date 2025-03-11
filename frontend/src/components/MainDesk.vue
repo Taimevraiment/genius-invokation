@@ -1214,6 +1214,7 @@ button:active {
 
 .will-attach {
   width: 20px;
+  --blink-opacity: 0.5;
   animation: blink 1s linear infinite alternate;
   z-index: 5;
 }
