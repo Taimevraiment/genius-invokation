@@ -527,7 +527,10 @@ watchEffect(() => {
   isShowSkill.value = [];
   skillExplain.value = [];
   if (info.value && 'costType' in info.value) { // 卡牌
-    info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' })).filter(v => v != '');
+    info.value.UI.descriptions = info.value.UI.description
+      .split(/(?<!\\)；/)
+      .map(desc => wrapDesc(desc, { obj: info.value as Card, type: type.value == INFO_TYPE.Support ? 'support' : 'card' }))
+      .filter(v => v != '');
     if (type.value == INFO_TYPE.Support) { // 支援物
       const onceDesc = info.value.UI.descriptions.findIndex(v => v.includes('入场时：'));
       if (onceDesc > -1) info.value.UI.descriptions.splice(onceDesc, 1);
@@ -543,7 +546,7 @@ watchEffect(() => {
   }
   if (info.value && 'maxUse' in info.value) { // 召唤物
     smnExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
-    info.value.UI.descriptions = (info.value.UI.description as string).split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Summon }));
+    info.value.UI.descriptions = info.value.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: info.value as Summon }));
     const onceDesc = info.value.UI.descriptions.findIndex(v => v.includes('入场时：'));
     if (onceDesc > -1) info.value.UI.descriptions.splice(onceDesc, 1);
   }
@@ -652,8 +655,7 @@ const showRule = (...desc: string[]) => {
   font-size: medium;
   display: inline-block;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
 }
 
 .cost-img {
@@ -664,8 +666,10 @@ const showRule = (...desc: string[]) => {
 
 .info-card-cost>span {
   position: absolute;
-  left: 8px;
-  top: 3px;
+  width: 25px;
+  height: 27px;
+  text-align: center;
+  align-content: center;
 }
 
 .info-card-energy,
@@ -682,8 +686,7 @@ const showRule = (...desc: string[]) => {
   color: white;
   display: inline-block;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
 }
 
 .info-card-energy>span,
@@ -906,17 +909,20 @@ svg {
   align-items: center;
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
 }
 
 .info-outer-container>.info-container .skill-cost>.cost-img {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
 }
 
 .info-outer-container>.info-container .skill-cost>span {
   position: absolute;
+  width: 23px;
+  height: 16px;
+  text-align: center;
+  align-content: center;
 }
 </style>

@@ -10,7 +10,7 @@
         <span class="dice-cnt">
           <div>{{ diceCnt[playerIdx ^ 1] }}</div>
         </span>
-        <div style="position: relative;">{{ pileCnt[playerIdx ^ 1] }}</div>
+        <div class="pile-cnt">{{ pileCnt[playerIdx ^ 1] }}</div>
         <Handcard class="will-getcard-oppo" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
@@ -46,7 +46,7 @@
         <span class="dice-cnt">
           <div>{{ diceCnt[playerIdx] }}</div>
         </span>
-        <div style="position: relative;">{{ pileCnt[playerIdx] }}</div>
+        <div class="pile-cnt">{{ pileCnt[playerIdx] }}</div>
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
@@ -871,8 +871,7 @@ const mouseup = () => {
   aspect-ratio: 1/1;
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   margin-bottom: 5px;
   cursor: pointer;
 }
@@ -919,6 +918,7 @@ const mouseup = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: HYWenHeiNumber;
 }
 
 .dice-cnt>div {
@@ -929,6 +929,11 @@ const mouseup = () => {
   justify-content: center;
   align-items: center;
   background-color: #5675a5;
+}
+
+.pile-cnt {
+  position: relative;
+  font-family: HYWenHeiNumber;
 }
 
 button {
@@ -1017,15 +1022,13 @@ button:active {
   display: flex;
   justify-content: center;
   align-items: center;
-  letter-spacing: -2px;
   font-size: min(23px, max(16px, 2vw));
 }
 
 .hero-hp-cnt {
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   z-index: 1;
   padding-right: 2px;
   transform: scale(var(--scale-val-change));
@@ -1115,8 +1118,7 @@ button:active {
   /* background-color: #c67b7b; */
   color: white;
   -webkit-text-stroke: 0.8px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1176,8 +1178,7 @@ button:active {
   border-image-width: 7px;
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   z-index: 1;
 }
 
@@ -1253,8 +1254,7 @@ button:active {
   font-size: 0;
   box-sizing: border-box;
   -webkit-text-stroke: 0.8px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   /* background-image: url(@@/image/Attack.png); */
   background-size: 100%;
 }
@@ -1323,6 +1323,7 @@ button:active {
   right: -6px;
   bottom: -3px;
   font-size: 12px;
+  font-family: HYWenHeiNumber;
   height: 12px;
   width: 12px;
   line-height: 12px;
@@ -1489,10 +1490,8 @@ button:active {
   transform: translate(35%, -30%) scale(var(--scale-val-change));
   color: white;
   font-size: medium;
-  letter-spacing: -2px;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   transition: 0.2s;
   z-index: 1;
 }
@@ -1520,10 +1519,8 @@ button:active {
   transform: translate(-35%, 30%);
   color: white;
   font-size: medium;
-  letter-spacing: -2px;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
   z-index: 1;
 }
 

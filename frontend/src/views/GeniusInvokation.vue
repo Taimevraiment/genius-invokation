@@ -792,8 +792,7 @@ body {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
-  font-family: sans-serif;
-  font-weight: bold;
+  font-family: HYWenHeiNumber;
 }
 
 .cost-img {

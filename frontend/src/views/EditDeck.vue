@@ -1044,7 +1044,6 @@ input#isOfflineInput:checked {
     display: flex;
     justify-content: center;
     align-items: center;
-    letter-spacing: -2px;
     z-index: 1;
     font-size: min(23px, max(16px, 2vw));
 }
@@ -1060,10 +1059,8 @@ input#isOfflineInput:checked {
     position: absolute;
     color: white;
     -webkit-text-stroke: 1px black;
-    font-family: sans-serif;
-    font-weight: bold;
+    font-family: HYWenHeiNumber;
     z-index: 1;
-    padding-right: 2px;
 }
 
 .curr-deck {
@@ -1090,8 +1087,7 @@ input#isOfflineInput:checked {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
-    font-family: sans-serif;
-    font-weight: bold;
+    font-family: HYWenHeiNumber;
     z-index: 3;
 }
 
@@ -1100,6 +1096,10 @@ input#isOfflineInput:checked {
     position: absolute;
     left: 0;
     top: 0;
+    width: 10px;
+    height: 10px;
+    text-align: center;
+    align-content: center;
 }
 
 .dice-img {
@@ -1119,8 +1119,7 @@ input#isOfflineInput:checked {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
-    font-family: sans-serif;
-    font-weight: bold;
+    font-family: HYWenHeiNumber;
     z-index: 3;
 }
 

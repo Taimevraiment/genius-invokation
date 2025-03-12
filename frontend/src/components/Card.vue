@@ -129,8 +129,7 @@ const getPngIcon = (name: string = '') => {
     text-align: center;
     line-height: 30px;
     -webkit-text-stroke: 1px black;
-    font-family: sans-serif;
-    font-weight: bold;
+    font-family: HYWenHeiNumber;
     z-index: 1;
 }
 
@@ -144,8 +143,7 @@ const getPngIcon = (name: string = '') => {
     text-align: center;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
-    font-family: sans-serif;
-    font-weight: bold;
+    font-family: HYWenHeiNumber;
     z-index: 1;
 }
 
