@@ -1115,6 +1115,7 @@ body {
   flex-direction: row;
   align-items: center;
   z-index: 6;
+  font-family: HYWenHeiNumber;
 }
 
 .lookon-count>img {

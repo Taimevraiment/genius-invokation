@@ -813,6 +813,7 @@ const showRule = (...desc: string[]) => {
   color: white;
   background: #000000ae;
   border-radius: 50%;
+  font-family: HYWenHeiNumber;
 }
 
 .info-hero-skill-desc,
