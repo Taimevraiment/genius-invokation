@@ -158,8 +158,10 @@
           <img class="hero-center-icon" style="width: 30%;opacity: 1;" src="@@/image/Select_Check_01.png"
             v-if="targetSelect?.[hgi]?.[hidx]" />
           <div class="hero-hp" :class="{ 'mobile-hero-hp': isMobile }" v-if="(hero?.hp ?? 0) >= 0">
-            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png"
-              :style="{ filter: `${hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}` }" />
+            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" :style="{
+              filter: `${hasObjById(hero.heroStatus, 122) ? 'saturate(2.2) hue-rotate(-25deg) contrast(0.8)' :
+                hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}`
+            }" />
             <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
               {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
             </div>
@@ -175,25 +177,24 @@
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
-              <img :src="hero.vehicleSlot[1].UI.src || CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]"
-                style="filter: brightness(0.3);" />
+              <img :src="hero.vehicleSlot[1].UI.src || CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]" />
               <div :class="{ 'slot-can-use': hero.vehicleSlot[0].perCnt + hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
           </div>
           <div class="hero-equipment" v-if="(hero?.hp ?? 0) >= 0">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Weapon]] }">
-              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" style="filter: brightness(0.3);" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" />
               <div :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-artifact" v-if="hero.artifactSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Artifact]] }">
-              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Artifact]" style="filter: brightness(0.3);" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Artifact]" />
               <div :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-talent" v-if="hero.talentSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Talent]] }">
-              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Talent]" style="filter: brightness(0.3);" />
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Talent]" />
               <div :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
             </div>
           </div>
@@ -203,14 +204,8 @@
                 :class="{ 'el-tip-anime-left-icon': elTips[hgi][hidx][0] != '' }">
               <img :src="ELEMENT_URL[elTips[hgi][hidx][2]]" alt="" style="width: 20px;"
                 :class="{ 'el-tip-anime-right-icon': elTips[hgi][hidx][0] != '' }">
-              <div class="el-tip" :class="{
-                'el-tip-anime': elTips[hgi][hidx][0] != '',
-              }" :style="{
-                color: REACTION_COLOR[elTips[hgi][hidx][0]]
-                // color: ELEMENT_COLOR[elTips[hgi][hidx][2]],
-                // fontWeight: 'bolder',
-                // '-webkit-text-stroke': `0.5px ${ELEMENT_COLOR[elTips[hgi][hidx][1]]}`,
-              }">
+              <div class="el-tip" :class="{ 'el-tip-anime': elTips[hgi][hidx][0] != '' }"
+                :style="{ color: REACTION_COLOR[elTips[hgi][hidx][0]] }">
                 {{ elTips[hgi][hidx][0] }}
               </div>
             </template>
@@ -1096,6 +1091,7 @@ button:active {
 .hero-vehicle>img {
   width: 100%;
   border-radius: 50%;
+  filter: brightness(0.3);
 }
 
 .is-front-oppo {
@@ -1366,7 +1362,6 @@ button:active {
   width: 100%;
   height: 100%;
   border-radius: inherit;
-  opacity: 0.6;
 }
 
 .hero-shield2 {
