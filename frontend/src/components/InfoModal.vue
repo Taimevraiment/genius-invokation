@@ -667,7 +667,8 @@ const showRule = (...desc: string[]) => {
 .info-card-cost>span {
   position: absolute;
   width: 25px;
-  height: 27px;
+  height: 28px;
+  line-height: 28px;
   text-align: center;
   align-content: center;
 }

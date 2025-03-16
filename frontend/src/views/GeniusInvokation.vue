@@ -141,8 +141,7 @@
         <div class="skill-btn" :class="{ 'skill-vehicle': skill.type == SKILL_TYPE.Vehicle }"
           @click.stop="useSkill(skill.id)" :style="{ boxShadow: skill.style.fullEnergy }">
           <img class="skill-bg" :src="getPngIcon('skill_btn_bg')" alt="" />
-          <div class="skill3-bg" :style="{ background: skill.style.notFullEnergy }">
-          </div>
+          <div class="skill3-bg" :style="{ background: skill.style.notFullEnergy }"></div>
           <img class="skill3-btn" :src="getPngIcon('skill3_btn_bg')" alt="" />
           <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0" :alt="SKILL_TYPE_ABBR[skill.type]"
             draggable="false" />

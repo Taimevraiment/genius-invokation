@@ -1098,6 +1098,7 @@ input#isOfflineInput:checked {
     top: 0;
     width: 10px;
     height: 10px;
+    line-height: 23px;
     text-align: center;
     align-content: center;
 }
