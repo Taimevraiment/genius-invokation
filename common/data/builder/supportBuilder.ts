@@ -1,11 +1,15 @@
 import { Card, Support, Trigger, VersionCompareFn } from "../../../typing";
 import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
+import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { SupportHandleEvent, SupportHandleRes } from "../supports.js";
+import { SupportExecEvent, SupportExecRes, SupportHandleEvent, SupportHandleRes } from "../supports.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
-type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
+type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers' | 'exec'> & {
+    triggers?: Trigger | Trigger[],
+    exec?: (support: Support, cmds: CmdsGenerator, event: SupportExecEvent) => SupportExecRes | void,
+};
 
 export class GISupport {
     entityId: number = -1; // 实体id
@@ -33,9 +37,14 @@ export class GISupport {
                 return {}
             }
             const builderRes = handle?.(support, event, compareVersionFn(ver)) ?? {};
+            const cmds = new CmdsGenerator();
             const res: SupportHandleRes = {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
+                exec: (support, event) => {
+                    const exeres = builderRes.exec?.(support, cmds, event);
+                    return { ...exeres, cmds }
+                }
             }
             return res;
         };

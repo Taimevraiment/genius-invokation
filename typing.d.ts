@@ -8,6 +8,7 @@ import { type GISkill } from "./common/data/builder/skillBuilder"
 import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
 import { type GISupport } from "./common/data/builder/supportBuilder"
+import CmdsGenerator from "./common/utils/cmdsGenerator"
 import { compareVersionFn } from "./common/utils/gameUtil"
 
 type RoomList = {
@@ -291,8 +292,8 @@ type CalcAtkRes = {
     pdmg?: number,
     isSelf?: boolean,
     hidxs?: number[],
-    cmds?: Cmds[],
-    execmds?: Cmds[],
+    cmds?: CmdsGenerator,
+    execmds?: CmdsGenerator,
     damages?: SmnDamageHandle,
     exec?: (...args: any) => any,
 }
@@ -301,7 +302,7 @@ type SmnDamageHandle = (isOppo?: boolean, cnt?: number, element?: DamageType, hi
 
 type AtkTask = {
     pidx: number,
-    cmds: Cmds[],
+    cmds: CmdsGenerator,
     atkname: string,
 }
 

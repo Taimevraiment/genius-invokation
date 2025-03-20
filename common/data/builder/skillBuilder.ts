@@ -4,12 +4,15 @@ import {
     SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
+import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
 import { clone, convertToArray, isCdt } from "../../utils/utils.js";
 import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
+
+type SkillBuilderHandleEvent = SkillHandleEvent & { cmds: CmdsGenerator };
 
 export class GISkill {
     id: number; // 唯一id
@@ -45,7 +48,8 @@ export class GISkill {
             id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[],
             ver?: Version, canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: any[],
         } = {},
-        src?: string | string[], handle?: (hevent: SkillHandleEvent, version: VersionCompareFn) => SkillBuilderHandleRes | undefined | void
+        src?: string | string[],
+        handle?: (hevent: SkillBuilderHandleEvent, version: VersionCompareFn) => SkillBuilderHandleRes | undefined | void
     ) {
         this.name = name;
         this.type = type;
@@ -73,10 +77,13 @@ export class GISkill {
         this.canSelectHero = canSelectHero;
         this.addition = [...adt];
         this.handle = hevent => {
+            const cmds = new CmdsGenerator();
+            const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds };
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
-            const builderRes = handle?.(hevent, compareVersionFn(ver)) ?? {};
+            const builderRes = handle?.(hbevent, compareVersionFn(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
+                cmds: isCdt(cmds.length, cmds),
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }
@@ -124,7 +131,7 @@ export class SkillBuilder extends BaseBuilder {
     private _costElement: SkillCostType | undefined;
     private _anyCost: number = 0;
     private _energyCost: VersionMap<number> = new VersionMap();
-    private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined;
+    private _handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined;
     private _perCnt: number = 0;
     private _src: string[] = [];
     private _explains: string[] = [];
@@ -218,7 +225,7 @@ export class SkillBuilder extends BaseBuilder {
         this._anyCost = cost;
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined) {
+    handle(handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined) {
         this._handle = handle;
         return this;
     }
@@ -280,7 +287,7 @@ export class SkillBuilder extends BaseBuilder {
 export class NormalSkillBuilder extends BaseBuilder {
     private _id: number = -1;
     private _weaponType: WeaponType | undefined;
-    private _handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined) | undefined;
+    private _handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined) | undefined;
     private _perCnt: number = 0;
     private _anyCost: number = 2;
     private _damage: number = 0;
@@ -332,7 +339,7 @@ export class NormalSkillBuilder extends BaseBuilder {
         this._damage = damage;
         return this;
     }
-    handle(handle: ((event: SkillHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined)) {
+    handle(handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined)) {
         this._handle = handle;
         return this;
     }

@@ -1,5 +1,6 @@
-import { Card, Cmds, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
+import { Card, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
 import { CARD_SUBTYPE, CardSubtype, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
+import CmdsGenerator from "../utils/cmdsGenerator.js"
 import { allHidxs, getNextBackHidx, getObjById, hasObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
@@ -55,7 +56,7 @@ export type SkillHandleRes = {
     summonPre?: (number | [number, ...any] | Summon)[] | number,
     statusAfter?: (number | [number, ...any | Status])[] | number,
     statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
-    cmds?: Cmds[],
+    cmds?: CmdsGenerator,
     heal?: number,
     hidxs?: number[],
     dmgElement?: ElementType,
@@ -164,9 +165,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1121422',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
-        .vehicle().cost(1).handle(event => ({
-            cmds: [{ cmd: 'switch-before' }],
-            status: isCdt(allHidxs(event.heros).length == 1, 112145),
+        .vehicle().cost(1).handle(({ heros, cmds }) => (cmds.switchBefore(), {
+            status: isCdt(allHidxs(heros).length == 1, 112145),
             statusOppo: 112143,
         })),
 
@@ -178,11 +178,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src()
         .vehicle().damage(2).costAny(1).handle(event => {
-            const { eheros, combatStatus, hero: { hidx } } = event;
+            const { eheros, combatStatus, hero: { hidx }, cmds } = event;
             const hidxs = getNextBackHidx(eheros);
-            const cmds: Cmds[] = [{ cmd: 'getStatus', status: 112145, hidxs: [hidx] }];
-            if (hidxs.length == 0) return { cmds }
-            return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs, cmds }
+            cmds.getStatus(112145, { hidxs: hidx });
+            if (hidxs.length == 0) return;
+            return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
         }),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
@@ -212,10 +212,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {
-            const { hcards = [] } = event;
-            const cmds: Cmds[] = [{ cmd: 'stealCard', cnt: 1, mode: CMD_MODE.HighHandCard }];
-            if (ver.gte('v5.4.0')) cmds.push({ cmd: 'getCard', cnt: 1, isOppo: true });
-            return { cmds, minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
+            const { hcards = [], cmds } = event;
+            cmds.stealCard(1, CMD_MODE.HighHandCard);
+            if (ver.gte('v5.4.0')) cmds.getCard(1, { isOppo: true });
+            return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。（每回合最多使用1次）')
@@ -231,12 +231,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130041',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e9339d30ff4a5642b32bc1208063a08c_2715679545278748017.png')
         .vehicle().costAny(2).handle(event => {
-            const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [] } = event;
-            const cmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];
+            const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [], cmds } = event;
+            cmds.getCard(2);
             if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {
-                cmds.push({ cmd: 'getStatus', status: 301301 });
+                cmds.getStatus(301301);
             }
-            return { cmds }
         }),
 
     3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中[挑选]1张加入手牌，并且治疗附属角色1点。')
@@ -255,7 +254,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     3130061: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
         .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130063',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
-        .vehicle().costSame(1).handle(() => ({ cmds: [{ cmd: 'switch-after' }], statusOppo: 301302 })),
+        .vehicle().costSame(1).handle(({ cmds }) => (cmds.switchAfter(), { statusOppo: 301302 })),
 
     3130071: () => new SkillBuilder('浪船·迅击炮').description('{dealDmg}。')
         .src()

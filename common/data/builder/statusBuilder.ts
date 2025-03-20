@@ -2,12 +2,15 @@ import { Status, Trigger, VersionCompareFn } from "../../../typing";
 import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
+import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
 import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
+
+type StatusBuilderHandleEvent = StatusHandleEvent & { cmds: CmdsGenerator };
 
 export class GIStatus {
     id: number; // 唯一id
@@ -34,7 +37,7 @@ export class GIStatus {
     constructor(
         id: number, name: string, description: string, icon: string, group: StatusGroup, type: StatusType[],
         useCnt: number, maxCnt: number, roundCnt: number,
-        handle?: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined,
+        handle?: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
             isTalent?: boolean, isReset?: boolean, adt?: any[], ver?: Version,
@@ -74,7 +77,7 @@ export class GIStatus {
         this.perCnt = pct;
         this.isTalent = isTalent;
         this.addition = adt;
-        let thandle: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
+        let thandle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
             // this.icon = 'shield2';
             // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
@@ -132,14 +135,17 @@ export class GIStatus {
             }
         }
         this.handle = (status, event = {}) => {
-            const { reset = false } = event;
+            const cmds = new CmdsGenerator();
+            const cevent = { ...event, cmds };
+            const { reset = false } = cevent;
             if (reset) {
                 if (isReset) status.perCnt = pct;
                 return {}
             }
-            const handleRes = thandle(status, event, compareVersionFn(ver)) ?? {};
+            const handleRes = thandle(status, cevent, compareVersionFn(ver)) ?? {};
             const res: StatusHandleRes = {
                 ...handleRes,
+                cmds,
                 triggers: isCdt(handleRes.triggers, convertToArray(handleRes.triggers) as Trigger[]),
             }
             return res;
@@ -192,7 +198,7 @@ export class GIStatus {
 
 export class StatusBuilder extends BaseBuilder {
     private _id: number = -1;
-    private _name: string = '无';
+    private _name: VersionMap<string> = new VersionMap();
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
     private _useCnt: VersionMap<number> = new VersionMap();
@@ -207,17 +213,21 @@ export class StatusBuilder extends BaseBuilder {
     private _summonId: number = -1;
     private _addition: any[] = [];
     private _isReset: boolean = true;
-    private _handle: ((status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) | undefined;
+    private _handle: ((status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionCompareFn) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: VersionCompareFn) => boolean, number][] = [];
     private _barrierCnt: number = 1;
     private _barrierUsage: number = 1;
     constructor(name: string) {
         super();
-        this._name = name;
+        this._name.set(['vlatest', name]);
     }
     id(id: number) {
         this._id = id;
+        return this;
+    }
+    name(name: string, version: Version = 'vlatest') {
+        this._name.set([version, name]);
         return this;
     }
     heroStatus() {
@@ -313,7 +323,7 @@ export class StatusBuilder extends BaseBuilder {
         this._isReset = false;
         return this;
     }
-    handle(handle: (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) {
+    handle(handle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }
@@ -333,6 +343,7 @@ export class StatusBuilder extends BaseBuilder {
         return this;
     }
     done() {
+        const name = this._name.get(this._curVersion, '无');
         const description = this._description.get(this._curVersion, '');
         const icon = this._icon.get(this._curVersion, '');
         const perCnt = this._perCnt.get(this._curVersion, 0);
@@ -358,8 +369,8 @@ export class StatusBuilder extends BaseBuilder {
                         if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
                     }
                 }
-            } : (status: Status, event: StatusHandleEvent, ver: VersionCompareFn) => this._handle?.(status, event, ver) ?? {};
-        return new GIStatus(this._id, this._name, description, icon, this._group, this._type,
+            } : (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => this._handle?.(status, event, ver) ?? {};
+        return new GIStatus(this._id, name, description, icon, this._group, this._type,
             useCnt, maxCnt, roundCnt, handle,
             {
                 pct: perCnt,

@@ -1,13 +1,20 @@
-import { Cmds, Summon, Trigger, VersionCompareFn } from "../../../typing";
+import { Summon, Trigger, VersionCompareFn } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
+import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { SummonExecRes, SummonHandleEvent, SummonHandleRes } from "../summons.js";
+import { SummonExecEvent, SummonExecRes, SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
-type SummonBuilderHandleRes = Omit<SummonHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
+type SummonBuilderExecEvent = SummonExecEvent & { cmds: CmdsGenerator };
+
+type SummonBuilderHandleRes = Omit<SummonHandleRes, 'triggers' | 'exec'> & {
+    triggers?: Trigger | Trigger[],
+    exec?: (event: SummonBuilderExecEvent) => SummonExecRes | void,
+    isOnlyPhaseEnd?: boolean,
+};
 
 export class GISummon {
     id: number; // 唯一id
@@ -32,6 +39,7 @@ export class GISummon {
         icon: string, // 右上角图标
         hasPlus: boolean, // 是否有加号
         isWill: boolean, // 是否为将要生成的召唤物
+        willChange: boolean, // 是否将要变化的召唤物
         explains: string[], // 要解释的文本
     };
     constructor(
@@ -68,6 +76,7 @@ export class GISummon {
             hasPlus: pls,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             isWill: false,
+            willChange: false,
             descriptions: [],
         }
         this.perCnt = pct;
@@ -83,31 +92,45 @@ export class GISummon {
                 summon.perCnt = pct;
                 if (!spReset && trigger != 'enter') return {}
             }
+            const cmds = new CmdsGenerator();
             if (!handle) {
                 return {
                     triggers: ['phase-end'],
-                    exec: execEvent => (execEvent.summon ?? summon).phaseEndAtk(event),
+                    exec: execEvent => ({ cmds: (execEvent.summon ?? summon).phaseEndAtk(event, cmds) }),
                 }
             }
             const builderRes = handle(summon, event, compareVersionFn(ver)) ?? {};
-            const res: SummonHandleRes = {
+            return {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
+                exec: execEvent => {
+                    if (!builderRes.exec) {
+                        builderRes.exec = execEvent => {
+                            const { summon: smn = summon, cmds } = execEvent;
+                            if (!builderRes.isOnlyPhaseEnd || event.trigger == 'phase-end') smn.phaseEndAtk(event, cmds);
+                        }
+                    }
+                    builderRes.exec({ ...execEvent, cmds });
+                    return { cmds }
+                }
             }
-            return res;
         };
     }
     setEntityId(id: number): Summon {
         this.entityId = id;
         return this;
     }
-    phaseEndAtk(event: SummonHandleEvent, healHidxs?: number[]): SummonExecRes {
+    phaseEndAtk(event: SummonHandleEvent, cmds: CmdsGenerator, healHidxs?: number[]): CmdsGenerator {
         if (this.isDestroy == SUMMON_DESTROY_TYPE.Used) this.minusUseCnt();
         else if (!event.isExec) this.useCnt = -100;
-        const cmds: Cmds[] = [];
-        if (this.damage >= 0) cmds.push({ cmd: 'attack' });
-        if (this.shieldOrHeal > 0) cmds.push({ cmd: 'heal', hidxs: healHidxs });
-        return { cmds }
+        if (this.damage >= 0) cmds.attack();
+        if (this.shieldOrHeal > 0) cmds.smnHeal({ hidxs: healHidxs });
+        return cmds;
+    }
+    changeAnemoElement(trigger: Trigger) {
+        if (trigger.includes('elReaction-Anemo:') && this.element == ELEMENT_TYPE.Anemo) {
+            this.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
+        }
     }
     addUseCnt(ignoreMax: boolean): void
     addUseCnt(n?: number, ignoreMax?: boolean): void

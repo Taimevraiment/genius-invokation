@@ -325,10 +325,10 @@
         <div class="summons">
           <div class="summon-area" v-if="!!opponent" v-for="(smnArea, saidx) in smnAreas" :key="saidx">
             <div class="summon" :class="{
-              'will-attach': summon.UI.isWill,
+              'will-attach': summon.UI.isWill || summon.UI.willChange,
               'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
               'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING && !summon.UI.isWill,
-              'active-summoncnt': canAction && (summonCnt[getGroup(saidx)][suidx] != 0 || changedSummons[getGroup(saidx)][suidx]),
+              'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
             }" v-for="(summon, suidx) in smnArea" :key="suidx"
               @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
               <div class="summon-img-content">
@@ -620,7 +620,7 @@ const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wr
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
 const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch.flat()));
-const changedSummons = computed<(Summon | undefined)[][]>(() => props.client.changedSummons);
+// const changedSummons = computed<(Summon | undefined)[][]>(() => props.client.changedSummons);
 const smnAreas = computed(() => {
   const { client: { player, opponent, changedSummons } } = props;
   const areas = [[...opponent?.summons, ...willSummons.value[0]], [...player.summons, ...willSummons.value[1]]];
@@ -1162,8 +1162,7 @@ button:active {
   top: -5px;
   left: -5px;
   min-width: 35px;
-  height: 20px;
-  line-height: 20px;
+  height: 23px;
   /* border-radius: 10px;
   color: #22a800;
   background-color: #7bc67c; */
@@ -1474,7 +1473,7 @@ button:active {
 
 .summon-top-num,
 .support-top-num {
-  --scale-val-change: 1;
+  --scale-val-change: 1.1;
   position: absolute;
   top: 0;
   right: 0;
@@ -1482,7 +1481,7 @@ button:active {
   height: 25px;
   text-align: center;
   line-height: 25px;
-  transform: translate(35%, -30%) scale(var(--scale-val-change));
+  transform: translate(35%, -25%) scale(var(--scale-val-change));
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
@@ -1511,7 +1510,7 @@ button:active {
   height: 25px;
   text-align: center;
   line-height: 25px;
-  transform: translate(-35%, 30%);
+  transform: translate(-35%, 35%) scale(1.1);
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;

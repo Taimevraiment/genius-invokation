@@ -943,6 +943,7 @@ export default class GeniusInvokationClient {
             this.energyCnt = [...clone(preview.willEnergyChange)!];
             this.heroSelect[1].forEach((_, i, a) => a[i] = +(preview.heroIdxs?.[0] == i));
             this._resetTargetSelect();
+            this._resetSummonSelect();
             if ((preview.tarHidx ?? -1) != -1) this.targetSelect[0][preview.tarHidx!] = true;
             else if (preview.isValid) this.targetSelect[1][this.player.hidx] = true;
             this.isValid = preview.isValid;

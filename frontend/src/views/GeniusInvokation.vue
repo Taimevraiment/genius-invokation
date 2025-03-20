@@ -670,6 +670,7 @@ body {
 }
 
 .skill-will {
+  filter: brightness(1.2);
   z-index: 5;
 }
 
