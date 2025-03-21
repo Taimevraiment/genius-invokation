@@ -52,8 +52,8 @@ export default class TaskQueue {
         for (const [func, after = 0, before = 0] of funcs) {
             if (this.env != 'test') await delay(before);
             res = !!await func();
-            if (this.env != 'test') await delay(after);
-            duration += before + after;
+            if (this.env != 'test' && !res) await delay(after);
+            duration += before + (res ? 0 : after);
         }
         this._writeLog(`execTask-end-${taskType}:${duration}ms`, 'emit');
         this.isExecuting = true;

@@ -620,7 +620,6 @@ const elTips = computed<[string, PureElementType, PureElementType][][]>(() => wr
 const willHp = computed<(number | undefined)[][]>(() => wrapArr(props.client.willHp));
 const willSummons = computed<Summon[][]>(() => props.client.willSummons);
 const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch.flat()));
-// const changedSummons = computed<(Summon | undefined)[][]>(() => props.client.changedSummons);
 const smnAreas = computed(() => {
   const { client: { player, opponent, changedSummons } } = props;
   const areas = [[...opponent?.summons, ...willSummons.value[0]], [...player.summons, ...willSummons.value[1]]];

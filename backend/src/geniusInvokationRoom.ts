@@ -1289,6 +1289,11 @@ export default class GeniusInvokationRoom {
         const calcSummonAtk = (cplayers: Player[], smn: Summon, trg: Trigger, isSelf = 1) => {
             const trounds = [0];
             const cpidx = pidx ^ isSelf ^ 1;
+            const calcRes = {
+                isKilled: false,
+                atriggers: cplayers[cpidx].heros.map(() => []) as Trigger[][],
+                etriggers: cplayers[cpidx ^ 1].heros.map(() => []) as Trigger[][],
+            }
             while (trounds.length && !isExec) {
                 const tround = trounds.pop();
                 const { smnres, tasks } = this._detectSummon(pidx, trg, { csummon: [smn], players: cplayers, skid, atkHidx: isSelf ? ohidx : ehidx(), tround, hcard: withCard, isExec: false });
@@ -1305,17 +1310,20 @@ export default class GeniusInvokationRoom {
                             ]),
                         }
                     }
-                    calcAtk(cplayers, {
+                    const smnAtkRes = calcAtk(cplayers, {
                         ...smnres,
                         element: smn.element,
                         heal: isCdt(smn.shieldOrHeal > 0, smn.shieldOrHeal),
                         cmds,
                         damages
                     }, 'summon', smn.id, skid, isSelf);
+                    calcRes.atriggers.forEach((trgs, trgsi) => trgs.push(...smnAtkRes.atriggers[trgsi]));
+                    calcRes.etriggers.forEach((trgs, trgsi) => trgs.push(...smnAtkRes.etriggers[trgsi]));
                     calcTasks(tasks, cplayers, pidx);
                     if (smnres.tround) trounds.push(smnres.tround);
                 }
             }
+            return calcRes;
         }
         const calcAtk = (oplayers: Player[], res: CalcAtkRes, type: string, stsId: number, skid = -1, isSelf = 0) => {
             const cpidx = pidx ^ +!isSelf;
@@ -1325,7 +1333,8 @@ export default class GeniusInvokationRoom {
                 etriggers: oplayers[cpidx ^ 1].heros.map(() => []) as Trigger[][],
             }
             if (res.element == DICE_COST_TYPE.Omni) return calcRes;
-            const atkcmds: Cmds[] = [...(res?.cmds?.value ?? []), ...(res?.execmds?.value ?? []), ...(isCdt(type != 'summon', () => res.exec?.()?.cmds) ?? [])];
+            if (type != 'summon') res.exec?.();
+            const atkcmds: Cmds[] = [...(res?.cmds?.value ?? []), ...(res?.execmds?.value ?? [])];
             res.isSelf ??= !(atkcmds[0]?.isOppo ?? true);
             const dmgedHlen = +!!res.isSelf ^ isSelf ? ehlen : ahlen;
             const atkHidx = isSelf ? cahidx : cehidx;
@@ -1342,7 +1351,9 @@ export default class GeniusInvokationRoom {
                 if (!summonTrigger) return;
                 const { summons } = oplayers[cpidx];
                 convertToArray(summonTrigger).forEach(trg => {
-                    calcSummonAtk(oplayers, summons[smnid] ?? summons.find(s => s.id == smnid), trg, isSelf);
+                    const smnAtkRes = calcSummonAtk(oplayers, summons[smnid] ?? summons.find(s => s.id == smnid), trg, isSelf);
+                    calcRes.atriggers.forEach((trgs, trgsi) => trgs.push(...smnAtkRes.atriggers[trgsi]));
+                    calcRes.etriggers.forEach((trgs, trgsi) => trgs.push(...smnAtkRes.etriggers[trgsi]));
                 });
             });
             const { willHeals: whl, aWillDamages: smndmg, atkedIdxs, tasks = [] } = this._doCmds(cpidx, atkcmds, {
@@ -1468,7 +1479,7 @@ export default class GeniusInvokationRoom {
             const afterAndSwitchTrgs = ctrgs.filter(t => /^after|switch/.test(t));
             if (group == STATUS_GROUP.heroStatus) {
                 if (!notDetectSkill) this._detectSkill(cpidx, afterAndSwitchTrgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
-                this._detectStatus(cpidx, STATUS_TYPE.Usage, afterAndSwitchTrgs, { players: oplayers, energyCnt, hidxs: chidx, isExec });
+                this._detectSlotAndStatus(cpidx, afterAndSwitchTrgs, { types: STATUS_TYPE.Usage, players: oplayers, energyCnt, hidxs: chidx, isExec });
             }
             if (group == STATUS_GROUP.combatStatus) {
                 this._detectSupport(cpidx, afterAndSwitchTrgs, { players: oplayers, supportCnt, energyCnt, hidx: chidx, isExec });
@@ -1938,6 +1949,7 @@ export default class GeniusInvokationRoom {
                     const nsmn = nsmns.find(s => s.entityId == osmns[si].entityId);
                     const smnCnt = nsmn?.useCnt ?? 0;
                     let res = smnCnt - osmns[si].useCnt;
+                    if (nsmn?.UI.willChange) nsmn.useCnt = osmns[si].useCnt;
                     if (res == 0 && pi == pidx && nsummons.some(s => s.entityId == nsmns[si].entityId)) res += 0.3;
                     if (res < -50 || smnCnt <= 0 && nsmn?.isDestroy == SUMMON_DESTROY_TYPE.Used) this._doSummonDestroy(pi, osmns[si], { isExec, supportCnt, isQuickAction });
                     return res;
@@ -3805,7 +3817,7 @@ export default class GeniusInvokationRoom {
         let isTriggered = false;
         let dmgElement: ElementType | undefined;
         const cmds = new CmdsGenerator();
-        const task: [() => void | Promise<void>, number?, number?][] = [];
+        const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         hidxs = convertToArray(hidxs);
         type = convertToArray(type);
         for (const hidx of hidxs) {
@@ -3941,7 +3953,7 @@ export default class GeniusInvokationRoom {
         const heroStatus: Status[] = [];
         const combatStatus: Status[] = [];
         const cmds = new CmdsGenerator();
-        const task: [() => void | Promise<void>, number?, number?][] = [];
+        const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         const ahidx = player.hidx;
         if (Array.isArray(hidxs)) {
             hidxs = hidxs.map(hi => (hi - ahidx + heros.length) % heros.length).sort().map(hi => (hi + ahidx) % heros.length);
@@ -4184,7 +4196,7 @@ export default class GeniusInvokationRoom {
         let aWillHeals: number[] | undefined;
         let readySkill = -1;
         let stsFallAtk = false;
-        const task: [() => void | Promise<void>, number?, number?][] = [];
+        const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         let addDmg = 0;
         let getDmg = 0;
         let multiDmg = 0;
@@ -4336,6 +4348,9 @@ export default class GeniusInvokationRoom {
                                     } else {
                                         const statusHandle = async () => {
                                             const { hidx: ahidx, heros, combatStatus } = this.players[pidx];
+                                            const statuses = group == STATUS_GROUP.heroStatus ? heros[hidx].heroStatus : combatStatus;
+                                            const curStatus = statuses.find(s => s.entityId == sts.entityId);
+                                            if (!curStatus) return true;
                                             this._doCmds(pidx, stscmds, {
                                                 hidxs: [group == STATUS_GROUP.combatStatus ? ahidx : hidx],
                                                 withCard: hcard,
@@ -4343,11 +4358,6 @@ export default class GeniusInvokationRoom {
                                                 source: sts.id,
                                                 isPriority: true,
                                             });
-                                            const statuses = group == STATUS_GROUP.heroStatus ?
-                                                this.players[pidx].heros[hidx].heroStatus :
-                                                this.players[pidx].combatStatus;
-                                            const curStatus = statuses.find(s => s.entityId == sts.entityId);
-                                            if (!curStatus) return;
                                             stsres.exec?.(curStatus, { heros, combatStatus });
                                             if (!curStatus.hasType(STATUS_TYPE.TempNonDestroy, STATUS_TYPE.Accumulate) && (curStatus.useCnt == 0 || curStatus.roundCnt == 0)) {
                                                 curStatus.type.push(STATUS_TYPE.TempNonDestroy);
@@ -4358,7 +4368,6 @@ export default class GeniusInvokationRoom {
                                             if (!curStatus.hasType(STATUS_TYPE.Hide)) this._writeLog(`[${player.name}](${player.pidx})[${curStatus.name}]发动${oCnt != curStatus.useCnt ? ` ${useCntChange}` : ''}`, stsres.notLog ? 'system' : 'log');
                                             const flag = `_doStatus-${group == STATUS_GROUP.heroStatus ? 'hero' : 'combat'}Status-task-${curStatus.name}(${curStatus.entityId})`;
                                             const curStatusIdx = statuses.filter(s => !s.hasType(STATUS_TYPE.Hide)).findIndex(s => s.entityId == sts.entityId);
-                                            if (curStatusIdx == -1) intvl = 0;
                                             this.emit(flag, pidx, { isQuickAction, statusSelect: isCdt(curStatusIdx > -1, [pidx, group, hidx, curStatusIdx]) });
                                             if ((curStatus.useCnt == 0 || curStatus.roundCnt == 0) && !curStatus.hasType(STATUS_TYPE.Accumulate)) {
                                                 curStatus.type.splice(curStatus.type.indexOf(STATUS_TYPE.TempNonDestroy), 1);
@@ -4569,7 +4578,7 @@ export default class GeniusInvokationRoom {
         const smncmds = new CmdsGenerator();
         let addDmg = 0;
         let smnres: SummonHandleRes | undefined;
-        const task: [() => void | Promise<void>, number?, number?][] = [];
+        const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         const tasks: AtkTask[] = [];
         const summons: Summon[] = tsummon ?? csummon ?? [...player.summons];
         for (const state of states) {
@@ -4743,7 +4752,7 @@ export default class GeniusInvokationRoom {
             supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon, isAfterSkill } = options;
         let { switchHeroDiceCnt = 0, isQuickAction = false, minusDiceCard = 0 } = options;
         const cmdsAll = new CmdsGenerator();
-        const task: [() => void | Promise<void>, number?, number?][] = [];
+        const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         const player = players[pidx];
         const opponent = players[pidx ^ 1];
         const destroys: number[] = [];
@@ -5398,7 +5407,7 @@ export default class GeniusInvokationRoom {
                 player.summons.splice(suidx, 1, clone(nsummon));
                 if (!attackPreview) attackPreview = { isValid: true, type: 'use-card' };
                 attackPreview.changedSummons = players.map(() => []);
-                nsummon.UI.isWill = true;
+                nsummon.UI.willChange = true;
                 attackPreview.changedSummons[pidx][suidx] = nsummon;
             } else if (cmd == 'changePattern') {
                 if (hidxs == undefined) throw new Error('hidxs is undefined');
@@ -6291,7 +6300,7 @@ export default class GeniusInvokationRoom {
                 }
                 if (taskType.includes('heroDie')) this.taskQueue.isDieWaiting = true;
                 if (taskType == 'not found' || !taskType || !args) break;
-                let task: [() => void | Promise<void>, number?, number?][] | undefined;
+                let task: [() => void | Promise<void | boolean>, number?, number?][] | undefined;
                 if (taskType.startsWith('status-')) task = this._detectStatus(...(args as Parameters<typeof this._detectStatus>)).task;
                 else if (taskType.startsWith('support-')) task = this._detectSupport(...(args as Parameters<typeof this._detectSupport>)).task;
                 else if (taskType.startsWith('summon-')) task = this._detectSummon(...(args as Parameters<typeof this._detectSummon>)).task;

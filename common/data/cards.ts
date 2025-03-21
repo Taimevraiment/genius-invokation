@@ -1,6 +1,7 @@
 import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
-    CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
+    CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE,
+    DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
     HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE,
     VERSION, Version
 } from '../constant/enum.js';
@@ -1791,7 +1792,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const [fromHeroIdx, toHeroIdx] = selectHeros;
                     const fromHero = heros[fromHeroIdx];
                     const toHero = heros[toHeroIdx];
-                    const fromWeapon = fromHero.weaponSlot;
+                    const fromWeapon = fromHero?.weaponSlot;
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
                         if (ver.gte('v4.1.0')) fromWeapon.handle(fromWeapon, { reset: true });
@@ -1814,7 +1815,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const [fromHeroIdx, toHeroIdx] = selectHeros;
                     const fromHero = heros[fromHeroIdx];
                     const toHero = heros[toHeroIdx];
-                    const fromArtifact = fromHero.artifactSlot;
+                    const fromArtifact = fromHero?.artifactSlot;
                     if (fromArtifact) {
                         fromHero.artifactSlot = null;
                         if (ver.gte('v4.1.0')) fromArtifact.handle(fromArtifact, { reset: true });
@@ -2896,7 +2897,16 @@ const allCards: Record<number, () => CardBuilder> = {
 
     217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent().costDendro(1).perCnt(1)
         .description('所附属角色造成的[物理伤害]变为[草元素伤害]。；【装备有此牌的〖hro〗｢普通攻击｣后：】我方最高等级的｢柔灯之匣｣立刻行动1次。（每回合1次）')
-        .src('tmp/UI_Gcg_CardFace_Modify_Talent_Emilie_2014980344'),
+        .src('tmp/UI_Gcg_CardFace_Modify_Talent_Emilie_2014980344')
+        .handle((card, event) => {
+            const { summons = [], execmds } = event;
+            if (card.perCnt <= 0) return;
+            const hid = getHidById(card.id);
+            const smnIds = summons.filter(smn => getHidById(smn.id) == hid).map(s => s.id);
+            if (smnIds.length == 0) return;
+            execmds.summonTrigger(Math.max(...smnIds));
+            return { triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
+        }),
 
     221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')

@@ -734,59 +734,28 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
     117101: () => new SummonBuilder('柔灯之匣·一阶').useCnt(3).maxUse(6).damage(1)
         .description('{defaultAtk。；【我方造成燃烧反应伤害后：】此牌升级为【smn117102】。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_1_-376351845.png')
-        .handle((summon, event) => {
-            const { talent, heros, summons, trigger } = event;
-            const triggers: Trigger[] = ['Burning', 'other-Burning', 'phase-end'];
-            if (talent && talent.perCnt > 0 && getObjById(heros, getHidById(summon.id))?.isFront && !hasObjById(summons, 117103)) {
-                triggers.push('after-skilltype1');
+        .handle((summon, event) => ({
+            triggers: ['Burning', 'other-Burning', 'phase-end'],
+            exec: execEvent => {
+                const { summon: smn = summon, cmds } = execEvent;
+                if (event.trigger?.includes('Burning')) return cmds.changeSummon(smn.id, 117102).res;
+                smn.phaseEndAtk(event, cmds);
             }
-            return {
-                triggers,
-                exec: execEvent => {
-                    const { summon: smn = summon, cmds } = execEvent;
-                    if (trigger?.includes('Burning')) return cmds.changeSummon(smn.id, 117102).res;
-                    if (trigger == 'after-skilltype1') talent?.minusPerCnt();
-                    smn.phaseEndAtk(event, cmds);
-                }
-            }
-        }),
+        })),
 
     117102: (cnt: number = 3) => new SummonBuilder('柔灯之匣·二阶').useCnt(cnt).maxUse(6).damage(2).description('{defaultAtk。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_2_825775385.png')
-        .handle((summon, event) => {
-            const { talent, heros, summons, trigger } = event;
-            const triggers: Trigger[] = ['phase-end'];
-            if (talent && talent.perCnt > 0 && getObjById(heros, getHidById(summon.id))?.isFront && !hasObjById(summons, 117103)) {
-                triggers.push('after-skilltype1');
-            }
-            return {
-                triggers,
-                exec: execEvent => {
-                    const { summon: smn = summon, cmds } = execEvent;
-                    if (trigger == 'after-skilltype1') talent?.minusPerCnt();
-                    smn.phaseEndAtk(event, cmds);
-                },
-            }
-        }),
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_2_825775385.png'),
 
     117103: () => new SummonBuilder('柔灯之匣·三阶').useCnt(1).damage(1).description('{对敌方全体defaultAtk。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_3_-1733244062.png')
-        .handle((summon, event) => {
-            const { talent, heros, eheros, trigger } = event;
-            const triggers: Trigger[] = ['phase-end'];
-            if (talent && talent.perCnt > 0 && getObjById(heros, getHidById(summon.id))?.isFront) {
-                triggers.push('after-skilltype1');
+        .handle((summon, event) => ({
+            triggers: 'phase-end',
+            exec: execEvent => {
+                const { summon: smn = summon, cmds } = execEvent;
+                smn.phaseEndAtk(event, cmds);
+                getBackHidxs(event.eheros).forEach(hi => cmds.smnAttack({ hidxs: hi }));
             }
-            return {
-                triggers,
-                exec: execEvent => {
-                    const { summon: smn = summon, cmds } = execEvent;
-                    smn.phaseEndAtk(event, cmds);
-                    if (trigger == 'after-skilltype1') talent?.minusPerCnt();
-                    getBackHidxs(eheros).forEach(hi => cmds.smnAttack({ hidxs: hi }));
-                }
-            }
-        }),
+        })),
 
     121011: (cnt: number = 2) => new SummonBuilder('冰萤').useCnt(cnt).maxUse(3).damage(1)
         .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。')
