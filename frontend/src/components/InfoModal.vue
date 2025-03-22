@@ -291,8 +291,8 @@ import { computed, ref, watchEffect } from 'vue';
 
 import {
   CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
-  ELEMENT_NAME, ELEMENT_URL, ElementColorKey, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SHIELD_ICON_URL, SKILL_TYPE_ABBR,
-  SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
+  ELEMENT_NAME, ELEMENT_URL, ElementColorKey, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SKILL_TYPE_ABBR,
+  SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
   CARD_SUBTYPE, CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
@@ -343,7 +343,7 @@ const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
   let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni, DAMAGE_TYPE.Physical].some(v => v == el) ?
     isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] :
     getPngIcon(ELEMENT_ICON[el]);
-  if (el == STATUS_TYPE.Shield) url = SHIELD_ICON_URL;
+  if (el == STATUS_TYPE.Shield) url = STATUS_ICON.Shield;
   return `<img style='width:1em;transform:translateY(20%) scale(1.4);margin:0 0.2em' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {

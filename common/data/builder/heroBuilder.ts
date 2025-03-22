@@ -22,7 +22,7 @@ export class GIHero {
     hidx: number = -1; // 角色序号
     skills: Skill[] = []; // 技能组
     weaponSlot: Card | null = null; // 武器栏
-    artifactSlot: Card | null = null; // 圣遗物栏
+    relicSlot: Card | null = null; // 圣遗物栏
     talentSlot: Card | null = null; // 天赋栏
     vehicleSlot: [Card, Skill] | null = null; // 特技栏
     heroStatus: Status[] = []; // 角色状态
@@ -62,7 +62,7 @@ export class GIHero {
         this.offlineVersion = offlineVersion;
     }
     get equipments(): Card[] {
-        const slots = [this.weaponSlot, this.artifactSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null].filter(s => s != null) as Card[];
+        const slots = [this.weaponSlot, this.relicSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null].filter(s => s != null) as Card[];
         return slots.sort((a, b) => b.entityId - a.entityId);
     }
 }

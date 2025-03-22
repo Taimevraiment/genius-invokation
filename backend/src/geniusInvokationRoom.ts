@@ -609,8 +609,8 @@ export default class GeniusInvokationRoom {
             p.playerInfo.isUsedLegend = false;
             p.playerInfo.weaponTypeCnt = new Set(p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Weapon)).map(c => c.id)).size;
             p.playerInfo.weaponCnt = p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Weapon)).length;
-            p.playerInfo.artifactTypeCnt = new Set(p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Artifact)).map(c => c.id)).size;
-            p.playerInfo.artifactCnt = p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Artifact)).length;
+            p.playerInfo.relicTypeCnt = new Set(p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Relic)).map(c => c.id)).size;
+            p.playerInfo.relicCnt = p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Relic)).length;
             p.playerInfo.talentTypeCnt = new Set(p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Talent)).map(c => c.id)).size;
             p.playerInfo.talentCnt = p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Talent)).length;
             p.playerInfo.initCardIds = [...new Set(p.pile.map(c => c.id))];
@@ -1294,7 +1294,7 @@ export default class GeniusInvokationRoom {
                 atriggers: cplayers[cpidx].heros.map(() => []) as Trigger[][],
                 etriggers: cplayers[cpidx ^ 1].heros.map(() => []) as Trigger[][],
             }
-            while (trounds.length && !isExec) {
+            while (trounds.length) {
                 const tround = trounds.pop();
                 const { smnres, tasks } = this._detectSummon(pidx, trg, { csummon: [smn], players: cplayers, skid, atkHidx: isSelf ? ohidx : ehidx(), tround, hcard: withCard, isExec: false });
                 const { cmds } = smnres?.exec?.({ summon: smn, heros: cplayers[cpidx].heros, combatStatus: cplayers[cpidx].combatStatus, eCombatStatus: cplayers[cpidx ^ 1].combatStatus }) ?? {};
@@ -2870,7 +2870,7 @@ export default class GeniusInvokationRoom {
                 type == CARD_TYPE.Support ||
                 type == CARD_TYPE.Event && currCard.subType.length == 0 ||
                 currCard.hasSubtype(CARD_SUBTYPE.Weapon) && userType == hero.weaponType ||
-                currCard.hasSubtype(CARD_SUBTYPE.Artifact, CARD_SUBTYPE.Vehicle) ||
+                currCard.hasSubtype(CARD_SUBTYPE.Relic, CARD_SUBTYPE.Vehicle) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Food) && !hasObjById(hero.heroStatus, 303300) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Talent) && userType == hero.id && (hero.isFront || !currCard.hasSubtype(CARD_SUBTYPE.Action) || currCard.type == CARD_TYPE.Event) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Action, CARD_SUBTYPE.Legend, CARD_SUBTYPE.ElementResonance) && userType == 0
@@ -3508,7 +3508,7 @@ export default class GeniusInvokationRoom {
                         h.hp = -1;
                         h.heroStatus.forEach(sts => !sts.hasType(STATUS_TYPE.NonDestroy) && sts.dispose());
                         h.talentSlot = null;
-                        h.artifactSlot = null;
+                        h.relicSlot = null;
                         h.weaponSlot = null;
                         h.vehicleSlot = null;
                         h.attachElement.length = 0;
@@ -3681,9 +3681,9 @@ export default class GeniusInvokationRoom {
             if (equipment.hasSubtype(CARD_SUBTYPE.Weapon)) { // 武器
                 if (hero.weaponSlot?.id == equipment.id) equipment.setEntityId(hero.weaponSlot.entityId);
                 hero.weaponSlot = equipment.setEntityId(this._genEntityId());
-            } else if (equipment.hasSubtype(CARD_SUBTYPE.Artifact)) { // 圣遗物
-                if (hero.artifactSlot?.id == equipment.id) equipment.setEntityId(hero.artifactSlot.entityId);
-                hero.artifactSlot = equipment.setEntityId(this._genEntityId());
+            } else if (equipment.hasSubtype(CARD_SUBTYPE.Relic)) { // 圣遗物
+                if (hero.relicSlot?.id == equipment.id) equipment.setEntityId(hero.relicSlot.entityId);
+                hero.relicSlot = equipment.setEntityId(this._genEntityId());
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋
                 hero.talentSlot = equipment.setEntityId(hero.talentSlot?.entityId ?? this._genEntityId());
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
@@ -4260,7 +4260,7 @@ export default class GeniusInvokationRoom {
                         isMinusDiceCard,
                         isMinusDiceTalent: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == pheros[hidx]?.id,
                         isMinusDiceWeapon: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Weapon),
-                        isMinusDiceArtifact: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Artifact),
+                        isMinusDiceRelic: isMinusDiceCard && hcard.hasSubtype(CARD_SUBTYPE.Relic),
                         isMinusDiceSkill: minusDiceSkillIds.includes(sts.entityId),
                         minusDiceSkill,
                         getdmg,
@@ -4351,14 +4351,14 @@ export default class GeniusInvokationRoom {
                                             const statuses = group == STATUS_GROUP.heroStatus ? heros[hidx].heroStatus : combatStatus;
                                             const curStatus = statuses.find(s => s.entityId == sts.entityId);
                                             if (!curStatus) return true;
-                                            this._doCmds(pidx, stscmds, {
+                                            stsres.exec?.(curStatus, { heros, combatStatus });
+                                            this._doCmds(pidx, stsres.cmds, {
                                                 hidxs: [group == STATUS_GROUP.combatStatus ? ahidx : hidx],
                                                 withCard: hcard,
                                                 trigger,
                                                 source: sts.id,
                                                 isPriority: true,
                                             });
-                                            stsres.exec?.(curStatus, { heros, combatStatus });
                                             if (!curStatus.hasType(STATUS_TYPE.TempNonDestroy, STATUS_TYPE.Accumulate) && (curStatus.useCnt == 0 || curStatus.roundCnt == 0)) {
                                                 curStatus.type.push(STATUS_TYPE.TempNonDestroy);
                                             }
@@ -5412,7 +5412,7 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'changePattern') {
                 if (hidxs == undefined) throw new Error('hidxs is undefined');
                 const newPattern = this.newHero(cnt);
-                const { id, entityId, heroStatus: chsts, hp, isFront, hidx, attachElement, talentSlot, artifactSlot, weaponSlot, vehicleSlot, energy } = clone(cheros[hidxs[0]]);
+                const { id, entityId, heroStatus: chsts, hp, isFront, hidx, attachElement, talentSlot, relicSlot, weaponSlot, vehicleSlot, energy } = clone(cheros[hidxs[0]]);
                 assgin(cheros[hidxs[0]], newPattern);
                 cheros[hidxs[0]].id = id;
                 cheros[hidxs[0]].entityId = entityId;
@@ -5422,7 +5422,7 @@ export default class GeniusInvokationRoom {
                 cheros[hidxs[0]].hidx = hidx;
                 assgin(cheros[hidxs[0]].attachElement, attachElement);
                 cheros[hidxs[0]].talentSlot = talentSlot;
-                cheros[hidxs[0]].artifactSlot = artifactSlot;
+                cheros[hidxs[0]].relicSlot = relicSlot;
                 cheros[hidxs[0]].weaponSlot = weaponSlot;
                 cheros[hidxs[0]].vehicleSlot = vehicleSlot;
                 cheros[hidxs[0]].energy = energy;
@@ -6534,7 +6534,7 @@ export default class GeniusInvokationRoom {
         player.handCards.forEach((c, ci) => {
             const isMinusDiceCard = c.cost + c.anydice > costChange[ci];
             const isMinusDiceWeapon = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Weapon);
-            const isMinusDiceArtifact = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Artifact);
+            const isMinusDiceRelic = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Relic);
             const getMinusDiceCard = <T extends { handle: (...args: any) => { minusDiceCard?: number } }>(entity: T, hidx: number): number => {
                 const isMinusDiceTalent = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Talent) && c.userType == player.heros[hidx].id;
                 return entity.handle(entity, {
@@ -6547,7 +6547,7 @@ export default class GeniusInvokationRoom {
                     isMinusDiceCard,
                     isMinusDiceTalent,
                     isMinusDiceWeapon,
-                    isMinusDiceArtifact,
+                    isMinusDiceRelic,
                 })?.minusDiceCard ?? 0;
             }
             allHidxs(player.heros).forEach(hidx => {
@@ -6672,7 +6672,7 @@ export default class GeniusInvokationRoom {
         const field: (Card | Status)[] = [...hero.heroStatus];
         const isEquip = hcard && hidx == equipHidx;
         if (hero.weaponSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Weapon))) field.push(hero.weaponSlot);
-        if (hero.artifactSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Artifact))) field.push(hero.artifactSlot);
+        if (hero.relicSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Relic))) field.push(hero.relicSlot);
         if (hero.vehicleSlot && (!isEquip || !hcard?.hasSubtype(CARD_SUBTYPE.Vehicle))) field.push(hero.vehicleSlot[0]);
         if (hero.talentSlot) field.push(hero.talentSlot);
         field.sort((a, b) => b.entityId - a.entityId);

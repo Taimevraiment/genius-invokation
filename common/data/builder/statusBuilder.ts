@@ -1,7 +1,7 @@
 import { Status, Trigger, VersionCompareFn } from "../../../typing";
 import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
-import { BARRIER_ICON_URL, SHIELD_ICON_URL, STATUS_BG_COLOR, StatusBgColor } from "../../constant/UIconst.js";
+import { STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
@@ -79,9 +79,7 @@ export class GIStatus {
         this.addition = adt;
         let thandle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
-            // this.icon = 'shield2';
-            // this.UI.iconBg = STATUS_BG_COLOR[STATUS_TYPE.Shield];
-            this.UI.icon = SHIELD_ICON_URL;
+            this.UI.icon = STATUS_ICON.Shield;
             thandle = (status, event) => {
                 let { restDmg = -1 } = event;
                 let rest: StatusBuilderHandleRes = {};
@@ -95,9 +93,7 @@ export class GIStatus {
                 return { restDmg: restDmg - shieldDmg, ...rest, triggers: 'reduce-dmg', exec: () => { status.minusUseCnt(shieldDmg) } };
             }
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
-            // this.icon = 'shield';
-            // this.iconBg = '#9268db';
-            this.UI.icon = BARRIER_ICON_URL;
+            this.UI.icon = STATUS_ICON.Barrier;
             thandle = (status, event) => {
                 const { restDmg = -1 } = event;
                 const handleres = handle?.(status, event, compareVersionFn(ver)) ?? {};
@@ -105,7 +101,7 @@ export class GIStatus {
                 return { ...handleres, triggers: 'reduce-dmg' }
             }
         } else if (type.includes(STATUS_TYPE.NonEvent)) {
-            this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp';
+            this.UI.icon = STATUS_ICON.DebuffCountered01;
             thandle = (status, event) => {
                 if (event.hcard?.type != CARD_TYPE.Event) return;
                 return { triggers: 'card', isInvalid: true, exec: () => { status.minusUseCnt() } }
@@ -115,23 +111,11 @@ export class GIStatus {
             this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nightsoul_${element}.webp`;
         }
         if (this.UI.icon == '#') this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
-        else if (this.UI.icon == 'dot') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp';
-        if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
-            if (icon.startsWith('buff')) {
-                if (icon == 'buff2') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Buff.webp';
-                if (icon == 'buff3') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Special.webp';
-                if (icon == 'buff' || icon == 'buff4') this.UI.iconBg = STATUS_BG_COLOR[el];
-                else this.UI.iconBg = STATUS_BG_COLOR.Buff;
-            } else if (['satiety', 'debuff'].includes(icon)) {
-                if (icon == 'satiety') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Food.webp';
-                if (icon == 'debuff') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Debuff.webp';
-                // this.iconBg = DEBUFF_BG_COLOR;
-            } else if (icon.includes('heal')) {
-                if (icon == 'heal') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Heal.webp';
-                if (icon == 'heal2') this.UI.icon = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp';
-                // this.iconBg = '#95ff7a';
-            } else if (icon.startsWith('ski')) {
+        else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
+            if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {
                 this.UI.iconBg = STATUS_BG_COLOR[el];
+            } else if (icon == STATUS_ICON.AtkUp || icon == STATUS_ICON.AtkSelf) {
+                this.UI.iconBg = STATUS_BG_COLOR.Buff;
             }
         }
         this.handle = (status, event = {}) => {
@@ -143,10 +127,15 @@ export class GIStatus {
                 return {}
             }
             const handleRes = thandle(status, cevent, compareVersionFn(ver)) ?? {};
+            const handleCmds = new CmdsGenerator(cmds);
             const res: StatusHandleRes = {
                 ...handleRes,
                 cmds,
                 triggers: isCdt(handleRes.triggers, convertToArray(handleRes.triggers) as Trigger[]),
+                exec: (eStatus, execEvent) => {
+                    cmds.clear().addCmds(handleCmds);
+                    return handleRes.exec?.(eStatus, execEvent);
+                },
             }
             return res;
         }

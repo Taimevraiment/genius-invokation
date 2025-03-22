@@ -12,10 +12,6 @@ export const HANDCARDS_GAP_MOBILE = 36; // 移动端手牌间隔(px)
 
 export const HANDCARDS_OFFSET_MOBILE = 25; // 移动端手牌偏移(px)
 
-export const SHIELD_ICON_URL = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp'; // 护盾图标
-
-export const BARRIER_ICON_URL = 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp'; // 减伤盾图标
-
 export const PURE_ELEMENT_NAME = {
     [ELEMENT_TYPE.Cryo]: '冰元素',
     [ELEMENT_TYPE.Hydro]: '水元素',
@@ -92,7 +88,7 @@ export const CARD_TYPE_NAME = {
 
 export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Weapon]: '武器',
-    [CARD_SUBTYPE.Artifact]: '圣遗物',
+    [CARD_SUBTYPE.Relic]: '圣遗物',
     [CARD_SUBTYPE.Vehicle]: '特技',
     [CARD_SUBTYPE.Place]: '场地',
     [CARD_SUBTYPE.Ally]: '伙伴',
@@ -106,7 +102,7 @@ export const CARD_SUBTYPE_NAME = {
 
 export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Weapon]: 'https://patchwiki.biligame.com/images/ys/thumb/c/ce/l98mlw9whvdgy6w95qlteb9wwc2dc5i.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%AD%A6%E5%99%A8.png',
-    [CARD_SUBTYPE.Artifact]: 'https://patchwiki.biligame.com/images/ys/thumb/7/75/540z6nuruz9nb2do1epuwnocpe054kz.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%A3%E9%81%97%E7%89%A9.png',
+    [CARD_SUBTYPE.Relic]: 'https://patchwiki.biligame.com/images/ys/thumb/7/75/540z6nuruz9nb2do1epuwnocpe054kz.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%A3%E9%81%97%E7%89%A9.png',
     [CARD_SUBTYPE.Vehicle]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2e/70kbksdgkoky3vb89js27kqxxj0n9oe.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E7%89%B9%E6%8A%80.png',
     [CARD_SUBTYPE.Place]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2b/54crg8w1f0ccqmh8x4qc6yg8qxnvy4c.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%BA%E5%9C%B0.png',
     [CARD_SUBTYPE.Ally]: 'https://patchwiki.biligame.com/images/ys/thumb/a/aa/nwz9v6fm3wn5cdtnmq5m33nnzlubx8s.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E4%BC%99%E4%BC%B4.png',
@@ -120,7 +116,7 @@ export const CARD_SUBTYPE_URL = {
 
 export const SLOT_CODE = {
     [CARD_SUBTYPE.Weapon]: 0,
-    [CARD_SUBTYPE.Artifact]: 1,
+    [CARD_SUBTYPE.Relic]: 1,
     [CARD_SUBTYPE.Talent]: 2,
     [CARD_SUBTYPE.Vehicle]: 3,
 } as const;
@@ -263,6 +259,24 @@ export const DICE_WEIGHT = [ // 骰子的优先级权重(越低越优先)
     DICE_COST_TYPE.Dendro,
     DICE_COST_TYPE.Anemo,
 ];
+
+export const STATUS_ICON = {
+    Enchant: 'enchant',
+    ElementAtkUp: 'elementAtkUp',
+    AtkUp: 'atkUp',
+    AtkSelf: 'atkSelf',
+    Dot: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp',
+    Buff: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Buff.webp',
+    Special: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Special.webp',
+    Food: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Food.webp',
+    Debuff: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Debuff.webp',
+    Heal: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Heal.webp',
+    Revive: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp',
+    Barrier: 'Barrier',
+    Shield: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp',
+    DebuffCountered01: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp',
+    DebuffCostSkill: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSkill.webp',
+} as const;
 
 export const REACTION_COLOR = {
     融化: '#f1d08e',

@@ -37,11 +37,11 @@ export class GISupport {
                 return {}
             }
             const builderRes = handle?.(support, event, compareVersionFn(ver)) ?? {};
-            const cmds = new CmdsGenerator();
             const res: SupportHandleRes = {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 exec: (support, event) => {
+                    const cmds = new CmdsGenerator();
                     const exeres = builderRes.exec?.(support, cmds, event);
                     return { ...exeres, cmds }
                 }

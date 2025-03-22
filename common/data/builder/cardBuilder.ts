@@ -79,7 +79,7 @@ export class GICard {
         }
         if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组）`;
         else if (subType.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣）`;
-        else if (subType.includes(CARD_SUBTYPE.Artifact)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
+        else if (subType.includes(CARD_SUBTYPE.Relic)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
         else if (subType.includes(CARD_SUBTYPE.Vehicle)) {
             const vehicle = `rsk${getVehicleIdByCid(id)}`;
             const vehicleDesc = ` [特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}`;
@@ -295,8 +295,8 @@ export class CardBuilder extends BaseCostBuilder {
         if (weaponType != undefined) this._userType.set(['vlatest', weaponType]);
         return this.equipment();
     }
-    artifact() {
-        this._subtype.push(CARD_SUBTYPE.Artifact);
+    relic() {
+        this._subtype.push(CARD_SUBTYPE.Relic);
         return this.equipment();
     }
     vehicle(isUseNightSoul: boolean = false) {

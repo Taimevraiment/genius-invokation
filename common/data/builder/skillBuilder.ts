@@ -83,7 +83,7 @@ export class GISkill {
             const builderRes = handle?.(hbevent, compareVersionFn(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
-                cmds: isCdt(cmds.length, cmds),
+                cmds,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }

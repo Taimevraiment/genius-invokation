@@ -94,8 +94,8 @@
         :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
         @mouseleave="mouseleave(idx)">
-        <img src="https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp" alt=""
-          v-if="card.type == CARD_TYPE.Event && isNonEvent" style="position: absolute;top: 3%;width: 30%;opacity: .8;">
+        <img :src="STATUS_ICON.DebuffCountered01" alt="" v-if="card.type == CARD_TYPE.Event && isNonEvent"
+          style="position: absolute;top: 3%;width: 30%;opacity: 0.8;">
       </Handcard>
       <Handcard v-for="(card, idx) in client.player.UI.willGetCard.cards.filter(c => c.UI.class?.includes('over'))"
         :key="`${card.entityId}-myhandcard-over`" :card="card" :isMobile="isMobile" :class="card.UI.class ?? ''"
@@ -228,7 +228,7 @@ import {
   Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
-import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR } from '@@@/constant/UIconst';
+import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, STATUS_ICON } from '@@@/constant/UIconst';
 import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { debounce, isCdt, parseShareCode } from '@@@/utils/utils';
@@ -590,7 +590,7 @@ const devOps = (cidx = 0) => {
     } else if (op.startsWith('q')) { // 附属装备
       const [card = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
       const hidxs = hidx > heros.length ? heros.map(h => h.hidx) : [hidx];
-      cmds.push({ cmd: 'equip', hidxs, card });
+      cmds.push({ cmd: 'equip', hidxs, card: card || getTalentIdByHid(heros[hidx].id) });
       flag.add('equip');
     } else { // 摸牌
       const cards: (number | Card)[] = [];

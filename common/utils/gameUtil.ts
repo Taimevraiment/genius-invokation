@@ -252,8 +252,8 @@ export const playerInfoToString = (playerInfo: GameInfo, prefixSpace: number = 1
     const prefix1 = '  '.repeat(prefixSpace);
     return `{\n`
         + `${prefix1}isUsedLegend: ${playerInfo.isUsedLegend}\n`
-        + `${prefix1}artifactCnt: ${playerInfo.artifactCnt}\n`
-        + `${prefix1}artifactTypeCnt: ${playerInfo.artifactTypeCnt}\n`
+        + `${prefix1}relicCnt: ${playerInfo.relicCnt}\n`
+        + `${prefix1}relicTypeCnt: ${playerInfo.relicTypeCnt}\n`
         + `${prefix1}weaponCnt: ${playerInfo.weaponCnt}\n`
         + `${prefix1}weaponTypeCnt: ${playerInfo.weaponTypeCnt}\n`
         + `${prefix1}talentCnt: ${playerInfo.talentCnt}\n`
@@ -339,7 +339,7 @@ export const heroToString = (hero: Hero, prefixSpace: number = 1) => {
         + `${prefix1}weaponType: ${hero.weaponType}\n`
         + `${prefix1}tags: ${hero.tags}\n`
         + `${prefix1}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 1, false)}`
-        + `${prefix1}artifactSlot: ${cardToString(hero.artifactSlot, prefixSpace + 1, false)}`
+        + `${prefix1}relicSlot: ${cardToString(hero.relicSlot, prefixSpace + 1, false)}`
         + `${prefix1}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 1, false)}`
         + `${prefix1}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 1, false)}`
         + `${prefix1}heroStatus: [\n`

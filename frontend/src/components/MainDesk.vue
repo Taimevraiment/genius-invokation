@@ -187,10 +187,10 @@
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" />
               <div :class="{ 'slot-can-use': hero.weaponSlot.perCnt > 0 }"></div>
             </div>
-            <div class="hero-artifact" v-if="hero.artifactSlot != null"
-              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Artifact]] }">
-              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Artifact]" />
-              <div :class="{ 'slot-can-use': hero.artifactSlot.perCnt > 0 }"></div>
+            <div class="hero-relic" v-if="hero.relicSlot != null"
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Relic]] }">
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Relic]" />
+              <div :class="{ 'slot-can-use': hero.relicSlot.perCnt > 0 }"></div>
             </div>
             <div class="hero-talent" v-if="hero.talentSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Talent]] }">
@@ -1068,7 +1068,7 @@ button:active {
 }
 
 .hero-weapon,
-.hero-artifact,
+.hero-relic,
 .hero-talent,
 .hero-vehicle {
   position: relative;
@@ -1085,7 +1085,7 @@ button:active {
 }
 
 .hero-weapon>img,
-.hero-artifact>img,
+.hero-relic>img,
 .hero-talent>img,
 .hero-vehicle>img {
   width: 100%;

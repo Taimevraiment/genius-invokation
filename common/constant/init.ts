@@ -27,8 +27,8 @@ export const INIT_PLAYER: () => Player = () => ({
     isOffline: false,
     playerInfo: {
         isUsedLegend: false,
-        artifactCnt: 0,
-        artifactTypeCnt: 0,
+        relicCnt: 0,
+        relicTypeCnt: 0,
         weaponCnt: 0,
         weaponTypeCnt: 0,
         talentCnt: 0,

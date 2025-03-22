@@ -232,7 +232,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 黄金屋
     321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
         const { card, minusDiceCard: mdc = 0 } = event;
-        if (support.perCnt > 0 && card && card.cost >= 3 && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Artifact) && card.cost > mdc) {
+        if (support.perCnt > 0 && card && card.cost >= 3 && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic) && card.cost > mdc) {
             return {
                 triggers: 'card',
                 isNotAddTask: true,
@@ -468,10 +468,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 蒂玛乌斯
     322003: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
-        const { card, trigger, minusDiceCard: mdc = 0, playerInfo: { artifactCnt = 0 } = {} } = event;
+        const { card, trigger, minusDiceCard: mdc = 0, playerInfo: { relicCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
-        if (ver.gte('v4.3.0') && artifactCnt >= 6) triggers.push('enter');
-        const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Artifact) && card.cost > mdc && support.cnt >= card.cost - mdc;
+        if (ver.gte('v4.3.0') && relicCnt >= 6) triggers.push('enter');
+        const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Relic) && card.cost > mdc && support.cnt >= card.cost - mdc;
         if (trigger == 'card' && !isMinus) return;
         return {
             triggers: triggers,
@@ -479,7 +479,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             isLast: true,
             minusDiceCard: isMinus ? card.cost - mdc : 0,
             exec: (spt, cmds) => {
-                if (trigger == 'enter') return cmds.getCard(1, { subtype: CARD_SUBTYPE.Artifact, isFromPile: true }).res;
+                if (trigger == 'enter') return cmds.getCard(1, { subtype: CARD_SUBTYPE.Relic, isFromPile: true }).res;
                 if (trigger == 'phase-end') ++spt.cnt;
                 else if (trigger == 'card' && isMinus) {
                     spt.cnt -= card.cost - mdc;
@@ -642,7 +642,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 花散里
     322013: () => new SupportBuilder().collection().handle((support, event) => {
         const { card, trigger, minusDiceCard: mdc = 0 } = event;
-        const isMinus = support.cnt >= 3 && card && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Artifact) && card.cost > mdc;
+        const isMinus = support.cnt >= 3 && card && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic) && card.cost > mdc;
         return {
             triggers: ['summon-destroy', 'card'],
             minusDiceCard: isCdt(isMinus, 2),
@@ -724,9 +724,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322020: () => new SupportBuilder().permanent().perCnt(1).handle((support, event, ver) => {
         if (support.perCnt <= 0) return;
         const { card, heros = [], minusDiceCard: mdc = 0 } = event;
-        if (!card || !card.hasSubtype(CARD_SUBTYPE.Artifact) || card.cost <= mdc) return;
-        const artifactLen = heros.filter(h => h.artifactSlot != null).length;
-        const minusCnt = 1 + +(ver.lt('v4.6.0') ? artifactLen : (artifactLen >= 2));
+        if (!card || !card.hasSubtype(CARD_SUBTYPE.Relic) || card.cost <= mdc) return;
+        const relicLen = heros.filter(h => h.relicSlot != null).length;
+        const minusCnt = 1 + +(ver.lt('v4.6.0') ? relicLen : (relicLen >= 2));
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -918,7 +918,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 留念镜
     323006: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
         const { card, playerInfo: { usedCardIds = [] } = {}, minusDiceCard: mdc = 0 } = event;
-        const subtypes = [CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Artifact, CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally];
+        const subtypes = [CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic, CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally];
         if (!card || !usedCardIds.includes(card.id) || !card.hasSubtype(...subtypes) || support.perCnt <= 0 || card.cost <= mdc) return;
         return {
             triggers: 'card',
