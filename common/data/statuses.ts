@@ -1749,7 +1749,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117104: () => new StatusBuilder('余薰（生效中）').heroStatus().useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special)
+    117104: () => new StatusBuilder('余薰（生效中）').heroStatus().useCnt(1).type(STATUS_TYPE.Usage).icon(STATUS_ICON.Buff)
         .description('【双方角色使用技能后：】触发1次我方【smn115】的回合结束效果。')
         .handle((_, event) => {
             if (!hasObjById(event.summons, 115)) return;

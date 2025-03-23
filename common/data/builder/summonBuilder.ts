@@ -40,6 +40,7 @@ export class GISummon {
         hasPlus: boolean, // 是否有加号
         isWill: boolean, // 是否为将要生成的召唤物
         willChange: boolean, // 是否将要变化的召唤物
+        isAdd: boolean, // 召唤物是否增加过次数
         explains: string[], // 要解释的文本
     };
     constructor(
@@ -77,6 +78,7 @@ export class GISummon {
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             isWill: false,
             willChange: false,
+            isAdd: false,
             descriptions: [],
         }
         this.perCnt = pct;

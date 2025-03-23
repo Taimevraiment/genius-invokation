@@ -224,7 +224,7 @@
               <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
               </div>
               <img v-if="getPngIcon(ists.UI.icon) != ''" class="status-icon" :style="{
-                filter: getPngIcon(ists.UI.icon).startsWith('https') || ists.UI.icon.startsWith('buff') || ists.UI.icon.endsWith('dice')
+                filter: getPngIcon(ists.UI.icon).startsWith('https') || ists.UI.icon == STATUS_ICON.ElementAtkUp || ists.UI.icon == STATUS_ICON.Enchant || ists.UI.icon.endsWith('dice')
                   ? getSvgFilter(ists.UI.iconBg) : '',
               }" :src="getPngIcon(ists.UI.icon)" />
               <div v-else style="color: white;">{{ ists.name[0] }}</div>
@@ -253,7 +253,7 @@
                   :style="{ background: osts.UI.iconBg }">
                 </div>
                 <img v-if="getPngIcon(osts.UI.icon) != ''" class="status-icon" :style="{
-                  filter: getPngIcon(osts.UI.icon).startsWith('https') || osts.UI.icon.startsWith('buff') || osts.UI.icon.endsWith('dice')
+                  filter: getPngIcon(osts.UI.icon).startsWith('https') || osts.UI.icon == STATUS_ICON.ElementAtkUp || osts.UI.icon == STATUS_ICON.Enchant || osts.UI.icon.endsWith('dice')
                     ? getSvgFilter(osts.UI.iconBg) : '',
                 }" :src="getPngIcon(osts.UI.icon)" />
                 <div v-else style="color: white;">{{ osts.name[0] }}</div>
@@ -447,7 +447,7 @@ import {
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
-import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, StatusBgColor } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { hasObjById } from '@@@/utils/gameUtil';
 import { computed, onMounted, ref, watchEffect } from 'vue';
@@ -1393,7 +1393,7 @@ button:active {
   transform: translate(-50%, -50%);
   border-radius: 5px;
   border: 2px solid #fffdd2e9;
-  box-shadow: 0 0 15px 5px #fffdd2e9 inset;
+  box-shadow: 0 0 10px 5px #fffdd2e9 inset;
   box-sizing: border-box;
   z-index: 1;
 }

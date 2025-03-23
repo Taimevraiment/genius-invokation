@@ -1950,7 +1950,7 @@ export default class GeniusInvokationRoom {
                     const smnCnt = nsmn?.useCnt ?? 0;
                     let res = smnCnt - osmns[si].useCnt;
                     if (nsmn?.UI.willChange) nsmn.useCnt = osmns[si].useCnt;
-                    if (res == 0 && pi == pidx && nsummons.some(s => s.entityId == nsmns[si].entityId)) res += 0.3;
+                    if (res == 0 && (pi == pidx && nsummons.some(s => s.entityId == nsmns[si].entityId) || nsmn?.UI.isAdd)) res += 0.3;
                     if (res < -50 || smnCnt <= 0 && nsmn?.isDestroy == SUMMON_DESTROY_TYPE.Used) this._doSummonDestroy(pi, osmns[si], { isExec, supportCnt, isQuickAction });
                     return res;
                 });
@@ -6167,6 +6167,7 @@ export default class GeniusInvokationRoom {
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
                 oriSummon[csmnIdx].damage = smn.damage;
+                if (!isExec) oriSummon[csmnIdx].UI.isAdd = true;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(this._genEntityId());
                 oriSummon.push(csummon);
