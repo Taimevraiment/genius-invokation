@@ -680,7 +680,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     116103: () => new SummonBuilder('冲天转转·脱离').useCnt(1).damage(1)
         .description('{defaultAtk，对下一个敌方后台角色造成1点[穿透伤害]。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Kachina_-1200666569.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/cc08c2c835426ea190041ff7be7ff0c9_1608888123917049873.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
             isTrigger: true,
@@ -733,7 +733,7 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
     117101: () => new SummonBuilder('柔灯之匣·一阶').useCnt(3).maxUse(6).damage(1)
         .description('{defaultAtk。；【我方造成燃烧反应伤害后：】此牌升级为【smn117102】。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_1_-376351845.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/4832db511e57a4673f91cfab4ec6e260_2114320537892261405.png')
         .handle((summon, event) => ({
             triggers: ['Burning', 'other-Burning', 'phase-end'],
             exec: execEvent => {
@@ -744,10 +744,10 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     117102: (cnt: number = 3) => new SummonBuilder('柔灯之匣·二阶').useCnt(cnt).maxUse(6).damage(2).description('{defaultAtk。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_2_825775385.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/02806cab25353aa6b35f89c675e517c6_3569134135175708486.png'),
 
     117103: () => new SummonBuilder('柔灯之匣·三阶').useCnt(1).damage(1).description('{对敌方全体defaultAtk。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Emilie_3_-1733244062.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/eacf5e3609a63656b348ed0972016239_7375246412914411207.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
             exec: execEvent => {

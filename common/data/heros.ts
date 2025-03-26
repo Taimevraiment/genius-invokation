@@ -1,7 +1,7 @@
 import { Hero, Trigger } from '../../typing';
 import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { allHidxs, getBackHidxs, getMaxHertHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getMaxHertHidxs, getMinHpHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { NormalSkillBuilder, SkillBuilder } from './builder/skillBuilder.js';
@@ -1022,6 +1022,26 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[122, 4]] }))
         ),
 
+    1413: () => new HeroBuilder(469).name('赛索斯').since('v5.6.0').sumeru().electro().bow()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Sethos.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('王家苇箭术').energy(-1).handle(event => {
+            const { hero: { energy }, cmds, eheros } = event;
+            cmds.getEnergy(-energy);
+            return { pdmg: energy + 1, hidxs: getMinHpHidxs(eheros) }
+        }))
+        .skills(
+            new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，切换到下一个角色。下次我方角色使用技能触发[雷元素相关反应]后，自身回复1点[充能]。')
+                .src('/image/tmp/Skill_S_Sethos_01.webp')
+                .elemental().cost(2).handle(({ cmds }) => (cmds.attach({ element: ELEMENT_TYPE.Electro, isOppo: true }).switchAfter(), { status: 114132 })),
+            new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
+                .src('/image/tmp/Skill_E_Sethos_01.webp')
+                .burst(4).damage(2).cost(3).handle(() => ({ status: 114131 })),
+            new SkillBuilder('黑鸢的密喻').description('自身｢普通攻击｣不会获得[充能]。；自身｢普通攻击｣后：消耗自己全部[充能]，对生命值最低的敌方造成等额+1的[穿透伤害]。')
+                .src('/image/tmp/UI_Talent_S_Sethos_05.webp')
+                .passive()
+        ),
+
     1501: () => new HeroBuilder(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')
@@ -1361,19 +1381,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1610: () => new HeroBuilder(461).name('卡齐娜').since('v5.5.0').natlan().geo().polearm()
-        .src('/image/tmp/UI_Gcg_CardFace_Char_Avatar_Kachina_2038694556.png')
-        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Kachina_1710153075.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/755fa9ad709e60e4a6252018bccf0212_3836323857297098657.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67e335b0/b6befd776c5917647591dc26e9925785.png')
         .normalSkill(new NormalSkillBuilder('嵴之啮咬'))
         .skills(
             new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116102】，并进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
-                .src('/image/tmp/Skill_S_Kachina_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/11c22191b14034fbacc64b4476ea03a1_8778532385562478186.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
                     equip: 116102,
                     status: [[116104, 2]],
                     isForbidden: hasObjById(heroStatus, 116104),
                 })),
             new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116101】。')
-                .src('/image/tmp/Skill_E_Kachina_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3212cc83c9970f4e0e6f7e149fbc5ec8_7653177718325263666.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 116101 }))
         ),
 
@@ -1540,27 +1562,26 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1710: () => new HeroBuilder(462).name('艾梅莉埃').since('v5.5.0').fontaine(HERO_TAG.ArkhePneuma).dendro().polearm()
-        .src('/image/tmp/UI_Gcg_CardFace_Char_Avatar_Emilie_-145625492.png')
-        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Emilie_-544801855.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/641497fd6142bac67bd7839cd2564160_7223090451532824757.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67e335b0/d1597e7c081ce3e732b1c5fb552b7780.png')
         .normalSkill(new NormalSkillBuilder('逐影枪术·改'))
         .skills(
             new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
-                .src('/image/tmp/Skill_S_Emilie_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/56c8c6c62ed792d56ccbbeaaf9aa9779_3263971776553896947.png')
                 .elemental().cost(3).handle(({ summons }) => ({ summon: 117101 + +hasObjById(summons, 117102) })),
             new SkillBuilder('香氛演绎').description('{dealDmg}。召唤【smn117103】。')
-                .src('/image/tmp/Skill_E_Emilie_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1e918eff70dc3167325c4bee79c84959_6163012173343249974.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 117103 })),
             new SkillBuilder('余薰').description('【我方〖smn115〗入场时：】下次双方角色使用技能后，触发一次【smn115】的回合结束效果。（每回合2次）')
-                .src('/image/tmp/UI_Talent_S_Emilie_05.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/ed280b75ea2169c2f53ed0ccc851ac63_6394994445214265959.png')
                 .passive().handle(event => {
                     const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 1) return;
                     return { triggers: ['Burning-oppo'], isNotAddTask: true, status: 117104 }
-                }),
-            new SkillBuilder().passive(true).handle(event => {
-                if (!event.talent) return;
-                return { triggers: 'skill', dmgElement: DAMAGE_TYPE.Dendro, isNotAddTask: true }
-            })
+                })
         ),
 
     2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()

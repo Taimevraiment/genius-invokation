@@ -24,8 +24,7 @@ export const allHidxs = (heros?: Hero[], options: {
 }
 
 // 获取受伤最多的角色的hidxs(只有一个number的数组)
-export const getMaxHertHidxs = (heros?: Hero[], options: { fhidx?: number, isBack?: boolean } = {}): number[] => {
-    heros ??= [];
+export const getMaxHertHidxs = (heros: Hero[] = [], options: { fhidx?: number, isBack?: boolean } = {}): number[] => {
     const { fhidx = heros.findIndex(h => h.isFront), isBack = false } = options;
     if (fhidx == -1) return [];
     const maxHert = Math.max(...heros.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.maxHp - h.hp));
@@ -43,7 +42,7 @@ export const getMaxHertHidxs = (heros?: Hero[], options: { fhidx?: number, isBac
 }
 
 // 获取受伤最少的角色的hidx(只有一个number的数组)
-export const getMinHertHidxs = (heros: Hero[], fhidx?: number): number[] => {
+export const getMinHertHidxs = (heros: Hero[] = [], fhidx?: number): number[] => {
     fhidx = fhidx ?? heros.findIndex(h => h.isFront);
     if (fhidx == -1) return [];
     const minHert = Math.min(...heros.filter(h => h.hp > 0).map(h => h.maxHp - h.hp));
@@ -52,6 +51,22 @@ export const getMinHertHidxs = (heros: Hero[], fhidx?: number): number[] => {
         const hidx = (i + fhidx) % heros.length;
         const hert = heros[hidx].maxHp - heros[hidx].hp;
         if (heros[hidx].hp > 0 && hert == minHert) {
+            hidxs.push(hidx);
+            break;
+        }
+    }
+    return hidxs;
+}
+
+// 获取生命值最低角色的hidx(只有一个number的数组)
+export const getMinHpHidxs = (heros: Hero[] = [], fhidx?: number): number[] => {
+    fhidx = fhidx ?? heros.findIndex(h => h.isFront);
+    if (fhidx == -1) return [];
+    const minHp = Math.min(...heros.filter(h => h.hp > 0).map(h => h.hp));
+    const hidxs: number[] = [];
+    for (let i = 0; i < heros.length; ++i) {
+        const hidx = (i + fhidx) % heros.length;
+        if (heros[hidx].hp == minHp) {
             hidxs.push(hidx);
             break;
         }

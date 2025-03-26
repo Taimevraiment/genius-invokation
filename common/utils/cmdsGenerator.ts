@@ -99,10 +99,10 @@ export default class CmdsGenerator {
         this.value.push({ cmd: 'switch-after', isOppo });
         return this;
     }
-    attach(options: { element?: ElementType | ElementType[], hidxs?: number | number[] } = {}) {
-        let { element, hidxs } = options;
+    attach(options: { element?: ElementType | ElementType[], hidxs?: number | number[], isOppo?: boolean } = {}) {
+        let { element, hidxs, isOppo } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this.value.push({ cmd: 'attach', element, hidxs });
+        this.value.push({ cmd: 'attach', element, hidxs, isOppo });
         return this;
     }
     attack(damage?: number, element?: DamageType | DamageType[], options: { hidxs?: number | number[], isOppo?: boolean } = {}) {

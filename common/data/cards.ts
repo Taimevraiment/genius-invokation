@@ -89,6 +89,7 @@ export type CardHandleRes = {
     minusDiceSkill?: MinusDiceSkill,
     minusDiceCard?: number,
     minusDiceHero?: number,
+    attachEl?: PureElementType,
     hidxs?: number[],
     isValid?: boolean,
     element?: DiceCostType,
@@ -102,6 +103,7 @@ export type CardHandleRes = {
     isQuickAction?: boolean,
     isOrTrigger?: boolean,
     isTrigger?: boolean,
+    atkOffset?: number,
     exec?: () => CardExecRes | void,
 };
 
@@ -1202,7 +1204,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     313007: () => new CardBuilder(465).name('浪船').since('v5.5.0').vehicle().costSame(5).useCnt(2)
-        .src('tmp/UI_Gcg_CardFace_Modify_Vehicle_LangChuan_1441176747')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/4687e93bcf167198eb10acc1b3008d0c_5520302002949225658.png')
         .description('【入场时：】为我方附属角色提供2点[护盾]。；【附属角色切换至后台时：】此牌[可用次数]+1。')
         .handle((card, { cmds, selectHeros }) => (
             cmds.getStatus(301304, { hidxs: selectHeros }), {
@@ -1320,7 +1322,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321027: () => new CardBuilder(466).name('｢烟谜主｣').since('v5.5.0').place().costSame(0)
         .description('此牌初始具有4点【灵觉】。；【我方[挑选]后：灵觉】-1。；【行动阶段开始时：】若【灵觉】为0，则移除自身，然后从3个随机元素骰费用为2的支援牌中[挑选]一个生成。')
-        .src('tmp/UI_Gcg_CardFace_Assist_Location_YanmiZhu_1307857034'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1f83f6f34b1af8920ebf43d40ca51e8c_8682815555943814152.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -2084,7 +2086,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332044: () => new CardBuilder(467).name('以极限之名').since('v5.5.0').event().costSame(4)
         .description('交换双方手牌，然后手牌较少的一方抓牌直到手牌数等同于手牌多的一方。')
-        .src('tmp/UI_Gcg_CardFace_Event_Event_NiyeLong_942149019')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/c1917b3cfd96b9d83152a52addf1b055_6925432845450862739.png')
         .handle((_, event) => {
             const { hcardsCnt = 0, ehcardsCnt = 0, cmds } = event;
             const diff = hcardsCnt - ehcardsCnt;
@@ -2214,7 +2216,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333020: () => new CardBuilder(468).name('奇瑰之汤').since('v5.5.0').food().costSame(1).canSelectHero(1)
         .description('从3个随机效果中[挑选]1个，对目标角色生效。')
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .handle((_, { cmds }) => cmds.pickCard(3, CMD_MODE.UseCard, { card: [333021, 333022, 333023, 333024, 333025, 333026] }).res),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
@@ -2659,6 +2661,17 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: ['elReaction-Electro', 'other-elReaction-Electro'] }
         }),
 
+    214131: () => new CardBuilder(471).name('巡日塔门书').since('v5.6.0').talent().costElectro(1).perCnt(1)
+        .description('我方【hro】回复1点[充能]。；我方【hro】因【ski,3】扣除[充能]后，回复1点[充能]。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Sethos.webp')
+        .handle((card, event) => {
+            const { cmds, execmds, hero } = event;
+            cmds.getEnergy(1, { hidxs: hero?.hidx });
+            if (card.perCnt <= 0 || !hero?.energy) return;
+            execmds.getEnergy(1);
+            return { triggers: 'skilltype1', exec: () => card.minusPerCnt() }
+        }),
+
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/93fb13495601c24680e2299f9ed4f582_2499309288429565866.png'),
@@ -2825,7 +2838,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).perCnt(2)
         .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）')
-        .src('tmp/UI_Gcg_CardFace_Modify_Talent_Kachina_-298830647')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
         .handle((card, event) => {
             const { source, execmds } = event;
             if (card.perCnt <= 0 || (source != 116102 && source != 116103)) return;
@@ -2897,15 +2910,16 @@ const allCards: Record<number, () => CardBuilder> = {
 
     217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent().costDendro(1).perCnt(1)
         .description('所附属角色造成的[物理伤害]变为[草元素伤害]。；【装备有此牌的〖hro〗｢普通攻击｣后：】我方最高等级的｢柔灯之匣｣立刻行动1次。（每回合1次）')
-        .src('tmp/UI_Gcg_CardFace_Modify_Talent_Emilie_2014980344')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/6417278fc4d517b03f1373a6579cf9f2_7434922514757306138.png')
         .handle((card, event) => {
             const { summons = [], execmds } = event;
-            if (card.perCnt <= 0) return;
+            const res: CardBuilderHandleRes = { attachEl: ELEMENT_TYPE.Dendro };
+            if (card.perCnt <= 0) return res;
             const hid = getHidById(card.id);
             const smnIds = summons.filter(smn => getHidById(smn.id) == hid).map(s => s.id);
-            if (smnIds.length == 0) return;
+            if (smnIds.length == 0) return res;
             execmds.summonTrigger(Math.max(...smnIds));
-            return { triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
+            return { ...res, triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
         }),
 
     221011: () => new CardBuilder(112).name('冰萤寒光').since('v3.7.0').talent(1).costCryo(3)
@@ -3417,31 +3431,31 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333021: () => new CardBuilder().name('奇瑰之汤·疗愈').food().costSame(0).canSelectHero(1)
         .description('治疗目标角色2点。')
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .handle((_, { cmds }) => cmds.heal(2).res),
 
     333022: () => new CardBuilder().name('奇瑰之汤·助佑').food().costSame(0).canSelectHero(1)
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标角色下次使用技能时少花费2个元素骰。')
         .handle(() => ({ status: 303317 })),
 
     333023: () => new CardBuilder().name('奇瑰之汤·激愤').food().costSame(0).canSelectHero(1)
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标角色下一次造成的伤害+2。')
         .handle(() => ({ status: 303318 })),
 
     333024: () => new CardBuilder().name('奇瑰之汤·宁静').food().costSame(0).canSelectHero(1)
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标角色下次受到的伤害-2。')
         .handle(() => ({ status: 303319 })),
 
     333025: () => new CardBuilder().name('奇瑰之汤·安神').food().costSame(0).canSelectHero(1)
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标我方角色受到的伤害-1。（最多生效3次）')
         .handle(() => ({ status: 303320 })),
 
     333026: () => new CardBuilder().name('奇瑰之汤·鼓舞').food().costSame(0).canSelectHero(1)
-        .src('tmp/UI_Gcg_CardFace_Event_Food_MingShi_-1513751782')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('目标角色获得1点额外最大生命值。')
         .handle((_, { cmds }) => cmds.addMaxHp(1).res),
 

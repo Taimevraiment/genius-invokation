@@ -6,7 +6,7 @@ import {
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY, STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getMinHpHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
 import { StatusBuilder } from "./builder/statusBuilder.js";
 
@@ -1195,6 +1195,29 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             addDmg: status.useCnt,
             exec: () => status.dispose(),
         })),
+
+    114131: () => new StatusBuilder('寂想瞑影').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Enchant, STATUS_TYPE.AddDamage)
+        .description('【所附属角色使用｢普通攻击｣时：】造成的[物理伤害]变为[雷元素伤害]，伤害+1，少花费1个[无色元素骰]，并且对敌方生命值最低的角色造成1点[穿透伤害]。；[roundCnt]')
+        .handle((_, event) => ({
+            triggers: 'skilltype1',
+            attachEl: ELEMENT_TYPE.Electro,
+            addDmgType1: 1,
+            minusDiceSkill: { skilltype1: [0, 1, 0] },
+            pdmg: 1,
+            hidxs: getMinHpHidxs(event.eheros),
+        })),
+
+    114132: () => new StatusBuilder('轰雷凝集').heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【下次我方角色使用技能触发[雷元素相关反应]后：】所附属角色回复1点[充能]。')
+        .handle((_, event) => {
+            const { hidx = -1, cmds } = event;
+            cmds.getEnergy(1, { hidxs: hidx });
+            return {
+                triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
+                isAddTask: true,
+                exec: eStatus => eStatus?.minusUseCnt(),
+            }
+        }),
 
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon(STATUS_ICON.Special)
         .useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)

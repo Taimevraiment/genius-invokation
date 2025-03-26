@@ -1,7 +1,8 @@
 import { Trigger, VersionCompareFn } from "../../../typing.js";
 import {
     COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, SKILL_TYPE, SkillCostType,
-    SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
+    SkillType,
+    VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -66,7 +67,14 @@ export class GISkill {
             .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`);
         this.UI = {
             description,
-            src: convertToArray(src).filter(v => v != '')[0] ?? '',
+            src: convertToArray(src).filter(v => v != '').map(v => {
+                if (v?.startsWith('#')) {
+                    const prefix = 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/';
+                    if (v == '#') return `${prefix}${id}`;
+                    return `${prefix}${v.slice(1)}`;
+                }
+                return v;
+            })[0] ?? '',
             explains: [...(description.match(/(?<=【)[^【】]+(?=】)/g) ?? []), ...expl],
             descriptions: [],
         };
@@ -98,14 +106,14 @@ export class GISkill {
             }
             let dmgElement = res.dmgElement;
             let atkOffset = res.atkOffset;
-            for (const ist of hero.heroStatus) {
+            for (const hfield of [...hero.equipments, ...hero.heroStatus].sort((a, b) => b.entityId - a.entityId)) {
                 const event = { ...clone(hevent), hidx: hero.hidx };
                 delete event.minusDiceSkill;
-                const stsres = ist.handle(ist, event) ?? {};
-                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
-                    dmgElement = stsres.attachEl;
+                const hfieldres = hfield.handle(hfield as any, event) ?? {};
+                if (hfieldres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
+                    dmgElement = hfieldres.attachEl;
                 }
-                if (stsres.atkOffset) atkOffset = stsres.atkOffset;
+                if (hfieldres.atkOffset) atkOffset = hfieldres.atkOffset;
             }
             return {
                 ...res,
@@ -292,6 +300,7 @@ export class NormalSkillBuilder extends BaseBuilder {
     private _anyCost: number = 2;
     private _damage: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
+    private _energyCost: number = 0;
     private _explains: string[] = [];
     private _builder: SkillBuilder;
     private _src: string[] = [
@@ -339,6 +348,10 @@ export class NormalSkillBuilder extends BaseBuilder {
         this._damage = damage;
         return this;
     }
+    energy(energy: number) {
+        this._energyCost = energy;
+        return this;
+    }
     handle(handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined)) {
         this._handle = handle;
         return this;
@@ -363,6 +376,7 @@ export class NormalSkillBuilder extends BaseBuilder {
             .cost(1)
             .costAny(this._anyCost)
             .costElement(this._costElement)
+            .energy(this._energyCost)
             .damage(this._damage || (isCatalyst ? 1 : 2))
             .dmgElement(dmgElement)
             .perCnt(this._perCnt)

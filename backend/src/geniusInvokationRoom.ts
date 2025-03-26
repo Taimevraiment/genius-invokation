@@ -5433,26 +5433,29 @@ export default class GeniusInvokationRoom {
                 if (hidxs == undefined) throw new Error('@_doCmds-loseSkill: hidxs is undefined');
                 cheros[hidxs[0]].skills.splice(mode, 1);
             } else if (cmd == 'attach') {
-                if (!willAttachs) willAttachs = new Array(player.heros.length + opponent.heros.length).fill(0).map(() => []);
-                (ohidxs ?? [player.hidx]).forEach((hidx, hi) => {
+                const cpidx = pidx ^ +!!isOppo;
+                const cplayer = players[cpidx];
+                const copponent = players[cpidx ^ 1];
+                if (!willAttachs) willAttachs = new Array(cplayer.heros.length + copponent.heros.length).fill(0).map(() => []);
+                (ohidxs ?? [cplayer.hidx]).forEach((hidx, hi) => {
                     const {
                         dmgElement: dmgel = (Array.isArray(element) ?
                             element[hi] : element ??
-                            this._getFrontHero(pidx, { players })?.element ??
+                            this._getFrontHero(cpidx, { players })?.element ??
                             DAMAGE_TYPE.Physical) as ElementType,
                     } = damages?.(false, 0, element as DamageType | undefined, hidxs) ?? {};
                     const { players: players1, elTips: elTips1, willAttachs: willAttachs1, atriggers: atrgs1, etriggers: etrgs1 }
-                        = this._calcDamage(pidx, dmgel, [], hidx, players, { isAttach: true, elTips, isExec, skid, sktype });
-                    for (let i = 0; i < players[pidx].heros.length; ++i) {
+                        = this._calcDamage(cpidx, dmgel, [], hidx, players, { isAttach: true, elTips, isExec, skid, sktype });
+                    for (let i = 0; i < players[cpidx].heros.length; ++i) {
                         const attachEl = willAttachs1[i];
                         if (attachEl == undefined) continue;
-                        willAttachs![i + pidx * players[pidx ^ 1].heros.length].push(attachEl);
+                        willAttachs![i + cpidx * copponent.heros.length].push(attachEl);
                     }
                     assgin(players, players1);
                     elTips1.forEach((et, eti) => et[0] != '' && (elTips[eti] = [...et]));
                     const damageVO: DamageVO = {
                         dmgSource: 'null',
-                        atkPidx: pidx,
+                        atkPidx: cpidx,
                         atkHidx: -1,
                         tarHidx: -1,
                         willHeals: [],

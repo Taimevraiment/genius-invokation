@@ -163,16 +163,14 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
 
     1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1121422',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
+        .src('#1121422', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
         .vehicle().cost(1).handle(({ heros, cmds }) => (cmds.switchBefore(), {
             status: isCdt(allHidxs(heros).length == 1, 112145),
             statusOppo: 112143,
         })),
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1151021',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
@@ -186,31 +184,27 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1220511')
+        .src('#')
         .vehicle().costSame(1).handle(() => ({ status: 122053 })),
 
     1220512: () => new SkillBuilder('水泡封锁').description('{dealDmg}，敌方出战角色附属【sts122052】。')
         .vehicle().readySkill().damage(1).handle(() => ({ statusOppo: 122052 })),
 
     1230311: () => new SkillBuilder('炙烧攻势').description('{dealDmg}。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1230311',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/91a1aeec8fb8ae9e5eaaf64a839dabcb_6571191726509456077.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/91a1aeec8fb8ae9e5eaaf64a839dabcb_6571191726509456077.png')
         .vehicle().damage(2).costSame(2),
 
     1270321: () => new SkillBuilder('藤蔓锋鳞').description('{dealDmg}。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/1270321',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/1ff71b6c76cb900018bd9f98b8c7add7_7309401796826933036.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/1ff71b6c76cb900018bd9f98b8c7add7_7309401796826933036.png')
         .vehicle().damage(1).costAny(1).energy(1),
 
     3130011: () => new SkillBuilder('原海水刃').description('{dealDmg}。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130011',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5f3971c1d0665eb3d72f68415c3da8ae_6268200576026280012.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5f3971c1d0665eb3d72f68415c3da8ae_6268200576026280012.png')
         .vehicle().damage(2).costAny(2),
 
     3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
         .description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。', 'v5.4.0')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130021',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {
             const { hcards = [], cmds } = event;
             cmds.stealCard(1, CMD_MODE.HighHandCard);
@@ -219,8 +213,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。（每回合最多使用1次）')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130031',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({
             summonTriggers: 'phase-end',
             isForbidden: event.skill.perCnt == 0,
@@ -228,8 +221,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         })),
 
     3130041: () => new SkillBuilder('掘进突击').description('抓2张牌。然后，如果手牌中存在名称不存在于本局最初牌组中的牌，则提供2点[护盾]保护所附属角色。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130041',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e9339d30ff4a5642b32bc1208063a08c_2715679545278748017.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e9339d30ff4a5642b32bc1208063a08c_2715679545278748017.png')
         .vehicle().costAny(2).handle(event => {
             const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [], cmds } = event;
             cmds.getCard(2);
@@ -239,8 +231,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中[挑选]1张加入手牌，并且治疗附属角色1点。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130051',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/80e0cad80855e14a1efebb4b6ba2cd67_801740963269596598.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/80e0cad80855e14a1efebb4b6ba2cd67_801740963269596598.png')
         .vehicle().costSame(1).handle(() => ({
             pickCard: {
                 cnt: 3,
@@ -252,12 +243,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         })),
 
     3130061: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
-        .src('https://gi-tcg-assets.guyutongxue.site/api/v2/images/3130063',
-            'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
+        .src('#3130063', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
         .vehicle().costSame(1).handle(({ cmds }) => (cmds.switchAfter(), { statusOppo: 301302 })),
 
     3130071: () => new SkillBuilder('浪船·迅击炮').description('{dealDmg}。')
-        .src()
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/d51ae51bce40330458cea198b5dba91d_9095998201034503166.png')
         .vehicle().damage(2).costSame(1),
 
 }
