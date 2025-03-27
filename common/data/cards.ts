@@ -1214,6 +1214,9 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         )),
 
+    313008: () => new CardBuilder(473).name('突角龙').since('v5.6.0').vehicle().costAny(4).useCnt(2)
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_TujiaoLong.webp'),
+
     321001: () => new CardBuilder(179).name('璃月港口').offline('v1').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/c9f669c64195790d3ca31ee6559360ab_669337352006808767.png'),
@@ -1323,6 +1326,10 @@ const allCards: Record<number, () => CardBuilder> = {
     321027: () => new CardBuilder(466).name('｢烟谜主｣').since('v5.5.0').place().costSame(0)
         .description('此牌初始具有4点【灵觉】。；【我方[挑选]后：灵觉】-1。；【行动阶段开始时：】若【灵觉】为0，则移除自身，然后从3个随机元素骰费用为2的支援牌中[挑选]一个生成。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1f83f6f34b1af8920ebf43d40ca51e8c_8682815555943814152.png'),
+
+    321028: () => new CardBuilder(474).name('｢沃陆之邦｣').since('v5.6.0').place().costAny(3)
+        .description('【我方角色使用准备技能后：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得1点【sts301025】。；（当锻炼层数到达5点时，对应角色所造成的伤害+1）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_Woluzhibang.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -2094,6 +2101,11 @@ const allCards: Record<number, () => CardBuilder> = {
             if (diff != 0) cmds.getCard(Math.abs(diff), { isOppo: diff < 0 });
         }),
 
+    332045: () => new CardBuilder(475).name('困困冥想术').since('v5.6.0').event().costAny(2)
+        .description('从随机3张特技牌中[挑选]1张。；我方下次打出不属于初始卡组的牌少花费2个元素骰。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_MingshiLong.webp')
+        .handle((_, { cmds }) => (cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Vehicle }), { status: 303239 })),
+
     333001: () => new CardBuilder(265).name('绝云锅巴').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次｢普通攻击｣造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png')
@@ -2162,17 +2174,17 @@ const allCards: Record<number, () => CardBuilder> = {
     333011: () => new CardBuilder(275).name('唐杜尔烤鸡').since('v3.7.0').food().costAny(2)
         .description('本回合中，所有我方角色下一次｢元素战技｣造成的伤害+2。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/ebc939f0b5695910118e65f9acfc95ff_8938771284871719730.png')
-        .handle((_, event) => ({ status: 303309, hidxs: allHidxs(event.heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
+        .handle((_, { heros }) => ({ status: 303309, hidxs: allHidxs(heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
 
     333012: () => new CardBuilder(276).name('黄油蟹蟹').since('v3.7.0').food().costAny(2)
         .description('本回合中，所有我方角色下次受到伤害-2。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/371abd087dfb6c3ec9435668d927ee75_1853952407602581228.png')
-        .handle((_, event) => ({ status: 303310, hidxs: allHidxs(event.heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
+        .handle((_, { heros }) => ({ status: 303310, hidxs: allHidxs(heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
 
     333013: () => new CardBuilder(318).name('炸鱼薯条').since('v4.3.0').food().costAny(2)
         .description('本回合中，所有我方角色下次使用技能时少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/21ece93fa784b810495128f6f0b14c59_4336812734349949596.png')
-        .handle((_, event) => ({ status: 303311, hidxs: allHidxs(event.heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
+        .handle((_, { heros }) => ({ status: 303311, hidxs: allHidxs(heros, { cdt: h => !hasObjById(h.heroStatus, 303300) }) })),
 
     333014: () => new CardBuilder(333).name('松茸酿肉卷').since('v4.4.0').food().costSame(2).canSelectHero(1)
         .description('治疗目标角色2点，3回合内结束阶段再治疗此角色1点。')
@@ -2218,6 +2230,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('从3个随机效果中[挑选]1个，对目标角色生效。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .handle((_, { cmds }) => cmds.pickCard(3, CMD_MODE.UseCard, { card: [333021, 333022, 333023, 333024, 333025, 333026] }).res),
+
+    333027: () => new CardBuilder(476).name('纵声欢唱').since('v5.6.0').food().costAny(3)
+        .description('抓3张牌，下2次切换角色少花费1个元素骰。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Rongyi.webp')
+        .handle((_, { cmds, heros }) => (cmds.getCard(3), { status: 303321, hidxs: allHidxs(heros) })),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -2846,6 +2863,25 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'trigger', exec: () => card.minusPerCnt() }
         }),
 
+    216111: () => new CardBuilder(472).name('丛山锻火驰行').since('v5.6.0').talent(1).costGeo(2).perCnt(2)
+        .description('{action}；【装备有此牌的〖hro〗在场时：】切换至【hro】或由【hro】切换至其他角色时，若目标处于夜魂态，则回复1点｢夜魂值｣。（每回合2次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Xilonen.webp')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const nightSoul = getObjById(event.hero?.heroStatus, 116111);
+            const triggers: Trigger[] = [];
+            if (nightSoul && nightSoul.useCnt < nightSoul.maxCnt) triggers.push('switch-to', 'switch-from');
+            return {
+                isValid: !nightSoul,
+                triggers,
+                isAddTask: true,
+                exec: () => {
+                    nightSoul?.addUseCnt();
+                    card.minusPerCnt();
+                }
+            }
+        }),
+
     217011: () => new CardBuilder(107).name('飞叶迴斜').offline('v1').talent(1).costDendro(4).costDendro(3, 'v3.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。（每回合1次）')
         .src('https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png'),
@@ -3242,7 +3278,11 @@ const allCards: Record<number, () => CardBuilder> = {
 
     116102: () => new CardBuilder().name('冲天转转').vehicle(true).costSame(0)
         .description('【附属角色切换至后台时：】消耗1点｢夜魂值｣，召唤【smn116103】。')
-        .handle((_) => ({ triggers: 'switch-from', isAddTask: true, summon: 116103, isTrigger: true })),
+        .handle(() => ({ triggers: 'switch-from', isAddTask: true, summon: 116103, isTrigger: true })),
+
+    116112: () => new CardBuilder().name('刃轮装束').vehicle(true).costSame(0)
+        .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')
+        .handle(() => ({ attachEl: ELEMENT_TYPE.Geo })),
 
     122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),

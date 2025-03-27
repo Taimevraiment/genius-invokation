@@ -31,7 +31,10 @@
       </div>
       <div class="curr-deck">
         <div class="hero-avatar">
-          <img v-for="(avatar, aidx) in currDeck.avatars" :key="aidx" :src="avatar" />
+          <div v-for="(hero, aidx) in currDeck.heros" :key="aidx" :style="{ backgroundColor: hero.elColor }">
+            <img v-if="hero.avatar" :src="hero.avatar" />
+            <span style="line-height: 60px;">{{ hero.name }}</span>
+          </div>
         </div>
         当前卡组: <span class="deck-name">{{ currDeck.name }}</span>
       </div>
@@ -260,7 +263,10 @@ const currDeck = computed(() => { // 当前出战卡组
   const { heroIds } = parseShareCode(deck.shareCode);
   return {
     name: deck.name,
-    avatars: heroIds.map(hid => parseHero(hid).UI.avatar),
+    heros: heroIds.map(hid => {
+      const hero = parseHero(hid);
+      return { avatar: hero.UI.avatar, elColor: ELEMENT_COLOR[hero.element], name: hero.name }
+    }),
   }
 });
 const afterWinHeros = ref<Hero[][]>([]); // 游戏结束后显示的角色信息
@@ -881,9 +887,17 @@ body {
   margin-bottom: 5px;
 }
 
-.hero-avatar>img {
+.hero-avatar>div {
   width: 30%;
   filter: drop-shadow(0 0 2px white);
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.hero-avatar img {
+  width: 100%;
+  height: 100%;
 }
 
 .exit {

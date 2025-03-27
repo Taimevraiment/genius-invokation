@@ -1036,7 +1036,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ cmds }) => (cmds.attach({ element: ELEMENT_TYPE.Electro, isOppo: true }).switchAfter(), { status: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('/image/tmp/Skill_E_Sethos_01.webp')
-                .burst(4).damage(2).cost(3).handle(() => ({ status: 114131 })),
+                .burst(4).damage(3).cost(3).handle(() => ({ status: 114131 })),
             new SkillBuilder('黑鸢的密喻').description('自身｢普通攻击｣不会获得[充能]。；自身｢普通攻击｣后：消耗自己全部[充能]，对生命值最低的敌方造成等额+1的[穿透伤害]。')
                 .src('/image/tmp/UI_Talent_S_Sethos_05.webp')
                 .passive()
@@ -1397,6 +1397,31 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3212cc83c9970f4e0e6f7e149fbc5ec8_7653177718325263666.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 116101 }))
+        ),
+
+    1611: () => new HeroBuilder(470).name('希诺宁').since('v5.6.0').natlan().geo().sword()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Xilonen.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('锐锋攫猎').description('若自身附属【sts116111】，则恢复1点｢夜魂值｣。')
+            .handle(({ hero: { heroStatus } }) => ({ exec: () => getObjById(heroStatus, 116111)?.addUseCnt() })))
+        .skills(
+            new SkillBuilder('音火锻淬').description('本角色附属【crd116112】，并进入【夜魂加持】。（角色进入【夜魂加持】后不可使用此技能）')
+                .src('/image/tmp/Skill_S_Xilonen_01.webp')
+                .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
+                    equip: 116112,
+                    status: [[116111, 2]],
+                    isForbidden: hasObjById(heroStatus, 116111),
+                })),
+            new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方生命值最低的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的源音采样额外治疗1点。')
+                .src('/image/tmp/Skill_E_Xilonen_01.webp')
+                .burst(2).damage(1).cost(3).handle(event => {
+                    const { cmds, hero: { heroStatus }, heros } = event;
+                    cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
+                    cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: getMinHpHidxs(heros) });
+                }),
+            new SkillBuilder('四境四象回声').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的源音采样。')
+                .src('/image/tmp/UI_Talent_S_Xilonen_05.webp')
+                .passive().handle(() => ({ triggers: 'game-start', status: [[116113, 3]] }))
         ),
 
     1701: () => new HeroBuilder(47).name('柯莱').offline('v1').sumeru().dendro().bow()

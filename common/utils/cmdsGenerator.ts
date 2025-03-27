@@ -212,6 +212,10 @@ export default class CmdsGenerator {
         this.value.push({ cmd: 'exchangeHandCards' });
         return this;
     }
+    consumeNightSoul(hidx?: number, count: number = 1) {
+        for (let i = 0; i < count; ++i) this.getStatus(112145, { hidxs: hidx });
+        return this;
+    }
     addCmds(cmds?: Cmds[] | CmdsGenerator) {
         if (cmds != undefined) this.value.push(...(Array.isArray(cmds) ? cmds : cmds.value));
         return this;

@@ -451,6 +451,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             return { isDestroy: true }
         }
     })),
+    // ｢沃陆之邦｣
+    321028: () => new SupportBuilder().permanent().handle((_, event) => ({
+        triggers: ['useReadySkill', 'switch-to'],
+        exec: (_, cmds) => {
+            const { trigger, hidx } = event;
+            cmds.getStatus([[301025, trigger == 'useReadySkill' ? 3 : 1]], { hidxs: isCdt(trigger == 'switch-to', hidx) });
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(() => ({
         triggers: 'phase-start',

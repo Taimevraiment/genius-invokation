@@ -135,6 +135,7 @@ export class GICard {
                     ...res,
                     status: [...ressts, 303300],
                     notPreview: true,
+                    isValid: event.heros?.some(h => !hasObjById(h.heroStatus, 303300)),
                 }
             }
         } else if (subType.includes(CARD_SUBTYPE.Talent)) {

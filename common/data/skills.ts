@@ -164,10 +164,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
         .src('#1121422', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
-        .vehicle().cost(1).handle(({ heros, cmds }) => (cmds.switchBefore(), {
-            status: isCdt(allHidxs(heros).length == 1, 112145),
-            statusOppo: 112143,
-        })),
+        .vehicle().cost(1).handle(({ heros, cmds }) => {
+            cmds.switchBefore();
+            if (allHidxs(heros).length == 1) cmds.consumeNightSoul();
+            return { statusOppo: 112143 }
+        }),
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
@@ -178,10 +179,14 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().damage(2).costAny(1).handle(event => {
             const { eheros, combatStatus, hero: { hidx }, cmds } = event;
             const hidxs = getNextBackHidx(eheros);
-            cmds.getStatus(112145, { hidxs: hidx });
+            cmds.consumeNightSoul(hidx);
             if (hidxs.length == 0) return;
             return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
         }),
+
+    1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点｢夜魂值｣，抓3张牌。')
+        .src()
+        .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('#')
@@ -249,6 +254,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     3130071: () => new SkillBuilder('浪船·迅击炮').description('{dealDmg}。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/d51ae51bce40330458cea198b5dba91d_9095998201034503166.png')
         .vehicle().damage(2).costSame(1),
+
+    3130081: () => new SkillBuilder('昂扬状态').description('附属角色[准备技能]2次｢普通攻击｣。')
+        .src()
+        .vehicle().costAny(3).handle(() => ({ status: 301303 })),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

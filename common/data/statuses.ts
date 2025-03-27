@@ -211,8 +211,8 @@ const card332024sts = (minusCnt: number) => {
         });
 }
 
-const status11505x = (swirlEl: PureElementType) => {
-    return new StatusBuilder('风物之诗咏·' + ELEMENT_NAME[swirlEl][0]).combatStatus().icon(STATUS_ICON.ElementAtkUp).useCnt(2)
+const hero1505sts = (swirlEl: PureElementType) => {
+    return new StatusBuilder(`风物之诗咏·${ELEMENT_NAME[swirlEl][0]}`).combatStatus().icon(STATUS_ICON.ElementAtkUp).useCnt(2)
         .type(STATUS_TYPE.AddDamage).iconBg(STATUS_BG_COLOR[swirlEl])
         .description(`我方角色和召唤物所造成的[${ELEMENT_NAME[swirlEl]}伤害]+1。；[useCnt]`)
         .handle((status, event) => {
@@ -224,6 +224,13 @@ const status11505x = (swirlEl: PureElementType) => {
                 exec: () => { status.minusUseCnt() },
             }
         });
+}
+
+const hero1611sts = (el: ElementType) => {
+    const stsId = [, 216116, 216114, 216115, 216117, , 2116113][ELEMENT_CODE[el]];
+    return new StatusBuilder(`源音采样·${ELEMENT_NAME[el][0]}`).heroStatus().icon('').type(STATUS_TYPE.Usage)
+        .description(`【回合开始时：】如果所附属角色拥有2点｢夜魂值｣，则在敌方场上生成【sts${stsId}】。激活全部源音采样后，消耗2点｢夜魂值｣。`)
+        .handle(() => { });
 }
 
 const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
@@ -1305,13 +1312,13 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 }
             }),
 
-    115057: () => status11505x(ELEMENT_TYPE.Cryo),
+    115057: () => hero1505sts(ELEMENT_TYPE.Cryo),
 
-    115058: () => status11505x(ELEMENT_TYPE.Hydro),
+    115058: () => hero1505sts(ELEMENT_TYPE.Hydro),
 
-    115059: () => status11505x(ELEMENT_TYPE.Pyro),
+    115059: () => hero1505sts(ELEMENT_TYPE.Pyro),
 
-    115050: () => status11505x(ELEMENT_TYPE.Electro),
+    115050: () => hero1505sts(ELEMENT_TYPE.Electro),
 
     115061: () => new StatusBuilder('优风倾姿').heroStatus().icon(STATUS_ICON.AtkUp).useCnt(2).type(STATUS_TYPE.AddDamage)
         .description('【所附属角色进行｢普通攻击｣时：】造成的伤害+2\\；如果敌方存在后台角色，则此技能改为对下一个敌方后台角色造成伤害。；[useCnt]')
@@ -1529,6 +1536,18 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116104: nightSoul,
 
+    116111: nightSoul,
+
+    116113: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Geo).useCnt(useCnt),
+
+    116114: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Hydro).useCnt(useCnt),
+
+    116115: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Pyro).useCnt(useCnt),
+
+    116116: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Cryo).useCnt(useCnt),
+
+    116117: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Electro).useCnt(useCnt),
+
     117012: () => new StatusBuilder('新叶').combatStatus().icon(STATUS_ICON.AtkSelf).useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。（每回合1次）；[roundCnt]')
         .handle((_, event) => {
@@ -1728,9 +1747,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('我方下次【打出｢场地｣支援牌时：】少花费2个元素骰。')
         .handle((status, event) => {
             const { hcard, isMinusDiceCard } = event;
-            if (isMinusDiceCard && hcard?.hasSubtype(CARD_SUBTYPE.Place)) {
-                return { minusDiceCard: 2, triggers: 'card', exec: () => { status.minusUseCnt() } }
-            }
+            if (!isMinusDiceCard || !hcard?.hasSubtype(CARD_SUBTYPE.Place)) return;
+            return { triggers: 'card', minusDiceCard: 2, exec: () => { status.minusUseCnt() } }
         }),
 
     117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).icon('#')
@@ -1746,11 +1764,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                         if (status.roundCnt == 1) nightSoul.roundCnt = 0;
                         return;
                     }
-                    nightSoul.useCnt = Math.min(nightSoul.maxCnt, nightSoul.useCnt + 1);
+                    nightSoul.addUseCnt();
                     if (nightSoul.useCnt == 2) {
-                        cmds.getStatus(117094, { hidxs: hidx })
-                            .getStatus(112145, { hidxs: hidx })
-                            .getStatus(112145, { hidxs: hidx });
+                        cmds.getStatus(117094, { hidxs: hidx }).consumeNightSoul(hidx, 2);
                     }
                 }
             }
@@ -2275,9 +2291,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方打出〖crd127021〗时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
             const { hcard, isMinusDiceCard } = event;
-            if (isMinusDiceCard && hcard?.id == 127021) {
-                return { triggers: 'card', minusDiceCard: 1, exec: () => { status.minusUseCnt() } }
-            }
+            if (!isMinusDiceCard || hcard?.id != 127021) return;
+            return { triggers: 'card', minusDiceCard: 1, exec: () => { status.minusUseCnt() } }
         }),
 
     127027: () => new StatusBuilder('重燃的绿洲之心').heroStatus().icon('ski,2')
@@ -2350,6 +2365,31 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 exec: eStatus => { eStatus?.minusUseCnt() },
             }
         }),
+
+    216113: () => new StatusBuilder('受到的岩元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon('geo-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
+        .description('我方受到的[岩元素伤害]+1。[roundCnt]')
+        .handle(() => ({ triggers: 'Geo-getdmg', getDmg: 1 })),
+
+    216114: () => new StatusBuilder('受到的水元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon('hydro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
+        .description('我方受到的[水元素伤害]+1。[roundCnt]')
+        .handle(() => ({ triggers: 'Hydro-getdmg', getDmg: 1 })),
+
+    216115: () => new StatusBuilder('受到的火元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
+        .description('我方受到的[火元素伤害]+1。[roundCnt]')
+        .handle(() => ({ triggers: 'Pyro-getdmg', getDmg: 1 })),
+
+    216116: () => new StatusBuilder('受到的冰元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon('cryo-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
+        .description('我方受到的[冰元素伤害]+1。[roundCnt]')
+        .handle(() => ({ triggers: 'Cryo-getdmg', getDmg: 1 })),
+
+    216117: () => new StatusBuilder('受到的雷元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon('electro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
+        .description('我方受到的[雷元素伤害]+1。[roundCnt]')
+        .handle(() => ({ triggers: 'Electro-getdmg', getDmg: 1 })),
 
     300001: () => new StatusBuilder('旧时庭园（生效中）').combatStatus().icon(STATUS_ICON.Buff).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -2433,6 +2473,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
+    301025: (cnt: number) => new StatusBuilder('锻炼').heroStatus().useCnt(cnt).maxCnt(5)
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.AddDamage)
+        .description('若自身层数等于5，则所附属角色造成的伤害+1。')
+        .handle((status, event) => {
+            const { sktype = SKILL_TYPE.Vehicle } = event;
+            if (sktype == SKILL_TYPE.Vehicle || status.useCnt < 5) return;
+            return { triggers: 'dmg', addDmgCdt: 1 }
+        }),
+
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
         .description('根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。'),
 
@@ -2509,7 +2558,28 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301302: () => new StatusBuilder('目标').heroStatus().icon(STATUS_ICON.Debuff).useCnt(1).type(STATUS_TYPE.Usage)
         .description('【敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果。'),
 
+    301303: () => new StatusBuilder('突角龙（生效中）').heroStatus().icon(STATUS_ICON.Special).useCnt(1)
+        .type(STATUS_TYPE.ReadySkill, STATUS_TYPE.Sign)
+        .description('本角色将在下次行动时，直接使用技能：【普通攻击】。')
+        .handle((status, event) => ({
+            triggers: ['switch-from', 'useReadySkill'],
+            skill: SKILL_TYPE.Normal,
+            exec: () => {
+                status.minusUseCnt();
+                event.cmds.getStatus(301305);
+            }
+        })),
+
     301304: () => shieldHeroStatus('浪船'),
+
+    301305: () => new StatusBuilder('突角龙（生效中）').heroStatus().icon(STATUS_ICON.Special).useCnt(1)
+        .type(STATUS_TYPE.ReadySkill, STATUS_TYPE.Sign)
+        .description('本角色将在下次行动时，直接使用技能：【普通攻击】。')
+        .handle(status => ({
+            triggers: ['switch-from', 'useReadySkill'],
+            skill: SKILL_TYPE.Normal,
+            exec: () => { status.minusUseCnt() }
+        })),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -2646,7 +2716,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('我方下次触发扩散反应时对目标以外的所有敌方角色造成的伤害+1。')
         .handle((status, event) => ({
-            triggers: ['dmg-Swirl'],
+            triggers: 'dmg-Swirl',
             addDmgCdt: 1,
             exec: () => { event.isSwirlExec && status.minusUseCnt() },
         })),
@@ -2850,13 +2920,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合中，我方下次打出支援牌时：】少花费1个元素骰。')
         .handle((status, event) => {
             const { hcard, isMinusDiceCard } = event;
-            if (isMinusDiceCard && hcard?.type == CARD_TYPE.Support) {
-                return {
-                    minusDiceCard: 1,
-                    triggers: 'card',
-                    exec: () => status.minusRoundCnt(),
-                }
-            }
+            if (!isMinusDiceCard || hcard?.type != CARD_TYPE.Support) return;
+            return { triggers: 'card', minusDiceCard: 1, exec: () => status.minusRoundCnt() }
         }),
 
     303231: () => coolDownStatus('海底宝藏', 303230).heroStatus().description('本回合此角色不会再受到来自｢【crd303230】｣的治疗。'),
@@ -2906,6 +2971,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     eStatus.minusRoundCnt();
                 }
             }
+        }),
+
+    303239: () => new StatusBuilder('困困冥想术（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('我方下次打出不属于初始卡组的牌少花费2个元素骰。')
+        .handle((status, event) => {
+            const { hcard, playerInfo: { initCardIds = [] } = {}, isMinusDiceCard } = event;
+            if (!hcard || initCardIds.includes(hcard.id) || !isMinusDiceCard) return;
+            return { triggers: 'card', minusDiceCard: 2, exec: () => { status.minusUseCnt() } }
         }),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon(STATUS_ICON.Food).roundCnt(1)
@@ -3056,6 +3130,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303320: () => new StatusBuilder('奇瑰之汤·安神（生效中）').heroStatus()
         .useCnt(3).roundCnt(1).type(STATUS_TYPE.Barrier)
         .description('本回合中，该我方角色受到的伤害-1。；[useCnt]'),
+
+    303321: () => new StatusBuilder('纵声欢唱（生效中）').combatStatus().useCnt(2).icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage)
+        .description('切换角色少花费1个元素骰。；[useCnt]')
+        .handle((status, event) => {
+            const { switchHeroDiceCnt = 0 } = event;
+            if (switchHeroDiceCnt == 0) return;
+            return { minusDiceHero: 1, triggers: 'minus-switch', exec: () => { status.minusUseCnt() } }
+        }),
 
 };
 
