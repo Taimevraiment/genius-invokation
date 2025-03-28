@@ -1,5 +1,5 @@
 import { Hero, Trigger } from '../../typing';
-import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
+import { CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getMinHpHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
@@ -1025,21 +1025,22 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1413: () => new HeroBuilder(469).name('赛索斯').since('v5.6.0').sumeru().electro().bow()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Sethos.webp')
         .avatar()
-        .normalSkill(new NormalSkillBuilder('王家苇箭术').energy(-1).handle(event => {
-            const { hero: { energy }, cmds, eheros } = event;
-            cmds.getEnergy(-energy);
-            return { pdmg: energy + 1, hidxs: getMinHpHidxs(eheros) }
-        }))
+        .normalSkill(new NormalSkillBuilder('王家苇箭术').energy(-1))
         .skills(
             new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，切换到下一个角色。下次我方角色使用技能触发[雷元素相关反应]后，自身回复1点[充能]。')
                 .src('/image/tmp/Skill_S_Sethos_01.webp')
-                .elemental().cost(2).handle(({ cmds }) => (cmds.attach({ element: ELEMENT_TYPE.Electro, isOppo: true }).switchAfter(), { status: 114132 })),
+                .elemental().cost(2).handle(({ cmds }) => (cmds.switchAfter(), { isAttachOppo: true, status: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('/image/tmp/Skill_E_Sethos_01.webp')
                 .burst(4).damage(3).cost(3).handle(() => ({ status: 114131 })),
             new SkillBuilder('黑鸢的密喻').description('自身｢普通攻击｣不会获得[充能]。；自身｢普通攻击｣后：消耗自己全部[充能]，对生命值最低的敌方造成等额+1的[穿透伤害]。')
                 .src('/image/tmp/UI_Talent_S_Sethos_05.webp')
-                .passive()
+                .passive().handle(event => {
+                    const { hero: { energy }, cmds, eheros } = event;
+                    if (energy == 0) return;
+                    cmds.getEnergy(-energy).attack(energy + 1, DAMAGE_TYPE.Pierce, { hidxs: getMinHpHidxs(eheros) })
+                    return { triggers: 'after-skilltype1' }
+                })
         ),
 
     1501: () => new HeroBuilder(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
@@ -1409,7 +1410,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/Skill_S_Xilonen_01.webp')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
                     equip: 116112,
-                    status: [[116111, 2]],
+                    status: [[116111, 1]],
                     isForbidden: hasObjById(heroStatus, 116111),
                 })),
             new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方生命值最低的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的源音采样额外治疗1点。')
@@ -1421,7 +1422,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 }),
             new SkillBuilder('四境四象回声').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的源音采样。')
                 .src('/image/tmp/UI_Talent_S_Xilonen_05.webp')
-                .passive().handle(() => ({ triggers: 'game-start', status: [[116113, 3]] }))
+                .passive().handle(event => {
+                    const stsId = [, 116116, 116114, 116115, 116117, , 116113];
+                    const { heros } = event;
+                    return { triggers: 'game-start', status: heros?.map(h => stsId[ELEMENT_CODE[h.element]] ?? 116113) }
+                })
         ),
 
     1701: () => new HeroBuilder(47).name('柯莱').offline('v1').sumeru().dendro().bow()

@@ -149,7 +149,8 @@ export class GICard {
                     const { slotUse = false, cmds } = event;
                     const ohandleres = ohandle?.(card, event, ver) ?? {};
                     if (slotUse && !ohandleres.cmds?.isUseSkill) {
-                        return { triggers: 'skill', cmds: cmds.useSkill({ skillId: cnt }) }
+                        cmds.useSkill({ skillId: cnt });
+                        return { triggers: 'skill', isValid: ohandleres.isValid }
                     }
                     return ohandleres;
                 }

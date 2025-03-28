@@ -59,8 +59,7 @@ export const getMinHertHidxs = (heros: Hero[] = [], fhidx?: number): number[] =>
 }
 
 // 获取生命值最低角色的hidx(只有一个number的数组)
-export const getMinHpHidxs = (heros: Hero[] = [], fhidx?: number): number[] => {
-    fhidx = fhidx ?? heros.findIndex(h => h.isFront);
+export const getMinHpHidxs = (heros: Hero[] = [], fhidx: number = heros.findIndex(h => h.isFront)): number[] => {
     if (fhidx == -1) return [];
     const minHp = Math.min(...heros.filter(h => h.hp > 0).map(h => h.hp));
     const hidxs: number[] = [];

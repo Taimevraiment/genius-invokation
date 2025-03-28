@@ -2686,7 +2686,7 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds.getEnergy(1, { hidxs: hero?.hidx });
             if (card.perCnt <= 0 || !hero?.energy) return;
             execmds.getEnergy(1);
-            return { triggers: 'skilltype1', exec: () => card.minusPerCnt() }
+            return { triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
         }),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
@@ -2868,11 +2868,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Xilonen.webp')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const nightSoul = getObjById(event.hero?.heroStatus, 116111);
+            const { hero, heros, sourceHidx = -1, trigger } = event;
+            const thero = trigger == 'switch-to' ? hero : heros?.[sourceHidx];
+            const nightSoul = thero?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
             const triggers: Trigger[] = [];
             if (nightSoul && nightSoul.useCnt < nightSoul.maxCnt) triggers.push('switch-to', 'switch-from');
             return {
-                isValid: !nightSoul,
+                isValid: !hasObjById(hero?.heroStatus, 116111),
                 triggers,
                 isAddTask: true,
                 exec: () => {

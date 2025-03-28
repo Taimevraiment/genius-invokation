@@ -46,6 +46,7 @@ export type SkillHandleRes = {
     summon?: (number | [number, ...any])[] | number,
     triggers?: Trigger[],
     isAttach?: boolean,
+    isAttachOppo?: boolean,
     pdmg?: number,
     pdmgSelf?: number,
     addDmgCdt?: number,

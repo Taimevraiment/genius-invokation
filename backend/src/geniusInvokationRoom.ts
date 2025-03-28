@@ -934,13 +934,16 @@ export default class GeniusInvokationRoom {
                 const chi = (hidx + i) % player.heros.length;
                 const triggers: Trigger[] = ['switch'];
                 const types: StatusType[] = [STATUS_TYPE.Usage, STATUS_TYPE.Attack];
+                let sourceHidx = -1;
                 if (chi == ohidx) {
                     triggers.push('switch-from');
                     types.push(STATUS_TYPE.ReadySkill);
+                    sourceHidx = hidx;
                 } else if (chi == hidx) {
                     triggers.push('switch-to');
+                    sourceHidx = ohidx;
                 } else continue;
-                this._detectSlotAndStatus(pidx, triggers, { hidxs: chi, types, fhidx: ohidx, isQuickAction });
+                this._detectSlotAndStatus(pidx, triggers, { hidxs: chi, types, fhidx: ohidx, sourceHidx, isQuickAction });
             }
             this._detectSupport(pidx, 'switch', { hidx, isQuickAction });
             player.isFallAtk = true;
@@ -1721,12 +1724,12 @@ export default class GeniusInvokationRoom {
             .getStatus(skillres.statusOppoAfter, { hidxs: skillres.hidxs, isOppo: true });
         this._doCmds(pidx, stsaftercmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
         if (skillres.summon) this._updateSummon(pidx, this._getSummonById(skillres.summon), players, isExec, { supportCnt });
-        if (skillres.isAttach) {
+        if (skillres.isAttach || skillres.isAttachOppo) {
             const { elTips: elTips2 = [], willAttachs: willAttachs2 = [], atriggers: atrgs2 = [], etriggers: etrgs2 = [] } = this._doCmds(pidx,
-                [{ cmd: 'attach', hidxs: [ohidx], element: oplayers[pidx].heros[ohidx].element }],
-                { players, isExec, isAction: !isQuickAction, skid, sktype: skill?.type });
-            for (let i = 0; i < ahlen; ++i) aElTips[i + pidx * ehlen] = elTips2[i + pidx * ehlen];
-            for (let i = 0; i < ahlen; ++i) aWillAttach[i + pidx * ehlen].push(...willAttachs2[i + pidx * ehlen]);
+                [{ cmd: 'attach', element: oplayers[pidx].heros[ohidx].element, isOppo: skillres.isAttachOppo }],
+                { players, isExec, isAction: !isQuickAction, skid, sktype: skill?.type, energyCnt });
+            elTips2.forEach((elt, elti) => elt[0] != '' && (aElTips[elti] = elt));
+            willAttachs2.forEach((wa, wai) => aWillAttach[wai].push(...wa));
             atrgs2.forEach((at, ati) => atriggers[ati] = [...new Set([...atriggers[ati], ...at])]);
             etrgs2.forEach((et, eti) => etriggers[eti] = [...new Set([...etriggers[eti], ...et])]);
         }
@@ -2021,7 +2024,7 @@ export default class GeniusInvokationRoom {
             isReadySkill, sktype, minusDiceSkillIds = [], atkId, tasks = [], willSwitch, isQuickAction = false,
             aWillHeals = new Array<number>(oahlen + oehlen).fill(-1), bWillHeals = new Array<number>(oahlen + oehlen).fill(-1),
             usedDice = 0, dmgElements = new Array<DamageType>(oehlen + oahlen).fill(DAMAGE_TYPE.Physical),
-            willAttachs = new Array<PureElementType | undefined>(isAttach || isAtkSelf ? oahlen : oehlen).fill(undefined), isSwitch = -1,
+            willAttachs = new Array<PureElementType | undefined>(isAtkSelf ? oahlen : oehlen).fill(undefined), isSwitch = -1,
             elTips = new Array(oahlen + oehlen).fill(0).map(() => ['', PURE_ELEMENT_TYPE.Cryo, PURE_ELEMENT_TYPE.Cryo]), minusDiceSkill = [],
             atriggers: atrg = new Array(oahlen).fill(0).map(() => []), etriggers: etrg = new Array(oehlen).fill(0).map(() => []),
             discards = [], withCard, isChargedAtk, isFallAtk, supportCnt, energyCnt,
@@ -2052,9 +2055,8 @@ export default class GeniusInvokationRoom {
             isFallAtk: false,
             tasks,
         });
-        const isSelf = !!isAtkSelf || !!isAttach;
         const { heros: aheros, summons: asummons, playerInfo } = res.players[pidx];
-        const dmgedPidx = epidx ^ +isSelf;
+        const dmgedPidx = epidx ^ +isAtkSelf;
         const atkPidx = dmgedPidx ^ 1;
         const { heros: dmgedheros, heros: { length: ehlen }, summons: esummons, handCards } = res.players[dmgedPidx];
         const { heros: { length: ahlen }, heros: atkheros } = res.players[atkPidx];
@@ -2100,14 +2102,14 @@ export default class GeniusInvokationRoom {
                     res.willAttachs[dmgedHidx] = dmgElement;
                     res.elTips[elTipIdx] = ['扩散', attachElement, dmgElement];
                     atriggers.forEach((trg, tri) => {
-                        if (!isSelf) {
+                        if (!isAtkSelf) {
                             if (tri == atkHidx) trg.push('Swirl');
                             else trg.push('other-Swirl');
                         }
                         trg.push('Swirl-oppo');
                     });
                     etriggers.forEach((trg, tri) => {
-                        if (isSelf) {
+                        if (isAtkSelf) {
                             if (tri == dmgedHidx) trg.push('Swirl');
                             else trg.push('other-Swirl');
                         }
@@ -2119,14 +2121,14 @@ export default class GeniusInvokationRoom {
                     ++res.willDamages[getDmgIdx][0];
                     res.elTips[elTipIdx] = ['结晶', attachElement, dmgElement];
                     atriggers.forEach((trg, tri) => {
-                        if (!isSelf) {
+                        if (!isAtkSelf) {
                             if (tri == atkHidx) trg.push('Crystallize');
                             else trg.push('other-Crystallize');
                         }
                         trg.push('Crystallize-oppo');
                     });
                     etriggers.forEach((trg, tri) => {
-                        if (isSelf) {
+                        if (isAtkSelf) {
                             if (tri == dmgedHidx) trg.push('Crystallize');
                             else trg.push('other-Crystallize');
                         }
@@ -2144,14 +2146,14 @@ export default class GeniusInvokationRoom {
                         res.willDamages[getDmgIdx][0] += isAttach ? 0 : 2;
                         res.elTips[elTipIdx] = ['蒸发', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Vaporize');
                                 else trg.push('other-Vaporize');
                             }
                             trg.push('Vaporize-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Vaporize');
                                 else trg.push('other-Vaporize');
                             }
@@ -2161,14 +2163,14 @@ export default class GeniusInvokationRoom {
                         res.willDamages[getDmgIdx][0] += isAttach ? 0 : 2;
                         res.elTips[elTipIdx] = ['融化', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Melt');
                                 else trg.push('other-Melt');
                             }
                             trg.push('Melt-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Melt');
                                 else trg.push('other-Melt');
                             }
@@ -2185,14 +2187,14 @@ export default class GeniusInvokationRoom {
                         }
                         res.elTips[elTipIdx] = ['感电', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('ElectroCharged');
                                 else trg.push('other-ElectroCharged');
                             }
                             trg.push('ElectroCharged-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('ElectroCharged');
                                 else trg.push('other-ElectroCharged');
                             }
@@ -2209,14 +2211,14 @@ export default class GeniusInvokationRoom {
                         }
                         res.elTips[elTipIdx] = ['超导', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Superconduct');
                                 else trg.push('other-Superconduct');
                             }
                             trg.push('Superconduct-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Superconduct');
                                 else trg.push('other-Superconduct');
                             }
@@ -2227,14 +2229,14 @@ export default class GeniusInvokationRoom {
                         eist[dmgedHidx].push(this.newStatus(106));
                         res.elTips[elTipIdx] = ['冻结', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Frozen');
                                 else trg.push('other-Frozen');
                             }
                             trg.push('Frozen-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Frozen');
                                 else trg.push('other-Frozen');
                             }
@@ -2244,14 +2246,14 @@ export default class GeniusInvokationRoom {
                         ++res.willDamages[getDmgIdx][0];
                         res.elTips[elTipIdx] = ['绽放', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Bloom');
                                 else trg.push('other-Bloom');
                             }
                             trg.push('Bloom-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Bloom');
                                 else trg.push('other-Bloom');
                             }
@@ -2273,14 +2275,14 @@ export default class GeniusInvokationRoom {
                         }
                         res.elTips[elTipIdx] = ['超载', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Overload');
                                 else trg.push('other-Overload');
                             }
                             trg.push('Overload-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Overload');
                                 else trg.push('other-Overload');
                             }
@@ -2292,14 +2294,14 @@ export default class GeniusInvokationRoom {
                         this._updateSummon(cpidx, [this.newSummon(115)], res.players, isExec, { isSummon, supportCnt });
                         res.elTips[elTipIdx] = ['燃烧', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Burning');
                                 else trg.push('other-Burning');
                             }
                             trg.push('Burning-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Burning');
                                 else trg.push('other-Burning');
                             }
@@ -2309,14 +2311,14 @@ export default class GeniusInvokationRoom {
                         ++res.willDamages[getDmgIdx][0];
                         res.elTips[elTipIdx] = ['原激化', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
-                            if (!isSelf) {
+                            if (!isAtkSelf) {
                                 if (tri == atkHidx) trg.push('Quicken');
                                 else trg.push('other-Quicken');
                             }
                             trg.push('Quicken-oppo');
                         });
                         etriggers.forEach((trg, tri) => {
-                            if (isSelf) {
+                            if (isAtkSelf) {
                                 if (tri == dmgedHidx) trg.push('Quicken');
                                 else trg.push('other-Quicken');
                             }
@@ -2338,14 +2340,14 @@ export default class GeniusInvokationRoom {
                         `other-elReaction-${ELEMENT_TYPE_KEY[attachElement]}` as Trigger,
                     ];
                     atriggers.forEach((trgs, tri) => {
-                        if (!isSelf) {
+                        if (!isAtkSelf) {
                             if (tri == atkHidx) trgs.push(...elReactionTriggers);
                             else trgs.push(...otherElReactionTriggers);
                         }
                         trgs.push(...otherElReactionTriggers.map(t => t.replace('other', 'get') + '-oppo' as Trigger));
                     });
                     etriggers.forEach((trgs, tri) => {
-                        if (isSelf) {
+                        if (isAtkSelf) {
                             if (tri == dmgedHidx) trgs.push(...elReactionTriggers);
                             else trgs.push(...otherElReactionTriggers);
                         }
@@ -2376,19 +2378,19 @@ export default class GeniusInvokationRoom {
                 const wdmgs = res.willDamages.slice(edmgIdxOffset, edmgIdxOffset + ehlen);
                 if (wdmgs.some(dmg => dmg[0] > -1 || dmg[1] > 0)) {
                     triggers.forEach((trgs, ti) => {
-                        if (!isSelf && isA) {
+                        if (!isAtkSelf && isA) {
                             if (ti == atkHidx) trgs.push('dmg');
                             else trgs.push('other-dmg');
                         }
                         trgs.push('getdmg-oppo');
                         if (dmgElement != ELEMENT_TYPE.Physical) {
-                            if (ti == atkHidx && !isSelf) trgs.push('el-dmg');
+                            if (ti == atkHidx && !isAtkSelf) trgs.push('el-dmg');
                             trgs.push('el-getdmg-oppo');
                         }
                     });
                     if (wdmgs.some(dmg => dmg[0] > -1)) {
                         triggers.forEach((trgs, ti) => {
-                            if (!isSelf && isA) {
+                            if (!isAtkSelf && isA) {
                                 if (ti == atkHidx) trgs.push(`${trgEl}-dmg`);
                                 else trgs.push(`other-${trgEl}-dmg`);
                             }
@@ -2397,7 +2399,7 @@ export default class GeniusInvokationRoom {
                     }
                     if (wdmgs.some(dmg => dmg[1] > 0)) {
                         triggers.forEach((trgs, ti) => {
-                            if (!isSelf && isA) {
+                            if (!isAtkSelf && isA) {
                                 if (ti == atkHidx) trgs.push('Pierce-dmg');
                                 else trgs.push('other-Pierce-dmg');
                             }
@@ -2737,13 +2739,13 @@ export default class GeniusInvokationRoom {
         const stscmds = new CmdsGenerator();
         aheros.forEach((_, i) => {
             if (aist[i].length == 0) return;
-            stscmds.getStatus(aist[i], { hidxs: i, isOppo: isSelf });
+            stscmds.getStatus(aist[i], { hidxs: i, isOppo: !!isAtkSelf });
         });
         dmgedheros.forEach((_, i) => {
             if (eist[i].length == 0) return;
-            stscmds.getStatus(eist[i], { hidxs: i, isOppo: !isSelf });
+            stscmds.getStatus(eist[i], { hidxs: i, isOppo: !isAtkSelf });
         });
-        stscmds.getStatus(aost, { isOppo: isSelf }).getStatus(eost, { isOppo: !isSelf });
+        stscmds.getStatus(aost, { isOppo: !!isAtkSelf }).getStatus(eost, { isOppo: !isAtkSelf });
         this._doCmds(pidx, stscmds, { players: res.players, ahidx: atkHidx, ehidx: dmgedHidx, isExec });
         this._updateSummon(dmgedPidx, [], res.players, isExec, { destroy: +(isSummon == -1) });
         this._updateSummon(atkPidx, [], res.players, isExec, { destroy: +(isSummon == -1) });
@@ -3852,8 +3854,8 @@ export default class GeniusInvokationRoom {
                     restDmg = skillres.restDmg;
                     dmgElement = skillres.dmgElement;
                     cmds.addCmds(skillres.cmds)
-                        .getStatus(skillres.status, { hidxs: [hidx] })
-                        .getStatus(skillres.statusOppo, { hidxs: [hidx], isOppo: true });
+                        .getStatus(skillres.status, { hidxs: hidx })
+                        .getStatus(skillres.statusOppo, { hidxs: hidx, isOppo: true });
                     if (isExec || isOnlyExec) {
                         if (isExecTask || skillres.isNotAddTask || isOnlyExec) {
                             skillres.exec?.();
@@ -3875,21 +3877,21 @@ export default class GeniusInvokationRoom {
                             } else {
                                 const skillHandle = async () => {
                                     this._writeLog(`[${players[pidx].name}](${pidx})[${hero.name}][${skill.name}]发动`, 'info');
-                                    const { willHeals = [] } = this._doCmds(pidx, cmds, { isAction: !isQuickAction });
+                                    const { willHeals = [], bWillDamages = [] } = this._doCmds(pidx, cmds, { isAction: !isQuickAction });
                                     const heroSelect = [pidx, hidx];
                                     const actionInfo: ActionInfo = {
                                         avatar: hero.UI.avatar,
                                         content: skill.name,
                                         subContent: SKILL_TYPE_NAME[skill.type],
                                     }
-                                    if (willHeals[0]?.length) {
+                                    if (willHeals[0]?.length || bWillDamages.length) {
                                         await this._doDamage(pidx, {
                                             dmgSource: 'skill',
                                             atkPidx: pidx,
                                             atkHidx: -1,
                                             tarHidx: -1,
                                             willHeals: willHeals[0],
-                                            willDamages: [],
+                                            willDamages: bWillDamages,
                                             dmgElements: [],
                                             elTips: [],
                                         }, {
@@ -5441,12 +5443,12 @@ export default class GeniusInvokationRoom {
                     const {
                         dmgElement: dmgel = (Array.isArray(element) ?
                             element[hi] : element ??
-                            this._getFrontHero(cpidx, { players })?.element ??
+                            this._getFrontHero(pidx, { players })?.element ??
                             DAMAGE_TYPE.Physical) as ElementType,
                     } = damages?.(false, 0, element as DamageType | undefined, hidxs) ?? {};
                     const { players: players1, elTips: elTips1, willAttachs: willAttachs1, atriggers: atrgs1, etriggers: etrgs1 }
-                        = this._calcDamage(cpidx, dmgel, [], hidx, players, { isAttach: true, elTips, isExec, skid, sktype });
-                    for (let i = 0; i < players[cpidx].heros.length; ++i) {
+                        = this._calcDamage(pidx, dmgel, [], hidx, players, { isAttach: true, isAtkSelf: +!isOppo, elTips, isExec, skid, sktype, energyCnt });
+                    for (let i = 0; i < cplayer.heros.length; ++i) {
                         const attachEl = willAttachs1[i];
                         if (attachEl == undefined) continue;
                         willAttachs![i + cpidx * copponent.heros.length].push(attachEl);
@@ -6352,8 +6354,8 @@ export default class GeniusInvokationRoom {
         if (isSwitch > -1 && !isExec) hidx = isSwitch;
         const curHero = heros[hidx];
         if (!curHero) throw new Error(`@_calcSkillChange: hero not found\n pidx:${pidx},hidx:${hidx},skid:${skid},heros:[${heros.map(h => heroToString(h))}]`);
-        const rskill = isReadySkill ? this.newSkill(skid) : null;
         const skills = [...curHero.skills.filter(sk => sk.type != SKILL_TYPE.Passive && sk.type != SKILL_TYPE.PassiveHidden)];
+        const rskill = isReadySkill ? (skills.find(s => s.type == skid || s.id == skid) ?? this.newSkill(skid)) : null;
         if (curHero.vehicleSlot) skills.unshift(curHero.vehicleSlot[1]);
         const genSkillArr = <T>(item: T) => skills.map(() => clone(item));
         const dmgChange = genSkillArr(0);
@@ -6547,6 +6549,7 @@ export default class GeniusInvokationRoom {
                     hidx,
                     hcard: c,
                     card: c,
+                    playerInfo: player.playerInfo,
                     minusDiceCard: costChange[ci],
                     isMinusDiceCard,
                     isMinusDiceTalent,
@@ -6697,7 +6700,7 @@ export default class GeniusInvokationRoom {
                 return this.newStatus(...convertToArray(stsargs) as [number, ...any]);
             }
             return stsargs;
-        });
+        }).filter(sts => sts.id > 0);
     }
     /**
      * 根据id和参数获取召唤物数组

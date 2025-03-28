@@ -276,6 +276,7 @@ export const STATUS_ICON = {
     Shield: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp',
     DebuffCountered01: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp',
     DebuffCostSkill: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSkill.webp',
+    DebuffCostSwitch: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSwitch.webp',
 } as const;
 
 export const REACTION_COLOR = {

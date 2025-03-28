@@ -4,6 +4,7 @@ import {
     ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
+import { NULL_STATUS } from "../constant/init.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY, STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getMinHpHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
@@ -227,10 +228,18 @@ const hero1505sts = (swirlEl: PureElementType) => {
 }
 
 const hero1611sts = (el: ElementType) => {
-    const stsId = [, 216116, 216114, 216115, 216117, , 2116113][ELEMENT_CODE[el]];
-    return new StatusBuilder(`源音采样·${ELEMENT_NAME[el][0]}`).heroStatus().icon('').type(STATUS_TYPE.Usage)
+    const stsId = [, 216116, 216114, 216115, 216117, , 216113][ELEMENT_CODE[el]];
+    return new StatusBuilder(`源音采样·${ELEMENT_NAME[el][0]}`).heroStatus().icon('').iconBg(STATUS_BG_COLOR[el]).maxCnt(3).type(STATUS_TYPE.Usage)
         .description(`【回合开始时：】如果所附属角色拥有2点｢夜魂值｣，则在敌方场上生成【sts${stsId}】。激活全部源音采样后，消耗2点｢夜魂值｣。`)
-        .handle(() => { });
+        .handle((status, event) => {
+            const { heros = [], hidx = -1, cmds } = event;
+            const heroStatus = heros[hidx]?.heroStatus;
+            if ((getObjById(heroStatus, 116111)?.useCnt ?? 0) < 2) return;
+            cmds.getStatus(stsId, { isOppo: true });
+            const sts = heroStatus.findLast(s => [116113, 116114, 116115, 116116, 116117].includes(s.id));
+            if (status.id == sts?.id) cmds.consumeNightSoul(hidx, 2);
+            return { triggers: 'phase-start', isAddTask: true }
+        });
 }
 
 const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
@@ -1103,14 +1112,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色｢元素战技｣和｢元素爆发｣造成的伤害+1。；[useCnt]')
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle, hasDmg } = event;
-            const trigger: Trigger[] = [];
+            const triggers: Trigger[] = [];
             if (hasDmg && ([SKILL_TYPE.Elemental, SKILL_TYPE.Burst] as SkillType[]).includes(sktype)) {
-                trigger.push(`skilltype${sktype}` as Trigger);
+                triggers.push(`skilltype${sktype}`);
             }
             return {
                 addDmgType2: 1,
                 addDmgType3: 1,
-                triggers: trigger,
+                triggers,
                 exec: () => { status.minusUseCnt() },
             }
         }),
@@ -1217,7 +1226,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114132: () => new StatusBuilder('轰雷凝集').heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【下次我方角色使用技能触发[雷元素相关反应]后：】所附属角色回复1点[充能]。')
         .handle((_, event) => {
-            const { hidx = -1, cmds } = event;
+            const { sktype = SKILL_TYPE.Vehicle, hidx = -1, cmds } = event;
+            if (sktype == SKILL_TYPE.Vehicle) return;
             cmds.getEnergy(1, { hidxs: hidx });
             return {
                 triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
@@ -1538,15 +1548,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     116111: nightSoul,
 
-    116113: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Geo).useCnt(useCnt),
+    116113: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Geo).useCnt(useCnt),
 
-    116114: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Hydro).useCnt(useCnt),
+    116114: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Hydro).useCnt(useCnt),
 
-    116115: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Pyro).useCnt(useCnt),
+    116115: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Pyro).useCnt(useCnt),
 
-    116116: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Cryo).useCnt(useCnt),
+    116116: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Cryo).useCnt(useCnt),
 
-    116117: (useCnt: number) => hero1611sts(ELEMENT_TYPE.Electro).useCnt(useCnt),
+    116117: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Electro).useCnt(useCnt),
 
     117012: () => new StatusBuilder('新叶').combatStatus().icon(STATUS_ICON.AtkSelf).useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。（每回合1次）；[roundCnt]')
@@ -2368,27 +2378,27 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     216113: () => new StatusBuilder('受到的岩元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
         .icon('geo-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[岩元素伤害]+1。[roundCnt]')
+        .description('我方受到的[岩元素伤害]+1。；[roundCnt]')
         .handle(() => ({ triggers: 'Geo-getdmg', getDmg: 1 })),
 
     216114: () => new StatusBuilder('受到的水元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
         .icon('hydro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[水元素伤害]+1。[roundCnt]')
+        .description('我方受到的[水元素伤害]+1。；[roundCnt]')
         .handle(() => ({ triggers: 'Hydro-getdmg', getDmg: 1 })),
 
     216115: () => new StatusBuilder('受到的火元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
         .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[火元素伤害]+1。[roundCnt]')
+        .description('我方受到的[火元素伤害]+1。；[roundCnt]')
         .handle(() => ({ triggers: 'Pyro-getdmg', getDmg: 1 })),
 
     216116: () => new StatusBuilder('受到的冰元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
         .icon('cryo-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[冰元素伤害]+1。[roundCnt]')
+        .description('我方受到的[冰元素伤害]+1。；[roundCnt]')
         .handle(() => ({ triggers: 'Cryo-getdmg', getDmg: 1 })),
 
     216117: () => new StatusBuilder('受到的雷元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
         .icon('electro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[雷元素伤害]+1。[roundCnt]')
+        .description('我方受到的[雷元素伤害]+1。；[roundCnt]')
         .handle(() => ({ triggers: 'Electro-getdmg', getDmg: 1 })),
 
     300001: () => new StatusBuilder('旧时庭园（生效中）').combatStatus().icon(STATUS_ICON.Buff).roundCnt(1)
@@ -2878,7 +2888,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    303226: () => new StatusBuilder('坍陷与契机（生效中）').combatStatus().icon(STATUS_ICON.Debuff).roundCnt(1)
+    303226: () => new StatusBuilder('坍陷与契机（生效中）').combatStatus().icon(STATUS_ICON.DebuffCostSwitch).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，双方牌手进行｢切换角色｣行动时：】需要额外花费1个元素骰。')
         .handle(() => ({ triggers: 'add-switch', addDiceHero: 1 })),
@@ -3141,4 +3151,4 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
 };
 
-export const newStatus = (version?: Version) => (id: number, ...args: any) => statusTotal[id](...args).id(id).version(version).done();
+export const newStatus = (version?: Version) => (id: number, ...args: any) => statusTotal[id]?.(...args).id(id).version(version).done() ?? NULL_STATUS();

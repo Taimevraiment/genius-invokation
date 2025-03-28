@@ -2,6 +2,7 @@ import { InfoVO, Player } from '../../typing';
 import { GICard } from '../data/builder/cardBuilder.js';
 import { GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
+import { GIStatus } from '../data/builder/statusBuilder.js';
 import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
 import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from './gameOption.js';
 
@@ -72,6 +73,8 @@ export const NULL_SKILL = () => new GISkill('无', '', SKILL_TYPE.Passive, 0, 0,
 export const NULL_HERO = () => new GIHero(0, -1, '无', 'v3.3.0', [], 0, ELEMENT_TYPE.Physical, WEAPON_TYPE.Other, '', '');
 
 export const NULL_CARD = () => new GICard(0, -1, '无', 'v3.3.0', '', '', 0, DICE_TYPE.Same, CARD_TYPE.Event);
+
+export const NULL_STATUS = () => new GIStatus(0, '无', '', '', 0, [], 1, 1, 1);
 
 export const NULL_MODAL = (): InfoVO => ({
     version: VERSION[0],

@@ -124,7 +124,7 @@
           'hero-select': heroSelect[hgi][hidx],
           'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
           'active-willhp': canAction && (
-            willHp[hgi][hidx] != undefined ||
+            willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length ||
             (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) &&
             hgi == 1 || willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
           ),
@@ -1680,21 +1680,34 @@ button:active {
   z-index: 2;
 }
 
-.init-cards,
-.pick-cards {
+.init-cards {
   position: relative;
   width: 100%;
   height: 70%;
   margin: 0 auto;
 }
 
-.init-card,
-.pick-card {
+.init-card {
   position: absolute;
   cursor: pointer;
   text-align: center;
   background-color: #a7bbdd;
   transition: .75s;
+}
+
+.pick-cards {
+  display: flex;
+  width: 100%;
+  height: 70%;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.pick-card {
+  position: relative;
+  cursor: pointer;
+  text-align: center;
+  background-color: #a7bbdd;
 }
 
 .init-card-content {
