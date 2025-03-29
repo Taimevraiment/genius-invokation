@@ -16,7 +16,7 @@ import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD } from '../../c
 import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../common/constant/UIconst.js';
 import { CardHandleRes, cardsTotal, newCard, parseCard } from '../../common/data/cards.js';
 import { herosTotal, newHero, parseHero } from '../../common/data/heros.js';
-import { newSkill } from '../../common/data/skills.js';
+import { SkillHandleRes, newSkill } from '../../common/data/skills.js';
 import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
 import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
@@ -1459,8 +1459,12 @@ export default class GeniusInvokationRoom {
                 let { isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: oahidx, isOnlyHeroStatus: true }), oahidx, STATUS_GROUP.heroStatus, ['status-destroy', ...atriggers3[oahidx], ...(isSwitchSelf ? ['switch-from' as Trigger] : [])], isExec, 1);
                 if (!isPreviewEnd && isSwitchSelf) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(pidx, { players: oplayers, hidx: nahidx, isOnlyHeroStatus: true }), nahidx, STATUS_GROUP.heroStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-to' as Trigger] : [])], isExec, 1));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, oplayers[pidx].combatStatus, nahidx, STATUS_GROUP.combatStatus, [...atriggers3[nahidx], ...(isSwitchSelf ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec, 1));
-                if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: oehidx, isOnlyHeroStatus: true }), oehidx, STATUS_GROUP.heroStatus, ['status-destroy', ...etriggers3[oehidx], ...(isSwitchOppo ? ['switch-from' as Trigger] : [])], isExec));
-                if (!isPreviewEnd && isSwitchOppo) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: nehidx, isOnlyHeroStatus: true }), nehidx, STATUS_GROUP.heroStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-to' as Trigger] : [])], isExec));
+                for (let i = 0; i < oplayers[epidx].heros.length; ++i) {
+                    const cehidx = (oehidx + i) % oplayers[epidx].heros.length;
+                    const switchFromTrigger: Trigger[] = isSwitchOppo && i == 0 ? ['switch-from'] : [];
+                    const swtichToTrigger: Trigger[] = isSwitchOppo && cehidx == nehidx ? ['switch-to'] : [];
+                    if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, this._getHeroField(epidx, { players: oplayers, hidx: cehidx, isOnlyHeroStatus: true }), cehidx, STATUS_GROUP.heroStatus, ['status-destroy', ...etriggers3[cehidx], ...switchFromTrigger, ...swtichToTrigger], isExec));
+                }
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(oplayers, oplayers[epidx].combatStatus, nehidx, STATUS_GROUP.combatStatus, [...etriggers3[nehidx], ...(isSwitchOppo ? ['switch-from', 'switch-to', 'switch'] as Trigger[] : [])], isExec));
             });
             return calcRes;
@@ -1788,17 +1792,16 @@ export default class GeniusInvokationRoom {
                 });
             }]], { isPriority: true, isUnshift: true });
         }
-        const { willHeals: skillheal, tasks = [] }
-            = this._doCmds(pidx, skillcmds, {
-                players: bPlayers,
-                isExec: false,
-                isAction: !!skill && !isQuickAction,
-                supportCnt,
-                willSwitch,
-                energyCnt,
-            });
+        const { willHeals: skillheal, tasks = [] } = this._doCmds(pidx, skillcmds, {
+            players: bPlayers,
+            isExec: false,
+            isAction: !!skill && !isQuickAction,
+            supportCnt,
+            willSwitch,
+            energyCnt,
+        });
         mergeWillHeals(bWillHeal, skillheal);
-        const dtriggers: Trigger[] = [...convertToArray(otriggers)];
+        const dtriggers: Trigger[] = convertToArray(otriggers);
         cahidx = skid == -1 && dtriggers.includes('switch-to') ? isSwitch : bPlayers[pidx].hidx;
         cehidx = bPlayers[pidx ^ 1].hidx;
         dmgedHidx = cehidx;
@@ -1823,11 +1826,17 @@ export default class GeniusInvokationRoom {
         const afterESkillTrgs2 = [...afterESkillTrgs.flat()];
         for (let i = 0; i < ahlen; ++i) {
             const hi = (ohidx + i) % ahlen;
-            this._detectSkill(pidx, afterASkillTrgs[hi], {
+            const { skillPreviews } = this._detectSkill(pidx, afterASkillTrgs[hi], {
+                players: isCdt(!isExec, bPlayers),
                 isExec,
                 hidxs: hi,
                 dmg: aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).map(d => Math.max(0, d[0]) + d[1]),
             });
+            if (!isExec && skillPreviews.length) {
+                skillPreviews.forEach(skillPreview => {
+                    calcAtk(bPlayers, skillPreview.res, 'skill', skillPreview.skid, undefined, 1);
+                });
+            }
             afterASkillTrgs[hi].push('status-destroy');
             const { atkStatus: atkhst, isPreviewEnd, atrgs, etrgs } = doPreviewHfield(bPlayers, this._getHeroField(pidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterASkillTrgs[hi], isExec, 1, true);
             afterASkillTrgs2.push(...atrgs.flat());
@@ -3802,8 +3811,7 @@ export default class GeniusInvokationRoom {
     *                heal 回血数, discards 我方弃牌, dmg 造成的伤害, hidxs 只检测某些序号角色, isExecTask 是否为执行任务, 
     *                isQuickAction 是否为快速行动, card 打出的卡牌, energyCnt 充能变化, source 触发id, sourceHidx 触发的角色序号hidx,
     *                restDmg 减伤
-    * @returns isQuickAction: 是否为快速行动, heros 变化后的我方角色组, eheros 变化后的对方角色组, isTriggered 是否触发被动, restDmg 减伤
-    *          dmgElement 被动附魔
+    * @returns isQuickAction: 是否为快速行动, restDmg 减伤, dmgElement 被动附魔, task, skillPreviews 用于技能预览
     */
     private _detectSkill(pidx: number, otrigger: Trigger | Trigger[],
         options: {
@@ -3816,12 +3824,15 @@ export default class GeniusInvokationRoom {
         const { players = this.players, isExec = true, getdmg = [], dmg = [], heal = [], discards = [], card, source, sourceHidx,
             isExecTask, heros = players[pidx].heros, eheros = players[pidx ^ 1].heros, cskid = -1, energyCnt, isOnlyExec } = options;
         let { hidxs = allHidxs(heros), isQuickAction, type = [], restDmg } = options;
-        let isTriggered = false;
         let dmgElement: ElementType | undefined;
         const cmds = new CmdsGenerator();
         const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         hidxs = convertToArray(hidxs);
         type = convertToArray(type);
+        const skillPreviews: {
+            res: SkillHandleRes,
+            skid: number
+        }[] = [];
         for (const hidx of hidxs) {
             const hero = heros[hidx];
             const skills = hero.skills;
@@ -3849,7 +3860,10 @@ export default class GeniusInvokationRoom {
                         isExecTask,
                     });
                     if (this._hasNotTriggered(skillres.triggers, trigger)) continue;
-                    isTriggered = true;
+                    skillPreviews.push({
+                        res: skillres,
+                        skid: skill.id,
+                    });
                     isQuickAction ||= !!skillres.isQuickAction;
                     restDmg = skillres.restDmg;
                     dmgElement = skillres.dmgElement;
@@ -3905,17 +3919,17 @@ export default class GeniusInvokationRoom {
                                     }
                                 }
                                 task.push([skillHandle, 1e3]);
+                                if (skillres.isTrigger) this._doTrigger(pidx, players, skill.id, isExec);
                             }
-                        } else {
-                            this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
+                            continue;
                         }
-                    } else {
-                        this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
+                        continue;
                     }
+                    this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
                 }
             }
         }
-        return { isQuickAction, isTriggered, task, restDmg, dmgElement }
+        return { isQuickAction, task, restDmg, dmgElement, skillPreviews }
     }
     /**
      * 检测装备发动

@@ -2682,11 +2682,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('我方【hro】回复1点[充能]。；我方【hro】因【ski,3】扣除[充能]后，回复1点[充能]。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Sethos.webp')
         .handle((card, event) => {
-            const { cmds, execmds, hero } = event;
+            const { cmds, execmds, hero, source = -1 } = event;
             cmds.getEnergy(1, { hidxs: hero?.hidx });
-            if (card.perCnt <= 0 || !hero?.energy) return;
+            if (card.perCnt <= 0 || source != 14134) return;
             execmds.getEnergy(1);
-            return { triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
+            return { triggers: 'trigger', exec: () => card.minusPerCnt() }
         }),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
@@ -2853,14 +2853,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中[挑选]1个并召唤。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 
-    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).perCnt(2)
+    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).useCnt(0).perCnt(2)
         .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
         .handle((card, event) => {
             const { source, execmds } = event;
             if (card.perCnt <= 0 || (source != 116102 && source != 116103)) return;
             execmds.getCard(1);
-            return { triggers: 'trigger', exec: () => card.minusPerCnt() }
+            return {
+                triggers: 'trigger',
+                exec: () => {
+                    card.minusPerCnt();
+                    card.addUseCnt();
+                }
+            }
         }),
 
     216111: () => new CardBuilder(472).name('丛山锻火驰行').since('v5.6.0').talent(1).costGeo(2).perCnt(2)

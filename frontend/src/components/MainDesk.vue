@@ -33,7 +33,7 @@
           v-for="(card, cidx) in opponent?.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
-      <div class="timer" :style="{ 'background-image': currTimeBg }">
+      <div class="timer" :style="{ backgroundImage: currTimeBg }">
         <button class="end-phase" @click.stop="endPhase" :class="{
           'confirm-end-phase': isShowEndPhase,
           forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1
@@ -94,7 +94,7 @@
             'border-image-source': `url(${getPngIcon(`Preview${supportCnt[getGroup(saidx)][siidx] > 0 ? 3 : supportCnt[getGroup(saidx)][siidx] < -support.cnt ? 1 : 2}`)})`,
           }">
             <img v-if="supportCnt[getGroup(saidx)][siidx] < -support.cnt" :src="getSvgIcon('die')"
-              style="height: 16px" />
+              style="height: 16px;" />
             <span>
               {{ supportCnt[getGroup(saidx)][siidx] > 0 ? "+" :
                 supportCnt[getGroup(saidx)][siidx] >= -support.cnt ? "-" : "" }}
@@ -114,7 +114,7 @@
     <div class="heros" :class="{ 'mobile-heros': isMobile }">
       <div class="hero-group" v-for="(hgroup, hgi) in heros" :key="hgi">
         <div class="hero" :ratio="7 / 12" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
-          'background-color': hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
+          backgroundColor: hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
         }" :class="{
           'mobile-hero': isMobile,
           'my': hgi == 1,
@@ -210,7 +210,7 @@
               </div>
             </template>
             <template v-if="hero.hp >= 0">
-              <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px" />
+              <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px;" />
               <img class="will-attach"
                 v-for="(attach, waidx) in willAttachs[hgi][hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
                 :key="waidx" :src="ELEMENT_URL[attach]" />
@@ -228,7 +228,7 @@
                   ? getSvgFilter(ists.UI.iconBg) : '',
               }" :src="getPngIcon(ists.UI.icon)" />
               <div v-else style="color: white;">{{ ists.name[0] }}</div>
-              <div :style="{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%' }"
+              <div style="position: absolute;width: 100%;height: 100%;border-radius: 50%;"
                 :class="{ 'status-can-use': ists.perCnt > 0 }"></div>
               <div class="status-cnt"
                 :class="{ 'mobile-status-cnt': isMobile, 'is-change': statusCurcnt[hgi][hidx][0][isti].isChange }"
@@ -273,22 +273,21 @@
                 </div>
               </div>
               <div class="hero-die" v-if="hero.hp < 0">
-                <img :src="getSvgIcon('die')" style="width: 40px" />
+                <img :src="getSvgIcon('die')" style="width: 40px;" />
               </div>
               <div :class="{
                 'will-damage': (willHp[hgi][hidx] ?? 0) <= 0,
                 'will-heal': (willHp[hgi][hidx] ?? 0) > 0,
               }" :style="{
-                'padding-left': `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
-                // 'background-image': `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
-                'border-image-source': `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 || ((willHp[hgi][hidx] ?? 0) % 1 != 0 && hero.hp > 0) ? 2 : 3}`)})`,
+                paddingLeft: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '0' : '3px'}`,
+                // backgroundImage: `url(${getPngIcon(`Preview${(willHp[hgi][hidx] ?? 0) <= 0 ? 2 : 3}`)})`,
+                borderImageSource: `url(${getPngIcon(`Preview${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? 1 : (willHp[hgi][hidx] ?? 0) <= 0 || ((willHp[hgi][hidx] ?? 0) % 1 != 0 && hero.hp > 0) ? 2 : 3}`)})`,
                 color: `${hero.hp + (willHp[hgi][hidx] ?? 0) <= 0 ? '#ffdada' : (willHp[hgi][hidx] ?? 0) <= 0 ? 'white' : '#e0ffd6'}`,
               }" v-if="willHp[hgi][hidx] != undefined">
-                <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0"
-                  :src="getPngIcon('https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp')"
-                  style="height: 16px" />
+                <img v-if="(willHp[hgi][hidx] ?? 0) % 1 != 0" :src="getPngIcon(STATUS_ICON.Revive)"
+                  style="height: 16px;" />
                 <img v-else-if="hero.hp + (willHp[hgi][hidx] ?? 0) <= 0" :src="getSvgIcon('die')"
-                  style="height: 16px; padding-left: 3px" />
+                  style="height: 16px; padding-left: 3px;" />
                 <span
                   :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hgi][hidx] ?? 0) > 0 && (willHp[hgi][hidx] ?? 0) % 1 == 0 ? '5px' : '0'}` }">
                   {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{
@@ -299,21 +298,22 @@
                 <div class="damage" v-if="dmgElements[hgi] != undefined && willDamages[hgi][hidx] != undefined"
                   :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][0] >= 0 && hero.hp >= 0 }" :style="{
                     color: ELEMENT_COLOR[dmgElements[hgi][hidx]],
-                    'background-image': `url(${getPngIcon('Attack')})`,
+                    backgroundImage: `url(${getPngIcon('Attack')})`,
                   }">
                   -{{ willDamages[hgi][hidx][0] }}
                 </div>
                 <div class="damage" v-if="willDamages[hgi][hidx] != undefined"
                   :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][1] > 0 && hero.hp >= 0 }" :style="{
                     color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce],
-                    'background-image': `url(${getPngIcon('Attack')})`,
+                    backgroundImage: `url(${getPngIcon('Attack')})`,
                   }">
                   -{{ willDamages[hgi][hidx][1] }}
                 </div>
                 <div class="heal" v-if="willHeals[hgi][hidx] != undefined"
                   :class="{ 'show-heal': isShowDmg && willHeals[hgi][hidx] >= 0 }" :style="{
                     color: ELEMENT_COLOR.Heal,
-                    'background-image': `url(${getPngIcon('Heal')})`,
+                    backgroundImage: `url(${getPngIcon('Heal')})`,
+                    paddingTop: '9%',
                   }">
                   +{{ Math.ceil(willHeals[hgi][hidx]) }}
                 </div>
@@ -348,11 +348,11 @@
                 // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
                 'will-add': true,
               }" :style="{
-                'border-image-source': `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
+                borderImageSource: `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
               }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
                 <img
                   v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
-                  :src="getSvgIcon('die')" style="height: 16px" />
+                  :src="getSvgIcon('die')" style="height: 16px;" />
                 <span>
                   {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
                     summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
@@ -398,7 +398,7 @@
               </div>
             </div>
           </div>
-          <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%">
+          <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%;">
             还可重投{{ rollCnt }}轮
           </div>
           <button @click="reroll()" :class="{ 'not-show': !showRerollBtn }">

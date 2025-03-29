@@ -76,6 +76,7 @@ export type SkillHandleRes = {
         mode: number,
         isOrdered?: boolean,
     },
+    isTrigger?: boolean,
     exec?: () => void,
 }
 
@@ -186,7 +187,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点｢夜魂值｣，抓3张牌。')
-        .src()
+        .src('/image/tmp/Gcg_CardInfo_Buff_Vehicle_Xilonen.png')
         .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
@@ -257,7 +258,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().damage(2).costSame(1),
 
     3130081: () => new SkillBuilder('昂扬状态').description('附属角色[准备技能]2次｢普通攻击｣。')
-        .src()
+        .src('/image/tmp/Gcg_CardInfo_Buff_Vehicle_Bisonsaurus.png')
         .vehicle().costAny(3).handle(() => ({ status: 301303 })),
 
 }

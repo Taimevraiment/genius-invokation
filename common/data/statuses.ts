@@ -1,6 +1,7 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
+    ELEMENT_TYPE_KEY,
     ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
@@ -229,17 +230,25 @@ const hero1505sts = (swirlEl: PureElementType) => {
 
 const hero1611sts = (el: ElementType) => {
     const stsId = [, 216116, 216114, 216115, 216117, , 216113][ELEMENT_CODE[el]];
-    return new StatusBuilder(`源音采样·${ELEMENT_NAME[el][0]}`).heroStatus().icon('').iconBg(STATUS_BG_COLOR[el]).maxCnt(3).type(STATUS_TYPE.Usage)
+    return new StatusBuilder(`源音采样·${ELEMENT_NAME[el][0]}`).heroStatus().icon(`tmp/${stsId! - 100000}`).maxCnt(3)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy)
         .description(`【回合开始时：】如果所附属角色拥有2点｢夜魂值｣，则在敌方场上生成【sts${stsId}】。激活全部源音采样后，消耗2点｢夜魂值｣。`)
         .handle((status, event) => {
             const { heros = [], hidx = -1, cmds } = event;
             const heroStatus = heros[hidx]?.heroStatus;
             if ((getObjById(heroStatus, 116111)?.useCnt ?? 0) < 2) return;
             cmds.getStatus(stsId, { isOppo: true });
-            const sts = heroStatus.findLast(s => [116113, 116114, 116115, 116116, 116117].includes(s.id));
+            const sts = [...heroStatus].reverse().find(s => [116113, 116114, 116115, 116116, 116117].includes(s.id));
             if (status.id == sts?.id) cmds.consumeNightSoul(hidx, 2);
             return { triggers: 'phase-start', isAddTask: true }
         });
+}
+
+const hero1611sts2 = (el: ElementType) => {
+    return new StatusBuilder(`受到的${ELEMENT_NAME[el]}伤害增加`).combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon(`${ELEMENT_ICON[el]}-dice`).iconBg(DEBUFF_BG_COLOR).roundCnt(1)
+        .description(`我方受到的[${ELEMENT_NAME[el]}伤害]+1。；[roundCnt]`)
+        .handle(() => ({ triggers: `${ELEMENT_TYPE_KEY[el]}-getdmg`, getDmg: 1 }));
 }
 
 const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
@@ -2376,30 +2385,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    216113: () => new StatusBuilder('受到的岩元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
-        .icon('geo-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[岩元素伤害]+1。；[roundCnt]')
-        .handle(() => ({ triggers: 'Geo-getdmg', getDmg: 1 })),
+    216113: () => hero1611sts2(ELEMENT_TYPE.Geo),
 
-    216114: () => new StatusBuilder('受到的水元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
-        .icon('hydro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[水元素伤害]+1。；[roundCnt]')
-        .handle(() => ({ triggers: 'Hydro-getdmg', getDmg: 1 })),
+    216114: () => hero1611sts2(ELEMENT_TYPE.Hydro),
 
-    216115: () => new StatusBuilder('受到的火元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
-        .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[火元素伤害]+1。；[roundCnt]')
-        .handle(() => ({ triggers: 'Pyro-getdmg', getDmg: 1 })),
+    216115: () => hero1611sts2(ELEMENT_TYPE.Pyro),
 
-    216116: () => new StatusBuilder('受到的冰元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
-        .icon('cryo-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[冰元素伤害]+1。；[roundCnt]')
-        .handle(() => ({ triggers: 'Cryo-getdmg', getDmg: 1 })),
+    216116: () => hero1611sts2(ELEMENT_TYPE.Cryo),
 
-    216117: () => new StatusBuilder('受到的雷元素伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
-        .icon('electro-dice').iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description('我方受到的[雷元素伤害]+1。；[roundCnt]')
-        .handle(() => ({ triggers: 'Electro-getdmg', getDmg: 1 })),
+    216117: () => hero1611sts2(ELEMENT_TYPE.Electro),
 
     300001: () => new StatusBuilder('旧时庭园（生效中）').combatStatus().icon(STATUS_ICON.Buff).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
