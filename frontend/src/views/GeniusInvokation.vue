@@ -1263,7 +1263,7 @@ body {
 
 @keyframes getcard-my-pile {
   0% {
-    transform: translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
+    transform: perspective(500px) translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
   }
 
   40% {
@@ -1306,14 +1306,17 @@ body {
 @keyframes getcard-my-pile-over {
   0% {
     transform: perspective(500px) translate(-1000%, -100%) rotate(90deg) rotateY(180deg);
+    opacity: 1;
   }
 
   40% {
     transform: translateY(-50vh);
+    opacity: 1;
   }
 
   85% {
     transform: translateY(-50vh);
+    opacity: 1;
   }
 
   100% {
@@ -1339,6 +1342,7 @@ body {
 
   85% {
     transform: translateY(-50vh);
+    opacity: 1;
   }
 
   100% {

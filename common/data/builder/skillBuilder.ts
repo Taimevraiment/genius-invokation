@@ -1,8 +1,7 @@
 import { Trigger, VersionCompareFn } from "../../../typing.js";
 import {
     COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, SKILL_TYPE, SkillCostType,
-    SkillType,
-    VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
+    SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -106,14 +105,14 @@ export class GISkill {
             }
             let dmgElement = res.dmgElement;
             let atkOffset = res.atkOffset;
-            for (const hfield of [...hero.equipments, ...hero.heroStatus].sort((a, b) => b.entityId - a.entityId)) {
+            for (const ist of hero.heroStatus) {
                 const event = { ...clone(hevent), hidx: hero.hidx };
                 delete event.minusDiceSkill;
-                const hfieldres = hfield.handle(hfield as any, event) ?? {};
-                if (hfieldres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
-                    dmgElement = hfieldres.attachEl;
+                const stsres = ist.handle(ist, event) ?? {};
+                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
+                    dmgElement = stsres.attachEl;
                 }
-                if (hfieldres.atkOffset) atkOffset = hfieldres.atkOffset;
+                if (stsres.atkOffset) atkOffset = stsres.atkOffset;
             }
             return {
                 ...res,

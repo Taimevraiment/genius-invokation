@@ -364,7 +364,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
     .replace(/〔g(.+)〕/g, (_, ctt: string) => isInGame.value ? '' : ctt)
-    .replace(/〔(\[.+\])?(.+)〕/g, (_, f: string, ctt: string) => {
+    .replace(/〔(\*)?(\[.+\])?(.+)〕/g, (_, nnc: boolean, f: string, ctt: string) => {
+      const notNeedColor = !!nnc;
       const flag = (f || '').slice(1, -1);
       if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';
       if (!isInGame.value || isExplain) return '';
@@ -375,7 +376,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }
-      return `<span style="color:#d5bb49;">${ctt}</span>`
+      return `<span${notNeedColor ? '' : ' style="color:#d5bb49;"'}>${ctt}</span$>`
     })
     .replace(/(?<!\\)(\*?)〖(.*?)〗/g, wrapName)
     .replace(/(?<!\\)(\*?)【(.*?)】/g, wrapName)
@@ -440,7 +441,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
 // 下划线（有规则解释，如果可能前面会有图标）：[]
 // 解析名字并加入解释：〖〗【】
 // 有某些特殊颜色（如 冰/水/火/雷）：‹nxxx› n为1.字体元素颜色+前面的图标 2.直接用颜色#yyyyyy xxx为内容
-// 卡牌上一些实时信息：〔〕
+// 卡牌上一些实时信息：〔〕 [slot]只在装备栏时显示 [card]只在手牌中显示 [support]只在支援物中显示
 // 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
 const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {

@@ -3402,6 +3402,13 @@ export default class GeniusInvokationRoom {
         const { players = this.players, slotsDestroy = players[pidx].heros.map(h => +(h.hidx == hidx)) } = options;
         this._detectSlot(pidx, 'slot-destroy', { players, cSlot: slot, hidxs: [hidx] });
         this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, isOnlyCombatStatus: true, slotsDestroy });
+        if (slot.hasTag(CARD_TAG.Enchant)) {
+            for (const skill of players[pidx].heros[hidx].skills) {
+                if (skill.dmgElement != DAMAGE_TYPE.Physical) continue;
+                skill.UI.description = skill.UI.description.replace(ELEMENT_NAME[skill.attachElement], ELEMENT_NAME[DAMAGE_TYPE.Physical]);
+                skill.attachElement = DAMAGE_TYPE.Physical;
+            }
+        }
     }
     /**
      * 状态被移除时发动
@@ -3700,6 +3707,15 @@ export default class GeniusInvokationRoom {
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
                 if (hero.vehicleSlot?.[0].id == equipment.id) equipment.setEntityId(hero.vehicleSlot[0].entityId);
                 hero.vehicleSlot = [equipment.setEntityId(this._genEntityId()), this.newSkill(equipment.id * 10 + 1)];
+            }
+            if (equipment.hasTag(CARD_TAG.Enchant)) {
+                const { attachEl } = equipment.handle(equipment);
+                if (!attachEl) throw new Error('Enchant equipment must have attachEl');
+                for (const skill of hero.skills) {
+                    if (skill.dmgElement != DAMAGE_TYPE.Physical) continue;
+                    skill.attachElement = attachEl;
+                    skill.UI.description = skill.UI.description.replace(ELEMENT_NAME[DAMAGE_TYPE.Physical], ELEMENT_NAME[attachEl]);
+                }
             }
         }
     }
@@ -4367,6 +4383,7 @@ export default class GeniusInvokationRoom {
                                             const statuses = group == STATUS_GROUP.heroStatus ? heros[hidx].heroStatus : combatStatus;
                                             const curStatus = statuses.find(s => s.entityId == sts.entityId);
                                             if (!curStatus) return true;
+                                            stsres.cmds?.clear().addCmds(stscmds);
                                             stsres.exec?.(curStatus, { heros, combatStatus });
                                             this._doCmds(pidx, stsres.cmds, {
                                                 hidxs: [group == STATUS_GROUP.combatStatus ? ahidx : hidx],
@@ -4410,7 +4427,10 @@ export default class GeniusInvokationRoom {
             const chidx = taskMark && cStatus.group == STATUS_GROUP.heroStatus ?
                 pheros.find(h => h.entityId == taskMark[4])!.hidx : (hidxs?.[0] ?? player.hidx);
             if (!pheros[chidx].heroStatus.some(s => s.hasType(STATUS_TYPE.NonAction)) || !triggers.includes('useReadySkill')) {
-                detectStatus(cStatus, cStatus.group, chidx, triggers);
+                const eStatus = taskMark ?
+                    (cStatus.group == STATUS_GROUP.heroStatus ? pheros[chidx].heroStatus : player.combatStatus)
+                        .find(s => s.entityId == taskMark[2]) ?? cStatus : cStatus;
+                detectStatus(eStatus, eStatus.group, chidx, triggers);
             }
         } else {
             for (let i = 0; i < pheros.length; ++i) {

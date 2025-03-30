@@ -144,6 +144,7 @@ export const CARD_TAG = {
     LocalResonance: 'LocalResonance', // 所属共鸣 2
     NonDefeat: 'NonDefeat', // 免击倒 3
     NonReconcile: 'NonReconcile', // 不能调和 4
+    Enchant: 'Enchant', // 附魔 5
 } as const;
 
 export type CardTag = TypeConst<typeof CARD_TAG>;

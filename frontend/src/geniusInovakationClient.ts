@@ -1,7 +1,7 @@
 import type { Socket } from "socket.io-client";
 
 import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_TYPE, Version } from "@@@/constant/enum";
-import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
+import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC, SLOT_CODE_KEY,
@@ -260,23 +260,26 @@ export default class GeniusInvokationClient {
     updateHandCardsPos(player: Player) {
         if (!this.isStart || !player) return;
         const isGetCard = (c: Card) => c.UI.class?.includes('getcard');
-        const newCardIdxs = player.handCards.filter(isGetCard);
-        const validNewCardIdxs = newCardIdxs.filter(c => !c.UI.class?.includes('over'));
-        let overloadIdx = -1;
+        const newCards = player.handCards.filter(isGetCard);
+        const validNewCards = newCards.filter(c => !c.UI.class?.includes('over'));
+        let newCardIdx = 0;
+        const getNewCardIdx = () => {
+            const cardWidth = this.isMobile ? 60 : 90;
+            const newCardsOffset = (player.handCards.length / 2) * this.handcardsGap - newCards.length / 2 * cardWidth;
+            return newCardIdx++ * (cardWidth + 5) + newCardsOffset;
+        };
         this.handcardsPos = player.handCards.map(c => {
-            const newCidxGap = isGetCard(c) ? 0 : validNewCardIdxs.filter(v => v.cidx < c.cidx).length;
-            const newGroupOffset = isGetCard(c) ? 12 * newCardIdxs.length : 0;
-            if (isGetCard(c)) overloadIdx = c.cidx;
-            return (c.cidx - newCidxGap) * this.handcardsGap - newGroupOffset;
+            if (isGetCard(c)) return getNewCardIdx();
+            const newCidxGap = validNewCards.filter(v => v.cidx < c.cidx).length;
+            return (c.cidx - newCidxGap) * this.handcardsGap;
         });
         this.handcardsOverPos = [];
-        if (overloadIdx == -1) overloadIdx = MAX_HANDCARDS_COUNT / 2 - Math.ceil(newCardIdxs.length / 2);
         player.UI.willGetCard.cards
             .filter(c => c.UI.class?.includes('over'))
-            .forEach((_, ci) => this.handcardsOverPos.push((ci + overloadIdx + 1) * this.handcardsGap));
+            .forEach(() => this.handcardsOverPos.push(getNewCardIdx()));
         const isDiscard = (c: Card) => c.UI.class?.includes('discard');
         const discardIdxs = player.handCards.filter(isDiscard).map(c => c.cidx);
-        if (newCardIdxs.length + discardIdxs.length) {
+        if (newCards.length + discardIdxs.length) {
             setTimeout(() => {
                 this.handcardsPos = this.player.handCards.map(c => {
                     const discardCidxGap = isDiscard(c) ? 0 : discardIdxs.filter(v => v < c.cidx).length;

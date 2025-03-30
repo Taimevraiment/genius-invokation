@@ -103,7 +103,6 @@ export type CardHandleRes = {
     isQuickAction?: boolean,
     isOrTrigger?: boolean,
     isTrigger?: boolean,
-    atkOffset?: number,
     exec?: () => CardExecRes | void,
 };
 
@@ -2679,7 +2678,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214131: () => new CardBuilder(471).name('巡日塔门书').since('v5.6.0').talent().costElectro(1).perCnt(1)
-        .description('我方【hro】回复1点[充能]。；我方【hro】因【ski,3】扣除[充能]后，回复1点[充能]。（每回合1次）')
+        .description('〔*[card]我方【hro】回复1点[充能]。；〕我方【hro】因【ski,3】扣除[充能]后，回复1点[充能]。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Sethos.webp')
         .handle((card, event) => {
             const { cmds, execmds, hero, source = -1 } = event;
@@ -2853,20 +2852,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中[挑选]1个并召唤。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 
-    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).useCnt(0).perCnt(2)
+    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).useCnt(2).isResetUseCnt()
         .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
         .handle((card, event) => {
             const { source, execmds } = event;
-            if (card.perCnt <= 0 || (source != 116102 && source != 116103)) return;
+            if (card.useCnt <= 0 || (source != 116102 && source != 116103)) return;
             execmds.getCard(1);
-            return {
-                triggers: 'trigger',
-                exec: () => {
-                    card.minusPerCnt();
-                    card.addUseCnt();
-                }
-            }
+            return { triggers: 'trigger', exec: () => card.minusUseCnt() }
         }),
 
     216111: () => new CardBuilder(472).name('丛山锻火驰行').since('v5.6.0').talent(1).costGeo(2).perCnt(2)
@@ -2952,8 +2945,8 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: ['switch-to', 'skilltype2'], exec: () => card.minusPerCnt() }
         }),
 
-    217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent().costDendro(1).perCnt(1)
-        .description('所附属角色造成的[物理伤害]变为[草元素伤害]。；【装备有此牌的〖hro〗｢普通攻击｣后：】我方最高等级的｢柔灯之匣｣立刻行动1次。（每回合1次）')
+    217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent().costDendro(1).perCnt(1).tag(CARD_TAG.Enchant)
+        .description('所附属角色造成的[物理伤害]变为[草元素伤害]。；装备有此牌的【hro】｢普通攻击｣后：我方最高等级的｢柔灯之匣｣立刻行动1次。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/6417278fc4d517b03f1373a6579cf9f2_7434922514757306138.png')
         .handle((card, event) => {
             const { summons = [], execmds } = event;
@@ -3288,7 +3281,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【附属角色切换至后台时：】消耗1点｢夜魂值｣，召唤【smn116103】。')
         .handle(() => ({ triggers: 'switch-from', isAddTask: true, summon: 116103, isTrigger: true })),
 
-    116112: () => new CardBuilder().name('刃轮装束').vehicle(true).costSame(0)
+    116112: () => new CardBuilder().name('刃轮装束').vehicle(true).costSame(0).tag(CARD_TAG.Enchant)
         .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ attachEl: ELEMENT_TYPE.Geo })),
 

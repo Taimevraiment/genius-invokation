@@ -2959,11 +2959,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303238: () => new StatusBuilder('燃素充盈（生效中）').combatStatus().icon(STATUS_ICON.Buff).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合我方角色下次消耗｢夜魂值｣后：】该角色获得1点｢夜魂值｣。')
-        .handle((_, event) => {
+        .handle((status, event) => {
             const { heros = [], source = -1, sourceHidx = -1 } = event;
-            if (source != 112145) return;
             const hero = heros[sourceHidx];
-            if (!hero) return;
+            if (source != 112145 || !hero || status.roundCnt <= 0) return;
             const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
             if (!nightSoul) return;
             return {
