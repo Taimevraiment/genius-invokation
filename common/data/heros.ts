@@ -1420,7 +1420,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
                     cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: getMinHpHidxs(heros) });
                 }),
-            new SkillBuilder('四境四象回声').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的【源音采样】。')
+            new SkillBuilder('四境四象回声').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的｢源音采样｣。')
                 .src('/image/tmp/UI_Talent_S_Xilonen_01.webp')
                 .passive().handle(event => {
                     const stsId = [, 116116, 116114, 116115, 116117, , 116113];

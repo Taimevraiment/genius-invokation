@@ -10,7 +10,7 @@ import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG
 import CmdsGenerator from "../utils/cmdsGenerator.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getMinHpHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
-import { StatusBuilder } from "./builder/statusBuilder.js";
+import { StatusBuilder, StatusBuilderHandleEvent } from "./builder/statusBuilder.js";
 
 export type StatusHandleEvent = {
     restDmg?: number,
@@ -118,21 +118,22 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
         .handle(status => ({ attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType, addDmg }));
 }
 
-const readySkillStatus = (name: string, skill: number, shieldStatusId?: number) => {
+const readySkillStatus = (name: string, skill: number, shieldStatusId?: number, exec?: (event: StatusBuilderHandleEvent) => void) => {
     return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
-        .description(`本角色将在下次行动时，直接使用技能：【rsk${skill}】。`)
+        .description(`本角色将在下次行动时，直接使用技能：【${skill == SKILL_TYPE.Normal ? '普攻攻击' : `rsk${skill}`}】。`)
         .handle((status, event) => ({
             triggers: ['switch-from', 'useReadySkill'],
             skill,
             exec: () => {
                 status.minusUseCnt();
+                exec?.(event);
                 if (shieldStatusId) {
                     const { heros = [], hidx = -1 } = event;
                     const shieldStatus = getObjById(heros[hidx]?.heroStatus, shieldStatusId);
                     if (shieldStatus) shieldStatus.dispose();
                 }
             }
-        }))
+        }));
 }
 
 const senlin1Status = (name: string) => {
@@ -230,9 +231,9 @@ const hero1505sts = (swirlEl: PureElementType) => {
 
 const hero1611sts = (el: ElementType) => {
     const stsId = [, 216116, 216114, 216115, 216117, , 216113][ELEMENT_CODE[el]];
-    return new StatusBuilder(`源音采样·${ELEMENT_NAME[el][0]}`).heroStatus().icon(`tmp/${stsId! - 100000}`).maxCnt(3)
+    return new StatusBuilder(`｢源音采样｣·${ELEMENT_NAME[el][0]}`).heroStatus().icon(`tmp/${stsId! - 100000}`).maxCnt(3)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy)
-        .description(`【回合开始时：】如果所附属角色拥有2点｢夜魂值｣，则在敌方场上生成【sts${stsId}】。激活全部源音采样后，消耗2点｢夜魂值｣。`)
+        .description(`【回合开始时：】如果所附属角色拥有2点｢夜魂值｣，则在敌方场上生成【sts${stsId}】。激活全部｢源音采样｣后，消耗2点｢夜魂值｣。`)
         .handle((status, event) => {
             const { heros = [], hidx = -1, cmds } = event;
             const heroStatus = heros[hidx]?.heroStatus;
@@ -247,7 +248,7 @@ const hero1611sts = (el: ElementType) => {
 const hero1611sts2 = (el: ElementType) => {
     return new StatusBuilder(`受到的${ELEMENT_NAME[el]}伤害增加`).combatStatus().type(STATUS_TYPE.AddDamage)
         .icon(`${ELEMENT_ICON[el]}-dice`).iconBg(DEBUFF_BG_COLOR).roundCnt(1)
-        .description(`我方受到的[${ELEMENT_NAME[el]}伤害]+1。；[roundCnt]`)
+        .description(`我方受到的[${ELEMENT_NAME[el]}伤害]增加1点。；[roundCnt]`)
         .handle(() => ({ triggers: `${ELEMENT_TYPE_KEY[el]}-getdmg`, getDmg: 1 }));
 }
 
@@ -2479,7 +2480,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301025: (cnt: number) => new StatusBuilder('锻炼').heroStatus().useCnt(cnt).maxCnt(5)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.AddDamage)
-        .description('若自身层数等于5，则所附属角色造成的伤害+1。')
+        .description('若自身层数等于5，则所附属角色造成的伤害+1。（可叠加，最多叠加到5层）')
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle || status.useCnt < 5) return;
@@ -2562,28 +2563,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301302: () => new StatusBuilder('目标').heroStatus().icon(STATUS_ICON.Debuff).useCnt(1).type(STATUS_TYPE.Usage)
         .description('【敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果。'),
 
-    301303: () => new StatusBuilder('突角龙（生效中）').heroStatus().icon(STATUS_ICON.Special).useCnt(1)
-        .type(STATUS_TYPE.ReadySkill, STATUS_TYPE.Sign)
-        .description('本角色将在下次行动时，直接使用技能：【普通攻击】。')
-        .handle((status, event) => ({
-            triggers: ['switch-from', 'useReadySkill'],
-            skill: SKILL_TYPE.Normal,
-            exec: () => {
-                status.minusUseCnt();
-                event.cmds.getStatus(301305);
-            }
-        })),
+    301303: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, 0, ({ cmds }) => cmds.getStatus(301305)),
 
     301304: () => shieldHeroStatus('浪船'),
 
-    301305: () => new StatusBuilder('突角龙（生效中）').heroStatus().icon(STATUS_ICON.Special).useCnt(1)
-        .type(STATUS_TYPE.ReadySkill, STATUS_TYPE.Sign)
-        .description('本角色将在下次行动时，直接使用技能：【普通攻击】。')
-        .handle(status => ({
-            triggers: ['switch-from', 'useReadySkill'],
-            skill: SKILL_TYPE.Normal,
-            exec: () => { status.minusUseCnt() }
-        })),
+    301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

@@ -134,7 +134,7 @@ export default class GeniusInvokationRoom {
             + `  _currentPlayerIdx: ${this._currentPlayerIdx}\n`
             + `  _random: ${this._random}\n`
             + `  systemLog:\n`
-            + `${this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
+            + `${this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
             + `}`;
     }
     get roomInfoLog() {
@@ -209,7 +209,7 @@ export default class GeniusInvokationRoom {
     exportLog(options: { isShowRoomInfo?: boolean } = {}) {
         if (this.env == 'test') return;
         const { isShowRoomInfo = true } = options;
-        let log = this.systemLog.replace(/【p?\d*:?([^【】]+)】/g, '$1') + '\n' +
+        let log = this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1') + '\n' +
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}\n`).join('');
         if (isShowRoomInfo) log += this.roomInfoLog;
@@ -393,14 +393,14 @@ export default class GeniusInvokationRoom {
             const _serverDataVO = (vopidx: number, tip: string | string[]) => {
                 const log = this.log.map(lg => {
                     const cpidxs = lg.content.match(/(?<=【p)\d+(?=:)/g)?.map(Number) ?? [];
-                    if (vopidx == -1) return { content: lg.content.replace(/【p\d+:([^【】]+)】/g, '$1'), type: lg.type }
+                    if (vopidx == -1) return { content: lg.content.replace(/【p\d+:(.+?)】/g, '$1'), type: lg.type }
                     const logctt = lg.content
                         .replace(new RegExp(`\\[${this.players[vopidx]?.name}\\]\\(${vopidx}\\)`), '[我方]')
                         .replace(new RegExp(`\\[${this.players[vopidx ^ 1]?.name}\\]\\(${vopidx ^ 1}\\)`), '[对方]');
-                    if (cpidxs.length == 0) return { content: logctt.replace(/【[^【】]+】/g, ''), type: lg.type }
+                    if (cpidxs.length == 0) return { content: logctt.replace(/【.+?】/g, ''), type: lg.type }
                     const content = cpidxs.reduce((a, c) => {
-                        return a.replace(new RegExp(`【p${c}:([^【】]+)】`, 'g'), c == vopidx ? '$1' : '');
-                    }, logctt).replace(/【[^【】]+】/g, '');
+                        return a.replace(new RegExp(`【p${c}:(.+?)】`, 'g'), c == vopidx ? '$1' : '');
+                    }, logctt).replace(/【.+?】/g, '');
                     return { content, type: lg.type }
                 });
                 const content = actionInfo?.content || (isActionInfo ? log.filter(lg => lg.type == 'info').at(-1)?.content.replace(/\s*\d→\d/g, '') ?? '' : '');

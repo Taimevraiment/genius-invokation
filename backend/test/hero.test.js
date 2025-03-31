@@ -109,7 +109,32 @@ describe('hero', function () {
                 expect(opponent.heros.map(h => h.hp)).eql(opponent.heros.map(h => h.maxHp - 1 - +!h.isFront));
                 done();
             });
-            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 4, diceSelect: player.dice.map((_, i) => i < 3) });
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 11014, diceSelect: player.dice.map((_, i) => i < 3) });
+        });
+    });
+    describe('迪奥娜', () => {
+        it('猫爪护盾', done => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            room.testDmgFn.push(() => {
+                const hero = opponent.heros[opponent.hidx];
+                expect(hero.hp).equal(hero.maxHp - 1);
+                done();
+            });
+            room.getActionDev({ cpidx: opponent.pidx, cmds: [{ cmd: 'getStatus', status: 111021 }] });
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: player.dice.map((_, i) => i < 3) });
+        });
+        it('猫爪冰摇', async () => {
+            const player = room.players[room.currentPlayerIdx];
+            const opponent = room.players[room.currentPlayerIdx ^ 1];
+            changeFrontHero(player, 1);
+            room.getActionDev({ cpidx: room.currentPlayerIdx, cmds: [{ cmd: 'getCard', cnt: 1, card: 211021 }] });
+            room.getAction({ type: ACTION_TYPE.UseCard, cardIdxs: [5], heroIdxs: [1] });
+            await roomWait(room);
+            room.getAction({ type: ACTION_TYPE.UseSkill, skillId: 1, diceSelect: opponent.dice.map((_, i) => i < 3) });
+            await roomWait(room);
+            const hero = player.heros[player.hidx];
+            expect(hero.hp).equal(hero.maxHp);
         });
     });
 });

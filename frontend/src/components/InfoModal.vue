@@ -364,11 +364,11 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
     .replace(/〔g(.+)〕/g, (_, ctt: string) => isInGame.value ? '' : ctt)
-    .replace(/〔(\*)?(\[.+\])?(.+)〕/g, (_, nnc: boolean, f: string, ctt: string) => {
+    .replace(/〔(\*?)(\[.+?\])?(.+)〕/g, (_, nnc: string, f: string, ctt: string) => {
       const notNeedColor = !!nnc;
       const flag = (f || '').slice(1, -1);
       if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';
-      if (!isInGame.value || isExplain) return '';
+      if ((!isInGame.value && !notNeedColor) || isExplain) return '';
       ctt = ctt
         .replace(/{round}/, `${round.value}`)
         .replace(/{dessptcnt}/, `${playerInfo.value?.destroyedSupport}`)
@@ -376,7 +376,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }
-      return `<span${notNeedColor ? '' : ' style="color:#d5bb49;"'}>${ctt}</span$>`
+      return `<span${notNeedColor ? '' : ' style="color:#d5bb49;"'}>${ctt}</span>`
     })
     .replace(/(?<!\\)(\*?)〖(.*?)〗/g, wrapName)
     .replace(/(?<!\\)(\*?)【(.*?)】/g, wrapName)

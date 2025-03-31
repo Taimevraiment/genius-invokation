@@ -62,8 +62,8 @@ export class GISkill {
         const hid = getHidById(id);
         description = description
             .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害')
-            .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
-            .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`);
+            .replace(/(?<=〖)ski,(.+?)(?=〗)/g, `ski${hid},$1`)
+            .replace(/(?<=【)ski,(.+?)(?=】)/g, `ski${hid},$1`);
         this.UI = {
             description,
             src: convertToArray(src).filter(v => v != '').map(v => {
@@ -74,7 +74,7 @@ export class GISkill {
                 }
                 return v;
             })[0] ?? '',
-            explains: [...(description.match(/(?<=【)[^【】]+(?=】)/g) ?? []), ...expl],
+            explains: [...(description.match(/(?<=【).+?(?=】)/g) ?? []), ...expl],
             descriptions: [],
         };
         this.id = id;

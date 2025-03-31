@@ -75,7 +75,7 @@ export class GISummon {
             src,
             icon,
             hasPlus: pls,
-            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+            explains: [...(description.match(/(?<=【).+?\d(?=】)/g) ?? []), ...expl],
             isWill: false,
             willChange: false,
             isAdd: false,

@@ -10,7 +10,7 @@ import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-type StatusBuilderHandleEvent = StatusHandleEvent & { cmds: CmdsGenerator };
+export type StatusBuilderHandleEvent = StatusHandleEvent & { cmds: CmdsGenerator };
 
 export class GIStatus {
     id: number; // 唯一id
@@ -57,8 +57,8 @@ export class GIStatus {
         description = description
             .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
             .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
-            .replace(/(?<=〖)ski,([^〖〗]+)(?=〗)/g, `ski${hid},$1`)
-            .replace(/(?<=【)ski,([^【】]+)(?=】)/g, `ski${hid},$1`)
+            .replace(/(?<=〖)ski,(.+?)(?=〗)/g, `ski${hid},$1`)
+            .replace(/(?<=【)ski,(.+?)(?=】)/g, `ski${hid},$1`)
             .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
             .replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         this.UI = {
@@ -66,8 +66,8 @@ export class GIStatus {
             icon: icon.replace(/ski,(\d)/, `ski${hid},$1`),
             iconBg: icbg,
             explains: [
-                ...(description.match(/(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []),
-                ...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []),
+                ...(description.match(/(?<=〖).+?\d(?=〗)/g) ?? []),
+                ...(description.match(/(?<=【).+?\d(?=】)/g) ?? []),
                 ...expl,
             ],
             descriptions: [],
