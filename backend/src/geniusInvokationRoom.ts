@@ -4769,7 +4769,7 @@ export default class GeniusInvokationRoom {
      * @param options switchHeroDiceCnt 切换需要的骰子, hcard 使用的牌, players 最新的玩家信息, skid 使用的技能id
      *                hidx 将要切换的玩家, minusDiceSkill 用技能减骰子, isExecTask 是否执行任务队列, isExec 是否执行, firstPlayer 先手玩家pidx,
      *                getdmg 受伤量, heal 回血量, getcard 本次摸牌数, discardCnt 本次舍弃牌数, minusDiceSkill 技能当前被x减费后留存的骰子数, 
-     *                csummon 选中的召唤物, isAfterSkill 是否是使用技能后触发
+     *                csummon 选中的召唤物, isAfterSkill 是否是使用技能后触发, sourceStatus 状态来源（用于get-status）
      * @returns isQuickAction 是否快速行动, cmds 命令集, outStatus 出战状态, minusDiceHero 减少切换角色骰子, supportCnt 支援区数量,
      *          minusDiceCard 减少使用卡骰子, minusDiceSkill 用技能减骰子
      */
@@ -4778,14 +4778,14 @@ export default class GeniusInvokationRoom {
             switchHeroDiceCnt?: number, hcard?: Card, players?: Player[], firstPlayer?: number, minusDiceSkill?: number[][], sktype?: SkillType,
             isExec?: boolean, isQuickAction?: boolean, minusDiceCard?: number, csupport?: Support[], hidx?: number, skid?: number,
             minusDiceSkillIds?: number[], isExecTask?: boolean, getdmg?: number[], heal?: number[], discardCnt?: number, supportCnt?: number[][],
-            energyCnt?: number[][], csummon?: Summon, isAfterSkill?: boolean,
+            energyCnt?: number[][], csummon?: Summon, isAfterSkill?: boolean, sourceStatus?: Status,
         } = {}) {
         const states: Trigger[] = [];
         if (typeof ostates == 'string') states.push(ostates);
         else states.push(...ostates);
         const { hcard, players = this.players, isExec = true, firstPlayer = -1, hidx = -1, skid = -1, sktype,
             isExecTask, csupport, getdmg, heal, discardCnt = 0, minusDiceSkillIds = [], minusDiceSkill = [],
-            supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon, isAfterSkill } = options;
+            supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon, isAfterSkill, sourceStatus } = options;
         let { switchHeroDiceCnt = 0, isQuickAction = false, minusDiceCard = 0 } = options;
         const cmdsAll = new CmdsGenerator();
         const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
@@ -4827,6 +4827,7 @@ export default class GeniusInvokationRoom {
                     heal,
                     discardCnt,
                     epile: opponent.pile,
+                    sourceStatus,
                     isExecTask,
                     getCardIds: this._getCardIds.bind(this),
                 });
@@ -6142,6 +6143,7 @@ export default class GeniusInvokationRoom {
                     isExec,
                     supportCnt,
                 });
+                this._detectSupport(pidx, 'get-status', { players, sourceStatus: sts, isExec });
                 if (isExec && isLog) {
                     this._writeLog(`[${player.name}](${player.pidx})${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`, isCdt(sts.hasType(STATUS_TYPE.Hide), 'system'));
                 }

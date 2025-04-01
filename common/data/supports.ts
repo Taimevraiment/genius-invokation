@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, STATUS_TYPE, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx } from '../utils/gameUtil.js';
@@ -37,6 +37,7 @@ export type SupportHandleEvent = {
     discardCnt?: number,
     epile?: Card[],
     isExecTask?: boolean,
+    sourceStatus?: Status,
     getCardIds?: (filter?: (card: Card) => boolean) => number[],
 }
 
@@ -453,10 +454,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // ｢沃陆之邦｣
     321028: () => new SupportBuilder().permanent().handle((_, event) => ({
-        triggers: ['useReadySkill', 'switch'],
+        triggers: ['get-status', 'switch'],
         exec: (_, cmds) => {
-            const { trigger, hidx } = event;
-            cmds.getStatus([[301025, trigger == 'useReadySkill' ? 3 : 1]], { hidxs: isCdt(trigger == 'switch', hidx) });
+            const { trigger, hidx, sourceStatus } = event;
+            if (trigger == 'get-status' && !sourceStatus?.hasType(STATUS_TYPE.ReadySkill)) return;
+            cmds.getStatus([[301025, trigger == 'get-status' ? 3 : 1]], { hidxs: isCdt(trigger == 'switch', hidx) });
         }
     })),
     // 派蒙
