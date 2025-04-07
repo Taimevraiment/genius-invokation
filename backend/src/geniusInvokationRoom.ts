@@ -2478,6 +2478,7 @@ export default class GeniusInvokationRoom {
                 dmgedHidx,
                 dmgSource: skid > -1 ? (atkId ?? afhero.id) : isSummon,
                 dmgElement,
+                source: skid > -1 ? skid : isSummon,
                 minusDiceSkillIds,
                 minusDiceSkill,
                 hasDmg: res.willDamages[getDmgIdx][0] > 0,

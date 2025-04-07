@@ -407,10 +407,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const hasDendro = heros.some(h => h.element == ELEMENT_TYPE.Dendro);
                     return { statusPre: isCdt(onlyHydroOrDendro && hasDendro, 112081) }
                 }),
-            new SkillBuilder('浮莲舞步·远梦聆泉').description('{dealDmg}，目标角色附属【sts112083】。')
+            new SkillBuilder('浮莲舞步·远梦聆泉').description('{dealDmg}，目标及下一个角色附属【sts112083】。')
+                .description('{dealDmg}，目标角色附属【sts112083】。', 'v5.6.0')
                 .src('https://patchwiki.biligame.com/images/ys/e/e4/g0jxv4e1j04516p1lse7kbmq9e169o4.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/d90ebd60eb4eb78a42d0f2f95cab33fc_4581262526420283887.png')
-                .burst(2).damage(2).cost(3).handle(() => ({ statusOppo: 112083 }))
+                .burst(2).damage(2).cost(3).handle((event, ver) => {
+                    const { eheros } = event;
+                    return { statusOppo: 112083, hidxs: isCdt(ver.gte('v5.6.0'), allHidxs(eheros, { limit: 2 })) }
+                })
         ),
 
     1209: () => new HeroBuilder(280).name('夜兰').since('v4.3.0').liyue().hydro().bow()
@@ -1027,7 +1031,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Sethos_-1936854580.png')
         .normalSkill(new NormalSkillBuilder('王家苇箭术').energy(-1))
         .skills(
-            new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，切换到下一个角色。下次我方角色使用技能触发[雷元素相关反应]后，自身回复1点[充能]。')
+            new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，我方切换到下一个角色。自身附属【sts114132】。')
                 .src('/image/tmp/Skill_S_Sethos_01.webp')
                 .elemental().cost(2).handle(({ cmds }) => (cmds.switchAfter(), { isAttachOppo: true, status: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
@@ -1406,7 +1410,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('锐锋攫猎').description('若自身附属【sts116111】，则恢复1点｢夜魂值｣。')
             .handle(({ hero: { heroStatus } }) => ({ exec: () => getObjById(heroStatus, 116111)?.addUseCnt() })))
         .skills(
-            new SkillBuilder('音火锻淬').description('本角色附属【crd116112】，并进入【夜魂加持】。（角色进入【夜魂加持】后不可使用此技能）')
+            new SkillBuilder('音火锻淬').description('本角色附属【crd116112】，进入【夜魂加持】并获得1点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Xilonen_01.webp')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
                     equip: 116112,
@@ -1420,7 +1424,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
                     cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: getMinHpHidxs(heros) });
                 }),
-            new SkillBuilder('四境四象回声').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的｢源音采样｣。')
+            new SkillBuilder('｢源音采样｣').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的｢源音采样｣。')
                 .src('/image/tmp/UI_Talent_S_Xilonen_01.webp')
                 .passive().handle(event => {
                     const stsId = [, 116116, 116114, 116115, 116117, , 116113];

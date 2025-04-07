@@ -1327,7 +1327,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1f83f6f34b1af8920ebf43d40ca51e8c_8682815555943814152.png'),
 
     321028: () => new CardBuilder(474).name('｢沃陆之邦｣').since('v5.6.0').place().costAny(3)
-        .description('【我方角色准备技能时：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得1点【sts301025】。；（当锻炼层数到达5点时，对应角色所造成的伤害+1）')
+        .description('【我方角色准备技能时：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得2点【sts301025】。；（当锻炼层数到达3点时，对应角色获得1点[护盾]\\；当锻炼层数到达5点时，对应角色所造成的伤害+1）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_Woluzhibang.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
@@ -1642,7 +1642,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/f6109c65a24602b1ad921d5bd5f94d97_2028353267602639806.png'),
 
     331702: () => new CardBuilder(236).name('元素共鸣：蔓生之草').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costDendro(1)
-        .description('若我方场上存在【smn115】/【sts116】/【sts117】，则对对方出战角色造成1点[火元素伤害]/[水元素伤害]/[雷元素伤害]。')
+        .description('若我方场上存在【smn115】/【sts116】或【smn112082】/【sts117】，则对对方出战角色造成1点[火元素伤害]/[水元素伤害]/[雷元素伤害]。')
         .description('本回合中，我方角色下一次引发元素反应时，造成的伤害+2。；使我方场上的｢【smn115】｣、｢【sts116】｣和｢【sts117】｣[可用次数]+1。', 'v5.5.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/af52f6c4f7f85bb3d3242778dc257c5c_1159043703701983776.png')
         .handle((_, event, ver) => {
@@ -1656,7 +1656,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     }
                 }
             }
-            if (hasObjById(combatStatus, 116)) cmds.attack(1, DAMAGE_TYPE.Hydro);
+            if (hasObjById(combatStatus, 116) || hasObjById(summons, 112082)) cmds.attack(1, DAMAGE_TYPE.Hydro);
             if (hasObjById(combatStatus, 117)) cmds.attack(1, DAMAGE_TYPE.Electro);
             if (hasObjById(summons, 115)) cmds.attack(1, DAMAGE_TYPE.Pyro);
             return { isValid: cmds.order().length > 0, notPreview: true }
@@ -2100,7 +2100,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (diff != 0) cmds.getCard(Math.abs(diff), { isOppo: diff < 0 });
         }),
 
-    332045: () => new CardBuilder(475).name('困困冥想术').since('v5.6.0').event().costAny(2)
+    332045: () => new CardBuilder(475).name('困困冥想术').since('v5.6.0').event().costSame(1)
         .description('从随机3张特技牌中[挑选]1张。；我方下次打出不属于初始卡组的牌少花费2个元素骰。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_MingshiLong.webp')
         .handle((_, { cmds }) => (cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Vehicle }), { status: 303239 })),
@@ -2852,14 +2852,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中[挑选]1个并召唤。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 
-    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).useCnt(2).isResetUseCnt()
+    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).perCnt(1).useCnt(2).isResetUseCnt()
         .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
         .handle((card, event) => {
             const { source, execmds } = event;
-            if (card.useCnt <= 0 || (source != 116102 && source != 116103)) return;
+            if (card.useCnt <= 0 || (source != 116102 && source != 116103 && source != 1161021)) return;
             execmds.getCard(1);
-            return { triggers: 'trigger', exec: () => card.minusUseCnt() }
+            return {
+                triggers: ['trigger', 'vehicle'],
+                exec: () => {
+                    card.minusUseCnt();
+                    if (card.useCnt == 0) card.minusPerCnt();
+                }
+            }
         }),
 
     216111: () => new CardBuilder(472).name('丛山锻火驰行').since('v5.6.0').talent(1).costGeo(2).perCnt(2)

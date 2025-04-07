@@ -237,7 +237,7 @@
               </div>
               <div v-if="hero.heroStatus.length > 4" class="status" :class="{ 'mobile-status': isMobile }"
                 style="background-color: #faebd767;">
-                <span>…</span>
+                <span style="color: beige;">…</span>
                 <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
                   {{ hero.heroStatus.length - 3 }}
                 </div>
@@ -266,7 +266,7 @@
                 </div>
                 <div v-if="combatStatuses[hgi].length > 4" class="status" :class="{ 'mobile-status': isMobile }"
                   style="background-color: #faebd767">
-                  <span>…</span>
+                  <span style="color: beige;">…</span>
                   <div class="status-cnt" :class="{ 'mobile-status-cnt': isMobile }">
                     {{ combatStatuses[hgi].length - 3 }}
                   </div>

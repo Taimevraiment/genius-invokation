@@ -692,9 +692,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle(() => ({ triggers: 'Bloom-oppo', summon: 112082 })),
 
     112083: () => new StatusBuilder('永世流沔').heroStatus().icon('ski,2').useCnt(1).type(STATUS_TYPE.Attack).iconBg(DEBUFF_BG_COLOR)
-        .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；[useCnt]')
-        .handle(() => ({
-            damage: 3,
+        .description('【结束阶段：】对所附属角色造成2点[水元素伤害]。；[useCnt]')
+        .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；[useCnt]', 'v5.6.0')
+        .handle((_s, _e, ver) => ({
+            damage: isCdt(ver.lt('v5.6.0'), 3, 2),
             element: DAMAGE_TYPE.Hydro,
             isSelf: true,
             triggers: 'phase-end',
@@ -1234,7 +1235,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114132: () => new StatusBuilder('轰雷凝集').heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .description('【下次我方角色使用技能触发[雷元素相关反应]后：】所附属角色回复1点[充能]。')
+        .description('【我方角色使用技能触发[雷元素相关反应]后：】所附属角色回复1点[充能]。')
         .handle((_, event) => {
             const { sktype = SKILL_TYPE.Vehicle, hidx = -1, cmds } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
@@ -2486,6 +2487,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (sktype == SKILL_TYPE.Vehicle || status.useCnt < 5) return;
             return { triggers: 'dmg', addDmgCdt: 1 }
         }),
+
+    301026: () => shieldHeroStatus('护盾', 1),
 
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
         .description('根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。'),

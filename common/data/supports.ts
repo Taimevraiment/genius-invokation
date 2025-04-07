@@ -2,7 +2,7 @@ import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger 
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, STATUS_TYPE, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
-import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx, getObjById } from '../utils/gameUtil.js';
 import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 
@@ -453,14 +453,20 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // ｢沃陆之邦｣
-    321028: () => new SupportBuilder().permanent().handle((_, event) => ({
-        triggers: ['get-status', 'switch'],
-        exec: (_, cmds) => {
-            const { trigger, hidx, sourceStatus } = event;
-            if (trigger == 'get-status' && !sourceStatus?.hasType(STATUS_TYPE.ReadySkill)) return;
-            cmds.getStatus([[301025, trigger == 'get-status' ? 3 : 1]], { hidxs: isCdt(trigger == 'switch', hidx) });
+    321028: () => new SupportBuilder().permanent().handle((_, event) => {
+        const { trigger, hidx = -1, sourceStatus, heros = [], hidxs: [fhidx] = [-1] } = event;
+        if (trigger == 'get-status' && !sourceStatus?.hasType(STATUS_TYPE.ReadySkill)) return;
+        return {
+            triggers: ['get-status', 'switch'],
+            exec: (_, cmds) => {
+                const hidxs = trigger == 'get-status' ? fhidx : hidx;
+                const cnt = trigger == 'get-status' ? 3 : 2;
+                cmds.getStatus([[301025, cnt]], { hidxs });
+                const ocnt = getObjById(heros[hidxs].heroStatus, 301025)?.useCnt ?? 0;
+                if (ocnt < 3 && ocnt + cnt >= 3) cmds.getStatus(301026, { hidxs });
+            }
         }
-    })),
+    }),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(() => ({
         triggers: 'phase-start',

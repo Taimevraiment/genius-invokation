@@ -47,7 +47,7 @@ export default class CmdsGenerator {
             card,
             hidxs: isCdt(subtype || cardTag, exclude, include),
             isOppo,
-            isAttach: isCdt(card, isFromPile),
+            isAttach: isCdt(card || subtype || cardTag, isFromPile),
         });
         return this;
     }

@@ -73,7 +73,7 @@ export const getMinHpHidxs = (heros: Hero[] = [], fhidx: number = heros.findInde
     return hidxs;
 }
 
-// 获取攻击角色hidx
+// 获取出战角色hidx
 export const getAtkHidx = (heros: Hero[]): number => {
     return heros.findIndex(h => h.isFront);
 }

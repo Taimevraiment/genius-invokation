@@ -1,7 +1,7 @@
 <template>
     <div class="card" :class="{ 'mobile-card': isMobile }">
         <div class="card-border" v-if="!isHideBorder"></div>
-        <img class="card-img" :src="getPngIcon('card-bg')" :alt="card.name" style="transform: rotateY(180deg);" />
+        <img class="card-img" :src="getPngIcon('card-bg')" alt="" style="transform: rotateY(180deg);" />
         <img class="card-img" :src="getPngIcon(card.UI.src)" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"

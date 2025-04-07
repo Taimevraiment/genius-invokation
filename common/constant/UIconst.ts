@@ -272,7 +272,7 @@ export const STATUS_ICON = {
     Debuff: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Debuff.webp',
     Heal: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Heal.webp',
     Revive: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp',
-    Barrier: 'Barrier',
+    Barrier: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp',
     Shield: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp',
     DebuffCountered01: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp',
     DebuffCostSkill: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSkill.webp',
