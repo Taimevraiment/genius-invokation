@@ -1177,7 +1177,7 @@ button:active {
 }
 
 .attach-element {
-  width: 200%;
+  width: 2000%;
   position: absolute;
   top: -23px;
   left: 50%;
