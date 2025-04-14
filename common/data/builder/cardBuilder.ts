@@ -132,10 +132,10 @@ export class GICard {
                 const res = ohandle?.(card, event, ver) ?? {};
                 const ressts = typeof res?.status == 'number' ? [res.status] : res?.status ?? [];
                 return {
+                    isValid: event.heros?.some(h => !hasObjById(h.heroStatus, 303300)),
                     ...res,
                     status: [...ressts, 303300],
                     notPreview: true,
-                    isValid: event.heros?.some(h => !hasObjById(h.heroStatus, 303300)),
                 }
             }
         } else if (subType.includes(CARD_SUBTYPE.Talent)) {

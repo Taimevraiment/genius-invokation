@@ -1417,12 +1417,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     status: [[116111, 1]],
                     isForbidden: hasObjById(heroStatus, 116111),
                 })),
-            new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方生命值最低的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的【源音采样】额外治疗1点。')
+            new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方受伤最多的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的【源音采样】额外治疗1点。')
                 .src('/image/tmp/Skill_E_Xilonen_01.webp')
                 .burst(2).damage(2).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus }, heros } = event;
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
-                    cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: getMinHpHidxs(heros) });
+                    cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: getMaxHertHidxs(heros) });
                 }),
             new SkillBuilder('｢源音采样｣').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的｢源音采样｣。')
                 .src('/image/tmp/UI_Talent_S_Xilonen_01.webp')

@@ -2231,9 +2231,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => cmds.pickCard(3, CMD_MODE.UseCard, { card: [333021, 333022, 333023, 333024, 333025, 333026] }).res),
 
     333027: () => new CardBuilder(476).name('纵声欢唱').since('v5.6.0').food().costAny(3)
-        .description('抓3张牌，下2次切换角色少花费1个元素骰。')
+        .description('所有我方角色【sts303300】，抓3张牌，下2次切换角色少花费1个元素骰。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Rongyi.webp')
-        .handle((_, { cmds, heros }) => (cmds.getCard(3), { status: 303321, hidxs: allHidxs(heros) })),
+        .handle((_, event) => {
+            const { cmds, heros } = event;
+            cmds.getCard(3).getStatus(303321);
+            return { hidxs: allHidxs(heros), isValid: heros?.every(h => !hasObjById(h.heroStatus, 303300)) }
+        }),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -2241,8 +2245,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/15a100ee0285878fc5749663031fa05a_7762319984393418259.png')
         .handle((card, event, ver) => {
             if (ver.gte('v3.7.0')) return;
-            const { heros = [] } = event;
-            const hero = getObjById(heros, card.userType as number);
+            const hero = getObjById(event.heros, card.userType as number);
             return { addDmgCdt: isCdt(!!hero?.skills[2].useCnt, 1) }
         }),
 
