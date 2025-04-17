@@ -463,7 +463,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 const cnt = trigger == 'get-status' ? 3 : 2;
                 cmds.getStatus([[301025, cnt]], { hidxs });
                 const ocnt = getObjById(heros[hidxs].heroStatus, 301025)?.useCnt ?? 0;
-                if (ocnt < 3 && ocnt + cnt >= 3) cmds.getStatus(301026, { hidxs });
+                if (ocnt < 3 && ocnt + cnt >= 3) cmds.heal(1, { hidxs });
             }
         }
     }),

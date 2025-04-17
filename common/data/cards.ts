@@ -1327,7 +1327,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1f83f6f34b1af8920ebf43d40ca51e8c_8682815555943814152.png'),
 
     321028: () => new CardBuilder(474).name('｢沃陆之邦｣').since('v5.6.0').place().costAny(3)
-        .description('【我方角色准备技能时：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得2点【sts301025】。；（当锻炼层数到达3点时，对应角色获得1点[护盾]\\；当锻炼层数到达5点时，对应角色所造成的伤害+1）')
+        .description('【我方角色准备技能时：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得2点【sts301025】。；（当锻炼层数到达3点时，治疗对应角色1点\\；当锻炼层数到达5点时，对应角色所造成的伤害+1）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_Woluzhibang.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
@@ -2231,7 +2231,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => cmds.pickCard(3, CMD_MODE.UseCard, { card: [333021, 333022, 333023, 333024, 333025, 333026] }).res),
 
     333027: () => new CardBuilder(476).name('纵声欢唱').since('v5.6.0').food().costAny(3)
-        .description('所有我方角色【sts303300】，抓3张牌，下2次切换角色少花费1个元素骰。')
+        .description('所有我方角色获得【sts303300】，抓3张牌，下2次切换角色少花费1个元素骰。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Rongyi.webp')
         .handle((_, event) => {
             const { cmds, heros } = event;
@@ -2681,7 +2681,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214131: () => new CardBuilder(471).name('巡日塔门书').since('v5.6.0').talent().costElectro(1).perCnt(1)
-        .description('〔*[card]我方【hro】回复1点[充能]。〕；我方【hro】因【ski,3】扣除[充能]后，回复1点[充能]。（每回合1次）')
+        .description('〔*[card]我方【hro】获得1点[充能]。〕；我方【hro】因【ski,3】扣除[充能]后，获得1点[充能]。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Sethos.webp')
         .handle((card, event) => {
             const { cmds, execmds, hero, source = -1 } = event;

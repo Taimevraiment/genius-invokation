@@ -412,6 +412,7 @@
               :key="`${card.entityId}-initcard`" :card="card" :isMobile="isMobile" @click.stop="selectChangeCard(cidx)"
               :style="{ left: client.initcardsPos[cidx], top: '25%' }">
               <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
+              <div v-if="initCardsSelect[cidx]" class="init-select-text">替换</div>
             </Handcard>
           </div>
           <button @click="changeCard" v-if="showChangeCardBtn">
@@ -1822,6 +1823,12 @@ button:active {
   transform: translate(-50%, -50%) rotate(30deg);
   width: 80%;
   animation: forwards init-select .2s;
+}
+
+.init-select-text {
+  color: white;
+  text-shadow: 0 0 20px red;
+  transform: translateY(30px);
 }
 
 @keyframes init-select {

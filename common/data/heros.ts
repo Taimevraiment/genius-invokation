@@ -1037,7 +1037,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('/image/tmp/Skill_E_Sethos_01.webp')
                 .burst(4).damage(3).cost(3).handle(() => ({ status: 114131 })),
-            new SkillBuilder('黑鸢的密喻').description('自身｢普通攻击｣不会获得[充能]。；自身｢普通攻击｣后：消耗自己全部[充能]，对生命值最低的敌方造成等额+1的[穿透伤害]。')
+            new SkillBuilder('黑鸢的密喻').description('自身｢普通攻击｣不会获得[充能]。；自身｢普通攻击｣后：如可能，消耗全部[充能]，对生命值最低的敌方造成等额+1的[穿透伤害]。')
                 .src('/image/tmp/UI_Talent_S_Sethos_05.webp')
                 .passive().handle(event => {
                     const { hero: { energy }, cmds, eheros } = event;

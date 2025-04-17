@@ -1235,7 +1235,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     114132: () => new StatusBuilder('轰雷凝集').heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .description('【我方角色使用技能触发[雷元素相关反应]后：】所附属角色回复1点[充能]。')
+        .description('【我方角色引发[雷元素相关反应]后：】所附属角色获得1点[充能]。；[useCnt]')
         .handle((_, event) => {
             const { sktype = SKILL_TYPE.Vehicle, hidx = -1, cmds } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
@@ -2481,14 +2481,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301025: (cnt: number) => new StatusBuilder('锻炼').heroStatus().useCnt(cnt).maxCnt(5)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.AddDamage)
-        .description('若自身层数等于5，则所附属角色造成的伤害+1。（可叠加，最多叠加到5层）')
+        .description('自身层数到达3时，治疗所附属角色1点\\；若自身层数等于5，则所附属角色造成的伤害+1。（可叠加，最多叠加到5层）')
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle || status.useCnt < 5) return;
             return { triggers: 'dmg', addDmgCdt: 1 }
         }),
-
-    301026: () => shieldHeroStatus('护盾', 1),
 
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
         .description('根据｢璃月｣角色的数量提供[护盾]，保护所附属角色。'),
@@ -3122,7 +3120,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合中，该我方角色受到的伤害-1。；[useCnt]'),
 
     303321: () => new StatusBuilder('纵声欢唱（生效中）').combatStatus().useCnt(2).icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage)
-        .description('切换角色少花费1个元素骰。；[useCnt]')
+        .description('下次切换角色少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
             const { switchHeroDiceCnt = 0 } = event;
             if (switchHeroDiceCnt == 0) return;
