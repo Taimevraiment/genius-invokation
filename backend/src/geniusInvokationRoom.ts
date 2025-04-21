@@ -927,7 +927,6 @@ export default class GeniusInvokationRoom {
         const isQuickSwitch = isQuickAction && !isDieSwitch && this.phase == PHASE.ACTION && diceSelect;
         this._writeLog(`[${player.name}](${player.pidx})切换为[${player.heros[hidx].name}]出战${isQuickSwitch ? '（快速行动）' : ''}`, 'info');
         this.taskQueue.addTask('switchHero', [[async () => {
-            if (diceSelect != undefined) this._doActionAfter(pidx, isQuickAction);
             const player = this.players[pidx];
             this._detectSkill(pidx, 'switch-to', { hidxs: hidx, isQuickAction });
             for (let i = 0; i < player.heros.length; ++i) {
@@ -961,6 +960,8 @@ export default class GeniusInvokationRoom {
                 }
             });
         }, 1e3]], { isUnshift: true, orderAfter: 'minus-switch' });
+        await this._execTask();
+        if (diceSelect != undefined) this._doActionAfter(pidx, isQuickAction, [hidx, ohidx]);
         await this._execTask();
         if (isDieSwitch) {
             const { cmds: killedicmds } = this._detectStatus(pidx, STATUS_TYPE.Usage, 'killed', { isOnlyHeroStatus: true, hidxs: [ohidx] });
@@ -1659,6 +1660,7 @@ export default class GeniusInvokationRoom {
             });
             mergeWillHeals(aWillHeal, skillheal);
         }
+        skillcmds.addCmds(skillres.cmds);
         if (skill && !isExec) {
             if (skill.cost[2].cnt == 0) energyCnt[pidx][ohidx]++;
             else if (skill.cost[2].cnt > 0) energyCnt[pidx][ohidx] -= skill.cost[2].cnt;
@@ -1717,12 +1719,12 @@ export default class GeniusInvokationRoom {
                 aWillHeal.forEach((_, awhi, awha) => awha[awhi] = ahealres[awhi]);
                 bWillHeal.forEach((_, awhi, awha) => awha[awhi] = ahealres[awhi]);
                 mergeWillHeals(bWillHeal, bhealres);
-                skillcmds.addCmds(skillres.cmds);
                 const allHeros = players.flatMap(p => p.heros);
                 willDamage1.forEach((dmg, di) => { aWillDamages[di] = allHeros[di].hp > 0 ? [...dmg] : [-1, 0] });
                 tasks0.push(...tasks1);
             });
         }
+        this._doCmds(pidx, skillres.cmdsAfter, { players, isExec, isAction: !!skill && !isQuickAction });
         const stsaftercmds = new CmdsGenerator()
             .getStatus(skillres.statusAfter, { hidxs: skillres.hidxs })
             .getStatus(skillres.statusOppoAfter, { hidxs: skillres.hidxs, isOppo: true });
@@ -3209,9 +3211,9 @@ export default class GeniusInvokationRoom {
      * 玩家执行任意行动后
      * @param pidx 玩家序号
      */
-    private _doActionAfter(pidx: number, isQuickAction: boolean = false) {
+    private _doActionAfter(pidx: number, isQuickAction: boolean = false, hidxs?: number[]) {
         this._detectSkill(pidx, 'action-after', { type: SKILL_TYPE.Passive, isQuickAction });
-        this._detectSlotAndStatus(pidx, 'action-after', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], isOnlyFront: true, isQuickAction });
+        this._detectSlotAndStatus(pidx, 'action-after', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], isOnlyFront: true, hidxs, isQuickAction });
         this._detectSupport(pidx, 'action-after', { isQuickAction });
         this._detectSkill(pidx ^ 1, 'action-after-oppo', { type: SKILL_TYPE.Passive, isQuickAction });
         this._detectSlotAndStatus(pidx ^ 1, 'action-after-oppo', { types: STATUS_TYPE.Usage, isOnlyFront: true, isQuickAction });

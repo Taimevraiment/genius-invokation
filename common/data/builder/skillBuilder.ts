@@ -12,7 +12,7 @@ import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
 
-type SkillBuilderHandleEvent = SkillHandleEvent & { cmds: CmdsGenerator };
+type SkillBuilderHandleEvent = SkillHandleEvent & { cmds: CmdsGenerator, cmdsAfter: CmdsGenerator };
 
 export class GISkill {
     id: number; // 唯一id
@@ -85,12 +85,14 @@ export class GISkill {
         this.addition = [...adt];
         this.handle = hevent => {
             const cmds = new CmdsGenerator();
-            const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds };
+            const cmdsAfter = new CmdsGenerator();
+            const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds, cmdsAfter };
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
             const builderRes = handle?.(hbevent, compareVersionFn(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
                 cmds,
+                cmdsAfter,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }

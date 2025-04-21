@@ -94,29 +94,28 @@ export class GICard {
             if (isUseNightSoul) {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver);
-                    const { hero, combatStatus = [], source = -1, sourceHidx = -1, trigger = '', execmds } = event;
+                    const { hero, combatStatus, trigger, execmds } = event;
                     if (!hero) return res;
                     const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return res;
-                    if (trigger == 'get-status' && source == 112145 && sourceHidx == hero.hidx &&
-                        !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 1) {
-                        return { triggers: 'get-status', isDestroy: true, exec: () => { nightSoul.dispose(true) } }
-                    }
                     if (trigger == 'slot-destroy') {
-                        return { triggers: 'slot-destroy', exec: () => { nightSoul.dispose(true) } }
+                        return { triggers: 'slot-destroy', exec: () => nightSoul.dispose(true) }
                     }
-                    return {
-                        ...res,
-                        execmds: execmds.addCmds(res?.execmds).getStatus(112145, { hidxs: hero.hidx }),
+                    if (trigger == 'action-after' && !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 0) {
+                        return { triggers: 'action-after', isDestroy: true, exec: () => nightSoul.dispose(true) }
                     }
+                    execmds.getStatus(112145, { hidxs: hero.hidx });
+                    return res;
                 }
             } else {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver) ?? {};
+                    if (event.trigger == 'action-after' && card.useCnt == 0) {
+                        return { triggers: 'action-after', isDestroy: true }
+                    }
                     if (event.trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
                     return {
                         triggers: 'vehicle',
-                        isDestroy: card.useCnt == 1,
                         exec: () => {
                             card.minusUseCnt();
                             return isCdt(!res.triggers, () => res.exec?.());

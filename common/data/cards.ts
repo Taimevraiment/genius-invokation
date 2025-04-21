@@ -2859,11 +2859,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
         .handle((card, event) => {
-            const { source, execmds } = event;
-            if (card.useCnt <= 0 || (source != 116102 && source != 116103 && source != 1161021)) return;
+            const { skid = -1, isSummon = -1, execmds } = event;
+            if (card.useCnt <= 0 || (isSummon != 116103 && skid != 1161021)) return;
             execmds.getCard(1);
             return {
-                triggers: ['trigger', 'vehicle'],
+                triggers: 'dmg',
                 exec: () => {
                     card.minusUseCnt();
                     if (card.useCnt == 0) card.minusPerCnt();
@@ -3288,7 +3288,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     116102: () => new CardBuilder().name('冲天转转').vehicle(true).costSame(0)
         .description('【附属角色切换至后台时：】消耗1点｢夜魂值｣，召唤【smn116103】。')
-        .handle(() => ({ triggers: 'switch-from', isAddTask: true, summon: 116103, isTrigger: true })),
+        .handle(() => ({ triggers: 'switch-from', isAddTask: true, summon: 116103 })),
 
     116112: () => new CardBuilder().name('刃轮装束').vehicle(true).costSame(0).tag(CARD_TAG.Enchant)
         .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')

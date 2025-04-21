@@ -683,7 +683,6 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/cc08c2c835426ea190041ff7be7ff0c9_1608888123917049873.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
-            isTrigger: true,
             exec: execEvent => {
                 const { eheros, combatStatus } = event;
                 const { summon: smn = summon, cmds } = execEvent;

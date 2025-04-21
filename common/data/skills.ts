@@ -58,6 +58,7 @@ export type SkillHandleRes = {
     statusAfter?: (number | [number, ...any | Status])[] | number,
     statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
     cmds?: CmdsGenerator,
+    cmdsAfter?: CmdsGenerator,
     heal?: number,
     hidxs?: number[],
     dmgElement?: ElementType,
@@ -166,9 +167,9 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
         .src('#1121422', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
-        .vehicle().cost(1).handle(({ heros, cmds }) => {
+        .vehicle().cost(1).handle(({ heros, cmds, cmdsAfter }) => {
             cmds.switchBefore();
-            if (allHidxs(heros).length == 1) cmds.consumeNightSoul();
+            if (allHidxs(heros).length == 1) cmdsAfter.consumeNightSoul();
             return { statusOppo: 112143 }
         }),
 
@@ -179,16 +180,16 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')
         .vehicle().damage(2).costAny(1).handle(event => {
-            const { eheros, combatStatus, hero: { hidx }, cmds } = event;
+            const { eheros, combatStatus, hero: { hidx }, cmdsAfter } = event;
             const hidxs = getNextBackHidx(eheros);
-            cmds.consumeNightSoul(hidx);
+            cmdsAfter.consumeNightSoul(hidx);
             if (hidxs.length == 0) return;
             return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点｢夜魂值｣，抓3张牌。')
         .src('/image/tmp/Gcg_CardInfo_Buff_Vehicle_Xilonen.png')
-        .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getCard(3).res),
+        .vehicle().costAny(2).handle(({ cmdsAfter, hero: { hidx } }) => cmdsAfter.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('#')
