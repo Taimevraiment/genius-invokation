@@ -1,7 +1,8 @@
 <template>
   <div class="info-outer-container">
     <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
-    <div class="info-container" :class="{ 'mobile-font': isMobile }" v-if="isShow" @click.stop="">
+    <div class="info-container" :class="{ 'mobile-font': isMobile, 'not-transparent': isNotTransparent }" v-if="isShow"
+      @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
         <div class="name">{{ (info as Card).name }}</div>
@@ -310,9 +311,10 @@ import { getVehicleIdByCid } from '@@@/utils/gameUtil';
 const props = defineProps<{
   info: InfoVO,
   isMobile: boolean,
-  isInGame: boolean,
+  isInGame?: boolean,
   round?: number,
   playerInfo?: GameInfo,
+  isNotTransparent?: boolean,
 }>();
 
 const isMobile = computed<boolean>(() => props.isMobile);
@@ -325,6 +327,7 @@ const type = computed<InfoType | null>(() => props.info.type); // 显示类型�
 const info = computed<Hero | Card | Summon | null>(() => props.info.info); // 展示信息
 const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
+const isNotTransparent = computed<boolean>(() => props.isNotTransparent ?? false); // 背景是否为不透明
 const skills = ref<Skill[]>([]); // 展示技能
 const isShowSkill = ref<boolean[]>([]); // 是否展示技能
 const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态
@@ -588,6 +591,7 @@ watchEffect(() => {
     isCombatStatus.value = new Array(combatStatus.value.length).fill(false);
     isEquipment.value = new Array(info.value.equipments.length).fill(false);
   }
+  if (isNotTransparent.value) isShowSkill.value.fill(true);
 });
 
 // 是否显示描述
@@ -637,6 +641,12 @@ const showRule = (...desc: string[]) => {
   margin-right: 2px;
   overflow: auto;
   pointer-events: all;
+}
+
+.not-transparent {
+  background-color: #3e4d69;
+  max-height: 2000px;
+  border-radius: 0;
 }
 
 .name {

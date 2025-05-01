@@ -2,7 +2,7 @@
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div style="position: absolute;right: 10px;top: 10px;">（更新至5.6v5）</div>
-    <div v-if="isShowEditName" class="edit-name">
+    <div v-if="isShowEditName && !infoContent" class="edit-name">
       <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto" @click="register">
         {{ username == "" ? "确认" : inputName == "" ? "取消" : "修改" }}
@@ -58,18 +58,24 @@
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
     @enter-room="enterRoom" />
+  <InfoModal id="info-modal" v-if="info.info != null" :is-mobile="isMobile" :info="info" isNotTransparent />
+  <input id="taimbot" type="text" style="opacity: 0;" v-model="infoContent" @change="showInfo" />
+  <div id="info-url" style="opacity: 0;">{{ infoUrl }}</div>
 </template>
 
 <script setup lang='ts'>
 import CreateRoomModal from '@/components/CreateRoomModal.vue';
 import EnterRoomModal from '@/components/EnterRoomModal.vue';
+import InfoModal from '@/components/InfoModal.vue';
 import { getSocket } from '@/store/socket';
-import { Version } from '@@@/constant/enum';
+import { VERSION, Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import { cardsTotal } from '@@@/data/cards';
+import { herosTotal } from '@@@/data/heros';
 import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Player, PlayerList, RoomList } from '../../../typing';
+import { InfoVO, Player, PlayerList, RoomList } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -90,6 +96,10 @@ const playerStatus = ref([
   { name: '房间中', color: 'black' },
   { name: '游戏中', color: '#eb7e00' },
 ]); // 玩家状态
+const info = ref<InfoVO>({ version: 'v3.3.0', isShow: true, type: null, info: null }); // 为pupeteer截图时使用
+const infoContent = ref<string>('');
+const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, true)];
+const infoUrl = ref<string>('');
 let followIdx: number = -1; // 跟随的玩家id
 
 if (username.value != '' && userid.value > 0) {
@@ -183,6 +193,22 @@ const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomLi
     status: p.rid < 0 ? 0 : roomList.value.find(r => r.id == p.rid)?.isStart ? 2 : 1,
   }));
 };
+
+// 显示实体信息(用于puppeteer截图)
+const showInfo = () => {
+  const [query, ver] = infoContent.value.split(' ');
+  const version = /^v\d\.\d\.\d$/.test(ver) ? ver as Version : VERSION[0];
+  const infoEntity = allEntities(version).find(e => e.id.toString() == query || e.name.includes(query));
+  if (!infoEntity) return info.value.info = null;
+  info.value = {
+    version: VERSION[0],
+    isShow: true,
+    type: 'cost' in infoEntity ? 'card' : 'hero',
+    info: infoEntity,
+  };
+  infoUrl.value = infoEntity.UI.src;
+}
+
 onMounted(async () => {
   // 获取登录pid
   socket.on('login', ({ pid, name }) => {

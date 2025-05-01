@@ -159,7 +159,7 @@
       </div>
     </div>
 
-    <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" :isInGame="true"
+    <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" isInGame
       :round="client.round" :playerInfo="client.player.playerInfo" style="z-index: 10" />
 
     <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"

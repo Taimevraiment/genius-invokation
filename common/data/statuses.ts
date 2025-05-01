@@ -118,8 +118,10 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
         .handle(status => ({ attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType, addDmg }));
 }
 
-const readySkillStatus = (name: string, skill: number, shieldStatusId?: number, exec?: (event: StatusBuilderHandleEvent) => void) => {
-    return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill)
+// shieldStatusId若<0则显示角标,-1为无护盾状态,其他为护盾状态Id
+const readySkillStatus = (name: string, skill: number, shieldStatusId: number = 0, exec?: (event: StatusBuilderHandleEvent) => void) => {
+    return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.Special).useCnt(1)
+        .type(STATUS_TYPE.ReadySkill).type(shieldStatusId >= 0, STATUS_TYPE.Sign)
         .description(`本角色将在下次行动时，直接使用技能：【${skill == SKILL_TYPE.Normal ? '普攻攻击' : `rsk${skill}`}】。`)
         .handle((status, event) => ({
             triggers: ['switch-from', 'useReadySkill'],
@@ -127,9 +129,9 @@ const readySkillStatus = (name: string, skill: number, shieldStatusId?: number, 
             exec: () => {
                 status.minusUseCnt();
                 exec?.(event);
-                if (shieldStatusId) {
+                if (Math.abs(shieldStatusId) > 1) {
                     const { heros = [], hidx = -1 } = event;
-                    const shieldStatus = getObjById(heros[hidx]?.heroStatus, shieldStatusId);
+                    const shieldStatus = getObjById(heros[hidx]?.heroStatus, Math.abs(shieldStatusId));
                     if (shieldStatus) shieldStatus.dispose();
                 }
             }
@@ -1223,10 +1225,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => status.dispose(),
         })),
 
-    114131: () => new StatusBuilder('寂想瞑影').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Enchant, STATUS_TYPE.AddDamage)
+    114131: () => new StatusBuilder('寂想瞑影').heroStatus().icon('ski,2').roundCnt(2)
+        .type(STATUS_TYPE.Enchant, STATUS_TYPE.AddDamage, STATUS_TYPE.Attack)
         .description('【所附属角色使用｢普通攻击｣时：】造成的[物理伤害]变为[雷元素伤害]，伤害+1，少花费1个[无色元素骰]，并且对敌方生命值最低的角色造成1点[穿透伤害]。；[roundCnt]')
         .handle((_, event) => ({
-            triggers: 'skilltype1',
+            triggers: 'after-skilltype1',
             attachEl: ELEMENT_TYPE.Electro,
             addDmgType1: 1,
             minusDiceSkill: { skilltype1: [0, 1, 0] },
@@ -2178,9 +2181,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    125022: () => readySkillStatus('风龙吐息', 25025).typeOverride(STATUS_TYPE.ReadySkill),
+    125022: () => readySkillStatus('风龙吐息', 25025, -1),
 
-    125023: () => readySkillStatus('风龙吐息', 25026).typeOverride(STATUS_TYPE.ReadySkill),
+    125023: () => readySkillStatus('风龙吐息', 25026, -1),
 
     125032: () => new StatusBuilder('亡风啸卷（生效中）').combatStatus().icon(STATUS_ICON.Special).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -2564,11 +2567,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301302: () => new StatusBuilder('目标').heroStatus().icon(STATUS_ICON.Debuff).useCnt(1).type(STATUS_TYPE.Usage)
         .description('【敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果。'),
 
-    301303: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, 0, ({ cmds }) => cmds.getStatus(301305)),
+    301303: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1, ({ cmds }) => cmds.getStatus(301305)),
 
     301304: () => shieldHeroStatus('浪船'),
 
-    301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal),
+    301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

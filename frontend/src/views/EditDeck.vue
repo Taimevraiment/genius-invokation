@@ -203,7 +203,7 @@
                 </span>
             </div>
         </div>
-        <InfoModal :info="modalInfo" :isMobile="isMobile" :isInGame="false" />
+        <InfoModal :info="modalInfo" :isMobile="isMobile" />
     </div>
     <div class="debug-mask" v-if="maskOpacity != 0" :style="{ opacity: maskOpacity }"></div>
 </template>

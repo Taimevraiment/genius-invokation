@@ -20,6 +20,14 @@ export default defineConfig({
         drop_console: true,
         drop_debugger: true,
       }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          cards: ['../common/data/cards'],
+          heros: ['../common/data/heros'],
+        }
+      }
     }
   },
 })

@@ -1053,6 +1053,7 @@ export default class GeniusInvokationRoom {
                         this._doReset();
                         await this.delay(1e3);
                         await this._doPhaseStart(flag, pidx);
+                        this.emit(`${flag}-finish`, pidx);
                     } else if (player.id != AI_ID) {
                         this.emit(`${flag}-finish`, pidx, { socket });
                     }
@@ -3198,13 +3199,15 @@ export default class GeniusInvokationRoom {
     private async _doActionStart(pidx: number) {
         this._detectSkill(pidx, 'action-start');
         await this._execTask();
-        this._detectSlotAndStatus(pidx, ['action-start', 'useReadySkill'], { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill], isOnlyFront: true, isQuickAction: true });
+        this._detectSlotAndStatus(pidx, 'action-start', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], hidxs: allHidxs(this.players[pidx].heros), isQuickAction: true });
+        await this._execTask();
+        this._detectSlotAndStatus(pidx, 'useReadySkill', { types: STATUS_TYPE.ReadySkill, isOnlyFront: true, isQuickAction: true });
         await this._execTask();
         this._detectSummon(pidx, 'action-start');
         await this._execTask();
         this._detectSupport(pidx, 'action-start', { isQuickAction: true });
         await this._execTask();
-        this._detectStatus(pidx ^ 1, STATUS_TYPE.Attack, 'action-start-oppo', { isOnlyCombatStatus: true });
+        this._detectSlotAndStatus(pidx ^ 1, 'action-start-oppo', { types: STATUS_TYPE.Attack, hidxs: allHidxs(this.players[pidx ^ 1].heros) });
         await this._execTask();
     }
     /**

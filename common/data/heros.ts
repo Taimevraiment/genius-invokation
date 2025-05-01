@@ -1427,9 +1427,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('｢源音采样｣').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的｢源音采样｣。')
                 .src('/image/tmp/UI_Talent_S_Xilonen_01.webp')
                 .passive().handle(event => {
+                    const { heros = [] } = event;
                     const stsId = [, 116116, 116114, 116115, 116117, , 116113];
-                    const { heros } = event;
-                    return { triggers: 'game-start', status: heros?.map(h => stsId[ELEMENT_CODE[h.element]] ?? 116113) }
+                    const otherHeroElement = heros.filter(h => h.id != 1611).map(h => stsId[ELEMENT_CODE[h.element]] ?? 116113);
+                    return { triggers: 'game-start', status: [116113, ...otherHeroElement] }
                 })
         ),
 
@@ -2334,12 +2335,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
 }
 
-export const herosTotal = (version: Version = VERSION[0]) => {
+export const herosTotal = (version: Version = VERSION[0], force: boolean = false) => {
     if (version == 'vlatest') version = VERSION[0];
     const heros: Hero[] = [];
     for (const idx in allHeros) {
         const heroBuilder = allHeros[idx]().version(version);
-        if (heroBuilder.notExist || heroBuilder.notInHeroPool) continue;
+        if ((heroBuilder.notExist || heroBuilder.notInHeroPool) && !force) continue;
         heros.push(heroBuilder.id(+idx).done());
     }
     return heros;
