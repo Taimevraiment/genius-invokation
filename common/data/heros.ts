@@ -2151,7 +2151,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(5).cost(4).handle(event => ({ statusOppo: 125021, hidxs: getBackHidxs(event.eheros) }))
         ),
 
-    2503: () => new HeroBuilder(370).name('圣骸飞蛇').since('v4.7.0').monster().consecratedBeast().anemo()
+    2503: () => new HeroBuilder(370).name('圣骸飞蛇').since('v4.7.0').consecratedBeast().anemo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/39bdf909aff15f061d4d9ea3d4c2b2ab_472359532850721936.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c1d78d82c85022519c595a9ab954ebfb.png')
         .normalSkill(new NormalSkillBuilder('旋尾迅击'))

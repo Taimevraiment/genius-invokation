@@ -1,6 +1,6 @@
 
 import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, Version } from "../constant/enum.js";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
@@ -76,7 +76,7 @@ const crd12702summon = () => {
 }
 
 
-const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
+const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     115: () => new SummonBuilder('燃烧烈焰').useCnt(1).maxUse(2).damage(1).pyro().description('{defaultAtk。}')
         .src('https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png'),
@@ -992,4 +992,14 @@ const summonTotal: Record<number, (...args: any) => SummonBuilder> = {
 
 }
 
-export const newSummon = (version?: Version) => (id: number, ...args: any) => summonTotal[id](...args).id(id).version(version).done();
+export const summonsTotal = (version: Version = VERSION[0]) => {
+    if (version == 'vlatest') version = VERSION[0];
+    const summons: Summon[] = [];
+    for (const idx in allSummons) {
+        const heroBuilder = allSummons[idx]().version(version);
+        summons.push(heroBuilder.id(+idx).done());
+    }
+    return summons;
+}
+
+export const newSummon = (version?: Version) => (id: number, ...args: any) => allSummons[id](...args).id(id).version(version).done();

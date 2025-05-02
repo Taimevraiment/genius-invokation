@@ -34,6 +34,7 @@
             <button class="edit-btn save" @click.stop="saveDeck">保存</button>
             <button class="edit-btn share-deck" @click.stop="shareDeck">分享</button>
             <div class="deck-share-img" v-if="isShowDeckShareImg" @click.stop="">
+                <span>{{herosDeck.filter(h => h.id > 0).length + cardsDeck.length}}</span>
                 <canvas id="deck-share" style="width: 100%;height: 100%;"></canvas>
                 <img src="@@/image/deck-share.png" style="width: 100%;height: 100%;position: absolute;top: 0;left: 0;"
                     draggable="false">
@@ -66,7 +67,10 @@
             <input v-model="deckName" class="deck-name" />
             <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
             <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" />
-            <button class="edit-btn share" v-if="pShareCode.length > 0" @click.stop="pasteShareCode">粘贴分享码</button>
+            <button id="paste-share-code" class="edit-btn share" v-if="pShareCode.length > 0"
+                @click.stop="pasteShareCode">
+                粘贴分享码
+            </button>
             <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
             <div v-if="currIdx == 0">
                 <div class="heros-deck">
@@ -830,7 +834,7 @@ body div {
     left: 50%;
     transform: translate(-50%);
     aspect-ratio: 120/163;
-    background-color: #363c5f;
+    background-color: #dfc98f;
     z-index: 10;
 }
 
@@ -1037,8 +1041,8 @@ input#isOfflineInput:checked {
 
 .hero-hp {
     position: absolute;
-    left: 0px;
-    top: 0px;
+    left: 0;
+    top: 0;
     width: 30%;
     aspect-ratio: 1/1;
     display: flex;

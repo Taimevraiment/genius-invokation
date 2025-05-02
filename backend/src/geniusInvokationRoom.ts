@@ -139,6 +139,7 @@ export default class GeniusInvokationRoom {
     }
     get roomInfoLog() {
         return '\nroomInfo: {\n'
+            + `  seed: ${this.seed}\n`
             + `  phase: ${this.phase}\n`
             + `  round: ${this.round}\n`
             + `  startIdx: ${this.startIdx}\n`

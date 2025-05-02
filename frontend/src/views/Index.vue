@@ -2,7 +2,7 @@
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div style="position: absolute;right: 10px;top: 10px;">（更新至5.6v5）</div>
-    <div v-if="isShowEditName && !infoContent" class="edit-name">
+    <div v-if="isShowEditName" class="edit-name">
       <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto" @click="register">
         {{ username == "" ? "确认" : inputName == "" ? "取消" : "修改" }}
@@ -60,7 +60,6 @@
     @enter-room="enterRoom" />
   <InfoModal id="info-modal" v-if="info.info != null" :is-mobile="isMobile" :info="info" isNotTransparent />
   <input id="taimbot" type="text" style="opacity: 0;" v-model="infoContent" @change="showInfo" />
-  <div id="info-url" style="opacity: 0;">{{ infoUrl }}</div>
 </template>
 
 <script setup lang='ts'>
@@ -72,6 +71,7 @@ import { VERSION, Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
+import { summonsTotal } from '@@@/data/summons';
 import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -98,8 +98,7 @@ const playerStatus = ref([
 ]); // 玩家状态
 const info = ref<InfoVO>({ version: 'v3.3.0', isShow: true, type: null, info: null }); // 为pupeteer截图时使用
 const infoContent = ref<string>('');
-const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, true)];
-const infoUrl = ref<string>('');
+const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, true), ...summonsTotal(version)];
 let followIdx: number = -1; // 跟随的玩家id
 
 if (username.value != '' && userid.value > 0) {
@@ -197,16 +196,17 @@ const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomLi
 // 显示实体信息(用于puppeteer截图)
 const showInfo = () => {
   const [query, ver] = infoContent.value.split(' ');
-  const version = /^v\d\.\d\.\d$/.test(ver) ? ver as Version : VERSION[0];
+  const [, v1, v2, v3] = ver.match(/v?(\d)\.(\d)\.?(\d?)/) ?? VERSION[0];
+  const rawVersion = `v${v1}.${v2}.${v3 || 0}`;
+  const version = Array.from<string>(VERSION).includes(rawVersion) ? rawVersion as Version : VERSION[0];
   const infoEntity = allEntities(version).find(e => e.id.toString() == query || e.name.includes(query));
   if (!infoEntity) return info.value.info = null;
   info.value = {
-    version: VERSION[0],
+    version,
     isShow: true,
-    type: 'cost' in infoEntity ? 'card' : 'hero',
+    type: 'maxUse' in infoEntity ? 'summon' : 'cost' in infoEntity ? 'card' : 'hero',
     info: infoEntity,
   };
-  infoUrl.value = infoEntity.UI.src;
 }
 
 onMounted(async () => {

@@ -1540,12 +1540,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/035d9f63a863e8ad26cb6ecf62725411_2229767666746467527.png')
         .handle(() => ({ status: 300004 })),
 
-    330008: () => new CardBuilder(392).name('旧日鏖战').since('v4.7.0').legend().costSame(1)
+    330008: () => new CardBuilder(392).name('旧日鏖战').since('v4.7.0').legend().costSame(0)
         .description('敌方出战角色失去1点[充能]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e09e62a684575d632c731f3725280df2_7385957084481452662.png')
         .handle((_, { eheros, cmds }) => (cmds.getEnergy(-1, { isOppo: true }), { isValid: !!eheros?.find(h => h.isFront)?.energy })),
 
-    330009: () => new CardBuilder(418).name('赦免宣告').since('v5.0.0').legend().costSame(1).canSelectHero(1)
+    330009: () => new CardBuilder(418).name('赦免宣告').since('v5.0.0').legend().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为｢出战角色｣时不会因效果而切换。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/76e84615db9526436d399c79aaa9d47a_2755116418615718064.png')
         .handle(() => ({ status: 300005 })),
@@ -1767,7 +1767,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: hero && hero.energy < hero.maxEnergy }
         }),
 
-    332009: () => new CardBuilder(249).name('白垩之术').offline('v1').event().costSame(0)
+    332009: () => new CardBuilder(249).name('白垩之术').offline('v1').event().costSame(1)
         .description('从最多2个我方后台角色身上，转移1点[充能]到我方出战角色。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/567c17051137fdd9e5c981ea584df298_4305321690584111415.png')
         .handle((_, event) => {

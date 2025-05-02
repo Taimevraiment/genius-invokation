@@ -26,6 +26,7 @@ export default defineConfig({
         manualChunks: {
           cards: ['../common/data/cards'],
           heros: ['../common/data/heros'],
+          summons: ['../common/data/summons'],
         }
       }
     }

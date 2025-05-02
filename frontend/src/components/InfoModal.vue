@@ -5,30 +5,35 @@
       @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
-        <div class="name">{{ (info as Card).name }}</div>
-        <div>
-          <div class="info-card-cost">
-            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[(info as Card).costType])" />
-            <span>{{ (info as Card).cost }}</span>
+        <div class="info-base">
+          <img v-if="isNotTransparent" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
+          <div>
+            <div class="name">{{ (info as Card).name }}</div>
+            <div>
+              <div class="info-card-cost">
+                <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[(info as Card).costType])" />
+                <span>{{ (info as Card).cost }}</span>
+              </div>
+              <div class="info-card-anydice" v-if="(info as Card).anydice > 0">
+                <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" />
+                <span>{{ (info as Card).anydice }}</span>
+              </div>
+              <div class="info-card-energy" v-if="(info as Card).energy > 0">
+                <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
+                <span>{{ (info as Card).energy }}</span>
+              </div>
+              <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
+                <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
+              </div>
+            </div>
+            <div class="info-card-type">{{ CARD_TYPE_NAME[(info as Card).type] }}</div>
+            <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
+              {{ CARD_SUBTYPE_NAME[subtype] }}
+            </div>
+            <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
+              {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
+            </div>
           </div>
-          <div class="info-card-anydice" v-if="(info as Card).anydice > 0">
-            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" />
-            <span>{{ (info as Card).anydice }}</span>
-          </div>
-          <div class="info-card-energy" v-if="(info as Card).energy > 0">
-            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
-            <span>{{ (info as Card).energy }}</span>
-          </div>
-          <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
-            <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
-          </div>
-        </div>
-        <div class="info-card-type">{{ CARD_TYPE_NAME[(info as Card).type] }}</div>
-        <div class="info-card-type sub" v-for="(subtype, suidx) in (info as Card).subType" :key="suidx">
-          {{ CARD_SUBTYPE_NAME[subtype] }}
-        </div>
-        <div v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Weapon)" class="info-card-type sub">
-          {{ WEAPON_TYPE_NAME[(info as Card).userType as WeaponType] }}
         </div>
         <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
         </div>
@@ -40,13 +45,22 @@
       </div>
       <div v-if="type == INFO_TYPE.Hero || type == INFO_TYPE.Skill ||
         (type == INFO_TYPE.Card && (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))">
-        <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
-        <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
-          <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
-          <span>{{ WEAPON_TYPE_NAME[(info as Hero).weaponType] }}</span>
-          <span v-for="(tag, tidx) in (info as Hero).tags" :key="tidx">
-            {{ HERO_TAG_NAME[tag] }}
-          </span>
+        <div class="info-base">
+          <div class="info-hero-hp" v-if="isNotTransparent">
+            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
+            <div class="hero-hp-cnt">{{ (info as Hero).maxHp }}</div>
+          </div>
+          <img v-if="isNotTransparent" class="info-base-img info-hero-base-img" :src="info?.UI.src" :alt="info?.name">
+          <div>
+            <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
+            <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
+              <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
+              <span>{{ WEAPON_TYPE_NAME[(info as Hero).weaponType] }}</span>
+              <span v-for="(tag, tidx) in (info as Hero).tags" :key="tidx">
+                {{ HERO_TAG_NAME[tag] }}
+              </span>
+            </div>
+          </div>
         </div>
         <div class="info-hero-skill" v-for="(skill, sidx) in skills.filter(
           (sk, i) => type == INFO_TYPE.Card ||
@@ -182,8 +196,13 @@
         </div>
       </div>
       <div v-if="type == INFO_TYPE.Summon" @click.stop="showRule((info as Summon).UI.description)">
-        <div class="name">{{ (info as Summon).name }}</div>
-        <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
+        <div class="info-base">
+          <img v-if="isNotTransparent" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
+          <div>
+            <div class="name">{{ (info as Summon).name }}</div>
+            <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
+          </div>
+        </div>
         <div class="summon-desc" v-for="(desc, didx) in (info as Summon).UI.descriptions" :key="didx" v-html="desc">
         </div>
         <div class="info-summon-explain" v-for="(expl, eidx) in smnExplain" :key="eidx" style="margin-top: 5px">
@@ -617,6 +636,7 @@ const showRule = (...desc: string[]) => {
   align-items: flex-start;
   user-select: none;
   pointer-events: none;
+  gap: 2px;
   font-family: HYWenHei;
 }
 
@@ -638,7 +658,6 @@ const showRule = (...desc: string[]) => {
   border-radius: 5px;
   background-color: #3e4d69e7;
   padding: 10px 5px;
-  margin-right: 2px;
   overflow: auto;
   pointer-events: all;
 }
@@ -654,6 +673,10 @@ const showRule = (...desc: string[]) => {
   margin-bottom: 3px;
   color: #93aed4;
   padding-left: 3px;
+}
+
+.info-base-img {
+  width: 25%;
 }
 
 .info-card-cost {
@@ -720,6 +743,40 @@ const showRule = (...desc: string[]) => {
 .info-card-type.sub {
   background-color: #5787dfdd;
   margin-left: 3px;
+}
+
+.info-base {
+  display: flex;
+  gap: 5px;
+}
+
+.info-hero-base-img {
+  margin-left: 2px;
+  border-radius: 5px;
+}
+
+.info-hero-hp {
+  position: absolute;
+  width: 10%;
+  aspect-ratio: 1/1;
+  left: 0;
+  top: 2px;
+}
+
+.hero-hp-bg {
+  position: absolute;
+  width: 100%;
+}
+
+.hero-hp-cnt {
+  position: absolute;
+  font-family: HYWenHeiNumber;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  align-content: center;
+  color: white;
+  -webkit-text-stroke: black 1px;
 }
 
 .info-hero-tag {
