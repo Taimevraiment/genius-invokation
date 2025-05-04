@@ -234,7 +234,7 @@ const hero1505sts = (swirlEl: PureElementType) => {
 const hero1611sts = (el: ElementType) => {
     const stsId = [, 216116, 216114, 216115, 216117, , 216113][ELEMENT_CODE[el]];
     return new StatusBuilder(`｢源音采样｣·${ELEMENT_NAME[el][0]}`).heroStatus().icon(`tmp/${stsId! - 100000}`).maxCnt(3)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy, STATUS_TYPE.Show)
         .description(`【回合开始时：】如果所附属角色拥有2点｢夜魂值｣，则在敌方场上生成【sts${stsId}】。激活全部｢源音采样｣后，消耗2点｢夜魂值｣。`)
         .handle((status, event) => {
             const { heros = [], hidx = -1, cmds } = event;

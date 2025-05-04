@@ -200,6 +200,7 @@ export const STATUS_TYPE = {
     ConditionalEnchant: 'ConditionalEnchant', // 条件附魔 16
     NightSoul: 'NightSoul', // 夜魂加持 17
     NonEvent: 'NonEvent', // 事件牌失效 18
+    Show: 'Show', // 死后也显示 19
 } as const;
 
 export type StatusType = TypeConst<typeof STATUS_TYPE>;
@@ -367,7 +368,7 @@ export const VERSION = [
 
 export type OnlineVersion = typeof VERSION[number] | 'vlatest';
 
-export const OFFLINE_VERSION = ['v1'] as const;
+export const OFFLINE_VERSION = ['v2', 'v1'] as const;
 
 export type OfflineVersion = typeof OFFLINE_VERSION[number];
 

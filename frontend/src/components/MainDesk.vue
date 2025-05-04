@@ -216,10 +216,10 @@
                 :key="waidx" :src="ELEMENT_URL[attach]" />
             </template>
           </div>
-          <div class="instatus" v-if="phase >= PHASE.DICE && hero.hp >= 0">
+          <div class="instatus" v-if="phase >= PHASE.DICE">
             <div class="status"
               :class="{ 'mobile-status': isMobile, 'status-select': statusSelect[hgi]?.[0]?.[hidx]?.[isti] }"
-              v-for="(ists, isti) in hero.heroStatus.filter((_, stsi) => hero.heroStatus.length <= 4 || stsi < 3)"
+              v-for="(ists, isti) in hero.heroStatus.filter((sts, stsi) => (hero.heroStatus.length <= 4 || stsi < 3) && (hero.hp >= 0 || sts.hasType(STATUS_TYPE.Show)))"
               :key="ists.id">
               <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
               </div>

@@ -19,7 +19,7 @@ import { skillTotal } from './skills.js';
 
 const allHeros: Record<number, () => HeroBuilder> = {
 
-    1101: () => new HeroBuilder(1).name('甘雨').offline('v1').maxHp(12).maxHp(10, 'v5.5.0').liyue().cryo().bow()
+    1101: () => new HeroBuilder(1).name('甘雨').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').liyue().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
         .normalSkill(new NormalSkillBuilder('流天射术'))
@@ -41,7 +41,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).burst(2, 'v3.7.0').damage(2).damage(1, 'v3.7.0').cost(3).handle(() => ({ summon: 111011, pdmg: 1 }))
         ),
 
-    1102: () => new HeroBuilder(2).name('迪奥娜').mondstadt().cryo().bow()
+    1102: () => new HeroBuilder(2).name('迪奥娜').offline('v2').mondstadt().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
         .normalSkill(new NormalSkillBuilder('猎人射术'))
@@ -56,7 +56,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(1).cost(3).handle(() => ({ summon: 111023, heal: 2 }))
         ),
 
-    1103: () => new HeroBuilder(3).name('凯亚').mondstadt().cryo().sword()
+    1103: () => new HeroBuilder(3).name('凯亚').offline('v2').mondstadt().cryo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png')
         .normalSkill(new NormalSkillBuilder('仪典剑术'))
@@ -108,7 +108,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1106: () => new HeroBuilder(6).name('优菈').since('v3.5.0').mondstadt().cryo().claymore()
+    1106: () => new HeroBuilder(6).name('优菈').since('v3.5.0').offline('v2').mondstadt().cryo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png')
         .normalSkill(new NormalSkillBuilder('西风剑术·宗室'))
@@ -269,7 +269,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).cost(3).handle(event => ({ heal: 4, hidxs: allHidxs(event.heros) }))
         ),
 
-    1202: () => new HeroBuilder(10).name('行秋').liyue().hydro().sword()
+    1202: () => new HeroBuilder(10).name('行秋').offline('v2').liyue().hydro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e522e3d11a6de75d38264655a531adf2_137376333068857031.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/dcec68115a5ccddf72741a1d1cac0e0e.png')
         .normalSkill(new NormalSkillBuilder('古华剑法'))
@@ -336,7 +336,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 112041 }))
         ),
 
-    1205: () => new HeroBuilder(13).name('珊瑚宫心海').since('v3.5.0').maxHp(12).maxHp(10, 'v5.5.0').inazuma().hydro().catalyst()
+    1205: () => new HeroBuilder(13).name('珊瑚宫心海').since('v3.5.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').inazuma().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/89d5a757e494bded4020080c075bf32e_3429989759479851369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a3d326e3d228b0a9413cc26893d20c60.png')
         .normalSkill(new NormalSkillBuilder('水有常形'))
@@ -353,7 +353,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { talent, summons = [], heros = [], cmds } = event;
                     const smn112051 = getObjById(summons, 112051);
                     const summon = isCdt<[number, number][]>(ver.gte('v4.2.0') && talent && !smn112051, [[112051, 1]]);
-                    cmds.getStatus(112052)
+                    cmds.getStatus(112052);
                     return {
                         summon,
                         heal: isCdt(ver.gte('v3.6.0'), 1),
@@ -378,7 +378,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).burst(3, 'v4.1.0').damage(1).damage(3, 'v4.1.0').cost(3).handle(() => ({ summon: 112062 }))
         ),
 
-    1207: () => new HeroBuilder(15).name('坎蒂丝').since('v3.8.0').sumeru().hydro().polearm()
+    1207: () => new HeroBuilder(15).name('坎蒂丝').since('v3.8.0').offline('v2').sumeru().hydro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/62c7b1917c4d60c69ca5ef0f011ab8f7_6753229827849116335.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6dcba2a54e7f7f1df7951987eeed39f1.png')
         .normalSkill(new NormalSkillBuilder('流耀枪术·守势'))
@@ -583,7 +583,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(4).handle(event => ({ statusAfter: [[113031, !!event.talent]] }))
         ),
 
-    1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').mondstadt().pyro().bow()
+    1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').offline('v2').mondstadt().pyro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/915473ac6c13d0bea16d141adca38359_823004675460920277.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6aedca19a0357e653046e151d4796835.png')
         .normalSkill(new NormalSkillBuilder('神射手'))
@@ -629,7 +629,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(3).cost(3).handle(() => ({ statusOppo: 113063 }))
         ),
 
-    1307: () => new HeroBuilder(23).name('胡桃').since('v3.7.0').maxHp(12).maxHp(10, 'v5.5.0').liyue().pyro().polearm()
+    1307: () => new HeroBuilder(23).name('胡桃').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').liyue().pyro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fb95dbcb2f4ad804f1c3bbe767c3595e_5336167659518462076.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/ada775c7d535074ed9b2b77ec3070978.png')
         .normalSkill(new NormalSkillBuilder('往生秘传枪法'))
@@ -873,7 +873,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 114041 }))
         ),
 
-    1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').liyue().electro().claymore()
+    1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').offline('v2').liyue().electro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/20a9053476de0a5b82ae38f678df287b_1479624244948739352.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f68c082b2adf084ad7783776ceb1c334.png')
         .normalSkill(new NormalSkillBuilder('征涛'))
@@ -1077,7 +1077,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).burst(3, 'v4.2.0').cost(4).handle(event => ({ summon: 115021, heal: 2, hidxs: allHidxs(event.heros) }))
         ),
 
-    1503: () => new HeroBuilder(38).name('温迪').since('v3.7.0').maxHp(12).maxHp(10, 'v5.5.0').mondstadt().anemo().bow()
+    1503: () => new HeroBuilder(38).name('温迪').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').mondstadt().anemo().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b8d0f177c157908bbe1ef65774d5a4e5_6672388573788855956.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0ad1fda4450c4aa9949706c37324ee11.png')
         .normalSkill(new NormalSkillBuilder('神代射术'))
@@ -1092,7 +1092,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ summonPre: 115034 }))
         ),
 
-    1504: () => new HeroBuilder(39).name('魈').since('v3.7.0').liyue().anemo().polearm()
+    1504: () => new HeroBuilder(39).name('魈').since('v3.7.0').offline('v2').liyue().anemo().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/cdb6d5f322226b118ce989ed2f02e932_3401048792875977242.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/ac4a8ff803416b736c99096b6a7ff33a.png')
         .normalSkill(new NormalSkillBuilder('卷积微尘'))
@@ -1239,7 +1239,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1602: () => new HeroBuilder(43).name('诺艾尔').offline('v1').maxHp(12).maxHp(10, 'v5.5.0').mondstadt().geo().claymore()
+    1602: () => new HeroBuilder(43).name('诺艾尔').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').mondstadt().geo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e985b9bc4ec19c9e982c5b018ebbd74e_3315904207091435338.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a1163fe769ec8e0e244e952e8f7c9f9d.png')
         .normalSkill(new NormalSkillBuilder('西风剑术·女仆'))
@@ -1254,7 +1254,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(4).handle(() => ({ status: 116022 }))
         ),
 
-    1603: () => new HeroBuilder(44).name('钟离').since('v3.7.0').maxHp(12).maxHp(10, 'v5.5.0').liyue().geo().polearm()
+    1603: () => new HeroBuilder(44).name('钟离').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').liyue().geo().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/025bfe8320c376254bec54a9507ad33a_604601120081367211.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1f8e8ca48f32c190a937fc519e706b92.png')
         .normalSkill(new NormalSkillBuilder('岩雨'))
@@ -1273,7 +1273,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(4).cost(3).handle(() => ({ statusOppo: 116033 }))
         ),
 
-    1604: () => new HeroBuilder(45).name('阿贝多').since('v4.0.0').mondstadt().geo().sword()
+    1604: () => new HeroBuilder(45).name('阿贝多').since('v4.0.0').offline('v2').mondstadt().geo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/82503813/5ec1824cea9aad20a4e2ddca9f4b090e_8072421465872569194.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5bc8d6153d2a0f33252114d8c0754a23.png')
         .normalSkill(new NormalSkillBuilder('西风剑术·白'))
@@ -1495,7 +1495,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1704: () => new HeroBuilder(50).name('瑶瑶').since('v4.1.0').liyue().dendro().polearm()
+    1704: () => new HeroBuilder(50).name('瑶瑶').since('v4.1.0').offline('v2').liyue().dendro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/a351e4595bfcbec661319951fd9bc7c1_739695784762644208.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4cf30a41392384d709e3d958a29dfab0.png')
         .normalSkill(new NormalSkillBuilder('颠扑连环枪'))
@@ -1510,7 +1510,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(4).handle(() => ({ status: 117043 }))
         ),
 
-    1705: () => new HeroBuilder(51).name('白术').since('v4.2.0').liyue().dendro().catalyst()
+    1705: () => new HeroBuilder(51).name('白术').since('v4.2.0').offline('v2').liyue().dendro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/0251f3d9b514e6971ccb10284a9340a9_5804585615005847738.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/80f126aa0347192046fdb7ff1d8304bf.png')
         .normalSkill(new NormalSkillBuilder('金匮针解'))
@@ -1853,7 +1853,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).handle(({ cmds }) => { cmds.getCard(1, { card: 122051 }) })
         ),
 
-    2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
+    2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9f134f05bb71f0ee1afb33785cf945e9_8487118119361104507.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/de42691212adcb46a66595c833bd3598.png')
         .normalSkill(new NormalSkillBuilder('突刺'))
@@ -1972,7 +1972,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2401: () => new HeroBuilder(57).name('无相之雷').since('v3.7.0').maxHp(8).monster().electro()
+    2401: () => new HeroBuilder(57).name('无相之雷').since('v3.7.0').offline('v2').maxHp(8).monster().electro()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/df234a18db1aa6f769ac3b32b0168ebf_4040044349475544115.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1a3098561b2f1526156ad02d258e6ed5.png')
         .normalSkill(new NormalSkillBuilder('雷晶投射').catalyst())
@@ -2186,7 +2186,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 124051, { isRandom: false }), { triggers: 'game-start' }))
         ),
 
-    2601: () => new HeroBuilder(59).name('丘丘岩盔王').maxHp(8).hilichurl().geo()
+    2601: () => new HeroBuilder(59).name('丘丘岩盔王').offline('v2').maxHp(8).hilichurl().geo()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/db05474f6bdc3a5080e141d72c876548_5712469579238063350.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2886b95ca3fcd79cf72577fd0276cb94.png')
         .normalSkill(new NormalSkillBuilder('Plama Lawa'))

@@ -58,11 +58,11 @@
                         {{ ver }}
                     </option>
                 </select>
-                <!-- <div>
+                <div>
                     <input id="isOfflineInput" type="checkbox" :checked="isOfflineVersion"
                         @change="switchOfflineVersion" />
                     <label for="isOfflineInput">实体版</label>
-                </div> -->
+                </div>
             </div>
             <input v-model="deckName" class="deck-name" />
             <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
@@ -361,15 +361,15 @@ const shareDeck = () => {
 }
 
 // 切换线下版
-// const switchOfflineVersion = () => {
-//     isOfflineVersion.value = !isOfflineVersion.value;
-//     if (isOfflineVersion.value) {
-//         version.value = OFFLINE_VERSION[0];
-//     } else {
-//         version.value = VERSION[0];
-//     }
-//     updateInfo();
-// }
+const switchOfflineVersion = () => {
+    isOfflineVersion.value = !isOfflineVersion.value;
+    if (isOfflineVersion.value) {
+        version.value = OFFLINE_VERSION[0];
+    } else {
+        version.value = VERSION[0];
+    }
+    updateInfo();
+}
 
 // 点击下拉框
 const clickSelect = () => {

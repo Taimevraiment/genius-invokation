@@ -6178,7 +6178,7 @@ export default class GeniusInvokationRoom {
                 }
             }
         });
-        assgin(oStatus, oStatus.sort((a, b) => Math.sign(a.summonId) - Math.sign(b.summonId))
+        assgin(oStatus, oStatus.sort((a, b) => +b.hasType(STATUS_TYPE.NightSoul) - +a.hasType(STATUS_TYPE.NightSoul) || Math.sign(a.summonId) - Math.sign(b.summonId))
             .filter(sts => {
                 const isNotDestroy = ((sts.useCnt != 0 || sts.hasType(STATUS_TYPE.Accumulate, STATUS_TYPE.Attack)) && sts.roundCnt != 0) || sts.hasType(STATUS_TYPE.TempNonDestroy);
                 const isStsAtk = isAddAtkStsTask && sts.useCnt == 0 && sts.hasType(STATUS_TYPE.Attack);

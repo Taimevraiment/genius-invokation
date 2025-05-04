@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
-    <div style="position: absolute;right: 10px;top: 10px;">（更新至5.6v5）</div>
+    <div style="position: absolute;right: 10px;top: 10px;font-family: HYWenHeiNumber;">（更新至5.6v5）</div>
     <div v-if="isShowEditName" class="edit-name">
       <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto" @click="register">
@@ -59,7 +59,7 @@
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
     @enter-room="enterRoom" />
   <InfoModal id="info-modal" v-if="info.info != null" :is-mobile="isMobile" :info="info" isNotTransparent />
-  <input id="taimbot" type="text" style="opacity: 0;" v-model="infoContent" @change="showInfo" />
+  <input id="taimbot" type="text" v-model="infoContent" @change="showInfo" />
 </template>
 
 <script setup lang='ts'>
@@ -265,6 +265,7 @@ body {
   text-align: center;
   margin: 20px 0;
   font-weight: bolder;
+  font-family: HYWenHei;
 }
 
 .title-mobile {
@@ -397,5 +398,12 @@ button:active {
   width: auto;
   padding: 0 3px;
   margin-right: 5px;
+}
+
+#taimbot {
+  opacity: 0;
+  position: absolute;
+  top: 20%;
+  z-index: -1;
 }
 </style>

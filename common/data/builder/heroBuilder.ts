@@ -90,8 +90,9 @@ export class HeroBuilder extends BaseCostBuilder {
         this._tags.push(...tags);
         return this;
     }
-    maxHp(maxHp: number, version: Version = 'vlatest') {
-        this._maxHp.set([version, maxHp]);
+    maxHp(maxHp: number, ...version: Version[]) {
+        if (version.length == 0) version = ['vlatest'];
+        version.forEach(v => this._maxHp.set([v, maxHp]));
         return this;
     }
     monster() {
