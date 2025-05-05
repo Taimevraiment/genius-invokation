@@ -479,18 +479,26 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
     if (memo.includes(expl.id + expl.name)) continue;
     memo.push(expl.id + expl.name);
     const nameEl = `<span style="font-weight:bold;color:white;">${expl.name}</span>`;
+    const cardStyle = 'width:15%;margin-right:5px;';
+    const statusStyle = 'width:10%;margin-right:2px;';
     if ('costType' in expl) { // Card
       explains.push(`
-        <div style="display:flex;align-items:flex-end;">
-            ${nameEl}
-            <div class="skill-cost" style="margin-left:5px;">
-              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}" />
-              <span>${expl.cost}</span>
-            </div>
+        <div style="display:flex;align-items:center;">
+          ${isNotTransparent.value ? `<img src="${getPngIcon(expl.id.toString(), true)}" style="${cardStyle}"/>` : ''}
+          ${nameEl}
+          <div class="skill-cost" style="margin-left:5px;margin-top:0;" >
+            <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
+            <span>${expl.cost}</span>
+          </div>
         </div>
       `);
     } else {
-      explains.push(nameEl);
+      explains.push(`
+        <div div style="display:flex;align-items:center;">
+          ${isNotTransparent.value ? `<img src="${getPngIcon(expl.id.toString(), true)}" style="${'group' in expl ? statusStyle : cardStyle}"/>` : ''}
+          ${nameEl}
+        </div>
+      `);
     }
     explains.push(...expl.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true, obj: expl })));
     container.push(explains);
@@ -505,7 +513,7 @@ const wrapRule = (...desc: string[]) => {
   ruleExplain.value = [];
   [...new Set(desc.join('').replace(/<img[^<>]+>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
     if (title in RULE_EXPLAIN) {
-      ruleExplain.value.push(`<div style='font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`, { isExplain: true })}</div>`);
+      ruleExplain.value.push(`<div div style = 'font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;' > ${wrapDesc(`*[${title}]`, { isExplain: true })} </div>`);
       ruleExplain.value.push(...RULE_EXPLAIN[title].split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true })));
     }
   });
@@ -517,12 +525,16 @@ const getDiceIcon = (name: string) => {
 }
 
 // 获取png图片
-const getPngIcon = (name: string) => {
+const getPngIcon = (name: string, isUseOnlineSrc: boolean = false) => {
+  if (isUseOnlineSrc) return 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/' + name;
   if (name.startsWith('http') || name == '') return name;
   if (name.endsWith('-dice')) return getSvgIcon(name);
   if (name.startsWith('ski')) {
-    const [hid, skidx] = name.slice(3).split(',').map(v => JSON.parse(v));
-    return newHero(version.value)(hid).skills?.[skidx].UI.src ?? '';
+    if (name.includes(',')) {
+      const [hid, skidx] = name.slice(3).split(',').map(v => JSON.parse(v));
+      return newHero(version.value)(hid).skills?.[skidx].UI.src ?? '';
+    }
+    return newSkill(version.value)(+name.slice(3)).UI.src ?? '';
   }
   if (name == 'energy') name += '-dice-bg';
   return `/image/${name}.png`;
@@ -991,7 +1003,7 @@ svg {
 .info-outer-container>.info-container .skill-cost>span {
   position: absolute;
   width: 23px;
-  height: 16px;
+  height: 17px;
   text-align: center;
   align-content: center;
 }

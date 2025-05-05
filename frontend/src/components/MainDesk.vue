@@ -450,6 +450,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
 import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
+import { newSkill } from '@@@/data/skills';
 import { hasObjById } from '@@@/utils/gameUtil';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
@@ -687,8 +688,11 @@ const getPngIcon = (name: string) => {
   if (name.startsWith('http') || name == '') return name;
   if (name.endsWith('-dice')) return getSvgIcon(name);
   if (name.startsWith('ski')) {
-    const [hid, skidx] = name.slice(3).split(',').map(v => JSON.parse(v));
-    return newHero(version.value)(hid).skills?.[skidx].UI.src ?? '';
+    if (name.includes(',')) {
+      const [hid, skidx] = name.slice(3).split(',').map(v => JSON.parse(v));
+      return newHero(version.value)(hid).skills?.[skidx].UI.src ?? '';
+    }
+    return newSkill(version.value)(+name.slice(3)).UI.src ?? '';
   }
   return `/image/${name}.png`;
 };
@@ -1776,6 +1780,7 @@ button:active {
   transform: translateX(-50%);
   width: 100%;
   height: 100%;
+  line-height: 500%;
   /* border-radius: 10px; */
 }
 

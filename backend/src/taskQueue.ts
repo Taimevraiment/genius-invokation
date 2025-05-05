@@ -1,6 +1,13 @@
 import { delay, isCdt } from "../../common/utils/utils.js";
 import { Env, LogType, StatusTask, TaskItem } from "../../typing";
 
+const findLastIndex = <T>(arr: T[], predicate: (value: T, index: number, obj: T[]) => boolean) => {
+    for (let i = arr.length - 1; i >= 0; i--) {
+        if (predicate(arr[i], i, arr)) return i;
+    }
+    return -1;
+}
+
 export default class TaskQueue {
     priorityQueue: TaskItem[] | undefined;
     queue: TaskItem[] = [];
@@ -31,8 +38,8 @@ export default class TaskQueue {
         if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
             console.trace('重复task:', taskType);
         }
-        const tidx = addAfterNonDmg ? this.queue.findLastIndex(([, , , isdmg]) => !isdmg) :
-            orderAfter != '' ? this.queue.findLastIndex(([taskType]) => taskType.includes(orderAfter)) :
+        const tidx = addAfterNonDmg ? findLastIndex(this.queue, ([, , , isdmg]) => !isdmg) :
+            orderAfter != '' ? findLastIndex(this.queue, ([taskType]) => taskType.includes(orderAfter)) :
                 -1;
         if (tidx > -1) this.queue.splice(tidx + 1, 0, [taskType, args, source, isDmg]);
         else {

@@ -2567,11 +2567,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301302: () => new StatusBuilder('目标').heroStatus().icon(STATUS_ICON.Debuff).useCnt(1).type(STATUS_TYPE.Usage)
         .description('【敌方附属有〖crd313006〗的角色切换至前台时：】自身减少1层效果。'),
 
-    301303: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1, ({ cmds }) => cmds.getStatus(301305)),
+    301303: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1, ({ cmds }) => cmds.getStatus(301305))
+        .icon('ski3130081').iconBg(STATUS_BG_COLOR.Physical),
 
     301304: () => shieldHeroStatus('浪船'),
 
-    301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1),
+    301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1).icon('ski3130081').iconBg(STATUS_BG_COLOR.Physical),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)

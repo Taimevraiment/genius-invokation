@@ -3047,6 +3047,7 @@ export default class GeniusInvokationRoom {
             await this._doActionStart(pidx);
         } else {
             if (currCard.type != CARD_TYPE.Equipment) cardres.exec?.();
+            if (!getCard) cardcmds?.addCmds(cardres.execmds);
             let destroyedSupportCnt = oSupportCnt - player.supports.length;
             const { damageVOs: cmdDmgVos = [] } = this._doCmds(pidx, cardcmds, {
                 withCard: isCdt(!getCard, currCard),

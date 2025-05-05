@@ -1785,7 +1785,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('将一个装备在我方角色的｢武器｣装备牌，转移给另一个武器类型相同的我方角色。', 'v4.1.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/05625ae4eed490d0958191d8022174cd_5288127036517503589.png')
         .handle((_, event, ver) => {
-            const { heros = [], selectHeros = [] } = event;
+            const { heros = [], selectHeros = [], execmds } = event;
             const selectCnt = selectHeros.length;
             let canSelectHero: boolean[] = heros.map(() => false);
             if (selectCnt == 0) {
@@ -1799,12 +1799,11 @@ const allCards: Record<number, () => CardBuilder> = {
                 exec: () => {
                     const [fromHeroIdx, toHeroIdx] = selectHeros;
                     const fromHero = heros[fromHeroIdx];
-                    const toHero = heros[toHeroIdx];
                     const fromWeapon = fromHero?.weaponSlot;
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
                         if (ver.gte('v4.1.0')) fromWeapon.handle(fromWeapon, { reset: true });
-                        toHero.weaponSlot = fromWeapon;
+                        execmds.equip(toHeroIdx, fromWeapon);
                     }
                 }
             }
@@ -1815,19 +1814,18 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('将一个装备在我方角色的｢圣遗物｣装备牌，转移给另一个我方角色。', 'v4.1.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a67aefe7f7473b2bc9f602917bad9c5f_6329604065139808609.png')
         .handle((_, event, ver) => {
-            const { heros = [], selectHeros = [] } = event;
+            const { heros = [], selectHeros = [], execmds } = event;
             const selectCnt = selectHeros.length;
             return {
                 canSelectHero: selectCnt == 0 ? heros.map(h => h.relicSlot != null) : heros.map(h => h.hp > 0),
                 exec: () => {
                     const [fromHeroIdx, toHeroIdx] = selectHeros;
                     const fromHero = heros[fromHeroIdx];
-                    const toHero = heros[toHeroIdx];
                     const fromRelic = fromHero?.relicSlot;
                     if (fromRelic) {
                         fromHero.relicSlot = null;
                         if (ver.gte('v4.1.0')) fromRelic.handle(fromRelic, { reset: true });
-                        toHero.relicSlot = fromRelic;
+                        execmds.equip(toHeroIdx, fromRelic);
                     }
                 }
             }
