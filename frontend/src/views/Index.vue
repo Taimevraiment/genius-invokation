@@ -1,7 +1,9 @@
 <template>
+  <span style="position: absolute;font-family: HYWenHeiNumber;">7</span>
+  <span style="position: absolute;font-family: HYWenHei;">圣</span>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
-    <div style="position: absolute;right: 10px;top: 10px;font-family: HYWenHeiNumber;">（更新至5.6v5）</div>
+    <div style="position: absolute;right: 10px;top: 10px;">（更新至5.6v5）</div>
     <div v-if="isShowEditName" class="edit-name">
       <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto" @click="register">
@@ -265,7 +267,6 @@ body {
   text-align: center;
   margin: 20px 0;
   font-weight: bolder;
-  font-family: HYWenHei;
 }
 
 .title-mobile {

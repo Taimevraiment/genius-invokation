@@ -75,7 +75,7 @@ export class GICard {
             src,
             cnt,
             descriptions: [],
-            explains: [...(description.match(/(?<=【).+?\d(?=】)/g) ?? []), ...expl],
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
         if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组）`;
         else if (subType.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣）`;

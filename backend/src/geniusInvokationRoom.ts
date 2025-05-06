@@ -56,6 +56,7 @@ export default class GeniusInvokationRoom {
     private systemLog: string = ''; // 系统日志
     private errorLog: string[] = []; // 错误日志
     private reporterLog: { name: string, message: string }[] = []; // 报告者问题
+    private actionLog: { actionData: ActionData, pidx: number }[] = []; // 行动操作日志
     countdown: Countdown = { limit: 0, curr: 0, timer: undefined }; // 倒计时
     private isDieBackChange: boolean = true; // 用于记录角色被击倒切换角色后是否转换回合
     private pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 };// 挑选卡牌信息
@@ -651,6 +652,7 @@ export default class GeniusInvokationRoom {
      */
     getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket) {
         if (this.taskQueue.isExecuting) return;
+        this.actionLog.push({ actionData, pidx });
         const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
             summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
         const player = this.players[pidx];

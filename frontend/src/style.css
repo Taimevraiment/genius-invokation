@@ -1,9 +1,11 @@
 @font-face {
     font-family: HYWenHei;
     src: url('../public/font/HYWenHei-65W-3.ttf') format('truetype');
+    font-display: swap;
 }
 
 @font-face {
     font-family: HYWenHeiNumber;
     src: url('../public/font/1688643371341.woff') format('truetype');
+    font-display: swap;
 }

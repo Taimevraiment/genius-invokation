@@ -200,9 +200,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段：】弃置此牌，{dealDmg}。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/098f3edd0f9ac347a9424c6417de6987_7446453175998729325.png'),
 
-    112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(4).maxUse(2, 'v5.3.0').damage(1).heal(1)
+    112051: (useCnt: number = 2) => new SummonBuilder('化海月').useCnt(useCnt).maxUse(4).maxUse(2, 'v5.3.0', 'v2').damage(1).heal(1)
         .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；[useCnt]')
-        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】', 'v5.3.0')
+        .description('【结束阶段：】{dealDmg}，治疗我方出战角色{shield}点。；【[可用次数]：{useCnt}】', 'v5.3.0', 'v2')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/4608304a2a01f7f33b59b731543a761b_3713077215425832494.png'),
 
     112062: () => new SummonBuilder('清净之园囿').useCnt(2).damage(2)

@@ -400,8 +400,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       }
       return `<span${notNeedColor ? '' : ' style="color:#d5bb49;"'}>${ctt}</span>`
     })
-    .replace(/(?<!\\)(\*?)〖(.*?)〗/g, wrapName)
-    .replace(/(?<!\\)(\*?)【(.*?)】/g, wrapName)
+    .replace(/(?<!\\)(\*?)〖(.+?)〗/g, wrapName)
+    .replace(/(?<!\\)(\*?)【(.+?)】/g, wrapName)
     .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
       let icon = '';
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == word) ?? [];
@@ -481,24 +481,32 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
     const nameEl = `<span style="font-weight:bold;color:white;">${expl.name}</span>`;
     const cardStyle = 'width:15%;margin-right:5px;';
     const statusStyle = 'width:10%;margin-right:2px;';
-    if ('costType' in expl) { // Card
-      explains.push(`
-        <div style="display:flex;align-items:center;">
-          ${isNotTransparent.value ? `<img src="${getPngIcon(expl.id.toString(), true)}" style="${cardStyle}"/>` : ''}
+    if ('cost' in expl) { // Card/Skill
+      explains.push(
+        `<div style="display:flex;align-items:center;">
+          ${isNotTransparent.value ? `<img src="${expl.UI.src.startsWith('http') ? expl.UI.src : getPngIcon(expl.id.toString(), true)}" style="${cardStyle}"/>` : ''}
           ${nameEl}
-          <div class="skill-cost" style="margin-left:5px;margin-top:0;" >
+          ${'costType' in expl ?
+          `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
             <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
             <span>${expl.cost}</span>
-          </div>
-        </div>
-      `);
+          </div>`:
+          `${expl.cost.filter(c => c.cnt > 0).map(c => {
+            return `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
+              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
+              <span>${c.cnt}</span>
+            </div>`
+          }).join('')}`
+        }
+        </div>`
+      );
     } else {
-      explains.push(`
-        <div div style="display:flex;align-items:center;">
+      explains.push(
+        `<div div style="display:flex;align-items:center;">
           ${isNotTransparent.value ? `<img src="${getPngIcon(expl.id.toString(), true)}" style="${'group' in expl ? statusStyle : cardStyle}"/>` : ''}
           ${nameEl}
-        </div>
-      `);
+        </div>`
+      );
     }
     explains.push(...expl.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true, obj: expl })));
     container.push(explains);

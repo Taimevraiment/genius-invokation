@@ -1062,7 +1062,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(event => ({ summonPre: [[115011, !!event.talent]] }))
         ),
 
-    1502: () => new HeroBuilder(37).name('琴').offline('v1').maxHp(12).maxHp(10, 'v5.5.0').mondstadt().anemo().sword()
+    1502: () => new HeroBuilder(37).name('琴').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').mondstadt().anemo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/88b869ceca8108bfd6dd14a68d5e9610_2290626250490650584.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9dd710fa45f1d7df996331ca92b2ae3a.png')
         .normalSkill(new NormalSkillBuilder('西风剑术'))

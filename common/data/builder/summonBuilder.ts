@@ -75,7 +75,7 @@ export class GISummon {
             src,
             icon,
             hasPlus: pls,
-            explains: [...(description.match(/(?<=【).+?\d(?=】)/g) ?? []), ...expl],
+            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             isWill: false,
             willChange: false,
             isAdd: false,
@@ -199,8 +199,9 @@ export class SummonBuilder extends BaseBuilder {
         this._useCnt.set([version, useCnt]);
         return this;
     }
-    maxUse(maxUse: number, version: Version = 'vlatest') {
-        this._maxUse.set([version, maxUse]);
+    maxUse(maxUse: number, ...version: Version[]) {
+        if (version.length == 0) version = ['vlatest'];
+        version.forEach(v => this._maxUse.set([v, maxUse]));
         return this;
     }
     shield(shield: number) {

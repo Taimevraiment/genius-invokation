@@ -548,7 +548,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     --spt.perCnt;
                     cmds.getDice(1, { mode: CMD_MODE.Random });
                 }
-                if (ver.gte('v4.1.0') && isGetCard) {
+                if ((ver.gte('v4.1.0') || ver.isOffline) && isGetCard) {
                     --spt.cnt;
                     cmds.getCard(1, { subtype: CARD_SUBTYPE.Food, isFromPile: true });
                 }

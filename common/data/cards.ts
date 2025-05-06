@@ -2247,11 +2247,11 @@ const allCards: Record<number, () => CardBuilder> = {
             return { addDmgCdt: isCdt(!!hero?.skills[2].useCnt, 1) }
         }),
 
-    211021: () => new CardBuilder(62).name('猫爪冰摇').talent(1).costCryo(3).costCryo(4, 'v4.1.0')
+    211021: () => new CardBuilder(62).name('猫爪冰摇').offline('v2').talent(1).costCryo(3).costCryo(4, 'v4.1.0')
         .description('{action}；装备有此牌的【hro】生成的【sts111021】，所提供的[护盾]值+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/cb37f02217bcd8ae5f6e4a6eb9bae539_3357631204660850476.png'),
 
-    211031: () => new CardBuilder(63).name('冷血之剑').talent(1).costCryo(4).perCnt(1)
+    211031: () => new CardBuilder(63).name('冷血之剑').offline('v2').talent(1).costCryo(4).perCnt(1)
         .description('{action}；装备有此牌的【hro】使用【ski】后：治疗自身2点。（每回合1次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png')
         .handle((card, event) => {
@@ -2280,7 +2280,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
 
-    211061: () => new CardBuilder(66).name('战欲涌现').since('v3.5.0').talent(2).costCryo(3).energy(2)
+    211061: () => new CardBuilder(66).name('战欲涌现').since('v3.5.0').offline('v2').talent(2).costCryo(3).energy(2)
         .description('{action}。；装备有此牌的【hro】使用【ski,1】时，会额外为【smn111062】累积1点｢能量层数｣。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/54bfba5d0eb40f38a0b679808dbf3941_5181344457570733816.png'),
 
@@ -2367,7 +2367,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    212021: () => new CardBuilder(70).name('重帘留香').talent(1).costHydro(3).costHydro(4, 'v4.2.0')
+    212021: () => new CardBuilder(70).name('重帘留香').offline('v2').talent(1).costHydro(3).costHydro(4, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【sts112021】，会在我方出战角色受到至少为2的伤害时抵消伤害，并且初始[可用次数]+1。')
         .description('{action}；装备有此牌的【hro】生成的【sts112021】初始[可用次数]+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/eb3cd31f7a2c433499221b5664a264f3_3086723857644931388.png'),
@@ -2382,7 +2382,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；结束阶段：装备有此牌的【hro】在场时，对敌方所有附属有【sts112043】的角色造成1点[穿透伤害]。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e56754de22dbaf1cfb84ce85af588d21_7106803920286784988.png'),
 
-    212051: () => new CardBuilder(73).name('匣中玉栉').since('v3.5.0').talent(2).costHydro(3).energy(2)
+    212051: () => new CardBuilder(73).name('匣中玉栉').since('v3.5.0').offline('v2').talent(2).costHydro(3).energy(2)
         .description('{action}；装备有此牌的【hro】使用【ski】时：召唤一个[可用次数]为1的【smn112051】\\；如果【smn112051】已在场，则改为使其[可用次数]+1。；【sts112052】存在期间，【smn112051】造成的伤害+1。')
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果【smn112051】已在场，则改为使其[可用次数]+1。；【sts112052】存在期间，【smn112051】造成的伤害+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/5e980c377a2142322435bb4487b4f8fc_5354100201913685764.png')
@@ -2403,7 +2403,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    212071: () => new CardBuilder(75).name('衍溢的汐潮').since('v3.8.0').talent(2).costHydro(3).costHydro(4, 'v4.2.0').energy(2)
+    212071: () => new CardBuilder(75).name('衍溢的汐潮').since('v3.8.0').offline('v2').talent(2).costHydro(3).costHydro(4, 'v4.2.0').energy(2)
         .description('{action}；装备有此牌的【hro】生成的【sts112072】额外具有以下效果：我方角色｢普通攻击｣后：造成1点[水元素伤害]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/64b78d95471e27f99a8cf1cf2a946537_1864982310212941599.png'),
 
@@ -2481,7 +2481,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【sts113031】，其伤害提升效果改为总是生效，不再具有生命值限制。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/044617980be5a70980f7826036963e74_8167452876830335549.png'),
 
-    213041: () => new CardBuilder(80).name('一触即发').since('v3.7.0').talent(1).costPyro(3)
+    213041: () => new CardBuilder(80).name('一触即发').since('v3.7.0').offline('v2').talent(1).costPyro(3)
         .description('{action}；【〖hro〗｢普通攻击｣后：】如果此牌和【smn113041】仍在场，则引爆【smn113041】，造成4点[火元素伤害]。')
         .description('{action}；【〖hro〗｢普通攻击｣后：】如果此牌和【smn113041】仍在场，则引爆【smn113041】，造成3点[火元素伤害]。', 'v4.2.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/2a48f2862634d319b9165838de944561_3946596064567874908.png'),
@@ -2495,7 +2495,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【sts113061】的[可用次数]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/0cca153cadfef3f9ccfd37fd2b306b61_8853740768385239334.png'),
 
-    213071: () => new CardBuilder(83).name('血之灶火').since('v3.7.0').talent(1).costPyro(2)
+    213071: () => new CardBuilder(83).name('血之灶火').since('v3.7.0').offline('v2').talent(1).costPyro(2)
         .description('{action}；装备有此牌的【hro】在生命值不多于6时，造成的[火元素伤害]+1。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/950a1fe6fcb977429942fcf0db1a6cc6_4713651560561730973.png')
         .handle((_, event) => {
@@ -2610,7 +2610,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    214051: () => new CardBuilder(90).name('霹雳连霄').since('v3.4.0').talent(1).costElectro(3)
+    214051: () => new CardBuilder(90).name('霹雳连霄').since('v3.4.0').offline('v2').talent(1).costElectro(3)
         .description('{action}；装备有此牌的【hro】使用【rsk14054】时：使【hro】本回合内｢普通攻击｣少花费1个[无色元素骰]。')
         .description('{action}；装备有此牌的【hro】在[准备技能]期间受过伤害后：使【hro】本回合内｢普通攻击｣少花费1个[无色元素骰]。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/c3004d7c3873556c01124277c58b4b87_6946169426849615589.png'),
@@ -2697,11 +2697,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，【smn115021】会使我方造成的[风元素伤害]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4e162cfa636a6db51f166d7d82fbad4f_6452993893511545582.png'),
 
-    215031: () => new CardBuilder(98).name('绪风之拥').since('v3.7.0').talent(1).costAnemo(3)
+    215031: () => new CardBuilder(98).name('绪风之拥').since('v3.7.0').offline('v2').talent(1).costAnemo(3)
         .description('{action}；装备有此牌的【hro】生成的【sts115031】触发后，会使本回合中我方角色下次｢普通攻击｣少花费1个[无色元素骰]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f46cfa06d1b3ebe29fe8ed2c986b4586_6729812664471389603.png'),
 
-    215041: () => new CardBuilder(99).name('降魔·护法夜叉').since('v3.7.0').talent(2).costAnemo(3).energy(2)
+    215041: () => new CardBuilder(99).name('降魔·护法夜叉').since('v3.7.0').offline('v2').talent(2).costAnemo(3).energy(2)
         .description('{action}；装备有此牌的【hro】附属【sts115041】期间，使用【ski,1】时少花费1个[风元素骰]。（每附属1次【sts115041】，可触发2次）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fae27eb5db055cf623a80c11e08bb07c_2875856165408881126.png'),
 
@@ -2781,7 +2781,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'skilltype1', exec: () => card.minusPerCnt() }
         }),
 
-    216031: () => new CardBuilder(104).name('炊金馔玉').since('v3.7.0').talent(2).costGeo(5)
+    216031: () => new CardBuilder(104).name('炊金馔玉').since('v3.7.0').offline('v2').talent(2).costGeo(5)
         .description('{action}；装备有此牌的【hro】生命值至少为7时，【hro】造成的伤害和我方召唤物造成的[岩元素伤害]+1。')
         .description('{action}；装备有此牌的【hro】在场时，我方出战角色在[护盾]角色状态或[护盾]出战状态的保护下时，我方召唤物造成的[岩元素伤害]+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
@@ -2801,7 +2801,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, addDmgCdt: 1 }
         }),
 
-    216041: () => new CardBuilder(105).name('神性之陨').since('v4.0.0').talent(1).costGeo(3)
+    216041: () => new CardBuilder(105).name('神性之陨').since('v4.0.0').offline('v2').talent(1).costGeo(3)
         .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1，且少花费1个[无色元素骰]。')
         .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png')
@@ -2908,11 +2908,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，根据我方队伍中存在的元素类型提供效果：；‹3火元素›：【sts117032】在场时，自身受到元素反应触发【sts117031】的敌方角色，所受【sts117031】的[穿透伤害]改为[草元素伤害];；‹4雷元素›：【sts117032】入场时，使当前对方场上【sts117031】的[可用次数]+1;；‹2水元素›：装备有此牌的【hro】所生成的【sts117032】初始[持续回合]+1。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/013c862d1c89850fb23f26763f601b11_823565145951775374.png'),
 
-    217041: () => new CardBuilder(110).name('慈惠仁心').since('v4.1.0').talent(1).costDendro(3)
+    217041: () => new CardBuilder(110).name('慈惠仁心').since('v4.1.0').offline('v2').talent(1).costDendro(3)
         .description('{action}；装备有此牌的【hro】生成的【smn117041】，在[可用次数]仅剩余最后1次时造成的伤害和治疗各+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/2b762e3829ac4a902190fde3e0f5377e_8510806015272134296.png'),
 
-    217051: () => new CardBuilder(111).name('在地为化').since('v4.2.0').talent(2).costDendro(4).energy(2)
+    217051: () => new CardBuilder(111).name('在地为化').since('v4.2.0').offline('v2').talent(2).costDendro(4).energy(2)
         .description('{action}；装备有此牌的【hro】在场，【sts117053】触发治疗效果时：生成1个出战角色类型的元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/08/258999284/aa3ad0a53cd667f9d6e5393214dfa09d_9069092032307263917.png'),
 
@@ -3045,7 +3045,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    223011: () => new CardBuilder(115).name('悉数讨回').talent(1).costPyro(3)
+    223011: () => new CardBuilder(115).name('悉数讨回').offline('v2').talent(1).costPyro(3)
         .description('{action}；装备有此牌的【hro】生成的【sts123011】获得以下效果：；初始[可用次数]+1，并且使所附属角色造成的[物理伤害]变为[火元素伤害]。')
         .src('https://patchwiki.biligame.com/images/ys/4/4b/p2lmo1107n5nwc2pulpjkurlixa2o4h.png'),
 
@@ -3078,7 +3078,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
         .handle((_, { hero, cmds }) => cmds.attach({ hidxs: hero?.hidx }).res),
 
-    224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
+    224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
         .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
         .handle((card, event) => {
@@ -3153,7 +3153,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'card' }
         }),
 
-    226011: () => new CardBuilder(119).name('重铸：岩盔').talent(2).costGeo(4).energy(2)
+    226011: () => new CardBuilder(119).name('重铸：岩盔').offline('v2').talent(2).costGeo(4).energy(2)
         .description('{action}；装备有此牌的【hro】击倒敌方角色后：【hro】重新附属【sts126011】和【sts126012】。')
         .src('https://patchwiki.biligame.com/images/ys/9/9f/ijpaagvk7o9jh1pzb933vl9l2l4islk.png')
         .handle((card, event) => {
