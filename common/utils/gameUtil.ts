@@ -6,10 +6,10 @@ import { arrToObj, objToArr } from "./utils.js";
 // 获取所有存活/死亡角色的索引hidx
 export const allHidxs = (heros?: Hero[], options: {
     isDie?: boolean, exclude?: number, include?: number, isAll?: boolean,
-    cdt?: (h: Hero) => boolean, limit?: number,
+    cdt?: (h: Hero) => boolean, limit?: number, frontIdx?: number,
 } = {}): number[] => {
-    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true, limit = -1 } = options;
-    const hidx = heros?.findIndex(h => h.isFront) ?? -1;
+    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true, limit = -1, frontIdx } = options;
+    const hidx = frontIdx ?? heros?.findIndex(h => h.isFront) ?? -1;
     if (!heros || hidx == -1 || limit == 0) return [];
     const hidxs: number[] = [];
     for (let i = 0; i < heros.length; ++i) {

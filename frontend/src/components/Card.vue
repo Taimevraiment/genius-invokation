@@ -152,7 +152,7 @@ const getPngIcon = (name: string) => {
     width: 30px;
     height: 30px;
     left: 20px;
-    top: 6px;
+    top: 6.5px;
 }
 
 .card-energy>span {
@@ -210,7 +210,7 @@ const getPngIcon = (name: string) => {
     position: absolute;
     font-size: 18px;
     left: 10px;
-    top: 5px;
+    top: 6px;
 }
 
 .mobile-hcard {

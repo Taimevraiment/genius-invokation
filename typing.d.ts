@@ -141,7 +141,7 @@ type Cmds = {
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
-    'putCard' | 'exchangeHandCards';
+    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'consumeDice';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -159,6 +159,7 @@ type GameInfo = {
     discardIds: number[], // 舍弃卡牌的id
     initCardIds: number[], // 初始牌组id
     isUsedCardPerRound: boolean, // 我方本回合是否使用过行动卡
+    usedVehcileCnt: number, // 本局打出过的特技牌数量
 }
 
 type InfoVO = {
@@ -206,7 +207,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | '';
+    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'consumeNightSoul' | 'ready-skill' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

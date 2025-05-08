@@ -213,7 +213,13 @@ export default class CmdsGenerator {
         return this;
     }
     consumeNightSoul(hidx?: number, count: number = 1) {
-        for (let i = 0; i < count; ++i) this.getStatus(112145, { hidxs: hidx });
+        const hidxs = hidx != undefined ? convertToArray(hidx) : hidx;
+        for (let i = 0; i < count; ++i) this.getStatus(112145, { hidxs });
+        this.value.push({ cmd: 'consumeNightSoul', hidxs });
+        return this;
+    }
+    consumeDice(diceSelect: boolean[] | number) {
+        this.value.push({ cmd: 'consumeDice', hidxs: typeof diceSelect == 'number' ? [-diceSelect] : diceSelect.map(Number) });
         return this;
     }
     addCmds(cmds?: Cmds[] | CmdsGenerator) {

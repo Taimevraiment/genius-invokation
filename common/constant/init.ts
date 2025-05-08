@@ -42,6 +42,7 @@ export const INIT_PLAYER: () => Player = () => ({
         discardIds: [],
         initCardIds: [],
         isUsedCardPerRound: false,
+        usedVehcileCnt: 0,
     },
     UI: {
         info: '',

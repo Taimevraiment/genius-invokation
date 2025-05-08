@@ -254,6 +254,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(() => ({ statusPre: 111131, summon: 111132 }))
         ),
 
+    1114: () => new HeroBuilder(477).name('茜特菈莉').since('v5.7.0').natlan().cryo().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Citlali.webp'),
+
     1201: () => new HeroBuilder(9).name('芭芭拉').offline('v1').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e92854385a3584dbbbd087ee5c49c69d.png')
@@ -524,7 +527,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u502gh/751d43f3f0f8c0c7ff15116b7a6286c8.png')
         .normalSkill(new NormalSkillBuilder('降温处理'))
         .skills(
-            new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
+            new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【sts112141】，并获得2点｢夜魂值｣。（角色进入【sts112141】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/c/cf/6st36uogdsny0hmvb5j4uqh1i9lj27n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/c0769da88723a8460722bf3f9b45a36d_6871593320341772759.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
@@ -801,6 +804,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
             })
         ),
 
+    1315: () => new HeroBuilder(478).name('玛薇卡').since('v5.7.0').natlan().pyro().claymore()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mavuika.webp'),
+
     1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/195563531/41fc0a943f93c80bdcf24dbce13a0956_3894833720039304594.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e4166ac0aa3f216c59ff3e8a5e44fa70.png')
@@ -1027,18 +1033,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1413: () => new HeroBuilder(469).name('赛索斯').since('v5.6.0').sumeru().electro().bow()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Sethos.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/f34d34b3dd6e957234e879f1349f7e36_4599716883224681823.png')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Sethos_-1936854580.png')
         .normalSkill(new NormalSkillBuilder('王家苇箭术').energy(-1))
         .skills(
             new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，我方切换到下一个角色。自身附属【sts114132】。')
-                .src('/image/tmp/Skill_S_Sethos_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/4bf73369fa5d88135d922835143cd6af_1465120113594108114.png')
                 .elemental().cost(2).handle(({ cmds }) => (cmds.switchAfter(), { isAttachOppo: true, status: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
-                .src('/image/tmp/Skill_E_Sethos_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/beeb23fb35fe9eb3733358e0bab70841_6737855537393504262.png')
                 .burst(4).damage(3).cost(3).handle(() => ({ status: 114131 })),
             new SkillBuilder('黑鸢的密喻').description('自身｢普通攻击｣不会获得[充能]。；自身｢普通攻击｣后：如可能，消耗全部[充能]，对生命值最低的敌方造成等额+1的[穿透伤害]。')
-                .src('/image/tmp/UI_Talent_S_Sethos_05.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/37808a6df83732f6825ccd12210ca4a3_9041641115482655982.png')
                 .passive().handle(event => {
                     const { hero: { energy }, cmds, eheros } = event;
                     if (energy == 0) return;
@@ -1221,6 +1230,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(({ heros, cmds }) => (cmds.getCard(1, { card: 115102 }), { heal: 1, hidxs: allHidxs(heros) }))
         ),
 
+    1511: () => new HeroBuilder(479).name('恰斯卡').since('v5.7.0').natlan().anemo().bow()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Chasca.webp'),
+
     1601: () => new HeroBuilder(42).name('凝光').offline('v1').liyue().geo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/69b48f96666e12872c81087955a4abcb.png')
@@ -1390,8 +1402,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67e335b0/b6befd776c5917647591dc26e9925785.png')
         .normalSkill(new NormalSkillBuilder('嵴之啮咬'))
         .skills(
-            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116102】，并进入【夜魂加持】，并获得2点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
-                .src('#',
+            new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116102】，并进入【sts116104】，并获得2点｢夜魂值｣。（角色进入【sts116104】后不可使用此技能）')
+                .src('https://patchwiki.biligame.com/images/ys/3/3e/o36jizt96zeb1iil8vg0mgtwd1dnwmr.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/11c22191b14034fbacc64b4476ea03a1_8778532385562478186.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
                     equip: 116102,
@@ -1399,33 +1411,36 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     isForbidden: hasObjById(heroStatus, 116104),
                 })),
             new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116101】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/95/ik3phxdr9icvfhohdju4ryyx1ewp9h2.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3212cc83c9970f4e0e6f7e149fbc5ec8_7653177718325263666.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 116101 }))
         ),
 
     1611: () => new HeroBuilder(470).name('希诺宁').since('v5.6.0').natlan().geo().sword()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Xilonen.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/57bd20405cce28ef0e76bb4edcf50139_848653401769182967.png')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Xilonen_1106953552.png')
         .normalSkill(new NormalSkillBuilder('锐锋攫猎').description('若自身附属【sts116111】，则恢复1点｢夜魂值｣。')
             .handle(({ hero: { heroStatus } }) => ({ exec: () => getObjById(heroStatus, 116111)?.addUseCnt() })))
         .skills(
-            new SkillBuilder('音火锻淬').description('本角色附属【crd116112】，进入【夜魂加持】并获得1点｢夜魂值｣。（角色进入【夜魂加持】后不可使用此技能）')
-                .src('/image/tmp/Skill_S_Xilonen_01.webp')
+            new SkillBuilder('音火锻淬').description('本角色附属【crd116112】，进入【sts116111】并获得1点｢夜魂值｣。（角色进入【sts116111】后不可使用此技能）')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/bfef7ae61e6a66cf65676de9d5d629c2_7377885707934929218.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus } }) => ({
                     equip: 116112,
                     status: [[116111, 1]],
                     isForbidden: hasObjById(heroStatus, 116111),
                 })),
             new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方受伤最多的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的【源音采样】额外治疗1点。')
-                .src('/image/tmp/Skill_E_Xilonen_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/22421a5b3ae18db603f872689c0e11bc_752137491273388613.png')
                 .burst(2).damage(2).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus }, heros } = event;
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
                     cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: getMaxHertHidxs(heros) });
                 }),
             new SkillBuilder('｢源音采样｣').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的｢源音采样｣。')
-                .src('/image/tmp/UI_Talent_S_Xilonen_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/21cda0957fb4318fbc22e24c08107d96_3568076944477539463.png')
                 .passive().handle(event => {
                     const { heros = [] } = event;
                     const stsId = [, 116116, 116114, 116115, 116117, , 116113];
@@ -1602,15 +1617,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('逐影枪术·改'))
         .skills(
             new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/b/b9/nefvl0fgzk3rb4v6ztu5sonr7mnmg3g.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/56c8c6c62ed792d56ccbbeaaf9aa9779_3263971776553896947.png')
                 .elemental().cost(3).handle(({ summons }) => ({ summon: 117101 + +hasObjById(summons, 117102) })),
             new SkillBuilder('香氛演绎').description('{dealDmg}。召唤【smn117103】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/7/70/527jlc73ttpp3baabc3pxlllk33rg7r.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1e918eff70dc3167325c4bee79c84959_6163012173343249974.png')
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 117103 })),
             new SkillBuilder('余薰').description('【我方〖smn115〗入场时：】下次双方角色使用技能后，触发一次【smn115】的回合结束效果。（每回合2次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/4/41/kobtwvnjjwrr6nnrlppc8ht5h0y8jpw.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/ed280b75ea2169c2f53ed0ccc851ac63_6394994445214265959.png')
                 .passive().handle(event => {
                     const { skill: { useCntPerRound } } = event;

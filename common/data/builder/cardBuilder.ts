@@ -2,7 +2,8 @@ import { Card, Trigger, VersionCompareFn } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
     HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode,
-    STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
+    STATUS_TYPE, VERSION, Version,
+    WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -105,7 +106,7 @@ export class GICard {
                     if (destroyTriggers.includes(trigger) && !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 0) {
                         return { triggers: destroyTriggers, isDestroy: true, exec: () => nightSoul.dispose(true) }
                     }
-                    execmds.getStatus(112145, { hidxs: hero.hidx });
+                    execmds.consumeNightSoul(hero.hidx);
                     return res;
                 }
             } else {
@@ -412,7 +413,7 @@ export class CardBuilder extends BaseCostBuilder {
             };
         }
         const description = this._description.get(this._curVersion, '') +
-            (this._isUseNightSoul ? '；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【sts112141】。' : '');
+            (this._isUseNightSoul ? '；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【夜魂加持】。' : '');
         const cost = this._cost.get(this._curVersion, 0);
         const costType = this._costType.get(this._curVersion, DICE_TYPE.Same);
         const useCnt = this._useCnt.get(this._curVersion, -1);

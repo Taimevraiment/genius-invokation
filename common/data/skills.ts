@@ -188,7 +188,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点｢夜魂值｣，抓3张牌。')
-        .src('/image/tmp/Gcg_CardInfo_Buff_Vehicle_Xilonen.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/6e198a5ebf0245a681cbb894919886d1_5120040167043277378.png')
         .vehicle().costAny(2).handle(({ cmdsAfter, hero: { hidx } }) => cmdsAfter.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
@@ -259,8 +259,12 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().damage(2).costSame(1),
 
     3130081: () => new SkillBuilder('昂扬状态').description('附属角色[准备技能]2次｢普通攻击｣。')
-        .src('/image/tmp/Gcg_CardInfo_Buff_Vehicle_Bisonsaurus.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/75019ddf20d1485e844ad7c5e3106e0f_5220421915413934082.png')
         .vehicle().costAny(3).handle(() => ({ status: 301303 })),
+
+    3130091: () => new SkillBuilder('呀！呀！').description('从牌库中抓一张【特技牌】，下次我方打出【特技牌】少花费2个元素骰。')
+        .src('', '') // #3130092
+        .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 
 }
 export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();

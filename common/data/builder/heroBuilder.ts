@@ -175,22 +175,37 @@ export class HeroBuilder extends BaseCostBuilder {
         this._element = ELEMENT_TYPE.Dendro;
         return this;
     }
+    /**
+     * 弓
+     */
     bow() {
         this._weaponType = WEAPON_TYPE.Bow;
         return this;
     }
+    /**
+     * 法器
+     */
     catalyst() {
         this._weaponType = WEAPON_TYPE.Catalyst;
         return this;
     }
+    /**
+     * 双手剑
+     */
     claymore() {
         this._weaponType = WEAPON_TYPE.Claymore;
         return this;
     }
+    /**
+     * 长柄武器
+     */
     polearm() {
         this._weaponType = WEAPON_TYPE.Polearm;
         return this;
     }
+    /**
+     * 单手剑
+     */
     sword() {
         this._weaponType = WEAPON_TYPE.Sword;
         return this;

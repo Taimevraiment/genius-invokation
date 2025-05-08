@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, STATUS_TYPE, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx, getObjById } from '../utils/gameUtil.js';
@@ -454,13 +454,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // ｢沃陆之邦｣
     321028: () => new SupportBuilder().permanent().handle((_, event) => {
-        const { trigger, hidx = -1, sourceStatus, heros = [], hidxs: [fhidx] = [-1] } = event;
-        if (trigger == 'get-status' && !sourceStatus?.hasType(STATUS_TYPE.ReadySkill)) return;
+        const { trigger, hidx = -1, heros = [], hidxs: [fhidx] = [-1] } = event;
         return {
-            triggers: ['get-status', 'switch'],
+            triggers: ['ready-skill', 'switch'],
             exec: (_, cmds) => {
-                const hidxs = trigger == 'get-status' ? fhidx : hidx;
-                const cnt = trigger == 'get-status' ? 3 : 2;
+                const hidxs = trigger == 'ready-skill' ? fhidx : hidx;
+                const cnt = trigger == 'ready-skill' ? 3 : 2;
                 cmds.getStatus([[301025, cnt]], { hidxs });
                 const ocnt = getObjById(heros[hidxs].heroStatus, 301025)?.useCnt ?? 0;
                 if (ocnt < 3 && ocnt + cnt >= 3) cmds.heal(1, { hidxs });
