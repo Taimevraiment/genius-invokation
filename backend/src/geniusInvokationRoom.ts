@@ -1513,7 +1513,7 @@ export default class GeniusInvokationRoom {
                         skid,
                         trigger: state,
                         dmgedHidx: cehidx,
-                        hasDmg: aWillDamages[chidx + cpidx * oplayers[0].heros.length][0] > 0,
+                        hasDmg: aWillDamages[chidx + cpidx * oplayers[0].heros.length][0] > -1,
                         isChargedAtk: isSelf ? isChargedAtk : false,
                         talent: isCdt(!isExec && withCard?.id == getTalentIdByHid(getHidById(hfield.id)), withCard) ??
                             getObjById(oplayers[cpidx].heros, getHidById(hfield.id))?.talentSlot,
@@ -1664,7 +1664,7 @@ export default class GeniusInvokationRoom {
             mergeWillHeals(aWillHeal, skillheal);
         }
         skillcmds.addCmds(skillres.cmds);
-        if (skill && !isExec) {
+        if (skill && !isExec && hero.maxEnergy > 0) {
             if (skill.cost[2].cnt == 0) energyCnt[pidx][ohidx]++;
             else if (skill.cost[2].cnt > 0) energyCnt[pidx][ohidx] -= skill.cost[2].cnt;
         }
@@ -2486,7 +2486,7 @@ export default class GeniusInvokationRoom {
                 source: skid > -1 ? skid : isSummon,
                 minusDiceSkillIds,
                 minusDiceSkill,
-                hasDmg: res.willDamages[getDmgIdx][0] > 0,
+                hasDmg: res.willDamages[getDmgIdx][0] > -1,
                 discards,
                 hcard: withCard,
                 supportCnt,
@@ -2584,7 +2584,7 @@ export default class GeniusInvokationRoom {
                 dmgElement,
                 minusDiceSkillIds,
                 minusDiceSkill,
-                hasDmg: res.willDamages[getDmgIdx][0] > 0,
+                hasDmg: res.willDamages[getDmgIdx][0] > -1,
                 discards,
                 hcard: withCard,
                 hcardsCnt,
@@ -2704,7 +2704,7 @@ export default class GeniusInvokationRoom {
                     dmgElement,
                     minusDiceSkillIds,
                     minusDiceSkill,
-                    hasDmg: res.willDamages[getDmgIdx][0] > 0,
+                    hasDmg: res.willDamages[getDmgIdx][0] > -1,
                     discards,
                     hcard: withCard,
                     supportCnt,
@@ -2890,6 +2890,7 @@ export default class GeniusInvokationRoom {
                 currCard.hasSubtype(CARD_SUBTYPE.Relic, CARD_SUBTYPE.Vehicle) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Food) && !hasObjById(hero.heroStatus, 303300) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Talent) && userType == hero.id && (hero.isFront || !currCard.hasSubtype(CARD_SUBTYPE.Action) || currCard.type == CARD_TYPE.Event) ||
+                currCard.hasSubtype(CARD_SUBTYPE.Vehicle) && (userType == 0 || userType == hero.id) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Action, CARD_SUBTYPE.Legend, CARD_SUBTYPE.ElementResonance) && userType == 0
             );
         });
@@ -5369,11 +5370,16 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'getEnergy') {
                 ((isOppo ? ceheros : cheros) as Hero[]).forEach((h, hi) => {
                     if (h.hp > 0 && (ohidxs == undefined && h.isFront || ohidxs?.includes(hi))) {
-                        if ((cnt > 0 && h.energy < h.maxEnergy) || (cnt < 0 && h.energy > 0)) {
-                            const pcnt = Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
-                            h.energy += pcnt;
+                        if (
+                            (!isAttach && ((cnt > 0 && h.energy < h.maxEnergy) || (cnt < 0 && h.energy > 0))) ||
+                            (isAttach && ((cnt > 0 && h.energy > h.maxEnergy) || (cnt < 0 && h.energy < 0)))
+                        ) {
+                            const pcnt = isAttach ?
+                                Math.max(h.energy, Math.min(h.energy - h.maxEnergy, cnt)) :
+                                Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
+                            h.energy += pcnt * (isAttach ? -1 : 1);
                             if (isExec && pcnt != 0) {
-                                this._writeLog(`[${player.name}](${player.pidx})[${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点充能`);
+                                this._writeLog(`[${player.name}](${player.pidx})[${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点${isAttach ? '战意' : '充能'}`);
                             } else {
                                 energyCnt[pidx ^ +!!isOppo][hi] += pcnt;
                             }
@@ -5712,12 +5718,18 @@ export default class GeniusInvokationRoom {
                 }
                 this._writeLog('双方交换了手牌');
             } else if (cmd == 'consumeNightSoul' && ohidxs) {
+                const { isInvalid } = this._detectSlotAndStatus(pidx, 'pre-consumeNightSoul', { types: STATUS_TYPE.Usage, players, isExec });
+                if (isInvalid) continue;
                 const nightSoul = player.heros[ohidxs[0]].heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
-                if (nightSoul?.useCnt) nightSoul.minusUseCnt();
+                if (nightSoul?.useCnt) nightSoul.minusUseCnt(cnt);
                 this._detectSlotAndStatus(pidx, 'consumeNightSoul', { players, hidxs: allHidxs(player.heros), sourceHidx: ohidxs[0], isExec })
             } else if (cmd == 'consumeDice' && ohidxs) {
                 if (ohidxs[0] < 0) player.dice.splice(ohidxs[0], -ohidxs[0]);
                 else player.dice = player.dice.filter((_, i) => !ohidxs[i]);
+            } else if (cmd == 'convertCard' && isExec) {
+                const [eid = -1, cid = -1] = ohidxs ?? [];
+                const cidx = player.handCards.findIndex(c => c.entityId == eid);
+                player.handCards.splice(cidx, 1, this.newCard(cid).setEntityId(eid));
             }
         }
 

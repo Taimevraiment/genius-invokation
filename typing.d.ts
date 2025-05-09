@@ -141,7 +141,7 @@ type Cmds = {
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
-    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'consumeDice';
+    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'consumeDice' | 'convertCard';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -207,7 +207,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'consumeNightSoul' | 'ready-skill' | '';
+    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'consumeNightSoul' | 'pre-consumeNightSoul' | 'ready-skill' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

@@ -255,7 +255,26 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1114: () => new HeroBuilder(477).name('茜特菈莉').since('v5.7.0').natlan().cryo().catalyst()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Citlali.webp'),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Citlali.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('宿灵捕影'))
+        .skills(
+            new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点｢夜魂值｣。生成1点【sts111142】和【sts111143】。（角色进入【sts112141】后不可使用此技能）')
+                .src()
+                .elemental().damage(1).cost(3).handle(() => ({ status: [[111141, 1], 111142, 111143] })),
+            new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并获得2点｢夜魂值｣。')
+                .src()
+                .burst(2).damage(2).cost(3).handle(({ cmds }) => (cmds.getStatus([[111141, 2]]), { pdmg: 1 })),
+            new SkillBuilder('奥秘传唱').description('【我方进行[挑选]或触发元素反应后：】获得1点｢夜魂值｣。（每回合2次）')
+                .src()
+                .passive().handle(event => {
+                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus }, cmds } = event;
+                    const nightSoul = getObjById(heroStatus, 111141);
+                    if (useCntPerRound > 1 || !nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
+                    cmds.getStatus([[nightSoul.id, 1]]);
+                    return { triggers: ['pick', 'elReaction', 'other-elReaction'] }
+                })
+        ),
 
     1201: () => new HeroBuilder(9).name('芭芭拉').offline('v1').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
@@ -805,7 +824,38 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1315: () => new HeroBuilder(478).name('玛薇卡').since('v5.7.0').natlan().pyro().claymore()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mavuika.webp'),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mavuika.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('以火织命'))
+        .skills(
+            new SkillBuilder('称名之刻').description('本角色进入【sts113151】，获得2点｢夜魂值｣，并从3张【驰轮车】中[挑选]1张加入手牌。')
+                .src()
+                .elemental().cost(3).handle(() => ({
+                    status: [[113151, 2]],
+                    pickCard: {
+                        cnt: 3,
+                        mode: CMD_MODE.GetCard,
+                        card: [113154, 113155, 113156],
+                    }
+                })),
+            new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点｢夜魂值｣，消耗自身全部战意，对敌方前台造成等同于消耗战意点[火元素伤害]。；若消耗了6点战意，则自身附属【sts113152】。')
+                .src()
+                .burst(-3).cost(4).handle(event => {
+                    const { hero: { energy }, cmds } = event;
+                    cmds.getEnergy(-energy, { isSp: true });
+                    const status: (number | [number, ...any[]])[] = [[113151, 1]];
+                    if (energy >= 6) status.push(113152);
+                    return { status, addDmgCdt: energy }
+                }),
+            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗夜魂或使用普通攻击后，获得1点战意。；本角色使用｢元素战技｣或｢元素爆发｣时，附属【sts113153】。')
+                .src()
+                .passive().handle(event => {
+                    const { trigger = '', cmds } = event;
+                    if (['skilltype2', 'skilltype3'].includes(trigger)) cmds.getStatus(113153);
+                    if (['consumeNightSoul', 'skilltype1', 'other-skilltype1'].includes(trigger)) cmds.getEnergy(1, { isSp: true });
+                    return { triggers: trigger }
+                })
+        ),
 
     1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/195563531/41fc0a943f93c80bdcf24dbce13a0956_3894833720039304594.png')
@@ -1231,7 +1281,24 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1511: () => new HeroBuilder(479).name('恰斯卡').since('v5.7.0').natlan().anemo().bow()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Chasca.webp'),
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Chasca.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('迷羽流击'))
+        .skills(
+            new SkillBuilder('灵缰追影').description('{dealDmg}。；本角色附属【crd115112】，进入【sts115111】，并获得2点｢夜魂值｣。（角色进入【sts115111】后不可使用此技能）；【我方接下来3次执行｢切换角色｣行动时：】抓1张牌。')
+                .src()
+                .elemental().damage(1).cost(3).handle(({ hero: { heroStatus } }) => ({
+                    equip: 115112,
+                    status: [[115111, 2], 115118],
+                    isForbidden: hasObjById(heroStatus, 115111),
+                })),
+            new SkillBuilder('索魂命袭').description('{dealDmg}，对敌方所有后台角色造成1点穿透伤害，并抓3张牌。')
+                .src()
+                .burst(2).damage(1).cost(3).handle(({ cmds }) => (cmds.getCard(3), { pdmg: 1 })),
+            new SkillBuilder('追影弹').description('对局开始时，将6枚【crd115113】随机放置进牌库。')
+                .src()
+                .passive().handle(({ cmds }) => (cmds.addCard(6, 115113), { triggers: 'game-start' }))
+        ),
 
     1601: () => new HeroBuilder(42).name('凝光').offline('v1').liyue().geo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png')

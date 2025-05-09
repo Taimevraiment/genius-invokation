@@ -1,8 +1,10 @@
 import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE,
-    DICE_COST_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL,
+    DICE_COST_TYPE, DiceCostType, ELEMENT_CODE,
+    ELEMENT_TYPE, ElementType, HERO_LOCAL,
     HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE,
+    SwirlElementType,
     VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
@@ -231,6 +233,15 @@ const magicCount = (cnt: number, shareId?: number) => {
             if (trigger == 'discard') cmds.addCard(1, 332036 - cnt, { scope: 1 });
             else cmds.changeDice().getCard(4);
             return { triggers: isCdt(cnt > 0, 'discard') }
+        });
+}
+
+const hero1511card = (el: SwirlElementType) => {
+    return new CardBuilder().name(`焕光追影弹·${ELEMENT_NAME[el][0]}`).event().cost(3, el)
+        .description(`【打出或[舍弃]此牌时：】造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
+        .handle((_, event) => {
+            event.cmds.attack(1, el).addCard(1, 115113);
+            return { triggers: 'discard' }
         });
 }
 
@@ -2424,8 +2435,16 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, exec: () => card.minusPerCnt() }
         }),
 
-    211141: () => new CardBuilder(480).name('五重天的寒雨').since('v5.7.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Citlali.webp'),
+    211141: () => new CardBuilder(480).name('五重天的寒雨').since('v5.7.0').talent().costCryo(1).perCnt(1)
+        .description('【敌方受到冻结或融化反应伤害后：】我方下2次造成的[水元素伤害]和[火元素伤害]+1，并使【hro】获得1点｢夜魂值｣。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Citlali.webp')
+        .handle((card, event) => {
+            const { hero, hasDmg, execmds } = event;
+            const nightSoul = getObjById(hero?.heroStatus, 111141);
+            if (card.perCnt <= 0 || !hasDmg || !nightSoul) return;
+            execmds.getStatus([211142, [nightSoul.id, 1]]);
+            return { triggers: ['Frozen-oppo', 'Melt-oppo'], exec: () => card.minusPerCnt() }
+        }),
 
     212011: () => new CardBuilder(69).name('光辉的季节').offline('v1').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，【smn112011】会使我方执行｢切换角色｣行动时少花费1个元素骰。（每回合1次）')
@@ -2625,11 +2644,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【队伍中包含‹3火元素›角色和‹4雷元素›角色且不包含其他元素的角色，才能打出：】将此牌装备给【hro】。；装备有此牌的【hro】在场，敌方角色受到超载反应伤害后：我方接下来造成的2次[火元素伤害]或[雷元素伤害]+1。（包括扩散反应造成的[火元素伤害]或[雷元素伤害]）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/63d30082fb5068d4b847292c999003a4_5250915378710745589.png')
         .handle((_, event) => {
-            const { heros = [], execmds } = event;
+            const { heros = [], execmds, hasDmg } = event;
             const onlyPyroOrElectro = heros.every(h => h.element == ELEMENT_TYPE.Pyro || h.element == ELEMENT_TYPE.Electro);
             const hasElectro = heros.some(h => h.element == ELEMENT_TYPE.Electro);
             execmds.getStatus(113134);
-            return { isValid: onlyPyroOrElectro && hasElectro, triggers: ['Overload', 'other-Overload'] }
+            return { isValid: onlyPyroOrElectro && hasElectro, triggers: isCdt(hasDmg, ['Overload', 'other-Overload']) }
         }),
 
     213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿…').since('v5.4.0').talent(-2).costPyro(2)
@@ -2637,8 +2656,18 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/9770a329be6b9be3965bc3240c531cb4_511464347620244194.png')
         .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
-    213151: () => new CardBuilder(481).name('人之命，解放！').since('v5.7.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mavuika.webp'),
+    213151: () => new CardBuilder(481).name('人之命，解放！').since('v5.7.0').talent().costPyro(1)
+        .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。；〕【我方打出特技牌后：】若可能，【hro】回复1点｢夜魂值｣。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mavuika.webp')
+        .handle((_, event) => {
+            const { hcard, hero, cmds, execmds } = event;
+            cmds.pickCard(3, CMD_MODE.GetCard, { card: [113154, 113155, 113156] });
+            if (!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle)) return;
+            const nightSoul = getObjById(hero?.heroStatus, 113151);
+            if (!nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
+            execmds.getStatus([[113151, 1]]);
+            return { triggers: 'card' }
+        }),
 
     214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
         .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】｢普通攻击｣后造成2点[雷元素伤害]。（需消耗[可用次数]）')
@@ -2755,7 +2784,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214131: () => new CardBuilder(471).name('巡日塔门书').since('v5.6.0').talent().costElectro(1).perCnt(1)
-        .description('〔*[card]我方【hro】获得1点[充能]。〕；我方【hro】因【ski,3】扣除[充能]后，获得1点[充能]。（每回合1次）')
+        .description('〔*[card]我方【hro】获得1点[充能]。；〕我方【hro】因【ski,3】扣除[充能]后，获得1点[充能]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/c76d4ed584fd2bbc82310df761039167_284204024608898385.png')
         .handle((card, event) => {
             const { cmds, execmds, hero, source = -1 } = event;
@@ -2843,8 +2872,10 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chasca.webp'),
+    215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0').talent().event().costAnemo(1)
+        .description('将一张【crd115113】加入手牌。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chasca.webp')
+        .handle((_, { cmds }) => cmds.getCard(1, { card: 115113 }).res),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
@@ -3329,8 +3360,8 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle(true).costSame(0)
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/d5b28af6dee07cf37bb2bfaa757a4656_5892221598902559399.png')
         .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点｢夜魂值｣，使敌方出战角色附属【sts112143】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/d5b28af6dee07cf37bb2bfaa757a4656_5892221598902559399.png')
         .handle((_, event) => {
             const { hero, trigger, execmds } = event;
             if (trigger == 'switch-oppo' && !hero?.isFront) return;
@@ -3342,6 +3373,27 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('[战斗行动]：对敌方｢出战角色｣造成1点[火元素伤害]。；【此牌被[舍弃]时：】对敌方｢出战角色｣造成1点[火元素伤害]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9e3f3602c9eb4929bd9713b86c7fc5a1_5877781091007295306.png')
         .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
+
+    113154: () => new CardBuilder().name('驰轮车·跃升').vehicle().userType().costAny(3)
+        .description('〔*[card]【此牌在手牌中被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。；〕{vehicle}；（仅【hro】可用）')
+        .src('')
+        .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
+
+    113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costSame(1)
+        .description('〔*[card]【此卡牌被打出时：】随机触发我方个｢召唤物｣的｢结束阶段｣效果。；〕{vehicle}；（仅【hro】可用）')
+        .handle((_, event) => {
+            const { summons = [], cmds, randomInt } = event;
+            if (randomInt && summons.length) {
+                cmds.summonTrigger(randomInt(summons.length - 1));
+            }
+        }),
+
+    113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costAny(2)
+        .description('〔*[card]【此卡牌可使用次数为0时：】抓4张牌。；〕{vehicle}；（仅【hro】可用）')
+        .handle((_, event) => {
+            const { trigger, execmds } = event;
+            if (trigger == 'slot-destroy') execmds.getCard(4);
+        }),
 
     114031: () => new CardBuilder().name('雷楔').talent().event(true).costElectro(3)
         .description('[战斗行动]：将【hro】切换到场上，立刻使用【ski,1】。本次【ski,1】会为【hro】附属【sts114032】，但是不会再生成【雷楔】。(【hro】使用【ski,1】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro】附属【sts114032】)')
@@ -3357,6 +3409,33 @@ const allCards: Record<number, () => CardBuilder> = {
 
     115102: () => new CardBuilder().name('竹星').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/e58400e1d1d763da8b03886edd298d0e_3195150843851699982.png'),
+
+    115112: () => new CardBuilder().name('灵枪·仪式杖').vehicle(true).costSame(0)
+        .src(''),
+
+    115113: () => new CardBuilder().name('追影弹').event().costAnemo(3)
+        .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。')
+        .src('')
+        .handle((card, event) => {
+            const { hero, execmds, cmds, trigger } = event;
+            if (!hero) return;
+            if (trigger == 'getcard') {
+                const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
+                if (!ncardId) return;
+                execmds.convertCard(card.entityId, ncardId);
+                return { triggers: trigger }
+            }
+            cmds.attack(1, DAMAGE_TYPE.Anemo).addCard(1, 115113);
+            return { triggers: 'discard' }
+        }),
+
+    115114: () => hero1511card(ELEMENT_TYPE.Pyro).src(''),
+
+    115115: () => hero1511card(ELEMENT_TYPE.Hydro).src(''),
+
+    115116: () => hero1511card(ELEMENT_TYPE.Electro).src(''),
+
+    115117: () => hero1511card(ELEMENT_TYPE.Cryo).src(''),
 
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方｢出战角色｣造成1点物理伤害，抓1张牌。')

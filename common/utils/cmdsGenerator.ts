@@ -51,10 +51,10 @@ export default class CmdsGenerator {
         });
         return this;
     }
-    getEnergy(cnt: number, options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
-        let { hidxs, isOppo } = options;
+    getEnergy(cnt: number, options: { hidxs?: number | number[], isOppo?: boolean, isSp?: boolean } = {}) {
+        let { hidxs, isOppo, isSp: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this.value.push({ cmd: 'getEnergy', cnt, hidxs, isOppo });
+        this.value.push({ cmd: 'getEnergy', cnt, hidxs, isOppo, isAttach });
         return this;
     }
     heal(cnt?: number, options: { hidxs?: number | number[], order?: number, notPreHeal?: boolean } = {}) {
@@ -212,14 +212,17 @@ export default class CmdsGenerator {
         this.value.push({ cmd: 'exchangeHandCards' });
         return this;
     }
-    consumeNightSoul(hidx?: number, count: number = 1) {
+    consumeNightSoul(hidx?: number, cnt: number = 1) {
         const hidxs = hidx != undefined ? convertToArray(hidx) : hidx;
-        for (let i = 0; i < count; ++i) this.getStatus(112145, { hidxs });
-        this.value.push({ cmd: 'consumeNightSoul', hidxs });
+        this.value.push({ cmd: 'consumeNightSoul', cnt, hidxs });
         return this;
     }
     consumeDice(diceSelect: boolean[] | number) {
         this.value.push({ cmd: 'consumeDice', hidxs: typeof diceSelect == 'number' ? [-diceSelect] : diceSelect.map(Number) });
+        return this;
+    }
+    convertCard(eid: number, cid: number) {
+        this.value.push({ cmd: 'convertCard', hidxs: [eid, cid] });
         return this;
     }
     addCmds(cmds?: Cmds[] | CmdsGenerator) {

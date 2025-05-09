@@ -107,6 +107,9 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     13095: () => new SkillBuilder('焚落踢').description('{dealDmg}。').burst().readySkill().damage(3),
 
+    13155: () => new SkillBuilder('驰轮车·疾驰').description('【行动阶段开始时：】获得2个[万能元素骰]。')
+        .elemental().readySkill().handle(() => ({ status: 113158 })),
+
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。')
         .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle(event => {
             if (event.talent) return { status: 114052 }
@@ -173,9 +176,25 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             return { statusOppo: 112143 }
         }),
 
+    1131541: () => new SkillBuilder('跃升').description('消耗1点｢夜魂值｣，{dealDmg}。')
+        .src()
+        .vehicle().damage(4).costAny(1),
+
+    1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将1个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
+        .src()
+        .vehicle().costSame(0).handle(({ cmds }) => (cmds.switchAfter().changeDice({ cnt: 1 }), { isQuickAction: true })),
+
+    1131561: () => new SkillBuilder('疾驰').description('消耗1点｢夜魂值｣，然后[准备技能]：【rsk13155】。')
+        .src()
+        .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getStatus(113157).res),
+
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
+
+    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点｢夜魂值｣，随机[舍弃]3张原本元素骰费用最高的手牌，然后{dealDmg}。')
+        .src()
+        .vehicle().damage(1).cost(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).discard({ cnt: 3, mode: CMD_MODE.HighHandCard }).res),
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')

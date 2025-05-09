@@ -29,7 +29,7 @@ export class GICard {
     type: CardType; // 牌类型
     subType: CardSubtype[]; // 副类型
     tag: CardTag[]; // 特殊作用标签
-    userType: number | WeaponType; // 使用人类型匹配：0全匹配 匹配武器Hero.weaponType 匹配天赋Hero.id
+    userType: number | WeaponType; // 使用人类型匹配：0全匹配 匹配武器Hero.weaponType 匹配天赋/特技Hero.id
     useCnt: number; // 累积点数
     perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
@@ -316,6 +316,10 @@ export class CardBuilder extends BaseCostBuilder {
         }
         return this.equipment();
     }
+    userType(hid: number = -1) {
+        this._userType.set(['vlatest', hid]);
+        return this;
+    }
     place() {
         this._subtype.push(CARD_SUBTYPE.Place);
         return this.support();
@@ -403,7 +407,7 @@ export class CardBuilder extends BaseCostBuilder {
         if (this._subtype.includes(CARD_SUBTYPE.Weapon)) {
             userType ||= WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10 as WeaponTypeCode];
         }
-        if (this._subtype.includes(CARD_SUBTYPE.Talent) && !this._subtype.includes(CARD_SUBTYPE.Action)) {
+        if ((this._subtype.includes(CARD_SUBTYPE.Talent) && !this._subtype.includes(CARD_SUBTYPE.Action)) || userType == -1) {
             userType = getHidById(this._id);
         }
         if (this._type == CARD_TYPE.Support) {
