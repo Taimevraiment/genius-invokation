@@ -1,6 +1,5 @@
 <template>
-  <span style="position: absolute;font-family: HYWenHeiNumber;">7</span>
-  <span style="position: absolute;font-family: HYWenHei;">圣</span>
+  <span style="position: absolute;font-family: HYWH;">7</span>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div style="position: absolute;right: 10px;top: 10px;">（更新至5.6v5）</div>

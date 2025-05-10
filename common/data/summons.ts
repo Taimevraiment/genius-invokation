@@ -93,7 +93,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
     111062: () => new SummonBuilder('光降之剑').maxUse(MAX_USE_COUNT).damage(3).damage(2, 'v3.8.0').physical().collection().plus().roundEnd()
-        .description('【〖hro〗使用｢普通攻击｣或｢元素战技｣时：】此牌累积2点｢能量层数｣，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点｢能量层数｣，都使次伤害+1。（影响此牌｢[可用次数]｣的效果会作用于｢能量层数｣。）')
+        .description('【〖hro〗使用「普通攻击」或「元素战技」时：】此牌累积2点「能量层数」，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点「能量层数」，都使次伤害+1。（影响此牌「[可用次数]」的效果会作用于「能量层数」。）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event) => {
             const { heros, talent, isExec = true, trigger = '' } = event;
@@ -131,8 +131,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     111081: () => new SummonBuilder('寒病鬼差').useCnt(3).perCnt(1).perCnt(0, 'v4.7.0').damage(1)
-        .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点\\；【每回合1次：】再治疗我方出战角色1点。')
-        .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用｢普通攻击｣后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
+        .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用「普通攻击」后：】治疗受伤最多的我方角色1点\\；【每回合1次：】再治疗我方出战角色1点。')
+        .description('{defaultAtk。}；【此召唤物在场时，〖hro〗使用「普通攻击」后：】治疗受伤最多的我方角色1点。', 'v4.7.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/16/12109492/f9ea7576630eb5a8c46aae9ea8f61c7b_317750933065064305.png')
         .handle((summon, event, ver) => {
             const { heros = [], atkHidx = -1, trigger, tround = 0 } = event;
@@ -158,7 +158,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     111093: () => new SummonBuilder('饰梦天球').useCnt(2).damage(1)
-        .description('{defaultAtk。如果【sts111092】在场，则使其累积1枚｢晚星｣。}')
+        .description('{defaultAtk。如果【sts111092】在场，则使其累积1枚「晚星」。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/1b86f1cb97411b77d51cc22bb5622ff7_2462971599599504312.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
@@ -206,7 +206,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/4608304a2a01f7f33b59b731543a761b_3713077215425832494.png'),
 
     112062: () => new SummonBuilder('清净之园囿').useCnt(2).damage(2)
-        .description('{defaultAtk。}；【此召唤物在场时：】我方角色｢普通攻击｣造成的伤害+1。')
+        .description('{defaultAtk。}；【此召唤物在场时：】我方角色「普通攻击」造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/ef32ccb60a38cb7bfa31372dd5953970_1908841666370199656.png')
         .handle((_, event) => ({
             addDmgType1: 1,
@@ -301,7 +301,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/27885c0d6d1bd4ae42ea0d69d357198d_8888407409706694377.png'),
 
     114011: (isTalent: boolean = false) => new SummonBuilder('奥兹').useCnt(2).damage(1).talent(isTalent)
-        .description(`{defaultAtk。}${isTalent ? '；【hro】｢普通攻击｣后：造成2点[雷元素伤害]。（需消耗[可用次数]）' : ''}`)
+        .description(`{defaultAtk。}${isTalent ? '；【hro】「普通攻击」后：造成2点[雷元素伤害]。（需消耗[可用次数]）' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png')
         .handle((summon, event) => {
             const { heros = [], trigger } = event;
@@ -342,7 +342,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     114071: () => new SummonBuilder('雷罚恶曜之眼').useCnt(3).damage(1)
-        .description('{defaultAtk。}；【此召唤物在场时：】我方角色｢元素爆发｣造成的伤害+1。')
+        .description('{defaultAtk。}；【此召唤物在场时：】我方角色「元素爆发」造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/a27cfa39a258ff4b80f01b1964e6faac_1649452858766133852.png')
         .handle(() => ({ addDmgType3: 1, triggers: 'phase-end' })),
 
@@ -508,7 +508,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/251c5e32d6cbdfb4c4d0e14e7088ab67_7008401766526335309.png'),
 
     116041: () => new SummonBuilder('阳华').useCnt(3).damage(1).perCnt(1)
-        .description('{defaultAtk。}；【此召唤物在场，我方执行｢切换角色｣行动时：】将此次切换视为｢[快速行动]｣而非｢[战斗行动]｣。（每回合1次）')
+        .description('{defaultAtk。}；【此召唤物在场，我方执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。（每回合1次）')
         .description('{defaultAtk。}；【此召唤物在场时：】我方角色进行[下落攻击]时少花费1个[无色元素骰]。（每回合1次）', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
         .handle((summon, event, ver) => {
@@ -582,7 +582,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     116091: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1)
-        .description('{defaultAtk。}；【此牌在场时：】我方【hro】造成的[物理伤害]变为[岩元素伤害]，且｢普通攻击｣造成的[岩元素伤害]+1。')
+        .description('{defaultAtk。}；【此牌在场时：】我方【hro】造成的[物理伤害]变为[岩元素伤害]，且「普通攻击」造成的[岩元素伤害]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1966112146303462873.png')
         .handle((summon, event) => ({
             triggers: ['enter', 'phase-end'],
@@ -657,7 +657,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     116096: () => new SummonBuilder('侧目睥睨之袖').useCnt(2).damage(1).perCnt(1)
-        .description('{defaultAtk。}；【〖hro〗进行｢普通攻击｣时：】少花费1个元素骰。（每回合1次）')
+        .description('{defaultAtk。}；【〖hro〗进行「普通攻击」时：】少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1093502271962485608.png')
         .handle((summon, event) => {
             const { heros = [], isMinusDiceSkill, trigger } = event;
@@ -757,8 +757,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     121011: (cnt: number = 2) => new SummonBuilder('冰萤').useCnt(cnt).maxUse(3).damage(1)
-        .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。')
-        .description('{defaultAtk。}；【〖hro〗｢普通攻击｣后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
+        .description('{defaultAtk。}；【〖hro〗「普通攻击」后：】此牌[可用次数]+1。；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。')
+        .description('{defaultAtk。}；【〖hro〗「普通攻击」后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
         .handle((summon, event, ver) => {
             const { trigger = '', heros = [], atkHidx = -1, dmgedHidx = -1, talent, getdmg = [] } = event;
@@ -824,7 +824,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     122043: (dmg: number = -1, useCnt: number = -1) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
-        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的｢攻击力｣，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌｢攻击力｣值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
+        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
         .handle(() => ({ triggers: ['phase-end', 'end-phase'] })),
 
@@ -833,7 +833,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png'),
 
     123031: (isTalent: boolean = false) => new SummonBuilder('厄灵·炎之魔蝎').useCnt(2).damage(1).plus(isTalent).talent(isTalent)
-        .description(`{defaultAtk${isTalent ? '\\；如果本回合中【hro】使用过｢普通攻击｣或｢元素战技｣，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
+        .description(`{defaultAtk${isTalent ? '\\；如果本回合中【hro】使用过「普通攻击」或「元素战技」，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
         .handle((summon, event) => {
             const { heros = [], trigger } = event;
@@ -858,7 +858,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     124013: () => new SummonBuilder('雷锁镇域').useCnt(2).damage(1).perCnt(1)
-        .description('{defaultAtk。}；【此召唤物在场时：】敌方执行｢切换角色｣行动的元素骰费用+1。（每回合1次）')
+        .description('{defaultAtk。}；【此召唤物在场时：】敌方执行「切换角色」行动的元素骰费用+1。（每回合1次）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/8df8ffcdace3033ced5ccedc1dc7da68_5001323349681512527.png')
         .handle((summon, event) => {
             const { trigger } = event;

@@ -58,7 +58,8 @@ export type SkillHandleRes = {
     statusAfter?: (number | [number, ...any | Status])[] | number,
     statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
     cmds?: CmdsGenerator,
-    cmdsAfter?: CmdsGenerator,
+    skillAfter?: CmdsGenerator,
+    skillBefore?: CmdsGenerator,
     heal?: number,
     hidxs?: number[],
     dmgElement?: ElementType,
@@ -94,12 +95,12 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             if (hp >= 6) return { addDmgCdt: 1, pdmgSelf: 1 }
         }),
 
-    12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于｢始基力:荒性｣形态，召唤【smn112111】。；（【hro】处于｢始基力:芒性｣形态时，会改为召唤【smn112112】。）')
+    12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于「始基力:荒性」形态，召唤【smn112111】。；（【hro】处于「始基力:芒性」形态时，会改为召唤【smn112112】。）')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/629f7630db6af1831478699dbe6a04e0.png',
             'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/d605827c81562212ec685c75f8788b85_3866956682696340528.png')
         .elemental().cost(3).handle(event => ({ summon: 112111, status: isCdt(!!event.talent, 112116) })),
 
-    12122: () => new SkillBuilder('孤心沙龙').description('【hro1211】当前处于｢始基力:芒性｣形态，召唤【smn112112】。；（【hro】处于｢始基力:荒性｣形态时，会改为召唤【smn112111】。）')
+    12122: () => new SkillBuilder('孤心沙龙').description('【hro1211】当前处于「始基力:芒性」形态，召唤【smn112112】。；（【hro】处于「始基力:荒性」形态时，会改为召唤【smn112111】。）')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/3a6b3aa64583eed30205cc6959de0b11.png')
         .elemental().cost(3).handle(event => ({ summon: 112112, status: isCdt(!!event.talent, 112116) })),
 
@@ -168,47 +169,49 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/466e63dcff914eaaa05c7710346033f1.png')
         .elemental().damage(3).costElectro(3).handle(() => ({ status: 126022 })),
 
-    1121421: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点｢夜魂值｣）')
-        .src('#1121422', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
-        .vehicle().cost(1).handle(({ heros, cmds, cmdsAfter }) => {
+    1121422: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点「夜魂值」）')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
+        .vehicle().cost(1).handle(({ heros, cmds, skillAfter }) => {
             cmds.switchBefore();
-            if (allHidxs(heros).length == 1) cmdsAfter.consumeNightSoul();
+            if (allHidxs(heros).length == 1) skillAfter.consumeNightSoul();
             return { statusOppo: 112143 }
         }),
 
-    1131541: () => new SkillBuilder('跃升').description('消耗1点｢夜魂值｣，{dealDmg}。')
-        .src()
+    1131541: () => new SkillBuilder('跃升').description('消耗1点「夜魂值」，{dealDmg}。')
+        .src('/image/tmp/Skill_Vehicle_Mavuika2_-899064990.png')
         .vehicle().damage(4).costAny(1),
 
     1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将1个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
-        .src()
+        .src('/image/tmp/Skill_Vehicle_Mavuika3_789405650.png')
         .vehicle().costSame(0).handle(({ cmds }) => (cmds.switchAfter().changeDice({ cnt: 1 }), { isQuickAction: true })),
 
-    1131561: () => new SkillBuilder('疾驰').description('消耗1点｢夜魂值｣，然后[准备技能]：【rsk13155】。')
-        .src()
-        .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getStatus(113157).res),
+    1131561: () => new SkillBuilder('疾驰').description('消耗1点「夜魂值」，然后[准备技能]：【rsk13155】。')
+        .src('/image/tmp/Skill_Vehicle_Mavuika1_2075538931.png')
+        .vehicle().costAny(2).handle(({ skillAfter, hero: { hidx } }) => skillAfter.consumeNightSoul(hidx).getStatus(113157).res),
 
-    1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次｢普通攻击｣视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
+    1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次「普通攻击」视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
-    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点｢夜魂值｣，随机[舍弃]3张原本元素骰费用最高的手牌，然后{dealDmg}。')
-        .src()
-        .vehicle().damage(1).cost(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).discard({ cnt: 3, mode: CMD_MODE.HighHandCard }).res),
+    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，随机[舍弃]3张原本元素骰费用最高的手牌，然后{dealDmg}。')
+        .src('/image/tmp/Skill_Vehicle_Chasca_-159040159.png')
+        .vehicle().damage(1).cost(2).handle(({ skillAfter, hero: { hidx } }) => {
+            skillAfter.consumeNightSoul(hidx).discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
+        }),
 
-    1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点｢夜魂值｣，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
+    1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')
         .vehicle().damage(2).costAny(1).handle(event => {
-            const { eheros, combatStatus, hero: { hidx }, cmdsAfter } = event;
+            const { eheros, combatStatus, hero: { hidx }, skillAfter } = event;
             const hidxs = getNextBackHidx(eheros);
-            cmdsAfter.consumeNightSoul(hidx);
+            skillAfter.consumeNightSoul(hidx);
             if (hidxs.length == 0) return;
             return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
         }),
 
-    1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点｢夜魂值｣，抓3张牌。')
+    1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点「夜魂值」，抓3张牌。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/6e198a5ebf0245a681cbb894919886d1_5120040167043277378.png')
-        .vehicle().costAny(2).handle(({ cmdsAfter, hero: { hidx } }) => cmdsAfter.consumeNightSoul(hidx).getCard(3).res),
+        .vehicle().costAny(2).handle(({ skillAfter, hero: { hidx } }) => skillAfter.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('#')
@@ -239,7 +242,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
         }),
 
-    3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方｢召唤物｣，立刻触发其｢结束阶段｣效果。（每回合最多使用1次）')
+    3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方「召唤物」，立刻触发其「结束阶段」效果。（每回合最多使用1次）')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({
             summonTriggers: 'phase-end',
@@ -257,7 +260,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             }
         }),
 
-    3130051: () => new SkillBuilder('灵性援护').description('从｢场地｣｢道具｣｢料理｣中[挑选]1张加入手牌，并且治疗附属角色1点。')
+    3130051: () => new SkillBuilder('灵性援护').description('从「场地」「道具」「料理」中[挑选]1张加入手牌，并且治疗附属角色1点。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/80e0cad80855e14a1efebb4b6ba2cd67_801740963269596598.png')
         .vehicle().costSame(1).handle(() => ({
             pickCard: {
@@ -269,20 +272,20 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             heal: 1,
         })),
 
-    3130061: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
-        .src('#3130063', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
+    3130063: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
         .vehicle().costSame(1).handle(({ cmds }) => (cmds.switchAfter(), { statusOppo: 301302 })),
 
     3130071: () => new SkillBuilder('浪船·迅击炮').description('{dealDmg}。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/d51ae51bce40330458cea198b5dba91d_9095998201034503166.png')
         .vehicle().damage(2).costSame(1),
 
-    3130081: () => new SkillBuilder('昂扬状态').description('附属角色[准备技能]2次｢普通攻击｣。')
+    3130081: () => new SkillBuilder('昂扬状态').description('附属角色[准备技能]2次「普通攻击」。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/75019ddf20d1485e844ad7c5e3106e0f_5220421915413934082.png')
         .vehicle().costAny(3).handle(() => ({ status: 301303 })),
 
-    3130091: () => new SkillBuilder('呀！呀！').description('从牌库中抓一张【特技牌】，下次我方打出【特技牌】少花费2个元素骰。')
-        .src('', '') // #3130092
+    3130092: () => new SkillBuilder('呀！呀！').description('从牌库中抓一张【特技牌】，下次我方打出【特技牌】少花费2个元素骰。')
+        .src('/image/tmp/Skill_GCG_SaurusBaby_345786978.png')
         .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 
 }

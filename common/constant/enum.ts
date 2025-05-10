@@ -83,6 +83,7 @@ export type DiceType = TypeConst<typeof DICE_TYPE>;
 export const COST_TYPE = {
     ...DICE_TYPE,
     Energy: 'Energy', // 充能 9
+    SpEnergy: 'SpEnergy', // 战意 10
 } as const;
 
 export type CostType = TypeConst<typeof COST_TYPE>;

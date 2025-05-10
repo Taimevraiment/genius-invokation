@@ -113,7 +113,7 @@
 
     <div class="heros" :class="{ 'mobile-heros': isMobile }">
       <div class="hero-group" v-for="(hgroup, hgi) in heros" :key="hgi">
-        <div class="hero" :ratio="7 / 12" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
+        <div class="hero" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
           backgroundColor: hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
         }" :class="{
           'mobile-hero': isMobile,
@@ -166,13 +166,18 @@
               {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
             </div>
           </div>
-          <div class="hero-energys" v-if="(hero?.hp ?? 0) >= 0">
-            <div v-for="(_, eidx) in hero?.maxEnergy" :key="eidx" class="hero-energy"
-              :class="{ 'mobile-energy': isMobile }">
-              <img class="hero-energy-img" :src="getEnergyIcon()">
-              <img class="hero-energy-img"
-                :class="{ blink: eidx > (hero?.energy ?? 0) - 1 && eidx <= (hero?.energy ?? 0) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 }"
-                :src="getEnergyIcon((hero?.energy ?? 0) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx)" />
+          <div class="hero-energys" v-if="hero && hero.hp >= 0">
+            <div v-for="(_, eidx) in Math.abs(hero.maxEnergy) / (hero.maxEnergy >= 0 ? 1 : 2)" :key="eidx"
+              class="hero-energy" :class="{ 'mobile-energy': isMobile }">
+              <img class="hero-energy-img" :src="getEnergyIcon(false, hero.maxEnergy < 0)">
+              <img class="hero-energy-img" :class="{
+                blink: (Math.abs(hero.energy) - 1 < eidx && Math.abs(hero.energy) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx) ||
+                  (Math.abs(hero.energy) + (hero.maxEnergy / 2) - 1 < eidx && Math.abs(hero.energy) + (energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx)
+              }" :src="getEnergyIcon(
+                Math.abs(hero.energy) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx,
+                hero.maxEnergy < 0,
+                Math.abs(hero.energy) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx
+              )" />
             </div>
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
@@ -181,7 +186,7 @@
               <div :class="{ 'slot-can-use': hero.vehicleSlot[0].perCnt + hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
           </div>
-          <div class="hero-equipment" v-if="(hero?.hp ?? 0) >= 0">
+          <div class="hero-equipment" v-if="hero && hero.hp >= 0">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Weapon]] }">
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Weapon]" />
@@ -713,8 +718,8 @@ const getDiceIcon = (name: string) => {
 };
 
 // 获取充能图标
-const getEnergyIcon = (isCharged: boolean = false) => {
-  return `/image/energy-${isCharged ? 'charged' : 'empty'}.png`;
+const getEnergyIcon = (isCharged: boolean = false, isSp: boolean = false, isFull: boolean = false) => {
+  return `/image/${isSp ? 'sp-' : ''}energy-${isCharged ? 'charged' : 'empty'}${isSp && isFull ? '-full' : ''}.png`;
 };
 
 // 获取过滤器
@@ -852,7 +857,7 @@ const mouseup = () => {
   left: 0;
   height: 75%;
   width: 100%;
-  font-family: HYWenHei;
+  font-family: HYWH;
 }
 
 .side {
@@ -870,7 +875,6 @@ const mouseup = () => {
   aspect-ratio: 1/1;
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
   margin-bottom: 5px;
   cursor: pointer;
 }
@@ -917,7 +921,6 @@ const mouseup = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: HYWenHeiNumber;
 }
 
 .dice-cnt>div {
@@ -932,7 +935,6 @@ const mouseup = () => {
 
 .pile-cnt {
   position: relative;
-  font-family: HYWenHeiNumber;
 }
 
 button {
@@ -946,7 +948,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: HYWenHei;
+  font-family: HYWH;
 }
 
 button:active {
@@ -1027,7 +1029,6 @@ button:active {
 .hero-hp-cnt {
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
   z-index: 1;
   padding-right: 2px;
   transform: scale(var(--scale-val-change));
@@ -1042,7 +1043,7 @@ button:active {
 
 .hero-energys {
   position: absolute;
-  right: -6px;
+  right: -3%;
   top: 15px;
   width: 30%;
   display: flex;
@@ -1059,7 +1060,7 @@ button:active {
 }
 
 .hero-energy-img {
-  width: 100%;
+  width: 140%;
   height: 100%;
   position: absolute;
 }
@@ -1077,7 +1078,7 @@ button:active {
 .hero-talent,
 .hero-vehicle {
   position: relative;
-  left: 15%;
+  left: 35%;
   width: 100%;
   border: 2px solid #525252;
   border-radius: 50%;
@@ -1118,7 +1119,6 @@ button:active {
   /* background-color: #c67b7b; */
   color: white;
   -webkit-text-stroke: 0.8px black;
-  font-family: HYWenHeiNumber;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1177,7 +1177,6 @@ button:active {
   border-image-width: 7px;
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
   z-index: 1;
 }
 
@@ -1253,7 +1252,6 @@ button:active {
   font-size: 0;
   box-sizing: border-box;
   -webkit-text-stroke: 0.8px black;
-  font-family: HYWenHeiNumber;
   /* background-image: url(@@/image/Attack.png); */
   background-size: 100%;
 }
@@ -1322,7 +1320,6 @@ button:active {
   right: -6px;
   bottom: -3px;
   font-size: 12px;
-  font-family: HYWenHeiNumber;
   height: 12px;
   width: 12px;
   line-height: 12px;
@@ -1489,7 +1486,6 @@ button:active {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
   transition: 0.2s;
   z-index: 1;
 }
@@ -1518,7 +1514,6 @@ button:active {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
   z-index: 1;
 }
 

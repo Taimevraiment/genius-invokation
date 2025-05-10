@@ -23,7 +23,7 @@ import { newSupport } from '../../common/data/supports.js';
 import CmdsGenerator from '../../common/utils/cmdsGenerator.js';
 import {
     allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById,
-    getTalentIdByHid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString
+    getTalentIdByHid, getVehicleIdByCid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
@@ -1239,7 +1239,11 @@ export default class GeniusInvokationRoom {
         const reviveCnt = players.map(p => {
             return p.heros.map(h => {
                 return this._getHeroField(p.pidx, { players, hidx: h.hidx }).map(s => {
-                    if ('group' in s) return s?.handle(s, { trigger: 'will-killed' }).cmds?.getCmdCnt('revive') ?? -1;
+                    if ('group' in s) {
+                        if (!s.hasType(STATUS_TYPE.NonDefeat)) return -1;
+                        return s?.handle(s, { trigger: 'will-killed', dicesCnt: p.dice.length }).cmds?.getCmdCnt('revive') ?? -1;
+                    }
+                    if (s.hasTag(CARD_TAG.NonDefeat)) return -1;
                     return s?.handle(s, { trigger: 'will-killed' }).execmds?.getCmdCnt('revive') ?? -1;
                 }).filter(v => v > 0);
             });
@@ -1666,7 +1670,7 @@ export default class GeniusInvokationRoom {
         skillcmds.addCmds(skillres.cmds);
         if (skill && !isExec && hero.maxEnergy > 0) {
             if (skill.cost[2].cnt == 0) energyCnt[pidx][ohidx]++;
-            else if (skill.cost[2].cnt > 0) energyCnt[pidx][ohidx] -= skill.cost[2].cnt;
+            else if (skill.cost[2].cnt > 0 && skill.cost[2].type == COST_TYPE.Energy) energyCnt[pidx][ohidx] -= skill.cost[2].cnt;
         }
         let ifa = false;
         const tasks0: AtkTask[] = [];
@@ -1727,7 +1731,7 @@ export default class GeniusInvokationRoom {
                 tasks0.push(...tasks1);
             });
         }
-        this._doCmds(pidx, skillres.cmdsAfter, { players, isExec, isAction: !!skill && !isQuickAction });
+        this._doCmds(pidx, skillres.skillAfter, { players, isExec, skid, sktype: skill?.type, isAction: !!skill && !isQuickAction });
         const stsaftercmds = new CmdsGenerator()
             .getStatus(skillres.statusAfter, { hidxs: skillres.hidxs })
             .getStatus(skillres.statusOppoAfter, { hidxs: skillres.hidxs, isOppo: true });
@@ -1770,7 +1774,7 @@ export default class GeniusInvokationRoom {
                 this._writeLog(`[${player().name}](${player().pidx})[${aHeros()[player().hidx].name}]使用了[${SKILL_TYPE_NAME[skill.type]}][${skill.name}]`, 'info');
                 const energyCmds = new CmdsGenerator();
                 if (skill.cost[2].cnt == 0) energyCmds.getEnergy(1);
-                else if (skill.cost[2].cnt > 0) energyCmds.getEnergy(-skill.cost[2].cnt);
+                else if (skill.cost[2].cnt > 0 && skill.cost[2].type == COST_TYPE.Energy) energyCmds.getEnergy(-skill.cost[2].cnt);
                 if (skillres.energy) energyCmds.getEnergy(skillres.energy);
                 const isVehicle = skill.type == SKILL_TYPE.Vehicle;
                 const atkHidx = aHeros()[player().hidx].hidx;
@@ -3051,6 +3055,13 @@ export default class GeniusInvokationRoom {
         } else {
             if (currCard.type != CARD_TYPE.Equipment) cardres.exec?.();
             let destroyedSupportCnt = oSupportCnt - player.supports.length;
+            this._doCmds(pidx, cardres.cmdsBefore, {
+                withCard: currCard,
+                isAction: !isQuickAction,
+                hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
+                source: currCard.id,
+            });
+            await this._execTask();
             const { damageVOs: cmdDmgVos = [] } = this._doCmds(pidx, cardcmds, {
                 withCard: isCdt(!getCard, currCard),
                 isAction: !isQuickAction,
@@ -3102,7 +3113,6 @@ export default class GeniusInvokationRoom {
                         isQuickAction,
                         actionInfo: isCdt(!getCard && !pickCard && voi == 0, { card: currCard }),
                     });
-                    if (canAction) await this._execTask();
                 } else {
                     if (!isUseSkill) {
                         this._doActionAfter(pidx, isQuickAction);
@@ -3114,8 +3124,8 @@ export default class GeniusInvokationRoom {
                             actionInfo: isCdt(!getCard && !pickCard, { card: currCard }),
                         });
                     }
-                    await this._execTask();
                 }
+                if (canAction) await this._execTask();
             }
             if (!getCard && !pickCard && !isUseSkill) {
                 if (isAction) this._changeTurn(pidx, isQuickAction, 'useCard');
@@ -3211,7 +3221,7 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         this._detectSupport(pidx, 'action-start', { isQuickAction: true });
         await this._execTask();
-        this._detectSlotAndStatus(pidx ^ 1, 'action-start-oppo', { types: STATUS_TYPE.Attack, hidxs: allHidxs(this.players[pidx ^ 1].heros) });
+        this._detectSlotAndStatus(pidx ^ 1, 'action-start-oppo', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], hidxs: allHidxs(this.players[pidx ^ 1].heros) });
         await this._execTask();
     }
     /**
@@ -3499,11 +3509,12 @@ export default class GeniusInvokationRoom {
                 const heal = Math.max(0, willHeals[phidx] ?? 0);
                 if (h.hp > 0 || heal % 1 != 0) {
                     const damage = willDamages[phidx]?.reduce((a, b) => a + Math.max(0, b), 0) ?? 0;
-                    if (heal % 1 != 0) h.hp = Math.ceil(heal);
-                    else h.hp = Math.max(0, h.hp - damage + heal);
+                    const rheal = heal % 1 != 0 ? Math.ceil(heal) : Math.min(heal, h.maxHp - h.hp);
+                    if (heal % 1 != 0) h.hp = rheal;
+                    else h.hp = Math.max(0, h.hp - damage + rheal);
                     if ((willDamages[phidx]?.[0] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][0]}点${ELEMENT_NAME[dmgElements[phidx]]}伤害`);
                     if (willDamages[phidx]?.[1]) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][1]}点穿透伤害`);
-                    if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${Math.ceil(heal)}点`);
+                    if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点`);
                     // 被击倒
                     if (h.hp == 0 &&
                         h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) &&
@@ -3716,7 +3727,7 @@ export default class GeniusInvokationRoom {
                 hero.talentSlot = equipment.setEntityId(hero.talentSlot?.entityId ?? this._genEntityId());
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
                 if (hero.vehicleSlot?.[0].id == equipment.id) equipment.setEntityId(hero.vehicleSlot[0].entityId);
-                hero.vehicleSlot = [equipment.setEntityId(this._genEntityId()), this.newSkill(equipment.id * 10 + 1)];
+                hero.vehicleSlot = [equipment.setEntityId(this._genEntityId()), this.newSkill(getVehicleIdByCid(equipment.id))];
             }
             if (equipment.hasTag(CARD_TAG.Enchant)) {
                 const { attachEl } = equipment.handle(equipment);
@@ -3737,7 +3748,7 @@ export default class GeniusInvokationRoom {
         const { entityId, group, pidx, isSelf = 0, trigger = '', hidx: ohidx = this.players[pidx].hidx,
             discards = [], hcard, skid, name: atkname } = stsTask;
         let { isQuickAction } = stsTask;
-        let { heros: aheros, hidx: ahidx, summons: aSummon, pile, handCards, combatStatus, playerInfo } = this.players[pidx];
+        let { heros: aheros, hidx: ahidx, summons: aSummon, pile, handCards, combatStatus, playerInfo, dice } = this.players[pidx];
         const { heros: eheros, hidx: eFrontIdx, combatStatus: eCombatStatus } = this.players[pidx ^ 1];
         ahidx = group == STATUS_GROUP.combatStatus ? ahidx : ohidx;
         const atkStatus = (group == STATUS_GROUP.heroStatus ? this.players[pidx].heros[ahidx].heroStatus : combatStatus).find(sts => sts.entityId == entityId)!;
@@ -3761,6 +3772,7 @@ export default class GeniusInvokationRoom {
             discards,
             hcard,
             playerInfo,
+            dicesCnt: dice.length,
             talent: getObjById(aheros, getHidById(atkStatus.id))?.talentSlot,
             isExecTask: true,
             randomInt: this._randomInt.bind(this),
@@ -5370,10 +5382,7 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'getEnergy') {
                 ((isOppo ? ceheros : cheros) as Hero[]).forEach((h, hi) => {
                     if (h.hp > 0 && (ohidxs == undefined && h.isFront || ohidxs?.includes(hi))) {
-                        if (
-                            (!isAttach && ((cnt > 0 && h.energy < h.maxEnergy) || (cnt < 0 && h.energy > 0))) ||
-                            (isAttach && ((cnt > 0 && h.energy > h.maxEnergy) || (cnt < 0 && h.energy < 0)))
-                        ) {
+                        if ((cnt > 0 && Math.abs(h.energy) < Math.abs(h.maxEnergy)) || (cnt < 0 && Math.abs(h.energy) > 0)) {
                             const pcnt = isAttach ?
                                 Math.max(h.energy, Math.min(h.energy - h.maxEnergy, cnt)) :
                                 Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
@@ -5874,7 +5883,7 @@ export default class GeniusInvokationRoom {
                         if (c != DICE_COST_TYPE.Omni) a[c] = (a[c] ?? 0) + 1;
                         return a;
                     }, {} as Record<DiceCostType, number>)))) < skill.cost[0].cnt - skill.costChange[0];
-                const isEnergy = skill.cost[2].cnt > 0 && skill.cost[2].cnt > energy;
+                const isEnergy = skill.cost[2].cnt > 0 && skill.cost[2].cnt > Math.abs(energy);
                 const needSelectSmn = skill.canSelectSummon != -1 && summons.length == 0;
                 const skillres = skill.handle({ skill, hero });
                 skillForbidden = isWaiting || this.phase != PHASE.ACTION || isNonAction || isLen || isElDice || isEnergy || !!skillres.isForbidden;

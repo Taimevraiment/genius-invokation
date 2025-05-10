@@ -403,7 +403,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
-    // ｢悬木人｣
+    // 「悬木人」
     321024: () => new SupportBuilder().round(1).handle((support, event) => {
         const { card, playerInfo: { initCardIds = [] } = {} } = event;
         if (!card || initCardIds.includes(card.id) || card.cost + card.anydice < support.cnt) return;
@@ -416,7 +416,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
-    // ｢流泉之众｣
+    // 「流泉之众」
     321025: () => new SupportBuilder().round(3).handle(() => ({
         triggers: 'summon-generate',
         supportCnt: -1,
@@ -425,7 +425,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             return { isDestroy: --spt.cnt == 0 }
         }
     })),
-    // ｢花羽会｣
+    // 「花羽会」
     321026: () => new SupportBuilder().collection().handle((support, event) => {
         const { discardCnt = 1, heros } = event;
         return {
@@ -439,7 +439,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
-    // ｢烟谜主｣
+    // 「烟谜主」
     321027: () => new SupportBuilder().round(4).handle((support, event) => ({
         triggers: support.cnt > 0 ? 'pick' : 'phase-start',
         exec: (spt, cmds) => {
@@ -452,7 +452,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             return { isDestroy: true }
         }
     })),
-    // ｢沃陆之邦｣
+    // 「沃陆之邦」
     321028: () => new SupportBuilder().permanent().handle((_, event) => {
         const { trigger, hidx = -1, heros = [], hidxs: [fhidx] = [-1] } = event;
         return {

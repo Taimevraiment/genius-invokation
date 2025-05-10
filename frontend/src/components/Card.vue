@@ -88,7 +88,7 @@ const getPngIcon = (name: string) => {
     justify-content: center;
     align-items: center;
     backface-visibility: hidden;
-    font-family: HYWenHei;
+    font-family: HYWH;
 }
 
 .card-img {
@@ -128,7 +128,6 @@ const getPngIcon = (name: string) => {
     text-align: center;
     line-height: 30px;
     -webkit-text-stroke: 1px black;
-    font-family: HYWenHeiNumber;
     z-index: 1;
 }
 
@@ -142,7 +141,6 @@ const getPngIcon = (name: string) => {
     text-align: center;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
-    font-family: HYWenHeiNumber;
     z-index: 1;
 }
 

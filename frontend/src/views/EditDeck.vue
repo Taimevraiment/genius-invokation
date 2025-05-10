@@ -715,7 +715,7 @@ body div {
     height: 95vh;
     background-color: #daa98a;
     overflow: hidden;
-    font-family: HYWenHei;
+    font-family: HYWH;
 }
 
 .edit-deck-list {
@@ -913,7 +913,7 @@ body div {
     margin: 5px;
     border-radius: 10px;
     cursor: pointer;
-    font-family: HYWenHei;
+    font-family: HYWH;
 }
 
 .edit-deck-btn-group button:hover,
@@ -931,7 +931,7 @@ body div {
     border-radius: 5px;
     border: 3px solid #583a01;
     background-color: #ffcf77;
-    font-family: HYWenHei;
+    font-family: HYWH;
 }
 
 input#isOfflineInput:checked {
@@ -1063,7 +1063,6 @@ input#isOfflineInput:checked {
     position: absolute;
     color: white;
     -webkit-text-stroke: 1px black;
-    font-family: HYWenHeiNumber;
     z-index: 1;
 }
 
@@ -1091,7 +1090,6 @@ input#isOfflineInput:checked {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
-    font-family: HYWenHeiNumber;
     z-index: 3;
 }
 
@@ -1124,7 +1122,6 @@ input#isOfflineInput:checked {
     height: 20px;
     line-height: 20px;
     -webkit-text-stroke: 1px black;
-    font-family: HYWenHeiNumber;
     z-index: 3;
 }
 
@@ -1226,7 +1223,7 @@ input#isOfflineInput:checked {
     border: 3px solid #343b7d;
     background-color: #3a457d;
     color: white;
-    font-family: HYWenHei;
+    font-family: HYWH;
 }
 
 .filter-title {

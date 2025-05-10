@@ -1,20 +1,20 @@
 import { Card, Trigger, VersionCompareFn } from "../../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, HERO_LOCAL_CODE_KEY,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, ELEMENT_CODE, HERO_LOCAL_CODE_KEY,
     HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode,
     STATUS_TYPE, VERSION, Version,
     WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { compareVersionFn, getHidById, getVehicleIdByCid, hasObjById } from "../../utils/gameUtil.js";
+import { compareVersionFn, getElByHid, getHidById, getVehicleIdByCid, hasObjById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
 export type CardBuilderHandleRes = Omit<CardHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-export type CardBuilderHandleEvent = CardHandleEvent & { cmds: CmdsGenerator, execmds: CmdsGenerator };
+export type CardBuilderHandleEvent = CardHandleEvent & { cmds: CmdsGenerator, execmds: CmdsGenerator, cmdsBefore: CmdsGenerator };
 
 export class GICard {
     id: number; // 唯一id
@@ -78,9 +78,9 @@ export class GICard {
             descriptions: [],
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
-        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个｢${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}｣角色，才能加入牌组）`;
-        else if (subType.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（｢${WEAPON_TYPE_NAME[userType as WeaponType]}｣【角色】才能装备。角色最多装备1件｢武器｣）`;
-        else if (subType.includes(CARD_SUBTYPE.Relic)) this.UI.description += `；（角色最多装备1件｢圣遗物｣）`;
+        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个「${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}」角色，才能加入牌组）`;
+        else if (subType.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（「${WEAPON_TYPE_NAME[userType as WeaponType]}」【角色】才能装备。角色最多装备1件「武器」）`;
+        else if (subType.includes(CARD_SUBTYPE.Relic)) this.UI.description += `；（角色最多装备1件「圣遗物」）`;
         else if (subType.includes(CARD_SUBTYPE.Vehicle)) {
             const vehicle = `rsk${getVehicleIdByCid(id)}`;
             const vehicleDesc = ` [特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}`;
@@ -89,7 +89,7 @@ export class GICard {
             } else {
                 this.UI.description += (this.UI.description != '' ? '；' : '') + vehicleDesc;
             }
-            this.UI.description += `；（角色最多装备1个｢特技｣）`;
+            this.UI.description += `；（角色最多装备1个「特技」）`;
             this.UI.explains.push(vehicle);
             const ohandle = handle;
             const destroyTriggers: Trigger[] = ['action-after', 'action-start', 'action-start-oppo'];
@@ -127,8 +127,8 @@ export class GICard {
                 }
             }
         } else if (subType.includes(CARD_SUBTYPE.Food)) {
-            if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；（每回合中，最多通过｢料理｣复苏1个角色，并且每个角色最多食用1次｢料理｣）`;
-            else this.UI.description += `；（每回合每个角色最多食用1次｢料理｣）`;
+            if (tag.includes(CARD_TAG.Revive)) this.UI.description += `；（每回合中，最多通过「料理」复苏1个角色，并且每个角色最多食用1次「料理」）`;
+            else this.UI.description += `；（每回合每个角色最多食用1次「料理」）`;
             const ohandle = handle;
             handle = (card, event, ver) => {
                 const res = ohandle?.(card, event, ver) ?? {};
@@ -164,7 +164,7 @@ export class GICard {
                 + `；（牌组中包含【${hro}】，才能加入牌组）`;
             userType = hid;
         } else if (subType.includes(CARD_SUBTYPE.Legend)) {
-            this.UI.description += `；（整局游戏只能打出一张｢秘传｣卡牌\\；这张牌一定在你的起始手牌中）`;
+            this.UI.description += `；（整局游戏只能打出一张「秘传」卡牌\\；这张牌一定在你的起始手牌中）`;
             this.UI.cnt = 1;
         } else if (subType.includes(CARD_SUBTYPE.ElementResonance)) {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
@@ -190,7 +190,8 @@ export class GICard {
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();
-            const cevent: CardBuilderHandleEvent = { ...event, cmds, execmds };
+            const cmdsBefore = new CmdsGenerator();
+            const cevent: CardBuilderHandleEvent = { ...event, cmds, execmds, cmdsBefore };
             const { reset = false } = cevent;
             if (reset) {
                 if (isResetPct) card.perCnt = pct;
@@ -202,6 +203,7 @@ export class GICard {
                 ...builderRes,
                 cmds,
                 execmds,
+                cmdsBefore,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
             }
             return res;
@@ -417,7 +419,11 @@ export class CardBuilder extends BaseCostBuilder {
             };
         }
         const description = this._description.get(this._curVersion, '') +
-            (this._isUseNightSoul ? '；{vehicle}；所附属角色｢夜魂值｣为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【夜魂加持】。' : '');
+            (this._isUseNightSoul ? '；{vehicle}；所附属角色「夜魂值」为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【夜魂加持】。' : '');
+        if (this._isUseNightSoul) {
+            const nightSoulId = [, 111141, 112141, 113151, , 115111, 116104, 117092];
+            this.explain(`【sts${nightSoulId[ELEMENT_CODE[getElByHid(getHidById(this._id))]]}】`)
+        }
         const cost = this._cost.get(this._curVersion, 0);
         const costType = this._costType.get(this._curVersion, DICE_TYPE.Same);
         const useCnt = this._useCnt.get(this._curVersion, -1);

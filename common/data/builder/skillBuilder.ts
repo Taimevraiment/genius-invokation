@@ -12,7 +12,7 @@ import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
 
-type SkillBuilderHandleEvent = SkillHandleEvent & { cmds: CmdsGenerator, cmdsAfter: CmdsGenerator };
+type SkillBuilderHandleEvent = SkillHandleEvent & { cmds: CmdsGenerator, skillAfter: CmdsGenerator, skillBefore: CmdsGenerator };
 
 export class GISkill {
     id: number; // 唯一id
@@ -23,7 +23,7 @@ export class GISkill {
     cost: [ // 费用列表 [元素骰, 任意骰, 充能]
         { cnt: number, type: SkillCostType },
         { cnt: number, type: typeof DICE_TYPE.Any },
-        { cnt: number, type: typeof COST_TYPE.Energy },
+        { cnt: number, type: typeof COST_TYPE.Energy | typeof COST_TYPE.SpEnergy },
     ];
     attachElement: ElementType = ELEMENT_TYPE.Physical; // 附魔属性
     handle: (event: SkillHandleEvent) => SkillHandleRes; // 处理函数
@@ -46,7 +46,7 @@ export class GISkill {
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
         options: {
             id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[],
-            ver?: Version, canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: any[],
+            ver?: Version, canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: any[], spe?: boolean,
         } = {},
         src?: string | string[],
         handle?: (hevent: SkillBuilderHandleEvent, version: VersionCompareFn) => SkillBuilderHandleRes | undefined | void
@@ -55,7 +55,7 @@ export class GISkill {
         this.type = type;
         this.damage = damage;
         const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], adt = [],
-            canSelectSummon = -1, canSelectHero = -1,
+            canSelectSummon = -1, canSelectHero = -1, spe = false,
         } = options;
         costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
@@ -78,21 +78,23 @@ export class GISkill {
             descriptions: [],
         };
         this.id = id;
-        this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: COST_TYPE.Energy }];
+        this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: spe ? COST_TYPE.SpEnergy : COST_TYPE.Energy }];
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
         this.addition = [...adt];
         this.handle = hevent => {
             const cmds = new CmdsGenerator();
-            const cmdsAfter = new CmdsGenerator();
-            const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds, cmdsAfter };
+            const skillAfter = new CmdsGenerator();
+            const skillBefore = new CmdsGenerator();
+            const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds, skillAfter, skillBefore };
             const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
             const builderRes = handle?.(hbevent, compareVersionFn(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
                 cmds,
-                cmdsAfter,
+                skillAfter,
+                skillBefore,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }
@@ -140,6 +142,7 @@ export class SkillBuilder extends BaseBuilder {
     private _costElement: SkillCostType | undefined;
     private _anyCost: number = 0;
     private _energyCost: VersionMap<number> = new VersionMap();
+    private _isSpEnergy: boolean = false;
     private _handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined;
     private _perCnt: number = 0;
     private _src: string[] = [];
@@ -169,6 +172,11 @@ export class SkillBuilder extends BaseBuilder {
         this._energyCost.set([version, energy]);
         return this;
     }
+    burstSp(energy: number = 0, version: Version = 'vlatest') {
+        this.burst();
+        this.energy(energy, true, version);
+        return this;
+    }
     passive(isHide: boolean = false) {
         this._type = isHide ? SKILL_TYPE.PassiveHidden : SKILL_TYPE.Passive;
         return this;
@@ -183,8 +191,9 @@ export class SkillBuilder extends BaseBuilder {
         this._energyCost.set(['vlatest', -2]);
         return this;
     }
-    energy(energy: number) {
-        this._energyCost.set(['vlatest', energy]);
+    energy(energy: number, isSp: boolean = false, version: Version = 'vlatest') {
+        this._energyCost.set([version, energy]);
+        this._isSpEnergy = isSp;
         return this;
     }
     damage(damage: number, version: Version = 'vlatest') {
@@ -287,6 +296,7 @@ export class SkillBuilder extends BaseBuilder {
                 canSelectSummon: this._canSelectSummon,
                 canSelectHero: this._canSelectHero,
                 adt: this._addition,
+                spe: this._isSpEnergy,
             },
             this._src, this._handle);
     }
@@ -302,6 +312,7 @@ export class NormalSkillBuilder extends BaseBuilder {
     private _damage: number = 0;
     private _costElement: ElementType = ELEMENT_TYPE.Physical;
     private _energyCost: number = 0;
+    private _isSpEnergy: boolean = false;
     private _explains: string[] = [];
     private _builder: SkillBuilder;
     private _src: string[] = [
@@ -349,8 +360,9 @@ export class NormalSkillBuilder extends BaseBuilder {
         this._damage = damage;
         return this;
     }
-    energy(energy: number) {
+    energy(energy: number, isSp: boolean = false) {
         this._energyCost = energy;
+        this._isSpEnergy = isSp;
         return this;
     }
     handle(handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined)) {
@@ -377,7 +389,7 @@ export class NormalSkillBuilder extends BaseBuilder {
             .cost(1)
             .costAny(this._anyCost)
             .costElement(this._costElement)
-            .energy(this._energyCost)
+            .energy(this._energyCost, this._isSpEnergy)
             .damage(this._damage || (isCatalyst ? 1 : 2))
             .dmgElement(dmgElement)
             .perCnt(this._perCnt)

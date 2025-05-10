@@ -37,7 +37,8 @@ export class GIHero {
     };
     constructor(
         id: number, shareId: number, name: string, version: OnlineVersion, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
-        weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null, skills: GISkill[] = []
+        weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null,
+        skills: GISkill[] = [], maxEnergy: number = 0,
     ) {
         this.id = id;
         this.shareId = shareId;
@@ -58,7 +59,7 @@ export class GIHero {
             isActive: false,
         }
         this.skills.push(...skills);
-        this.maxEnergy = this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0;
+        this.maxEnergy = maxEnergy || (this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0);
         this.offlineVersion = offlineVersion;
     }
     get equipments(): Card[] {
@@ -70,6 +71,7 @@ export class GIHero {
 export class HeroBuilder extends BaseCostBuilder {
     private _tags: HeroTag[] = [];
     private _maxHp: VersionMap<number> = new VersionMap();
+    private _maxEnergy: number = 0;
     private _element: ElementType | undefined;
     private _weaponType: WeaponType = WEAPON_TYPE.Other;
     private _skills: SkillBuilder[] = [];
@@ -93,6 +95,10 @@ export class HeroBuilder extends BaseCostBuilder {
     maxHp(maxHp: number, ...version: Version[]) {
         if (version.length == 0) version = ['vlatest'];
         version.forEach(v => this._maxHp.set([v, maxHp]));
+        return this;
+    }
+    spMaxEnergy(maxEnergy: number) {
+        this._maxEnergy = -maxEnergy;
         return this;
     }
     monster() {
@@ -233,6 +239,7 @@ export class HeroBuilder extends BaseCostBuilder {
         if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType));
         return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
             maxHp, element, this._weaponType, this._src, this._avatar, this._offlineVersion,
-            skills.map((skill, skidx) => skill.costElement(element).id(this._id * 10 + skidx + 1).version(this._curVersion).done()));
+            skills.map((skill, skidx) => skill.costElement(element).id(this._id * 10 + skidx + 1).version(this._curVersion).done()),
+            this._maxEnergy);
     }
 }

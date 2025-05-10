@@ -173,8 +173,13 @@ export const getTalentIdByHid = (hid: number): number => {
     return +`2${hid}1`;
 }
 // 根据特技卡id获取特技技能id
-export const getVehicleIdByCid = (hid: number): number => {
-    return +`${hid}1`;
+export const getVehicleIdByCid = (cid: number): number => {
+    const SpecialCard: Record<number, number> = {
+        112142: 1121422,
+        313006: 3130063,
+        313009: 3130092,
+    };
+    return SpecialCard[cid] ?? +`${cid}1`;
 }
 
 // 合并预回血

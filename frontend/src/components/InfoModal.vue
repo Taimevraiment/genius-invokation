@@ -18,8 +18,9 @@
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" />
                 <span>{{ (info as Card).anydice }}</span>
               </div>
-              <div class="info-card-energy" v-if="(info as Card).energy > 0">
-                <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
+              <div class="info-card-energy" v-if="(info as Card).energy != 0">
+                <img class="cost-img"
+                  :src="getDiceIcon(ELEMENT_ICON[(info as Card).energy > 0 ? COST_TYPE.Energy : COST_TYPE.SpEnergy])" />
                 <span>{{ (info as Card).energy }}</span>
               </div>
               <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
@@ -83,8 +84,8 @@
                         CHANGE_BAD_COLOR : 'white'
                   }">
                     <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[cost.type])" />
-                    <span>{{ Math.max(cost.cnt - (type == INFO_TYPE.Skill && cidx < 2 ? (skill.costChange[cidx] as
-                      number) : 0), 0) }}</span>
+                    <span>{{ Math.max(Math.abs(cost.cnt) - (type == INFO_TYPE.Skill && cidx < 2 ?
+                      (skill.costChange[cidx] as number) : 0), 0) }}</span>
                   </div>
                 </div>
               </span>
@@ -360,7 +361,7 @@ const smnExplain = ref<any[]>([]); // 召唤物解释
 const ruleExplain = ref<any[]>([]); // 规则解释
 const isShowRule = ref<boolean>(false); // 是否显示规则
 
-const wrapedIcon = (el?: ElementColorKey, isDice = false) => {
+const wrapedIcon = (el?: ElementColorKey, isDice: boolean = false) => {
   if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == 'Heal') return '';
   let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni, DAMAGE_TYPE.Physical].some(v => v == el) ?
     isDice ? getPngIcon(ELEMENT_ICON[el] + '-dice-bg') : ELEMENT_URL[el as ElementType] :
@@ -402,7 +403,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
     })
     .replace(/(?<!\\)(\*?)〖(.+?)〗/g, wrapName)
     .replace(/(?<!\\)(\*?)【(.+?)】/g, wrapName)
-    .replace(/(?<!\\)(｢)(.*?)(｣)/g, (_, prefix: string, word: string, suffix: string) => {
+    .replace(/(?<!\\)(「)(.*?)(」)/g, (_, prefix: string, word: string, suffix: string) => {
       let icon = '';
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == word) ?? [];
       const [weapon] = objToArr(WEAPON_TYPE_NAME).find(([, name]) => name == word) ?? [];
@@ -459,12 +460,12 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   }
   return res;
 }
-// 变白色：【】｢｣
+// 变白色：【】「」
 // 下划线（有规则解释，如果可能前面会有图标）：[]
 // 解析名字并加入解释：〖〗【】
 // 有某些特殊颜色（如 冰/水/火/雷）：‹nxxx› n为1.字体元素颜色+前面的图标 2.直接用颜色#yyyyyy xxx为内容
 // 卡牌上一些实时信息：〔〕 [slot]只在装备栏时显示 [card]只在手牌中显示 [support]只在支援物中显示
-// 一些参考括号类型｢｣﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
+// 一些参考括号类型「」﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
 const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {
   const container: string[][] = [];
@@ -490,13 +491,13 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
           `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
             <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
             <span>${expl.cost}</span>
-          </div>`:
-          `${expl.cost.filter(c => c.cnt > 0).map(c => {
-            return `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
+          </div>`: isNotTransparent.value ?
+            `${expl.cost.filter(c => c.cnt > 0).map(c => {
+              return `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
               <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
               <span>${c.cnt}</span>
             </div>`
-          }).join('')}`
+            }).join('')}` : ''
         }
         </div>`
       );
@@ -544,7 +545,7 @@ const getPngIcon = (name: string, isUseOnlineSrc: boolean = false) => {
     }
     return newSkill(version.value)(+name.slice(3)).UI.src ?? '';
   }
-  if (name == 'energy') name += '-dice-bg';
+  if (name.includes('energy')) name += '-dice-bg';
   return `/image/${name}.png`;
 }
 
@@ -657,7 +658,7 @@ const showRule = (...desc: string[]) => {
   user-select: none;
   pointer-events: none;
   gap: 2px;
-  font-family: HYWenHei;
+  font-family: HYWH;
 }
 
 [class$="-desc"],
@@ -709,7 +710,6 @@ const showRule = (...desc: string[]) => {
   font-size: medium;
   display: inline-block;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
 }
 
 .cost-img {
@@ -741,7 +741,6 @@ const showRule = (...desc: string[]) => {
   color: white;
   display: inline-block;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
 }
 
 .info-card-energy>span,
@@ -790,7 +789,6 @@ const showRule = (...desc: string[]) => {
 
 .hero-hp-cnt {
   position: absolute;
-  font-family: HYWenHeiNumber;
   width: 100%;
   height: 100%;
   text-align: center;
@@ -902,7 +900,6 @@ const showRule = (...desc: string[]) => {
   color: white;
   background: #000000ae;
   border-radius: 50%;
-  font-family: HYWenHeiNumber;
 }
 
 .info-hero-skill-desc,
@@ -999,7 +996,6 @@ svg {
   align-items: center;
   color: white;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
 }
 
 .info-outer-container>.info-container .skill-cost>.cost-img {

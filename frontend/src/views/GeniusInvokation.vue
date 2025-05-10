@@ -629,7 +629,7 @@ body {
   position: relative;
   user-select: none;
   overflow: hidden;
-  font-family: HYWenHei;
+  font-family: HYWH;
 }
 
 .player-info {
@@ -798,7 +798,6 @@ body {
   color: white;
   font-size: medium;
   -webkit-text-stroke: 1px black;
-  font-family: HYWenHeiNumber;
 }
 
 .cost-img {
@@ -823,7 +822,7 @@ body {
 }
 
 .menu button {
-  font-family: HYWenHei;
+  font-family: HYWH;
 }
 
 .start {
@@ -1129,7 +1128,6 @@ body {
   flex-direction: row;
   align-items: center;
   z-index: 6;
-  font-family: HYWenHeiNumber;
 }
 
 .lookon-count>img {
