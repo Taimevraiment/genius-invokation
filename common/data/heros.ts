@@ -261,7 +261,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .skills(
             new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点「夜魂值」。生成1点【sts111142】和【sts111143】。（角色进入【sts112141】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Citlali_01.webp')
-                .elemental().damage(1).cost(3).handle(() => ({ status: [[111141, 1], 111142, 111143] })),
+                .elemental().damage(1).cost(3).handle(({ hero: { heroStatus } }) => ({
+                    status: [[111141, 1], 111142, 111143],
+                    isForbidden: hasObjById(heroStatus, 111141),
+                })),
             new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并获得2点「夜魂值」。')
                 .src('/image/tmp/Skill_E_Citlali_01.webp')
                 .burst(2).damage(2).cost(3).handle(({ cmds }) => (cmds.getStatus([[111141, 2]]), { pdmg: 1 })),
@@ -1095,7 +1098,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，我方切换到下一个角色。自身附属【sts114132】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/4bf73369fa5d88135d922835143cd6af_1465120113594108114.png')
-                .elemental().cost(2).handle(({ cmds }) => (cmds.switchAfter(), { isAttachOppo: true, status: 114132 })),
+                .elemental().cost(2).handle(({ skillAfter }) => (skillAfter.switchAfter(), { isAttachOppo: true, status: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/beeb23fb35fe9eb3733358e0bab70841_6737855537393504262.png')

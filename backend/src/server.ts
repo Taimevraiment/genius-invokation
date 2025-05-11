@@ -322,6 +322,7 @@ io.on('connection', socket => {
 });
 
 app.get('/detail', (req, res) => {
+    if (serverSecretKey == 'wrong') return console.info(`获取serverSecretKey失败`);
     if (req.headers.flag != serverSecretKey) return console.info(`[${new Date()}]请求失败，headers:${JSON.stringify(req.headers)}`);
     res.json({
         roomList: roomList.map(r => ({

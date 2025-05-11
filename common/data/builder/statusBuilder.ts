@@ -79,7 +79,7 @@ export class GIStatus {
         this.addition = adt;
         let thandle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
-            this.UI.icon = STATUS_ICON.Shield;
+            this.UI.icon ||= STATUS_ICON.Shield;
             thandle = (status, event) => {
                 let { restDmg = -1 } = event;
                 let rest: StatusBuilderHandleRes = {};
@@ -179,8 +179,8 @@ export class GIStatus {
         if (nrcnt < 0) throw new Error(`${this.name}(${this.entityId}).roundCnt < 0`);
         this.roundCnt = nrcnt;
     }
-    dispose(isOnlyRoundCnt: boolean = false): void {
-        if (!isOnlyRoundCnt) this.useCnt = 0;
+    dispose(): void {
+        this.useCnt = 0;
         this.roundCnt = 0;
     }
 }

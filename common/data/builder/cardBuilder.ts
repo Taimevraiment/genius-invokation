@@ -92,19 +92,27 @@ export class GICard {
             this.UI.description += `；（角色最多装备1个「特技」）`;
             this.UI.explains.push(vehicle);
             const ohandle = handle;
-            const destroyTriggers: Trigger[] = ['action-after', 'action-start', 'action-start-oppo'];
+            const destroyTriggers: Trigger[] = ['action-start', 'action-start-oppo'];
             if (isUseNightSoul) {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver);
-                    const { hero, combatStatus, trigger = '', execmds } = event;
+                    const { hero, combatStatus, trigger = '', execmds, cmds } = event;
                     if (!hero) return res;
                     const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return res;
                     if (trigger == 'slot-destroy') {
-                        return { triggers: 'slot-destroy', exec: () => nightSoul.dispose(true) }
+                        if (!res?.triggers?.includes('slot-destroy')) {
+                            cmds.clear();
+                            execmds.clear();
+                        }
+                        return { triggers: 'slot-destroy', exec: () => nightSoul.dispose() }
                     }
                     if (destroyTriggers.includes(trigger) && !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 0) {
-                        return { triggers: destroyTriggers, isDestroy: true, exec: () => nightSoul.dispose(true) }
+                        if (!res?.triggers?.includes(trigger)) {
+                            cmds.clear();
+                            execmds.clear();
+                        }
+                        return { triggers: destroyTriggers, isDestroy: true, exec: () => nightSoul.dispose() }
                     }
                     execmds.consumeNightSoul(hero.hidx);
                     return res;

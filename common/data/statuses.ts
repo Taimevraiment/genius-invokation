@@ -6,7 +6,7 @@ import {
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { NULL_STATUS } from "../constant/init.js";
-import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY, STATUS_ICON } from "../constant/UIconst.js";
+import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, SKILL_TYPE_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY, STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getMinHpHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
@@ -124,7 +124,7 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
 const readySkillStatus = (name: string, skill: number, shieldStatusId: number = 0, exec?: (event: StatusBuilderHandleEvent) => void) => {
     return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.Special).useCnt(1)
         .type(STATUS_TYPE.ReadySkill).type(shieldStatusId >= 0, STATUS_TYPE.Sign)
-        .description(`本角色将在下次行动时，直接使用技能：【${skill == SKILL_TYPE.Normal ? '普攻攻击' : `rsk${skill}`}】。`)
+        .description(`本角色将在下次行动时，直接使用技能：【${skill < 5 ? SKILL_TYPE_NAME[skill as SkillType] : `rsk${skill}`}】。`)
         .handle((status, event) => ({
             triggers: ['switch-from', 'useReadySkill'],
             skill,
@@ -554,7 +554,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
         .description('【我方受到伤害时：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
         .handle((status, event) => {
-            const { trigger, heros, cmds, source = -1 } = event;
+            const { trigger, heros, cmds, source = -1, isExecTask } = event;
             const hero = getObjById(heros, getHidById(status.id));
             if (!hero) return;
             const nightSoul = getObjById(hero.heroStatus, 111141);
@@ -562,10 +562,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (trigger == 'getdmg') {
                 if (nightSoul.useCnt == 0) return;
                 cmds.consumeNightSoul(hero.hidx).getStatus(111142);
-                return { triggers: 'getdmg' }
+                return { triggers: 'getdmg', isAddTask: true }
             }
-            if (trigger == 'get-status' && source == nightSoul.id && nightSoul.useCnt == 2) {
-                return { damage: 1, element: DAMAGE_TYPE.Cryo }
+            if (trigger == 'get-status' && source == nightSoul.id && (!isExecTask || nightSoul.useCnt == 2)) {
+                return { triggers: 'get-status', damage: 1, element: DAMAGE_TYPE.Cryo }
             }
         }),
 
@@ -1280,7 +1280,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (sktype == SKILL_TYPE.Vehicle) return;
             cmds.getEnergy(1, { hidxs: hidx });
             return {
-                triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
+                triggers: 'elReaction-Electro',
                 isAddTask: true,
                 exec: eStatus => eStatus?.minusUseCnt(),
             }
@@ -1464,7 +1464,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('角色进行「普通攻击」时：此技能视为[下落攻击]，并且伤害+1。技能结算后，造成1点[风元素伤害]。；[useCnt]')
         .handle((_, event) => {
-            const { sktype = -1, trigger = '' } = event;
+            const { sktype = SKILL_TYPE.Vehicle, trigger = '' } = event;
             if (trigger == 'enter' || (['skill', 'vehicle', 'card'].includes(trigger) && sktype != SKILL_TYPE.Normal)) {
                 return { triggers: [trigger], isFallAtk: true }
             }
@@ -1628,7 +1628,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
-                triggers: 'elReaction-Dendro',
+                triggers: ['elReaction-Dendro', 'other-elReaction-Dendro'],
                 exec: eStatus => { eStatus?.minusUseCnt() },
             }
         }),
@@ -1674,7 +1674,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { trigger, heros = [], eheros = [] } = event;
             return {
-                triggers: ['elReaction', 'enter'],
+                triggers: ['elReaction', 'other-elReaction', 'enter'],
                 addDmgCdt: 1,
                 exec: () => {
                     if (!status.isTalent || heros.every(h => h.element != ELEMENT_TYPE.Electro) || trigger != 'enter') return;
@@ -2826,7 +2826,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合中，我方下一次引发元素反应时，造成的伤害+2。')
         .handle(status => ({
             addDmgCdt: 2,
-            triggers: 'elReaction',
+            triggers: ['elReaction', 'other-elReaction'],
             exec: () => { status.minusUseCnt() },
         })),
 
@@ -3065,8 +3065,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle((_, event) => {
             const { hidx = -1, sourceHidx = -1, cmds } = event;
             if (hidx == sourceHidx) return;
-            cmds.getStatus(303242);
-            return { triggers: 'ready-skill', exec: eStatus => { eStatus?.minusUseCnt() } }
+            cmds.getStatus(303242, { hidxs: hidx });
+            return { triggers: 'ready-skill', isAddTask: true, exec: eStatus => { eStatus?.minusUseCnt() } }
         }),
 
     303242: () => new StatusBuilder('健身的成果（生效中）').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).type(STATUS_TYPE.Usage)
@@ -3225,9 +3225,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303322: () => new StatusBuilder('丰稔之赐（生效中）').heroStatus().useCnt(2).icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage)
         .description('【该角色[准备技能]时：】治疗自身1点。；[useCnt]')
         .handle((_, event) => {
-            const { hidx = -1, sourceHidx = -1, cmds } = event;
-            if (hidx != sourceHidx) return;
-            cmds.heal(1);
+            const { hidx = -1, sourceHidx = -1, cmds, isExecTask } = event;
+            if (hidx != sourceHidx && !isExecTask) return;
+            cmds.heal(1, { hidxs: hidx });
             return { triggers: 'ready-skill', exec: eStatus => { eStatus?.minusUseCnt() } }
         }),
 

@@ -117,6 +117,8 @@ type StatusTask = {
     trigger: Trigger, // 触发条件
     hidx: number, // 攻击者hidx
     skid: number, // 引起协同攻击的技能id -1为切换角色
+    sktype?: SkillType, // 引起协同攻击的技能类型
+    atkHidx?: number,// 攻击角色hidx
     isQuickAction?: boolean, // 是否为快速行动
     discards?: Card[], // 舍弃的牌
     hcard?: Card, // 调和或使用的牌

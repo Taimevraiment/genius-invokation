@@ -283,7 +283,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle || card.perCnt <= 0) return { addDmg: 1 }
-            return { addDmg: 1, addDmgCdt: 1, triggers: 'elReaction', exec: () => card.minusPerCnt() }
+            return { addDmg: 1, addDmgCdt: 1, triggers: ['elReaction', 'other-elReaction'], exec: () => card.minusPerCnt() }
         }),
 
     311105: () => new CardBuilder(125).name('盈满之实').since('v3.8.0').weapon().costAny(3)
@@ -716,7 +716,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { sktype = SKILL_TYPE.Vehicle, hero, execmds } = event;
             if (card.perCnt <= 0 || sktype == SKILL_TYPE.Vehicle) return;
             execmds.getDice(1, { element: hero?.element });
-            return { triggers: 'elReaction', exec: () => card.minusPerCnt() }
+            return { triggers: ['elReaction', 'other-elReaction'], exec: () => card.minusPerCnt() }
         }),
 
     312006: () => new CardBuilder(153).name('流放者头冠').relic().costAny(2).perCnt(1)
@@ -1980,9 +1980,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('牌数小于4的牌手抓牌，直到手牌数各为4张。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/31/183046623/d5a778eb85b98892156d269044c54147_5022722922597227063.png')
         .handle((_, event) => {
-            const { hcards: { length: hcardsCnt } = [], ehcardsCnt = 0, cmds } = event;
-            if (hcardsCnt < 5) cmds.getCard(4 - hcardsCnt);
-            if (ehcardsCnt < 4) cmds.getCard(4 - ehcardsCnt, { isOppo: true });
+            const { cmds } = event;
+            cmds.getCard(4, { until: true }).getCard(4, { isOppo: true, until: true });
             return { isValid: cmds.length > 0 }
         }),
 
@@ -2164,12 +2163,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('随机[舍弃]至多2张原本元素骰费用最高的手牌，随后抓牌直至手牌中有4张牌。；【此牌在手牌被[舍弃]后：】抓1张牌。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_RongyiLong.webp')
         .handle((_, event) => {
-            const { cmds, hcardsCnt = 0, trigger } = event;
+            const { cmds, trigger } = event;
             if (trigger == 'discard') {
                 cmds.getCard(1);
                 return { triggers: 'discard' }
             }
-            cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(4 - Math.max(0, hcardsCnt - 2));
+            cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(4, { until: true });
         }),
 
     332048: () => new CardBuilder(490).name('健身的成果').since('v5.7.0').event().costSame(0).canSelectHero(1)
@@ -2658,7 +2657,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
     213151: () => new CardBuilder(481).name('人之命，解放！').since('v5.7.0').talent().costPyro(1)
-        .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。；〕【我方打出特技牌后：】若可能，【hro】回复1点「夜魂值」。')
+        .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。〕；【我方打出特技牌后：】若可能，【hro】回复1点「夜魂值」。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mavuika.webp')
         .handle((_, event) => {
             const { hcard, hero, cmds, execmds } = event;
@@ -2785,7 +2784,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214131: () => new CardBuilder(471).name('巡日塔门书').since('v5.6.0').talent().costElectro(1).perCnt(1)
-        .description('〔*[card]我方【hro】获得1点[充能]。；〕我方【hro】因【ski,3】扣除[充能]后，获得1点[充能]。（每回合1次）')
+        .description('〔*[card]我方【hro】获得1点[充能]。〕；我方【hro】因【ski,3】扣除[充能]后，获得1点[充能]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/c76d4ed584fd2bbc82310df761039167_284204024608898385.png')
         .handle((card, event) => {
             const { cmds, execmds, hero, source = -1 } = event;
@@ -3376,12 +3375,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
 
     113154: () => new CardBuilder().name('驰轮车·跃升').vehicle().userType().costAny(3)
-        .description('〔*[card]【此牌在手牌中被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。；〕{vehicle}；（仅【hro】可用）')
+        .description('〔*[card]【此牌在手牌中被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。〕；{vehicle}；（仅【hro】可用）')
         .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sky_-1882047076')
         .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
 
     113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costSame(1)
-        .description('〔*[card]【此卡牌被打出时：】随机触发我方个「召唤物」的「结束阶段」效果。；〕{vehicle}；（仅【hro】可用）')
+        .description('〔*[card]【此卡牌被打出时：】随机触发我方个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')
         .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sea_-1664946792')
         .handle((_, event) => {
             const { summons = [], cmds, randomInt } = event;
@@ -3391,7 +3390,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costAny(2)
-        .description('〔*[card]【此卡牌可使用次数为0时：】抓4张牌。；〕{vehicle}；（仅【hro】可用）')
+        .description('〔*[card]【此卡牌可使用次数为0时：】抓4张牌。〕；{vehicle}；（仅【hro】可用）')
         .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Land_528121626')
         .handle((_, event) => {
             const { trigger, execmds } = event;

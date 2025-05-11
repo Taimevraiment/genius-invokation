@@ -381,7 +381,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；【此召唤物在场时：】如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png')
         .handle((summon, event) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             const changeElTrgs = ['-dmg', '-dmg-Swirl'].map(t => ELEMENT_TYPE[summon.element] + t) as Trigger[];
             if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
@@ -394,7 +394,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 exec: execEvent => {
                     const { summon: smn = summon, cmds } = execEvent;
                     if (trigger == 'phase-end') return smn.phaseEndAtk(event, cmds).res;
-                    if (trigger.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
+                    if (trigger?.startsWith('elReaction-Anemo:') && smn.element == ELEMENT_TYPE.Anemo) {
                         smn.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
                     }
                 }

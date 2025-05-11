@@ -169,7 +169,10 @@
           <div class="hero-energys" v-if="hero && hero.hp >= 0">
             <div v-for="(_, eidx) in Math.abs(hero.maxEnergy) / (hero.maxEnergy >= 0 ? 1 : 2)" :key="eidx"
               class="hero-energy" :class="{ 'mobile-energy': isMobile }">
-              <img class="hero-energy-img" :src="getEnergyIcon(false, hero.maxEnergy < 0)">
+              <img class="hero-energy-img" :src="getEnergyIcon(
+                hero.maxEnergy < 0 && Math.abs(hero.energy) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx,
+                hero.maxEnergy < 0
+              )">
               <img class="hero-energy-img" :class="{
                 blink: (Math.abs(hero.energy) - 1 < eidx && Math.abs(hero.energy) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx) ||
                   (Math.abs(hero.energy) + (hero.maxEnergy / 2) - 1 < eidx && Math.abs(hero.energy) + (energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx)
@@ -1221,6 +1224,10 @@ button:active {
 .blink {
   --blink-opacity: 0.5;
   animation: blink 1s linear infinite alternate;
+}
+
+.hero-energy-img.blink {
+  --blink-opacity: 0.2;
 }
 
 .hero-img.blink {

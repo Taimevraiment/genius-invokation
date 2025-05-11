@@ -789,7 +789,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 西尔弗和迈勒斯
     322023: () => new SupportBuilder().collection().handle((support, event) => {
-        const { trigger = '', playerInfo: { oppoGetElDmgType = 0 } = {}, isExecTask } = event;
+        const { trigger, playerInfo: { oppoGetElDmgType = 0 } = {}, isExecTask } = event;
         if (trigger == 'enter') {
             support.cnt = Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
             return;
@@ -800,7 +800,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         });
         if (support.cnt >= 4) triggers.length = 0;
         if (support.cnt >= 3) triggers.push('phase-end');
-        const [el] = objToArr(PURE_ELEMENT_TYPE_KEY).find(([, elname]) => elname == trigger.slice(0, trigger.indexOf('-getdmg-oppo'))) ?? [];
+        const [el] = objToArr(PURE_ELEMENT_TYPE_KEY).find(([, elname]) => elname == trigger?.slice(0, trigger.indexOf('-getdmg-oppo'))) ?? [];
         return {
             triggers: triggers,
             supportCnt: isCdt(el && (oppoGetElDmgType >> PURE_ELEMENT_CODE[el] & 1) == 0, 1),
@@ -809,7 +809,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     cmds.getCard(spt.cnt);
                     return { isDestroy: true }
                 }
-                if (trigger.endsWith('-getdmg-oppo')) spt.cnt = Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
+                if (trigger?.endsWith('-getdmg-oppo')) spt.cnt = Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
             }
         }
     }),

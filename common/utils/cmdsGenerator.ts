@@ -36,9 +36,9 @@ export default class CmdsGenerator {
     getCard(cnt: number, options: {
         subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[],
         card?: Card | (Card | number)[] | number, exclude?: number[], include?: number[],
-        isOppo?: boolean, isFromPile?: boolean,
+        isOppo?: boolean, isFromPile?: boolean, until?: boolean,
     } = {}) {
-        const { subtype, cardTag, card, exclude, include, isOppo, isFromPile } = options;
+        const { subtype, cardTag, card, exclude, include, isOppo, isFromPile, until } = options;
         this.value.push({
             cmd: 'getCard',
             cnt,
@@ -48,6 +48,7 @@ export default class CmdsGenerator {
             hidxs: isCdt(subtype || cardTag, exclude, include),
             isOppo,
             isAttach: isCdt(card || subtype || cardTag, isFromPile),
+            mode: +!!until,
         });
         return this;
     }
