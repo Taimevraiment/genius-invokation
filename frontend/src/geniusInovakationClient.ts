@@ -165,18 +165,19 @@ export default class GeniusInvokationClient {
         if (fhero == undefined) return [];
         const skills = [...fhero.skills];
         if (fhero.vehicleSlot) skills.unshift(fhero.vehicleSlot[1]);
+        const energy = Math.max(0, fhero.energy);
         return skills.filter(skill => skill.type != SKILL_TYPE.Passive).map(skill => {
             const elColor = ELEMENT_COLOR[skill.type == SKILL_TYPE.Vehicle ? fhero.element : skill.cost[0].type];
-            const energyPer = fhero.energy / skill.cost[2].cnt * 100;
+            const energyPer = energy / skill.cost[2].cnt * 100;
             const isValid = !!this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skill.id)?.isValid;
             return {
                 ...skill,
                 isForbidden: skill.isForbidden || this.isLookon > -1 || !this.canAction || !isValid,
                 CurrCnts: skill.cost.map((cost, cidx) => [cost.cnt, Math.max(cost.cnt - (cidx < 2 ? (skill.costChange[cidx] as number) : 0), 0)])
                     .filter(([c]) => c).map(([, c]) => c),
-                isNotFullEnergy: skill.cost[2].cnt > 0 && fhero.energy < skill.cost[2].cnt,
+                isNotFullEnergy: skill.cost[2].cnt > 0 && energy < skill.cost[2].cnt,
                 style: {
-                    fullEnergy: skill.cost[2].cnt > 0 && fhero.energy >= skill.cost[2].cnt ? `0px 0px 10px 5px ${elColor}` : '',
+                    fullEnergy: skill.cost[2].cnt > 0 && energy >= skill.cost[2].cnt ? `0px 0px 10px 5px ${elColor}` : '',
                     notFullEnergy: `linear-gradient(to top, ${elColor} 0%, ${elColor} ${energyPer}%, transparent ${energyPer}%, transparent 100%)`,
                     costColors: skill.cost.map((cost, cidx) => ({
                         cnt: cost.cnt,

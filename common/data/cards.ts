@@ -2872,7 +2872,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0').talent().event().costAnemo(1)
+    215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0').talent().event().costAnemo(1).canSelectHero(0)
         .description('将一张【crd115113】加入手牌。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chasca.webp')
         .handle((_, { cmds }) => cmds.getCard(1, { card: 115113 }).res),
@@ -3377,7 +3377,7 @@ const allCards: Record<number, () => CardBuilder> = {
     113154: () => new CardBuilder().name('驰轮车·跃升').vehicle().userType().costAny(3)
         .description('〔*[card]【此牌在手牌中被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。〕；{vehicle}；（仅【hro】可用）')
         .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sky_-1882047076')
-        .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
+        .handle((_, { cmds, slotUse }) => (!slotUse && cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: ['discard', 'vehicle'] })),
 
     113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costSame(1)
         .description('〔*[card]【此卡牌被打出时：】随机触发我方个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')
@@ -3387,6 +3387,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (randomInt && summons.length) {
                 cmds.summonTrigger(randomInt(summons.length - 1));
             }
+            return { triggers: 'vehicle' }
         }),
 
     113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costAny(2)
@@ -3395,6 +3396,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { trigger, execmds } = event;
             if (trigger == 'slot-destroy') execmds.getCard(4);
+            return { triggers: 'vehicle' }
         }),
 
     114031: () => new CardBuilder().name('雷楔').talent().event(true).costElectro(3)
@@ -3419,16 +3421,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。')
         .src('tmp/UI_Gcg_CardFace_Summon_Chasca_Wind_-1066976300')
         .handle((card, event) => {
-            const { hero, execmds, cmds, trigger } = event;
+            const { hero, execmds, cmds } = event;
             if (!hero) return;
-            if (trigger == 'getcard') {
-                const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
-                if (!ncardId) return;
-                execmds.convertCard(card.entityId, ncardId);
-                return { triggers: trigger }
-            }
+            const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
+            if (ncardId) execmds.convertCard(card.entityId, ncardId);
             cmds.attack(1, DAMAGE_TYPE.Anemo).addCard(1, 115113);
-            return { triggers: 'discard' }
+            return { triggers: ['discard', 'getcard'] }
         }),
 
     115114: () => hero1511card(ELEMENT_TYPE.Pyro).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Fire_1813918232'),

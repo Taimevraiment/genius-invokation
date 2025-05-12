@@ -179,7 +179,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1131541: () => new SkillBuilder('跃升').description('消耗1点「夜魂值」，{dealDmg}。')
         .src('/image/tmp/Skill_Vehicle_Mavuika2_-899064990.png')
-        .vehicle().damage(4).costAny(1),
+        .vehicle().damage(4).costAny(1).handle(({ skillAfter, hero: { hidx } }) => skillAfter.consumeNightSoul(hidx).res),
 
     1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将1个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
         .src('/image/tmp/Skill_Vehicle_Mavuika3_789405650.png')
@@ -195,8 +195,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，随机[舍弃]3张原本元素骰费用最高的手牌，然后{dealDmg}。')
         .src('/image/tmp/Skill_Vehicle_Chasca_-159040159.png')
-        .vehicle().damage(1).cost(2).handle(({ skillAfter, hero: { hidx } }) => {
-            skillAfter.consumeNightSoul(hidx).discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
+        .vehicle().damage(1).cost(2).handle(event => {
+            const { skillAfter, skillBefore, hero: { hidx } } = event;
+            skillBefore.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
+            skillAfter.consumeNightSoul(hidx);
         }),
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')

@@ -551,7 +551,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1'),
 
     111143: () => new StatusBuilder('伊兹帕帕').combatStatus().roundCnt(2)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
         .description('【我方受到伤害时：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
         .handle((status, event) => {
             const { trigger, heros, cmds, source = -1, isExecTask } = event;
@@ -564,8 +564,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 cmds.consumeNightSoul(hero.hidx).getStatus(111142);
                 return { triggers: 'getdmg', isAddTask: true }
             }
-            if (trigger == 'get-status' && source == nightSoul.id && (!isExecTask || nightSoul.useCnt == 2)) {
-                return { triggers: 'get-status', damage: 1, element: DAMAGE_TYPE.Cryo }
+            if (trigger == 'getNightSoul' && (isExecTask || (source == nightSoul.id && nightSoul.useCnt == 2))) {
+                cmds.consumeNightSoul(hero.hidx, 2);
+                return { triggers: 'getNightSoul', damage: 1, element: DAMAGE_TYPE.Cryo }
+            }
+            if (status.roundCnt == 1) {
+                return { triggers: 'turn-end', exec: () => nightSoul.dispose() }
             }
         }),
 
@@ -1087,7 +1091,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (hidx == hid) return;
             cmds.consumeNightSoul(getObjById(heros, hid)?.hidx);
             return {
-                triggers: ['after-skill', 'vehicle'],
+                triggers: ['skill', 'vehicle'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
             }
@@ -1491,7 +1495,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     115118: () => new StatusBuilder('我方执行切换角色行动时抓1张牌').combatStatus().useCnt(3).icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage)
         .description('【我方执行「切换角色」行动时：】抓1张牌。；[useCnt]')
         .handle((_, event) => ({
-            triggers: 'active-switch',
+            triggers: 'active-switch-from',
+            isAddTask: true,
             exec: eStatus => {
                 eStatus?.minusUseCnt();
                 event.cmds.getCard(1);

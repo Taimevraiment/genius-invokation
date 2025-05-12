@@ -271,10 +271,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('奥秘传唱').description('【我方进行[挑选]或触发元素反应后：】获得1点「夜魂值」。（每回合2次）')
                 .src('/image/tmp/UI_Talent_S_Mavuika_08.webp')
                 .passive().handle(event => {
-                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus }, cmds } = event;
+                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds } = event;
                     const nightSoul = getObjById(heroStatus, 111141);
                     if (useCntPerRound > 1 || !nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
-                    cmds.getStatus([[nightSoul.id, 1]]);
+                    cmds.getStatus([[nightSoul.id, 1]], { hidxs: hidx });
                     return { triggers: ['pick', 'elReaction', 'other-elReaction'] }
                 })
         ),

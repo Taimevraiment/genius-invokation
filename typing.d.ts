@@ -209,7 +209,8 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'consumeNightSoul' | 'pre-consumeNightSoul' | 'ready-skill' | '';
+    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'consumeNightSoul' | 'pre-consumeNightSoul' |
+    'getNightSoul' | 'ready-skill' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

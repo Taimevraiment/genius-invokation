@@ -124,7 +124,7 @@ export class GICard {
                     if (destroyTriggers.includes(trigger) && card.useCnt == 0) {
                         return { triggers: destroyTriggers, isDestroy: true }
                     }
-                    if (event.trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
+                    if (trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
                     return {
                         triggers: 'vehicle',
                         exec: () => {

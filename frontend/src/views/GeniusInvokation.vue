@@ -151,8 +151,9 @@
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
           <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop="useSkill(skill.id, true)"></div>
         </div>
-        <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx"
-          :style="{ color: skill.style.costColors[cidx] }">
+        <div class="skill-cost"
+          v-for="(cost, cidx) in skill.cost.every(c => c.cnt <= 0) ? skill.cost.slice(0, 1) : skill.cost.filter(c => c.cnt > 0)"
+          :key="cidx" :style="{ color: skill.style.costColors[cidx] }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[cost.type])" draggable="false" />
           <span style="z-index: 1">{{ skill.CurrCnts[cidx] }}</span>
         </div>
