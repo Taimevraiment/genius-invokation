@@ -285,9 +285,13 @@ const continuousActionHandle = (status: Status, event: StatusHandleEvent): Statu
     }
 }
 
-const nightSoul = (cnt: number = 0) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
+const nightSoul = (cnt: number = 0, isAccumate: boolean = true) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
     .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage, STATUS_TYPE.NightSoul)
-    .description('所附属角色可累积「夜魂值」。（最多累积到2点）');
+    .description(`所附属角色可累积「夜魂值」。（最多累积到2点）${isAccumate ? '' : '；「夜魂值」为0时，退出【夜魂加持】状态。'}`)
+    .handle(status => {
+        if (status.useCnt > 0 || isAccumate) return;
+        return { triggers: ['action-start', 'action-start-oppo'], exec: () => status.dispose() }
+    });
 
 const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
@@ -1069,29 +1073,30 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'getdmg', cmds, exec: () => { status.minusUseCnt(hidxs.length) } }
         }),
 
-    113151: nightSoul,
+    113151: (cnt?: number) => nightSoul(cnt, false),
 
     113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方全体角色的技能不消耗「夜魂值」。；我方全体角色「普通攻击」造成的伤害+1。；[useCnt]')
         .handle(status => ({
-            triggers: 'pre-consumeNightSoul',
+            triggers: ['skilltype1', 'pre-consumeNightSoul'],
             isInvalid: true,
-            addDmgType1: 1,
+            addDmgCdt: 1,
             exec: () => { status.minusUseCnt() }
         })),
 
     113153: () => new StatusBuilder('诸火武装·焚焰之环').combatStatus().icon('ski,1').type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
         .description('【我方其他角色使用技能或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出夜魂态后销毁）')
         .handle((status, event) => {
-            const { hidx = -1, heros, cmds, trigger, source = -1 } = event;
+            const { hidx = -1, heros = [], cmds, trigger, source = -1 } = event;
             if (trigger == 'status-destroy' && source == 113151) {
                 return { triggers: trigger, exec: () => status.dispose() }
             }
             const hid = getHidById(status.id);
-            if (hidx == hid) return;
+            const hero = heros[hidx];
+            if (!hero || hero.id == hid) return;
             cmds.consumeNightSoul(getObjById(heros, hid)?.hidx);
             return {
-                triggers: ['skill', 'vehicle'],
+                triggers: ['after-skill', 'after-skilltype5'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
             }

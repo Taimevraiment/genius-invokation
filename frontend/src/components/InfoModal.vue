@@ -78,11 +78,13 @@
               <span class="info-skill-costs">
                 <div>{{ skill.name }}</div>
                 <div>
-                  <div class="skill-cost" v-for="(cost, cidx) in skill.cost.filter(c => c.cnt > 0)" :key="cidx" :style="{
-                    color: type == INFO_TYPE.Skill && cidx < 2 && (skill.costChange[cidx] as number) > 0 ?
-                      CHANGE_GOOD_COLOR : type == INFO_TYPE.Skill && cidx < 2 && (skill.costChange[cidx] as number) < 0 ?
-                        CHANGE_BAD_COLOR : 'white'
-                  }">
+                  <div class="skill-cost"
+                    v-for="(cost, cidx) in skill.type != SKILL_TYPE.Passive && skill.cost.every(c => c.cnt <= 0) ? skill.cost.slice(0, 1) : skill.cost.filter(c => c.cnt > 0)"
+                    :key="cidx" :style="{
+                      color: type == INFO_TYPE.Skill && cidx < 2 && (skill.costChange[cidx] as number) > 0 ?
+                        CHANGE_GOOD_COLOR : type == INFO_TYPE.Skill && cidx < 2 && (skill.costChange[cidx] as number) < 0 ?
+                          CHANGE_BAD_COLOR : 'white'
+                    }">
                     <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[cost.type])" />
                     <span>{{ Math.max(Math.abs(cost.cnt) - (type == INFO_TYPE.Skill && cidx < 2 ?
                       (skill.costChange[cidx] as number) : 0), 0) }}</span>
@@ -100,7 +102,7 @@
           <div v-if="isShowSkill[sidx]"
             @click.stop="showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
             <div class="info-hero-skill-explain"
-              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx + +(skills[0].type == SKILL_TYPE.Vehicle)]"
+              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx + +(type != INFO_TYPE.Card && skills[0].type == SKILL_TYPE.Vehicle)]"
               :key="eidx">
               <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
             </div>
@@ -485,14 +487,14 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
     if ('cost' in expl) { // Card/Skill
       explains.push(
         `<div style="display:flex;align-items:center;">
-          ${isNotTransparent.value ? `<img src="${expl.UI.src.startsWith('http') ? expl.UI.src : getPngIcon(expl.id.toString(), true)}" style="${cardStyle}"/>` : ''}
+          ${isNotTransparent.value ? `<img src="${expl.UI.src.startsWith('http') || expl.UI.src.includes('tmp') ? expl.UI.src : getPngIcon(expl.id.toString(), true)}" style="${cardStyle}"/>` : ''}
           ${nameEl}
           ${'costType' in expl ?
           `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
             <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
             <span>${expl.cost}</span>
           </div>`: isNotTransparent.value ?
-            `${expl.cost.filter(c => c.cnt > 0).map(c => {
+            `${expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0).map(c => {
               return `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
               <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
               <span>${c.cnt}</span>
@@ -501,10 +503,10 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
         }
         </div>`
       );
-    } else {
+    } else { // Status/Summon
       explains.push(
         `<div div style="display:flex;align-items:center;">
-          ${isNotTransparent.value ? `<img src="${getPngIcon(expl.id.toString(), true)}" style="${'group' in expl ? statusStyle : cardStyle}"/>` : ''}
+          ${isNotTransparent.value ? `<img src="${'src' in expl.UI && (expl.UI.src.startsWith('http') || expl.UI.src.includes('tmp')) ? expl.UI.src : 'icon' in expl.UI && (expl.UI.icon.startsWith('http') || expl.UI.icon.includes('tmp')) ? expl.UI.icon : getPngIcon(expl.id.toString(), true)}" style="${'group' in expl ? statusStyle : cardStyle}"/>` : ''}
           ${nameEl}
         </div>`
       );

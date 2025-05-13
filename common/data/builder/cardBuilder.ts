@@ -96,7 +96,7 @@ export class GICard {
             if (isUseNightSoul) {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver);
-                    const { hero, combatStatus, trigger = '', execmds, cmds } = event;
+                    const { hero, trigger = '', execmds, cmds } = event;
                     if (!hero) return res;
                     const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return res;
@@ -107,7 +107,7 @@ export class GICard {
                         }
                         return { triggers: 'slot-destroy', exec: () => nightSoul.dispose() }
                     }
-                    if (destroyTriggers.includes(trigger) && !hasObjById(combatStatus, 303238) && nightSoul.useCnt == 0) {
+                    if (destroyTriggers.includes(trigger) && nightSoul.useCnt == 0) {
                         if (!res?.triggers?.includes(trigger)) {
                             cmds.clear();
                             execmds.clear();
