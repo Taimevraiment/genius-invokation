@@ -1098,7 +1098,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，我方切换到下一个角色。自身附属【sts114132】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/4bf73369fa5d88135d922835143cd6af_1465120113594108114.png')
-                .elemental().cost(2).handle(({ skillAfter }) => (skillAfter.switchAfter(), { isAttachOppo: true, status: 114132 })),
+                .elemental().cost(2).handle(({ skillAfter }) => (skillAfter.switchAfter(), { isAttachOppo: true, statusPre: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/beeb23fb35fe9eb3733358e0bab70841_6737855537393504262.png')

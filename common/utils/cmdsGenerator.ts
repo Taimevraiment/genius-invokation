@@ -233,9 +233,6 @@ export default class CmdsGenerator {
     hasCmds(...cmds: Cmd[]) {
         return this.value.some(({ cmd }) => cmds.includes(cmd));
     }
-    includeCmds(...cmds: string[]) {
-        return this.value.filter(({ cmd }) => cmds.some(c => cmd.includes(c)));
-    }
     filterCmds(...cmds: Cmd[]) {
         return this.value.filter(({ cmd }) => cmds.includes(cmd));
     }

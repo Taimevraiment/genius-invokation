@@ -254,12 +254,12 @@ const hero1611sts2 = (el: ElementType) => {
 
 const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
     return new StatusBuilder(name).combatStatus().type(STATUS_TYPE.Shield).useCnt(cnt).maxCnt(mcnt)
-        .description(`为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `(可叠加${mcnt < MAX_USE_COUNT ? `，最多到${mcnt}` : ''})` : ''}`);
+        .description(`为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `（可叠加${mcnt < MAX_USE_COUNT ? `，最多到${mcnt}` : ''}）` : ''}`);
 }
 
 const shieldHeroStatus = (name: string, cnt = 2, mcnt = 0) => {
     return new StatusBuilder(name).heroStatus().useCnt(cnt).maxCnt(mcnt).type(STATUS_TYPE.Shield)
-        .description(`提供${cnt}点[护盾]，保护所附属角色。${mcnt > 0 ? `(可叠加${mcnt < MAX_USE_COUNT ? `，最多到${mcnt}` : ''})` : ''}`)
+        .description(`提供${cnt}点[护盾]，保护所附属角色。${mcnt > 0 ? `（可叠加${mcnt < MAX_USE_COUNT ? `，最多到${mcnt}` : ''}）` : ''}`)
 }
 
 const readySkillShieldStatus = (name: string) => {
@@ -1285,11 +1285,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114132: () => new StatusBuilder('轰雷凝集').heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【我方角色引发[雷元素相关反应]后：】所附属角色获得1点[充能]。；[useCnt]')
         .handle((_, event) => {
-            const { sktype = SKILL_TYPE.Vehicle, hidx = -1, cmds } = event;
+            const { sktype = SKILL_TYPE.Vehicle, hidx, cmds } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
             cmds.getEnergy(1, { hidxs: hidx });
             return {
-                triggers: 'elReaction-Electro',
+                triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
                 isAddTask: true,
                 exec: eStatus => eStatus?.minusUseCnt(),
             }

@@ -1190,6 +1190,7 @@ button:active {
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
+  pointer-events: none;
 }
 
 .el-tip {

@@ -1425,6 +1425,7 @@ export default class GeniusInvokationRoom {
                         {
                             isExec: false,
                             skid,
+                            sktype: skill?.type,
                             isAtkSelf: +!!res.isSelf,
                             supportCnt,
                             energyCnt,
@@ -1565,7 +1566,7 @@ export default class GeniusInvokationRoom {
                             isPreviewEnd = true;
                             break preview_end;
                         }
-                        const { isKilled, atriggers, etriggers } = calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, skid, isSelf);
+                        const { isKilled, atriggers, etriggers } = calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, skid, isSelf, atkHidx);
                         if (isKilled) {
                             isPreviewEnd = true;
                             break preview_end;
@@ -1790,7 +1791,8 @@ export default class GeniusInvokationRoom {
             .equip(skillres.hidxs ?? hero.hidx, skillres.equip)
             .getStatus(skillres.status, { hidxs: skillres.hidxs })
             .getStatus(skillres.statusOppo, { hidxs: skillres.hidxs, isOppo: true });
-        this._doCmds(pidx, hfieldcmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
+        const { tasks: stsTasks = [] } = this._doCmds(pidx, hfieldcmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
+        calcTasks(stsTasks, players, pidx);
         const tarHidx = aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).some(([d, p]) => d > -1 || p > 0) ? dmgedHidx : -1;
         if (skill && isExec) {
             players[pidx].isFallAtk = ifa;
@@ -1938,7 +1940,7 @@ export default class GeniusInvokationRoom {
 
         if (!isExec) {
             let isPreviewEnd = false;
-            const atkHidx = isCdt(skillres.skillAfter?.includeCmds('switch'), ohidx);
+            const atkHidx = isCdt(skillres.skillAfter?.isSwitch, ohidx);
             willSwitch[epidx].filter(v => v).forEach(() => {
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: odmgedHidx, isOnlyHeroStatus: true }), odmgedHidx, STATUS_GROUP.heroStatus, ['switch-from', 'switch-to'], isExec));
                 if (!isPreviewEnd) ({ isPreviewEnd } = doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, odmgedHidx, STATUS_GROUP.combatStatus, ['switch-from', 'switch-to', 'switch'], isExec));
@@ -2484,7 +2486,7 @@ export default class GeniusInvokationRoom {
             if (isReadySkill) atriggers[atkHidx].push('useReadySkill');
         }
         atkheros.forEach((_, hi) => {
-            this._detectSkill(atkPidx, atriggers[hi], {
+            const { tasks: skitasks = [] } = this._detectSkill(atkPidx, atriggers[hi], {
                 hidxs: hi,
                 players: res.players,
                 isExec,
@@ -2494,6 +2496,7 @@ export default class GeniusInvokationRoom {
                 isQuickAction: res.isQuickAction,
                 energyCnt,
             });
+            res.tasks.push(...skitasks);
         });
         if (!isExec && skid > -1 && energyCnt) {
             this._doCmds(atkPidx, [{ cmd: 'getEnergy', cnt: energyCnt[atkPidx][atkHidx], hidxs: [atkHidx] }], { players: res.players, isExec: false });
@@ -3897,6 +3900,7 @@ export default class GeniusInvokationRoom {
         let dmgElement: ElementType | undefined;
         const cmds = new CmdsGenerator();
         const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
+        const tasks: AtkTask[] = [];
         hidxs = convertToArray(hidxs);
         type = convertToArray(type);
         const skillPreviews: {
@@ -3995,11 +3999,12 @@ export default class GeniusInvokationRoom {
                         }
                         continue;
                     }
-                    this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
+                    const { tasks: skiTasks = [] } = this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
+                    tasks.push(...skiTasks);
                 }
             }
         }
-        return { isQuickAction, task, restDmg, dmgElement, skillPreviews }
+        return { isQuickAction, task, restDmg, dmgElement, skillPreviews, tasks }
     }
     /**
      * 检测装备发动
@@ -4304,7 +4309,12 @@ export default class GeniusInvokationRoom {
             const stsEntityIds = stses.map(sts => sts.entityId);
             for (const sts of stses) {
                 const isDiffTaskMark = taskMark && ((group == STATUS_GROUP.heroStatus && taskMark[0] != hidx) || taskMark[1] != group || taskMark[2] != sts.entityId);
-                if ((types.length > 0 && !sts.hasType(...types)) || isDiffTaskMark || !stsEntityIds.includes(sts.entityId) || (sts.useCnt == 0 && !sts.hasType(STATUS_TYPE.Accumulate, STATUS_TYPE.Attack))) continue;
+                if (
+                    (types.length > 0 && !sts.hasType(...types)) ||
+                    isDiffTaskMark ||
+                    !stsEntityIds.includes(sts.entityId) ||
+                    (sts.useCnt == 0 && !sts.hasType(STATUS_TYPE.Accumulate, STATUS_TYPE.Attack))
+                ) continue;
                 const isMinusDiceCard = hcard && hcard.cost + hcard.anydice > minusDiceCard;
                 for (const trigger of triggers) {
                     if (trigger == 'status-destroy' && cStatus?.id == source && cStatus.entityId == 1) break;
@@ -5775,7 +5785,8 @@ export default class GeniusInvokationRoom {
                 const nightSoul = player.heros[ohidxs[0]].heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                 if (nightSoul?.useCnt) nightSoul.minusUseCnt(cnt);
                 this._detectSkill(pidx, 'consumeNightSoul', { players, sourceHidx: ohidxs[0], source: nightSoul?.id, isExec });
-                this._detectSlotAndStatus(pidx, 'consumeNightSoul', { players, hidxs: allHidxs(player.heros), sourceHidx: ohidxs[0], isExec });
+                const { tasks: nstasks = [] } = this._detectSlotAndStatus(pidx, 'consumeNightSoul', { players, hidxs: allHidxs(player.heros), sourceHidx: ohidxs[0], isExec });
+                tasks.push(...nstasks);
             } else if (cmd == 'consumeDice' && ohidxs) {
                 if (ohidxs[0] < 0) player.dice.splice(ohidxs[0], -ohidxs[0]);
                 else player.dice = player.dice.filter((_, i) => !ohidxs[i]);
@@ -5849,15 +5860,15 @@ export default class GeniusInvokationRoom {
                 attackPreview.willAttachs.forEach((_, wai, waa) => waa[wai].push(...taskwa[wai]));
             }
         }
-        this.delay(isExec ? -1 : 0, () => {
-            for (let fhidx = 0; fhidx < cheros.length; ++fhidx) {
-                const fhero = cheros[fhidx];
-                if (heroStatus && heroStatus[fhidx].length) {
-                    this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
-                }
+        for (let fhidx = 0; fhidx < cheros.length; ++fhidx) {
+            const fhero = cheros[fhidx];
+            if (heroStatus && heroStatus[fhidx].length) {
+                const { tasks: ststasks = [] } = this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players,
+                    { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+                tasks.push(...ststasks);
             }
-            if (combatStatus) this._updateStatus(pidx, combatStatus, player.combatStatus, players, { hidx: ahidx, isExec, isQuickAction: !isAction });
-        });
+        }
+        if (combatStatus) this._updateStatus(pidx, combatStatus, player.combatStatus, players, { hidx: ahidx, isExec, isQuickAction: !isAction });
         for (let fhidx = 0; fhidx < ceheros.length; ++fhidx) {
             const fhero = ceheros[fhidx];
             if (heroStatusOppo && heroStatusOppo[fhidx].length) {
@@ -6165,7 +6176,8 @@ export default class GeniusInvokationRoom {
     ) {
         const newStatus: Status[] = clone(nStatus);
         const player = players[pidx];
-        if (!player) return;
+        const tasks: AtkTask[] = [];
+        if (!player) return { tasks }
         const { isExec, ohidx, supportCnt, isQuickAction, isLog = true, isAddAtkStsTask } = options;
         let { hidx } = options;
         const { combatStatus, heros, hidx: phidx } = player;
@@ -6253,7 +6265,7 @@ export default class GeniusInvokationRoom {
             }
         });
         if (nightSoulId > -1) {
-            this._detectSlotAndStatus(pidx, 'getNightSoul', {
+            const { tasks: stsTasks = [] } = this._detectSlotAndStatus(pidx, 'getNightSoul', {
                 types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack],
                 players,
                 hidxs: allHidxs(heros),
@@ -6262,6 +6274,7 @@ export default class GeniusInvokationRoom {
                 isExec,
                 supportCnt,
             });
+            tasks.push(...stsTasks);
         }
         oStatus.forEach(sts => {
             if (sts.hasType(STATUS_TYPE.Enchant)) {
@@ -6282,6 +6295,7 @@ export default class GeniusInvokationRoom {
                 if (isExec && (!isNotDestroy || isStsAtk) && sts.entityId != 1) this._doStatusDestroy(pidx, allHidxs(heros), sts, hidx, isQuickAction);
                 return isNotDestroy || (sts.hasType(STATUS_TYPE.Attack) && sts.roundCnt != 0);
             }));
+        return { tasks }
     }
     /**
      * 更新召唤物
