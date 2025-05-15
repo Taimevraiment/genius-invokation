@@ -205,7 +205,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
-    'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
+    'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' |

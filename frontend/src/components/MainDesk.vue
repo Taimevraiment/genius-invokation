@@ -124,9 +124,9 @@
           'hero-select': heroSelect[hgi][hidx],
           'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
           'active-willhp': canAction && (
-            willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length ||
-            (energyCnt[hgi][hidx] || heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) &&
-            hgi == 1 || willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
+            willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyCnt[hgi][hidx] ||
+            (heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 ||
+            willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
           ),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <div class="card-border"></div>

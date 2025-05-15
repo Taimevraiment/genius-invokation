@@ -558,19 +558,19 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
         .description('【我方受到伤害时：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
         .handle((status, event) => {
-            const { trigger, heros, cmds, source = -1, isExecTask } = event;
+            const { trigger, heros, cmds, source, isExecTask } = event;
             const hero = getObjById(heros, getHidById(status.id));
             if (!hero) return;
             const nightSoul = getObjById(hero.heroStatus, 111141);
             if (!nightSoul) return;
-            if (trigger == 'getdmg') {
+            if (trigger == 'after-getdmg') {
                 if (nightSoul.useCnt == 0) return;
                 cmds.consumeNightSoul(hero.hidx).getStatus(111142);
-                return { triggers: 'getdmg', isAddTask: true }
+                return { triggers: trigger, isAddTask: true }
             }
             if (trigger == 'getNightSoul' && (isExecTask || (source == nightSoul.id && nightSoul.useCnt == 2))) {
                 cmds.consumeNightSoul(hero.hidx, 2);
-                return { triggers: 'getNightSoul', damage: 1, element: DAMAGE_TYPE.Cryo }
+                return { triggers: trigger, damage: 1, element: DAMAGE_TYPE.Cryo }
             }
             if (status.roundCnt == 1) {
                 return { triggers: 'turn-end', exec: () => nightSoul.dispose() }
@@ -1359,7 +1359,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             .description(`【我方下次通过「切换角色」行动切换到所附属角色时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。；【我方选择行动前：】如果所附属角色为「出战角色」，则直接使用「普通攻击」\\；本次「普通攻击」造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
-                const { isFallAtk, isQuickAction: iqa, trigger, cmds } = event;
+                const { isFallAtk, isQuickAction: iqa, trigger, heros, cmds } = event;
                 if (ver.lt('v4.8.0')) {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
@@ -1374,7 +1374,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                     isQuickAction,
                     attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
                     exec: () => {
-                        if (trigger == 'action-start') return cmds.useSkill({ skillType: SKILL_TYPE.Normal }).res;
+                        if (trigger == 'action-start' && getObjById(heros, getHidById(status.id))?.isFront) return cmds.useSkill({ skillType: SKILL_TYPE.Normal }).res;
                         if (trigger == 'skilltype1' && status.useCnt > 0) status.minusUseCnt();
                         if (isQuickAction) status.minusPerCnt();
                     },
@@ -3177,9 +3177,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     303313: () => new StatusBuilder('缤纷马卡龙（生效中）').heroStatus().icon(STATUS_ICON.Heal).useCnt(3).type(STATUS_TYPE.Attack)
         .description('【所附属角色受到伤害后：】治疗该角色1点。；[useCnt]')
-        .handle((_, event) => ({
+        .handle((_, { hidx = -1 }) => ({
             heal: 1,
-            hidxs: [event.hidx ?? -1],
+            hidxs: [hidx],
             triggers: 'getdmg',
             exec: eStatus => { eStatus?.minusUseCnt() },
         })),

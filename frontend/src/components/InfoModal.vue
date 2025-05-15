@@ -494,7 +494,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
             <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
             <span>${expl.cost}</span>
           </div>`: isNotTransparent.value ?
-            `${expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0).map(c => {
+            `${(expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0)).map(c => {
               return `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
               <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
               <span>${c.cnt}</span>

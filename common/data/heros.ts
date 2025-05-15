@@ -259,7 +259,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Citlali_1748229198.png')
         .normalSkill(new NormalSkillBuilder('宿灵捕影'))
         .skills(
-            new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点「夜魂值」。生成1点【sts111142】和【sts111143】。（角色进入【sts112141】后不可使用此技能）')
+            new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点「夜魂值」。生成1点【sts111142】和【sts111143】。（角色进入【sts111141】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Citlali_01.webp')
                 .elemental().damage(1).cost(3).handle(({ hero: { heroStatus } }) => ({
                     status: [[111141, 1], 111142, 111143],
@@ -267,7 +267,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })),
             new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并获得2点「夜魂值」。')
                 .src('/image/tmp/Skill_E_Citlali_01.webp')
-                .burst(2).damage(2).cost(3).handle(({ cmds }) => (cmds.getStatus([[111141, 2]]), { pdmg: 1 })),
+                .burst(2).damage(2).cost(3).handle(event => {
+                    const { hero: { heroStatus } } = event;
+                    const nightSoul = getObjById(heroStatus, 111141)!;
+                    return { pdmg: 1, status: isCdt(nightSoul, () => [[nightSoul.id, 2]]) }
+                }),
             new SkillBuilder('奥秘传唱').description('【我方进行[挑选]或触发元素反应后：】获得1点「夜魂值」。（每回合2次）')
                 .src('/image/tmp/UI_Talent_S_Mavuika_08.webp')
                 .passive().handle(event => {
