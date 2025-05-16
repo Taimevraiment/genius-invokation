@@ -552,7 +552,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111141: nightSoul,
 
-    111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1'),
+    111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1').icon('tmp/UI_Gcg_Buff_Citlali_Shiled_586652224'),
 
     111143: () => new StatusBuilder('伊兹帕帕').combatStatus().roundCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
@@ -1075,7 +1075,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113151: (cnt?: number) => nightSoul(cnt, false),
 
-    113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
+    113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').icon('tmp/UI_Gcg_Buff_Mavuika_S_-1066548432')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方全体角色的技能不消耗「夜魂值」。；我方全体角色「普通攻击」造成的伤害+1。；[useCnt]')
         .handle(status => ({
             triggers: ['skilltype1', 'pre-consumeNightSoul'],
@@ -1084,7 +1085,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { status.minusUseCnt() }
         })),
 
-    113153: () => new StatusBuilder('诸火武装·焚焰之环').combatStatus().icon('ski,1').type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
+    113153: () => new StatusBuilder('诸火武装·焚焰之环').combatStatus().icon('ski,1').icon('tmp/UI_Gcg_Buff_Mavuika_E_-205421090')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
         .description('【我方其他角色使用技能或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出夜魂态后销毁）')
         .handle((status, event) => {
             const { hidx = -1, heros = [], cmds, trigger, source = -1 } = event;

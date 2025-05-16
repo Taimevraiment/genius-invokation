@@ -318,6 +318,7 @@ export class CardBuilder extends BaseCostBuilder {
         this._isUseNightSoul = isUseNightSoul;
         return this.equipment();
     }
+    // >=0为技能序号(从0开始) -1为不使用技能仅装备 -2为不使用技能但为战斗行动地装备
     talent(skillIdx: number = -1, version: Version = 'vlatest') {
         if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Talent);
         if (skillIdx != -1) {

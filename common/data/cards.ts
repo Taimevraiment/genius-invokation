@@ -2299,6 +2299,7 @@ const allCards: Record<number, () => CardBuilder> = {
     333020: () => new CardBuilder(468).name('奇瑰之汤').since('v5.5.0').food().costSame(1).canSelectHero(1)
         .description('从3个随机效果中[挑选]1个，对目标角色生效。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
+        .explain(...Array.from({ length: 6 }, (_, i) => `botcrd33302${i + 1}`))
         .handle((_, { cmds }) => cmds.pickCard(3, CMD_MODE.UseCard, { card: [333021, 333022, 333023, 333024, 333025, 333026] }).res),
 
     333027: () => new CardBuilder(476).name('纵声欢唱').since('v5.6.0').food().costAny(3)
@@ -2875,7 +2876,11 @@ const allCards: Record<number, () => CardBuilder> = {
     215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0').talent().event().costAnemo(1).canSelectHero(0)
         .description('将一张【crd115113】加入手牌。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chasca.webp')
-        .handle((_, { cmds }) => cmds.getCard(1, { card: 115113 }).res),
+        .handle((card, event) => {
+            const { cmds, heros } = event;
+            cmds.getCard(1, { card: 115113 });
+            return { isValid: (getObjById(heros, getHidById(card.id))?.hp ?? 0) > 0 }
+        }),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
@@ -3387,15 +3392,12 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: ['discard', 'vehicle'] }
         }),
 
-    113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costSame(1)
+    113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costSame(1).useCnt(2)
         .description('〔*[card]【此卡牌被打出时：】随机触发我方个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')
         .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sea_-1664946792')
         .handle((_, event) => {
             const { summons = [], cmds, randomInt } = event;
-            if (randomInt && summons.length) {
-                cmds.summonTrigger(randomInt(summons.length - 1));
-            }
-            return { triggers: 'vehicle' }
+            if (randomInt && summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
         }),
 
     113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costAny(2)

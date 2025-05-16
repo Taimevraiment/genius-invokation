@@ -1,12 +1,12 @@
 <template>
   <div class="info-outer-container">
     <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
-    <div class="info-container" :class="{ 'mobile-font': isMobile, 'not-transparent': isNotTransparent }" v-if="isShow"
+    <div class="info-container" :class="{ 'mobile-font': isMobile, 'not-transparent': isBot }" v-if="isShow"
       @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
         <div class="info-base">
-          <img v-if="isNotTransparent" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
+          <img v-if="isBot" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
           <div>
             <div class="name">{{ (info as Card).name }}</div>
             <div>
@@ -47,11 +47,11 @@
       <div v-if="type == INFO_TYPE.Hero || type == INFO_TYPE.Skill ||
         (type == INFO_TYPE.Card && (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))">
         <div class="info-base">
-          <div class="info-hero-hp" v-if="isNotTransparent">
+          <div class="info-hero-hp" v-if="isBot">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
             <div class="hero-hp-cnt">{{ (info as Hero).maxHp }}</div>
           </div>
-          <img v-if="isNotTransparent" class="info-base-img info-hero-base-img" :src="info?.UI.src" :alt="info?.name">
+          <img v-if="isBot" class="info-base-img info-hero-base-img" :src="info?.UI.src" :alt="info?.name">
           <div>
             <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
             <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
@@ -200,7 +200,7 @@
       </div>
       <div v-if="type == INFO_TYPE.Summon" @click.stop="showRule((info as Summon).UI.description)">
         <div class="info-base">
-          <img v-if="isNotTransparent" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
+          <img v-if="isBot" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
           <div>
             <div class="name">{{ (info as Summon).name }}</div>
             <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
@@ -336,7 +336,7 @@ const props = defineProps<{
   isInGame?: boolean,
   round?: number,
   playerInfo?: GameInfo,
-  isNotTransparent?: boolean,
+  isBot?: boolean,
 }>();
 
 const isMobile = computed<boolean>(() => props.isMobile);
@@ -349,7 +349,7 @@ const type = computed<InfoType | null>(() => props.info.type); // 显示类型�
 const info = computed<Hero | Card | Summon | null>(() => props.info.info); // 展示信息
 const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
-const isNotTransparent = computed<boolean>(() => props.isNotTransparent ?? false); // 背景是否为不透明
+const isBot = computed<boolean>(() => props.isBot ?? false); // 是否为bot截图
 const skills = ref<Skill[]>([]); // 展示技能
 const isShowSkill = ref<boolean[]>([]); // 是否展示技能
 const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态
@@ -372,16 +372,21 @@ const wrapedIcon = (el?: ElementColorKey, isDice: boolean = false) => {
   return `<img style='width:1em;transform:translateY(20%) scale(1.4);margin:0 0.2em' src='${url}'/>`;
 }
 const wrapExplCtt = (content: string) => {
-  if (!/^[a-z,0-9]+$/.test(content)) return { name: content, default: true }
-  const [a1, a2, a3] = content.slice(3).split(',').map(v => JSON.parse(v));
-  const type = content.slice(0, 3);
-  return type == 'crd' ? newCard(version.value)(a1) :
+  const [isMatch, botFlag = 'null', ctt] = content.match(/^(n?bot)?([a-z,0-9]+)$/) ?? [];
+  if (!isMatch) return { name: content, default: true }
+  const [a1, a2, a3] = ctt.slice(3).split(',').map(v => JSON.parse(v));
+  const type = ctt.slice(0, 3);
+  const res = type == 'crd' ? newCard(version.value)(a1) :
     type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
       type == 'rsk' ? newSkill(version.value)(a1) :
         type == 'smn' ? newSummon(version.value)(a1, a2, a3) :
           type == 'ski' ? newHero(version.value)(a1).skills[a2] :
             type == 'hro' ? newHero(version.value)(a1) :
               { name: content, default: true };
+  if ((botFlag != 'null' && (+isBot.value ^ +(botFlag == 'bot')))) {
+    return { name: res.name, default: true }
+  }
+  return res;
 }
 type WrapExplainType = 'slot' | 'card' | 'support' | '';
 const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
@@ -482,32 +487,57 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
     if (memo.includes(expl.id + expl.name)) continue;
     memo.push(expl.id + expl.name);
     const nameEl = `<span style="font-weight:bold;color:white;">${expl.name}</span>`;
-    const cardStyle = 'width:15%;margin-right:5px;';
-    const statusStyle = 'width:10%;margin-right:2px;';
+    const cardStyle = 'width:35px;margin-right:5px;margin-bottom:5px;';
+    const statusStyle = 'width:25px;margin-right:2px;';
+    const skillStyle = 'width:25px;margin-right:5px;';
+    const realSrcReg = /^http|tmp/;
+    const getSrc = <T extends { name: string, UI: object, id: number }>(obj: T, ...attrs: string[]) => {
+      for (const attr of attrs) {
+        if (attr in obj.UI && realSrcReg.test(obj.UI[attr])) {
+          if ('costType' in obj) return getPngIcon(obj.UI[attr]);
+          return obj.UI[attr];
+        }
+      }
+      return getPngIcon(obj.id.toString(), true);
+    }
     if ('cost' in expl) { // Card/Skill
+      const isCard = 'costType' in expl;
       explains.push(
         `<div style="display:flex;align-items:center;">
-          ${isNotTransparent.value ? `<img src="${expl.UI.src.startsWith('http') || expl.UI.src.includes('tmp') ? expl.UI.src : getPngIcon(expl.id.toString(), true)}" style="${cardStyle}"/>` : ''}
-          ${nameEl}
-          ${'costType' in expl ?
-          `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
-            <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
-            <span>${expl.cost}</span>
-          </div>`: isNotTransparent.value ?
-            `${(expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0)).map(c => {
-              return `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
-              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
-              <span>${c.cnt}</span>
-            </div>`
-            }).join('')}` : ''
-        }
+          ${isBot.value ? `<img src="${getSrc(expl, 'src')}" style="${isCard ? cardStyle : skillStyle}"/>` : ''}
+          <div style="display:flex;${isBot.value && isCard ? 'flex-direction:column;gap:3px;' : 'width:87%;'}">
+            ${nameEl}
+            ${'costType' in expl ?
+          `<div class="skill-cost" style="margin-${isBot.value ? 'right' : 'left'}:5px;margin-top:0;" >
+              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
+              <span>${expl.cost}</span>
+            </div>`: isBot.value ?
+            `${(expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0)).map(c =>
+              `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
+                  <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
+                  <span>${c.cnt}</span>
+                </div>`
+            ).join('')}` : ''}
+            ${isBot.value ?
+          `<div style="${isCard ? '' : 'margin-left:auto;'}color:#d0c298;">
+              ${'damage' in expl ? SKILL_TYPE_NAME[expl.type] : `${CARD_TYPE_NAME[expl.type]}牌`}
+            </div>` : ''}
+          </div>
         </div>`
       );
     } else { // Status/Summon
+      const isStatus = 'group' in expl;
       explains.push(
         `<div div style="display:flex;align-items:center;">
-          ${isNotTransparent.value ? `<img src="${'src' in expl.UI && (expl.UI.src.startsWith('http') || expl.UI.src.includes('tmp')) ? expl.UI.src : 'icon' in expl.UI && (expl.UI.icon.startsWith('http') || expl.UI.icon.includes('tmp')) ? expl.UI.icon : getPngIcon(expl.id.toString(), true)}" style="${'group' in expl ? statusStyle : cardStyle}"/>` : ''}
-          ${nameEl}
+          ${!isBot.value ? nameEl :
+          `<img src="${getSrc(expl, 'src', 'icon')}" style="${isStatus ? statusStyle : cardStyle}"/>
+           <div style="display:flex;${'damage' in expl ? 'flex-direction:column;gap:3px;' : 'width:87%;'}" >
+            ${nameEl}
+            <span style="${isStatus ? 'margin-left:auto;' : ''}color:#d0c298;">
+             ${'group' in expl ? `${['角色', '出战'][expl.group]}状态` : '召唤物'}
+            </span>
+           </div>`
+        }
         </div>`
       );
     }
@@ -537,7 +567,7 @@ const getDiceIcon = (name: string) => {
 
 // 获取png图片
 const getPngIcon = (name: string, isUseOnlineSrc: boolean = false) => {
-  if (isUseOnlineSrc) return 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/' + name;
+  if (isUseOnlineSrc) return `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${name}`;
   if (name.startsWith('http') || name == '') return name;
   if (name.endsWith('-dice')) return getSvgIcon(name);
   if (name.startsWith('ski')) {
@@ -633,7 +663,7 @@ watchEffect(() => {
     isCombatStatus.value = new Array(combatStatus.value.length).fill(false);
     isEquipment.value = new Array(info.value.equipments.length).fill(false);
   }
-  if (isNotTransparent.value) isShowSkill.value.fill(true);
+  if (isBot.value) isShowSkill.value.fill(true);
 });
 
 // 是否显示描述

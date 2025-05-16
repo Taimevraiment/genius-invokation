@@ -1,6 +1,6 @@
 import { Status, Trigger, VersionCompareFn } from "../../../typing";
 import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
-import { MAX_USE_COUNT } from "../../constant/gameOption.js";
+import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
@@ -63,7 +63,7 @@ export class GIStatus {
             .replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         this.UI = {
             description,
-            icon: icon.replace(/ski,(\d)/, `ski${hid},$1`),
+            icon: icon.replace(/(tmp)?ski,(\d)/, `$1ski${hid},$2`),
             iconBg: icbg,
             explains: [
                 ...(description.match(/(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []),
@@ -110,6 +110,11 @@ export class GIStatus {
             const element = ['', 'Ice', 'Water', 'Fire', 'Elec', 'Wind', 'Rock', 'Grass'][Math.floor(id / 1e3) % 10];
             this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nightsoul_${element}.webp`;
         }
+        if (IS_USE_OFFICIAL_SRC && !/^http|tmp/.test(this.UI.icon)) {
+            this.UI.icon = '#';
+            this.UI.iconBg = STATUS_BG_COLOR.Transparent;
+        }
+        this.UI.icon = this.UI.icon.replace('tmpski', 'tmp');
         if (this.UI.icon == '#') this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
         else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
             if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {

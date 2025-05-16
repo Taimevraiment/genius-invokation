@@ -1660,12 +1660,9 @@ export default class GeniusInvokationRoom {
         this._doCmds(pidx, stsprecmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction, isExec });
         if (skillres.summonPre) this._updateSummon(pidx, this._getSummonById(skillres.summonPre), players, isExec, { supportCnt });
         const dPlayers = clone(players);
-        const { tasks: skillBeforeTasks = [] } = this._doCmds(pidx, skillres.skillBefore, {
-            players, isExec: false, energyCnt, willSwitch, supportCnt, isOnlyApply: isExec,
-        });
-        if (!isExec) {
-            calcTasks(skillBeforeTasks, players, pidx);
-        }
+        const { tasks: skillBeforeTasks = [] } = this._doCmds(pidx, skillres.skillBefore,
+            { players, isExec: false, energyCnt, willSwitch, supportCnt, isOnlyApply: isExec });
+        if (!isExec) calcTasks(skillBeforeTasks, players, pidx);
         const oSummonEids = players[pidx].summons.map(smn => smn.entityId);
         if (skillres.heal != undefined) {
             const { willHeals } = this._doCmds(pidx, new CmdsGenerator().heal(skillres.heal, { hidxs: skillres.hidxs ?? cahidx }), {
@@ -5430,7 +5427,7 @@ export default class GeniusInvokationRoom {
                             const { tasks: distasks, willHeals: disheal } = this._doDiscard(pidx, discards, { players, isAction, isExec, supportCnt });
                             tasks.push(...distasks);
                             if (isOnlyApply && distasks.length) {
-                                this._doCmds(pidx, distasks.map(t => t.cmds).reduce((a, c) => a.addCmds(c)), { players, isExec: false, isOnlyApply: true });
+                                this._doCmds(pidx, distasks.map(t => t.cmds).reduce((a, c) => a.addCmds(c)), { players, isExec, isOnlyApply: true });
                             }
                             if (disheal) {
                                 if (willHeals[0] == undefined) willHeals.push(disheal);

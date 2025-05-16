@@ -59,7 +59,7 @@
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
     @enter-room="enterRoom" />
-  <InfoModal id="info-modal" v-if="info.info != null" :is-mobile="isMobile" :info="info" isNotTransparent />
+  <InfoModal id="info-modal" v-if="info.info != null" :is-mobile="isMobile" :info="info" isBot />
   <input id="taimbot" type="text" v-model="infoContent" @change="showInfo" />
 </template>
 

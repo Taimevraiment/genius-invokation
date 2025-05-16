@@ -837,7 +837,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .skills(
             new SkillBuilder('称名之刻').description('本角色进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
                 .src('/image/tmp/Skill_S_Mavuika_01.webp')
-                .elemental().cost(3).handle(() => ({
+                .elemental().cost(3).explain(...Array.from({ length: 3 }, (_, i) => `botcrd11315${i + 4}`)).handle(() => ({
                     status: [[113151, 2]],
                     pickCard: {
                         cnt: 3,
@@ -845,7 +845,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         card: [113154, 113155, 113156],
                     }
                 })),
-            new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点「夜魂值」，消耗自身全部[战意]，对敌方前台造成等同于消耗[战意]点[火元素伤害]。；若消耗了6点[战意]，则自身附属【sts113152】。')
+            new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点「夜魂值」，消耗自身全部*[战意]，对敌方前台造成等同于消耗*[战意]点[火元素伤害]。；若消耗了6点*[战意]，则自身附属【sts113152】。')
                 .src('/image/tmp/Skill_E_Mavuika_01.webp')
                 .burstSp(3).cost(4).handle(event => {
                     const { hero: { energy }, cmds } = event;
@@ -854,7 +854,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (-energy >= 6) status.push(113152);
                     return { status, addDmgCdt: -energy }
                 }),
-            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗夜魂或使用普通攻击后，获得1点[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
+            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗夜魂或使用普通攻击后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
                 .src('/image/tmp/Skill_S_Mavuika_06_-650569527.png')
                 .passive().handle(event => {
                     const { trigger = '', cmds, hero: { hidx } } = event;
@@ -1456,10 +1456,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u539vg/3c860e49ed049afab518114f5639b046.png')
         .normalSkill(new NormalSkillBuilder('心织刀流'))
         .skills(
-            new SkillBuilder('羽袖一触').description('从3个【smn116097】中[挑选]1个召唤。')
+            new SkillBuilder('羽袖一触').description('从3个【nbotsmn116097】中[挑选]1个召唤。')
                 .src('https://patchwiki.biligame.com/images/ys/c/c1/o1q0bq8i2xiqwwtzpadn62ht0f1mk92.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8ef27719f84860001bce5a1f5df2dcd3_8474447068629975560.png')
-                .elemental().cost(3).handle(event => {
+                .elemental().cost(3).explain(...Array.from({ length: 6 }, (_, i) => `botsmn11609${i + 1}`)).handle(event => {
                     const { talent } = event;
                     return {
                         summonPre: isCdt(!!talent, 116094),
