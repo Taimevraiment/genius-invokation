@@ -1309,6 +1309,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(({ cmds }) => (cmds.getCard(3), { pdmg: 1 })),
             new SkillBuilder('追影弹').description('对局开始时，将6枚【crd115113】随机放置进牌库。')
                 .src('/image/tmp/Skill_S_Chasca_06_-1060139079.png')
+                .explain(...Array.from({ length: 4 }, (_, i) => `botcrd11511${i + 4}`))
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 115113), { triggers: 'game-start' }))
         ),
 

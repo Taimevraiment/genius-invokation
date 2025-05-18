@@ -13,7 +13,7 @@ import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
-import { CardBuilder, CardBuilderHandleEvent, CardBuilderHandleRes } from './builder/cardBuilder.js';
+import { CardBuilder, CardBuilderHandleRes } from './builder/cardBuilder.js';
 
 export type CardHandleEvent = {
     pidx?: number,
@@ -156,26 +156,31 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
         .handle(() => ({ addDmg: 1, status: [[stsId, name]] }));
 }
 
-const barrierWeaponHandle = (card: Card, event: CardBuilderHandleEvent): CardBuilderHandleRes | undefined => {
-    const { hcards = [], hcardsCnt = hcards.length, restDmg = -1, sktype = SKILL_TYPE.Vehicle, execmds } = event;
-    if (restDmg > -1) {
-        if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return { restDmg }
-        execmds.discard({ mode: CMD_MODE.HighHandCard })
-        return {
-            restDmg: restDmg - 1,
-            exec: () => {
-                card.addUseCnt();
-                card.minusPerCnt();
+const barrierWeapon = (shareId: number, mark: string) => {
+    return new CardBuilder(shareId).weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
+        .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合1次）；【角色造成伤害时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此伤害+1，并且每消耗1点「${mark}」就抓1张牌。`)
+        .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合最多触发2次）；【角色使用技能时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此技能伤害+1，并且每消耗1点「${mark}」就抓1张牌。`, 'v5.0.0')
+        .handle((card, event) => {
+            const { hcards = [], hcardsCnt = hcards.length, restDmg = -1, sktype = SKILL_TYPE.Vehicle, execmds } = event;
+            if (restDmg > -1) {
+                if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return { restDmg }
+                execmds.discard({ mode: CMD_MODE.HighHandCard })
+                return {
+                    restDmg: restDmg - 1,
+                    exec: () => {
+                        card.addUseCnt();
+                        card.minusPerCnt();
+                    }
+                }
             }
-        }
-    }
-    if (card.useCnt == 0 || sktype == SKILL_TYPE.Vehicle) return;
-    execmds.getCard(card.useCnt)
-    return {
-        triggers: 'dmg',
-        addDmgCdt: 1,
-        exec: () => { card.useCnt = 0 }
-    }
+            if (card.useCnt == 0 || sktype == SKILL_TYPE.Vehicle) return;
+            execmds.getCard(card.useCnt)
+            return {
+                triggers: 'dmg',
+                addDmgCdt: 1,
+                exec: () => { card.useCnt = 0 }
+            }
+        });
 }
 
 const normalElRelic = (shareId: number, element: PureElementType) => {
@@ -488,10 +493,8 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311309: () => new CardBuilder(426).name('便携动力锯').since('v5.1.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1)
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「坚忍标记」。（每回合1次）；【角色造成伤害时：】如果此牌已有「坚忍标记」，则消耗所有「坚忍标记」，使此伤害+1，并且每消耗1点「坚忍标记」就抓1张牌。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/12bb81a54a568778a58e8ba5094501c8_8843117623857806924.png')
-        .handle(barrierWeaponHandle),
+    311309: () => barrierWeapon(426, '坚忍标记').name('便携动力锯').since('v5.1.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/12bb81a54a568778a58e8ba5094501c8_8843117623857806924.png'),
 
     311401: () => normalWeapon(137).name('白缨枪').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2618b55f8449904277794039473df17c_5042678227170067991.png'),
@@ -579,11 +582,8 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311409: () => new CardBuilder(402).name('勘探钻机').since('v4.8.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「团结」。（每回合1次）；【角色造成伤害时：】如果此牌已有「团结」，则消耗所有「团结」，使此伤害+1，并且每消耗1点「团结」就抓1张牌。')
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「团结」。（每回合最多触发2次）；【角色使用技能时：】如果此牌已有「团结」，则消耗所有「团结」，使此技能伤害+1，并且每消耗1点「团结」就抓1张牌。', 'v5.0.0')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png')
-        .handle(barrierWeaponHandle),
+    311409: () => barrierWeapon(402, '团结').name('勘探钻机').since('v4.8.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/ad09f3e1b00c0c246816af88dd5f457b_4905856338602635848.png'),
 
     311501: () => normalWeapon(143).name('旅行剑').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2540a7ead6f2e957a6f25c9899ce428b_3859616323968734996.png'),
@@ -662,10 +662,8 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311509: () => new CardBuilder(483).name('船坞长剑').since('v5.7.0').weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1)
-        .description('【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「团结」。（每回合1次）；【角色造成伤害时：】如果此牌已有「团结」，则消耗所有「团结」，使此伤害+1，并且每消耗1点「团结」就抓1张牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_ChuanwuJian.webp')
-        .handle(barrierWeaponHandle),
+    311509: () => barrierWeapon(483, '团结').name('船坞长剑').since('v5.7.0')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_ChuanwuJian.webp'),
 
     312001: () => new CardBuilder(148).name('冒险家头带').offline('v2').relic().costSame(1).perCnt(3)
         .description('【角色使用「普通攻击」后：】治疗自身1点（每回合至多3次）。')
@@ -1531,10 +1529,7 @@ const allCards: Record<number, () => CardBuilder> = {
     330001: () => new CardBuilder(218).name('旧时庭园').since('v3.8.0').legend().costSame(0)
         .description('【我方有角色已装备「武器」或「圣遗物」时，才能打出：】本回合中，我方下次打出「武器」或「圣遗物」装备牌时少花费2个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/cd9d8158b2361b984da8c061926bb636_390832108951639145.png')
-        .handle((_, event) => {
-            const { heros = [] } = event;
-            return { status: 300001, isValid: heros.some(h => h.weaponSlot != null || h.relicSlot != null) }
-        }),
+        .handle((_, { heros = [] }) => ({ status: 300001, isValid: heros.some(h => h.weaponSlot != null || h.relicSlot != null) })),
 
     330002: () => new CardBuilder(219).name('磐岩盟契').since('v3.8.0').legend().costSame(0)
         .description('【我方剩余元素骰数量为0时，才能打出：】生成2个不同的基础元素骰。')

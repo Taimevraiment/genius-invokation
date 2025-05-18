@@ -6,7 +6,7 @@
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
         <div class="info-base">
-          <img v-if="isBot" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
+          <img v-if="isBot" class="info-base-img" :src="getPngIcon(info?.UI.src, true)" :alt="info?.name">
           <div>
             <div class="name">{{ (info as Card).name }}</div>
             <div>
@@ -47,11 +47,12 @@
       <div v-if="type == INFO_TYPE.Hero || type == INFO_TYPE.Skill ||
         (type == INFO_TYPE.Card && (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))">
         <div class="info-base">
-          <div class="info-hero-hp" v-if="isBot">
+          <div class="info-hero-hp" v-if="isBot && type == INFO_TYPE.Hero">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
             <div class="hero-hp-cnt">{{ (info as Hero).maxHp }}</div>
           </div>
-          <img v-if="isBot" class="info-base-img info-hero-base-img" :src="info?.UI.src" :alt="info?.name">
+          <img v-if="isBot && type == INFO_TYPE.Hero" class="info-base-img info-hero-base-img"
+            :src="getPngIcon(info?.UI.src, true)" :alt="info?.name">
           <div>
             <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
             <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
@@ -494,13 +495,13 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
     const getSrc = <T extends { name: string, UI: object, id: number }>(obj: T, ...attrs: string[]) => {
       for (const attr of attrs) {
         if (attr in obj.UI && realSrcReg.test(obj.UI[attr])) {
-          if ('costType' in obj) return getPngIcon(obj.UI[attr]);
+          if ('costType' in obj || 'group' in obj) return getPngIcon(obj.UI[attr]);
           return obj.UI[attr];
         }
       }
       return getPngIcon(obj.id.toString(), true);
     }
-    if ('cost' in expl) { // Card/Skill
+    if ('cost' in expl) { // Card | Skill
       const isCard = 'costType' in expl;
       explains.push(
         `<div style="display:flex;align-items:center;">
@@ -525,7 +526,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
           </div>
         </div>`
       );
-    } else { // Status/Summon
+    } else { // Status | Summon
       const isStatus = 'group' in expl;
       explains.push(
         `<div div style="display:flex;align-items:center;">
@@ -566,9 +567,12 @@ const getDiceIcon = (name: string) => {
 }
 
 // 获取png图片
-const getPngIcon = (name: string, isUseOnlineSrc: boolean = false) => {
-  if (isUseOnlineSrc) return `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${name}`;
+const getPngIcon = (name: string = '', isUseOnlineSrc: boolean = false) => {
   if (name.startsWith('http') || name == '') return name;
+  if (isUseOnlineSrc) {
+    if (name.includes('tmp')) return `/image/${name}.png`;
+    return `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${name}`;
+  }
   if (name.endsWith('-dice')) return getSvgIcon(name);
   if (name.startsWith('ski')) {
     if (name.includes(',')) {
