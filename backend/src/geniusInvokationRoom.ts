@@ -3718,9 +3718,9 @@ export default class GeniusInvokationRoom {
             const cardres = card.handle(card, { summons, trigger: 'discard', isExec });
             if (this._hasNotTriggered(cardres.triggers, 'discard')) continue;
             if (cardres.cmds) {
-                const atkcmds = cardres.cmds.filterCmds('attack');
+                const hasAtkcmds = cardres.cmds.hasCmds('attack');
                 const { bWillDamages = [] } = this._doCmds(pidx, cardres.cmds,
-                    { players: isCdt(!isExec, clone(players)), isAction, isExec: isCdt(atkcmds.length, false, isExec), supportCnt, isPriority, isUnshift });
+                    { players: isCdt(!isExec, clone(players)), isAction, isExec: isCdt(hasAtkcmds, false, isExec), supportCnt, isPriority, isUnshift });
                 if (bWillDamages.length > 0) {
                     const atkname = `${card.name}(${card.entityId})`;
                     tasks.push({ pidx, cmds: cardres.cmds, atkname });
@@ -3728,7 +3728,7 @@ export default class GeniusInvokationRoom {
                         this.taskQueue.addTask(`doDamage-${atkname}`, [[async () => {
                             const { bWillDamages: willDamages = [], willHeals: [whl] = [], bDmgElements: dmgElements = [],
                                 elTips = [], atkedIdxs: [tarHidx] = [-1] }
-                                = this._doCmds(pidx, atkcmds, { isAction });
+                                = this._doCmds(pidx, cardres.cmds, { isAction });
                             await this._doDamage(pidx, {
                                 dmgSource: 'card',
                                 atkPidx: pidx,
@@ -3919,10 +3919,10 @@ export default class GeniusInvokationRoom {
     */
     private _detectSkill(pidx: number, otrigger: Trigger | Trigger[],
         options: {
-            players?: Player[], heros?: Hero[], eheros?: Hero[], hidxs?: number[] | number, cskid?: number,
-            isExec?: boolean, getdmg?: number[], heal?: number[], discards?: Card[], isExecTask?: boolean,
-            dmg?: number[], isQuickAction?: boolean, card?: Card, energyCnt?: number[][], source?: number,
-            sourceHidx?: number, type?: SkillType | SkillType[], restDmg?: number, isOnlyExec?: boolean,
+            players?: Player[], heros?: Hero[], eheros?: Hero[], hidxs?: number[] | number, cskid?: number, isExec?: boolean,
+            getdmg?: number[], heal?: number[], discards?: Card[], isExecTask?: boolean, dmg?: number[], isQuickAction?: boolean,
+            card?: Card, energyCnt?: number[][], source?: number, sourceHidx?: number, type?: SkillType | SkillType[], restDmg?: number,
+            isOnlyExec?: boolean,
         } = {}
     ) {
         const { players = this.players, isExec = true, getdmg = [], dmg = [], heal = [], discards = [], card, source, sourceHidx,
@@ -4511,7 +4511,7 @@ export default class GeniusInvokationRoom {
                                             if (!curStatus.hasType(STATUS_TYPE.Hide)) this._writeLog(`[${player.name}](${player.pidx})[${curStatus.name}]发动${oCnt != curStatus.useCnt ? ` ${useCntChange}` : ''}`, stsres.notLog ? 'system' : 'log');
                                             const flag = `_doStatus-${group == STATUS_GROUP.heroStatus ? 'hero' : 'combat'}Status-task-${curStatus.name}(${curStatus.entityId})`;
                                             const curStatusIdx = statuses.filter(s => !s.hasType(STATUS_TYPE.Hide)).findIndex(s => s.entityId == sts.entityId);
-                                            this.emit(flag, pidx, { isQuickAction, statusSelect: isCdt(curStatusIdx > -1, [pidx, group, hidx, curStatusIdx]) });
+                                            this.emit(flag, pidx, { isQuickAction, statusSelect: isCdt(curStatusIdx > -1, [pidx, group, group == STATUS_GROUP.combatStatus ? ahidx : hidx, curStatusIdx]) });
                                             if ((curStatus.useCnt == 0 || curStatus.roundCnt == 0) && !curStatus.hasType(STATUS_TYPE.Accumulate)) {
                                                 curStatus.type.splice(curStatus.type.indexOf(STATUS_TYPE.TempNonDestroy), 1);
                                             }

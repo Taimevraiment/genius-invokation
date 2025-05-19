@@ -287,7 +287,7 @@ const continuousActionHandle = (status: Status, event: StatusHandleEvent): Statu
 
 const nightSoul = (cnt: number = 0, isAccumate: boolean = true) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
     .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage, STATUS_TYPE.NightSoul)
-    .description(`所附属角色可累积「夜魂值」。（最多累积到2点）${isAccumate ? '' : '；「夜魂值」为0时，退出【夜魂加持】状态。'}`)
+    .description(`所附属角色可累积「夜魂值」。（最多累积到2点）${isAccumate ? '' : '；「夜魂值」为0时，退出【夜魂加持】。'}`)
     .handle(status => {
         if (status.useCnt > 0 || isAccumate) return;
         return { triggers: ['action-start', 'action-start-oppo'], exec: () => status.dispose() }
@@ -556,7 +556,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111143: () => new StatusBuilder('伊兹帕帕').combatStatus().roundCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
-        .description('【我方受到伤害时：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
+        .description('【我方受到伤害时：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，优先对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
         .handle((status, event) => {
             const { trigger, heros, cmds, source, isExecTask } = event;
             const hero = getObjById(heros, getHidById(status.id));
@@ -569,7 +569,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 return { triggers: trigger, isAddTask: true }
             }
             if (trigger == 'getNightSoul' && (isExecTask || (source == nightSoul.id && nightSoul.useCnt == 2))) {
-                cmds.consumeNightSoul(hero.hidx, 2);
                 return { triggers: trigger, damage: 1, element: DAMAGE_TYPE.Cryo }
             }
             if (status.roundCnt == 1) {
@@ -1087,7 +1086,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113153: () => new StatusBuilder('诸火武装·焚焰之环').combatStatus().icon('ski,1').icon('tmp/UI_Gcg_Buff_Mavuika_E_-205421090')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
-        .description('【我方其他角色使用技能或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出夜魂态后销毁）')
+        .description('【我方其他角色使用「普通攻击」或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
             const { hidx = -1, heros = [], cmds, trigger, source = -1 } = event;
             if (trigger == 'status-destroy' && source == 113151) {
@@ -1098,7 +1097,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             if (!hero || hero.id == hid) return;
             cmds.consumeNightSoul(getObjById(heros, hid)?.hidx);
             return {
-                triggers: ['after-skill', 'after-skilltype5'],
+                triggers: ['after-skilltype1', 'after-skilltype5'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
             }
@@ -1499,10 +1498,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     115111: nightSoul,
 
-    115118: () => new StatusBuilder('我方执行切换角色行动时抓1张牌').combatStatus().useCnt(3).icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage)
-        .description('【我方执行「切换角色」行动时：】抓1张牌。；[useCnt]')
+    115118: () => new StatusBuilder('掩护的心意').combatStatus().useCnt(2).icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage)
+        .description('【我方「切换角色」时：】抓1张牌。；[useCnt]')
         .handle((_, event) => ({
-            triggers: 'active-switch-from',
+            triggers: 'switch-from',
             isAddTask: true,
             exec: eStatus => {
                 eStatus?.minusUseCnt();
@@ -2635,9 +2634,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1).icon('#'),
 
-    301306: () => new StatusBuilder('呀！呀！（生效中）').combatStatus().icon('ski3130091').iconBg(STATUS_BG_COLOR.Physical)
+    301306: () => new StatusBuilder('呀——！').combatStatus().icon('ski3130091').iconBg(STATUS_BG_COLOR.Physical)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).useCnt(1)
-        .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方前台获得6点[护盾]，然后造成6点[物理伤害]。')
+        .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方前台获得3点[护盾]，然后造成3点[物理伤害]。')
         .handle((status, event) => {
             const { playerInfo: { usedVehcileCnt = 0 } = {}, cmds } = event;
             if (usedVehcileCnt > 0) status.useCnt = usedVehcileCnt;
@@ -2645,15 +2644,15 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             cmds.getStatus(301307);
             return {
                 triggers: ['enter', 'card'],
-                damage: 6,
+                damage: 3,
                 element: DAMAGE_TYPE.Physical,
                 exec: eStatus => eStatus?.dispose(),
             }
         }),
 
-    301307: () => shieldHeroStatus('呀！呀！（生效中）', 6),
+    301307: () => shieldHeroStatus('龙伙伴的声援！', 3),
 
-    301308: () => new StatusBuilder('呀！呀！（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
+    301308: () => new StatusBuilder('龙伙伴的鼓舞！').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('我方下次打出【特技牌】少花费2个元素骰。')
         .handle((status, event) => {

@@ -140,7 +140,7 @@ export class SkillBuilder extends BaseBuilder {
     private _dmgElement: ElementType | undefined;
     private _cost: VersionMap<number> = new VersionMap();
     private _costElement: SkillCostType | undefined;
-    private _anyCost: number = 0;
+    private _anyCost: VersionMap<number> = new VersionMap();
     private _energyCost: VersionMap<number> = new VersionMap();
     private _isSpEnergy: boolean = false;
     private _handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined;
@@ -240,8 +240,8 @@ export class SkillBuilder extends BaseBuilder {
     costSame(cost: number) {
         return this.cost(cost).costElement(ELEMENT_TYPE.Physical);
     }
-    costAny(cost: number) {
-        this._anyCost = cost;
+    costAny(cost: number, version: Version = 'vlatest') {
+        this._anyCost.set([version, cost]);
         return this;
     }
     handle(handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined) {
@@ -285,10 +285,11 @@ export class SkillBuilder extends BaseBuilder {
         const ec = this._energyCost.get(this._curVersion, 0);
         const damage = this._damage.get(this._curVersion, 0);
         const cost = this._cost.get(this._curVersion, 0);
+        const anyCost = this._anyCost.get(this._curVersion, 0);
         return new GISkill(this._name, description, this._type, damage, cost, this._costElement,
             {
                 id: this._id,
-                ac: this._anyCost,
+                ac: anyCost,
                 ec,
                 de: this._dmgElement,
                 expl: this._explains,

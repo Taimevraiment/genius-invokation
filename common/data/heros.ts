@@ -265,21 +265,23 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     status: [[111141, 1], 111142, 111143],
                     isForbidden: hasObjById(heroStatus, 111141),
                 })),
-            new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并获得2点「夜魂值」。')
+            new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。如可能，获得2点「夜魂值」。')
                 .src('/image/tmp/Skill_E_Citlali_01.webp')
                 .burst(2).damage(2).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const nightSoul = getObjById(heroStatus, 111141)!;
                     return { pdmg: 1, status: isCdt(nightSoul, () => [[nightSoul.id, 2]]) }
                 }),
-            new SkillBuilder('奥秘传唱').description('【我方进行[挑选]或触发元素反应后：】获得1点「夜魂值」。（每回合2次）')
+            new SkillBuilder('奥秘传唱').description('【我方进行[挑选]或造成元素反应伤害后：】如可能，获得1点「夜魂值」。（每回合2次）')
                 .src('/image/tmp/UI_Talent_S_Mavuika_08.webp')
                 .passive().handle(event => {
-                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds } = event;
+                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds, dmg = [] } = event;
                     const nightSoul = getObjById(heroStatus, 111141);
                     if (useCntPerRound > 1 || !nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
                     cmds.getStatus([[nightSoul.id, 1]], { hidxs: hidx });
-                    return { triggers: ['pick', 'elReaction', 'other-elReaction'] }
+                    const triggers: Trigger[] = ['pick'];
+                    if (dmg.some(v => v >= 0)) triggers.push('elReaction', 'other-elReaction');
+                    return { triggers }
                 })
         ),
 
@@ -407,7 +409,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).burst(3, 'v4.1.0').damage(1).damage(3, 'v4.1.0').cost(3).handle(() => ({ summon: 112062 }))
         ),
 
-    1207: () => new HeroBuilder(15).name('坎蒂丝').since('v3.8.0').offline('v2').sumeru().hydro().polearm()
+    1207: () => new HeroBuilder(15).name('坎蒂丝').since('v3.8.0').offline('v2').maxHp(11).maxHp(10, 'v5.7.0', 'v2').sumeru().hydro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/62c7b1917c4d60c69ca5ef0f011ab8f7_6753229827849116335.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6dcba2a54e7f7f1df7951987eeed39f1.png')
         .normalSkill(new NormalSkillBuilder('流耀枪术·守势'))
@@ -465,7 +467,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 112091 }))
         ),
 
-    1210: () => new HeroBuilder(335).name('那维莱特').since('v4.5.0').fontaine(HERO_TAG.ArkhePneuma).hydro().catalyst()
+    1210: () => new HeroBuilder(335).name('那维莱特').since('v4.5.0').maxHp(11).maxHp(10, 'v5.7.0').fontaine(HERO_TAG.ArkhePneuma).hydro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/86e0474f40841fbc5faff7870fe9cd0c_8511334021456599978.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/eac3491b067897444fbedb6a9a3e58ad.png')
         .normalSkill(new NormalSkillBuilder('如水从平'))
@@ -854,7 +856,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (-energy >= 6) status.push(113152);
                     return { status, addDmgCdt: -energy }
                 }),
-            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗夜魂或使用普通攻击后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
+            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
                 .src('/image/tmp/Skill_S_Mavuika_06_-650569527.png')
                 .passive().handle(event => {
                     const { trigger = '', cmds, hero: { hidx } } = event;
@@ -941,7 +943,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 114041 }))
         ),
 
-    1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').offline('v2').liyue().electro().claymore()
+    1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').offline('v2').maxHp(11).maxHp(10, 'v5.7.0', 'v2').liyue().electro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/20a9053476de0a5b82ae38f678df287b_1479624244948739352.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f68c082b2adf084ad7783776ceb1c334.png')
         .normalSkill(new NormalSkillBuilder('征涛'))
@@ -983,7 +985,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('奥义·梦想真说').description('{dealDmg}，其他我方角色获得2点[充能]。')
                 .src('https://patchwiki.biligame.com/images/ys/8/84/3elwfz4r3jrizlpe5zx9f0vhqzc7aef.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e32265b2715186774b8d4bcf3d918880_1471851977626289486.png')
-                .burst(2).damage(3).cost(4).handle(event => {
+                .burst(2).damage(3).cost(3).cost(4, 'v5.7.0').handle(event => {
                     const { heros = [], talent, hero: { heroStatus }, cmds } = event;
                     cmds.getEnergy(2, { hidxs: getBackHidxs(heros) })
                     return { addDmgCdt: (getObjById(heroStatus, 114072)?.useCnt ?? 0) * (talent ? 2 : 1) }
@@ -1297,13 +1299,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Chasca_-1947025693.png')
         .normalSkill(new NormalSkillBuilder('迷羽流击'))
         .skills(
-            new SkillBuilder('灵缰追影').description('{dealDmg}。；本角色附属【crd115112】，进入【sts115111】，并获得2点「夜魂值」。（角色进入【sts115111】后不可使用此技能）；【我方接下来3次执行「切换角色」行动时：】抓1张牌。')
+            new SkillBuilder('灵缰追影').description('{dealDmg}，抓1张牌。；本角色附属【crd115112】，进入【sts115111】，并获得2点「夜魂值」。（角色进入【sts115111】后不可使用此技能）；【我方接下来2次「切换角色」时：】抓1张牌。')
                 .src('/image/tmp/Skill_S_Chasca_01.webp')
-                .elemental().damage(1).cost(3).handle(({ hero: { heroStatus } }) => ({
-                    equip: 115112,
-                    status: [[115111, 2], 115118],
-                    isForbidden: hasObjById(heroStatus, 115111),
-                })),
+                .elemental().damage(1).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
+                    cmds.getCard(1), {
+                        equip: 115112,
+                        status: [[115111, 2], 115118],
+                        isForbidden: hasObjById(heroStatus, 115111),
+                    })),
             new SkillBuilder('索魂命袭').description('{dealDmg}，对敌方所有后台角色造成1点穿透伤害，并抓3张牌。')
                 .src('/image/tmp/Skill_E_Chasca_01.webp')
                 .burst(2).damage(1).cost(3).handle(({ cmds }) => (cmds.getCard(3), { pdmg: 1 })),
@@ -1365,7 +1368,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(4).cost(3).handle(() => ({ statusOppo: 116033 }))
         ),
 
-    1604: () => new HeroBuilder(45).name('阿贝多').since('v4.0.0').offline('v2').mondstadt().geo().sword()
+    1604: () => new HeroBuilder(45).name('阿贝多').since('v4.0.0').offline('v2').maxHp(12).maxHp(10, 'v5.7.0', 'v2').mondstadt().geo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/82503813/5ec1824cea9aad20a4e2ddca9f4b090e_8072421465872569194.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5bc8d6153d2a0f33252114d8c0754a23.png')
         .normalSkill(new NormalSkillBuilder('西风剑术·白'))
@@ -1605,7 +1608,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(4).handle(() => ({ status: 117043 }))
         ),
 
-    1705: () => new HeroBuilder(51).name('白术').since('v4.2.0').offline('v2').liyue().dendro().catalyst()
+    1705: () => new HeroBuilder(51).name('白术').since('v4.2.0').offline('v2').maxHp(11).maxHp(10, 'v5.7.0', 'v2').liyue().dendro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/0251f3d9b514e6971ccb10284a9340a9_5804585615005847738.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/80f126aa0347192046fdb7ff1d8304bf.png')
         .normalSkill(new NormalSkillBuilder('金匮针解'))
@@ -1924,7 +1927,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: 122041 }))
         ),
 
-    2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').hilichurl().hydro()
+    2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').maxHp(11).maxHp(10, 'v5.7.0').hilichurl().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/79deea8fbb624269dc7a85fb22bbf649_2655043128470707650.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/17912c63d03adfefcb3cc1c262909ffb.png')
         .normalSkill(new NormalSkillBuilder('镰刀旋斩'))
@@ -1945,7 +1948,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('浮泡攻势').description('{dealDmg}，生成手牌【crd122051】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/78/4l236g81or3zb78ozzojs6dm67wjmev.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1eef9550382f6987f37db0e387ed9ea5_1022099738869474504.png')
-                .burst(2).damage(3).cost(3).handle(({ cmds }) => { cmds.getCard(1, { card: 122051 }) })
+                .burst(2).damage(4).damage(3, 'v5.7.0').cost(3).handle(({ cmds }) => { cmds.getCard(1, { card: 122051 }) })
         ),
 
     2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()

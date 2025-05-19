@@ -179,31 +179,39 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1131541: () => new SkillBuilder('跃升').description('消耗1点「夜魂值」，{dealDmg}。')
         .src('/image/tmp/Skill_Vehicle_Mavuika2_-899064990.png')
-        .vehicle().damage(4).costAny(1).handle(({ skillAfter, hero: { hidx } }) => skillAfter.consumeNightSoul(hidx).res),
+        .vehicle().damage(4).costAny(1).handle(event => {
+            const { skillAfter, hero: { hidx, heroStatus } } = event;
+            skillAfter.consumeNightSoul(hidx);
+            return { isForbidden: !hasObjById(heroStatus, 113151) }
+        }),
 
-    1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将1个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
+    1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将2个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
         .src('/image/tmp/Skill_Vehicle_Mavuika3_789405650.png')
-        .vehicle().costSame(0).handle(({ cmds }) => (cmds.switchAfter().changeDice({ cnt: 1 }), { isQuickAction: true })),
+        .vehicle().costSame(0).handle(({ cmds }) => (cmds.switchAfter().changeDice({ cnt: 2 }), { isQuickAction: true })),
 
     1131561: () => new SkillBuilder('疾驰').description('消耗1点「夜魂值」，然后[准备技能]：【rsk13155】。')
         .src('/image/tmp/Skill_Vehicle_Mavuika1_2075538931.png')
-        .vehicle().costAny(2).handle(({ skillAfter, hero: { hidx } }) => skillAfter.consumeNightSoul(hidx).getStatus(113157).res),
+        .vehicle().costAny(2).handle(event => {
+            const { skillAfter, hero: { hidx, heroStatus } } = event;
+            skillAfter.consumeNightSoul(hidx).getStatus(113157);
+            return { isForbidden: !hasObjById(heroStatus, 113151) }
+        }),
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次「普通攻击」视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
-    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，随机[舍弃]3张原本元素骰费用最高的手牌，然后{dealDmg}。')
+    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，{dealDmg}，然后随机[舍弃]3张原本元素骰费用最高的手牌。')
         .src('/image/tmp/Skill_Vehicle_Chasca_-159040159.png')
         .vehicle().damage(1).cost(2).handle(event => {
-            const { skillAfter, skillBefore, hero: { hidx } } = event;
-            skillBefore.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
+            const { cmds, skillAfter, hero: { hidx } } = event;
+            cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
             skillAfter.consumeNightSoul(hidx);
         }),
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')
-        .vehicle().damage(2).costAny(1).handle(event => {
+        .vehicle().damage(2).cost(1).costAny(1, 'v5.7.0').handle(event => {
             const { eheros, combatStatus, hero: { hidx }, skillAfter } = event;
             const hidxs = getNextBackHidx(eheros);
             skillAfter.consumeNightSoul(hidx);
@@ -286,7 +294,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/75019ddf20d1485e844ad7c5e3106e0f_5220421915413934082.png')
         .vehicle().costAny(3).handle(() => ({ status: 301303 })),
 
-    3130092: () => new SkillBuilder('呀！呀！').description('从牌库中抓一张【特技牌】，下次我方打出【特技牌】少花费2个元素骰。')
+    3130092: () => new SkillBuilder('呀！呀！').description('从牌库中抓1张【特技牌】，下次我方打出【特技牌】少花费2个元素骰。')
         .src('/image/tmp/Skill_GCG_SaurusBaby_345786978.png')
         .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 

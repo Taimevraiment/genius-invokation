@@ -120,8 +120,10 @@ export class GICard {
             } else {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver) ?? {};
-                    const { trigger = '' } = event;
+                    const { trigger = '', cmds, execmds } = event;
                     if (destroyTriggers.includes(trigger) && card.useCnt == 0) {
+                        cmds.clear();
+                        execmds.clear();
                         return { triggers: destroyTriggers, isDestroy: true }
                     }
                     if (trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
@@ -373,8 +375,9 @@ export class CardBuilder extends BaseCostBuilder {
         this._useCnt.set([version, useCnt]);
         return this;
     }
-    perCnt(perCnt: number, version: Version = 'vlatest') {
-        this._perCnt.set([version, perCnt]);
+    perCnt(perCnt: number, ...version: Version[]) {
+        if (version.length == 0) version = ['vlatest'];
+        version.forEach(v => this._perCnt.set([v, perCnt]));
         return this;
     }
     energy(energy: number, version: Version = 'vlatest') {
