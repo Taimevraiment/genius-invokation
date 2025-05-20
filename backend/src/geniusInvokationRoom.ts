@@ -5189,7 +5189,7 @@ export default class GeniusInvokationRoom {
                 if (cmd == 'getCard') {
                     const willGetCard: Card[] = [];
                     const exclude = ohidxs ?? [];
-                    let restCnt = mode ? count - cplayer.handCards.length : (count || cards.length);
+                    let restCnt = mode ? count - cplayer.handCards.filter(c => c.UI.class != 'discard').length : (count || cards.length);
                     let isFromPile = isAttach;
                     while (restCnt-- > 0) {
                         let wcard: Card | null = null;
@@ -5425,6 +5425,7 @@ export default class GeniusInvokationRoom {
                                 else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { isPriority: true, isUnshift: true });
                             }
                         }, 1500]], { isPriority, isUnshift });
+                        cplayer.handCards.forEach(c => discards.some(dc => dc.entityId == c.entityId) && (c.UI.class = 'discard'));
                     } else {
                         if (!isAttach && isDiscard) {
                             const { tasks: distasks, willHeals: disheal } = this._doDiscard(pidx, discards, { players, isAction, isExec, supportCnt });

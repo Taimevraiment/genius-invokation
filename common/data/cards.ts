@@ -1164,6 +1164,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (energy < maxEnergy) {
                     execmds.getEnergy(1, { hidxs: hidx });
                     ++heroEnergy[hidx][0];
+                    --i;
                     if (--count == 0) break;
                 }
             }

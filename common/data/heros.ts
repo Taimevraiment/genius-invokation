@@ -859,12 +859,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
                 .src('/image/tmp/Skill_S_Mavuika_06_-650569527.png')
                 .passive().handle(event => {
-                    const { trigger = '', cmds, hero: { hidx } } = event;
+                    const { trigger = '', cmds, hero: { hidx, energy, maxEnergy } } = event;
                     if (['skilltype2', 'skilltype3'].includes(trigger)) {
                         cmds.getStatus(113153);
                         return { triggers: trigger }
                     }
-                    if (['consumeNightSoul', 'skilltype1', 'other-skilltype1'].includes(trigger)) {
+                    if (['consumeNightSoul', 'skilltype1', 'other-skilltype1'].includes(trigger) && energy > maxEnergy) {
                         cmds.getEnergy(1, { hidxs: hidx, isSp: true });
                         return { triggers: trigger }
                     }

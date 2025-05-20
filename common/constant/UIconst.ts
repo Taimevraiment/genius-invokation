@@ -263,6 +263,8 @@ export const DICE_WEIGHT = [ // 骰子的优先级权重(越低越优先)
     DICE_COST_TYPE.Anemo,
 ];
 
+export const ELEMENT_ICON_NAME = ['', 'Ice', 'Water', 'Fire', 'Elec', 'Wind', 'Rock', 'Grass'];
+
 export const STATUS_ICON = {
     Enchant: 'enchant',
     ElementAtkUp: 'elementAtkUp',

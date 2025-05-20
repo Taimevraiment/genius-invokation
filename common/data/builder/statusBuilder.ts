@@ -1,7 +1,7 @@
 import { Status, Trigger, VersionCompareFn } from "../../../typing";
 import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
-import { STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
+import { ELEMENT_ICON_NAME, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
@@ -56,14 +56,14 @@ export class GIStatus {
         const el = getElByHid(hid);
         description = description
             .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
-            .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
+            .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 || useCnt > -1 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
             .replace(/(?<=〖)ski,(.+?)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,(.+?)(?=】)/g, `ski${hid},$1`)
             .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
             .replace(/(?<=【)hro(?=】)/g, `hro${hid}`);
         this.UI = {
             description,
-            icon: icon.replace(/(tmp)?ski,(\d)/, `$1ski${hid},$2`),
+            icon: icon.replace(/ski,(\d)/, `ski${hid},$1`),
             iconBg: icbg,
             explains: [
                 ...(description.match(/(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []),
@@ -107,14 +107,22 @@ export class GIStatus {
                 return { triggers: 'card', isInvalid: true, exec: () => { status.minusUseCnt() } }
             }
         } else if (type.includes(STATUS_TYPE.NightSoul)) {
-            const element = ['', 'Ice', 'Water', 'Fire', 'Elec', 'Wind', 'Rock', 'Grass'][Math.floor(id / 1e3) % 10];
+            const element = ELEMENT_ICON_NAME[Math.floor(id / 1e3) % 10];
             this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nightsoul_${element}.webp`;
+        } else if (Object.values<string>(STATUS_ICON).slice(0, 4).includes(icon) && IS_USE_OFFICIAL_SRC) {
+            const element = icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp ? ELEMENT_ICON_NAME[Math.floor(id / 1e3) % 10] : '';
+            const iconName = icon == STATUS_ICON.Enchant ? 'Element_Enchant_' :
+                icon == STATUS_ICON.ElementAtkUp ? 'Element_Atk_Up_' :
+                    icon == STATUS_ICON.AtkUp ? 'Common_Atk_Up' :
+                        icon == STATUS_ICON.AtkSelf ? 'Common_Atk_Self' : '';
+            this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_${iconName}${element}.webp`;
+            this.UI.iconBg = STATUS_BG_COLOR.Transparent;
         }
         if (IS_USE_OFFICIAL_SRC && !/^http|tmp/.test(this.UI.icon)) {
             this.UI.icon = '#';
             this.UI.iconBg = STATUS_BG_COLOR.Transparent;
         }
-        this.UI.icon = this.UI.icon.replace('tmpski', 'tmp');
+        this.UI.icon = this.UI.icon.replace('tmpski', 'ski');
         if (this.UI.icon == '#') this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
         else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
             if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {

@@ -61,7 +61,8 @@ export class GISkill {
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         const hid = getHidById(id);
         description = description
-            .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]').replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害')
+            .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
+            .replace(/elDmg/g, ELEMENT_NAME[this.dmgElement] + '伤害')
             .replace(/(?<=〖)ski,(.+?)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,(.+?)(?=】)/g, `ski${hid},$1`);
         this.UI = {

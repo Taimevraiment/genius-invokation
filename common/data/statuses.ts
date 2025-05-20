@@ -285,13 +285,16 @@ const continuousActionHandle = (status: Status, event: StatusHandleEvent): Statu
     }
 }
 
-const nightSoul = (cnt: number = 0, isAccumate: boolean = true) => new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2)
-    .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage, STATUS_TYPE.NightSoul)
-    .description(`所附属角色可累积「夜魂值」。（最多累积到2点）${isAccumate ? '' : '；「夜魂值」为0时，退出【夜魂加持】。'}`)
-    .handle(status => {
-        if (status.useCnt > 0 || isAccumate) return;
-        return { triggers: ['action-start', 'action-start-oppo'], exec: () => status.dispose() }
-    });
+const nightSoul = (cnt: number = 0, options: { isAccumate?: boolean, roundCnt?: number } = {}) => {
+    const { isAccumate = true, roundCnt = -1 } = options;
+    return new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2).roundCnt(roundCnt)
+        .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage, STATUS_TYPE.NightSoul)
+        .description(`所附属角色可累积「夜魂值」。（最多累积到2点）${isAccumate ? '' : '；「夜魂值」为0时，退出【夜魂加持】。'}${roundCnt > -1 ? `；[roundCnt]` : ''}`)
+        .handle(status => {
+            if (status.useCnt > 0 || isAccumate) return;
+            return { triggers: ['action-start', 'action-start-oppo'], exec: () => status.dispose() }
+        });
+}
 
 const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
@@ -550,7 +553,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle(status => ({ multiDmgCdt: 2, triggers: 'skill', exec: () => { status.minusUseCnt() } })),
 
-    111141: nightSoul,
+    111141: (cnt?: number) => nightSoul(cnt, { roundCnt: 2 }),
 
     111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1').icon('tmp/UI_Gcg_Buff_Citlali_Shiled_586652224'),
 
@@ -570,9 +573,6 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
             if (trigger == 'getNightSoul' && (isExecTask || (source == nightSoul.id && nightSoul.useCnt == 2))) {
                 return { triggers: trigger, damage: 1, element: DAMAGE_TYPE.Cryo }
-            }
-            if (status.roundCnt == 1) {
-                return { triggers: 'turn-end', exec: () => nightSoul.dispose() }
             }
         }),
 
@@ -1072,7 +1072,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'getdmg', cmds, exec: () => { status.minusUseCnt(hidxs.length) } }
         }),
 
-    113151: (cnt?: number) => nightSoul(cnt, false),
+    113151: (cnt?: number) => nightSoul(cnt, { isAccumate: false }),
 
     113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').icon('tmp/UI_Gcg_Buff_Mavuika_S_-1066548432')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
@@ -2634,7 +2634,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1).icon('#'),
 
-    301306: () => new StatusBuilder('呀——！').combatStatus().icon('ski3130091').iconBg(STATUS_BG_COLOR.Physical)
+    301306: () => new StatusBuilder('呀——！').combatStatus().icon('tmpski3130092').iconBg(STATUS_BG_COLOR.Physical)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).useCnt(1)
         .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方前台获得3点[护盾]，然后造成3点[物理伤害]。')
         .handle((status, event) => {
@@ -3059,7 +3059,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     303240: () => new StatusBuilder('还魂诗').heroStatus().useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon(STATUS_ICON.Revive)
-        .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到2点生命值。然后此牌「重燃」+1。')
+        .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
             const { hidx = -1, cmds, dicesCnt = 0, trigger = '' } = event;
             if (trigger.includes('action-start')) {
@@ -3067,7 +3067,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 else status.type = [STATUS_TYPE.Usage];
                 return;
             }
-            cmds.revive(2, hidx).consumeDice(status.useCnt);
+            cmds.revive(1, hidx).consumeDice(status.useCnt);
             return { triggers: 'will-killed', exec: eStatus => { eStatus?.addUseCnt(true) } }
         }),
 
