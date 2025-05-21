@@ -285,9 +285,9 @@ const continuousActionHandle = (status: Status, event: StatusHandleEvent): Statu
     }
 }
 
-const nightSoul = (cnt: number = 0, options: { isAccumate?: boolean, roundCnt?: number } = {}) => {
+const nightSoul = (options: { isAccumate?: boolean, roundCnt?: number } = {}) => {
     const { isAccumate = true, roundCnt = -1 } = options;
-    return new StatusBuilder('夜魂加持').heroStatus().useCnt(cnt).maxCnt(2).roundCnt(roundCnt)
+    return () => new StatusBuilder('夜魂加持').heroStatus().useCnt(0).maxCnt(2).addCnt(0).roundCnt(roundCnt)
         .type(STATUS_TYPE.Accumulate, STATUS_TYPE.Usage, STATUS_TYPE.NightSoul)
         .description(`所附属角色可累积「夜魂值」。（最多累积到2点）${isAccumate ? '' : '；「夜魂值」为0时，退出【夜魂加持】。'}${roundCnt > -1 ? `；[roundCnt]` : ''}`)
         .handle(status => {
@@ -553,7 +553,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方造成技能伤害时：】移除此状态，使本次伤害加倍。')
         .handle(status => ({ multiDmgCdt: 2, triggers: 'skill', exec: () => { status.minusUseCnt() } })),
 
-    111141: (cnt?: number) => nightSoul(cnt, { roundCnt: 2 }),
+    111141: nightSoul({ roundCnt: 2 }),
 
     111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1').icon('tmp/UI_Gcg_Buff_Citlali_Shiled_586652224'),
 
@@ -835,7 +835,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112141: nightSoul,
+    112141: nightSoul(),
 
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage).icon('#')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
@@ -1072,7 +1072,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'getdmg', cmds, exec: () => { status.minusUseCnt(hidxs.length) } }
         }),
 
-    113151: (cnt?: number) => nightSoul(cnt, { isAccumate: false }),
+    113151: nightSoul({ isAccumate: false }),
 
     113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').icon('tmp/UI_Gcg_Buff_Mavuika_S_-1066548432')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
@@ -1496,7 +1496,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: eStatus => { eStatus?.minusUseCnt() },
         })),
 
-    115111: nightSoul,
+    115111: nightSoul(),
 
     115118: () => new StatusBuilder('掩护的心意').combatStatus().useCnt(2).icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage)
         .description('【我方「切换角色」时：】抓1张牌。；[useCnt]')
@@ -1617,9 +1617,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'Geo-dmg', addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
         }),
 
-    116104: nightSoul,
+    116104: nightSoul(),
 
-    116111: nightSoul,
+    116111: nightSoul(),
 
     116113: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Geo).useCnt(useCnt),
 
@@ -1855,7 +1855,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    117092: nightSoul,
+    117092: nightSoul(),
 
     117094: () => new StatusBuilder('钩锁准备').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign).icon('#')
         .description('【我方选择行动前，若附属角色为出战角色：】对最近的敌方角色造成3点[草元素伤害]。；[useCnt]')
@@ -3032,17 +3032,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合我方角色下次消耗「夜魂值」后：】该角色获得1点「夜魂值」。')
         .handle((status, event) => {
-            const { heros = [], sourceHidx = -1, cmds } = event;
-            const hero = heros[sourceHidx];
-            if (!hero || status.roundCnt <= 0) return;
-            const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
-            if (!nightSoul) return;
+            const { sourceHidx = -1, cmds } = event;
+            if (sourceHidx == -1 || status.roundCnt <= 0) return;
             return {
                 triggers: 'consumeNightSoul',
                 isAddTask: true,
                 exec: eStatus => {
                     if (!eStatus) return;
-                    cmds.getStatus([[nightSoul.id, 1]]);
+                    cmds.getNightSoul(1, sourceHidx);
                     eStatus.minusRoundCnt();
                 }
             }

@@ -36,9 +36,9 @@ export default class CmdsGenerator {
     getCard(cnt: number, options: {
         subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[],
         card?: Card | (Card | number)[] | number, exclude?: number[], include?: number[],
-        isOppo?: boolean, isFromPile?: boolean, until?: boolean,
+        isOppo?: boolean, isFromPile?: boolean, until?: boolean, mode?: number,
     } = {}) {
-        const { subtype, cardTag, card, exclude, include, isOppo, isFromPile, until } = options;
+        const { subtype, cardTag, card, exclude, include, isOppo, isFromPile, until, mode } = options;
         this.value.push({
             cmd: 'getCard',
             cnt,
@@ -48,7 +48,8 @@ export default class CmdsGenerator {
             hidxs: isCdt(subtype || cardTag, exclude, include),
             isOppo,
             isAttach: isCdt(card || subtype || cardTag, isFromPile),
-            mode: +!!until,
+            mode,
+            status: +!!until,
         });
         return this;
     }
@@ -216,6 +217,10 @@ export default class CmdsGenerator {
     consumeNightSoul(hidx?: number, cnt: number = 1) {
         const hidxs = hidx != undefined ? convertToArray(hidx) : hidx;
         this.value.push({ cmd: 'consumeNightSoul', cnt, hidxs });
+        return this;
+    }
+    getNightSoul(cnt: number = 1, hidx?: number) {
+        this.value.push({ cmd: 'getNightSoul', hidxs: hidx != undefined ? [hidx] : undefined, cnt });
         return this;
     }
     consumeDice(diceSelect: boolean[] | number) {

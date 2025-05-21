@@ -232,7 +232,10 @@
               <div class="status-bg" :class="{ 'mobile-status-bg': isMobile }" :style="{ background: ists.UI.iconBg }">
               </div>
               <img v-if="getPngIcon(ists.UI.icon) != ''" class="status-icon" :style="{
-                filter: getPngIcon(ists.UI.icon).startsWith('https') || ists.UI.icon == STATUS_ICON.ElementAtkUp || ists.UI.icon == STATUS_ICON.Enchant || ists.UI.icon.endsWith('dice')
+                filter: (getPngIcon(ists.UI.icon).startsWith('https') ||
+                  ists.UI.icon == STATUS_ICON.ElementAtkUp ||
+                  ists.UI.icon == STATUS_ICON.Enchant ||
+                  ists.UI.icon.endsWith('dice')) && !getPngIcon(ists.UI.icon).includes('guyutongxue')
                   ? getSvgFilter(ists.UI.iconBg) : '',
               }" :src="getPngIcon(ists.UI.icon)" />
               <div v-else style="color: white;">{{ ists.name[0] }}</div>
@@ -261,7 +264,10 @@
                   :style="{ background: osts.UI.iconBg }">
                 </div>
                 <img v-if="getPngIcon(osts.UI.icon) != ''" class="status-icon" :style="{
-                  filter: getPngIcon(osts.UI.icon).startsWith('https') || osts.UI.icon == STATUS_ICON.ElementAtkUp || osts.UI.icon == STATUS_ICON.Enchant || osts.UI.icon.endsWith('dice')
+                  filter: (getPngIcon(osts.UI.icon).startsWith('https') ||
+                    osts.UI.icon == STATUS_ICON.ElementAtkUp ||
+                    osts.UI.icon == STATUS_ICON.Enchant ||
+                    osts.UI.icon.endsWith('dice')) && !getPngIcon(osts.UI.icon).includes('guyutongxue')
                     ? getSvgFilter(osts.UI.iconBg) : '',
                 }" :src="getPngIcon(osts.UI.icon)" />
                 <div v-else style="color: white;">{{ osts.name[0] }}</div>

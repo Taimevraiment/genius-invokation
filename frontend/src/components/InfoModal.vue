@@ -145,7 +145,10 @@
                   <div class="status-icon">
                     <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
                     <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
-                      filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? getSvgFilter(ist.UI.iconBg) : ''
+                      filter: (getPngIcon(ist.UI.icon).startsWith('https') ||
+                        ist.UI.icon.startsWith('buff') ||
+                        ist.UI.icon.endsWith('dice')) && !getPngIcon(ist.UI.icon).includes('guyutongxue')
+                        ? getSvgFilter(ist.UI.iconBg) : ''
                     }" />
                     <div v-else style="color: white;">{{ ist.name[0] }}</div>
                     <div class="status-cnt"
@@ -175,8 +178,12 @@
                 <span class="status-title-left">
                   <div class="status-icon">
                     <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
-                    <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
-                      :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? getSvgFilter(ost.UI.iconBg) : '' }" />
+                    <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)" :style="{
+                      filter: (getPngIcon(ost.UI.icon).startsWith('https') ||
+                        ost.UI.icon.startsWith('buff') ||
+                        ost.UI.icon.endsWith('dice')) && !getPngIcon(ost.UI.icon).includes('guyutongxue')
+                        ? getSvgFilter(ost.UI.iconBg) : ''
+                    }" />
                     <div v-else style="color: white;">{{ ost.name[0] }}</div>
                     <div class="status-cnt"
                       v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
@@ -252,8 +259,12 @@
             <span class="status-title-left">
               <div class="status-icon">
                 <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
-                <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)"
-                  :style="{ filter: getPngIcon(ist.UI.icon).startsWith('https') || ist.UI.icon.startsWith('buff') || ist.UI.icon.endsWith('dice') ? getSvgFilter(ist.UI.iconBg) : '' }" />
+                <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
+                  filter: (getPngIcon(ist.UI.icon).startsWith('https') ||
+                    ist.UI.icon.startsWith('buff') ||
+                    ist.UI.icon.endsWith('dice')) && !getPngIcon(ist.UI.icon).includes('guyutongxue')
+                    ? getSvgFilter(ist.UI.iconBg) : ''
+                }" />
                 <div v-else style="color: white;">{{ ist.name[0] }}</div>
                 <div class="status-cnt" v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
                   {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
@@ -280,8 +291,12 @@
             <span class="status-title-left">
               <div class="status-icon">
                 <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
-                <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)"
-                  :style="{ filter: getPngIcon(ost.UI.icon).startsWith('https') || ost.UI.icon.startsWith('buff') || ost.UI.icon.endsWith('dice') ? getSvgFilter(ost.UI.iconBg) : '' }" />
+                <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)" :style="{
+                  filter: (getPngIcon(ost.UI.icon).startsWith('https') ||
+                    ost.UI.icon.startsWith('buff') ||
+                    ost.UI.icon.endsWith('dice')) && !getPngIcon(ost.UI.icon).includes('guyutongxue')
+                    ? getSvgFilter(ost.UI.iconBg) : ''
+                }" />
                 <div v-else style="color: white;">{{ ost.name[0] }}</div>
                 <div class="status-cnt" v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
                   {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>

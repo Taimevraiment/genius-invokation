@@ -50,7 +50,7 @@ export class GIStatus {
         this.useCnt = useCnt;
         this.maxCnt = maxCnt;
         this.roundCnt = roundCnt;
-        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = Math.max(useCnt, roundCnt),
+        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
             isTalent = false, isReset = true, adt = [], ver = VERSION[0] } = options;
         const hid = getHidById(id);
         const el = getElByHid(hid);
@@ -72,7 +72,7 @@ export class GIStatus {
             ],
             descriptions: [],
         }
-        this.addCnt = act;
+        this.addCnt = act == -1 ? Math.max(useCnt, roundCnt) : act;
         this.summonId = smnId;
         this.perCnt = pct;
         this.isTalent = isTalent;
@@ -205,7 +205,7 @@ export class StatusBuilder extends BaseBuilder {
     private _type: StatusType[] = [];
     private _useCnt: VersionMap<number> = new VersionMap();
     private _maxCnt: VersionMap<number> = new VersionMap();
-    private _addCnt: number = 0;
+    private _addCnt: number = -1;
     private _perCnt: VersionMap<number> = new VersionMap();
     private _roundCnt: VersionMap<number> = new VersionMap();
     private _icon: VersionMap<string> = new VersionMap();
@@ -376,7 +376,7 @@ export class StatusBuilder extends BaseBuilder {
             useCnt, maxCnt, roundCnt, handle,
             {
                 pct: perCnt,
-                act: this._addCnt || Math.max(useCnt, roundCnt),
+                act: this._addCnt,
                 icbg: this._iconBg,
                 isTalent: this._isTalent,
                 smnId,

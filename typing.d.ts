@@ -143,7 +143,7 @@ type Cmds = {
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
-    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'consumeDice' | 'convertCard';
+    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡

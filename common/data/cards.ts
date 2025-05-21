@@ -2321,8 +2321,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色1点，目标角色之后2次[准备技能]时：治疗自身1点。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_TujiaoLong.webp')
         .handle((_, event) => {
-            event.cmds.heal(1);
-            return { status: 303322, canSelectHero: event.heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
+            const { cmds, heros } = event;
+            cmds.heal(1);
+            return { status: 303322, canSelectHero: heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
         }),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
@@ -2447,9 +2448,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Citlali.webp')
         .handle((card, event) => {
             const { hero, hasDmg, execmds } = event;
-            const nightSoul = getObjById(hero?.heroStatus, 111141);
-            if (card.perCnt <= 0 || !hasDmg || !nightSoul) return;
-            execmds.getStatus([211142, [nightSoul.id, 1]]);
+            if (card.perCnt <= 0 || !hasDmg) return;
+            execmds.getStatus(211142).getNightSoul(1, hero?.hidx);
             return { triggers: ['Frozen-oppo', 'Melt-oppo'], exec: () => card.minusPerCnt() }
         }),
 
@@ -2672,7 +2672,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle) || card.perCnt <= 0) return;
             const nightSoul = getObjById(hero?.heroStatus, 113151);
             if (!nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
-            execmds.getStatus([[113151, 1]]);
+            execmds.getNightSoul(1, hero?.hidx);
             return { triggers: 'card', exec: () => card.minusPerCnt() }
         }),
 
@@ -3432,10 +3432,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, execmds, cmds } = event;
             if (!hero) return;
+            const triggers: Trigger[] = ['discard'];
             const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
-            if (ncardId) execmds.convertCard(card.entityId, ncardId);
+            if (ncardId) {
+                execmds.convertCard(card.entityId, ncardId);
+                triggers.push('getcard');
+            }
             cmds.attack(1, DAMAGE_TYPE.Anemo).addCard(1, 115113);
-            return { triggers: ['discard', 'getcard'] }
+            return { triggers }
         }),
 
     115114: () => hero1511card(ELEMENT_TYPE.Pyro).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Fire_1813918232'),
