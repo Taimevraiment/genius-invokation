@@ -247,7 +247,7 @@ const hero1511card = (el: SwirlElementType) => {
         .description(`【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
         .handle((_, event) => {
             event.cmds.attack(1, el).addCard(1, 115113);
-            return { triggers: 'discard' }
+            return { triggers: 'discard', notPreview: true }
         });
 }
 
@@ -3439,7 +3439,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 triggers.push('getcard');
             }
             cmds.attack(1, DAMAGE_TYPE.Anemo).addCard(1, 115113);
-            return { triggers }
+            return { triggers, notPreview: true }
         }),
 
     115114: () => hero1511card(ELEMENT_TYPE.Pyro).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Fire_1813918232'),

@@ -3054,16 +3054,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'card', minusDiceCard: 2, exec: () => { status.minusUseCnt() } }
         }),
 
-    303240: () => new StatusBuilder('还魂诗').heroStatus().useCnt(1).roundCnt(1)
+    303240: () => new StatusBuilder('还魂诗').heroStatus().addCnt(0).useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon(STATUS_ICON.Revive)
         .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
-            const { hidx = -1, cmds, dicesCnt = 0, trigger = '' } = event;
-            if (trigger.includes('action-start')) {
-                if (dicesCnt >= status.useCnt) status.type = [STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat];
-                else status.type = [STATUS_TYPE.Usage];
-                return;
-            }
+            const { hidx = -1, cmds, dicesCnt = 0 } = event;
+            if (dicesCnt < status.useCnt) return;
             cmds.revive(1, hidx).consumeDice(status.useCnt);
             return { triggers: 'will-killed', exec: eStatus => { eStatus?.addUseCnt(true) } }
         }),
@@ -3071,8 +3067,8 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303241: () => new StatusBuilder('健身的成果（生效中）').heroStatus().icon(STATUS_ICON.Buff).useCnt(2).type(STATUS_TYPE.Usage)
         .description('【我方其他角色[准备技能]时：】所选角色下次「元素战技」少花费1个元素骰。（至多触发2次，不可叠加）')
         .handle((_, event) => {
-            const { hidx = -1, sourceHidx = -1, cmds } = event;
-            if (hidx == sourceHidx) return;
+            const { heros = [], hidx = -1, sourceHidx = -1, cmds } = event;
+            if (hidx == sourceHidx || hasObjById(heros[hidx]?.heroStatus, 303242)) return;
             cmds.getStatus(303242, { hidxs: hidx });
             return { triggers: 'ready-skill', isAddTask: true, exec: eStatus => { eStatus?.minusUseCnt() } }
         }),

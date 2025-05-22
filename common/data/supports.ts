@@ -2,8 +2,8 @@ import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger 
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
-import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx, getObjById } from '../utils/gameUtil.js';
-import { arrToObj, isCdt, objToArr } from '../utils/utils.js';
+import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices } from '../utils/gameUtil.js';
+import { isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 
 export type SupportHandleEvent = {
@@ -71,14 +71,6 @@ export type SupportExecRes = {
     cmds?: CmdsGenerator,
     isDestroy?: boolean,
     summon?: (number | [number, ...any])[] | number,
-}
-
-const getSortedDices = (dices: DiceCostType[]) => {
-    const diceCnt = arrToObj(DICE_WEIGHT, 0);
-    dices.forEach(d => ++diceCnt[d]);
-    return objToArr(diceCnt)
-        .sort((a, b) => b[1] * +(b[0] != DICE_COST_TYPE.Omni) - a[1] * +(a[0] != DICE_COST_TYPE.Omni) || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
-        .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
 }
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {

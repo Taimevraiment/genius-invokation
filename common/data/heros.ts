@@ -274,8 +274,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/UI_Talent_S_Mavuika_08.webp')
                 .passive().handle(event => {
                     const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds, dmg = [] } = event;
-                    const nightSoul = getObjById(heroStatus, 111141);
-                    if (useCntPerRound > 1 || !nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
+                    if (useCntPerRound > 1 || !hasObjById(heroStatus, 111141)) return;
                     cmds.getNightSoul(1, hidx);
                     const triggers: Trigger[] = ['pick'];
                     if (dmg.some(v => v >= 0)) triggers.push('elReaction', 'other-elReaction');
@@ -1506,7 +1505,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/57bd20405cce28ef0e76bb4edcf50139_848653401769182967.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/681a94af/4ca1622d72a6dfb024393a85485c7ef3.png')
         .normalSkill(new NormalSkillBuilder('锐锋攫猎').description('若自身附属【sts116111】，则回复1点「夜魂值」。')
-            .handle(({ hero: { heroStatus } }) => ({ exec: () => getObjById(heroStatus, 116111)?.addUseCnt() })))
+            .handle(({ cmds }) => cmds.getNightSoul().res))
         .skills(
             new SkillBuilder('音火锻淬').description('本角色附属【crd116112】，进入【sts116111】并获得1点「夜魂值」。（角色进入【sts116111】后不可使用此技能）')
                 .src('#',

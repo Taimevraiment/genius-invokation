@@ -19,7 +19,7 @@ export default class CmdsGenerator {
         return this.value.some(({ cmd }) => cmd.includes('switch'));
     }
     get res() {
-        return;
+        return undefined;
     }
     getDice(cnt: number, options: { element?: (DiceCostType | 'Physical') | (DiceCostType | 'Physical')[], mode?: number, frontOffset?: 1 | -1 } = {}) {
         const { element, mode, frontOffset } = options;

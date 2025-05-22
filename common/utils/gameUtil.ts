@@ -1,6 +1,6 @@
 import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
 import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, VERSION, Version } from "../constant/enum.js";
-import { SKILL_TYPE_NAME } from "../constant/UIconst.js";
+import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -180,6 +180,15 @@ export const getVehicleIdByCid = (cid: number): number => {
         313009: 3130092,
     };
     return SpecialCard[cid] ?? +`${cid}1`;
+}
+
+// 获取排序后的骰子
+export const getSortedDices = (dices: DiceCostType[]) => {
+    const diceCnt = arrToObj(DICE_WEIGHT, 0);
+    dices.forEach(d => ++diceCnt[d]);
+    return objToArr(diceCnt)
+        .sort((a, b) => b[1] * +(b[0] != DICE_COST_TYPE.Omni) - a[1] * +(a[0] != DICE_COST_TYPE.Omni) || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
+        .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
 }
 
 // 合并预回血
