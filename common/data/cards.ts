@@ -1827,7 +1827,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { hero, cmds } = event;
             cmds.getEnergy(1);
-            return { isValid: hero && hero.energy < hero.maxEnergy }
+            return { isValid: hero && hero.energy != hero.maxEnergy }
         }),
 
     332009: () => new CardBuilder(249).name('白垩之术').offline('v1').event().costSame(1)
@@ -2767,17 +2767,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/b53d6688202a139f452bda31939162f8_3511216535123780784.png')
         .handle((card, event) => {
             const { hero, trigger, execmds } = event;
-            const isRevive = card.perCnt > 0 && trigger == 'will-killed';
-            const triggers: Trigger[] = ['skill'];
-            if (isRevive) {
-                triggers.push('will-killed');
-                execmds.revive(1);
+            if (card.perCnt > 0 && trigger == 'will-killed') {
+                execmds.revive(1, hero?.hidx);
+                return { triggers: 'will-killed', exec: () => card.minusPerCnt() }
             }
-            return {
-                triggers,
-                addDmgCdt: isCdt((hero?.hp ?? 10) <= 5, 1),
-                exec: () => { isRevive && card.minusPerCnt() }
-            }
+            return { triggers: 'skill', addDmgCdt: isCdt((hero?.hp ?? 10) <= 5, 1) }
         }),
 
     214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)

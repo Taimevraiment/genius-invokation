@@ -3059,8 +3059,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
             const { hidx = -1, cmds, dicesCnt = 0 } = event;
+            status.addition[0] = 0;
             if (dicesCnt < status.useCnt) return;
             cmds.revive(1, hidx).consumeDice(status.useCnt);
+            status.addition[0] = 1;
             return { triggers: 'will-killed', exec: eStatus => { eStatus?.addUseCnt(true) } }
         }),
 

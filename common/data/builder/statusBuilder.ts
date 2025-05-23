@@ -356,6 +356,7 @@ export class StatusBuilder extends BaseBuilder {
         this._typeCdt.forEach(([cdt, types]) => {
             if (cdt(compareVersionFn(this._curVersion))) this._type.push(...types);
         });
+        if (this._type.includes(STATUS_TYPE.NonDefeat)) this.addition(1);
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
             (status: Status, event: StatusHandleEvent, ver: VersionCompareFn): StatusBuilderHandleRes => {
                 const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;

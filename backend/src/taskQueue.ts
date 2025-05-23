@@ -11,6 +11,7 @@ const findLastIndex = <T>(arr: T[], predicate: (value: T, index: number, obj: T[
 export default class TaskQueue {
     priorityQueue: TaskItem[] | undefined;
     queue: TaskItem[] = [];
+    finalQueue: TaskItem[] = [];
     isExecuting: boolean = false;
     isDieWaiting: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
@@ -20,21 +21,22 @@ export default class TaskQueue {
         this.env = env;
     }
     get queueList() {
-        return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}])`;
+        return `(${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}]${this.finalQueue.length ? `finalQueue=[${this.finalQueue.map(v => v[0])}]` : ''})`;
     }
     init() {
         this.priorityQueue = undefined;
         this.queue = [];
+        this.finalQueue = [];
         this.isExecuting = false;
         this.isDieWaiting = false;
     }
     addTask(taskType: string, args: any[] | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
-        orderAfter?: string,
+        orderAfter?: string, isFinal?: boolean,
     } = {}) {
-        const { isUnshift = false, isDmg = false, addAfterNonDmg = false, isPriority = false, source = -1, orderAfter = '' } = options;
+        const { isUnshift, isDmg = false, addAfterNonDmg, isPriority, isFinal, source = -1, orderAfter = '' } = options;
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
-        const curQueue = isCdt(this.isExecuting || isPriority, this.priorityQueue) ?? this.queue;
+        const curQueue = isCdt(isFinal, this.finalQueue, isCdt(this.isExecuting || isPriority, this.priorityQueue)) ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
             console.trace('重复task:', taskType);
         }
@@ -51,8 +53,9 @@ export default class TaskQueue {
     async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
         this._writeLog('execTask-start-' + taskType, 'emit');
         if (this.env == 'dev') console.time('execTask-end-' + taskType);
-        if (!this.priorityQueue && this.queue.length > 0) {
-            this.priorityQueue = [];
+        if (this.queue.length > 0) {
+            if (!this.priorityQueue) this.priorityQueue = [];
+            else this.queue.unshift(...this.priorityQueue.splice(0, this.priorityQueue.length + 1))
         }
         let res = true;
         let duration = 0;
@@ -69,7 +72,7 @@ export default class TaskQueue {
     }
     getTask(): [TaskItem, boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
-        const res = this.priorityQueue?.shift() ?? this.queue.shift();
+        const res = this.priorityQueue?.shift() ?? this.queue.shift() ?? this.finalQueue.shift();
         if (!res) return [['not found', [], -1, false], false];
         this._writeLog(`getTask:${res[0]}${this.queueList}`, 'emit');
         if (this.priorityQueue?.length == 0) {
@@ -79,13 +82,13 @@ export default class TaskQueue {
     }
     peekTask(): [TaskItem, boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
-        const res = this.priorityQueue?.[0] ?? this.queue[0];
+        const res = this.priorityQueue?.[0] ?? this.queue?.[0] ?? this.finalQueue?.[0];
         if (!res) return [['not found', [], -1, false], false];
         return [res, isPriority];
     }
     removeTask(condition: { entityId?: number, source?: number }) {
         const { entityId, source = -1 } = condition;
-        for (const queue of [this.priorityQueue, this.queue]) {
+        for (const queue of [this.priorityQueue, this.queue, this.finalQueue]) {
             if (!queue) continue;
             const idxs = queue.map(([tpn, , src], idx) => ({ tpn, src, idx })).filter(({ tpn, src }) => {
                 if (entityId) return tpn.includes(`${entityId}`);
@@ -99,7 +102,7 @@ export default class TaskQueue {
         }
     }
     isTaskEmpty() {
-        return (this.priorityQueue ?? []).length == 0 && this.queue.length == 0;
+        return (this.priorityQueue ?? []).length == 0 && this.queue.length == 0 && this.finalQueue.length == 0;
     }
     addStatusAtk(ststask: StatusTask[], options: { isUnshift?: boolean, isPriority?: boolean } = {}) {
         if (ststask.length == 0) return;

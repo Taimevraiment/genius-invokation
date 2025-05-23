@@ -2207,7 +2207,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('狂迸骇雷').description('{dealDmg}。如果目标[充能]不多于1，造成的伤害+2。')
                 .src('https://patchwiki.biligame.com/images/ys/0/0c/g9ebbv77szz3in5lhcizahlcs1l19ft.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/7315eed5a999d03bf46e6fa40a97d2ab_3785888462903729262.png')
-                .burst(2).damage(3).cost(3).handle(event => ({ addDmgCdt: isCdt((event.eheros?.find(h => h.isFront)?.energy ?? 3) <= 1, 2) })),
+                .burst(2).damage(3).cost(3).handle(event => {
+                    const { eheros } = event;
+                    const ehero = eheros?.find(h => h.isFront);
+                    if (!ehero || ehero.energy > 1 || ehero.maxEnergy < 0) return;
+                    return { addDmgCdt: 2 }
+                }),
             new SkillBuilder('雷之新生').description('战斗开始时，初始附属【sts124061】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f2/38qfb9pun8odt1sp4anaytzwzsitth7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/07e9c627e0391e19a7a610b4505a827a_6922644027589193780.png')

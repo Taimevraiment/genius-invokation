@@ -1247,7 +1247,7 @@ export default class GeniusInvokationRoom {
                         if (!s.hasType(STATUS_TYPE.NonDefeat)) return -1;
                         return s?.handle(s, { trigger: 'will-killed', dicesCnt: p.dice.length }).cmds?.getCmdCnt('revive') ?? -1;
                     }
-                    if (s.hasTag(CARD_TAG.NonDefeat)) return -1;
+                    if (!s.hasTag(CARD_TAG.NonDefeat)) return -1;
                     return s?.handle(s, { trigger: 'will-killed' }).execmds?.getCmdCnt('revive') ?? -1;
                 }).filter(v => v > 0);
             });
@@ -1542,6 +1542,7 @@ export default class GeniusInvokationRoom {
                     }
                     const isStsRes = isSts && hfield.hasType(STATUS_TYPE.Attack) && ('damage' in fieldres || 'heal' in fieldres || 'pdmg' in fieldres);
                     const isSmnTrg = fieldres.cmds?.value.some(({ summonTrigger }) => summonTrigger);
+                    const cskid = state.includes('after') ? -1 : skid;
                     if (!isSts || isSmnTrg || isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
                         if (isExec && /after|elReaction|getdmg/i.test(state) && isStsRes) {
                             atkStatus.push([{
@@ -1553,8 +1554,8 @@ export default class GeniusInvokationRoom {
                                 isSelf: isSelfAtk,
                                 trigger: state,
                                 hidx: hi,
-                                skid,
-                                sktype: skill?.type,
+                                skid: cskid,
+                                sktype: isCdt(!state.includes('after'), skill?.type),
                                 atkHidx,
                                 isQuickAction,
                             }, state == 'getdmg']);
@@ -1567,7 +1568,7 @@ export default class GeniusInvokationRoom {
                             isPreviewEnd = true;
                             break preview_end;
                         }
-                        const { isKilled, atriggers, etriggers } = calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, skid, isSelf, atkHidx);
+                        const { isKilled, atriggers, etriggers } = calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, cskid, isSelf, atkHidx);
                         if (isKilled) {
                             isPreviewEnd = true;
                             break preview_end;
@@ -2107,7 +2108,7 @@ export default class GeniusInvokationRoom {
         const dmgedPidx = epidx ^ +isAtkSelf;
         const atkPidx = dmgedPidx ^ 1;
         const { heros: dmgedheros, heros: { length: ehlen }, summons: esummons, handCards } = res.players[dmgedPidx];
-        const { heros: { length: ahlen }, heros: atkheros } = res.players[atkPidx];
+        const { heros: { length: ahlen } } = res.players[atkPidx];
         let { hcardsCnt = handCards.length } = options;
         const dmgedfhero = dmgedheros[dmgedHidx];
         if (dmgedfhero.hp <= 0) return res;
@@ -2485,9 +2486,11 @@ export default class GeniusInvokationRoom {
             }
             if (isReadySkill) atriggers[atkHidx].push('useReadySkill');
         }
-        atkheros.forEach((_, hi) => {
-            const { tasks: skitasks = [] } = this._detectSkill(atkPidx, atriggers[hi], {
-                hidxs: hi,
+        for (let i = 0; i < ahlen; ++i) {
+            const chi = (atkHidx + i) % ahlen;
+            const trgs = atriggers[isSummon > -1 ? atkHidx : chi];
+            const { tasks: skitasks = [] } = this._detectSkill(atkPidx, trgs, {
+                hidxs: chi,
                 players: res.players,
                 isExec,
                 getdmg: agetdmg(),
@@ -2497,13 +2500,9 @@ export default class GeniusInvokationRoom {
                 energyCnt,
             });
             res.tasks.push(...skitasks);
-        });
-        if (!isExec && skid > -1 && energyCnt) {
-            this._doCmds(atkPidx, [{ cmd: 'getEnergy', cnt: energyCnt[atkPidx][atkHidx], hidxs: [atkHidx] }], { players: res.players, isExec: false });
-        }
-        for (let i = 0; i < ahlen; ++i) {
-            const chi = (atkHidx + i) % ahlen;
-            const trgs = atriggers[isSummon > -1 ? atkHidx : chi];
+            if (!isExec && i == 0 && skid > -1 && energyCnt) {
+                this._doCmds(atkPidx, [{ cmd: 'getEnergy', cnt: energyCnt[atkPidx][atkHidx], hidxs: [atkHidx] }], { players: res.players, isExec: false });
+            }
             const hfieldres = this._detectSlotAndStatus(atkPidx, trgs, {
                 types: [STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.MultiDamage],
                 hidxs: chi,
@@ -3581,7 +3580,7 @@ export default class GeniusInvokationRoom {
                     if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点`);
                     // 被击倒
                     if (h.hp == 0 &&
-                        h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat)) &&
+                        h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.addition[0] == 0) &&
                         (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.perCnt <= 0)
                     ) {
                         this.players[p.pidx ^ 1].canAction = false;
@@ -3721,7 +3720,7 @@ export default class GeniusInvokationRoom {
             if (cardres.cmds) {
                 const hasAtkcmds = cardres.cmds.hasCmds('attack');
                 const { bWillDamages = [] } = this._doCmds(pidx, cardres.cmds,
-                    { players: isCdt(!isExec, clone(players)), isAction, isExec: isCdt(hasAtkcmds, false, isExec), supportCnt, isPriority, isUnshift });
+                    { players: isCdt(!isExec || hasAtkcmds, clone(players)), isAction, isExec: isCdt(hasAtkcmds, false, isExec), supportCnt, isPriority, isUnshift });
                 if (bWillDamages.length > 0) {
                     const atkname = `${card.name}(${card.entityId})`;
                     tasks.push({ pidx, cmds: cardres.cmds, atkname });
