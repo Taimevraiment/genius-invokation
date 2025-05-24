@@ -107,10 +107,10 @@ export default class CmdsGenerator {
         this.value.push({ cmd: 'attach', element, hidxs, isOppo });
         return this;
     }
-    attack(damage?: number, element?: DamageType | DamageType[], options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
-        let { hidxs, isOppo } = options;
+    attack(damage?: number, element?: DamageType | DamageType[], options: { hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean } = {}) {
+        let { hidxs, isOppo, isPriority } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this.value.push({ cmd: 'attack', cnt: damage, element, hidxs, isOppo });
+        this.value.push({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode: +!!isPriority });
         return this;
     }
     smnAttack(options: { hidxs?: number | number[], isOppo?: boolean } = {}) {

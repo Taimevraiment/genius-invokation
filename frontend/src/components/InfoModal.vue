@@ -896,11 +896,11 @@ const showRule = (...desc: string[]) => {
 
 .equipment-icon {
   position: relative;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #525252;
+  width: 25px;
+  height: 25px;
+  /* border: 2px solid #525252;
   border-radius: 50%;
-  background: #d2d493;
+  background: #d2d493; */
   margin-right: 3px;
 }
 
@@ -910,7 +910,7 @@ const showRule = (...desc: string[]) => {
   top: 0;
   width: 100%;
   height: 100%;
-  filter: brightness(0.3);
+  /* filter: brightness(0.3); */
 }
 
 .status-icon {

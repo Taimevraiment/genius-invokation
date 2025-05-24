@@ -246,7 +246,7 @@ const hero1511card = (el: SwirlElementType) => {
     return new CardBuilder().name(`焕光追影弹·${ELEMENT_NAME[el][0]}`).event().cost(3, el)
         .description(`【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
         .handle((_, event) => {
-            event.cmds.attack(1, el).addCard(1, 115113);
+            event.cmds.attack(1, el, { isPriority: true }).addCard(1, 115113);
             return { triggers: 'discard', notPreview: true }
         });
 }
@@ -1840,7 +1840,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 if (heros[hidx].energy > 0) cmds.getEnergy(-1, { hidxs: hidx });
             }
             if (cmds.length > 0) cmds.getEnergy(cmds.length, { hidxs: hero.hidx });
-            return { isValid: cmds.length > 0 }
+            return { isValid: hero.maxEnergy != hero.energy && cmds.length > 0 }
         }),
 
     332010: () => new CardBuilder(250).name('诸武精通').offline('v2').event().costSame(0).canSelectHero(2)
@@ -3432,7 +3432,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 execmds.convertCard(card.entityId, ncardId);
                 triggers.push('getcard');
             }
-            cmds.attack(1, DAMAGE_TYPE.Anemo).addCard(1, 115113);
+            cmds.attack(1, DAMAGE_TYPE.Anemo, { isPriority: true }).addCard(1, 115113);
             return { triggers, notPreview: true }
         }),
 

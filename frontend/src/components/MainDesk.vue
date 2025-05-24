@@ -287,7 +287,7 @@
                 </div>
               </div>
               <div class="hero-die" v-if="hero.hp < 0">
-                <img :src="getSvgIcon('die')" style="width: 40px;" />
+                <img :src="getPngIcon('Death')" style="width: 90%;" />
               </div>
               <div :class="{
                 'will-damage': (willHp[hgi][hidx] ?? 0) <= 0,
@@ -1088,10 +1088,10 @@ button:active {
 .hero-vehicle {
   position: relative;
   left: 35%;
-  width: 100%;
-  border: 2px solid #525252;
-  border-radius: 50%;
-  background: #d2d493;
+  width: 120%;
+  /* border: 2px solid #525252; */
+  /* border-radius: 50%; */
+  /* background: #d2d493; */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1104,8 +1104,8 @@ button:active {
 .hero-talent>img,
 .hero-vehicle>img {
   width: 100%;
-  border-radius: 50%;
-  filter: brightness(0.3);
+  /* border-radius: 50%; */
+  /* filter: brightness(0.3); */
 }
 
 .is-front-oppo {
