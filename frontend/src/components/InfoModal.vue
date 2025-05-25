@@ -1,8 +1,7 @@
 <template>
   <div class="info-outer-container">
     <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
-    <div class="info-container" :class="{ 'mobile-font': isMobile, 'not-transparent': isBot }" v-if="isShow"
-      @click.stop="">
+    <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
         <div class="info-base">
@@ -115,8 +114,11 @@
             <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
               <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
                 <span class="equipment-title-left">
-                  <div class="equipment-icon">
-                    <img class="equipment-icon-img" :src="getEquipmentIcon((slot as Card).subType[0])" />
+                  <div class="equipment-icon"
+                    :class="{ 'vehicle-icon': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }">
+                    <img class="equipment-icon-img"
+                      :class="{ 'vehicle-icon-img': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }"
+                      :src="getEquipmentIcon((slot as Card).subType[0])" />
                   </div>
                   <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                     {{ Math.floor((slot as Card).useCnt) }}
@@ -228,8 +230,11 @@
         <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
           <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
             <span class="equipment-title-left">
-              <div class="equipment-icon">
-                <img class="equipment-icon-img" :src="getEquipmentIcon((slot as Card).subType[0])" />
+              <div class="equipment-icon"
+                :class="{ 'vehicle-icon': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }">
+                <img class="equipment-icon-img"
+                  :class="{ 'vehicle-icon-img': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }"
+                  :src="getEquipmentIcon((slot as Card).subType[0])" />
               </div>
               <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
                 {{ Math.floor((slot as Card).useCnt) }}
@@ -417,8 +422,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       if ((!isInGame.value && !notNeedColor) || isExplain) return '';
       ctt = ctt
         .replace(/{round}/, `${round.value}`)
-        .replace(/{dessptcnt}/, `${playerInfo.value?.destroyedSupport}`)
-        .replace(/{eldmgcnt}/, `${playerInfo.value?.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`)
+        .replace(/{desSptCnt}/, `${playerInfo.value?.destroyedSupport}`)
+        .replace(/{elDmgCnt}/, `${playerInfo.value?.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`)
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
       }
@@ -521,23 +526,25 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
       explains.push(
         `<div style="display:flex;align-items:center;">
           ${isBot.value ? `<img src="${getSrc(expl, 'src')}" style="${isCard ? cardStyle : skillStyle}"/>` : ''}
-          <div style="display:flex;${isBot.value && isCard ? 'flex-direction:column;gap:3px;' : 'width:87%;'}">
-            ${nameEl}
-            ${'costType' in expl ?
+          <div style="display:flex;${isBot.value ? `flex-direction:column;${isCard ? 'gap:3px;' : ''}` : ''}">
+            <div style="display:flex;${isCard ? 'flex-direction:column;' : ''}">
+              ${nameEl}
+              ${'costType' in expl ?
           `<div class="skill-cost" style="margin-${isBot.value ? 'right' : 'left'}:5px;margin-top:0;" >
-              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
-              <span>${expl.cost}</span>
-            </div>`: isBot.value ?
+             <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
+             <span>${expl.cost}</span>
+           </div>`: isBot.value ?
             `${(expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0)).map(c =>
               `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
-                  <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
-                  <span>${c.cnt}</span>
-                </div>`
+                 <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
+                 <span>${c.cnt}</span>
+               </div>`
             ).join('')}` : ''}
+            </div>
             ${isBot.value ?
-          `<div style="${isCard ? '' : 'margin-left:auto;'}color:#d0c298;">
-              ${'damage' in expl ? SKILL_TYPE_NAME[expl.type] : `${CARD_TYPE_NAME[expl.type]}牌`}
-            </div>` : ''}
+          `<div style="color:#d0c298;">
+             ${'damage' in expl ? SKILL_TYPE_NAME[expl.type] : `${CARD_TYPE_NAME[expl.type]}牌`}
+           </div>` : ''}
           </div>
         </div>`
       );
@@ -547,7 +554,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
         `<div div style="display:flex;align-items:center;">
           ${!isBot.value ? nameEl :
           `<img src="${getSrc(expl, 'src', 'icon')}" style="${isStatus ? statusStyle : cardStyle}"/>
-           <div style="display:flex;${'damage' in expl ? 'flex-direction:column;gap:3px;' : 'width:87%;'}" >
+           <div style="display:flex;flex-direction:column;margin-left:2px;${'damage' in expl ? 'gap:3px;' : ''}" >
             ${nameEl}
             <span style="${isStatus ? 'margin-left:auto;' : ''}color:#d0c298;">
              ${'group' in expl ? `${['角色', '出战'][expl.group]}状态` : '召唤物'}
@@ -734,9 +741,10 @@ const showRule = (...desc: string[]) => {
   pointer-events: all;
 }
 
-.not-transparent {
+.bot {
   background-color: #3e4d69;
   max-height: 2000px;
+  width: 30vw;
   border-radius: 0;
 }
 
@@ -896,11 +904,11 @@ const showRule = (...desc: string[]) => {
 
 .equipment-icon {
   position: relative;
-  width: 25px;
-  height: 25px;
-  /* border: 2px solid #525252;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #525252;
   border-radius: 50%;
-  background: #d2d493; */
+  background: #d2d493;
   margin-right: 3px;
 }
 
@@ -910,7 +918,7 @@ const showRule = (...desc: string[]) => {
   top: 0;
   width: 100%;
   height: 100%;
-  /* filter: brightness(0.3); */
+  filter: brightness(0.3);
 }
 
 .status-icon {

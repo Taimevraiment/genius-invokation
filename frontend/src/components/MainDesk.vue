@@ -217,7 +217,7 @@
                 {{ elTips[hgi][hidx][0] }}
               </div>
             </template>
-            <template v-if="hero.hp >= 0">
+            <template v-if="hero.hp > 0">
               <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px;" />
               <img class="will-attach"
                 v-for="(attach, waidx) in willAttachs[hgi][hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
@@ -286,7 +286,7 @@
                   </div>
                 </div>
               </div>
-              <div class="hero-die" v-if="hero.hp < 0">
+              <div class="hero-die" v-if="hero.hp <= 0">
                 <img :src="getPngIcon('Death')" style="width: 90%;" />
               </div>
               <div :class="{
@@ -1088,10 +1088,10 @@ button:active {
 .hero-vehicle {
   position: relative;
   left: 35%;
-  width: 120%;
-  /* border: 2px solid #525252; */
-  /* border-radius: 50%; */
-  /* background: #d2d493; */
+  width: 100%;
+  border: 2px solid #525252;
+  border-radius: 50%;
+  background: #d2d493;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1104,8 +1104,13 @@ button:active {
 .hero-talent>img,
 .hero-vehicle>img {
   width: 100%;
-  /* border-radius: 50%; */
-  /* filter: brightness(0.3); */
+  border-radius: 50%;
+  filter: brightness(0.3);
+}
+
+.hero-vehicle>img {
+  border-radius: 50%;
+  filter: brightness(0.3);
 }
 
 .is-front-oppo {

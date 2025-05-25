@@ -189,7 +189,7 @@
         </div>
       </div>
       <Handcard v-if="client.actionInfo.card" style="position: relative;margin-top: 10px;"
-        :card="client.actionInfo.card" :isMobile="isMobile" :isHideCost="true">
+        :card="client.actionInfo.card" :isMobile="isMobile" isHideCost>
       </Handcard>
     </div>
     <div class="willskill-mask" v-if="client.player.status == PLAYER_STATUS.PLAYING &&

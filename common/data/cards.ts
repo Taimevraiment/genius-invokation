@@ -1475,12 +1475,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/eb0cb5b32a8c816b7f13c3d44d0a0fe4_6830305949958078300.png'),
 
     322022: () => new CardBuilder(329).name('婕德').since('v4.4.0').ally().costSame(1).costAny(2, 'v4.6.0')
-        .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为「阅历」。（最多6点〔[card]，当前为{dessptcnt}点〕）；【我方角色使用「元素爆发」后：】如果「阅历」至少为6，则弃置此牌，对我方出战角色附属【sts302205】。')
+        .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为「阅历」。（最多6点〔[card]，当前为{desSptCnt}点〕）；【我方角色使用「元素爆发」后：】如果「阅历」至少为6，则弃置此牌，对我方出战角色附属【sts302205】。')
         .description('此牌会记录本场对局中我方支援区弃置卡牌的数量，称为「阅历」。（最多6点）；【我方角色使用「元素爆发」后：】如果「阅历」至少为5，则弃置此牌，生成【「阅历」-2】数量的[万能元素骰]。', 'v4.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8931597db1022094e0ebdf3e91f5f44c_6917553066022383928.png'),
 
     322023: () => new CardBuilder(330).name('西尔弗和迈勒斯').since('v4.4.0').ally().costSame(1)
-        .description('此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为「侍从的周到」。（最多4点〔[card]，当前为{eldmgcnt}点〕）；【结束阶段：】如果「侍从的周到」至少为3，则弃置此牌，然后抓「侍从的周到」点数的牌。')
+        .description('此牌会记录本场对局中敌方角色受到过的元素伤害种类数，称为「侍从的周到」。（最多4点〔[card]，当前为{elDmgCnt}点〕）；【结束阶段：】如果「侍从的周到」至少为3，则弃置此牌，然后抓「侍从的周到」点数的牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/e160832e6337e402fc01d5f89c042aa3_8868205734801507533.png'),
 
     322024: () => new CardBuilder(358).name('太郎丸').since('v4.6.0').ally().costAny(2)

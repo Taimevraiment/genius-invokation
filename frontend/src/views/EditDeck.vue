@@ -73,12 +73,15 @@
             </button>
             <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
             <div v-if="currIdx == 0">
-                <div class="heros-deck">
-                    <div class="hero-deck" :class="{ 'mobile-hero-deck': isMobile }" v-for="(dhero, dhidx) in herosDeck"
-                        :key="dhidx" @click.stop="showHeroInfo(dhero.id)">
-                        <img class="hero-img" :src="dhero.UI.src" v-if="dhero?.UI.src?.length > 0" :alt="dhero.name"
-                            draggable="false" />
-                        <span v-else class="hero-img">{{ dhero.name }}</span>
+                <div class="heros-deck" :class="{ 'mobile-heros-deck': isMobile }">
+                    <div class="hero-deck" :class="{ 'mobile-hero-avatar': isMobile }"
+                        v-for="(dhero, dhidx) in herosDeck" :key="dhidx" @click.stop="showHeroInfo(dhero.id)">
+                        <img class="hero-img" :src="dhero.UI.avatar" v-if="dhero?.UI.avatar?.length > 0"
+                            :alt="dhero.name" draggable="false" />
+                        <span v-else class="hero-img"
+                            style="background-color: #ffd0a2;border-radius: 50%;aspect-ratio: 1/1;">
+                            {{ dhero.name }}
+                        </span>
                         <div class="icon-group" v-if="dhero.id > 1000">
                             <span v-for="(icon, cidx) in heroMoveIcon" :key="cidx" class="edit-icon"
                                 @click.stop="icon.handle(dhidx)">
@@ -87,14 +90,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="heros-total">
+                <div class="heros-total" :class="{ 'mobile-heros-total': isMobile }">
                     <div class="hero-total" :class="{ 'mobile-hero-deck': isMobile }" v-for="dthero in allHeros"
                         :key="dthero.id" :style="{ color: ELEMENT_COLOR[dthero.element] }"
                         @click.stop="showHeroInfo(dthero.id)">
                         <span class="hero-img">{{ dthero.name }}</span>
                         <div class="hero-hp" v-if="(dthero?.hp ?? 0) > 0">
                             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
-                            <div class="hero-hp-cnt"> {{ dthero.maxHp }} </div>
+                            <div class="hero-hp-cnt" :class="{ 'mobile-hero-hp-cnt': isMobile }"> {{ dthero.maxHp }}
+                            </div>
                         </div>
                         <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
                             draggable="false" />
@@ -110,76 +114,34 @@
             </div>
             <div v-else>
                 <div :style="{ position: 'absolute', right: '10%', top: '5%' }">{{ cardsDeckLen }}/30</div>
-                <div class="cards-deck">
+                <div class="cards-deck" :class="{ 'mobile-cards-deck': isMobile }">
                     <div class="card-deck" :class="{ 'mobile-card-deck': isMobile }" v-for="(dcard, dcidx) in cardsDeck"
                         :key="dcidx" @click.stop="showCardInfo(dcard.id)">
-                        <div class="card-img-content">
-                            <span class="card-img">{{ dcard.name }}</span>
-                            <img class="card-img" :src="getPngIcon(dcard.UI.src)" v-if="dcard?.UI.src?.length > 0"
-                                :alt="dcard.name" draggable="false" />
-                            <img class="legend-border" v-if="dcard.hasSubtype(CARD_SUBTYPE.Legend)"
-                                :src="getPngIcon('legend-border')" />
-                        </div>
-                        <div class="card-cost">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[dcard.costType])" draggable="false" />
-                            <span>{{ dcard.cost }}</span>
-                        </div>
-                        <div class="card-energy" v-if="dcard?.anydice ?? 0 > 0">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" draggable="false" />
-                            <span>{{ dcard?.anydice ?? 0 }}</span>
-                        </div>
-                        <div class="card-energy" v-if="dcard?.energy ?? 0 > 0">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])"
-                                draggable="false" />
-                            <span>{{ dcard?.energy ?? 0 }}</span>
-                        </div>
-                        <div class="card-energy" v-if="dcard?.hasSubtype(CARD_SUBTYPE.Legend)">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])"
-                                draggable="false" />
-                        </div>
-                        <span class="edit-icon card-select-icon"
-                            v-if="(allCards.find(c => c.id === dcard.id)?.UI.cnt ?? -1) > 0"
-                            @click.stop="selectCard(dcard.id)">+</span>
-                        <span class="edit-icon card-remove-icon" @click.stop="removeCard(dcard.id)">-</span>
-                        <div class="card-cnt">{{ dcard.UI.cnt }}</div>
+                        <Actioncard :card="dcard" :isMobile="isMobile" isHideBorder isHideCost
+                            style="width: 100%;height: 100%;">
+                            <span class="edit-icon card-select-icon"
+                                v-if="(allCards.find(c => c.id === dcard.id)?.UI.cnt ?? -1) > 0"
+                                @click.stop="selectCard(dcard.id)">+</span>
+                            <span class="edit-icon card-remove-icon" @click.stop="removeCard(dcard.id)">-</span>
+                            <div class="card-cnt">{{ dcard.UI.cnt }}</div>
+                        </Actioncard>
                     </div>
                 </div>
-                <div class="cards-total">
+                <div class="cards-total" :class="{ 'mobile-cards-total': isMobile }">
                     <div class="card-total" :class="{ 'mobile-card-deck': isMobile }"
                         v-for="(dtcard, dtcidx) in allCards" :key="dtcidx" @click.stop="showCardInfo(dtcard.id)">
-                        <div class="card-img-content">
-                            <span class="card-img">{{ dtcard.name }}</span>
-                            <img class="card-img" :src="getPngIcon(dtcard.UI.src)" v-if="dtcard?.UI.src?.length > 0"
-                                :alt="dtcard.name" draggable="false" />
-                            <img class="legend-border" v-if="dtcard.hasSubtype(CARD_SUBTYPE.Legend)"
-                                :src="getPngIcon('legend-border')" />
-                        </div>
-                        <div class="card-cost">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[dtcard.costType])" draggable="false" />
-                            <span>{{ dtcard.cost }}</span>
-                        </div>
-                        <div class="card-energy" v-if="dtcard?.anydice ?? 0 > 0">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" draggable="false" />
-                            <span>{{ dtcard?.anydice ?? 0 }}</span>
-                        </div>
-                        <div class="card-energy" v-if="dtcard?.energy ?? 0 > 0">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])"
-                                draggable="false" />
-                            <span>{{ dtcard?.energy ?? 0 }}</span>
-                        </div>
-                        <div class="card-energy" v-if="dtcard?.hasSubtype(CARD_SUBTYPE.Legend)">
-                            <img class="dice-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])"
-                                draggable="false" />
-                        </div>
-                        <div class="forbidden" v-if="dtcard.UI.cnt == -1">
-                            已失效
-                        </div>
-                        <span class="edit-icon card-select-icon" @click.stop="selectCard(dtcard.id)"
-                            v-else-if="dtcard.UI.cnt > 0">+</span>
-                        <div v-else class="selected">已选完</div>
-                        <span class="edit-icon card-remove-icon" @click.stop="removeCard(dtcard.id)"
-                            v-if="dtcard.UI.cnt >= 0 && cardsDeck.some(c => c.id == dtcard.id)">-</span>
-                        <div class="card-cnt" v-if="dtcard.UI.cnt >= 0">{{ dtcard.UI.cnt }}</div>
+                        <Actioncard :card="dtcard" :isMobile="isMobile" isHideBorder :isHideCost="dtcard.UI.cnt == 0"
+                            style="width: 100%;height: 100%;">
+                            <div class="forbidden" v-if="dtcard.UI.cnt == -1">
+                                已失效
+                            </div>
+                            <span v-else-if="dtcard.UI.cnt > 0" class="edit-icon card-select-icon"
+                                @click.stop="selectCard(dtcard.id)">+</span>
+                            <div v-else class="selected">已选完</div>
+                            <span class="edit-icon card-remove-icon" @click.stop="removeCard(dtcard.id)"
+                                v-if="dtcard.UI.cnt >= 0 && cardsDeck.some(c => c.id == dtcard.id)">-</span>
+                            <div class="card-cnt" v-if="dtcard.UI.cnt >= 0">{{ dtcard.UI.cnt }}</div>
+                        </Actioncard>
                     </div>
                 </div>
             </div>
@@ -215,13 +177,13 @@
 <script setup lang="ts">
 import InfoModal from '@/components/InfoModal.vue';
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, COST_TYPE, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
     HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
-    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_NAME_KEY, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
+    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_NAME_KEY, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
 import { computed, ref } from 'vue';
@@ -231,6 +193,7 @@ import { herosTotal, parseHero } from '../../../common/data/heros';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
 import { Card, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn } from '@@@/utils/gameUtil';
+import Actioncard from '@/components/Card.vue';
 
 type Filter<T> = {
     name: string,
@@ -319,10 +282,10 @@ const sinceVersionSelect = computed(() => ['实装版本'].concat(versionSelect.
 const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 
 // 获取png图片
-const getPngIcon = (name: string) => {
-    if (name.startsWith('http')) return name;
-    return `/image/${name}.png`;
-}
+// const getPngIcon = (name: string) => {
+//     if (name.startsWith('http')) return name;
+//     return `/image/${name}.png`;
+// }
 
 // 选择出战卡组
 const selectDeck = (didx: number) => {
@@ -519,9 +482,9 @@ const updateInfo = (init = false) => {
 
 
 // 获取骰子背景
-const getDiceIcon = (name: string) => {
-    return `/image/${name}-dice-bg.png`;
-}
+// const getDiceIcon = (name: string) => {
+//     return `/image/${name}-dice-bg.png`;
+// }
 
 // 进入编辑卡组界面
 const toEditDeck = (did: number) => {
@@ -945,7 +908,7 @@ input#isOfflineInput:checked {
     transform: translate(-45%, -20%);
     background-color: #d59b3f;
     width: 80%;
-    height: 30%;
+    height: 20%;
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -961,10 +924,8 @@ input#isOfflineInput:checked {
     transform: translate(-45%, -20%);
     background-color: #d59b3f;
     width: 80%;
-    height: 35%;
-    white-space: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
+    height: 20%;
+    overflow-y: scroll;
     border-radius: 15px;
     padding: 0 5px;
     border: 5px solid #906725;
@@ -973,12 +934,14 @@ input#isOfflineInput:checked {
 
 .hero-deck {
     position: relative;
-    background-color: #ffd0a2;
-    width: 120px;
-    height: 80%;
-    border-radius: 15px;
+    /* background-color: #ffd0a2; */
+    width: 110px;
+    height: 95%;
+    /* border-radius: 15px; */
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    gap: 5%;
     align-items: center;
     cursor: pointer;
     overflow: hidden;
@@ -992,12 +955,10 @@ input#isOfflineInput:checked {
     transform: translate(-45%, 20%);
     background-color: #d59b3f;
     width: 80%;
-    height: 35%;
-    white-space: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
+    height: 50%;
+    overflow-y: scroll;
     border-radius: 15px;
-    padding: 0 5px;
+    padding: 5px;
     border: 5px solid #906725;
     box-sizing: border-box;
 }
@@ -1006,20 +967,25 @@ input#isOfflineInput:checked {
 .card-total,
 .card-deck {
     position: relative;
-    background-color: #ffd0a2;
-    width: 120px;
-    height: 90%;
+    /* background-color: #ffd0a2; */
+    width: 115px;
+    height: 197px;
     border-radius: 10px;
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    margin: 5px;
-    margin-bottom: 10px;
+    margin: 5px 7px;
     cursor: pointer;
 }
 
 .hero-total {
     overflow: hidden;
+}
+
+.card-deck {
+    height: 90%;
+    aspect-ratio: 7/12;
+    width: auto;
 }
 
 .card-img-content {
@@ -1037,6 +1003,11 @@ input#isOfflineInput:checked {
     width: 100%;
     text-align: center;
     line-height: 500%;
+}
+
+.hero-deck>.hero-img {
+    position: relative;
+    width: 80%;
 }
 
 .hero-hp {
@@ -1148,6 +1119,10 @@ input#isOfflineInput:checked {
     justify-content: space-around;
 }
 
+.hero-deck>.icon-group {
+    position: relative;
+}
+
 .edit-icon {
     padding: 0 5px;
     border: 2px solid black;
@@ -1194,7 +1169,7 @@ input#isOfflineInput:checked {
     height: 100%;
     padding-top: 50%;
     background: #0000009e;
-    border-radius: inherit;
+    border-radius: 10px;
     color: white;
     text-align: center;
     box-sizing: border-box;
@@ -1258,8 +1233,26 @@ input#isOfflineInput:checked {
     left: 110px;
 }
 
+.mobile-hero-deck,
 .mobile-card-deck {
     width: 65px;
+    height: 111px;
+    border-radius: 8px;
+    font-size: 8px;
+}
+
+.mobile-cards-deck,
+.mobile-heros-deck {
+    height: 35%;
+}
+
+.mobile-cards-total,
+.mobile-heros-total {
+    height: 38%;
+}
+
+.mobile-hero-hp-cnt {
+    font-size: 12px;
 }
 
 .debug-mask {

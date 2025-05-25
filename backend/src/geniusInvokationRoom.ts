@@ -1544,7 +1544,10 @@ export default class GeniusInvokationRoom {
                     const isSmnTrg = fieldres.cmds?.value.some(({ summonTrigger }) => summonTrigger);
                     const cskid = state.includes('after') ? -1 : skid;
                     if (!isSts || isSmnTrg || isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
-                        if (isExec && /after|elReaction|getdmg/i.test(state) && isStsRes) {
+                        if (
+                            isExec && /after|elReaction|getdmg/i.test(state) && isStsRes &&
+                            (!state.startsWith('after-skill') || skill?.cost[2].cnt != -2)
+                        ) {
                             atkStatus.push([{
                                 id: hfield.id,
                                 name: hfield.name,
@@ -1575,6 +1578,8 @@ export default class GeniusInvokationRoom {
                         }
                         atrgs.forEach((at, ati) => at.push(...atriggers[ati]));
                         etrgs.forEach((et, eti) => et.push(...etriggers[eti]));
+                    } else {
+                        this._doCmds(cpidx, fieldres.cmds, { players: oplayers, isExec: false })
                     }
                 }
             }
@@ -1857,12 +1862,27 @@ export default class GeniusInvokationRoom {
         const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
             .map(xtrgs => xtrgs.map(trgs => trgs
                 .filter(trg => /skill|elReaction|dmg/i.test(trg))
-                .map(trg => /^skill|^other/.test(trg) ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[])
+                .map(trg => /^skill|^other|getdmg$/.test(trg) ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[])
             );
         const atkStatues: StatusTask[] = [];
         const atkStatuesUnshift: StatusTask[] = [];
         const afterASkillTrgs2 = [...afterASkillTrgs.flat()];
         const afterESkillTrgs2 = [...afterESkillTrgs.flat()];
+        for (let i = 0; i < ehlen; ++i) {
+            const hi = (cehidx + i) % ehlen;
+            const h = bPlayers[epidx].heros[hi];
+            if (h.hp > 0) {
+                afterESkillTrgs[hi].push('status-destroy');
+                const { atkStatus: atkhst, isPreviewEnd } = doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
+                atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+                if (isPreviewEnd) break;
+            }
+            if (i == 0) {
+                const { atkStatus: atkcst, isPreviewEnd } = doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
+                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
+                if (isPreviewEnd) break;
+            }
+        }
         for (let i = 0; i < ahlen; ++i) {
             const hi = (ohidx + i) % ahlen;
             const { skillPreviews } = this._detectSkill(pidx, afterASkillTrgs[hi].filter(t => !t.includes('elReaction')), {
@@ -1887,21 +1907,6 @@ export default class GeniusInvokationRoom {
                 const { atkStatus: atkcst, isPreviewEnd, atrgs, etrgs } = doPreviewHfield(bPlayers, bPlayers[pidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterASkillTrgs[hi], isExec, 1);
                 afterASkillTrgs2.push(...atrgs.flat());
                 afterESkillTrgs2.push(...etrgs.flat());
-                atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-                if (isPreviewEnd) break;
-            }
-        }
-        for (let i = 0; i < ehlen; ++i) {
-            const hi = (cehidx + i) % ehlen;
-            const h = bPlayers[epidx].heros[hi];
-            if (h.hp > 0) {
-                afterESkillTrgs[hi].push('status-destroy');
-                const { atkStatus: atkhst, isPreviewEnd } = doPreviewHfield(bPlayers, this._getHeroField(epidx, { players: bPlayers, hidx: hi, isOnlyHeroStatus: true }), hi, STATUS_GROUP.heroStatus, afterESkillTrgs[hi], isExec);
-                atkhst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
-                if (isPreviewEnd) break;
-            }
-            if (i == 0) {
-                const { atkStatus: atkcst, isPreviewEnd } = doPreviewHfield(bPlayers, bPlayers[epidx].combatStatus, hi, STATUS_GROUP.combatStatus, afterESkillTrgs[hi], isExec);
                 atkcst.forEach(([task, isUnshift]) => (isUnshift ? atkStatuesUnshift : atkStatues).push(task));
                 if (isPreviewEnd) break;
             }
@@ -2780,36 +2785,38 @@ export default class GeniusInvokationRoom {
                     supportCnt,
                 });
             }
-            for (let i = 0; i < ehlen; ++i) {
-                const chi = (dmgedHidx + i) % ehlen;
-                const trgs = etriggers[chi];
-                if (!trgs.includes('getdmg')) continue;
-                this._detectSlotAndStatus(dmgedPidx, 'after-getdmg', {
-                    types: STATUS_TYPE.Usage,
-                    hidxs: chi,
-                    players: res.players,
-                    isExec,
-                    getdmg: getdmg(),
-                    supportCnt,
-                    willSwitch,
-                    energyCnt,
-                    isQuickAction: res.isQuickAction,
-                    isOnlyExec: !isExec,
-                    sktype,
-                    skid,
-                    isChargedAtk,
-                    isFallAtk,
-                    isSummon,
-                    dmgedHidx,
-                    dmgSource: skid > -1 ? (atkId ?? afhero.id) : isSummon,
-                    dmgElement,
-                    minusDiceSkillIds,
-                    minusDiceSkill,
-                    hasDmg: res.willDamages[getDmgIdx][0] > -1,
-                    discards,
-                    hcard: withCard,
-                    hcardsCnt,
-                });
+            if (!sktype) {
+                for (let i = 0; i < ehlen; ++i) {
+                    const chi = (dmgedHidx + i) % ehlen;
+                    const trgs = etriggers[chi];
+                    if (!trgs.includes('getdmg')) continue;
+                    this._detectSlotAndStatus(dmgedPidx, 'after-getdmg', {
+                        types: STATUS_TYPE.Usage,
+                        hidxs: chi,
+                        players: res.players,
+                        isExec,
+                        getdmg: getdmg(),
+                        supportCnt,
+                        willSwitch,
+                        energyCnt,
+                        isQuickAction: res.isQuickAction,
+                        isOnlyExec: !isExec,
+                        sktype,
+                        skid,
+                        isChargedAtk,
+                        isFallAtk,
+                        isSummon,
+                        dmgedHidx,
+                        dmgSource: skid > -1 ? (atkId ?? afhero.id) : isSummon,
+                        dmgElement,
+                        minusDiceSkillIds,
+                        minusDiceSkill,
+                        hasDmg: res.willDamages[getDmgIdx][0] > -1,
+                        discards,
+                        hcard: withCard,
+                        hcardsCnt,
+                    });
+                }
             }
         }
 
@@ -2878,8 +2885,7 @@ export default class GeniusInvokationRoom {
                 assgin(res, this._calcDamage(pidx, swirlDmg, res.willDamages, i, res.players, {
                     ...options, isSwirl: true, isSwirlExec: idx == otheridx.length - 1,
                     atriggers: res.atriggers, etriggers: res.etriggers, dmgElements: res.dmgElements,
-                    elTips: res.elTips, willAttachs: res.willAttachs, hcardsCnt,
-                    tasks: res.tasks,
+                    elTips: res.elTips, willAttachs: res.willAttachs, hcardsCnt, tasks: res.tasks,
                 }));
             });
         }
