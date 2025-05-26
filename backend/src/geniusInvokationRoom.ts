@@ -1526,6 +1526,7 @@ export default class GeniusInvokationRoom {
                         skid,
                         trigger: state,
                         dmgedHidx: cehidx,
+                        source: isCdt(isSelf, oplayers[cpidx].heros[ohidx].id),
                         hasDmg: aWillDamages[chidx + cpidx * oplayers[0].heros.length][0] > -1,
                         isChargedAtk: isSelf ? isChargedAtk : false,
                         talent: isCdt(!isExec && withCard?.id == getTalentIdByHid(getHidById(hfield.id)), withCard) ??
@@ -1544,10 +1545,7 @@ export default class GeniusInvokationRoom {
                     const isSmnTrg = fieldres.cmds?.value.some(({ summonTrigger }) => summonTrigger);
                     const cskid = state.includes('after') ? -1 : skid;
                     if (!isSts || isSmnTrg || isStsRes && (fieldres.damage || fieldres.pdmg || fieldres.heal)) {
-                        if (
-                            isExec && /after|elReaction|getdmg/i.test(state) && isStsRes &&
-                            (!state.startsWith('after-skill') || skill?.cost[2].cnt != -2)
-                        ) {
+                        if (isExec && /after|elReaction|getdmg/i.test(state) && isStsRes) {
                             atkStatus.push([{
                                 id: hfield.id,
                                 name: hfield.name,
@@ -2484,7 +2482,8 @@ export default class GeniusInvokationRoom {
             atriggers[atkHidx].push(`${trgEl}-dmg-Swirl` as Trigger, 'dmg-Swirl');
             etriggers[dmgedHidx].push(`${trgEl}-getdmg-Swirl` as Trigger);
         } else {
-            if (skid > -1 && sktype != undefined) {
+            if (isReadySkill) atriggers[atkHidx].push('useReadySkill');
+            else if (skid > -1 && sktype != undefined) {
                 const sktrg = sktype == SKILL_TYPE.Vehicle ? 'vehicle' : 'skill';
                 atriggers.forEach((trg, ti) => {
                     const isOther = ti != atkHidx ? 'other-' : '';
@@ -2492,7 +2491,6 @@ export default class GeniusInvokationRoom {
                 });
                 etriggers.forEach(trgs => trgs.push(`${sktrg}-oppo`));
             }
-            if (isReadySkill) atriggers[atkHidx].push('useReadySkill');
         }
         for (let i = 0; i < ahlen; ++i) {
             const chi = (atkHidx + i) % ahlen;
@@ -3519,7 +3517,7 @@ export default class GeniusInvokationRoom {
         this._detectStatus(pidx, STATUS_TYPE.Attack, 'status-destroy', { cStatus, hidxs: [hidx], isUnshift: true, isQuickAction });
         // 其他状态因被移除状态触发
         this._detectSkill(pidx, 'status-destroy', { hidxs, source: cStatus.id, sourceHidx: hidx, isQuickAction });
-        this._detectSlotAndStatus(pidx, 'status-destroy', { types: STATUS_TYPE.Usage, source: cStatus.id, sourceHidx: hidx, isQuickAction });
+        this._detectSlotAndStatus(pidx, 'status-destroy', { types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack], source: cStatus.id, sourceHidx: hidx, isQuickAction });
     }
     /**
      * 召唤物消失时发动
@@ -4528,7 +4526,7 @@ export default class GeniusInvokationRoom {
                                         };
                                         task.push([statusHandle, intvl]);
                                     }
-                                } else {
+                                } else if (!types.includes(STATUS_TYPE.Attack) || !(stsres.damage || stsres.pdmg || stsres.heal)) {
                                     this._writeLog(`[${player.name}](${player.pidx})${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${oCnt}→${sts.useCnt}` : ''}${sts.perCnt != -1 ? `.perCnt:${oPct}→${sts.perCnt}` : ''}`, 'system');
                                     this._writeLog(`[${player.name}](${player.pidx})[${sts.name}]发动${oCnt != sts.useCnt ? ` ${oCnt}→${sts.useCnt}` : ''}`, isCdt(sts.hasType(STATUS_TYPE.Hide), stsres.notLog ? 'system' : 'log'));
                                     this._doCmds(pidx, stscmds, { players, hidxs: [hidx], withCard: hcard, source: sts.id, isPriority: true });

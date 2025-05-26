@@ -7,7 +7,10 @@
         <div class="info-base">
           <img v-if="isBot" class="info-base-img" :src="getPngIcon(info?.UI.src, true)" :alt="info?.name">
           <div>
-            <div class="name">{{ (info as Card).name }}</div>
+            <div class="name">
+              {{ (info as Card).name }}
+              <span v-if="isBot" style="position: absolute;right: 5px;">{{ version }}</span>
+            </div>
             <div>
               <div class="info-card-cost">
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[(info as Card).costType])" />
@@ -53,7 +56,10 @@
           <img v-if="isBot && type == INFO_TYPE.Hero" class="info-base-img info-hero-base-img"
             :src="getPngIcon(info?.UI.src, true)" :alt="info?.name">
           <div>
-            <div v-if="type == INFO_TYPE.Hero" class="name">{{ (info as Hero).name }}</div>
+            <div v-if="type == INFO_TYPE.Hero" class="name">
+              {{ (info as Hero).name }}
+              <span v-if="isBot" style="position: absolute;right: 5px;">{{ version }}</span>
+            </div>
             <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
               <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
               <span>{{ WEAPON_TYPE_NAME[(info as Hero).weaponType] }}</span>
@@ -212,7 +218,10 @@
         <div class="info-base">
           <img v-if="isBot" class="info-base-img" :src="info?.UI.src" :alt="info?.name">
           <div>
-            <div class="name">{{ (info as Summon).name }}</div>
+            <div class="name">
+              {{ (info as Summon).name }}
+              <span v-if="isBot" style="position: absolute;right: 5px;">{{ version }}</span>
+            </div>
             <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
           </div>
         </div>
@@ -527,7 +536,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
         `<div style="display:flex;align-items:center;">
           ${isBot.value ? `<img src="${getSrc(expl, 'src')}" style="${isCard ? cardStyle : skillStyle}"/>` : ''}
           <div style="display:flex;${isBot.value ? `flex-direction:column;${isCard ? 'gap:3px;' : ''}` : ''}">
-            <div style="display:flex;${isCard ? 'flex-direction:column;' : ''}">
+            <div style="display:flex;${isBot.value && isCard ? 'flex-direction:column;' : ''}">
               ${nameEl}
               ${'costType' in expl ?
           `<div class="skill-cost" style="margin-${isBot.value ? 'right' : 'left'}:5px;margin-top:0;" >

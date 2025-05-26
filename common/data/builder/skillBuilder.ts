@@ -190,7 +190,7 @@ export class SkillBuilder extends BaseBuilder {
     }
     vehicle() {
         this._type = SKILL_TYPE.Vehicle;
-        this._energyCost.set(['vlatest', -2]);
+        this._energyCost.set(['vlatest', -3]);
         return this;
     }
     energy(energy: number, isSp: boolean = false, version: Version = 'vlatest') {

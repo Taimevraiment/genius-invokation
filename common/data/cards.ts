@@ -3380,12 +3380,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('〔*[card]【此牌被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。〕；{vehicle}；（仅【hro】可用）')
         .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sky_-1882047076')
         .handle((_, event) => {
-            const { cmds, slotUse, hero, trigger, source } = event;
-            if (trigger == 'status-destroy' && source == 113151) {
-                if (getObjById(hero?.heroStatus, source)?.useCnt) return;
-                return { triggers: trigger, isDestroy: true }
-            }
-            if (!slotUse) cmds.attack(1, DAMAGE_TYPE.Pyro)
+            const { cmds, trigger } = event;
+            if (trigger != 'discard') return;
+            cmds.attack(1, DAMAGE_TYPE.Pyro)
             return { triggers: 'discard' }
         }),
 

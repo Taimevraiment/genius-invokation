@@ -1085,21 +1085,20 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     113153: () => new StatusBuilder('诸火武装·焚焰之环').combatStatus().icon('ski,1').icon('tmp/UI_Gcg_Buff_Mavuika_E_-205421090')
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
+        .type(STATUS_TYPE.Attack)
         .description('【我方其他角色使用「普通攻击」或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
-            const { hidx = -1, heros = [], cmds, trigger, source = -1 } = event;
+            const { heros = [], cmds, trigger, source = -1 } = event;
             if (trigger == 'status-destroy' && source == 113151) {
                 return { triggers: trigger, exec: () => status.dispose() }
             }
             const hid = getHidById(status.id);
-            const hero = heros[hidx];
-            if (!hero || hero.id == hid) return;
-            cmds.consumeNightSoul(getObjById(heros, hid)?.hidx);
+            if (source == hid) return;
             return {
                 triggers: ['after-skilltype1', 'after-skilltype5'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
+                exec: () => cmds.consumeNightSoul(getObjById(heros, hid)?.hidx).res,
             }
         }),
 
