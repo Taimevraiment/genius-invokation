@@ -711,8 +711,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色引发元素反应后：】生成1个此角色元素类型的元素骰。（每回合至多3次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/66b3c1346a589e0dea45a58cd4d65c5a_3513743616827517581.png')
         .handle((card, event) => {
-            const { sktype = SKILL_TYPE.Vehicle, hero, execmds } = event;
-            if (card.perCnt <= 0 || sktype == SKILL_TYPE.Vehicle) return;
+            const { skid = -1, sktype = SKILL_TYPE.Vehicle, hero, execmds } = event;
+            if (card.perCnt <= 0 || sktype == SKILL_TYPE.Vehicle || getHidById(skid) != hero?.id) return;
             execmds.getDice(1, { element: hero?.element });
             return { triggers: ['elReaction', 'other-elReaction'], exec: () => card.minusPerCnt() }
         }),

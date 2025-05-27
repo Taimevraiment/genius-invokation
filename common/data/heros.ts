@@ -912,10 +912,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().damage(3).cost(3).handle(event => {
                     const { talent, card, hcards = [], cmds } = event;
                     const hasCard114031 = hasObjById(hcards, 114031) || card?.id == 114031;
-                    if (hasCard114031) {
-                        if (card?.id != 114031) cmds.discard({ card: 114031 });
-                        else cmds.getCard(1, { card: 114031 });
-                    }
+                    if (!hasCard114031) cmds.getCard(1, { card: 114031 });
+                    else if (card?.id != 114031) cmds.discard({ card: 114031 });
                     return { status: isCdt(hasCard114031, [[114032, +!!talent]]) }
                 }),
             new SkillBuilder('天街巡游').description('{dealDmg}，对所有敌方后台角色造成3点[穿透伤害]。')

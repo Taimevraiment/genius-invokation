@@ -203,8 +203,8 @@ export default class GeniusInvokationRoom {
      */
     private _writeLog(log: string, type: LogType = 'log') {
         if (this.env == 'test') return;
-        if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/{[^\{\}]+}/g, ''), type });
-        this.systemLog += log.replace(/\{|\}/g, '') + '\n';
+        if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/{.*?}/g, ''), type });
+        this.systemLog += log.replace(/{|}/g, '') + '\n';
     }
     /**
      * 导出日志
@@ -1556,7 +1556,7 @@ export default class GeniusInvokationRoom {
                                 trigger: state,
                                 hidx: hi,
                                 skid: cskid,
-                                sktype: isCdt(!state.includes('after'), skill?.type),
+                                sktype: skill?.type,
                                 atkHidx,
                                 isQuickAction,
                             }, state == 'getdmg']);
@@ -3601,7 +3601,7 @@ export default class GeniusInvokationRoom {
                 }
             }
         }
-        logs.forEach(log => this._writeLog(log));
+        logs.forEach(log => this._writeLog(log, 'info'));
         if (isDie.size > 0) {
             // 击倒对方角色
             for (const cpidx of isDie) {
@@ -3887,7 +3887,7 @@ export default class GeniusInvokationRoom {
             if (cmdheal) willHeals = cmdheal;
         }
         if (!atkStatus.hasType(STATUS_TYPE.Hide)) {
-            this._writeLog(`[${this.players[pidx].name}](${pidx})[${atkname.replace(/\[card.+?\]/, '')}]发动${oCnt != atkStatus.useCnt ? ` ${oCnt}→${atkStatus.useCnt}` : ''}`);
+            this._writeLog(`[${this.players[pidx].name}](${pidx})[${atkname.replace(/\[card.*?\]/, '')}]发动${oCnt != atkStatus.useCnt ? ` ${oCnt}→${atkStatus.useCnt}` : ''}`);
         }
         this._detectStatus(pidx ^ 1 ^ isSelf, STATUS_TYPE.Attack, etriggers1[atkedIdx], { hidxs: atkedIdx, isOnlyHeroStatus: true, isQuickAction });
         const whLen = willHeals.length || 1;
@@ -5144,6 +5144,7 @@ export default class GeniusInvokationRoom {
                             isReadySkill: isAttach,
                             otriggers: summonTrigger,
                             selectSummon: ohidxs?.[0],
+                            withCard,
                             isQuickAction: isCdt(withCard, !isAction),
                             isChargedAtk: (player.dice.length + (withCard ? withCard.cost + withCard.anydice - withCard.costChange : 0)) % 2 == 0,
                         });

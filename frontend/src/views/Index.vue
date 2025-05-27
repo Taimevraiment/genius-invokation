@@ -73,6 +73,7 @@ import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
+import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -200,7 +201,11 @@ const showInfo = () => {
   const [, v1, v2, v3] = ver.match(/v?(\d)\.(\d)\.?(\d?)/) ?? VERSION[0];
   const rawVersion = `v${v1}.${v2}.${v3 || 0}`;
   const version = Array.from<string>(VERSION).includes(rawVersion) ? rawVersion as Version : VERSION[0];
-  const infoEntity = allEntities(version).find(e => e.id.toString() == query || e.name.includes(query));
+  const isTalent = query.endsWith('天赋');
+  let infoEntity = allEntities(version).find(e => e.id.toString() == query || e.name.includes(query.slice(0, isTalent ? -2 : 100)));
+  if (isTalent && infoEntity) {
+    infoEntity = allEntities(version).find(e => e.id == getTalentIdByHid(infoEntity!.id));
+  }
   if (!infoEntity) return info.value.info = null;
   info.value = {
     version,
