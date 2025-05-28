@@ -1295,11 +1295,21 @@ export default class GeniusInvokationRoom {
             return res;
         }
         const calcTasks = (tasks: AtkTask[], cplayers: Player[], cpidx: number) => {
+            const calcRes = {
+                isKilled: false,
+                atriggers: oplayers[cpidx].heros.map(() => []) as Trigger[][],
+                etriggers: oplayers[cpidx ^ 1].heros.map(() => []) as Trigger[][],
+            }
             tasks.some(task => {
                 const { cmds, pidx: tpidx } = task;
                 if (!cmds.hasCmds('attack', 'heal')) return false;
-                return calcAtk(cplayers, { cmds }, cmds.value[0].cmd, -1, -1, +(tpidx == cpidx)).isKilled;
+                const res = calcAtk(cplayers, { cmds }, cmds.value[0].cmd, -1, -1, +(tpidx == cpidx));
+                calcRes.isKilled ||= res.isKilled;
+                calcRes.atriggers.forEach((trgs, trgsi) => trgs.push(...res.atriggers[trgsi]));
+                calcRes.etriggers.forEach((trgs, trgsi) => trgs.push(...res.etriggers[trgsi]));
+                return res.isKilled;
             });
+            return calcRes;
         }
         const calcSummonAtk = (cplayers: Player[], smn: Summon, trg: Trigger, isSelf = 1) => {
             const trounds = [0];
@@ -1577,7 +1587,15 @@ export default class GeniusInvokationRoom {
                         atrgs.forEach((at, ati) => at.push(...atriggers[ati]));
                         etrgs.forEach((et, eti) => et.push(...etriggers[eti]));
                     } else {
-                        this._doCmds(cpidx, fieldres.cmds, { players: oplayers, isExec: false })
+                        const { tasks: cmdtasks = [] } = this._doCmds(cpidx, fieldres.cmds,
+                            { players: oplayers, isExec: false, willSwitch, energyCnt, skid, sktype: skill?.type });
+                        const { isKilled, atriggers, etriggers } = calcTasks(cmdtasks, oplayers, cpidx);
+                        if (isKilled) {
+                            isPreviewEnd = true;
+                            break preview_end;
+                        }
+                        atrgs.forEach((at, ati) => at.push(...atriggers[ati]));
+                        etrgs.forEach((et, eti) => et.push(...etriggers[eti]));
                     }
                 }
             }
@@ -3632,6 +3650,7 @@ export default class GeniusInvokationRoom {
                         }
                         h.isFront = false;
                         if (this._isWin() == -1) {
+                            this.taskQueue.isDieWaiting = true;
                             this.isDieBackChange = !isQuickAction && cplayer.phase == PHASE.ACTION;
                             cplayer.status = PLAYER_STATUS.DIESWITCH;
                             cplayer.UI.info = '请选择出战角色...';
@@ -6540,7 +6559,6 @@ export default class GeniusInvokationRoom {
                     this.taskQueue.addTask(taskType, args, { isUnshift: true, source, isDmg });
                     break;
                 }
-                if (taskType.includes('heroDie')) this.taskQueue.isDieWaiting = true;
                 if (taskType == 'not found' || !taskType || !args) break;
                 let task: [() => void | Promise<void | boolean>, number?, number?][] | undefined;
                 if (taskType.startsWith('status-')) task = this._detectStatus(...(args as Parameters<typeof this._detectStatus>)).task;

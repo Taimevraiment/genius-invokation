@@ -3422,12 +3422,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('tmp/UI_Gcg_CardFace_Summon_Chasca_Wind_-1066976300')
         .handle((card, event) => {
             const { hero, execmds, cmds } = event;
-            if (!hero) return;
             const triggers: Trigger[] = ['discard'];
-            const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
-            if (ncardId) {
-                execmds.convertCard(card.entityId, ncardId);
-                triggers.push('getcard');
+            if (hero) {
+                const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
+                if (ncardId) {
+                    execmds.convertCard(card.entityId, ncardId);
+                    triggers.push('getcard');
+                }
             }
             cmds.attack(1, DAMAGE_TYPE.Anemo, { isPriority: true }).addCard(1, 115113);
             return { triggers, notPreview: true }

@@ -40,12 +40,14 @@ export default class TaskQueue {
         if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
             console.trace('重复task:', taskType);
         }
-        const tidx = addAfterNonDmg ? findLastIndex(this.queue, ([, , , isdmg]) => !isdmg) :
+        const queueTask: TaskItem = [taskType, args, source, isDmg];
+        const tidx = addAfterNonDmg ? this.queue.findIndex(([, , , isdmg]) => isdmg) :
             orderAfter != '' ? findLastIndex(this.queue, ([taskType]) => taskType.includes(orderAfter)) : -1;
-        if (tidx > -1) this.queue.splice(tidx + 1, 0, [taskType, args, source, isDmg]);
+        if (addAfterNonDmg && tidx == -1) this.queue.push(queueTask)
+        else if (tidx > -1) this.queue.splice(tidx + (addAfterNonDmg ? 0 : 1), 0, queueTask);
         else {
-            if (isUnshift) curQueue.unshift([taskType, args, source, isDmg]);
-            else curQueue.push([taskType, args, source, isDmg]);
+            if (isUnshift) curQueue.unshift(queueTask);
+            else curQueue.push(queueTask);
         }
         this._writeLog((isUnshift ? 'unshift' : isPriority ? 'priotity' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
     }

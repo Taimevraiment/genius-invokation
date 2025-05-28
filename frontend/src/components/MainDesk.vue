@@ -166,7 +166,7 @@
               {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
             </div>
           </div>
-          <div class="hero-energys" v-if="hero && hero.hp >= 0">
+          <div class="hero-energys" v-if="hero && hero.hp > 0">
             <div v-for="(_, eidx) in Math.abs(hero.maxEnergy) / (hero.maxEnergy >= 0 ? 1 : 2)" :key="eidx"
               class="hero-energy" :class="{ 'mobile-energy': isMobile }">
               <img class="hero-energy-img" :src="getEnergyIcon(
