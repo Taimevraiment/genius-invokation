@@ -106,6 +106,7 @@ export type CardHandleRes = {
     isQuickAction?: boolean,
     isOrTrigger?: boolean,
     isTrigger?: boolean,
+    isAfterSkill?: boolean,
     exec?: () => CardExecRes | void,
 };
 

@@ -419,8 +419,8 @@ const wrapExplCtt = (content: string) => {
   return res;
 }
 type WrapExplainType = 'slot' | 'card' | 'support' | '';
+const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite == '' ? ` style='color:white;'` : ''}>${wrapExplCtt(ctt).name}</span>`;
 const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
-  const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite == '' ? ` style='color:white;'` : ''}>${wrapExplCtt(ctt).name}</span>`;
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
     .replace(/〔g(.+)〕/g, (_, ctt: string) => isInGame.value ? '' : ctt)

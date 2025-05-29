@@ -102,6 +102,7 @@ export type StatusHandleRes = {
     source?: number,
     notLog?: boolean,
     isTrigger?: boolean,
+    isAfterSkill?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => void,
 };
 
@@ -1285,12 +1286,12 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     114132: () => new StatusBuilder('轰雷凝集').heroStatus().icon(STATUS_ICON.Special).useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【我方角色引发[雷元素相关反应]后：】所附属角色获得1点[充能]。；[useCnt]')
         .handle((_, event) => {
-            const { sktype = SKILL_TYPE.Vehicle, hidx, cmds } = event;
-            if (sktype == SKILL_TYPE.Vehicle) return;
+            const { hidx, cmds } = event;
             cmds.getEnergy(1, { hidxs: hidx });
             return {
                 triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
                 isAddTask: true,
+                isAfterSkill: true,
                 exec: eStatus => eStatus?.minusUseCnt(),
             }
         }),
