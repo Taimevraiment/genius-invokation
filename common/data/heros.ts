@@ -838,7 +838,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('称名之刻').description('本角色进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
                 .src('/image/tmp/Skill_S_Mavuika_01.webp')
                 .explain(...Array.from({ length: 3 }, (_, i) => `botcrd11315${i + 4}`))
-                .elemental().cost(3).handle(({ cmds }) => (
+                .elemental().cost(2).handle(({ cmds }) => (
                     cmds.getNightSoul(2), {
                         statusPre: 113151,
                         pickCard: {

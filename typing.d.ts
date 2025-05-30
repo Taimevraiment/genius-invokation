@@ -123,6 +123,7 @@ type StatusTask = {
     discards?: Card[], // 舍弃的牌
     hcard?: Card, // 调和或使用的牌
     source?: number, // 触发该状态的实体id
+    isPriority?: boolean, // 是否优先攻击出战角色，即不鞭尸
 }
 
 type Cmds = {
@@ -295,6 +296,7 @@ type CalcAtkRes = {
     damage?: number,
     pdmg?: number,
     isSelf?: boolean,
+    isPriority?: boolean,
     hidxs?: number[],
     cmds?: CmdsGenerator,
     execmds?: CmdsGenerator,

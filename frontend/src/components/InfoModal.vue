@@ -41,7 +41,7 @@
         <div class="info-card-desc" v-for="(desc, didx) in (info as Card).UI.descriptions" :key="didx" v-html="desc">
         </div>
         <div class="info-card-explain"
-          v-for="(expl, eidx) in skillExplain.filter(() => !(info as Card).hasSubtype(CARD_SUBTYPE.Vehicle))"
+          v-for="(expl, eidx) in (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle) ? skillExplain[0] : skillExplain"
           :key="eidx" style="margin-top: 5px">
           <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
         </div>
@@ -108,7 +108,7 @@
           <div v-if="isShowSkill[sidx]"
             @click.stop="showRule(skill.UI.description, ...skillExplain[type == INFO_TYPE.Skill ? skidx : sidx].flat(2))">
             <div class="info-hero-skill-explain"
-              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : sidx + +(type != INFO_TYPE.Card && skills[0].type == SKILL_TYPE.Vehicle)]"
+              v-for="(expl, eidx) in skillExplain[type == INFO_TYPE.Skill ? skidx : type == INFO_TYPE.Card && (info as Card).hasSubtype(CARD_SUBTYPE.Vehicle) ? 1 : sidx + +(type != INFO_TYPE.Card && skills[0].type == SKILL_TYPE.Vehicle)]"
               :key="eidx">
               <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
             </div>
@@ -646,13 +646,17 @@ watchEffect(() => {
       const onceDesc = info.value.UI.descriptions.findIndex(v => v.includes('入场时：'));
       if (onceDesc > -1) info.value.UI.descriptions.splice(onceDesc, 1);
     }
-    skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     if (info.value.hasSubtype(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(getVehicleIdByCid(info.value.id));
       vehicle.UI.descriptions = vehicle.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: vehicle }));
       skills.value.push(vehicle);
       isShowSkill.value.push(true);
-      skillExplain.value = [wrapExpl(vehicle.UI.explains, vehicle.id + vehicle.name)];
+      skillExplain.value = [
+        wrapExpl(info.value.UI.explains, [vehicle.id + vehicle.name, info.value.id + info.value.name]),
+        wrapExpl(vehicle.UI.explains, [vehicle.id + vehicle.name, info.value.id + info.value.name]),
+      ];
+    } else {
+      skillExplain.value = wrapExpl(info.value.UI.explains, info.value.id + info.value.name);
     }
   }
   if (info.value && 'maxUse' in info.value) { // 召唤物

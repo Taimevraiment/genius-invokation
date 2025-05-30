@@ -203,8 +203,8 @@ export default class GeniusInvokationRoom {
      */
     private _writeLog(log: string, type: LogType = 'log') {
         if (this.env == 'test') return;
-        if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/{.*?}/g, ''), type });
-        this.systemLog += log.replace(/{|}/g, '') + '\n';
+        if (type != 'system' && type != 'emit') this.log.push({ content: log.replace(/\{.*?\}/g, ''), type });
+        this.systemLog += log.replace(/\{|\}/g, '') + '\n';
     }
     /**
      * 导出日志
@@ -454,7 +454,7 @@ export default class GeniusInvokationRoom {
                     }),
                     previews: vopidx == this.currentPlayerIdx ? this.previews : [],
                     ...(typeof tip != 'string' ? { tip: tip[vopidx] } :
-                        tip.includes('{p}') ? { tip: tip.replace(/{p}/, vopidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
+                        tip.includes('{p}') ? { tip: tip.replace(/\{p\}/, vopidx == this.currentPlayerIdx ? '你的' : '对方') } : {}),
                     log: log.map(v => v.content),
                     actionInfo: {
                         ...actionInfo,
@@ -1395,7 +1395,18 @@ export default class GeniusInvokationRoom {
                 damages: res.damages,
             });
             mergeWillHeals(bWillHeal, whl?.[0], oplayers);
-            const dmgedHidxs = atkedIdxs ?? [+!!res.isSelf ^ isSelf ? cehidx : cahidx];
+            let dmgedHidxs = atkedIdxs ?? [+!!res.isSelf ^ isSelf ? cehidx : cahidx];
+            if (res.isPriority) {
+                const cheros = oplayers[cpidx ^ +!res.isSelf].heros;
+                for (let i = 0; i < dmgedHidxs.length; ++i) {
+                    const chidx = dmgedHidxs[i];
+                    if (cheros[chidx].hp <= 0) {
+                        dmgedHidxs[i] = (chidx + 1) % cheros.length;
+                        --i;
+                    }
+                }
+                dmgedHidxs = [...new Set(dmgedHidxs)];
+            }
             const dmgEl = atkcmds[0]?.element;
             calcTasks(tasks, oplayers, cpidx);
             oplayers.forEach(p => {
@@ -1574,6 +1585,7 @@ export default class GeniusInvokationRoom {
                                 sktype: skill?.type,
                                 atkHidx,
                                 isQuickAction,
+                                isPriority: fieldres.isPriority,
                             }, state == 'getdmg']);
                         }
                         if (!isStsRes) fieldres.element = undefined;
@@ -1777,7 +1789,7 @@ export default class GeniusInvokationRoom {
                 tasks0.push(...tasks1);
             });
         }
-        this._doCmds(pidx, skillres.skillAfter, {
+        const { isSwitch: skillswitch = -1 } = this._doCmds(pidx, skillres.skillAfter, {
             players,
             isExec,
             skid,
@@ -1868,7 +1880,7 @@ export default class GeniusInvokationRoom {
         });
         mergeWillHeals(bWillHeal, skillheal);
         const dtriggers: Trigger[] = convertToArray(otriggers);
-        cahidx = skid == -1 && dtriggers.includes('switch-to') ? isSwitch : bPlayers[pidx].hidx;
+        cahidx = skid == -1 && dtriggers.includes('switch-to') ? isSwitch : isExec && skillswitch > -1 ? skillswitch : bPlayers[pidx].hidx;
         cehidx = bPlayers[pidx ^ 1].hidx;
         dmgedHidx = cehidx;
         tasks.push(...tasks0);
@@ -1944,7 +1956,7 @@ export default class GeniusInvokationRoom {
         }
         if (skill && skill.type != SKILL_TYPE.Vehicle) {
             this._detectSlotAndStatus(pidx, [...new Set(afterASkillTrgs2)],
-                { types: STATUS_TYPE.Usage, players: bPlayers, hidxs: allHidxs(bPlayers[pidx].heros), energyCnt, willSwitch, isAfterSkill: true });
+                { types: STATUS_TYPE.Usage, players: bPlayers, hidxs: allHidxs(bPlayers[pidx].heros), energyCnt, willSwitch, isExec, isOnlyExec: !isExec, isAfterSkill: true });
             const { tasks = [] } = this._detectSupport(pidx, [...new Set(afterASkillTrgs2)], { players: bPlayers, isExec, supportCnt, isAfterSkill: true });
             this._detectSupport(epidx, [...new Set(afterESkillTrgs2)], { players: bPlayers, isExec, supportCnt, isAfterSkill: true });
             calcTasks(tasks, bPlayers, pidx);
@@ -3851,7 +3863,7 @@ export default class GeniusInvokationRoom {
     private async _doStatusAtk(stsTask: StatusTask) {
         if (!this._hasNotDieSwitch() || !this.taskQueue.isExecuting) return false;
         const { entityId, group, pidx, isSelf = 0, trigger = '', hidx: ohidx = this.players[pidx].hidx,
-            discards = [], hcard, skid, name: atkname, sktype, atkHidx } = stsTask;
+            discards = [], hcard, skid, name: atkname, sktype, atkHidx, isPriority } = stsTask;
         let { isQuickAction } = stsTask;
         let { heros: aheros, hidx: ahidx, summons: aSummon, pile, handCards, combatStatus, playerInfo, dice } = this.players[pidx];
         const { heros: eheros, hidx: eFrontIdx, combatStatus: eCombatStatus } = this.players[pidx ^ 1];
@@ -3893,7 +3905,14 @@ export default class GeniusInvokationRoom {
             return true;
         }
         const stsreshidxs = stsres.hidxs ?? getBackHidxs(isSelf ? aheros : eheros);
-        const atkedIdx = isSelf ? ahidx : (stsres.hidxs?.[0] ?? eFrontIdx);
+        let atkedIdx = isSelf ? ahidx : (stsres.hidxs?.[0] ?? eFrontIdx);
+        if (isPriority) {
+            const cheros = isSelf ? aheros : eheros;
+            for (let i = 0; i < cheros.length; ++i) {
+                if (cheros[atkedIdx].hp > 0) break;
+                atkedIdx = (atkedIdx + 1) % cheros.length;
+            }
+        }
         const { willDamages, dmgElements, players: players1, elTips, isQuickAction: iqa, etriggers: etriggers1 }
             = this._calcDamage(
                 pidx,
@@ -4296,19 +4315,18 @@ export default class GeniusInvokationRoom {
         }
         let willHeals: number[] | undefined;
         const tasks: AtkTask[] = [];
-        if (!isExec) {
-            const { willHeals: cmdheal, tasks: cmdtasks = [] } = this._doCmds(pidx, cmds, {
-                players, getdmg, supportCnt, willSwitch, energyCnt, isExec: false, source: cSlot?.id, isPriority: true,
+        const { willHeals: cmdheal, tasks: cmdtasks = [] } = this._doCmds(pidx, cmds, {
+            players: isCdt(isExec, clone(players), players), getdmg, supportCnt,
+            willSwitch, energyCnt, isExec: false, source: cSlot?.id, isPriority: true,
+        });
+        willHeals = cmdheal?.reduce((a, c) => {
+            c.forEach((hl, hli) => {
+                if (a[hli] == -1) a[hli] = hl;
+                else a[hli] += hl;
             });
-            willHeals = cmdheal?.reduce((a, c) => {
-                c.forEach((hl, hli) => {
-                    if (a[hli] == -1) a[hli] = hl;
-                    else a[hli] += hl;
-                });
-                return a;
-            }, new Array<number>(heros.length + eheros.length).fill(-1));
-            tasks.push(...cmdtasks);
-        }
+            return a;
+        }, new Array<number>(heros.length + eheros.length).fill(-1));
+        tasks.push(...cmdtasks);
         return {
             willHeals, switchHeroDiceCnt, addDmg, tasks, reviveHidxs, supportCnt,
             heroStatus, combatStatus, isQuickAction, minusDiceCard, cmds, task, restDmg, hcardsCnt,
@@ -4517,6 +4535,7 @@ export default class GeniusInvokationRoom {
                                     discards,
                                     hcard,
                                     source: stsres.source,
+                                    isPriority: stsres.isPriority,
                                 });
                             } else {
                                 if (stsres.isAddTask) {

@@ -103,6 +103,7 @@ export type StatusHandleRes = {
     notLog?: boolean,
     isTrigger?: boolean,
     isAfterSkill?: boolean,
+    isPriority?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => void,
 };
 
@@ -573,7 +574,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
                 return { triggers: trigger, isAddTask: true }
             }
             if (trigger == 'getNightSoul' && (isExecTask || (source == nightSoul.id && nightSoul.useCnt == 2))) {
-                return { triggers: trigger, damage: 1, element: DAMAGE_TYPE.Cryo }
+                return { triggers: trigger, damage: 1, element: DAMAGE_TYPE.Cryo, isPriority: true }
             }
         }),
 
@@ -1085,7 +1086,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { status.minusUseCnt() }
         })),
 
-    113153: () => new StatusBuilder('诸火武装·焚焰之环').combatStatus().icon('ski,1').icon('tmp/UI_Gcg_Buff_Mavuika_E_-205421090')
+    113153: () => new StatusBuilder('诸火武装·焚曜之环').combatStatus().icon('ski,1').icon('tmp/UI_Gcg_Buff_Mavuika_E_-205421090')
         .type(STATUS_TYPE.Attack)
         .description('【我方其他角色使用「普通攻击」或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
@@ -1289,7 +1290,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             const { hidx, cmds } = event;
             cmds.getEnergy(1, { hidxs: hidx });
             return {
-                triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
+                triggers: 'elReaction-Electro',
                 isAddTask: true,
                 isAfterSkill: true,
                 exec: eStatus => eStatus?.minusUseCnt(),
@@ -2636,7 +2637,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301306: () => new StatusBuilder('呀——！').combatStatus().icon('tmpski3130092').iconBg(STATUS_BG_COLOR.Physical)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).useCnt(1)
-        .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方前台获得3点[护盾]，然后造成3点[物理伤害]。')
+        .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方出战角色获得3点[护盾]，然后造成3点[物理伤害]。')
         .handle((status, event) => {
             const { playerInfo: { usedVehcileCnt = 0 } = {}, cmds } = event;
             if (usedVehcileCnt > 0) status.useCnt = usedVehcileCnt;

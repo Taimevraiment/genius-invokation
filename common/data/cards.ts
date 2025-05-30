@@ -1264,7 +1264,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/192ce5481c21e740b4630a0602b3e5b5_5955176255097578471.png'),
 
     313009: () => new CardBuilder(486).name('呀！呀！').since('v5.7.0').vehicle().costSame(2).useCnt(2)
-        .description('【入场时：】创建【sts301306】。（【我方打出特技牌时：】若本局游戏我方累计打出了6张特技牌，我方前台获得3点[护盾]，然后造成3点[物理伤害]）')
+        .description('【入场时：】创建【sts301306】。（【我方打出特技牌时：】若本局游戏我方累计打出了6张特技牌，我方出战角色获得3点[护盾]，然后造成3点[物理伤害]）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_Xiaokonglong.webp')
         .handle((_, { cmds }) => cmds.getStatus(301306).res),
 
@@ -1917,8 +1917,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 summonCnt,
                 exec: () => {
                     const selectSmn = esummons[selectSummon];
-                    if (ver.lt('v3.7.0')) selectSmn.dispose();
-                    else selectSmn.minusUseCnt(2);
+                    if (ver.lt('v3.7.0')) selectSmn?.dispose();
+                    else selectSmn?.minusUseCnt(2);
                 }
             }
         }),
@@ -2665,7 +2665,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
     213151: () => new CardBuilder(481).name('「人之名」解放').since('v5.7.0').talent().costPyro(1).perCnt(1)
-        .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。〕；【我方打出特技牌后：】若可能，【hro】回复1点「夜魂值」。（每回合1次）')
+        .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。〕；【我方打出特技牌后：】若可能，【hro】恢复1点「夜魂值」。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mavuika.webp')
         .handle((card, event) => {
             const { hcard, hero, cmds, execmds } = event;
