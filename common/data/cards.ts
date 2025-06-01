@@ -2724,7 +2724,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     214051: () => new CardBuilder(90).name('霹雳连霄').since('v3.4.0').offline('v2').talent(1).costElectro(3)
-        .description('{action}；装备有此牌的【hro】使用【rsk14054】时：使【hro】本回合内「普通攻击」少花费1个[无色元素骰]。')
+        .description('{action}；装备有此牌的【hro】使用【rsk14054】后：使【hro】本回合内「普通攻击」少花费1个[无色元素骰]。')
         .description('{action}；装备有此牌的【hro】在[准备技能]期间受过伤害后：使【hro】本回合内「普通攻击」少花费1个[无色元素骰]。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/c3004d7c3873556c01124277c58b4b87_6946169426849615589.png'),
 

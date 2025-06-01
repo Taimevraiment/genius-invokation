@@ -565,7 +565,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
           `<img src="${getSrc(expl, 'src', 'icon')}" style="${isStatus ? statusStyle : cardStyle}"/>
            <div style="display:flex;flex-direction:column;margin-left:2px;${'damage' in expl ? 'gap:3px;' : ''}" >
             ${nameEl}
-            <span style="${isStatus ? 'margin-left:auto;' : ''}color:#d0c298;">
+            <span style="color:#d0c298;">
              ${'group' in expl ? `${['角色', '出战'][expl.group]}状态` : '召唤物'}
             </span>
            </div>`
