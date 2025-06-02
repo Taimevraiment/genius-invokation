@@ -136,21 +136,22 @@
               :alt="hero.name" />
             <div v-else class="hero-name">{{ hero?.name }}</div>
           </div>
-          <div class="hero-freeze" v-if="hero.heroStatus.some(ist => ist.id == 106)">
+          <div class="hero-freeze" v-if="hasObjById(hero.heroStatus, 106)">
             <img :src="getPngIcon('freeze-bg')" />
           </div>
-          <div class="hero-freeze" style="background-color: #716446de" v-if="hasObjById(hero.heroStatus, 116033)">
+          <div class="hero-freeze" v-if="hasObjById(hero.heroStatus, 116033)">
+            <img :src="getPngIcon('rocken-bg')" />
           </div>
-          <div class="hero-shield7"
+          <div class="hero-shield"
             v-if="[...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0)">
           </div>
-          <div class="hero-shield2" v-if="(
+          <div class="hero-barrier" v-if="(
             hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier)) ||
             hero.isFront && combatStatuses[hgi].some(ost => ost.hasType(STATUS_TYPE.Barrier)) ||
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
             hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt != 0) ||
             hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt != 0">
-            <img :src="getPngIcon('Shield2')" alt="" style="width: 100%;height: 100%;">
+            <img :src="getPngIcon('barrier-bg')" alt="" style="width: 100%;height: 100%;">
           </div>
           <img class="hero-center-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <img class="hero-center-icon" style="width: 60%;opacity: 1;" src="@@/image/Select_Ring_01.png"
@@ -1383,7 +1384,7 @@ button:active {
   border-radius: inherit;
 }
 
-.hero-shield2 {
+.hero-barrier {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -1405,7 +1406,7 @@ button:active {
   z-index: 1;
 }
 
-.hero-shield7 {
+.hero-shield {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -1628,6 +1629,7 @@ button:active {
 
 .support-can-use {
   box-shadow: 0 0 15px yellow inset;
+  animation: can-use-blink 3s linear infinite alternate;
 }
 
 .slot-can-use {
@@ -1636,15 +1638,18 @@ button:active {
   height: 100%;
   border-radius: 50%;
   box-shadow: 0 0 5px 2px yellow inset;
+  animation: can-use-blink 3s linear infinite alternate;
   z-index: 2;
 }
 
 .summon-can-use {
   box-shadow: 0 0 15px 2px yellow inset;
+  animation: can-use-blink 3s linear infinite alternate;
 }
 
 .status-can-use {
   box-shadow: 0 0 5px 1px yellow inset;
+  animation: can-use-blink 3s linear infinite alternate;
 }
 
 .summon-select,
@@ -2089,6 +2094,24 @@ svg {
 
   100% {
     opacity: var(--blink-opacity);
+  }
+}
+
+@keyframes can-use-blink {
+  0% {
+    opacity: 0.5;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.5;
   }
 }
 

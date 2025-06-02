@@ -145,7 +145,7 @@
           @click.stop="useSkill(skill.id)" :style="{ boxShadow: skill.style.fullEnergy }">
           <img class="skill-bg" :src="getPngIcon('skill_btn_bg')" alt="" />
           <div class="skill3-bg" :style="{ background: skill.style.notFullEnergy }"></div>
-          <img class="skill3-btn" :src="getPngIcon('skill3_btn_bg')" alt="" />
+          <img class="skill3-btn" v-if="skill.type == SKILL_TYPE.Burst" :src="getPngIcon('skill3_btn_bg')" alt="" />
           <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0" :alt="SKILL_TYPE_ABBR[skill.type]"
             draggable="false" />
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
@@ -689,8 +689,8 @@ body {
 
 .skill3-bg {
   position: absolute;
-  width: 105%;
-  height: 105%;
+  width: 107%;
+  height: 107%;
   border-radius: 50%;
   top: 50%;
   left: 50%;

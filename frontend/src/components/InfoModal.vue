@@ -340,7 +340,7 @@
 </template>
 
 <script setup lang='ts'>
-import { computed, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, watchEffect } from 'vue';
 
 import {
   CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
@@ -716,6 +716,14 @@ const showRule = (...desc: string[]) => {
   isShowRule.value = !isShowRule.value;
   if (isShowRule.value) wrapRule(...desc);
 }
+
+onMounted(() => {
+  document.querySelectorAll('img').forEach(img => {
+    img.onerror = () => {
+      img.src = getPngIcon(STATUS_ICON.Special);
+    }
+  });
+});
 </script>
 
 <style scoped>
