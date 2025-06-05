@@ -252,6 +252,29 @@ export const convertToArray = <T>(obj: T | T[]): T[] => {
 }
 
 /**
+ * 解析时间戳
+ * @param timeStamp 时间戳
+ * @returns 
+ */
+export const parseDate = (timeStamp: number | Date = new Date()) => {
+    const dateFormat = (time: number) => time.toString().padStart(2, '0');
+    const curr = timeStamp instanceof Date ? timeStamp : new Date(timeStamp);
+    const year = curr.getFullYear();
+    const month = dateFormat(curr.getMonth() + 1);
+    const date = dateFormat(curr.getDate());
+    const hours = dateFormat(curr.getHours());
+    const minutes = dateFormat(curr.getMinutes());
+    const seconds = dateFormat(curr.getSeconds());
+    return {
+        value: `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`,
+        date: `${month}-${date}`,
+        year: `${year}`,
+        time: `${hours}:${minutes}`,
+        lastDate: () => parseDate(curr.getTime() - 86400000).date,
+    }
+};
+
+/**
  * 获取密钥
  */
 export const getSecretKey = async (name: string) => {

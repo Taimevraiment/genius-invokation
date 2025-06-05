@@ -183,7 +183,7 @@ export class SkillBuilder extends BaseBuilder {
         return this;
     }
     readySkill(round: number = 1) {
-        this._energyCost.set(['vlatest', -2]);
+        if (this._energyCost.get('vlatest', 0) != -3) this._energyCost.set(['vlatest', -2]);
         this.costSame(0);
         this._readySkillRound = round;
         return this;

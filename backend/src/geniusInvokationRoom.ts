@@ -28,7 +28,7 @@ import {
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
-    ActionData, ActionInfo, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
+    ActionData, ActionInfo, ActionLog, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
     Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
@@ -57,7 +57,7 @@ export default class GeniusInvokationRoom {
     private systemLog: string = ''; // 系统日志
     private errorLog: string[] = []; // 错误日志
     private reporterLog: { name: string, message: string }[] = []; // 报告者问题
-    private actionLog: { actionData: ActionData, pidx: number }[] = []; // 行动操作日志
+    private actionLog: ActionLog[] = []; // 行动操作日志
     countdown: Countdown = { limit: 0, curr: 0, timer: undefined }; // 倒计时
     private isDieBackChange: boolean = true; // 用于记录角色被击倒切换角色后是否转换回合
     private pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 };// 挑选卡牌信息
@@ -391,6 +391,7 @@ export default class GeniusInvokationRoom {
                 supportSelect,
                 pickModal: this.pickModal,
                 watchers: this.watchers.length,
+                actionLog: flag == 'game-end' ? this.actionLog : [],
                 flag: `[${this.id}]${flag}-p${pidx}`,
             };
             const _serverDataVO = (vopidx: number, tip: string | string[]) => {
@@ -596,6 +597,7 @@ export default class GeniusInvokationRoom {
         this.systemLog = '';
         this.errorLog = [];
         this.reporterLog = [];
+        this.actionLog = [];
         this.taskQueue.init();
         if (this.players[1].id == AI_ID) this._initAI();
         this.players.forEach(p => {
@@ -3533,7 +3535,8 @@ export default class GeniusInvokationRoom {
     private _doSlotDestroy(pidx: number, hidx: number, slot: Card, options: { players?: Player[], slotsDestroy?: number[] } = {}) {
         const { players = this.players, slotsDestroy = players[pidx].heros.map(h => +(h.hidx == hidx)) } = options;
         this._detectSlot(pidx, 'slot-destroy', { players, cSlot: slot, hidxs: [hidx] });
-        this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, isOnlyCombatStatus: true, slotsDestroy });
+        this._detectStatus(pidx, STATUS_TYPE.ReadySkill, 'slot-destroy', { players, hidxs: hidx, isOnlyHeroStatus: true, source: slot.id, slotsDestroy });
+        this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, isOnlyCombatStatus: true, source: slot.id, slotsDestroy });
         if (slot.hasTag(CARD_TAG.Enchant)) {
             for (const skill of players[pidx].heros[hidx].skills) {
                 if (skill.dmgElement != DAMAGE_TYPE.Physical) continue;
@@ -3557,9 +3560,9 @@ export default class GeniusInvokationRoom {
         cStatus.entityId = 1;
         // 被移除的状态触发
         this._detectStatus(pidx, STATUS_TYPE.Attack, 'status-destroy', { cStatus, hidxs: [hidx], isUnshift: true, isQuickAction });
-        // 其他状态因被移除状态触发
+        // 其他因被移除状态触发
         this._detectSkill(pidx, 'status-destroy', { hidxs, source: cStatus.id, sourceHidx: hidx, isQuickAction });
-        this._detectSlotAndStatus(pidx, 'status-destroy', { types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack], source: cStatus.id, sourceHidx: hidx, isQuickAction });
+        this._detectSlotAndStatus(pidx, 'status-destroy', { types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack], source: cStatus.id, sourceHidx: hidx, hidxs, isQuickAction });
     }
     /**
      * 召唤物消失时发动
@@ -4690,7 +4693,11 @@ export default class GeniusInvokationRoom {
         const reviveHidxs: number[] = [];
         for (const hidx of hidxs) {
             const heroField = this._getHeroField(pidx, {
-                players, hidx, hcard, equipHidx, includeCombatStatus: triggers.some(trg => trg.includes('switch-to')),
+                players,
+                hidx,
+                hcard,
+                equipHidx,
+                includeCombatStatus: triggers.some(trg => trg.includes('switch-to')),
             });
             for (const field of heroField) {
                 if ('group' in field) {

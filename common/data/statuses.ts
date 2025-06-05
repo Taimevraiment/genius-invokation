@@ -122,24 +122,29 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
         .handle(status => ({ attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType, addDmg }));
 }
 
-// shieldStatusId若<0则显示角标,-1为无护盾状态,其他为护盾状态Id
-const readySkillStatus = (name: string, skill: number, shieldStatusId: number = 0, exec?: (event: StatusBuilderHandleEvent) => void) => {
+// statusId若为-1则显示角标,>0为护盾状态Id,<0为关联特技牌id
+const readySkillStatus = (name: string, skill: number, statusId: number = 0, exec?: (event: StatusBuilderHandleEvent) => void) => {
     return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.Special).useCnt(1)
-        .type(STATUS_TYPE.ReadySkill).type(shieldStatusId >= 0, STATUS_TYPE.Sign)
+        .type(STATUS_TYPE.ReadySkill).type(statusId >= 0, STATUS_TYPE.Sign)
         .description(`本角色将在下次行动时，直接使用技能：【${skill < 5 ? SKILL_TYPE_NAME[skill as SkillType] : `rsk${skill}`}】。`)
-        .handle((status, event) => ({
-            triggers: ['switch-from', 'useReadySkill'],
-            skill,
-            exec: () => {
-                status.minusUseCnt();
-                exec?.(event);
-                if (Math.abs(shieldStatusId) > 1) {
-                    const { heros = [], hidx = -1 } = event;
-                    const shieldStatus = getObjById(heros[hidx]?.heroStatus, Math.abs(shieldStatusId));
-                    if (shieldStatus) shieldStatus.dispose();
+        .handle((status, event) => {
+            const { heros = [], hidx = -1, trigger, source = -1 } = event;
+            if (trigger == 'slot-destroy' && source == -statusId) {
+                return { triggers: 'slot-destroy', exec: () => status.dispose() }
+            }
+            return {
+                triggers: ['switch-from', 'useReadySkill'],
+                skill,
+                exec: () => {
+                    status.minusUseCnt();
+                    exec?.(event);
+                    if (statusId > 1) {
+                        const shieldStatus = getObjById(heros[hidx]?.heroStatus, statusId);
+                        if (shieldStatus) shieldStatus.dispose();
+                    }
                 }
             }
-        }));
+        });
 }
 
 const senlin1Status = (name: string) => {
@@ -2066,7 +2071,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction)
         .description('【角色无法使用技能。】（持续到回合结束）'),
 
-    122053: () => readySkillStatus('水泡封锁（准备中）', 1220512),
+    122053: () => readySkillStatus('水泡封锁（准备中）', 1220512, -122051),
 
     123011: (isTalent: boolean = false) => new StatusBuilder('潜行').heroStatus().useCnt(2).useCnt(3, isTalent)
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage).type(isTalent, STATUS_TYPE.Enchant).talent(isTalent)

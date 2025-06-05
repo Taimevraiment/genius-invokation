@@ -1,10 +1,11 @@
-import cors from 'cors';
+import cors from "cors";
 import express from "express";
 import { createServer } from "http";
+import cron from "node-cron";
 import { Server } from "socket.io";
 import { PHASE, PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
-import { getSecretKey } from '../../common/utils/utils.js';
+import { getSecretKey, parseDate } from '../../common/utils/utils.js';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
@@ -47,6 +48,14 @@ const isDev = process.env.NODE_ENV == 'development';
 const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
+const todayPlayersHistory = new Map<number, {
+    name: string,
+    duration: number,
+    loginTime: number,
+    logoutTime: number,
+    currLogin: number,
+}>(); // 当日玩家登录信息
+cron.schedule('0 0 0 * * *', () => todayPlayersHistory.clear());
 
 // 生成id
 const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number } = {}) => {
@@ -120,7 +129,8 @@ io.on('connection', socket => {
         if (pid == -1) return;
         const me = player ?? getPlayer(pid) as Player;
         if (!me) return console.error(`ERROR@leaveRoom:${eventName}:未找到玩家,me:${JSON.stringify(me)}`);
-        const log = `[${new Date()}]:玩家[${me.name}]-pid:${me.id}-rid:${me.rid} ` + ({
+        const date = new Date();
+        const log = `[${date}]:玩家[${me.name}]-pid:${me.id}-rid:${me.rid} ` + ({
             exitRoom: `离开了房间[${me.rid}]...`,
             disconnect: `断开连接了...`,
             close: `关闭了连接...`,
@@ -147,7 +157,13 @@ io.on('connection', socket => {
                 room.emit('leaveRoom', me.pidx > -1 ? me.pidx : PLAYER_COUNT);
             }
         }
-        if (eventName != 'exitRoom') removePlayer(me);
+        if (eventName != 'exitRoom') {
+            removePlayer(me);
+            const info = todayPlayersHistory.get(me.id);
+            if (!info) return console.error(`ERROR@leaveRoom:${eventName}:未找到玩家,rid:${me.id}`);
+            info.logoutTime = date.getTime();
+            info.duration += info.logoutTime - info.currLogin;
+        }
         emitPlayerAndRoomList();
     }
     // 登录/改名/重连
@@ -156,9 +172,10 @@ io.on('connection', socket => {
         if (name == '') return;
         let username = name;
         const player = getPlayer(id);
+        const date = new Date();
         if (id > 0 && player) {
             const prevname = player.name;
-            const playerInfo = () => `[${new Date()}]:玩家[${prevname}]-pid:${pid}`;
+            const playerInfo = () => `[${date}]:玩家[${prevname}]-pid:${pid}`;
             if (prevname != name) {
                 player.name = name;
                 console.info(`${playerInfo()} 改名为[${name}]`);
@@ -177,10 +194,17 @@ io.on('connection', socket => {
             }
         } else {
             pid = genId(playerList);
-            console.info(`[${new Date()}]:新玩家[${name}]-pid${pid} 连接了...`);
+            console.info(`[${date}]:新玩家[${name}]-pid${pid} 连接了...`);
             playerList.push({ id: pid, name, rid: -1, status: PLAYER_STATUS.WAITING });
         }
         if (id > 0 && player && pid != id) return console.info(`WARN@login:非法的登录 pid:${pid}, id:${id}`);
+        const loginTime = date.getTime();
+        if (todayPlayersHistory.has(id)) {
+            const info = todayPlayersHistory.get(id)!;
+            info.currLogin = loginTime;
+        } else {
+            todayPlayersHistory.set(pid, { name, duration: 0, loginTime, logoutTime: -1, currLogin: loginTime });
+        }
         socket.emit('login', { pid, name: username });
         emitPlayerAndRoomList();
     });
@@ -321,9 +345,14 @@ io.on('connection', socket => {
 
 });
 
-app.get('/detail', (req, res) => {
+
+app.use((req, _res, next) => {
     if (serverSecretKey == 'wrong') return console.info(`获取serverSecretKey失败`);
-    if (req.headers.flag != serverSecretKey) return console.info(`[${new Date()}]请求失败，headers:${JSON.stringify(req.headers)}`);
+    if (!isDev && req.headers.flag != serverSecretKey) return console.info(`[${new Date()}]请求失败，headers:${JSON.stringify(req.headers)}`);
+    next();
+});
+
+app.get('/detail', (_, res) => {
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,
@@ -338,6 +367,21 @@ app.get('/detail', (req, res) => {
             rid: p.rid,
             status: p.status,
         })),
+    });
+});
+
+app.get('/info', (_req, res) => {
+    res.json({
+        roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}}`),
+        playersInfo: playerList.map(p => `${p.name} ${['空闲', '房间中', '游戏中'][p.status]}`),
+        todayPlayersHistory: Array.from(todayPlayersHistory.entries())
+            .map(([id, { name, duration, loginTime, logoutTime }]) => ({
+                id,
+                name,
+                duration: duration / 1000 / 60,
+                loginTime: parseDate(loginTime).time,
+                logoutTime: parseDate(logoutTime).time,
+            })),
     });
 });
 

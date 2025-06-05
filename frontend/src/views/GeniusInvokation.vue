@@ -150,6 +150,8 @@
             draggable="false" />
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
           <div class="skill-forbidden" v-if="skill.isForbidden" @click.stop="useSkill(skill.id, true)"></div>
+          <img class="skill-forbidden-icon" v-if="skill.isForbidden && isLookon == -1" :src="getSvgIcon('forbidden')"
+            alt="" />
         </div>
         <div class="skill-cost"
           v-for="(cost, cidx) in skill.cost.every(c => c.cnt <= 0) ? skill.cost.slice(0, 1) : skill.cost.filter(c => c.cnt > 0)"
@@ -180,6 +182,7 @@
       'modal-action-oppo': client.actionInfo.isOppo && client.actionInfo.isShow,
       'modal-action-my-leave': !client.actionInfo.isOppo && !client.actionInfo.isShow,
       'modal-action-oppo-leave': client.actionInfo.isOppo && !client.actionInfo.isShow,
+      'modal-action-gradient': !client.actionInfo.card,
     }">
       <div class="modal-action-content" v-if="client.actionInfo.content != ''">
         <img v-if="client.actionInfo.avatar" :src="client.actionInfo.avatar" alt="">
@@ -285,9 +288,9 @@ const getPngIcon = (name: string) => {
 };
 
 // 获取svg图片
-// const getSvgIcon = (name: string) => {
-//   return `/svg/${name}.svg`;
-// };
+const getSvgIcon = (name: string) => {
+  return `/svg/${name}.svg`;
+};
 
 watchEffect(() => {
   if (client.value.isWin < 2) {
@@ -766,6 +769,18 @@ body {
   box-sizing: border-box;
 }
 
+.skill-forbidden-icon {
+  position: absolute;
+  width: 40%;
+  height: 40%;
+  filter: brightness(1.5);
+  right: -5%;
+  bottom: -5%;
+  background: #644828;
+  border-radius: 50%;
+  padding: 5%;
+}
+
 .switch-button {
   width: 55px;
   height: 55px;
@@ -1021,8 +1036,8 @@ body {
   align-items: center;
   transition: .5s;
   color: white;
-  background-color: #254162b9;
-  border: 3px solid #1c3149b9;
+  background-color: #254162;
+  border: 3px solid #1c3149;
   border-radius: 10px;
   z-index: 5;
 }
@@ -1062,6 +1077,10 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
+}
+
+.modal-action-gradient {
+  background: linear-gradient(to right, #254162 40%, #2c76ca);
 }
 
 .btn-group {

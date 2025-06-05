@@ -244,6 +244,11 @@ type ActionInfo = {
     subContent?: string, // 提示词
 }
 
+type ActionLog = {
+    actionData: ActionData,
+    pidx: number,
+}
+
 type ServerData = Readonly<{
     players: Player[],
     previews: Preview[],
@@ -266,6 +271,7 @@ type ServerData = Readonly<{
     supportSelect: number[],
     pickModal: PickCard,
     watchers: number,
+    actionLog: ActionLog[],
     flag: string,
 }>
 

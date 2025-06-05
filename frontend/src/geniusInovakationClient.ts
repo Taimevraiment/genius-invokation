@@ -15,7 +15,7 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon
+    ActionData, ActionInfo, ActionLog, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, ServerData, Skill, Status, Summon
 } from "../../typing";
 
 type DeckValid = {
@@ -91,6 +91,7 @@ export default class GeniusInvokationClient {
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 }; // 挑选卡牌
     watchers: number = 0; // 观战人数
+    actionLog: ActionLog[] = []; // 行动日志
     isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
     emit: (actionData: ActionData) => void; // 发送事件
@@ -494,10 +495,11 @@ export default class GeniusInvokationClient {
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
-            watchers, flag } = data;
+            watchers, actionLog, flag } = data;
         if (this.isDev) console.info(flag);
         const hasDmg = damageVO && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
+        this.actionLog = actionLog;
         if ((this.isLookon > -1 && this.isLookon != this.playerIdx) || players.length == 0) return;
         this.previews = previews;
         this.reconcileValid = previews.filter(pre => pre.type == ACTION_TYPE.Reconcile).sort((a, b) => a.cardIdxs![0] - b.cardIdxs![0]).map(v => v.isValid);
@@ -1068,6 +1070,22 @@ export default class GeniusInvokationClient {
         if (this.isLookon == -1) return;
         this.isLookon = pidx;
         this.socket.emit('roomInfoUpdate', { roomId: this.roomId, pidx });
+    }
+    exportActionLog() {
+        const blob = new Blob([JSON.stringify(this.actionLog)], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `game${this.version.replace(/\./g, '_')}-r${this.roomId}.taimgi`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
+    }
+    importActionLog() {
+
     }
     _sendTip(tip: string) {
         if (tip == '') return;

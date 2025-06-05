@@ -223,7 +223,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/6e198a5ebf0245a681cbb894919886d1_5120040167043277378.png')
         .vehicle().costAny(2).handle(({ skillAfter, hero: { hidx } }) => skillAfter.consumeNightSoul(hidx).getCard(3).res),
 
-    1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
+    1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）；造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('#')
         .vehicle().costSame(1).handle(() => ({ status: 122053 })),
 

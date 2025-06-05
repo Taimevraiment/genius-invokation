@@ -54,7 +54,7 @@ export class GICard {
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
-            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version
+            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version, readySkillStatus?: number,
         } = {}
     ) {
         this.id = id;
@@ -65,7 +65,8 @@ export class GICard {
         subType ??= [];
         subType = convertToArray(subType);
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
-            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul } = options;
+            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
+            readySkillStatus = 0 } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -120,11 +121,17 @@ export class GICard {
             } else {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver) ?? {};
-                    const { trigger = '', cmds, execmds } = event;
-                    if (destroyTriggers.includes(trigger) && card.useCnt == 0) {
+                    const { trigger = '', cmds, execmds, source = -1 } = event;
+                    if (readySkillStatus > 0) {
+                        if (card.useCnt == 0 && trigger == 'status-destroy' && source == readySkillStatus) {
+                            cmds.clear();
+                            execmds.clear();
+                            return { triggers: 'status-destroy', isDestroy: true }
+                        }
+                    } else if (destroyTriggers.includes(trigger) && card.useCnt == 0) {
                         cmds.clear();
                         execmds.clear();
-                        return { triggers: destroyTriggers, isDestroy: true }
+                        return { triggers: destroyTriggers, isDestroy: res.isDestroy ?? true }
                     }
                     if (trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
                     return {
@@ -278,6 +285,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _explains: string[] = [];
     private _cnt: number = 2;
     private _isUseNightSoul: boolean = false;
+    private _readySkillStatus: number = 0;
     constructor(shareId?: number) {
         super(shareId ?? -1);
         if (shareId == undefined) this._cnt = -2;
@@ -315,10 +323,17 @@ export class CardBuilder extends BaseCostBuilder {
         this._subtype.push(CARD_SUBTYPE.Relic);
         return this.equipment();
     }
-    vehicle(isUseNightSoul: boolean = false) {
+    vehicle() {
         this._subtype.push(CARD_SUBTYPE.Vehicle);
-        this._isUseNightSoul = isUseNightSoul;
         return this.equipment();
+    }
+    useNightSoul(isUseNightSoul: boolean = false) {
+        this._isUseNightSoul = isUseNightSoul;
+        return this;
+    }
+    useReadySkill(readySkillStatusId: number) {
+        this._readySkillStatus = readySkillStatusId;
+        return this;
     }
     // >=0为技能序号(从0开始) -1为不使用技能仅装备 -2为不使用技能但为战斗行动地装备
     talent(skillIdx: number = -1, version: Version = 'vlatest') {
@@ -460,6 +475,7 @@ export class CardBuilder extends BaseCostBuilder {
                 spReset: this._isSpReset,
                 ver: this._curVersion,
                 isUseNightSoul: this._isUseNightSoul,
+                readySkillStatus: this._readySkillStatus,
             });
     }
 }

@@ -3362,7 +3362,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'getcard' }
         }),
 
-    112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle(true).costSame(0)
+    112142: () => new CardBuilder().name('咬咬鲨鱼').vehicle().useNightSoul().costSame(0)
         .description('【双方切换角色后，且〖hro〗为出战角色时：】消耗1点「夜魂值」，使敌方出战角色附属【sts112143】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/d5b28af6dee07cf37bb2bfaa757a4656_5892221598902559399.png')
         .handle((_, event) => {
@@ -3415,7 +3415,7 @@ const allCards: Record<number, () => CardBuilder> = {
     115102: () => new CardBuilder().name('竹星').vehicle().costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/e58400e1d1d763da8b03886edd298d0e_3195150843851699982.png'),
 
-    115112: () => new CardBuilder().name('灵枪·仪式杖').vehicle(true).costSame(0)
+    115112: () => new CardBuilder().name('灵枪·仪式杖').vehicle().useNightSoul().costSame(0)
         .src('tmp/UI_Gcg_CardFace_Summon_Chasca_Gun_1045046159'),
 
     115113: () => new CardBuilder().name('追影弹').event().costAnemo(3)
@@ -3448,15 +3448,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
         .handle((_, { cmds }) => cmds.attack(1, DAMAGE_TYPE.Physical).getCard(1).res),
 
-    116102: () => new CardBuilder().name('冲天转转').vehicle(true).costSame(0)
+    116102: () => new CardBuilder().name('冲天转转').vehicle().useNightSoul().costSame(0)
         .description('【附属角色切换至后台时：】消耗1点「夜魂值」，召唤【smn116103】。')
         .handle(() => ({ triggers: 'switch-from', isAddTask: true, summon: 116103 })),
 
-    116112: () => new CardBuilder().name('刃轮装束').vehicle(true).costSame(0).tag(CARD_TAG.Enchant)
+    116112: () => new CardBuilder().name('刃轮装束').vehicle().useNightSoul().costSame(0).tag(CARD_TAG.Enchant)
         .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ attachEl: ELEMENT_TYPE.Geo })),
 
-    122051: () => new CardBuilder().name('水泡史莱姆').vehicle().costSame(0).useCnt(2)
+    122051: () => new CardBuilder().name('水泡史莱姆').vehicle().useReadySkill(122053).costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
 
     123031: () => new CardBuilder().name('厄灵·炎之魔蝎').vehicle().costSame(0).tag(CARD_TAG.Barrier).useCnt(1).perCnt(2)
