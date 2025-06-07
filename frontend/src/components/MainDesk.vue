@@ -2,15 +2,17 @@
   <div class="main-container">
     <div class="side" :style="{ opacity: +(player.phase >= PHASE.CHOOSE_HERO) }">
       <div class="round" @click.stop="showHistory">
-        <img src="@@/image/TimeState.png" alt="回合" />
-        <span>{{ client.round }}</span>
+        <img class="round-bg" src="@@/image/TimeState.png" alt="回合" />
+        <StrokedText class="round-text" width="3">{{ client.round }}</StrokedText>
       </div>
       <div class="pile">
         <img src="@@/image/card-bg.png" alt="" class="pile-bg">
         <span class="dice-cnt">
-          <div>{{ diceCnt[playerIdx ^ 1] }}</div>
+          <div>
+            <StrokedText width="3">{{ diceCnt[playerIdx ^ 1] }}</StrokedText>
+          </div>
         </span>
-        <div class="pile-cnt">{{ pileCnt[playerIdx ^ 1] }}</div>
+        <StrokedText class="pile-cnt" width="3">{{ pileCnt[playerIdx ^ 1] }}</StrokedText>
         <Handcard class="will-getcard-oppo" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
@@ -44,9 +46,11 @@
       <div class="pile">
         <img src="@@/image/card-bg.png" alt="" class="pile-bg">
         <span class="dice-cnt">
-          <div>{{ diceCnt[playerIdx] }}</div>
+          <div>
+            <StrokedText width="3">{{ diceCnt[playerIdx] }}</StrokedText>
+          </div>
         </span>
-        <div class="pile-cnt">{{ pileCnt[playerIdx] }}</div>
+        <StrokedText class="pile-cnt" width="3">{{ pileCnt[playerIdx] }}</StrokedText>
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
@@ -83,10 +87,10 @@
           </div>
           <img class="support-top-icon" v-if="support.type != SUPPORT_TYPE.Permanent"
             :src="getPngIcon(support.type == SUPPORT_TYPE.Round ? 'TimeState' : 'Counter')" />
-          <div class="support-top-num" :class="{ 'is-change': supportCurcnt[saidx][siidx].isChange }"
+          <StrokedText class="support-top-num" :class="{ 'is-change': supportCurcnt[saidx][siidx].isChange }"
             v-if="support.type != SUPPORT_TYPE.Permanent">
             {{ support.cnt }}
-          </div>
+          </StrokedText>
           <div :class="{
             // 'will-destroy': supportCnt[getGroup(saidx)][siidx] < 0,
             'will-add': supportCnt[getGroup(saidx)][siidx] != 0,
@@ -95,18 +99,18 @@
           }">
             <img v-if="supportCnt[getGroup(saidx)][siidx] < -support.cnt" :src="getSvgIcon('die')"
               style="height: 16px;" />
-            <span>
+            <StrokedText>
               {{ supportCnt[getGroup(saidx)][siidx] > 0 ? "+" :
                 supportCnt[getGroup(saidx)][siidx] >= -support.cnt ? "-" : "" }}
-            </span>
-            <span v-if="supportCnt[getGroup(saidx)][siidx] >= -support.cnt">
+            </StrokedText>
+            <StrokedText v-if="supportCnt[getGroup(saidx)][siidx] >= -support.cnt">
               {{ Math.abs(supportCnt[getGroup(saidx)][siidx]) }}
-            </span>
+            </StrokedText>
           </div>
           <img class="support-bottom-icon" v-if="support.heal > 0" :src="getPngIcon('Element_Heal')" />
-          <div class="support-bottom-num" v-if="support.heal > 0">
+          <StrokedText class="support-bottom-num" v-if="support.heal > 0">
             {{ support.heal }}
-          </div>
+          </StrokedText>
         </div>
       </div>
     </div>
@@ -163,9 +167,9 @@
               filter: `${hasObjById(hero.heroStatus, 122) ? 'saturate(2.2) hue-rotate(-25deg) contrast(0.8)' :
                 hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}`
             }" />
-            <div class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
+            <StrokedText class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
               {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
-            </div>
+            </StrokedText>
           </div>
           <div class="hero-energys" v-if="hero && hero.hp > 0">
             <div v-for="(_, eidx) in Math.abs(hero.maxEnergy) / (hero.maxEnergy >= 0 ? 1 : 2)" :key="eidx"
@@ -303,11 +307,11 @@
                   style="height: 16px;" />
                 <img v-else-if="hero.hp + (willHp[hgi][hidx] ?? 0) <= 0" :src="getSvgIcon('die')"
                   style="height: 16px; padding-left: 3px;" />
-                <span
+                <StrokedText
                   :style="{ padding: `0 8px 0 ${hero.hp + (willHp[hgi][hidx] ?? 0) > 0 && (willHp[hgi][hidx] ?? 0) % 1 == 0 ? '5px' : '0'}` }">
                   {{ (willHp[hgi][hidx] ?? 0) > 0 ? "+" : "-" }}{{
                     Math.min(100, Math.abs(Math.ceil(willHp[hgi][hidx] ?? 0)) % 100) }}
-                </span>
+                </StrokedText>
               </div>
               <div class="damages">
                 <div class="damage" v-if="dmgElements[hgi] != undefined && willDamages[hgi][hidx] != undefined"
@@ -315,14 +319,18 @@
                     color: ELEMENT_COLOR[dmgElements[hgi][hidx]],
                     backgroundImage: `url(${getPngIcon('Attack')})`,
                   }">
-                  -{{ willDamages[hgi][hidx][0] }}
+                  <StrokedText>
+                    -{{ willDamages[hgi][hidx][0] }}
+                  </StrokedText>
                 </div>
                 <div class="damage" v-if="willDamages[hgi][hidx] != undefined"
                   :class="{ 'show-damage': isShowDmg && willDamages[hgi][hidx][1] > 0 && hero.hp >= 0 }" :style="{
                     color: ELEMENT_COLOR[DAMAGE_TYPE.Pierce],
                     backgroundImage: `url(${getPngIcon('Attack')})`,
                   }">
-                  -{{ willDamages[hgi][hidx][1] }}
+                  <StrokedText>
+                    -{{ willDamages[hgi][hidx][1] }}
+                  </StrokedText>
                 </div>
                 <div class="heal" v-if="willHeals[hgi][hidx] != undefined"
                   :class="{ 'show-heal': isShowDmg && willHeals[hgi][hidx] >= 0 }" :style="{
@@ -330,7 +338,9 @@
                     backgroundImage: `url(${getPngIcon('Heal')})`,
                     paddingTop: '9%',
                   }">
-                  +{{ Math.ceil(willHeals[hgi][hidx]) }}
+                  <StrokedText>
+                    +{{ Math.ceil(willHeals[hgi][hidx]) }}
+                  </StrokedText>
                 </div>
               </div>
             </div>
@@ -354,10 +364,10 @@
                   :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
               </div>
               <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.icon)" />
-              <div class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
+              <StrokedText class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
                 v-if="!summon?.UI.isWill">
                 {{ summon.useCnt }}
-              </div>
+              </StrokedText>
               <div :class="{
                 // 'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
                 // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
@@ -368,31 +378,31 @@
                 <img
                   v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
                   :src="getSvgIcon('die')" style="height: 16px;" />
-                <span>
+                <StrokedText>
                   {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
                     summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
                       (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50) ?
                       "-" : "" }}
-                </span>
-                <span
+                </StrokedText>
+                <StrokedText
                   v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50)">
                   {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
-                </span>
+                </StrokedText>
               </div>
               <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"
                 :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
                 :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getPngIcon('Element_Heal')" />
-              <div class="summon-bottom-num" v-if="!summon?.UI.isWill">
+              <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill">
                 {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
-              </div>
+              </StrokedText>
             </div>
           </div>
         </div>
 
         <div class="dices" :class="{ 'mobile-dices': isMobile }">
           <div class="dice-my cursor-point" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []"
-            :key="didx" :class="{ 'dice-select': diceSelect[didx], 'mobile-dice-my': isMobile }"
-            @click.stop="selectUseDice(didx)">
+            :key="didx" :class="{ 'mobile-dice-my': isMobile }" @click.stop="selectUseDice(didx)">
+            <div class="dice-select" v-if="diceSelect[didx]"></div>
             <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
             <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
             <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" />
@@ -405,8 +415,8 @@
           @touchstart.stop="mousedown()" @touchend.stop="mouseup">
           <div class="dice-change-area">
             <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
-              <div class="dice" :class="{ 'dice-select': diceSelect[didx] }" @pointerdown="mousedown(didx)"
-                @pointerenter="selectRerollDice(didx)">
+              <div class="dice" @pointerdown="mousedown(didx)" @pointerenter="selectRerollDice(didx)">
+                <div class="dice-select" v-if="diceSelect[didx]"></div>
                 <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
                 <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
                 <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
@@ -469,6 +479,7 @@ import { newSkill } from '@@@/data/skills';
 import { hasObjById } from '@@@/utils/gameUtil';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
+import StrokedText from './StrokedText.vue';
 
 const props = defineProps<{
   isMobile: boolean,
@@ -884,12 +895,11 @@ const mouseup = () => {
   width: 50%;
   aspect-ratio: 1/1;
   color: white;
-  -webkit-text-stroke: 1px black;
   margin-bottom: 5px;
   cursor: pointer;
 }
 
-.round * {
+.round-bg {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -898,6 +908,12 @@ const mouseup = () => {
   align-items: center;
   left: 0;
   top: 0;
+}
+
+.round-text {
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 .pile {
@@ -1038,7 +1054,6 @@ button:active {
 
 .hero-hp-cnt {
   color: white;
-  -webkit-text-stroke: 1px black;
   z-index: 1;
   padding-right: 2px;
   transform: scale(var(--scale-val-change));
@@ -1133,7 +1148,6 @@ button:active {
   /* color: #a80000; */
   /* background-color: #c67b7b; */
   color: white;
-  -webkit-text-stroke: 0.8px black;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1191,7 +1205,6 @@ button:active {
   border-image-slice: 20 25 fill;
   border-image-width: 7px;
   color: white;
-  -webkit-text-stroke: 1px black;
   z-index: 1;
 }
 
@@ -1271,7 +1284,6 @@ button:active {
   transition: 0.5s;
   font-size: 0;
   box-sizing: border-box;
-  -webkit-text-stroke: 0.8px black;
   /* background-image: url(@@/image/Attack.png); */
   background-size: 100%;
 }
@@ -1505,7 +1517,6 @@ button:active {
   transform: translate(35%, -25%) scale(var(--scale-val-change));
   color: white;
   font-size: medium;
-  -webkit-text-stroke: 1px black;
   transition: 0.2s;
   z-index: 1;
 }
@@ -1515,8 +1526,8 @@ button:active {
   position: absolute;
   top: 0;
   right: 0;
-  width: 25px;
-  height: 25px;
+  width: 28px;
+  height: 28px;
   transform: translate(35%, -30%);
   z-index: 1;
 }
@@ -1533,7 +1544,6 @@ button:active {
   transform: translate(-35%, 35%) scale(1.1);
   color: white;
   font-size: medium;
-  -webkit-text-stroke: 1px black;
   z-index: 1;
 }
 
@@ -1542,8 +1552,8 @@ button:active {
   position: absolute;
   left: 10px;
   bottom: 10px;
-  width: 25px;
-  height: 25px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: radial-gradient(#ffffff 10%, #ffffff19 60%, transparent 80%);
   transform: translate(-30%, 30%);
@@ -1611,6 +1621,7 @@ button:active {
 }
 
 .dice {
+  position: relative;
   width: min(60px, 100%);
   aspect-ratio: 1/1;
   border-radius: 50%;
@@ -1669,7 +1680,14 @@ button:active {
 }
 
 .dice-select {
-  box-shadow: 0 0 10px #ffeb56b8, 0 0 40px #ffeb56b8 inset;
+  width: 90%;
+  height: 105%;
+  background-color: #ffeb56;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .hero-can-select,

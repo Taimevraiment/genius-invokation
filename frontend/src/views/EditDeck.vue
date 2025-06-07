@@ -97,8 +97,9 @@
                         <span class="hero-img">{{ dthero.name }}</span>
                         <div class="hero-hp" v-if="(dthero?.hp ?? 0) > 0">
                             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
-                            <div class="hero-hp-cnt" :class="{ 'mobile-hero-hp-cnt': isMobile }"> {{ dthero.maxHp }}
-                            </div>
+                            <StrokedText class="hero-hp-cnt" :class="{ 'mobile-hero-hp-cnt': isMobile }">
+                                {{ dthero.maxHp }}
+                            </StrokedText>
                         </div>
                         <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
                             draggable="false" />
@@ -140,7 +141,7 @@
                             <div v-else class="selected">已选完</div>
                             <span class="edit-icon card-remove-icon" @click.stop="removeCard(dtcard.id)"
                                 v-if="dtcard.UI.cnt >= 0 && cardsDeck.some(c => c.id == dtcard.id)">-</span>
-                            <div class="card-cnt" v-if="dtcard.UI.cnt >= 0">{{ dtcard.UI.cnt }}</div>
+                            <div class="card-cnt" v-if="dtcard.UI.cnt > 0">{{ dtcard.UI.cnt }}</div>
                         </Actioncard>
                     </div>
                 </div>
@@ -194,6 +195,7 @@ import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../.
 import { Card, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
+import StrokedText from '@/components/StrokedText.vue';
 
 type Filter<T> = {
     name: string,
@@ -919,6 +921,9 @@ input#isOfflineInput:checked {
 
 .cards-deck {
     position: absolute;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 80px);
+    justify-content: center;
     left: 50%;
     top: 20%;
     transform: translate(-45%, -20%);
@@ -950,6 +955,9 @@ input#isOfflineInput:checked {
 .heros-total,
 .cards-total {
     position: absolute;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 130px);
+    justify-content: center;
     left: 50%;
     bottom: 20%;
     transform: translate(-45%, 20%);
@@ -1033,7 +1041,6 @@ input#isOfflineInput:checked {
 .hero-hp-cnt {
     position: absolute;
     color: white;
-    -webkit-text-stroke: 1px black;
     z-index: 1;
 }
 
@@ -1044,56 +1051,11 @@ input#isOfflineInput:checked {
         -4px -4px 6px #ffeb56;
 }
 
-
-.legend-border {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-.card-cost {
-    position: absolute;
-    left: 0;
-    top: 0;
-    text-align: center;
-    color: white;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    -webkit-text-stroke: 1px black;
-    z-index: 3;
-}
-
-.card-cost>span,
-.card-energy>span {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 10px;
-    height: 10px;
-    line-height: 23px;
-    text-align: center;
-    align-content: center;
-}
-
 .dice-img {
     position: absolute;
     left: -10px;
     top: -5px;
     width: 30px;
-}
-
-.card-energy {
-    position: absolute;
-    left: 0;
-    top: 30px;
-    text-align: center;
-    color: white;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    -webkit-text-stroke: 1px black;
-    z-index: 3;
 }
 
 .card-cnt {
@@ -1102,8 +1064,8 @@ input#isOfflineInput:checked {
     border: 2px solid black;
     border-radius: 10px;
     position: absolute;
-    top: 3px;
-    right: 3px;
+    top: -3px;
+    right: -3px;
     width: 20px;
     height: 20px;
     display: flex;
@@ -1244,11 +1206,13 @@ input#isOfflineInput:checked {
 .mobile-cards-deck,
 .mobile-heros-deck {
     height: 35%;
+    grid-template-columns: repeat(auto-fill, 75px);
 }
 
 .mobile-cards-total,
 .mobile-heros-total {
     height: 38%;
+    grid-template-columns: repeat(auto-fill, 75px);
 }
 
 .mobile-hero-hp-cnt {

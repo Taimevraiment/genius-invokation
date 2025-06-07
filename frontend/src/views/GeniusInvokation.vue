@@ -132,9 +132,9 @@
         <div class="skill-cost" v-if="client.player.phase == PHASE.ACTION"
           :style="{ marginTop: '10px', opacity: +(client.isShowSwitchHero >= 2) }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
-          <span :style="{ zIndex: 1, color: client.heroSwitchDiceColor }">
+          <StrokedText :style="{ zIndex: 1, color: client.heroSwitchDiceColor }">
             {{ client.heroSwitchDice }}
-          </span>
+          </StrokedText>
         </div>
       </div>
     </div>
@@ -157,7 +157,7 @@
           v-for="(cost, cidx) in skill.cost.every(c => c.cnt <= 0) ? skill.cost.slice(0, 1) : skill.cost.filter(c => c.cnt > 0)"
           :key="cidx" :style="{ color: skill.style.costColors[cidx] }">
           <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[cost.type])" draggable="false" />
-          <span style="z-index: 1">{{ skill.CurrCnts[cidx] }}</span>
+          <StrokedText style="z-index: 1">{{ skill.CurrCnts[cidx] }}</StrokedText>
         </div>
       </div>
     </div>
@@ -217,6 +217,7 @@ import { useRoute, useRouter } from 'vue-router';
 import Handcard from '@/components/Card.vue';
 import InfoModal from '@/components/InfoModal.vue';
 import MainDesk from '@/components/MainDesk.vue';
+import StrokedText from '@/components/StrokedText.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
@@ -814,7 +815,6 @@ body {
   align-items: center;
   color: white;
   font-size: medium;
-  -webkit-text-stroke: 1px black;
 }
 
 .cost-img {

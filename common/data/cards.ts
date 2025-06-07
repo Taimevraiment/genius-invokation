@@ -456,19 +456,21 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311306: () => new CardBuilder(301).name('苇海信标').since('v4.3.0').offline('v2').weapon().costSame(3).perCnt(0b11)
+    311306: () => new CardBuilder(301).name('苇海信标').since('v4.3.0').offline('v2').weapon().costSame(3).perCnt(0b11).perCnt(2, 'v2')
         .description('【角色造成的伤害+1】。；【角色使用「元素战技」后：】本回合内，角色下次造成的伤害额外+1。（每回合1次）；【角色受到伤害后：】本回合内，角色下次造成的伤害额外+1。（每回合1次）')
+        .description('【角色造成的伤害+1】。；【角色使用「元素战技」或受到伤害后：】本回合内，角色下次造成的伤害额外+1。（每回合最多触发2次）', 'v2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/4148c247b2685dfcb305cc9b6c5e8cff_6450004800527281410.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { hero, trigger, execmds } = event;
             if (!hero) return;
-            const isTriggered1 = trigger == 'skilltype2' && (card.perCnt >> 0 & 1) == 1;
-            const isTriggered2 = trigger == 'getdmg' && (card.perCnt >> 1 & 1) == 1;
+            const isTriggered1 = trigger == 'skilltype2' && (ver.isOffline ? card.perCnt > 0 : (card.perCnt >> 0 & 1) == 1);
+            const isTriggered2 = trigger == 'getdmg' && (ver.isOffline ? card.perCnt > 0 : (card.perCnt >> 1 & 1) == 1);
             if (isTriggered1 || isTriggered2) execmds.getStatus(301105 + +isTriggered2, { hidxs: hero.hidx });
             return {
                 addDmg: 1,
                 triggers: ['skilltype2', 'getdmg'],
                 exec: () => {
+                    if (ver.isOffline && (isTriggered1 || isTriggered2)) return card.minusPerCnt();
                     if (isTriggered1) card.perCnt &= ~(1 << 0);
                     if (isTriggered2) card.perCnt &= ~(1 << 1);
                 }
@@ -2900,7 +2902,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
         .handle((card, event, ver) => {
             const { hero, heros, combatStatus = [], sktype = SKILL_TYPE.Vehicle, isSummon = -1 } = event;
-            if (ver.lt('v4.8.0')) {
+            if (ver.lt('v4.8.0') && !ver.isOffline) {
                 const fhero = heros?.find(h => h.isFront);
                 const istShield = fhero?.heroStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
                 const ostShield = combatStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
@@ -2915,7 +2917,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     216041: () => new CardBuilder(105).name('神性之陨').since('v4.0.0').offline('v2').talent(1).costGeo(3)
-        .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1，且少花费1个[无色元素骰]。')
+        .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时少花费1个[无色元素骰]，并且造成的伤害+1。')
         .description('{action}；装备有此牌的【hro】在场时，如果我方场上存在【smn116041】，则我方角色进行[下落攻击]时造成的伤害+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png')
         .handle((_, event) => {

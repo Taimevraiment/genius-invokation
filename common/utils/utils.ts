@@ -268,9 +268,7 @@ export const parseDate = (timeStamp: number | Date = new Date()) => {
     return {
         value: `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`,
         date: `${month}-${date}`,
-        year: `${year}`,
-        time: `${hours}:${minutes}`,
-        lastDate: () => parseDate(curr.getTime() - 86400000).date,
+        time: `${hours}:${minutes}:${seconds}`,
     }
 };
 

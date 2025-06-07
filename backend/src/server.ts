@@ -55,7 +55,7 @@ const todayPlayersHistory = new Map<number, {
     logoutTime: number,
     currLogin: number,
 }>(); // 当日玩家登录信息
-cron.schedule('0 0 0 * * *', () => todayPlayersHistory.clear());
+cron.schedule('0 0 5 * * *', () => todayPlayersHistory.clear());
 
 // 生成id
 const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number } = {}) => {
@@ -373,12 +373,12 @@ app.get('/detail', (_, res) => {
 app.get('/info', (_req, res) => {
     res.json({
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}}`),
-        playersInfo: playerList.map(p => `${p.name} ${['空闲', '房间中', '游戏中'][p.status]}`),
+        playersInfo: playerList.map(p => `${p.name} ${['空闲', '房间中', '游戏中'][p.status] ?? p.status}`),
         todayPlayersHistory: Array.from(todayPlayersHistory.entries())
             .map(([id, { name, duration, loginTime, logoutTime }]) => ({
                 id,
                 name,
-                duration: duration / 1000 / 60,
+                duration: (duration / 1000 / 60).toFixed(2),
                 loginTime: parseDate(loginTime).time,
                 logoutTime: parseDate(logoutTime).time,
             })),

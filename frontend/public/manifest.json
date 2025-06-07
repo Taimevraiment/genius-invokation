@@ -1,0 +1,10 @@
+{
+    "name": "GI TCG taim",
+    "short_name": "gi",
+    "description": "GI TCG simulator by taim",
+    "start_url": ".",
+    "display": "fullscreen",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": []
+}

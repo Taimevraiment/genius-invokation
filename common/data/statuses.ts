@@ -181,10 +181,10 @@ const senlin2Status = (name: string) => {
 }
 
 const card311306sts = (name: string) => {
-    return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.AtkUp).roundCnt(1)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+    return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.AtkUp).roundCnt(1).useCnt(1).maxCnt(2)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).type(ver => !ver.isOffline, STATUS_TYPE.Sign)
         .description('本回合内，所附属角色下次造成的伤害额外+1。')
-        .handle(status => ({ triggers: 'skill', addDmg: 1, exec: () => status.minusRoundCnt() }));
+        .handle((status) => ({ triggers: 'skill', addDmg: status.useCnt, exec: () => status.minusRoundCnt() }));
 }
 
 const card332016sts = (element: ElementType) => {
@@ -584,7 +584,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     112021: (isTalent: boolean = false) => new StatusBuilder('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
-        .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => ver.gte('v4.2.0') && isTalent)
+        .type(STATUS_TYPE.Barrier).talent(isTalent).barrierCdt(3).barrierCdt(2, ver => (ver.gte('v4.2.0') || ver.isOffline) && isTalent)
         .description(`【我方出战角色受到至少为${isTalent ? 2 : 3}的伤害时：】抵消1点伤害。；[useCnt]`)
         .description(`【我方出战角色受到至少为3的伤害时：】抵消1点伤害。；[useCnt]`, 'v4.2.0'),
 
@@ -592,7 +592,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色「普通攻击」后：】造成1点[水元素伤害]。；[useCnt]')
         .description('【我方角色「普通攻击」后：】造成2点[水元素伤害]。；[useCnt]', 'v3.6.0')
         .handle((_s, _e, ver) => ({
-            damage: isCdt(ver.lt('v3.6.0'), 2, 1),
+            damage: isCdt(ver.lt('v3.6.0') && !ver.isOffline, 2, 1),
             element: DAMAGE_TYPE.Hydro,
             triggers: 'after-skilltype1',
             exec: eStatus => { eStatus?.minusUseCnt() },
@@ -660,7 +660,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     112052: () => new StatusBuilder('仪来羽衣').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.AddDamage)
         .description('所附属角色「普通攻击」造成的伤害+1。；【所附属角色「普通攻击」后：】治疗所有我方角色1点。；[roundCnt]')
         .handle((_, event) => {
-            const { heros = [], trigger } = event;
+            const { heros, trigger } = event;
             return {
                 addDmgType1: 1,
                 triggers: ['skilltype1', 'after-skilltype1'],
@@ -1160,10 +1160,9 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     114051: () => readySkillShieldStatus('捉浪·涛拥之守').handle((_s, { cmds }, ver) => {
-        if (ver.lt('v4.2.0')) {
-            cmds.getStatus(114052);
-            return { triggers: 'getdmg' }
-        }
+        if (ver.gte('v4.2.0') || ver.isOffline) return;
+        cmds.getStatus(114052);
+        return { triggers: 'getdmg' }
     }),
 
     114052: () => new StatusBuilder('奔潮引电').heroStatus().icon(STATUS_ICON.Special).useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
@@ -1749,7 +1748,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             triggers: ['skilltype1', 'after-skilltype1'],
             damage: 1,
             element: DAMAGE_TYPE.Dendro,
-            exec: () => { event.isChargedAtk && status.addRoundCnt(1, status.maxCnt) }
+            exec: () => { event.isChargedAtk && status.addRoundCnt(1) }
         })),
 
     117071: () => new StatusBuilder('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)

@@ -184,8 +184,8 @@ export class GIStatus {
         this.perCnt -= n;
         return this.perCnt;
     }
-    addRoundCnt(n: number = 1, max?: number): void {
-        this.roundCnt = Math.min(max ?? Infinity, this.roundCnt + n);
+    addRoundCnt(n: number = 1): void {
+        this.roundCnt = Math.max(this.roundCnt, Math.min(this.maxCnt, this.roundCnt + n));
     }
     minusRoundCnt(n: number = 1): void {
         const nrcnt = this.roundCnt - n;

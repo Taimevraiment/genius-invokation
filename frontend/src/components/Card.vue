@@ -10,19 +10,21 @@
                 :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" draggable="false" />
-                <span>{{ Math.max(0, card.cost - card.costChange) }}</span>
+                <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChange) }}</StrokedText>
             </div>
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
                 v-if="card.anydice > 0 && !isHideCost"
                 :style="{ color: card.costChange - card.cost > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
-                <span>{{ card.anydice - Math.max(0, card.costChange - card.cost) }}</span>
+                <StrokedText class="cost-text">
+                    {{ card.anydice - Math.max(0, card.costChange - card.cost) }}
+                </StrokedText>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0 && !isHideCost">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" draggable="false" />
-                <span>{{ card.energy }}</span>
+                <StrokedText class="cost-text">{{ card.energy }}</StrokedText>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }"
                 v-if="card.subType.includes(CARD_SUBTYPE.Legend) && !isHideCost">
@@ -43,6 +45,7 @@ import { computed } from 'vue';
 import { CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
 import { CARD_SUBTYPE, COST_TYPE } from '@@@/constant/enum';
 import { Card } from '../../../typing';
+import StrokedText from './StrokedText.vue';
 
 const props = defineProps<{
     card: Card,
@@ -127,8 +130,8 @@ const getPngIcon = (name: string) => {
     color: white;
     text-align: center;
     line-height: 30px;
-    -webkit-text-stroke: 1px black;
     z-index: 1;
+    pointer-events: none;
 }
 
 .card-energy {
@@ -140,17 +143,15 @@ const getPngIcon = (name: string) => {
     color: white;
     text-align: center;
     line-height: 20px;
-    -webkit-text-stroke: 1px black;
     z-index: 1;
+    pointer-events: none;
 }
 
-.card-cost>span {
+.cost-text {
     position: absolute;
-    font-size: 23px;
-    width: 30px;
-    height: 30px;
-    left: 20px;
-    top: 6.5px;
+    font-size: 22px;
+    width: 40px;
+    height: 42px;
 }
 
 .card-energy>span {
@@ -203,12 +204,12 @@ const getPngIcon = (name: string) => {
     top: 20px;
 }
 
-.mobile-card-cost>span,
-.mobile-card-energy>span {
+.mobile-card-cost>.cost-text,
+.mobile-card-energy>.cost-text {
     position: absolute;
     font-size: 18px;
-    left: 10px;
-    top: 6px;
+    left: 5px;
+    top: -5px;
 }
 
 .mobile-hcard {

@@ -380,11 +380,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).damage(3, 'v3.6.0').cost(3).handle((event, ver) => {
                     const { talent, summons = [], heros = [], cmds } = event;
                     const smn112051 = getObjById(summons, 112051);
-                    const summon = isCdt<[number, number][]>(ver.gte('v4.2.0') && talent && !smn112051, [[112051, 1]]);
+                    const summon = isCdt<[number, number][]>((ver.gte('v4.2.0') || ver.isOffline) && talent && !smn112051, [[112051, 1]]);
                     cmds.getStatus(112052);
                     return {
                         summon,
-                        heal: isCdt(ver.gte('v3.6.0'), 1),
+                        heal: isCdt(ver.gte('v3.6.0') || ver.isOffline, 1),
                         hidxs: allHidxs(heros),
                         exec: () => { talent && smn112051?.addUseCnt(true) }
                     }

@@ -14,16 +14,16 @@
             <div>
               <div class="info-card-cost">
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[(info as Card).costType])" />
-                <span>{{ (info as Card).cost }}</span>
+                <StrokedText class="cost-text">{{ (info as Card).cost }}</StrokedText>
               </div>
               <div class="info-card-anydice" v-if="(info as Card).anydice > 0">
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" />
-                <span>{{ (info as Card).anydice }}</span>
+                <StrokedText class="cost-text">{{ (info as Card).anydice }}</StrokedText>
               </div>
               <div class="info-card-energy" v-if="(info as Card).energy != 0">
                 <img class="cost-img"
                   :src="getDiceIcon(ELEMENT_ICON[(info as Card).energy > 0 ? COST_TYPE.Energy : COST_TYPE.SpEnergy])" />
-                <span>{{ (info as Card).energy }}</span>
+                <StrokedText class="cost-text">{{ (info as Card).energy }}</StrokedText>
               </div>
               <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
@@ -51,7 +51,7 @@
         <div class="info-base">
           <div class="info-hero-hp" v-if="isBot && type == INFO_TYPE.Hero">
             <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
-            <div class="hero-hp-cnt">{{ (info as Hero).maxHp }}</div>
+            <StrokedText class="hero-hp-cnt">{{ (info as Hero).maxHp }}</StrokedText>
           </div>
           <img v-if="isBot && type == INFO_TYPE.Hero" class="info-base-img info-hero-base-img"
             :src="getPngIcon(info?.UI.src, true)" :alt="info?.name">
@@ -92,8 +92,8 @@
                           CHANGE_BAD_COLOR : 'white'
                     }">
                     <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[cost.type])" />
-                    <span>{{ Math.max(Math.abs(cost.cnt) - (type == INFO_TYPE.Skill && cidx < 2 ?
-                      (skill.costChange[cidx] as number) : 0), 0) }}</span>
+                    <StrokedText class="cost-text">{{ Math.max(Math.abs(cost.cnt) - (type == INFO_TYPE.Skill && cidx < 2
+                      ? (skill.costChange[cidx] as number) : 0), 0) }}</StrokedText>
                   </div>
                 </div>
               </span>
@@ -359,6 +359,7 @@ import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
 import { Card, ExplainContent, GameInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
 import { getVehicleIdByCid } from '@@@/utils/gameUtil';
+import StrokedText from './StrokedText.vue';
 
 const props = defineProps<{
   info: InfoVO,
@@ -379,7 +380,7 @@ const type = computed<InfoType | null>(() => props.info.type); // 显示类型�
 const info = computed<Hero | Card | Summon | null>(() => props.info.info); // 展示信息
 const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
-const isBot = computed<boolean>(() => props.isBot ?? false); // 是否为bot截图
+const isBot = computed<boolean>(() => props.isBot); // 是否为bot截图 
 const skills = ref<Skill[]>([]); // 展示技能
 const isShowSkill = ref<boolean[]>([]); // 是否展示技能
 const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态
@@ -503,6 +504,14 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
 // 卡牌上一些实时信息：〔〕 [slot]只在装备栏时显示 [card]只在手牌中显示 [support]只在支援物中显示
 // 一些参考括号类型「」﹝﹞«»‹›〔〕〖〗『』〈〉《》【】[]
 
+const strokedText = (cost: number) => {
+  return `<div style="display:inline-grid;grid-template-areas:'a';justify-items:center;align-items:center;z-index:1;transform:translateY(1px);">
+            <div style="grid-area:a;-webkit-text-stroke:2px black;">
+              ${cost}
+            </div>
+            <div style="grid-area:a;">${cost}</div>
+          </div>`;
+}
 const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] => {
   const container: string[][] = [];
   if (typeof memo == 'string') memo = [memo];
@@ -540,12 +549,12 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
               ${'costType' in expl ?
           `<div class="skill-cost" style="margin-${isBot.value ? 'right' : 'left'}:5px;margin-top:0;" >
              <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[expl.costType])}"/>
-             <span>${expl.cost}</span>
+             ${strokedText(expl.cost)}
            </div>`: isBot.value ?
             `${(expl.cost.every(c => c.cnt <= 0) ? expl.cost.slice(0, 1) : expl.cost.filter(c => c.cnt > 0)).map(c =>
               `<div class="skill-cost" style="margin-left:5px;margin-top:0;" >
                  <img class="cost-img" src="${getDiceIcon(ELEMENT_ICON[c.type])}"/>
-                 <span>${c.cnt}</span>
+                 ${strokedText(c.cnt)}
                </div>`
             ).join('')}` : ''}
             </div>
@@ -788,7 +797,6 @@ onMounted(() => {
   color: white;
   font-size: medium;
   display: inline-block;
-  -webkit-text-stroke: 1px black;
 }
 
 .cost-img {
@@ -797,7 +805,7 @@ onMounted(() => {
   height: 25px;
 }
 
-.info-card-cost>span {
+.cost-text {
   position: absolute;
   width: 25px;
   height: 28px;
@@ -819,14 +827,6 @@ onMounted(() => {
   font-size: medium;
   color: white;
   display: inline-block;
-  -webkit-text-stroke: 1px black;
-}
-
-.info-card-energy>span,
-.info-card-anydice>span {
-  position: absolute;
-  left: 18px;
-  top: 3px;
 }
 
 .info-card-type {
@@ -873,7 +873,6 @@ onMounted(() => {
   text-align: center;
   align-content: center;
   color: white;
-  -webkit-text-stroke: black 1px;
 }
 
 .info-hero-tag {
@@ -1074,7 +1073,6 @@ svg {
   justify-content: center;
   align-items: center;
   color: white;
-  -webkit-text-stroke: 1px black;
 }
 
 .info-outer-container>.info-container .skill-cost>.cost-img {
@@ -1083,10 +1081,11 @@ svg {
   height: 23px;
 }
 
-.info-outer-container>.info-container .skill-cost>span {
+.info-outer-container>.info-container .skill-cost>.cost-text {
   position: absolute;
   width: 23px;
   height: 17px;
+  transform: translateY(1px);
   text-align: center;
   align-content: center;
 }

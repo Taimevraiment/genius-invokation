@@ -6370,9 +6370,9 @@ export default class GeniusInvokationRoom {
                     cStatus.perCnt = sts.perCnt;
                     let oCnt = -1;
                     let nCnt = -1;
-                    if (cStatus.roundCnt > -1) {
+                    if (cStatus.roundCnt > -1 && cStatus.useCnt == -1) {
                         oCnt = cStatus.roundCnt;
-                        cStatus.roundCnt = Math.max(cStatus.roundCnt, Math.min(cStatus.maxCnt, cStatus.roundCnt + sts.addCnt));
+                        cStatus.addRoundCnt(cStatus.addCnt);
                         nCnt = cStatus.roundCnt;
                     } else {
                         cStatus.roundCnt = sts.roundCnt;
@@ -6748,6 +6748,7 @@ export default class GeniusInvokationRoom {
                 hidx,
                 isChargedAtk,
                 isFallAtk: player.isFallAtk,
+                talent: getObjById(heros, getHidById(smn.id))?.talentSlot,
                 trigger: 'calc',
             });
             calcDmgChange(smnres);

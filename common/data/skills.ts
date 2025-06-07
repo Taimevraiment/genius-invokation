@@ -112,8 +112,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .elemental().readySkill().handle(() => ({ status: 113158 })),
 
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。')
-        .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle(event => {
-            if (event.talent) return { status: 114052 }
+        .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle((event, ver) => {
+            if (event.talent && (ver.gte('v4.2.0') || ver.isOffline)) return { status: 114052 }
         }),
 
     15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}（或被扩散元素的伤害）。').elemental().readySkill().damage(2),

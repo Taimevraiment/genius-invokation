@@ -911,7 +911,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     323005: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
         const { card, minusDiceCard: mdc = 0 } = event;
         if (!card || card.type != CARD_TYPE.Support || support.perCnt <= 0 || card.cost <= mdc) return;
-        if (ver.lt('v4.6.0') ? card.cost != 1 : card.cost < 2) return;
+        if (ver.lt('v4.6.0') && !ver.isOffline ? card.cost != 1 : card.cost < 2) return;
         return {
             triggers: 'card',
             minusDiceCard: 1,
