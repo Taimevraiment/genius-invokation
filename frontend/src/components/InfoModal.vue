@@ -9,7 +9,10 @@
           <div>
             <div class="name">
               {{ (info as Card).name }}
-              <span v-if="isBot" style="position: absolute;right: 5px;">{{ version }}</span>
+              <span v-if="isBot" style="position: absolute;right: 5px;">
+                <span v-if="(OFFLINE_VERSION as unknown as string[]).includes(version)">实体版</span>
+                {{ version }}
+              </span>
             </div>
             <div>
               <div class="info-card-cost">
@@ -349,7 +352,7 @@ import {
 } from '@@@/constant/UIconst';
 import {
   CARD_SUBTYPE, CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
-  InfoType, SKILL_TYPE, STATUS_TYPE, Version, WeaponType,
+  InfoType, OFFLINE_VERSION, SKILL_TYPE, STATUS_TYPE, Version, WeaponType,
 } from '@@@/constant/enum';
 import { newCard } from '@@@/data/cards';
 import { newHero } from '@@@/data/heros';

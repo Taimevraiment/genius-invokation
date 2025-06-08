@@ -3536,7 +3536,7 @@ export default class GeniusInvokationRoom {
         const { players = this.players, slotsDestroy = players[pidx].heros.map(h => +(h.hidx == hidx)) } = options;
         this._detectSlot(pidx, 'slot-destroy', { players, cSlot: slot, hidxs: [hidx] });
         this._detectStatus(pidx, STATUS_TYPE.ReadySkill, 'slot-destroy', { players, hidxs: hidx, isOnlyHeroStatus: true, source: slot.id, slotsDestroy });
-        this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, isOnlyCombatStatus: true, source: slot.id, slotsDestroy });
+        this._detectStatus(pidx, STATUS_TYPE.Usage, 'slot-destroy', { players, isOnlyCombatStatus: true, source: slot.id, sourceHidx: hidx, slotsDestroy });
         if (slot.hasTag(CARD_TAG.Enchant)) {
             for (const skill of players[pidx].heros[hidx].skills) {
                 if (skill.dmgElement != DAMAGE_TYPE.Physical) continue;
@@ -6693,7 +6693,10 @@ export default class GeniusInvokationRoom {
             costChange.forEach((_, i) => {
                 const curSkill = skills[i];
                 for (let j = 0; j < 3; ++j) {
-                    if (j == 0 && curSkill.cost[0].type != elDice) continue;
+                    if (j == 0 && elDice != undefined && curSkill.cost[0].type != elDice) {
+                        skill[1] += skill[0];
+                        continue;
+                    }
                     const ski = curHero.skills.findIndex(sk => sk.id == curSkill.id);
                     const change = (ski != -1 ? skill[j] : 0) + (res.minusDiceSkill?.[`skilltype${curSkill.type}`]?.[j] ?? 0) + (mskills[ski]?.[j] ?? 0);
                     if (change > 0) costChangeList[i][j].push([entityId, change]);

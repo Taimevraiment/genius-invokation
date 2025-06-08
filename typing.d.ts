@@ -89,13 +89,13 @@ type Hero = GIHero;
 type Skill = GISkill;
 
 type MinusDiceSkill = {
-    skill?: number[],
-    skills?: number[][],
-    skilltype1?: number[],
-    skilltype2?: number[],
-    skilltype3?: number[],
-    skilltype5?: number[],
-    elDice?: PureElementType,
+    skill?: number[], // 所有技能减费
+    skills?: number[][], // 每个特判技能减费
+    skilltype1?: number[], // 普通攻击减费
+    skilltype2?: number[], // 元素战技减费
+    skilltype3?: number[], // 元素爆发减费
+    skilltype5?: number[], // 特技减费
+    elDice?: PureElementType, // 是否减某种元素骰
     isAll?: boolean, // 是否对其他角色生效
 }
 

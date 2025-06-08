@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SKILL_TYPE, SkillType, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices } from '../utils/gameUtil.js';
@@ -109,7 +109,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     321003: () => new SupportBuilder().permanent().handle((_, event, ver) => {
         const { hcards = [], trigger } = event;
         const triggers: Trigger[] = ['phase-dice'];
-        if (ver.gte('v4.5.0') && hcards.length <= 3) triggers.push('phase-start');
+        if ((ver.gte('v4.5.0') || ver.isOffline) && hcards.length <= 3) triggers.push('phase-start');
         return {
             triggers,
             element: -2,
@@ -261,7 +261,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
         const isCardMinus = isMinusDiceTalent && support.perCnt > 0;
-        const skills = heros[hidx]?.skills.filter(v => v.type != SKILL_TYPE.Passive).map(skill => {
+        const skills = heros[hidx]?.skills.map(skill => {
             if (support.perCnt > 0 && skill.cost[0].cnt + skill.cost[1].cnt >= 4) return [0, 0, 1];
             return [0, 0, 0];
         });

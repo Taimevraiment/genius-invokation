@@ -2563,9 +2563,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus().useCnt(useCnt).type(STATUS_TYPE.Shield)
         .description('根据「璃月」角色的数量提供[护盾]，保护所附属角色。'),
 
-    301102: () => new StatusBuilder('千年的大乐章·别离之歌').heroStatus().icon(STATUS_ICON.AtkUp).roundCnt(2)
+    301102: () => new StatusBuilder('千年的大乐章·别离之歌').combatStatus().icon(STATUS_ICON.AtkUp).roundCnt(2)
         .description('我方角色造成的伤害+1。；[roundCnt]')
-        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage).handle(() => ({ addDmg: 1 })),
+        .type(STATUS_TYPE.Round, STATUS_TYPE.AddDamage)
+        .handle(() => ({ addDmg: 1 })),
 
     301103: (name: string) => senlin1Status(name),
 
@@ -2851,7 +2852,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；[useCnt]', 'v4.1.0')
         .handle((status, event, ver) => {
-            if (ver.lt('v4.1.0')) return continuousActionHandle(status, event);
+            if (ver.lt('v4.1.0') && !ver.isOffline) return continuousActionHandle(status, event);
             event.cmds.switchAfter();
             return { triggers: 'skill', exec: () => status.minusRoundCnt() }
         }),
@@ -3130,13 +3131,14 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     303306: () => new StatusBuilder('兽肉薄荷卷（生效中）').heroStatus().icon(STATUS_ICON.Buff)
-        .useCnt(3).useCnt(-1, 'v3.4.0').roundCnt(1).type(STATUS_TYPE.Usage).type(ver => ver.lt('v3.4.0'), STATUS_TYPE.Sign)
+        .useCnt(3).useCnt(-1, 'v3.4.0').roundCnt(1)
+        .type(STATUS_TYPE.Usage).type(ver => ver.lt('v3.4.0') && !ver.isOffline, STATUS_TYPE.Sign)
         .description('本回合中，该角色「普通攻击」少花费1个[无色元素骰]。；[useCnt]')
         .description('本回合中，该角色「普通攻击」少花费1个[无色元素骰]。', 'v3.4.0')
         .handle((status, event, ver) => ({
             triggers: 'skilltype1',
             minusDiceSkill: { skilltype1: [0, 1, 0] },
-            exec: () => { ver.gte('v3.4.0') && event.isMinusDiceSkill && status.minusUseCnt() },
+            exec: () => { (ver.gte('v3.4.0') || ver.isOffline) && event.isMinusDiceSkill && status.minusUseCnt() },
         })),
 
     303307: () => new StatusBuilder('复苏冷却中').combatStatus().icon(STATUS_ICON.Food).roundCnt(1)

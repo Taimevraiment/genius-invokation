@@ -23,7 +23,10 @@
               @click="enterRoom(room.id.toString())">
               <span class="game-room-id">{{ room.id }}</span>
               <span class="game-room-name">{{ room.name }}</span>
-              <span class="game-room-version">{{ room.version }}</span>
+              <span class="game-room-version">
+                <span v-if="(OFFLINE_VERSION as unknown as string[]).includes(room.version)">实体版</span>
+                {{ room.version }}
+              </span>
               <span class="game-room-status">
                 {{ room.isStart ? "游戏中" : "等待中" }}({{ room.playerCnt }}/{{ PLAYER_COUNT }})
               </span>
@@ -68,7 +71,7 @@ import CreateRoomModal from '@/components/CreateRoomModal.vue';
 import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import InfoModal from '@/components/InfoModal.vue';
 import { getSocket } from '@/store/socket';
-import { VERSION, Version } from '@@@/constant/enum';
+import { OFFLINE_VERSION, VERSION, Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
@@ -77,7 +80,7 @@ import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { genShareCode } from '@@@/utils/utils';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { InfoVO, Player, PlayerList, RoomList } from '../../../typing';
+import { Card, Hero, InfoVO, Player, PlayerList, RoomList, Summon } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -197,22 +200,31 @@ const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomLi
 
 // 显示实体信息(用于puppeteer截图)
 const showInfo = () => {
-  const [query, ver] = infoContent.value.split(' ');
-  const [, v1, v2, v3] = ver.match(/v?(\d)\.(\d)\.?(\d?)/) ?? VERSION[0];
-  const rawVersion = `v${v1}.${v2}.${v3 || 0}`;
-  const version = Array.from<string>(VERSION).includes(rawVersion) ? rawVersion as Version : VERSION[0];
-  const isTalent = query.endsWith('天赋');
-  let infoEntity = allEntities(version).find(e => e.id.toString() == query || e.name.includes(query.slice(0, isTalent ? -2 : 100)));
-  if (isTalent && infoEntity) {
-    infoEntity = allEntities(version).find(e => e.id == getTalentIdByHid(infoEntity!.id));
+  try {
+    const [query, ver] = infoContent.value.split(' ');
+    const isTalent = query.endsWith('天赋');
+    const findEntity = (e: Hero | Card | Summon) => e.id.toString() == query || e.name.includes(query.slice(0, isTalent ? -2 : 100));
+    const [, v1, v2, v3] = ver.match(/v?(\d)\.?(\d?)\.?(\d?)/) ?? VERSION[0];
+    const isOffline = ver.startsWith('实体');
+    const rawVersion = `v${v1}.${v2 || 0}.${v3 || 0}`;
+    const version = isOffline ? OFFLINE_VERSION.find(v => allEntities(v).some(findEntity)) :
+      Array.from<string>(VERSION).includes(rawVersion) ? rawVersion as Version : VERSION[0];
+    if (!version) throw new Error('版本错误');
+    let infoEntity = allEntities(version).find(findEntity);
+    if (isTalent && infoEntity) {
+      infoEntity = allEntities(version).find(e => e.id == getTalentIdByHid(infoEntity!.id));
+    }
+    if (!infoEntity) throw new Error('未找到');
+    info.value = {
+      version,
+      isShow: true,
+      type: 'maxUse' in infoEntity ? 'summon' : 'cost' in infoEntity ? 'card' : 'hero',
+      info: infoEntity,
+    };
+  } catch {
+    infoContent.value = '';
+    return info.value.info = null;
   }
-  if (!infoEntity) return info.value.info = null;
-  info.value = {
-    version,
-    isShow: true,
-    type: 'maxUse' in infoEntity ? 'summon' : 'cost' in infoEntity ? 'card' : 'hero',
-    info: infoEntity,
-  };
 }
 
 onMounted(async () => {

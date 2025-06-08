@@ -185,7 +185,7 @@ const barrierWeapon = (shareId: number, mark: string) => {
 }
 
 const normalElRelic = (shareId: number, element: PureElementType) => {
-    return new CardBuilder(shareId).relic().costAny(2).costSame(2, 'v4.0.0').perCnt(1)
+    return new CardBuilder(shareId).offline('v2').relic().costAny(2).costSame(2, 'v4.0.0').perCnt(1)
         .description(`【对角色打出「天赋」或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。（每回合1次）`)
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
@@ -506,8 +506,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【角色造成的伤害+1】。；【入场时：】队伍中每有1名「璃月」角色，此牌就为附属的角色提供1点[护盾]。（最多3点）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/7b6b74c3444f624f117f8e05344d27ec_6292708375904670698.png')
         .handle((_, event, ver) => {
-            const { heros } = event;
-            const liyueCnt = Math.min(3, heros?.filter(h => h.tags.includes(HERO_LOCAL.Liyue) && (ver.gte('v3.7.0') || h.hp > 0))?.length ?? 0);
+            const liyueCnt = Math.min(3, event.heros?.filter(h =>
+                h.tags.includes(HERO_LOCAL.Liyue) &&
+                (ver.gte('v3.7.0') || ver.isOffline || h.hp > 0))?.length ?? 0);
             return { addDmg: 1, status: [[301101, liyueCnt]] }
         }),
 
@@ -1174,43 +1175,43 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'consumeNightSoul', exec: () => card.minusPerCnt() }
         }),
 
-    312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音').offline('v2')
+    312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
 
     312102: () => advancedElRelic(166, ELEMENT_TYPE.Cryo).name('冰风迷途的勇士')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/9f6238a08b5844b652365304f05a4e8e_1667994661821497515.png'),
 
-    312201: () => normalElRelic(167, ELEMENT_TYPE.Hydro).name('酒渍船帽').offline('v2')
+    312201: () => normalElRelic(167, ELEMENT_TYPE.Hydro).name('酒渍船帽')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/26c4d2daa8a4686107a39f372a2066f3_2037156632546120753.png'),
 
     312202: () => advancedElRelic(168, ELEMENT_TYPE.Hydro).name('沉沦之心')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/b415a4b00134ee115f7abd0518623f4f_8721743655470015978.png'),
 
-    312301: () => normalElRelic(169, ELEMENT_TYPE.Pyro).name('焦灼的魔女帽').offline('v2')
+    312301: () => normalElRelic(169, ELEMENT_TYPE.Pyro).name('焦灼的魔女帽')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/0d841e5b1b0bbf09b8fa1bb7a3e9125b_8584142007202998007.png'),
 
     312302: () => advancedElRelic(170, ELEMENT_TYPE.Pyro).name('炽烈的炎之魔女')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/fa55d0e05799d88270cc50bd7148bfcf_3804037770932131779.png'),
 
-    312401: () => normalElRelic(171, ELEMENT_TYPE.Electro).name('唤雷的头冠').offline('v2')
+    312401: () => normalElRelic(171, ELEMENT_TYPE.Electro).name('唤雷的头冠')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/00d958c2d533c85d56613c0d718d9498_7034674946756695515.png'),
 
     312402: () => advancedElRelic(172, ELEMENT_TYPE.Electro).name('如雷的盛怒')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/3c5878d193077253d00e39f6db043270_1544021479773717286.png'),
 
-    312501: () => normalElRelic(173, ELEMENT_TYPE.Anemo).name('翠绿的猎人之冠').offline('v2')
+    312501: () => normalElRelic(173, ELEMENT_TYPE.Anemo).name('翠绿的猎人之冠')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/ab97ddfef51292e8032722be4b90033c_7637964083886847648.png'),
 
     312502: () => advancedElRelic(174, ELEMENT_TYPE.Anemo).name('翠绿之影')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/b95596e3e5648849048417635b619e2e_2329852964215208759.png'),
 
-    312601: () => normalElRelic(175, ELEMENT_TYPE.Geo).name('不动玄石之相').offline('v2')
+    312601: () => normalElRelic(175, ELEMENT_TYPE.Geo).name('不动玄石之相')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/886a90f766bcecf0e8812513b7075638_2236001599325966947.png'),
 
     312602: () => advancedElRelic(176, ELEMENT_TYPE.Geo).name('悠古的磐岩')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/977478ceacb3093ecefcf986aeacc1c5_8889340500329632165.png'),
 
-    312701: () => normalElRelic(177, ELEMENT_TYPE.Dendro).name('月桂的宝冠').offline('v2')
+    312701: () => normalElRelic(177, ELEMENT_TYPE.Dendro).name('月桂的宝冠')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/ee4fbb8c86fcc3d54c5e6717b3b62ddb_7264725145151740958.png'),
 
     312702: () => advancedElRelic(178, ELEMENT_TYPE.Dendro).name('深林的记忆')
@@ -1330,6 +1331,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321015: () => new CardBuilder(193).name('风龙废墟').since('v4.2.0').offline('v2').place().costSame(2)
         .description('【入场时：】从牌组中随机抽取一张「天赋」牌。；【我方打出「天赋」牌，或我方角色使用原本元素骰消耗至少为4的技能时：】少花费1个元素骰。（每回合1次）；[可用次数]：3')
+        .description('【入场时：】从我方牌库底展示卡牌，直到出现1张「天赋」牌为止，将这张「天赋」牌加入手牌，然后将你的牌库洗牌。；【我方打出「天赋」牌，或我方角色使用原本元素骰消耗至少为4的技能时：】少花费1个元素骰。（每回合1次）；[可用次数]：3', 'v2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/1812234f8a4cbd2445ce3bc1387df37c_4843239005964574553.png'),
 
     321016: () => new CardBuilder(309).name('湖中垂柳').since('v4.3.0').place().costSame(1)
@@ -1513,6 +1515,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     323002: () => new CardBuilder(215).name('便携营养袋').offline('v2').item().costSame(1).costSame(2, 'v4.1.0')
         .description('【入场时：】从牌组中随机抽取1张「料理」事件。；【我方打出「料理」事件牌时：】从牌组中随机抽取1张「料理」事件。（每回合1次）')
+        .description('【入场时：】从我方牌库底展示卡牌，直到出现1张「料理」事件牌为止，将这张「料理」事件牌加入手牌，然后将你的牌库洗牌。；【我方打出「料理」事件牌时：】再次触发入场时效果。（每回合1次）', 'v2')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/ab41e76335be5fe031e9d2d6a4bc5cb1_7623544243734791763.png'),
 
     323003: () => new CardBuilder(216).name('红羽团扇').since('v3.7.0').offline('v2').item().costSame(2)
@@ -1727,7 +1730,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png')
-        .handle((_, event, ver) => ({ isValid: ver.lt('v4.1.0') || allHidxs(event.heros).length > 1, status: 303181 })),
+        .handle((_, event, ver) => ({ isValid: (ver.lt('v4.1.0') && !ver.isOffline) || allHidxs(event.heros).length > 1, status: 303181 })),
 
     331802: () => new CardBuilder(238).name('岩与契约').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costAny(3)
         .description('【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。')
@@ -1868,7 +1871,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromWeapon = fromHero?.weaponSlot;
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
-                        if (ver.gte('v4.1.0')) fromWeapon.handle(fromWeapon, { reset: true });
+                        if (ver.gte('v4.1.0') || ver.isOffline) fromWeapon.handle(fromWeapon, { reset: true });
                         execmds.equip(toHeroIdx, fromWeapon);
                     }
                 }
@@ -1969,10 +1972,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { heros = [], selectHeros, cmds } = event;
             cmds.switchTo(selectHeros?.[0]).useSkill({ skillType: SKILL_TYPE.Normal });
-            return {
-                canSelectHero: heros.map(h => !h.isFront && h.hp > 0 && h.heroStatus.every(s => !s.hasType(STATUS_TYPE.NonAction))),
-                notPreview: true,
-            }
+            const canSelectHero = heros.map(h => !h.isFront && h.hp > 0 && h.heroStatus.every(s => !s.hasType(STATUS_TYPE.NonAction)));
+            return { canSelectHero, notPreview: true }
         }),
 
     332018: () => new CardBuilder(258).name('重攻击').since('v3.7.0').offline('v2').event().costSame(1)
@@ -2208,26 +2209,17 @@ const allCards: Record<number, () => CardBuilder> = {
     333005: () => new CardBuilder(269).name('甜甜花酿鸡').offline('v1').food().costSame(0).canSelectHero(1)
         .description('治疗目标角色1点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/bb5528c89decc6e54ade58e1c672cbfa_4113972688843190708.png')
-        .handle((_, event) => {
-            event.cmds.heal(1);
-            return { canSelectHero: event.heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds }) => cmds.heal(1).res),
 
     333006: () => new CardBuilder(270).name('蒙德土豆饼').offline('v1').food().costSame(1).canSelectHero(1)
         .description('治疗目标角色2点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/f1026f0a187267e7484d04885e62558a_1248842015783359733.png')
-        .handle((_, event) => {
-            event.cmds.heal(2);
-            return { canSelectHero: event.heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds }) => cmds.heal(2).res),
 
     333007: () => new CardBuilder(271).name('烤蘑菇披萨').offline('v1').food().costSame(1).canSelectHero(1)
         .description('治疗目标角色1点，两回合内结束阶段再治疗此角色1点。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/915af5fee026a95d6001559c3a1737ff_7749997812479443913.png')
-        .handle((_, event) => {
-            event.cmds.heal(1);
-            return { status: 303305, canSelectHero: event.heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds }) => (cmds.heal(1), { status: 303305 })),
 
     333008: () => new CardBuilder(272).name('兽肉薄荷卷').offline('v2').food().costSame(1).canSelectHero(1)
         .description('目标角色在本回合结束前，之后3次「普通攻击」都少花费1个[无色元素骰]。')
@@ -2238,12 +2230,7 @@ const allCards: Record<number, () => CardBuilder> = {
     333009: () => new CardBuilder(273).name('提瓦特煎蛋').since('v3.7.0').offline('v1').food().costSame(2).costSame(3, 'v4.1.0').canSelectHero(1)
         .description('复苏目标角色，并治疗此角色1点。').tag(CARD_TAG.Revive)
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/981cc0d2da6a2dc2b535b1ee25a77622_592021532068551671.png')
-        .handle((_, event) => {
-            const { heros = [], combatStatus, cmds } = event;
-            cmds.revive(1);
-            const canSelectHero = heros.map(h => h.hp <= 0 && !hasObjById(combatStatus, 303307));
-            return { status: 303307, canSelectHero }
-        }),
+        .handle((_, { cmds }) => (cmds.revive(1), { status: 303307 })),
 
     333010: () => new CardBuilder(274).name('刺身拼盘').since('v3.7.0').food().costSame(1).canSelectHero(1)
         .description('目标角色在本回合结束前，「普通攻击」造成的伤害+1。')
@@ -2268,18 +2255,12 @@ const allCards: Record<number, () => CardBuilder> = {
     333014: () => new CardBuilder(333).name('松茸酿肉卷').since('v4.4.0').food().costSame(2).canSelectHero(1)
         .description('治疗目标角色2点，3回合内结束阶段再治疗此角色1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/9001508071c110f4b13088edeb22c8b4_7346504108686077875.png')
-        .handle((_, event) => {
-            event.cmds.heal(2);
-            return { status: 303312, canSelectHero: event.heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds }) => (cmds.heal(2), { status: 303312 })),
 
     333015: () => new CardBuilder(361).name('缤纷马卡龙').since('v4.6.0').food().costAny(2).canSelectHero(1)
         .description('治疗目标角色1点，该角色接下来3次受到伤害后再治疗其1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/287f535c9a60620259bb149a75a3a001_7028948017645858669.png')
-        .handle((_, event) => {
-            event.cmds.heal(1);
-            return { status: 303313, canSelectHero: event.heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds }) => (cmds.heal(1), { status: 303313 })),
 
     333016: () => new CardBuilder(431).name('龙龙饼干').since('v5.1.0').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次使用「特技」少花费1个元素骰。')
@@ -2299,11 +2280,7 @@ const allCards: Record<number, () => CardBuilder> = {
     333019: () => new CardBuilder(460).name('温泉时光').since('v5.4.0').food().costSame(1).canSelectHero(1)
         .description('治疗目标角色1点，我方场上每有1个召唤物，则额外治疗1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/10/258999284/930a4ce59c928b77102192d730b2594b_856448637254416810.png')
-        .handle((_, event) => {
-            const { summons: { length } = [], heros = [], cmds } = event;
-            cmds.heal(1 + length);
-            return { canSelectHero: heros.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds, summons: { length } = [] }) => cmds.heal(1 + length).res),
 
     333020: () => new CardBuilder(468).name('奇瑰之汤').since('v5.5.0').food().costSame(1).canSelectHero(1)
         .description('从3个随机效果中[挑选]1个，对目标角色生效。')
@@ -2323,11 +2300,7 @@ const allCards: Record<number, () => CardBuilder> = {
     333028: () => new CardBuilder(491).name('丰稔之赐').since('v5.7.0').food().costSame(1).canSelectHero(1)
         .description('治疗目标角色1点，目标角色之后2次[准备技能]时：治疗自身1点。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_TujiaoLong.webp')
-        .handle((_, event) => {
-            const { cmds, heros } = event;
-            cmds.heal(1);
-            return { status: 303322, canSelectHero: heros?.map(h => h.hp < h.maxHp && h.hp > 0) }
-        }),
+        .handle((_, { cmds }) => (cmds.heal(1), { status: 303322 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
