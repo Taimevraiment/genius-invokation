@@ -233,6 +233,7 @@ type ActionData = {
     cardIds?: number[], // 卡组卡牌id
     shareCode?: string, // 分享码
     flag?: string, // 发起请求的标志
+    actionLog?: ActionLog[], // 对局回放数据
 }
 
 type ActionInfo = {

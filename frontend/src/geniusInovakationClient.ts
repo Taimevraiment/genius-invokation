@@ -1071,22 +1071,6 @@ export default class GeniusInvokationClient {
         this.isLookon = pidx;
         this.socket.emit('roomInfoUpdate', { roomId: this.roomId, pidx });
     }
-    exportActionLog() {
-        const blob = new Blob([JSON.stringify(this.actionLog)], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `game${this.version.replace(/\./g, '_')}-r${this.roomId}.taimgi`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 100);
-    }
-    importActionLog() {
-
-    }
     _sendTip(tip: string) {
         if (tip == '') return;
         if (this.tip != '') this.tip = '';

@@ -52,6 +52,7 @@
         </div>
       </div>
       <div class="btn-group">
+        <!-- <button>导入回放<input type="file" @change="importFile" /></button> -->
         <button @click="openRename">改名</button>
         <button @click="enterEditDeck">查看卡组</button>
         <button @click="openEnterRoom()">加入房间</button>
@@ -189,6 +190,21 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
   socket.emit('enterRoom', { roomId: Number(roomId), roomPassword, isForce });
 };
 
+// 导入回放
+// const importFile = (e: Event) => {
+//   const file = (e.target as HTMLInputElement).files?.[0];
+//   if (file) {
+//     const reader = new FileReader();
+//     reader.onload = e => {
+//       const actionLog: ActionLog[] = JSON.parse(e.target?.result?.toString() ?? '[]');
+//       socket.emit('enterRoom', { roomId: 0 });
+//       // todo
+//       socket.emit('sendToServer', { type: ACTION_TYPE.PlayeRecord, actionLog });
+//     };
+//     reader.readAsText(file);
+//   }
+// }
+
 // 获取玩家和房间列表
 const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomList; }) => {
   roomList.value = rlist;
@@ -289,7 +305,7 @@ body {
   margin: 5px 0;
 }
 
-input {
+input[type=text] {
   height: 20px;
   width: 50%;
   margin: 0 auto;
@@ -298,7 +314,18 @@ input {
   padding: 5px 10px;
 }
 
+input[type=file] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
 button {
+  position: relative;
   background-color: #00a4db;
   border-radius: 5px;
   border: 0;

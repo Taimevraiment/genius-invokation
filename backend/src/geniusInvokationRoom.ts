@@ -655,9 +655,9 @@ export default class GeniusInvokationRoom {
      */
     getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket) {
         if (this.taskQueue.isExecuting) return;
-        this.actionLog.push({ actionData, pidx });
+        if (this.id > 0) this.actionLog.push({ actionData, pidx });
         const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
-            summonIdx = -1, supportIdx = -1, shareCode = '', flag = 'noflag' } = actionData;
+            summonIdx = -1, supportIdx = -1, shareCode = '', actionLog = [], flag = 'noflag' } = actionData;
         const player = this.players[pidx];
         // this.resetHeartBreak(pidx);
         switch (actionData.type) {
@@ -725,6 +725,10 @@ export default class GeniusInvokationRoom {
                 break;
             case ACTION_TYPE.PickCard:
                 this._pickCard(pidx, cardIdxs[0], skillId);
+                break;
+            case ACTION_TYPE.PlayeRecord:
+                this.actionLog = actionLog;
+                // todo
                 break;
             default:
                 const a: never = actionData.type;

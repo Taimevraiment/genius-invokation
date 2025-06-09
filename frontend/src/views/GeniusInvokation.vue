@@ -3,8 +3,11 @@
     <button v-if="!client.isStart || isLookon > -1 || hasAI" class="exit" @click.stop="exit">
       返回
     </button>
-    <div style="position: absolute;left: 60px;color: white;z-index: 6;" @click.stop="sendLog">
-      [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}] 房间号{{ roomId }} <u>发送日志</u>
+    <div style="position: absolute;left: 60px;color: white;z-index: 6;">
+      [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}]
+      房间号{{ roomId }}
+      <u @click.stop="sendLog">发送日志</u>
+      <u v-if="client.actionLog.length" @click.stop="exportLog" style="margin-left: 5px;">导出日志</u>
     </div>
     <div class="lookon-count" v-if="client.watchers > 0">
       <img src="@@/svg/lookon.svg" alt="旁观人数" />
@@ -340,6 +343,22 @@ const sendLog = () => {
     socket.emit('sendLog', { roomId, description });
     alert('日志已发送');
   }
+}
+// 导出行动日志
+const exportLog = () => {
+  if (client.value.actionLog.length == 0) return;
+  const blob = new Blob([JSON.stringify(client.value.actionLog)], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `game${version.value.replace(/\./g, '_')}-r${roomId}.gi`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+  client.value.actionLog = [];
 }
 // 投降
 const giveup = () => {
