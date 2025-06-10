@@ -28,8 +28,9 @@ import {
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
 import {
-    ActionData, ActionInfo, ActionLog, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
-    Player, Preview, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn
+    ActionData, ActionInfo,
+    AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
+    Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -51,13 +52,13 @@ export default class GeniusInvokationRoom {
     onlinePlayersCnt = 0; // 在线玩家数
     private winner: number = -1; // 赢家序号
     private taskQueue: TaskQueue; // 任务队列
-    private entityIdIdx: number = -500000; // 实体id序号标记
+    private entityIdIdx: number = -700000; // 实体id序号标记
     previews: Preview[] = []; // 当前出战玩家预览
     private log: { content: string, type: LogType }[] = []; // 当局游戏的日志
     private systemLog: string = ''; // 系统日志
     private errorLog: string[] = []; // 错误日志
     private reporterLog: { name: string, message: string }[] = []; // 报告者问题
-    private actionLog: ActionLog[] = []; // 行动操作日志
+    private recordData: RecordData; // 行动操作日志
     countdown: Countdown = { limit: 0, curr: 0, timer: undefined }; // 倒计时
     private isDieBackChange: boolean = true; // 用于记录角色被击倒切换角色后是否转换回合
     private pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 };// 挑选卡牌信息
@@ -85,6 +86,7 @@ export default class GeniusInvokationRoom {
         this.password = password;
         this.countdown.limit = countdown;
         this.allowLookon = allowLookon;
+        this.recordData = { name, seed: '', version, actionLog: [] }
         this.env = env;
         this.newStatus = newStatus(version);
         this.newCard = newCard(version);
@@ -391,7 +393,7 @@ export default class GeniusInvokationRoom {
                 supportSelect,
                 pickModal: this.pickModal,
                 watchers: this.watchers.length,
-                actionLog: flag == 'game-end' ? this.actionLog : [],
+                recordData: isCdt(flag == 'game-end', this.recordData),
                 flag: `[${this.id}]${flag}-p${pidx}`,
             };
             const _serverDataVO = (vopidx: number, tip: string | string[]) => {
@@ -580,8 +582,9 @@ export default class GeniusInvokationRoom {
      * @param flag 标志
      */
     start(pidx: number, flag: string, seed?: string) {
-        this.seed ||= isCdt(this.env == 'test', seed) ?? Math.floor(Math.random() * 1e10).toString();
+        this.seed ||= seed ?? Math.floor(Math.random() * 1e10).toString();
         this._random = +this.seed;
+        this.recordData.seed = this.seed;
         const d = new Date();
         const format = (n: number) => String(n).padStart(2, '0');
         if (this.env != 'test') console.info(`[${this.id}]start-seed:${this.seed}`);
@@ -597,7 +600,7 @@ export default class GeniusInvokationRoom {
         this.systemLog = '';
         this.errorLog = [];
         this.reporterLog = [];
-        this.actionLog = [];
+        this.recordData.actionLog = [];
         this.taskQueue.init();
         if (this.players[1].id == AI_ID) this._initAI();
         this.players.forEach(p => {
@@ -655,9 +658,9 @@ export default class GeniusInvokationRoom {
      */
     getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket) {
         if (this.taskQueue.isExecuting) return;
-        if (this.id > 0) this.actionLog.push({ actionData, pidx });
+        if (this.id > 0) this.recordData.actionLog.push({ actionData, pidx });
         const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
-            summonIdx = -1, supportIdx = -1, shareCode = '', actionLog = [], flag = 'noflag' } = actionData;
+            summonIdx = -1, supportIdx = -1, shareCode = '', actionLog, flag = 'noflag' } = actionData;
         const player = this.players[pidx];
         // this.resetHeartBreak(pidx);
         switch (actionData.type) {
@@ -727,8 +730,17 @@ export default class GeniusInvokationRoom {
                 this._pickCard(pidx, cardIdxs[0], skillId);
                 break;
             case ACTION_TYPE.PlayeRecord:
-                this.actionLog = actionLog;
-                // todo
+                if (actionLog) this.recordData.actionLog = actionLog;
+                this.recordData.isPlaying = flag.includes('play');
+                this.delay(0, async () => {
+                    while (this.recordData.isPlaying && this.recordData.actionLog.length > 0) {
+                        await wait(() => this.needWait, { maxtime: 3e6 });
+                        if (!this.recordData.isPlaying) break;
+                        const { actionData, pidx } = this.recordData.actionLog.shift()!;
+                        this.getAction(actionData, pidx, socket);
+                    }
+                    this.recordData.isPlaying = false;
+                });
                 break;
             default:
                 const a: never = actionData.type;

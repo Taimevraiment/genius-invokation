@@ -3,16 +3,16 @@
     <div class="side" :style="{ opacity: +(player.phase >= PHASE.CHOOSE_HERO) }">
       <div class="round" @click.stop="showHistory">
         <img class="round-bg" src="@@/image/TimeState.png" alt="回合" />
-        <StrokedText class="round-text" width="3">{{ client.round }}</StrokedText>
+        <StrokedText class="round-text">{{ client.round }}</StrokedText>
       </div>
       <div class="pile">
         <img src="@@/image/card-bg.png" alt="" class="pile-bg">
         <span class="dice-cnt">
           <div>
-            <StrokedText width="3">{{ diceCnt[playerIdx ^ 1] }}</StrokedText>
+            <StrokedText>{{ diceCnt[playerIdx ^ 1] }}</StrokedText>
           </div>
         </span>
-        <StrokedText class="pile-cnt" width="3">{{ pileCnt[playerIdx ^ 1] }}</StrokedText>
+        <StrokedText class="pile-cnt">{{ pileCnt[playerIdx ^ 1] }}</StrokedText>
         <Handcard class="will-getcard-oppo" :class="{
           'mobile-will-card': isMobile,
           'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
@@ -47,10 +47,10 @@
         <img src="@@/image/card-bg.png" alt="" class="pile-bg">
         <span class="dice-cnt">
           <div>
-            <StrokedText width="3">{{ diceCnt[playerIdx] }}</StrokedText>
+            <StrokedText>{{ diceCnt[playerIdx] }}</StrokedText>
           </div>
         </span>
-        <StrokedText class="pile-cnt" width="3">{{ pileCnt[playerIdx] }}</StrokedText>
+        <StrokedText class="pile-cnt">{{ pileCnt[playerIdx] }}</StrokedText>
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">

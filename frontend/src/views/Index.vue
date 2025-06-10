@@ -79,6 +79,7 @@ import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { genShareCode } from '@@@/utils/utils';
+import Cookies from 'js-cookie';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Card, Hero, InfoVO, Player, PlayerList, RoomList, Summon } from '../../../typing';
@@ -87,6 +88,10 @@ const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
 const router = useRouter();
+const gidecks = Cookies.get('GIdecks');
+if (gidecks) localStorage.setItem('GIdecks', gidecks);
+const gideckidx = Cookies.get('GIdeckIdx');
+if (gideckidx) localStorage.setItem('GIdeckIdx', gideckidx);
 
 const userid = ref<number>(Number(localStorage.getItem('7szh_userid') || '-1')); // 玩家id
 const username = ref<string>(localStorage.getItem('7szh_username') || ''); // 昵称
@@ -113,15 +118,16 @@ if (username.value != '' && userid.value > 0) {
 
 // 初始化卡组
 if (localStorage.getItem('GIdecks') == null) {
-  localStorage.setItem(
-    'GIdecks',
-    JSON.stringify(
-      new Array(MAX_DECK_COUNT).fill(0).map(() => ({
-        name: '默认卡组',
-        shareCode: genShareCode([0, 0, 0]),
-      }))
-    )
+  const gidecks = JSON.stringify(
+    new Array(MAX_DECK_COUNT).fill(0).map(() => ({
+      name: '默认卡组',
+      shareCode: genShareCode([0, 0, 0]),
+    }))
   );
+  localStorage.setItem('GIdecks', gidecks);
+  Cookies.set('GIdecks', gidecks, { expires: 365 });
+} else {
+  Cookies.set('GIdecks', JSON.stringify(localStorage.getItem('GIdecks')), { expires: 365 });
 }
 
 // 注册昵称
@@ -158,9 +164,9 @@ const cancelCreateRoom = () => {
 };
 
 // 创建房间
-const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean) => {
+const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean, isRecord?: boolean) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, isRecord });
 };
 
 // 打开加入房间界面
@@ -196,10 +202,10 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 //   if (file) {
 //     const reader = new FileReader();
 //     reader.onload = e => {
-//       const actionLog: ActionLog[] = JSON.parse(e.target?.result?.toString() ?? '[]');
-//       socket.emit('enterRoom', { roomId: 0 });
+//       const recordData: RecordData = JSON.parse(e.target?.result?.toString() ?? '{}');
+//       createRoom(recordData.name, recordData.version, '', 0, false, true);
 //       // todo
-//       socket.emit('sendToServer', { type: ACTION_TYPE.PlayeRecord, actionLog });
+//       socket.emit('sendToServer', { type: ACTION_TYPE.PlayeRecord, actionLog: recordData.actionLog, flag: 'play-record' });
 //     };
 //     reader.readAsText(file);
 //   }

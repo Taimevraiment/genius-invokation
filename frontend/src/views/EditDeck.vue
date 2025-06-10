@@ -196,6 +196,7 @@ import { Card, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
 import StrokedText from '@/components/StrokedText.vue';
+import Cookies from 'js-cookie';
 
 type Filter<T> = {
     name: string,
@@ -293,6 +294,7 @@ const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 const selectDeck = (didx: number) => {
     deckIdx.value = didx;
     localStorage.setItem('GIdeckIdx', didx.toString());
+    Cookies.set('GIdeckIdx', didx.toString(), { expires: 365 });
 }
 
 // 保存卡组
@@ -303,7 +305,9 @@ const saveDeck = () => {
         version: version.value == VERSION[0] ? 'vlatest' : version.value,
         shareCode: shareCode.value,
     }
-    localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
+    const decks = JSON.stringify(oriDecks.value);
+    localStorage.setItem('GIdecks', decks);
+    Cookies.set('GIdecks', decks, { expires: 365 });
     editDeckIdx.value = -1;
 }
 
@@ -316,7 +320,9 @@ const deleteDeck = (did: number) => {
             version: VERSION[0],
             shareCode: genShareCode([0, 0, 0]),
         };
-        localStorage.setItem('GIdecks', JSON.stringify(oriDecks.value));
+        const decks = JSON.stringify(oriDecks.value);
+        localStorage.setItem('GIdecks', decks);
+        Cookies.set('GIdecks', decks, { expires: 365 });
     }
 }
 

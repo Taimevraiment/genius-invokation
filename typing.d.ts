@@ -236,6 +236,14 @@ type ActionData = {
     actionLog?: ActionLog[], // 对局回放数据
 }
 
+type RecordData = {
+    seed: string,
+    name: string,
+    version: Version,
+    actionLog: ActionLog[],
+    isPlaying?: boolean,
+}
+
 type ActionInfo = {
     content?: string, // 提示词
     card?: Card, // 使用卡时的卡牌
@@ -272,7 +280,7 @@ type ServerData = Readonly<{
     supportSelect: number[],
     pickModal: PickCard,
     watchers: number,
-    actionLog: ActionLog[],
+    recordData?: RecordData,
     flag: string,
 }>
 

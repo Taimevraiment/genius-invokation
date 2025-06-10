@@ -7,7 +7,7 @@
       [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}]
       房间号{{ roomId }}
       <u @click.stop="sendLog">发送日志</u>
-      <u v-if="client.actionLog.length" @click.stop="exportLog" style="margin-left: 5px;">导出日志</u>
+      <u v-if="client.recordData.actionLog.length" @click.stop="exportLog" style="margin-left: 5px;">导出日志</u>
     </div>
     <div class="lookon-count" v-if="client.watchers > 0">
       <img src="@@/svg/lookon.svg" alt="旁观人数" />
@@ -51,7 +51,7 @@
       <span v-if="isLookon > -1">旁观中......</span>
       <p>{{ client.player?.name }}</p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
-        {{ handCardsCnt[client.playerIdx] }}
+        <StrokedText>{{ handCardsCnt[client.playerIdx] }}</StrokedText>
       </div>
       <img class="legend" :src="getDiceBgIcon('legend-empty')" />
       <img v-if="!client.player?.playerInfo.isUsedLegend" class="legend" :src="getDiceBgIcon('legend')" />
@@ -75,7 +75,7 @@
         已准备
       </strong>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
-        {{ handCardsCnt[client.playerIdx ^ 1] }}
+        <StrokedText>{{ handCardsCnt[client.playerIdx ^ 1] }}</StrokedText>
       </div>
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
       <img v-if="isLookon > -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
@@ -164,6 +164,11 @@
         </div>
       </div>
     </div>
+
+    <!-- <div class="record-control">
+      <div>▶</div>
+      <div>| |</div>
+    </div> -->
 
     <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" isInGame
       :round="client.round" :playerInfo="client.player.playerInfo" style="z-index: 10" />
@@ -346,8 +351,8 @@ const sendLog = () => {
 }
 // 导出行动日志
 const exportLog = () => {
-  if (client.value.actionLog.length == 0) return;
-  const blob = new Blob([JSON.stringify(client.value.actionLog)], { type: 'text/plain' });
+  if (client.value.recordData.actionLog.length == 0) return;
+  const blob = new Blob([JSON.stringify(client.value.recordData)], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -358,7 +363,7 @@ const exportLog = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, 100);
-  client.value.actionLog = [];
+  client.value.recordData.actionLog = [];
 }
 // 投降
 const giveup = () => {
@@ -845,6 +850,34 @@ body {
 .cost-img.hcard {
   width: 30px;
   height: 30px;
+}
+
+.record-control {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 70px;
+  width: 30px;
+  bottom: 1%;
+  right: 1%;
+  background-color: #a16c41;
+  border-radius: 10px;
+  border: #cb8a53 3px solid;
+  z-index: 6;
+}
+
+.record-control>div {
+  cursor: pointer;
+}
+
+.record-control>div:hover {
+  color: #fed691;
+}
+
+.record-control>div.active {
+  color: #fcdca4;
 }
 
 .menu {

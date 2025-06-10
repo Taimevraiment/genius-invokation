@@ -58,11 +58,11 @@ const todayPlayersHistory = new Map<number, {
 cron.schedule('0 0 5 * * *', () => todayPlayersHistory.clear());
 
 // 生成id
-const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number } = {}) => {
-    const { len = 4, prefix } = option;
+const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number, isMinus?: boolean } = {}) => {
+    const { len = 4, prefix, isMinus } = option;
     let id: number | undefined;
     while (id == undefined || arr.findIndex(v => v.id == id) > -1) {
-        id = Math.floor(Math.random() * (prefix ? 1 : 9) * 10 ** (len - 1) + (prefix || 1) * 10 ** (len - 1));
+        id = Math.floor(Math.random() * (prefix ? 1 : 9) * 10 ** (len - 1) + (prefix || 1) * 10 ** (len - 1)) * (isMinus ? -1 : 1);
     }
     return id;
 }
@@ -113,7 +113,7 @@ io.on('connection', socket => {
                 name: p.name,
                 rid: p.rid ?? -1,
             })).filter(p => !removePlayerList.has(p.id)),
-            rlist: roomList.map(r => ({
+            rlist: roomList.filter(r => r.id > 0).map(r => ({
                 id: r.id,
                 name: r.name,
                 isStart: r.isStart,
@@ -214,15 +214,18 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown, allowLookon } = data;
-        const roomId = genId(roomList);
+        const { roomName, version, roomPassword, countdown, allowLookon, isRecord } = data;
+        const roomId = genId(roomList, { isMinus: isRecord });
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', io);
         const player = newRoom.init(me);
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
-        socket.join(`7szh-${roomId}-p${player.pidx}`);
-        emitPlayerAndRoomList();
+        if (isRecord) newRoom.init({ id: 0, name: '对手' });
+        else {
+            socket.join(`7szh-${roomId}-p${player.pidx}`);
+            emitPlayerAndRoomList();
+        }
         socket.emit('enterRoom', {
             roomId,
             players: newRoom.players,
