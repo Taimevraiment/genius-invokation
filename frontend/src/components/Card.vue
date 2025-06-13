@@ -82,7 +82,6 @@ const getPngIcon = (name: string) => {
     text-align: center;
     white-space: nowrap;
     transition: 0.3s;
-    font-size: medium;
     z-index: 1;
     /* background-color: #8caee1d0; */
     border-radius: 5px;
@@ -149,20 +148,10 @@ const getPngIcon = (name: string) => {
 
 .cost-text {
     position: absolute;
-    font-size: 22px;
+    font-size: 20px;
     width: 40px;
     height: 42px;
 }
-
-.card-energy>span {
-    position: absolute;
-    font-size: 23px;
-    width: 30px;
-    height: 30px;
-    left: 15px;
-    top: 10px;
-}
-
 
 .cost-img {
     position: absolute;
@@ -207,7 +196,7 @@ const getPngIcon = (name: string) => {
 .mobile-card-cost>.cost-text,
 .mobile-card-energy>.cost-text {
     position: absolute;
-    font-size: 18px;
+    font-size: 16px;
     left: 5px;
     top: -5px;
 }

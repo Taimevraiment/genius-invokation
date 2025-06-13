@@ -37,16 +37,20 @@
       </div>
       <div class="timer" :style="{ backgroundImage: currTimeBg }">
         <button class="end-phase" @click.stop="endPhase" :class="{
-          'confirm-end-phase': isShowEndPhase,
-          forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1
+          'pre-end-phase': !isShowEndPhase,
+          forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1,
+        }" :style="{
+          backgroundImage: `url(${getPngIcon(`RoundButton_0${player.status == PLAYER_STATUS.WAITING ? 1 : isShowEndPhase ? 4 : 2}`)})`,
         }">
-          {{ isShowEndPhase ? '确认' : '结束' }}
+          <img class="end-phase-icon" :class="{ 'confirm-end-phase': isShowEndPhase }" :src="getSvgIcon('round')"
+            alt="">
         </button>
+        <!-- {{ isShowEndPhase ? '确认' : '结束' }} -->
       </div>
       <div class="pile">
         <img src="@@/image/card-bg.png" alt="" class="pile-bg">
         <span class="dice-cnt">
-          <div>
+          <div style="background-color: #eca944;">
             <StrokedText>{{ diceCnt[playerIdx] }}</StrokedText>
           </div>
         </span>
@@ -400,8 +404,8 @@
         </div>
 
         <div class="dices" :class="{ 'mobile-dices': isMobile }">
-          <div class="dice-my cursor-point" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []"
-            :key="didx" :class="{ 'mobile-dice-my': isMobile }" @click.stop="selectUseDice(didx)">
+          <div class="dice-my" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []" :key="didx"
+            :class="{ 'mobile-dice-my': isMobile }" @click.stop="selectUseDice(didx)">
             <div class="dice-select" v-if="diceSelect[didx]"></div>
             <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
             <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
@@ -426,7 +430,7 @@
           <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%;">
             还可重投{{ rollCnt }}轮
           </div>
-          <button @click="reroll()" :class="{ 'not-show': !showRerollBtn }">
+          <button @click="reroll()" class="button" :class="{ 'not-show': !showRerollBtn }">
             {{diceSelect.some(v => v) ? "重掷" : "确认"}}
           </button>
         </div>
@@ -440,7 +444,7 @@
               <div v-if="initCardsSelect[cidx]" class="init-select-text">替换</div>
             </Handcard>
           </div>
-          <button @click="changeCard" v-if="showChangeCardBtn">
+          <button class="button" @click="changeCard" v-if="showChangeCardBtn">
             {{initCardsSelect.some(v => v) ? "换牌" : "确认手牌"}}
           </button>
         </div>
@@ -454,7 +458,7 @@
               <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
             </Handcard>
           </div>
-          <button @click="pickCard" v-if="pickCardIdx > -1">确认</button>
+          <button class="button" @click="pickCard" v-if="pickCardIdx > -1">确认</button>
         </div>
       </div>
 
@@ -943,15 +947,15 @@ const mouseup = () => {
   width: 55%;
   aspect-ratio: 1/1.1;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background-color: #ababab;
+  background-color: #bdbdbd;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .dice-cnt>div {
-  width: 90%;
-  height: 90%;
+  width: 80%;
+  height: 80%;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   display: flex;
   justify-content: center;
@@ -963,7 +967,7 @@ const mouseup = () => {
   position: relative;
 }
 
-button {
+.button {
   background-color: #ffe122;
   border: 3px outset #e1c300;
   border-radius: 5px;
@@ -977,7 +981,7 @@ button {
   font-family: HYWH;
 }
 
-button:active {
+.button:active {
   background-color: #d0b81d;
   border: 3px inset #e1c300;
 }
@@ -1055,7 +1059,7 @@ button:active {
 .hero-hp-cnt {
   color: white;
   z-index: 1;
-  padding-right: 2px;
+  padding-top: 10%;
   transform: scale(var(--scale-val-change));
   transition: transform 0.3s;
 }
@@ -1704,6 +1708,7 @@ button:active {
   height: 40px;
   border-radius: 50%;
   margin-bottom: 2px;
+  cursor: pointer;
 }
 
 .card-change,
@@ -2045,37 +2050,70 @@ button:active {
 }
 
 .timer {
-  width: 90%;
+  width: 100%;
   aspect-ratio: 1/1;
   margin: 10px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-areas: 'a';
   border-radius: 50%;
   transition: background-image 1s;
+  justify-items: center;
+  align-items: center;
 }
 
 .end-phase {
-  padding: 0;
-  height: 90%;
-  width: 90%;
-  border-radius: inherit;
-  font-size: 12px;
+  height: 130%;
+  width: 100%;
+  grid-area: a;
+  background-size: 100%;
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+}
+
+.end-phase:active {
+  background-image: url(@@/image/RoundButton_03.png) !important;
+}
+
+.end-phase::before {
+  content: '◀';
+  position: absolute;
+  font-size: medium;
+  left: 5%;
+  top: 43%;
+  color: #ff6822;
+}
+
+.end-phase::after {
+  content: '确认结束';
+  color: white;
+  position: absolute;
+  left: 6%;
+  background: linear-gradient(to right, #ff6822, #8d3100);
+  padding: .8%;
+  border-radius: 5px;
+  font-family: HYWH;
+}
+
+.pre-end-phase::before,
+.pre-end-phase::after {
+  display: none;
 }
 
 .confirm-end-phase {
-  background-color: #ff6822;
-  border: 3px outset #e14f00;
-  color: white;
-}
-
-.cursor-point {
-  cursor: pointer;
+  filter: brightness(2);
 }
 
 .forbidden {
-  background-color: #a8a8a8 !important;
-  border: 3px outset #bdbdbd !important;
+  pointer-events: none;
+}
+
+.end-phase-icon {
+  width: 40%;
+  height: 40%;
+  grid-area: a;
+  padding-top: 15%;
+  pointer-events: none;
 }
 
 img {

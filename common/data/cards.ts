@@ -107,6 +107,7 @@ export type CardHandleRes = {
     isOrTrigger?: boolean,
     isTrigger?: boolean,
     isAfterSkill?: boolean,
+    isImmediate?: boolean,
     exec?: () => CardExecRes | void,
 };
 
@@ -2179,6 +2180,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 return { triggers: 'discard' }
             }
             cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(4, { until: true });
+            return { isImmediate: true }
         }),
 
     332048: () => new CardBuilder(490).name('健身的成果').since('v5.7.0').event().costSame(0).canSelectHero(1)

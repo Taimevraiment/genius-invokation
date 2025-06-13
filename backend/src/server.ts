@@ -10,33 +10,24 @@ import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
 const app = express();
-app.use(cors({
-    origin: [
-        'http://127.0.0.1:5500',
-        'http://127.0.0.1:5501',
-        'http://taim.site',
-        'http://gi-tcg.taim.site',
-        'http://7szh.taim.site',
-        'http://localhost:5500',
-        'http://localhost:5501',
-    ],
-    methods: ['GET', 'POST']
-}));
+const origin = [
+    'http://127.0.0.1:5500',
+    'http://127.0.0.1:5501',
+    'http://taim.site',
+    'https://taim.site',
+    'http://gi-tcg.taim.site',
+    'https://gi-tcg.taim.site',
+    'http://7szh.taim.site',
+    'http://localhost:5500',
+    'http://localhost:5501',
+]
+app.use(cors({ origin, methods: ['GET', 'POST'] }));
 
+const isDev = process.env.NODE_ENV == 'development';
 const httpServer = createServer(app);
 const PORT = 7000;
 const io = new Server(httpServer, {
-    // @ts-ignore
-    cors: {
-        origin: [
-            'http://127.0.0.1:5500',
-            'http://taim.site',
-            'http://gi-tcg.taim.site',
-            'http://7szh.taim.site',
-            'http://localhost:5500',
-        ],
-        methods: ['GET', 'POST']
-    }
+    cors: { origin, methods: ['GET', 'POST'] }
 });
 
 process.on('uncaughtException', err => console.error(err));
@@ -44,7 +35,6 @@ process.on('uncaughtException', err => console.error(err));
 process.on('exit', code => console.error(code));
 
 const serverSecretKey = await getSecretKey('secretKey');
-const isDev = process.env.NODE_ENV == 'development';
 const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
@@ -349,13 +339,23 @@ io.on('connection', socket => {
 });
 
 
-app.use((req, _res, next) => {
-    if (serverSecretKey == 'wrong') return console.info(`获取serverSecretKey失败`);
-    if (!isDev && req.headers.flag != serverSecretKey) return console.info(`[${new Date()}]请求失败，headers:${JSON.stringify(req.headers)}`);
-    next();
-});
+const validateSK = (req, res) => {
+    if (serverSecretKey == 'wrong') {
+        console.info(`获取serverSecretKey失败`);
+        return false;
+    }
+    if (!isDev && req.headers.flag != serverSecretKey) {
+        console.info(`[${new Date()}]请求失败\nurl:${JSON.stringify(req.url)}, headers:${JSON.stringify(req.headers)}`);
+        res.status(403).json({ err: '非法请求！' });
+        return false;
+    }
+    return true;
+};
 
-app.get('/detail', (_, res) => {
+app.get('/test', (_, res) => res.json({ ok: true }));
+
+app.get('/detail', (req, res) => {
+    if (!validateSK(req, res)) return;
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,
@@ -373,7 +373,8 @@ app.get('/detail', (_, res) => {
     });
 });
 
-app.get('/info', (_req, res) => {
+app.get('/info', (req, res) => {
+    if (!validateSK(req, res)) return;
     res.json({
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}}`),
         playersInfo: playerList.map(p => `${p.name} ${['空闲', '房间中', '游戏中'][p.status] ?? p.status}`),

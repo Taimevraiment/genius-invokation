@@ -59,6 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
+    <div class="version">v0.1.3</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
@@ -125,9 +126,9 @@ if (localStorage.getItem('GIdecks') == null) {
     }))
   );
   localStorage.setItem('GIdecks', gidecks);
-  Cookies.set('GIdecks', gidecks, { expires: 365 });
+  Cookies.set('GIdecks', gidecks, { expires: 31 });
 } else {
-  Cookies.set('GIdecks', JSON.stringify(localStorage.getItem('GIdecks')), { expires: 365 });
+  Cookies.set('GIdecks', localStorage.getItem('GIdecks')!, { expires: 31 });
 }
 
 // 注册昵称
@@ -205,7 +206,7 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 //       const recordData: RecordData = JSON.parse(e.target?.result?.toString() ?? '{}');
 //       createRoom(recordData.name, recordData.version, '', 0, false, true);
 //       // todo
-//       socket.emit('sendToServer', { type: ACTION_TYPE.PlayeRecord, actionLog: recordData.actionLog, flag: 'play-record' });
+//       socket.emit('sendToServer', { type: ACTION_TYPE.PlayRecord, actionLog: recordData.actionLog, flag: 'play-record' });
 //     };
 //     reader.readAsText(file);
 //   }
@@ -448,6 +449,14 @@ button:active {
   width: auto;
   padding: 0 3px;
   margin-right: 5px;
+}
+
+.version {
+  position: absolute;
+  bottom: 0;
+  right: 3px;
+  color: gray;
+  font-size: 10px;
 }
 
 #taimbot {

@@ -3061,7 +3061,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     303240: () => new StatusBuilder('还魂诗').heroStatus().addCnt(0).useCnt(1).roundCnt(1)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon(STATUS_ICON.Revive)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon('tmp/UI_Gcg_Buff_Resurrection_-1515900563')
         .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
             const { hidx = -1, cmds, dicesCnt = 0 } = event;

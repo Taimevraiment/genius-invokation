@@ -101,7 +101,7 @@ export default class GeniusInvokationClient {
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
     ) {
         this.socket = socket;
-        this.emit = data => socket.emit('sendToServer', data);
+        this.emit = data => roomId > 0 && socket.emit('sendToServer', data);
         this.roomId = roomId;
         this.userid = userid;
         this.version = version;

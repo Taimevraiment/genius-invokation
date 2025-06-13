@@ -468,8 +468,8 @@ export default class GeniusInvokationRoom {
                 }
             }
             this._writeLog(serverData.flag, 'emit');
-            if (socket) {
-                socket.emit('getServerInfo', Object.freeze({
+            if (socket || this.id < -1) {
+                socket?.emit('getServerInfo', Object.freeze({
                     ...serverData,
                     ..._serverDataVO(pidx, tip),
                 }));
@@ -656,13 +656,14 @@ export default class GeniusInvokationRoom {
      * @param pidx 发起行动的玩家序号
      * @param socket 发送请求socket
      */
-    getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket) {
+    getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket, isRecord?: boolean) {
         if (this.taskQueue.isExecuting) return;
         if (this.id > 0) this.recordData.actionLog.push({ actionData, pidx });
         const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
             summonIdx = -1, supportIdx = -1, shareCode = '', actionLog, flag = 'noflag' } = actionData;
         const player = this.players[pidx];
         // this.resetHeartBreak(pidx);
+        if (actionData.type != ACTION_TYPE.PlayRecord && isRecord) return;
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 if (this.players.length < PLAYER_COUNT) return this.emit('playersError', pidx, { socket, tip: `玩家为${PLAYER_COUNT}人才能开始游戏` });
@@ -729,15 +730,16 @@ export default class GeniusInvokationRoom {
             case ACTION_TYPE.PickCard:
                 this._pickCard(pidx, cardIdxs[0], skillId);
                 break;
-            case ACTION_TYPE.PlayeRecord:
+            case ACTION_TYPE.PlayRecord:
                 if (actionLog) this.recordData.actionLog = actionLog;
                 this.recordData.isPlaying = flag.includes('play');
                 this.delay(0, async () => {
                     while (this.recordData.isPlaying && this.recordData.actionLog.length > 0) {
                         await wait(() => this.needWait, { maxtime: 3e6 });
+                        await this.delay(1000 + Math.random() * 500);
                         if (!this.recordData.isPlaying) break;
                         const { actionData, pidx } = this.recordData.actionLog.shift()!;
-                        this.getAction(actionData, pidx, socket);
+                        this.getAction(actionData, pidx, socket, true);
                     }
                     this.recordData.isPlaying = false;
                 });
@@ -3197,6 +3199,7 @@ export default class GeniusInvokationRoom {
                 hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
                 source: currCard.id,
                 isUnshift: !!getCard,
+                isImmediate: cardres.isImmediate,
             });
             if (cardres.hidxs && currCard.type != CARD_TYPE.Equipment) assgin(hidxs, cardres.hidxs);
             if (cardres.support) {
@@ -5164,6 +5167,7 @@ export default class GeniusInvokationRoom {
             socket?: Socket, isSummon?: number, getdmg?: number[], supportCnt?: number[][], willSwitch?: boolean[][],
             damages?: SmnDamageHandle, isOnlyGetWillDamages?: boolean, isPriority?: boolean, isUnshift?: boolean,
             energyCnt?: number[][], isOnlyGetWillHeal?: boolean, skid?: number, sktype?: SkillType, isOnlyApply?: boolean,
+            isImmediate?: boolean,
         } = {}
     ): {
         cmds?: Cmds[], heros?: Hero[], eheros?: Hero[], willHeals?: number[][], atriggers?: Trigger[][], etriggers?: Trigger[][],
@@ -5176,7 +5180,7 @@ export default class GeniusInvokationRoom {
         const player = players[pidx];
         const opponent = players[pidx ^ 1];
         const { withCard, hidxs: chidxs, heal = 0, isExec = true, ahidx = player.hidx, ehidx = opponent.hidx,
-            isAction, source = -1, damages, socket, isSummon = -1, trigger, isOnlyApply,
+            isAction, source = -1, damages, socket, isSummon = -1, trigger, isOnlyApply, isImmediate,
             willSwitch = players.map(p => p.heros.map(() => false)), isOnlyGetWillDamages,
             supportCnt = INIT_SUPPORTCNT(), isPriority, isUnshift, isOnlyGetWillHeal,
             energyCnt = players.map(p => p.heros.map(() => 0)), skid, sktype } = options;
@@ -5347,7 +5351,7 @@ export default class GeniusInvokationRoom {
                                 this.emit('doCmd--getCard', cpidx, { isQuickAction: !isAction });
                                 p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
                                 p.handCards.forEach(c => delete c.UI.class);
-                            }, 1500]], { isPriority, isUnshift });
+                            }, 1500]], { isPriority, isUnshift, isImmediate });
                         } else {
                             cplayer.handCards.push(...getcards);
                         }
@@ -5367,7 +5371,7 @@ export default class GeniusInvokationRoom {
                                     });
                                     this._detectSupport(cpidx ^ 1, etriggers, { isQuickAction: !isAction });
                                     if (this.taskQueue.isTaskEmpty()) this.emit('doCmd--getCard:getcard/drawcard-cancel', cpidx, { isQuickAction: !isAction });
-                                }]]);
+                                }]], { isImmediate });
                             } else {
                                 this._detectStatus(cpidx, STATUS_TYPE.Usage, atriggers, {
                                     players,
@@ -5520,7 +5524,7 @@ export default class GeniusInvokationRoom {
                                 if (isDiscard) this._doDiscard(pidx, discards, { isAction, isPriority, isUnshift });
                                 else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { isPriority: true, isUnshift: true });
                             }
-                        }, 1500]], { isPriority, isUnshift });
+                        }, 1500]], { isPriority, isUnshift, isImmediate });
                         cplayer.handCards.forEach(c => discards.some(dc => dc.entityId == c.entityId) && (c.UI.class = 'discard'));
                     } else {
                         if (!isAttach && isDiscard) {
