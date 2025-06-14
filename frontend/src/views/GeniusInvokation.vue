@@ -148,7 +148,7 @@
           @click.stop="useSkill(skill.id)" :style="{ boxShadow: skill.style.fullEnergy }">
           <img class="skill-bg" :src="getPngIcon('skill_btn_bg')" alt="" />
           <div class="skill3-bg" :style="{ background: skill.style.notFullEnergy }"></div>
-          <img class="skill3-btn" v-if="skill.type == SKILL_TYPE.Burst" :src="getPngIcon('skill3_btn_bg')" alt="" />
+          <img class="skill3-btn" v-if="skill.cost[2].cnt > 0" :src="getPngIcon('skill3_btn_bg')" alt="" />
           <img class="skill-img" :src="skill.UI.src" v-if="skill.UI.src.length > 0" :alt="SKILL_TYPE_ABBR[skill.type]"
             draggable="false" />
           <span v-else class="skill-img">{{ SKILL_TYPE_ABBR[skill.type] }}</span>
@@ -270,7 +270,7 @@ const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
 const canAction = computed<boolean>(() => client.value.canAction && isLookon.value == -1); // 是否可以操作
-const isNonEvent = computed<boolean>(() => client.value.player.combatStatus.some(s => s.hasType(STATUS_TYPE.NonEvent))); // 是否使事件牌失效
+const isNonEvent = computed<boolean>(() => client.value.player.combatStatus.some(s => s.type.includes(STATUS_TYPE.NonEvent))); // 是否使事件牌失效
 const currDeck = computed(() => { // 当前出战卡组
   const deck = client.value.decks[client.value.editDeckIdx];
   const { heroIds } = parseShareCode(deck.shareCode);
@@ -890,7 +890,7 @@ body {
   justify-content: center;
 }
 
-.menu button {
+button {
   font-family: HYWH;
 }
 
@@ -993,7 +993,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100px;
-  height: 150px;
+  height: 120px;
   border: 2px solid black;
   border-radius: 5px;
 }
@@ -1009,7 +1009,6 @@ body {
   position: absolute;
   top: 10px;
   right: 10px;
-  min-height: 100px;
   background-color: #63a0e6;
 }
 
@@ -1091,7 +1090,7 @@ body {
   background-color: #254162;
   border: 3px solid #1c3149;
   border-radius: 10px;
-  z-index: 5;
+  z-index: 6;
 }
 
 .modal-action-my {
@@ -1233,7 +1232,6 @@ body {
 
 .ai-btn {
   cursor: pointer;
-  padding-top: 20px;
   z-index: 2;
 }
 
@@ -1255,7 +1253,7 @@ body {
 
   [class*='player-display'] {
     width: 70px;
-    height: 100px;
+    height: 70px;
   }
 
   .btn-group button {
@@ -1285,7 +1283,7 @@ body {
 
 .mobile-player-display {
   width: 70px;
-  height: 100px;
+  height: 70px;
 }
 
 .mobile-hand-card {

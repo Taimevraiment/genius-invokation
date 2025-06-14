@@ -35,17 +35,17 @@
           v-for="(card, cidx) in opponent?.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
-      <div class="timer" :style="{ backgroundImage: currTimeBg }">
+      <div class="end-phase-btn">
         <button class="end-phase" @click.stop="endPhase" :class="{
           'pre-end-phase': !isShowEndPhase,
           forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1,
         }" :style="{
-          backgroundImage: `url(${getPngIcon(`RoundButton_0${player.status == PLAYER_STATUS.WAITING ? 1 : isShowEndPhase ? 4 : 2}`)})`,
+          backgroundImage: `url(${getPngIcon(`RoundButton_0${phase == PHASE.ACTION && player.status == PLAYER_STATUS.WAITING ? 1 : !canAction || isLookon > -1 ? 5 : isShowEndPhase ? 4 : 2}`)})`,
         }">
           <img class="end-phase-icon" :class="{ 'confirm-end-phase': isShowEndPhase }" :src="getSvgIcon('round')"
             alt="">
         </button>
-        <!-- {{ isShowEndPhase ? '确认' : '结束' }} -->
+        <div class="timer" :style="{ backgroundImage: currTimeBg }"></div>
       </div>
       <div class="pile">
         <img src="@@/image/card-bg.png" alt="" class="pile-bg">
@@ -689,7 +689,7 @@ const heros = computed<Hero[][]>(() => {
 });
 const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, player.value.combatStatus]);
 const currTime = computed<number>(() => ((props.client.countdown.limit - props.client.countdown.curr) / props.client.countdown.limit) * 100);
-const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value.status == PLAYER_STATUS.WAITING ? '#2b6aff' : '#ffb36d'} ${currTime.value + 5}%)`);
+const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value.status == PLAYER_STATUS.WAITING ? '#63a0e6' : '#ffb36d'} ${currTime.value + 5}%)`);
 const isShowHistory = computed<boolean>(() => props.client.isShowHistory);
 const getColor = (ctt: string) => {
   const preffix = ctt.match(/(?<=\[)[^\]]+(?=\])/)?.[0];
@@ -892,6 +892,7 @@ const mouseup = () => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  padding-left: 1%;
 }
 
 .round {
@@ -1565,10 +1566,10 @@ const mouseup = () => {
 }
 
 .dices {
-  height: 67%;
+  height: 70%;
   width: 5%;
   text-align: center;
-  padding-top: 170px;
+  padding-top: 140px;
   padding-right: 10px;
   display: flex;
   flex-direction: column;
@@ -1977,7 +1978,7 @@ const mouseup = () => {
 .hide-btn::before {
   content: '/';
   position: absolute;
-  left: 48%;
+  left: 45%;
   top: 30%;
   transform: scale(2.5);
   z-index: 1;
@@ -1998,7 +1999,7 @@ const mouseup = () => {
 }
 
 .mobile-dices {
-  padding-top: 110px;
+  padding-top: 80px;
 }
 
 .mobile-status {
@@ -2049,13 +2050,12 @@ const mouseup = () => {
   opacity: 0;
 }
 
-.timer {
-  width: 100%;
+.end-phase-btn {
+  width: 130%;
   aspect-ratio: 1/1;
-  margin: 10px 0;
+  margin: 20% 0;
   display: grid;
   grid-template-areas: 'a';
-  border-radius: 50%;
   transition: background-image 1s;
   justify-items: center;
   align-items: center;
@@ -2079,17 +2079,18 @@ const mouseup = () => {
   content: '◀';
   position: absolute;
   font-size: medium;
-  left: 5%;
+  left: 6%;
   top: 43%;
-  color: #ff6822;
+  color: #ffb36d;
 }
 
 .end-phase::after {
-  content: '确认结束';
+  content: '宣布结束';
   color: white;
   position: absolute;
-  left: 6%;
-  background: linear-gradient(to right, #ff6822, #8d3100);
+  left: 7%;
+  top: 42%;
+  background: linear-gradient(to right, #ffb36d, #ca6732);
   padding: .8%;
   border-radius: 5px;
   font-family: HYWH;
@@ -2102,6 +2103,17 @@ const mouseup = () => {
 
 .confirm-end-phase {
   filter: brightness(2);
+}
+
+.timer {
+  grid-area: a;
+  width: 65%;
+  height: 65%;
+  border-radius: 50%;
+  transition: background-image 1s;
+  margin-top: 1px;
+  mask-image: radial-gradient(circle at center, transparent 57%, #000 57%);
+  pointer-events: none;
 }
 
 .forbidden {
