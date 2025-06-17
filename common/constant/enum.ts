@@ -358,6 +358,7 @@ export const ACTION_TYPE = {
     GiveUp: 'give-up', // 投降
     PickCard: 'pick-card', // 挑选卡牌
     PlayRecord: 'play-record', // 放回对局
+    PuaseRecord: 'puase-record', // 暂停对局
 } as const;
 
 export type ActionType = TypeConst<typeof ACTION_TYPE>;

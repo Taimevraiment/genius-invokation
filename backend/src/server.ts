@@ -126,7 +126,7 @@ io.on('connection', socket => {
             close: `关闭了连接...`,
         }[eventName] ?? `未知原因[${eventName}]断开...`);
         console.info(log);
-        if (me.rid > 0) {
+        if (me.rid != -1) {
             const room = getRoom(me.rid);
             if (!room) return console.error(`ERROR@leaveRoom:${eventName}:未找到房间,rid:${me.rid}`);
             if (me.pidx > -1) {
@@ -139,7 +139,7 @@ io.on('connection', socket => {
                 if (room.players[0]?.id == AI_ID) --room.onlinePlayersCnt;
                 if (me.pidx != -1) room.players.forEach(p => p.phase = PHASE.NOT_READY);
             }
-            if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline)) {
+            if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline) || me.rid < -1) {
                 [...room.players, ...room.watchers].forEach(p => p.rid = -1);
                 if (room.countdown.timer != null) clearInterval(room.countdown.timer);
                 removeById(room.id, roomList);
@@ -205,17 +205,16 @@ io.on('connection', socket => {
     // 创建房间
     socket.on('createRoom', data => {
         const { roomName, version, roomPassword, countdown, allowLookon, isRecord } = data;
-        const roomId = genId(roomList, { isMinus: isRecord });
+        const roomId = genId(roomList, { isMinus: !!isRecord });
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', io);
+        if (isRecord && isRecord.pidx == 1) newRoom.init({ id: 0, name: isRecord.oppoName });
         const player = newRoom.init(me);
+        if (isRecord && isRecord.pidx == 0) newRoom.init({ id: 0, name: isRecord.oppoName });
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
-        if (isRecord) newRoom.init({ id: 0, name: '对手' });
-        else {
-            socket.join(`7szh-${roomId}-p${player.pidx}`);
-            emitPlayerAndRoomList();
-        }
+        socket.join(`7szh-${roomId}-p${player.pidx}`);
+        emitPlayerAndRoomList();
         socket.emit('enterRoom', {
             roomId,
             players: newRoom.players,

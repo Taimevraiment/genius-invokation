@@ -233,15 +233,19 @@ type ActionData = {
     cardIds?: number[], // 卡组卡牌id
     shareCode?: string, // 分享码
     flag?: string, // 发起请求的标志
-    actionLog?: ActionLog[], // 对局回放数据
+    recordData?: RecordData, // 对局回放数据
 }
 
 type RecordData = {
-    seed: string,
-    name: string,
-    version: Version,
-    actionLog: ActionLog[],
-    isPlaying?: boolean,
+    seed: string, // 当局种子
+    pidx: number, // 存录像的人的pidx
+    name: string, // 房间名字
+    username: string[], // 玩家名字数组
+    shareCode: string[], // 玩家分享码数组
+    version: Version, // 牌局版本
+    actionLog: ActionLog[], // 录像回放数据
+    isPlaying?: boolean, // 是否正在播放录像
+    isExecuting?: boolean, // 是否正在执行录像
 }
 
 type ActionInfo = {

@@ -26,7 +26,7 @@ import {
     getSortedDices,
     getTalentIdByHid, getVehicleIdByCid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString
 } from '../../common/utils/gameUtil.js';
-import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, wait } from '../../common/utils/utils.js';
+import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import {
     ActionData, ActionInfo,
     AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
@@ -86,7 +86,7 @@ export default class GeniusInvokationRoom {
         this.password = password;
         this.countdown.limit = countdown;
         this.allowLookon = allowLookon;
-        this.recordData = { name, seed: '', version, actionLog: [] }
+        this.recordData = { name: this.name, pidx: -1, username: [], shareCode: [], seed: '', version, actionLog: [] }
         this.env = env;
         this.newStatus = newStatus(version);
         this.newCard = newCard(version);
@@ -393,7 +393,6 @@ export default class GeniusInvokationRoom {
                 supportSelect,
                 pickModal: this.pickModal,
                 watchers: this.watchers.length,
-                recordData: isCdt(flag == 'game-end', this.recordData),
                 flag: `[${this.id}]${flag}-p${pidx}`,
             };
             const _serverDataVO = (vopidx: number, tip: string | string[]) => {
@@ -465,11 +464,12 @@ export default class GeniusInvokationRoom {
                         isShow: content != '' || !!actionInfo?.card,
                         isOppo: pidx != vopidx,
                     },
+                    recordData: isCdt(flag == 'game-end' || this.id < -1, { ...this.recordData, pidx: vopidx }),
                 }
             }
             this._writeLog(serverData.flag, 'emit');
-            if (socket || this.id < -1) {
-                socket?.emit('getServerInfo', Object.freeze({
+            if (socket) {
+                socket.emit('getServerInfo', Object.freeze({
                     ...serverData,
                     ..._serverDataVO(pidx, tip),
                 }));
@@ -498,7 +498,8 @@ export default class GeniusInvokationRoom {
      * 发送错误信息
      * @param err 错误信息
      */
-    emitError(err: Error) {
+    emitError(err: Error | string) {
+        if (typeof err === 'string') err = new Error(err);
         if (err.stack) this.errorLog.push(err.stack);
         this.io?.to([`7szh-${this.id}`, `7szh-${this.id}-p0`, `7szh-${this.id}-p1`]).emit('error', err.message);
         this.exportLog();
@@ -582,9 +583,13 @@ export default class GeniusInvokationRoom {
      * @param flag 标志
      */
     start(pidx: number, flag: string, seed?: string) {
-        this.seed ||= seed ?? Math.floor(Math.random() * 1e10).toString();
+        this.seed ||= seed || Math.floor(Math.random() * 1e10).toString();
         this._random = +this.seed;
         this.recordData.seed = this.seed;
+        this.recordData.username = this.players.map(p => p.name);
+        this.recordData.shareCode = this.shareCodes;
+        this.recordData.isExecuting = false;
+        this.recordData.isPlaying = false;
         const d = new Date();
         const format = (n: number) => String(n).padStart(2, '0');
         if (this.env != 'test') console.info(`[${this.id}]start-seed:${this.seed}`);
@@ -600,7 +605,7 @@ export default class GeniusInvokationRoom {
         this.systemLog = '';
         this.errorLog = [];
         this.reporterLog = [];
-        this.recordData.actionLog = [];
+        if (this.id > 0) this.recordData.actionLog = [];
         this.taskQueue.init();
         if (this.players[1].id == AI_ID) this._initAI();
         this.players.forEach(p => {
@@ -658,12 +663,12 @@ export default class GeniusInvokationRoom {
      */
     getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket, isRecord?: boolean) {
         if (this.taskQueue.isExecuting) return;
+        if (this.id < -1 && !isRecord && actionData.type != ACTION_TYPE.PlayRecord && actionData.type != ACTION_TYPE.PuaseRecord) return;
         if (this.id > 0) this.recordData.actionLog.push({ actionData, pidx });
         const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
-            summonIdx = -1, supportIdx = -1, shareCode = '', actionLog, flag = 'noflag' } = actionData;
+            summonIdx = -1, supportIdx = -1, shareCode = '', recordData, flag = 'noflag' } = actionData;
         const player = this.players[pidx];
         // this.resetHeartBreak(pidx);
-        if (actionData.type != ACTION_TYPE.PlayRecord && isRecord) return;
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 if (this.players.length < PLAYER_COUNT) return this.emit('playersError', pidx, { socket, tip: `玩家为${PLAYER_COUNT}人才能开始游戏` });
@@ -679,7 +684,7 @@ export default class GeniusInvokationRoom {
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
                 if (this.winner > -1 && this.winner < PLAYER_COUNT) this.winner += PLAYER_COUNT;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
-                    this.start(pidx, flag);
+                    this.start(pidx, flag, this.recordData.seed);
                 } else {
                     this.emit(flag, pidx);
                 }
@@ -731,18 +736,47 @@ export default class GeniusInvokationRoom {
                 this._pickCard(pidx, cardIdxs[0], skillId);
                 break;
             case ACTION_TYPE.PlayRecord:
-                if (actionLog) this.recordData.actionLog = actionLog;
-                this.recordData.isPlaying = flag.includes('play');
+                if (this.recordData.isPlaying) return;
+                if (recordData) this.recordData = recordData;
+                if (!this.isStart) {
+                    this.players.forEach(p => {
+                        const shareCodes = this.recordData.shareCode;
+                        const { heroIds, cardIds } = parseShareCode(shareCodes[p.pidx]);
+                        this.getAction({ type: ACTION_TYPE.StartGame, heroIds, cardIds, shareCode: shareCodes[p.pidx] }, p.pidx, socket, true);
+                    });
+                }
                 this.delay(0, async () => {
-                    while (this.recordData.isPlaying && this.recordData.actionLog.length > 0) {
-                        await wait(() => this.needWait, { maxtime: 3e6 });
-                        await this.delay(1000 + Math.random() * 500);
-                        if (!this.recordData.isPlaying) break;
-                        const { actionData, pidx } = this.recordData.actionLog.shift()!;
-                        this.getAction(actionData, pidx, socket, true);
+                    try {
+                        await wait(() => !this.recordData.isExecuting);
+                        this.recordData.isPlaying = true;
+                        while (this.recordData.isPlaying && this.recordData.actionLog.length > 0) {
+                            await this.delay(1e3 + Math.random() * 1e3);
+                            await wait(() => this.needWait || ([PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(this.phase), { maxtime: 3e6 });
+                            await this.delay((this.phase == PHASE.ACTION ? 4e3 : 5e2) + Math.random() * 1e3);
+                            this.recordData.isExecuting = true;
+                            if (!this.recordData.isPlaying) break;
+                            const { actionData, pidx } = this.recordData.actionLog.shift()!;
+                            const { phase } = this.players[pidx];
+                            if (
+                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(phase) ||
+                                actionData.type == ACTION_TYPE.ChangeCard && phase != PHASE.CHANGE_CARD && phase != PHASE.ACTION ||
+                                actionData.type == ACTION_TYPE.ChooseInitHero && phase != PHASE.CHOOSE_HERO ||
+                                actionData.type == ACTION_TYPE.Reroll && phase != PHASE.DICE && phase != PHASE.ACTION
+                            ) {
+                                this.recordData.actionLog.unshift({ actionData, pidx });
+                                continue;
+                            }
+                            this.getAction(actionData, pidx, socket, true);
+                        }
+                        this.recordData.isPlaying = false;
+                        this.recordData.isExecuting = false;
+                    } catch (e) {
+                        this.emitError('录像文件损坏');
                     }
-                    this.recordData.isPlaying = false;
                 });
+                break;
+            case ACTION_TYPE.PuaseRecord:
+                this.recordData.isPlaying = false;
                 break;
             default:
                 const a: never = actionData.type;
@@ -3097,17 +3131,19 @@ export default class GeniusInvokationRoom {
         const opponent = this.players[pidx ^ 1];
         const currCard = getCard ?? pickCard ?? player.handCards[cardIdx];
         if (!getCard && !pickCard) {
-            const preview = this.previews.find(pre =>
-                pre.type == ACTION_TYPE.UseCard &&
-                pre.cardIdxs?.[0] == cardIdx &&
-                (pre.heroIdxs?.length ?? 0) == selectHeros.length &&
-                pre.heroIdxs?.every(hi => selectHeros.includes(hi)) &&
-                (pre.summonIdx ?? -1) == selectSummon &&
-                (pre.supportIdx ?? -1) == selectSupport
-            );
-            if (!preview?.isValid) return this.emit('useCard-invalid', pidx, { socket, tip: '卡牌使用无效' });
-            const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
-            if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
+            if (this.id > 0) {
+                const preview = this.previews.find(pre =>
+                    pre.type == ACTION_TYPE.UseCard &&
+                    pre.cardIdxs?.[0] == cardIdx &&
+                    (pre.heroIdxs?.length ?? 0) == selectHeros.length &&
+                    pre.heroIdxs?.every(hi => selectHeros.includes(hi)) &&
+                    (pre.summonIdx ?? -1) == selectSummon &&
+                    (pre.supportIdx ?? -1) == selectSupport
+                );
+                if (!preview?.isValid) return this.emit('useCard-invalid', pidx, { socket, tip: '卡牌使用无效' });
+                const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
+                if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
+            }
             this._writeLog(`[${player.name}](${player.pidx})打出卡牌[${currCard.name}]`, 'info');
             this._doCmds(pidx, new CmdsGenerator().consumeDice(diceSelect));
         }
@@ -3428,8 +3464,7 @@ export default class GeniusInvokationRoom {
             // await this._execTask();
         }
         await this._execTask();
-        await wait(() => this.players.every(p => p.phase == PHASE.ACTION_START) &&
-            this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting, { maxtime: 6e6 });
+        await wait(() => this.players.every(p => p.phase == PHASE.ACTION_START) && this.needWait, { maxtime: 6e6 });
         // 回合开始阶段结束，进入行动阶段 phase-action
         this.phase = PHASE.ACTION;
         this.players[this.startIdx].status = PLAYER_STATUS.PLAYING;

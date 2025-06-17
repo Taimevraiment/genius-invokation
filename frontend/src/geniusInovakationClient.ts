@@ -91,7 +91,7 @@ export default class GeniusInvokationClient {
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 }; // 挑选卡牌
     watchers: number = 0; // 观战人数
-    recordData: RecordData = { seed: '', name: '', version: 'v3.3.0', actionLog: [] }; // 行动日志
+    recordData: RecordData = { seed: '', name: '', pidx: -1, username: [], shareCode: [], version: 'v3.3.0', actionLog: [] }; // 行动日志
     isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
     emit: (actionData: ActionData) => void; // 发送事件
@@ -145,6 +145,7 @@ export default class GeniusInvokationClient {
             this.tip == '' &&
             this.actionInfo.content == '' &&
             this.damageVO.dmgSource == 'null' &&
+            this.roomId > 0 &&
             this.players.every(p =>
                 p.UI.willGetCard.cards.length == 0 &&
                 p.UI.willAddCard.cards.length == 0 &&
@@ -462,9 +463,9 @@ export default class GeniusInvokationClient {
     /**
      * 开始游戏
      */
-    startGame() {
+    startGame(shareCode: string = '') {
         if (this.players.length < PLAYER_COUNT) return alert(`玩家为${PLAYER_COUNT}人才能开始游戏`);
-        const { shareCode = 'null' } = this.decks[this.deckIdx] ?? {};
+        if (shareCode == '') ({ shareCode = 'null' } = this.decks[this.deckIdx] ?? {});
         if (shareCode == 'null') return console.error('卡组未找到');
         if (!this.isDeckCompleteValid.isValid) return alert(this.isDeckCompleteValid.error);
         if (!this.isDeckVersionValid.isValid) return alert(this.isDeckVersionValid.error);

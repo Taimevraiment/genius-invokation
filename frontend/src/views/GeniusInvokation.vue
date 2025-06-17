@@ -1,24 +1,27 @@
 <template>
   <div class="container" :class="{ 'mobile-container': isMobile }" @click.stop="cancel">
-    <button v-if="!client.isStart || isLookon > -1 || hasAI" class="exit" @click.stop="exit">
+    <button v-if="!client.isStart || isLookon > -1 || hasAI || roomId < -1" class="exit" @click.stop="exit">
       返回
     </button>
     <div style="position: absolute;left: 60px;color: white;z-index: 6;">
       [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}]
-      房间号{{ roomId }}
-      <u @click.stop="sendLog">发送日志</u>
-      <u v-if="client.recordData.actionLog.length" @click.stop="exportLog" style="margin-left: 5px;">导出日志</u>
+      <span v-if="roomId > 0">房间号{{ roomId }}</span>
+      <span v-else>回放</span>
+      <u v-if="client.roomId > 0" @click.stop="sendLog" style="cursor: pointer;">发送日志</u>
+      <u v-if="client.recordData.actionLog.length && client.roomId > 0 && false" @click.stop="exportLog"
+        style="margin-left: 5px;cursor: pointer;">导出录像数据</u>
     </div>
     <div class="lookon-count" v-if="client.watchers > 0">
       <img src="@@/svg/lookon.svg" alt="旁观人数" />
       <div>{{ client.watchers }}</div>
     </div>
-    <button v-if="client.isStart && isLookon == -1 && client.phase >= PHASE.ACTION" class="exit" @click.stop="giveup">
+    <button v-if="client.isStart && isLookon == -1 && client.phase >= PHASE.ACTION && roomId > 0" class="exit"
+      @click.stop="giveup">
       投降
     </button>
     <div class="player-info">{{ client.player?.UI.info }}</div>
 
-    <div class="menu" v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN">
+    <div class="menu" v-if="isLookon == -1 && client.phase <= PHASE.NOT_BEGIN && client.roomId > 0">
       <button class="start" @click.stop="startGame">
         {{ client.player?.phase == PHASE.NOT_READY ? '准备开始' : '取消准备' }}
       </button>
@@ -78,7 +81,7 @@
         <StrokedText>{{ handCardsCnt[client.playerIdx ^ 1] }}</StrokedText>
       </div>
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
-      <img v-if="isLookon > -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
+      <img v-if="isLookon > -1 || client.roomId < -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
         @click.stop="lookonTo(client.opponent?.pidx ?? -1)" />
       <img class="legend-oppo" :src="getDiceBgIcon('legend-empty')" />
       <img v-if="!client.opponent.playerInfo.isUsedLegend" class="legend-oppo" :src="getDiceBgIcon('legend')" />
@@ -165,10 +168,10 @@
       </div>
     </div>
 
-    <!-- <div class="record-control">
-      <div>▶</div>
-      <div>| |</div>
-    </div> -->
+    <div class="record-control" v-if="client.roomId < 0">
+      <div class="record-btn" :class="{ active: client.recordData.isPlaying }" @click.stop="playRecord">▶</div>
+      <div class="record-btn" :class="{ active: !client.recordData.isPlaying }" @click.stop="puaseRecord">| |</div>
+    </div>
 
     <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" isInGame
       :round="client.round" :playerInfo="client.player.playerInfo" style="z-index: 10" />
@@ -229,6 +232,7 @@ import StrokedText from '@/components/StrokedText.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import { getSocket } from '@/store/socket';
 import {
+  ACTION_TYPE,
   CARD_TYPE,
   COST_TYPE,
   DICE_COST_TYPE_CODE_KEY,
@@ -459,6 +463,16 @@ const removeAI = () => {
   socket.emit('removeAI');
   hasAI.value = false;
 };
+// 播放录像
+const playRecord = () => {
+  client.value.recordData.isPlaying = true;
+  socket.emit('sendToServer', { type: ACTION_TYPE.PlayRecord, flag: 'playRecord' });
+}
+// 暂停录像
+const puaseRecord = () => {
+  client.value.recordData.isPlaying = false;
+  socket.emit('sendToServer', { type: ACTION_TYPE.PuaseRecord, flag: 'puaseRecord' });
+}
 
 const getPlayerList = ({ plist }: { plist: Player[] }) => {
   const me = plist.find(p => p.id == userid);
@@ -868,16 +882,16 @@ body {
   z-index: 6;
 }
 
-.record-control>div {
+.record-btn {
   cursor: pointer;
 }
 
-.record-control>div:hover {
+.record-btn:hover {
   color: #fed691;
 }
 
-.record-control>div.active {
-  color: #fcdca4;
+.record-btn.active {
+  color: #ffbe4d;
 }
 
 .menu {

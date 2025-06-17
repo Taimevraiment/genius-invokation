@@ -430,7 +430,7 @@
           <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%;">
             还可重投{{ rollCnt }}轮
           </div>
-          <button @click="reroll()" class="button" :class="{ 'not-show': !showRerollBtn }">
+          <button @click="reroll()" class="button" :class="{ 'not-show': !showRerollBtn }" v-if="client.roomId > 0">
             {{diceSelect.some(v => v) ? "重掷" : "确认"}}
           </button>
         </div>
@@ -440,11 +440,13 @@
             <Handcard :class="['init-card', card.UI.class ?? '']" v-for="(card, cidx) in initCards"
               :key="`${card.entityId}-initcard`" :card="card" :isMobile="isMobile" @click.stop="selectChangeCard(cidx)"
               :style="{ left: client.initcardsPos[cidx], top: '25%' }">
-              <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" v-if="initCardsSelect[cidx]" class="init-select" />
-              <div v-if="initCardsSelect[cidx]" class="init-select-text">替换</div>
+              <template v-if="initCardsSelect[cidx] && client.roomId > 0">
+                <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" class="init-select" />
+                <div class="init-select-text">替换</div>
+              </template>
             </Handcard>
           </div>
-          <button class="button" @click="changeCard" v-if="showChangeCardBtn">
+          <button class="button" @click="changeCard" v-if="showChangeCardBtn && client.roomId > 0">
             {{initCardsSelect.some(v => v) ? "换牌" : "确认手牌"}}
           </button>
         </div>
@@ -458,7 +460,7 @@
               <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
             </Handcard>
           </div>
-          <button class="button" @click="pickCard" v-if="pickCardIdx > -1">确认</button>
+          <button class="button" @click="pickCard" v-if="pickCardIdx > -1 && client.roomId > 0">确认</button>
         </div>
       </div>
 
@@ -1982,6 +1984,7 @@ const mouseup = () => {
   top: 30%;
   transform: scale(2.5);
   z-index: 1;
+  color: #13227a;
   pointer-events: none;
 }
 

@@ -52,14 +52,14 @@
         </div>
       </div>
       <div class="btn-group">
-        <!-- <button>导入回放<input type="file" @change="importFile" /></button> -->
+        <button v-if="false">导入回放<input type="file" accept=".gi" @change="importFile" /></button>
         <button @click="openRename">改名</button>
         <button @click="enterEditDeck">查看卡组</button>
         <button @click="openEnterRoom()">加入房间</button>
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.1.3</div>
+    <div class="version">v0.1.4</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
@@ -73,7 +73,7 @@ import CreateRoomModal from '@/components/CreateRoomModal.vue';
 import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import InfoModal from '@/components/InfoModal.vue';
 import { getSocket } from '@/store/socket';
-import { OFFLINE_VERSION, VERSION, Version } from '@@@/constant/enum';
+import { ACTION_TYPE, OFFLINE_VERSION, VERSION, Version } from '@@@/constant/enum';
 import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
@@ -83,7 +83,7 @@ import { genShareCode } from '@@@/utils/utils';
 import Cookies from 'js-cookie';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Card, Hero, InfoVO, Player, PlayerList, RoomList, Summon } from '../../../typing';
+import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -165,7 +165,8 @@ const cancelCreateRoom = () => {
 };
 
 // 创建房间
-const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean, isRecord?: boolean) => {
+const createRoom = (roomName: string, version: Version, roomPassword: string,
+  countdown: number, allowLookon: boolean, isRecord?: { pidx: number, oppoName: string }) => {
   isShowCreateRoom.value = false;
   socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, isRecord });
 };
@@ -198,19 +199,31 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 };
 
 // 导入回放
-// const importFile = (e: Event) => {
-//   const file = (e.target as HTMLInputElement).files?.[0];
-//   if (file) {
-//     const reader = new FileReader();
-//     reader.onload = e => {
-//       const recordData: RecordData = JSON.parse(e.target?.result?.toString() ?? '{}');
-//       createRoom(recordData.name, recordData.version, '', 0, false, true);
-//       // todo
-//       socket.emit('sendToServer', { type: ACTION_TYPE.PlayRecord, actionLog: recordData.actionLog, flag: 'play-record' });
-//     };
-//     reader.readAsText(file);
-//   }
-// }
+const importFile = (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) {
+    if (!file.name.endsWith('.gi')) return alert('请选择正确的回放文件');
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const recordData: RecordData = JSON.parse(e.target?.result?.toString() ?? '{}');
+        createRoom(recordData.name, recordData.version, '', 0, false, {
+          pidx: recordData.pidx,
+          oppoName: recordData.username[recordData.pidx ^ 1],
+        });
+        socket.emit('sendToServer', {
+          type: ACTION_TYPE.PlayRecord,
+          recordData,
+          flag: 'play-record',
+        });
+      } catch (e) {
+        alert('读取文件失败');
+        console.error(e);
+      }
+    };
+    reader.readAsText(file);
+  }
+}
 
 // 获取玩家和房间列表
 const getPlayerAndRoomList = ({ plist, rlist }: { plist: Player[]; rlist: RoomList; }) => {
