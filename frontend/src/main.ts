@@ -9,6 +9,6 @@ app.use(router)
 
 app.mount('#app')
 
-await navigator.serviceWorker?.register(`/sw.js`, {
+navigator.serviceWorker?.register(`/sw.js`, {
     scope: '/',
 });

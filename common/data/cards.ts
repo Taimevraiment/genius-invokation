@@ -668,7 +668,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     311509: () => barrierWeapon(483, '团结').name('船坞长剑').since('v5.7.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_ChuanwuJian.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/e9877c83e773561f7ff6592b3f4c1781_5275857443789679269.png'),
 
     312001: () => new CardBuilder(148).name('冒险家头带').offline('v2').relic().costSame(1).perCnt(3)
         .description('【角色使用「普通攻击」后：】治疗自身1点（每回合至多3次）。')
@@ -1147,7 +1147,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312033: () => new CardBuilder(484).name('诸圣的礼冠').since('v5.7.0').relic().costSame(1).perCnt(2)
         .description('【附属角色消耗「夜魂值」后：】该角色下次技能或[特技]造成伤害+1。（每回合2次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_HeiyaoXiao.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/9541c5197827be760578bf40262e2308_6667104550486422326.png')
         .handle((card, event) => {
             const { execmds, sourceHidx = -1, hero } = event;
             if (!hero || card.perCnt <= 0 || hero.hidx != sourceHidx) return;
@@ -1157,7 +1157,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312034: () => new CardBuilder(485).name('烬城勇者绘卷').since('v5.7.0').relic().costAny(3).perCnt(1)
         .description('【附属角色消耗「夜魂值」后：】使我方[充能]未满的一个角色获得1点[充能]，重复1次。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_JinchengYongzhe.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/51f24ba726b7df1001b780a64b34b000_192944399212306775.png')
         .handle((card, event) => {
             const { execmds, heros = [], hero } = event;
             if (card.perCnt <= 0 || !hero || heros.every(h => h.energy >= h.maxEnergy)) return;
@@ -1268,8 +1268,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/192ce5481c21e740b4630a0602b3e5b5_5955176255097578471.png'),
 
     313009: () => new CardBuilder(486).name('呀！呀！').since('v5.7.0').vehicle().costSame(2).useCnt(2)
-        .description('【入场时：】创建【sts301306】。（【我方打出特技牌时：】若本局游戏我方累计打出了6张特技牌，我方出战角色获得3点[护盾]，然后造成3点[物理伤害]）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Vehicle_Xiaokonglong.webp')
+        .description('【入场时：】创建【sts301306】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/5c419d53dba2e426fbe77e1371119e0b_6168980388855550066.png')
         .handle((_, { cmds }) => cmds.getStatus(301306).res),
 
     321001: () => new CardBuilder(179).name('璃月港口').offline('v1').place().costSame(2)
@@ -1620,7 +1620,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     330011: () => new CardBuilder(487).name('为「死」而战').since('v5.7.0').legend().costSame(1)
         .description('抓1张牌。；【我方场上每存在一个被击倒的角色：】我方剩余全体角色+2最大生命上限。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Yongye.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/9393e9b5eadd20f43a05543d415a631d_8559164828680161887.png')
         .handle((_, event) => {
             const { cmds, cmdsBefore, heros } = event;
             cmdsBefore.getCard(1);
@@ -1780,9 +1780,9 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds.heal(1, { hidxs, order: 1 });
         }),
 
-    331806: () => new CardBuilder(488).name('火与战争').since('v5.7.0').tag(CARD_TAG.LocalResonance).costSame(1).canSelectHero(1)
-        .description('选一个我方角色，使其附属「重燃」为1的【sts303240】。（本回合内该角色被击倒时，消耗等同于「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值，然后「重燃」+1）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_FireWar.webp')
+    331806: () => new CardBuilder(489).name('火与战争').since('v5.7.0').tag(CARD_TAG.LocalResonance).costSame(1).canSelectHero(1)
+        .description('选一个我方角色，使其附属「重燃」为1的【sts303240】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/884a6c5256fdf570dafe5adc5c0eb9b1_6127011854622496025.png')
         .handle(() => ({ status: 303240 })),
 
     332001: () => new CardBuilder(241).name('最好的伙伴！').offline('v1').event().costAny(2)
@@ -2170,9 +2170,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/01/258999284/3d3f334c85d5170dc49b6bab0a26a3c9_2475960371644413525.png')
         .handle((_, { cmds }) => (cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Vehicle }), { status: 303239 })),
 
-    332046: () => new CardBuilder(489).name('飞行队出击！').since('v5.7.0').event().costAny(3)
+    332046: () => new CardBuilder(488).name('飞行队出击！').since('v5.7.0').event().costAny(3)
         .description('随机[舍弃]至多2张原本元素骰费用最高的手牌，随后抓牌直至手牌中有4张牌。；【此牌在手牌被[舍弃]后：】抓1张牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_RongyiLong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/495fa2cc19ba2fa4ca9534c58a926b63_7007260530446437361.png')
         .handle((_, event) => {
             const { cmds, trigger } = event;
             if (trigger == 'discard') {
@@ -2185,7 +2185,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332048: () => new CardBuilder(490).name('健身的成果').since('v5.7.0').event().costSame(0).canSelectHero(1)
         .description('选一个我方角色，【我方其他角色[准备技能]时：】所选角色下次「元素战技」少花费1个元素骰。（至多触发2次，不可叠加）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_TujiaoLong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/7f21964cbcee8b0a691c3084d53e145e_3386390197183606658.png')
         .handle(() => ({ status: 303241 })),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
@@ -2301,7 +2301,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333028: () => new CardBuilder(491).name('丰稔之赐').since('v5.7.0').food().costSame(1).canSelectHero(1)
         .description('治疗目标角色1点，目标角色之后2次[准备技能]时：治疗自身1点。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_TujiaoLong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/bf2ec0fa0b9b29e7d9ab281075af73eb_586432453009953293.png')
         .handle((_, { cmds }) => (cmds.heal(1), { status: 303322 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
@@ -2423,7 +2423,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     211141: () => new CardBuilder(480).name('五重天的寒雨').since('v5.7.0').talent().costCryo(1).perCnt(1)
         .description('【敌方受到冻结或融化反应伤害后：】我方下2次造成的[水元素伤害]和[火元素伤害]+1，并使【hro】获得1点「夜魂值」。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Citlali.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/9ec020d270379d7f6e94952812af12e3_7325254312548425895.png')
         .handle((card, event) => {
             const { hero, hasDmg, execmds } = event;
             if (card.perCnt <= 0 || !hasDmg) return;
@@ -2643,7 +2643,8 @@ const allCards: Record<number, () => CardBuilder> = {
 
     213151: () => new CardBuilder(481).name('「人之名」解放').since('v5.7.0').talent().costPyro(1).perCnt(1)
         .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。〕；【我方打出特技牌后：】若可能，【hro】恢复1点「夜魂值」。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mavuika.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/7f0315e54bdbff9c6558af0465452bb5_6729482251847915815.png')
+        .explain(...Array.from({ length: 3 }, (_, i) => `botcrd11315${i + 4}`))
         .handle((card, event) => {
             const { hcard, hero, cmds, execmds } = event;
             cmds.pickCard(3, CMD_MODE.GetCard, { card: [113154, 113155, 113156] });
@@ -2853,7 +2854,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0').talent().event().costAnemo(1)
         .description('〔*[card][快速行动]：我方恰斯卡在场时，对该角色打出。〕；将一张【crd115113】加入手牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Chasca.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/d0d3e9ce9700c9ba9225042e22b0d25c_108209558149032615.png')
         .handle((_, { cmds }) => cmds.getCard(1, { card: 115113 }).res),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
@@ -3356,17 +3357,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
     113154: () => new CardBuilder().name('驰轮车·跃升').vehicle().userType().costAny(3).useCnt(2)
         .description('〔*[card]【此牌被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。〕；{vehicle}；（仅【hro】可用）')
-        .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sky_-1882047076')
-        .handle((_, event) => {
-            const { cmds, trigger } = event;
-            if (trigger != 'discard') return;
-            cmds.attack(1, DAMAGE_TYPE.Pyro)
-            return { triggers: 'discard' }
-        }),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/66a071da9eee7b682d84ec5b16417262_1569763485666904120.png')
+        .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
 
     113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costAny(2).useCnt(2)
         .description('〔*[card]【此卡牌被打出时：】随机触发我方1个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')
-        .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Sea_-1664946792')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b7987132c27e1baeebf379498453f17f_5843656174627783133.png')
         .handle((_, event) => {
             const { summons = [], cmds, randomInt } = event;
             if (randomInt && summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
@@ -3374,7 +3370,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costSame(1).useCnt(2)
         .description('〔*[card]【此卡牌可使用次数为0时：】抓4张牌。〕；{vehicle}；（仅【hro】可用）')
-        .src('tmp/UI_Gcg_CardFace_Summon_Mavuika_Land_528121626')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/31d5b53225a1014c8622d7dc2c9a0493_8192798041035888377.png')
         .handle((card, event) => { card.useCnt == 1 && event.execmds.getCard(4) }),
 
     114031: () => new CardBuilder().name('雷楔').talent().event(true).costElectro(3)
@@ -3393,11 +3389,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/e58400e1d1d763da8b03886edd298d0e_3195150843851699982.png'),
 
     115112: () => new CardBuilder().name('灵枪·仪式杖').vehicle().useNightSoul().costSame(0)
-        .src('tmp/UI_Gcg_CardFace_Summon_Chasca_Gun_1045046159'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/6ff110643c36e30384bde2805a97ca01_5779765981432713193.png'),
 
     115113: () => new CardBuilder().name('追影弹').event().costAnemo(3)
         .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。')
-        .src('tmp/UI_Gcg_CardFace_Summon_Chasca_Wind_-1066976300')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/be0fea5e603570c03e7c728698bdd297_5978114668085840517.png')
         .handle((card, event) => {
             const { hero, execmds, cmds } = event;
             const triggers: Trigger[] = ['discard'];

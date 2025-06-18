@@ -5682,7 +5682,10 @@ export default class GeniusInvokationRoom {
                     }
                 });
                 if (cnt == 0) cmds[i].cnt = heal;
-                if (isExec && cmd == 'revive') this._detectSkill(pidx, 'revive', { hidxs });
+                if (isExec && cmd == 'revive') {
+                    this._detectSkill(pidx, 'revive', { hidxs });
+                    this._detectStatus(pidx, STATUS_TYPE.NonDestroy, 'revive', { hidxs });
+                }
             } else if (cmd == 'changeSummon') {
                 const osummon = player.summons[ohidxs?.[0] ?? -1] ?? player.summons.find(s => s.id == ohidxs?.[0]);
                 if (!osummon) continue;

@@ -1068,7 +1068,7 @@ export default class GeniusInvokationClient {
      * @param pidx 要观战的玩家idx
      */
     lookonTo(pidx: number) {
-        if (this.isLookon == -1) return;
+        if (this.isLookon == -1 && this.roomId > 0) return;
         this.isLookon = pidx;
         this.socket.emit('roomInfoUpdate', { roomId: this.roomId, pidx });
     }

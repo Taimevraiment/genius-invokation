@@ -108,7 +108,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     13095: () => new SkillBuilder('焚落踢').description('{dealDmg}。').burst().readySkill().damage(3),
 
-    13155: () => new SkillBuilder('驰轮车·疾驰').description('【行动阶段开始时：】获得2个[万能元素骰]。')
+    13155: () => new SkillBuilder('驰轮车·疾驰').description('【行动阶段开始时：】生成2个[万能元素骰]。')
         .elemental().readySkill().handle(() => ({ status: 113158 })),
 
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。')
@@ -178,7 +178,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     1131541: () => new SkillBuilder('跃升').description('消耗1点「夜魂值」，{dealDmg}。')
-        .src('/image/tmp/Skill_Vehicle_Mavuika2_-899064990.png')
+        .src('/image/tmp/Skill_Vehicle_Mavuika2_-899064990.png',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/7cc24c2715c5ab0c4d6bd5a2959b9291_7360941024826114619.png')
         .vehicle().damage(4).costAny(1).handle(event => {
             const { skillAfter, hero: { hidx, heroStatus } } = event;
             skillAfter.consumeNightSoul(hidx);
@@ -186,11 +187,13 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         }),
 
     1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将2个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
-        .src('/image/tmp/Skill_Vehicle_Mavuika3_789405650.png')
+        .src('/image/tmp/Skill_Vehicle_Mavuika3_789405650.png',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/62a45ed9d0d6b948f17911a41aec92df_2245350266406096827.png')
         .vehicle().costSame(0).handle(({ cmds }) => (cmds.switchAfter().changeDice({ cnt: 2 }), { isQuickAction: true })),
 
     1131561: () => new SkillBuilder('疾驰').description('消耗1点「夜魂值」，然后[准备技能]：【rsk13155】。')
-        .src('/image/tmp/Skill_Vehicle_Mavuika1_2075538931.png')
+        .src('/image/tmp/Skill_Vehicle_Mavuika1_2075538931.png',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/7a6eed5e4c9fd02aec47a0afc97b38c2_4483242706754770532.png')
         .vehicle().costAny(2).handle(event => {
             const { skillAfter, hero: { hidx, heroStatus } } = event;
             skillAfter.consumeNightSoul(hidx).getStatus(113157);
@@ -295,7 +298,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().costAny(3).handle(() => ({ status: 301303 })),
 
     3130092: () => new SkillBuilder('呀！呀！').description('从牌库中抓1张【特技牌】，下次我方打出【特技牌】少花费2个元素骰。')
-        .src('/image/tmp/Skill_GCG_SaurusBaby_345786978.png')
+        .src('/image/tmp/Skill_GCG_SaurusBaby_345786978.png',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/20748df108ea0370a5060050796a2f1d_3076328206173195867.png')
         .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 
 }

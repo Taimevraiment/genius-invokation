@@ -566,7 +566,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111143: () => new StatusBuilder('伊兹帕帕').combatStatus().roundCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
-        .description('【我方受到伤害时：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，优先对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
+        .description('【我方角色受到伤害后：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，优先对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
         .handle((status, event) => {
             const { trigger, heros, cmds, source, isExecTask } = event;
             const hero = getObjById(heros, getHidById(status.id));
@@ -831,9 +831,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    112136: () => new StatusBuilder('细致入微的诊疗').heroStatus().useCnt(3).type(STATUS_TYPE.Hide, STATUS_TYPE.Usage)
-        .handle((_, event) => {
-            const { hidx = -1, source = -1, sourceHidx = -1, isExecTask, cmds } = event;
+    112136: () => new StatusBuilder('细致入微的诊疗').heroStatus().useCnt(3)
+        .type(STATUS_TYPE.Hide, STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy)
+        .handle((status, event) => {
+            const { hidx = -1, source = -1, sourceHidx = -1, isExecTask, cmds, trigger } = event;
+            if (trigger == 'revive') return { triggers: 'revive', exec: () => { status.useCnt = 3 } };
             if ((hidx != sourceHidx || source != 122) && !isExecTask) return;
             cmds.addMaxHp(1, hidx);
             return {
@@ -2624,7 +2626,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    301205: () => new StatusBuilder('诸圣的礼冠（生效中）').heroStatus().icon(STATUS_ICON.AtkUp).useCnt(1)
+    301205: () => new StatusBuilder('诸圣的礼冠（生效中）').heroStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('所附属角色下次造成的伤害或特技伤害+1。')
         .handle(status => ({ addDmgCdt: 1, triggers: ['skill', 'vehicle'], exec: () => status.minusUseCnt() })),

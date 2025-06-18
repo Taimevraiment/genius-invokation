@@ -693,11 +693,15 @@ watchEffect(() => {
     }
     slotExplain.value = [];
     info.value.equipments.forEach(slot => {
-      const desc = slot.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
+      const rawDesc = slot.UI.description.split(/(?<!\\)；/);
+      const desc = rawDesc.map(desc => wrapDesc(desc, { obj: slot, type: 'slot' })).filter(v => v != '');
       const isActionTalent = [CARD_SUBTYPE.Action, CARD_SUBTYPE.Talent].every(v => slot.hasSubtype(v));
       slot.UI.descriptions = isActionTalent ? desc.slice(1 + +desc[1].includes('立刻使用一次')) : desc;
       const onceDesc = slot.UI.descriptions.findIndex(v => /入场时(?:：|，)|才能打出/.test(v));
-      if (onceDesc > -1) slot.UI.descriptions.splice(onceDesc, 1);
+      if (onceDesc > -1) {
+        slot.UI.descriptions.splice(onceDesc, 1);
+        slot.UI.explains = slot.UI.explains.filter((v, vi) => !rawDesc[onceDesc].includes(v) || (vi != onceDesc && rawDesc[vi].includes(v)));
+      }
       slotExplain.value.push(wrapExpl(slot.UI.explains.slice(+isActionTalent), slot.id + slot.name));
       if (slot.hasSubtype(CARD_SUBTYPE.Vehicle)) {
         skills.value.unshift((info.value as Hero).vehicleSlot![1]);
