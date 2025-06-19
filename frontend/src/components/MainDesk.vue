@@ -393,7 +393,7 @@
                   {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
                 </StrokedText>
               </div>
-              <img class="summon-bottom-icon" v-if="!summon?.UI.isWill"
+              <img class="summon-bottom-icon" v-if="!summon?.UI.isWill && (summon.damage >= 0 || summon.shieldOrHeal != 0)"
                 :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
                 :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getPngIcon('Element_Heal')" />
               <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill">

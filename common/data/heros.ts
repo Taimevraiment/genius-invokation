@@ -1,5 +1,5 @@
 import { Hero, Trigger } from '../../typing';
-import { CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getMinHpHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
@@ -841,7 +841,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('称名之刻').description('本角色进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
                 .src('/image/tmp/Skill_S_Mavuika_01.webp',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/3b17437c8cb0d89864c9d3577ef3891a_5376680950361440983.png')
-                .explain(...Array.from({ length: 3 }, (_, i) => `botcrd11315${i + 4}`))
+                .explain(...Array.from({ length: 3 }, (_, i) => `botcrd${113154 + i}`))
                 .elemental().cost(2).handle(({ cmds }) => (
                     cmds.getNightSoul(2), {
                         statusPre: 113151,
@@ -1320,8 +1320,43 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('追影弹').description('对局开始时，将6枚【crd115113】随机放置进牌库。')
                 .src('/image/tmp/Skill_S_Chasca_06_-1060139079.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/b9d46ecac92d7c3463f2f8a36a986623_8667629559957280935.png')
-                .explain(...Array.from({ length: 4 }, (_, i) => `botcrd11511${i + 4}`))
+                .explain(...Array.from({ length: 4 }, (_, i) => `botcrd${115114 + i}`))
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 115113), { triggers: 'game-start' }))
+        ),
+
+    1512: () => new HeroBuilder(492).name('蓝砚').since('v5.8.0').liyue().anemo().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Lanyan.webp')
+        .avatar('/image/tmp/Avatar_LanYan.png')
+        .normalSkill(new NormalSkillBuilder('玄鸾画水'))
+        .skills(
+            new SkillBuilder('凤缕随翦舞').description('生成2层【sts115121】，然后{dealDmg}，如果此技能引发了扩散，则额外生成1层【sts115121】。；【此技能结算后：】我方切换到下一个角色。')
+                .src('/image/tmp/Skill_S_Lanyan_01.webp')
+                .elemental().damage(1).cost(3).handle(({ swirlEl, cmds }) => (
+                    cmds.switchAfter(), { status: [[115121, 2 + +!!swirlEl]] }
+                )),
+            new SkillBuilder('鹍弦踏月出').description('{dealDmg}。')
+                .src('/image/tmp/Skill_E_Lanyan_01.webp')
+                .burst(2).damage(5).cost(3)
+        ),
+
+    1513: () => new HeroBuilder(493).name('鹿野院平藏').since('v5.8.0').inazuma().anemo().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Heizo.webp')
+        .avatar('/image/tmp/Avatar_Heizo.png')
+        .normalSkill(new NormalSkillBuilder('不动流格斗术'))
+        .skills(
+            new SkillBuilder('勠心拳').description('[准备技能]：【rsk15135】。')
+                .src('/image/tmp/Skill_S_Heizo_01.webp')
+                .elemental().cost(3).handle(({ hero: { heroStatus } }) => ({
+                    status: 115131,
+                    isQuickAction: (getObjById(heroStatus, 115132)?.useCnt ?? 0) >= 2,
+                })),
+            new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的[聚风真眼]。')
+                .src('/image/tmp/Skill_E_Heizo_01.webp')
+                .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115133 + i}`))
+                .burst(2).damage(4).cost(3).handle(({ swirlEl }) => ({ statusOppo: isCdt(swirlEl, 115132 + ELEMENT_CODE[swirlEl!]) })),
+            new SkillBuilder('反论稽古').description('【我方引发了[风元素相关反应]后：】自身附属1层【sts115132】。')
+                .src('/image/tmp/UI_Talent_S_Heizo_05.webp')
+                .passive().handle(() => ({ triggers: ['elReaction-Anemo', 'other-elReaction-Anemo'], status: 115132 }))
         ),
 
     1601: () => new HeroBuilder(42).name('凝光').offline('v1').liyue().geo().catalyst()
@@ -1471,7 +1506,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('羽袖一触').description('从3个【nbotsmn116097】中[挑选]1个召唤。')
                 .src('https://patchwiki.biligame.com/images/ys/c/c1/o1q0bq8i2xiqwwtzpadn62ht0f1mk92.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8ef27719f84860001bce5a1f5df2dcd3_8474447068629975560.png')
-                .elemental().cost(3).explain(...Array.from({ length: 6 }, (_, i) => `botsmn11609${i + 1}`)).handle(event => {
+                .elemental().cost(3).explain(...Array.from({ length: 6 }, (_, i) => `botsmn${116091 + i}`)).handle(event => {
                     const { talent } = event;
                     return {
                         summonPre: isCdt(!!talent, 116094),
@@ -2429,6 +2464,34 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (hp - getdmg[hidx] > 7 || useCntPerRound) return;
                     cmds.getEnergy(1, { hidxs: hidx });
                     return { triggers: 'getdmg' }
+                })
+        ),
+
+    2704: () => new HeroBuilder(494).name('贪食匿叶龙山王').since('v5.8.0').maxHp(7).monster().dendro()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_HookwalkerPrimo.webp')
+        .avatar('/image/tmp/Avatar_HookwalkerPrimo.png')
+        .normalSkill(new NormalSkillBuilder('沉重尾击'))
+        .skills(
+            new SkillBuilder('喷吐草实').description('{dealDmg}，抓1张「料理」牌。')
+                .src('/image/tmp/MonsterSkill_S_HookwalkerPrimo_01.png')
+                .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Food, isFromPile: true }).res),
+            new SkillBuilder('榴果爆轰').description('{dealDmg}。')
+                .src('/image/tmp/MonsterSkill_E_HookwalkerPrimo_01_HD.png')
+                .burst(2).damage(5).dmgElement(DAMAGE_TYPE.Pyro).cost(3),
+            new SkillBuilder('贪食之王').description('自身不会【sts303300】。；【我方打出「料理」牌后：】随机附属1层【sts127041】或【sts127042】，或获得1点额外最大生命值。（每回合2次）')
+                .src('/image/tmp/MonsterSkill_S_HookwalkerPrimo_02.png')
+                .passive().perCnt(2).handle(event => {
+                    const { skill, hero: { hidx }, trigger, source, talent, card, cmds, randomInt } = event;
+                    if (trigger == 'pre-get-status') return { triggers: isCdt(source == 303300, 'pre-get-status'), isNotAddTask: true, isInvalid: true }
+                    const isFood = trigger == 'card' && card?.hasSubtype(CARD_SUBTYPE.Food) && skill.perCnt > 0;
+                    const isTalent = trigger == 'trigger' && source == talent?.id;
+                    if ((isFood || isTalent) && randomInt) {
+                        const ran = randomInt(2);
+                        if (ran == 0) cmds.getStatus(127041, { hidxs: hidx });
+                        else if (ran == 1) cmds.getStatus(127042, { hidxs: hidx });
+                        else cmds.addMaxHp(1, hidx);
+                        return { triggers: ['card', 'trigger'], exec: () => { isFood && --skill.perCnt } }
+                    }
                 })
         ),
 

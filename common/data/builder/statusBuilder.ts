@@ -218,8 +218,8 @@ export class StatusBuilder extends BaseBuilder {
     private _handle: ((status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionCompareFn) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: VersionCompareFn) => boolean, number][] = [];
-    private _barrierCnt: number = 1;
-    private _barrierUsage: number = 1;
+    private _barrierCnt: (status: Status) => number = () => 1;
+    private _barrierUsage: (status: Status) => number = () => 1;
     constructor(name: string) {
         super();
         this._name.set(['vlatest', name]);
@@ -336,12 +336,18 @@ export class StatusBuilder extends BaseBuilder {
         else this._barrierCdt.push([cdt, cnt]);
         return this;
     }
-    barrierCnt(cnt: number) {
-        this._barrierCnt = cnt;
+    barrierCnt(cnt: (status: Status) => number): StatusBuilder;
+    barrierCnt(cnt: number): StatusBuilder;
+    barrierCnt(cnt: number | ((status: Status) => number)) {
+        if (typeof cnt == 'number') this._barrierCnt = () => cnt;
+        else this._barrierCnt = cnt;
         return this;
     }
-    barrierUsage(cnt: number) {
-        this._barrierUsage = cnt;
+    barrierUsage(cnt: (status: Status) => number): StatusBuilder;
+    barrierUsage(cnt: number): StatusBuilder;
+    barrierUsage(cnt: number | ((status: Status) => number)) {
+        if (typeof cnt == 'number') this._barrierUsage = () => cnt;
+        else this._barrierUsage = cnt;
         return this;
     }
     done() {
@@ -365,11 +371,11 @@ export class StatusBuilder extends BaseBuilder {
                 const summon = summons.find(smn => smn.id == status.summonId);
                 return {
                     triggers,
-                    restDmg: Math.max(0, restDmg - this._barrierCnt),
+                    restDmg: Math.max(0, restDmg - this._barrierCnt(status)),
                     exec: () => {
-                        if (status.useCnt > 0) status.minusUseCnt(this._barrierUsage);
-                        if (summon && summon.statusId != -1 && this._summonId != -1) summon.minusUseCnt(this._barrierUsage);
-                        if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt);
+                        if (status.useCnt > 0) status.minusUseCnt(this._barrierUsage(status));
+                        if (summon && summon.statusId != -1 && this._summonId != -1) summon.minusUseCnt(this._barrierUsage(status));
+                        if (getdmg.length > 0) getdmg[hidx] = Math.max(0, restDmg - this._barrierCnt(status));
                     }
                 }
             } : (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => this._handle?.(status, event, ver) ?? {};

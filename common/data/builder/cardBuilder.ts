@@ -155,11 +155,10 @@ export class GICard {
                     isValid: heros?.some(h => !hasObjById(h.heroStatus, 303300)),
                     ...res,
                     status: [...ressts, 303300],
-                    canSelectHero: cmds?.hasCmds('heal') ?
-                        heros?.map((h, hi) => (res.canSelectHero?.[hi] ?? true) && h.hp < h.maxHp && h.hp > 0) :
-                        cmds.hasCmds('revive') ?
-                            heros?.map((h, hi) => (res.canSelectHero?.[hi] ?? true) && h.hp <= 0 && !hasObjById(combatStatus, 303307)) :
-                            res.canSelectHero,
+                    canSelectHero: res.canSelectHero != undefined ? res.canSelectHero :
+                        cmds?.hasCmds('heal') ? heros?.map(h => h.hp < h.maxHp && h.hp > 0) :
+                            cmds.hasCmds('revive') ? heros?.map(h => h.hp <= 0 && !hasObjById(combatStatus, 303307)) :
+                                res.canSelectHero,
                     notPreview: true,
                 }
             }

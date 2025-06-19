@@ -7,7 +7,7 @@
       [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}]
       <span v-if="roomId > 0">房间号{{ roomId }}</span>
       <span v-else>回放</span>
-      <u v-if="client.roomId > 0" @click.stop="sendLog" style="cursor: pointer;">发送日志</u>
+      <u v-if="client.roomId > 0" @click.stop="sendLog" style="margin-left: 5px;cursor: pointer;">发送日志</u>
       <u v-if="client.recordData.actionLog.length && client.roomId > 0 && false" @click.stop="exportLog"
         style="margin-left: 5px;cursor: pointer;">导出录像数据</u>
     </div>
@@ -499,8 +499,8 @@ onUnmounted(() => {
 // dev
 let prodEnv = 0;
 const maskOpacity = ref<number>(0.7);
-const isOpenMask = ref<boolean>(true);
-// const isOpenMask = ref<boolean>(false);
+// const isOpenMask = ref<boolean>(true);
+const isOpenMask = ref<boolean>(false);
 const devOps = (cidx = 0) => {
   if ((client.value.phase < PHASE.DICE && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');

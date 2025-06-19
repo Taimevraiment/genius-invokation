@@ -199,6 +199,7 @@ type TrgOther = 'other-' | '';
 type TrgAfter = 'after-' | '';
 type TrgActive = 'active-' | '';
 type TrgDice = 'add-' | 'minus-' | '';
+type TrgPre = 'pre-' | '';
 
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
     'end-phase' | 'any-end-phase' | `${TrgAfter}${TrgOther}skill${TrgOppo}` | `${TrgAfter}${TrgOther}skilltype${SkillType}` |
@@ -207,10 +208,10 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
-    `heal${TrgOppo}` | `${TrgOther}heal` | 'pre-heal' | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
+    `heal${TrgOppo}` | `${TrgOther | TrgPre}heal` | 'useReadySkill' | 'status-destroy' | 'summon-destroy' | 'slot-destroy' | 'support-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
-    `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | 'get-status' |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'consumeNightSoul' | 'pre-consumeNightSoul' |
+    `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | `${TrgPre}get-status` |
+    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
     'getNightSoul' | 'ready-skill' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;

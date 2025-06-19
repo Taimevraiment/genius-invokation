@@ -13,6 +13,7 @@ export type SupportHandleEvent = {
     eCombatStatus?: Status[],
     eSupports?: Support[],
     heros?: Hero[],
+    summons?: Summon[],
     supports?: Support[],
     pile?: Card[],
     reset?: boolean,
@@ -39,6 +40,8 @@ export type SupportHandleEvent = {
     isExecTask?: boolean,
     sourceStatus?: Status,
     getCardIds?: (filter?: (card: Card) => boolean) => number[],
+    randomInt?: (len?: number) => number,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
 
 export type SupportHandleRes = {
@@ -445,16 +448,44 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 「沃陆之邦」
-    321028: () => new SupportBuilder().permanent().handle((_, event) => {
-        const { trigger, hidx = -1, heros = [], hidxs: [fhidx] = [-1] } = event;
+    321028: () => new SupportBuilder().permanent().handle((_, event) => ({
+        triggers: ['ready-skill', 'switch'],
+        exec: (_, cmds) => {
+            const { trigger, hidx = -1, heros = [], hidxs: [fhidx] = [-1] } = event;
+            const hidxs = trigger == 'ready-skill' ? fhidx : hidx;
+            const cnt = trigger == 'ready-skill' ? 3 : 2;
+            cmds.getStatus([[301025, cnt]], { hidxs });
+            const ocnt = getObjById(heros[hidxs].heroStatus, 301025)?.useCnt ?? 0;
+            if (ocnt < 3 && ocnt + cnt >= 3) cmds.heal(1, { hidxs });
+        }
+    })),
+    // 墨色酒馆
+    321029: () => new SupportBuilder().collection(3).handle((_, event) => {
+        const { trigger, summons = [], randomInArr } = event;
+        if (trigger == 'enter') return { triggers: 'enter', exec: (_, cmds) => cmds.getCard(1, { card: [301034, 301035, 301036] }).res }
+        if (trigger != 'end-phase') return;
+        const [selectSummon] = randomInArr?.(summons.filter(s => [301028, 301029, 301030, 301031].includes(s.id))) ?? [];
+        if (!selectSummon) return;
         return {
-            triggers: ['ready-skill', 'switch'],
-            exec: (_, cmds) => {
-                const hidxs = trigger == 'ready-skill' ? fhidx : hidx;
-                const cnt = trigger == 'ready-skill' ? 3 : 2;
-                cmds.getStatus([[301025, cnt]], { hidxs });
-                const ocnt = getObjById(heros[hidxs].heroStatus, 301025)?.useCnt ?? 0;
-                if (ocnt < 3 && ocnt + cnt >= 3) cmds.heal(1, { hidxs });
+            triggers: 'end-phase',
+            exec: (spt, cmds) => {
+                cmds.summonTrigger(summons.findIndex(s => s.entityId == selectSummon.entityId));
+                --spt.cnt;
+            }
+        }
+    }),
+    // 星轨王城
+    321030: () => new SupportBuilder().collection().handle((support, event) => {
+        const { trigger } = event;
+        return {
+            triggers: ['enter', 'skill'],
+            supportCnt: isCdt(trigger == 'skill', support.cnt < 2 ? 1 : -3),
+            exec: (spt, cmds) => {
+                if (trigger == 'enter') return cmds.getCard(1, { card: 301033 }).res;
+                if (trigger == 'skill' && ++spt.cnt == 2) {
+                    spt.cnt = 0;
+                    cmds.getStatus(301032);
+                }
             }
         }
     }),
@@ -860,6 +891,16 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: spt => { event.isMinusDiceSkill && --spt.perCnt }
         }
     }),
+    // 森林的祝福
+    322029: () => new SupportBuilder().permanent().handle(() => ({
+        triggers: ['enter', 'elReaction'],
+        exec: (_, cmds) => cmds.getCard(1, { card: [301034, 301035, 301036] }).res,
+    })),
+    // 预言女神的礼物
+    322030: () => new SupportBuilder().permanent().handle(() => ({
+        triggers: 'enter',
+        exec: (_, cmds) => cmds.getCard(1, { card: 301033 }).addCard(1, 301033).res,
+    })),
     // 参量质变仪
     323001: () => new SupportBuilder().collection().handle(support => ({
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],
