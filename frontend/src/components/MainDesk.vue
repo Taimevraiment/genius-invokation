@@ -367,7 +367,7 @@
                 <div style="position: absolute; width: 100%; height: 100%;top: 0;"
                   :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
               </div>
-              <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.icon)" />
+              <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.topIcon)" />
               <StrokedText class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
                 v-if="!summon?.UI.isWill">
                 {{ summon.useCnt }}
@@ -393,12 +393,14 @@
                   {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
                 </StrokedText>
               </div>
-              <img class="summon-bottom-icon" v-if="!summon?.UI.isWill && (summon.damage >= 0 || summon.shieldOrHeal != 0)"
-                :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
-                :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getPngIcon('Element_Heal')" />
-              <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill">
-                {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
-              </StrokedText>
+              <template v-if="!summon?.UI.isWill && (summon.damage >= 0 || summon.shieldOrHeal != 0)">
+                <img class="summon-bottom-icon"
+                  :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
+                  :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : getPngIcon('Element_Heal')" />
+                <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill">
+                  {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal }}{{ summon.UI.hasPlus ? "+" : "" }}
+                </StrokedText>
+              </template>
             </div>
           </div>
         </div>

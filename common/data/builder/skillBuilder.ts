@@ -3,7 +3,7 @@ import {
     COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, SKILL_TYPE, SkillCostType,
     SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
-import { ELEMENT_NAME } from "../../constant/UIconst.js";
+import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getHidById } from "../../utils/gameUtil.js";
 import { clone, convertToArray, isCdt } from "../../utils/utils.js";
@@ -69,9 +69,8 @@ export class GISkill {
             description,
             src: convertToArray(src).filter(v => v != '').map(v => {
                 if (v?.startsWith('#')) {
-                    const prefix = 'https://gi-tcg-assets.guyutongxue.site/api/v2/images/';
-                    if (v == '#') return `${prefix}${id}`;
-                    return `${prefix}${v.slice(1)}`;
+                    if (v == '#') return `${GUYU_PREIFIX}${id}`;
+                    return `${GUYU_PREIFIX}${v.slice(1)}`;
                 }
                 return v;
             })[0] ?? '',

@@ -976,33 +976,36 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     127025: () => crd12702summon(),
 
-    301028: (src: string, isEnhance: boolean = false) =>
-        new SummonBuilder('积木小人').useCnt(2).damage(1 + +isEnhance).physical().description('{defaultAtk。}').src(src),
+    301028: (enhance: number = 0) => new SummonBuilder('积木小人').useCnt(2).damage(1 + enhance).physical().description('{defaultAtk。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_JimuBing.png'),
 
-    301029: (src: string, isEnhance: boolean = false) => new SummonBuilder('折纸飞鼠').useCnt(2).src(src)
-        .description(`【结束阶段：】获得${1 + +isEnhance}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
+    301029: (enhance: number = 0) => new SummonBuilder('折纸飞鼠').useCnt(2)
+        .description(`【结束阶段：】获得${1 + enhance}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                cmds.getStatus([[169, 1 + +isEnhance]]);
+                cmds.getStatus([[169, 1 + enhance]]);
                 smn.minusUseCnt();
             }
         })),
 
-    301030: (src: string, isEnhance: boolean = false) => new SummonBuilder('跳跳纸蛙').useCnt(2).src(src)
-        .description(`【结束阶段：】抓${1 + +isEnhance}张牌。；[useCnt]`)
+    301030: (enhance: number = 0) => new SummonBuilder('跳跳纸蛙').useCnt(2)
+        .description(`【结束阶段：】抓${1 + enhance}张牌。；[useCnt]`)
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiWa.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                cmds.getCard(1 + +isEnhance);
+                cmds.getCard(1 + enhance);
                 smn.minusUseCnt();
             }
         })),
 
-    301031: (src: string, isEnhance: boolean = false) => new SummonBuilder('折纸胖胖鼠').useCnt(2).heal(1 + +isEnhance).src(src)
+    301031: (enhance: number = 0) => new SummonBuilder('折纸胖胖鼠').useCnt(2).heal(1 + enhance)
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
             exec: execEvent => {
@@ -1011,7 +1014,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    302201: (src: string) => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical().description('{defaultAtk。}').src(src),
+    302201: () => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical().description('{defaultAtk。}')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png'),
 
     303211: () => new SummonBuilder('冰箭丘丘人').useCnt(2).damage(1).cryo().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png'),

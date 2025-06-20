@@ -462,14 +462,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 墨色酒馆
     321029: () => new SupportBuilder().collection(3).handle((_, event) => {
         const { trigger, summons = [], randomInArr } = event;
-        if (trigger == 'enter') return { triggers: 'enter', exec: (_, cmds) => cmds.getCard(1, { card: [301034, 301035, 301036] }).res }
-        if (trigger != 'end-phase') return;
-        const [selectSummon] = randomInArr?.(summons.filter(s => [301028, 301029, 301030, 301031].includes(s.id))) ?? [];
-        if (!selectSummon) return;
+        if (trigger == 'enter') return { triggers: 'enter', exec: (_, cmds) => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
+        if (trigger != 'end-phase' || !randomInArr) return;
+        const selectSummons = summons.filter(s => [301028, 301029, 301030, 301031].includes(s.id)) ?? [];
+        if (selectSummons.length == 0) return;
         return {
             triggers: 'end-phase',
             exec: (spt, cmds) => {
-                cmds.summonTrigger(summons.findIndex(s => s.entityId == selectSummon.entityId));
+                cmds.summonTrigger(summons.findIndex(s => s.entityId == randomInArr(selectSummons)[0].entityId));
                 --spt.cnt;
             }
         }
@@ -656,7 +656,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 田铁嘴
     322011: () => new SupportBuilder().round(2).handle((_, event) => {
-        const hidxs = allHidxs(event.heros, { cdt: h => h.energy < h.maxEnergy, limit: 1 });
+        const hidxs = allHidxs(event.heros, { cdt: h => h.energy != h.maxEnergy, limit: 1 });
         if (hidxs.length == 0) return;
         return {
             triggers: 'phase-end',
@@ -666,7 +666,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 刘苏
     322012: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
         const { heros = [], hidx = -1 } = event;
-        if (support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) > 0) return;
+        if (support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) != 0) return;
         return {
             triggers: 'switch',
             supportCnt: -1,
@@ -844,7 +844,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (event.card?.id != 302202) return;
         return {
             triggers: 'card',
-            summon: isCdt(support.cnt == 1, [[302201, support.card.UI.src]]),
+            summon: isCdt(support.cnt == 1, 302201),
             exec: spt => ({ isDestroy: ++spt.cnt >= 2 }),
         }
     }),
@@ -894,7 +894,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 森林的祝福
     322029: () => new SupportBuilder().permanent().handle(() => ({
         triggers: ['enter', 'elReaction'],
-        exec: (_, cmds) => cmds.getCard(1, { card: [301034, 301035, 301036] }).res,
+        exec: (_, cmds) => cmds.getCard(1, { include: [301034, 301035, 301036] }).res,
     })),
     // 预言女神的礼物
     322030: () => new SupportBuilder().permanent().handle(() => ({

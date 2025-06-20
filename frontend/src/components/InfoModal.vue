@@ -347,7 +347,7 @@ import { computed, onMounted, ref, watchEffect } from 'vue';
 
 import {
   CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
-  ELEMENT_NAME, ELEMENT_URL, ElementColorKey, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SKILL_TYPE_ABBR,
+  ELEMENT_NAME, ELEMENT_URL, ElementColorKey, GUYU_PREIFIX, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SKILL_TYPE_ABBR,
   SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
@@ -613,7 +613,7 @@ const getPngIcon = (name: string = '', isUseOnlineSrc: boolean = false) => {
   if (name.startsWith('http') || name == '') return name;
   if (isUseOnlineSrc) {
     if (name.includes('tmp')) return `/image/${name}.png`;
-    return `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${name}`;
+    return `${GUYU_PREIFIX}${name}`;
   }
   if (name.endsWith('-dice')) return getSvgIcon(name);
   if (name.startsWith('ski')) {

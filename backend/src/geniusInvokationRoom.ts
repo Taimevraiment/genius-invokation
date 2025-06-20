@@ -684,7 +684,7 @@ export default class GeniusInvokationRoom {
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
                 if (this.winner > -1 && this.winner < PLAYER_COUNT) this.winner += PLAYER_COUNT;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
-                    this.start(pidx, flag, this.recordData.seed);
+                    this.start(pidx, flag, isCdt(isRecord, this.recordData.seed));
                 } else {
                     this.emit(flag, pidx);
                 }
@@ -3557,6 +3557,8 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         this._detectSummon(pidx, 'end-phase');
         await this._execTask();
+        this._detectSupport(pidx, 'end-phase');
+        await this._execTask();
         this._doActionAfter(pidx);
         await this._execTask();
         if (this.players[pidx ^ 1].phase != PHASE.ACTION_END) {
@@ -5415,7 +5417,7 @@ export default class GeniusInvokationRoom {
                                     });
                                     this._detectSupport(cpidx ^ 1, etriggers, { isQuickAction: !isAction });
                                     if (this.taskQueue.isTaskEmpty()) this.emit('doCmd--getCard:getcard/drawcard-cancel', cpidx, { isQuickAction: !isAction });
-                                }]], { isImmediate });
+                                }]]);
                             } else {
                                 this._detectStatus(cpidx, STATUS_TYPE.Usage, atriggers, {
                                     players,
@@ -6167,7 +6169,7 @@ export default class GeniusInvokationRoom {
                         if (c != DICE_COST_TYPE.Omni) a[c] = (a[c] ?? 0) + 1;
                         return a;
                     }, {} as Record<DiceCostType, number>)))) < skill.cost[0].cnt - skill.costChange[0];
-                const isEnergy = skill.cost[2].cnt > 0 && skill.cost[2].cnt > Math.abs(energy);
+                const isEnergy = skill.cost[2].cnt > 0 && skill.cost[2].cnt > (skill.cost[2].type == COST_TYPE.Energy ? energy : -energy);
                 const needSelectSmn = skill.canSelectSummon != -1 && summons.length == 0;
                 const skillres = skill.handle({ skill, hero });
                 skillForbidden = isWaiting || this.phase != PHASE.ACTION || isNonAction || isLen || isElDice || isEnergy || !!skillres.isForbidden;
@@ -6545,7 +6547,7 @@ export default class GeniusInvokationRoom {
             if (csmnIdx > -1) { // 重复生成召唤物
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
-                oriSummon[csmnIdx].damage = smn.damage;
+                oriSummon[csmnIdx].damage = Math.max(oriSmn.damage, smn.damage);
                 if (!isExec) oriSummon[csmnIdx].UI.isAdd = true;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(this._genEntityId());

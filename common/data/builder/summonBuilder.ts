@@ -1,7 +1,7 @@
 import { Summon, Trigger, VersionCompareFn } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
-import { ELEMENT_NAME } from "../../constant/UIconst.js";
+import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
@@ -36,7 +36,8 @@ export class GISummon {
         src: string; // 图片url
         description: string; // 描述
         descriptions: string[], // 处理后的技能描述
-        icon: string, // 右上角图标
+        topIcon: string, // 右上角图标
+        bottomIcon: string, // 左下角图标
         hasPlus: boolean, // 是否有加号
         isWill: boolean, // 是否为将要生成的召唤物
         willChange: boolean, // 是否将要变化的召唤物
@@ -48,8 +49,8 @@ export class GISummon {
         shieldOrHeal: number, damage: number, element: ElementType,
         handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined,
         options: {
-            pct?: number, isTalent?: boolean, adt?: any[], pdmg?: number, isDestroy?: SummonDestroyType,
-            stsId?: number, spReset?: boolean, expl?: string[], icon?: string, pls?: boolean, ver?: Version,
+            pct?: number, isTalent?: boolean, adt?: any[], pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
+            spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version,
         } = {}
     ) {
         this.id = id;
@@ -61,7 +62,7 @@ export class GISummon {
         this.element = element;
         const {
             pct = 0, isTalent = false, adt = [], pdmg = 0, isDestroy = 0, stsId = -1,
-            spReset = false, expl = [], icon = '', pls = false, ver = VERSION[0],
+            spReset = false, expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0],
         } = options;
         const hid = getHidById(id);
         this.UI = {
@@ -73,7 +74,8 @@ export class GISummon {
                 .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
                 .replace(/(?<=【)hro(?=】)/g, `hro${hid}`),
             src,
-            icon,
+            topIcon,
+            bottomIcon,
             hasPlus: pls,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             isWill: false,
@@ -87,7 +89,7 @@ export class GISummon {
         this.pdmg = pdmg;
         this.isDestroy = isDestroy;
         this.statusId = stsId;
-        if (this.UI.src == '#') this.UI.src = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
+        if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
         this.handle = (summon, event = {}) => {
             const { reset, trigger } = event;
             if (reset) {
@@ -178,7 +180,8 @@ export class SummonBuilder extends BaseBuilder {
     private _addition: any[] = [];
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
     private _statusId: number = -1;
-    private _icon: string = 'TimeState';
+    private _topIcon: string = 'TimeState';
+    private _bottomIcon: string = '';
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
@@ -206,7 +209,7 @@ export class SummonBuilder extends BaseBuilder {
     }
     shield(shield: number) {
         this._shieldOrHeal = -shield;
-        this._icon = 'Barrier';
+        this._topIcon = 'Barrier';
         return this;
     }
     heal(heal: number) {
@@ -270,7 +273,11 @@ export class SummonBuilder extends BaseBuilder {
         return this;
     }
     collection() {
-        this._icon = 'Counter';
+        this._topIcon = 'Counter';
+        return this;
+    }
+    icon(icon: string) {
+        this._bottomIcon = icon;
         return this;
     }
     plus(plus: boolean = true) {
@@ -320,7 +327,8 @@ export class SummonBuilder extends BaseBuilder {
                 stsId,
                 spReset: this._spReset,
                 expl: this._explains,
-                icon: this._icon,
+                topIcon: this._topIcon,
+                bottomIcon: this._bottomIcon,
                 pls: this._hasPlus,
                 ver: this._curVersion,
             }

@@ -287,6 +287,8 @@ export const STATUS_ICON = {
     DebuffCostSwitch: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSwitch.webp',
 } as const;
 
+export const GUYU_PREIFIX = 'https://gi-tcg-assets.guyutongxue.site/api/v3/images/';
+
 export const REACTION_COLOR = {
     融化: '#f1d08e',
     蒸发: '#f6bd6f',

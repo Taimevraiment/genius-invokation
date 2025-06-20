@@ -372,7 +372,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     169: (cnt: number = 1) => new StatusBuilder('高效行动').combatStatus().icon(STATUS_ICON.Buff)
-        .useCnt(cnt).type(STATUS_TYPE.Usage)
+        .useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
         .description('【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
             const { switchHeroDiceCnt = 0 } = event;
@@ -589,10 +589,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     111141: nightSoul({ roundCnt: 2 }),
 
-    111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1').icon('tmp/UI_Gcg_Buff_Citlali_Shiled_586652224'),
+    111142: () => shieldCombatStatus('白曜护盾', 1, MAX_USE_COUNT).icon('ski,1').icon('#'),
 
     111143: () => new StatusBuilder('伊兹帕帕').combatStatus().roundCnt(2)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('tmp/UI_Gcg_Buff_Citlali_E1_1426922238')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Attack, STATUS_TYPE.Round).icon('#')
         .description('【我方角色受到伤害后：】减少1点【hro】的「夜魂值」，生成1层【sts111142】。；当【hro】获得「夜魂值」并使自身「夜魂值」等于2时，优先对敌方出战角色造成1点[冰元素伤害]。；[roundCnt]')
         .handle((status, event) => {
             const { trigger, heros, cmds, source, isExecTask } = event;
@@ -1110,7 +1110,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     113151: nightSoul({ isAccumate: false }),
 
-    113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').icon('tmp/UI_Gcg_Buff_Mavuika_S_-1066548432')
+    113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').icon('#')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方全体角色的技能不消耗「夜魂值」。；我方全体角色「普通攻击」造成的伤害+1。；[useCnt]')
         .handle(status => ({
@@ -1120,7 +1120,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { status.minusUseCnt() }
         })),
 
-    113153: () => new StatusBuilder('诸火武装·焚曜之环').combatStatus().icon('ski,1').icon('tmp/UI_Gcg_Buff_Mavuika_E_-205421090')
+    113153: () => new StatusBuilder('诸火武装·焚曜之环').combatStatus().icon('ski,1').icon('#')
         .type(STATUS_TYPE.Attack)
         .description('【我方其他角色使用「普通攻击」或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
@@ -2482,7 +2482,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('自身下次造成的伤害+1。（可叠加，没有上限）')
         .handle(status => ({ triggers: 'skill', addDmgCdt: status.useCnt, exec: () => status.dispose() })),
 
-    127042: () => new StatusBuilder('食足体健').heroStatus().icon(STATUS_ICON.Barrier).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
+    127042: () => new StatusBuilder('食足体健').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
         .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(status => status.useCnt).barrierUsage(status => status.useCnt),
 
     163011: () => new StatusBuilder('炽热').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
@@ -2700,7 +2700,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     301206: () => new StatusBuilder('未竟的遐思（生效中）').heroStatus().icon(STATUS_ICON.Debuff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('每层使所附属角色下次受到的伤害+1。（可叠加，没有上限）')
-        .handle(status => ({ getDmg: status.useCnt, exec: () => status.dispose() })),
+        .handle(status => ({ triggers: 'getdmg', getDmg: status.useCnt, exec: () => status.dispose() })),
 
     301301: () => shieldHeroStatus('掘进的收获'),
 
@@ -2713,7 +2713,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     301305: () => readySkillStatus('突角龙（生效中）', SKILL_TYPE.Normal, -1).icon('#'),
 
-    301306: () => new StatusBuilder('呀——！').combatStatus().icon('tmpski3130092').iconBg(STATUS_BG_COLOR.Physical)
+    301306: () => new StatusBuilder('呀——！').combatStatus().icon('#').iconBg(STATUS_BG_COLOR.Physical)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).useCnt(1)
         .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方出战角色获得3点[护盾]，然后造成3点[物理伤害]。')
         .handle((status, event) => {
@@ -3134,7 +3134,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     303240: () => new StatusBuilder('还魂诗').heroStatus().addCnt(0).useCnt(1).roundCnt(1)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon('tmp/UI_Gcg_Buff_Resurrection_-1515900563')
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon('#')
         .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
             const { hidx = -1, cmds, dicesCnt = 0 } = event;
@@ -3165,22 +3165,23 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
     303243: () => new StatusBuilder('很棒，哥们。（生效中）').combatStatus().roundCnt(1)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('下次使用【特技牌】后，生成1个[万能元素骰]。')
-        .handle((status, event) => {
+        .handle((_, event) => {
             const { hcard, cmds } = event;
             if (!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle)) return;
             cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
-            return { triggers: 'card', exec: () => status.dispose() }
+            return { triggers: 'card', isAddTask: true, exec: eStatus => eStatus?.dispose() }
         }),
 
     303244: () => new StatusBuilder('收获时间（生效中）').combatStatus().useCnt(1).maxCnt(2)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Round)
-        .description('【结束阶段：】生成一张【crd332049】，随机置入我方牌组。；[useCnt]')
-        .handle((_, { cmds }) => ({
+        .description('【结束阶段：】生成一张【crd332049】，随机置入我方牌组。（可叠加，最多叠加到2）')
+        .handle((status, { cmds }) => ({
             triggers: 'phase-end',
+            isAddTask: true,
             exec: eStatus => {
-                cmds.addCard(1, 332049);
-                eStatus?.minusUseCnt();
-            }
+                cmds.addCard(status.useCnt, 332049);
+                eStatus?.dispose();
+            },
         })),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().icon(STATUS_ICON.Food).roundCnt(1)

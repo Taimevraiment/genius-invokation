@@ -1,7 +1,7 @@
 import { Status, Trigger, VersionCompareFn } from "../../../typing";
 import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
-import { ELEMENT_ICON_NAME, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
+import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
@@ -123,7 +123,7 @@ export class GIStatus {
             this.UI.iconBg = STATUS_BG_COLOR.Transparent;
         }
         this.UI.icon = this.UI.icon.replace('tmpski', 'ski');
-        if (this.UI.icon == '#') this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/api/v2/images/${id}`;
+        if (this.UI.icon == '#') this.UI.icon = `${GUYU_PREIFIX}${id}`;
         else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
             if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {
                 this.UI.iconBg = STATUS_BG_COLOR[el];

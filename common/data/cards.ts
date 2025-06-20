@@ -623,7 +623,7 @@ const allCards: Record<number, () => CardBuilder> = {
             execmds.getEnergy(1);
             return {
                 addDmg: 1,
-                triggers: isCdt(card.perCnt > 0 && hero && hero.energy < hero.maxEnergy, 'skilltype2'),
+                triggers: isCdt(card.perCnt > 0 && hero && hero.energy != hero.maxEnergy, 'skilltype2'),
                 exec: () => card.minusPerCnt(),
             }
         }),
@@ -728,7 +728,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros = [], execmds } = event;
             const hidxs = getBackHidxs(heros);
-            const isTriggered = heros.some(h => hidxs.includes(h.hidx) && h.energy < h.maxEnergy);
+            const isTriggered = heros.some(h => hidxs.includes(h.hidx) && h.energy != h.maxEnergy);
             if (card.perCnt <= 0 || !isTriggered) return;
             execmds.getEnergy(1, { hidxs });
             return { triggers: 'skilltype3', exec: () => card.minusPerCnt() }
@@ -739,7 +739,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/82dc7fbd9334da0ca277b234c902a394_6676194364878839414.png')
         .handle((_, event) => {
             const { hero, execmds } = event;
-            if (!hero || hero.energy >= hero.maxEnergy) return;
+            if (!hero || hero.energy == hero.maxEnergy) return;
             execmds.getEnergy(1, { hidxs: hero.hidx });
             return { triggers: 'other-skilltype3' }
         }),
@@ -750,7 +750,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/361399b0aa575a2805da6765d3c0e17c_4972333427190668688.png')
         .handle((card, event, ver) => {
             const { hero, trigger, execmds } = event;
-            if (!hero || (trigger == 'other-skilltype3' && hero.energy >= hero.maxEnergy)) return;
+            if (!hero || (trigger == 'other-skilltype3' && hero.energy == hero.maxEnergy)) return;
             const isAddDmg = ver.lt('v4.1.0') || card.perCnt > 0;
             if (trigger == 'other-skilltype3') execmds.getEnergy(1, { hidxs: hero.hidx });
             return {
@@ -840,7 +840,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
             const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
-            const isAddDmg = (hero?.energy ?? 0) >= 2;
+            const isAddDmg = (Math.abs(hero?.energy ?? 0)) >= 2;
             return {
                 addDmgType1: isCdt(isAddDmg, 1),
                 addDmgType2: isCdt(isAddDmg, 1),
@@ -1140,7 +1140,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/7a6508ce85f6e89913c30f37d158150e_142786359709140614.png')
         .handle((card, event) => {
             const { hero, execmds } = event;
-            if (card.perCnt <= 0 || !hero || hero.energy >= hero.maxEnergy) return;
+            if (card.perCnt <= 0 || !hero || hero.energy == hero.maxEnergy) return;
             execmds.getEnergy(1, { hidxs: hero.hidx });
             return { triggers: 'vehicle', exec: () => card.minusPerCnt() }
         }),
@@ -1160,7 +1160,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/51f24ba726b7df1001b780a64b34b000_192944399212306775.png')
         .handle((card, event) => {
             const { execmds, heros = [], hero } = event;
-            if (card.perCnt <= 0 || !hero || heros.every(h => h.energy >= h.maxEnergy)) return;
+            if (card.perCnt <= 0 || !hero || heros.every(h => h.energy == h.maxEnergy)) return;
             const heroEnergy = heros.map(h => [h.energy, h.maxEnergy]);
             let count = 2;
             for (let i = 0; i < heros.length; ++i) {
@@ -1179,17 +1179,19 @@ const allCards: Record<number, () => CardBuilder> = {
     312035: () => new CardBuilder(498).name('未竟的遐思').since('v5.8.0').relic().costAny(2).perCnt(2)
         .description('【我方触发燃烧反应后：】敌方出战角色下次受到的伤害+1。（每回合2次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xiasi.webp')
-        .handle(card => {
+        .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            return { triggers: ['Burning', 'other-Burning'], statusOppo: 301206, exec: () => card.minusPerCnt() }
+            event.execmds.getStatus(301206, { isOppo: true });
+            return { triggers: ['Burning', 'other-Burning'], exec: () => card.minusPerCnt() }
         }),
 
     312036: () => new CardBuilder(499).name('谐律交响的前奏').since('v5.8.0').relic().costSame(0).perCnt(1)
         .description('【附属角色使用技能后：】双方出战角色附属1层【sts122】。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xielve.webp')
-        .handle(card => {
+        .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            return { triggers: 'skill', status: 122, statusOppo: 122, exec: () => card.minusPerCnt() }
+            event.execmds.getStatus(122).getStatus(122, { isOppo: true });
+            return { triggers: 'skill', exec: () => card.minusPerCnt() }
         }),
 
     312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
@@ -1700,12 +1702,12 @@ const allCards: Record<number, () => CardBuilder> = {
             const hidxs: number[] = [];
             for (const chidx of (ver.lt('v5.5.0') ? allHidxs : getBackHidxs)(heros)) {
                 const chero = heros[chidx];
-                if (chero.energy < chero.maxEnergy) {
+                if (chero.energy != chero.maxEnergy) {
                     hidxs.push(chidx);
                     break;
                 }
             }
-            if (ver.gte('v5.5.0') && hero && hero.energy < hero.maxEnergy) hidxs.unshift(hero.hidx);
+            if (ver.gte('v5.5.0') && hero && hero.energy != hero.maxEnergy) hidxs.unshift(hero.hidx);
             cmds.getEnergy(1, { hidxs });
             return { isValid: hidxs.length > 0 }
         }),
@@ -1876,7 +1878,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { heros = [], hero, cmds } = event;
             if (!hero) return;
             for (const hidx of getBackHidxs(heros, hero.hidx, Math.min(2, hero.maxEnergy - hero.energy))) {
-                if (heros[hidx].energy > 0) cmds.getEnergy(-1, { hidxs: hidx });
+                cmds.getEnergy(-1, { hidxs: hidx });
             }
             if (cmds.length > 0) cmds.getEnergy(cmds.length, { hidxs: hero.hidx });
             return { isValid: hero.maxEnergy != hero.energy && cmds.length > 0 }
@@ -2708,7 +2710,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { heros = [], execmds } = event;
             if (ver.gte('v4.2.0') && card.perCnt <= 0) return;
-            const hidxs = allHidxs(heros, { cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && h.energy < h.maxEnergy, limit: 1 });
+            const hidxs = allHidxs(heros, { cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && h.energy != h.maxEnergy, limit: 1 });
             if (hidxs.length == 0) return;
             execmds.getEnergy(1, { hidxs });
             return { triggers: 'skilltype2', exec: () => { ver.gte('v4.2.0') && card.minusPerCnt() } }
@@ -3473,13 +3475,13 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, notPreview: true }
         }),
 
-    115114: () => hero1511card(ELEMENT_TYPE.Pyro).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Fire_1813918232'),
+    115114: () => hero1511card(ELEMENT_TYPE.Pyro).src('#'),
 
-    115115: () => hero1511card(ELEMENT_TYPE.Hydro).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Water_2028798731'),
+    115115: () => hero1511card(ELEMENT_TYPE.Hydro).src('#'),
 
-    115116: () => hero1511card(ELEMENT_TYPE.Electro).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Elec_1210046806'),
+    115116: () => hero1511card(ELEMENT_TYPE.Electro).src('#'),
 
-    115117: () => hero1511card(ELEMENT_TYPE.Cryo).src('tmp/UI_Gcg_CardFace_Summon_Chasca_Ice_-1750746684'),
+    115117: () => hero1511card(ELEMENT_TYPE.Cryo).src('#'),
 
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')
@@ -3503,7 +3505,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, restDmg = -1, execmds } = event;
             if (restDmg == -1 || !hero) return;
-            const isBarrier = card.perCnt > 0 && !!hero?.energy;
+            const isBarrier = card.perCnt > 0 && hero.energy > 0;
             if (!isBarrier || restDmg == 0) return { restDmg }
             execmds.getEnergy(-1, { hidxs: hero.hidx }).getStatus(123032);
             return { restDmg: restDmg - 1, exec: () => card.minusPerCnt() }
@@ -3569,22 +3571,22 @@ const allCards: Record<number, () => CardBuilder> = {
     301033: () => new CardBuilder().name('积木小人').event().costSame(1)
         .description('召唤【smn301028】。')
         .src('tmp/UI_Gcg_CardFace_Summon_JimuBing')
-        .handle((card, { supports }) => ({ summon: [[301028, card.UI.src, !!hasObjById(supports?.map(s => s.card), 322030)]] })),
+        .handle((_, { supports }) => ({ summon: [[301028, supports?.filter(s => s.card.id == 322030).length]] })),
 
     301034: () => new CardBuilder().name('折纸飞鼠').event().costSame(1)
         .description('召唤【smn301029】。')
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu')
-        .handle((card, { supports }) => ({ summon: [[301029, card.UI.src, !!hasObjById(supports?.map(s => s.card), 322030)]] })),
+        .handle((_, { supports }) => ({ summon: [[301029, supports?.filter(s => s.card.id == 322030).length]] })),
 
     301035: () => new CardBuilder().name('跳跳纸蛙').event().costSame(1)
         .description('召唤【smn301030】。')
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiWa')
-        .handle((card, { supports }) => ({ summon: [[301030, card.UI.src, !!hasObjById(supports?.map(s => s.card), 322030)]] })),
+        .handle((_, { supports }) => ({ summon: [[301030, supports?.filter(s => s.card.id == 322030).length]] })),
 
     301036: () => new CardBuilder().name('折纸胖胖鼠').event().costSame(1)
         .description('召唤【smn301031】。')
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu')
-        .handle((card, { supports }) => ({ summon: [[301031, card.UI.src, !!hasObjById(supports?.map(s => s.card), 322030)]] })),
+        .handle((_, { supports }) => ({ summon: [[301031, supports?.filter(s => s.card.id == 322030).length]] })),
 
     302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0)
         .description('生成1个[万能元素骰]。')

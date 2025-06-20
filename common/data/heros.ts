@@ -260,7 +260,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('宿灵捕影'))
         .skills(
             new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点「夜魂值」。生成1点【sts111142】和【sts111143】。（角色进入【sts111141】后不可使用此技能）')
-                .src('/image/tmp/Skill_S_Citlali_01.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b1d0e25e76b566167390330c5effc80e_4161361711767872548.png')
                 .elemental().damage(2).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getNightSoul(), {
@@ -269,11 +269,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         isForbidden: hasObjById(heroStatus, 111141),
                     })),
             new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。如可能，获得2点「夜魂值」。')
-                .src('/image/tmp/Skill_E_Citlali_01.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/30e9d35220a7ae49e3f079842780de9e_7909253825080492582.png')
                 .burst(2).damage(2).cost(3).handle(({ cmds }) => (cmds.getNightSoul(2), { pdmg: 1 })),
             new SkillBuilder('奥秘传唱').description('【我方进行[挑选]或造成元素反应伤害后：】如可能，获得1点「夜魂值」。（每回合1次）')
-                .src('/image/tmp/UI_Talent_S_Mavuika_08.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/cad27b0e9146d4f1a743d5ae8a154aa2_6166204071621235420.png')
                 .passive().handle(event => {
                     const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds, dmg = [] } = event;
@@ -528,7 +528,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (trigger == 'status-destroy' && source == 122 && hasObjById(heros[sourceHidx]?.heroStatus, 112136)) {
                         triggers.push('status-destroy');
                     }
-                    if (trigger == 'switch-to' && hasObjById(combatStatus, 112101) && hero.energy < hero.maxEnergy) {
+                    if (trigger == 'switch-to' && hasObjById(combatStatus, 112101) && hero.energy != hero.maxEnergy) {
                         triggers.push('switch-to');
                         cmds.getEnergy(1, { hidxs: hero.hidx });
                     }
@@ -839,7 +839,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('以火织命'))
         .skills(
             new SkillBuilder('称名之刻').description('本角色进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
-                .src('/image/tmp/Skill_S_Mavuika_01.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/3b17437c8cb0d89864c9d3577ef3891a_5376680950361440983.png')
                 .explain(...Array.from({ length: 3 }, (_, i) => `botcrd${113154 + i}`))
                 .elemental().cost(2).handle(({ cmds }) => (
@@ -852,7 +852,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         }
                     })),
             new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点「夜魂值」，消耗自身全部*[战意]，对敌方出战角色造成等同于消耗*[战意]数量[火元素伤害]。；若消耗了6点*[战意]，则自身附属【sts113152】。')
-                .src('/image/tmp/Skill_E_Mavuika_01.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/000ee3af3827bb90f6449f66e46dceeb_7084427594096869810.png')
                 .burstSp(3).cost(4).handle(event => {
                     const { hero: { energy }, cmds } = event;
@@ -862,7 +862,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { statusPre: 113151, status, addDmgCdt: -energy }
                 }),
             new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
-                .src('/image/tmp/Skill_S_Mavuika_06_-650569527.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/73b4f45ecb5c27f78ccea53dd0459430_3782408909774728081.png')
                 .passive().handle(event => {
                     const { trigger = '', cmds, hero: { hidx, energy, maxEnergy } } = event;
@@ -1304,7 +1304,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('迷羽流击'))
         .skills(
             new SkillBuilder('灵缰追影').description('{dealDmg}，抓1张牌。；本角色附属【crd115112】，进入【sts115111】，并获得2点「夜魂值」。（角色进入【sts115111】后不可使用此技能）；【我方接下来2次「切换角色」时：】抓1张牌。')
-                .src('/image/tmp/Skill_S_Chasca_01.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/a17eb41be64eca6dd82798d28c726016_647712972431004942.png')
                 .elemental().damage(1).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getCard(1).getNightSoul(2), {
@@ -1314,11 +1314,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         isForbidden: hasObjById(heroStatus, 115111),
                     })),
             new SkillBuilder('索魂命袭').description('{dealDmg}，对敌方所有后台角色造成1点穿透伤害，并抓3张牌。')
-                .src('/image/tmp/Skill_E_Chasca_01.webp',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/37086ae15e5cd7d9beafd2a1e8f3e715_9061455789109395645.png')
                 .burst(2).damage(1).cost(3).handle(({ cmds }) => (cmds.getCard(3), { pdmg: 1 })),
             new SkillBuilder('追影弹').description('对局开始时，将6枚【crd115113】随机放置进牌库。')
-                .src('/image/tmp/Skill_S_Chasca_06_-1060139079.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/b9d46ecac92d7c3463f2f8a36a986623_8667629559957280935.png')
                 .explain(...Array.from({ length: 4 }, (_, i) => `botcrd${115114 + i}`))
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 115113), { triggers: 'game-start' }))
@@ -2243,7 +2243,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { eheros = [], heros = [], cmds } = event;
                     const ehero = eheros.find(h => h.isFront);
                     if (!ehero?.attachElement.includes(ELEMENT_TYPE.Electro) || ehero.energy == 0) return;
-                    const hidxs = allHidxs(heros, { cdt: h => h.energy < h.maxEnergy, limit: 1 });
+                    const hidxs = allHidxs(heros, { cdt: h => h.energy != h.maxEnergy, limit: 1 });
                     cmds.getEnergy(-1, { isOppo: true }).getEnergy(1, { hidxs });
                 }),
             new SkillBuilder('狂迸骇雷').description('{dealDmg}。如果目标[充能]不多于1，造成的伤害+2。')
@@ -2252,7 +2252,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).handle(event => {
                     const { eheros } = event;
                     const ehero = eheros?.find(h => h.isFront);
-                    if (!ehero || ehero.energy > 1 || ehero.maxEnergy < 0) return;
+                    if (!ehero || Math.abs(ehero.energy) > 1) return;
                     return { addDmgCdt: 2 }
                 }),
             new SkillBuilder('雷之新生').description('战斗开始时，初始附属【sts124061】。')
