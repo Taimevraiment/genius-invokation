@@ -2,6 +2,7 @@
 import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
+import { STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
@@ -979,7 +980,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     301028: (enhance: number = 0) => new SummonBuilder('积木小人').useCnt(2).damage(1 + enhance).physical().description('{defaultAtk。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_JimuBing.png'),
 
-    301029: (enhance: number = 0) => new SummonBuilder('折纸飞鼠').useCnt(2)
+    301029: (enhance: number = 0) => new SummonBuilder('折纸飞鼠').useCnt(2).addition(1 + enhance).icon(STATUS_ICON.Buff)
         .description(`【结束阶段：】获得${1 + enhance}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu.png')
         .handle(summon => ({
@@ -991,7 +992,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    301030: (enhance: number = 0) => new SummonBuilder('跳跳纸蛙').useCnt(2)
+    301030: (enhance: number = 0) => new SummonBuilder('跳跳纸蛙').useCnt(2).addition(1 + enhance).icon(STATUS_ICON.Special)
         .description(`【结束阶段：】抓${1 + enhance}张牌。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiWa.png')
         .handle(summon => ({

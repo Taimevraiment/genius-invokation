@@ -698,6 +698,7 @@ body {
 }
 
 .card.selected {
+  filter: brightness(1.2);
   transform: translateY(-15px);
 }
 
@@ -720,7 +721,6 @@ body {
 }
 
 .skill-will {
-  filter: brightness(1.2);
   z-index: 5;
 }
 

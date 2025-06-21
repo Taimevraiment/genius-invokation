@@ -478,11 +478,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     321030: () => new SupportBuilder().collection().handle((support, event) => {
         const { trigger } = event;
         return {
-            triggers: ['enter', 'skill'],
+            triggers: ['enter', 'skill', 'phase-end'],
             supportCnt: isCdt(trigger == 'skill', support.cnt < 2 ? 1 : -3),
             exec: (spt, cmds) => {
                 if (trigger == 'enter') return cmds.getCard(1, { card: 301033 }).res;
-                if (trigger == 'skill' && ++spt.cnt == 2) {
+                if (trigger == 'phase-end') spt.cnt = 0;
+                else if (trigger == 'skill' && ++spt.cnt == 2) {
                     spt.cnt = 0;
                     cmds.getStatus(301032);
                 }

@@ -9,7 +9,7 @@ import {
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
-import { ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
+import { ELEMENT_ICON_NAME, ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
@@ -247,6 +247,7 @@ const magicCount = (cnt: number, shareId?: number) => {
 const hero1511card = (el: SwirlElementType) => {
     return new CardBuilder().name(`焕光追影弹·${ELEMENT_NAME[el][0]}`).event().cost(3, el)
         .description(`【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
+        .src(`https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Chasca_${ELEMENT_ICON_NAME[ELEMENT_CODE[el]]}.webp`)
         .handle((_, event) => {
             event.cmds.attack(1, el, { isPriority: true }).addCard(1, 115113);
             return { triggers: 'discard', notPreview: true }
@@ -3475,13 +3476,13 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, notPreview: true }
         }),
 
-    115114: () => hero1511card(ELEMENT_TYPE.Pyro).src('#'),
+    115114: () => hero1511card(ELEMENT_TYPE.Pyro),
 
-    115115: () => hero1511card(ELEMENT_TYPE.Hydro).src('#'),
+    115115: () => hero1511card(ELEMENT_TYPE.Hydro),
 
-    115116: () => hero1511card(ELEMENT_TYPE.Electro).src('#'),
+    115116: () => hero1511card(ELEMENT_TYPE.Electro),
 
-    115117: () => hero1511card(ELEMENT_TYPE.Cryo).src('#'),
+    115117: () => hero1511card(ELEMENT_TYPE.Cryo),
 
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')

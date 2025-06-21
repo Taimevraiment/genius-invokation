@@ -8,6 +8,7 @@
     "preview": "vite preview --port 5500"
   },
   "dependencies": {
+    "@vueuse/core": "^13.4.0",
     "js-cookie": "^3.0.5",
     "socket.io-client": "^4.7.4",
     "vue": "^3.3.11",
