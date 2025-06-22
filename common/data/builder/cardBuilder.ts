@@ -134,6 +134,10 @@ export class GICard {
                         return { triggers: destroyTriggers, isDestroy: res.isDestroy ?? true }
                     }
                     if (trigger != 'vehicle' || res.triggers?.includes('vehicle')) return res;
+                    if (!!res.triggers) {
+                        cmds.clear();
+                        execmds.clear();
+                    }
                     return {
                         triggers: 'vehicle',
                         exec: () => {

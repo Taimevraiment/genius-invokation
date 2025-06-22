@@ -113,6 +113,10 @@
     </div>
 
     <div class="btn-group" v-if="client.isShowButton">
+      <div class="forbidden-card"
+        v-if="client.currCard.id > 0 && client.currCard.type == CARD_TYPE.Event && isNonEvent">
+        <StrokedText stroke-color="red">此牌效果将被无效</StrokedText>
+      </div>
       <button :class="{ forbidden: !client.isValid }" v-if="!client.isReconcile && client.currCard.id > 0 && canAction"
         @click.stop="useCard">
         出牌
@@ -841,6 +845,12 @@ body {
   color: #fff581;
   font-weight: bold;
   margin-bottom: 5px;
+}
+
+.forbidden-card {
+  position: absolute;
+  color: #fda3a3;
+  top: -100%;
 }
 
 .skill-cost {

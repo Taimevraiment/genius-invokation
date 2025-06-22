@@ -3426,7 +3426,7 @@ const allCards: Record<number, () => CardBuilder> = {
     113154: () => new CardBuilder().name('驰轮车·跃升').vehicle().userType().costAny(3).useCnt(2)
         .description('〔*[card]【此牌被[舍弃]后：】对敌方出战角色造成1点[火元素伤害]。〕；{vehicle}；（仅【hro】可用）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/66a071da9eee7b682d84ec5b16417262_1569763485666904120.png')
-        .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
+        .handle((_, { execmds }) => (execmds.attack(1, DAMAGE_TYPE.Pyro), { triggers: 'discard' })),
 
     113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costAny(2).useCnt(2)
         .description('〔*[card]【此卡牌被打出时：】随机触发我方1个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')

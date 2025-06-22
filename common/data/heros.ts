@@ -2475,8 +2475,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('贪食之王').description('自身不会【sts303300】。；【我方打出「料理」牌后：】随机附属1层【sts127041】或【sts127042】，或获得1点额外最大生命值。（每回合2次）')
                 .src('/image/tmp/MonsterSkill_S_HookwalkerPrimo_02.png')
                 .passive().perCnt(2).handle(event => {
-                    const { skill, hero: { hidx }, trigger, source, talent, card, cmds, randomInt } = event;
-                    if (trigger == 'pre-get-status') return { triggers: isCdt(source == 303300, 'pre-get-status'), isNotAddTask: true, isInvalid: true }
+                    const { skill, hero: { hidx }, trigger, source, sourceHidx, talent, card, cmds, randomInt } = event;
+                    if (trigger == 'pre-get-status') {
+                        return { triggers: isCdt(source == 303300, 'pre-get-status'), isNotAddTask: true, isInvalid: hidx == sourceHidx }
+                    }
                     const isFood = trigger == 'card' && card?.hasSubtype(CARD_SUBTYPE.Food) && skill.perCnt > 0;
                     const isTalent = trigger == 'trigger' && source == talent?.id;
                     if ((isFood || isTalent) && randomInt) {

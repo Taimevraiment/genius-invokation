@@ -1,5 +1,101 @@
 <template>
   <div class="info-outer-container">
+    <DefineTemplate>
+      <div class="info-equipment" v-if="(info as Hero).equipments.length > 0">
+        <div class="title">—— 角色装备 ——</div>
+        <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
+          <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
+            <span class="equipment-title-left">
+              <div class="equipment-icon"
+                :class="{ 'vehicle-icon': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }">
+                <img class="equipment-icon-img"
+                  :class="{ 'vehicle-icon-img': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }"
+                  :src="getEquipmentIcon((slot as Card).subType[0])" />
+              </div>
+              <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
+                {{ Math.floor((slot as Card).useCnt) }}
+              </div>
+              <span>{{ (slot as Card).name }}</span>
+            </span>
+            <span>{{ isEquipment[slidx] ? "▲" : "▼" }}</span>
+          </div>
+          <div v-if="isEquipment[slidx]"
+            @click.stop="showRule((slot as Card).UI.description, ...slotExplain[slidx].flat(2))">
+            <div class="equipment-desc" v-for="(desc, didx) in (slot as Card).UI.descriptions" :key="didx"
+              v-html="desc">
+            </div>
+            <div class="info-card-explain" v-for="(expl, eidx) in slotExplain[slidx]" :key="eidx">
+              <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
+        <div class="title">—— 角色状态 ——</div>
+        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ist.id"
+          class="status">
+          <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
+            <span class="status-title-left">
+              <div class="status-icon">
+                <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
+                <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
+                  filter: (getPngIcon(ist.UI.icon).startsWith('https') ||
+                    ist.UI.icon.startsWith('buff') ||
+                    ist.UI.icon.endsWith('dice')) && !getPngIcon(ist.UI.icon).includes('guyutongxue')
+                    ? getSvgFilter(ist.UI.iconBg) : ''
+                }" />
+                <div v-else style="color: white;">{{ ist.name[0] }}</div>
+                <div class="status-cnt" v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
+                  {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
+                </div>
+                <span>{{ ist.name }}</span>
+            </span>
+            <span>{{ isHeroStatus[idx] ? "▲" : "▼" }}</span>
+          </div>
+          <div v-if="isHeroStatus[idx]" @click.stop=" showRule(ist.UI.description, ...heroStatusExplain[idx].flat(2))">
+            <div class="status-desc" v-for="(desc, didx) in ist.UI.descriptions" :key="didx" v-html="desc"></div>
+            <div v-if="heroStatusExplain[idx].length > 0">
+              <div class="info-hero-status-explain" v-for="(expl, eidx) in heroStatusExplain[idx]" :key="eidx">
+                <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-if="combatStatus.length > 0" class="info-status">
+        <div class="title">—— 阵营出战状态 ——</div>
+        <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
+          class="status">
+          <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
+            <span class="status-title-left">
+              <div class="status-icon">
+                <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
+                <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)" :style="{
+                  filter: (getPngIcon(ost.UI.icon).startsWith('https') ||
+                    ost.UI.icon.startsWith('buff') ||
+                    ost.UI.icon.endsWith('dice')) && !getPngIcon(ost.UI.icon).includes('guyutongxue')
+                    ? getSvgFilter(ost.UI.iconBg) : ''
+                }" />
+                <div v-else style="color: white;">{{ ost.name[0] }}</div>
+                <div class="status-cnt" v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
+                  {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
+                </div>
+                <span>{{ ost.name }}</span>
+            </span>
+            <span>{{ isCombatStatus[idx] ? "▲" : "▼" }}</span>
+          </div>
+          <div v-if="isCombatStatus[idx]"
+            @click.stop="showRule(ost.UI.description, ...combatStatusExplain[idx].flat(2))">
+            <div class="status-desc" v-for="(desc, didx) in ost.UI.descriptions" :key="didx" v-html="desc"></div>
+            <div v-if="combatStatusExplain[idx].length > 0">
+              <div class="info-hero-status-explain" v-for="(expl, eidx) in combatStatusExplain[idx]" :key="eidx">
+                <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </DefineTemplate>
     <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
     <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
@@ -118,105 +214,6 @@
           </div>
         </div>
         <div v-if="type == INFO_TYPE.Skill && skills[skidx].type != SKILL_TYPE.Vehicle">
-          <DefineTemplate>
-            <div class="info-equipment" v-if="(info as Hero).equipments.length > 0">
-              <div class="title">—— 角色装备 ——</div>
-              <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
-                <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
-                  <span class="equipment-title-left">
-                    <div class="equipment-icon"
-                      :class="{ 'vehicle-icon': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }">
-                      <img class="equipment-icon-img"
-                        :class="{ 'vehicle-icon-img': (slot as Card).subType[0] == CARD_SUBTYPE.Vehicle }"
-                        :src="getEquipmentIcon((slot as Card).subType[0])" />
-                    </div>
-                    <div class="status-cnt" v-if="(slot as Card).useCnt > -1">
-                      {{ Math.floor((slot as Card).useCnt) }}
-                    </div>
-                    <span>{{ (slot as Card).name }}</span>
-                  </span>
-                  <span>{{ isEquipment[slidx] ? "▲" : "▼" }}</span>
-                </div>
-                <div v-if="isEquipment[slidx]"
-                  @click.stop="showRule((slot as Card).UI.description, ...slotExplain[slidx].flat(2))">
-                  <div class="equipment-desc" v-for="(desc, didx) in (slot as Card).UI.descriptions" :key="didx"
-                    v-html="desc">
-                  </div>
-                  <div class="info-card-explain" v-for="(expl, eidx) in slotExplain[slidx]" :key="eidx">
-                    <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
-              <div class="title">—— 角色状态 ——</div>
-              <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))"
-                :key="ist.id" class="status">
-                <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
-                  <span class="status-title-left">
-                    <div class="status-icon">
-                      <div class="status-bg" :style="{ background: ist.UI.iconBg }"></div>
-                      <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
-                        filter: (getPngIcon(ist.UI.icon).startsWith('https') ||
-                          ist.UI.icon.startsWith('buff') ||
-                          ist.UI.icon.endsWith('dice')) && !getPngIcon(ist.UI.icon).includes('guyutongxue')
-                          ? getSvgFilter(ist.UI.iconBg) : ''
-                      }" />
-                      <div v-else style="color: white;">{{ ist.name[0] }}</div>
-                      <div class="status-cnt"
-                        v-if="!ist.hasType(STATUS_TYPE.Sign) && (ist.useCnt >= 0 || ist.roundCnt >= 0)">
-                        {{ ist.useCnt < 0 ? ist.roundCnt : ist.useCnt }} </div>
-                      </div>
-                      <span>{{ ist.name }}</span>
-                  </span>
-                  <span>{{ isHeroStatus[idx] ? "▲" : "▼" }}</span>
-                </div>
-                <div v-if="isHeroStatus[idx]"
-                  @click.stop=" showRule(ist.UI.description, ...heroStatusExplain[idx].flat(2))">
-                  <div class="status-desc" v-for="(desc, didx) in ist.UI.descriptions" :key="didx" v-html="desc"></div>
-                  <div v-if="heroStatusExplain[idx].length > 0">
-                    <div class="info-hero-status-explain" v-for="(expl, eidx) in heroStatusExplain[idx]" :key="eidx">
-                      <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div v-if="combatStatus.length > 0" class="info-status">
-              <div class="title">—— 阵营出战状态 ——</div>
-              <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
-                class="status">
-                <div class="status-title" @click.stop="showDesc(isCombatStatus, idx)">
-                  <span class="status-title-left">
-                    <div class="status-icon">
-                      <div class="status-bg" :style="{ background: ost.UI.iconBg }"></div>
-                      <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)" :style="{
-                        filter: (getPngIcon(ost.UI.icon).startsWith('https') ||
-                          ost.UI.icon.startsWith('buff') ||
-                          ost.UI.icon.endsWith('dice')) && !getPngIcon(ost.UI.icon).includes('guyutongxue')
-                          ? getSvgFilter(ost.UI.iconBg) : ''
-                      }" />
-                      <div v-else style="color: white;">{{ ost.name[0] }}</div>
-                      <div class="status-cnt"
-                        v-if="!ost.hasType(STATUS_TYPE.Sign) && (ost.useCnt >= 0 || ost.roundCnt >= 0)">
-                        {{ ost.useCnt < 0 ? ost.roundCnt : ost.useCnt }} </div>
-                      </div>
-                      <span>{{ ost.name }}</span>
-                  </span>
-                  <span>{{ isCombatStatus[idx] ? "▲" : "▼" }}</span>
-                </div>
-                <div v-if="isCombatStatus[idx]"
-                  @click.stop="showRule(ost.UI.description, ...combatStatusExplain[idx].flat(2))">
-                  <div class="status-desc" v-for="(desc, didx) in ost.UI.descriptions" :key="didx" v-html="desc"></div>
-                  <div v-if="combatStatusExplain[idx].length > 0">
-                    <div class="info-hero-status-explain" v-for="(expl, eidx) in combatStatusExplain[idx]" :key="eidx">
-                      <div v-for="(desc, didx) in expl" :key="didx" v-html="desc"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </DefineTemplate>
           <UseTemplate />
         </div>
       </div>

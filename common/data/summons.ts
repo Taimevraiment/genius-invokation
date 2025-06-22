@@ -987,7 +987,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             triggers: 'phase-end',
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                cmds.getStatus([[169, 1 + enhance]]);
+                cmds.getStatus([[169, summon.addition[0]]]);
                 smn.minusUseCnt();
             }
         })),
@@ -999,7 +999,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             triggers: 'phase-end',
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                cmds.getCard(1 + enhance);
+                cmds.getCard(summon.addition[0]);
                 smn.minusUseCnt();
             }
         })),

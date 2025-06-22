@@ -3835,18 +3835,19 @@ export default class GeniusInvokationRoom {
         for (const card of discards) {
             const cardres = card.handle(card, { summons, trigger: 'discard', isExec });
             if (this._hasNotTriggered(cardres.triggers, 'discard')) continue;
-            if (cardres.cmds) {
-                const hasAtkcmds = cardres.cmds.hasCmds('attack');
-                const { bWillDamages = [] } = this._doCmds(pidx, cardres.cmds,
+            const cardrescmds = new CmdsGenerator(cardres.cmds).addCmds(cardres.execmds);
+            if (cardrescmds) {
+                const hasAtkcmds = cardrescmds.hasCmds('attack');
+                const { bWillDamages = [] } = this._doCmds(pidx, cardrescmds,
                     { players: isCdt(!isExec || hasAtkcmds, clone(players)), isAction, isExec: isCdt(hasAtkcmds, false, isExec), supportCnt, isPriority, isUnshift });
                 if (bWillDamages.length > 0) {
                     const atkname = `${card.name}(${card.entityId})`;
-                    tasks.push({ pidx, cmds: cardres.cmds, atkname });
+                    tasks.push({ pidx, cmds: cardrescmds, atkname });
                     if (isExec) {
                         this.taskQueue.addTask(`doDamage-${atkname}`, [[async () => {
                             const { bWillDamages: willDamages = [], willHeals: [whl] = [], bDmgElements: dmgElements = [],
                                 elTips = [], atkedIdxs: [tarHidx] = [-1] }
-                                = this._doCmds(pidx, cardres.cmds, { isAction });
+                                = this._doCmds(pidx, cardrescmds, { isAction });
                             await this._doDamage(pidx, {
                                 dmgSource: 'card',
                                 atkPidx: pidx,
