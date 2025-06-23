@@ -3,7 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import cron from "node-cron";
 import { Server } from "socket.io";
-import { PHASE, PLAYER_STATUS, PlayerStatus } from '../../common/constant/enum.js';
+import { PHASE, PLAYER_STATUS, PlayerStatus } from "../../common/constant/enum.js";
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
 import { getSecretKey, parseDate } from '../../common/utils/utils.js';
 import { ActionData, Player } from "../../typing";
@@ -81,7 +81,7 @@ const getRoomIdx = (rid: number) => getIdxById(rid, roomList);
 const removePlayer = (player: Player) => {
     const { id: pid, status } = player;
     player.status = PLAYER_STATUS.OFFLINE;
-    const time = setTimeout(() => removeById(pid, playerList), 30 * 60 * 1e3);
+    const time = setTimeout(() => removeById(pid, playerList), 24 * 60 * 60 * 1e3);
     removePlayerList.set(pid, {
         time,
         status,
@@ -184,7 +184,7 @@ io.on('connection', socket => {
             }
         } else {
             pid = genId(playerList);
-            console.info(`[${date}]:新玩家[${name}]-pid${pid} 连接了...`);
+            console.info(`[${date}]:新玩家[${name}]-pid:${pid} 连接了...`);
             playerList.push({ id: pid, name, rid: -1, status: PLAYER_STATUS.WAITING });
         }
         if (id > 0 && player && pid != id) return console.info(`WARN@login:非法的登录 pid:${pid}, id:${id}`);

@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.1.7</div>
+    <div class="version">v0.1.9</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
@@ -113,7 +113,7 @@ const infoContent = ref<string>('');
 const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, true), ...summonsTotal(version)];
 let followIdx: number = -1; // 跟随的玩家id
 
-if (username.value != '' && userid.value > 0) {
+if (username.value != '') {
   socket.emit('login', { id: userid.value, name: username.value });
 }
 
