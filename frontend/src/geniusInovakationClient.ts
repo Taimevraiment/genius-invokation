@@ -571,10 +571,12 @@ export default class GeniusInvokationClient {
                     this.supportSelect[+(p == this.playerIdx)][s] = true;
                     const sptEid = this.players[p].supports[s].entityId;
                     setTimeout(() => this._resetSupportSelect(), 500);
-                    if (isDestroy) setTimeout(() => {
-                        if (this.players[p].supports[s]?.entityId != sptEid) return;
-                        this.players[p].supports.splice(s, 1);
-                    }, 1e3);
+                    if (isDestroy) {
+                        setTimeout(() => {
+                            if (this.players[p].supports[s]?.entityId != sptEid) return;
+                            this.players[p].supports.splice(s, 1);
+                        }, 800);
+                    }
                 }
             } catch (e) {
                 this.initSelect(players);

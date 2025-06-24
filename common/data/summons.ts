@@ -977,11 +977,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     127025: () => crd12702summon(),
 
-    301028: (enhance: number = 0) => new SummonBuilder('积木小人').useCnt(2).damage(1 + enhance).physical().description('{defaultAtk。}')
+    301028: () => new SummonBuilder('积木小人').useCnt(2).damage(1).physical().description('{defaultAtk。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_JimuBing.png'),
 
-    301029: (enhance: number = 0) => new SummonBuilder('折纸飞鼠').useCnt(2).addition(1 + enhance).icon(STATUS_ICON.Buff)
-        .description(`【结束阶段：】获得${1 + enhance}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
+    301029: () => new SummonBuilder('折纸飞鼠').useCnt(2).addition(1).icon(STATUS_ICON.Buff)
+        .description(`【结束阶段：】获得{addition0}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu.png')
         .handle(summon => ({
             triggers: 'phase-end',
@@ -992,8 +992,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    301030: (enhance: number = 0) => new SummonBuilder('跳跳纸蛙').useCnt(2).addition(1 + enhance).icon(STATUS_ICON.Special)
-        .description(`【结束阶段：】抓${1 + enhance}张牌。；[useCnt]`)
+    301030: () => new SummonBuilder('跳跳纸蛙').useCnt(2).addition(1).icon(STATUS_ICON.Special)
+        .description(`【结束阶段：】抓{addition0}张牌。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiWa.png')
         .handle(summon => ({
             triggers: 'phase-end',
@@ -1004,16 +1004,19 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    301031: (enhance: number = 0) => new SummonBuilder('折纸胖胖鼠').useCnt(2).heal(1 + enhance)
+    301031: () => new SummonBuilder('折纸胖胖鼠').useCnt(2).heal(1)
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu.png')
-        .handle((summon, event) => ({
-            triggers: 'phase-end',
-            exec: execEvent => {
-                const { summon: smn = summon, cmds } = execEvent;
-                cmds.heal(smn.shieldOrHeal, { hidxs: getMaxHertHidxs(event.heros) });
+        .handle((summon, event) => {
+            const hidxs = getMaxHertHidxs(event.heros);
+            return {
+                triggers: isCdt(hidxs.length > 0, 'phase-end'),
+                exec: execEvent => {
+                    const { summon: smn = summon, cmds } = execEvent;
+                    cmds.heal(smn.shieldOrHeal, { hidxs });
+                }
             }
-        })),
+        }),
 
     302201: () => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical().description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png'),

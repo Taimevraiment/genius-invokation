@@ -23,7 +23,7 @@ export const allHidxs = (heros?: Hero[], options: {
     return hidxs;
 }
 
-// 获取受伤最多的角色的hidxs(只有一个number的数组)
+// 获取受伤最多的角色的hidxs(最多一个number的数组)
 export const getMaxHertHidxs = (heros: Hero[] = [], options: { fhidx?: number, isBack?: boolean } = {}): number[] => {
     const { fhidx = heros.findIndex(h => h.isFront), isBack = false } = options;
     if (fhidx == -1) return [];
@@ -41,7 +41,7 @@ export const getMaxHertHidxs = (heros: Hero[] = [], options: { fhidx?: number, i
     return hidxs;
 }
 
-// 获取受伤最少的角色的hidx(只有一个number的数组)
+// 获取受伤最少的角色的hidx(最多一个number的数组)
 export const getMinHertHidxs = (heros: Hero[] = [], fhidx?: number): number[] => {
     fhidx = fhidx ?? heros.findIndex(h => h.isFront);
     if (fhidx == -1) return [];

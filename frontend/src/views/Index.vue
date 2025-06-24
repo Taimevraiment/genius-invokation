@@ -2,7 +2,7 @@
   <span style="position: absolute;font-family: HYWH;">7</span>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
-    <div style="position: absolute;right: 10px;top: 10px;">（更新至5.8v1）</div>
+    <div style="position: absolute;right: 10px;top: 10px;">（更新至5.8v2）</div>
     <div v-if="isShowEditName" class="edit-name">
       <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto" @click="register">
@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.1.9</div>
+    <div class="version">v0.1.11</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
@@ -81,6 +81,7 @@ import { summonsTotal } from '@@@/data/summons';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { genShareCode } from '@@@/utils/utils';
 import Cookies from 'js-cookie';
+import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
@@ -126,9 +127,6 @@ if (localStorage.getItem('GIdecks') == null) {
     }))
   );
   localStorage.setItem('GIdecks', gidecks);
-  Cookies.set('GIdecks', gidecks, { expires: 31 });
-} else {
-  Cookies.set('GIdecks', localStorage.getItem('GIdecks')!, { expires: 31 });
 }
 
 // 注册昵称
@@ -206,7 +204,7 @@ const importFile = (e: Event) => {
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const recordData: RecordData = JSON.parse(e.target?.result?.toString() ?? '{}');
+        const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(e.target?.result?.toString() ?? '{}'));
         createRoom(recordData.name, recordData.version, '', 0, false, {
           pidx: recordData.pidx,
           oppoName: recordData.username[recordData.pidx ^ 1],

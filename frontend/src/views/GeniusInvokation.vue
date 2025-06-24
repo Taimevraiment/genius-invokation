@@ -225,6 +225,7 @@
 </template>
 
 <script setup lang='ts'>
+import LZString from 'lz-string';
 import type { Socket } from 'socket.io-client';
 import { computed, onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -360,7 +361,7 @@ const sendLog = () => {
 // 导出行动日志
 const exportLog = () => {
   if (client.value.recordData.actionLog.length == 0) return;
-  const blob = new Blob([JSON.stringify(client.value.recordData)], { type: 'text/plain' });
+  const blob = new Blob([LZString.compressToBase64(JSON.stringify(client.value.recordData))], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

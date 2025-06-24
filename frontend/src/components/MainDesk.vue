@@ -368,7 +368,7 @@
                   :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
               </div>
               <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.topIcon)" />
-              <StrokedText class="summon-top-num" :class="{ 'is-change': summonCurcnt[saidx][suidx].isChange }"
+              <StrokedText class="summon-top-num" :class="{ 'is-change': summonTopCurcnt[saidx][suidx].isChange }"
                 v-if="!summon?.UI.isWill">
                 {{ summon.useCnt }}
               </StrokedText>
@@ -398,7 +398,8 @@
                 <img class="summon-bottom-icon"
                   :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
                   :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : summon.shieldOrHeal > 0 ? getPngIcon('Element_Heal') : summon.UI.bottomIcon" />
-                <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill">
+                <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill"
+                  :class="{ 'is-change': summonBottomCurcnt[saidx][suidx].isChange }">
                   {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal > 0 ? summon.shieldOrHeal :
                     (summon.addition?.[0] ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
                 </StrokedText>
@@ -518,7 +519,8 @@ const emits = defineEmits<{
 type Curcnt = { sid: number, val: number, isChange: boolean };
 const genChangeProxy = (length: number) => Array.from({ length }, () => ({ sid: 0, val: 0, isChange: false }));
 const supportCurcnt = ref<Curcnt[][]>([genChangeProxy(MAX_SUPPORT_COUNT), genChangeProxy(MAX_SUPPORT_COUNT)]);
-const summonCurcnt = ref<Curcnt[][]>([genChangeProxy(MAX_SUMMON_COUNT), genChangeProxy(MAX_SUMMON_COUNT)]);
+const summonTopCurcnt = ref<Curcnt[][]>([genChangeProxy(MAX_SUMMON_COUNT), genChangeProxy(MAX_SUMMON_COUNT)]);
+const summonBottomCurcnt = ref<Curcnt[][]>([genChangeProxy(MAX_SUMMON_COUNT), genChangeProxy(MAX_SUMMON_COUNT)]);
 const statusCurcnt = ref<Curcnt[][][][]>([]);
 const hpCurcnt = ref<Curcnt[][]>([]);
 const getGroup = (idx: number) => idx ^ playerIdx.value ^ 1;
@@ -574,12 +576,21 @@ const player = computed<Player>(() => {
         }
       });
       p.summons.forEach((smn, smni) => {
-        if (summonCurcnt.value[pi][smni].val != smn.useCnt) {
-          if (summonCurcnt.value[pi][smni].sid == smn.id) {
-            summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
-            setTimeout(() => summonCurcnt.value[pi][smni].isChange = false, 300);
+        if (summonTopCurcnt.value[pi][smni].val != smn.useCnt) {
+          if (summonTopCurcnt.value[pi][smni].sid == smn.id) {
+            summonTopCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: true };
+            setTimeout(() => summonTopCurcnt.value[pi][smni].isChange = false, 300);
           } else {
-            summonCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
+            summonTopCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
+          }
+        }
+        const summonBottomCnt = Math.max(smn.damage, Math.abs(smn.shieldOrHeal), smn.addition?.[0] ?? -1);
+        if (summonBottomCurcnt.value[pi][smni].val != summonBottomCnt) {
+          if (summonBottomCurcnt.value[pi][smni].sid == smn.id) {
+            summonBottomCurcnt.value[pi][smni] = { sid: smn.id, val: summonBottomCnt, isChange: true };
+            setTimeout(() => summonBottomCurcnt.value[pi][smni].isChange = false, 300);
+          } else {
+            summonBottomCurcnt.value[pi][smni] = { sid: smn.id, val: summonBottomCnt, isChange: false };
           }
         }
       });
@@ -1545,6 +1556,7 @@ const mouseup = () => {
 
 .summon-bottom-num,
 .support-bottom-num {
+  --scale-val-change: 1.1;
   position: absolute;
   left: 11px;
   bottom: 10px;
@@ -1552,9 +1564,10 @@ const mouseup = () => {
   height: 25px;
   text-align: center;
   line-height: 25px;
-  transform: translate(-35%, 35%) scale(1.1);
+  transform: translate(-35%, 35%) scale(var(--scale-val-change));
   color: white;
   font-size: medium;
+  transition: 0.2s;
   z-index: 1;
 }
 

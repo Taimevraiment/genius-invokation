@@ -3047,9 +3047,10 @@ export default class GeniusInvokationRoom {
             summonCnt: cardres.summonCnt,
             changedHeros: players.map(() => []),
         };
+        const cardSummonsId = this._getSummonById(cardres.summon).map(s => s.id);
         if (!isReconcile &&
             (cardres.hidxs?.length == 0 ||
-                cardres.summon && summons.length == MAX_SUMMON_COUNT ||
+                cardSummonsId.length > 0 && (summons.length == MAX_SUMMON_COUNT && summons.every(s => !cardSummonsId.includes(s.id))) ||
                 cardres.isValid == false ||
                 currCard.hasSubtype(CARD_SUBTYPE.Legend) && isUsedLegend ||
                 Math.abs(heros[hidx].energy) < Math.abs(energy)) ||
@@ -6582,7 +6583,7 @@ export default class GeniusInvokationRoom {
             if (csmnIdx > -1) { // 重复生成召唤物
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
-                oriSummon[csmnIdx].damage = Math.max(oriSmn.damage, smn.damage);
+                oriSummon[csmnIdx].damage = smn.damage;
                 if (!isExec) oriSummon[csmnIdx].UI.isAdd = true;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(this._genEntityId());
@@ -6591,9 +6592,9 @@ export default class GeniusInvokationRoom {
                 if (smnres.rCombatStatus) {
                     this._updateStatus(pidx, this._getStatusById(smnres.rCombatStatus), combatStatus, players, { hidx, isExec });
                 }
-                if (isExec) this._writeLog(`[${name}](${pidx})召唤[${smn.name}](${smn.entityId})`, 'system');
+                if (isExec) this._writeLog(`[${name}](${pidx})召唤[${smn.name}]【(${smn.entityId})】`);
             } else isGenerate = false;
-            if (isGenerate) this._detectSupport(pidx, 'summon-generate', { players, csummon, supportCnt, isExec });
+            if (isGenerate) this._detectSupport(pidx, 'summon-generate', { players, csummon, supportCnt, isExec, isQuickAction });
         });
         if (isSummon > -1) return assgin(summons, oriSummon);
         assgin(summons, oriSummon.filter(smn => {

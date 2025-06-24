@@ -196,7 +196,6 @@ import { Card, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
 import StrokedText from '@/components/StrokedText.vue';
-import Cookies from 'js-cookie';
 
 type Filter<T> = {
     name: string,
@@ -294,7 +293,6 @@ const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 const selectDeck = (didx: number) => {
     deckIdx.value = didx;
     localStorage.setItem('GIdeckIdx', didx.toString());
-    Cookies.set('GIdeckIdx', didx.toString(), { expires: 31 });
 }
 
 // 保存卡组
@@ -307,7 +305,6 @@ const saveDeck = () => {
     }
     const decks = JSON.stringify(oriDecks.value);
     localStorage.setItem('GIdecks', decks);
-    Cookies.set('GIdecks', decks, { expires: 31 });
     editDeckIdx.value = -1;
 }
 
@@ -322,7 +319,6 @@ const deleteDeck = (did: number) => {
         };
         const decks = JSON.stringify(oriDecks.value);
         localStorage.setItem('GIdecks', decks);
-        Cookies.set('GIdecks', decks, { expires: 31 });
     }
 }
 

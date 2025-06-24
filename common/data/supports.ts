@@ -470,7 +470,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'end-phase',
             exec: (spt, cmds) => {
                 cmds.summonTrigger(summons.findIndex(s => s.entityId == randomInArr(selectSummons)[0].entityId));
-                --spt.cnt;
+                return { isDestroy: --spt.cnt == 0 }
             }
         }
     }),
@@ -898,10 +898,26 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         exec: (_, cmds) => cmds.getCard(1, { include: [301034, 301035, 301036] }).res,
     })),
     // 预言女神的礼物
-    322030: () => new SupportBuilder().permanent().handle(() => ({
-        triggers: 'enter',
-        exec: (_, cmds) => cmds.getCard(1, { card: 301033 }).addCard(1, 301033).res,
-    })),
+    322030: () => new SupportBuilder().collection(2).handle((_, event) => {
+        const { trigger, csummon } = event;
+        const triggers: Trigger[] = ['enter'];
+        if (csummon && [301028, 301029, 301030, 301031].includes(csummon.id)) triggers.push('summon-generate');
+        return {
+            triggers,
+            exec: (spt, cmds, execEvent) => {
+                if (trigger == 'enter') return cmds.getCard(1, { card: 301033 }).addCard(1, 301033).res;
+                if (trigger == 'summon-generate') {
+                    const { csummon } = execEvent;
+                    if (csummon) {
+                        if (csummon.id == 301028) ++csummon.damage;
+                        else if (csummon.id == 3010301) ++csummon.shieldOrHeal;
+                        else ++csummon.addition[0];
+                    }
+                    return { isDestroy: --spt.cnt == 0 }
+                }
+            },
+        }
+    }),
     // 参量质变仪
     323001: () => new SupportBuilder().collection().handle(support => ({
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],

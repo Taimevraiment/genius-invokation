@@ -2480,10 +2480,10 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
 
     127041: () => new StatusBuilder('食足力增').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('自身下次造成的伤害+1。（可叠加，没有上限）')
-        .handle(status => ({ triggers: 'skill', addDmgCdt: status.useCnt, exec: () => status.dispose() })),
+        .handle(status => ({ triggers: 'skill', addDmgCdt: 1, exec: () => { status.minusUseCnt() } })),
 
     127042: () => new StatusBuilder('食足体健').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
-        .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(status => status.useCnt).barrierUsage(status => status.useCnt),
+        .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(1),
 
     163011: () => new StatusBuilder('炽热').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
         .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR)
@@ -2697,7 +2697,7 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色下次造成的伤害或特技伤害+1。')
         .handle(status => ({ addDmgCdt: 1, triggers: ['skill', 'vehicle'], exec: () => status.minusUseCnt() })),
 
-    301206: () => new StatusBuilder('未竟的遐思（生效中）').heroStatus().icon(STATUS_ICON.Debuff)
+    301206: () => new StatusBuilder('失冕的宝冠（生效中）').heroStatus().icon(STATUS_ICON.Debuff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('每层使所附属角色下次受到的伤害+1。（可叠加，没有上限）')
         .handle(status => ({ triggers: 'getdmg', getDmg: status.useCnt, exec: () => status.dispose() })),
@@ -3315,11 +3315,11 @@ const statusTotal: Record<number, (...args: any) => StatusBuilder> = {
         .handle(status => ({ addDmg: 2, triggers: 'skill', exec: () => status.dispose() })),
 
     303319: () => new StatusBuilder('奇瑰之汤·宁静（生效中）').heroStatus().useCnt(1).roundCnt(1)
-        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
+        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff)
         .description('本回合中，该角色下次受到的伤害-2。').barrierCnt(2),
 
     303320: () => new StatusBuilder('奇瑰之汤·安神（生效中）').heroStatus()
-        .useCnt(3).roundCnt(1).type(STATUS_TYPE.Barrier)
+        .useCnt(3).roundCnt(1).type(STATUS_TYPE.Barrier).icon(STATUS_ICON.Buff)
         .description('本回合中，该我方角色受到的伤害-1。；[useCnt]'),
 
     303321: () => new StatusBuilder('纵声欢唱（生效中）').combatStatus().useCnt(2).icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage)

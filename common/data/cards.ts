@@ -1177,8 +1177,8 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'consumeNightSoul', exec: () => card.minusPerCnt() }
         }),
 
-    312035: () => new CardBuilder(498).name('未竟的遐思').since('v5.8.0').relic().costAny(2).perCnt(2)
-        .description('【我方触发燃烧反应后：】敌方出战角色下次受到的伤害+1。（每回合2次）')
+    312035: () => new CardBuilder(498).name('失冕的宝冠').since('v5.8.0').relic().costAny(2).perCnt(2)
+        .description('【我方触发燃烧反应后：】敌方当前出战角色下次受到的伤害+1。（每回合2次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xiasi.webp')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
@@ -1186,7 +1186,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: ['Burning', 'other-Burning'], exec: () => card.minusPerCnt() }
         }),
 
-    312036: () => new CardBuilder(499).name('谐律交响的前奏').since('v5.8.0').relic().costSame(0).perCnt(1)
+    312036: () => new CardBuilder(499).name('异想零落的圆舞').since('v5.8.0').relic().costSame(0).perCnt(1)
         .description('【附属角色使用技能后：】双方出战角色附属1层【sts122】。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xielve.webp')
         .handle((card, event) => {
@@ -1541,7 +1541,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_ZhezhiJiazu.webp'),
 
     322030: () => new CardBuilder(503).name('预言女神的礼物').since('v5.8.0').ally().costAny(2)
-        .description('【入场时：】生成手牌【crd301033】，并生成1张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。')
+        .description('【入场时：】生成手牌【crd301033】，并生成1张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_JimuRen.webp'),
 
     323001: () => new CardBuilder(214).name('参量质变仪').offline('v1').item().costAny(2)
@@ -2903,7 +2903,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => cmds.getCard(1, { card: 115113 }).res),
 
     215121: () => new CardBuilder(495).name('舞袂翩兮扬玉霓').since('v5.8.0').talent(1).costAnemo(3).perCnt(1)
-        .description('{action}；【我方角色进行普通攻击时：】获得1层【sts115121】。（每回合1次）')
+        .description('{action}；【装备有此牌的〖hro〗在场，我方角色进行普通攻击时：】获得1层【sts115121】。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Lanyan.webp')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
@@ -3572,22 +3572,22 @@ const allCards: Record<number, () => CardBuilder> = {
     301033: () => new CardBuilder().name('积木小人').event().costSame(1)
         .description('召唤【smn301028】。')
         .src('tmp/UI_Gcg_CardFace_Summon_JimuBing')
-        .handle((_, { supports }) => ({ summon: [[301028, supports?.filter(s => s.card.id == 322030).length]] })),
+        .handle(() => ({ summon: 301028 })),
 
     301034: () => new CardBuilder().name('折纸飞鼠').event().costSame(1)
         .description('召唤【smn301029】。')
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu')
-        .handle((_, { supports }) => ({ summon: [[301029, supports?.filter(s => s.card.id == 322030).length]] })),
+        .handle(() => ({ summon: 301029 })),
 
     301035: () => new CardBuilder().name('跳跳纸蛙').event().costSame(1)
         .description('召唤【smn301030】。')
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiWa')
-        .handle((_, { supports }) => ({ summon: [[301030, supports?.filter(s => s.card.id == 322030).length]] })),
+        .handle(() => ({ summon: 301030 })),
 
     301036: () => new CardBuilder().name('折纸胖胖鼠').event().costSame(1)
         .description('召唤【smn301031】。')
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu')
-        .handle((_, { supports }) => ({ summon: [[301031, supports?.filter(s => s.card.id == 322030).length]] })),
+        .handle(() => ({ summon: 301031 })),
 
     302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0)
         .description('生成1个[万能元素骰]。')
