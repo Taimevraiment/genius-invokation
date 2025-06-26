@@ -1,20 +1,32 @@
 <template>
   <div class="create-room-dialogue" @click="cancel">
     <div class="create-room-main" @click.stop="" @keyup.enter="create">
-      <select name="version" id="version" v-model="version">
-        <option v-for="ver in [...VERSION, ...OFFLINE_VERSION]" :key="ver" :value="ver">
+      <select name="version" id="custom-version" v-model="customVersion.name" v-if="isCustom">
+        <option v-for="(item, idx) in customVersionList" :key="idx" :value="item.name">
+          {{ item.name }}
+        </option>
+      </select>
+      <select name="version" id="version" v-model="version" v-else>
+        <option v-for="ver in officialVersionList" :key="ver" :value="ver">
           {{ isOfflineVersion(ver) ? '实体版' : '' }}{{ ver }}
         </option>
       </select>
       <input type="text" placeholder="房间名(选填)" v-model="roomName" />
       <input type="text" placeholder="密码(选填)" v-model="roomPassword" />
       <input type="number" placeholder="倒计时(秒)(选填)" v-model="countdown" />
-      <div style="margin-top: 5%;">
-        <input type="checkbox" id="allowLookon" style="width: fit-content;height: 100%;" :checked="allowLookon"
-          @click="allowLookon = !allowLookon" />
+      <div class="options">
+        <input type="checkbox" id="allowLookon" :checked="allowLookon" @click="allowLookon = !allowLookon" />
         <label for="allowLookon" style="cursor: pointer;">允许观战</label>
+        <input type="checkbox" id="isCustom" :checked="isCustom" @click="isCustom = !isCustom" />
+        <label for="isCustom" style="cursor: pointer;">自定义版本</label>
       </div>
-      <button style="margin: 5% 0" @click="create">创建</button>
+      <div class="btn-group">
+        <button v-if="isCustom" @click="createConfig">新增</button>
+        <button v-if="isCustom && customVersion.diff.length > 0" @click="editConfig">编辑</button>
+        <button v-if="isCustom && customVersion.diff.length > 0" @click="deleteConfig">删除</button>
+        <button v-if="isCustom" @click="importConfig">导入</button>
+        <button :class="{ 'btn-forbidden': isCustom && customVersion.diff.length == 0 }" @click="create">创建</button>
+      </div>
     </div>
   </div>
 </template>
@@ -23,10 +35,13 @@
 import { OFFLINE_VERSION, OfflineVersion, VERSION, Version } from '@@@/constant/enum';
 import { compareVersionFn } from '@@@/utils/gameUtil';
 import { ref } from 'vue';
+import { CustomVersionConfig, VersionDiff } from '../../../typing';
 
 const emit = defineEmits<{
-  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean],
-  'create-room-cancel': []
+  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, versionDiff: VersionDiff[], allowLookon: boolean],
+  'create-room-cancel': [],
+  'create-config': [],
+  'edit-config': [name: string],
 }>();
 
 const roomName = ref<string>(''); // 房间名
@@ -35,10 +50,38 @@ const oriVersion: Version = (JSON.parse(localStorage.getItem('GIdecks') || '[]')
 const version = ref<Version>(compareVersionFn(oriVersion).value); // 版本
 const countdown = ref<number | string>(''); // 倒计时
 const allowLookon = ref<boolean>(true); // 是否允许观战
+const officialVersionList = ref<Version[]>([...VERSION, ...OFFLINE_VERSION]); // 官方版本列表
+const isCustom = ref<boolean>(false); // 是否创建自定义版本房间
+const customVersionList = ref<CustomVersionConfig[]>(JSON.parse(localStorage.getItem('7szh_custom_version_list') || '[{ "name": "无", "baseVersion": "v3.3.0", "diff": [] }]')); // 自定义版本列表
+const customVersion = ref<CustomVersionConfig>(customVersionList.value[0]); // 当前选择的版本配置
 
-const create = () => emit('create-room', roomName.value, version.value, roomPassword.value, +countdown.value || 0, allowLookon.value);
+const create = () => {
+  if (isCustom.value && customVersion.value.diff.length == 0) return;
+  const selectedVersion = isCustom.value ? customVersion.value.baseVersion : version.value;
+  emit('create-room', roomName.value, selectedVersion, roomPassword.value,
+    +countdown.value || 0, customVersion.value.diff, allowLookon.value)
+};
 const cancel = () => emit('create-room-cancel');
 const isOfflineVersion = (version: Version) => OFFLINE_VERSION.includes(version as OfflineVersion);
+
+const createConfig = () => emit('create-config');
+
+const editConfig = () => emit('edit-config', customVersion.value.name);
+
+const deleteConfig = () => {
+  const isConfirm = confirm('确定删除吗？');
+  if (isConfirm) {
+    const delIdx = customVersionList.value.findIndex(v => v.name == customVersion.value.name);
+    customVersionList.value.splice(delIdx, 1);
+    localStorage.setItem('7szh_custom_version_list', JSON.stringify(customVersionList.value));
+    customVersion.value = customVersionList.value[0];
+  }
+}
+
+const importConfig = () => {
+
+}
+
 </script>
 
 <style scoped>
@@ -56,19 +99,41 @@ const isOfflineVersion = (version: Version) => OFFLINE_VERSION.includes(version 
 }
 
 .create-room-main {
-  width: 50vw;
+  min-width: 40vw;
   border-radius: 5px;
   background-color: #cccccc;
   border: 3px solid black;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 0 5%;
+}
+
+.options {
+  margin-top: 5%;
+}
+
+.options>input {
+  width: fit-content;
+  height: 100%;
+}
+
+.btn-group {
+  display: flex;
+  margin: 5% 0;
+  gap: 2%;
+}
+
+.btn-forbidden {
+  cursor: default;
+  background-color: #9a9a9a;
+  border: 3px outset #5a5a5a;
 }
 
 input {
-  width: 80%;
+  width: 100%;
   height: 5vh;
-  margin-top: 5%;
+  margin-top: 3%;
   padding: 0 2%;
   border-radius: 5px;
 }
@@ -90,13 +155,13 @@ button {
   border: 3px outset #0093c4;
 }
 
-button:hover {
+button:not(.btn-forbidden):hover {
   background-color: #0093c4;
   cursor: pointer;
   border: 3px outset #005f7f;
 }
 
-button:active {
+button:not(.btn-forbidden):active {
   background-color: #005f7f;
   border: 3px outset #00a4db;
 }

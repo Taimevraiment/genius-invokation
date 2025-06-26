@@ -1,4 +1,4 @@
-import { Hero, Trigger } from '../../typing';
+import { Hero, Trigger, VersionDiff } from '../../typing';
 import { CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getMinHpHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
@@ -1957,8 +1957,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { combatStatus } = event;
                     const sts122041 = getObjById(combatStatus, 122041);
                     if (!sts122041) return;
-                    const [, , dmg, cnt] = sts122041.addition;
-                    return { pdmg: 1, summon: isCdt(+cnt > 0, [[122043, +dmg, +cnt]]) }
+                    const { maxDice, maxDiceCnt } = sts122041.addition;
+                    return { pdmg: 1, summon: isCdt(maxDiceCnt > 0, [[122043, maxDice, maxDiceCnt]]) }
                 }),
             new SkillBuilder('无尽食欲').description('战斗开始时，生成【sts122041】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a9e29da334dce66803ef9edb13b8e8d9.png',
@@ -2518,6 +2518,17 @@ export const herosTotal = (version: Version = VERSION[0], force: boolean = false
     return heros;
 }
 
-export const newHero = (version?: Version) => (id: number) => allHeros[id]?.().id(id).version(version).done() ?? NULL_HERO();
+export const newHero = (version?: Version, options: { diff?: VersionDiff[] } = {}) => {
+    return (id: number) => {
+        const dversion = options.diff?.find(v => v.id == id)?.version ?? version;
+        return allHeros[id]?.().id(id).version(dversion).done() ?? NULL_HERO();
+    }
+}
 
-export const parseHero = (shareId: number, version?: Version) => herosTotal(version).find(h => h.shareId == shareId) ?? NULL_HERO();
+export const parseHero = (shareId: number, version?: Version, options: { diff?: VersionDiff[] } = {}) => {
+    const { diff = [] } = options;
+    const hero = herosTotal(version).find(h => h.shareId == shareId) ?? NULL_HERO();
+    const dversion = diff.find(v => v.id == hero.id)?.version ?? version;
+    if (dversion == version) return hero;
+    return herosTotal(dversion).find(h => h.shareId == shareId) ?? NULL_HERO();
+};

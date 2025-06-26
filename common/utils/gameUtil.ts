@@ -210,6 +210,15 @@ export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | num
     players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, (resHeals as number[])[h.hidx + (p.pidx * players[0].heros.length)]))));
 }
 
+// 获取衍生物的父id(递归寻找追溯至card/hero)
+export const getDerivantParentId = (id: number, dict: Record<number, number>) => {
+    let parentId = dict[id];
+    while (dict[parentId] != undefined) {
+        parentId = dict[parentId];
+    }
+    return parentId;
+}
+
 // 比较版本大小
 const compareVersion = (v1: Version, v2: Version | null) => {
     if (v1 === v2) return 0;

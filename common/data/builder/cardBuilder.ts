@@ -39,6 +39,7 @@ export class GICard {
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
     cidx: number = -1; // 在手牌中的序号
+    addition: Record<string, number> = {}; // 额外信息
     UI: {
         src: string, // 图片url
         description: string, // 卡牌描述
@@ -54,7 +55,7 @@ export class GICard {
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
-            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version, readySkillStatus?: number,
+            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version, readySkillStatus?: number, adt?: Record<string, number>,
         } = {}
     ) {
         this.id = id;
@@ -66,7 +67,7 @@ export class GICard {
         subType = convertToArray(subType);
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
             isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
-            readySkillStatus = 0 } = options;
+            readySkillStatus = 0, adt = {} } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -213,6 +214,7 @@ export class GICard {
         this.tag = tag;
         this.userType = userType;
         this.canSelectHero = canSelectHero;
+        this.addition = adt;
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();
@@ -295,6 +297,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _cnt: number = 2;
     private _isUseNightSoul: boolean = false;
     private _readySkillStatus: number = 0;
+    private _addition: Record<string, number> = {};
     constructor(shareId?: number) {
         super(shareId ?? -1);
         if (shareId == undefined) this._cnt = -2;
@@ -440,6 +443,14 @@ export class CardBuilder extends BaseCostBuilder {
         this._isSpReset = isSpReset;
         return this;
     }
+    addition(key: string, value: number) {
+        this._addition[key] = value;
+        return this;
+    }
+    from(id: number) {
+        this.addition('from', id);
+        return this;
+    }
     done() {
         let userType = this._userType.get(this._curVersion, 0);
         if (this._subtype.includes(CARD_SUBTYPE.Weapon)) {
@@ -485,6 +496,7 @@ export class CardBuilder extends BaseCostBuilder {
                 ver: this._curVersion,
                 isUseNightSoul: this._isUseNightSoul,
                 readySkillStatus: this._readySkillStatus,
+                adt: this._addition,
             });
     }
 }

@@ -1,38 +1,42 @@
 <template>
     <div class="edit-deck-container" @click="cancel">
         <button class="edit-btn exit" @click.stop="exit">返回</button>
-        <div v-if="editDeckIdx == -1" class="edit-deck-list">
+        <div v-if="editDeckIdx == -1 && isEditDeck" class="edit-deck-list">
             <div v-for="(deck, did) in decks" :key="'deckid:' + did" class="deck"
                 :class="{ 'curr-deck': deckIdx == did }" @click="toEditDeck(did)">
-                <div class="forbidden" style="top: -10%; border-radius: 10%;"
-                    v-if="deckIdx == did && (deck.heroIds.some(h => h.id == 0) || deck.cardIds.length < 30)">
-                    卡组不完整
-                </div>
-                <div>{{ deck.name }}</div>
-                <div style="height: 1.2rem;">
-                    {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体版' : '' }}{{
-                        compareVersionFn(deck.version).value }}
-                </div>
-                <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero">
-                    <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name" style="width: 100%;height: 100%;" />
-                    <div v-else
-                        style="height: 100%;aspect-ratio: 1/1;align-content: center;text-align: center;border-radius: 50%;"
-                        :style="{ backgroundColor: ELEMENT_COLOR[hero.element] }">
-                        {{ hero.name }}
+                <div class="deck-info">
+                    <div class="forbidden" style="border-radius: 5px 5px 0 0;"
+                        v-if="deckIdx == did && (deck.heroIds.some(h => h.id == 0) || deck.cardIds.length < 30)">
+                        卡组不完整
+                    </div>
+                    <div>{{ deck.name }}</div>
+                    <div style="height: 1.2rem;">
+                        {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体版' : '' }}{{
+                            compareVersionFn(deck.version).value }}
+                    </div>
+                    <div class="deck-heros">
+                        <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero">
+                            <img v-if="hero.avatar" :src="hero.avatar" :alt="hero.name"
+                                style="width: 100%;height: 100%;" />
+                            <div v-else
+                                style="height: 100%;aspect-ratio: 1/1;align-content: center;text-align: center;border-radius: 50%;"
+                                :style="{ backgroundColor: ELEMENT_COLOR[hero.element] }">
+                                {{ hero.name }}
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="edit-btn-group">
-                    <span v-for="(icon, cidx) in deckListEditIcon" :key="cidx" class="edit-list-icon"
-                        @click.stop="icon.handle(did)">
-                        {{ icon.name }}
-                    </span>
+                    <div class="edit-list-icon" @click.stop="selectDeck(did)">出战</div>
+                    <img class="edit-list-icon" @click.stop="deleteDeck(did)" src="@@/svg/delete.svg"
+                        style="width: 15%;" alt="删" />
                 </div>
             </div>
         </div>
         <div v-else class="edit-container">
             <button class="edit-btn exit" @click.stop="exit">返回</button>
-            <button class="edit-btn save" @click.stop="saveDeck">保存</button>
-            <button class="edit-btn share-deck" @click.stop="shareDeck">分享</button>
+            <button class="edit-btn save" @click.stop="saveDeck">{{ mode.startsWith('edit') ? '保存' : '创建' }}</button>
+            <button class="edit-btn share-deck" v-if="isEditDeck" @click.stop="shareDeck">分享</button>
             <div class="deck-share-img" v-if="isShowDeckShareImg" @click.stop="">
                 <span>{{herosDeck.filter(h => h.id > 0).length + cardsDeck.length}}</span>
                 <canvas id="deck-share" style="width: 100%;height: 100%;"></canvas>
@@ -58,20 +62,22 @@
                         {{ ver }}
                     </option>
                 </select>
-                <div>
+                <div v-if="isEditDeck">
                     <input id="isOfflineInput" type="checkbox" :checked="isOfflineVersion"
                         @change="switchOfflineVersion" />
                     <label for="isOfflineInput">实体版</label>
                 </div>
             </div>
-            <input v-model="deckName" class="deck-name" />
-            <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
-            <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" />
-            <button id="paste-share-code" class="edit-btn share" v-if="pShareCode.length > 0"
-                @click.stop="pasteShareCode">
-                粘贴分享码
-            </button>
-            <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
+            <template v-if="isEditDeck">
+                <input v-model="deckName" class="deck-name" />
+                <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
+                <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" />
+                <button id="paste-share-code" class="edit-btn share" v-if="pShareCode.length > 0"
+                    @click.stop="pasteShareCode">
+                    粘贴分享码
+                </button>
+                <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
+            </template>
             <div v-if="currIdx == 0">
                 <div class="heros-deck" :class="{ 'mobile-heros-deck': isMobile }">
                     <div class="hero-deck" :class="{ 'mobile-hero-avatar': isMobile }"
@@ -179,7 +185,8 @@
 import InfoModal from '@/components/InfoModal.vue';
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE, TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
+    HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE,
+    TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
@@ -188,7 +195,7 @@ import {
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, parseHero } from '../../../common/data/heros';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
@@ -215,9 +222,12 @@ const TAG_INDEX = { // 标签页
 } as const;
 type TagIndex = TypeConst<typeof TAG_INDEX>;
 const router = useRouter();
+const route = useRoute();
 
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)); // 是否为手机
 const maskOpacity = ref(+(history.state.maskOpacity ?? 0));
+const mode: string = (route.params?.mode ?? 'edit-deck') as string;
+const isEditDeck = mode == 'edit-deck';
 
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
@@ -255,10 +265,6 @@ const editDeck = ref<{ heroIds: number[], cardIds: number[] }>({ heroIds: [], ca
 const deckIdx = ref<number>(Number(localStorage.getItem('GIdeckIdx') || 0)); // 出战卡组id
 const cardsDeckLen = computed<number>(() => cardsDeck.value.map(v => v.UI.cnt).reduce((a, b) => a + b, 0)); // 卡组数量
 const modalInfo = ref<InfoVO>(NULL_MODAL());
-const deckListEditIcon = ref([
-    { name: '战', handle: (idx: number) => selectDeck(idx) },
-    { name: '删', handle: (idx: number) => deleteDeck(idx) },
-]);
 const heroSelectIcon = ref([
     { name: '左', handle: (idx: number) => selectHero(0, idx) },
     { name: '中', handle: (idx: number) => selectHero(1, idx) },
@@ -484,12 +490,6 @@ const updateInfo = (init = false) => {
             .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => v.name)) ?? []);
 }
 
-
-// 获取骰子背景
-// const getDiceIcon = (name: string) => {
-//     return `/image/${name}-dice-bg.png`;
-// }
-
 // 进入编辑卡组界面
 const toEditDeck = (did: number) => {
     editDeckIdx.value = did;
@@ -687,35 +687,34 @@ body div {
 
 .edit-deck-list {
     width: 100%;
-    height: min(80%, 300px);
+    height: 80%;
     background-color: #db8803;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    overflow-x: auto;
+    overflow-y: auto;
     white-space: nowrap;
     border-top: 10px solid #572e00;
     border-bottom: 10px solid #572e00;
     padding: 5px 10px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     box-sizing: border-box;
 }
 
 .deck {
-    display: inline-flex;
-    flex-direction: column;
-    justify-content: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
-    height: 90%;
-    width: 100px;
+    width: min(500px, 100%);
     background-color: #ddba54;
     margin: 5px;
     padding: 5px;
     border-radius: 10px;
     cursor: pointer;
     box-sizing: border-box;
-    position: relative;
 }
 
 .deck:hover,
@@ -723,26 +722,43 @@ body div {
     background-color: #daaf2f;
 }
 
+.deck-info {
+    padding: 0 2%;
+    flex: 7;
+}
+
+.deck-heros {
+    display: flex;
+    margin: 2px 0;
+    gap: 2%;
+}
+
 .deck-hero {
-    height: 22%;
+    width: 15%;
     aspect-ratio: 1 / 1;
     border-radius: 50%;
-    margin: 2px 0;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .edit-btn-group {
-    margin-top: 5px;
+    display: flex;
+    gap: 5%;
+    flex: 3;
+    justify-content: flex-end;
+    align-items: center;
+    width: fit-content;
 }
 
 .edit-list-icon {
-    padding: 0 10px;
-    margin: 5px;
     border: 2px solid black;
     border-radius: 5px;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
 }
 
 .edit-list-icon:hover,
@@ -1047,6 +1063,7 @@ input#isOfflineInput:checked {
 }
 
 .curr-deck {
+    position: relative;
     box-shadow: 4px 4px 6px #ffeb56,
         -4px 4px 6px #ffeb56,
         4px -4px 6px #ffeb56,
@@ -1115,6 +1132,7 @@ input#isOfflineInput:checked {
 
 .forbidden {
     position: absolute;
+    left: 0;
     width: 100%;
     background: #ffb6b6f1;
     padding: 3px 0;

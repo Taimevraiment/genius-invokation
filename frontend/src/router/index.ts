@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import Index from '@/views/Index.vue'
+import Index from '@/views/Index.vue';
+import { createRouter, createWebHistory } from 'vue-router';
 // import { useStore } from 'vuex'
 
 const router = createRouter({
@@ -17,6 +17,10 @@ const router = createRouter({
     path: '/game-room/:roomId',
     name: 'gameRoom',
     component: () => import('@/views/GeniusInvokation.vue'),
+  }, {
+    path: '/edit-deck/:mode?',
+    name: 'editDeck',
+    component: () => import('@/views/EditDeck.vue'),
   }]
 })
 

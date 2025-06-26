@@ -30,7 +30,7 @@ export class GISummon {
     perCnt: number; // 每回合次数
     isTalent: boolean; // 是否有天赋
     statusId: number; // 可能对应的状态 -1不存在
-    addition: any[]; // 额外信息
+    addition: Record<string, number>; // 额外信息
     handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
     UI: {
         src: string; // 图片url
@@ -49,7 +49,7 @@ export class GISummon {
         shieldOrHeal: number, damage: number, element: ElementType,
         handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined,
         options: {
-            pct?: number, isTalent?: boolean, adt?: any[], pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
+            pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
             spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version,
         } = {}
     ) {
@@ -61,7 +61,7 @@ export class GISummon {
         this.damage = damage;
         this.element = element;
         const {
-            pct = 0, isTalent = false, adt = [], pdmg = 0, isDestroy = 0, stsId = -1,
+            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = 0, stsId = -1,
             spReset = false, expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0],
         } = options;
         const hid = getHidById(id);
@@ -177,7 +177,7 @@ export class SummonBuilder extends BaseBuilder {
     private _element: ElementType | undefined;
     private _perCnt: VersionMap<number> = new VersionMap();
     private _isTalent: boolean = false;
-    private _addition: any[] = [];
+    private _addition: Record<string, number> = {};
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
     private _statusId: number = -1;
     private _topIcon: string = 'TimeState';
@@ -264,8 +264,8 @@ export class SummonBuilder extends BaseBuilder {
         this._isTalent = isTalent;
         return this;
     }
-    addition(...addition: any[]) {
-        this._addition.push(...addition);
+    addition(key: string, value: number) {
+        this._addition[key] = value;;
         return this;
     }
     statusId(stsId?: number) {
@@ -302,6 +302,10 @@ export class SummonBuilder extends BaseBuilder {
     }
     usedRoundEnd() {
         this._isDestroy = SUMMON_DESTROY_TYPE.UsedRoundEnd;
+        return this;
+    }
+    from(id: number) {
+        this.addition('from', id);
         return this;
     }
     handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined) {

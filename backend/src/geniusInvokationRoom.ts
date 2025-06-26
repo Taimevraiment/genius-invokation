@@ -17,8 +17,8 @@ import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../com
 import { CardHandleRes, cardsTotal, newCard, parseCard } from '../../common/data/cards.js';
 import { herosTotal, newHero, parseHero } from '../../common/data/heros.js';
 import { SkillHandleRes, newSkill } from '../../common/data/skills.js';
-import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
-import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
+import { StatusHandleRes, newStatus, statusesTotal } from '../../common/data/statuses.js';
+import { SummonHandleRes, newSummon, summonsTotal } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
 import CmdsGenerator from '../../common/utils/cmdsGenerator.js';
 import {
@@ -30,7 +30,8 @@ import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, parseS
 import {
     ActionData, ActionInfo,
     AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
-    Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn
+    Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn,
+    VersionDiff
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -78,7 +79,10 @@ export default class GeniusInvokationRoom {
     testTaskFn: (() => void)[] = []; // 任务测试用
     // private _heartBreak: (NodeJS.Timeout | undefined)[][] = [[undefined, undefined], [undefined, undefined]]; // 心跳包的标记
 
-    constructor(id: number, name: string, version: Version, password: string, countdown: number, allowLookon: boolean, env: Env, io?: Server) {
+    constructor(
+        id: number, name: string, version: Version, password: string, countdown: number,
+        diff: VersionDiff[], allowLookon: boolean, env: Env, io?: Server
+    ) {
         this.io = io;
         this.id = id;
         this.name = name || `房间${id}`;
@@ -88,15 +92,19 @@ export default class GeniusInvokationRoom {
         this.allowLookon = allowLookon;
         this.recordData = { name: this.name, pidx: -1, username: [], shareCode: [], seed: '', version, actionLog: [] }
         this.env = env;
-        this.newStatus = newStatus(version);
-        this.newCard = newCard(version);
+        const dict: Record<number, number> = {};
+        cardsTotal(version).forEach(c => c.addition.from && (dict[c.id] = c.addition.from));
+        statusesTotal(version).forEach(s => s.addition.from && (dict[s.id] = s.addition.from));
+        summonsTotal(version).forEach(s => s.addition.from && (dict[s.id] = s.addition.from));
+        this.newStatus = newStatus(version, { diff, dict });
+        this.newCard = newCard(version, { diff, dict });
         this.newHero = newHero(version);
-        this.newSummon = newSummon(version);
+        this.newSummon = newSummon(version, { diff, dict });
         this.newSupport = (id: number | Card, ...args: any[]) => {
-            if (typeof id === 'number') return newSupport(version)(this.newCard(id), ...args);
-            return newSupport(version)(id, ...args);
+            if (typeof id === 'number') return newSupport(version, { diff, dict })(this.newCard(id), ...args);
+            return newSupport(version, { diff, dict })(id, ...args);
         }
-        this.newSkill = newSkill(version);
+        this.newSkill = newSkill(version, { diff });
         this.taskQueue = new TaskQueue(this._writeLog.bind(this), this.env);
         this.delay = async (time?: number, fn?: () => any) => {
             if (this.env == 'test') return fn?.();
@@ -1950,7 +1958,7 @@ export default class GeniusInvokationRoom {
         const [afterASkillTrgs, afterESkillTrgs] = [atriggers, etriggers]
             .map(xtrgs => xtrgs.map(trgs => trgs
                 .filter(trg => /skill|elReaction|dmg/i.test(trg))
-                .map(trg => /^skill|^other|getdmg$/.test(trg) ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[])
+                .map(trg => /^skill|^other|^getdmg$/.test(trg) ? 'after-' + trg : trg.startsWith('after-') ? trg.slice(6) : trg) as Trigger[])
             );
         const atkStatues: StatusTask[] = [];
         const atkStatuesUnshift: StatusTask[] = [];
@@ -3698,7 +3706,7 @@ export default class GeniusInvokationRoom {
                     if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点`);
                     // 被击倒
                     if (h.hp == 0 && !isDead &&
-                        h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.addition[0] == 0) &&
+                        h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.addition[STATUS_TYPE.NonDefeat] == 0) &&
                         (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.perCnt <= 0)
                     ) {
                         this.players[p.pidx ^ 1].canAction = false;
@@ -5393,8 +5401,8 @@ export default class GeniusInvokationRoom {
                                     if (cardIdx > -1) [wcard] = cplayer.pile.splice(cardIdx, 1);
                                 }
                             } else {
-                                const cardsPool = cardsTotal(this.version.value).filter(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[]))) && !exclude.includes(c.id));
-                                [wcard] = this._randomInArr(cardsPool);
+                                const cardsIdPool = this._getCardIds(c => (c.hasSubtype(...(subtype as CardSubtype[])) || c.hasTag(...(cardTag as CardTag[]))) && !exclude.includes(c.id));
+                                wcard = this.newCard(this._randomInArr(cardsIdPool)[0]);
                             }
                         }
                         if (wcard && wcard.id != 0) {

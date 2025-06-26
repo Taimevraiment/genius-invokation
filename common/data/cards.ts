@@ -1,17 +1,15 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
+import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger, VersionDiff } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE,
     DICE_COST_TYPE, DiceCostType, ELEMENT_CODE,
-    ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE,
-    SwirlElementType,
-    VERSION, Version
+    ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE,
+    SwirlElementType, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_ICON_NAME, ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder, CardBuilderHandleRes } from './builder/cardBuilder.js';
 
@@ -3556,7 +3554,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { exec: () => { !talent && card.perCnt == 1 && card.minusPerCnt() } }
         }),
 
-    300006: () => new CardBuilder().name('斗争之火').place()
+    300006: () => new CardBuilder().name('斗争之火').place().from(330010)
         .description('此牌会记录本回合你对敌方角色造成的伤害，记为「斗志」。；【行动阶段开始时：】若此牌是场上「斗志」最高的斗争之火，则清空此牌的「斗志」，使我方出战角色本回合造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2e88a5df59e2b48de1bc62d60dd1ba5b_5370407805539882566.png'),
 
@@ -3589,32 +3587,32 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu')
         .handle(() => ({ summon: 301031 })),
 
-    302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0)
+    302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0).from(322024)
         .description('生成1个[万能元素骰]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ec89e83a04c551ed3814157e8ee4a3e8_6552557422383245360.png')
         .handle((_, { cmds }) => cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).res),
 
-    302203: () => new CardBuilder().name('「清洁工作」').event().costSame(0)
+    302203: () => new CardBuilder().name('「清洁工作」').event().costSame(0).from(322025)
         .description('我方出战角色下次造成伤害+1。（可叠加，最多叠加到+2）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/382849ade5e2cebea6b3a77a92f49f5b_4826032308536650097.png')
         .handle(() => ({ status: 302204 })),
 
-    302206: () => new CardBuilder().name('瑟琳的声援').event().costSame(0)
+    302206: () => new CardBuilder().name('瑟琳的声援').event().costSame(0).from(322027)
         .description('随机将2张美露莘推荐的「料理」加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, { cmds }) => cmds.getCard(2, { subtype: CARD_SUBTYPE.Food }).res),
 
-    302207: () => new CardBuilder().name('洛梅的声援').event().costSame(0)
+    302207: () => new CardBuilder().name('洛梅的声援').event().costSame(0).from(322027)
         .description('随机将2张美露莘好奇的「圣遗物」加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, { cmds }) => cmds.getCard(2, { subtype: CARD_SUBTYPE.Relic }).res),
 
-    302208: () => new CardBuilder().name('柯莎的声援').event().costSame(0)
+    302208: () => new CardBuilder().name('柯莎的声援').event().costSame(0).from(322027)
         .description('随机将2张美露莘称赞的「武器」加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, { cmds }) => cmds.getCard(2, { subtype: CARD_SUBTYPE.Weapon }).res),
 
-    302209: () => new CardBuilder().name('夏诺蒂拉的声援').event().costSame(1)
+    302209: () => new CardBuilder().name('夏诺蒂拉的声援').event().costSame(1).from(322027)
         .description('随机将2张美露莘看好的超棒事件牌加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => {
@@ -3625,12 +3623,12 @@ const allCards: Record<number, () => CardBuilder> = {
             });
         }),
 
-    302210: () => new CardBuilder().name('希洛娜的声援').event().costSame(0)
+    302210: () => new CardBuilder().name('希洛娜的声援').event().costSame(0).from(322027)
         .description('接下来3个回合结束时，各将1张美露莘看好的超棒事件牌加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle(() => ({ status: 302219 })),
 
-    302211: () => new CardBuilder().name('希露艾的声援').event().costSame(1)
+    302211: () => new CardBuilder().name('希露艾的声援').event().costSame(1).from(322027)
         .description('复制对方牌库顶部的3张牌，加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => {
@@ -3638,7 +3636,7 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds.getCard(3, { card: epile.slice(0, 3) });
         }),
 
-    302212: () => new CardBuilder().name('薇尔妲的声援').event().costAny(2)
+    302212: () => new CardBuilder().name('薇尔妲的声援').event().costAny(2).from(322027)
         .description('随机将2张「秘传」卡牌加入你的手牌，并恢复双方牌手的「秘传」卡牌使用机会。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => {
@@ -3652,7 +3650,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    302213: () => new CardBuilder().name('芙佳的声援').event().costSame(0)
+    302213: () => new CardBuilder().name('芙佳的声援').event().costSame(0).from(322027)
         .description('随机生成「伙伴」到场上，直到填满双方支援区。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => {
@@ -3674,17 +3672,17 @@ const allCards: Record<number, () => CardBuilder> = {
             return { support, supportOppo }
         }),
 
-    302214: () => new CardBuilder().name('托皮娅的声援').event().costSame(0)
+    302214: () => new CardBuilder().name('托皮娅的声援').event().costSame(0).from(322027)
         .description('抓2张牌，双方获得以下效果：本回合打出手牌后，随机[舍弃]1张牌或抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, { cmds }) => (cmds.getCard(2), { status: 302216, statusOppo: 302216 })),
 
-    302215: () => new CardBuilder().name('卢蒂妮的声援').event().costSame(0)
+    302215: () => new CardBuilder().name('卢蒂妮的声援').event().costSame(0).from(322027)
         .description('抓2张牌，双方获得以下效果：角色使用技能后，随机受到2点治疗或2点[穿透伤害]。[可用次数]：2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, { cmds }) => (cmds.getCard(2), { status: 302217, statusOppo: 302217 })),
 
-    303230: () => new CardBuilder().name('海底宝藏').event().costSame(0)
+    303230: () => new CardBuilder().name('海底宝藏').event().costSame(0).from(322027)
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。（每个角色每回合最多受到1次来自本效果的治疗。）')
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/3aff8ec3cf191b9696331d29ccb9d81e_7906651546886585440.png')
@@ -3696,38 +3694,38 @@ const allCards: Record<number, () => CardBuilder> = {
             return { status: isCdt(ver.gte('v4.8.0'), 303231) }
         }),
 
-    332033: () => magicCount(2),
+    332033: () => magicCount(2).from(332032),
 
-    332034: () => magicCount(1),
+    332034: () => magicCount(1).from(332032),
 
-    332035: () => magicCount(0),
+    332035: () => magicCount(0).from(332032),
 
-    333021: () => new CardBuilder().name('奇瑰之汤·疗愈').food().costSame(0).canSelectHero(1)
+    333021: () => new CardBuilder().name('奇瑰之汤·疗愈').food().costSame(0).canSelectHero(1).from(333020)
         .description('治疗目标角色2点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .handle((_, { cmds }) => cmds.heal(2).res),
 
-    333022: () => new CardBuilder().name('奇瑰之汤·助佑').food().costSame(0).canSelectHero(1)
+    333022: () => new CardBuilder().name('奇瑰之汤·助佑').food().costSame(0).canSelectHero(1).from(333020)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标角色下次使用技能时少花费2个元素骰。')
         .handle(() => ({ status: 303317 })),
 
-    333023: () => new CardBuilder().name('奇瑰之汤·激愤').food().costSame(0).canSelectHero(1)
+    333023: () => new CardBuilder().name('奇瑰之汤·激愤').food().costSame(0).canSelectHero(1).from(333020)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标角色下一次造成的伤害+2。')
         .handle(() => ({ status: 303318 })),
 
-    333024: () => new CardBuilder().name('奇瑰之汤·宁静').food().costSame(0).canSelectHero(1)
+    333024: () => new CardBuilder().name('奇瑰之汤·宁静').food().costSame(0).canSelectHero(1).from(333020)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标角色下次受到的伤害-2。')
         .handle(() => ({ status: 303319 })),
 
-    333025: () => new CardBuilder().name('奇瑰之汤·安神').food().costSame(0).canSelectHero(1)
+    333025: () => new CardBuilder().name('奇瑰之汤·安神').food().costSame(0).canSelectHero(1).from(333020)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('本回合中，目标我方角色受到的伤害-1。（最多生效3次）')
         .handle(() => ({ status: 303320 })),
 
-    333026: () => new CardBuilder().name('奇瑰之汤·鼓舞').food().costSame(0).canSelectHero(1)
+    333026: () => new CardBuilder().name('奇瑰之汤·鼓舞').food().costSame(0).canSelectHero(1).from(333020)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/3ebfcee5c42c2a66d25b18c2241d6fba_5980484403709677390.png')
         .description('目标角色获得1点额外最大生命值。')
         .handle((_, { cmds }) => cmds.addMaxHp(1).res),
@@ -3745,6 +3743,18 @@ export const cardsTotal = (version: Version = VERSION[0], force: boolean = false
     return cards;
 }
 
-export const newCard = (version?: Version) => (id: number) => allCards[id]?.().id(id).version(version).done() ?? NULL_CARD();
+export const newCard = (version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
+    return (id: number) => {
+        const { diff = [], dict = {} } = options;
+        const dversion = diff.find(v => v.id == (getDerivantParentId(id, dict) ?? getHidById(id) ?? id))?.version ?? version;
+        return allCards[id]?.().id(id).version(dversion).done() ?? NULL_CARD();
+    }
+}
 
-export const parseCard = (shareId: number, version?: Version) => cardsTotal(version).find(c => c.shareId == shareId) ?? NULL_CARD();
+export const parseCard = (shareId: number, version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
+    const { diff = [], dict = {} } = options;
+    const card = cardsTotal(version).find(c => c.shareId == shareId) ?? NULL_CARD();
+    const dversion = diff.find(v => v.id == (getDerivantParentId(card.id, dict) || v.id == getHidById(card.id) || v.id == card.id))?.version ?? version;
+    if (dversion == version) return card;
+    return cardsTotal(dversion).find(c => c.shareId == shareId) ?? NULL_CARD();
+};

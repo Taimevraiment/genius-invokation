@@ -61,7 +61,8 @@
     </div>
     <div class="version">v0.1.11</div>
   </div>
-  <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom" />
+  <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
+    @create-config="createConfig" @edit-config="editConfig" />
   <EnterRoomModal v-if="isShowEnterRoom" :select-room-id="selectRoomId" @enter-room-cancel="cancelEnterRoom"
     @enter-room="enterRoom" />
   <InfoModal id="info-modal" v-if="info.info != null" :is-mobile="isMobile" :info="info" isBot />
@@ -80,20 +81,15 @@ import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { genShareCode } from '@@@/utils/utils';
-import Cookies from 'js-cookie';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
+import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon, VersionDiff } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
 const router = useRouter();
-const gidecks = Cookies.get('GIdecks');
-if (gidecks) localStorage.setItem('GIdecks', gidecks);
-const gideckidx = Cookies.get('GIdeckIdx');
-if (gideckidx) localStorage.setItem('GIdeckIdx', gideckidx);
 
 const userid = ref<number>(Number(localStorage.getItem('7szh_userid') || '-1')); // 玩家id
 const username = ref<string>(localStorage.getItem('7szh_username') || ''); // 昵称
@@ -163,10 +159,10 @@ const cancelCreateRoom = () => {
 };
 
 // 创建房间
-const createRoom = (roomName: string, version: Version, roomPassword: string,
-  countdown: number, allowLookon: boolean, isRecord?: { pidx: number, oppoName: string }) => {
+const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number,
+  versionDiff: VersionDiff[], allowLookon: boolean, isRecord?: { pidx: number, oppoName: string }) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, isRecord });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, versionDiff, allowLookon, isRecord });
 };
 
 // 打开加入房间界面
@@ -205,7 +201,8 @@ const importFile = (e: Event) => {
     reader.onload = e => {
       try {
         const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(e.target?.result?.toString() ?? '{}'));
-        createRoom(recordData.name, recordData.version, '', 0, false, {
+        // todo 在回放文件中要加上versionDiff配置文件，并传入下面的参数中
+        createRoom(recordData.name, recordData.version, '', 0, [], false, {
           pidx: recordData.pidx,
           oppoName: recordData.username[recordData.pidx ^ 1],
         });
@@ -221,6 +218,16 @@ const importFile = (e: Event) => {
     };
     reader.readAsText(file);
   }
+}
+
+// 新增自定义版本配置
+const createConfig = () => {
+  router.push({ name: 'editDeck', params: { mode: 'create-config' } });
+}
+
+// 编辑自定义版本配置
+const editConfig = (configName: string) => {
+  router.push({ name: 'editDeck', params: { mode: 'edit-config' }, state: { configName } });
 }
 
 // 获取玩家和房间列表

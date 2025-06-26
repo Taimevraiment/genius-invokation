@@ -1,8 +1,8 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
+import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger, VersionDiff } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
-import { allHidxs, getBackHidxs, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getDerivantParentId, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 
@@ -1033,8 +1033,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
 }
 
-export const newSupport = (version: Version) => {
+export const newSupport = (version: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
     return (card: Card, ...args: any[]) => {
-        return supportTotal[card.id](...args).card(card).version(version).done();
+        const { diff = [], dict = {} } = options;
+        const dversion = diff.find(v => v.id == (getDerivantParentId(card.id, dict) ?? card.id))?.version ?? version;
+        return supportTotal[card.id](...args).card(card).version(dversion).done();
     }
 }

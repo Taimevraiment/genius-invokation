@@ -1,7 +1,7 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger } from "../../typing"
+import { Card, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger, VersionDiff } from "../../typing"
 import { CARD_SUBTYPE, CardSubtype, CMD_MODE, ELEMENT_TYPE, ElementType, PureElementType, Version } from "../constant/enum.js"
 import CmdsGenerator from "../utils/cmdsGenerator.js"
-import { allHidxs, getNextBackHidx, getObjById, hasObjById } from "../utils/gameUtil.js"
+import { allHidxs, getHidById, getNextBackHidx, getObjById, hasObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 
@@ -303,5 +303,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 
 }
-export const newSkill = (version: Version) => (id: number) => skillTotal[id]().version(version).id(id).done();
+export const newSkill = (version: Version, options: { diff?: VersionDiff[] } = {}) => {
+    return (id: number) => {
+        const dversion = options.diff?.find(v => v.id == Math.floor(id / 10) || v.id == getHidById(id) || v.id == id)?.version ?? version;
+        return skillTotal[id]().version(dversion).id(id).done();
+    }
+}
 

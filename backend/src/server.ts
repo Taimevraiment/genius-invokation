@@ -204,10 +204,10 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown, allowLookon, isRecord } = data;
+        const { roomName, version, roomPassword, countdown, versionDiff = [], allowLookon, isRecord } = data;
         const roomId = genId(roomList, { isMinus: !!isRecord });
         const me = getPlayer(pid) as Player;
-        const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', io);
+        const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, versionDiff, allowLookon, isDev ? 'dev' : 'prod', io);
         if (isRecord && isRecord.pidx == 1) newRoom.init({ id: 0, name: isRecord.oppoName });
         const player = newRoom.init(me);
         if (isRecord && isRecord.pidx == 0) newRoom.init({ id: 0, name: isRecord.oppoName });

@@ -1,10 +1,10 @@
 
-import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
+import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionDiff } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
-import { allHidxs, getBackHidxs, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -977,34 +977,34 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     127025: () => crd12702summon(),
 
-    301028: () => new SummonBuilder('积木小人').useCnt(2).damage(1).physical().description('{defaultAtk。}')
+    301028: () => new SummonBuilder('积木小人').from(301033).useCnt(2).damage(1).physical().description('{defaultAtk。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_JimuBing.png'),
 
-    301029: () => new SummonBuilder('折纸飞鼠').useCnt(2).addition(1).icon(STATUS_ICON.Buff)
-        .description(`【结束阶段：】获得{addition0}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
+    301029: () => new SummonBuilder('折纸飞鼠').from(301034).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Buff)
+        .description(`【结束阶段：】获得{effect}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                cmds.getStatus([[169, summon.addition[0]]]);
+                cmds.getStatus([[169, summon.addition.effect]]);
                 smn.minusUseCnt();
             }
         })),
 
-    301030: () => new SummonBuilder('跳跳纸蛙').useCnt(2).addition(1).icon(STATUS_ICON.Special)
-        .description(`【结束阶段：】抓{addition0}张牌。；[useCnt]`)
+    301030: () => new SummonBuilder('跳跳纸蛙').from(301035).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Special)
+        .description(`【结束阶段：】抓{effect}张牌。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiWa.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                cmds.getCard(summon.addition[0]);
+                cmds.getCard(summon.addition.effect);
                 smn.minusUseCnt();
             }
         })),
 
-    301031: () => new SummonBuilder('折纸胖胖鼠').useCnt(2).heal(1)
+    301031: () => new SummonBuilder('折纸胖胖鼠').from(301036).useCnt(2).heal(1)
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu.png')
         .handle((summon, event) => {
@@ -1018,19 +1018,19 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    302201: () => new SummonBuilder('愤怒的太郎丸').useCnt(2).damage(2).physical().description('{defaultAtk。}')
+    302201: () => new SummonBuilder('愤怒的太郎丸').from(322024).useCnt(2).damage(2).physical().description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png'),
 
-    303211: () => new SummonBuilder('冰箭丘丘人').useCnt(2).damage(1).cryo().description('{defaultAtk。}')
+    303211: () => new SummonBuilder('冰箭丘丘人').from(332015).useCnt(2).damage(1).cryo().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/ba55e6e19d419b16ec763dfcfb655834_213836850123099432.png'),
 
-    303212: () => new SummonBuilder('水丘丘萨满').useCnt(2).damage(1).hydro().description('{defaultAtk。}')
+    303212: () => new SummonBuilder('水丘丘萨满').from(332015).useCnt(2).damage(1).hydro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/1fc573971ff6d8a6ede47f966be9a6a9_2274801154807218394.png'),
 
-    303213: () => new SummonBuilder('冲锋丘丘人').useCnt(2).damage(1).pyro().description('{defaultAtk。}')
+    303213: () => new SummonBuilder('冲锋丘丘人').from(332015).useCnt(2).damage(1).pyro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/b2751af5c3dddc5a4bf7909bd2382adc_8142471467728886523.png'),
 
-    303214: () => new SummonBuilder('雷箭丘丘人').useCnt(2).damage(1).electro().description('{defaultAtk。}')
+    303214: () => new SummonBuilder('雷箭丘丘人').from(332015).useCnt(2).damage(1).electro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
 
 }
@@ -1039,10 +1039,15 @@ export const summonsTotal = (version: Version = VERSION[0]) => {
     if (version == 'vlatest') version = VERSION[0];
     const summons: Summon[] = [];
     for (const idx in allSummons) {
-        const heroBuilder = allSummons[idx]().version(version);
-        summons.push(heroBuilder.id(+idx).done());
+        summons.push(allSummons[idx]().version(version).id(+idx).done());
     }
     return summons;
 }
 
-export const newSummon = (version?: Version) => (id: number, ...args: any) => allSummons[id](...args).id(id).version(version).done();
+export const newSummon = (version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
+    return (id: number, ...args: any) => {
+        const { diff = [], dict = {} } = options;
+        const dversion = diff.find(v => v.id == (getDerivantParentId(id, dict) || v.id == getHidById(id) || v.id == id))?.version ?? version;
+        return allSummons[id](...args).id(id).version(dversion).done();
+    }
+}

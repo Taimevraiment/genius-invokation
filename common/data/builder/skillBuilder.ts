@@ -35,7 +35,7 @@ export class GISkill {
     useCnt: number = 0; // 整局技能使用次数
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectHero: -1 | 0 | 1; // 能选择的角色 -1不能选择 0能选择敌方 1能选择我方
-    addition: any[]; // 额外信息
+    addition: Record<string, number>; // 额外信息
     UI: {
         src: string, // 图片url
         description: string; // 技能描述
@@ -45,8 +45,8 @@ export class GISkill {
     constructor(
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
         options: {
-            id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[],
-            ver?: Version, canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: any[], spe?: boolean,
+            id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version,
+            canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: Record<string, number>, spe?: boolean,
         } = {},
         src?: string | string[],
         handle?: (hevent: SkillBuilderHandleEvent, version: VersionCompareFn) => SkillBuilderHandleRes | undefined | void
@@ -54,7 +54,7 @@ export class GISkill {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], adt = [],
+        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], adt = {},
             canSelectSummon = -1, canSelectHero = -1, spe = false,
         } = options;
         costElement ??= DICE_TYPE.Same;
@@ -82,7 +82,7 @@ export class GISkill {
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
-        this.addition = [...adt];
+        this.addition = adt;
         this.handle = hevent => {
             const cmds = new CmdsGenerator();
             const skillAfter = new CmdsGenerator();
@@ -104,7 +104,7 @@ export class GISkill {
             if (reset) {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;
-                curskill.addition = [...adt];
+                curskill.addition = adt;
                 return {};
             }
             let dmgElement = res.dmgElement;
@@ -150,7 +150,7 @@ export class SkillBuilder extends BaseBuilder {
     private _readySkillRound: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectHero: -1 | 0 | 1 = -1;
-    private _addition: any[] = [];
+    private _addition: Record<string, number> = {};
     constructor(name: string = '') {
         super();
         this._name = name;
@@ -268,8 +268,8 @@ export class SkillBuilder extends BaseBuilder {
         this._canSelectHero = canSelectHero;
         return this;
     }
-    addition(...addition: any[]) {
-        this._addition.push(...addition);
+    addition(key: string, value: number) {
+        this._addition[key] = value;
         return this;
     }
     done() {

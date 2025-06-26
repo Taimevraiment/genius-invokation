@@ -354,3 +354,14 @@ type TaskItem = [
 ];
 
 type Env = 'prod' | 'dev' | 'test';
+
+type VersionDiff = {
+    id: number,
+    version: Version,
+}
+
+type CustomVersionConfig = {
+    name: string,
+    baseVersion: Version,
+    diff: VersionDiff[]
+}

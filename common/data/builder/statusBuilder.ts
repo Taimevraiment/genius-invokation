@@ -26,7 +26,7 @@ export class GIStatus {
     isTalent: boolean; // 是否有天赋
     handle: (status: Status, event?: StatusHandleEvent) => StatusHandleRes; // 处理函数
     summonId: number; // 可能对应的召唤物 -1不存在
-    addition: any[]; // 额外信息
+    addition: Record<string, number>; // 额外信息
     UI: {
         icon: string, // 图标
         description: string, // 描述
@@ -40,7 +40,7 @@ export class GIStatus {
         handle?: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, adt?: any[], ver?: Version,
+            isTalent?: boolean, isReset?: boolean, adt?: Record<string, number>, ver?: Version,
         } = {}
     ) {
         this.id = id;
@@ -51,7 +51,7 @@ export class GIStatus {
         this.maxCnt = maxCnt;
         this.roundCnt = roundCnt;
         const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
-            isTalent = false, isReset = true, adt = [], ver = VERSION[0] } = options;
+            isTalent = false, isReset = true, adt = {}, ver = VERSION[0] } = options;
         const hid = getHidById(id);
         const el = getElByHid(hid);
         description = description
@@ -213,7 +213,7 @@ export class StatusBuilder extends BaseBuilder {
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
     private _summonId: number = -1;
-    private _addition: any[] = [];
+    private _addition: Record<string, number> = {};
     private _isReset: boolean = true;
     private _handle: ((status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionCompareFn) => boolean, StatusType[]][] = [];
@@ -317,8 +317,8 @@ export class StatusBuilder extends BaseBuilder {
         this._summonId = smnId ?? -2;
         return this;
     }
-    addition(...addition: any[]) {
-        this._addition.push(...addition);
+    addition(key: string, value: number) {
+        this._addition[key] = value;
         return this;
     }
     notReset() {
@@ -350,6 +350,10 @@ export class StatusBuilder extends BaseBuilder {
         else this._barrierUsage = cnt;
         return this;
     }
+    from(id: number) {
+        this.addition('from', id);
+        return this;
+    }
     done() {
         const name = this._name.get(this._curVersion, '无');
         const description = this._description.get(this._curVersion, '');
@@ -362,7 +366,7 @@ export class StatusBuilder extends BaseBuilder {
         this._typeCdt.forEach(([cdt, types]) => {
             if (cdt(compareVersionFn(this._curVersion))) this._type.push(...types);
         });
-        if (this._type.includes(STATUS_TYPE.NonDefeat)) this.addition(1);
+        if (this._type.includes(STATUS_TYPE.NonDefeat)) this.addition(STATUS_TYPE.NonDefeat, 1);
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
             (status: Status, event: StatusHandleEvent, ver: VersionCompareFn): StatusBuilderHandleRes => {
                 const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;
