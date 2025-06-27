@@ -1,4 +1,4 @@
-import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionDiff } from "../../typing";
+import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType,
     DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
@@ -1897,14 +1897,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 triggers: ['other-vehicle', 'Burning-oppo', 'turn-end'],
                 exec: () => {
-                    const nightSoul = heros[hidx]?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                    const heroStatus = heros[hidx]?.heroStatus;
+                    const nightSoul = heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return;
                     if (trigger == 'turn-end') {
                         if (status.roundCnt == 1) nightSoul.roundCnt = 0;
                         return;
                     }
                     nightSoul.addUseCnt();
-                    if (nightSoul.useCnt == 2) {
+                    if (nightSoul.useCnt == 2 && !hasObjById(heroStatus, 117094)) {
                         cmds.getStatus(117094, { hidxs: hidx }).consumeNightSoul(hidx, 2);
                     }
                 }
@@ -3373,10 +3374,10 @@ export const statusesTotal = (version: Version = VERSION[0]) => {
     return statuses;
 }
 
-export const newStatus = (version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
+export const newStatus = (version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
     return (id: number, ...args: any) => {
-        const { diff = [], dict = {} } = options;
-        const dversion = diff.find(v => v.id == (getDerivantParentId(id, dict) || v.id == getHidById(id) || v.id == id))?.version ?? version;
+        const { diff = {}, dict = {} } = options;
+        const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
         return allStatuses[id]?.(...args).id(id).version(dversion).done() ?? NULL_STATUS();
     }
 }

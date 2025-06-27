@@ -28,10 +28,8 @@ import {
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import {
-    ActionData, ActionInfo,
-    AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
+    ActionData, ActionInfo, AtkTask, CalcAtkRes, Card, Cmds, Countdown, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
     Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn,
-    VersionDiff
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -81,7 +79,7 @@ export default class GeniusInvokationRoom {
 
     constructor(
         id: number, name: string, version: Version, password: string, countdown: number,
-        diff: VersionDiff[], allowLookon: boolean, env: Env, io?: Server
+        diff: Record<number, Version>, allowLookon: boolean, env: Env, io?: Server
     ) {
         this.io = io;
         this.id = id;

@@ -1,4 +1,4 @@
-import { Hero, Trigger, VersionDiff } from '../../typing';
+import { Hero, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
 import { allHidxs, getBackHidxs, getMaxHertHidxs, getMinHpHidxs, getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
@@ -2518,17 +2518,16 @@ export const herosTotal = (version: Version = VERSION[0], force: boolean = false
     return heros;
 }
 
-export const newHero = (version?: Version, options: { diff?: VersionDiff[] } = {}) => {
+export const newHero = (version?: Version, options: { diff?: Record<number, Version> } = {}) => {
     return (id: number) => {
-        const dversion = options.diff?.find(v => v.id == id)?.version ?? version;
+        const dversion = options.diff?.[id] ?? version;
         return allHeros[id]?.().id(id).version(dversion).done() ?? NULL_HERO();
     }
 }
 
-export const parseHero = (shareId: number, version?: Version, options: { diff?: VersionDiff[] } = {}) => {
-    const { diff = [] } = options;
+export const parseHero = (shareId: number, version?: Version, options: { diff?: Record<number, Version> } = {}) => {
     const hero = herosTotal(version).find(h => h.shareId == shareId) ?? NULL_HERO();
-    const dversion = diff.find(v => v.id == hero.id)?.version ?? version;
+    const dversion = options.diff?.[hero.id] ?? version;
     if (dversion == version) return hero;
     return herosTotal(dversion).find(h => h.shareId == shareId) ?? NULL_HERO();
 };

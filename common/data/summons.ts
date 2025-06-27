@@ -1,5 +1,5 @@
 
-import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionDiff } from "../../typing";
+import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { STATUS_ICON } from "../constant/UIconst.js";
@@ -1044,10 +1044,10 @@ export const summonsTotal = (version: Version = VERSION[0]) => {
     return summons;
 }
 
-export const newSummon = (version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
+export const newSummon = (version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
     return (id: number, ...args: any) => {
-        const { diff = [], dict = {} } = options;
-        const dversion = diff.find(v => v.id == (getDerivantParentId(id, dict) || v.id == getHidById(id) || v.id == id))?.version ?? version;
+        const { diff = {}, dict = {} } = options;
+        const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
         return allSummons[id](...args).id(id).version(dversion).done();
     }
 }

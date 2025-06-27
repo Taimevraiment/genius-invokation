@@ -19,6 +19,9 @@ export class VersionMap<T> {
         }
         return this._map.sort(([a], [b]) => a.lt(b.ver) ? -1 : 1).find(([ver]) => ver.gt(version))?.[1] ?? defaultValue;
     }
+    get versions() {
+        return this._map.filter(([v]) => (Array.from(VERSION) as string[]).includes(v.ver)).map(([v]) => v.ver);
+    }
 }
 
 export class BaseBuilder {

@@ -22,10 +22,10 @@
       </div>
       <div class="btn-group">
         <button v-if="isCustom" @click="createConfig">新增</button>
-        <button v-if="isCustom && customVersion.diff.length > 0" @click="editConfig">编辑</button>
-        <button v-if="isCustom && customVersion.diff.length > 0" @click="deleteConfig">删除</button>
+        <button v-if="isCustom && !isDiffEmpty" @click="editConfig">编辑</button>
+        <button v-if="isCustom && !isDiffEmpty" @click="deleteConfig">删除</button>
         <button v-if="isCustom" @click="importConfig">导入</button>
-        <button :class="{ 'btn-forbidden': isCustom && customVersion.diff.length == 0 }" @click="create">创建</button>
+        <button :class="{ 'btn-forbidden': isCustom && isDiffEmpty }" @click="create">创建</button>
       </div>
     </div>
   </div>
@@ -34,11 +34,12 @@
 <script setup lang='ts'>
 import { OFFLINE_VERSION, OfflineVersion, VERSION, Version } from '@@@/constant/enum';
 import { compareVersionFn } from '@@@/utils/gameUtil';
-import { ref } from 'vue';
-import { CustomVersionConfig, VersionDiff } from '../../../typing';
+import { computed, ref } from 'vue';
+import { CustomVersionConfig } from '../../../typing';
+import { NULL_CUSTOM_VERSION_CONFIG } from '@@@/constant/init';
 
 const emit = defineEmits<{
-  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, versionDiff: VersionDiff[], allowLookon: boolean],
+  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, versionDiff: Record<number, Version>, allowLookon: boolean],
   'create-room-cancel': [],
   'create-config': [],
   'edit-config': [name: string],
@@ -52,11 +53,12 @@ const countdown = ref<number | string>(''); // 倒计时
 const allowLookon = ref<boolean>(true); // 是否允许观战
 const officialVersionList = ref<Version[]>([...VERSION, ...OFFLINE_VERSION]); // 官方版本列表
 const isCustom = ref<boolean>(false); // 是否创建自定义版本房间
-const customVersionList = ref<CustomVersionConfig[]>(JSON.parse(localStorage.getItem('7szh_custom_version_list') || '[{ "name": "无", "baseVersion": "v3.3.0", "diff": [] }]')); // 自定义版本列表
+const customVersionList = ref<CustomVersionConfig[]>(JSON.parse(localStorage.getItem('7szh_custom_version_list') || JSON.stringify([NULL_CUSTOM_VERSION_CONFIG()]))); // 自定义版本列表
 const customVersion = ref<CustomVersionConfig>(customVersionList.value[0]); // 当前选择的版本配置
+const isDiffEmpty = computed(() => Object.keys(customVersion.value.diff).length == 0);
 
 const create = () => {
-  if (isCustom.value && customVersion.value.diff.length == 0) return;
+  if (isCustom.value && isDiffEmpty.value) return;
   const selectedVersion = isCustom.value ? customVersion.value.baseVersion : version.value;
   emit('create-room', roomName.value, selectedVersion, roomPassword.value,
     +countdown.value || 0, customVersion.value.diff, allowLookon.value)

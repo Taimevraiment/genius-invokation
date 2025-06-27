@@ -18,8 +18,8 @@ const router = createRouter({
     name: 'gameRoom',
     component: () => import('@/views/GeniusInvokation.vue'),
   }, {
-    path: '/edit-deck/:mode?',
-    name: 'editDeck',
+    path: '/version-config/:mode',
+    name: 'versionConfig',
     component: () => import('@/views/EditDeck.vue'),
   }]
 })

@@ -1,4 +1,4 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger, VersionDiff } from '../../typing';
+import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE,
     DICE_COST_TYPE, DiceCostType, ELEMENT_CODE,
@@ -3743,18 +3743,18 @@ export const cardsTotal = (version: Version = VERSION[0], force: boolean = false
     return cards;
 }
 
-export const newCard = (version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
+export const newCard = (version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
     return (id: number) => {
-        const { diff = [], dict = {} } = options;
-        const dversion = diff.find(v => v.id == (getDerivantParentId(id, dict) ?? getHidById(id) ?? id))?.version ?? version;
+        const { diff = {}, dict = {} } = options;
+        const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
         return allCards[id]?.().id(id).version(dversion).done() ?? NULL_CARD();
     }
 }
 
-export const parseCard = (shareId: number, version?: Version, options: { diff?: VersionDiff[], dict?: Record<number, number> } = {}) => {
-    const { diff = [], dict = {} } = options;
+export const parseCard = (shareId: number, version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
+    const { diff = {}, dict = {} } = options;
     const card = cardsTotal(version).find(c => c.shareId == shareId) ?? NULL_CARD();
-    const dversion = diff.find(v => v.id == (getDerivantParentId(card.id, dict) || v.id == getHidById(card.id) || v.id == card.id))?.version ?? version;
+    const dversion = diff[getDerivantParentId(card.id, dict)] ?? diff[getHidById(card.id)] ?? diff[card.id] ?? version;
     if (dversion == version) return card;
     return cardsTotal(dversion).find(c => c.shareId == shareId) ?? NULL_CARD();
 };

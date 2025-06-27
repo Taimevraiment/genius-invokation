@@ -1,4 +1,4 @@
-import { InfoVO, Player } from '../../typing';
+import { CustomVersionConfig, InfoVO, Player } from '../../typing';
 import { GICard } from '../data/builder/cardBuilder.js';
 import { GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
@@ -83,6 +83,8 @@ export const NULL_MODAL = (): InfoVO => ({
     type: null,
     info: null,
 });
+
+export const NULL_CUSTOM_VERSION_CONFIG = (): CustomVersionConfig => ({ name: '无', baseVersion: VERSION[0], diff: {} });
 
 export const INIT_SUMMONCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
 

@@ -159,7 +159,11 @@ export const getObjIdxById = <T extends { id: number }>(obj: T[] | undefined, id
 }
 
 // 根据id提取角色id
-export const getHidById = (id: number): number => Math.floor(id / 10) % 1e4;
+export const getHidById = (id: number): number => {
+    const [first] = id.toString();
+    if (first != '1' && first != '2') return 0;
+    return Math.floor(id / 10) % 1e4;
+};
 
 // 根据角色id获取元素
 export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];

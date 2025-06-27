@@ -35,8 +35,12 @@
         </div>
         <div v-else class="edit-container">
             <button class="edit-btn exit" @click.stop="exit">返回</button>
-            <button class="edit-btn save" @click.stop="saveDeck">{{ mode.startsWith('edit') ? '保存' : '创建' }}</button>
-            <button class="edit-btn share-deck" v-if="isEditDeck" @click.stop="shareDeck">分享</button>
+            <button class="edit-btn save" @click.stop="isEditDeck ? saveDeck() : saveConfig()">
+                {{ mode.startsWith('edit') ? '保存' : '创建' }}
+            </button>
+            <button class="edit-btn share-deck" @click.stop="isEditDeck ? shareDeck() : exportConfig()">
+                {{ isEditDeck ? '分享' : '导出' }}
+            </button>
             <div class="deck-share-img" v-if="isShowDeckShareImg" @click.stop="">
                 <span>{{herosDeck.filter(h => h.id > 0).length + cardsDeck.length}}</span>
                 <canvas id="deck-share" style="width: 100%;height: 100%;"></canvas>
@@ -68,8 +72,8 @@
                     <label for="isOfflineInput">实体版</label>
                 </div>
             </div>
+            <input v-model="deckName" class="deck-name" />
             <template v-if="isEditDeck">
-                <input v-model="deckName" class="deck-name" />
                 <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
                 <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" />
                 <button id="paste-share-code" class="edit-btn share" v-if="pShareCode.length > 0"
@@ -79,7 +83,7 @@
                 <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
             </template>
             <div v-if="currIdx == 0">
-                <div class="heros-deck" :class="{ 'mobile-heros-deck': isMobile }">
+                <div class="heros-deck" :class="{ 'mobile-heros-deck': isMobile }" v-if="isEditDeck">
                     <div class="hero-deck" :class="{ 'mobile-hero-avatar': isMobile }"
                         v-for="(dhero, dhidx) in herosDeck" :key="dhidx" @click.stop="showHeroInfo(dhero.id)">
                         <img class="hero-img" :src="dhero.UI.avatar" v-if="dhero?.UI.avatar?.length > 0"
@@ -96,7 +100,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="heros-total" :class="{ 'mobile-heros-total': isMobile }">
+                <div class="heros-total" :class="{ 'mobile-heros-total': isMobile, 'config-total': !isEditDeck }">
                     <div class="hero-total" :class="{ 'mobile-hero-deck': isMobile }" v-for="dthero in allHeros"
                         :key="dthero.id" :style="{ color: ELEMENT_COLOR[dthero.element] }"
                         @click.stop="showHeroInfo(dthero.id)">
@@ -109,19 +113,27 @@
                         </div>
                         <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
                             draggable="false" />
-                        <div class="icon-group" v-if="!dthero.UI.isActive">
+                        <div class="icon-group" v-if="!dthero.UI.isActive && isEditDeck">
                             <span v-for="(icon, cidx) in heroSelectIcon" :key="cidx" class="edit-icon"
                                 @click.stop="icon.handle(dthero.id)">
                                 {{ icon.name }}
                             </span>
                         </div>
-                        <div v-else class="selected">已选择</div>
+                        <div v-else-if="isEditDeck" class="selected">已选择</div>
+                        <select :name="`config-${dthero.id}-version`" :id="`config-${dthero.id}-version`"
+                            v-if="!isEditDeck" v-model="herosVersion[dthero.id]" style="z-index:2;" @click.stop="cancel"
+                            @change="changeVersion(currIdx, dthero.id)">
+                            <option v-for="ver in versionSelect" :key="ver" :value="ver">
+                                {{ ver }}
+                            </option>
+                        </select>
                     </div>
                 </div>
             </div>
             <div v-else>
-                <div :style="{ position: 'absolute', right: '10%', top: '5%' }">{{ cardsDeckLen }}/30</div>
-                <div class="cards-deck" :class="{ 'mobile-cards-deck': isMobile }">
+                <div :style="{ position: 'absolute', right: '10%', top: '5%' }" v-if="isEditDeck">{{ cardsDeckLen }}/30
+                </div>
+                <div class="cards-deck" :class="{ 'mobile-cards-deck': isMobile }" v-if="isEditDeck">
                     <div class="card-deck" :class="{ 'mobile-card-deck': isMobile }" v-for="(dcard, dcidx) in cardsDeck"
                         :key="dcidx" @click.stop="showCardInfo(dcard.id)">
                         <Actioncard :card="dcard" :isMobile="isMobile" isHideBorder isHideCost
@@ -134,20 +146,29 @@
                         </Actioncard>
                     </div>
                 </div>
-                <div class="cards-total" :class="{ 'mobile-cards-total': isMobile }">
+                <div class="cards-total" :class="{ 'mobile-cards-total': isMobile, 'config-total': !isEditDeck }">
                     <div class="card-total" :class="{ 'mobile-card-deck': isMobile }"
                         v-for="(dtcard, dtcidx) in allCards" :key="dtcidx" @click.stop="showCardInfo(dtcard.id)">
                         <Actioncard :card="dtcard" :isMobile="isMobile" isHideBorder :isHideCost="dtcard.UI.cnt == 0"
                             style="width: 100%;height: 100%;">
-                            <div class="forbidden" v-if="dtcard.UI.cnt == -1">
-                                已失效
-                            </div>
-                            <span v-else-if="dtcard.UI.cnt > 0" class="edit-icon card-select-icon"
-                                @click.stop="selectCard(dtcard.id)">+</span>
-                            <div v-else class="selected">已选完</div>
-                            <span class="edit-icon card-remove-icon" @click.stop="removeCard(dtcard.id)"
-                                v-if="dtcard.UI.cnt >= 0 && cardsDeck.some(c => c.id == dtcard.id)">-</span>
-                            <div class="card-cnt" v-if="dtcard.UI.cnt > 0">{{ dtcard.UI.cnt }}</div>
+                            <template v-if="isEditDeck">
+                                <div class="forbidden" v-if="dtcard.UI.cnt == -1">
+                                    已失效
+                                </div>
+                                <span v-else-if="dtcard.UI.cnt > 0" class="edit-icon card-select-icon"
+                                    @click.stop="selectCard(dtcard.id)">+</span>
+                                <div v-else class="selected">已选完</div>
+                                <span class="edit-icon card-remove-icon" @click.stop="removeCard(dtcard.id)"
+                                    v-if="dtcard.UI.cnt >= 0 && cardsDeck.some(c => c.id == dtcard.id)">-</span>
+                                <div class="card-cnt" v-if="dtcard.UI.cnt > 0">{{ dtcard.UI.cnt }}</div>
+                            </template>
+                            <select :name="`config-${dtcard.id}-version`" :id="`config-${dtcard.id}-version`"
+                                v-if="!isEditDeck" v-model="cardsVersion[dtcard.id]" style="z-index:2;"
+                                @click.stop="cancel" @change="changeVersion(currIdx, dtcard.id)">
+                                <option v-for="ver in versionSelect" :key="ver" :value="ver">
+                                    {{ ver }}
+                                </option>
+                            </select>
                         </Actioncard>
                     </div>
                 </div>
@@ -189,7 +210,7 @@ import {
     TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
 import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
-import { NULL_CARD, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
+import { NULL_CARD, NULL_CUSTOM_VERSION_CONFIG, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
     CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_NAME_KEY, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
@@ -199,7 +220,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { cardsTotal } from '../../../common/data/cards';
 import { herosTotal, parseHero } from '../../../common/data/heros';
 import { arrToObj, clone, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
-import { Card, Hero, InfoVO } from '../../../typing';
+import { Card, CustomVersionConfig, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
 import StrokedText from '@/components/StrokedText.vue';
@@ -289,11 +310,16 @@ const selectSize = ref<number>(0);
 const sinceVersionSelect = computed(() => ['实装版本'].concat(versionSelect.value.filter(ver => compareVersionFn(ver).lte(version.value))));
 const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 
-// 获取png图片
-// const getPngIcon = (name: string) => {
-//     if (name.startsWith('http')) return name;
-//     return `/image/${name}.png`;
-// }
+const { configName } = history.state;
+if (configName) deckName.value = configName;
+const customVersionList: CustomVersionConfig[] = JSON.parse(localStorage.getItem('7szh_custom_version_list') || '[]'); // 自定义版本列表
+const customVersionIdx = customVersionList.findIndex(v => v.name == configName); // 当前自定义版本配置索引
+const curstomVersion = ref<CustomVersionConfig>(customVersionList[customVersionIdx] || NULL_CUSTOM_VERSION_CONFIG()); // 当前自定义版本配置
+const herosVersion = ref<Record<number, Version>>({});
+herosPool.value.forEach(h => herosVersion.value[h.id] = curstomVersion.value.diff[h.id] ?? version.value);
+const cardsVersion = ref<Record<number, Version>>({});
+cardsPool.value.forEach(c => cardsVersion.value[c.id] = curstomVersion.value.diff[c.id] ?? version.value);
+const isDiffEmpty = computed(() => Object.keys(curstomVersion.value.diff).length == 0);
 
 // 选择出战卡组
 const selectDeck = (didx: number) => {
@@ -399,67 +425,72 @@ const resetCardFilter = () => {
 }
 
 const updateInfo = (init = false) => {
-    herosDeck.value = herosDeck.value.map(h => herosPool.value.some(ph => ph.id == h.id) ? h : NULL_HERO());
-    if (currIdx.value == TAG_INDEX.Hero || init) {
-        allHeros.value = [];
-        const heroIds = herosDeck.value.map(v => v.id);
-        herosPool.value.forEach(h => {
-            if (h.id > 1000) {
-                h.UI.isActive = heroIds.includes(h.id);
-                allHeros.value.push(h);
+    if (isEditDeck) {
+        herosDeck.value = herosDeck.value.map(h => herosPool.value.some(ph => ph.id == h.id) ? h : NULL_HERO());
+        if (currIdx.value == TAG_INDEX.Hero || init) {
+            allHeros.value = [];
+            const heroIds = herosDeck.value.map(v => v.id);
+            herosPool.value.forEach(h => {
+                if (h.id > 1000) {
+                    h.UI.isActive = heroIds.includes(h.id);
+                    allHeros.value.push(h);
+                }
+            });
+        }
+        if (currIdx.value == TAG_INDEX.Card || init) {
+            allCards.value = [];
+            cardsPool.value.forEach(c => {
+                const cnt = c.UI.cnt - (cardsDeck.value.find(cd => cd.id == c.id)?.UI.cnt ?? 0);
+                if (c.id > 0) allCards.value.push(clone(c).setCnt(cnt));
+            });
+            cardsDeck.value.sort((a, b) => a.id - b.id);
+        }
+        const elMap = arrToObj(Object.values(ELEMENT_TYPE), 0);
+        const lcMap = arrToObj(Object.values(HERO_LOCAL), 0);
+        herosDeck.value.forEach(h => {
+            ++elMap[h.element];
+            h.tags.forEach(lc => {
+                if (lc in lcMap) ++lcMap[lc as HeroLocal];
+            });
+        });
+        cardsDeck.value = cardsDeck.value.filter(c => {
+            if (cardsPool.value.every(pc => pc.id != c.id)) return false;
+            if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
+                return herosDeck.value.map(h => h.id).includes(c.userType as number);
+            }
+            if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
+                const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
+                if (element == ELEMENT_TYPE.Physical) return false;
+                const elCode = PURE_ELEMENT_CODE[element] * 100;
+                return [331001 + elCode, 331002 + elCode].includes(c.id);
+            }
+            if (c.hasTag(CARD_TAG.LocalResonance)) { // 地区共鸣(包括魔物、愚人众)
+                const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
+                if (local == undefined) return false;
+                return c.id == 331800 + HERO_LOCAL_CODE[local];
+            }
+            return true;
+        });
+        allCards.value.forEach(c => {
+            if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
+                if (!herosDeck.value.some(h => h.id == c.userType)) c.UI.cnt = -1;
+                else if (c.UI.cnt == -1) c.UI.cnt = 2;
+            } else if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
+                const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
+                if (element == ELEMENT_TYPE.Physical || !Array.from({ length: 2 }, (_, i) => 331001 + i + PURE_ELEMENT_CODE[element] * 100).includes(c.id)) {
+                    c.UI.cnt = -1;
+                } else if (c.UI.cnt == -1) c.UI.cnt = 2;
+            } else if (c.hasTag(CARD_TAG.LocalResonance)) { // 所属地区(包括魔物、愚人众)
+                const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
+                if (local == undefined || c.id != 331800 + HERO_LOCAL_CODE[local]) c.UI.cnt = -1;
+                else if (c.UI.cnt == -1) c.UI.cnt = 2;
             }
         });
+    } else {
+        allHeros.value.forEach(h => herosVersion.value[h.id] = version.value);
+        allCards.value.forEach(c => cardsVersion.value[c.id] = version.value);
     }
-    if (currIdx.value == TAG_INDEX.Card || init) {
-        allCards.value = [];
-        cardsPool.value.forEach(c => {
-            const cnt = c.UI.cnt - (cardsDeck.value.find(cd => cd.id == c.id)?.UI.cnt ?? 0);
-            if (c.id > 0) allCards.value.push(clone(c).setCnt(cnt));
-        });
-        cardsDeck.value.sort((a, b) => a.id - b.id);
-    }
-    const elMap = arrToObj(Object.values(ELEMENT_TYPE), 0);
-    const lcMap = arrToObj(Object.values(HERO_LOCAL), 0);
-    herosDeck.value.forEach(h => {
-        ++elMap[h.element];
-        h.tags.forEach(lc => {
-            if (lc in lcMap) ++lcMap[lc as HeroLocal];
-        });
-    });
-    cardsDeck.value = cardsDeck.value.filter(c => {
-        if (cardsPool.value.every(pc => pc.id != c.id)) return false;
-        if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
-            return herosDeck.value.map(h => h.id).includes(c.userType as number);
-        }
-        if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
-            const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
-            if (element == ELEMENT_TYPE.Physical) return false;
-            const elCode = PURE_ELEMENT_CODE[element] * 100;
-            return [331001 + elCode, 331002 + elCode].includes(c.id);
-        }
-        if (c.hasTag(CARD_TAG.LocalResonance)) { // 地区共鸣(包括魔物、愚人众)
-            const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
-            if (local == undefined) return false;
-            return c.id == 331800 + HERO_LOCAL_CODE[local];
-        }
-        return true;
-    });
-    allCards.value.forEach(c => {
-        if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
-            if (!herosDeck.value.some(h => h.id == c.userType)) c.UI.cnt = -1;
-            else if (c.UI.cnt == -1) c.UI.cnt = 2;
-        } else if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
-            const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
-            if (element == ELEMENT_TYPE.Physical || !Array.from({ length: 2 }, (_, i) => 331001 + i + PURE_ELEMENT_CODE[element] * 100).includes(c.id)) {
-                c.UI.cnt = -1;
-            } else if (c.UI.cnt == -1) c.UI.cnt = 2;
-        } else if (c.hasTag(CARD_TAG.LocalResonance)) { // 所属地区(包括魔物、愚人众)
-            const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
-            if (local == undefined || c.id != 331800 + HERO_LOCAL_CODE[local]) c.UI.cnt = -1;
-            else if (c.UI.cnt == -1) c.UI.cnt = 2;
-        }
-    });
-    const cardFilterRes: [CardType[], CardSubtype[], number[], DiceType[]] = cardFilter.value?.map(ftype => {
+    const cardFilterRes = cardFilter.value?.map(ftype => {
         return ftype.value.filter(v => v.tap).map(v => v.val);
     }) as [CardType[], CardSubtype[], number[], DiceType[]];
     allCards.value = allCards.value.filter(c => {
@@ -468,7 +499,8 @@ const updateInfo = (init = false) => {
         const co = cardFilterRes[2].length == 0 || cardFilterRes[2].includes(c.cost + c.anydice);
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
         const sinceVersion = sinceVersionFilter.value == '实装版本' || c.sinceVersion == sinceVersionFilter.value;
-        return t && st && co && ct && sinceVersion;
+        const isConfig = isEditDeck || !c.hasSubtype(CARD_SUBTYPE.Talent);
+        return t && st && co && ct && sinceVersion && isConfig;
     }).sort((a, b) => {
         if (a.UI.cnt == -1 && b.UI.cnt != -1) return 1;
         if (a.UI.cnt != -1 && b.UI.cnt == -1) return -1;
@@ -488,6 +520,13 @@ const updateInfo = (init = false) => {
         .concat([heroFilter, cardFilter][currIdx.value].value
             ?.filter(ftype => ftype.value.filter(v => v.tap).length > 0)
             .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => v.name)) ?? []);
+}
+
+// 进入配置版本页面
+if (!isEditDeck) {
+    resetCardFilter();
+    resetHeroFilter();
+    updateInfo(true);
 }
 
 // 进入编辑卡组界面
@@ -667,6 +706,30 @@ const cancel = () => {
     isShowDeckShareImg.value = false;
     modalInfo.value = NULL_MODAL();
     selectSize.value = 0;
+}
+
+// 改变版本
+const changeVersion = (currIdx: TagIndex, id: number) => {
+    curstomVersion.value.diff[id] = [herosVersion.value, cardsVersion.value][currIdx][id];
+}
+
+// 保存版本配置
+const saveConfig = () => {
+    curstomVersion.value.name = deckName.value;
+    if (isDiffEmpty || deckName.value.trim() == '') alert('配置或名字不能为空');
+    if (customVersionList.filter(v => v.name == deckName.value).length > 1) {
+        if (!confirm('已存在同名配置，是否覆盖？')) return;
+        if (customVersionIdx > -1) customVersionList.splice(customVersionIdx, 1);
+        const oldIdx = customVersionList.findIndex(v => v.name == deckName.value);
+        customVersionList[oldIdx] = curstomVersion.value;
+    }
+    localStorage.setItem('7szh_custom_version_list', JSON.stringify(customVersionList));
+    router.push({ name: 'index', state: { saveConfig: true } })
+}
+
+// 导出版本配置
+const exportConfig = () => {
+
 }
 
 </script>
@@ -908,7 +971,7 @@ body div {
     background-color: #ffcf77;
 }
 
-#version {
+select#version {
     margin: 5px;
     padding: 5px 0;
     border-radius: 5px;
@@ -1215,6 +1278,15 @@ input#isOfflineInput:checked {
     left: 110px;
 }
 
+select[id^=config] {
+    position: absolute;
+    bottom: 5%;
+    border-radius: 5px;
+    border: 3px solid #583a01;
+    background-color: #ffcf77;
+    font-family: HYWH;
+}
+
 .mobile-hero-deck,
 .mobile-card-deck {
     width: 65px;
@@ -1237,6 +1309,11 @@ input#isOfflineInput:checked {
 
 .mobile-hero-hp-cnt {
     font-size: 12px;
+}
+
+.config-total {
+    height: 80%;
+    bottom: 25%;
 }
 
 .debug-mask {

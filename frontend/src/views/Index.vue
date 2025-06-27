@@ -84,7 +84,7 @@ import { genShareCode } from '@@@/utils/utils';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon, VersionDiff } from '../../../typing';
+import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -125,6 +125,11 @@ if (localStorage.getItem('GIdecks') == null) {
   localStorage.setItem('GIdecks', gidecks);
 }
 
+if (history.state.saveConfig) {
+  history.state.saveConfig = false;
+  isShowCreateRoom.value = true;
+}
+
 // 注册昵称
 const register = () => {
   if (inputName.value == '' && username.value == '') return alert('不能为空！');
@@ -160,7 +165,7 @@ const cancelCreateRoom = () => {
 
 // 创建房间
 const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number,
-  versionDiff: VersionDiff[], allowLookon: boolean, isRecord?: { pidx: number, oppoName: string }) => {
+  versionDiff: Record<number, Version>, allowLookon: boolean, isRecord?: { pidx: number, oppoName: string }) => {
   isShowCreateRoom.value = false;
   socket.emit('createRoom', { roomName, version, roomPassword, countdown, versionDiff, allowLookon, isRecord });
 };
@@ -222,12 +227,12 @@ const importFile = (e: Event) => {
 
 // 新增自定义版本配置
 const createConfig = () => {
-  router.push({ name: 'editDeck', params: { mode: 'create-config' } });
+  router.push({ name: 'versionConfig', params: { mode: 'create' } });
 }
 
 // 编辑自定义版本配置
 const editConfig = (configName: string) => {
-  router.push({ name: 'editDeck', params: { mode: 'edit-config' }, state: { configName } });
+  router.push({ name: 'versionConfig', params: { mode: 'edit' }, state: { configName } });
 }
 
 // 获取玩家和房间列表
