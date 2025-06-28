@@ -105,7 +105,7 @@
           <div>
             <div class="name">
               {{ (info as Card).name }}
-              <span v-if="isBot" style="position: absolute;right: 5px;">
+              <span v-if="isBot || isConfig" style="position: absolute;right: 5px;">
                 <span v-if="(OFFLINE_VERSION as unknown as string[]).includes(version)">实体版</span>
                 {{ version }}
               </span>
@@ -157,7 +157,7 @@
           <div>
             <div v-if="type == INFO_TYPE.Hero" class="name">
               {{ (info as Hero).name }}
-              <span v-if="isBot" style="position: absolute;right: 5px;">{{ version }}</span>
+              <span v-if="isBot || isConfig" style="position: absolute;right: 5px;">{{ version }}</span>
             </div>
             <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
               <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
@@ -223,7 +223,7 @@
           <div>
             <div class="name">
               {{ (info as Summon).name }}
-              <span v-if="isBot" style="position: absolute;right: 5px;">{{ version }}</span>
+              <span v-if="isBot || isConfig" style="position: absolute;right: 5px;">{{ version }}</span>
             </div>
             <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
           </div>
@@ -277,6 +277,7 @@ const props = defineProps<{
   round?: number,
   playerInfo?: GameInfo,
   isBot?: boolean,
+  isConfig?: boolean,
 }>();
 
 const isMobile = computed<boolean>(() => props.isMobile);
@@ -289,7 +290,8 @@ const type = computed<InfoType | null>(() => props.info.type); // 显示类型�
 const info = computed<Hero | Card | Summon | null>(() => props.info.info); // 展示信息
 const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
-const isBot = computed<boolean>(() => props.isBot); // 是否为bot截图 
+const isBot = computed<boolean>(() => props.isBot); // 是否为bot截图
+const isConfig = computed<boolean>(() => props.isConfig); // 是否为版本配置界面
 const skills = ref<Skill[]>([]); // 展示技能
 const isShowSkill = ref<boolean[]>([]); // 是否展示技能
 const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态

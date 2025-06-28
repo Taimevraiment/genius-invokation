@@ -1,5 +1,6 @@
 {
     "name": "GI TCG taim",
+    "id": "GI TCG taim",
     "short_name": "gi",
     "description": "GI TCG simulator by taim",
     "start_url": ".",

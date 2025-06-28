@@ -52,7 +52,7 @@
         </div>
       </div>
       <div class="btn-group">
-        <button v-if="false">导入回放<input type="file" accept=".gi" @change="importFile" /></button>
+        <button v-if="false">导入回放<input type="file" accept=".gi" @change="importRecord" /></button>
         <button @click="openRename">改名</button>
         <button @click="enterEditDeck">查看卡组</button>
         <button @click="openEnterRoom()">加入房间</button>
@@ -80,7 +80,7 @@ import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { genShareCode } from '@@@/utils/utils';
+import { genShareCode, importFile } from '@@@/utils/utils';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -198,31 +198,20 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 };
 
 // 导入回放
-const importFile = (e: Event) => {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (file) {
-    if (!file.name.endsWith('.gi')) return alert('请选择正确的回放文件');
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(e.target?.result?.toString() ?? '{}'));
-        // todo 在回放文件中要加上versionDiff配置文件，并传入下面的参数中
-        createRoom(recordData.name, recordData.version, '', 0, [], false, {
-          pidx: recordData.pidx,
-          oppoName: recordData.username[recordData.pidx ^ 1],
-        });
-        socket.emit('sendToServer', {
-          type: ACTION_TYPE.PlayRecord,
-          recordData,
-          flag: 'play-record',
-        });
-      } catch (e) {
-        alert('读取文件失败');
-        console.error(e);
-      }
-    };
-    reader.readAsText(file);
-  }
+const importRecord = (e: Event) => {
+  importFile(e, res => {
+    const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(res ?? '{}'));
+    // todo 在回放文件中要加上versionDiff配置文件，并传入下面的参数中
+    createRoom(recordData.name, recordData.version, '', 0, [], false, {
+      pidx: recordData.pidx,
+      oppoName: recordData.username[recordData.pidx ^ 1],
+    });
+    socket.emit('sendToServer', {
+      type: ACTION_TYPE.PlayRecord,
+      recordData,
+      flag: 'play-record',
+    });
+  }, 'gi');
 }
 
 // 新增自定义版本配置

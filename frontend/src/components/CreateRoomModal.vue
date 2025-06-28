@@ -3,7 +3,7 @@
     <div class="create-room-main" @click.stop="" @keyup.enter="create">
       <select name="version" id="custom-version" v-model="customVersion.name" v-if="isCustom">
         <option v-for="(item, idx) in customVersionList" :key="idx" :value="item.name">
-          {{ item.name }}
+          {{ item.name || '无' }}
         </option>
       </select>
       <select name="version" id="version" v-model="version" v-else>
@@ -24,7 +24,7 @@
         <button v-if="isCustom" @click="createConfig">新增</button>
         <button v-if="isCustom && !isDiffEmpty" @click="editConfig">编辑</button>
         <button v-if="isCustom && !isDiffEmpty" @click="deleteConfig">删除</button>
-        <button v-if="isCustom" @click="importConfig">导入</button>
+        <button v-if="isCustom">导入<input type="file" accept=".json" @change="importConfig" /></button>
         <button :class="{ 'btn-forbidden': isCustom && isDiffEmpty }" @click="create">创建</button>
       </div>
     </div>
@@ -37,6 +37,7 @@ import { compareVersionFn } from '@@@/utils/gameUtil';
 import { computed, ref } from 'vue';
 import { CustomVersionConfig } from '../../../typing';
 import { NULL_CUSTOM_VERSION_CONFIG } from '@@@/constant/init';
+import { importFile } from '@@@/utils/utils';
 
 const emit = defineEmits<{
   'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, versionDiff: Record<number, Version>, allowLookon: boolean],
@@ -53,7 +54,8 @@ const countdown = ref<number | string>(''); // 倒计时
 const allowLookon = ref<boolean>(true); // 是否允许观战
 const officialVersionList = ref<Version[]>([...VERSION, ...OFFLINE_VERSION]); // 官方版本列表
 const isCustom = ref<boolean>(false); // 是否创建自定义版本房间
-const customVersionList = ref<CustomVersionConfig[]>(JSON.parse(localStorage.getItem('7szh_custom_version_list') || JSON.stringify([NULL_CUSTOM_VERSION_CONFIG()]))); // 自定义版本列表
+const rawCustomVersionList: CustomVersionConfig[] = JSON.parse(localStorage.getItem('7szh_custom_version_list') || '[]');
+const customVersionList = ref<CustomVersionConfig[]>(rawCustomVersionList.length ? rawCustomVersionList : [NULL_CUSTOM_VERSION_CONFIG()]); // 自定义版本列表
 const customVersion = ref<CustomVersionConfig>(customVersionList.value[0]); // 当前选择的版本配置
 const isDiffEmpty = computed(() => Object.keys(customVersion.value.diff).length == 0);
 
@@ -76,12 +78,26 @@ const deleteConfig = () => {
     const delIdx = customVersionList.value.findIndex(v => v.name == customVersion.value.name);
     customVersionList.value.splice(delIdx, 1);
     localStorage.setItem('7szh_custom_version_list', JSON.stringify(customVersionList.value));
+    if (customVersionList.value.length == 0) customVersionList.value.push(NULL_CUSTOM_VERSION_CONFIG());
     customVersion.value = customVersionList.value[0];
   }
 }
 
-const importConfig = () => {
-
+const importConfig = (e: Event) => {
+  importFile(e, res => {
+    const config: CustomVersionConfig = JSON.parse(res ?? '{}');
+    if (!config.name || !config.baseVersion || !Object.keys(config.diff ?? '').length) return alert('请选择正确的配置文件');
+    const hasSameName = customVersionList.value.findIndex(v => v.name == config.name);
+    if (hasSameName > -1) {
+      if (!confirm('有同名配置，要覆盖吗？')) return;
+      customVersionList.value[hasSameName] = config;
+    } else {
+      customVersionList.value.push(config);
+      if (Object.keys(customVersionList.value[0].diff).length == 0) customVersionList.value.shift();
+    }
+    customVersion.value = customVersionList.value.at(hasSameName)!;
+    localStorage.setItem('7szh_custom_version_list', JSON.stringify(customVersionList.value));
+  }, 'json');
 }
 
 </script>
@@ -140,6 +156,16 @@ input {
   border-radius: 5px;
 }
 
+input[type=file] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
 select {
   height: 5vh;
   margin-top: 5%;
@@ -149,6 +175,7 @@ select {
 }
 
 button {
+  position: relative;
   background-color: #00a4db;
   border-radius: 5px;
   border: 0;

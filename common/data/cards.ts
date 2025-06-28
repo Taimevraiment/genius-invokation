@@ -3732,12 +3732,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
 }
 
-export const cardsTotal = (version: Version = VERSION[0], force: boolean = false) => {
+export const cardsTotal = (version: Version = VERSION[0], force: boolean = false, ignoreVersion: boolean = false) => {
     if (version == 'vlatest') version = VERSION[0];
     const cards: Card[] = [];
     for (const id in allCards) {
         const cardBuilder = allCards[id]().version(version);
-        if ((cardBuilder.notExist || cardBuilder.notInCardPool) && !force) continue;
+        if (((cardBuilder.notExist && !ignoreVersion) || cardBuilder.notInCardPool) && !force) continue;
         cards.push(cardBuilder.id(+id).done()!);
     }
     return cards;

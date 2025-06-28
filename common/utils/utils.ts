@@ -283,3 +283,38 @@ export const getSecretKey = async (name: string) => {
         return 'wrong';
     }
 }
+
+/**
+ * 导出文件
+ * @param name 文件名
+ * @param content 内容
+ */
+export const exportFile = (name: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+}
+
+export const importFile = (ev: Event, callback: (content?: string) => void, suffix?: string) => {
+    const file = (ev.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (suffix && !file.name.endsWith(`.${suffix}`)) return alert('请选择正确的回放文件');
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            callback(e.target?.result?.toString());
+        } catch (error) {
+            alert('读取文件失败');
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
+}

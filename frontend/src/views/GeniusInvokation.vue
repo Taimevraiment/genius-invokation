@@ -256,7 +256,7 @@ import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, STATUS_ICON } from '@@@/constant/UIconst';
 import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { debounce, isCdt, parseShareCode } from '@@@/utils/utils';
+import { debounce, exportFile, isCdt, parseShareCode } from '@@@/utils/utils';
 import { Card, Cmds, Hero, Player } from '../../../typing';
 
 const router = useRouter();
@@ -361,17 +361,7 @@ const sendLog = () => {
 // 导出行动日志
 const exportLog = () => {
   if (client.value.recordData.actionLog.length == 0) return;
-  const blob = new Blob([LZString.compressToBase64(JSON.stringify(client.value.recordData))], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `game${version.value.replace(/\./g, '_')}-r${roomId}.gi`;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 100);
+  exportFile(`game${version.value.replace(/\./g, '_')}-r${roomId}.gi`, LZString.compressToBase64(JSON.stringify(client.value.recordData)));
   client.value.recordData.actionLog = [];
 }
 // 投降
