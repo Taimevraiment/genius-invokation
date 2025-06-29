@@ -84,7 +84,7 @@ import { genShareCode, importFile } from '@@@/utils/utils';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Card, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
+import { Card, CustomVersionConfig, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -165,9 +165,9 @@ const cancelCreateRoom = () => {
 
 // 创建房间
 const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number,
-  versionDiff: Record<number, Version>, allowLookon: boolean, isRecord?: { pidx: number, oppoName: string }) => {
+  allowLookon: boolean, customVersion?: CustomVersionConfig, isRecord?: { pidx: number, oppoName: string }) => {
   isShowCreateRoom.value = false;
-  socket.emit('createRoom', { roomName, version, roomPassword, countdown, versionDiff, allowLookon, isRecord });
+  socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, customVersion, isRecord });
 };
 
 // 打开加入房间界面
@@ -201,8 +201,7 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 const importRecord = (e: Event) => {
   importFile(e, res => {
     const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(res ?? '{}'));
-    // todo 在回放文件中要加上versionDiff配置文件，并传入下面的参数中
-    createRoom(recordData.name, recordData.version, '', 0, [], false, {
+    createRoom(recordData.name, recordData.version, '', 0, false, recordData.customVersionConfig, {
       pidx: recordData.pidx,
       oppoName: recordData.username[recordData.pidx ^ 1],
     });
@@ -271,7 +270,7 @@ onMounted(async () => {
   });
   socket.on('getPlayerAndRoomList', getPlayerAndRoomList);
   // 进入房间
-  socket.on('enterRoom', ({ roomId, isLookon, players, version, countdown, allowLookon, err }) => {
+  socket.on('enterRoom', ({ roomId, isLookon, players, version, countdown, allowLookon, customVersion, err }) => {
     if (err) return alert(err);
     if (isLookon) alert('游戏已满员！进入成为旁观者');
     router.push({
@@ -284,6 +283,7 @@ onMounted(async () => {
         version,
         countdown,
         allowLookon,
+        customVersion,
         follow: players.find((p: Player) => p.id == followIdx)?.pidx,
       },
     });

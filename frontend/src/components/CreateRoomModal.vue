@@ -21,11 +21,11 @@
         <label for="isCustom" style="cursor: pointer;">自定义版本</label>
       </div>
       <div class="btn-group">
-        <button v-if="isCustom" @click="createConfig">新增</button>
-        <button v-if="isCustom && !isDiffEmpty" @click="editConfig">编辑</button>
-        <button v-if="isCustom && !isDiffEmpty" @click="deleteConfig">删除</button>
-        <button v-if="isCustom">导入<input type="file" accept=".json" @change="importConfig" /></button>
+        <button class="add" v-if="isCustom" @click="createConfig">新增</button>
+        <button class="import" v-if="isCustom">导入<input type="file" accept=".json" @change="importConfig" /></button>
         <button :class="{ 'btn-forbidden': isCustom && isDiffEmpty }" @click="create">创建</button>
+        <button class="edit" v-if="isCustom && !isDiffEmpty" @click="editConfig">编辑</button>
+        <button class="del" v-if="isCustom && !isDiffEmpty" @click="deleteConfig">删除</button>
       </div>
     </div>
   </div>
@@ -37,10 +37,10 @@ import { compareVersionFn } from '@@@/utils/gameUtil';
 import { computed, ref } from 'vue';
 import { CustomVersionConfig } from '../../../typing';
 import { NULL_CUSTOM_VERSION_CONFIG } from '@@@/constant/init';
-import { importFile } from '@@@/utils/utils';
+import { importFile, isCdt } from '@@@/utils/utils';
 
 const emit = defineEmits<{
-  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, versionDiff: Record<number, Version>, allowLookon: boolean],
+  'create-room': [roomName: string, version: Version, roomPassword: string, countdown: number, allowLookon: boolean, customVersion?: CustomVersionConfig],
   'create-room-cancel': [],
   'create-config': [],
   'edit-config': [name: string],
@@ -63,7 +63,7 @@ const create = () => {
   if (isCustom.value && isDiffEmpty.value) return;
   const selectedVersion = isCustom.value ? customVersion.value.baseVersion : version.value;
   emit('create-room', roomName.value, selectedVersion, roomPassword.value,
-    +countdown.value || 0, customVersion.value.diff, allowLookon.value)
+    +countdown.value || 0, allowLookon.value, isCdt(isCustom.value, customVersion.value))
 };
 const cancel = () => emit('create-room-cancel');
 const isOfflineVersion = (version: Version) => OFFLINE_VERSION.includes(version as OfflineVersion);
@@ -88,6 +88,7 @@ const importConfig = (e: Event) => {
     const config: CustomVersionConfig = JSON.parse(res ?? '{}');
     if (!config.name || !config.baseVersion || !Object.keys(config.diff ?? '').length) return alert('请选择正确的配置文件');
     const hasSameName = customVersionList.value.findIndex(v => v.name == config.name);
+    if (!config.banList) config.banList = [];
     if (hasSameName > -1) {
       if (!confirm('有同名配置，要覆盖吗？')) return;
       customVersionList.value[hasSameName] = config;
@@ -193,5 +194,21 @@ button:not(.btn-forbidden):hover {
 button:not(.btn-forbidden):active {
   background-color: #005f7f;
   border: 3px outset #00a4db;
+}
+
+button.add {
+  filter: hue-rotate(286deg);
+}
+
+button.import {
+  filter: hue-rotate(213deg);
+}
+
+button.edit {
+  filter: hue-rotate(43deg);
+}
+
+button.del {
+  filter: hue-rotate(173deg);
 }
 </style>

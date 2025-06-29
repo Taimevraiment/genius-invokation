@@ -2525,8 +2525,9 @@ export const newHero = (version?: Version, options: { diff?: Record<number, Vers
     }
 }
 
-export const parseHero = (shareId: number, version?: Version, options: { diff?: Record<number, Version> } = {}) => {
+export const parseHero = (shareId: number, version?: Version, options: { diff?: Record<number, Version>, banList?: number[] } = {}) => {
     const hero = herosTotal(version).find(h => h.shareId == shareId) ?? NULL_HERO();
+    if (options.banList?.includes(hero.id)) return NULL_HERO();
     const dversion = options.diff?.[hero.id] ?? version;
     if (dversion == version) return hero;
     return herosTotal(dversion).find(h => h.shareId == shareId) ?? NULL_HERO();

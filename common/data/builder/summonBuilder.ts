@@ -43,10 +43,11 @@ export class GISummon {
         willChange: boolean, // 是否将要变化的召唤物
         isAdd: boolean, // 召唤物是否增加过次数
         explains: string[], // 要解释的文本
+        curVersion: Version, // 当前版本
     };
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
-        shieldOrHeal: number, damage: number, element: ElementType,
+        shieldOrHeal: number, damage: number, element: ElementType, curVersion: Version,
         handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
@@ -82,6 +83,7 @@ export class GISummon {
             willChange: false,
             isAdd: false,
             descriptions: [],
+            curVersion,
         }
         this.perCnt = pct;
         this.isTalent = isTalent;
@@ -321,7 +323,7 @@ export class SummonBuilder extends BaseBuilder {
         const damage = this._damage.get(this._curVersion, -1);
         const stsId = this._statusId == -2 ? this._id : this._statusId;
         return new GISummon(this._id, this._name, description, this._src, useCnt, maxUse,
-            this._shieldOrHeal, damage, element, this._handle,
+            this._shieldOrHeal, damage, element, this._curVersion, this._handle,
             {
                 pct: perCnt,
                 isTalent: this._isTalent,

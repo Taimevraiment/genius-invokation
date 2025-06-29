@@ -4,7 +4,8 @@
       返回
     </button>
     <div style="position: absolute;left: 60px;color: white;z-index: 6;">
-      [{{ OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' : '' }}{{ version }}]
+      [{{ customVersion ? customVersion.name : `${OFFLINE_VERSION.includes(version as OfflineVersion) ? '实体版' :
+        ''}${version}` }}]
       <span v-if="roomId > 0">房间号{{ roomId }}</span>
       <span v-else>回放</span>
       <u v-if="client.roomId > 0" @click.stop="sendLog" style="margin-left: 5px;cursor: pointer;">发送日志</u>
@@ -178,7 +179,7 @@
     </div>
 
     <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" isInGame
-      :round="client.round" :playerInfo="client.player.playerInfo" style="z-index: 10" />
+      :round="client.round" :playerInfo="client.player.playerInfo" :customVersion="customVersion" style="z-index: 10" />
 
     <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
       :class="{ 'mobile-win-banner': isMobile }">
@@ -263,18 +264,17 @@ const router = useRouter();
 const route = useRoute();
 
 const isMobile = ref(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
-const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow, isDev } = history.state;
+const { players: cplayers, version: cversion, isLookon: cisLookon, countdown, follow, customVersion, isDev } = history.state;
 const socket: Socket = getSocket(isDev);
 
 const userid = Number(localStorage.getItem('7szh_userid') || '-1'); // 玩家id
 const roomId: number = +route.params.roomId; // 房间id
-const version = ref<Version>(cversion); // 版本
+const version = ref<Version>(customVersion?.baseVersion ?? cversion); // 版本
 const isLookon = ref<number>(cisLookon ? (follow ?? Math.floor(Math.random() * PLAYER_COUNT)) : -1); // 是否旁观
 const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
-  socket, roomId, userid, version.value,
-  cplayers, isMobile.value, countdown, isDev,
+  socket, roomId, userid, version.value, cplayers, isMobile.value, countdown, isDev,
   JSON.parse(localStorage.getItem('GIdecks') || '[]'),
-  Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value
+  Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value, customVersion,
 ));
 
 const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
@@ -343,7 +343,13 @@ const startGame = () => {
 };
 // 查看卡组
 const enterEditDeck = () => {
-  router.push({ name: 'editDeck', state: { maskOpacity: isOpenMask.value ? maskOpacity.value : 0 } });
+  router.push({
+    name: 'editDeck',
+    state: {
+      maskOpacity: isOpenMask.value ? maskOpacity.value : 0,
+      customVersion,
+    }
+  });
 };
 // 返回
 const exit = () => {

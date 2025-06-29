@@ -71,9 +71,9 @@ export const INIT_PLAYER: () => Player = () => ({
 
 export const NULL_SKILL = () => new GISkill('无', '', SKILL_TYPE.Passive, 0, 0, DICE_TYPE.Same);
 
-export const NULL_HERO = () => new GIHero(0, -1, '无', 'v3.3.0', [], 0, ELEMENT_TYPE.Physical, WEAPON_TYPE.Other, '', '');
+export const NULL_HERO = () => new GIHero(0, -1, '无', 'v3.3.0', 'v3.3.0', [], 0, ELEMENT_TYPE.Physical, WEAPON_TYPE.Other, '', '');
 
-export const NULL_CARD = () => new GICard(0, -1, '无', 'v3.3.0', '', '', 0, DICE_TYPE.Same, CARD_TYPE.Event);
+export const NULL_CARD = () => new GICard(0, -1, '无', 'v3.3.0', 'v3.3.0', '', '', 0, DICE_TYPE.Same, CARD_TYPE.Event);
 
 export const NULL_STATUS = () => new GIStatus(0, '无', '', '', 0, [], 1, 1, 1);
 
@@ -84,7 +84,7 @@ export const NULL_MODAL = (): InfoVO => ({
     info: null,
 });
 
-export const NULL_CUSTOM_VERSION_CONFIG = (): CustomVersionConfig => ({ name: '无', baseVersion: VERSION[0], diff: {} });
+export const NULL_CUSTOM_VERSION_CONFIG = (): CustomVersionConfig => ({ name: '无', baseVersion: VERSION[0], diff: {}, banList: [] });
 
 export const INIT_SUMMONCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
 

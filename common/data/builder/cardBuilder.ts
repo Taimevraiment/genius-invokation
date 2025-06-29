@@ -46,11 +46,13 @@ export class GICard {
         cnt: number, // 卡牌数量，默认为2
         descriptions: string[], // 处理后的技能描述
         explains: string[], // 要解释的文本
+        curVersion: Version, // 当前版本
         class?: string, // 动画的class
     };
     constructor(
-        id: number, shareId: number, name: string, version: OnlineVersion, description: string, src: string, cost: number, costType: DiceType,
-        type: CardType, subType?: CardSubtype | CardSubtype[], userType: number | WeaponType = 0, offlineVersion: OfflineVersion | null = null,
+        id: number, shareId: number, name: string, version: OnlineVersion, curVersion: Version, description: string, src: string,
+        cost: number, costType: DiceType, type: CardType, subType?: CardSubtype | CardSubtype[],
+        userType: number | WeaponType = 0, offlineVersion: OfflineVersion | null = null,
         handle?: (card: Card, event: CardBuilderHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
@@ -78,6 +80,7 @@ export class GICard {
             src,
             cnt,
             descriptions: [],
+            curVersion,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
         if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个「${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}」角色，才能加入牌组）`;
@@ -477,7 +480,7 @@ export class CardBuilder extends BaseCostBuilder {
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const energy = this._energy.get(this._curVersion, 0);
         const canSelectHero = this._canSelectHero.get(this._curVersion, 0);
-        return new GICard(this._id, this._shareId, this._name, this._version, description, this._src,
+        return new GICard(this._id, this._shareId, this._name, this._version, this._curVersion, description, this._src,
             cost, costType, this._type, this._subtype, userType, this._offlineVersion, this._handle,
             {
                 tag: this._tag,

@@ -60,13 +60,14 @@
                 <button @click.stop="{ currIdx = 1; updateInfo(); }" :class="{ active: currIdx == 1 }">
                     卡组
                 </button>
-                <select name="version" id="version" v-model="version" :size="selectSize" @click.stop="clickSelect"
-                    @change="updateInfo()">
+                <select name="version" id="version" v-model="version" @click.stop="clickSelect" @change="updateInfo()">
                     <option v-for="ver in versionSelect" :key="ver" :value="ver">
                         {{ ver }}
                     </option>
                 </select>
-                <button class="edit-btn reset-config" @click="changeVersion(currIdx, -1)">清除配置</button>
+                <button class="edit-btn reset-config" v-if="!isEditDeck" @click="changeVersion(currIdx, -1)">
+                    清除配置
+                </button>
                 <div v-if="isEditDeck">
                     <input id="isOfflineInput" type="checkbox" :checked="isOfflineVersion"
                         @change="switchOfflineVersion" />
@@ -83,6 +84,7 @@
                 </button>
                 <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
             </template>
+            <div v-if="!isDiffEmpty && isEditDeck" style="margin-left: 5px;">基版本{{ customVersion.baseVersion }}</div>
             <div v-if="currIdx == 0">
                 <div class="heros-deck" :class="{ 'mobile-heros-deck': isMobile }" v-if="isEditDeck">
                     <div class="hero-deck" :class="{ 'mobile-hero-avatar': isMobile }"
@@ -114,13 +116,22 @@
                         </div>
                         <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
                             draggable="false" />
-                        <div class="icon-group" v-if="!dthero.UI.isActive && isEditDeck">
-                            <span v-for="(icon, cidx) in heroSelectIcon" :key="cidx" class="edit-icon"
-                                @click.stop="icon.handle(dthero.id)">
-                                {{ icon.name }}
+                        <template v-if="isEditDeck">
+                            <div class="icon-group" v-if="!dthero.UI.isActive">
+                                <span v-for="(icon, cidx) in heroSelectIcon" :key="cidx" class="edit-icon"
+                                    @click.stop="icon.handle(dthero.id)">
+                                    {{ icon.name }}
+                                </span>
+                            </div>
+                            <div v-else class="selected">已选择</div>
+                        </template>
+                        <template v-else>
+                            <span class="edit-icon" @click.stop="banToggle(dthero.id)"
+                                style="position: absolute;top:2px;right: 5px;z-index: 3;">
+                                {{ customVersion.banList.includes(dthero.id) ? '+' : '-' }}
                             </span>
-                        </div>
-                        <div v-else-if="isEditDeck" class="selected">已选择</div>
+                            <div v-if="customVersion.banList.includes(dthero.id)" class="selected">已禁用</div>
+                        </template>
                         <select :name="`config-${dthero.id}-version`" :id="`config-${dthero.id}-version`"
                             v-if="!isEditDeck" v-model="herosVersion[dthero.id]" style="z-index:2;" @click.stop="cancel"
                             @change="changeVersion(currIdx, dthero.id)">
@@ -150,7 +161,8 @@
                 <div class="cards-total" :class="{ 'mobile-cards-total': isMobile, 'config-total': !isEditDeck }">
                     <div class="card-total" :class="{ 'mobile-card-deck': isMobile }"
                         v-for="(dtcard, dtcidx) in allCards" :key="dtcidx" @click.stop="showCardInfo(dtcard.id)">
-                        <Actioncard :card="dtcard" :isMobile="isMobile" isHideBorder :isHideCost="dtcard.UI.cnt == 0"
+                        <Actioncard :card="dtcard" :isMobile="isMobile" isHideBorder
+                            :isHideCost="dtcard.UI.cnt == 0 || customVersion.banList.includes(dtcard.id)"
                             style="width: 100%;height: 100%;">
                             <template v-if="isEditDeck">
                                 <div class="forbidden" v-if="dtcard.UI.cnt == -1">
@@ -162,6 +174,13 @@
                                 <span class="edit-icon card-remove-icon" @click.stop="removeCard(dtcard.id)"
                                     v-if="dtcard.UI.cnt >= 0 && cardsDeck.some(c => c.id == dtcard.id)">-</span>
                                 <div class="card-cnt" v-if="dtcard.UI.cnt > 0">{{ dtcard.UI.cnt }}</div>
+                            </template>
+                            <template v-else>
+                                <span class="edit-icon" @click.stop="banToggle(dtcard.id)"
+                                    style="position: absolute;top:2px;right: 5px;z-index: 3;">
+                                    {{ customVersion.banList.includes(dtcard.id) ? '+' : '-' }}
+                                </span>
+                                <div v-if="customVersion.banList.includes(dtcard.id)" class="selected">已禁用</div>
                             </template>
                             <select :name="`config-${dtcard.id}-version`" :id="`config-${dtcard.id}-version`"
                                 v-if="!isEditDeck" v-model="cardsVersion[dtcard.id]" style="z-index:2;"
@@ -200,7 +219,7 @@
                 </span>
             </div>
         </div>
-        <InfoModal :info="modalInfo" :isMobile="isMobile" :isConfig="!isEditDeck" />
+        <InfoModal :info="modalInfo" :isMobile="isMobile" :customVersion="customVersion" />
     </div>
     <div class="debug-mask" v-if="maskOpacity != 0" :style="{ opacity: maskOpacity }"></div>
 </template>
@@ -220,11 +239,11 @@ import {
 import { DeckVO, OriDeck } from 'typing';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { cardsTotal, newCard } from '../../../common/data/cards';
-import { herosTotal, newHero, parseHero } from '../../../common/data/heros';
-import { arrToObj, clone, exportFile, genShareCode, objToArr, parseShareCode } from '../../../common/utils/utils';
+import { cardsTotal, newCard, parseCard } from '@@@/data/cards';
+import { herosTotal, newHero, parseHero } from '@@@/data/heros';
+import { arrToObj, clone, exportFile, genShareCode, objToArr, parseShareCode } from '@@@/utils/utils';
 import { Card, CustomVersionConfig, Hero, InfoVO } from '../../../typing';
-import { compareVersionFn } from '@@@/utils/gameUtil';
+import { compareVersionFn, getHidById } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
 import StrokedText from '@/components/StrokedText.vue';
 
@@ -267,11 +286,13 @@ const herosDeck = ref<Hero[]>([]); // 当前角色组
 const cardsDeck = ref<Card[]>([]); // 当前卡组
 const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => { // 卡组列表
     const { heroIds, cardIds } = parseShareCode(deck.shareCode);
+    const version = isDiffEmpty ? deck.version : customVersion.value.baseVersion;
+    const options = { diff: customVersion.value.diff, banList: customVersion.value.banList };
     return {
         name: deck.name,
         version: deck.version,
-        heroIds: heroIds.map(hid => {
-            const hero = parseHero(hid);
+        heroIds: heroIds.map(shareId => {
+            const hero = parseHero(shareId, version, options);
             return {
                 id: hero.id,
                 name: hero.name,
@@ -281,7 +302,7 @@ const decks = computed<DeckVO[]>(() => oriDecks.value.map(deck => { // 卡组列
                 avatar: hero.UI.avatar,
             }
         }),
-        cardIds,
+        cardIds: cardIds.filter(shareId => isDiffEmpty.value || parseCard(shareId, version, options).id > 0),
     }
 }));
 const deckName = ref<string>(''); // 卡组名字
@@ -316,16 +337,18 @@ const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 
 const { configName } = history.state;
 if (configName) deckName.value = configName;
-const customVersionList: CustomVersionConfig[] = JSON.parse(localStorage.getItem('7szh_custom_version_list') || '[]'); // 自定义版本列表
+const customVersionList: CustomVersionConfig[] = isEditDeck ? [] : JSON.parse(localStorage.getItem('7szh_custom_version_list') || '[]'); // 自定义版本列表
 if (mode == 'create') deckName.value = `版本配置${customVersionList.length + 1}`;
 const customVersionIdx = customVersionList.findIndex(v => v.name == configName); // 当前自定义版本配置索引
-const customVersion = ref<CustomVersionConfig>(customVersionList[customVersionIdx] || NULL_CUSTOM_VERSION_CONFIG()); // 当前自定义版本配置
-version.value = customVersion.value.baseVersion;
+const customVersion = ref<CustomVersionConfig>(
+    (isEditDeck ? history.state.customVersion : customVersionList[customVersionIdx]) || NULL_CUSTOM_VERSION_CONFIG()
+); // 当前自定义版本配置
+const isDiffEmpty = computed(() => Object.keys(customVersion.value.diff).length == 0);
+if (!isDiffEmpty) version.value = customVersion.value.baseVersion;
 const herosVersion = ref<Record<number, Version>>({});
 herosPool.value.forEach(h => herosVersion.value[h.id] = customVersion.value.diff[h.id] ?? version.value);
 const cardsVersion = ref<Record<number, Version>>({});
-cardsPool.value.forEach(c => cardsVersion.value[c.id] = customVersion.value.diff[c.id] ?? version.value);
-const isDiffEmpty = computed(() => Object.keys(customVersion.value.diff).length == 0);
+cardsPool.value.forEach(c => cardsVersion.value[c.id] = customVersion.value.diff[c.id] ?? customVersion.value.diff[getHidById(c.id)] ?? version.value);
 
 // 选择出战卡组
 const selectDeck = (didx: number) => {
@@ -438,27 +461,28 @@ const updateInfo = (init = false) => {
             const heroIds = herosDeck.value.map(v => v.id);
             herosPool.value.forEach(h => {
                 h.UI.isActive = heroIds.includes(h.id);
-                allHeros.value.push(h);
+                if (customVersion.value.banList.includes(h.id)) return;
+                allHeros.value.push(newHero(version.value, { diff: customVersion.value.diff })(h.id));
             });
         }
         if (currIdx.value == TAG_INDEX.Card || init) {
             allCards.value = [];
             cardsPool.value.forEach(c => {
+                if (customVersion.value.banList.includes(c.id)) return;
                 const cnt = c.UI.cnt - (cardsDeck.value.find(cd => cd.id == c.id)?.UI.cnt ?? 0);
-                if (c.id > 0) allCards.value.push(clone(c).setCnt(cnt));
+                allCards.value.push(newCard(version.value, { diff: customVersion.value.diff })(c.id).setCnt(cnt));
             });
             cardsDeck.value.sort((a, b) => a.id - b.id);
         }
         const elMap = arrToObj(Object.values(ELEMENT_TYPE), 0);
         const lcMap = arrToObj(Object.values(HERO_LOCAL), 0);
-        herosDeck.value.forEach(h => {
+        herosDeck.value.forEach((h, hi, ha) => {
+            if (customVersion.value.banList.includes(h.id)) return ha[hi] = NULL_HERO();
             ++elMap[h.element];
-            h.tags.forEach(lc => {
-                if (lc in lcMap) ++lcMap[lc as HeroLocal];
-            });
+            h.tags.forEach(lc => lc in lcMap && ++lcMap[lc as HeroLocal]);
         });
         cardsDeck.value = cardsDeck.value.filter(c => {
-            if (cardsPool.value.every(pc => pc.id != c.id)) return false;
+            if (cardsPool.value.every(pc => pc.id != c.id) || customVersion.value.banList.includes(c.id)) return false;
             if (c.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋牌
                 return herosDeck.value.map(h => h.id).includes(c.userType as number);
             }
@@ -510,7 +534,7 @@ const updateInfo = (init = false) => {
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
         const sinceVersion = sinceVersionFilter.value == '实装版本' || c.sinceVersion == sinceVersionFilter.value;
         const isConfigTalent = isEditDeck || !c.hasSubtype(CARD_SUBTYPE.Talent);
-        const isConfigShow = isEditDeck || !isOnlyShowConfiged.value || customVersion.value.diff[c.id];
+        const isConfigShow = !isOnlyShowConfiged.value || customVersion.value.diff[c.id] || customVersion.value.diff[getHidById(c.id)] || customVersion.value.banList.includes(c.id);
         return t && st && co && ct && sinceVersion && isConfigTalent && isConfigShow;
     }).sort((a, b) => {
         if (a.UI.cnt == -1 && b.UI.cnt != -1) return 1;
@@ -525,7 +549,7 @@ const updateInfo = (init = false) => {
         const element = heroFilterRes[1].length == 0 || heroFilterRes[1].includes(h.element);
         const weapon = heroFilterRes[2].length == 0 || heroFilterRes[2].includes(h.weaponType);
         const sinceVersion = sinceVersionFilter.value == '实装版本' || h.sinceVersion == sinceVersionFilter.value;
-        const isConfigShow = isEditDeck || !isOnlyShowConfiged.value || customVersion.value.diff[h.id];
+        const isConfigShow = !isOnlyShowConfiged.value || customVersion.value.diff[h.id] || customVersion.value.banList.includes(h.id);
         return tag && element && weapon && sinceVersion && isConfigShow;
     });
     filterSelected.value = (sinceVersionFilter.value == '实装版本' ? [] : [sinceVersionFilter.value])
@@ -637,7 +661,7 @@ const showHeroInfo = (hid: number) => {
 const showCardInfo = (cid: number) => {
     if (cid <= 0) return;
     modalInfo.value = {
-        version: customVersion.value.diff[cid] ?? version.value,
+        version: customVersion.value.diff[cid] ?? customVersion.value.diff[getHidById(cid)] ?? version.value,
         isShow: true,
         type: INFO_TYPE.Card,
         info: allCards.value.find(c => c.id == cid)!,
@@ -729,6 +753,7 @@ const changeVersion = (currIdx: TagIndex, id: number) => {
     if (id == -1) {
         customVersion.value.baseVersion = version.value;
         customVersion.value.diff = {};
+        customVersion.value.banList = [];
         allHeros.value.forEach(h => herosVersion.value[h.id] = version.value);
         allCards.value.forEach(c => cardsVersion.value[c.id] = version.value);
     } else if (currIdx == 0) {
@@ -742,6 +767,13 @@ const changeVersion = (currIdx: TagIndex, id: number) => {
         const cidx = allCards.value.findIndex(c => c.id == id);
         allCards.value.splice(cidx, 1, newCard(cardsVersion.value[id])(id));
     }
+}
+
+// 禁用
+const banToggle = (id: number) => {
+    const idx = customVersion.value.banList.indexOf(id);
+    if (idx > -1) customVersion.value.banList.splice(idx, 1);
+    else customVersion.value.banList.push(id);
 }
 
 // 保存版本配置
@@ -852,13 +884,14 @@ body div {
 }
 
 .edit-list-icon {
-    border: 2px solid black;
+    border: 2px solid #85623e;
     border-radius: 5px;
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 5px;
+    background-color: #eacb99;
 }
 
 .edit-list-icon:hover,

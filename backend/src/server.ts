@@ -107,7 +107,7 @@ io.on('connection', socket => {
                 id: r.id,
                 name: r.name,
                 isStart: r.isStart,
-                version: r.version.value,
+                version: r.customVersionConfig ? r.customVersionConfig.name : r.version.value,
                 playerCnt: r.players.length,
                 hasPassWord: r.password != '',
             })),
@@ -204,10 +204,10 @@ io.on('connection', socket => {
     socket.on('disconnect', () => leaveRoom('disconnect'));
     // 创建房间
     socket.on('createRoom', data => {
-        const { roomName, version, roomPassword, countdown, versionDiff = [], allowLookon, isRecord } = data;
+        const { roomName, version, roomPassword, countdown, customVersion, allowLookon, isRecord } = data;
         const roomId = genId(roomList, { isMinus: !!isRecord });
         const me = getPlayer(pid) as Player;
-        const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, versionDiff, allowLookon, isDev ? 'dev' : 'prod', io);
+        const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', customVersion, io);
         if (isRecord && isRecord.pidx == 1) newRoom.init({ id: 0, name: isRecord.oppoName });
         const player = newRoom.init(me);
         if (isRecord && isRecord.pidx == 0) newRoom.init({ id: 0, name: isRecord.oppoName });
@@ -220,6 +220,7 @@ io.on('connection', socket => {
             players: newRoom.players,
             version: newRoom.version.value,
             countdown: newRoom.countdown.limit,
+            customVersion: newRoom.customVersionConfig,
         });
     });
     // 加入房间
@@ -254,6 +255,7 @@ io.on('connection', socket => {
             players: room.players,
             version: room.version.value,
             countdown: room.countdown.limit,
+            customVersion: room.customVersionConfig,
         });
     });
     // 退出房间

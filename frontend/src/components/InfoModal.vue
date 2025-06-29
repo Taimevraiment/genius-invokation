@@ -105,9 +105,9 @@
           <div>
             <div class="name">
               {{ (info as Card).name }}
-              <span v-if="isBot || isConfig" style="position: absolute;right: 5px;">
+              <span v-if="isShowVersion" style="position: absolute;right: 5px;">
                 <span v-if="(OFFLINE_VERSION as unknown as string[]).includes(version)">实体版</span>
-                {{ version }}
+                {{ info?.UI.curVersion ?? version }}
               </span>
             </div>
             <div>
@@ -157,7 +157,9 @@
           <div>
             <div v-if="type == INFO_TYPE.Hero" class="name">
               {{ (info as Hero).name }}
-              <span v-if="isBot || isConfig" style="position: absolute;right: 5px;">{{ version }}</span>
+              <span v-if="isShowVersion" style="position: absolute;right: 5px;">
+                {{ info?.UI.curVersion ?? version }}
+              </span>
             </div>
             <div v-if="type == INFO_TYPE.Hero" class="info-hero-tag">
               <span>{{ ELEMENT_NAME[(info as Hero).element] }}</span>
@@ -223,7 +225,9 @@
           <div>
             <div class="name">
               {{ (info as Summon).name }}
-              <span v-if="isBot || isConfig" style="position: absolute;right: 5px;">{{ version }}</span>
+              <span v-if="isShowVersion" style="position: absolute;right: 5px;">
+                {{ info?.UI.curVersion ?? version }}
+              </span>
             </div>
             <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
           </div>
@@ -265,10 +269,11 @@ import { newSkill } from '@@@/data/skills';
 import { newStatus } from '@@@/data/statuses';
 import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
-import { Card, ExplainContent, GameInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
+import { Card, CustomVersionConfig, ExplainContent, GameInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
 import { getVehicleIdByCid } from '@@@/utils/gameUtil';
 import StrokedText from './StrokedText.vue';
 import { createReusableTemplate } from '@vueuse/core';
+import { getDict } from '@/store/versionDependancyDict';
 
 const props = defineProps<{
   info: InfoVO,
@@ -277,7 +282,7 @@ const props = defineProps<{
   round?: number,
   playerInfo?: GameInfo,
   isBot?: boolean,
-  isConfig?: boolean,
+  customVersion?: CustomVersionConfig,
 }>();
 
 const isMobile = computed<boolean>(() => props.isMobile);
@@ -291,7 +296,8 @@ const info = computed<Hero | Card | Summon | null>(() => props.info.info); // �
 const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
 const isBot = computed<boolean>(() => props.isBot); // 是否为bot截图
-const isConfig = computed<boolean>(() => props.isConfig); // 是否为版本配置界面
+const customVersion = computed<CustomVersionConfig | undefined>(() => props.customVersion); // 是否为版本配置界面
+const isShowVersion = computed<boolean>(() => isBot.value || !!customVersion.value);
 const skills = ref<Skill[]>([]); // 展示技能
 const isShowSkill = ref<boolean[]>([]); // 是否展示技能
 const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态
@@ -307,6 +313,8 @@ const isShowRule = ref<boolean>(false); // 是否显示规则
 
 const [DefineTemplate, UseTemplate] = createReusableTemplate();
 
+const dict: Record<number, number> = getDict(version.value);
+
 const wrapedIcon = (el?: ElementColorKey, isDice: boolean = false) => {
   if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == 'Heal') return '';
   let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni, DAMAGE_TYPE.Physical].some(v => v == el) ?
@@ -320,12 +328,14 @@ const wrapExplCtt = (content: string) => {
   if (!isMatch) return { name: content, default: true }
   const [a1, a2, a3] = ctt.slice(3).split(',').map(v => JSON.parse(v));
   const type = ctt.slice(0, 3);
-  const res = type == 'crd' ? newCard(version.value)(a1) :
-    type == 'sts' ? newStatus(version.value)(a1, a2, a3) :
-      type == 'rsk' ? newSkill(version.value)(a1) :
-        type == 'smn' ? newSummon(version.value)(a1, a2, a3) :
-          type == 'ski' ? newHero(version.value)(a1).skills[a2] :
-            type == 'hro' ? newHero(version.value)(a1) :
+  const cversion = info.value?.UI.curVersion ?? version.value;
+  const options = { diff: customVersion.value?.diff, dict };
+  const res = type == 'crd' ? newCard(cversion, options)(a1) :
+    type == 'sts' ? newStatus(cversion, options)(a1, a2, a3) :
+      type == 'rsk' ? newSkill(cversion, options)(a1) :
+        type == 'smn' ? newSummon(cversion, options)(a1, a2, a3) :
+          type == 'ski' ? newHero(cversion, options)(a1).skills[a2] :
+            type == 'hro' ? newHero(cversion, options)(a1) :
               { name: content, default: true };
   if ((botFlag != 'null' && (+isBot.value ^ +(botFlag == 'bot')))) {
     return { name: res.name, default: true }

@@ -245,6 +245,7 @@ type RecordData = {
     shareCode: string[], // 玩家分享码数组
     version: Version, // 牌局版本
     actionLog: ActionLog[], // 录像回放数据
+    customVersionConfig?: CustomVersionConfig, // 自定义版本配置
     isPlaying?: boolean, // 是否正在播放录像
     isExecuting?: boolean, // 是否正在执行录像
 }
@@ -358,5 +359,6 @@ type Env = 'prod' | 'dev' | 'test';
 type CustomVersionConfig = {
     name: string,
     baseVersion: Version,
-    diff: Record<number, Version>
+    diff: Record<number, Version>,
+    banList: number[],
 }

@@ -15,7 +15,7 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, DamageVO, Hero, InfoVO, PickCard, Player, Preview, RecordData, ServerData, Skill, Status, Summon
+    ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, Player, Preview, RecordData, ServerData, Skill, Status, Summon
 } from "../../typing";
 
 type DeckValid = {
@@ -92,13 +92,14 @@ export default class GeniusInvokationClient {
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 }; // 挑选卡牌
     watchers: number = 0; // 观战人数
     recordData: RecordData = { seed: '', name: '', pidx: -1, username: [], shareCode: [], version: 'v3.3.0', actionLog: [] }; // 行动日志
+    customVersion?: CustomVersionConfig; // 自定义版本配置
     isDev: boolean; // 是否为开发模式
     error: string = ''; // 服务器发生的错误信息
     emit: (actionData: ActionData) => void; // 发送事件
 
     constructor(
         socket: Socket, roomId: number, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
-        decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number
+        decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number, customVersion?: CustomVersionConfig,
     ) {
         this.socket = socket;
         this.emit = data => roomId > 0 && socket.emit('sendToServer', data);
@@ -118,13 +119,20 @@ export default class GeniusInvokationClient {
         this.handcardsOffset = isMobile ? HANDCARDS_OFFSET_MOBILE : HANDCARDS_OFFSET_PC;
         this.handcardsPos = this.player.handCards.map((_, ci) => ci * this.handcardsGap);
         const { shareCode = 'null', version: ver = 'null' } = this.decks[this.deckIdx] ?? {};
-        const { heroIds, cardIds } = parseShareCode(shareCode);
+        let { heroIds, cardIds } = parseShareCode(shareCode);
+        if (customVersion) {
+            this.customVersion = customVersion;
+            const { baseVersion: version, diff, banList } = customVersion;
+            this.version = version;
+            heroIds = heroIds.map(v => parseHero(v, version, { diff, banList }).id == 0 ? 0 : v);
+            cardIds = cardIds.filter(v => parseCard(v, version, { diff, banList }).id > 0);
+        }
         this.isDeckCompleteValid = {
             isValid: !heroIds.includes(0) && cardIds.length == DECK_CARD_COUNT,
             error: '当前出战卡组不完整',
         };
         this.isDeckVersionValid = {
-            isValid: ver == 'null' || compareVersionFn(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
+            isValid: ver == 'null' || !!customVersion || compareVersionFn(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
             error: '当前卡组版本不匹配',
         };
     }

@@ -3751,9 +3751,13 @@ export const newCard = (version?: Version, options: { diff?: Record<number, Vers
     }
 }
 
-export const parseCard = (shareId: number, version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
-    const { diff = {}, dict = {} } = options;
+export const parseCard = (
+    shareId: number, version?: Version,
+    options: { diff?: Record<number, Version>, dict?: Record<number, number>, banList?: number[] } = {}
+) => {
+    const { diff = {}, dict = {}, banList = [] } = options;
     const card = cardsTotal(version).find(c => c.shareId == shareId) ?? NULL_CARD();
+    if (banList.includes(card.id)) return NULL_CARD();
     const dversion = diff[getDerivantParentId(card.id, dict)] ?? diff[getHidById(card.id)] ?? diff[card.id] ?? version;
     if (dversion == version) return card;
     return cardsTotal(dversion).find(c => c.shareId == shareId) ?? NULL_CARD();

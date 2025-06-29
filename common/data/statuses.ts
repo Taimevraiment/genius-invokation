@@ -1111,15 +1111,19 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     113151: nightSoul({ isAccumate: false }),
 
-    113152: () => new StatusBuilder('死生之炉').combatStatus().useCnt(2).icon('ski,2').icon('#')
+    113152: () => new StatusBuilder('死生之炉').heroStatus().useCnt(2).icon('ski,2').icon('#')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方全体角色的技能不消耗「夜魂值」。；我方全体角色「普通攻击」造成的伤害+1。；[useCnt]')
-        .handle(status => ({
-            triggers: ['skilltype1', 'pre-consumeNightSoul'],
-            isInvalid: true,
-            addDmgCdt: 1,
-            exec: () => { status.minusUseCnt() }
-        })),
+        .handle((status, event) => {
+            const { restDmg = 1 } = event;
+            const cnt = Math.min(status.useCnt, restDmg);
+            return {
+                triggers: ['skilltype1', 'other-skilltype1', 'pre-consumeNightSoul'],
+                addDmgCdt: 1,
+                restDmg: restDmg - cnt,
+                exec: () => { status.minusUseCnt(cnt) }
+            }
+        }),
 
     113153: () => new StatusBuilder('诸火武装·焚曜之环').combatStatus().icon('ski,1').icon('#')
         .type(STATUS_TYPE.Attack)

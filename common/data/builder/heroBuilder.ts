@@ -34,9 +34,10 @@ export class GIHero {
         avatar: string, // 头像url
         avatars: string[], // 所有头像url
         isActive: boolean, // 是否发光
+        curVersion: Version, // 当前版本
     };
     constructor(
-        id: number, shareId: number, name: string, version: OnlineVersion, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
+        id: number, shareId: number, name: string, version: OnlineVersion, curVersion: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
         weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null,
         skills: GISkill[] = [], maxEnergy: number = 0,
     ) {
@@ -57,6 +58,7 @@ export class GIHero {
             avatar: avatar[0],
             avatars: avatar,
             isActive: false,
+            curVersion,
         }
         this.skills.push(...skills);
         this.maxEnergy = maxEnergy || (this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0);
@@ -237,7 +239,7 @@ export class HeroBuilder extends BaseCostBuilder {
         const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
         const skills: (SkillBuilder | NormalSkillBuilder)[] = this._skills.slice();
         if (this._normalSkill != undefined) skills.unshift(this._normalSkill.weaponType(this._weaponType));
-        return new GIHero(this._id, this._shareId, this._name, this._version, this._tags,
+        return new GIHero(this._id, this._shareId, this._name, this._version, this._curVersion, this._tags,
             maxHp, element, this._weaponType, this._src, this._avatar, this._offlineVersion,
             skills.map((skill, skidx) => skill.costElement(element).id(this._id * 10 + skidx + 1).version(this._curVersion).done()),
             this._maxEnergy);
