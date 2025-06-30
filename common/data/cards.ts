@@ -1175,8 +1175,8 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'consumeNightSoul', exec: () => card.minusPerCnt() }
         }),
 
-    312035: () => new CardBuilder(498).name('失冕的宝冠').since('v5.8.0').relic().costAny(2).perCnt(2)
-        .description('【我方触发燃烧反应后：】敌方当前出战角色下次受到的伤害+1。（每回合2次）')
+    312035: () => new CardBuilder(498).name('失冕的宝冠').since('v5.8.0').relic().costSame(0).perCnt(1)
+        .description('【我方触发燃烧反应后：】敌方当前出战角色下次受到的伤害+1。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xiasi.webp')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
@@ -1404,12 +1404,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方角色准备技能时：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得2点【sts301025】。；（当锻炼层数到达3点时，治疗对应角色1点\\；当锻炼层数到达5点时，对应角色所造成的伤害+1）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/798cd8c757e991c5d54ae762f455fbf5_5369716917521459765.png'),
 
-    321029: () => new CardBuilder(500).name('墨色酒馆').since('v5.8.0').place().costAny(3)
+    321029: () => new CardBuilder(500).name('墨色酒馆').since('v5.8.0').place().costAny(2)
         .description('【入场时：】从【crd301034】、【crd301035】、【crd301036】中随机生成1张手牌。；【我方宣布结束时：】随机触发我方1个[「希穆兰卡」召唤物]的「结束阶段」效果。；[可用次数]：3')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_MoseJiuguan.webp'),
 
     321030: () => new CardBuilder(501).name('星轨王城').since('v5.8.0').place().costSame(2)
-        .description('【入场时：】生成手牌【crd301033】。；【本回合我方角色累计使用过2次技能后：】下次打出【crd301033】少花费1个元素骰。')
+        .description('【入场时：】生成手牌【crd301033】。；【我方角色使用「元素战技」后：】下次打出【crd301033】少花费1个元素骰。（不可叠加）；【我方角色使用「元素爆发」后：】下次打出的【crd301033】效果量+1。（不可叠加）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_XinguiWangcheng.webp'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
@@ -1534,12 +1534,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('我方使用「特技」时：少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/10e2b03ab56591fdebdeadd3dcd091dc_4193411804004313763.png'),
 
-    322029: () => new CardBuilder(502).name('森林的祝福').since('v5.8.0').ally().costAny(3)
+    322029: () => new CardBuilder(502).name('森林的祝福').since('v5.8.0').ally().costAny(2)
         .description('【入场时及我方触发元素反应后：】从【crd301034】、【crd301035】、【crd301036】中随机生成1张加入手牌。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_ZhezhiJiazu.webp'),
 
     322030: () => new CardBuilder(503).name('预言女神的礼物').since('v5.8.0').ally().costAny(2)
-        .description('【入场时：】生成手牌【crd301033】，并生成1张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
+        .description('【入场时：】生成2张手牌【crd301033】，并生成2张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_JimuRen.webp'),
 
     323001: () => new CardBuilder(214).name('参量质变仪').offline('v1').item().costAny(2)
@@ -2679,8 +2679,8 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: onlyPyroOrElectro && hasElectro, triggers: isCdt(hasDmg, ['Overload', 'other-Overload']) }
         }),
 
-    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿…').since('v5.4.0').talent(-2).costPyro(2)
-        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出，使【hro】附属3层【sts122】。；装备有此牌的【hro】受到伤害时，若可能，消耗1层【sts122】，以抵消1点伤害。')
+    213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿…').since('v5.4.0').talent(-2).costPyro(1).costPyro(2, 'v5.8.0')
+        .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出，使【hro】附属3层【sts122】。；【装备有此牌的〖hro〗受到伤害时:】如果【hro】附属了【sts122】，则消耗1层【sts122】，抵消1点伤害。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/9770a329be6b9be3965bc3240c531cb4_511464347620244194.png')
         .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
 
@@ -3000,18 +3000,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时：额外召唤1个【smn116094】，并改为从4个【smn116097】中[挑选]1个并召唤。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/469388e91dfc3c32fa631dbd8984bb1c_6906890829853379228.png'),
 
-    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1).perCnt(1).useCnt(2).isResetUseCnt()
-        .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）')
+    216101: () => new CardBuilder(463).name('夜域赐礼·团结炉心').since('v5.5.0').talent().costGeo(1)
+        .perCnt(1).useCnt(-1).useCnt(2, 'v5.8.0').isResetUseCnt()
+        .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合1次）')
+        .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）', 'v5.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { skid = -1, isSummon = -1, execmds } = event;
-            if (card.useCnt <= 0 || (isSummon != 116103 && skid != 1161021)) return;
+            if (card.perCnt <= 0 || (isSummon != 116103 && skid != 1161021)) return;
             execmds.getCard(1);
             return {
                 triggers: 'dmg',
                 exec: () => {
-                    card.minusUseCnt();
-                    if (card.useCnt == 0) card.minusPerCnt();
+                    if (ver.lt('v5.8.0')) card.minusUseCnt();
+                    if (ver.gte('v5.8.0') || card.useCnt == 0) card.minusPerCnt();
                 }
             }
         }),
@@ -3099,7 +3101,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: ['switch-to', 'skilltype2'], exec: () => card.minusPerCnt() }
         }),
 
-    217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent().costDendro(1).perCnt(1).tag(CARD_TAG.Enchant)
+    217101: () => new CardBuilder(464).name('茉洁香迹').since('v5.5.0').talent().costDendro(2).costDendro(1, 'v5.8.0').perCnt(1).tag(CARD_TAG.Enchant)
         .description('所附属角色造成的[物理伤害]变为[草元素伤害]。；装备有此牌的【hro】「普通攻击」后：我方最高等级的「柔灯之匣」立刻行动1次。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/6417278fc4d517b03f1373a6579cf9f2_7434922514757306138.png')
         .handle((card, event) => {

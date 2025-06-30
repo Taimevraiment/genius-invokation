@@ -25,8 +25,15 @@ export class VersionMap<T> {
 }
 
 export class BaseBuilder {
+    protected _versionMaps: VersionMap<any>[] = [];
     protected _curVersion: Version = VERSION[0];
-    protected _description: VersionMap<string> = new VersionMap();
+    protected _description: VersionMap<string> = this._createVersionMap();
+
+    _createVersionMap<T>() {
+        const map = new VersionMap<T>();
+        this._versionMaps.push(map);
+        return map;
+    }
     version(version: Version | undefined) {
         if (version == 'vlatest') version = VERSION[0];
         if (version != undefined) this._curVersion = version;
@@ -36,6 +43,9 @@ export class BaseBuilder {
         if (versions.length == 0) versions = ['vlatest'];
         versions.forEach(v => this._description.set([v, description]));
         return this;
+    }
+    get versionChanges() {
+        return [...new Set(this._versionMaps.map(map => map.versions).flat())];
     }
 }
 

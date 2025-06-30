@@ -273,7 +273,7 @@ import { Card, CustomVersionConfig, ExplainContent, GameInfo, Hero, InfoVO, Skil
 import { getVehicleIdByCid } from '@@@/utils/gameUtil';
 import StrokedText from './StrokedText.vue';
 import { createReusableTemplate } from '@vueuse/core';
-import { getDict } from '@/store/versionDependancyDict';
+import { dict } from '@@@/constant/dependancyDict';
 
 const props = defineProps<{
   info: InfoVO,
@@ -312,9 +312,6 @@ const ruleExplain = ref<any[]>([]); // 规则解释
 const isShowRule = ref<boolean>(false); // 是否显示规则
 
 const [DefineTemplate, UseTemplate] = createReusableTemplate();
-
-const dict: Record<number, number> = getDict(version.value);
-
 const wrapedIcon = (el?: ElementColorKey, isDice: boolean = false) => {
   if (el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same || el == 'Heal') return '';
   let url = [...Object.keys(DICE_COLOR), DICE_COST_TYPE.Omni, DAMAGE_TYPE.Physical].some(v => v == el) ?

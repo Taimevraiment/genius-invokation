@@ -35,11 +35,12 @@ export class GIHero {
         avatars: string[], // 所有头像url
         isActive: boolean, // 是否发光
         curVersion: Version, // 当前版本
+        versionChanges: Version[], // 版本变更
     };
     constructor(
         id: number, shareId: number, name: string, version: OnlineVersion, curVersion: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
         weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null,
-        skills: GISkill[] = [], maxEnergy: number = 0,
+        skills: GISkill[] = [], maxEnergy: number = 0, versionChanges: Version[] = [],
     ) {
         this.id = id;
         this.shareId = shareId;
@@ -59,6 +60,7 @@ export class GIHero {
             avatars: avatar,
             isActive: false,
             curVersion,
+            versionChanges,
         }
         this.skills.push(...skills);
         this.maxEnergy = maxEnergy || (this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0);
@@ -72,7 +74,7 @@ export class GIHero {
 
 export class HeroBuilder extends BaseCostBuilder {
     private _tags: HeroTag[] = [];
-    private _maxHp: VersionMap<number> = new VersionMap();
+    private _maxHp: VersionMap<number> = this._createVersionMap();
     private _maxEnergy: number = 0;
     private _element: ElementType | undefined;
     private _weaponType: WeaponType = WEAPON_TYPE.Other;
@@ -234,6 +236,10 @@ export class HeroBuilder extends BaseCostBuilder {
         this._avatar.push(...avatar.filter(v => v != ''));
         return this;
     }
+    get versionChanges() {
+        const vchanges = super.versionChanges;
+        return [...new Set([...vchanges, ...this._skills.map(skill => skill.versionChanges)].flat())];
+    }
     done() {
         const maxHp = this._maxHp.get(this._curVersion, 10);
         const element: ElementType = this._element ?? ELEMENT_CODE_KEY[Math.floor(this._id / 100) % 10 as ElementCode];
@@ -242,6 +248,6 @@ export class HeroBuilder extends BaseCostBuilder {
         return new GIHero(this._id, this._shareId, this._name, this._version, this._curVersion, this._tags,
             maxHp, element, this._weaponType, this._src, this._avatar, this._offlineVersion,
             skills.map((skill, skidx) => skill.costElement(element).id(this._id * 10 + skidx + 1).version(this._curVersion).done()),
-            this._maxEnergy);
+            this._maxEnergy, this.versionChanges);
     }
 }

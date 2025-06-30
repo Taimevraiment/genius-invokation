@@ -2,7 +2,7 @@ import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger 
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SkillType, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
-import { allHidxs, getBackHidxs, getDerivantParentId, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getDerivantParentId, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 
@@ -13,6 +13,7 @@ export type SupportHandleEvent = {
     eCombatStatus?: Status[],
     eSupports?: Support[],
     heros?: Hero[],
+    combatStatus?: Status[],
     summons?: Summon[],
     supports?: Support[],
     pile?: Card[],
@@ -475,18 +476,18 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 星轨王城
-    321030: () => new SupportBuilder().collection().handle((support, event) => {
-        const { trigger } = event;
+    321030: () => new SupportBuilder().permanent().handle((_, event) => {
+        const { trigger, combatStatus } = event;
+        const triggers: Trigger[] = ['enter', 'phase-end'];
+        if (!hasObjById(combatStatus, 301032)) triggers.push('skilltype2');
+        if (!hasObjById(combatStatus, 301037)) triggers.push('skilltype3');
         return {
-            triggers: ['enter', 'skill', 'phase-end'],
-            supportCnt: isCdt(trigger == 'skill', support.cnt < 2 ? 1 : -3),
+            triggers,
             exec: (spt, cmds) => {
                 if (trigger == 'enter') return cmds.getCard(1, { card: 301033 }).res;
                 if (trigger == 'phase-end') spt.cnt = 0;
-                else if (trigger == 'skill' && ++spt.cnt == 2) {
-                    spt.cnt = 0;
-                    cmds.getStatus(301032);
-                }
+                else if (trigger == 'skilltype2') cmds.getStatus(301032);
+                else if (trigger == 'skilltype3') cmds.getStatus(301037);
             }
         }
     }),
@@ -905,13 +906,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         return {
             triggers,
             exec: (spt, cmds, execEvent) => {
-                if (trigger == 'enter') return cmds.getCard(1, { card: 301033 }).addCard(1, 301033).res;
+                if (trigger == 'enter') return cmds.getCard(2, { card: 301033 }).addCard(2, 301033).res;
                 if (trigger == 'summon-generate') {
                     const { csummon } = execEvent;
                     if (csummon) {
                         if (csummon.id == 301028) ++csummon.damage;
                         else if (csummon.id == 3010301) ++csummon.shieldOrHeal;
-                        else ++csummon.addition[0];
+                        else ++csummon.addition.effect;
                     }
                     return { isDestroy: --spt.cnt == 0 }
                 }

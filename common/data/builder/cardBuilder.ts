@@ -47,6 +47,7 @@ export class GICard {
         descriptions: string[], // 处理后的技能描述
         explains: string[], // 要解释的文本
         curVersion: Version, // 当前版本
+        versionChanges: Version[], // 版本变更
         class?: string, // 动画的class
     };
     constructor(
@@ -57,7 +58,8 @@ export class GICard {
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
-            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version, readySkillStatus?: number, adt?: Record<string, number>,
+            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version, readySkillStatus?: number,
+            adt?: Record<string, number>, versionChanges?: Version[],
         } = {}
     ) {
         this.id = id;
@@ -69,7 +71,7 @@ export class GICard {
         subType = convertToArray(subType);
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
             isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
-            readySkillStatus = 0, adt = {} } = options;
+            readySkillStatus = 0, adt = {}, versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -81,6 +83,7 @@ export class GICard {
             cnt,
             descriptions: [],
             curVersion,
+            versionChanges,
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
         }
         if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个「${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}」角色，才能加入牌组）`;
@@ -283,13 +286,13 @@ export class CardBuilder extends BaseCostBuilder {
     private _type: CardType = CARD_TYPE.Event;
     private _subtype: CardSubtype[] = [];
     private _tag: CardTag[] = [];
-    private _userType: VersionMap<number | WeaponType> = new VersionMap();
-    private _useCnt: VersionMap<number> = new VersionMap();
-    private _perCnt: VersionMap<number> = new VersionMap();
-    private _energy: VersionMap<number> = new VersionMap();
+    private _userType: VersionMap<number | WeaponType> = this._createVersionMap();
+    private _useCnt: VersionMap<number> = this._createVersionMap();
+    private _perCnt: VersionMap<number> = this._createVersionMap();
+    private _energy: VersionMap<number> = this._createVersionMap();
     private _anydice: number = 0;
     private _handle: ((card: Card, event: CardBuilderHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void) | undefined;
-    private _canSelectHero: VersionMap<number> = new VersionMap();
+    private _canSelectHero: VersionMap<number> = this._createVersionMap();
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
     private _isResetUseCnt: boolean = false;
@@ -500,6 +503,7 @@ export class CardBuilder extends BaseCostBuilder {
                 isUseNightSoul: this._isUseNightSoul,
                 readySkillStatus: this._readySkillStatus,
                 adt: this._addition,
+                versionChanges: this.versionChanges,
             });
     }
 }

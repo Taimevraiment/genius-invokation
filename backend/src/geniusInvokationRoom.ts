@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
+import { dict } from '../../common/constant/dependancyDict.js';
 import {
     ACTION_TYPE, ActionType, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE,
     DICE_COST_TYPE, DICE_TYPE, DamageType, DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE,
@@ -17,8 +18,8 @@ import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../com
 import { CardHandleRes, cardsTotal, newCard, parseCard } from '../../common/data/cards.js';
 import { herosTotal, newHero, parseHero } from '../../common/data/heros.js';
 import { SkillHandleRes, newSkill } from '../../common/data/skills.js';
-import { StatusHandleRes, newStatus, statusesTotal } from '../../common/data/statuses.js';
-import { SummonHandleRes, newSummon, summonsTotal } from '../../common/data/summons.js';
+import { StatusHandleRes, newStatus } from '../../common/data/statuses.js';
+import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
 import CmdsGenerator from '../../common/utils/cmdsGenerator.js';
 import {
@@ -64,7 +65,6 @@ export default class GeniusInvokationRoom {
     private shareCodes: string[] = ['', '']; // 卡组码
     allowLookon: boolean; // 是否允许观战
     customVersionConfig?: CustomVersionConfig; // 自定义版本配置
-    dict: Record<number, number> = {}; // 版本依赖字典
     private env: Env; // 环境
     private newStatus: (id: number, ...args: any) => Status;
     private newCard: (id: number, ...args: any) => Card;
@@ -94,16 +94,13 @@ export default class GeniusInvokationRoom {
         this.recordData = { name: this.name, pidx: -1, username: [], shareCode: [], seed: '', version, actionLog: [], customVersionConfig }
         this.env = env;
         const { diff = [] } = customVersionConfig ?? {};
-        cardsTotal(version).forEach(c => c.addition.from && (this.dict[c.id] = c.addition.from));
-        statusesTotal(version).forEach(s => s.addition.from && (this.dict[s.id] = s.addition.from));
-        summonsTotal(version).forEach(s => s.addition.from && (this.dict[s.id] = s.addition.from));
-        this.newStatus = newStatus(version, { diff, dict: this.dict });
-        this.newCard = newCard(version, { diff, dict: this.dict });
+        this.newStatus = newStatus(version, { diff, dict });
+        this.newCard = newCard(version, { diff, dict });
         this.newHero = newHero(version);
-        this.newSummon = newSummon(version, { diff, dict: this.dict });
+        this.newSummon = newSummon(version, { diff, dict });
         this.newSupport = (id: number | Card, ...args: any[]) => {
-            if (typeof id === 'number') return newSupport(version, { diff, dict: this.dict })(this.newCard(id), ...args);
-            return newSupport(version, { diff, dict: this.dict })(id, ...args);
+            if (typeof id === 'number') return newSupport(version, { diff, dict })(this.newCard(id), ...args);
+            return newSupport(version, { diff, dict })(id, ...args);
         }
         this.newSkill = newSkill(version, { diff });
         this.taskQueue = new TaskQueue(this._writeLog.bind(this), this.env);
@@ -684,7 +681,7 @@ export default class GeniusInvokationRoom {
                 if (this.shareCodes[pidx] != shareCode && heroIds.length > 0 && cardIds.length > 0) {
                     if (heroIds.includes(0) || cardIds.length < DECK_CARD_COUNT) return this.emit('deckCompleteError', pidx, { socket, tip: '当前出战卡组不完整' });
                     const version = this.customVersionConfig ? this.customVersionConfig.baseVersion : this.version.value;
-                    const options = { diff: this.customVersionConfig?.diff, banList: this.customVersionConfig?.banList, dict: this.dict };
+                    const options = { diff: this.customVersionConfig?.diff, banList: this.customVersionConfig?.banList, dict };
                     player.heros = heroIds.map(hid => parseHero(hid, version, options));
                     player.pile = cardIds.map(cid => parseCard(cid, version, options));
                     if (player.heros.some(h => h.id == 0) || player.pile.some(c => c.id == 0)) {
@@ -4453,7 +4450,7 @@ export default class GeniusInvokationRoom {
         hasDmg?: boolean, minusDiceSkillIds?: number[], source?: number, isChargedAtk?: boolean, isFallAtk?: boolean, supportCnt?: number[][],
         minusDiceSkill?: number[][], isOnlyExec?: boolean, fhidx?: number, dmgElement?: DamageType, skid?: number, willSwitch?: boolean[][],
         energyCnt?: number[][], dmg?: number[], sourceHidx?: number, taskMark?: [number, number, number, Trigger, number], restDmg?: number,
-        orderAfter?: string, isSwirlExec?: boolean, atkHidx?: number, isAfterSkill?: boolean, sourceStatus?: Status,
+        orderAfter?: string, isSwirlExec?: boolean, atkHidx?: number, isAfterSkill?: boolean, sourceStatus?: Status, csummon?: Summon,
     } = {}) {
         const types = convertToArray(otypes);
         const triggers = convertToArray(otrigger);
@@ -4462,7 +4459,7 @@ export default class GeniusInvokationRoom {
             hcard, isOnlyHeroStatus, isOnlyCombatStatus, heal, discards = [], getdmg = [], dmg = [],
             isUnshift, taskMark, sktype, isSummon = -1, dmgSource = -1, minusDiceSkillIds = [], source = -1,
             isChargedAtk, isFallAtk, cStatus, minusDiceSkill = [], isOnlyExec, dmgedHidx = -1, isAfterSkill,
-            fhidx, dmgElement, skid = -1, supportCnt = INIT_SUPPORTCNT(), slotsDestroy, sourceHidx = -1,
+            fhidx, dmgElement, skid = -1, supportCnt = INIT_SUPPORTCNT(), slotsDestroy, sourceHidx = -1, csummon,
             willSwitch = players.map(p => p.heros.map(() => false)), isPriority, energyCnt, atkHidx, sourceStatus } = options;
         let isInvalid = false;
         const cmds = new CmdsGenerator();
@@ -4555,6 +4552,7 @@ export default class GeniusInvokationRoom {
                         isSelfRound: this.currentPlayerIdx == pidx,
                         restDmg,
                         isSwirlExec,
+                        csummon,
                         randomInt: this._randomInt.bind(this),
                         randomInArr: this._randomInArr.bind(this),
                     });
@@ -4563,7 +4561,7 @@ export default class GeniusInvokationRoom {
                         if (!taskMark || triggers.includes(taskMark[3])) continue;
                     }
                     if (!stsres.isAfterSkill != !isAfterSkill) continue;
-                    if (sts.hasType(STATUS_TYPE.Barrier, STATUS_TYPE.Shield) || trigger == 'pre-consumeNightSoul') {
+                    if (sts.hasType(STATUS_TYPE.Barrier, STATUS_TYPE.Shield)) {
                         restDmg = stsres.restDmg;
                     }
                     if (sts.hasType(STATUS_TYPE.AddDamage) && types.includes(STATUS_TYPE.AddDamage)) {
@@ -5085,6 +5083,7 @@ export default class GeniusInvokationRoom {
                     dices: players[pidx].dice,
                     trigger: state,
                     heros: player.heros,
+                    combatStatus: player.combatStatus,
                     summons: player.summons,
                     supports: player.supports,
                     pile: player.pile,
@@ -6022,11 +6021,12 @@ export default class GeniusInvokationRoom {
                 }
                 this._writeLog('双方交换了手牌');
             } else if (cmd == 'consumeNightSoul') {
-                const { restDmg = 0 } = this._detectSlotAndStatus(pidx, 'pre-consumeNightSoul', { types: STATUS_TYPE.Usage, restDmg: cnt, players, isExec });
-                if (restDmg == 0) continue;
                 const hidx = ohidxs?.[0] ?? player.hidx;
+                const { isInvalid } = this._detectSlotAndStatus(pidx, 'pre-consumeNightSoul',
+                    { types: STATUS_TYPE.Usage, restDmg: cnt, players, hidxs: allHidxs(cheros), sourceHidx: hidx, isExec });
+                if (isInvalid) continue;
                 const nightSoul = player.heros[hidx].heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
-                if (nightSoul?.useCnt) nightSoul.minusUseCnt(restDmg);
+                if (nightSoul?.useCnt) nightSoul.minusUseCnt(cnt);
                 this._detectSkill(pidx, 'consumeNightSoul', { players, sourceHidx: hidx, source: nightSoul?.id, energyCnt, isExec });
                 const { tasks: nstasks = [] } = this._detectSlotAndStatus(pidx, 'consumeNightSoul', { players, hidxs: allHidxs(player.heros), sourceHidx: hidx, energyCnt, isExec });
                 tasks.push(...nstasks);
@@ -6605,7 +6605,10 @@ export default class GeniusInvokationRoom {
                 }
                 if (isExec) this._writeLog(`[${name}](${pidx})召唤[${smn.name}]【(${smn.entityId})】`);
             } else isGenerate = false;
-            if (isGenerate) this._detectSupport(pidx, 'summon-generate', { players, csummon, supportCnt, isExec, isQuickAction });
+            if (isGenerate) {
+                this._detectStatus(pidx, STATUS_TYPE.Usage, 'summon-generate', { players, csummon, isOnlyCombatStatus: true, isExec, isQuickAction });
+                this._detectSupport(pidx, 'summon-generate', { players, csummon, supportCnt, isExec, isQuickAction });
+            }
         });
         if (isSummon > -1) return assgin(summons, oriSummon);
         assgin(summons, oriSummon.filter(smn => {

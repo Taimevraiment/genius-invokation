@@ -832,11 +832,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6851f3bc/bd52f08c820bc007bf2358413fba8bce.png')
         .normalSkill(new NormalSkillBuilder('以火织命'))
         .skills(
-            new SkillBuilder('称名之刻').description('本角色进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
+            new SkillBuilder('称名之刻').description('自身进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/3b17437c8cb0d89864c9d3577ef3891a_5376680950361440983.png')
                 .explain(...Array.from({ length: 3 }, (_, i) => `botcrd${113154 + i}`))
-                .elemental().cost(2).handle(({ cmds }) => (
+                .elemental().cost(3).cost(2, 'v5.8.0').handle(({ cmds }) => (
                     cmds.getNightSoul(2), {
                         statusPre: 113151,
                         pickCard: {
@@ -851,9 +851,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burstSp(3).cost(4).handle(event => {
                     const { hero: { energy }, cmds } = event;
                     cmds.getNightSoul().getEnergy(energy, { isSp: true });
-                    const status: number[] = [];
-                    if (-energy >= 6) status.push(113152);
-                    return { statusPre: 113151, status, addDmgCdt: -energy }
+                    return { statusPre: 113151, status: isCdt(-energy >= 6, 113152), addDmgCdt: -energy }
                 }),
             new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
                 .src('#',
@@ -1323,14 +1321,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/Avatar_LanYan.png')
         .normalSkill(new NormalSkillBuilder('玄鸾画水'))
         .skills(
-            new SkillBuilder('凤缕随翦舞').description('生成2层【sts115121】，然后{dealDmg}，如果此技能引发了扩散，则额外生成1层【sts115121】。；【此技能结算后：】我方切换到下一个角色。')
+            new SkillBuilder('凤缕随翦舞').description('生成2层【sts115121】，获得1层【sts169】，并{dealDmg}，如果此技能引发了扩散，则额外生成1层【sts115121】。')
                 .src('/image/tmp/Skill_S_Lanyan_01.webp')
-                .elemental().damage(1).cost(3).handle(({ swirlEl, cmds }) => (
-                    cmds.switchAfter(), { status: [[115121, 2 + +!!swirlEl]] }
-                )),
-            new SkillBuilder('鹍弦踏月出').description('{dealDmg}。')
+                .elemental().damage(1).cost(3).handle(({ swirlEl }) => ({ status: [[115121, 2 + +!!swirlEl], 169] })),
+            new SkillBuilder('鹍弦踏月出').description('{dealDmg}，生成2层【sts115121】。')
                 .src('/image/tmp/Skill_E_Lanyan_01.webp')
-                .burst(2).damage(5).cost(3)
+                .burst(2).damage(3).cost(3).handle(() => ({ status: [[115121, 2]] }))
         ),
 
     1513: () => new HeroBuilder(493).name('鹿野院平藏').since('v5.8.0').inazuma().anemo().catalyst()
@@ -1724,7 +1720,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('悬猎·游骋高狩').description('选一个我方角色，自身附属【sts117091】并进入【sts117092】。{dealDmg}，然后与所选角色交换位置。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a2/08equlc0irtfiur6id02qiwromqwpl5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/cccdba35b77374e5ef8c19c7d429f985_1146383664533306901.png')
-                .elemental().damage(2).cost(3).canSelectHero(1).handle(({ cmds, hero: { hidx }, selectHero = -1 }) => (
+                .elemental().damage(1).damage(2, 'v5.8.0').cost(3).canSelectHero(1).handle(({ cmds, hero: { hidx }, selectHero = -1 }) => (
                     cmds.exchangePos(hidx, selectHero), { statusPre: [117092, 117091] }
                 )),
             new SkillBuilder('向伟大圣龙致意').description('{dealDmg}，召唤【smn117093】。')
@@ -1814,7 +1810,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: 121034 }))
         ),
 
-    2104: () => new HeroBuilder(397).name('愚人众·霜役人').since('v4.8.0').fatui().cryo()
+    2104: () => new HeroBuilder(397).name('愚人众·霜役人').since('v4.8.0').maxHp(11).maxHp(10, 'v5.8.0').fatui().cryo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a7baaff1ecc4dcda963698919ef2cae4_3934264341680499887.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/16b46893b0a27f52004e9377cd62c623.png')
         .normalSkill(new NormalSkillBuilder('迅捷剑锋'))
@@ -1826,7 +1822,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('掠袭之刺').description('{dealDmg}，本角色附属【sts121042】。')
                 .src('https://patchwiki.biligame.com/images/ys/a/ad/j8mjqzvynh98w3e5qkkxe3li00i0tv5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/91aaf5308bc072b31b6624af8f2ad1f0_601312319464014295.png')
-                .burst(2).damage(4).cost(3).handle(() => ({ status: 121042 })),
+                .burst(2).damage(5).damage(4, 'v5.8.0').cost(3).handle(() => ({ status: 121042 })),
             new SkillBuilder('血契掠影').description('【本角色使用技能后：】对敌方出战角色附属[可用次数]为（本技能最终伤害值-2）的【sts122】。（最多5层）')
                 .src('https://patchwiki.biligame.com/images/ys/8/82/izm590u04twm2v4y5md823l6fqeevof.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/78e32bb625cf50b2f92487f8577bff6b_4076485311764645060.png')

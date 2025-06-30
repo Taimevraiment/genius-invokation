@@ -33,6 +33,7 @@ export class GIStatus {
         descriptions: string[], // 处理后的技能描述
         explains: string[], // 要解释的文本
         iconBg: StatusBgColor, // 图标背景
+        versionChanges: Version[], // 版本变更
     };
     constructor(
         id: number, name: string, description: string, icon: string, group: StatusGroup, type: StatusType[],
@@ -40,7 +41,7 @@ export class GIStatus {
         handle?: (status: Status, event: StatusBuilderHandleEvent, ver: VersionCompareFn) => StatusBuilderHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, adt?: Record<string, number>, ver?: Version,
+            isTalent?: boolean, isReset?: boolean, adt?: Record<string, number>, ver?: Version, versionChanges?: Version[],
         } = {}
     ) {
         this.id = id;
@@ -51,7 +52,7 @@ export class GIStatus {
         this.maxCnt = maxCnt;
         this.roundCnt = roundCnt;
         const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
-            isTalent = false, isReset = true, adt = {}, ver = VERSION[0] } = options;
+            isTalent = false, isReset = true, adt = {}, ver = VERSION[0], versionChanges = [] } = options;
         const hid = getHidById(id);
         const el = getElByHid(hid);
         description = description
@@ -71,6 +72,7 @@ export class GIStatus {
                 ...expl,
             ],
             descriptions: [],
+            versionChanges,
         }
         this.addCnt = act == -1 ? Math.max(useCnt, roundCnt) : act;
         this.summonId = smnId;
@@ -200,15 +202,15 @@ export class GIStatus {
 
 export class StatusBuilder extends BaseBuilder {
     private _id: number = -1;
-    private _name: VersionMap<string> = new VersionMap();
+    private _name: VersionMap<string> = this._createVersionMap();
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
     private _type: StatusType[] = [];
-    private _useCnt: VersionMap<number> = new VersionMap();
-    private _maxCnt: VersionMap<number> = new VersionMap();
+    private _useCnt: VersionMap<number> = this._createVersionMap();
+    private _maxCnt: VersionMap<number> = this._createVersionMap();
     private _addCnt: number = -1;
-    private _perCnt: VersionMap<number> = new VersionMap();
-    private _roundCnt: VersionMap<number> = new VersionMap();
-    private _icon: VersionMap<string> = new VersionMap();
+    private _perCnt: VersionMap<number> = this._createVersionMap();
+    private _roundCnt: VersionMap<number> = this._createVersionMap();
+    private _icon: VersionMap<string> = this._createVersionMap();
     private _explains: string[] = [];
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
@@ -395,6 +397,7 @@ export class StatusBuilder extends BaseBuilder {
                 expl: this._explains,
                 isReset: this._isReset,
                 ver: this._curVersion,
+                versionChanges: this.versionChanges,
             }
         );
     }

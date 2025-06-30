@@ -44,6 +44,7 @@ export class GISummon {
         isAdd: boolean, // 召唤物是否增加过次数
         explains: string[], // 要解释的文本
         curVersion: Version, // 当前版本
+        versionChanges: Version[], // 版本更新
     };
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
@@ -51,7 +52,7 @@ export class GISummon {
         handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
-            spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version,
+            spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[],
         } = {}
     ) {
         this.id = id;
@@ -62,8 +63,8 @@ export class GISummon {
         this.damage = damage;
         this.element = element;
         const {
-            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = 0, stsId = -1,
-            spReset = false, expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0],
+            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = 0, stsId = -1, spReset = false,
+            expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [],
         } = options;
         const hid = getHidById(id);
         this.UI = {
@@ -84,6 +85,7 @@ export class GISummon {
             isAdd: false,
             descriptions: [],
             curVersion,
+            versionChanges,
         }
         this.perCnt = pct;
         this.isTalent = isTalent;
@@ -171,13 +173,13 @@ export class SummonBuilder extends BaseBuilder {
     private _id: number = -1;
     private _name: string;
     private _src: string = '';
-    private _useCnt: VersionMap<number> = new VersionMap();
-    private _maxUse: VersionMap<number> = new VersionMap();
+    private _useCnt: VersionMap<number> = this._createVersionMap();
+    private _maxUse: VersionMap<number> = this._createVersionMap();
     private _shieldOrHeal: number = 0;
-    private _damage: VersionMap<number> = new VersionMap();
+    private _damage: VersionMap<number> = this._createVersionMap();
     private _pdmg: number = 0;
     private _element: ElementType | undefined;
-    private _perCnt: VersionMap<number> = new VersionMap();
+    private _perCnt: VersionMap<number> = this._createVersionMap();
     private _isTalent: boolean = false;
     private _addition: Record<string, number> = {};
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
@@ -337,6 +339,7 @@ export class SummonBuilder extends BaseBuilder {
                 bottomIcon: this._bottomIcon,
                 pls: this._hasPlus,
                 ver: this._curVersion,
+                versionChanges: this.versionChanges,
             }
         )
     }

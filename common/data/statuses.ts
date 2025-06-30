@@ -63,6 +63,7 @@ export type StatusHandleEvent = {
     slotsDestroy?: number[],
     isSelfRound?: boolean,
     isSwirlExec?: boolean,
+    csummon?: Summon,
     randomInt?: (len?: number) => number,
     randomInArr?: <T>(arr: T[], cnt?: number) => T[],
 }
@@ -372,7 +373,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    169: (cnt: number = 1) => new StatusBuilder('高效行动').combatStatus().icon(STATUS_ICON.Buff)
+    169: (cnt: number = 1) => new StatusBuilder('高效切换').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage).from(301029)
         .description('【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
@@ -382,6 +383,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceHero: 1,
                 triggers: 'minus-switch',
                 exec: () => { status.minusUseCnt() }
+            }
+        }),
+
+    170: () => new StatusBuilder('敏捷切换').combatStatus().useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332006)
+        .description('【我方下次执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。')
+        .handle((status, event) => {
+            if (event.isQuickAction) return;
+            return {
+                isQuickAction: true,
+                triggers: 'minus-switch-from',
+                exec: () => { status.minusUseCnt() },
             }
         }),
 
@@ -1120,7 +1133,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 triggers: ['skilltype1', 'other-skilltype1', 'pre-consumeNightSoul'],
                 addDmgCdt: 1,
-                restDmg: restDmg - cnt,
+                isInvalid: true,
                 exec: () => { status.minusUseCnt(cnt) }
             }
         }),
@@ -1897,18 +1910,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).icon('#')
         .description('【敌方受到燃烧或我方其他角色使用特技后：】附属角色获得1点「夜魂值」。；【当「夜魂值」等于2点时：】附属角色附属【sts117094】，随后消耗2点「夜魂值」。；[roundCnt]')
         .handle((status, event) => {
-            const { heros = [], hidx = -1, trigger, cmds } = event;
+            const { heros = [], hidx = -1, trigger = '', cmds } = event;
             return {
-                triggers: ['other-vehicle', 'Burning-oppo', 'turn-end'],
+                triggers: ['other-vehicle', 'Burning-oppo', 'turn-end', 'action-start', 'action-start-oppo'],
                 exec: () => {
                     const heroStatus = heros[hidx]?.heroStatus;
-                    const nightSoul = heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                    const nightSoul = heroStatus?.find(s => s.hasType(STATUS_TYPE.NightSoul));
                     if (!nightSoul) return;
                     if (trigger == 'turn-end') {
                         if (status.roundCnt == 1) nightSoul.roundCnt = 0;
                         return;
                     }
-                    nightSoul.addUseCnt();
+                    if (['other-vehicle', 'Burning-oppo'].includes(trigger)) nightSoul.addUseCnt();
                     if (nightSoul.useCnt == 2 && !hasObjById(heroStatus, 117094)) {
                         cmds.getStatus(117094, { hidxs: hidx }).consumeNightSoul(hidx, 2);
                     }
@@ -2636,6 +2649,16 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             const { hcard, isMinusDiceCard } = event;
             if (!isMinusDiceCard || hcard?.id != 301033) return;
             return { triggers: 'card', minusDiceCard: 1, exec: () => status.dispose() }
+        }),
+
+    301037: () => new StatusBuilder('星轨王城（生效中）').combatStatus().useCnt(1)
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(321030)
+        .description('下次打出的【crd301033】效果量+1。')
+        .handle((status, event) => {
+            const { csummon } = event;
+            if (!csummon || csummon.id != 301028) return;
+            ++csummon.damage;
+            return { triggers: 'summon-generate', exec: () => { status.dispose() } }
         }),
 
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus()

@@ -60,7 +60,7 @@
                 <button @click.stop="{ currIdx = 1; updateInfo(); }" :class="{ active: currIdx == 1 }">
                     卡组
                 </button>
-                <select name="version" id="version" v-model="version" @click.stop="clickSelect" @change="updateInfo()">
+                <select name="version" id="version" v-model="version" @click.stop="" @change="updateInfo()">
                     <option v-for="ver in versionSelect" :key="ver" :value="ver">
                         {{ ver }}
                     </option>
@@ -135,7 +135,8 @@
                         <select :name="`config-${dthero.id}-version`" :id="`config-${dthero.id}-version`"
                             v-if="!isEditDeck" v-model="herosVersion[dthero.id]" style="z-index:2;" @click.stop="cancel"
                             @change="changeVersion(currIdx, dthero.id)">
-                            <option v-for="ver in versionSelect" :key="ver" :value="ver">
+                            <option v-for="ver in versionSelect" :key="ver" :value="ver"
+                                :class="{ active: dthero.UI.versionChanges.includes(ver) }">
                                 {{ ver }}
                             </option>
                         </select>
@@ -185,7 +186,8 @@
                             <select :name="`config-${dtcard.id}-version`" :id="`config-${dtcard.id}-version`"
                                 v-if="!isEditDeck" v-model="cardsVersion[dtcard.id]" style="z-index:2;"
                                 @click.stop="cancel" @change="changeVersion(currIdx, dtcard.id)">
-                                <option v-for="ver in versionSelect" :key="ver" :value="ver">
+                                <option v-for="ver in versionSelect" :key="ver" :value="ver"
+                                    :class="{ active: dtcard.UI.versionChanges.includes(ver) }">
                                     {{ ver }}
                                 </option>
                             </select>
@@ -201,7 +203,7 @@
                         {{ ver }}
                     </option>
                 </select>
-                <span class="filter-tag" :class="{ active: isOnlyShowConfiged }"
+                <span class="filter-tag" :class="{ active: isOnlyShowConfiged }" v-if="!isDiffEmpty"
                     @click.stop="selectFilter(currIdx)">只显示修改过</span>
                 <div v-for="(htitle, fidx) in [heroFilter, cardFilter][currIdx]" :key="fidx">
                     <div class="filter-title">{{ htitle.name }}</div>
@@ -246,6 +248,7 @@ import { Card, CustomVersionConfig, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn, getHidById } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
 import StrokedText from '@/components/StrokedText.vue';
+import { versionChanges } from '@@@/constant/dependancyDict';
 
 type Filter<T> = {
     name: string,
@@ -331,7 +334,6 @@ const shareCode = ref<string>('');
 const pShareCode = ref<string>('');
 const isShowDeckShareImg = ref<boolean>(false);
 const isOfflineVersion = ref<boolean>(false);
-const selectSize = ref<number>(0);
 const sinceVersionSelect = computed(() => ['实装版本'].concat(versionSelect.value.filter(ver => compareVersionFn(ver).lte(version.value))));
 const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 
@@ -397,13 +399,6 @@ const switchOfflineVersion = () => {
         version.value = VERSION[0];
     }
     updateInfo();
-}
-
-// 点击下拉框
-const clickSelect = () => {
-    if (versionSelect.value.length < 5 || isMobile.value) return;
-    if (selectSize.value == 0) selectSize.value = 5;
-    else selectSize.value = 0;
 }
 
 // 重置角色筛选
@@ -516,12 +511,22 @@ const updateInfo = (init = false) => {
         });
     } else {
         allHeros.value = herosPool.value.map(h => {
-            if (!customVersion.value.diff[h.id]) return h;
-            return newHero(customVersion.value.diff[h.id])(h.id);
+            if (!customVersion.value.diff[h.id]) {
+                h.UI.versionChanges = [...new Set([...h.UI.versionChanges, ...versionChanges[h.id]])]
+                return h;
+            }
+            const hero = newHero(customVersion.value.diff[h.id])(h.id);
+            hero.UI.versionChanges = [...new Set([...hero.UI.versionChanges, ...versionChanges[h.id]])];
+            return hero;
         });
         allCards.value = cardsPool.value.map(c => {
-            if (!customVersion.value.diff[c.id]) return c;
-            return newCard(customVersion.value.diff[c.id])(c.id);
+            if (!customVersion.value.diff[c.id]) {
+                c.UI.versionChanges = [...new Set([...c.UI.versionChanges, ...versionChanges[c.id]])]
+                return c;
+            }
+            const card = newCard(customVersion.value.diff[c.id])(c.id);
+            card.UI.versionChanges = [...new Set([...c.UI.versionChanges, ...versionChanges[c.id]])];
+            return card;
         });
     }
     const cardFilterRes = cardFilter.value?.map(ftype => {
@@ -745,7 +750,6 @@ const cancel = () => {
     isShowShareCode.value = false;
     isShowDeckShareImg.value = false;
     modalInfo.value = NULL_MODAL();
-    selectSize.value = 0;
 }
 
 // 改变版本
@@ -760,12 +764,16 @@ const changeVersion = (currIdx: TagIndex, id: number) => {
         if (customVersion.value.baseVersion == herosVersion.value[id]) delete customVersion.value.diff[id];
         else customVersion.value.diff[id] = herosVersion.value[id];
         const hidx = allHeros.value.findIndex(h => h.id == id);
-        allHeros.value.splice(hidx, 1, newHero(herosVersion.value[id])(id));
+        const hero = newHero(herosVersion.value[id])(id);
+        hero.UI.versionChanges = [...new Set([...hero.UI.versionChanges, ...versionChanges[id]])];
+        allHeros.value.splice(hidx, 1, hero);
     } else {
         if (customVersion.value.baseVersion == cardsVersion.value[id]) delete customVersion.value.diff[id];
         else customVersion.value.diff[id] = cardsVersion.value[id];
         const cidx = allCards.value.findIndex(c => c.id == id);
-        allCards.value.splice(cidx, 1, newCard(cardsVersion.value[id])(id));
+        const card = newCard(cardsVersion.value[id])(id);
+        card.UI.versionChanges = [...new Set([...card.UI.versionChanges, ...versionChanges[id]])]
+        allCards.value.splice(cidx, 1, card);
     }
 }
 
@@ -1357,6 +1365,10 @@ select[id^=config] {
     border: 3px solid #583a01;
     background-color: #ffcf77;
     font-family: HYWH;
+}
+
+option.active {
+    background-color: #ffffb1;
 }
 
 .mobile-hero-deck,

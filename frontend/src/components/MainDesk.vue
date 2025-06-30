@@ -401,7 +401,7 @@
                 <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill"
                   :class="{ 'is-change': summonBottomCurcnt[saidx][suidx].isChange }">
                   {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal > 0 ? summon.shieldOrHeal :
-                    (summon.addition?.[0] ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
+                    (summon.addition.effect ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
                 </StrokedText>
               </template>
             </div>

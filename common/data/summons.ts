@@ -981,7 +981,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('/image/tmp/UI_Gcg_CardFace_Summon_JimuBing.png'),
 
     301029: () => new SummonBuilder('折纸飞鼠').from(301034).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Buff)
-        .description(`【结束阶段：】获得{effect}层【我方下次执行「切换角色」行动时：】少花费1个元素骰。；[useCnt]`)
+        .description(`【结束阶段：】获得{effect}层【sts169】。；[useCnt]`)
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu.png')
         .handle(summon => ({
             triggers: 'phase-end',
@@ -1004,7 +1004,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    301031: () => new SummonBuilder('折纸胖胖鼠').from(301036).useCnt(2).heal(1)
+    301031: () => new SummonBuilder('折纸胖胖鼠').from(301036).useCnt(1).heal(2)
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu.png')
         .handle((summon, event) => {

@@ -136,12 +136,12 @@ export class SkillBuilder extends BaseBuilder {
     private _name: string = '';
     private _id: number = -1;
     private _type: SkillType = SKILL_TYPE.Passive;
-    private _damage: VersionMap<number> = new VersionMap();
+    private _damage: VersionMap<number> = this._createVersionMap();
     private _dmgElement: ElementType | undefined;
-    private _cost: VersionMap<number> = new VersionMap();
+    private _cost: VersionMap<number> = this._createVersionMap();
     private _costElement: SkillCostType | undefined;
-    private _anyCost: VersionMap<number> = new VersionMap();
-    private _energyCost: VersionMap<number> = new VersionMap();
+    private _anyCost: VersionMap<number> = this._createVersionMap();
+    private _energyCost: VersionMap<number> = this._createVersionMap();
     private _isSpEnergy: boolean = false;
     private _handle: ((event: SkillBuilderHandleEvent, ver: VersionCompareFn) => SkillBuilderHandleRes | undefined | void) | undefined;
     private _perCnt: number = 0;
