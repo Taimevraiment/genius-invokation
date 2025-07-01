@@ -4316,9 +4316,15 @@ export default class GeniusInvokationRoom {
                 const hstop = slotstsop.filter(s => s.group == STATUS_GROUP.heroStatus);
                 const cstop = slotstsop.filter(s => s.group == STATUS_GROUP.combatStatus);
                 if (hstop.length > 0) {
-                    (slotres.hidxs ?? [eheros.findIndex(h => h.isFront)]).forEach(hi => {
-                        this._updateStatus(pidx ^ 1, hstop, eheros[hi].heroStatus, players, { hidx: hi });
-                    });
+                    const efhidx = eheros.findIndex(h => h.isFront);
+                    const slotreshidxs = slotres.hidxs ?? [efhidx];
+                    const eist = eheros.map(h => slotreshidxs.includes(h.hidx) ? hstop.slice() : []);
+                    for (let dhidx = 0; dhidx < eheros.length; ++dhidx) {
+                        const fhidx = (efhidx + dhidx) % eheros.length;
+                        if (eist[fhidx].length == 0) continue;
+                        if (eheros[fhidx].hp <= 0) eist[(fhidx + 1) % eheros.length].push(...eist[fhidx]);
+                        else this._updateStatus(pidx ^ 1, hstop, eheros[fhidx].heroStatus, players, { hidx: fhidx });
+                    }
                 }
                 if (cstop.length > 0) this._updateStatus(pidx ^ 1, cstop, players[pidx ^ 1].combatStatus, players);
                 tcmds.value.forEach(({ cmd, cnt }) => cmd == 'discard' && (hcardsCnt -= cnt || 1));
@@ -6127,10 +6133,12 @@ export default class GeniusInvokationRoom {
             }
         }
         if (!isNotEffectStatus) {
-            for (let fhidx = 0; fhidx < cheros.length; ++fhidx) {
+            for (let dhidx = 0; dhidx < cheros.length; ++dhidx) {
+                const fhidx = (player.hidx + dhidx) % cheros.length;
                 const fhero = cheros[fhidx];
                 if (heroStatus && heroStatus[fhidx].length) {
-                    this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players,
+                    if (fhero.hp <= 0) heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
+                    else this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players,
                         { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
                 }
             }
@@ -6138,10 +6146,12 @@ export default class GeniusInvokationRoom {
                 this._updateStatus(pidx, combatStatus, player.combatStatus, players,
                     { hidx: ahidx, isExec, supportCnt, isQuickAction: !isAction });
             }
-            for (let fhidx = 0; fhidx < ceheros.length; ++fhidx) {
+            for (let dhidx = 0; dhidx < ceheros.length; ++dhidx) {
+                const fhidx = (opponent.hidx + dhidx) % ceheros.length;
                 const fhero = ceheros[fhidx];
                 if (heroStatusOppo && heroStatusOppo[fhidx].length) {
-                    this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, players,
+                    if (fhero.hp <= 0) heroStatusOppo[(fhidx + 1) % ceheros.length].push(...heroStatusOppo[fhidx]);
+                    else this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, players,
                         { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
                 }
             }

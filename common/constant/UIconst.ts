@@ -195,6 +195,16 @@ export const STATUS_BG_COLOR_CODE = {
     Forbidden: 10,
 } as const;
 
+export const NIGHT_SOUL_BG_COLOR = {
+    [ELEMENT_TYPE.Cryo]: '#c0fcff',
+    [ELEMENT_TYPE.Hydro]: '#9ad5ff',
+    [ELEMENT_TYPE.Pyro]: '#ffb298',
+    [ELEMENT_TYPE.Electro]: '#dfbeff',
+    [ELEMENT_TYPE.Anemo]: '#8bffcf',
+    [ELEMENT_TYPE.Geo]: '#ffde8b',
+    [ELEMENT_TYPE.Dendro]: '#bbff80',
+} as const;
+
 export const HERO_LOCAL_NAME = {
     [HERO_LOCAL.Monster]: '魔物',
     [HERO_LOCAL.Mondstadt]: '蒙德',

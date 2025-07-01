@@ -345,8 +345,8 @@ export class CardBuilder extends BaseCostBuilder {
         this._subtype.push(CARD_SUBTYPE.Vehicle);
         return this.equipment();
     }
-    useNightSoul(isUseNightSoul: boolean = false) {
-        this._isUseNightSoul = isUseNightSoul;
+    useNightSoul() {
+        this._isUseNightSoul = true;
         return this;
     }
     useReadySkill(readySkillStatusId: number) {

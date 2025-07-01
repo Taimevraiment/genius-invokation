@@ -137,6 +137,8 @@
             willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
           ),
         }" v-for="(hero, hidx) in hgroup" :key="hidx">
+          <NightSoul class="night-soul" v-if="hero.heroStatus.some(s => s.hasType(STATUS_TYPE.NightSoul))"
+            :color="NIGHT_SOUL_BG_COLOR[hero.element]" />
           <div class="card-border"></div>
           <div class="hero-img-content">
             <img :class="['hero-img', { blink: changedHeros[getGroup(hgi)][hidx] }]"
@@ -484,12 +486,13 @@ import {
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
-import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, NIGHT_SOUL_BG_COLOR, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { newSkill } from '@@@/data/skills';
 import { hasObjById } from '@@@/utils/gameUtil';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
+import NightSoul from './NightSoul.vue';
 import StrokedText from './StrokedText.vue';
 
 const props = defineProps<{
@@ -1046,6 +1049,15 @@ const mouseup = () => {
 
 .hero.oppo {
   align-self: flex-start;
+}
+
+.night-soul {
+  position: absolute;
+  width: 105%;
+  height: 130%;
+  bottom: -2%;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .hero-hp-bg,
