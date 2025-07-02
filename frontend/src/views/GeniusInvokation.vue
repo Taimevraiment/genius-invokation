@@ -55,7 +55,7 @@
       <span v-if="isLookon > -1">旁观中......</span>
       <p>{{ client.player?.name }}</p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
-        <StrokedText>{{ handCardsCnt[client.playerIdx] }}</StrokedText>
+        <StrokedText>{{ handCardsInfo.count[client.playerIdx] }}</StrokedText>
       </div>
       <img class="legend" :src="getDiceBgIcon('legend-empty')" />
       <img v-if="!client.player?.playerInfo.isUsedLegend" class="legend" :src="getDiceBgIcon('legend')" />
@@ -78,8 +78,13 @@
       <strong v-if="client.opponent.id != AI_ID && client.opponent.phase == PHASE.NOT_BEGIN" style="color: #eaff8d;">
         已准备
       </strong>
-      <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
-        <StrokedText>{{ handCardsCnt[client.playerIdx ^ 1] }}</StrokedText>
+      <div v-if="client.isWin > -1 || client.isStart" class="rest-card"
+        :class="{ 'mobile-rest-card': isMobile, 'has-forbidden-knowledge': handCardsInfo.forbiddenKnowledge[client.playerIdx ^ 1] }"
+        @click.stop="showHandCardInfo()" @mouseenter="showHandCardInfo(true)">
+        <StrokedText>{{ handCardsInfo.count[client.playerIdx ^ 1] }}</StrokedText>
+      </div>
+      <div v-if="client.isShowHandCardInfo" class="has-forbidden-knowledge forbidden-knowledge">
+        <StrokedText>禁忌知识：{{ handCardsInfo.forbiddenKnowledge[client.playerIdx ^ 1] }}</StrokedText>
       </div>
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
       <img v-if="isLookon > -1 || client.roomId < -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
@@ -277,7 +282,7 @@ const client = ref<GeniusInvokationClient>(new GeniusInvokationClient(
   Number(localStorage.getItem('GIdeckIdx') || '0'), isLookon.value, customVersion,
 ));
 
-const handCardsCnt = computed<number[]>(() => client.value.handCardsCnt); // 双方手牌数
+const handCardsInfo = computed(() => client.value.handCardsInfo); // 双方手牌信息（手牌数、禁忌知识数量）
 const canAction = computed<boolean>(() => client.value.canAction && isLookon.value == -1); // 是否可以操作
 const isNonEvent = computed<boolean>(() => client.value.player.combatStatus.some(s => s.type.includes(STATUS_TYPE.NonEvent))); // 是否使事件牌失效
 const currDeck = computed(() => { // 当前出战卡组
@@ -440,6 +445,10 @@ const useCard = () => {
 const showHistory = () => {
   client.value.isShowHistory = true;
 };
+// 显示手牌信息 
+const showHandCardInfo = (isMouseOver: boolean = false) => {
+  client.value.isShowHandCardInfo = (!client.value.isShowHandCardInfo || isMouseOver) && !!handCardsInfo.value.forbiddenKnowledge[client.value.playerIdx ^ 1];
+}
 // 更新diceSelect
 const updateDiceSelect = (didx: number, newVal?: boolean) => {
   if (didx == -1) client.value.resetDiceSelect();
@@ -1031,6 +1040,7 @@ button {
   top: 10px;
   right: 10px;
   background-color: #63a0e6;
+  z-index: 6;
 }
 
 .rest-card {
@@ -1319,6 +1329,22 @@ button {
   left: 3px;
 }
 
+.has-forbidden-knowledge {
+  background-image: linear-gradient(45deg, #d1acff, #774497, #d1acff, #774497);
+  background-size: 500% 100%;
+  animation: gradient-move 2s infinite linear;
+}
+
+.forbidden-knowledge {
+  position: absolute;
+  bottom: -2rem;
+  color: white;
+  border-radius: 5px;
+  padding: 5%;
+  white-space: nowrap;
+  background-size: 400% 100%;
+}
+
 .hand-pile.mobile-oppo {
   transform: translate(-30px, 108px);
 }
@@ -1459,6 +1485,16 @@ button {
   100% {
     transform: translateY(-50vh);
     opacity: 0;
+  }
+}
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 100% 50%;
   }
 }
 </style>

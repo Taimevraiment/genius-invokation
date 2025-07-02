@@ -387,7 +387,10 @@ export default class GeniusInvokationRoom {
                 log: [],
                 pileCnt: this.players.map(p => p.pile.length),
                 diceCnt: this.players.map(p => p.dice.length),
-                handCardsCnt: this.players.map(p => p.handCards.length),
+                handCardsInfo: {
+                    count: this.players.map(p => p.handCards.length),
+                    forbiddenKnowledge: this.players.map(p => p.handCards.filter(c => c.id == 301020).length),
+                },
                 damageVO,
                 tip: typeof tip == 'string' ? tip : '',
                 actionInfo: { content: '' },

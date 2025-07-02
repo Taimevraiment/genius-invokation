@@ -44,6 +44,7 @@ export default class GeniusInvokationClient {
     isShowSwitchHero: number = 0; // 是否显示切换角色按钮 0不显示 1显示 2显示且显示所需骰子 3显示且为快速行动
     isShowHistory: boolean = false; // 是否显示历史信息
     isShowEndPhase: boolean = false; // 是否显示确认结束回合按钮
+    isShowHandCardInfo: boolean = false;  // 是否显示手牌信息
     changedSummons: (Summon | undefined)[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 召唤物变化
     changedHeros: (string | undefined)[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 角色变化
     willSummons: Summon[][] = this._resetWillSummons(); // 将要召唤的召唤物
@@ -68,7 +69,10 @@ export default class GeniusInvokationClient {
     log: string[] = []; // 当局游戏日志
     pileCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 牌库数量
     diceCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 骰子数量
-    handCardsCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 手牌数量
+    handCardsInfo: { count: number[], forbiddenKnowledge: number[] } = {
+        count: new Array(PLAYER_COUNT).fill(0),
+        forbiddenKnowledge: new Array(PLAYER_COUNT).fill(0),
+    }; // 手牌数量
     isMobile: boolean; // 是否为手机
     diceSelect: boolean[]; // 骰子是否选中
     initcardsPos: string[] = []; // 换牌手牌位置
@@ -222,6 +226,7 @@ export default class GeniusInvokationClient {
     } = {}) {
         const { onlyCard, notCard, notHeros, onlyHeros, onlySupportAndSummon, notTarget, notSummonSelect } = options;
         this.isShowEndPhase = false;
+        this.isShowHandCardInfo = false;
         this._resetWillHp();
         if (!onlyCard) {
             if ((!notHeros || onlyHeros) && !onlySupportAndSummon) {
@@ -502,7 +507,7 @@ export default class GeniusInvokationClient {
      * @param data
      */
     getServerInfo(data: Readonly<ServerData>) {
-        const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsCnt, damageVO,
+        const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsInfo, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
             watchers, recordData, flag } = data;
         if (this.isDev) console.info(flag);
@@ -520,7 +525,7 @@ export default class GeniusInvokationClient {
         if (currCountdown > 0) this.countdown.timer = setInterval(() => --this.countdown.curr, 1e3);
         this.diceCnt = diceCnt;
         setTimeout(() => this.pileCnt = pileCnt, players.some(p => p.UI.willAddCard.cards.length) ? 1500 : 0);
-        setTimeout(() => this.handCardsCnt = handCardsCnt, players.some(p => p.UI.willDiscard.hcards.length + p.UI.willDiscard.pile.length) ? 1500 : 0);
+        setTimeout(() => this.handCardsInfo = handCardsInfo, players.some(p => p.UI.willDiscard.hcards.length + p.UI.willDiscard.pile.length) ? 1500 : 0);
         this.showRerollBtn = players[this.playerIdx]?.UI.showRerollBtn ?? false;
         this.pickModal = pickModal;
         this.watchers = watchers;
@@ -908,6 +913,7 @@ export default class GeniusInvokationClient {
      */
     async useSkill(skid: number, options: { isOnlyRead?: boolean } = {}) {
         this.isShowEndPhase = false;
+        this.isShowHandCardInfo = false;
         const { isOnlyRead = false } = options;
         const skidx = this.skills.findIndex(sk => sk.id == skid);
         const isExec = !isOnlyRead && this.modalInfo.skidx == skidx && this.isValid;

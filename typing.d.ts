@@ -275,7 +275,10 @@ type ServerData = Readonly<{
     log: string[],
     pileCnt: number[],
     diceCnt: number[],
-    handCardsCnt: number[],
+    handCardsInfo: {
+        count: number[],
+        forbiddenKnowledge: number[],
+    }
     isWin: number,
     tip: string,
     actionInfo: ActionInfo,

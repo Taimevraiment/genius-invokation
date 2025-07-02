@@ -7,7 +7,7 @@
             '--duration': bubble.duration + 's',
             '--size': bubble.size + '%',
             backgroundColor: props.color,
-        }" :class="`bubble ${bubble.animation}`"></div>
+        }" :class="['bubble', bubble.animation]"></div>
         <svg style="display: none;">
             <defs>
                 <filter id="blob">
