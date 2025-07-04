@@ -121,85 +121,39 @@
 
     <div class="heros" :class="{ 'mobile-heros': isMobile }">
       <div class="hero-group" v-for="(hgroup, hgi) in heros" :key="hgi">
-        <div class="hero" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent" :style="{
-          backgroundColor: hero.UI.src == '' ? ELEMENT_COLOR[hero?.element ?? ELEMENT_TYPE.Physical] : '',
-        }" :class="{
-          'mobile-hero': isMobile,
-          'my': hgi == 1,
-          'oppo': hgi == 0,
-          'is-front-oppo': hero?.isFront && phase >= PHASE.DICE && hgi == 0,
-          'is-front-my': hero?.isFront && hgi == 1,
-          'hero-select': heroSelect[hgi][hidx],
-          'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
-          'active-willhp': canAction && (
-            willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyCnt[hgi][hidx] ||
-            (heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 ||
-            willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
-          ),
-        }" v-for="(hero, hidx) in hgroup" :key="hidx">
-          <NightSoul class="night-soul" v-if="hero.heroStatus.some(s => s.hasType(STATUS_TYPE.NightSoul))"
-            :color="NIGHT_SOUL_BG_COLOR[hero.element]" />
-          <div class="card-border"></div>
-          <div class="hero-img-content">
-            <img :class="['hero-img', { blink: changedHeros[getGroup(hgi)][hidx] }]"
-              :src="changedHeros[getGroup(hgi)][hidx] || hero.UI.src" v-if="hero?.UI.src?.length > 0"
-              :alt="hero.name" />
-            <div v-else class="hero-name">{{ hero?.name }}</div>
-          </div>
-          <div class="hero-freeze" v-if="hasObjById(hero.heroStatus, 106)">
-            <img :src="getPngIcon('freeze-bg')" />
-          </div>
-          <div class="hero-freeze" v-if="hasObjById(hero.heroStatus, 116033)">
-            <img :src="getPngIcon('rocken-bg')" />
-          </div>
-          <div class="hero-shield"
-            v-if="[...hero.heroStatus, ...(hero.isFront ? combatStatuses[hgi] : [])].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0)">
-          </div>
-          <div class="hero-barrier" v-if="(
-            hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier)) ||
-            hero.isFront && combatStatuses[hgi].some(ost => ost.hasType(STATUS_TYPE.Barrier)) ||
-            hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
-            hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt != 0) ||
-            hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt != 0">
-            <img :src="getPngIcon('barrier-bg')" alt="" style="width: 100%;height: 100%;">
-          </div>
+        <GIHero :hero="hero" :isMobile="isMobile" :isBlink="changedHeros[getGroup(hgi)][hidx]"
+          :hpChange="hpCurcnt[hgi][hidx]" :energyCnt="energyCnt?.[hgi]?.[hidx]"
+          :combatStatus="hero.isFront ? combatStatuses[hgi] : []" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent"
+          :style="{
+            backgroundColor: hero.UI.src == '' ? ELEMENT_COLOR[hero.element ?? ELEMENT_TYPE.Physical] : '',
+          }" :class="{
+            'mobile-hero': isMobile,
+            'my': hgi == 1,
+            'oppo': hgi == 0,
+            'is-front-oppo': hero?.isFront && phase >= PHASE.DICE && hgi == 0,
+            'is-front-my': hero?.isFront && hgi == 1,
+            'hero-select': heroSelect[hgi][hidx],
+            'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
+            'active-willhp': canAction && (
+              willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyCnt[hgi][hidx] ||
+              (heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 ||
+              willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
+            ),
+          }" v-for="(hero, hidx) in hgroup" :key="hidx">
           <img class="hero-center-icon" v-if="willSwitch[hgi][hidx]" :src="getPngIcon('Select_Replace')" />
           <img class="hero-center-icon" style="width: 60%;opacity: 1;" src="@@/image/Select_Ring_01.png"
             v-if="targetSelect?.[hgi]?.[hidx]" />
           <img class="hero-center-icon" style="width: 30%;opacity: 1;" src="@@/image/Select_Check_01.png"
             v-if="targetSelect?.[hgi]?.[hidx]" />
-          <div class="hero-hp" :class="{ 'mobile-hero-hp': isMobile }" v-if="(hero?.hp ?? 0) >= 0">
-            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" :style="{
-              filter: `${hasObjById(hero.heroStatus, 122) ? 'saturate(2.2) hue-rotate(-25deg) contrast(0.8)' :
-                hero.hp == hero.maxHp ? 'brightness(1.2)' : ''}`
-            }" />
-            <StrokedText class="hero-hp-cnt" :class="{ 'is-change': hpCurcnt[hgi][hidx].isChange }">
-              {{ Math.max(0, hpCurcnt[hgi][hidx].val) }}
-            </StrokedText>
-          </div>
-          <div class="hero-energys" v-if="hero && hero.hp > 0">
-            <div v-for="(_, eidx) in Math.abs(hero.maxEnergy) / (hero.maxEnergy >= 0 ? 1 : 2)" :key="eidx"
-              class="hero-energy" :class="{ 'mobile-energy': isMobile }">
-              <img class="hero-energy-img" :src="getEnergyIcon(
-                hero.maxEnergy < 0 && Math.abs(hero.energy) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx,
-                hero.maxEnergy < 0
-              )">
-              <img class="hero-energy-img" :class="{
-                blink: (Math.abs(hero.energy) - 1 < eidx && Math.abs(hero.energy) + (energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx) ||
-                  (Math.abs(hero.energy) + (hero.maxEnergy / 2) - 1 < eidx && Math.abs(hero.energy) + (energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx)
-              }" :src="getEnergyIcon(
-                Math.abs(hero.energy) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) - 1 >= eidx,
-                hero.maxEnergy < 0,
-                Math.abs(hero.energy) + Math.max(0, energyCnt?.[hgi]?.[hidx] ?? 0) + (hero.maxEnergy / 2) - 1 >= eidx
-              )" />
-            </div>
+          <template #hero-right-bar>
             <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
               <img :src="hero.vehicleSlot[1].UI.src || CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]" />
               <div :class="{ 'slot-can-use': hero.vehicleSlot[0].perCnt + hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
-          </div>
+          </template>
+          <!-- </div> -->
           <div class="hero-equipment" v-if="hero && hero.hp >= 0">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Weapon]] }">
@@ -349,150 +303,148 @@
                   </StrokedText>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+        </GIHero>
+      </div>
+    </div>
 
-        <div class="summons">
-          <div class="summon-area" v-if="!!opponent" v-for="(smnArea, saidx) in smnAreas" :key="saidx">
-            <div class="summon" :class="{
-              'will-attach': summon.UI.isWill || summon.UI.willChange,
-              'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
-              'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING && !summon.UI.isWill,
-              'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
-            }" v-for="(summon, suidx) in smnArea" :key="suidx"
-              @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
-              <div class="summon-img-content">
-                <div class="card-border"></div>
-                <img class="summon-img" :src="summon.UI.src" v-if="summon?.UI.src?.length > 0" :alt="summon.name" />
-                <span v-else>{{ summon.name }}</span>
-                <div style="position: absolute; width: 100%; height: 100%;top: 0;"
-                  :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
-              </div>
-              <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.topIcon)" />
-              <StrokedText class="summon-top-num" :class="{ 'is-change': summonTopCurcnt[saidx][suidx].isChange }"
-                v-if="!summon?.UI.isWill">
-                {{ summon.useCnt }}
-              </StrokedText>
-              <div :class="{
-                // 'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
-                // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
-                'will-add': true,
-              }" :style="{
-                borderImageSource: `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
-              }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
-                <img
-                  v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
-                  :src="getSvgIcon('die')" style="height: 16px;" />
-                <StrokedText>
-                  {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
-                    summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
-                      (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50) ?
-                      "-" : "" }}
-                </StrokedText>
-                <StrokedText
-                  v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50)">
-                  {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
-                </StrokedText>
-              </div>
-              <template
-                v-if="!summon?.UI.isWill && (summon.damage >= 0 || summon.shieldOrHeal > 0 || summon.UI.bottomIcon)">
-                <img class="summon-bottom-icon"
-                  :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
-                  :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : summon.shieldOrHeal > 0 ? getPngIcon('Element_Heal') : summon.UI.bottomIcon" />
-                <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill"
-                  :class="{ 'is-change': summonBottomCurcnt[saidx][suidx].isChange }">
-                  {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal > 0 ? summon.shieldOrHeal :
-                    (summon.addition.effect ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
-                </StrokedText>
-              </template>
-            </div>
+    <div class="summons">
+      <div class="summon-area" v-if="!!opponent" v-for="(smnArea, saidx) in smnAreas" :key="saidx">
+        <div class="summon" :class="{
+          'will-attach': summon.UI.isWill || summon.UI.willChange,
+          'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
+          'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING && !summon.UI.isWill,
+          'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
+        }" v-for="(summon, suidx) in smnArea" :key="suidx"
+          @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
+          <div class="summon-img-content">
+            <div class="card-border"></div>
+            <img class="summon-img" :src="summon.UI.src" v-if="summon?.UI.src?.length > 0" :alt="summon.name" />
+            <span v-else>{{ summon.name }}</span>
+            <div style="position: absolute; width: 100%; height: 100%;top: 0;"
+              :class="{ 'summon-can-use': summon.perCnt > 0 && !summon.UI.isWill }"></div>
           </div>
+          <img class="summon-top-icon" v-if="!summon?.UI.isWill" :src="getPngIcon(summon.UI.topIcon)" />
+          <StrokedText class="summon-top-num" :class="{ 'is-change': summonTopCurcnt[saidx][suidx].isChange }"
+            v-if="!summon?.UI.isWill">
+            {{ summon.useCnt }}
+          </StrokedText>
+          <div :class="{
+            // 'will-destroy': summonCnt[getGroup(saidx)][suidx] < 0,
+            // 'will-add': summonCnt[getGroup(saidx)][suidx] > 0,
+            'will-add': true,
+          }" :style="{
+            borderImageSource: `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
+          }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
+            <img
+              v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
+              :src="getSvgIcon('die')" style="height: 16px;" />
+            <StrokedText>
+              {{ summonCnt[getGroup(saidx)][suidx] > 0 ? "+" :
+                summonCnt[getGroup(saidx)][suidx] > -summon.useCnt ||
+                  (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50) ?
+                  "-" : "" }}
+            </StrokedText>
+            <StrokedText
+              v-if="summonCnt[getGroup(saidx)][suidx] > -summon.useCnt || (summon.isDestroy != SUMMON_DESTROY_TYPE.Used && summonCnt[getGroup(saidx)][suidx] > -50)">
+              {{ Math.floor(Math.abs(Math.max(summonCnt[getGroup(saidx)][suidx], -summon.useCnt))) }}
+            </StrokedText>
+          </div>
+          <template
+            v-if="!summon?.UI.isWill && (summon.damage >= 0 || summon.shieldOrHeal > 0 || summon.UI.bottomIcon)">
+            <img class="summon-bottom-icon"
+              :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
+              :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : summon.shieldOrHeal > 0 ? getPngIcon('Element_Heal') : summon.UI.bottomIcon" />
+            <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill"
+              :class="{ 'is-change': summonBottomCurcnt[saidx][suidx].isChange }">
+              {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal > 0 ? summon.shieldOrHeal :
+                (summon.addition.effect ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
+            </StrokedText>
+          </template>
         </div>
+      </div>
+    </div>
 
-        <div class="dices" :class="{ 'mobile-dices': isMobile }">
-          <div class="dice-my" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []" :key="didx"
-            :class="{ 'mobile-dice-my': isMobile }" @click.stop="selectUseDice(didx)">
+    <div class="dices" :class="{ 'mobile-dices': isMobile }">
+      <div class="dice-my" v-for="(dice, didx) in player.phase >= PHASE.ACTION_START ? dices : []" :key="didx"
+        :class="{ 'mobile-dice-my': isMobile }" @click.stop="selectUseDice(didx)">
+        <div class="dice-select" v-if="diceSelect[didx]"></div>
+        <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
+        <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
+        <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" />
+      </div>
+    </div>
+
+    <div class="dice-change"
+      v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && !isHide && isLookon == -1"
+      @mousedown.stop="mousedown()" @mouseup.stop="mouseup" @touchmove.stop="selectRerollDiceByMobile"
+      @touchstart.stop="mousedown()" @touchend.stop="mouseup">
+      <div class="dice-change-area">
+        <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
+          <div class="dice" @pointerdown="mousedown(didx)" @pointerenter="selectRerollDice(didx)">
             <div class="dice-select" v-if="diceSelect[didx]"></div>
             <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
             <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
-            <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" />
+            <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
           </div>
-        </div>
-
-        <div class="dice-change"
-          v-if="(phase == PHASE.DICE || phase == PHASE.ACTION) && player.phase == PHASE.DICE && !isHide && isLookon == -1"
-          @mousedown.stop="mousedown()" @mouseup.stop="mouseup" @touchmove.stop="selectRerollDiceByMobile"
-          @touchstart.stop="mousedown()" @touchend.stop="mouseup">
-          <div class="dice-change-area">
-            <div class="dice-container" v-for="(dice, didx) in dices" :key="didx">
-              <div class="dice" @pointerdown="mousedown(didx)" @pointerenter="selectRerollDice(didx)">
-                <div class="dice-select" v-if="diceSelect[didx]"></div>
-                <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" style="opacity: 1" />
-                <img class="dice-change-el-img" :src="getDiceIcon(ELEMENT_ICON[dice])" />
-                <img class="dice-change-img" :src="getDiceBgIcon(ELEMENT_ICON[dice])" :didx="didx" />
-              </div>
-            </div>
-          </div>
-          <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%;">
-            还可重投{{ rollCnt }}轮
-          </div>
-          <button @click="reroll()" class="button" :class="{ 'not-show': !showRerollBtn }" v-if="client.roomId > 0">
-            {{diceSelect.some(v => v) ? "重掷" : "确认"}}
-          </button>
-        </div>
-
-        <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
-          <div class="init-cards">
-            <Handcard :class="['init-card', card.UI.class ?? '']" v-for="(card, cidx) in initCards"
-              :key="`${card.entityId}-initcard`" :card="card" :isMobile="isMobile" @click.stop="selectChangeCard(cidx)"
-              :style="{ left: client.initcardsPos[cidx], top: '25%' }">
-              <template v-if="initCardsSelect[cidx] && client.roomId > 0">
-                <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" class="init-select" />
-                <div class="init-select-text">替换</div>
-              </template>
-            </Handcard>
-          </div>
-          <button class="button" @click="changeCard" v-if="showChangeCardBtn && client.roomId > 0">
-            {{initCardsSelect.some(v => v) ? "换牌" : "确认手牌"}}
-          </button>
-        </div>
-
-        <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
-          <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
-          <div class="pick-cards">
-            <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${card.entityId}-pickcard`"
-              :card="card" :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }"
-              @click.stop="selectCardPick(cidx)">
-              <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
-            </Handcard>
-          </div>
-          <button class="button" @click="pickCard" v-if="pickCardIdx > -1 && client.roomId > 0">确认</button>
         </div>
       </div>
-
-      <div v-if="showHideBtn" class="display-btn" :class="{ 'hide-btn': isHide }">
-        <img @click="triggerHide" src="@@/svg/lookon.svg" alt="显/隐"
-          style="position: absolute;width: 100%;height: 100%;" />
-        <div style="width: 20px;height: 30px;"></div>
+      <div v-if="rollCnt > 1" style="color: white; position: absolute; bottom: 35%;">
+        还可重投{{ rollCnt }}轮
       </div>
+      <button @click="reroll()" class="button" :class="{ 'not-show': !showRerollBtn }" v-if="client.roomId > 0">
+        {{diceSelect.some(v => v) ? "重掷" : "确认"}}
+      </button>
+    </div>
+
+    <div class="card-change" v-if="player.phase == PHASE.CHANGE_CARD && !isHide && isLookon == -1">
+      <div class="init-cards">
+        <Handcard :class="['init-card', card.UI.class ?? '']" v-for="(card, cidx) in initCards"
+          :key="`${card.entityId}-initcard`" :card="card" :isMobile="isMobile" @click.stop="selectChangeCard(cidx)"
+          :style="{ left: client.initcardsPos[cidx], top: '25%' }">
+          <template v-if="initCardsSelect[cidx] && client.roomId > 0">
+            <img :src="getPngIcon('Select_ExchangeCard')" alt="选中" class="init-select" />
+            <div class="init-select-text">替换</div>
+          </template>
+        </Handcard>
+      </div>
+      <button class="button" @click="changeCard" v-if="showChangeCardBtn && client.roomId > 0">
+        {{initCardsSelect.some(v => v) ? "换牌" : "确认手牌"}}
+      </button>
+    </div>
+
+    <div class="card-pick" v-if="player.phase == PHASE.PICK_CARD && !isHide && isLookon == -1">
+      <div style="color: white;font-size: large;letter-spacing: 5px;">挑选卡牌</div>
+      <div class="pick-cards">
+        <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${card.entityId}-pickcard`" :card="card"
+          :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
+          <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
+        </Handcard>
+      </div>
+      <button class="button" @click="pickCard" v-if="pickCardIdx > -1 && client.roomId > 0">确认</button>
+    </div>
+  </div>
+
+  <div v-if="showHideBtn" class="display-btn" :class="{ 'hide-btn': isHide }">
+    <img @click="triggerHide" src="@@/svg/lookon.svg" alt="显/隐" style="position: absolute;width: 100%;height: 100%;" />
+    <div style="width: 20px;height: 30px;"></div>
+  </div>
 </template>
 
 <script setup lang='ts'>
 import Handcard from '@/components/Card.vue';
 import GeniusInvokationClient from '@/geniusInovakationClient';
 import {
-  CARD_SUBTYPE, CARD_TAG, DAMAGE_TYPE, DamageType, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
+  CARD_SUBTYPE,
+  DAMAGE_TYPE, DamageType, DICE_COST_TYPE, DiceCostType, ELEMENT_TYPE, ElementType, PHASE, Phase, PLAYER_STATUS,
   PureElementType, SKILL_TYPE, STATUS_TYPE, SUMMON_DESTROY_TYPE, SUPPORT_TYPE, Version
 } from '@@@/constant/enum';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '@@@/constant/gameOption';
-import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, NIGHT_SOUL_BG_COLOR, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_COLOR, SLOT_CODE, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor } from '@@@/constant/UIconst';
 import { newHero } from '@@@/data/heros';
 import { newSkill } from '@@@/data/skills';
-import { hasObjById } from '@@@/utils/gameUtil';
 import { computed, onMounted, ref, watchEffect } from 'vue';
 import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
-import NightSoul from './NightSoul.vue';
+import GIHero from './Hero.vue';
 import StrokedText from './StrokedText.vue';
 
 const props = defineProps<{
@@ -762,11 +714,6 @@ const getDiceIcon = (name: string) => {
   return `/svg/${name}-dice.svg`;
 };
 
-// 获取充能图标
-const getEnergyIcon = (isCharged: boolean = false, isSp: boolean = false, isFull: boolean = false) => {
-  return `/image/${isSp ? 'sp-' : ''}energy-${isCharged ? 'charged' : 'empty'}${isSp && isFull ? '-full' : ''}.png`;
-};
-
 // 获取过滤器
 const getSvgFilter = (statusColor: StatusBgColor) => {
   return `url(/svg/filter.svg#status-color-${STATUS_BG_COLOR_CODE[STATUS_BG_COLOR_KEY[statusColor]]})`;
@@ -1030,19 +977,6 @@ const mouseup = () => {
   initial-value: 0%;
 }
 
-.hero {
-  --scale-val-will: 1;
-  position: relative;
-  width: 100%;
-  aspect-ratio: 7/12;
-  border-radius: 10px;
-  margin: 0 5%;
-  cursor: pointer;
-  transition: --front-val 0.3s, box-shadow 0.5s;
-  background: white;
-  transform: translateY(var(--front-val)) scale(var(--scale-val-will));
-}
-
 .hero.my {
   align-self: flex-end;
 }
@@ -1051,77 +985,14 @@ const mouseup = () => {
   align-self: flex-start;
 }
 
-.night-soul {
-  position: absolute;
-  width: 105%;
-  height: 130%;
-  bottom: -2%;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.hero-hp-bg,
 .card-border {
   position: absolute;
   width: 100%;
   height: 100%;
   z-index: 1;
-}
-
-.card-border {
   border: min(15px, 1.5vw) solid transparent;
   border-image: url(@@/image/Gold.png) 75 stretch;
   box-sizing: border-box;
-}
-
-.hero-hp {
-  position: absolute;
-  left: -10px;
-  top: -10px;
-  width: 45%;
-  aspect-ratio: 1/1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: min(23px, max(16px, 2vw));
-}
-
-.hero-hp-cnt {
-  color: white;
-  z-index: 1;
-  padding-top: 10%;
-  transform: scale(var(--scale-val-change));
-  transition: transform 0.3s;
-}
-
-.hero-name {
-  position: absolute;
-  top: 30px;
-  left: 8px;
-}
-
-.hero-energys {
-  position: absolute;
-  right: -3%;
-  top: 15px;
-  width: 30%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  z-index: 1;
-}
-
-.hero-energy {
-  position: relative;
-  width: 15px;
-  height: 15px;
-  margin-bottom: 1px;
-}
-
-.hero-energy-img {
-  width: 140%;
-  height: 100%;
-  position: absolute;
 }
 
 .hero-equipment {
@@ -1281,19 +1152,6 @@ const mouseup = () => {
   z-index: 5;
 }
 
-.blink {
-  --blink-opacity: 0.5;
-  animation: blink 1s linear infinite alternate;
-}
-
-.hero-energy-img.blink {
-  --blink-opacity: 0.2;
-}
-
-.hero-img.blink {
-  --blink-opacity: 0.9;
-}
-
 .damages {
   position: absolute;
   bottom: 5px;
@@ -1410,38 +1268,6 @@ const mouseup = () => {
   align-items: center;
 }
 
-.hero-freeze {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 105%;
-  height: 105%;
-  transform: translate(-50%, -50%);
-  border-radius: inherit;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1;
-}
-
-.hero-freeze>img {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-}
-
-.hero-barrier {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 120%;
-  height: 108%;
-  transform: translate(-50%, -50%);
-  /* border-radius: inherit;
-  border-left: 5px solid #bff6ffbb;
-  border-right: 5px solid #bff6ffbb; */
-}
-
 .hero-center-icon {
   position: absolute;
   left: 50%;
@@ -1449,20 +1275,6 @@ const mouseup = () => {
   transform: translate(-50%, -50%);
   width: 80%;
   opacity: 0.85;
-  z-index: 1;
-}
-
-.hero-shield {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 101%;
-  height: 102%;
-  transform: translate(-50%, -50%);
-  border-radius: 5px;
-  border: 2px solid #fffdd2e9;
-  box-shadow: 0 0 10px 5px #fffdd2e9 inset;
-  box-sizing: border-box;
   z-index: 1;
 }
 
@@ -1833,16 +1645,6 @@ const mouseup = () => {
   }
 }
 
-.hero-img-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 10px;
-  border: 2px solid black;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
 .card-img,
 .hero-img {
   position: absolute;
@@ -1856,10 +1658,6 @@ const mouseup = () => {
   height: 100%;
   line-height: 500%;
   /* border-radius: 10px; */
-}
-
-.card-img {
-  border: 2px solid black;
 }
 
 .history-info {
@@ -2026,10 +1824,6 @@ const mouseup = () => {
   max-width: 18%;
 }
 
-.mobile-hero-hp {
-  width: 55%;
-}
-
 .mobile-dices {
   padding-top: 80px;
 }
@@ -2070,12 +1864,6 @@ const mouseup = () => {
 .mobile-will-card {
   width: 60px;
   height: 90px;
-}
-
-.mobile-energy {
-  width: 12px;
-  height: 12px;
-  margin: 0;
 }
 
 .not-show {

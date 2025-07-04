@@ -3688,7 +3688,8 @@ export default class GeniusInvokationRoom {
             atkname = '', cmds = [], skid = -1, isActionInfo, actionInfo,
         } = options;
         const { atkPidx, atkHidx, dmgElements = [], willDamages = [], willHeals = [], curPlayers } = damageVO;
-        const intvl = willDamages.every(([d, p]) => d == -1 && p == 0) && willHeals.every(h => h == -1) ? 1e3 : 2250;
+        const intvl = willDamages.every(([d, p]) => d == -1 && p == 0) && willHeals.every(h => h == -1) ? 1e3 :
+            willDamages.some(([d, p]) => d >= 0 && p > 0) ? 4500 : 2250;
         const logPrefix = `[${this.players[atkPidx].name}](${atkPidx})${atkHidx > -1 ? `[${this.players[atkPidx].heros[atkHidx].name}]` : `[${atkname.replace(/\(\-\d+\)/, '')}]`}对`;
         const logs: string[] = [];
         if (curPlayers) assgin(this.players, curPlayers, 'hp');

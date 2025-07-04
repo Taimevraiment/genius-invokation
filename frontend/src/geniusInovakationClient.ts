@@ -616,12 +616,14 @@ export default class GeniusInvokationClient {
             this.damageVO.atkPidx = damageVO?.atkPidx ?? -1;
             this.damageVO.atkHidx = damageVO?.atkHidx ?? -1;
             this.damageVO.tarHidx = damageVO?.tarHidx ?? -1;
+            const curWillDamages = damageVO?.willDamages ?? [];
+            const hasDoubleDmg = curWillDamages.some(([d, p]) => d >= 0 && p > 0);
             this.isShowDmg = true;
             setTimeout(() => {
                 this.updateHandCardsPos(players[this.playerIdx]);
                 this.players = players;
                 this.damageVO.elTips = damageVO?.elTips ?? [];
-                this.damageVO.willDamages = damageVO?.willDamages ?? [];
+                this.damageVO.willDamages = hasDoubleDmg ? curWillDamages.map(([d]) => [d, 0]) : curWillDamages;
                 this.damageVO.willHeals = damageVO?.willHeals ?? [];
                 const setDmgSelect = (retry = 0) => {
                     try {
@@ -642,13 +644,23 @@ export default class GeniusInvokationClient {
                     }
                 }
                 setDmgSelect();
+                setTimeout(() => {
+                    this.isShowDmg = false;
+                    if (damageVO?.dmgSource == 'summon') this._resetSummonSelect();
+                    else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
+                }, 1100);
+                setTimeout(() => {
+                    this._resetDamageVO();
+                    if (hasDoubleDmg) {
+                        this.damageVO.willDamages = curWillDamages.map(([, p]) => [-1, p]);
+                        setTimeout(() => {
+                            this.isShowDmg = true;
+                            setTimeout(() => this.isShowDmg = false, 1100);
+                            setTimeout(() => this._resetDamageVO(), 1600);
+                        }, 550);
+                    }
+                }, 1600);
             }, 550);
-            setTimeout(() => {
-                this.isShowDmg = false;
-                if (damageVO?.dmgSource == 'summon') this._resetSummonSelect();
-                else if (damageVO?.dmgSource == 'status') this._resetStatusSelect();
-            }, 1650);
-            setTimeout(() => this._resetDamageVO(), 2150);
         } else {
             this.updateHandCardsPos(players[this.playerIdx]);
             this.players = players;

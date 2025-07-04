@@ -104,18 +104,10 @@
                     </div>
                 </div>
                 <div class="heros-total" :class="{ 'mobile-heros-total': isMobile, 'config-total': !isEditDeck }">
-                    <div class="hero-total" :class="{ 'mobile-hero-deck': isMobile }" v-for="dthero in allHeros"
-                        :key="dthero.id" :style="{ color: ELEMENT_COLOR[dthero.element] }"
-                        @click.stop="showHeroInfo(dthero.id)">
-                        <span class="hero-img">{{ dthero.name }}</span>
-                        <div class="hero-hp" v-if="(dthero?.hp ?? 0) > 0">
-                            <img class="hero-hp-bg" src="@@/image/hero-hp-bg.png" />
-                            <StrokedText class="hero-hp-cnt" :class="{ 'mobile-hero-hp-cnt': isMobile }">
-                                {{ dthero.maxHp }}
-                            </StrokedText>
-                        </div>
-                        <img class="hero-img" :src="dthero.UI.src" v-if="dthero?.UI.src?.length > 0" :alt="dthero.name"
-                            draggable="false" />
+                    <GIHero class="hero-total" :class="{ 'mobile-hero-deck': isMobile }" v-for="dthero in allHeros"
+                        :key="dthero.id" :style="{ color: ELEMENT_COLOR[dthero.element] }" :hero="dthero" isHideBorder
+                        isHideEnergy :isHideHp="customVersion.banList.includes(dthero.id) || dthero.UI.isActive"
+                        hpPosY="-3%" @click.stop="showHeroInfo(dthero.id)">
                         <template v-if="isEditDeck">
                             <div class="icon-group" v-if="!dthero.UI.isActive">
                                 <span v-for="(icon, cidx) in heroSelectIcon" :key="cidx" class="edit-icon"
@@ -140,7 +132,7 @@
                                 {{ ver }}
                             </option>
                         </select>
-                    </div>
+                    </GIHero>
                 </div>
             </div>
             <div v-else>
@@ -221,7 +213,7 @@
                 </span>
             </div>
         </div>
-        <InfoModal :info="modalInfo" :isMobile="isMobile" :customVersion="customVersion" />
+        <InfoModal :info="modalInfo" :isMobile="isMobile" :customVersion="isCdt(!isEditDeck, customVersion)" />
     </div>
     <div class="debug-mask" v-if="maskOpacity != 0" :style="{ opacity: maskOpacity }"></div>
 </template>
@@ -243,11 +235,11 @@ import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { cardsTotal, newCard, parseCard } from '@@@/data/cards';
 import { herosTotal, newHero, parseHero } from '@@@/data/heros';
-import { arrToObj, clone, exportFile, genShareCode, objToArr, parseShareCode } from '@@@/utils/utils';
+import { arrToObj, clone, exportFile, genShareCode, isCdt, objToArr, parseShareCode } from '@@@/utils/utils';
 import { Card, CustomVersionConfig, Hero, InfoVO } from '../../../typing';
 import { compareVersionFn, getHidById } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
-import StrokedText from '@/components/StrokedText.vue';
+import GIHero from '@/components/Hero.vue';
 import { versionChanges } from '@@@/constant/dependancyDict';
 
 type Filter<T> = {
@@ -455,9 +447,10 @@ const updateInfo = (init = false) => {
             allHeros.value = [];
             const heroIds = herosDeck.value.map(v => v.id);
             herosPool.value.forEach(h => {
-                h.UI.isActive = heroIds.includes(h.id);
                 if (customVersion.value.banList.includes(h.id)) return;
-                allHeros.value.push(newHero(version.value, { diff: customVersion.value.diff })(h.id));
+                const hero = newHero(version.value, { diff: customVersion.value.diff })(h.id);
+                hero.UI.isActive = heroIds.includes(h.id);
+                allHeros.value.push(hero);
             });
         }
         if (currIdx.value == TAG_INDEX.Card || init) {
@@ -1105,7 +1098,6 @@ input#isOfflineInput:checked {
     /* background-color: #ffd0a2; */
     width: 110px;
     height: 95%;
-    /* border-radius: 15px; */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1178,45 +1170,12 @@ input#isOfflineInput:checked {
     width: 80%;
 }
 
-.hero-hp {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 30%;
-    aspect-ratio: 1/1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1;
-    font-size: min(23px, max(16px, 2vw));
-}
-
-.hero-hp-bg {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-}
-
-.hero-hp-cnt {
-    position: absolute;
-    color: white;
-    z-index: 1;
-}
-
 .curr-deck {
     position: relative;
     box-shadow: 4px 4px 6px #ffeb56,
         -4px 4px 6px #ffeb56,
         4px -4px 6px #ffeb56,
         -4px -4px 6px #ffeb56;
-}
-
-.dice-img {
-    position: absolute;
-    left: -10px;
-    top: -5px;
-    width: 30px;
 }
 
 .card-cnt {
@@ -1293,7 +1252,7 @@ input#isOfflineInput:checked {
     height: 100%;
     padding-top: 50%;
     background: #0000009e;
-    border-radius: 10px;
+    border-radius: 8px;
     color: white;
     text-align: center;
     box-sizing: border-box;
@@ -1389,10 +1348,6 @@ option.active {
 .mobile-heros-total {
     height: 38%;
     grid-template-columns: repeat(auto-fill, 75px);
-}
-
-.mobile-hero-hp-cnt {
-    font-size: 12px;
 }
 
 .config-total {
