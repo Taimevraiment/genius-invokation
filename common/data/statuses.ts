@@ -386,9 +386,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    170: () => new StatusBuilder('敏捷切换').combatStatus().useCnt(1)
+    170: () => new StatusBuilder('敏捷切换').combatStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332006)
-        .description('【我方下次执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。')
+        .description('【我方下次执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。；[useCnt]')
         .handle((status, event) => {
             if (event.isQuickAction) return;
             return {
@@ -1140,7 +1140,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     113153: () => new StatusBuilder('诸火武装·焚曜之环').combatStatus().icon('ski,1').icon('#')
         .type(STATUS_TYPE.Attack)
-        .description('【我方其他角色使用「普通攻击」或特技后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
+        .description('【我方其他角色使用「普通攻击」或[特技]后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
             const { heros = [], cmds, trigger, source = -1 } = event;
             if (trigger == 'status-destroy' && source == 113151) {
@@ -2572,12 +2572,13 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(4).roundCnt(1).type(STATUS_TYPE.Barrier).from(330007)
         .description('本回合中，所附属角色受到的伤害-1。；[useCnt]'),
 
-    300005: () => new StatusBuilder('赦免宣告（生效中）').heroStatus().icon(STATUS_ICON.Buff).roundCnt(1)
-        .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.Usage).from(330009)
-        .description('本回合中，所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。')
+    300005: () => new StatusBuilder('赦免宣告（生效中）').heroStatus().icon(STATUS_ICON.Buff).roundCnt(2).roundCnt(1, 'v5.8.0')
+        .type(STATUS_TYPE.Round, STATUS_TYPE.Usage).type(ver => ver.lt('v5.8.0'), STATUS_TYPE.Sign).from(330009)
+        .description('所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。；[roundCnt]')
+        .description('本回合中，所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。', 'v5.8.0')
         .handle((_, event) => {
-            const { heros = [], hidx = -1, sourceStatus, sourceHidx } = event;
-            heros[hidx]?.heroStatus.forEach(sts => sts.hasType(STATUS_TYPE.NonAction) && sts.dispose());
+            const { heros = [], hidx = -1, sourceStatus, sourceHidx, trigger } = event;
+            if (trigger == 'enter') heros[hidx]?.heroStatus.forEach(sts => sts.hasType(STATUS_TYPE.NonAction) && sts.dispose());
             if (hidx == sourceHidx && sourceStatus?.hasType(STATUS_TYPE.NonAction)) return { triggers: 'pre-get-status', isInvalid: true }
         }),
 
@@ -3209,7 +3210,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     303243: () => new StatusBuilder('很棒，哥们。（生效中）').combatStatus().roundCnt(1)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(332050)
-        .description('下次使用【特技牌】后，生成1个[万能元素骰]。')
+        .description('下次使用「特技」牌后，生成1个[万能元素骰]。')
         .handle((_, event) => {
             const { hcard, cmds } = event;
             if (!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle)) return;

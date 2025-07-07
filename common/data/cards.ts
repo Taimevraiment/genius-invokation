@@ -1633,10 +1633,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e09e62a684575d632c731f3725280df2_7385957084481452662.png')
         .handle((_, { eheros, cmds }) => (cmds.getEnergy(-1, { isOppo: true }), { isValid: !!eheros?.find(h => h.isFront)?.energy })),
 
-    330009: () => new CardBuilder(418).name('赦免宣告').since('v5.0.0').legend().costSame(0).canSelectHero(1)
-        .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。')
+    330009: () => new CardBuilder(419).name('赦免宣告').since('v5.0.0').legend().costSame(1).costSame(0, 'v5.8.0').canSelectHero(1)
+        .description('治疗目标角色2点。；目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换，持续2个回合。')
+        .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。', 'v5.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/76e84615db9526436d399c79aaa9d47a_2755116418615718064.png')
-        .handle(() => ({ status: 300005 })),
+        .handle((_, { cmds, selectHeros: hidxs }, ver) => (ver.gte('v5.8.0') && cmds.heal(2, { hidxs }), { status: 300005 })),
 
     330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(0)
         .description('在双方场上生成【crd300006】，然后我方场上的【crd300006】的「斗志」+1。（【crd300006】会将各自阵营对对方造成的伤害记录为「斗志」，每回合行动阶段开始时「斗志」较高的一方会清空「斗志」，使当前出战角色在本回合中造成的伤害+1。）')
@@ -2141,7 +2142,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9d4fdc428069d3b7f538e56c8bf222d8_660249598222625991.png')
         .handle((_, { cmds }) => (cmds.attack(1, DAMAGE_TYPE.Physical, { isOppo: false }), { status: 303237 })),
 
-    332039: () => new CardBuilder(419).name('龙伙伴的聚餐').since('v5.0.0').event().costSame(0).canSelectHero(1)
+    332039: () => new CardBuilder(418).name('龙伙伴的聚餐').since('v5.0.0').event().costSame(0).canSelectHero(1)
         .description('选择一个装备在我方角色的「特技」装备牌，使其[可用次数]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/d6bc8f4595323b94a240d692f60e9587_6859675329237579153.png')
         .handle((_, event) => {
@@ -2227,7 +2228,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => (cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Food }), { status: 303244 })),
 
     332050: () => new CardBuilder(505).name('很棒，哥们。').since('v5.8.0').event().costSame(1)
-        .description('抓1张【特技牌】，下次打出「特技」牌后，生成1个[万能元素骰]。')
+        .description('抓1张「特技」牌，下次打出「特技」牌后，生成1个[万能元素骰]。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Ifa.webp')
         .handle((_, { cmds }) => (cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }), { status: 303243 })),
 
@@ -2464,7 +2465,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, exec: () => card.minusPerCnt() }
         }),
 
-    211141: () => new CardBuilder(480).name('五重天的寒雨').since('v5.7.0').talent().costCryo(1).perCnt(1)
+    211141: () => new CardBuilder(480).name('五重天的寒雨').since('v5.7.0').talent().costCryo(2).costCryo(1, 'v5.8.0').perCnt(1)
         .description('【敌方受到冻结或融化反应伤害后：】我方下2次造成的[水元素伤害]和[火元素伤害]+1，并使【hro】获得1点「夜魂值」。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/9ec020d270379d7f6e94952812af12e3_7325254312548425895.png')
         .handle((card, event) => {

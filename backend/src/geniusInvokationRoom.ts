@@ -3697,7 +3697,7 @@ export default class GeniusInvokationRoom {
             for (let offset = 0; offset < p.heros.length; ++offset) {
                 const h = p.heros[(p.hidx + offset) % p.heros.length];
                 const phidx = h.hidx + p.pidx * this.players[0].heros.length;
-                const isDead = h.hp <= 0;
+                const isDead = h.hp <= 0 && willHeals[phidx] % 1 <= 0;
                 if (isDead) willHeals[phidx] = -1;
                 const heal = Math.max(0, willHeals[phidx] ?? 0);
                 if (h.hp >= 0 || heal % 1 != 0) {
