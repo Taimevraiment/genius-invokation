@@ -546,9 +546,9 @@ const devOps = (cidx = 0) => {
   const hps: { hidx: number, hp: number }[] = [];
   const clearSts: { hidx: number, stsid: number }[] = [];
   const setStsCnt: { hidx: number, stsid: number, type: string, val: number }[] = [];
-  const setSmnCnt: { smnidx: number, type: string, val: number }[] = [];
+  const setSmnCnt: { smnidx: number, type: string, val: number[] }[] = [];
   const setSptCnt: { sptidx: number, type: string, val: number }[] = [];
-  const smnIds: number[] = [];
+  const smnIds: number[][] = [];
   const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
   for (let op of ops) {
@@ -636,9 +636,9 @@ const devOps = (cidx = 0) => {
     } else if (op.startsWith('m')) { // 召唤物
       const isSetCnt = op[1] == '+';
       const setType = op[2];
-      const [smnid = 0, val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
-      if (isSetCnt) setSmnCnt.push({ smnidx: smnid, type: setType, val });
-      else smnIds.push(smnid);
+      const [smnid = 0, ...val] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
+      if (isSetCnt) setSmnCnt.push({ smnidx: smnid, type: setType, val: val.filter(v => v != undefined) });
+      else smnIds.push([smnid, ...val.filter(v => v != undefined)]);
       flag.add('setSummon');
     } else if (op.startsWith('p')) { // 支援物
       const isSetCnt = op[1] == '+';

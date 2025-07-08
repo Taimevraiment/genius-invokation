@@ -177,9 +177,7 @@ export class GIStatus {
         this.useCnt %= mod;
     }
     minusUseCnt(n: number = 1): number {
-        const ncnt = this.useCnt - n;
-        if (ncnt < 0) throw new Error(`${this.name}(${this.entityId}).useCnt < 0`);
-        this.useCnt = ncnt;
+        this.useCnt = Math.max(0, this.useCnt - n);
         return this.useCnt;
     }
     minusPerCnt(n: number = 1): number {

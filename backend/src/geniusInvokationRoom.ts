@@ -802,9 +802,9 @@ export default class GeniusInvokationRoom {
         cpidx: number, cmds: Cmds[], dices: DiceCostType[], hps: { hidx: number, hp: number }[],
         clearSts: { hidx: number, stsid: number }[], attachs: { hidx: number, el: ElementCode, isAdd: boolean }[],
         setStsCnt: { hidx: number, stsid: number, type: string, val: number }[],
-        setSmnCnt: { smnidx: number, type: string, val: number }[],
+        setSmnCnt: { smnidx: number, type: string, val: number[] }[],
         setSptCnt: { sptidx: number, type: string, val: number }[],
-        disCardCnt: number, smnIds: number[], sptIds: number[], seed: string, flag: string
+        disCardCnt: number, smnIds: number[][], sptIds: number[], seed: string, flag: string
     }) {
         const { cpidx, cmds, dices, attachs = [], hps = [], disCardCnt = 0, clearSts = [], setStsCnt = [],
             setSmnCnt = [], setSptCnt = [], smnIds = [], sptIds = [], seed = '', flag = '' } = actionData;
@@ -850,16 +850,16 @@ export default class GeniusInvokationRoom {
         if (dices) player.dice = dices;
         if (disCardCnt < 0) player.handCards.sort((a, b) => b.entityId - a.entityId).splice(disCardCnt, 10);
         this._doCmds(cpidx, cmds);
-        if (smnIds[0] == 0) player.summons = [];
-        else if (smnIds[0] < 0) player.summons.splice(smnIds[0]);
+        if (smnIds[0]?.[0] == 0) player.summons = [];
+        else if (smnIds[0]?.[0] < 0) player.summons.splice(smnIds[0][0]);
         else if (smnIds.length > 0) {
-            this._updateSummon(cpidx, smnIds.map(smnid => this.newSummon(smnid)), this.players);
+            this._updateSummon(cpidx, smnIds.map(smnid => this.newSummon(smnid[0], ...smnid.slice(1))), this.players);
         }
         for (const { smnidx, type, val } of setSmnCnt) {
             const smn = player.summons[smnidx];
             if (!smn) continue;
-            if (type == 'p') smn.perCnt = val;
-            else if (type == 'u') smn.useCnt = val;
+            if (type == 'p') smn.perCnt = val[0];
+            else if (type == 'u') smn.useCnt = val[0];
         }
         if (sptIds[0] == 0) player.supports = [];
         else if (sptIds[0] < 0) player.supports.splice(sptIds[0]);
@@ -2100,7 +2100,7 @@ export default class GeniusInvokationRoom {
                 const osmns = oplayers[pi].summons;
                 const nsmns = bPlayers[pi].summons;
                 smna[pi] = smns.map((_, si) => {
-                    if (osmns[si]) {
+                    if (osmns[si] && nsmns[si]) {
                         if (osmns[si].id == nsmns[si].id) changedSummons[pi][si] = undefined;
                         else {
                             nsmns[si].UI.willChange = true;
