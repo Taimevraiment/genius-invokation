@@ -1,9 +1,9 @@
-import { Summon, Trigger, VersionCompareFn } from "../../../typing";
+import { Summon, Trigger, VersionWrapper } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { compareVersionFn, getElByHid, getHidById } from "../../utils/gameUtil.js";
+import { getElByHid, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
 import { SummonExecEvent, SummonExecRes, SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
@@ -49,7 +49,7 @@ export class GISummon {
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
         shieldOrHeal: number, damage: number, element: ElementType, curVersion: Version,
-        handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined,
+        handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
             spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[],
@@ -107,7 +107,7 @@ export class GISummon {
                     exec: execEvent => ({ cmds: (execEvent.summon ?? summon).phaseEndAtk(event, cmds) }),
                 }
             }
-            const builderRes = handle(summon, event, compareVersionFn(ver)) ?? {};
+            const builderRes = handle(summon, event, versionWrap(ver)) ?? {};
             return {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
@@ -189,7 +189,7 @@ export class SummonBuilder extends BaseBuilder {
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
-    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined) | undefined;
+    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
         this._name = name;
@@ -312,7 +312,7 @@ export class SummonBuilder extends BaseBuilder {
         this.addition('from', id);
         return this;
     }
-    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionCompareFn) => SummonBuilderHandleRes | undefined) {
+    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) {
         this._handle = handle;
         return this;
     }

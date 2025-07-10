@@ -1,4 +1,4 @@
-import { Card, Trigger, VersionCompareFn } from "../../../typing";
+import { Card, Trigger, VersionWrapper } from "../../../typing";
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, ELEMENT_CODE, HERO_LOCAL_CODE_KEY,
     HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode,
@@ -7,7 +7,7 @@ import {
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { compareVersionFn, getElByHid, getHidById, getVehicleIdByCid, hasObjById } from "../../utils/gameUtil.js";
+import { getElByHid, getHidById, getVehicleIdByCid, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
 import { CardHandleEvent, CardHandleRes } from "../cards.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
@@ -54,7 +54,7 @@ export class GICard {
         id: number, shareId: number, name: string, version: OnlineVersion, curVersion: Version, description: string, src: string,
         cost: number, costType: DiceType, type: CardType, subType?: CardSubtype | CardSubtype[],
         userType: number | WeaponType = 0, offlineVersion: OfflineVersion | null = null,
-        handle?: (card: Card, event: CardBuilderHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void,
+        handle?: (card: Card, event: CardBuilderHandleEvent, version: VersionWrapper) => CardBuilderHandleRes | undefined | void,
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
@@ -232,7 +232,7 @@ export class GICard {
                 if (isResetUct) card.useCnt = uct;
                 if (!spReset) return {}
             }
-            const builderRes = handle?.(card, cevent, compareVersionFn(ver)) ?? {};
+            const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
             const res: CardHandleRes = {
                 ...builderRes,
                 cmds,
@@ -291,7 +291,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _perCnt: VersionMap<number> = this._createVersionMap();
     private _energy: VersionMap<number> = this._createVersionMap();
     private _anydice: number = 0;
-    private _handle: ((card: Card, event: CardBuilderHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void) | undefined;
+    private _handle: ((card: Card, event: CardBuilderHandleEvent, version: VersionWrapper) => CardBuilderHandleRes | undefined | void) | undefined;
     private _canSelectHero: VersionMap<number> = this._createVersionMap();
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectSupport: -1 | 0 | 1 = -1;
@@ -312,7 +312,7 @@ export class CardBuilder extends BaseCostBuilder {
         return this._cnt == -2;
     }
     get notExist() {
-        const version = compareVersionFn(this._curVersion);
+        const version = versionWrap(this._curVersion);
         return version.lt(this._version) && version.lt(this._offlineVersion);
     }
     src(src: string) {
@@ -433,7 +433,7 @@ export class CardBuilder extends BaseCostBuilder {
         this._canSelectSupport = canSelectSupport;
         return this;
     }
-    handle(handle: (card: Card, event: CardBuilderHandleEvent, version: VersionCompareFn) => CardBuilderHandleRes | undefined | void) {
+    handle(handle: (card: Card, event: CardBuilderHandleEvent, version: VersionWrapper) => CardBuilderHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

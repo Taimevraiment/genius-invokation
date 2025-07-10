@@ -12,7 +12,7 @@
                     <div>{{ deck.name }}</div>
                     <div style="height: 1.2rem;">
                         {{ OFFLINE_VERSION.includes(deck.version as OfflineVersion) ? '实体版' : '' }}{{
-                            compareVersionFn(deck.version).value }}
+                            versionWrap(deck.version).value }}
                     </div>
                     <div class="deck-heros">
                         <div v-for="(hero, hidx) in deck.heroIds" :key="hidx" class="deck-hero">
@@ -237,7 +237,7 @@ import { cardsTotal, newCard, parseCard } from '@@@/data/cards';
 import { herosTotal, newHero, parseHero } from '@@@/data/heros';
 import { arrToObj, clone, exportFile, genShareCode, isCdt, objToArr, parseShareCode } from '@@@/utils/utils';
 import { Card, CustomVersionConfig, Hero, InfoVO } from '../../../typing';
-import { compareVersionFn, getHidById } from '@@@/utils/gameUtil';
+import { versionWrap, getHidById } from '@@@/utils/gameUtil';
 import Actioncard from '@/components/Card.vue';
 import GIHero from '@/components/Hero.vue';
 import { versionChanges } from '@@@/constant/dependancyDict';
@@ -270,7 +270,7 @@ const isEditDeck = mode == 'edit-deck';
 const oriDecks = ref<OriDeck[]>(JSON.parse(localStorage.getItem('GIdecks') || '[]')); // 原始卡组列表
 const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
 const oriVersion = computed(() => oriDecks.value[editDeckIdx.value]?.version ?? 'vlatest');
-const version = ref<Version>(compareVersionFn(oriVersion.value).value); // 当前版本
+const version = ref<Version>(versionWrap(oriVersion.value).value); // 当前版本
 const herosPool = computed<Hero[]>(() => herosTotal(version.value, false, !isEditDeck)); // 选择的角色池
 const cardsPool = computed<Card[]>(() => cardsTotal(version.value, false, !isEditDeck)); // 选择的卡组池
 
@@ -326,7 +326,7 @@ const shareCode = ref<string>('');
 const pShareCode = ref<string>('');
 const isShowDeckShareImg = ref<boolean>(false);
 const isOfflineVersion = ref<boolean>(false);
-const sinceVersionSelect = computed(() => ['实装版本'].concat(versionSelect.value.filter(ver => compareVersionFn(ver).lte(version.value))));
+const sinceVersionSelect = computed(() => ['实装版本'].concat(versionSelect.value.filter(ver => versionWrap(ver).lte(version.value))));
 const sinceVersionFilter = ref(sinceVersionSelect.value[0]);
 
 const { configName } = history.state;
@@ -566,7 +566,7 @@ if (!isEditDeck) {
 // 进入编辑卡组界面
 const toEditDeck = (did: number) => {
     editDeckIdx.value = did;
-    version.value = compareVersionFn(oriVersion.value).value;
+    version.value = versionWrap(oriVersion.value).value;
     isOfflineVersion.value = OFFLINE_VERSION.includes(version.value as OfflineVersion);
     currIdx.value = TAG_INDEX.Hero;
     deckName.value = oriDecks.value[did].name;

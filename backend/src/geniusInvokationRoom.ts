@@ -23,14 +23,16 @@ import { SummonHandleRes, newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
 import CmdsGenerator from '../../common/utils/cmdsGenerator.js';
 import {
-    allHidxs, checkDices, compareVersionFn, getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById,
+    allHidxs, checkDices,
+    getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById,
     getSortedDices,
-    getTalentIdByHid, getVehicleIdByCid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString
+    getTalentIdByHid, getVehicleIdByCid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString,
+    versionWrap
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import {
     ActionData, ActionInfo, AtkTask, CalcAtkRes, Card, Cmds, Countdown, CustomVersionConfig, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
-    Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionCompareFn,
+    Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionWrapper,
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -40,7 +42,7 @@ export default class GeniusInvokationRoom {
     private io?: Server; // socket.io
     id: number; // 房间id
     name: string; // 房间名
-    version: VersionCompareFn; // 游戏版本
+    version: VersionWrapper; // 游戏版本
     password: string; // 房间密码
     private seed: string = ''; // 本局游戏种子(用于处理随机事件)
     players: Player[] = []; // 玩家数组
@@ -86,7 +88,7 @@ export default class GeniusInvokationRoom {
         this.io = io;
         this.id = id;
         this.name = name || `房间${id}`;
-        this.version = compareVersionFn(version);
+        this.version = versionWrap(version);
         this.password = password;
         this.countdown.limit = countdown;
         this.allowLookon = allowLookon;
@@ -217,9 +219,9 @@ export default class GeniusInvokationRoom {
     /**
      * 导出日志
      */
-    exportLog(options: { isShowRoomInfo?: boolean } = {}) {
+    exportLog(options: { isShowRoomInfo?: boolean, isError?: boolean } = {}) {
         if (this.env == 'test') return;
-        const { isShowRoomInfo = true } = options;
+        const { isShowRoomInfo = true, isError } = options;
         let log = this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1') + '\n' +
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}\n`).join('');
@@ -228,6 +230,7 @@ export default class GeniusInvokationRoom {
         fs.writeFile(path, log, err => {
             if (err) return console.error('err:', err);
         });
+        fetch(`http://koishi.taim.site/api/7smsg?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`);
     }
     /**
      * 记录报告者问题
@@ -511,7 +514,7 @@ export default class GeniusInvokationRoom {
         if (typeof err === 'string') err = new Error(err);
         if (err.stack) this.errorLog.push(err.stack);
         this.io?.to([`7szh-${this.id}`, `7szh-${this.id}-p0`, `7szh-${this.id}-p1`]).emit('error', err.message);
-        this.exportLog();
+        this.exportLog({ isError: true });
     }
     /**
      * 初始化玩家信息

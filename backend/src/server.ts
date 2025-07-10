@@ -3,9 +3,14 @@ import express from "express";
 import { createServer } from "http";
 import cron from "node-cron";
 import { Server } from "socket.io";
+import { versionChanges } from "../../common/constant/dependancyDict.js";
 import { PHASE, PLAYER_STATUS, PlayerStatus } from "../../common/constant/enum.js";
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
-import { getSecretKey, parseDate } from '../../common/utils/utils.js';
+import { cardsTotal } from "../../common/data/cards.js";
+import { herosTotal } from "../../common/data/heros.js";
+import { summonsTotal } from "../../common/data/summons.js";
+import { compareVersion } from '../../common/utils/gameUtil.js';
+import { convertToArray, getSecretKey, parseDate } from '../../common/utils/utils.js';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
@@ -388,6 +393,18 @@ app.get('/info', (req, res) => {
                 logoutTime: parseDate(logoutTime).time,
             })),
     });
+});
+
+app.get('/versions', (req, res) => {
+    const result = {};
+    (convertToArray(req.query.query) as string[]).forEach(query => {
+        const entity = [...herosTotal(undefined, true), ...cardsTotal(undefined, true), ...summonsTotal()].find(e => {
+            return e.id.toString() == query || e.name.includes(query);
+        });
+        if (!entity) return;
+        result[entity.name] = [...entity.UI.versionChanges, ...versionChanges[entity.id]].sort((a, b) => compareVersion(a, b));
+    });
+    res.json(result);
 });
 
 httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV ?? 'production'}端口${PORT}启动......`));

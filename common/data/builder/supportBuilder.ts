@@ -1,7 +1,7 @@
-import { Card, Support, Trigger, VersionCompareFn } from "../../../typing";
+import { Card, Support, Trigger, VersionWrapper } from "../../../typing";
 import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { compareVersionFn } from "../../utils/gameUtil.js";
+import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
 import { SupportExecEvent, SupportExecRes, SupportHandleEvent, SupportHandleRes } from "../supports.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
@@ -22,7 +22,7 @@ export class GISupport {
 
     constructor(
         card: Card, cnt: number, perCnt: number, type: SupportType,
-        handle: ((support: Support, event: SupportHandleEvent, ver: VersionCompareFn) => SupportBuilderHandleRes | undefined | void) | undefined,
+        handle: ((support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined,
         heal = 0, ver: Version = VERSION[0],
     ) {
         this.card = card;
@@ -36,7 +36,7 @@ export class GISupport {
                 support.perCnt = perCnt;
                 return {}
             }
-            const builderRes = handle?.(support, event, compareVersionFn(ver)) ?? {};
+            const builderRes = handle?.(support, event, versionWrap(ver)) ?? {};
             const res: SupportHandleRes = {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
@@ -61,7 +61,7 @@ export class SupportBuilder extends BaseBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _type: SupportType = SUPPORT_TYPE.Permanent;
     private _heal: number = 0;
-    private _handle: ((support: Support, event: SupportHandleEvent, ver: VersionCompareFn) => SupportBuilderHandleRes | undefined | void) | undefined = () => ({});
+    private _handle: ((support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined = () => ({});
     constructor() {
         super();
     }
@@ -95,7 +95,7 @@ export class SupportBuilder extends BaseBuilder {
         this._heal = heal;
         return this;
     }
-    handle(handle: (support: Support, event: SupportHandleEvent, ver: VersionCompareFn) => SupportBuilderHandleRes | undefined | void) {
+    handle(handle: (support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

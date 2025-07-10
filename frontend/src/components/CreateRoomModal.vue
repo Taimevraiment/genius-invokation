@@ -33,7 +33,7 @@
 
 <script setup lang='ts'>
 import { OFFLINE_VERSION, OfflineVersion, VERSION, Version } from '@@@/constant/enum';
-import { compareVersionFn } from '@@@/utils/gameUtil';
+import { versionWrap } from '@@@/utils/gameUtil';
 import { computed, ref } from 'vue';
 import { CustomVersionConfig } from '../../../typing';
 import { NULL_CUSTOM_VERSION_CONFIG } from '@@@/constant/init';
@@ -49,7 +49,7 @@ const emit = defineEmits<{
 const roomName = ref<string>(''); // 房间名
 const roomPassword = ref<string>(''); // 房间密码
 const oriVersion: Version = (JSON.parse(localStorage.getItem('GIdecks') || '[]')[Number(localStorage.getItem('GIdeckIdx') || '0')])?.version ?? 'vlatest';
-const version = ref<Version>(compareVersionFn(oriVersion).value); // 版本
+const version = ref<Version>(versionWrap(oriVersion).value); // 版本
 const countdown = ref<number | string>(''); // 倒计时
 const allowLookon = ref<boolean>(true); // 是否允许观战
 const officialVersionList = ref<Version[]>([...VERSION, ...OFFLINE_VERSION]); // 官方版本列表

@@ -735,10 +735,10 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。；【我方造成燃烧反应伤害后：】此牌升级为【smn117102】。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/4832db511e57a4673f91cfab4ec6e260_2114320537892261405.png')
         .handle((summon, event) => ({
-            triggers: ['Burning', 'other-Burning', 'phase-end'],
+            triggers: ['Burning', 'phase-end'],
             exec: execEvent => {
                 const { summon: smn = summon, cmds } = execEvent;
-                if (event.trigger?.includes('Burning')) return cmds.changeSummon(smn.id, 117102).res;
+                if (event.trigger == 'Burning') return cmds.changeSummon(smn.id, 117102).res;
                 smn.phaseEndAtk(event, cmds);
             }
         })),

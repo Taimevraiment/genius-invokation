@@ -9,7 +9,7 @@ import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
 import { type GISupport } from "./common/data/builder/supportBuilder"
 import CmdsGenerator from "./common/utils/cmdsGenerator"
-import { compareVersionFn } from "./common/utils/gameUtil"
+import { versionWrap } from "./common/utils/gameUtil"
 
 type RoomList = {
     id: number,
@@ -348,7 +348,7 @@ type PickCard = {
 
 type PickCardType = 'getCard' | 'summon' | 'useCard';
 
-type VersionCompareFn = ReturnType<typeof compareVersionFn>;
+type VersionWrapper = ReturnType<typeof versionWrap>;
 
 type TaskItem = [
     string, // 任务名称

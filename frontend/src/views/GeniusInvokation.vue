@@ -637,8 +637,8 @@ const devOps = (cidx = 0) => {
       const isSetCnt = op[1] == '+';
       const setType = op[2];
       const [smnid = 0, ...val] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
-      if (isSetCnt) setSmnCnt.push({ smnidx: smnid, type: setType, val: val.filter(v => v != undefined) });
-      else smnIds.push([smnid, ...val.filter(v => v != undefined)]);
+      if (isSetCnt) setSmnCnt.push({ smnidx: smnid, type: setType, val: val.filter(v => v != undefined) as number[] });
+      else smnIds.push([smnid, ...(val.filter(v => v != undefined) as number[])]);
       flag.add('setSummon');
     } else if (op.startsWith('p')) { // 支援物
       const isSetCnt = op[1] == '+';

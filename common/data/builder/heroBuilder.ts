@@ -1,6 +1,6 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
-import { compareVersionFn } from "../../utils/gameUtil.js";
+import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray } from "../../utils/utils.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
@@ -86,7 +86,7 @@ export class HeroBuilder extends BaseCostBuilder {
         super(shareId ?? -1);
     }
     get notExist() {
-        const version = compareVersionFn(this._curVersion);
+        const version = versionWrap(this._curVersion);
         return version.lt(this._version) && version.lt(this._offlineVersion);
     }
     get notInHeroPool() {

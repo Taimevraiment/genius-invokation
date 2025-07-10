@@ -1,15 +1,15 @@
-import { VersionCompareFn } from "../../../typing.js";
+import { VersionWrapper } from "../../../typing.js";
 import { DICE_TYPE, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, VERSION, Version } from "../../constant/enum.js";
-import { compareVersionFn } from "../../utils/gameUtil.js";
+import { versionWrap } from "../../utils/gameUtil.js";
 
 export class VersionMap<T> {
-    private _map: [VersionCompareFn, T][] = [];
+    private _map: [VersionWrapper, T][] = [];
     constructor() { }
     set(map: [Version, T]) {
         const [version, val] = map;
         const value = this._map.find(([ver]) => ver.eq(version));
         if (value) value[1] = val;
-        else this._map.push([compareVersionFn(version), val]);
+        else this._map.push([versionWrap(version), val]);
     }
     get(version: Version, defaultValue: T): T {
         if (OFFLINE_VERSION.includes(version as OfflineVersion)) {

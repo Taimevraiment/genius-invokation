@@ -12,7 +12,7 @@ import { GIStatus } from "@@@/data/builder/statusBuilder";
 import { parseCard } from "@@@/data/cards";
 import { parseHero } from "@@@/data/heros";
 import { newSummon } from "@@@/data/summons";
-import { checkDices, compareVersionFn } from "@@@/utils/gameUtil";
+import { checkDices, versionWrap } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, Player, Preview, RecordData, ServerData, Skill, Status, Summon
@@ -136,7 +136,7 @@ export default class GeniusInvokationClient {
             error: '当前出战卡组不完整',
         };
         this.isDeckVersionValid = {
-            isValid: ver == 'null' || !!customVersion || compareVersionFn(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
+            isValid: ver == 'null' || !!customVersion || versionWrap(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
             error: '当前卡组版本不匹配',
         };
     }

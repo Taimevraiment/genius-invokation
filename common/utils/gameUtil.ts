@@ -224,7 +224,7 @@ export const getDerivantParentId = (id: number, dict: Record<number, number>) =>
 }
 
 // 比较版本大小
-const compareVersion = (v1: Version, v2: Version | null) => {
+export const compareVersion = (v1: Version, v2: Version | null) => {
     if (v1 === v2) return 0;
     if (v2 === null || +OFFLINE_VERSION.includes(v1 as OfflineVersion) ^ +OFFLINE_VERSION.includes(v2 as OfflineVersion)) {
         return -1;
@@ -241,7 +241,7 @@ const compareVersion = (v1: Version, v2: Version | null) => {
 }
 
 // 比较版本大小
-export const compareVersionFn = (curVersion: Version) => {
+export const versionWrap = (curVersion: Version) => {
     return {
         ver: curVersion,
         value: curVersion == 'vlatest' ? VERSION[0] : curVersion,
