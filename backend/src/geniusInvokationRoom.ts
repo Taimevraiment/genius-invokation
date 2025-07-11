@@ -29,7 +29,7 @@ import {
     getTalentIdByHid, getVehicleIdByCid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString,
     versionWrap
 } from '../../common/utils/gameUtil.js';
-import { arrToObj, assgin, clone, convertToArray, delay, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
+import { arrToObj, assgin, clone, convertToArray, delay, getSecretData, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import {
     ActionData, ActionInfo, AtkTask, CalcAtkRes, Card, Cmds, Countdown, CustomVersionConfig, DamageVO, Env, Hero, LogType, MinusDiceSkill, PickCard,
     Player, Preview, RecordData, ServerData, Skill, SmnDamageHandle, Status, StatusTask, Summon, Support, Trigger, VersionWrapper,
@@ -37,6 +37,9 @@ import {
 import TaskQueue from './taskQueue.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const secretKey = await getSecretData('secretKey');
+const koishiUrl = await getSecretData('koishiUrl');
 
 export default class GeniusInvokationRoom {
     private io?: Server; // socket.io
@@ -230,7 +233,7 @@ export default class GeniusInvokationRoom {
         fs.writeFile(path, log, err => {
             if (err) return console.error('err:', err);
         });
-        fetch(`http://koishi.taim.site/api/7smsg?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`);
+        fetch(`${koishiUrl}?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`, { headers: { flag: secretKey } });
     }
     /**
      * 记录报告者问题
@@ -4945,19 +4948,19 @@ export default class GeniusInvokationRoom {
                 addDmg += summonres.addDmgCdt ?? 0;
                 switchHeroDiceCnt += summonres.addDiceHero ?? 0;
                 switchHeroDiceCnt = Math.max(0, switchHeroDiceCnt - (summonres.minusDiceHero ?? 0));
-                if (summonres.isNotAddTask) {
-                    if (summonres.exec && isExec) {
-                        const { cmds } = summonres.exec?.({
+                if (summonres.isNotAddTask || !isExec) {
+                    if (summonres.exec) {
+                        const { cmds } = summonres.exec({
                             summon,
                             heros,
                             eheros,
                             combatStatus: player.combatStatus,
                             eCombatStatus: players[pidx ^ 1].combatStatus,
                         }) ?? {};
-                        this._doCmds(pidx, cmds, { players, isExec, isPriority: true });
-                        smncmds.addCmds(cmds);
+                        if (isExec) this._doCmds(pidx, cmds, { players, isExec, isPriority: true });
+                        else smncmds.addCmds(cmds);
                     }
-                    continue;
+                    if (summonres.isNotAddTask) continue;
                 }
                 if (isExec) {
                     if (!isExecTask) {
@@ -5052,7 +5055,7 @@ export default class GeniusInvokationRoom {
         }
         let willHeals: number[][] | undefined;
         if (!isExec) {
-            ({ willHeals } = this._doCmds(pidx, smncmds, { supportCnt, willSwitch, energyCnt, isExec: false }));
+            ({ willHeals } = this._doCmds(pidx, smncmds, { players, supportCnt, willSwitch, energyCnt, isExec: false }));
         }
         return { smncmds, addDmg, switchHeroDiceCnt, willHeals, isQuickAction, csummon, task, smnres, tasks }
     }

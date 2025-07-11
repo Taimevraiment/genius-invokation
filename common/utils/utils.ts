@@ -275,10 +275,10 @@ export const parseDate = (timeStamp: number | Date = new Date()) => {
 /**
  * 获取密钥
  */
-export const getSecretKey = async (name: string) => {
+export const getSecretData = async (name: string) => {
     try {
-        const secretKey = (await import(`../constant/${name}.${typeof window == 'undefined' ? 'js' : 'ts'}`)).default;
-        return secretKey;
+        const secretData = await import(`../constant/secretData.${typeof window == 'undefined' ? 'js' : 'ts'}`);
+        return secretData[name];
     } catch {
         return 'wrong';
     }

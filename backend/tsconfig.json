@@ -40,7 +40,7 @@
     "include": [
         "src/**/*.ts",
         "src/**/*.d.ts",
-        "src/**/*", "../common/utils/cmdsGenerator.ts",
+        "src/**/*",
     ],
     "files": [
         "../typing.d.ts",

@@ -10,7 +10,7 @@ import { cardsTotal } from "../../common/data/cards.js";
 import { herosTotal } from "../../common/data/heros.js";
 import { summonsTotal } from "../../common/data/summons.js";
 import { compareVersion } from '../../common/utils/gameUtil.js';
-import { convertToArray, getSecretKey, parseDate } from '../../common/utils/utils.js';
+import { convertToArray, getSecretData, parseDate } from '../../common/utils/utils.js';
 import { ActionData, Player } from "../../typing";
 import GeniusInvokationRoom from "./geniusInvokationRoom.js";
 
@@ -39,7 +39,7 @@ process.on('uncaughtException', err => console.error(err));
 
 process.on('exit', code => console.error(code));
 
-const serverSecretKey = await getSecretKey('secretKey');
+const serverSecretKey = await getSecretData('secretKey');
 const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
@@ -361,7 +361,7 @@ const validateSK = (req, res) => {
 app.get('/test', (_, res) => res.json({ ok: true }));
 
 app.get('/detail', (req, res) => {
-    if (!validateSK(req, res)) return;
+    if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,
@@ -380,7 +380,7 @@ app.get('/detail', (req, res) => {
 });
 
 app.get('/info', (req, res) => {
-    if (!validateSK(req, res)) return;
+    if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
     res.json({
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}}`),
         playersInfo: playerList.map(p => `${p.name}[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),

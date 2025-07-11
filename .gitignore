@@ -23,5 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 
-# 私钥
-secretKey.ts
+# 隐私数据
+secretData.ts
