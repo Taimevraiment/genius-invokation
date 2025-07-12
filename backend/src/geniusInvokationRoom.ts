@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import http from 'node:http';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
@@ -233,7 +234,7 @@ export default class GeniusInvokationRoom {
         fs.writeFile(path, log, err => {
             if (err) return console.error('err:', err);
         });
-        fetch(`${koishiUrl}?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`, { headers: { flag: secretKey } });
+        http.get(`${koishiUrl}?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`, { headers: { flag: secretKey } });
     }
     /**
      * 记录报告者问题
