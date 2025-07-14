@@ -188,13 +188,14 @@ const normalElRelic = (shareId: number, element: PureElementType) => {
         .description(`【对角色打出「天赋」或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。（每回合1次）`)
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
+            const { trigger, isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
+            const isMinusDiceCard = isMinusDiceTalent && (hcard?.costType == element || (hcard?.anydice ?? 0) > 0);
             return {
                 minusDiceSkill: { skill: [1, 0, 0], elDice: element },
-                minusDiceCard: isCdt(isMinusDiceTalent, 1),
+                minusDiceCard: isCdt(isMinusDiceCard, 1),
                 triggers: ['skill', 'card'],
                 exec: () => {
-                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
+                    if (trigger == 'card' && isMinusDiceCard || trigger == 'skill' && isMinusDiceSkill) {
                         card.minusPerCnt();
                     }
                 }
@@ -206,8 +207,8 @@ const advancedElRelic = (shareId: number, element: PureElementType) => {
     return new CardBuilder(shareId).offline('v1').relic().costSame(2).costAny(3, 'v4.0.0').perCnt(1)
         .description(`【对角色打出「天赋」或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。（每回合1次）；【投掷阶段：】2个元素骰初始总是投出[${ELEMENT_NAME[element]}骰]。`)
         .handle((card, event) => {
-            const { trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
-            const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
+            const { trigger, isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
+            const isMinusCard = isMinusDiceTalent && card.perCnt > 0 && (hcard?.costType == element || (hcard?.anydice ?? 0) > 0);
             return {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
                 minusDiceCard: isCdt(isMinusCard, 1),

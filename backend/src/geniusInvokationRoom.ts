@@ -607,7 +607,7 @@ export default class GeniusInvokationRoom {
         this.recordData.isExecuting = false;
         this.recordData.isPlaying = false;
         const d = new Date();
-        const format = (n: number) => String(n).padStart(2, '0');
+        const format = (n: number) => n.toString().padStart(2, '0');
         if (this.env != 'test') console.info(`[${this.id}]start-seed:${this.seed}`);
         this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-${this.version.value.replace(/\./g, '_')}-r${this.id}-s${this.seed}`;
         this.entityIdIdx = -500000;
@@ -3528,6 +3528,7 @@ export default class GeniusInvokationRoom {
             }
             await this._execTask();
             await wait(() => this.needWait, { maxtime: 6e6 });
+            if (this.winner != -1) return;
             // 回合结束摸牌
             const getCardCmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];
             this._doCmds(this.startIdx, getCardCmds);
@@ -6705,6 +6706,8 @@ export default class GeniusInvokationRoom {
             }
         });
         if (winnerIdx != -1) {
+            this.winner = -3; // 标记游戏结束停止所有结算
+            this.taskQueue.init();
             this.delay(2500, () => this._gameEnd(winnerIdx));
         }
         return winnerIdx;
