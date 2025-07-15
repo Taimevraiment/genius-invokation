@@ -89,6 +89,7 @@ export type CardHandleRes = {
     addDmgCdt?: number,
     minusDiceSkill?: MinusDiceSkill,
     minusDiceCard?: number,
+    minusDiceCardEl?: ElementType,
     minusDiceHero?: number,
     attachEl?: PureElementType,
     hidxs?: number[],
@@ -193,6 +194,7 @@ const normalElRelic = (shareId: number, element: PureElementType) => {
             return {
                 minusDiceSkill: { skill: [1, 0, 0], elDice: element },
                 minusDiceCard: isCdt(isMinusDiceCard, 1),
+                minusDiceCardEl: element,
                 triggers: ['skill', 'card'],
                 exec: () => {
                     if (trigger == 'card' && isMinusDiceCard || trigger == 'skill' && isMinusDiceSkill) {
@@ -212,6 +214,7 @@ const advancedElRelic = (shareId: number, element: PureElementType) => {
             return {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
                 minusDiceCard: isCdt(isMinusCard, 1),
+                minusDiceCardEl: element,
                 triggers: ['skill', 'card', 'phase-dice'],
                 element,
                 cnt: 2,

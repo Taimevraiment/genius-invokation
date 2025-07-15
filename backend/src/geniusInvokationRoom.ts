@@ -1874,7 +1874,7 @@ export default class GeniusInvokationRoom {
         const stsaftercmds = new CmdsGenerator()
             .getStatus(skillres.statusAfter, { hidxs: skillres.hidxs })
             .getStatus(skillres.statusOppoAfter, { hidxs: skillres.hidxs, isOppo: true });
-        this._doCmds(pidx, stsaftercmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isAction: !isQuickAction });
+        this._doCmds(pidx, stsaftercmds, { players, ahidx: cahidx, ehidx: dmgedHidx, isExec, isAction: !isQuickAction });
         if (skillres.summon) this._updateSummon(pidx, this._getSummonById(skillres.summon), players, isExec, { supportCnt });
         if (skillres.isAttach || skillres.isAttachOppo) {
             const { elTips: elTips2 = [], willAttachs: willAttachs2 = [], atriggers: atrgs2 = [], etriggers: etrgs2 = [] } = this._doCmds(pidx,
@@ -3025,7 +3025,7 @@ export default class GeniusInvokationRoom {
         const { dice, heros, hidx, summons, combatStatus, playerInfo: { isUsedLegend }, handCards } = player;
         const currCard = handCards[cardIdx];
         if (!currCard) throw new Error(`ERROR@_checkCard:p${pidx}的卡牌${cardIdx}不存在,手牌:${handCards.map(c => `[${c.name}]`)}`);
-        const { cost, canSelectHero, type, userType, energy, costType, anydice, costChange } = currCard;
+        const { cost, canSelectHero, type, userType, energy, costType, anydice, costChange, costChanges } = currCard;
         const ncost = Math.max(0, cost + anydice - costChange);
         const cardres = currCard.handle(currCard, {
             pidx,
@@ -3117,10 +3117,10 @@ export default class GeniusInvokationRoom {
                 dice.filter(d => d == DICE_COST_TYPE.Omni).length + Math.max(0, ...Object.values(dice.reduce((a, c) => {
                     if (c != DICE_COST_TYPE.Omni) a[c] = (a[c] ?? 0) + 1;
                     return a;
-                }, {} as Record<DiceCostType, number>)))) >= ncost - anydice;
+                }, {} as Record<DiceCostType, number>)))) >= cost - costChanges[0];
             res.isValid = isLen && isElDice;
             if (res.isValid) {
-                res.diceSelect = this._selectDice(player, costType, ncost - anydice, anydice);
+                res.diceSelect = this._selectDice(player, costType, Math.max(0, cost - costChanges[0]), Math.max(0, anydice - costChanges[1] - Math.max(0, costChanges[0] - cost)));
                 res.summonCnt?.forEach((smncnts, pi) => {
                     smncnts.forEach((smncnt, si) => {
                         const smn = players[pi].summons[si];
@@ -6988,41 +6988,46 @@ export default class GeniusInvokationRoom {
     private _calcCardChange(pidx: number) {
         const player = this.players[pidx];
         if (!player) return;
-        const costChange = player.handCards.map(() => 0);
+        const costChange = player.handCards.map(() => [0, 0]);
         const curHero = this._getFrontHero(pidx);
         if (!curHero) return;
         player.handCards.forEach((c, ci) => {
-            const isMinusDiceCard = c.cost + c.anydice > costChange[ci];
+            const currCostChange = () => costChange[ci].reduce((a, b) => a + b);
+            const isMinusDiceCard = c.cost + c.anydice > currCostChange();
             const isMinusDiceWeapon = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Weapon);
             const isMinusDiceRelic = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Relic);
             const isMinusDiceVehicle = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Vehicle);
-            const getMinusDiceCard = <T extends { handle: (...args: any) => { minusDiceCard?: number } }>(entity: T, hidx: number): number => {
+            const getMinusDiceCard = <T extends {
+                handle: (...args: any) => { minusDiceCard?: number, minusDiceCardEl?: ElementType }
+            }>(entity: T, hidx: number) => {
                 const isMinusDiceTalent = isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Talent) && c.userType == player.heros[hidx].id;
-                return entity.handle(entity, {
+                const { minusDiceCard = 0, minusDiceCardEl } = entity.handle(entity, {
                     heros: player.heros,
                     hidxs: [hidx],
                     hidx,
                     hcard: c,
                     card: c,
                     playerInfo: player.playerInfo,
-                    minusDiceCard: costChange[ci],
+                    minusDiceCard: currCostChange(),
                     isMinusDiceCard,
                     isMinusDiceTalent,
                     isMinusDiceWeapon,
                     isMinusDiceRelic,
                     isMinusDiceVehicle,
-                })?.minusDiceCard ?? 0;
+                });
+                return { minusDiceCard, minusDiceCardEl }
             }
             allHidxs(player.heros).forEach(hidx => {
                 const heroField = this._getHeroField(pidx, { hidx });
                 for (const hfield of heroField) {
-                    costChange[ci] += getMinusDiceCard(hfield, hidx);
+                    const { minusDiceCard, minusDiceCardEl } = getMinusDiceCard(hfield, hidx);
+                    costChange[ci][+!!(minusDiceCardEl && minusDiceCardEl != c.costType)] += minusDiceCard;
                 }
             });
             player.summons.forEach(smn => {
-                costChange[ci] += smn.handle(smn, {
+                costChange[ci][0] += smn.handle(smn, {
                     heros: player.heros,
-                    minusDiceCard: costChange[ci],
+                    minusDiceCard: currCostChange(),
                 })?.minusDiceCard ?? 0;
             });
             const lastSupport: Support[] = [];
@@ -7034,26 +7039,29 @@ export default class GeniusInvokationRoom {
                     heros: player.heros,
                     hidxs: [player.hidx],
                     playerInfo: player.playerInfo,
-                    minusDiceCard: costChange[ci],
+                    minusDiceCard: currCostChange(),
                     isMinusDiceTalent: isMinusDiceCard && c.hasSubtype(CARD_SUBTYPE.Talent),
                 });
                 if (isLast) lastSupport.push(spt);
-                else costChange[ci] += minusDiceCard;
+                else costChange[ci][0] += minusDiceCard;
             });
             lastSupport.forEach(spt => {
-                costChange[ci] += spt.handle(spt, {
+                costChange[ci][0] += spt.handle(spt, {
                     card: c,
                     dices: player.dice,
                     hcards: player.handCards,
                     heros: player.heros,
                     hidxs: [player.hidx],
                     playerInfo: player.playerInfo,
-                    minusDiceCard: costChange[ci],
+                    minusDiceCard: currCostChange(),
                 })?.minusDiceCard ?? 0;
             });
             c.handle(c, { playerInfo: player.playerInfo, trigger: 'hcard-calc' });
         });
-        player.handCards.forEach((c, i) => c.costChange = Math.min(c.cost + c.anydice, costChange[i]));
+        player.handCards.forEach((c, i) => {
+            c.costChanges[0] = Math.min(c.cost + c.anydice, costChange[i][0]);
+            c.costChanges[1] = Math.min(c.anydice, costChange[i][1]);
+        });
     }
     /**
      * 计算切换角色所需骰子及是否速切

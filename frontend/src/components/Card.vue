@@ -7,18 +7,18 @@
             <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
                 :src="getPngIcon('legend-border')" draggable="false" />
             <div class="card-cost" v-if="!isHideCost" :class="{ 'mobile-card-cost': isMobile }"
-                :style="{ color: card.costChange > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+                :style="{ color: card.costChanges[0] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" draggable="false" />
-                <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChange) }}</StrokedText>
+                <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChanges[0]) }}</StrokedText>
             </div>
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
                 v-if="card.anydice > 0 && !isHideCost"
-                :style="{ color: card.costChange - card.cost > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+                :style="{ color: card.costChange - card.cost > 0 || card.costChanges[1] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
                 <StrokedText class="cost-text">
-                    {{ card.anydice - Math.max(0, card.costChange - card.cost) }}
+                    {{ Math.max(0, card.anydice - card.costChanges[1] - Math.max(0, card.costChanges[0] - card.cost)) }}
                 </StrokedText>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0 && !isHideCost">

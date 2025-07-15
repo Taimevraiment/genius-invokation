@@ -116,11 +116,11 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
     const diceCntArr = objToArr(diceCnt);
     const typeCnt = diceCntArr.filter(([v, n]) => v != DICE_COST_TYPE.Omni && n > 0).length;
     if (card) { // 选择卡所消耗的骰子
-        const { cost, costType, anydice, costChange } = card;
+        const { cost, costType, anydice, costChange, costChanges } = card;
         if (diceLen != cost + anydice - costChange) return false;
         if (costType == DICE_TYPE.Any) return true;
         if (costType != DICE_TYPE.Same) {
-            const elDiceValid = diceCnt[costType] + diceCnt[DICE_COST_TYPE.Omni] >= cost - costChange;
+            const elDiceValid = diceCnt[costType] + diceCnt[DICE_COST_TYPE.Omni] >= cost - costChanges[0];
             const anyDiceValid = diceCntArr.reduce((a, [, b]) => a + b, 0) - cost + costChange == anydice;
             return elDiceValid && anyDiceValid;
         }

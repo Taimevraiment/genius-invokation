@@ -24,7 +24,7 @@ export class GICard {
     sinceVersion: OnlineVersion; // 加入的版本
     offlineVersion: OfflineVersion | null; // 线下版本
     cost: number; // 费用
-    costChange: number = 0; // 费用变化
+    costChanges: number[] = [0, 0]; // 费用变化 [主, 无色(用于天赋的无色骰)]
     costType: DiceType; // 费用类型
     type: CardType; // 牌类型
     subType: CardSubtype[]; // 副类型
@@ -248,6 +248,9 @@ export class GICard {
         this.anydice = anydice;
         this.canSelectSummon = canSelectSummon;
         this.canSelectSupport = canSelectSupport;
+    }
+    get costChange() {
+        return this.costChanges.reduce((a, b) => a + b);
     }
     setEntityId(entityId: number): Card {
         this.entityId = entityId;
