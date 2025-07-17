@@ -125,7 +125,8 @@
                             <div v-if="customVersion.banList.includes(dthero.id)" class="selected">已禁用</div>
                         </template>
                         <select :name="`config-${dthero.id}-version`" :id="`config-${dthero.id}-version`"
-                            v-if="!isEditDeck" v-model="herosVersion[dthero.id]" style="z-index:2;" @click.stop="cancel"
+                            v-if="!isEditDeck && !customVersion.banList.includes(dthero.id)"
+                            v-model="herosVersion[dthero.id]" style="z-index:2;" @click.stop="cancel"
                             @change="changeVersion(currIdx, dthero.id)">
                             <option v-for="ver in versionSelect" :key="ver" :value="ver"
                                 :class="{ active: dthero.UI.versionChanges.includes(ver) }">
@@ -176,8 +177,9 @@
                                 <div v-if="customVersion.banList.includes(dtcard.id)" class="selected">已禁用</div>
                             </template>
                             <select :name="`config-${dtcard.id}-version`" :id="`config-${dtcard.id}-version`"
-                                v-if="!isEditDeck" v-model="cardsVersion[dtcard.id]" style="z-index:2;"
-                                @click.stop="cancel" @change="changeVersion(currIdx, dtcard.id)">
+                                v-if="!isEditDeck && !customVersion.banList.includes(dtcard.id)"
+                                v-model="cardsVersion[dtcard.id]" style="z-index:2;" @click.stop="cancel"
+                                @change="changeVersion(currIdx, dtcard.id)">
                                 <option v-for="ver in versionSelect" :key="ver" :value="ver"
                                     :class="{ active: dtcard.UI.versionChanges.includes(ver) }">
                                     {{ ver }}

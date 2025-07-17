@@ -4122,8 +4122,8 @@ export default class GeniusInvokationRoom {
                     restDmg = skillres.restDmg;
                     dmgElement = skillres.dmgElement;
                     cmds.addCmds(skillres.cmds)
-                        .getStatus(skillres.status, { hidxs: hidx })
-                        .getStatus(skillres.statusOppo, { hidxs: hidx, isOppo: true });
+                        .getStatus(skillres.status, { hidxs: skillres.hidxs ?? hidx })
+                        .getStatus(skillres.statusOppo, { hidxs: skillres.hidxs ?? players[pidx ^ 1].hidx, isOppo: true });
                     if (isExec || isOnlyExec) {
                         if (isExecTask || skillres.isNotAddTask || isOnlyExec) {
                             skillres.exec?.();

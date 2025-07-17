@@ -1829,12 +1829,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { dmg = [], talent, eheros = [] } = event;
                     let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + Math.max(0, b), 0) - 2));
+                    if (fdmg <= 0) return;
                     if (talent) {
                         const ocnt = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122)?.useCnt ?? 0;
                         const fcnt = (ocnt + fdmg) * 2;
                         fdmg = fcnt - ocnt;
                     }
-                    if (fdmg <= 0) return;
                     return { triggers: 'after-skill', statusOppo: [[122, fdmg]] }
                 })
         ),
