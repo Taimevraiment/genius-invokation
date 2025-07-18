@@ -1,5 +1,5 @@
 <template>
-  <!-- <span style="position: absolute;font-family: HYWH;">7</span> -->
+  <span v-if="info.info != null" style="position: absolute;font-family: HYWH;">7</span>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div style="position: absolute;right: 10px;top: 10px;">（更新至5.8v5）</div>
@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.3.5</div>
+    <div class="version">v0.3.6</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
