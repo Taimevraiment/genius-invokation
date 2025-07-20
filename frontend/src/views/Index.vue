@@ -1,5 +1,5 @@
 <template>
-  <span v-if="info.info != null" style="position: absolute;font-family: HYWH;">7</span>
+  <span v-if="route.redirectedFrom?.query.bot" style="position: absolute;font-family: HYWH;">7</span>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div style="position: absolute;right: 10px;top: 10px;">（更新至5.8v5）</div>
@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.3.6</div>
+    <div class="version">v0.3.7</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -83,13 +83,14 @@ import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { genShareCode, importFile } from '@@@/utils/utils';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { Card, CustomVersionConfig, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
 
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
 const router = useRouter();
+const route = useRoute();
 
 const userid = ref<number>(Number(localStorage.getItem('7szh_userid') || '-1')); // 玩家id
 const username = ref<string>(localStorage.getItem('7szh_username') || ''); // 昵称
