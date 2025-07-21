@@ -3669,12 +3669,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 const supportLen = MAX_SUPPORT_COUNT - supports.length;
                 const esupportLen = MAX_SUPPORT_COUNT - esupports.length;
                 const allyPool = getCardIds(c => c.hasSubtype(CARD_SUBTYPE.Ally));
-                for (let i = 0; i < supportLen; ++i) {
-                    support.push(randomInArr(allyPool)[0]);
-                }
-                for (let i = 0; i < esupportLen; ++i) {
-                    supportOppo.push(randomInArr(allyPool)[0]);
-                }
+                support.push(...randomInArr(allyPool, supportLen));
+                supportOppo.push(...randomInArr(allyPool, esupportLen));
             }
             return { support, supportOppo }
         }),
