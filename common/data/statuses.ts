@@ -2577,9 +2577,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。；[roundCnt]')
         .description('本回合中，所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。', 'v5.8.0')
         .handle((_, event) => {
-            const { heros = [], hidx = -1, sourceStatus, sourceHidx, trigger } = event;
-            if (trigger == 'enter') heros[hidx]?.heroStatus.forEach(sts => sts.hasType(STATUS_TYPE.NonAction) && sts.dispose());
-            if (hidx == sourceHidx && sourceStatus?.hasType(STATUS_TYPE.NonAction)) return { triggers: 'pre-get-status', isInvalid: true }
+            const { hidx = -1, sourceStatus, sourceHidx } = event;
+            if (hidx != sourceHidx || !sourceStatus?.hasType(STATUS_TYPE.NonAction)) return;
+            return { triggers: 'pre-get-status', isInvalid: true }
         }),
 
     300007: () => new StatusBuilder('斗争之火（生效中）').heroStatus().icon(STATUS_ICON.AtkUp).roundCnt(1)
