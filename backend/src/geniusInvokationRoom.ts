@@ -1,3 +1,4 @@
+import LZString from 'lz-string';
 import * as fs from 'node:fs';
 import http from 'node:http';
 import { dirname } from 'node:path';
@@ -230,10 +231,9 @@ export default class GeniusInvokationRoom {
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}\n`).join('');
         if (isShowRoomInfo) log += this.roomInfoLog;
-        const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}.log`;
-        fs.writeFile(path, log, err => {
-            if (err) return console.error('err:', err);
-        });
+        const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
+        fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
+        fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(this.recordData)), err => err && console.error('err:', err));
         http.get(`${koishiUrl}?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`, { headers: { flag: secretKey } });
     }
     /**
@@ -3291,7 +3291,7 @@ export default class GeniusInvokationRoom {
             this._updateSummon(pidx ^ 1, [], this.players, true, { isQuickAction, destroy: 1 });
             const stscmds = new CmdsGenerator()
                 .getStatus(cardres.status, { hidxs: cardres.hidxs ?? hidxs })
-                .getStatus(cardres.statusOppo, { hidxs: cardres.hidxs ?? [opponent.hidx], isOppo: true });
+                .getStatus(cardres.statusOppo, { hidxs: cardres.hidxs ?? opponent.hidx, isOppo: true });
             this._doCmds(pidx, stscmds, { source: currCard.id });
             if (isAction) player.canAction = false;
             const damageVOs: DamageVO[] = cmdDmgVos.map(vo => ({ ...vo, dmgSource: 'card' }));
@@ -6149,9 +6149,8 @@ export default class GeniusInvokationRoom {
                 const fhidx = (player.hidx + dhidx) % cheros.length;
                 const fhero = cheros[fhidx];
                 if (heroStatus && heroStatus[fhidx].length) {
-                    if (fhero.hp <= 0) heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
-                    else this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players,
-                        { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+                    if (fhero.hp <= 0 && !hasObjById(heroStatus[fhidx], 303300)) heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
+                    else this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
                 }
             }
             if (combatStatus) {
