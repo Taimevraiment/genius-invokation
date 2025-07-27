@@ -4024,9 +4024,7 @@ export default class GeniusInvokationRoom {
             const { willHeals: cmdheal } = this._doCmds(pidx, cmds, { isAction: !isQuickAction });
             if (cmdheal) willHeals = cmdheal;
         }
-        if (!atkStatus.hasType(STATUS_TYPE.Hide)) {
-            this._writeLog(`[${this.players[pidx].name}](${pidx})[${atkname.replace(/\[card.*?\]/, '')}]发动${oCnt != atkStatus.useCnt ? ` ${oCnt}→${atkStatus.useCnt}` : ''}`);
-        }
+        this._writeLog(`[${this.players[pidx].name}](${pidx})[${atkname.replace(/\[card.*?\]/, '')}]发动${oCnt != atkStatus.useCnt ? ` ${oCnt}→${atkStatus.useCnt}` : ''}`, isCdt(atkStatus.hasType(STATUS_TYPE.Hide), 'system'));
         this._detectStatus(pidx ^ 1 ^ isSelf, STATUS_TYPE.Attack, etriggers1[atkedIdx], { hidxs: atkedIdx, isOnlyHeroStatus: true, isQuickAction });
         const whLen = willHeals.length || 1;
         const selectedIdx = atkStatus.group == STATUS_GROUP.heroStatus ?
@@ -4076,7 +4074,6 @@ export default class GeniusInvokationRoom {
             isExecTask, heros = players[pidx].heros, eheros = players[pidx ^ 1].heros, cskid = -1, energyCnt, isOnlyExec } = options;
         let { hidxs = allHidxs(heros), isQuickAction, type = [], restDmg } = options;
         let dmgElement: ElementType | undefined;
-        const cmds = new CmdsGenerator();
         const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
         const tasks: AtkTask[] = [];
         let isInvalid = false;
@@ -4121,7 +4118,7 @@ export default class GeniusInvokationRoom {
                     isInvalid ||= !!skillres.isInvalid;
                     restDmg = skillres.restDmg;
                     dmgElement = skillres.dmgElement;
-                    cmds.addCmds(skillres.cmds)
+                    const cmds = new CmdsGenerator(skillres.cmds)
                         .getStatus(skillres.status, { hidxs: skillres.hidxs ?? hidx })
                         .getStatus(skillres.statusOppo, { hidxs: skillres.hidxs ?? players[pidx ^ 1].hidx, isOppo: true });
                     if (isExec || isOnlyExec) {
@@ -4177,10 +4174,11 @@ export default class GeniusInvokationRoom {
                             }
                             continue;
                         }
+                        if (isExec) this._writeLog(`[${players[pidx].name}](${pidx})[${hero.name}][${skill.name}]发动`, 'system');
+                        const { tasks: skiTasks = [] } = this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
+                        tasks.push(...skiTasks);
                         continue;
                     }
-                    const { tasks: skiTasks = [] } = this._doCmds(pidx, cmds, { players, energyCnt, isExec, isAction: !isQuickAction });
-                    tasks.push(...skiTasks);
                 }
             }
         }
@@ -4683,7 +4681,7 @@ export default class GeniusInvokationRoom {
                                             const useCntChange = `${oCnt}→${curStatus.useCnt}`;
                                             const perCntChange = `${oPct}→${curStatus.perCnt}`;
                                             this._writeLog(`[${player.name}](${player.pidx})${trigger}:${sts.name}${sts.useCnt != -1 ? `.useCnt:${useCntChange}` : ''}${curStatus.perCnt != -1 ? `.perCnt:${perCntChange}` : ''}`, 'system');
-                                            if (!curStatus.hasType(STATUS_TYPE.Hide)) this._writeLog(`[${player.name}](${player.pidx})[${curStatus.name}]发动${oCnt != curStatus.useCnt ? ` ${useCntChange}` : ''}`, stsres.notLog ? 'system' : 'log');
+                                            this._writeLog(`[${player.name}](${player.pidx})[${curStatus.name}]发动${oCnt != curStatus.useCnt ? ` ${useCntChange}` : ''}`, stsres.notLog || curStatus.hasType(STATUS_TYPE.Hide) ? 'system' : 'log');
                                             const flag = `_doStatus-${group == STATUS_GROUP.heroStatus ? 'hero' : 'combat'}Status-task-${curStatus.name}(${curStatus.entityId})`;
                                             const curStatusIdx = statuses.filter(s => !s.hasType(STATUS_TYPE.Hide)).findIndex(s => s.entityId == sts.entityId);
                                             this.emit(flag, pidx, { isQuickAction, statusSelect: isCdt(curStatusIdx > -1, [pidx, group, group == STATUS_GROUP.combatStatus ? ahidx : hidx, curStatusIdx]) });
@@ -6552,8 +6550,8 @@ export default class GeniusInvokationRoom {
                     supportCnt,
                 });
                 this._detectSupport(pidx, trigger, { players, sourceStatus: sts, isExec });
-                if (isExec && isLog) {
-                    this._writeLog(`[${player.name}](${player.pidx})${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`, isCdt(sts.hasType(STATUS_TYPE.Hide), 'system'));
+                if (isExec) {
+                    this._writeLog(`[${player.name}](${player.pidx})${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]附属角色` : '生成出战'}状态[${sts.name}]【(${sts.entityId})】`, isCdt(sts.hasType(STATUS_TYPE.Hide) || !isLog, 'system'));
                 }
             }
             const stsres = sts.handle(sts, { heros, hidx });

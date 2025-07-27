@@ -524,7 +524,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/8a6a3792e47546b5ec81ee636445c4d8_6392784692082623561.png')
                 .passive().handle(event => {
                     const { hero, heros, source, combatStatus, trigger, cmds } = event;
-                    const triggers: Trigger[] = ['game-start'];
+                    const triggers: Trigger[] = ['game-start', 'killed'];
                     if (source == 122) triggers.push('status-destroy');
                     if (trigger == 'game-start') cmds.getStatus(112136, { hidxs: allHidxs(heros) });
                     if (trigger == 'switch-to' && hasObjById(combatStatus, 112101) && hero.energy != hero.maxEnergy) {
@@ -533,11 +533,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                     return {
                         triggers,
-                        isNotAddTask: trigger == 'game-start',
+                        isNotAddTask: trigger == 'game-start' || trigger == 'killed',
                         exec: () => {
                             if (trigger == 'switch-to') {
                                 const sts112101 = getObjById(combatStatus, 112101);
                                 if (sts112101?.minusUseCnt() == 0) sts112101.type.length = 0;
+                            } else if (trigger == 'killed') {
+                                heros?.forEach(h => getObjById(h.heroStatus, 112136)?.dispose());
                             }
                         }
                     }
