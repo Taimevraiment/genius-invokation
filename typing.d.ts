@@ -30,6 +30,7 @@ type PlayerList = {
 type Player = {
     id: number, // id
     name: string, // 名字
+    ip?: string, // 客户端ip地址
     rid: number, // 所在房间id
     handCards: Card[], // 手牌
     heros: Hero[], // 登场英雄

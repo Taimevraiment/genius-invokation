@@ -40,10 +40,11 @@ process.on('uncaughtException', err => console.error(err));
 process.on('exit', code => console.error(code));
 
 const serverSecretKey = await getSecretData('secretKey');
-const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus } | Player)[] = []; // 在线玩家列表
+const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus, ip?: string } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
 const todayPlayersHistory = new Map<number, {
+    ip: string,
     name: string,
     duration: number,
     loginTime: number,
@@ -147,6 +148,7 @@ io.on('connection', socket => {
             if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline) || me.rid < -1) {
                 [...room.players, ...room.watchers].forEach(p => p.rid = -1);
                 if (room.countdown.timer != null) clearInterval(room.countdown.timer);
+                room.stop();
                 removeById(room.id, roomList);
             } else {
                 room.emit('leaveRoom', me.pidx > -1 ? me.pidx : PLAYER_COUNT);
@@ -198,7 +200,7 @@ io.on('connection', socket => {
             const info = todayPlayersHistory.get(id)!;
             info.currLogin = loginTime;
         } else {
-            todayPlayersHistory.set(pid, { name, duration: 0, loginTime, logoutTime: -1, currLogin: loginTime });
+            todayPlayersHistory.set(pid, { ip: '', name, duration: 0, loginTime, logoutTime: -1, currLogin: loginTime });
         }
         socket.emit('login', { pid, name: username });
         emitPlayerAndRoomList();
@@ -213,9 +215,11 @@ io.on('connection', socket => {
         const roomId = genId(roomList, { isMinus: !!isRecord });
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', customVersion, io);
-        if (isRecord && isRecord.pidx == 1) newRoom.init({ id: 0, name: isRecord.oppoName });
         const player = newRoom.init(me);
-        if (isRecord && isRecord.pidx == 0) newRoom.init({ id: 0, name: isRecord.oppoName });
+        if (isRecord) {
+            newRoom.init({ id: 0, name: isRecord.username[1] });
+            player.name = isRecord.username[0];
+        }
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
         socket.join(`7szh-${roomId}-p${player.pidx}`);
@@ -272,7 +276,7 @@ io.on('connection', socket => {
         const me = getPlayer(pid);
         if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
         room.setReporterLog(me.name, data.description);
-        room.exportLog();
+        room.exportLog({ info: `[${me.name}]:${data.description}` });
     });
     // 房间信息更新
     socket.on('roomInfoUpdate', data => {
@@ -360,6 +364,18 @@ const validateSK = (req, res) => {
 
 app.get('/test', (_, res) => res.json({ ok: true }));
 
+app.get('/login', (req, res) => {
+    const pid = req.query.pid as string;
+    const player = getPlayer(+pid);
+    if (!player) return res.status(505).json({ err: '玩家不存在！' });
+    const { headers, socket: { remoteAddress } } = req;
+    const oip = headers['x-forwarded-for'] || headers['x-real-ip'] || remoteAddress;
+    const ip = Array.isArray(oip) ? oip[0] : oip;
+    player.ip = ip;
+    todayPlayersHistory.get(+pid)!.ip = ip ?? '';
+    return res.json({ ok: true });
+});
+
 app.get('/detail', (req, res) => {
     if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
     res.json({
@@ -372,6 +388,7 @@ app.get('/detail', (req, res) => {
         })),
         playerList: playerList.map(p => ({
             id: p.id,
+            ip: p.ip,
             name: p.name,
             rid: p.rid,
             status: p.status,
@@ -385,8 +402,9 @@ app.get('/info', (req, res) => {
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
         playersInfo: playerList.map(p => `${p.name}[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
         todayPlayersHistory: Array.from(todayPlayersHistory.entries())
-            .map(([id, { name, duration, loginTime, logoutTime }]) => ({
+            .map(([id, { ip, name, duration, loginTime, logoutTime }]) => ({
                 id,
+                ip,
                 name,
                 duration: (duration / 1000 / 60).toFixed(2),
                 loginTime: parseDate(loginTime).time,

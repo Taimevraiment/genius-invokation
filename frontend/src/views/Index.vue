@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.3.7</div>
+    <div class="version">v0.3.8</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -80,7 +80,7 @@ import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { genShareCode, importFile } from '@@@/utils/utils';
+import { genShareCode, getSecretData, importFile } from '@@@/utils/utils';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -166,7 +166,7 @@ const cancelCreateRoom = () => {
 
 // 创建房间
 const createRoom = (roomName: string, version: Version, roomPassword: string, countdown: number,
-  allowLookon: boolean, customVersion?: CustomVersionConfig, isRecord?: { pidx: number, oppoName: string }) => {
+  allowLookon: boolean, customVersion?: CustomVersionConfig, isRecord?: { pidx: number, username: string[] }) => {
   isShowCreateRoom.value = false;
   socket.emit('createRoom', { roomName, version, roomPassword, countdown, allowLookon, customVersion, isRecord });
 };
@@ -202,9 +202,10 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 const importRecord = (e: Event) => {
   importFile(e, res => {
     const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(res ?? '{}'));
+    const pidx = Math.max(0, recordData.pidx);
     createRoom(recordData.name, recordData.version, '', 0, false, recordData.customVersionConfig, {
-      pidx: recordData.pidx,
-      oppoName: recordData.username[recordData.pidx ^ 1],
+      pidx,
+      username: recordData.username,
     });
     socket.emit('sendToServer', {
       type: ACTION_TYPE.PlayRecord,
@@ -264,10 +265,13 @@ const showInfo = () => {
 
 onMounted(async () => {
   // 获取登录pid
-  socket.on('login', ({ pid, name }) => {
+  socket.on('login', async ({ pid, name }) => {
     userid.value = pid;
     username.value = name;
     localStorage.setItem('7szh_userid', pid.toString());
+    let loginApi = await getSecretData('loginApi');
+    if (isDev) loginApi = loginApi.replace(/.+\.site/, 'http://localhost:7000');
+    fetch(`${loginApi}${pid}`);
   });
   socket.on('getPlayerAndRoomList', getPlayerAndRoomList);
   // 进入房间

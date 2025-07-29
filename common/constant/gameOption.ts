@@ -23,7 +23,7 @@ export const INIT_ROLL_COUNT = 1; // 初始可重投次数
 
 export const MAX_DECK_COUNT = 16; // 最大可组卡组数
 
-export const AI_ID = 1; // ai的id
+export const AI_ID = 2; // ai的id
 
 export const DECK_CARD_COUNT = 30; // 卡组所需行动牌数量
 

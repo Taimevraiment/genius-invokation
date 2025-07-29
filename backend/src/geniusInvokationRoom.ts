@@ -117,7 +117,7 @@ export default class GeniusInvokationRoom {
         }
     }
     get isDev() {
-        return this.env === 'dev';
+        return this.env === 'dev' && this.id > 0;
     }
     get currentPlayerIdx() {
         return this._currentPlayerIdx;
@@ -224,9 +224,9 @@ export default class GeniusInvokationRoom {
     /**
      * 导出日志
      */
-    exportLog(options: { isShowRoomInfo?: boolean, isError?: boolean } = {}) {
-        if (this.env == 'test') return;
-        const { isShowRoomInfo = true, isError } = options;
+    exportLog(options: { isShowRoomInfo?: boolean, isError?: boolean, info?: string } = {}) {
+        if (this.env == 'test' || this.id < -1) return;
+        const { isShowRoomInfo = true, isError, info = '' } = options;
         let log = this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1') + '\n' +
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}\n`).join('');
@@ -234,7 +234,7 @@ export default class GeniusInvokationRoom {
         const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
         fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(this.recordData)), err => err && console.error('err:', err));
-        http.get(`${koishiUrl}?message=${isError ? '7szh报错了' : '7szh有日志被发送了'}`, { headers: { flag: secretKey } });
+        http.get(`${koishiUrl}?message=${isError ? '7szh报错了' : `7szh有日志被发送了:${info}`}${this.isDev ? '(开发版)' : ''}`, { headers: { flag: secretKey } });
     }
     /**
      * 记录报告者问题
@@ -670,6 +670,13 @@ export default class GeniusInvokationRoom {
             aiPlayer.phase == PHASE.DICE;
         }
         this.emit(flag, pidx);
+    }
+    /**
+     * 停止游戏
+     */
+    stop() {
+        this.taskQueue.isExecuting = false;
+        this.taskQueue.init();
     }
     /**
      * 获取行动
@@ -6147,8 +6154,11 @@ export default class GeniusInvokationRoom {
                 const fhidx = (player.hidx + dhidx) % cheros.length;
                 const fhero = cheros[fhidx];
                 if (heroStatus && heroStatus[fhidx].length) {
-                    if (fhero.hp <= 0 && !hasObjById(heroStatus[fhidx], 303300)) heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
-                    else this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+                    if (fhero.hp <= 0 && !hasObjById(heroStatus[fhidx], 303300) && heroStatus[fhidx].some(s => s.hasType(STATUS_TYPE.NonDefeat))) {
+                        heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
+                    } else {
+                        this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+                    }
                 }
             }
             if (combatStatus) {
@@ -6873,6 +6883,7 @@ export default class GeniusInvokationRoom {
                 isChargedAtk,
                 isFallAtk: player.isFallAtk,
                 hcards: player.handCards,
+                hcardsCnt: player.handCards.length,
                 trigger: 'calc',
             });
             calcDmgChange(fieldres);
