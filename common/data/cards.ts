@@ -1181,7 +1181,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312035: () => new CardBuilder(498).name('失冕的宝冠').since('v5.8.0').relic().costSame(0).perCnt(1)
         .description('【我方触发燃烧反应后：】敌方当前出战角色下次受到的伤害+1。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xiasi.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/a07abd9a0293de4d38465e7400f469df_5197862534515354088.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.getStatus(301206, { isOppo: true });
@@ -1190,7 +1190,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312036: () => new CardBuilder(499).name('异想零落的圆舞').since('v5.8.0').relic().costSame(0).perCnt(1)
         .description('【附属角色使用技能后：】双方出战角色附属1层【sts122】。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Xielve.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/69608df44c68474a42b56815aa719a7b_3412336312318091228.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.getStatus(122).getStatus(122, { isOppo: true });
@@ -1410,11 +1410,11 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321029: () => new CardBuilder(500).name('墨色酒馆').since('v5.8.0').place().costAny(2)
         .description('【入场时：】从【crd301034】、【crd301035】、【crd301036】中随机生成1张手牌。；【我方宣布结束时：】随机触发我方1个[「希穆兰卡」召唤物]的「结束阶段」效果。；[可用次数]：3')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_MoseJiuguan.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/89c42f0f21c5a933c9a8e9f9b1e6c1dd_8383963697306266892.png'),
 
     321030: () => new CardBuilder(501).name('星轨王城').since('v5.8.0').place().costSame(2)
         .description('【入场时：】生成手牌【crd301033】。；【我方角色使用「元素战技」后：】下次打出【crd301033】少花费1个元素骰。（不可叠加）；【我方角色使用「元素爆发」后：】下次打出的【crd301033】效果量+1。（不可叠加）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_XinguiWangcheng.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/26/258999284/f721ecf8a6bec7cf87a07f7669d5a583_8349369588870331854.png'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1540,11 +1540,11 @@ const allCards: Record<number, () => CardBuilder> = {
 
     322029: () => new CardBuilder(502).name('森林的祝福').since('v5.8.0').ally().costAny(2)
         .description('【入场时及我方触发元素反应后：】从【crd301034】、【crd301035】、【crd301036】中随机生成1张加入手牌。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_ZhezhiJiazu.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/26/258999284/7e91ccef12e069d4a989c75c67866698_6484654818732443668.png'),
 
     322030: () => new CardBuilder(503).name('预言女神的礼物').since('v5.8.0').ally().costAny(2)
         .description('【入场时：】生成2张手牌【crd301033】，并生成2张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_NPC_JimuRen.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/45dae777fd99897142752609a238470f_3519286704122229551.png'),
 
     323001: () => new CardBuilder(214).name('参量质变仪').offline('v1').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个「质变进度」。；此牌已累积3个「质变进度」时，弃置此牌并生成3个不同的基础元素骰。')
@@ -2228,12 +2228,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332049: () => new CardBuilder(504).name('收获时间').since('v5.8.0').event().costSame(1)
         .description('从3张随机「料理」牌中[挑选]1张。；【结束阶段：】生成一张【crd332049】，随机置入我方牌组。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Olorun.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/85fe62dd5f8df51596a5c82cc9577ea4_622243239442081731.png')
         .handle((_, { cmds }) => (cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Food }), { status: 303244 })),
 
     332050: () => new CardBuilder(505).name('很棒，哥们。').since('v5.8.0').event().costSame(1)
         .description('抓1张「特技」牌，下次打出「特技」牌后，生成1个[万能元素骰]。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Ifa.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/f183a5af1052c200c29641865ab948a7_1117729196344946579.png')
         .handle((_, { cmds }) => (cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }), { status: 303243 })),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
@@ -2907,7 +2907,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     215121: () => new CardBuilder(495).name('舞袂翩兮扬玉霓').since('v5.8.0').talent(1).costAnemo(3).perCnt(1)
         .description('{action}；【装备有此牌的〖hro〗在场，我方角色进行普通攻击时：】获得1层【sts115121】。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Lanyan.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/d836580126ee628ba68f0c9e3ebacbcb_1067461203333824690.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.getStatus(115121);
@@ -2916,7 +2916,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     215131: () => new CardBuilder(496).name('奇想天开捕物帐').since('v5.8.0').talent(1).costAnemo(3)
         .description('{action}；【sts115132】提高的伤害额外+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Heizo.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/5a397c87c8f81a20fb69d9483299781f_5902943097195617602.png'),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
@@ -3356,7 +3356,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     227041: () => new CardBuilder(497).name('饕噬尽吞').since('v5.8.0').talent().costDendro(1).perCnt(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】，敌方抓1张牌，然后我方窃取1张原本元素骰费用最高的对方手牌。〕；【我方打出名称不存在于本局最初牌组的牌时：】触发【ski,3】1次。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_HookwalkerPrimo.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/840ad57e6a3de504c1a18dd0511e172b_8571717521108052350.png')
         .handle((card, event) => {
             const { cmds, hcard, playerInfo: { initCardIds = [] } = {} } = event;
             cmds.getCard(1, { isOppo: true }).stealCard(1, CMD_MODE.HighHandCard);
@@ -3576,22 +3576,22 @@ const allCards: Record<number, () => CardBuilder> = {
 
     301033: () => new CardBuilder().name('积木小人').event().costSame(1)
         .description('召唤【smn301028】。')
-        .src('tmp/UI_Gcg_CardFace_Summon_JimuBing')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/80704cf14d47841ff54dfd658bdffba4_5364615516522900370.png')
         .handle(() => ({ summon: 301028 })),
 
     301034: () => new CardBuilder().name('折纸飞鼠').event().costSame(1)
         .description('召唤【smn301029】。')
-        .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b1d95145d18301e8c5d22b8f314d95b3_4086315130176794183.png')
         .handle(() => ({ summon: 301029 })),
 
     301035: () => new CardBuilder().name('跳跳纸蛙').event().costSame(1)
         .description('召唤【smn301030】。')
-        .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiWa')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/40278ec42e615000753d766e5e6ddf22_1265067356573715766.png')
         .handle(() => ({ summon: 301030 })),
 
     301036: () => new CardBuilder().name('折纸胖胖鼠').event().costSame(1)
         .description('召唤【smn301031】。')
-        .src('tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle(() => ({ summon: 301031 })),
 
     302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0).from(322024)

@@ -978,11 +978,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     127025: () => crd12702summon(),
 
     301028: () => new SummonBuilder('积木小人').from(301033).useCnt(2).damage(1).physical().description('{defaultAtk。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_JimuBing.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/80704cf14d47841ff54dfd658bdffba4_5364615516522900370.png'),
 
     301029: () => new SummonBuilder('折纸飞鼠').from(301034).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Buff)
         .description(`【结束阶段：】获得{effect}层【sts169】。；[useCnt]`)
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiSongsu.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b1d95145d18301e8c5d22b8f314d95b3_4086315130176794183.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
@@ -994,7 +994,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     301030: () => new SummonBuilder('跳跳纸蛙').from(301035).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Special)
         .description(`【结束阶段：】抓{effect}张牌。；[useCnt]`)
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiWa.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/40278ec42e615000753d766e5e6ddf22_1265067356573715766.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
@@ -1006,7 +1006,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     301031: () => new SummonBuilder('折纸胖胖鼠').from(301036).useCnt(1).heal(2)
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_ZhezhiLaoshu.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle((summon, event) => {
             const hidxs = getMaxHertHidxs(event.heros);
             return {

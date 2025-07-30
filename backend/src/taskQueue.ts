@@ -22,7 +22,8 @@ export default class TaskQueue {
         this.env = env;
     }
     get queueList() {
-        return `(${this.immediateQueue.length ? `immediateQueue=[${this.immediateQueue.map(v => v[0])}]` : ''}${this.priorityQueue ? `priorityQueue=[${this.priorityQueue.map(v => v[0])}],` : ''}queue=[${this.queue.map(v => v[0])}]${this.finalQueue.length ? `finalQueue=[${this.finalQueue.map(v => v[0])}]` : ''})`;
+        const item = (name: string, q?: TaskItem[]) => q?.length ? `${name}=[${q.map(v => v[0])}]` : '';
+        return `(${item('immediateQueue', this.immediateQueue)}${item('priorityQueue', this.priorityQueue)}${item('queue', this.queue)}${item('finalQueue', this.finalQueue)})`;
     }
     init() {
         this.priorityQueue = undefined;
@@ -45,8 +46,10 @@ export default class TaskQueue {
         const queueTask: TaskItem = [taskType, args, source, isDmg];
         const tidx = addAfterNonDmg ? this.queue.findIndex(([, , , isdmg]) => isdmg) :
             orderAfter != '' ? findLastIndex(this.queue, ([taskType]) => taskType.includes(orderAfter)) : -1;
-        if (addAfterNonDmg && tidx == -1) this.queue.push(queueTask)
-        else if (tidx > -1) this.queue.splice(tidx + (addAfterNonDmg ? 0 : 1), 0, queueTask);
+        if (addAfterNonDmg && tidx == -1) {
+            if (isUnshift) this.queue.unshift(queueTask);
+            else this.queue.push(queueTask);
+        } else if (tidx > -1) this.queue.splice(tidx + (addAfterNonDmg ? 0 : 1), 0, queueTask);
         else {
             if (isUnshift) curQueue.unshift(queueTask);
             else curQueue.push(queueTask);

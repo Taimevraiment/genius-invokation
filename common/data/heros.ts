@@ -1319,35 +1319,40 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1512: () => new HeroBuilder(492).name('蓝砚').since('v5.8.0').liyue().anemo().catalyst()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Lanyan.webp')
-        .avatar('/image/tmp/Avatar_LanYan.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b448ace8a6f21314b0d097cd40811bbb_4959882338856335294.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/688960cf/ece87337c909371117827acffcab8245.png')
         .normalSkill(new NormalSkillBuilder('玄鸾画水'))
         .skills(
             new SkillBuilder('凤缕随翦舞').description('生成2层【sts115121】，获得1层【sts169】，并{dealDmg}，如果此技能引发了扩散，则额外生成1层【sts115121】。')
-                .src('/image/tmp/Skill_S_Lanyan_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/7602c02144feb3599e5b206166b63123_1875732569118149069.png')
                 .elemental().damage(1).cost(3).handle(({ swirlEl }) => ({ status: [[115121, 2 + +!!swirlEl], 169] })),
             new SkillBuilder('鹍弦踏月出').description('{dealDmg}，生成2层【sts115121】。')
-                .src('/image/tmp/Skill_E_Lanyan_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/2db09430be95c661c83aa254fc35aab8_3414318415429015440.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[115121, 2]] }))
         ),
 
     1513: () => new HeroBuilder(493).name('鹿野院平藏').since('v5.8.0').inazuma().anemo().catalyst()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Heizo.webp')
-        .avatar('/image/tmp/Avatar_Heizo.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/50fe377d9473ff764e55d84a5d7f3713_3264680029972686325.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/688960cf/b5fcf0e958998b853a34ccee37f35aef.png')
         .normalSkill(new NormalSkillBuilder('不动流格斗术'))
         .skills(
             new SkillBuilder('勠心拳').description('[准备技能]：【rsk15135】。')
-                .src('/image/tmp/Skill_S_Heizo_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/801abac38b832f558caa5e9640bc77b5_663641721514699737.png')
                 .elemental().cost(3).handle(({ hero: { heroStatus } }) => ({
                     status: 115131,
                     isQuickAction: (getObjById(heroStatus, 115132)?.useCnt ?? 0) >= 2,
                 })),
             new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的[聚风真眼]。')
-                .src('/image/tmp/Skill_E_Heizo_01.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/ca9e299b07cc179ac411d9b0f5c6583e_8866803548218067355.png')
                 .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115133 + i}`))
                 .burst(2).damage(4).cost(3).handle(({ swirlEl }) => ({ statusOppo: isCdt(swirlEl, 115132 + ELEMENT_CODE[swirlEl!]) })),
             new SkillBuilder('反论稽古').description('【我方引发了[风元素相关反应]后：】自身附属1层【sts115132】。')
-                .src('/image/tmp/UI_Talent_S_Heizo_05.webp')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/d1db770d4ab115ce695b64ca52fa2d0a_2093284852495190270.png')
                 .passive().handle(() => ({ triggers: ['elReaction-Anemo', 'other-elReaction-Anemo'], status: 115132 }))
         ),
 
@@ -2460,18 +2465,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     2704: () => new HeroBuilder(494).name('贪食匿叶龙山王').since('v5.8.0').maxHp(7).monster().dendro()
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_HookwalkerPrimo.webp')
-        .avatar('/image/tmp/Avatar_HookwalkerPrimo.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/96ffcb7de7285bd7981cbb868e0a33d9_4577622310420998135.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/d6a56a54fa436716a950c4a890f16fa6.png')
         .normalSkill(new NormalSkillBuilder('沉重尾击'))
         .skills(
             new SkillBuilder('喷吐草实').description('{dealDmg}，抓1张「料理」牌。')
-                .src('/image/tmp/MonsterSkill_S_HookwalkerPrimo_01.png')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/a4fe12c07eb0f6c539b8aa0a243a8e91_1978996320864904499.png')
                 .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Food, isFromPile: true }).res),
             new SkillBuilder('榴果爆轰').description('{dealDmg}。')
-                .src('/image/tmp/MonsterSkill_E_HookwalkerPrimo_01_HD.png')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/f4885049dc3a46d945ce86a1f73f73b0_4154092866177049311.png')
                 .burst(2).damage(5).dmgElement(DAMAGE_TYPE.Pyro).cost(3),
             new SkillBuilder('贪食之王').description('自身不会【sts303300】。；【我方打出「料理」牌后：】随机附属1层【sts127041】或【sts127042】，或获得1点额外最大生命值。（每回合2次）')
-                .src('/image/tmp/MonsterSkill_S_HookwalkerPrimo_02.png')
+                .src('#',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/6257ab91c38de8fbfa765b5d685cebb3_6732283299558524014.png')
                 .passive().perCnt(2).handle(event => {
                     const { skill, hero: { hidx }, trigger, source, sourceHidx, talent, card, cmds, randomInt } = event;
                     if (trigger == 'pre-get-status') {

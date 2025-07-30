@@ -240,7 +240,7 @@ const hero1505sts = (swirlEl: PureElementType) => {
 
 const hero1513sts = (swirlEl: PureElementType) => {
     return new StatusBuilder(`聚风真眼·${ELEMENT_NAME[swirlEl][0]}`).combatStatus().useCnt(1)
-        .type(STATUS_TYPE.Attack).icon('tmp/UI_Gcg_DeBuff_Heizo_S')
+        .type(STATUS_TYPE.Attack).icon('#')
         .description(`【所在阵营选择行动前：】对所附属角色造成1点[${ELEMENT_NAME[swirlEl]}伤害]。；[useCnt]`)
         .handle(() => ({
             damage: 1,
@@ -1561,13 +1561,13 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         })),
 
-    115121: (cnt: number = 1) => shieldCombatStatus('凤缕护盾', cnt, MAX_USE_COUNT).icon('tmp/UI_Gcg_Buff_Lanyan_E1')
+    115121: (cnt: number = 1) => shieldCombatStatus('凤缕护盾', cnt, MAX_USE_COUNT).icon('#')
         .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`),
 
     115131: () => readySkillStatus('在罪之先', 15135),
 
     115132: () => new StatusBuilder('变格').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
-        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).icon('tmp/UI_Gcg_Buff_Heizo_E1')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).icon('#')
         .description('如果此状态有2层，则消耗2层此状态，并且本角色下次【ski,1】将视为快速行动，并且此次【rsk15135】伤害+1。（可叠加，没有上限）')
         .handle((status, event) => {
             if (status.useCnt < 2 || event.skid != 15135) return;

@@ -417,8 +417,8 @@ export default class GeniusInvokationRoom {
                     if (vopidx == -1) return { content: lg.content.replace(/【p\d+:(.+?)】/g, '$1'), type: lg.type }
                     const logctt = lg.content
                         .replace(/\[card(?:\d|-)+?\]/, '')
-                        .replace(new RegExp(`\\[${this.players[vopidx]?.name}\\]\\(${vopidx}\\)`), '[我方]')
-                        .replace(new RegExp(`\\[${this.players[vopidx ^ 1]?.name}\\]\\(${vopidx ^ 1}\\)`), '[对方]');
+                        .replace(new RegExp(`\\[${this.players[vopidx]?.name}\\]\\(${vopidx}\\)`, 'g'), '[我方]')
+                        .replace(new RegExp(`\\[${this.players[vopidx ^ 1]?.name}\\]\\(${vopidx ^ 1}\\)`, 'g'), '[对方]');
                     if (cpidxs.length == 0) return { content: logctt.replace(/【.+?】/g, ''), type: lg.type }
                     const content = cpidxs.reduce((a, c) => {
                         return a.replace(new RegExp(`【p${c}:(.+?)】`, 'g'), c == vopidx ? '$1' : '');
@@ -4615,9 +4615,9 @@ export default class GeniusInvokationRoom {
                             const { willHeals: cmdheal = [] } = this._doCmds(pidx, [{ cmd: 'heal', cnt: stsres.heal, hidxs: stsres.hidxs }],
                                 { players, source: sts.id, isPriority: true });
                             aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
-                        } else if (stscmds.hasCmds('heal', 'addMaxHp')) {
+                        } else if (stscmds.hasCmds('heal', 'addMaxHp') && !isExec) {
                             const { willHeals: cmdheal = [] } = this._doCmds(pidx, stscmds.filterCmds('heal', 'addMaxHp'),
-                                { players, source: sts.id, isPriority: true, isOnlyGetWillHeal: true });
+                                { players, source: sts.id, isExec, isPriority: true, isOnlyGetWillHeal: true });
                             aWillHeals = isCdt(cmdheal.length > 0, () => cmdheal!.reduce((a, c) => (mergeWillHeals(a, c), a)));
                         }
                         if (
