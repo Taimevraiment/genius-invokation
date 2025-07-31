@@ -268,8 +268,8 @@ export class SkillBuilder extends BaseBuilder {
         this._canSelectHero = canSelectHero;
         return this;
     }
-    addition(key: string, value: number) {
-        this._addition[key] = value;
+    addition(key: string, value?: number) {
+        this._addition[key] = value ?? 0;
         return this;
     }
     done() {

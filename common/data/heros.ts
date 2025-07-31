@@ -820,11 +820,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                 }),
             new SkillBuilder().passive(true).handle(event => {
-                const { restDmg = -1, hero, trigger } = event;
+                const { restDmg = -1, hero, talent, trigger } = event;
                 const sts122 = getObjById(hero.heroStatus, 122);
                 if (trigger == 'skill' && sts122) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
-                if (restDmg == -1 || !sts122) return;
-                if (restDmg == 0) return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg }
+                if (restDmg <= 0 || !sts122 || !talent) return;
                 return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
             })
         ),
@@ -1118,6 +1117,45 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
+    1414: () => new HeroBuilder(506).name('伊安珊').since('v6.0.0').natlan().electro().polearm()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Iansan.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('负重锥击'))
+        .skills(
+            new SkillBuilder('电掣雷驰').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成1层【sts170】。')
+                .src('',
+                    '')
+                .elemental().damage(2).cost(3).handle(({ cmds }) => (cmds.getNightSoul(), { status: [114141, 170] })),
+            new SkillBuilder('力的三原理').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成【sts114142】。')
+                .src('',
+                    '')
+                .burst(2).damage(3).cost(3).handle(({ cmds, talent }) => (cmds.getNightSoul(), { status: [114141, [114142, !!talent]] })),
+            new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合2次）')
+                .src('',
+                    '')
+                .passive().addition('switch').perCnt(2).handle(event => {
+                    const { skill, hero, heros, trigger, cmds } = event;
+                    const nightSoul = getObjById(hero.heroStatus, 114141);
+                    if (!nightSoul || skill.perCnt <= 0) return;
+                    if (trigger == 'switch' && skill.addition.switch == 1 || trigger == 'ready-skill') {
+                        if (nightSoul.useCnt == 2) {
+                            const hidxs = getMaxHertHidxs(heros);
+                            if (hidxs.length == 0) return;
+                            cmds.heal(1, { hidxs });
+                        } else {
+                            cmds.getNightSoul(1, hero.hidx);
+                        }
+                    }
+                    return {
+                        triggers: ['ready-skill', 'switch'],
+                        exec: () => {
+                            if (trigger == 'ready-skill' || skill.addition.switch == 1) --skill.perCnt;
+                            if (trigger == 'switch') skill.addition.switch = (skill.addition.switch + 1) % 2;
+                        }
+                    }
+                })
+        ),
+
     1501: () => new HeroBuilder(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')
@@ -1345,15 +1383,30 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     status: 115131,
                     isQuickAction: (getObjById(heroStatus, 115132)?.useCnt ?? 0) >= 2,
                 })),
-            new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的[聚风真眼]。')
+            new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【聚风真眼】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/ca9e299b07cc179ac411d9b0f5c6583e_8866803548218067355.png')
-                .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115133 + i}`))
+                .explain(...Array.from({ length: 4 }, (_, i) => `sts${115133 + i}`))
                 .burst(2).damage(4).cost(3).handle(({ swirlEl }) => ({ statusOppo: isCdt(swirlEl, 115132 + ELEMENT_CODE[swirlEl!]) })),
             new SkillBuilder('反论稽古').description('【我方引发了[风元素相关反应]后：】自身附属1层【sts115132】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/d1db770d4ab115ce695b64ca52fa2d0a_2093284852495190270.png')
                 .passive().handle(() => ({ triggers: ['elReaction-Anemo', 'other-elReaction-Anemo'], status: 115132 }))
+        ),
+
+    1514: () => new HeroBuilder(507).name('梦见月瑞希').since('v6.0.0').inazuma().anemo().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mizuki.webp')
+        .avatar()
+        .normalSkill(new NormalSkillBuilder('梦我梦心'))
+        .skills(
+            new SkillBuilder('秋沙歌枕巡礼').description('{dealDmg}，自身附属【sts115141】。')
+                .src('',
+                    '')
+                .elemental().damage(2).cost(3).handle(() => ({ status: 115141 })),
+            new SkillBuilder('安乐秘汤疗法').description('{dealDmg}，生成1张【crd115142】，将其置于我方牌组顶部，并召唤【smn115143】。')
+                .src('',
+                    '')
+                .burst(2).damage(3).cost(3).handle(({ cmds }) => (cmds.addCard(1, 115142, { scope: 1 }), { summon: 115143 }))
         ),
 
     1601: () => new HeroBuilder(42).name('凝光').offline('v1').liyue().geo().catalyst()
@@ -2111,6 +2164,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                 })
         ),
+
+    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_TheAbyssXiuhcoatl.webp'),
 
     2401: () => new HeroBuilder(57).name('无相之雷').since('v3.7.0').offline('v2').maxHp(8).monster().electro()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/df234a18db1aa6f769ac3b32b0168ebf_4040044349475544115.png')

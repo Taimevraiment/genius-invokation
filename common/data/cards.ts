@@ -9,7 +9,7 @@ import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_ICON_NAME, ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
-import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
+import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getNextBackHidx, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder, CardBuilderHandleRes } from './builder/cardBuilder.js';
 
@@ -76,12 +76,14 @@ export type CardHandleRes = {
     supportOppo?: (number | [number, ...any])[] | number,
     cmds?: CmdsGenerator,
     cmdsBefore?: CmdsGenerator,
+    cmdsAfter?: CmdsGenerator,
     execmds?: CmdsGenerator,
     triggers?: Trigger[],
     status?: (number | [number, ...any])[] | number,
     statusOppo?: (number | [number, ...any])[] | number,
     canSelectHero?: boolean[],
     summon?: (number | [number, ...any])[] | number,
+    summonOppo?: (number | [number, ...any])[] | number,
     addDmg?: number,
     addDmgType1?: number,
     addDmgType2?: number,
@@ -426,6 +428,16 @@ const allCards: Record<number, () => CardBuilder> = {
                     }
                 }
             }
+        }),
+
+    311208: () => new CardBuilder(520).name('若水').since('v6.0.0').weapon().costSame(2)
+        .description('【所附属角色生命值至少为11时：】造成的伤害+2。；【入场时：】所附属角色获得1点最大生命值。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_RuoShui.webp')
+        .handle((_, event) => {
+            const { hero, sktype = SKILL_TYPE.Vehicle, cmds } = event;
+            cmds.addMaxHp(1, hero?.hidx);
+            if (sktype == SKILL_TYPE.Vehicle || !hero || hero.hp < 11) return;
+            return { triggers: 'dmg', addDmgCdt: 2 }
         }),
 
     311301: () => normalWeapon(132).name('白铁大剑').offline('v1')
@@ -1194,6 +1206,36 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.getStatus(122).getStatus(122, { isOppo: true });
+            return { triggers: 'skill', exec: () => card.minusPerCnt() }
+        }),
+
+    312037: () => new CardBuilder(512).name('宗室面具').since('v6.0.0').relic().costSame(0).perCnt(1)
+        .description('【附属角色使用元素爆发后：】我方下一个角色本回合内造成的伤害+1。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_ZongShixiao.webp')
+        .handle((card, event) => {
+            const { heros = [], execmds } = event;
+            if (heros.length < 2 || card.perCnt <= 0) return;
+            execmds.getStatus(301208, { hidxs: getNextBackHidx(heros) });
+            return { triggers: 'skilltype3', exec: () => card.minusPerCnt() }
+        }),
+
+    312038: () => new CardBuilder(513).name('未竟的遐思').since('v6.0.0').relic().costSame(2).perCnt(2)
+        .description('我方【smn115】以及造成的燃烧反应伤害+1。（每回合2次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XiasiDa.webp')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const triggers: Trigger[] = ['Burning'];
+            if (event.isSummon == 115) triggers.push('dmg');
+            return { triggers, addDmgCdt: 1, exec: () => card.minusPerCnt() }
+        }),
+
+    312039: () => new CardBuilder(514).name('谐律交响的前奏').since('v6.0.0').relic().costSame(2).perCnt(1)
+        .description('【附属角色使用技能后：】我方所有角色附属1层【sts122】，下次我方角色使用技能时少花费1个元素骰。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            const { heros, execmds } = event;
+            execmds.getStatus(122, { hidxs: allHidxs(heros) }).getStatus(301207);
             return { triggers: 'skill', exec: () => card.minusPerCnt() }
         }),
 
@@ -2236,6 +2278,46 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/f183a5af1052c200c29641865ab948a7_1117729196344946579.png')
         .handle((_, { cmds }) => (cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }), { status: 303243 })),
 
+    332051: () => new CardBuilder(515).name('「邪龙」的苏醒').since('v6.0.0').event().costSame(2).subtype(CARD_SUBTYPE.Simulanka)
+        .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1。（可叠加，最多叠加到5）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Elong.webp')
+        .handle((_, event) => {
+            const { playerInfo: { destroyedSummon = 0, destroyedSupport = 0 } = {} } = event;
+            return { summon: [[303245, destroyedSummon, destroyedSupport]] }
+        }),
+
+    332052: () => new CardBuilder(516).name('旁白的注脚').since('v6.0.0').event().costSame(0).subtype(CARD_SUBTYPE.Simulanka)
+        .description('双方召唤【smn301028】。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Pangbai.webp')
+        .handle(() => ({ summon: 301028, summonOppo: 301028 })),
+
+    332054: () => new CardBuilder(518).name('「魔女M的祝福」').since('v6.0.0').event().costSame(0).subtype(CARD_SUBTYPE.Simulanka).canSelectSummon(1)
+        .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，并治疗我方受伤最多的角色，治疗量等同于其可用次数超出2的部分。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ElongCry.webp')
+        .handle((_, event) => {
+            const { pidx = -1, summons = [], heros, selectSummon = -1, cmds } = event;
+            const summonCnt = INIT_SUMMONCNT();
+            if (selectSummon > -1 && pidx > -1) summonCnt[pidx][selectSummon] = -100;
+            const { useCnt = 0 } = summons[selectSummon] ?? {};
+            cmds.getDice(Math.min(2, useCnt), { mode: CMD_MODE.Random });
+            const hidxs = getMaxHertHidxs(heros);
+            if (useCnt > 2 && hidxs.length > 0) cmds.heal(useCnt - 2, { hidxs });
+            return { summonCnt, exec: () => summons[selectSummon]?.dispose() }
+        }),
+
+    332055: () => new CardBuilder(519).name('「狂欢节奏」').since('v6.0.0').event().costAny(2)
+        .description('抓2张牌，如果我方手牌中的「武器」牌或「圣遗物」牌数量大于1张，则各生成1个[万能元素骰]。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Xilonen.webp')
+        .handle((_, event) => {
+            const { pile = [], hcards = [], cmds } = event;
+            cmds.getCard(2);
+            const nhcards = [...hcards, ...pile.slice(0, 2)];
+            let cnt = 0;
+            if (nhcards.filter(c => c.hasSubtype(CARD_SUBTYPE.Weapon)).length > 1) ++cnt;
+            if (nhcards.filter(c => c.hasSubtype(CARD_SUBTYPE.Relic)).length > 1) ++cnt;
+            if (cnt > 0) cmds.getDice(cnt, { element: DICE_COST_TYPE.Omni });
+        }),
+
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次「普通攻击」造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png')
@@ -2822,6 +2904,10 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'trigger', exec: () => card.minusPerCnt() }
         }),
 
+    214141: () => new CardBuilder(509).name('「沃陆之邦」的训教').since('v6.0.0').talent(2).costElectro(3).energy(2)
+        .description('{action}；装备有此牌的【hro】生成的【sts114142】，初始[可用次数]+1。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Iansan.webp'),
+
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/93fb13495601c24680e2299f9ed4f582_2499309288429565866.png'),
@@ -2917,6 +3003,9 @@ const allCards: Record<number, () => CardBuilder> = {
     215131: () => new CardBuilder(496).name('奇想天开捕物帐').since('v5.8.0').talent(1).costAnemo(3)
         .description('{action}；【sts115132】提高的伤害额外+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/5a397c87c8f81a20fb69d9483299781f_5902943097195617602.png'),
+
+    215141: () => new CardBuilder(510).name('缠忆君影梦相见').since('v6.0.0')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mizuki.webp'),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
@@ -3232,6 +3321,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
         .handle((_, { hero, cmds }) => cmds.attach({ hidxs: hero?.hidx }).res),
 
+    223051: () => new CardBuilder(511).name('罔极盛怒').since('v6.0.0')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_TheAbyssXiuhcoatl.webp'),
+
     224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
         .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
@@ -3489,6 +3581,18 @@ const allCards: Record<number, () => CardBuilder> = {
 
     115117: () => hero1511card(ELEMENT_TYPE.Cryo),
 
+    115142: () => new CardBuilder().name('梦见风名物点心').food().costSame(0)
+        .description('【此卡牌进入手牌时：】如果我方出战角色生命值大于5，则造成1点[风元素伤害]\\；否则治疗我方出战角色2点。随后弃置此卡牌并抓1张牌。')
+        .src('')
+        .handle((_, event) => {
+            const { hero, execmds } = event;
+            if (!hero) return;
+            if (hero.hp >= 5) execmds.attack(1, DAMAGE_TYPE.Anemo);
+            else execmds.heal(2);
+            execmds.getCard(1);
+            return { triggers: 'getcard' }
+        }),
+
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
@@ -3574,22 +3678,22 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: !hasObjById(combatStatus, 301021), status: 301021 }
         }),
 
-    301033: () => new CardBuilder().name('积木小人').event().costSame(1)
+    301033: () => new CardBuilder().name('积木小人').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301028】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/80704cf14d47841ff54dfd658bdffba4_5364615516522900370.png')
         .handle(() => ({ summon: 301028 })),
 
-    301034: () => new CardBuilder().name('折纸飞鼠').event().costSame(1)
+    301034: () => new CardBuilder().name('折纸飞鼠').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301029】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b1d95145d18301e8c5d22b8f314d95b3_4086315130176794183.png')
         .handle(() => ({ summon: 301029 })),
 
-    301035: () => new CardBuilder().name('跳跳纸蛙').event().costSame(1)
+    301035: () => new CardBuilder().name('跳跳纸蛙').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301030】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/40278ec42e615000753d766e5e6ddf22_1265067356573715766.png')
         .handle(() => ({ summon: 301030 })),
 
-    301036: () => new CardBuilder().name('折纸胖胖鼠').event().costSame(1)
+    301036: () => new CardBuilder().name('折纸胖胖鼠').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301031】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle(() => ({ summon: 301031 })),

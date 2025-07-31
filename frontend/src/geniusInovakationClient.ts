@@ -843,6 +843,7 @@ export default class GeniusInvokationClient {
         const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.cardIdxs![0] == this.currCard.cidx && pre.summonIdx == (newVal ? suidx : -1));
         this.isValid = !!preview?.isValid;
         this.summonCnt = preview?.willSummonChange ?? this._resetSummonCnt();
+        this.willHp = preview?.willHp ?? this._resetWillHp();
         if (this.isValid) this.diceSelect = [...preview?.diceSelect!];
     }
     /**

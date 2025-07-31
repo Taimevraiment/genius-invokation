@@ -100,6 +100,7 @@ export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Action]: '战斗行动\uFEFF',
     [CARD_SUBTYPE.Legend]: '秘传',
     [CARD_SUBTYPE.ElementResonance]: '元素共鸣',
+    [CARD_SUBTYPE.Simulanka]: '希穆兰卡',
 } as const;
 
 export const CARD_SUBTYPE_URL = {
@@ -380,4 +381,5 @@ export const RULE_EXPLAIN: { [key: string]: string } = {
     挑选: '从特定的多张牌中选择1张执行效果。',
     聚风真眼: '【所在阵营选择行动前：】对所附属角色造成1点对应元素伤害，可用次数1。',
     '「希穆兰卡」召唤物': '可能出现的「希穆兰卡」召唤物共有4种：；积木小人：结束阶段造成1点*[物理伤害]，可用次数2。；折纸飞鼠：结束阶段获得1层【高效切换】，可用次数2。；跳跳纸蛙：结束阶段抓1张牌，可用次数2。；折纸胖胖鼠：结束阶段治疗受伤最多的我方角色2点，可用次数1。',
+    '「希穆兰卡」卡牌': '「希穆兰卡」卡牌包括：【墨色酒馆】、【星轨王城】、【森林的祝福】、【预言女神的礼物】、【邪龙】、【旁白的注脚】、【恶龙的地点】、【恶龙的偿还】。',
 }

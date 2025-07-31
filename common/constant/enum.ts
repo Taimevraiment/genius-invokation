@@ -135,6 +135,7 @@ export const CARD_SUBTYPE = {
     Action: 'Action', // 战斗行动
     Legend: 'Legend', // 秘传
     ElementResonance: 'ElementResonance', // 元素共鸣
+    Simulanka: 'Simulanka', // 希穆兰卡
 } as const;
 
 export type CardSubtype = TypeConst<typeof CARD_SUBTYPE>;
@@ -364,6 +365,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
+    'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',

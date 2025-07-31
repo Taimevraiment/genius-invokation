@@ -74,8 +74,8 @@ export const getMinHpHidxs = (heros: Hero[] = [], fhidx: number = heros.findInde
 }
 
 // 获取出战角色hidx
-export const getAtkHidx = (heros: Hero[]): number => {
-    return heros.findIndex(h => h.isFront);
+export const getFrontHidx = (heros?: Hero[]): number => {
+    return heros?.findIndex(h => h.isFront) ?? -1;
 }
 
 // 获得距离出战角色最近的hidx
@@ -99,7 +99,7 @@ export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
 
 // 获得所有后台角色hidx
 export const getBackHidxs = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1, limit?: number): number[] => {
-    return allHidxs(heros, { exclude: frontIdx, limit });
+    return allHidxs(heros, { exclude: frontIdx, frontIdx, limit });
 }
 
 // 获得下一个后台角色hidx(只有一个number的数组)
@@ -301,6 +301,7 @@ export const playerInfoToString = (playerInfo: GameInfo, prefixSpace: number = 1
         + `${prefix1}talentTypeCnt: ${playerInfo.talentTypeCnt}\n`
         + `${prefix1}usedCardIds: ${playerInfo.usedCardIds}\n`
         + `${prefix1}destroyedSupport: ${playerInfo.destroyedSupport}\n`
+        + `${prefix1}destroyedSummon: ${playerInfo.destroyedSummon}\n`
         + `${prefix1}oppoGetElDmgType: ${playerInfo.oppoGetElDmgType}\n`
         + `${prefix1}discardCnt: ${playerInfo.discardCnt}\n`
         + `${prefix1}reconcileCnt: ${playerInfo.reconcileCnt}\n`

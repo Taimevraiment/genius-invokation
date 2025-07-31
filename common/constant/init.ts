@@ -36,6 +36,7 @@ export const INIT_PLAYER: () => Player = () => ({
         talentTypeCnt: 0,
         usedCardIds: [],
         destroyedSupport: 0,
+        destroyedSummon: 0,
         oppoGetElDmgType: 0,
         discardCnt: 0,
         reconcileCnt: 0,

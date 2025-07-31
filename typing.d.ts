@@ -157,6 +157,7 @@ type GameInfo = {
     talentTypeCnt: number, // 初始牌堆天赋种类
     usedCardIds: number[], // 使用过的牌的id
     destroyedSupport: number, // 我方被弃置的支援牌数量
+    destroyedSummon: number, // 我方被弃置的召唤物数量
     oppoGetElDmgType: number, // 敌方受到元素伤害的种类(用位计数)
     discardCnt: number, // 每回合舍弃卡牌的数量
     reconcileCnt: number, // 每回合调和次数

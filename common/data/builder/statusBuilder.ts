@@ -10,7 +10,7 @@ import { BaseBuilder, VersionMap } from "./baseBuilder.js";
 
 type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-export type StatusBuilderHandleEvent = StatusHandleEvent & { cmds: CmdsGenerator };
+export type StatusBuilderHandleEvent = StatusHandleEvent & { cmds: CmdsGenerator, cmdsBefore: CmdsGenerator };
 
 export class GIStatus {
     id: number; // 唯一id
@@ -135,7 +135,8 @@ export class GIStatus {
         }
         this.handle = (status, event = {}) => {
             const cmds = new CmdsGenerator();
-            const cevent = { ...event, cmds };
+            const cmdsBefore = new CmdsGenerator();
+            const cevent = { ...event, cmds, cmdsBefore };
             const { reset = false } = cevent;
             if (reset) {
                 if (isReset) status.perCnt = pct;
@@ -146,6 +147,7 @@ export class GIStatus {
             const res: StatusHandleRes = {
                 ...handleRes,
                 cmds,
+                cmdsBefore,
                 triggers: isCdt(handleRes.triggers, convertToArray(handleRes.triggers) as Trigger[]),
                 exec: (eStatus, execEvent) => {
                     cmds.clear().addCmds(handleCmds);

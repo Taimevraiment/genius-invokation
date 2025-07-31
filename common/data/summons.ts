@@ -2,9 +2,9 @@
 import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
-import { STATUS_ICON } from "../constant/UIconst.js";
+import { ELEMENT_URL, STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
-import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { allHidxs, getBackHidxs, getDerivantParentId, getFrontHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -504,6 +504,18 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 },
             }
         }),
+
+    115143: () => new SummonBuilder('小貘').useCnt(3).icon(STATUS_ICON.Special)
+        .description('【结束阶段：】生成1张【crd115142】，将其置于我方牌组顶部。；[useCnt]')
+        .src('')
+        .handle(summon => ({
+            triggers: 'phase-end',
+            exec: execEvent => {
+                const { summon: smn = summon, cmds } = execEvent;
+                cmds.addCard(1, 115142, { scope: 1 });
+                smn.minusUseCnt();
+            },
+        })),
 
     116031: () => new SummonBuilder('岩脊').useCnt(2).damage(1).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/251c5e32d6cbdfb4c4d0e14e7088ab67_7008401766526335309.png'),
@@ -1032,6 +1044,19 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     303214: () => new SummonBuilder('雷箭丘丘人').from(332015).useCnt(2).damage(1).electro().description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
+
+    303245: (dmg: number = 0, useCnt: number = 0) =>
+        new SummonBuilder('「邪龙」').from(332051).useCnt(useCnt + 1).addition('effect', Math.min(5, dmg + 1)).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
+            .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]')
+            .src('')
+            .handle((summon, event) => ({
+                triggers: 'phase-end',
+                exec: execEvent => {
+                    const { summon: smn = summon, cmds } = execEvent;
+                    cmds.attack(smn.addition.effect, DAMAGE_TYPE.Pierce, { hidxs: getFrontHidx(event.eheros) });
+                    smn.minusUseCnt();
+                }
+            })),
 
 }
 

@@ -92,6 +92,7 @@ export type StatusHandleRes = {
     isSelf?: boolean,
     skill?: number,
     cmds?: CmdsGenerator,
+    cmdsBefore?: CmdsGenerator,
     summon?: (number | [number, ...any])[] | number,
     isInvalid?: boolean,
     onlyOne?: boolean,
@@ -186,7 +187,7 @@ const card311306sts = (name: string) => {
     return new StatusBuilder(name).heroStatus().icon(STATUS_ICON.AtkUp).roundCnt(1).useCnt(1).maxCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).type(ver => !ver.isOffline, STATUS_TYPE.Sign).from(311306)
         .description('本回合内，所附属角色下次造成的伤害额外+1。')
-        .handle((status) => ({ triggers: 'skill', addDmg: status.useCnt, exec: () => status.dispose() }));
+        .handle(status => ({ triggers: 'skill', addDmg: status.useCnt, exec: () => status.dispose() }));
 }
 
 const card332016sts = (element: ElementType) => {
@@ -1212,7 +1213,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         return { triggers: 'getdmg' }
     }),
 
-    114052: () => new StatusBuilder('奔潮引电').heroStatus().icon(STATUS_ICON.Special).useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
+    114052: () => new StatusBuilder('奔潮引电').heroStatus().icon(STATUS_ICON.Special)
+        .useCnt(2).roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Usage)
         .description('本回合内所附属的角色「普通攻击」少花费1个[无色元素骰]。；[useCnt]')
         .handle((status, event) => ({
             triggers: 'skilltype1',
@@ -1346,6 +1348,19 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 isAfterSkill: true,
                 exec: eStatus => eStatus?.minusUseCnt(),
             }
+        }),
+
+    114141: nightSoul({ isAccumate: false }),
+
+    114142: (isTalent: boolean = false) => new StatusBuilder('动能标示').combatStatus().icon('')
+        .useCnt(2 + +isTalent).type(STATUS_TYPE.AddDamage)
+        .description('【我方角色造成伤害时：】使该次伤害+2。如果【hro】处于【sts114141】，则改为消耗【hro】1点「夜魂值」。；[useCnt]')
+        .handle((status, event) => {
+            const { hasDmg, heros, cmds } = event;
+            if (!hasDmg) return;
+            const hero = getObjById(heros, getHidById(status.id));
+            if (hasObjById(hero?.heroStatus, 114141)) cmds.consumeNightSoul(hero!.id);
+            return { triggers: 'skill', addDmgCdt: 2, exec: () => { cmds.length == 0 && status.minusUseCnt() } }
         }),
 
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon(STATUS_ICON.Special)
@@ -1581,6 +1596,20 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     115135: () => hero1513sts(ELEMENT_TYPE.Pyro),
 
     115136: () => hero1513sts(ELEMENT_TYPE.Electro),
+
+    115141: () => new StatusBuilder('梦浮').heroStatus().icon('').useCnt(1).type(STATUS_TYPE.Attack)
+        .description('【我方宣布结束时：】如果所附属角色不是出战角色，则将所附属角色切换为出战角色，并造成1点风元素伤害。；[useCnt]')
+        .handle((_, event) => {
+            const { cmdsBefore, hidx = -1, heros = [] } = event;
+            if (heros[hidx]?.isFront) return;
+            cmdsBefore.switchTo(hidx);
+            return {
+                triggers: 'end-phase',
+                damage: 1,
+                element: DAMAGE_TYPE.Anemo,
+                exec: eStatus => { eStatus?.minusUseCnt() }
+            }
+        }),
 
     116011: () => new StatusBuilder('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
         .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；[useCnt]')
@@ -2737,6 +2766,20 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage).from(312035)
         .description('每层使所附属角色下次受到的伤害+1。（可叠加，没有上限）')
         .handle(status => ({ triggers: 'getdmg', getDmg: status.useCnt, exec: () => status.dispose() })),
+
+    301207: () => new StatusBuilder('谐律交响的前奏（生效中）').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(312039)
+        .description('角色使用技能时少花费1个元素骰。')
+        .handle((status, event) => ({
+            triggers: 'skill',
+            minusDiceSkill: { skill: [0, 0, 1] },
+            exec: () => { event.isMinusDiceSkill && status.dispose() },
+        })),
+
+    301208: () => new StatusBuilder('宗室面具（生效中）').heroStatus().icon(STATUS_ICON.Buff)
+        .roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.AddDamage).from(312037)
+        .description('本回合内，所附属角色造成的伤害+1。')
+        .handle(() => ({ addDmg: 1 })),
 
     301301: () => shieldHeroStatus('掘进的收获').from(313004),
 

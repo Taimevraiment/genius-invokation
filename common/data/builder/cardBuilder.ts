@@ -14,7 +14,7 @@ import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 
 export type CardBuilderHandleRes = Omit<CardHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-export type CardBuilderHandleEvent = CardHandleEvent & { cmds: CmdsGenerator, execmds: CmdsGenerator, cmdsBefore: CmdsGenerator };
+export type CardBuilderHandleEvent = CardHandleEvent & { cmds: CmdsGenerator, execmds: CmdsGenerator, cmdsBefore: CmdsGenerator, cmdsAfter: CmdsGenerator };
 
 export class GICard {
     id: number; // 唯一id
@@ -225,7 +225,8 @@ export class GICard {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();
             const cmdsBefore = new CmdsGenerator();
-            const cevent: CardBuilderHandleEvent = { ...event, cmds, execmds, cmdsBefore };
+            const cmdsAfter = new CmdsGenerator();
+            const cevent: CardBuilderHandleEvent = { ...event, cmds, execmds, cmdsBefore, cmdsAfter };
             const { reset = false } = cevent;
             if (reset) {
                 if (isResetPct) card.perCnt = pct;
@@ -238,6 +239,7 @@ export class GICard {
                 cmds,
                 execmds,
                 cmdsBefore,
+                cmdsAfter,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
             }
             return res;

@@ -26,7 +26,9 @@ import { newSupport } from '../../common/data/supports.js';
 import CmdsGenerator from '../../common/utils/cmdsGenerator.js';
 import {
     allHidxs, checkDices,
-    getAtkHidx, getBackHidxs, getHidById, getNearestHidx, getObjById, getObjIdxById,
+    getBackHidxs,
+    getFrontHidx,
+    getHidById, getNearestHidx, getObjById, getObjIdxById,
     getSortedDices,
     getTalentIdByHid, getVehicleIdByCid, hasObjById, heroToString, mergeWillHeals, playerToString, supportToString,
     versionWrap
@@ -1675,6 +1677,7 @@ export default class GeniusInvokationRoom {
                             isPreviewEnd = true;
                             break preview_end;
                         }
+                        if (hfield.type == CARD_TYPE.Equipment) fieldres.cmds?.clear();
                         const { isKilled, atriggers, etriggers } = calcAtk(oplayers, fieldres, isSts ? ['hero', 'combat'][group] + 'Status' : 'slot', hfield.id, cskid, isSelf, atkHidx);
                         if (isKilled) {
                             isPreviewEnd = true;
@@ -1683,17 +1686,6 @@ export default class GeniusInvokationRoom {
                         atrgs.forEach((at, ati) => at.push(...atriggers[ati]));
                         etrgs.forEach((et, eti) => et.push(...etriggers[eti]));
                     }
-                    // else {
-                    //     const { tasks: cmdtasks = [] } = this._doCmds(cpidx, fieldres.cmds,
-                    //         { players: oplayers, isExec: false, willSwitch, energyCnt, skid, sktype: skill?.type });
-                    //     const { isKilled, atriggers, etriggers } = calcTasks(cmdtasks, oplayers, cpidx);
-                    //     if (isKilled) {
-                    //         isPreviewEnd = true;
-                    //         break preview_end;
-                    //     }
-                    //     atrgs.forEach((at, ati) => at.push(...atriggers[ati]));
-                    //     etrgs.forEach((et, eti) => et.push(...etriggers[eti]));
-                    // }
                 }
             }
             return { atkStatus, isPreviewEnd, atrgs, etrgs }
@@ -2242,7 +2234,7 @@ export default class GeniusInvokationRoom {
             if (dmgedfhero.hp == 0) res.dmgElements[getDmgIdx] = dmgElement;
             return res;
         }
-        atkHidx ??= isSwitch > -1 ? isSwitch : getAtkHidx(aheros);
+        atkHidx ??= isSwitch > -1 ? isSwitch : getFrontHidx(aheros);
         const afhero = aheros[atkHidx];
         const atriggers: Trigger[][] = res.atriggers.map(() => []);
         const etriggers: Trigger[][] = res.etriggers.map(() => []);
@@ -3190,6 +3182,7 @@ export default class GeniusInvokationRoom {
             heros: player.heros,
             hero: player.heros[selectHeros?.[0] ?? player.hidx],
             combatStatus: player.combatStatus,
+            pile: player.pile,
             eheros: opponent.heros,
             eCombatStatus: opponent.combatStatus,
             dmgedHidx: opponent.hidx,
@@ -3295,7 +3288,7 @@ export default class GeniusInvokationRoom {
             });
             if (destroyedSupportCnt) this._doSupportDestroy(pidx, destroyedSupportCnt);
             this._updateSummon(pidx, this._getSummonById(cardres.summon), this.players, true, { isQuickAction, destroy: 1 });
-            this._updateSummon(pidx ^ 1, [], this.players, true, { isQuickAction, destroy: 1 });
+            this._updateSummon(pidx ^ 1, this._getSummonById(cardres.summonOppo), this.players, true, { isQuickAction, destroy: 1 });
             const stscmds = new CmdsGenerator()
                 .getStatus(cardres.status, { hidxs: cardres.hidxs ?? hidxs })
                 .getStatus(cardres.statusOppo, { hidxs: cardres.hidxs ?? opponent.hidx, isOppo: true });
@@ -3660,7 +3653,10 @@ export default class GeniusInvokationRoom {
      */
     private _doSummonDestroy(pidx: number, summon: Summon, options: { isExec?: boolean, supportCnt?: number[][], isQuickAction?: boolean } = {}) {
         const { isExec = true, supportCnt, isQuickAction } = options;
-        if (isExec) this._writeLog(`[${this.players[pidx].name}](${pidx})弃置召唤物[${summon.name}](${summon.entityId})`, 'system');
+        if (isExec) {
+            ++this.players[pidx].playerInfo.destroyedSummon;
+            this._writeLog(`[${this.players[pidx].name}](${pidx})弃置召唤物[${summon.name}](${summon.entityId})`, 'system');
+        }
         this._detectSummon(pidx, 'summon-destroy', { csummon: [summon], isExec, supportCnt, isQuickAction, isUnshift: true });
         this._detectSupport(pidx, 'summon-destroy', { isExec, supportCnt, isQuickAction });
         this._detectSupport(pidx ^ 1, 'summon-destroy', { isExec, supportCnt, isQuickAction });
@@ -4628,7 +4624,7 @@ export default class GeniusInvokationRoom {
                         }
                         if (isExec && !isOnlyExec) {
                             if (trigger == 'useReadySkill') {
-                                if (isExec) players[pidx].canAction = false;
+                                players[pidx].canAction = false;
                                 if (stsres.skill) stscmds.useSkill({ skillId: stsres.skill, isReadySkill: true });
                             }
                             const trgGetcard = ['drawcard', 'getcard'].includes(trigger) ? `[card(${hcard?.entityId ?? -1})]` : '';
@@ -4637,6 +4633,7 @@ export default class GeniusInvokationRoom {
                                     (stsres.damage || stsres.pdmg || stsres.heal)) ||
                                 stscmds.hasCmds('heal', 'revive', 'addMaxHp')
                             ) {
+                                this._doCmds(pidx, stsres.cmdsBefore);
                                 (isUnshift ? statusAtksPre : statusAtks).push({
                                     id: sts.id,
                                     name: sts.name + `${trgGetcard}`,
@@ -5014,6 +5011,7 @@ export default class GeniusInvokationRoom {
                                     = this._doCmds(pidx, smnexecres.cmds, {
                                         heal: isCdt(smn.shieldOrHeal > 0, smn.shieldOrHeal),
                                         damages,
+                                        hidxs: smnres?.hidxs,
                                         isSummon: smn.id,
                                         isUnshift: true,
                                     });
@@ -6391,8 +6389,9 @@ export default class GeniusInvokationRoom {
                     }
                 } else if (canSelectSummon != -1) {
                     for (let i = 0; i < players[+(canSelectSummon == pidx)].summons.length; ++i) {
-                        const { summonCnt, supportCnt } = this._checkCard(pidx, players, +cidx, { summonIdx: i });
+                        const { summonCnt, supportCnt, attackPreview } = this._checkCard(pidx, players, +cidx, { summonIdx: i });
                         previews.push({
+                            ...attackPreview,
                             ...preview,
                             isValid: diceValid,
                             summonIdx: i,
