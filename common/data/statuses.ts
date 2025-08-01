@@ -387,8 +387,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    170: () => new StatusBuilder('敏捷切换').combatStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
-        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332006)
+    170: () => new StatusBuilder('敏捷切换').combatStatus().icon(STATUS_ICON.Special)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
         .description('【我方下次执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。；[useCnt]')
         .handle((status, event) => {
             if (event.isQuickAction) return;
@@ -1352,14 +1352,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     114141: nightSoul({ isAccumate: false }),
 
-    114142: (isTalent: boolean = false) => new StatusBuilder('动能标示').combatStatus().icon('')
+    114142: (isTalent: boolean = false) => new StatusBuilder('动能标示').combatStatus().icon('tmp/UI_Gcg_Buff_Iansan_S')
         .useCnt(2 + +isTalent).type(STATUS_TYPE.AddDamage)
         .description('【我方角色造成伤害时：】使该次伤害+2。如果【hro】处于【sts114141】，则改为消耗【hro】1点「夜魂值」。；[useCnt]')
         .handle((status, event) => {
             const { hasDmg, heros, cmds } = event;
             if (!hasDmg) return;
             const hero = getObjById(heros, getHidById(status.id));
-            if (hasObjById(hero?.heroStatus, 114141)) cmds.consumeNightSoul(hero!.id);
+            if (hasObjById(hero?.heroStatus, 114141)) cmds.consumeNightSoul(hero!.hidx);
             return { triggers: 'skill', addDmgCdt: 2, exec: () => { cmds.length == 0 && status.minusUseCnt() } }
         }),
 
@@ -1579,14 +1579,20 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     115121: (cnt: number = 1) => shieldCombatStatus('凤缕护盾', cnt, MAX_USE_COUNT).icon('#')
         .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`),
 
-    115131: () => readySkillStatus('在罪之先', 15135),
+    115131: () => readySkillStatus('在罪之先', 15135, 0, event => {
+        const { heros = [], hidx = -1 } = event;
+        const sts115132 = getObjById(heros[hidx]?.heroStatus, 115132);
+        if (!sts115132 || sts115132.perCnt != -2) return;
+        if (sts115132.useCnt == 0) sts115132.dispose();
+        else sts115132.perCnt = -1;
+    }),
 
     115132: () => new StatusBuilder('变格').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
-        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).icon('#')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon('#')
         .description('如果此状态有2层，则消耗2层此状态，并且本角色下次【ski,1】将视为快速行动，并且此次【rsk15135】伤害+1。（可叠加，没有上限）')
         .handle((status, event) => {
-            if (status.useCnt < 2 || event.skid != 15135) return;
-            return { triggers: 'useReadySkill', addDmgCdt: 1 + +!!event.talent, exec: () => { status.minusUseCnt(2) } }
+            if (status.useCnt < 2 || event.source != 115131) return;
+            return { triggers: 'ready-skill', exec: () => { status.minusUseCnt(2); status.perCnt = -2; } }
         }),
 
     115133: () => hero1513sts(ELEMENT_TYPE.Cryo),
@@ -1597,7 +1603,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     115136: () => hero1513sts(ELEMENT_TYPE.Electro),
 
-    115141: () => new StatusBuilder('梦浮').heroStatus().icon('').useCnt(1).type(STATUS_TYPE.Attack)
+    115141: () => new StatusBuilder('梦浮').heroStatus().icon('tmp/UI_Gcg_Buff_Mizuki_S').useCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方宣布结束时：】如果所附属角色不是出战角色，则将所附属角色切换为出战角色，并造成1点风元素伤害。；[useCnt]')
         .handle((_, event) => {
             const { cmdsBefore, hidx = -1, heros = [] } = event;
@@ -2107,7 +2113,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     122041: () => new StatusBuilder('深噬之域').combatStatus().icon('ski,3').useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。', 'v5.0.0')
-        .addition('cost1', -1).addition('cost2', -1).addition('maxDice', 0).addition('maxDiceCnt', 0)
+        .addition('cost1', -1).addition('cost2', -1).addition('maxDice').addition('maxDiceCnt')
         .handle((status, event, ver) => {
             const { discards = [], hcard, heros, trigger, cmds } = event;
             const triggers: Trigger[] = ['discard', 'reconcile'];
@@ -2226,6 +2232,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('每层提供1点[护盾]，保护所附属角色。').type(STATUS_TYPE.Shield),
 
     123043: () => readySkillStatus('积蓄烈威', 23046),
+
+    123051: (cnt: number = 1) => new StatusBuilder('忿恨').heroStatus().icon('tmp/UI_Gcg_Buff_TheAbyssXiuhcoatl_S')
+        .useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
+        .description('每层使所附属角色造成的伤害+1。（包括[穿透伤害]，可叠加，没有上限）')
+        .handle((status, event) => {
+            const { sktype = SKILL_TYPE.Vehicle } = event;
+            if (sktype == SKILL_TYPE.Vehicle) return;
+            return { triggers: ['dmg', 'Pierce-dmg'], addDmgCdt: 1, exec: () => status.minusUseCnt() }
+        }),
 
     124011: () => readySkillStatus('猜拳三连击·剪刀', 24015),
 
@@ -2574,6 +2589,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     216116: () => hero1611sts2(ELEMENT_TYPE.Cryo),
 
     216117: () => hero1611sts2(ELEMENT_TYPE.Electro),
+
+    223052: () => new StatusBuilder('罔极盛怒（生效中）').heroStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('所附属角色下次造成的伤害+1。')
+        .handle((status, event) => {
+            const { sktype = SKILL_TYPE.Vehicle } = event;
+            if (sktype == SKILL_TYPE.Vehicle) return;
+            return { triggers: 'dmg', addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
+        }),
 
     300001: () => new StatusBuilder('旧时庭园（生效中）').combatStatus().icon(STATUS_ICON.Buff).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(330001)

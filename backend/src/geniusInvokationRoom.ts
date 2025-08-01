@@ -235,7 +235,7 @@ export default class GeniusInvokationRoom {
         if (isShowRoomInfo) log += this.roomInfoLog;
         const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
-        fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(this.recordData)), err => err && console.error('err:', err));
+        if (!this.isDev) fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(this.recordData)), err => err && console.error('err:', err));
         http.get(`${koishiUrl}?message=${isError ? '7szh报错了' : `7szh有日志被发送了:${info}`}${this.isDev ? '(开发版)' : ''}`, { headers: { flag: secretKey } });
     }
     /**
@@ -1016,6 +1016,7 @@ export default class GeniusInvokationRoom {
         this.taskQueue.addTask('switchHero', [[async () => {
             const player = this.players[pidx];
             this._detectSkill(pidx, 'switch-to', { hidxs: hidx, isQuickAction });
+            this._detectSkill(pidx, 'switch', { isQuickAction });
             for (let i = 0; i < player.heros.length; ++i) {
                 const chi = (hidx + i) % player.heros.length;
                 const triggers: Trigger[] = ['switch'];
@@ -3219,7 +3220,6 @@ export default class GeniusInvokationRoom {
             if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
             if (currCard.hasSubtype(CARD_SUBTYPE.Vehicle)) ++player.playerInfo.usedVehcileCnt;
             this._detectSkill(pidx, 'card', { card: currCard });
-            // await this._execTask();
             const { minusDiceCard, isFallAtk: ifa, isInvalid: inv, isQuickAction: iqa } = this._detectSlotAndStatus(pidx, 'card', {
                 types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.NonEvent],
                 hidxs: allHidxs(player.heros),
@@ -3229,11 +3229,9 @@ export default class GeniusInvokationRoom {
             });
             isInvalid = inv;
             isQuickAction || iqa;
-            // await this._execTask();
             this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction });
-            // await this._execTask();
+            this._detectSlotAndStatus(pidx ^ 1, 'ecard', { types: STATUS_TYPE.Usage, hcard: currCard, isQuickAction });
             this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction });
-            // await this._execTask();
             if (isAction) player.isFallAtk = ifa;
             const { usedCardIds } = player.playerInfo;
             usedCardIds.push(currCard.id);
@@ -3249,7 +3247,7 @@ export default class GeniusInvokationRoom {
             if (currCard.type != CARD_TYPE.Equipment) cardres.exec?.();
             let destroyedSupportCnt = oSupportCnt - player.supports.length;
             this._doCmds(pidx, cardres.cmdsBefore, {
-                withCard: currCard,
+                withCard: isCdt(!getCard, currCard),
                 isAction: !isQuickAction,
                 hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
                 source: currCard.id,
@@ -3321,6 +3319,13 @@ export default class GeniusInvokationRoom {
                 }
                 if (canAction) await this._execTask();
             }
+            this._doCmds(pidx, cardres.cmdsAfter, {
+                withCard: isCdt(!getCard, currCard),
+                isAction: !isQuickAction,
+                hidxs: isCdt(currCard.canSelectHero > 0, hidxs),
+                source: currCard.id,
+            });
+            await this._execTask();
             if (!getCard && !pickCard && !isUseSkill) {
                 if (isAction) this._changeTurn(pidx, isQuickAction, 'useCard');
                 else this._doActionStart(pidx);
@@ -5717,26 +5722,55 @@ export default class GeniusInvokationRoom {
                     this.emit(cmd, pidx, { notPreview: true, notUpdate: true, socket });
                 }]]);
             } else if (cmd == 'getStatus') {
+                const curheros = isOppo ? ceheros : cheros;
+                const hst: Status[][] = new Array(curheros.length).fill(0).map(() => []);
+                const cst: Status[] = [];
                 if (isOppo) {
                     getsts.forEach(sts => {
                         if (sts.group == STATUS_GROUP.heroStatus) {
                             if (!heroStatusOppo) heroStatusOppo = new Array(ceheros.length).fill(0).map(() => []);
-                            (ohidxs ?? [ehidx]).forEach(fhidx => heroStatusOppo![fhidx].push(sts));
+                            (ohidxs ?? [ehidx]).forEach(fhidx => {
+                                heroStatusOppo![fhidx].push(sts);
+                                hst[fhidx].push(sts);
+                            });
                         } else {
                             if (!combatStatusOppo) combatStatusOppo = [];
                             combatStatusOppo.push(sts);
+                            cst.push(sts);
                         }
                     });
                 } else {
                     getsts.forEach(sts => {
                         if (sts.group == STATUS_GROUP.heroStatus) {
                             if (!heroStatus) heroStatus = new Array(cheros.length).fill(0).map(() => []);
-                            (ohidxs ?? [ahidx]).forEach(fhidx => heroStatus?.[fhidx].push(sts));
+                            (ohidxs ?? [ahidx]).forEach(fhidx => {
+                                heroStatus?.[fhidx].push(sts);
+                                hst[fhidx].push(sts);
+                            });
                         } else {
                             if (!combatStatus) combatStatus = [];
                             combatStatus.push(sts);
+                            cst.push(sts);
                         }
-                    })
+                    });
+                }
+                if (!isNotEffectStatus) {
+                    const cpidx = pidx ^ +!!isOppo;
+                    const cplayer = players[cpidx];
+                    for (let dhidx = 0; dhidx < curheros.length; ++dhidx) {
+                        const fhidx = (cplayer.hidx + dhidx) % curheros.length;
+                        const fhero = curheros[fhidx];
+                        if (hst[fhidx].length) {
+                            if (fhero.hp <= 0 && !hasObjById(hst[fhidx], 303300) && hst[fhidx].some(s => s.hasType(STATUS_TYPE.NonDefeat))) {
+                                hst[(fhidx + 1) % curheros.length].push(...hst[fhidx]);
+                            } else {
+                                this._updateStatus(cpidx, hst[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+                            }
+                        }
+                    }
+                    if (cst.length) {
+                        this._updateStatus(cpidx, cst, cplayer.combatStatus, players, { hidx: isOppo ? ehidx : ahidx, isExec, supportCnt, isQuickAction: !isAction });
+                    }
                 }
             } else if (['heal', 'revive', 'addMaxHp'].includes(cmd)) {
                 if (mode != willHeals0.mode) {
@@ -6147,36 +6181,36 @@ export default class GeniusInvokationRoom {
                 attackPreview.willAttachs.forEach((_, wai, waa) => waa[wai].push(...taskwa[wai]));
             }
         }
-        if (!isNotEffectStatus) {
-            for (let dhidx = 0; dhidx < cheros.length; ++dhidx) {
-                const fhidx = (player.hidx + dhidx) % cheros.length;
-                const fhero = cheros[fhidx];
-                if (heroStatus && heroStatus[fhidx].length) {
-                    if (fhero.hp <= 0 && !hasObjById(heroStatus[fhidx], 303300) && heroStatus[fhidx].some(s => s.hasType(STATUS_TYPE.NonDefeat))) {
-                        heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
-                    } else {
-                        this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
-                    }
-                }
-            }
-            if (combatStatus) {
-                this._updateStatus(pidx, combatStatus, player.combatStatus, players,
-                    { hidx: ahidx, isExec, supportCnt, isQuickAction: !isAction });
-            }
-            for (let dhidx = 0; dhidx < ceheros.length; ++dhidx) {
-                const fhidx = (opponent.hidx + dhidx) % ceheros.length;
-                const fhero = ceheros[fhidx];
-                if (heroStatusOppo && heroStatusOppo[fhidx].length) {
-                    if (fhero.hp <= 0) heroStatusOppo[(fhidx + 1) % ceheros.length].push(...heroStatusOppo[fhidx]);
-                    else this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, players,
-                        { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
-                }
-            }
-            if (combatStatusOppo) {
-                this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, players,
-                    { hidx: ehidx, isExec, supportCnt, isQuickAction: !isAction });
-            }
-        }
+        // if (!isNotEffectStatus) {
+        //     for (let dhidx = 0; dhidx < cheros.length; ++dhidx) {
+        //         const fhidx = (player.hidx + dhidx) % cheros.length;
+        //         const fhero = cheros[fhidx];
+        //         if (heroStatus && heroStatus[fhidx].length) {
+        //             if (fhero.hp <= 0 && !hasObjById(heroStatus[fhidx], 303300) && heroStatus[fhidx].some(s => s.hasType(STATUS_TYPE.NonDefeat))) {
+        //                 heroStatus[(fhidx + 1) % cheros.length].push(...heroStatus[fhidx]);
+        //             } else {
+        //                 this._updateStatus(pidx, heroStatus[fhidx], fhero.heroStatus, players, { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+        //             }
+        //         }
+        //     }
+        //     if (combatStatus) {
+        //         this._updateStatus(pidx, combatStatus, player.combatStatus, players,
+        //             { hidx: ahidx, isExec, supportCnt, isQuickAction: !isAction });
+        //     }
+        //     for (let dhidx = 0; dhidx < ceheros.length; ++dhidx) {
+        //         const fhidx = (opponent.hidx + dhidx) % ceheros.length;
+        //         const fhero = ceheros[fhidx];
+        //         if (heroStatusOppo && heroStatusOppo[fhidx].length) {
+        //             if (fhero.hp <= 0) heroStatusOppo[(fhidx + 1) % ceheros.length].push(...heroStatusOppo[fhidx]);
+        //             else this._updateStatus(pidx ^ 1, heroStatusOppo[fhidx], fhero.heroStatus, players,
+        //                 { hidx: fhidx, isExec, supportCnt, isQuickAction: !isAction });
+        //         }
+        //     }
+        //     if (combatStatusOppo) {
+        //         this._updateStatus(pidx ^ 1, combatStatusOppo, opponent.combatStatus, players,
+        //             { hidx: ehidx, isExec, supportCnt, isQuickAction: !isAction });
+        //     }
+        // }
         return {
             cmds, heros: cheros, eheros: ceheros, willHeals, isSwitch, isSwitchOppo, willSwitch, supportCnt, atriggers, etriggers,
             elTips, willAttachs, bDmgElements, aWillDamages, bWillDamages, attackPreview, atkedIdxs, tasks, damageVOs,

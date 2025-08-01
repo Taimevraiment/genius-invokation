@@ -1,6 +1,6 @@
 
 import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { ELEMENT_URL, STATUS_ICON } from "../constant/UIconst.js";
 import CmdsGenerator from "../utils/cmdsGenerator.js";
@@ -507,7 +507,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     115143: () => new SummonBuilder('小貘').useCnt(3).icon(STATUS_ICON.Special)
         .description('【结束阶段：】生成1张【crd115142】，将其置于我方牌组顶部。；[useCnt]')
-        .src('')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Mizuki.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: execEvent => {
@@ -989,11 +989,12 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     127025: () => crd12702summon(),
 
-    301028: () => new SummonBuilder('积木小人').from(301033).useCnt(2).damage(1).physical().description('{defaultAtk。}')
+    301028: () => new SummonBuilder('积木小人').from(301033).useCnt(2).damage(1).physical()
+        .description('{defaultAtk。}').tag(SUMMON_TAG.Simulanka)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/80704cf14d47841ff54dfd658bdffba4_5364615516522900370.png'),
 
     301029: () => new SummonBuilder('折纸飞鼠').from(301034).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Buff)
-        .description(`【结束阶段：】获得{effect}层【sts169】。；[useCnt]`)
+        .description(`【结束阶段：】获得{effect}层【sts169】。；[useCnt]`).tag(SUMMON_TAG.Simulanka)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b1d95145d18301e8c5d22b8f314d95b3_4086315130176794183.png')
         .handle(summon => ({
             triggers: 'phase-end',
@@ -1005,7 +1006,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         })),
 
     301030: () => new SummonBuilder('跳跳纸蛙').from(301035).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Special)
-        .description(`【结束阶段：】抓{effect}张牌。；[useCnt]`)
+        .description(`【结束阶段：】抓{effect}张牌。；[useCnt]`).tag(SUMMON_TAG.Simulanka)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/40278ec42e615000753d766e5e6ddf22_1265067356573715766.png')
         .handle(summon => ({
             triggers: 'phase-end',
@@ -1016,7 +1017,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    301031: () => new SummonBuilder('折纸胖胖鼠').from(301036).useCnt(1).heal(2)
+    301031: () => new SummonBuilder('折纸胖胖鼠').from(301036).useCnt(1).heal(2).tag(SUMMON_TAG.Simulanka)
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle((summon, event) => {
@@ -1047,7 +1048,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     303245: (dmg: number = 0, useCnt: number = 0) =>
         new SummonBuilder('「邪龙」').from(332051).useCnt(useCnt + 1).addition('effect', Math.min(5, dmg + 1)).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
-            .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]')
+            .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]').tag(SUMMON_TAG.Simulanka)
             .src('')
             .handle((summon, event) => ({
                 triggers: 'phase-end',

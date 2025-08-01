@@ -22,7 +22,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1101: () => new HeroBuilder(1).name('甘雨').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').liyue().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/195563531/e5c7d702f8033c4361f3b25a7f0b8b30_7432225060782505988.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/a8c456eaabf9469d200b01e0a2f49bdd.png')
-        .normalSkill(new NormalSkillBuilder('流天射术'))
+        .normalSkill('流天射术')
         .skills(
             new SkillBuilder('山泽麟迹').description('{dealDmg}，生成【sts111012】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f8/0pge9o51iepqfdd3n8zu9uxfmo08t4u.png',
@@ -44,7 +44,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1102: () => new HeroBuilder(2).name('迪奥娜').offline('v2').mondstadt().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
-        .normalSkill(new NormalSkillBuilder('猎人射术'))
+        .normalSkill('猎人射术')
         .skills(
             new SkillBuilder('猫爪冻冻').description('{dealDmg}，生成【sts111021】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1e/293bqkk7gcer933p14viqh445sdwqzf.png',
@@ -59,7 +59,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1103: () => new HeroBuilder(3).name('凯亚').offline('v2').mondstadt().cryo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/161007a1aef385a3e9f4566702afef0b_7807393116480739426.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/4c4e0c95e68c8272388f781f38e2f410.png')
-        .normalSkill(new NormalSkillBuilder('仪典剑术'))
+        .normalSkill('仪典剑术')
         .skills(
             new SkillBuilder('霜袭').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f6/bsd6rp5bwuwttd0pyo0ysn1dn39nesz.png',
@@ -74,7 +74,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1104: () => new HeroBuilder(4).name('重云').offline('v1').liyue().cryo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5192016de21d9f10eb851387bdf2ef39_3201745536478119133.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c369d7851e6a8bf25acf7c515fb62b10.png')
-        .normalSkill(new NormalSkillBuilder('灭邪四式'))
+        .normalSkill('灭邪四式')
         .skills(
             new SkillBuilder('重华叠霜').description('{dealDmg}，生成【sts111041】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/95/l37dvsmjc6w2vpeue8xlpasuxwvdqga.png',
@@ -89,7 +89,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1105: () => new HeroBuilder(5).name('神里绫华').offline('v1').inazuma().cryo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/755cad41d2f5d2cc97e7917ab53abd6a_8806486016418846297.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/ede96c5aba784f50bc86dc66e5b16b12.png')
-        .normalSkill(new NormalSkillBuilder('神里流·倾'))
+        .normalSkill('神里流·倾')
         .skills(
             new SkillBuilder('神里流·冰华').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/2/2b/loq6n32a0wpbs8cu4vji5iiyr5pxsui.png',
@@ -111,7 +111,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1106: () => new HeroBuilder(6).name('优菈').since('v3.5.0').offline('v2').mondstadt().cryo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/4e77b64507209b6abb78b60b9f207c29_5483057583233196198.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/a3a5645e234da6457e28033a7418f63a.png')
-        .normalSkill(new NormalSkillBuilder('西风剑术·宗室'))
+        .normalSkill('西风剑术·宗室')
         .skills(
             new SkillBuilder('冰潮的涡旋').description('{dealDmg}，如果角色未附属【sts111061】，则使其附属【sts111061】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8a/q921jjp73rov2uov6hzuhh1ncxzluew.png',
@@ -129,7 +129,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1107: () => new HeroBuilder(7).name('申鹤').since('v3.7.0').liyue().cryo().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/40d8984c2bd2fda810f0170394ac2729_1971286688556670312.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/6d96a0d3974c54a772259e72f9335ee4.png')
-        .normalSkill(new NormalSkillBuilder('踏辰摄斗'))
+        .normalSkill('踏辰摄斗')
         .skills(
             new SkillBuilder('仰灵威召将役咒').description('{dealDmg}，生成【sts111071】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/73/7826w7dfmnl3bypl1liwuqcu3907s7l.png',
@@ -144,7 +144,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1108: () => new HeroBuilder(8).name('七七').since('v4.0.0').liyue().cryo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png')
-        .normalSkill(new NormalSkillBuilder('云来古剑法'))
+        .normalSkill('云来古剑法')
         .skills(
             new SkillBuilder('仙法·寒病鬼差').description('召唤【smn111081】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/26/jd1wryrgs25urbr57sq2xnqd4ftpziw.png',
@@ -168,7 +168,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1109: () => new HeroBuilder(279).name('莱依拉').since('v4.3.0').sumeru().cryo().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/94b1677048ddaa84ab735bb8f90c209d_3451890112016676238.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/8f522e8496dfdb2636a6eb273fa153b7.png')
-        .normalSkill(new NormalSkillBuilder('熠辉轨度剑'))
+        .normalSkill('熠辉轨度剑')
         .skills(
             new SkillBuilder('垂裳端凝之夜').description('生成【sts111091】和【sts111092】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f4992b1b1ccc7488e72d044a689add90.png',
@@ -183,7 +183,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1110: () => new HeroBuilder(334).name('夏洛蒂').since('v4.5.0').fontaine(HERO_TAG.ArkhePneuma).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/0bad00e61b01e543de83347130cab711_7623245668285687441.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f8260dca225e3d4def208ce068673d7c.png')
-        .normalSkill(new NormalSkillBuilder('冷色摄影律'))
+        .normalSkill('冷色摄影律')
         .skills(
             new SkillBuilder('取景·冰点构图法').description('{dealDmg}，目标角色附属【sts111101】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/59/dzffxm3w1c8nanj1jt7vwoafxvetdbm.png',
@@ -198,7 +198,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1111: () => new HeroBuilder(363).name('莱欧斯利').since('v4.7.0').fontaine(HERO_TAG.ArkheOusia).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/064e881b99d30a1ce455d16a11768a24_8173906534678189661.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a9641995fd67126ff2b1e0d0294db57.png')
-        .normalSkill(new NormalSkillBuilder('迅烈倾霜拳'))
+        .normalSkill('迅烈倾霜拳')
         .skills(
             new SkillBuilder('冰牙突驰').description('{dealDmg}，本角色附属【sts111111】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/682e824a7cf31c433eabdf8f101592b1.png',
@@ -223,7 +223,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1112: () => new HeroBuilder(407).name('菲米尼').since('v5.0.0').fontaine(HERO_TAG.ArkhePneuma).fatui().cryo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/edc282bd8955faa88895b23c4061a2f5_7931855952099336084.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/4c9e507d20691ab1f31c20ba0003b9a9.png')
-        .normalSkill(new NormalSkillBuilder('洑流剑'))
+        .normalSkill('洑流剑')
         .skills(
             new SkillBuilder('浮冰增压').description('{dealDmg}，若角色未附属【sts111121】，则使其附属【sts111121】。')
                 .src('https://patchwiki.biligame.com/images/ys/d/d8/4w9vt1jcc6qhbza7awafyd70sxxs74l.png',
@@ -241,7 +241,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1113: () => new HeroBuilder(432).name('罗莎莉亚').since('v5.2.0').mondstadt().cryo().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/4d0f8a88e70da601b334197a6f76c08f_4323853645135590656.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u0263g/d7c932b74ce84dc5fec8c91155dca4b0.png')
-        .normalSkill(new NormalSkillBuilder('教会枪术'))
+        .normalSkill('教会枪术')
         .skills(
             new SkillBuilder('噬罪的告解').description('{dealDmg}，生成1层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）')
                 .description('{dealDmg}，生成2层【sts111131】。（触发【sts111131】的效果时，会生成【sts111133】。）', 'v5.3.0')
@@ -257,14 +257,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1114: () => new HeroBuilder(477).name('茜特菈莉').since('v5.7.0').natlan().cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/1328319efbaf428574bec761c1cfe636_8215594796556604414.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6851f3bc/c14672813537ec7f5a9b7455e0ab08c4.png')
-        .normalSkill(new NormalSkillBuilder('宿灵捕影'))
+        .normalSkill('宿灵捕影')
         .skills(
             new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点「夜魂值」。生成1点【sts111142】和【sts111143】。（角色进入【sts111141】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/c/c9/82anvuwlko9jlztsdevhmg9r0hik446.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b1d0e25e76b566167390330c5effc80e_4161361711767872548.png')
                 .elemental().damage(2).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
-                    cmds.getNightSoul(), {
-                        statusPre: 111141,
+                    cmds.getStatus(111141).getNightSoul(), {
                         status: [111142, 111143],
                         isForbidden: hasObjById(heroStatus, 111141),
                     })),
@@ -288,7 +287,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1201: () => new HeroBuilder(9).name('芭芭拉').offline('v1').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e92854385a3584dbbbd087ee5c49c69d.png')
-        .normalSkill(new NormalSkillBuilder('水之浅唱'))
+        .normalSkill('水之浅唱')
         .skills(
             new SkillBuilder('演唱，开始♪').description('{dealDmg}，召唤【smn112011】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3d/dhyj1p18ghyyewzm8mrun808th2ula6.png',
@@ -303,7 +302,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1202: () => new HeroBuilder(10).name('行秋').offline('v2').liyue().hydro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e522e3d11a6de75d38264655a531adf2_137376333068857031.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/dcec68115a5ccddf72741a1d1cac0e0e.png')
-        .normalSkill(new NormalSkillBuilder('古华剑法'))
+        .normalSkill('古华剑法')
         .skills(
             new SkillBuilder('画雨笼山').description('{dealDmg}，本角色[附着水元素]，生成【sts112021】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/9f/n2lo8l7ov8w0bx2jwh5qcvmmflm8wbs.png',
@@ -318,7 +317,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1203: () => new HeroBuilder(11).name('莫娜').offline('v1').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/b48dbc3857d34dac326ae26c8c6cf779_954386122796941241.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0962d5ea36a7216959bd0becb32e8761.png')
-        .normalSkill(new NormalSkillBuilder('因果点破'))
+        .normalSkill('因果点破')
         .skills(
             new SkillBuilder('水中幻愿').description('{dealDmg}，召唤【smn112031】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/41/fbfrg3ytuk388anpxvam5c28nf3n575.png',
@@ -337,7 +336,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1204: () => new HeroBuilder(12).name('达达利亚').since('v3.7.0').fatui().hydro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a892e95a4bfde50980ebda3eb93e0ea3_7272571451164412234.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/013727346ac991708abee93c3dca762a.png')
-        .normalSkill(new NormalSkillBuilder('断雨'))
+        .normalSkill('断雨')
         .skills(
             new SkillBuilder('魔王武装·狂澜').description('切换为【sts112042】，然后{dealDmg}，并使目标角色附属【sts112043】。')
                 .description('切换为【sts112042】，然后{dealDmg}。', 'v4.1.0')
@@ -370,7 +369,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1205: () => new HeroBuilder(13).name('珊瑚宫心海').since('v3.5.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').inazuma().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/89d5a757e494bded4020080c075bf32e_3429989759479851369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a3d326e3d228b0a9413cc26893d20c60.png')
-        .normalSkill(new NormalSkillBuilder('水有常形'))
+        .normalSkill('水有常形')
         .skills(
             new SkillBuilder('海月之誓').description('本角色[附着水元素]，召唤【smn112051】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/4a/3xnadr88l6sbo4vimaz67889y77nfz5.png',
@@ -397,7 +396,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1206: () => new HeroBuilder(14).name('神里绫人').since('v3.6.0').inazuma().hydro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/8abc91faf473b3d11fb53db32862737a_4252453982763739636.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/774d77ccc6fe33be0c5953238090d926.png')
-        .normalSkill(new NormalSkillBuilder('神里流·转'))
+        .normalSkill('神里流·转')
         .skills(
             new SkillBuilder('神里流·镜花').description('{dealDmg}，本角色附属【sts112061】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/5d/15a6f0hbhixe9lsimlem2brt4lmm4tg.png',
@@ -412,7 +411,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1207: () => new HeroBuilder(15).name('坎蒂丝').since('v3.8.0').offline('v2').maxHp(11).maxHp(10, 'v5.7.0', 'v2').sumeru().hydro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/62c7b1917c4d60c69ca5ef0f011ab8f7_6753229827849116335.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6dcba2a54e7f7f1df7951987eeed39f1.png')
-        .normalSkill(new NormalSkillBuilder('流耀枪术·守势'))
+        .normalSkill('流耀枪术·守势')
         .skills(
             new SkillBuilder('圣仪·苍鹭庇卫').description('本角色附属【sts112071】并[准备技能]：【rsk12074】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b0/ay6ytf53eoh7q26tim9feavkmui7m67.png',
@@ -427,7 +426,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1208: () => new HeroBuilder(16).name('妮露').since('v4.2.0').sumeru().hydro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/c204ab1e33aa03f8b8936c5730408063_855558974512689147.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1bd791ccee166f25f6c9526fa30628af.png')
-        .normalSkill(new NormalSkillBuilder('弦月舞步'))
+        .normalSkill('弦月舞步')
         .skills(
             new SkillBuilder('七域舞步').description('{dealDmg}，如果队伍中包含‹2水元素角色›和‹7草元素角色›且不包含其他元素的角色，就生成【sts112081】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/70/eou9puc088y2tptuyz5obaecxu4mlwe.png',
@@ -451,7 +450,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1209: () => new HeroBuilder(280).name('夜兰').since('v4.3.0').liyue().hydro().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/5e7cb3adbfd464b00dbc707f442fe96d_6990020566246221581.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/7c33c2830e1d5dba89d671e18b507f23.png')
-        .normalSkill(new NormalSkillBuilder('潜形隐曜弓'))
+        .normalSkill('潜形隐曜弓')
         .skills(
             new SkillBuilder('萦络纵命索').description('{dealDmg}，此角色的【sts112091】层数+2。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/3fdd9553568d44d74d9719f3231b6a8d.png',
@@ -470,7 +469,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1210: () => new HeroBuilder(335).name('那维莱特').since('v4.5.0').maxHp(11).maxHp(10, 'v5.7.0').fontaine(HERO_TAG.ArkhePneuma).hydro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/86e0474f40841fbc5faff7870fe9cd0c_8511334021456599978.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/eac3491b067897444fbedb6a9a3e58ad.png')
-        .normalSkill(new NormalSkillBuilder('如水从平'))
+        .normalSkill('如水从平')
         .skills(
             new SkillBuilder('泪水啊，我必偿还').description('{dealDmg}，角色附属【sts112101】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/78/l63dicjkhcq42evmggc34tdr97rsc29.png',
@@ -509,7 +508,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1213: () => new HeroBuilder(433).name('希格雯').since('v5.2.0').maxHp(12).maxHp(10, 'v5.5.0').fontaine(HERO_TAG.ArkheOusia).hydro().bow()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u0263g/8abf0e180b4dad16808966a1995ab08e.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u0263g/2576f665c6de5e7cc3c16ce1773f90e8.png')
-        .normalSkill(new NormalSkillBuilder('靶向治疗'))
+        .normalSkill('靶向治疗')
         .skills(
             new SkillBuilder('弹跳水疗法').description('生成1张【crd112131】，将其置于我方牌库顶部第3张牌的位置，本角色附属3层【sts122】。（触发【crd112131】的效果后，会生成【crd112132】并置入对方牌库\\；触发【crd112132】的效果后，会生成【crd112133】并置入我方牌库）')
                 .src('https://patchwiki.biligame.com/images/ys/c/cb/ds8xetx81vimcqf1iplwz39bcocnaom.png',
@@ -549,15 +548,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1214: () => new HeroBuilder(444).name('玛拉妮').since('v5.3.0').natlan().hydro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/1088c1bedbeeba3217e8ae968bad7191_4305921354282696376.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u502gh/751d43f3f0f8c0c7ff15116b7a6286c8.png')
-        .normalSkill(new NormalSkillBuilder('降温处理'))
+        .normalSkill('降温处理')
         .skills(
             new SkillBuilder('踏鲨破浪').description('自身附属【crd112142】，然后进入【sts112141】，并获得2点「夜魂值」。（角色进入【sts112141】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/c/cf/6st36uogdsny0hmvb5j4uqh1i9lj27n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/c0769da88723a8460722bf3f9b45a36d_6871593320341772759.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
-                    cmds.getNightSoul(2), {
+                    cmds.getStatus(112141).getNightSoul(2), {
                         equip: 112142,
-                        statusPre: 112141,
                         isForbidden: hasObjById(heroStatus, 112141)
                     })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
@@ -569,7 +567,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1301: () => new HeroBuilder(17).name('迪卢克').offline('v1').mondstadt().pyro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/62a4fe60bee58508b5cb8ea1379bc975_5924535359245042441.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/844c962c95ae1dfe1b3b14cafdb277c3.png')
-        .normalSkill(new NormalSkillBuilder('淬炼之剑'))
+        .normalSkill('淬炼之剑')
         .skills(
             new SkillBuilder('逆焰之刃').description('{dealDmg}。每回合第三次使用本技能时，伤害+2。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ef/e4f6sb7ammsholnhufv95kmtfozj9fs.png',
@@ -584,7 +582,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1302: () => new HeroBuilder(18).name('香菱').offline('v1').liyue().pyro().polearm()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/db00cd121173cb6fcfefcd2269fffe8d_3134519584249287466.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1606f568f0bf22d9e9a1758a5f599643.png')
-        .normalSkill(new NormalSkillBuilder('白案功夫'))
+        .normalSkill('白案功夫')
         .skills(
             new SkillBuilder('锅巴出击').description('召唤【smn113021】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e0/ioytpg3b208mckx76izeidcojyybs0g.png',
@@ -599,7 +597,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1303: () => new HeroBuilder(19).name('班尼特').mondstadt().pyro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/d89f82644792213864d7882f1e6a6d57_6202328605123550683.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f16f7127bb6cad2295ff249d3414b497.png')
-        .normalSkill(new NormalSkillBuilder('好运剑'))
+        .normalSkill('好运剑')
         .skills(
             new SkillBuilder('热情过载').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/9/94/n851q7f1jehvs60c7lywx72vz6thjyi.png',
@@ -614,7 +612,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').offline('v2').mondstadt().pyro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/915473ac6c13d0bea16d141adca38359_823004675460920277.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6aedca19a0357e653046e151d4796835.png')
-        .normalSkill(new NormalSkillBuilder('神射手'))
+        .normalSkill('神射手')
         .skills(
             new SkillBuilder('爆炸玩偶').description('召唤【smn113041】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/47/52p9ytkmov9g5ms8mzzovuc4tzya3nl.png',
@@ -629,7 +627,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1305: () => new HeroBuilder(21).name('宵宫').inazuma().pyro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0ab761b86c16f0c1f8088132e488d641_2788225354118870949.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6230c2cdf9f915b6297d0782e6510ad.png')
-        .normalSkill(new NormalSkillBuilder('烟火打扬'))
+        .normalSkill('烟火打扬')
         .skills(
             new SkillBuilder('焰硝庭火舞').description('本角色附属【sts113051】。（此技能不产生[充能]）')
                 .src('https://patchwiki.biligame.com/images/ys/4/4d/nxz4yj425tcxv3bevn05eu33wrqv2jr.png',
@@ -645,7 +643,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1306: () => new HeroBuilder(22).name('可莉').since('v3.4.0').mondstadt().pyro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/69fb352f7c86836d42648a2bd9c61773_8899766719245799680.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e5f16924297448c8ac7d582da6f4fe34.png')
-        .normalSkill(new NormalSkillBuilder('砰砰'))
+        .normalSkill('砰砰')
         .skills(
             new SkillBuilder('蹦蹦炸弹').description('{dealDmg}，本角色附属【sts113061】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/99/eqni0xudmuxvbflx6kviz8l793fju23.png',
@@ -660,7 +658,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1307: () => new HeroBuilder(23).name('胡桃').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').liyue().pyro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fb95dbcb2f4ad804f1c3bbe767c3595e_5336167659518462076.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/ada775c7d535074ed9b2b77ec3070978.png')
-        .normalSkill(new NormalSkillBuilder('往生秘传枪法'))
+        .normalSkill('往生秘传枪法')
         .skills(
             new SkillBuilder('蝶引来生').description('本角色附属【sts113071】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f3/0g43qqxknh3k0v6j7b6q4u6jl5hfbee.png',
@@ -679,7 +677,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1308: () => new HeroBuilder(24).name('烟绯').since('v3.8.0').liyue().pyro().catalyst()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/df1805ae68d4dee99369058360f397cd_6712537786885000576.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c3cba1bf2d63f748a32392d259264ccc.png')
-        .normalSkill(new NormalSkillBuilder('火漆印制'))
+        .normalSkill('火漆印制')
         .skills(
             new SkillBuilder('丹书立约').description('{dealDmg}，本角色附属【sts113081】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/4d/c4zvyjyfmjxif0axdrokruczxky5dc7.png',
@@ -694,7 +692,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1309: () => new HeroBuilder(25).name('迪希雅').since('v4.1.0').sumeru().eremite().pyro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/9865ac83f483b177c63e99360305dc28_7940275616970367103.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1f1ecf33ab6dba84c36880f7c92e8e54.png')
-        .normalSkill(new NormalSkillBuilder('拂金剑斗术'))
+        .normalSkill('拂金剑斗术')
         .skills(
             new SkillBuilder('熔铁流狱').description('召唤【smn113093】\\；如果已存在【smn113093】，就先造成{dmg+1}点[火元素伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8c/k583v0pci7akj1fbcin40ogho11mxzr.png',
@@ -713,7 +711,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1310: () => new HeroBuilder(281).name('林尼').since('v4.3.0').fontaine(HERO_TAG.ArkhePneuma).fatui().pyro().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/e0cc3a4602a418aaebb0855ad147f91e_261319803814200678.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/45a1a4f44d1f5af987980c5079085392.png')
-        .normalSkill(new NormalSkillBuilder('迫牌易位式'))
+        .normalSkill('迫牌易位式')
         .skills(
             new SkillBuilder('隐具魔术箭').description('{dealDmg}，召唤【smn113101】，累积1层【sts113102】。；如果本角色生命值至少为6，则对自身造成1点[穿透伤害]。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1d65a51c36eca7169247316ff7e14a89.png',
@@ -732,7 +730,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1311: () => new HeroBuilder(319).name('托马').since('v4.4.0').inazuma().pyro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/a21241c40833d2aee5336ae8fdd58c41_7254789917363324478.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/23fd1154d3898bf8082c562634250f8d.png')
-        .normalSkill(new NormalSkillBuilder('迅破枪势'))
+        .normalSkill('迅破枪势')
         .skills(
             new SkillBuilder('烈烧佑命之侍护').description('{dealDmg}，生成【sts113111】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6a/s3cppco85ykmlq1xuqfqfohdwuk3ogi.png',
@@ -747,7 +745,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1312: () => new HeroBuilder(365).name('辛焱').since('v4.7.0').liyue().pyro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/2538459953fb12e38da66416bd1db19a_2302423233068754101.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/78f87dda37f211ee6e090ee66503335d.png')
-        .normalSkill(new NormalSkillBuilder('炎舞'))
+        .normalSkill('炎舞')
         .skills(
             new SkillBuilder('热情拂扫').description('{dealDmg}，随机[舍弃]1张元素骰费用最高的手牌，生成【sts113121】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
@@ -764,7 +762,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1313: () => new HeroBuilder(395).name('夏沃蕾').since('v4.8.0').fontaine(HERO_TAG.ArkheOusia).pyro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/6c91fd059cdcc4f1c068b0a255350433_8349286385786874049.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a428c5149c159454c1ea98b254d80990.png')
-        .normalSkill(new NormalSkillBuilder('线列枪刺·改'))
+        .normalSkill('线列枪刺·改')
         .skills(
             new SkillBuilder('近迫式急促拦射').description('{dealDmg}。；【此技能结算后：】如果我方手牌中含有【crd113131】，则[舍弃]1张并治疗我方受伤最多的角色1点。')
                 .src('https://patchwiki.biligame.com/images/ys/7/71/lh98vjaiu8gy537a5k4a3ypm6rde11w.png',
@@ -831,15 +829,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1315: () => new HeroBuilder(478).name('玛薇卡').since('v5.7.0').spMaxEnergy(6).natlan().pyro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/d1efa2f0e867de548415cdb7bfce1499_1736497909645663241.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6851f3bc/bd52f08c820bc007bf2358413fba8bce.png')
-        .normalSkill(new NormalSkillBuilder('以火织命'))
+        .normalSkill('以火织命')
         .skills(
             new SkillBuilder('称名之刻').description('自身进入【sts113151】，获得2点「夜魂值」，并从3张【驰轮车】中[挑选]1张加入手牌。')
                 .src('https://patchwiki.biligame.com/images/ys/4/49/c9v7tv37dp19lo61rq4sk363ucfmtz7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/3b17437c8cb0d89864c9d3577ef3891a_5376680950361440983.png')
                 .explain(...Array.from({ length: 3 }, (_, i) => `botcrd${113154 + i}`))
                 .elemental().cost(3).cost(2, 'v5.8.0').handle(({ cmds }) => (
-                    cmds.getNightSoul(2), {
-                        statusPre: 113151,
+                    cmds.getStatus(113151).getNightSoul(2), {
                         pickCard: {
                             cnt: 3,
                             mode: CMD_MODE.GetCard,
@@ -851,8 +848,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/000ee3af3827bb90f6449f66e46dceeb_7084427594096869810.png')
                 .burstSp(3).cost(4).handle(event => {
                     const { hero: { energy }, cmds } = event;
-                    cmds.getNightSoul().getEnergy(energy, { isSp: true });
-                    return { statusPre: 113151, status: isCdt(-energy >= 6, 113152), addDmgCdt: -energy }
+                    cmds.getStatus(113151).getNightSoul().getEnergy(energy, { isSp: true });
+                    return { status: isCdt(-energy >= 6, 113152), addDmgCdt: -energy }
                 }),
             new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8d/7lkubxbzsfo5qrfe0gkf4e8nkrmp1jm.png',
@@ -873,7 +870,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/195563531/41fc0a943f93c80bdcf24dbce13a0956_3894833720039304594.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e4166ac0aa3f216c59ff3e8a5e44fa70.png')
-        .normalSkill(new NormalSkillBuilder('灭罪之矢'))
+        .normalSkill('灭罪之矢')
         .skills(
             new SkillBuilder('夜巡影翼').description('{dealDmg}，召唤【smn114011】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/29/9ikuan4r5rhgza5nlxl86m718d3zmtt.png',
@@ -888,7 +885,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1402: () => new HeroBuilder(27).name('雷泽').mondstadt().electro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/52cc6519a87290840830b64f25117070_8992911737218383504.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/04a1d8fdbc395113542897c6ea6f13c5.png')
-        .normalSkill(new NormalSkillBuilder('钢脊'))
+        .normalSkill('钢脊')
         .skills(
             new SkillBuilder('利爪与苍雷').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/0/02/e16tz7kk056z1n3duql87hoj6gxf8z5.png',
@@ -903,7 +900,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1403: () => new HeroBuilder(28).name('刻晴').offline('v1').liyue().electro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/2dd94ec81fda4b55e9d90ae89de4cf80_5019006447640086752.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c6196a177b92302347a85c6e51fde46a.png')
-        .normalSkill(new NormalSkillBuilder('云来剑法'))
+        .normalSkill('云来剑法')
         .skills(
             new SkillBuilder('星斗归位').description('{dealDmg}，生成手牌【crd114031】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
@@ -924,7 +921,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1404: () => new HeroBuilder(29).name('赛诺').sumeru().electro().polearm()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/7f62549984cde8b10d694d05c0618a06_5004521367910517162.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/bf685f0e1d6e30d903fb7c9202a4acdc.png')
-        .normalSkill(new NormalSkillBuilder('七圣枪术'))
+        .normalSkill('七圣枪术')
         .skills(
             new SkillBuilder('秘仪·律渊渡魂').description('{dealDmg}，【sts114041】的「凭依」级数+1。').description('{dealDmg}。', 'v4.8.0')
                 .src('https://patchwiki.biligame.com/images/ys/4/4e/07nlgs0ws704oq4zbisr6ocw66qiyxh.png',
@@ -943,7 +940,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1405: () => new HeroBuilder(30).name('北斗').since('v3.4.0').offline('v2').maxHp(11).maxHp(10, 'v5.7.0', 'v2').liyue().electro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/20a9053476de0a5b82ae38f678df287b_1479624244948739352.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f68c082b2adf084ad7783776ceb1c334.png')
-        .normalSkill(new NormalSkillBuilder('征涛'))
+        .normalSkill('征涛')
         .skills(
             new SkillBuilder('捉浪').description('本角色附属【sts114051】，并[准备技能]：【rsk14054】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e5/k9meeap7ei7ox3q9yx4b6803v79m6om.png',
@@ -958,7 +955,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1406: () => new HeroBuilder(31).name('九条裟罗').since('v3.5.0').offline('v1').inazuma().electro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/7bef3d1a8bfd273866a62b05ce89c0c2_2441417120175670805.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/668657253155dc79461268e4be2b93b6.png')
-        .normalSkill(new NormalSkillBuilder('天狗传弓术'))
+        .normalSkill('天狗传弓术')
         .skills(
             new SkillBuilder('鸦羽天狗霆雷召咒').description('{dealDmg}，召唤【smn114061】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/7a/0we2peecoitxx412iw1toi30feb7uqz.png',
@@ -973,7 +970,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1407: () => new HeroBuilder(32).name('雷电将军').since('v3.7.0').inazuma().electro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e9cb40e812da2147e3786f7cc3b2bd7d_208524583698335951.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4069a33a82e3fc1327f97e14de6d16eb.png')
-        .normalSkill(new NormalSkillBuilder('源流'))
+        .normalSkill('源流')
         .skills(
             new SkillBuilder('神变·恶曜开眼').description('召唤【smn114071】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/2e/7b213rdcyu4wbzbt2lyz3xge9jur2u6.png',
@@ -996,7 +993,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1408: () => new HeroBuilder(33).name('八重神子').since('v3.7.0').inazuma().electro().catalyst()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7e55525ee5cff216360b46322aa107ee_5470950562732053429.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/82839e50c43ef6d72676e9b6957fadba.png')
-        .normalSkill(new NormalSkillBuilder('狐灵食罪式'))
+        .normalSkill('狐灵食罪式')
         .skills(
             new SkillBuilder('野千役咒·杀生樱').description('召唤【smn114081】。如果场上原本已存在【smn114081】，则额外使其造成的伤害+1。（最多+1）')
                 .description('召唤【smn114081】。', 'v5.3.0')
@@ -1044,7 +1041,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1410: () => new HeroBuilder(35).name('多莉').since('v4.2.0').sumeru().electro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/20b47c429b784fac1ef2c80d560c93cc_6932125694251188191.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/871b0b3d06bc11d69f9cb1df72309371.png')
-        .normalSkill(new NormalSkillBuilder('妙显剑舞·改'))
+        .normalSkill('妙显剑舞·改')
         .skills(
             new SkillBuilder('镇灵之灯·烦恼解决炮').description('{dealDmg}，召唤【smn114101】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/37/1eiismiuis2sxbg937vk1uhz3ge2yr2.png',
@@ -1059,7 +1056,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1411: () => new HeroBuilder(348).name('久岐忍').since('v4.6.0').inazuma().electro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/97e8a503ac00ee72817a33b15bc6e971_1406073271702365176.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a44a309f2d797406a2389655b03234d.png')
-        .normalSkill(new NormalSkillBuilder('忍流飞刃斩'))
+        .normalSkill('忍流飞刃斩')
         .skills(
             new SkillBuilder('越袚雷草之轮').description('生成【sts114111】。如果本角色生命值至少为6，则对自身造成2点[穿透伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/3/31/fv5yfpb6wv4qr22o5shuixr9zqnpxcm.png',
@@ -1119,31 +1116,30 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1414: () => new HeroBuilder(506).name('伊安珊').since('v6.0.0').natlan().electro().polearm()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Iansan.webp')
-        .avatar()
-        .normalSkill(new NormalSkillBuilder('负重锥击'))
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Iansan.png')
+        .normalSkill('负重锥击')
         .skills(
             new SkillBuilder('电掣雷驰').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成1层【sts170】。')
-                .src('',
+                .src('/image/tmp/Skill_S_Iansan_01.png',
                     '')
-                .elemental().damage(2).cost(3).handle(({ cmds }) => (cmds.getNightSoul(), { status: [114141, 170] })),
+                .elemental().damage(2).cost(3).handle(({ skillAfter }) => (skillAfter.getStatus(114141).getNightSoul(), { status: 170 })),
             new SkillBuilder('力的三原理').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成【sts114142】。')
-                .src('',
+                .src('/image/tmp/Skill_E_Iansan_01_HD.png',
                     '')
-                .burst(2).damage(3).cost(3).handle(({ cmds, talent }) => (cmds.getNightSoul(), { status: [114141, [114142, !!talent]] })),
+                .burst(2).damage(3).cost(3).handle(({ skillAfter, talent }) => (skillAfter.getStatus(114141).getNightSoul(), { status: [[114142, !!talent]] })),
             new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合2次）')
-                .src('',
+                .src('/image/tmp/UI_Talent_S_Iansan_08.png',
                     '')
                 .passive().addition('switch').perCnt(2).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
                     const nightSoul = getObjById(hero.heroStatus, 114141);
                     if (!nightSoul || skill.perCnt <= 0) return;
                     if (trigger == 'switch' && skill.addition.switch == 1 || trigger == 'ready-skill') {
-                        if (nightSoul.useCnt == 2) {
+                        if (nightSoul.useCnt != 2) cmds.getNightSoul(1, hero.hidx);
+                        else {
                             const hidxs = getMaxHertHidxs(heros);
                             if (hidxs.length == 0) return;
                             cmds.heal(1, { hidxs });
-                        } else {
-                            cmds.getNightSoul(1, hero.hidx);
                         }
                     }
                     return {
@@ -1159,7 +1155,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1501: () => new HeroBuilder(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')
-        .normalSkill(new NormalSkillBuilder('简式风灵作成'))
+        .normalSkill('简式风灵作成')
         .skills(
             new SkillBuilder('风灵作成·陆叁零捌').description('{dealDmg}，使对方强制切换到前一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6a/lu1s5jeliurancx62txk0i7pbgeu07d.png',
@@ -1174,7 +1170,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1502: () => new HeroBuilder(37).name('琴').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').mondstadt().anemo().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/88b869ceca8108bfd6dd14a68d5e9610_2290626250490650584.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9dd710fa45f1d7df996331ca92b2ae3a.png')
-        .normalSkill(new NormalSkillBuilder('西风剑术'))
+        .normalSkill('西风剑术')
         .skills(
             new SkillBuilder('风压剑').description('{dealDmg}，使对方强制切换到下一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/7/76/qzlqexf6zwkkcpxpyevb3m4viwepssv.png',
@@ -1189,7 +1185,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1503: () => new HeroBuilder(38).name('温迪').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').mondstadt().anemo().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b8d0f177c157908bbe1ef65774d5a4e5_6672388573788855956.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0ad1fda4450c4aa9949706c37324ee11.png')
-        .normalSkill(new NormalSkillBuilder('神代射术'))
+        .normalSkill('神代射术')
         .skills(
             new SkillBuilder('高天之歌').description('{dealDmg}，生成【sts115031】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fe/hhb16pe3sq5duv4cu299atxbi78k7ae.png',
@@ -1204,7 +1200,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1504: () => new HeroBuilder(39).name('魈').since('v3.7.0').offline('v2').liyue().anemo().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/cdb6d5f322226b118ce989ed2f02e932_3401048792875977242.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/ac4a8ff803416b736c99096b6a7ff33a.png')
-        .normalSkill(new NormalSkillBuilder('卷积微尘'))
+        .normalSkill('卷积微尘')
         .skills(
             new SkillBuilder('风轮两立').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/8/82/16jnimrpz65wm0ch1npu1f35j3mbuyy.png',
@@ -1224,7 +1220,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1505: () => new HeroBuilder(40).name('枫原万叶').since('v3.8.0').inazuma().anemo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/0aedb983698b4d5abcd1a4405a0ed634_7726035612370611710.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/83f16b6621747e630856b4e1a831f750.png')
-        .normalSkill(new NormalSkillBuilder('我流剑术'))
+        .normalSkill('我流剑术')
         .skills(
             new SkillBuilder('千早振').description('{dealDmg}，本角色附属【sts115051】。；如果此技能引发了扩散，则将【sts115051】转换为被扩散的元素。；【此技能结算后：】我方切换到后一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/2/29/f7rwj3qb9kffejm2kt2oq7ltl843nrk.png',
@@ -1241,7 +1237,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1506: () => new HeroBuilder(41).name('流浪者').since('v4.1.0').anemo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/1c63a8f561bdfe0a7d7e1053ff9c42f8_8476567918375768271.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/942e8b6dc3fcd818cd8067cecb562225.png')
-        .normalSkill(new NormalSkillBuilder('行幡鸣弦'))
+        .normalSkill('行幡鸣弦')
         .skills(
             new SkillBuilder('羽画·风姿华歌').description('{dealDmg}，本角色附属【sts115061】。')
                 .src('https://patchwiki.biligame.com/images/ys/0/0c/p9khnkc2qxezjcsy2yqn1t1608iq7df.png',
@@ -1260,7 +1256,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1507: () => new HeroBuilder(320).name('早柚').since('v4.4.0').inazuma().anemo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/7ba293dd475e123f98a89e2c6448c22d_2852763407290233167.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9f7f3f7d1794d4d58b3bce4ba311c170.png')
-        .normalSkill(new NormalSkillBuilder('忍刀·终末番'))
+        .normalSkill('忍刀·终末番')
         .skills(
             new SkillBuilder('呜呼流·风隐急进').description('{dealDmg}，本角色[准备技能]：【rsk15074】。；如果当前技能引发了扩散，则【rsk15074】将改为造成被扩散元素的伤害。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f1/nft00ohrbmn6j4hqssftn7kh4ha3nk5.png',
@@ -1278,7 +1274,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1508: () => new HeroBuilder(282).name('琳妮特').since('v4.3.0').fontaine(HERO_TAG.ArkheOusia).fatui().anemo().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/138a3a7a50a96267097824590e869fe1_5113881666208140363.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a9748bebc335c1ae1931f633742f818e.png')
-        .normalSkill(new NormalSkillBuilder('迅捷礼刺剑'))
+        .normalSkill('迅捷礼刺剑')
         .skills(
             new SkillBuilder('谜影障身法').description('{dealDmg}，本回合第一次使用此技能、且自身生命值不多于8时，治疗自身2点，但是附属【sts115081】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b2ba9e68ed4a405e54b4786ecac7c3e3.png',
@@ -1303,7 +1299,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1509: () => new HeroBuilder(349).name('珐露珊').since('v4.6.0').sumeru().anemo().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/df01c4398360e3884ceef43d0717699d_6350296313348675536.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0e689ff47e1651bd6178bcc6192b5a11.png')
-        .normalSkill(new NormalSkillBuilder('迴身箭术'))
+        .normalSkill('迴身箭术')
         .skills(
             new SkillBuilder('非想风天').description('{dealDmg}，本角色附属【sts115091】。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a5/a1tqqztvc2osslkg9s3oatxesdw8zdm.png',
@@ -1318,7 +1314,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1510: () => new HeroBuilder(408).name('闲云').since('v5.0.0').liyue().anemo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/25d2e76748611db680909e98c1629e41_2183137475204023064.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/895c928cc596421e6ecb3e12a8f9ff5d.png')
-        .normalSkill(new NormalSkillBuilder('清风散花词'))
+        .normalSkill('清风散花词')
         .skills(
             new SkillBuilder('朝起鹤云').description('{dealDmg}，生成【sts115101】，本角色附属【sts115104】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6d/ri0edrmy086b2ia85dya1xh5x7thc22.png',
@@ -1333,15 +1329,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1511: () => new HeroBuilder(479).name('恰斯卡').since('v5.7.0').natlan().anemo().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/8a7080b824a2cc2bebb4dc696f354ec0_1125758293638464105.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6851f3bc/9108fdad84c0005ae0f4acd5b1e73f06.png')
-        .normalSkill(new NormalSkillBuilder('迷羽流击'))
+        .normalSkill('迷羽流击')
         .skills(
             new SkillBuilder('灵缰追影').description('{dealDmg}，抓1张牌。；本角色附属【crd115112】，进入【sts115111】，并获得2点「夜魂值」。（角色进入【sts115111】后不可使用此技能）；【我方接下来2次「切换角色」时：】抓1张牌。')
                 .src('https://patchwiki.biligame.com/images/ys/c/ce/30gw2p8argyztwc3bkcu8ywk8rcw102.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/a17eb41be64eca6dd82798d28c726016_647712972431004942.png')
                 .elemental().damage(1).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
-                    cmds.getCard(1).getNightSoul(2), {
+                    cmds.getCard(1).getStatus(115111).getNightSoul(2), {
                         equip: 115112,
-                        statusPre: 115111,
                         status: 115118,
                         isForbidden: hasObjById(heroStatus, 115111),
                     })),
@@ -1359,7 +1354,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1512: () => new HeroBuilder(492).name('蓝砚').since('v5.8.0').liyue().anemo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b448ace8a6f21314b0d097cd40811bbb_4959882338856335294.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/688960cf/ece87337c909371117827acffcab8245.png')
-        .normalSkill(new NormalSkillBuilder('玄鸾画水'))
+        .normalSkill('玄鸾画水')
         .skills(
             new SkillBuilder('凤缕随翦舞').description('生成2层【sts115121】，获得1层【sts169】，并{dealDmg}，如果此技能引发了扩散，则额外生成1层【sts115121】。')
                 .src('#',
@@ -1374,7 +1369,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1513: () => new HeroBuilder(493).name('鹿野院平藏').since('v5.8.0').inazuma().anemo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/50fe377d9473ff764e55d84a5d7f3713_3264680029972686325.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/688960cf/b5fcf0e958998b853a34ccee37f35aef.png')
-        .normalSkill(new NormalSkillBuilder('不动流格斗术'))
+        .normalSkill('不动流格斗术')
         .skills(
             new SkillBuilder('勠心拳').description('[准备技能]：【rsk15135】。')
                 .src('#',
@@ -1396,15 +1391,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
 
     1514: () => new HeroBuilder(507).name('梦见月瑞希').since('v6.0.0').inazuma().anemo().catalyst()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Mizuki.webp')
-        .avatar()
-        .normalSkill(new NormalSkillBuilder('梦我梦心'))
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Mizuki.png')
+        .normalSkill('梦我梦心')
         .skills(
             new SkillBuilder('秋沙歌枕巡礼').description('{dealDmg}，自身附属【sts115141】。')
-                .src('',
+                .src('/image/tmp/Skill_S_Mizuki_01.png',
                     '')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 115141 })),
             new SkillBuilder('安乐秘汤疗法').description('{dealDmg}，生成1张【crd115142】，将其置于我方牌组顶部，并召唤【smn115143】。')
-                .src('',
+                .src('/image/tmp/Skill_E_Mizuki_01_HD.png',
                     '')
                 .burst(2).damage(3).cost(3).handle(({ cmds }) => (cmds.addCard(1, 115142, { scope: 1 }), { summon: 115143 }))
         ),
@@ -1412,7 +1407,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1601: () => new HeroBuilder(42).name('凝光').offline('v1').liyue().geo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/69b48f96666e12872c81087955a4abcb.png')
-        .normalSkill(new NormalSkillBuilder('千金掷'))
+        .normalSkill('千金掷')
         .skills(
             new SkillBuilder('璇玑屏').description('{dealDmg}，生成【sts116011】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/c7/fhhajrw49bck487xgc9tm832v1lydan.png',
@@ -1430,7 +1425,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1602: () => new HeroBuilder(43).name('诺艾尔').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').mondstadt().geo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/e985b9bc4ec19c9e982c5b018ebbd74e_3315904207091435338.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a1163fe769ec8e0e244e952e8f7c9f9d.png')
-        .normalSkill(new NormalSkillBuilder('西风剑术·女仆'))
+        .normalSkill('西风剑术·女仆')
         .skills(
             new SkillBuilder('护心铠').description('{dealDmg}，生成【sts116021】。')
                 .src('https://patchwiki.biligame.com/images/ys/d/de/bfodvzfdm75orbjztzb2tu29vc1cr2f.png',
@@ -1445,7 +1440,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1603: () => new HeroBuilder(44).name('钟离').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v5.5.0', 'v2').liyue().geo().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/025bfe8320c376254bec54a9507ad33a_604601120081367211.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1f8e8ca48f32c190a937fc519e706b92.png')
-        .normalSkill(new NormalSkillBuilder('岩雨'))
+        .normalSkill('岩雨')
         .skills(
             new SkillBuilder('地心').description('{dealDmg}，召唤【smn116031】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ee/k5fhv7fxeg9ofaauivue65iid8mh7ou.png',
@@ -1464,7 +1459,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1604: () => new HeroBuilder(45).name('阿贝多').since('v4.0.0').offline('v2').maxHp(12).maxHp(10, 'v5.7.0', 'v2').mondstadt().geo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/82503813/5ec1824cea9aad20a4e2ddca9f4b090e_8072421465872569194.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5bc8d6153d2a0f33252114d8c0754a23.png')
-        .normalSkill(new NormalSkillBuilder('西风剑术·白'))
+        .normalSkill('西风剑术·白')
         .skills(
             new SkillBuilder('创生法·拟造阳华').description('召唤【smn116041】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/49/7juclt9sdhys5cqpsszabbcgvr80onv.png',
@@ -1482,7 +1477,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1605: () => new HeroBuilder(46).name('荒泷一斗').since('v3.6.0').inazuma().geo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/0f6a96fb219e919f92c2768dd4a8d17d_2763599020845762537.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a7f896027d32b91c3cbab7a77d53b62e.png')
-        .normalSkill(new NormalSkillBuilder('喧哗屋传说'))
+        .normalSkill('喧哗屋传说')
         .skills(
             new SkillBuilder('魔杀绝技·赤牛发破！').description('{dealDmg}，召唤【smn116051】，本角色附属【sts116054】。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a5/3jpx4gxudn54mk2ll6v5mxl0hqrt3e5.png',
@@ -1497,7 +1492,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1606: () => new HeroBuilder(283).name('五郎').since('v4.3.0').inazuma().geo().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/a7a11aafd2166bd18514eb85107bbe6f_8372190332816763613.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/25cce22b0e3bb52323b98ca51942645c.png')
-        .normalSkill(new NormalSkillBuilder('呲牙裂扇箭'))
+        .normalSkill('呲牙裂扇箭')
         .skills(
             new SkillBuilder('犬坂吠吠方圆阵').description('{dealDmg}，生成【sts116061】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/82cfdcfa18c2ac51c7d7c80ad271b850.png',
@@ -1512,7 +1507,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1607: () => new HeroBuilder(366).name('云堇').since('v4.7.0').liyue().geo().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/1d2e9fbd3e021de0c2e944e9c3dbfab3_8286048443691981221.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e293da3c41de47ddc78daf4af1950a32.png')
-        .normalSkill(new NormalSkillBuilder('拂云出手'))
+        .normalSkill('拂云出手')
         .skills(
             new SkillBuilder('旋云开相').description('生成【sts116073】，本角色附属【sts116071】并[准备技能]：【rsk16074】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1800fefaf04f62c348cfecf558a0d573.png',
@@ -1527,7 +1522,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1608: () => new HeroBuilder(396).name('娜维娅').since('v4.8.0').fontaine(HERO_TAG.ArkheOusia).geo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/4c23484ade8f496c7bbf790a1dd43d30_170105147546023510.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/684bdd3ce161df1f5acb5ddc4aa59505.png')
-        .normalSkill(new NormalSkillBuilder('直率的辞绝'))
+        .normalSkill('直率的辞绝')
         .skills(
             new SkillBuilder('典仪式晶火').description('{dealDmg}，本角色附属【sts116084】\\；从手牌中[舍弃]至多5张【crd116081】，每[舍弃]1张都使此伤害+1并抓1张牌。')
                 .src('https://patchwiki.biligame.com/images/ys/7/71/nfo33f6mtxhgnz8i0a2sy8sgmv15fwm.png',
@@ -1551,7 +1546,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1609: () => new HeroBuilder(420).name('千织').since('v5.1.0').inazuma().geo().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/0c071f2c9c3766e11e8c78b4fec8bcfa_5816124722791875404.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u539vg/3c860e49ed049afab518114f5639b046.png')
-        .normalSkill(new NormalSkillBuilder('心织刀流'))
+        .normalSkill('心织刀流')
         .skills(
             new SkillBuilder('羽袖一触').description('从3个【nbotsmn116097】中[挑选]1个召唤。')
                 .src('https://patchwiki.biligame.com/images/ys/c/c1/o1q0bq8i2xiqwwtzpadn62ht0f1mk92.png',
@@ -1576,15 +1571,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1610: () => new HeroBuilder(461).name('卡齐娜').since('v5.5.0').natlan().geo().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/755fa9ad709e60e4a6252018bccf0212_3836323857297098657.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67e335b0/b6befd776c5917647591dc26e9925785.png')
-        .normalSkill(new NormalSkillBuilder('嵴之啮咬'))
+        .normalSkill('嵴之啮咬')
         .skills(
             new SkillBuilder('出击，冲天转转！').description('本角色附属【crd116102】，并进入【sts116104】，并获得2点「夜魂值」。（角色进入【sts116104】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/3/3e/o36jizt96zeb1iil8vg0mgtwd1dnwmr.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/11c22191b14034fbacc64b4476ea03a1_8778532385562478186.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
-                    cmds.getNightSoul(2), {
+                    cmds.getStatus(116104).getNightSoul(2), {
                         equip: 116102,
-                        statusPre: 116104,
                         isForbidden: hasObjById(heroStatus, 116104),
                     })),
             new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116101】。')
@@ -1603,9 +1597,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/2/21/kr1booceklshoie2ibpya9rri553pin.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/bfef7ae61e6a66cf65676de9d5d629c2_7377885707934929218.png')
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
-                    cmds.getNightSoul(), {
+                    cmds.getStatus(116111).getNightSoul(), {
                         equip: 116112,
-                        statusPre: 116111,
                         isForbidden: hasObjById(heroStatus, 116111),
                     })),
             new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方受伤最多的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的【源音采样】额外治疗1点。')
@@ -1630,7 +1623,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1701: () => new HeroBuilder(47).name('柯莱').offline('v1').sumeru().dendro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/cca275e9c7e6fa6cf61c5e1d6768db9d_4064677380613373250.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a0f79ba2105b03a5b72e01c14c1ee79c.png')
-        .normalSkill(new NormalSkillBuilder('祈颂射艺'))
+        .normalSkill('祈颂射艺')
         .skills(
             new SkillBuilder('拂花偈叶').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/1/17/pr0uli0a3fs8r3qiotnnx0ikaeudmw4.png',
@@ -1649,7 +1642,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1702: () => new HeroBuilder(48).name('提纳里').since('v3.6.0').sumeru().dendro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/33a72f8ddf94c32c750dd7c5c75d928e_176590332162344255.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0ca272d70321db004cae3cb271b330f3.png')
-        .normalSkill(new NormalSkillBuilder('藏蕴破障'))
+        .normalSkill('藏蕴破障')
         .skills(
             new SkillBuilder('识果种雷').description('{dealDmg}，本角色附属【sts117021】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/31/s5y6cir0ywerb7tr4jf6wol6c04853j.png',
@@ -1664,7 +1657,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1703: () => new HeroBuilder(49).name('纳西妲').since('v3.7.0').sumeru().dendro().catalyst()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7bd8cbd84e026de8af13599573750f63_9093638409228219545.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/442b83b64081b49383de8f77e43eb80c.png')
-        .normalSkill(new NormalSkillBuilder('行相'))
+        .normalSkill('行相')
         .skills(
             new SkillBuilder('所闻遍计').description('{dealDmg}，目标角色附属【sts117031】\\；如果在附属前目标角色已附属有【sts117031】，就改为对所有敌方角色附属【sts117031】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/hfb5j6xnze5j5e5tmixhieq59y78fwn.png',
@@ -1691,7 +1684,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1704: () => new HeroBuilder(50).name('瑶瑶').since('v4.1.0').offline('v2').liyue().dendro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/a351e4595bfcbec661319951fd9bc7c1_739695784762644208.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4cf30a41392384d709e3d958a29dfab0.png')
-        .normalSkill(new NormalSkillBuilder('颠扑连环枪'))
+        .normalSkill('颠扑连环枪')
         .skills(
             new SkillBuilder('云台团团降芦菔').description('召唤【smn117041】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b9/1kp0f3qy6c5glhcphgbxi3nze2nq695.png',
@@ -1706,7 +1699,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1705: () => new HeroBuilder(51).name('白术').since('v4.2.0').offline('v2').maxHp(11).maxHp(10, 'v5.7.0', 'v2').liyue().dendro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/0251f3d9b514e6971ccb10284a9340a9_5804585615005847738.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/80f126aa0347192046fdb7ff1d8304bf.png')
-        .normalSkill(new NormalSkillBuilder('金匮针解'))
+        .normalSkill('金匮针解')
         .skills(
             new SkillBuilder('太素诊要').description('{dealDmg}，召唤【smn117051】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/54/7wvszy5h117tqsmaz7xs3bejqswdhvb.png',
@@ -1721,7 +1714,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1706: () => new HeroBuilder(284).name('艾尔海森').since('v4.3.0').sumeru().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2b1b835110bfe23777d9e9a19a010c4b_6565453178979267276.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/987050c315dd16f26cfd23acc48c9114.png')
-        .normalSkill(new NormalSkillBuilder('溯因反绎法'))
+        .normalSkill('溯因反绎法')
         .skills(
             new SkillBuilder('共相·理式摹写').description('{dealDmg}，本角色附属【sts117061】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/02a567f5717fcd6351cb861142722369.png',
@@ -1745,7 +1738,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1707: () => new HeroBuilder(336).name('绮良良').since('v4.5.0').inazuma().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/650f884967057168a0b9b4025a032c11_2097188456727270580.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5a8903dcc480dd442f17404bd3630d93.png')
-        .normalSkill(new NormalSkillBuilder('箱纸切削术'))
+        .normalSkill('箱纸切削术')
         .skills(
             new SkillBuilder('呜喵町飞足').description('生成【sts117071】和【sts117072】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e6/t5pihmh5sg8ccu6nm7stvb71maxxz9x.png',
@@ -1760,7 +1753,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1708: () => new HeroBuilder(367).name('卡维').since('v4.7.0').sumeru().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/2879f08ce85d5ab6c5b69e8e729923e5_5879182844975848941.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/b7673cdfbbc24627cabf32bb1a3efe0c.png')
-        .normalSkill(new NormalSkillBuilder('旋规设矩'))
+        .normalSkill('旋规设矩')
         .skills(
             new SkillBuilder('画则巧施').description('{dealDmg}，生成【sts117082】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/1ae339d4c664e477455b738f1bbb52ed.png',
@@ -1775,7 +1768,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1709: () => new HeroBuilder(455).name('基尼奇').since('v5.4.0').natlan().dendro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/4656f4ff645d719e6621821c16038822_3079189442707648158.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u8c1lh/afdcc3827593f09ace6932ea92516f9d.png')
-        .normalSkill(new NormalSkillBuilder('夜阳斗技'))
+        .normalSkill('夜阳斗技')
         .skills(
             new SkillBuilder('悬猎·游骋高狩').description('选一个我方角色，自身附属【sts117091】并进入【sts117092】。{dealDmg}，然后与所选角色交换位置。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a2/08equlc0irtfiur6id02qiwromqwpl5.png',
@@ -1792,7 +1785,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1710: () => new HeroBuilder(462).name('艾梅莉埃').since('v5.5.0').fontaine(HERO_TAG.ArkhePneuma).dendro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/641497fd6142bac67bd7839cd2564160_7223090451532824757.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67e335b0/d1597e7c081ce3e732b1c5fb552b7780.png')
-        .normalSkill(new NormalSkillBuilder('逐影枪术·改'))
+        .normalSkill('逐影枪术·改')
         .skills(
             new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b9/nefvl0fgzk3rb4v6ztu5sonr7mnmg3g.png',
@@ -1873,7 +1866,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2104: () => new HeroBuilder(397).name('愚人众·霜役人').since('v4.8.0').maxHp(11).maxHp(10, 'v5.8.0').fatui().cryo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a7baaff1ecc4dcda963698919ef2cae4_3934264341680499887.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/16b46893b0a27f52004e9377cd62c623.png')
-        .normalSkill(new NormalSkillBuilder('迅捷剑锋'))
+        .normalSkill('迅捷剑锋')
         .skills(
             new SkillBuilder('霜刃截击').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3d/9ey3xozz1ho95mjplt7r9exqqh1iqbc.png',
@@ -1975,7 +1968,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2203: () => new HeroBuilder(350).name('深渊使徒·激流').since('v4.6.0').maxHp(6).monster().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/8e4f28eaf527a26d7b014eed8ee0f966_202629246380655977.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2fe9a301115a32a2006fa0b075760551.png')
-        .normalSkill(new NormalSkillBuilder('波刃锋斩'))
+        .normalSkill('波刃锋斩')
         .skills(
             new SkillBuilder('洄涡锋刃').description('{dealDmg}，然后[准备技能]：【rsk22035】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/24/t9ua2iv40wm0f3yig6vxig7onh3up3n.png',
@@ -1994,7 +1987,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2204: () => new HeroBuilder(368).name('吞星之鲸').since('v4.7.0').maxHp(5).monster().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/17c1739ef970603be767fa88764fc44f_4845015785088476307.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e29c46b79a53a6c428d46017eecb52c2.png')
-        .normalSkill(new NormalSkillBuilder('碎涛旋跃'))
+        .normalSkill('碎涛旋跃')
         .skills(
             new SkillBuilder('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+3）。然后[舍弃]1张原本元素骰费用最高的手牌。')
                 .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+4）。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v5.0.0')
@@ -2025,7 +2018,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2205: () => new HeroBuilder(409).name('丘丘水行游侠').since('v5.0.0').maxHp(11).maxHp(10, 'v5.7.0').hilichurl().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/79deea8fbb624269dc7a85fb22bbf649_2655043128470707650.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/17912c63d03adfefcb3cc1c262909ffb.png')
-        .normalSkill(new NormalSkillBuilder('镰刀旋斩'))
+        .normalSkill('镰刀旋斩')
         .skills(
             new SkillBuilder('狂澜镰击').description('{dealDmg}。；如果有敌方角色附属有【sts106】或【sts122052】，则本角色获得1点[充能]。（每回合1次）')
                 .src('https://patchwiki.biligame.com/images/ys/1/10/lnygbgud3vpwaeo78le24h55nsbz1ke.png',
@@ -2049,7 +2042,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9f134f05bb71f0ee1afb33785cf945e9_8487118119361104507.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/de42691212adcb46a66595c833bd3598.png')
-        .normalSkill(new NormalSkillBuilder('突刺'))
+        .normalSkill('突刺')
         .skills(
             new SkillBuilder('伺机而动').description('{dealDmg}，本角色附属【sts123011】。')
                 .src('https://patchwiki.biligame.com/images/ys/3/36/rr6eiuoeleum3em795e7r1x687ielwb.png',
@@ -2124,7 +2117,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2304: () => new HeroBuilder(351).name('铁甲熔火帝皇').since('v4.6.0').maxHp(5).maxHp(6, 'v5.4.0').monster().pyro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e96a9a84bdc0f1d2171010770f0605f0_3000155239481283018.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/713d2c89ff5f8e8e8b7da465857dc70f.png')
-        .normalSkill(new NormalSkillBuilder('重钳碎击'))
+        .normalSkill('重钳碎击')
         .skills(
             new SkillBuilder('烈焰燃绽').description('{dealDmg}\\；如果本角色附属有至少7层【sts123041】，则此伤害+1。；然后，本角色附属2层【sts123041】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ee/pkoq2y1juntwzekemn1cu1fiv9h5ed6.png',
@@ -2165,8 +2158,36 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_TheAbyssXiuhcoatl.webp'),
+    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0').monster().pyro()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_TheAbyssXiuhcoatl.webp')
+        .avatar('/image/tmp/UI_Gcg_Char_MonsterIcon_TheAbyssXiuhcoatl.png')
+        .normalSkill('虚界玄爪')
+        .skills(
+            new SkillBuilder('蚀灭火羽').description('{dealDmg}。')
+                .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_01.png',
+                    '')
+                .elemental().damage(3).cost(3),
+            new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
+                .src('/image/tmp/MonsterSkill_E_TheAbyssXiuhcoatl_01_HD.png',
+                    '')
+                .burst(2).damage(1).cost(3).handle(event => {
+                    event.cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard })
+                        .discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true })
+                    return { pdmg: 1, status: 123051 }
+                }),
+            new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
+                .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_02.png',
+                    '')
+                .passive().addition('discardCnt').handle(event => {
+                    const { skill, discards = [] } = event;
+                    const cnt = Math.floor((skill.addition.discardCnt + discards.length) / 6);
+                    return {
+                        triggers: 'discard',
+                        status: isCdt(cnt > 0, [[123051, cnt]]),
+                        exec: () => skill.addition.discardCnt = (skill.addition.discardCnt + discards.length) % 6,
+                    }
+                })
+        ),
 
     2401: () => new HeroBuilder(57).name('无相之雷').since('v3.7.0').offline('v2').maxHp(8).monster().electro()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/df234a18db1aa6f769ac3b32b0168ebf_4040044349475544115.png')
@@ -2214,7 +2235,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2403: () => new HeroBuilder(322).name('千年珍珠骏麟').since('v4.4.0').maxHp(8).monster().electro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/6ea12823806de2c2c7fe62d839410c8b_8031642621604475811.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/54bce42537a3bc38d77aa159d8f61355.png')
-        .normalSkill(new NormalSkillBuilder('旋尾扇击'))
+        .normalSkill('旋尾扇击')
         .skills(
             new SkillBuilder('霞舞鱼群').description('{dealDmg}。；【每回合1次：】如果本角色已附属【sts124032】，则使其[可用次数]+1。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3a/fej2c9u7kria1j2btaxy7f9o9k7uuyg.png',
@@ -2262,7 +2283,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2405: () => new HeroBuilder(369).name('圣骸毒蝎').since('v4.7.0').consecratedBeast().electro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/379deb8c564c0af89f544ff6bab049d2_839388424690765015.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a0b7c961a2b65824a4d68d461f059298.png')
-        .normalSkill(new NormalSkillBuilder('蝎爪钳击'))
+        .normalSkill('蝎爪钳击')
         .skills(
             new SkillBuilder('蝎尾锥刺').description('{dealDmg}。；生成1张【crd124051】，随机置入我方牌库顶部2张牌之中。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ba3107753a28bf55c7279482d9b0c9ed.png',
@@ -2317,7 +2338,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2501: () => new HeroBuilder(58).name('魔偶剑鬼').monster().anemo()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5b21d3abb8dd7245a8f5f540d8049fcb_59481287402207724.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6a1743d67ca3e21074e1f0c704c4549.png')
-        .normalSkill(new NormalSkillBuilder('一文字'))
+        .normalSkill('一文字')
         .skills(
             new SkillBuilder('孤风刀势').description('召唤【smn125011】。').description('{dealDmg},召唤【smn125011】。', 'v3.4.0')
                 .src('https://patchwiki.biligame.com/images/ys/f/f2/gucxzyumx6uaumg6r6ms4czbw32v3gt.png',
@@ -2336,7 +2357,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2502: () => new HeroBuilder(287).name('特瓦林').since('v4.3.0').monster().anemo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/83ef329668e4d3f2521c712881a9a028_6040566226446903836.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/690d318b28b1bde9d7ffc17a337b632b.png')
-        .normalSkill(new NormalSkillBuilder('裂爪横击'))
+        .normalSkill('裂爪横击')
         .skills(
             new SkillBuilder('暴风轰击').description('{dealDmg}，目标角色附属【sts125021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/6d5115adf3c4273b26e05690e4222f51.png',
@@ -2355,7 +2376,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2503: () => new HeroBuilder(370).name('圣骸飞蛇').since('v4.7.0').consecratedBeast().anemo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/39bdf909aff15f061d4d9ea3d4c2b2ab_472359532850721936.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c1d78d82c85022519c595a9ab954ebfb.png')
-        .normalSkill(new NormalSkillBuilder('旋尾迅击'))
+        .normalSkill('旋尾迅击')
         .skills(
             new SkillBuilder('盘绕风引').description('{dealDmg}，抓1张牌。')
                 .description('{dealDmg}，抓1张【crd124051】\\；然后，手牌中每有1张【crd124051】，抓1张牌（每回合最多抓2张）。', 'v4.8.0')
@@ -2390,7 +2411,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2601: () => new HeroBuilder(59).name('丘丘岩盔王').offline('v2').maxHp(8).hilichurl().geo()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/db05474f6bdc3a5080e141d72c876548_5712469579238063350.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2886b95ca3fcd79cf72577fd0276cb94.png')
-        .normalSkill(new NormalSkillBuilder('Plama Lawa'))
+        .normalSkill('Plama Lawa')
         .skills(
             new SkillBuilder('Movo Lawa').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/2/25/8sausa1g74119xvltdmopivnxclkn4l.png',
@@ -2413,7 +2434,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/8e7128d60419e53054de5daa1e096252.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/6bfb045422ca297b5ead653065fecfbe.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/949d01e6a23ceba1d6adeae6ac445374.png')
-        .normalSkill(new NormalSkillBuilder('碎岩冲撞'))
+        .normalSkill('碎岩冲撞')
         .skills(
             new SkillBuilder('磅礴之气').description('{dealDmg}，如果发生了结晶反应，则角色[汲取对应元素的力量]。；如果本技能中角色未汲取元素的力量，则附属【sts126021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/5ab059679b08fba559b68f7d361a64be.png',
@@ -2436,7 +2457,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2603: () => new HeroBuilder(434).name('黄金王兽').since('v5.2.0').monster().geo()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u0263g/50d5c739b78bbfc9456ca75393a85e36.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u0263g/b060baa72903bc181b63c4baa83d430a.png')
-        .normalSkill(new NormalSkillBuilder('王狼直击'))
+        .normalSkill('王狼直击')
         .skills(
             new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属2层【sts126031】，召唤【smn126032】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/58/7e3q4ziz9klancofuscufqq9o59c250.png',
@@ -2455,7 +2476,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2701: () => new HeroBuilder(60).name('翠翎恐蕈').offline('v1').monster().dendro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/83e1eecf95f1e3ba10afad2e2a4de03c_4053328098702513548.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0c8a00c0737279e0349769448e7a1f35.png')
-        .normalSkill(new NormalSkillBuilder('菌王舞步'))
+        .normalSkill('菌王舞步')
         .skills(
             new SkillBuilder('不稳定孢子云').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/4/46/2tjoad0wz0qn966hqp6vvgfvi07izaf.png',
@@ -2477,7 +2498,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2702: () => new HeroBuilder(371).name('阿佩普的绿洲守望者').since('v4.7.0').monster().dendro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/59b3a5744a5e0cef3a742cf97ee1a48e_9222353554920937369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6c67691a5ce406ff1ac33796448454ed.png')
-        .normalSkill(new NormalSkillBuilder('失乡重击'))
+        .normalSkill('失乡重击')
         .skills(
             new SkillBuilder('生命流束').description('{dealDmg}，抓1张【crd127021】，生成1层【sts127026】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a2598b6377145054026356571e3494d6.png',
@@ -2497,7 +2518,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2703: () => new HeroBuilder(422).name('镀金旅团·叶轮舞者').since('v5.1.0').eremite().dendro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/d817cec7f1b14e0949f458e3b9746fa3_8569570692569956190.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u539vg/3a4c97c13970817f79729204fbc2279c.png')
-        .normalSkill(new NormalSkillBuilder('叶轮轻扫'))
+        .normalSkill('叶轮轻扫')
         .skills(
             new SkillBuilder('蔓延旋舞').description('{dealDmg}，生成1层【sts127033】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/10/3uggqlvnngykujm38c9noimrtyt0rr1.png',
@@ -2523,7 +2544,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
     2704: () => new HeroBuilder(494).name('贪食匿叶龙山王').since('v5.8.0').maxHp(7).monster().dendro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/96ffcb7de7285bd7981cbb868e0a33d9_4577622310420998135.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/d6a56a54fa436716a950c4a890f16fa6.png')
-        .normalSkill(new NormalSkillBuilder('沉重尾击'))
+        .normalSkill('沉重尾击')
         .skills(
             new SkillBuilder('喷吐草实').description('{dealDmg}，抓1张「料理」牌。')
                 .src('#',

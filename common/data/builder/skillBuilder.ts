@@ -104,7 +104,6 @@ export class GISkill {
             if (reset) {
                 curskill.useCntPerRound = 0;
                 curskill.perCnt = pct;
-                curskill.addition = adt;
                 return {};
             }
             let dmgElement = res.dmgElement;

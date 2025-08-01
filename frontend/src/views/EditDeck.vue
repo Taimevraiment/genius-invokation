@@ -91,8 +91,8 @@
                         v-for="(dhero, dhidx) in herosDeck" :key="dhidx" @click.stop="showHeroInfo(dhero.id)">
                         <img class="hero-img" :src="dhero.UI.avatar" v-if="dhero?.UI.avatar?.length > 0"
                             :alt="dhero.name" draggable="false" />
-                        <span v-else class="hero-img"
-                            style="background-color: #ffd0a2;border-radius: 50%;aspect-ratio: 1/1;">
+                        <span v-else class="hero-img" style="border-radius: 50%;aspect-ratio: 1/1;white-space: nowrap;"
+                            :style="{ backgroundColor: `${ELEMENT_COLOR[dhero.element]}` }">
                             {{ dhero.name }}
                         </span>
                         <div class="icon-group" v-if="dhero.id > 1000">

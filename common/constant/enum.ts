@@ -207,6 +207,12 @@ export const STATUS_TYPE = {
 
 export type StatusType = TypeConst<typeof STATUS_TYPE>;
 
+export const SUMMON_TAG = {
+    Simulanka: 'Simulanka', // 希穆兰卡
+} as const;
+
+export type SummonTag = TypeConst<typeof SUMMON_TAG>;
+
 export const SUPPORT_TYPE = {
     Round: 1, // 轮次
     Collection: 2, // 收集物

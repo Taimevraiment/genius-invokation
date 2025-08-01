@@ -128,7 +128,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     15078: () => ski1507x(ELEMENT_TYPE.Electro),
 
-    15135: () => new SkillBuilder('勠心拳·蓄力').description('{dealDmg}。').elemental().readySkill().damage(4),
+    15135: () => new SkillBuilder('勠心拳·蓄力').description('{dealDmg}。').elemental().readySkill().damage(4)
+        .handle(({ hero, talent }) => ({ addDmgCdt: isCdt(getObjById(hero.heroStatus, 115132)?.perCnt == -2, 1 + +!!talent) })),
 
     16074: () => new SkillBuilder('长枪开相').description('{dealDmg}\\；如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
         .elemental().readySkill().damage(2).handle(event => {

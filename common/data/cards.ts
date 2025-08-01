@@ -1450,11 +1450,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方角色准备技能时：】此角色获得3点【sts301025】。；【我方角色切换为出战角色后：】此角色获得2点【sts301025】。；（当锻炼层数到达3点时，治疗对应角色1点\\；当锻炼层数到达5点时，对应角色所造成的伤害+1）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/798cd8c757e991c5d54ae762f455fbf5_5369716917521459765.png'),
 
-    321029: () => new CardBuilder(500).name('墨色酒馆').since('v5.8.0').place().costAny(2)
+    321029: () => new CardBuilder(500).name('墨色酒馆').since('v5.8.0').place().costAny(2).subtype(CARD_SUBTYPE.Simulanka)
         .description('【入场时：】从【crd301034】、【crd301035】、【crd301036】中随机生成1张手牌。；【我方宣布结束时：】随机触发我方1个[「希穆兰卡」召唤物]的「结束阶段」效果。；[可用次数]：3')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/89c42f0f21c5a933c9a8e9f9b1e6c1dd_8383963697306266892.png'),
 
-    321030: () => new CardBuilder(501).name('星轨王城').since('v5.8.0').place().costSame(2)
+    321030: () => new CardBuilder(501).name('星轨王城').since('v5.8.0').place().costSame(2).subtype(CARD_SUBTYPE.Simulanka)
         .description('【入场时：】生成手牌【crd301033】。；【我方角色使用「元素战技」后：】下次打出【crd301033】少花费1个元素骰。（不可叠加）；【我方角色使用「元素爆发」后：】下次打出的【crd301033】效果量+1。（不可叠加）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/26/258999284/f721ecf8a6bec7cf87a07f7669d5a583_8349369588870331854.png'),
 
@@ -1580,11 +1580,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('我方使用「特技」时：少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/10e2b03ab56591fdebdeadd3dcd091dc_4193411804004313763.png'),
 
-    322029: () => new CardBuilder(502).name('森林的祝福').since('v5.8.0').ally().costAny(2)
+    322029: () => new CardBuilder(502).name('森林的祝福').since('v5.8.0').ally().costAny(2).subtype(CARD_SUBTYPE.Simulanka)
         .description('【入场时及我方触发元素反应后：】从【crd301034】、【crd301035】、【crd301036】中随机生成1张加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/26/258999284/7e91ccef12e069d4a989c75c67866698_6484654818732443668.png'),
 
-    322030: () => new CardBuilder(503).name('预言女神的礼物').since('v5.8.0').ally().costAny(2)
+    322030: () => new CardBuilder(503).name('预言女神的礼物').since('v5.8.0').ally().costAny(2).subtype(CARD_SUBTYPE.Simulanka)
         .description('【入场时：】生成2张手牌【crd301033】，并生成2张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/45dae777fd99897142752609a238470f_3519286704122229551.png'),
 
@@ -3004,8 +3004,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；【sts115132】提高的伤害额外+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/5a397c87c8f81a20fb69d9483299781f_5902943097195617602.png'),
 
-    215141: () => new CardBuilder(510).name('缠忆君影梦相见').since('v6.0.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mizuki.webp'),
+    215141: () => new CardBuilder(510).name('缠忆君影梦相见').since('v6.0.0').talent(1).costAnemo(3).perCnt(2)
+        .description('{action}；如果【hro】是出战角色，则我方造成的[冰元素伤害][水元素伤害][火元素伤害][雷元素伤害]+1。（包括角色引发的任意元素扩散的伤害，每回合2次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mizuki.webp')
+        .handle((card, event) => {
+            if (!event.hero?.isFront || card.perCnt <= 0) return;
+            return {
+                addDmgCdt: 1,
+                triggers: [
+                    'Cryo-dmg', 'Cryo-dmg-Swirl', 'Hydro-dmg', 'Hydro-dmg-Swirl',
+                    'Pyro-dmg', 'Pyro-dmg-Swirl', 'Electro-dmg', 'Electro-dmg-Swirl',
+                ],
+                exec: () => card.minusPerCnt(),
+            }
+        }),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
@@ -3321,8 +3333,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
         .handle((_, { hero, cmds }) => cmds.attach({ hidxs: hero?.hidx }).res),
 
-    223051: () => new CardBuilder(511).name('罔极盛怒').since('v6.0.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_TheAbyssXiuhcoatl.webp'),
+    223051: () => new CardBuilder(511).name('罔极盛怒').since('v6.0.0').talent().costPyro(1).perCnt(1)
+        .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【敌方打出名称不存在于本局最初牌组的牌时：】所附属角色获得1点[充能]，下次造成的伤害+1。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_TheAbyssXiuhcoatl.webp')
+        .handle((card, event) => {
+            const { hcard, eplayerInfo: { initCardIds = [] } = {}, execmds } = event;
+            if (card.perCnt <= 0 || !hcard || initCardIds.includes(hcard.id)) return;
+            execmds.getEnergy(1).getStatus(223052);
+            return { triggers: 'ecard' }
+        }),
 
     224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
         .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
@@ -3583,13 +3602,13 @@ const allCards: Record<number, () => CardBuilder> = {
 
     115142: () => new CardBuilder().name('梦见风名物点心').food().costSame(0)
         .description('【此卡牌进入手牌时：】如果我方出战角色生命值大于5，则造成1点[风元素伤害]\\；否则治疗我方出战角色2点。随后弃置此卡牌并抓1张牌。')
-        .src('')
+        .src('tmp/UI_Gcg_CardFace_Summon_Mizuki_Food')
         .handle((_, event) => {
-            const { hero, execmds } = event;
+            const { hero, execmds, cmdsAfter } = event;
             if (!hero) return;
             if (hero.hp >= 5) execmds.attack(1, DAMAGE_TYPE.Anemo);
             else execmds.heal(2);
-            execmds.getCard(1);
+            cmdsAfter.getCard(1);
             return { triggers: 'getcard' }
         }),
 

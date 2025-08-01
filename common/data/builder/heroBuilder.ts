@@ -3,7 +3,7 @@ import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, H
 import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray } from "../../utils/utils.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
-import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder";
+import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder.js";
 
 export class GIHero {
     id: number; // 唯一id
@@ -220,8 +220,9 @@ export class HeroBuilder extends BaseCostBuilder {
         this._weaponType = WEAPON_TYPE.Sword;
         return this;
     }
-    normalSkill(normalSkillBuilder: NormalSkillBuilder) {
-        this._normalSkill = normalSkillBuilder;
+    normalSkill(normalSkillBuilder: NormalSkillBuilder | string) {
+        if (typeof normalSkillBuilder == 'string') this._normalSkill = new NormalSkillBuilder(normalSkillBuilder);
+        else this._normalSkill = normalSkillBuilder;
         return this;
     }
     skills(...skills: SkillBuilder[]) {

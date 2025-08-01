@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SkillType, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SkillType, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getDerivantParentId, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices, hasObjById } from '../utils/gameUtil.js';
@@ -465,7 +465,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { trigger, summons = [], randomInArr } = event;
         if (trigger == 'enter') return { triggers: 'enter', exec: (_, cmds) => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
         if (trigger != 'end-phase' || !randomInArr) return;
-        const selectSummons = summons.filter(s => [301028, 301029, 301030, 301031].includes(s.id)) ?? [];
+        const selectSummons = summons.filter(s => s.hasTag(SUMMON_TAG.Simulanka)) ?? [];
         if (selectSummons.length == 0) return;
         return {
             triggers: 'end-phase',
@@ -902,7 +902,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322030: () => new SupportBuilder().collection(2).handle((_, event) => {
         const { trigger, csummon } = event;
         const triggers: Trigger[] = ['enter'];
-        if (csummon && [301028, 301029, 301030, 301031].includes(csummon.id)) triggers.push('summon-generate');
+        if (csummon && csummon.hasTag(SUMMON_TAG.Simulanka)) triggers.push('summon-generate');
         return {
             triggers,
             exec: (spt, cmds, execEvent) => {

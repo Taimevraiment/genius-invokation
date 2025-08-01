@@ -1,5 +1,5 @@
 import { Summon, Trigger, VersionWrapper } from "../../../typing";
-import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, VERSION, Version } from "../../constant/enum.js";
+import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -26,6 +26,7 @@ export class GISummon {
     damage: number; // 伤害量
     pdmg: number; // 穿透伤害
     element: ElementType; // 伤害元素
+    tag: SummonTag[]; // 标签
     isDestroy: SummonDestroyType; // 是否销毁：0次数用完销毁 1次数用完回合结束时销毁 2回合结束时强制销毁
     perCnt: number; // 每回合次数
     isTalent: boolean; // 是否有天赋
@@ -53,6 +54,7 @@ export class GISummon {
         options: {
             pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
             spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[],
+            tag?: SummonTag[],
         } = {}
     ) {
         this.id = id;
@@ -65,6 +67,7 @@ export class GISummon {
         const {
             pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = 0, stsId = -1, spReset = false,
             expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [],
+            tag = [],
         } = options;
         const hid = getHidById(id);
         this.UI = {
@@ -87,6 +90,7 @@ export class GISummon {
             curVersion,
             versionChanges,
         }
+        this.tag = tag;
         this.perCnt = pct;
         this.isTalent = isTalent;
         this.addition = adt;
@@ -127,6 +131,9 @@ export class GISummon {
     setEntityId(id: number): Summon {
         this.entityId = id;
         return this;
+    }
+    hasTag(...tags: SummonTag[]) {
+        return this.tag.some(v => tags.includes(v));
     }
     phaseEndAtk(event: SummonHandleEvent, cmds: CmdsGenerator, healHidxs?: number[]): CmdsGenerator {
         if (this.isDestroy == SUMMON_DESTROY_TYPE.Used) this.minusUseCnt();
@@ -179,6 +186,7 @@ export class SummonBuilder extends BaseBuilder {
     private _damage: VersionMap<number> = this._createVersionMap();
     private _pdmg: number = 0;
     private _element: ElementType | undefined;
+    private _tag: SummonTag[] = [];
     private _perCnt: VersionMap<number> = this._createVersionMap();
     private _isTalent: boolean = false;
     private _addition: Record<string, number> = {};
@@ -266,6 +274,10 @@ export class SummonBuilder extends BaseBuilder {
     }
     talent(isTalent: boolean) {
         this._isTalent = isTalent;
+        return this;
+    }
+    tag(...tag: SummonTag[]) {
+        this._tag.push(...tag);
         return this;
     }
     addition(key: string, value: number) {

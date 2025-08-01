@@ -319,8 +319,8 @@ export class StatusBuilder extends BaseBuilder {
         this._summonId = smnId ?? -2;
         return this;
     }
-    addition(key: string, value: number) {
-        this._addition[key] = value;
+    addition(key: string, value?: number) {
+        this._addition[key] = value ?? 0;
         return this;
     }
     notReset() {
