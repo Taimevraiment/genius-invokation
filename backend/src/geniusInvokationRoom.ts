@@ -1403,8 +1403,7 @@ export default class GeniusInvokationRoom {
             }
             while (trounds.length) {
                 const tround = trounds.pop();
-                const { smnres, tasks } = this._detectSummon(pidx, trg, { csummon: [smn], players: cplayers, skid, atkHidx: isSelf ? ohidx : ehidx(), tround, hcard: withCard, isExec: false });
-                const { cmds } = smnres?.exec?.({ summon: smn, heros: cplayers[cpidx].heros, combatStatus: cplayers[cpidx].combatStatus, eCombatStatus: cplayers[cpidx ^ 1].combatStatus }) ?? {};
+                const { smnres, tasks, smncmds } = this._detectSummon(pidx, trg, { csummon: [smn], players: cplayers, skid, atkHidx: isSelf ? ohidx : ehidx(), tround, hcard: withCard, isExec: false });
                 if (smnres) {
                     const damages: SmnDamageHandle = (isOppo: boolean = true, cnt?: number, element?: DamageType, hidxs?: number[]) => {
                         const dmgElement = element ?? smn.element;
@@ -1421,7 +1420,7 @@ export default class GeniusInvokationRoom {
                         ...smnres,
                         element: smn.element,
                         heal: isCdt(smn.shieldOrHeal > 0, smn.shieldOrHeal),
-                        cmds,
+                        cmds: smncmds,
                         damages
                     }, 'summon', smn.id, skid, isSelf);
                     calcRes.atriggers.forEach((trgs, trgsi) => trgs.push(...smnAtkRes.atriggers[trgsi]));
@@ -2613,6 +2612,7 @@ export default class GeniusInvokationRoom {
                 hidxs: chi,
                 players: res.players,
                 isExec,
+                isOnlyExec: !isExec,
                 getdmg: agetdmg(),
                 dmg: getdmg(),
                 discards,
@@ -3583,7 +3583,7 @@ export default class GeniusInvokationRoom {
         if (player.status == PLAYER_STATUS.WAITING || !player.canAction || player.phase != PHASE.ACTION) return;
         player.canAction = false;
         player.phase = PHASE.ACTION_END;
-        this._detectStatus(pidx, [STATUS_TYPE.Attack, STATUS_TYPE.Usage], ['end-phase', 'any-end-phase']);
+        this._detectStatus(pidx, [STATUS_TYPE.Attack, STATUS_TYPE.Usage], ['end-phase', 'any-end-phase'], { hidxs: allHidxs(player.heros) });
         await this._execTask();
         this._detectStatus(pidx ^ 1, STATUS_TYPE.Usage, 'any-end-phase');
         await this._execTask();

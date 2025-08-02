@@ -843,7 +843,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                             card: [113154, 113155, 113156],
                         }
                     })),
-            new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点「夜魂值」，消耗自身全部*[战意]，对敌方出战角色造成等同于消耗*[战意]数量[火元素伤害]。；若消耗了6点*[战意]，则自身附属【sts113152】。')
+            new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点「夜魂值」，消耗自身全部【战意】，对敌方出战角色造成等同于消耗【战意】数量[火元素伤害]。；若消耗了6点【战意】，则自身附属【sts113152】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/7c/7fxaa5c7j8pian4bhrsqejz095b46pp.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/000ee3af3827bb90f6449f66e46dceeb_7084427594096869810.png')
                 .burstSp(3).cost(4).handle(event => {
@@ -851,7 +851,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     cmds.getStatus(113151).getNightSoul().getEnergy(energy, { isSp: true });
                     return { status: isCdt(-energy >= 6, 113152), addDmgCdt: -energy }
                 }),
-            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点*[战意]。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
+            new SkillBuilder('战意').description('角色不会获得[充能]。；在我方消耗「夜魂值」或使用「普通攻击」后，获得1点【战意】。；本角色使用「元素战技」或「元素爆发」时，附属【sts113153】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8d/7lkubxbzsfo5qrfe0gkf4e8nkrmp1jm.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/73b4f45ecb5c27f78ccea53dd0459430_3782408909774728081.png')
                 .passive().handle(event => {

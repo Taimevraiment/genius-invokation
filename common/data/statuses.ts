@@ -1580,11 +1580,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`),
 
     115131: () => readySkillStatus('在罪之先', 15135, 0, event => {
-        const { heros = [], hidx = -1 } = event;
+        const { heros = [], hidx = -1, trigger } = event;
         const sts115132 = getObjById(heros[hidx]?.heroStatus, 115132);
         if (!sts115132 || sts115132.perCnt != -2) return;
         if (sts115132.useCnt == 0) sts115132.dispose();
-        else sts115132.perCnt = -1;
+        if (trigger == 'switch-from') sts115132.perCnt = -1;
     }),
 
     115132: () => new StatusBuilder('变格').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
@@ -1604,10 +1604,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     115136: () => hero1513sts(ELEMENT_TYPE.Electro),
 
     115141: () => new StatusBuilder('梦浮').heroStatus().icon('tmp/UI_Gcg_Buff_Mizuki_S').useCnt(1).type(STATUS_TYPE.Attack)
-        .description('【我方宣布结束时：】如果所附属角色不是出战角色，则将所附属角色切换为出战角色，并造成1点风元素伤害。；[useCnt]')
+        .description('【我方宣布结束时：】如果所附属角色不是出战角色，则将所附属角色切换为出战角色，并造成1点[风元素伤害]。；[useCnt]')
         .handle((_, event) => {
-            const { cmdsBefore, hidx = -1, heros = [] } = event;
-            if (heros[hidx]?.isFront) return;
+            const { cmdsBefore, hidx = -1, heros = [], isExecTask } = event;
+            if (heros[hidx]?.isFront && !isExecTask) return;
             cmdsBefore.switchTo(hidx);
             return {
                 triggers: 'end-phase',
