@@ -42,6 +42,7 @@ export type SummonHandleRes = {
     addDmgType2?: number,
     addDmgType3?: number,
     addDmgCdt?: number,
+    addPdmg?: number,
     rCombatStatus?: (number | [number, ...any])[] | number,
     isNotAddTask?: boolean,
     element?: ElementType,

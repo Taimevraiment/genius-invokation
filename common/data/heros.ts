@@ -1144,6 +1144,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                     return {
                         triggers: ['ready-skill', 'switch'],
+                        isNotAddTask: trigger == 'switch' && skill.addition.switch != 1,
                         exec: () => {
                             if (trigger == 'ready-skill' || skill.addition.switch == 1) --skill.perCnt;
                             if (trigger == 'switch') skill.addition.switch = (skill.addition.switch + 1) % 2;
@@ -2184,6 +2185,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         triggers: 'discard',
                         status: isCdt(cnt > 0, [[123051, cnt]]),
+                        isNotAddTask: cnt == 0,
                         exec: () => skill.addition.discardCnt = (skill.addition.discardCnt + discards.length) % 6,
                     }
                 })

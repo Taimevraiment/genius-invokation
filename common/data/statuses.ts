@@ -79,6 +79,7 @@ export type StatusHandleRes = {
     addDmgType2?: number,
     addDmgType3?: number,
     addDmgCdt?: number,
+    addPdmg?: number,
     multiDmgCdt?: number,
     addDiceSkill?: AddDiceSkill,
     getDmg?: number,
@@ -1722,7 +1723,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { skid = -1, isSummon = -1 } = event;
             if (skid != getVehicleIdByCid(116102) && isSummon != 116103) return;
-            return { triggers: 'Geo-dmg', addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
+            return { triggers: 'Geo-dmg', addDmgCdt: 1, addPdmg: 1, exec: () => { status.minusUseCnt() } }
         }),
 
     116104: nightSoul(),
@@ -2239,7 +2240,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
-            return { triggers: ['dmg', 'Pierce-dmg'], addDmgCdt: 1, exec: () => status.minusUseCnt() }
+            return { triggers: 'dmg', addDmgCdt: 1, addPdmg: 1, exec: () => { status.minusUseCnt() } }
         }),
 
     124011: () => readySkillStatus('猜拳三连击·剪刀', 24015),

@@ -89,6 +89,7 @@ export type CardHandleRes = {
     addDmgType2?: number,
     addDmgType3?: number,
     addDmgCdt?: number,
+    addPdmg?: number,
     minusDiceSkill?: MinusDiceSkill,
     minusDiceCard?: number,
     minusDiceCardEl?: ElementType,
@@ -3340,7 +3341,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hcard, eplayerInfo: { initCardIds = [] } = {}, execmds } = event;
             if (card.perCnt <= 0 || !hcard || initCardIds.includes(hcard.id)) return;
             execmds.getEnergy(1).getStatus(223052);
-            return { triggers: 'ecard' }
+            return { triggers: 'ecard', exec: () => card.minusPerCnt() }
         }),
 
     224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')

@@ -51,6 +51,7 @@ export type SkillHandleRes = {
     pdmg?: number,
     pdmgSelf?: number,
     addDmgCdt?: number,
+    addPdmg?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
     statusPre?: (number | [number, ...any] | Status)[] | number,
@@ -222,11 +223,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')
         .vehicle().damage(2).cost(1).costAny(1, 'v5.7.0').handle(event => {
-            const { eheros, combatStatus, hero: { hidx }, skillAfter } = event;
+            const { eheros, hero: { hidx }, skillAfter } = event;
             const hidxs = getNextBackHidx(eheros);
             skillAfter.consumeNightSoul(hidx);
-            if (hidxs.length == 0) return;
-            return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
+            if (hidxs.length) return { pdmg: 1, hidxs }
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点「夜魂值」，抓3张牌。')
