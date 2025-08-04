@@ -1906,18 +1906,22 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117082: (useCnt: number = 1) => new StatusBuilder('迸发扫描').combatStatus().icon('ski,1').useCnt(useCnt).maxCnt(3).type(STATUS_TYPE.Attack)
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用的[草元素伤害]。；[useCnt]')
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；[useCnt]', 'v4.8.0')
-        .handle((status, event, ver) => {
-            const { summons = [], pile = [], hcard, combatStatus = [], talent, cmds } = event;
-            if (pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) return;
-            cmds.discard({ mode: CMD_MODE.TopPileCard });
+        .addition('dmg', -1).addition('cid').handle((status, event, ver) => {
+            const { summons = [], pile = [], hcard, combatStatus = [], talent, cmdsBefore, cmds, isExecTask } = event;
+            if ((pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) && !isExecTask) return;
+            cmdsBefore.discard({ mode: CMD_MODE.TopPileCard });
+            if (status.addition.dmg == -1) {
+                status.addition.dmg = pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0'));
+                status.addition.cid = pile[0].id;
+            }
             const isPlace = talent && talent.perCnt > 0 && pile[0].hasSubtype(CARD_SUBTYPE.Place);
             if (talent) {
-                cmds.getCard(1, { card: pile[0].id });
+                cmds.getCard(1, { card: status.addition.cid });
                 if (isPlace) cmds.getStatus(117083);
             }
             return {
                 triggers: ['action-start', 'action-start-oppo'],
-                damage: pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0')),
+                damage: status.addition.dmg,
                 element: DAMAGE_TYPE.Dendro,
                 exec: (eStatus, execEvent = {}) => {
                     if (!eStatus) return;
@@ -1931,6 +1935,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                         const talent = isCdt(hcard?.id == getTalentIdByHid(thero.id), hcard) ?? thero.talentSlot;
                         if (talent && isPlace) talent.minusPerCnt();
                     }
+                    eStatus.addition.dmg = -1;
                 }
             }
         }),
@@ -2792,7 +2797,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('每层使所附属角色下次受到的伤害+1。（可叠加，没有上限）')
         .handle(status => ({ triggers: 'getdmg', getDmg: status.useCnt, exec: () => status.dispose() })),
 
-    301207: () => new StatusBuilder('谐律交响的前奏（生效中）').combatStatus().icon(STATUS_ICON.Buff)
+    301207: () => new StatusBuilder('谐律异想断章（生效中）').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(312039)
         .description('角色使用技能时少花费1个元素骰。')
         .handle((status, event) => ({

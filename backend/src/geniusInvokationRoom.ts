@@ -3334,6 +3334,7 @@ export default class GeniusInvokationRoom {
             if (isAction) player.isFallAtk = ifa;
             const { usedCardIds } = player.playerInfo;
             usedCardIds.push(currCard.id);
+            await this._execTask();
         }
     }
     /**

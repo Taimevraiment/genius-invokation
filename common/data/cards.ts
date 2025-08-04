@@ -1230,7 +1230,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, addDmgCdt: 1, exec: () => card.minusPerCnt() }
         }),
 
-    312039: () => new CardBuilder(514).name('谐律交响的前奏').since('v6.0.0').relic().costSame(2).perCnt(1)
+    312039: () => new CardBuilder(514).name('谐律异想断章').since('v6.0.0').relic().costSame(2).perCnt(1)
         .description('【附属角色使用技能后：】我方所有角色附属1层【sts122】，下次我方角色使用技能时少花费1个元素骰。（每回合1次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
         .handle((card, event) => {

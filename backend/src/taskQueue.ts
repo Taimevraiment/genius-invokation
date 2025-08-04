@@ -22,7 +22,7 @@ export default class TaskQueue {
         this.env = env;
     }
     get queueList() {
-        const item = (name: string, q?: TaskItem[]) => q?.length && name != 'queue' ? `${name}=[${q.map(v => v[0])}]` : '';
+        const item = (name: string, q?: TaskItem[]) => q?.length || name == 'queue' ? `${name}=[${q?.map(v => v[0]) ?? ''}]` : '';
         return `(${item('immediateQueue', this.immediateQueue)}${item('priorityQueue', this.priorityQueue)}${item('queue', this.queue)}${item('finalQueue', this.finalQueue)})`;
     }
     init() {
