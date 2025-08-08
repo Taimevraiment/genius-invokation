@@ -1,6 +1,6 @@
 <template>
   <div class="main-container">
-    <div class="side" :style="{ opacity: +(player.phase >= PHASE.CHOOSE_HERO) }">
+    <div class="side" :style="{ opacity: +((player?.phase ?? 0) >= PHASE.CHOOSE_HERO) }">
       <div class="round" @click.stop="showHistory">
         <img class="round-bg" src="@@/image/TimeState.png" alt="回合" />
         <StrokedText class="round-text">{{ client.round }}</StrokedText>
@@ -38,9 +38,9 @@
       <div class="end-phase-btn">
         <button class="end-phase" @click.stop="endPhase" :class="{
           'pre-end-phase': !isShowEndPhase,
-          forbidden: player.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1,
+          forbidden: player?.status == PLAYER_STATUS.WAITING || !canAction || phase >= PHASE.ACTION_END || isLookon > -1,
         }" :style="{
-          backgroundImage: `url(${getPngIcon(`RoundButton_0${phase == PHASE.ACTION && player.status == PLAYER_STATUS.WAITING ? 1 : !canAction || isLookon > -1 ? 5 : isShowEndPhase ? 4 : 2}`)})`,
+          backgroundImage: `url(${getPngIcon(`RoundButton_0${phase == PHASE.ACTION && player?.status == PLAYER_STATUS.WAITING ? 1 : !canAction || isLookon > -1 ? 5 : isShowEndPhase ? 4 : 2}`)})`,
         }">
           <img class="end-phase-icon" :class="{ 'confirm-end-phase': isShowEndPhase }" :src="getSvgIcon('round')"
             alt="">

@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.3.11</div>
+    <div class="version">v0.3.12</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />

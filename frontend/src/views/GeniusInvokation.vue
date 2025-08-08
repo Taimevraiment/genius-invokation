@@ -53,7 +53,7 @@
       'mobile-player-display': isMobile,
     }" @click.stop="devOps()">
       <span v-if="isLookon > -1">旁观中......</span>
-      <p>{{ client.player?.name }}</p>
+      <p>{{ client.recordData.username[client.playerIdx] ?? client.player?.name }}</p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">
         <StrokedText>{{ handCardsInfo.count[client.playerIdx] }}</StrokedText>
       </div>
@@ -66,7 +66,7 @@
       'curr-player': client.opponent?.status == PLAYER_STATUS.PLAYING && client.phase <= PHASE.ACTION && client.phase >= PHASE.CHOOSE_HERO && client.isWin == -1,
       'mobile-player-display': isMobile,
     }" @click.stop="devOps(1)">
-      <p v-if="client.opponent?.name">{{ client.opponent?.name }}</p>
+      <p v-if="client.opponent?.name">{{ client.recordData.username[client.playerIdx ^ 1] ?? client.opponent?.name }}</p>
       <p class="ai-btn" v-if="!client.opponent?.name && isDev" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
       <p class="ai-btn" v-if="client.opponent.id == AI_ID && client.phase <= PHASE.NOT_BEGIN" style="color: red"
         @click.stop="removeAI">

@@ -2550,7 +2550,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     127041: () => new StatusBuilder('食足力增').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
         .description('自身下次造成的伤害+1。（可叠加，没有上限）')
-        .handle(status => ({ triggers: 'skill', addDmgCdt: 1, exec: () => { status.minusUseCnt() } })),
+        .handle(status => ({ triggers: 'skill', addDmg: 1, exec: () => { status.minusUseCnt() } })),
 
     127042: () => new StatusBuilder('食足体健').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
         .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(1),
@@ -3447,7 +3447,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     303321: () => new StatusBuilder('纵声欢唱（生效中）').combatStatus().useCnt(2)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(333027)
-        .description('下次切换角色少花费1个元素骰。；[useCnt]')
+        .description('下次切换角色少花费1个[无色元素骰]。')
         .handle((status, event) => {
             const { switchHeroDiceCnt = 0 } = event;
             if (switchHeroDiceCnt == 0) return;

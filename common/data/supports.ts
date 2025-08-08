@@ -714,7 +714,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 迪娜泽黛
     322016: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
         const { card, minusDiceCard: mdc = 0, pile = [] } = event;
-        const isMinus = card && card.hasSubtype(CARD_SUBTYPE.Ally) && card.cost > mdc && support.perCnt > 0;
+        if (!card || !card.hasSubtype(CARD_SUBTYPE.Ally)) return;
+        const isMinus = card.cost > mdc && support.perCnt > 0;
         const isGetCard = ver.gte('v4.1.0') && support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally));
         return {
             triggers: 'card',

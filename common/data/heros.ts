@@ -1997,8 +1997,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/942e3d28310f4395ee7e3f1580268db8_512199522496433076.png')
                 .elemental().damage(1).cost(3).explain('sts122041').handle((event, ver) => {
                     const { hero: { heroStatus }, cmds } = event;
-                    cmds.discard({ mode: CMD_MODE.HighHandCard })
-                    return { addDmgCdt: Math.min(ver.lt('v4.8.0') ? 5 : ver.lt('v5.0.0') ? 4 : 3, Math.floor(getObjById(heroStatus, 122042)?.useCnt ?? 0) / 3) }
+                    cmds.discard({ mode: CMD_MODE.HighHandCard });
+                    return { addDmgCdt: Math.min(ver.lt('v4.8.0') ? 5 : ver.lt('v5.0.0') ? 4 : 3, Math.floor((getObjById(heroStatus, 122042)?.useCnt ?? 0) / 3)) }
                 }),
             new SkillBuilder('横噬鲸吞').description('{dealDmg}，对敌方所有后台角色造成1点[穿透伤害]。召唤【smn122043】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/347f4286f0891f1b6937c9ac8cf5b1f7.png',

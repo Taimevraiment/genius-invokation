@@ -119,7 +119,7 @@ export default class GeniusInvokationRoom {
         }
     }
     get isDev() {
-        return this.env === 'dev' && this.id > 0;
+        return this.env == 'dev' && this.id > 0;
     }
     get currentPlayerIdx() {
         return this._currentPlayerIdx;
@@ -235,7 +235,10 @@ export default class GeniusInvokationRoom {
         if (isShowRoomInfo) log += this.roomInfoLog;
         const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
-        if (!this.isDev) fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(this.recordData)), err => err && console.error('err:', err));
+        if (!this.isDev) {
+            const recordData: RecordData = { ...this.recordData, username: this.players.map(v => v.name) };
+            fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(recordData)), err => err && console.error('err:', err));
+        }
         http.get(`${koishiUrl}?message=${isError ? '7szh报错了' : `7szh有日志被发送了:${info}`}${this.isDev ? '(开发版)' : ''}`, { headers: { flag: secretKey } });
     }
     /**
@@ -423,11 +426,12 @@ export default class GeniusInvokationRoom {
                         .replace(new RegExp(`\\[${this.players[vopidx ^ 1]?.name}\\]\\(${vopidx ^ 1}\\)`, 'g'), '[对方]');
                     if (cpidxs.length == 0) return { content: logctt.replace(/【.+?】/g, ''), type: lg.type }
                     const content = cpidxs.reduce((a, c) => {
-                        return a.replace(new RegExp(`【p${c}:(.+?)】`, 'g'), c == vopidx ? '$1' : '');
+                        return a.replace(new RegExp(`【p${c}:(.+?)】`, 'g'), c == vopidx || this.recordData.username.length ? '$1' : '');
                     }, logctt).replace(/【.+?】/g, '');
                     return { content, type: lg.type }
                 });
                 const content = actionInfo?.content || (isActionInfo ? log.filter(lg => lg.type == 'info').at(-1)?.content.replace(/\s*\d→\d/g, '') ?? '' : '');
+                if (flag == 'game-end' && this.recordData.username.length == 0) this.recordData.username = this.players.map(v => v.name);
                 return {
                     players: this.players.map(pvo => {
                         const heros = clone(pvo.heros).map(h => {
@@ -494,7 +498,7 @@ export default class GeniusInvokationRoom {
             } else {
                 this.io?.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
                     ...serverData,
-                    ..._serverDataVO(-1, tip),
+                    ..._serverDataVO(this.id > 0 ? -1 : this.recordData.pidx, tip),
                 }));
                 this.players.forEach(p => {
                     this.io?.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
@@ -506,6 +510,7 @@ export default class GeniusInvokationRoom {
                     }
                 });
             }
+            if (this.id < 0 && flag == 'roomInfoUpdate') this.recordData.pidx = pidx;
         } catch (e) {
             const error: Error = e as Error;
             console.error(error);
@@ -599,12 +604,12 @@ export default class GeniusInvokationRoom {
      * 开始游戏
      * @param pidx 玩家序号
      * @param flag 标志
+     * @param seed 指定种子
      */
     start(pidx: number, flag: string, seed?: string) {
-        this.seed ||= seed || Math.floor(Math.random() * 1e10).toString();
+        this.seed = seed || Math.floor(Math.random() * 1e10).toString();
         this._random = +this.seed;
         this.recordData.seed = this.seed;
-        this.recordData.username = this.players.map(p => p.name);
         this.recordData.shareCode = this.shareCodes;
         this.recordData.isExecuting = false;
         this.recordData.isPlaying = false;
@@ -614,7 +619,7 @@ export default class GeniusInvokationRoom {
         this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-${this.version.value.replace(/\./g, '_')}-r${this.id}-s${this.seed}`;
         this.entityIdIdx = -500000;
         this.isStart = true;
-        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.env != 'prod' ? 1 : this._randomInt(PLAYER_COUNT);
+        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.env != 'prod' && this.id > 0 ? 1 : this._randomInt(PLAYER_COUNT);
         this.startIdx = this.currentPlayerIdx;
         this.phase = PHASE.CHANGE_CARD;
         this.winner = -1;
@@ -677,6 +682,7 @@ export default class GeniusInvokationRoom {
      * 停止游戏
      */
     stop() {
+        this.recordData.actionLog = [];
         this.taskQueue.isExecuting = false;
         this.taskQueue.init();
     }
@@ -917,7 +923,7 @@ export default class GeniusInvokationRoom {
             newCard.UI.class = 'change-card';
             player.handCards.push(clone(newCard).setEntityId(this._genEntityId()));
         }
-        if (player.handCards.length < handCardsLen) {
+        while (player.handCards.length < handCardsLen) {
             const newCard = clone(player.pile.shift()!).setEntityId(this._genEntityId());
             newCard.UI.class = 'change-card';
             player.handCards.push(newCard);
@@ -929,7 +935,6 @@ export default class GeniusInvokationRoom {
                 this.emit(flag + '-action', pidx, { isQuickAction: true });
             });
         } else {
-            this._writeLog(player.handCards.reduce((a, c) => a + `[${c.name}](${c.entityId})`, `[${player.name}](${player.pidx})换牌后手牌为`), 'system');
             player.UI.info = `${this.startIdx == player.pidx ? '我方' : '对方'}先手，等待对方选择......`;
             this.delay(delayTime, () => {
                 player.phase = PHASE.CHOOSE_HERO;
@@ -939,6 +944,7 @@ export default class GeniusInvokationRoom {
         this.emit(flag, pidx, { socket });
         player.handCards.forEach(c => c.UI.class == 'change-card' && delete c.UI.class);
         player.handCards = player.handCards.filter(c => !c.UI.class);
+        this._writeLog(player.handCards.reduce((a, c) => a + `[${c.name}](${c.entityId})`, `[${player.name}](${player.pidx})换牌后手牌为`), 'system');
     }
     /**
      * 选择初始出战角色
@@ -3173,7 +3179,7 @@ export default class GeniusInvokationRoom {
                 const isDiceValid = checkDices(player.dice.filter((_, i) => diceSelect[i]), { card: currCard });
                 if (!isDiceValid) return this.emit('useCard-invalidDice', pidx, { socket, tip: '骰子不符合要求' });
             }
-            this._writeLog(`[${player.name}](${player.pidx})打出卡牌[${currCard.name}]`, 'info');
+            this._writeLog(`[${player.name}](${player.pidx})打出卡牌[${currCard.name}]【(${currCard.entityId})】`, 'info');
             this._doCmds(pidx, new CmdsGenerator().consumeDice(diceSelect));
         }
         const hidxs = currCard.canSelectSummon != -1 ? [selectSummon] :
@@ -3220,7 +3226,28 @@ export default class GeniusInvokationRoom {
         }
         this._doEquip(pidx, player.heros[hidxs[0]], currCard, { isDestroy: cardres.isDestroy });
         let { isInvalid } = this._detectStatus(pidx, STATUS_TYPE.NonEvent, 'card', { hcard: currCard, isOnlyCombatStatus: true });
+        const afterCard = () => {
+            if (getCard || pickCard) return;
+            player.playerInfo.isUsedCardPerRound = true;
+            if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
+            if (currCard.hasSubtype(CARD_SUBTYPE.Vehicle)) ++player.playerInfo.usedVehcileCnt;
+            this._detectSkill(pidx, 'card', { card: currCard, isQuickAction });
+            const { minusDiceCard, isFallAtk: ifa, isQuickAction: iqa } = this._detectSlotAndStatus(pidx, 'card', {
+                types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage],
+                hidxs: allHidxs(player.heros),
+                hcard: currCard,
+                equipHidx: hidxs[0],
+                isQuickAction,
+            });
+            isQuickAction ||= iqa;
+            this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction });
+            this._detectSlotAndStatus(pidx ^ 1, 'ecard', { types: STATUS_TYPE.Usage, hcard: currCard, isQuickAction });
+            this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction });
+            if (isAction) player.isFallAtk = ifa;
+            player.playerInfo.usedCardIds.push(currCard.id);
+        }
         if (isInvalid) {
+            afterCard();
             this._doActionAfter(pidx, isQuickAction);
             this._startTimer();
             this.emit(`useCard-${currCard.name}-invalid-${pidx}`, pidx, { actionInfo: { card: currCard }, isQuickAction: true });
@@ -3281,24 +3308,26 @@ export default class GeniusInvokationRoom {
                 const canAction = voi == dmgvoLen - 1;
                 const damageVO = damageVOs[voi];
                 if (damageVO != undefined) {
-                    if (canAction) this._doActionAfter(pidx, isQuickAction);
+                    if (canAction) {
+                        afterCard();
+                        this._doActionAfter(pidx, isQuickAction);
+                    }
                     await this._doDamage(pidx, damageVO, {
                         atkname: currCard.name,
                         canAction,
                         isQuickAction,
                         actionInfo: isCdt(!getCard && !pickCard && voi == 0, { card: currCard }),
                     });
-                } else {
-                    if (!isUseSkill) {
-                        this._doActionAfter(pidx, isQuickAction);
-                        this._startTimer();
-                        this.emit(`useCard-${currCard.name}`, pidx, {
-                            canAction,
-                            damageVO,
-                            isQuickAction,
-                            actionInfo: isCdt(!getCard && !pickCard, { card: currCard }),
-                        });
-                    }
+                } else if (!isUseSkill) {
+                    afterCard();
+                    this._doActionAfter(pidx, isQuickAction);
+                    this._startTimer();
+                    this.emit(`useCard-${currCard.name}`, pidx, {
+                        canAction,
+                        damageVO,
+                        isQuickAction,
+                        actionInfo: isCdt(!getCard && !pickCard, { card: currCard }),
+                    });
                 }
                 if (canAction) await this._execTask();
             }
@@ -3313,28 +3342,6 @@ export default class GeniusInvokationRoom {
                 if (isAction) this._changeTurn(pidx, isQuickAction, 'useCard');
                 else this._doActionStart(pidx);
             }
-        }
-        if (!getCard && !pickCard) {
-            player.playerInfo.isUsedCardPerRound = true;
-            if (currCard.hasSubtype(CARD_SUBTYPE.Legend)) player.playerInfo.isUsedLegend = true;
-            if (currCard.hasSubtype(CARD_SUBTYPE.Vehicle)) ++player.playerInfo.usedVehcileCnt;
-            this._detectSkill(pidx, 'card', { card: currCard });
-            const { minusDiceCard, isFallAtk: ifa, isInvalid: inv, isQuickAction: iqa } = this._detectSlotAndStatus(pidx, 'card', {
-                types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage],
-                hidxs: allHidxs(player.heros),
-                hcard: currCard,
-                equipHidx: hidxs[0],
-                isQuickAction,
-            });
-            isInvalid = inv;
-            isQuickAction || iqa;
-            this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction });
-            this._detectSlotAndStatus(pidx ^ 1, 'ecard', { types: STATUS_TYPE.Usage, hcard: currCard, isQuickAction });
-            this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction });
-            if (isAction) player.isFallAtk = ifa;
-            const { usedCardIds } = player.playerInfo;
-            usedCardIds.push(currCard.id);
-            await this._execTask();
         }
     }
     /**
@@ -3678,7 +3685,10 @@ export default class GeniusInvokationRoom {
      */
     private _doSupportDestroy(pidx: number, destroyedCnt: number, options: { supportCnt?: number[][], isExec?: boolean } = {}) {
         const { supportCnt, isExec = true } = options;
-        if (isExec) this.players[pidx].playerInfo.destroyedSupport += destroyedCnt;
+        if (isExec) {
+            this.players[pidx].playerInfo.destroyedSupport += destroyedCnt;
+            this._writeLog(`[${this.players[pidx].name}](${pidx})弃置支援物[${destroyedCnt}个]`, 'system');
+        }
         this._detectSupport(pidx, 'support-destroy', { supportCnt, isExec, isQuickAction: true });
     }
     /**
@@ -3722,13 +3732,17 @@ export default class GeniusInvokationRoom {
                 if (isDead) willHeals[phidx] = -1;
                 const heal = Math.max(0, willHeals[phidx] ?? 0);
                 if (h.hp >= 0 || heal % 1 != 0) {
-                    const damage = willDamages[phidx]?.reduce((a, b) => a + Math.max(0, b), 0) ?? 0;
+                    const eldmg = willDamages[phidx]?.[0] ?? -1;
+                    const pdmg = willDamages[phidx]?.[1] ?? 0;
                     const rheal = heal % 1 != 0 ? Math.ceil(heal) : Math.min(heal, h.maxHp - h.hp);
+                    let ohp = h.hp;
                     if (heal % 1 != 0) h.hp = rheal;
-                    else h.hp = Math.max(0, h.hp - damage + rheal);
-                    if ((willDamages[phidx]?.[0] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][0]}点${ELEMENT_NAME[dmgElements[phidx]]}伤害`);
-                    if (willDamages[phidx]?.[1]) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][1]}点穿透伤害`);
-                    if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点`);
+                    else h.hp = Math.max(0, h.hp - Math.max(0, eldmg) - pdmg + rheal);
+                    if (eldmg >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][0]}点${ELEMENT_NAME[dmgElements[phidx]]}伤害 ${ohp}→${ohp - eldmg}`);
+                    ohp -= Math.max(0, eldmg);
+                    if (heal % 1 != 0) ohp = 0;
+                    if (pdmg > 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][1]}点穿透伤害 ${ohp}→${ohp - pdmg}`);
+                    if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点 ${ohp}→${ohp + rheal}`);
                     // 被击倒
                     if (h.hp == 0 && !isDead &&
                         h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.addition[STATUS_TYPE.NonDefeat] == 0) &&

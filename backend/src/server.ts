@@ -216,13 +216,10 @@ io.on('connection', socket => {
         const me = getPlayer(pid) as Player;
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', customVersion, io);
         const player = newRoom.init(me);
-        if (isRecord) {
-            newRoom.init({ id: 0, name: isRecord.username[1] });
-            player.name = isRecord.username[0];
-        }
+        if (isRecord) newRoom.init({ id: 0, name: isRecord.username[1] });
         playerList[getPlayerIdx(pid)] = player;
         roomList.push(newRoom);
-        socket.join(`7szh-${roomId}-p${player.pidx}`);
+        socket.join(`7szh-${roomId}${isRecord ? '' : `-p${player.pidx}`}`);
         emitPlayerAndRoomList();
         socket.emit('enterRoom', {
             roomId,
@@ -288,10 +285,10 @@ io.on('connection', socket => {
     // 更新socket监听的房间
     socket.on('updateSocketRoom', () => {
         const me = getPlayer(pid);
-        if (!me) return console.error(`ERROR@sendToServer:未找到玩家-pid:${pid}`);
+        if (!me) return console.error(`ERROR@updateSocketRoom:未找到玩家-pid:${pid}`);
         socket.leave(`7szh-${me.rid}-p${(me as Player).pidx}`);
         const room = getRoom(me.rid);
-        if (!room) return console.error(`ERROR@roomInfoUpdate:未找到房间`);
+        if (!room) return console.error(`ERROR@updateSocketRoom:未找到房间`);
         socket.join(`7szh-${me.rid}-p${getIdxById(pid, room.players)}`);
     });
     // 发送数据到服务器
@@ -316,7 +313,7 @@ io.on('connection', socket => {
         if (pid == -1) console.warn(`pidx未找到`);
         if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
         const room = getRoom(isDev ? me.rid : actionData.rid);
-        if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
+        if (!room) return console.error(`ERROR@sendToServerDev:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;
         room.getActionDev(actionData);
         if (isStart != room.isStart) emitPlayerAndRoomList();
@@ -324,9 +321,9 @@ io.on('connection', socket => {
     // 接收心跳
     // socket.on('sendHeartBreak', () => {
     //     const me = getPlayer(pid);
-    //     if (!me) return console.error(`ERROR@sendToServerDev:未找到玩家-pid:${pid}`);
+    //     if (!me) return console.error(`ERROR@sendHeartBreak:未找到玩家-pid:${pid}`);
     //     const room = getRoom(me.rid);
-    //     if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
+    //     if (!room) return console.error(`ERROR@sendHeartBreak:未找到房间-rid:${me.rid}`);
     //     room.resetHeartBreak((me as Player).pidx);
     // });
     // 添加AI
@@ -400,7 +397,7 @@ app.get('/info', (req, res) => {
     if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
     res.json({
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
-        playersInfo: playerList.map(p => `${p.name}[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
+        playersInfo: playerList.map(p => `${p.name}(${p.ip})[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
         todayPlayersHistory: Array.from(todayPlayersHistory.entries())
             .map(([id, { ip, name, duration, loginTime, logoutTime }]) => ({
                 id,
