@@ -3869,25 +3869,31 @@ export default class GeniusInvokationRoom {
      * 弃牌后的处理
      * @param pidx 玩家序号
      * @param discards 将要舍弃的牌
-     * @param options players 玩家信息, isAction 是否为战斗行动, isExec 是否执行
+     * @param options players 玩家信息, isAction 是否为战斗行动, isExec 是否执行, isFromPile 是否从牌库弃牌
      */
     private _doDiscard(pidx: number, discards: Card[], options: {
         players?: Player[], isAction?: boolean, isExec?: boolean, supportCnt?: number[][],
-        isPriority?: boolean, isUnshift?: boolean,
+        isPriority?: boolean, isUnshift?: boolean, isFromPile?: boolean,
     } = {}) {
-        const { players = this.players, isAction, isExec = true, supportCnt = INIT_SUPPORTCNT(), isPriority, isUnshift } = options;
+        const { players = this.players, isAction, isExec = true, supportCnt = INIT_SUPPORTCNT(), isPriority, isUnshift, isFromPile = false } = options;
         const summons = [...players[pidx].summons];
         const tasks: AtkTask[] = [];
         const nsummons: Summon[] = [];
         let willHeals: number[] | undefined;
         for (const card of discards) {
-            const cardres = card.handle(card, { summons, trigger: 'discard', isExec });
+            const cardres = card.handle(card, { summons, source: +isFromPile, trigger: 'discard', isExec });
             if (this._hasNotTriggered(cardres.triggers, 'discard')) continue;
             const cardrescmds = new CmdsGenerator(cardres.cmds).addCmds(cardres.execmds);
             if (cardrescmds) {
                 const hasAtkcmds = cardrescmds.hasCmds('attack');
-                const { bWillDamages = [] } = this._doCmds(pidx, cardrescmds,
-                    { players: isCdt(!isExec || hasAtkcmds, clone(players)), isAction, isExec: isCdt(hasAtkcmds, false, isExec), supportCnt, isPriority, isUnshift });
+                const { bWillDamages = [] } = this._doCmds(pidx, cardrescmds, {
+                    players: isCdt(!isExec || hasAtkcmds, clone(players)),
+                    isAction,
+                    isExec: isCdt(hasAtkcmds, false, isExec),
+                    supportCnt,
+                    isPriority,
+                    isUnshift,
+                });
                 if (bWillDamages.length > 0) {
                     const atkname = `${card.name}(${card.entityId})`;
                     tasks.push({ pidx, cmds: cardrescmds, atkname });
@@ -5665,14 +5671,14 @@ export default class GeniusInvokationRoom {
                             p.handCards.forEach((c, ci) => c.cidx = ci);
                             p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
                             if (!isAttach) {
-                                if (isDiscard) this._doDiscard(cpidx, discards, { isAction, isPriority, isUnshift });
+                                if (isDiscard) this._doDiscard(cpidx, discards, { isFromPile: !isDiscardHand, isAction, isPriority, isUnshift });
                                 else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { isPriority: true, isUnshift: true });
                             }
                         }, 1500]], { isPriority, isUnshift, isImmediate });
                         cplayer.handCards.forEach(c => discards.some(dc => dc.entityId == c.entityId) && (c.UI.class = 'discard'));
                     } else {
                         if (!isAttach && isDiscard) {
-                            const { tasks: distasks, willHeals: disheal } = this._doDiscard(cpidx, discards, { players, isAction, isExec, supportCnt });
+                            const { tasks: distasks, willHeals: disheal } = this._doDiscard(cpidx, discards, { players, isFromPile: !isDiscardHand, isAction, isExec, supportCnt });
                             tasks.push(...distasks);
                             if (isOnlyApply && distasks.length) {
                                 this._doCmds(pidx, distasks.map(t => t.cmds).reduce((a, c) => a.addCmds(c)), { players, isExec, isOnlyApply: true });

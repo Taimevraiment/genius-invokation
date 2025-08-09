@@ -2255,8 +2255,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('随机[舍弃]至多2张原本元素骰费用最高的手牌，随后抓牌直至手牌中有4张牌。；【此牌在手牌被[舍弃]后：】抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/495fa2cc19ba2fa4ca9534c58a926b63_7007260530446437361.png')
         .handle((_, event) => {
-            const { cmds, trigger } = event;
+            const { cmds, source: isFromPile = 0, trigger } = event;
             if (trigger == 'discard') {
+                if (isFromPile) return;
                 cmds.getCard(1);
                 return { triggers: 'discard' }
             }
