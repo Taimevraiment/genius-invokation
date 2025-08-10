@@ -5616,7 +5616,7 @@ export default class GeniusInvokationRoom {
                             discards.push(...hcardsSorted);
                         } else {
                             const targetCnt = discardCnt;
-                            while (discardCnt > 0) {
+                            while (discardCnt > 0 && unselectedCards.length > 0) {
                                 if (mode == CMD_MODE.Random) { // 弃置随机手牌
                                     const didx = this._randomInt(unselectedCards.length - 1);
                                     const [discard] = unselectedCards.splice(didx, 1);

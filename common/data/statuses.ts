@@ -2245,7 +2245,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
-            return { triggers: 'dmg', addDmgCdt: 1, addPdmg: 1, exec: () => { status.minusUseCnt() } }
+            return { triggers: 'dmg', addDmgCdt: status.useCnt, addPdmg: status.useCnt }
         }),
 
     124011: () => readySkillStatus('猜拳三连击·剪刀', 24015),
