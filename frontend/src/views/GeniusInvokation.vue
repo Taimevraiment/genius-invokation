@@ -66,7 +66,8 @@
       'curr-player': client.opponent?.status == PLAYER_STATUS.PLAYING && client.phase <= PHASE.ACTION && client.phase >= PHASE.CHOOSE_HERO && client.isWin == -1,
       'mobile-player-display': isMobile,
     }" @click.stop="devOps(1)">
-      <p v-if="client.opponent?.name">{{ client.recordData.username[client.playerIdx ^ 1] ?? client.opponent?.name }}</p>
+      <p v-if="client.opponent?.name">{{ client.recordData.username[client.playerIdx ^ 1] ?? client.opponent?.name }}
+      </p>
       <p class="ai-btn" v-if="!client.opponent?.name && isDev" style="color: aquamarine;" @click.stop="addAI">+添加bot</p>
       <p class="ai-btn" v-if="client.opponent.id == AI_ID && client.phase <= PHASE.NOT_BEGIN" style="color: red"
         @click.stop="removeAI">
@@ -203,7 +204,7 @@
       'modal-action-oppo': client.actionInfo.isOppo && client.actionInfo.isShow,
       'modal-action-my-leave': !client.actionInfo.isOppo && !client.actionInfo.isShow,
       'modal-action-oppo-leave': client.actionInfo.isOppo && !client.actionInfo.isShow,
-      'modal-action-gradient': !client.actionInfo.card,
+      'modal-action-transparent': !!client.actionInfo.card,
     }">
       <div class="modal-action-content" v-if="client.actionInfo.content != ''">
         <img v-if="client.actionInfo.avatar" :src="client.actionInfo.avatar" alt="">
@@ -1118,8 +1119,6 @@ button {
   align-items: center;
   transition: .5s;
   color: white;
-  background-color: #254162;
-  border: 3px solid #1c3149;
   border-radius: 10px;
   z-index: 6;
 }
@@ -1127,11 +1126,15 @@ button {
 .modal-action-my {
   left: 20px;
   opacity: 1;
+  background: linear-gradient(to right, #94690d 40%, #ca982c);
+  border: 3px solid #605925;
 }
 
 .modal-action-oppo {
   right: 20px;
   opacity: 1;
+  background: linear-gradient(to right, #254162 40%, #2c76ca);
+  border: 3px solid #1c3149;
 }
 
 .modal-action-my-leave {
@@ -1161,8 +1164,9 @@ button {
   justify-content: space-around;
 }
 
-.modal-action-gradient {
-  background: linear-gradient(to right, #254162 40%, #2c76ca);
+.modal-action-transparent {
+  background: transparent;
+  border: none;
 }
 
 .btn-group {

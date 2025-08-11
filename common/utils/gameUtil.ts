@@ -1,5 +1,5 @@
-import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, VERSION, Version } from "../constant/enum.js";
+import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
+import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { arrToObj, objToArr } from "./utils.js";
 
@@ -251,6 +251,7 @@ export const versionWrap = (curVersion: Version) => {
         gt: (ver: Version | null) => compareVersion(curVersion, ver) > 0,
         gte: (ver: Version | null) => compareVersion(curVersion, ver) >= 0,
         eq: (ver: Version | null) => compareVersion(curVersion, ver) == 0,
+        range: (ver1: Version | null, ver2: Version | null) => compareVersion(curVersion, ver1) >= 0 && compareVersion(curVersion, ver2) < 0,
     }
 }
 
@@ -436,3 +437,74 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
         + `${prefix}}\n`;
 }
 
+export const getEntityHandleEvent = (pidx: number, players: Player[], hidx?: number) => {
+    const player = players[pidx];
+    const opponent = players[pidx ^ 1];
+    hidx ??= player.hidx;
+    return {
+        pidx,
+        hero: player.heros[hidx],
+        heros: player.heros,
+        hidx,
+        combatStatus: player.combatStatus,
+        pile: player.pile,
+        hcards: player.handCards,
+        hcardsCnt: player.handCards.length,
+        summons: player.summons,
+        supports: player.supports,
+        phase: player.phase,
+        playerInfo: player.playerInfo,
+        dices: player.dice,
+        dicesCnt: player.dice.length,
+        heal: player.heros.map(() => -1),
+        eheros: opponent.heros,
+        ehidx: opponent.hidx,
+        eCombatStatus: opponent.combatStatus,
+        epile: opponent.pile,
+        esummons: opponent.summons,
+        esupports: opponent.supports,
+        ehcards: opponent.handCards,
+        ehcardsCnt: opponent.handCards.length,
+        ephase: opponent.phase,
+        eplayerInfo: opponent.playerInfo,
+        reset: false,
+        trigger: '' as Trigger,
+        switchHeroDiceCnt: 0,
+        isQuickAction: false,
+        hcard: null,
+        isChargedAtk: false,
+        isFallAtk: false,
+        round: 1,
+        restDmg: -1,
+        skid: -1,
+        sktype: SKILL_TYPE.Vehicle,
+        isSummon: -1,
+        isExec: false,
+        isMinusDiceCard: false,
+        isMinusDiceTalent: false,
+        minusDiceCard: 0,
+        isMinusDiceSkill: false,
+        isMinusDiceWeapon: false,
+        isMinusDiceRelic: false,
+        isMinusDiceVehicle: false,
+        minusDiceSkill: [],
+        dmgedHidx: opponent.hidx,
+        getdmg: player.heros.map(() => -1),
+        dmg: player.heros.map(() => -1),
+        hasDmg: false,
+        isExecTask: false,
+        selectHeros: [],
+        selectSummon: -1,
+        selectSupport: -1,
+        source: -1,
+        sourceHidx: -1,
+        dmgSource: -1,
+        discards: [],
+        talent: null,
+        slotsDestroyCnt: player.heros.map(() => 0),
+        isSelfRound: false,
+        isSwirlExec: false,
+        atkHidx: player.hidx,
+        isFirst: false,
+    }
+}

@@ -186,6 +186,7 @@ export default class GeniusInvokationClient {
             const isValid = !!this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skill.id)?.isValid;
             return {
                 ...skill,
+                isReadySkill: false,
                 isForbidden: skill.isForbidden || this.isLookon > -1 || !this.canAction || !isValid,
                 CurrCnts: skill.cost.map((cost, cidx) => [cost.cnt, Math.max(cost.cnt - (cidx < 2 ? (skill.costChange[cidx] as number) : 0), 0)])
                     .filter(([c]) => c).map(([, c]) => c),

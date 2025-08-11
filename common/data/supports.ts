@@ -1,88 +1,16 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SkillType, SUMMON_TAG, Version } from '../constant/enum.js';
+import { Card, Trigger } from '../../typing';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
-import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getDerivantParentId, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
-
-export type SupportHandleEvent = {
-    dices?: DiceCostType[],
-    trigger?: Trigger,
-    eheros?: Hero[],
-    eCombatStatus?: Status[],
-    eSupports?: Support[],
-    heros?: Hero[],
-    combatStatus?: Status[],
-    summons?: Summon[],
-    supports?: Support[],
-    pile?: Card[],
-    reset?: boolean,
-    card?: Card,
-    hcards?: Card[],
-    csummon?: Summon,
-    isFirst?: boolean,
-    hidxs?: number[],
-    playerInfo?: GameInfo,
-    eplayerInfo?: GameInfo,
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    minusDiceCard?: number,
-    isMinusDiceSkill?: boolean,
-    minusDiceSkill?: number[][],
-    isMinusDiceTalent?: boolean,
-    skid?: number,
-    sktype?: SkillType,
-    hidx?: number,
-    heal?: number[],
-    getdmg?: number[],
-    discardCnt?: number,
-    epile?: Card[],
-    isExecTask?: boolean,
-    sourceStatus?: Status,
-    getCardIds?: (filter?: (card: Card) => boolean) => number[],
-    randomInt?: (len?: number) => number,
-    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
-}
-
-export type SupportHandleRes = {
-    triggers?: Trigger[],
-    exec?: (support: Support, event: SupportExecEvent) => SupportExecRes | void,
-    minusDiceCard?: number,
-    minusDiceHero?: number,
-    minusDiceSkill?: MinusDiceSkill,
-    element?: DiceCostType | -2,
-    cnt?: number,
-    addRollCnt?: number,
-    isQuickAction?: boolean,
-    supportCnt?: number,
-    isNotAddTask?: boolean,
-    isOrTrigger?: boolean,
-    isLast?: boolean,
-    isExchange?: boolean,
-    isAfterSkill?: boolean,
-    summon?: (number | [number, ...any])[] | number,
-}
-
-export type SupportExecEvent = {
-    csummon?: Summon,
-    isExecTask?: boolean,
-    supports?: Support[],
-    eSupports?: Support[],
-}
-
-export type SupportExecRes = {
-    cmds?: CmdsGenerator,
-    isDestroy?: boolean,
-    summon?: (number | [number, ...any])[] | number,
-}
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
     // 斗争之火
     300006: (cnt: number = 0) => new SupportBuilder().collection(cnt).handle((support, event) => {
-        const { getdmg = [], supports = [], eSupports = [], trigger } = event;
-        const isTriggered = support.cnt > Math.max(...[...supports, ...eSupports].filter(s => s.card.id == support.card.id && s.entityId != support.entityId).map(s => s.cnt));
+        const { getdmg = [], supports = [], esupports = [], trigger } = event;
+        const isTriggered = support.cnt > Math.max(...[...supports, ...esupports].filter(s => s.card.id == support.card.id && s.entityId != support.entityId).map(s => s.cnt));
         if (trigger == 'phase-start' && !isTriggered) return;
         const supportCnt = isCdt(trigger == 'after-dmg', getdmg.reduce((a, c) => a + Math.max(0, c), 0));
         return {
@@ -165,10 +93,15 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 鸣神大社
-    321008: () => new SupportBuilder().round(3).handle(() => ({
-        triggers: ['phase-start', 'enter'],
-        exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.Random }), { isDestroy: --spt.cnt == 0 })
-    })),
+    321008: () => new SupportBuilder().round(4).round(3, 'v6.0.0').handle((_, event, ver) => {
+        const { dices = [] } = event;
+        if (ver.gte('v6.0.0') && dices.length % 2 == 0) return;
+        return {
+            triggers: ver.lt('v6.0.0') ? ['phase-start', 'enter'] : 'after-skill',
+            supportCnt: -1,
+            exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.Random }), { isDestroy: --spt.cnt == 0 })
+        }
+    }),
     // 珊瑚宫
     321009: () => new SupportBuilder().round(2).handle((_, event) => {
         const { heros = [] } = event;
@@ -218,18 +151,27 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 镇守之森
-    321012: () => new SupportBuilder().round(3).handle((_, event) => {
-        const { isFirst = true } = event;
-        if (isFirst) return;
+    321012: () => new SupportBuilder().round(3).perCnt(1).perCnt(0, 'v6.0.0').handle((support, event, ver) => {
+        const { isFirst = true, dices = [], isMinusDiceSkill } = event;
+        if (ver.lt('v6.0.0')) {
+            if (isFirst) return;
+            return {
+                triggers: 'phase-start',
+                exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: --spt.cnt == 0 })
+            }
+        }
+        if (dices.length % 2 == 1 || support.perCnt <= 0 || !isMinusDiceSkill) return;
         return {
-            triggers: 'phase-start',
-            exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: --spt.cnt == 0 })
+            triggers: 'skilltype1',
+            minusDiceSkill: { skilltype1: [0, 0, 1] },
+            isNotAddTask: true,
+            exec: spt => ({ isDestroy: --spt.cnt == 0 })
         }
     }),
     // 黄金屋
     321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
-        const { card, minusDiceCard: mdc = 0 } = event;
-        if (support.perCnt > 0 && card && card.cost >= 3 && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic) && card.cost > mdc) {
+        const { hcard, minusDiceCard: mdc = 0 } = event;
+        if (support.perCnt > 0 && hcard && hcard.cost >= 3 && hcard.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic) && hcard.cost > mdc) {
             return {
                 triggers: 'card',
                 isNotAddTask: true,
@@ -352,7 +294,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 中央实验室遗址
     321021: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discardCnt = 1, trigger } = event;
+        const { discards: { length: discardCnt } = [0], trigger } = event;
         return {
             triggers: ['discard', 'reconcile'],
             supportCnt: support.cnt + discardCnt < 9 ? discardCnt : -10,
@@ -381,11 +323,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 特佩利舞台
     321023: () => new SupportBuilder().collection().handle((support, event) => {
-        const { trigger = '', card = support.card, playerInfo: { initCardIds: acids = [] } = {},
+        const { trigger = '', hcard = support.card, playerInfo: { initCardIds: acids = [] } = {},
             eplayerInfo: { initCardIds: ecids = [] } = {} } = event;
         const triggers: Trigger[] = [];
-        if (['card', 'enter'].includes(trigger) && !acids.includes(card.id)) triggers.push(trigger);
-        else if (card && trigger == 'ecard' && support.cnt > 0 && !ecids.includes(card.id)) triggers.push(trigger);
+        if (['card', 'enter'].includes(trigger) && !acids.includes(hcard.id)) triggers.push(trigger);
+        else if (hcard && trigger == 'ecard' && support.cnt > 0 && !ecids.includes(hcard.id)) triggers.push(trigger);
         if (support.cnt > 0) triggers.push('phase-start');
         return {
             triggers: triggers,
@@ -401,8 +343,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 「悬木人」
     321024: () => new SupportBuilder().round(1).handle((support, event) => {
-        const { card, playerInfo: { initCardIds = [] } = {} } = event;
-        if (!card || initCardIds.includes(card.id) || card.cost + card.anydice < support.cnt) return;
+        const { hcard, playerInfo: { initCardIds = [] } = {} } = event;
+        if (!hcard || initCardIds.includes(hcard.id) || hcard.cost + hcard.anydice < support.cnt) return;
         return {
             triggers: 'card',
             supportCnt: 1,
@@ -423,7 +365,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 「花羽会」
     321026: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discardCnt = 1, heros } = event;
+        const { discards: { length: discardCnt } = [0], heros } = event;
         return {
             triggers: 'discard',
             supportCnt: (support.cnt + discardCnt) % 2 - support.cnt,
@@ -508,21 +450,21 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 蒂玛乌斯
     322003: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
-        const { card, trigger, minusDiceCard: mdc = 0, playerInfo: { relicCnt = 0 } = {} } = event;
+        const { hcard, trigger, minusDiceCard: mdc = 0, playerInfo: { relicCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && relicCnt >= 6) triggers.push('enter');
-        const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Relic) && card.cost > mdc && support.cnt >= card.cost - mdc;
+        const isMinus = support.perCnt > 0 && hcard && hcard.hasSubtype(CARD_SUBTYPE.Relic) && hcard.cost > mdc && support.cnt >= hcard.cost - mdc;
         if (trigger == 'card' && !isMinus) return;
         return {
             triggers: triggers,
             isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
             isLast: true,
-            minusDiceCard: isMinus ? card.cost - mdc : 0,
+            minusDiceCard: isMinus ? hcard.cost - mdc : 0,
             exec: (spt, cmds) => {
                 if (trigger == 'enter') return cmds.getCard(1, { subtype: CARD_SUBTYPE.Relic, isFromPile: true }).res;
                 if (trigger == 'phase-end') ++spt.cnt;
                 else if (trigger == 'card' && isMinus) {
-                    spt.cnt -= card.cost - mdc;
+                    spt.cnt -= hcard.cost - mdc;
                     --spt.perCnt;
                     if (ver.isOffline && spt.card.useCnt > 0) {
                         spt.card.minusUseCnt();
@@ -534,21 +476,21 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 瓦格纳
     322004: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
-        const { card, trigger, minusDiceCard: mdc = 0, playerInfo: { weaponTypeCnt = 0 } = {} } = event;
+        const { hcard, trigger, minusDiceCard: mdc = 0, playerInfo: { weaponTypeCnt = 0 } = {} } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && weaponTypeCnt >= 3) triggers.push('enter');
-        const isMinus = support.perCnt > 0 && card && card.hasSubtype(CARD_SUBTYPE.Weapon) && card.cost > mdc && support.cnt >= card.cost - mdc;
+        const isMinus = support.perCnt > 0 && hcard && hcard.hasSubtype(CARD_SUBTYPE.Weapon) && hcard.cost > mdc && support.cnt >= hcard.cost - mdc;
         if (trigger == 'card' && !isMinus) return;
         return {
             triggers: triggers,
             isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
             isLast: true,
-            minusDiceCard: isMinus ? card.cost - mdc : 0,
+            minusDiceCard: isMinus ? hcard.cost - mdc : 0,
             exec: (spt, cmds) => {
                 if (trigger == 'enter') return cmds.getCard(1, { subtype: CARD_SUBTYPE.Weapon, isFromPile: true }).res;
                 if (trigger == 'phase-end') ++spt.cnt;
                 else if (trigger == 'card' && isMinus) {
-                    spt.cnt -= card.cost - mdc;
+                    spt.cnt -= hcard.cost - mdc;
                     --spt.perCnt;
                     if (ver.isOffline && spt.card.useCnt > 0) {
                         spt.card.minusUseCnt();
@@ -560,8 +502,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 卯师傅
     322005: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
-        const { card, pile = [] } = event;
-        if (!card?.hasSubtype(CARD_SUBTYPE.Food)) return;
+        const { hcard, pile = [] } = event;
+        if (!hcard?.hasSubtype(CARD_SUBTYPE.Food)) return;
         const isGetDice = support.perCnt > 0;
         const isGetCard = support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Food));
         if (!isGetDice && !isGetCard) return;
@@ -581,8 +523,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 阿圆
     322006: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { card, minusDiceCard: mdc = 0 } = event;
-        if (support.perCnt <= 0 || !card || !card.hasSubtype(CARD_SUBTYPE.Place) || card.cost <= mdc) return;
+        const { hcard, minusDiceCard: mdc = 0 } = event;
+        if (support.perCnt <= 0 || !hcard || !hcard.hasSubtype(CARD_SUBTYPE.Place) || hcard.cost <= mdc) return;
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -681,8 +623,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 花散里
     322013: () => new SupportBuilder().collection().handle((support, event) => {
-        const { card, trigger, minusDiceCard: mdc = 0 } = event;
-        const isMinus = support.cnt >= 3 && card && card.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic) && card.cost > mdc;
+        const { hcard, trigger, minusDiceCard: mdc = 0 } = event;
+        const isMinus = support.cnt >= 3 && hcard && hcard.hasSubtype(CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic) && hcard.cost > mdc;
         return {
             triggers: ['summon-destroy', 'card'],
             minusDiceCard: isCdt(isMinus, 2),
@@ -702,8 +644,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 旭东
     322015: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { card, minusDiceCard: mdc = 0 } = event;
-        if (support.perCnt <= 0 || !card || !card.hasSubtype(CARD_SUBTYPE.Food) || card.cost <= mdc) return;
+        const { hcard, minusDiceCard: mdc = 0 } = event;
+        if (support.perCnt <= 0 || !hcard || !hcard.hasSubtype(CARD_SUBTYPE.Food) || hcard.cost <= mdc) return;
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -713,9 +655,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 迪娜泽黛
     322016: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
-        const { card, minusDiceCard: mdc = 0, pile = [] } = event;
-        if (!card || !card.hasSubtype(CARD_SUBTYPE.Ally)) return;
-        const isMinus = card.cost > mdc && support.perCnt > 0;
+        const { hcard, minusDiceCard: mdc = 0, pile = [] } = event;
+        if (!hcard || !hcard.hasSubtype(CARD_SUBTYPE.Ally)) return;
+        const isMinus = hcard.cost > mdc && support.perCnt > 0;
         const isGetCard = ver.gte('v4.1.0') && support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally));
         return {
             triggers: 'card',
@@ -744,8 +686,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 老章
     322018: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
-        const { card, heros = [], minusDiceCard: mdc = 0 } = event;
-        if (!card || !card.hasSubtype(CARD_SUBTYPE.Weapon) || card.cost <= mdc) return;
+        const { hcard, heros = [], minusDiceCard: mdc = 0 } = event;
+        if (!hcard || !hcard.hasSubtype(CARD_SUBTYPE.Weapon) || hcard.cost <= mdc) return;
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -764,8 +706,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 弥生七月
     322020: () => new SupportBuilder().permanent().perCnt(1).handle((support, event, ver) => {
         if (support.perCnt <= 0) return;
-        const { card, heros = [], minusDiceCard: mdc = 0 } = event;
-        if (!card || !card.hasSubtype(CARD_SUBTYPE.Relic) || card.cost <= mdc) return;
+        const { hcard, heros = [], minusDiceCard: mdc = 0 } = event;
+        if (!hcard || !hcard.hasSubtype(CARD_SUBTYPE.Relic) || hcard.cost <= mdc) return;
         const relicLen = heros.filter(h => h.relicSlot != null).length;
         const minusCnt = 1 + +(ver.lt('v4.6.0') ? relicLen : (relicLen >= 2));
         return {
@@ -777,9 +719,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 玛梅赫
     322021: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
-        const { card } = event;
+        const { hcard } = event;
         const subtype = [CARD_SUBTYPE.Food, CARD_SUBTYPE.Ally, CARD_SUBTYPE.Place, CARD_SUBTYPE.Item];
-        if (support.perCnt <= 0 || card?.id == support.card.id || !card?.hasSubtype(...subtype)) return;
+        if (support.perCnt <= 0 || hcard?.id == support.card.id || !hcard?.hasSubtype(...subtype)) return;
         return {
             triggers: 'card',
             exec: (spt, cmds) => {
@@ -844,7 +786,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (event.trigger == 'enter') {
             return { triggers: 'enter', exec: (_, cmds) => cmds.addCard(4, 302202, { isRandom: false }).res }
         }
-        if (event.card?.id != 302202) return;
+        if (event.hcard?.id != 302202) return;
         return {
             triggers: 'card',
             summon: isCdt(support.cnt == 1, 302201),
@@ -862,7 +804,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 亚瑟先生
     322026: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discardCnt = 1, trigger, epile = [] } = event;
+        const { discards: { length: discardCnt } = [0], trigger, epile = [] } = event;
         if (+(support.cnt >= 2) ^ +(trigger == 'phase-end' && epile.length > 0)) return;
         return {
             triggers: ['discard', 'reconcile', 'phase-end'],
@@ -934,9 +876,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 便携营养袋
     323002: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { card, pile = [], trigger } = event;
+        const { hcard, pile = [], trigger } = event;
         if (!pile.some(c => c.hasSubtype(CARD_SUBTYPE.Food))) return;
-        if (trigger != 'enter' && (support.perCnt <= 0 || !card?.hasSubtype(CARD_SUBTYPE.Food))) return;
+        if (trigger != 'enter' && (support.perCnt <= 0 || !hcard?.hasSubtype(CARD_SUBTYPE.Food))) return;
         return {
             triggers: ['card', 'enter'],
             exec: (spt, cmds) => {
@@ -969,9 +911,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 化种匣
     323005: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
-        const { card, minusDiceCard: mdc = 0 } = event;
-        if (!card || card.type != CARD_TYPE.Support || support.perCnt <= 0 || card.cost <= mdc) return;
-        if (ver.lt('v4.6.0') && !ver.isOffline ? card.cost != 1 : card.cost < 2) return;
+        const { hcard, minusDiceCard: mdc = 0 } = event;
+        if (!hcard || hcard.type != CARD_TYPE.Support || support.perCnt <= 0 || hcard.cost <= mdc) return;
+        if (ver.lt('v4.6.0') && !ver.isOffline ? hcard.cost != 1 : hcard.cost < 2) return;
         return {
             triggers: 'card',
             minusDiceCard: 1,
@@ -984,9 +926,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 留念镜
     323006: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
-        const { card, playerInfo: { usedCardIds = [] } = {}, minusDiceCard: mdc = 0 } = event;
+        const { hcard, playerInfo: { usedCardIds = [] } = {}, minusDiceCard: mdc = 0 } = event;
         const subtypes = [CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic, CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally];
-        if (!card || !usedCardIds.includes(card.id) || !card.hasSubtype(...subtypes) || support.perCnt <= 0 || card.cost <= mdc) return;
+        if (!hcard || !usedCardIds.includes(hcard.id) || !hcard.hasSubtype(...subtypes) || support.perCnt <= 0 || hcard.cost <= mdc) return;
         return {
             triggers: 'card',
             minusDiceCard: 2,

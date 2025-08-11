@@ -1,12 +1,116 @@
-import { Status, Trigger, VersionWrapper } from "../../../typing";
-import { CARD_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
+import { CARD_TYPE, DamageType, ElementType, PureElementType, SkillType, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getElByHid, getHidById, versionWrap } from "../../utils/gameUtil.js";
+import { getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { StatusHandleEvent, StatusHandleRes } from "../statuses.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+
+export type StatusHandleEvent = {
+    restDmg?: number,
+    hidx?: number,
+    heros?: Hero[],
+    combatStatus?: Status[],
+    eheros?: Hero[],
+    eCombatStatus?: Status[],
+    ehidx?: number,
+    dmgedHidx?: number,
+    dmgElement?: DamageType,
+    reset?: boolean,
+    trigger?: Trigger,
+    hcard?: Card,
+    talent?: Card | null,
+    discards?: Card[],
+    isChargedAtk?: boolean,
+    isFallAtk?: boolean,
+    phase?: number,
+    sktype?: SkillType,
+    skid?: number,
+    hasDmg?: boolean,
+    dmgSource?: number,
+    switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
+    minusDiceCard?: number,
+    isMinusDiceCard?: boolean,
+    isMinusDiceTalent?: boolean,
+    isMinusDiceWeapon?: boolean,
+    isMinusDiceRelic?: boolean,
+    isMinusDiceSkill?: boolean,
+    isMinusDiceVehicle?: boolean,
+    minusDiceSkill?: number[][],
+    heal?: number[],
+    isExec?: boolean,
+    isExecTask?: boolean,
+    summons?: Summon[],
+    esummons?: Summon[],
+    hcards?: Card[],
+    ehcards?: Card[],
+    pile?: Card[],
+    dicesCnt?: number,
+    playerInfo?: GameInfo,
+    isSummon?: number,
+    source?: number,
+    sourceHidx?: number,
+    sourceStatus?: Status,
+    getdmg?: number[],
+    dmg?: number[],
+    slotsDestroyCnt?: number[],
+    isSelfRound?: boolean,
+    isSwirlExec?: boolean,
+    csummon?: Summon,
+    randomInt?: (len?: number) => number,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
+}
+
+export type StatusHandleRes = {
+    restDmg?: number,
+    damage?: number,
+    pdmg?: number,
+    element?: ElementType,
+    triggers?: Trigger[],
+    addDmg?: number,
+    addDmgType1?: number,
+    addDmgType2?: number,
+    addDmgType3?: number,
+    addDmgCdt?: number,
+    addPdmg?: number,
+    multiDmgCdt?: number,
+    addDiceSkill?: AddDiceSkill,
+    getDmg?: number,
+    minusDiceCard?: number,
+    minusDiceHero?: number,
+    addDiceHero?: number,
+    minusDiceSkill?: MinusDiceSkill,
+    heal?: number,
+    hidxs?: number[],
+    isQuickAction?: boolean,
+    isSelf?: boolean,
+    skill?: number,
+    cmds?: CmdsGenerator,
+    cmdsBefore?: CmdsGenerator,
+    summon?: (number | [number, ...any])[] | number,
+    isInvalid?: boolean,
+    onlyOne?: boolean,
+    attachEl?: PureElementType,
+    isUpdateAttachEl?: boolean,
+    atkOffset?: number,
+    isAddTask?: boolean,
+    notPreview?: boolean,
+    isFallAtk?: boolean,
+    source?: number,
+    notLog?: boolean,
+    isTrigger?: boolean,
+    isAfterSkill?: boolean,
+    isPriority?: boolean,
+    exec?: (eStatus?: Status, event?: StatusExecEvent) => void,
+};
+
+export type StatusExecEvent = {
+    heros?: Hero[],
+    combatStatus?: Status[],
+    summons?: Summon[],
+}
 
 type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
@@ -54,7 +158,6 @@ export class GIStatus {
         const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
             isTalent = false, isReset = true, adt = {}, ver = VERSION[0], versionChanges = [] } = options;
         const hid = getHidById(id);
-        const el = getElByHid(hid);
         description = description
             .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
             .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 || useCnt > -1 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
@@ -126,13 +229,13 @@ export class GIStatus {
         }
         this.UI.icon = this.UI.icon.replace('tmpski', 'ski');
         if (this.UI.icon == '#') this.UI.icon = `${GUYU_PREIFIX}${id}`;
-        else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
-            if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {
-                this.UI.iconBg = STATUS_BG_COLOR[el];
-            } else if (icon == STATUS_ICON.AtkUp || icon == STATUS_ICON.AtkSelf) {
-                this.UI.iconBg = STATUS_BG_COLOR.Buff;
-            }
-        }
+        // else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
+        //     if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {
+        //         this.UI.iconBg = STATUS_BG_COLOR[getElByHid(hid)];
+        //     } else if (icon == STATUS_ICON.AtkUp || icon == STATUS_ICON.AtkSelf) {
+        //         this.UI.iconBg = STATUS_BG_COLOR.Buff;
+        //     }
+        // }
         this.handle = (status, event = {}) => {
             const cmds = new CmdsGenerator();
             const cmdsBefore = new CmdsGenerator();

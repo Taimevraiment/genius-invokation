@@ -1,20 +1,73 @@
-import { Card, Trigger, VersionWrapper } from "../../../typing";
+import { Card, MinusDiceSkill, Trigger, VersionWrapper } from "../../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceType, ELEMENT_CODE, HERO_LOCAL_CODE_KEY,
-    HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode,
-    STATUS_TYPE, VERSION, Version,
-    WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceCostType, DiceType, ELEMENT_CODE, ElementType,
+    HERO_LOCAL_CODE_KEY, HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, PureElementType,
+    STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getElByHid, getHidById, getVehicleIdByCid, hasObjById, versionWrap } from "../../utils/gameUtil.js";
+import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { CardHandleEvent, CardHandleRes } from "../cards.js";
-import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseCostBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+
+export interface CardHandleEvent extends EntityHandleEvent {
+    slotUse: boolean,
+}
+
+export type CardHandleRes = {
+    support?: (number | [number, ...any])[] | number,
+    supportOppo?: (number | [number, ...any])[] | number,
+    cmds?: CmdsGenerator,
+    cmdsBefore?: CmdsGenerator,
+    cmdsAfter?: CmdsGenerator,
+    execmds?: CmdsGenerator,
+    triggers?: Trigger[],
+    status?: (number | [number, ...any])[] | number,
+    statusOppo?: (number | [number, ...any])[] | number,
+    canSelectHero?: boolean[],
+    summon?: (number | [number, ...any])[] | number,
+    summonOppo?: (number | [number, ...any])[] | number,
+    addDmg?: number,
+    addDmgType1?: number,
+    addDmgType2?: number,
+    addDmgType3?: number,
+    addDmgCdt?: number,
+    addPdmg?: number,
+    minusDiceSkill?: MinusDiceSkill,
+    minusDiceCard?: number,
+    minusDiceCardEl?: ElementType,
+    minusDiceHero?: number,
+    attachEl?: PureElementType,
+    hidxs?: number[],
+    isValid?: boolean,
+    element?: DiceCostType,
+    cnt?: number,
+    isDestroy?: boolean,
+    restDmg?: number,
+    isAddTask?: boolean,
+    notPreview?: boolean,
+    forcePreview?: boolean,
+    summonCnt?: number[][],
+    isQuickAction?: boolean,
+    isOrTrigger?: boolean,
+    isTrigger?: boolean,
+    isAfterSkill?: boolean,
+    isImmediate?: boolean,
+    exec?: () => CardExecRes | void,
+};
+
+export type CardExecRes = {
+    hidxs?: number[],
+}
 
 export type CardBuilderHandleRes = Omit<CardHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-export type CardBuilderHandleEvent = CardHandleEvent & { cmds: CmdsGenerator, execmds: CmdsGenerator, cmdsBefore: CmdsGenerator, cmdsAfter: CmdsGenerator };
+export interface CardBuilderHandleEvent extends CardHandleEvent {
+    cmds: CmdsGenerator,
+    execmds: CmdsGenerator,
+    cmdsBefore: CmdsGenerator,
+    cmdsAfter: CmdsGenerator,
+}
 
 export class GICard {
     id: number; // 唯一id
@@ -34,7 +87,8 @@ export class GICard {
     perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
-    handle: (card: Card, event?: CardHandleEvent) => CardHandleRes; // 卡牌发动的效果函数
+    handle: (card: Card, event: InputHandle<Partial<CardHandleEvent>>) => CardHandleRes; // 卡牌发动的效果函数
+    reset: () => void; // 重置每回合次数
     canSelectHero: number; // 能选择角色的数量
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
@@ -221,16 +275,32 @@ export class GICard {
         this.userType = userType;
         this.canSelectHero = canSelectHero;
         this.addition = adt;
+        this.reset = () => {
+            if (isResetPct) this.perCnt = pct;
+            if (isResetUct) this.useCnt = uct;
+        }
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();
             const cmdsBefore = new CmdsGenerator();
             const cmdsAfter = new CmdsGenerator();
-            const cevent: CardBuilderHandleEvent = { ...event, cmds, execmds, cmdsBefore, cmdsAfter };
+            const { players, pidx, randomInArr, randomInt, getCardIds, ...oevent } = event;
+            const pevent = getEntityHandleEvent(pidx, players, oevent.hidx);
+            const cevent: CardBuilderHandleEvent = {
+                slotUse: false,
+                ...pevent,
+                ...oevent,
+                randomInArr,
+                randomInt,
+                getCardIds,
+                cmds,
+                execmds,
+                cmdsBefore,
+                cmdsAfter,
+            };
             const { reset = false } = cevent;
             if (reset) {
-                if (isResetPct) card.perCnt = pct;
-                if (isResetUct) card.useCnt = uct;
+                this.reset();
                 if (!spReset) return {}
             }
             const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};

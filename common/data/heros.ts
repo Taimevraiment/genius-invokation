@@ -41,7 +41,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).burst(2, 'v3.7.0').damage(2).damage(1, 'v3.7.0').cost(3).handle(() => ({ summon: 111011, pdmg: 1 }))
         ),
 
-    1102: () => new HeroBuilder(2).name('迪奥娜').offline('v2').mondstadt().cryo().bow()
+    1102: () => new HeroBuilder(2).name('迪奥娜').offline('v2').maxHp(12).maxHp(10, 'v6.0.0', 'v2').mondstadt().cryo().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/708ced07857094dd94314d65c9723360_8516852131632705389.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u63dbg/77a8563fd5083b309c14e2e89fd302d1.png')
         .normalSkill('猎人射术')
@@ -99,12 +99,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/58/mcbp6hjwbi9pi7ux0cag1qrhtcod2oi.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/e590d8ed5ffda912275916a7885793e2_4175761153899718840.png')
                 .burst(3).damage(4).cost(3).handle(() => ({ summon: 111051 })),
-            new SkillBuilder('神里流·霰步').description('此角色被切换为「出战角色」时，附属【sts111052】。')
+            new SkillBuilder('神里流·霰步').description('此角色被切换为「出战角色」时，附属【sts111052】，本回合下次「普通攻击」造成的伤害+1。（每回合2次）')
+                .description('此角色被切换为「出战角色」时，附属【sts111052】。', 'v6.0.0')
                 .src('https://patchwiki.biligame.com/images/ys/b/bf/35ci2ri2f4j1n844qgcfu6mltipvy6o.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png')
                 .passive().handle(event => {
-                    const { hero: { talentSlot } } = event;
-                    return { triggers: 'switch-to', status: [[111052, 1, +!!talentSlot]] }
+                    const { hero: { talentSlot }, skill: { useCntPerRound } } = event;
+                    const status: number | (number | [number, ...any[]])[] = [[111052, 1, +!!talentSlot]];
+                    if (useCntPerRound < 2) status.push(111054);
+                    return { triggers: 'switch-to', status }
                 })
         ),
 
@@ -609,7 +612,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(4).handle(event => ({ statusAfter: [[113031, !!event.talent]] }))
         ),
 
-    1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').offline('v2').mondstadt().pyro().bow()
+    1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v6.0.0', 'v2').mondstadt().pyro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/915473ac6c13d0bea16d141adca38359_823004675460920277.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/6aedca19a0357e653046e151d4796835.png')
         .normalSkill('神射手')
@@ -906,10 +909,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c351b44d3163278214f6f9db09c020fd_3304441541356399096.png')
                 .elemental().damage(3).cost(3).handle(event => {
-                    const { talent, card, hcards = [], cmds } = event;
-                    const hasCard114031 = hasObjById(hcards, 114031) || card?.id == 114031;
+                    const { talent, hcard, hcards = [], cmds } = event;
+                    const hasCard114031 = hasObjById(hcards, 114031) || hcard?.id == 114031;
                     if (!hasCard114031) cmds.getCard(1, { card: 114031 });
-                    else if (card?.id != 114031) cmds.discard({ card: 114031 });
+                    else if (hcard?.id != 114031) cmds.discard({ card: 114031 });
                     return { status: isCdt(hasCard114031, [[114032, +!!talent]]) }
                 }),
             new SkillBuilder('天街巡游').description('{dealDmg}，对所有敌方后台角色造成3点[穿透伤害]。')
@@ -1114,7 +1117,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1414: () => new HeroBuilder(506).name('伊安珊').since('v6.0.0').natlan().electro().polearm()
+    1414: () => new HeroBuilder(506).name('伊安珊').since('v6.0.0').maxHp(12).natlan().electro().polearm()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Iansan.webp')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Iansan.png')
         .normalSkill('负重锥击')
@@ -1127,10 +1130,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/Skill_E_Iansan_01_HD.png',
                     '')
                 .burst(2).damage(3).cost(3).handle(({ skillAfter, talent }) => (skillAfter.getStatus(114141).getNightSoul(), { status: [[114142, !!talent]] })),
-            new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合2次）')
+            new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合3次）')
                 .src('/image/tmp/UI_Talent_S_Iansan_08.png',
                     '')
-                .passive().addition('switch').perCnt(2).handle(event => {
+                .passive().addition('switch').perCnt(3).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
                     const nightSoul = getObjById(hero.heroStatus, 114141);
                     if (!nightSoul || skill.perCnt <= 0) return;
@@ -1588,7 +1591,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 116101 }))
         ),
 
-    1611: () => new HeroBuilder(470).name('希诺宁').since('v5.6.0').natlan().geo().sword()
+    1611: () => new HeroBuilder(470).name('希诺宁').since('v5.6.0').maxHp(12).maxHp(10, 'v6.0.0').natlan().geo().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/57bd20405cce28ef0e76bb4edcf50139_848653401769182967.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/681a94af/4ca1622d72a6dfb024393a85485c7ef3.png')
         .normalSkill(new NormalSkillBuilder('锐锋攫猎').description('若自身附属【sts116111】，则回复1点「夜魂值」。')
@@ -1751,7 +1754,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ statusOppo: 117073 }))
         ),
 
-    1708: () => new HeroBuilder(367).name('卡维').since('v4.7.0').sumeru().dendro().sword()
+    1708: () => new HeroBuilder(367).name('卡维').since('v4.7.0').maxHp(12).maxHp(10, 'v6.0.0').sumeru().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/2879f08ce85d5ab6c5b69e8e729923e5_5879182844975848941.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/b7673cdfbbc24627cabf32bb1a3efe0c.png')
         .normalSkill('旋规设矩')
@@ -1893,12 +1896,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2201: () => new HeroBuilder(53).name('纯水精灵·洛蒂娅').offline('v1').monster().hydro()
+    2201: () => new HeroBuilder(53).name('纯水精灵·洛蒂娅').offline('v1').maxHp(11).maxHp(10, 'v6.0.0', 'v1').monster().hydro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/322de5ae9b660a9bf16eb96908949f20_6864460867288429831.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/aead2d2ae3013f2a1de52e4c77dcffa2.png')
         .normalSkill(new NormalSkillBuilder('翻涌').catalyst())
         .skills(
-            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）')
+            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。（优先生成不同的类型）')
+                .description('随机召唤1种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
                 .description('随机召唤1种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
@@ -1907,14 +1911,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if (!randomInArr) return;
                     const opools = [122011, 122012, 122013];
                     const pools = opools.filter(smnid => !hasObjById(summons, smnid));
-                    if (ver.gte('v4.3.0') && pools.length == 1) {
+                    if (ver.range('v4.3.0', 'v6.0.0') && pools.length == 1) {
                         pools.length = 0;
                         pools.push(...opools.filter(smnid => hasObjById(summons, smnid)));
                     }
-                    const summon = randomInArr(ver.lt('v4.3.0') && pools.length == 0 ? opools : pools);
+                    const summon = randomInArr(!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0 ? opools : pools);
                     return { summon }
                 }),
-            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）')
+            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型）')
+                .description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
                 .description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
@@ -1925,14 +1930,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const pools = opools.filter(smnid => !hasObjById(summons, smnid));
                     let summonId1 = -1;
                     if (pools.length == 1) {
-                        if (ver.gte('v4.3.0')) return { summon: opools.filter(smnid => hasObjById(summons, smnid)) }
+                        if (ver.range('v4.3.0', 'v6.0.0')) return { summon: opools.filter(smnid => hasObjById(summons, smnid)) }
                         summonId1 = pools[0];
                     }
                     if (pools.length == 2) {
-                        if (ver.lt('v4.3.0')) return { summon: pools }
+                        if (!ver.range('v4.3.0', 'v6.0.0')) return { summon: pools }
                         summonId1 = opools.find(smnid => !pools.includes(smnid))!;
                     }
-                    if (pools.length == 3 || (ver.lt('v4.3.0') && pools.length == 0)) {
+                    if (pools.length == 3 || (!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0)) {
                         [summonId1] = randomInArr(pools, 2);
                         pools.splice(pools.indexOf(summonId1), 1);
                     }
@@ -2159,22 +2164,22 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0').monster().pyro()
+    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0').maxHp(12).monster().pyro()
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_TheAbyssXiuhcoatl.webp')
         .avatar('/image/tmp/UI_Gcg_Char_MonsterIcon_TheAbyssXiuhcoatl.png')
         .normalSkill('虚界玄爪')
         .skills(
-            new SkillBuilder('蚀灭火羽').description('{dealDmg}。')
+            new SkillBuilder('蚀灭火羽').description('{dealDmg}，我方[舍弃]牌组顶部1张牌。')
                 .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_01.png',
                     '')
-                .elemental().damage(3).cost(3),
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }).res),
             new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
                 .src('/image/tmp/MonsterSkill_E_TheAbyssXiuhcoatl_01_HD.png',
                     '')
                 .burst(2).damage(1).cost(3).handle(event => {
-                    event.cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard })
-                        .discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true })
-                    return { pdmg: 1, status: 123051 }
+                    const { cmds, hero: { heroStatus } } = event;
+                    cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard }).discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true });
+                    return { pdmg: 1 + (getObjById(heroStatus, 123051)?.useCnt ?? 0), status: 123051 }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
                 .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_02.png',
@@ -2560,11 +2565,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/6257ab91c38de8fbfa765b5d685cebb3_6732283299558524014.png')
                 .passive().perCnt(2).handle(event => {
-                    const { skill, hero: { hidx }, trigger, source, sourceHidx, talent, card, cmds, randomInt } = event;
+                    const { skill, hero: { hidx }, trigger, source, sourceHidx, talent, hcard, cmds, randomInt } = event;
                     if (trigger == 'pre-get-status') {
                         return { triggers: isCdt(source == 303300, 'pre-get-status'), isNotAddTask: true, isInvalid: hidx == sourceHidx }
                     }
-                    const isFood = trigger == 'card' && card?.hasSubtype(CARD_SUBTYPE.Food) && skill.perCnt > 0;
+                    const isFood = trigger == 'card' && hcard?.hasSubtype(CARD_SUBTYPE.Food) && skill.perCnt > 0;
                     const isTalent = trigger == 'trigger' && source == talent?.id;
                     if ((isFood || isTalent) && randomInt) {
                         const ran = randomInt(2);

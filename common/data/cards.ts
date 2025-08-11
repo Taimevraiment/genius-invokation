@@ -1,121 +1,14 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger } from '../../typing';
+import { Card, Trigger } from '../../typing';
 import {
-    CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE,
-    DICE_COST_TYPE, DiceCostType, ELEMENT_CODE,
-    ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG, HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, SkillType, STATUS_TYPE,
-    SwirlElementType, VERSION, Version
+    CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG,
+    HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, STATUS_TYPE, SwirlElementType, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { INIT_SUMMONCNT, NULL_CARD } from '../constant/init.js';
 import { ELEMENT_ICON_NAME, ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import CmdsGenerator from '../utils/cmdsGenerator.js';
 import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getNextBackHidx, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder, CardBuilderHandleRes } from './builder/cardBuilder.js';
-
-export type CardHandleEvent = {
-    pidx?: number,
-    heros?: Hero[],
-    hero?: Hero,
-    combatStatus?: Status[],
-    pile?: Card[],
-    eheros?: Hero[],
-    eCombatStatus?: Status[],
-    epile?: Card[],
-    reset?: boolean,
-    hcard?: Card,
-    trigger?: Trigger,
-    summons?: Summon[],
-    esummons?: Summon[],
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    hcards?: Card[],
-    hcardsCnt?: number,
-    ehcardsCnt?: number,
-    heal?: number[],
-    ephase?: number,
-    isChargedAtk?: boolean,
-    isFallAtk?: boolean,
-    round?: number,
-    playerInfo?: GameInfo,
-    eplayerInfo?: GameInfo,
-    dicesCnt?: number,
-    restDmg?: number,
-    skid?: number,
-    sktype?: SkillType,
-    isSummon?: number,
-    isExec?: boolean,
-    supports?: Support[],
-    esupports?: Support[],
-    isMinusDiceCard?: boolean,
-    isMinusDiceTalent?: boolean,
-    minusDiceCard?: number,
-    isMinusDiceSkill?: boolean,
-    isMinusDiceWeapon?: boolean,
-    isMinusDiceRelic?: boolean,
-    minusDiceSkill?: number[][],
-    dmgedHidx?: number,
-    getdmg?: number[],
-    dmg?: number[],
-    hasDmg?: boolean,
-    slotUse?: boolean,
-    isExecTask?: boolean,
-    selectHeros?: number[],
-    selectSummon?: number,
-    selectSupport?: number,
-    source?: number,
-    sourceHidx?: number,
-    dmgSource?: number,
-    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
-    randomInt?: (max?: number) => number,
-    getCardIds?: (filter?: (card: Card) => boolean) => number[],
-}
-
-export type CardHandleRes = {
-    support?: (number | [number, ...any])[] | number,
-    supportOppo?: (number | [number, ...any])[] | number,
-    cmds?: CmdsGenerator,
-    cmdsBefore?: CmdsGenerator,
-    cmdsAfter?: CmdsGenerator,
-    execmds?: CmdsGenerator,
-    triggers?: Trigger[],
-    status?: (number | [number, ...any])[] | number,
-    statusOppo?: (number | [number, ...any])[] | number,
-    canSelectHero?: boolean[],
-    summon?: (number | [number, ...any])[] | number,
-    summonOppo?: (number | [number, ...any])[] | number,
-    addDmg?: number,
-    addDmgType1?: number,
-    addDmgType2?: number,
-    addDmgType3?: number,
-    addDmgCdt?: number,
-    addPdmg?: number,
-    minusDiceSkill?: MinusDiceSkill,
-    minusDiceCard?: number,
-    minusDiceCardEl?: ElementType,
-    minusDiceHero?: number,
-    attachEl?: PureElementType,
-    hidxs?: number[],
-    isValid?: boolean,
-    element?: DiceCostType,
-    cnt?: number,
-    isDestroy?: boolean,
-    restDmg?: number,
-    isAddTask?: boolean,
-    notPreview?: boolean,
-    forcePreview?: boolean,
-    summonCnt?: number[][],
-    isQuickAction?: boolean,
-    isOrTrigger?: boolean,
-    isTrigger?: boolean,
-    isAfterSkill?: boolean,
-    isImmediate?: boolean,
-    exec?: () => CardExecRes | void,
-};
-
-export type CardExecRes = {
-    hidxs?: number[],
-}
 
 const normalWeapon = (shareId: number) => {
     return new CardBuilder(shareId)
@@ -1082,38 +975,52 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312027: () => new CardBuilder(356).name('紫晶的花冠').since('v4.6.0').relic().costSame(1).useCnt(0).perCnt(2)
-        .description('【所附属角色为出战角色，敌方受到[草元素伤害]后：】累积1枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个随机基础元素骰。（每回合至多生成2个）')
+    312027: () => new CardBuilder(356).name('紫晶的花冠').since('v4.6.0').relic().costSame(0).costSame(1, 'v6.0.0').useCnt(0).perCnt(2, 'v6.0.0')
+        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。；【行动阶段开始时：】如果「花冠水晶」数量不低于2，则本回合内下次我方引发元素反应时伤害额外+2。')
+        .description('【所附属角色为出战角色，敌方受到[草元素伤害]后：】累积1枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个随机基础元素骰。（每回合至多生成2个）', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e431910b741b3723c64334265ce3e93e_3262613974155239712.png')
-        .handle((card, event) => {
-            const { hero, hcardsCnt = 0, execmds } = event;
-            if (!hero?.isFront) return;
-            const isGetDice = card.useCnt + 1 >= hcardsCnt && card.perCnt > 0;
-            if (isGetDice) execmds.getDice(1, { mode: CMD_MODE.Random });
-            return {
-                triggers: 'Dendro-getdmg-oppo',
-                isAddTask: true,
-                exec: () => {
-                    card.addUseCnt();
-                    if (isGetDice) card.minusPerCnt();
+        .handle((card, event, ver) => {
+            const { hero, hcardsCnt = 0, execmds, trigger, hasDmg } = event;
+            if (ver.lt('v6.0.0')) {
+                if (!hero?.isFront) return;
+                const isGetDice = card.useCnt + 1 >= hcardsCnt && card.perCnt > 0;
+                if (isGetDice) execmds.getDice(1, { mode: CMD_MODE.Random });
+                return {
+                    triggers: 'Dendro-getdmg-oppo',
+                    isAddTask: true,
+                    exec: () => {
+                        card.addUseCnt();
+                        if (isGetDice) card.minusPerCnt();
+                    }
                 }
+            }
+            if (!hasDmg) return;
+            if (trigger == 'phase-start' && card.useCnt >= 2) execmds.getStatus(301209);
+            return {
+                triggers: ['Dendro-getdmg-oppo', 'elReaction-Dendro-oppo', 'phase-start'],
+                isAddTask: true,
+                exec: () => { trigger != 'phase-start' && card.addUseCnt() }
             }
         }),
 
-    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(2).useCnt(0).perCnt(2)
-        .description('【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个[万能元素骰]。（每回合至多生成2个）')
+    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(2).useCnt(0).perCnt(2, 'v6.0.0')
+        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。如果「花冠水晶」数量不低于5，则生成1个[万能元素骰]，并抓1张牌。')
+        .description('【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个[万能元素骰]。（每回合至多生成2个）', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/5a997c90413e44f8147b136856facd2b_8759080322483134287.png')
-        .handle((card, event) => {
-            const { hero, hcards: { length: hcardsCnt } = [], execmds } = event;
-            if (!hero?.isFront) return;
-            const isGetDice = card.useCnt + 2 >= hcardsCnt && card.perCnt > 0;
-            if (isGetDice) execmds.getDice(1, { element: DICE_COST_TYPE.Omni });
+        .handle((card, event, ver) => {
+            const { hero, hcards: { length: hcardsCnt } = [], execmds, hasDmg } = event;
+            if (!hero?.isFront && ver.lt('v6.0.0') || !hasDmg && ver.gte('v6.0.0')) return;
+            const isTriggered = ver.lt('v6.0.0') ? card.useCnt + 2 >= hcardsCnt && card.perCnt > 0 : card.useCnt + 1 >= 5;
+            if (isTriggered) {
+                execmds.getDice(1, { element: DICE_COST_TYPE.Omni });
+                if (ver.gte('v6.0.0')) execmds.getCard(1);
+            }
             return {
                 triggers: ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'],
                 isAddTask: true,
                 exec: () => {
-                    card.addUseCnt(2);
-                    if (isGetDice) card.minusPerCnt();
+                    card.addUseCnt(ver.lt('v6.0.0') ? 2 : 1);
+                    if (isTriggered && ver.lt('v6.0.0')) card.minusPerCnt();
                 }
             }
         }),
@@ -1349,7 +1256,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【投掷阶段：】2个元素骰初始总是投出我方出战角色类型的元素。', 'v4.5.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/a170755e85072e3672834ae9f4d558d5_593047424158919411.png'),
 
-    321004: () => new CardBuilder(182).name('晨曦酒庄').place().costSame(2)
+    321004: () => new CardBuilder(182).name('晨曦酒庄').place().costAny(3).costSame(2, 'v6.0.0')
         .description('【我方执行行动「切换角色」时：】少花费1个元素骰。（每回合至多2次）')
         .description('【我方执行行动「切换角色」时：】少花费1个元素骰。（每回合1次）', 'v4.8.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/27ea1b01a7d0011b40c0180e4fba0490_7938002191515673602.png'),
@@ -1366,8 +1273,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【行动阶段开始时：】如果我方的元素骰包含5种不同的元素，则生成1个[万能元素骰]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6f2b064d7711e30c742b802770bef71_3841942586663095539.png'),
 
-    321008: () => new CardBuilder(186).name('鸣神大社').since('v3.6.0').place().costSame(2)
-        .description('【每回合自动触发1次：】生成1个随机的基础元素骰。；[可用次数]：3')
+    321008: () => new CardBuilder(186).name('鸣神大社').since('v3.6.0').place().costAny(3).costSame(2, 'v6.0.0')
+        .description('【我方角色使用技能后：】如果元素骰总数为奇数，则生成1个随机的基础元素骰。；[可用次数]：4')
+        .description('【每回合自动触发1次：】生成1个随机的基础元素骰。；[可用次数]：3', 'v6.0.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/25bee82daa48f8018a4a921319ca2686_8817000056070129488.png'),
 
     321009: () => new CardBuilder(187).name('珊瑚宫').since('v3.7.0').place().costSame(2)
@@ -1382,8 +1290,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【结束阶段：】收集最多2个未使用的元素骰。；【行动阶段开始时：】拿回此牌所收集的元素骰。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d46d38ef070b2340e8ee9dfa697aad3f_8762501854367946191.png'),
 
-    321012: () => new CardBuilder(190).name('镇守之森').since('v3.7.0').place().costSame(1)
-        .description('【行动阶段开始时：】如果我方不是「先手牌手」，则生成1个出战角色类型的元素骰。；[可用次数]：3')
+    321012: () => new CardBuilder(190).name('镇守之森').since('v3.7.0').place().costSame(2).costSame(1, 'v6.0.0')
+        .description('如果当前元素骰总数为偶数，则我方角色「普通攻击」少花费1个元素骰。（每回合1次）；[可用次数]：3')
+        .description('【行动阶段开始时：】如果我方不是「先手牌手」，则生成1个出战角色类型的元素骰。；[可用次数]：3', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5a543775e68a6f02d0ba6526712d32c3_5028743115976906315.png'),
 
     321013: () => new CardBuilder(191).name('黄金屋').since('v4.0.0').offline('v2').place().costSame(0)
@@ -1953,7 +1862,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromWeapon = fromHero?.weaponSlot;
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
-                        if (ver.gte('v4.1.0') || ver.isOffline) fromWeapon.handle(fromWeapon, { reset: true });
+                        if (ver.gte('v4.1.0') || ver.isOffline) fromWeapon.reset();
                         execmds.equip(toHeroIdx, fromWeapon);
                     }
                 }
@@ -1975,7 +1884,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromRelic = fromHero?.relicSlot;
                     if (fromRelic) {
                         fromHero.relicSlot = null;
-                        if (ver.gte('v4.1.0')) fromRelic.handle(fromRelic, { reset: true });
+                        if (ver.gte('v4.1.0')) fromRelic.reset();
                         execmds.equip(toHeroIdx, fromRelic);
                     }
                 }
@@ -2294,7 +2203,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(() => ({ summon: 301028, summonOppo: 301028 })),
 
     332054: () => new CardBuilder(518).name('「魔女M的祝福」').since('v6.0.0').event().costSame(0).subtype(CARD_SUBTYPE.Simulanka).canSelectSummon(1)
-        .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，并治疗我方受伤最多的角色，治疗量等同于其可用次数超出2的部分。')
+        .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，如果其原本可用次数不低于3，则额外治疗我方受伤最多的角色2点。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ElongCry.webp')
         .handle((_, event) => {
             const { pidx = -1, summons = [], heros, selectSummon = -1, cmds } = event;
@@ -2303,7 +2212,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { useCnt = 0 } = summons[selectSummon] ?? {};
             cmds.getDice(Math.min(2, useCnt), { mode: CMD_MODE.Random });
             const hidxs = getMaxHertHidxs(heros);
-            if (useCnt > 2 && hidxs.length > 0) cmds.heal(useCnt - 2, { hidxs });
+            if (useCnt >= 3 && hidxs.length > 0) cmds.heal(2, { hidxs });
             return { summonCnt, exec: () => summons[selectSummon]?.dispose() }
         }),
 
@@ -2450,7 +2359,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【sts111021】，所提供的[护盾]值+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/cb37f02217bcd8ae5f6e4a6eb9bae539_3357631204660850476.png'),
 
-    211031: () => new CardBuilder(63).name('冷血之剑').offline('v2').talent(1).costCryo(4).perCnt(1)
+    211031: () => new CardBuilder(63).name('冷血之剑').offline('v2').talent(1).costCryo(3).costCryo(4, 'v6.0.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】使用【ski】后：治疗自身2点。（每回合1次）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/616ba40396a3998560d79d3e720dbfd2_3275119808720081204.png')
         .handle((card, event) => {
@@ -3021,7 +2930,7 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(4)
+    216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(3).costGeo(4, 'v6.0.0')
         .description('{action}；装备有此牌的【hro】在场时，【sts116011】会使我方造成的[岩元素伤害]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/8b72e98d01d978567eac5b3ad09d7ec1_7682448375697308965.png'),
 

@@ -1,121 +1,15 @@
-import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
+import { Status, Trigger } from "../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DamageType,
-    DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
-    ELEMENT_TYPE_KEY, ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WeaponType
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_CODE_KEY, ELEMENT_TYPE,
+    ELEMENT_TYPE_KEY, ElementType, HERO_TAG, PHASE, PureElementType, PureElementTypeKey, SKILL_TYPE, SkillType, STATUS_TYPE, VERSION,
+    Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
 import { INIT_PILE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { NULL_STATUS } from "../constant/init.js";
-import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, SKILL_TYPE_NAME, STATUS_BG_COLOR, STATUS_BG_COLOR_KEY, STATUS_ICON } from "../constant/UIconst.js";
-import CmdsGenerator from "../utils/cmdsGenerator.js";
+import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, SKILL_TYPE_NAME, STATUS_BG_COLOR, STATUS_ICON } from "../constant/UIconst.js";
 import { allHidxs, getBackHidxs, getDerivantParentId, getHidById, getMaxHertHidxs, getMinHertHidxs, getMinHpHidxs, getNearestHidx, getNextBackHidx, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
 import { clone, isCdt } from "../utils/utils.js";
-import { StatusBuilder, StatusBuilderHandleEvent } from "./builder/statusBuilder.js";
-
-export type StatusHandleEvent = {
-    restDmg?: number,
-    hidx?: number,
-    heros?: Hero[],
-    combatStatus?: Status[],
-    eheros?: Hero[],
-    eCombatStatus?: Status[],
-    ehidx?: number,
-    dmgedHidx?: number,
-    dmgElement?: DamageType,
-    reset?: boolean,
-    trigger?: Trigger,
-    hcard?: Card,
-    talent?: Card | null,
-    discards?: Card[],
-    isChargedAtk?: boolean,
-    isFallAtk?: boolean,
-    phase?: number,
-    sktype?: SkillType,
-    skid?: number,
-    hasDmg?: boolean,
-    dmgSource?: number,
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    minusDiceCard?: number,
-    isMinusDiceCard?: boolean,
-    isMinusDiceTalent?: boolean,
-    isMinusDiceWeapon?: boolean,
-    isMinusDiceRelic?: boolean,
-    isMinusDiceSkill?: boolean,
-    isMinusDiceVehicle?: boolean,
-    minusDiceSkill?: number[][],
-    heal?: number[],
-    isExec?: boolean,
-    isExecTask?: boolean,
-    summons?: Summon[],
-    esummons?: Summon[],
-    hcards?: Card[],
-    ehcards?: Card[],
-    pile?: Card[],
-    dicesCnt?: number,
-    playerInfo?: GameInfo,
-    isSummon?: number,
-    source?: number,
-    sourceHidx?: number,
-    sourceStatus?: Status,
-    getdmg?: number[],
-    dmg?: number[],
-    slotsDestroy?: number[],
-    isSelfRound?: boolean,
-    isSwirlExec?: boolean,
-    csummon?: Summon,
-    randomInt?: (len?: number) => number,
-    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
-}
-
-export type StatusHandleRes = {
-    restDmg?: number,
-    damage?: number,
-    pdmg?: number,
-    element?: ElementType,
-    triggers?: Trigger[],
-    addDmg?: number,
-    addDmgType1?: number,
-    addDmgType2?: number,
-    addDmgType3?: number,
-    addDmgCdt?: number,
-    addPdmg?: number,
-    multiDmgCdt?: number,
-    addDiceSkill?: AddDiceSkill,
-    getDmg?: number,
-    minusDiceCard?: number,
-    minusDiceHero?: number,
-    addDiceHero?: number,
-    minusDiceSkill?: MinusDiceSkill,
-    heal?: number,
-    hidxs?: number[],
-    isQuickAction?: boolean,
-    isSelf?: boolean,
-    skill?: number,
-    cmds?: CmdsGenerator,
-    cmdsBefore?: CmdsGenerator,
-    summon?: (number | [number, ...any])[] | number,
-    isInvalid?: boolean,
-    onlyOne?: boolean,
-    attachEl?: PureElementType,
-    isUpdateAttachEl?: boolean,
-    atkOffset?: number,
-    isAddTask?: boolean,
-    notPreview?: boolean,
-    isFallAtk?: boolean,
-    source?: number,
-    notLog?: boolean,
-    isTrigger?: boolean,
-    isAfterSkill?: boolean,
-    isPriority?: boolean,
-    exec?: (eStatus?: Status, event?: StatusExecEvent) => void,
-};
-
-export type StatusExecEvent = {
-    heros?: Hero[],
-    combatStatus?: Status[],
-    summons?: Summon[],
-}
+import { StatusBuilder, StatusBuilderHandleEvent, StatusHandleEvent, StatusHandleRes } from "./builder/statusBuilder.js";
 
 const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
     const elName = ELEMENT_NAME[el];
@@ -123,7 +17,7 @@ const enchantStatus = (el: PureElementType, addDmg: number = 0) => {
     return new StatusBuilder(`${elName}附魔`).heroStatus().type(STATUS_TYPE.Enchant)
         .icon(addDmg > 0 ? STATUS_ICON.ElementAtkUp : STATUS_ICON.Enchant)
         .description(`所附属角色造成的[物理伤害]变为[${elName}伤害]${hasAddDmgDesc}。；[roundCnt]`)
-        .handle(status => ({ attachEl: STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType, addDmg }));
+        .handle(() => ({ attachEl: el, addDmg }));
 }
 
 // statusId若为-1则显示角标,>0为护盾状态Id,<0为关联特技牌id
@@ -233,7 +127,7 @@ const hero1505sts = (swirlEl: PureElementType) => {
             const { sktype = SKILL_TYPE.Vehicle, isSummon = -1 } = event;
             if (sktype == SKILL_TYPE.Vehicle && isSummon == -1) return;
             return {
-                triggers: [`${STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementTypeKey}-dmg`],
+                triggers: [`${ELEMENT_TYPE_KEY[swirlEl] as PureElementTypeKey}-dmg`],
                 addDmgCdt: 1,
                 exec: () => { status.minusUseCnt() },
             }
@@ -430,6 +324,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111052: (rcnt: number = 1, addDmg: number = 0) => enchantStatus(ELEMENT_TYPE.Cryo, addDmg).roundCnt(rcnt),
+
+    111054: () => new StatusBuilder('神里流·霰步').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).roundCnt(1)
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.Round)
+        .description('本回合内，所附属角色下次「普通攻击」造成的伤害+1。')
+        .handle(status => ({ triggers: 'skilltype1', addDmgType1: 1, exec: () => { status.minusUseCnt() } })),
 
     111061: () => new StatusBuilder('冷酷之心').heroStatus().icon(STATUS_ICON.ElementAtkUp).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
@@ -1433,7 +1332,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
                         triggers: 'skilltype1',
-                        attachEl: isCdt(isFallAtk, ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementTypeKey]),
+                        attachEl: isCdt(isFallAtk, swirlEl),
                         exec: () => { status.minusUseCnt() },
                     }
                 }
@@ -1441,7 +1340,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 return {
                     triggers: ['minus-switch-to', 'action-start', 'skilltype1'],
                     isQuickAction,
-                    attachEl: ELEMENT_TYPE[STATUS_BG_COLOR_KEY[status.UI.iconBg] as PureElementType],
+                    attachEl: swirlEl,
                     exec: () => {
                         if (trigger == 'action-start' && getObjById(heros, getHidById(status.id))?.isFront) return cmds.useSkill({ skillType: SKILL_TYPE.Normal }).res;
                         if (trigger == 'skilltype1' && status.useCnt > 0) status.minusUseCnt();
@@ -1605,11 +1504,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     115136: () => hero1513sts(ELEMENT_TYPE.Electro),
 
     115141: () => new StatusBuilder('梦浮').heroStatus().icon('tmp/UI_Gcg_Buff_Mizuki_S').useCnt(1).type(STATUS_TYPE.Attack)
-        .description('【我方宣布结束时：】如果所附属角色不是出战角色，则将所附属角色切换为出战角色，并造成1点[风元素伤害]。；[useCnt]')
+        .description('【我方宣布结束时：】将所附属角色切换为出战角色，并造成1点[风元素伤害]。；[useCnt]')
         .handle((_, event) => {
-            const { cmdsBefore, hidx = -1, heros = [], isExecTask } = event;
-            if (heros[hidx]?.isFront && !isExecTask) return;
-            cmdsBefore.switchTo(hidx);
+            const { cmdsBefore, hidx = -1, heros = [] } = event;
+            if (!heros[hidx]?.isFront) cmdsBefore.switchTo(hidx);
             return {
                 triggers: 'end-phase',
                 damage: 1,
@@ -2241,11 +2139,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     123051: (cnt: number = 1) => new StatusBuilder('忿恨').heroStatus().icon('tmp/UI_Gcg_Buff_TheAbyssXiuhcoatl_S')
         .useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
-        .description('每层使所附属角色造成的伤害+1。（包括[穿透伤害]，可叠加，没有上限）')
+        .description('每层使所附属角色造成的伤害和「元素爆发」造成的[穿透伤害]+1。（可叠加，没有上限）')
         .handle((status, event) => {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
-            return { triggers: 'dmg', addDmgCdt: status.useCnt, addPdmg: status.useCnt }
+            return { triggers: 'dmg', addDmgCdt: status.useCnt }
         }),
 
     124011: () => readySkillStatus('猜拳三连击·剪刀', 24015),
@@ -2549,8 +2447,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     127041: () => new StatusBuilder('食足力增').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage)
-        .description('自身下次造成的伤害+1。（可叠加，没有上限）')
-        .handle(status => ({ triggers: 'skill', addDmg: 1, exec: () => { status.minusUseCnt() } })),
+        .description('每层使自身下次造成的伤害+1。（可叠加，没有上限，每次最多生效2层）')
+        .description('自身下次造成的伤害+1。（可叠加，没有上限）', 'v6.0.0')
+        .handle((status, _, ver) => {
+            const addDmg = ver.lt('v6.0.0') ? 1 : Math.min(2, status.useCnt);
+            return { triggers: 'skill', addDmg, exec: () => { status.minusUseCnt(addDmg) } }
+        }),
 
     127042: () => new StatusBuilder('食足体健').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
         .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(1),
@@ -2810,6 +2712,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.AddDamage).from(312037)
         .description('本回合内，所附属角色造成的伤害+1。')
         .handle(() => ({ addDmg: 1 })),
+
+    301209: () => new StatusBuilder('紫晶的花冠（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
+        .roundCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.AddDamage).from(312027)
+        .description('本回合内下次我方引发元素反应时伤害额外+2。')
+        .handle((status, event) => {
+            if (!event.hasDmg) return;
+            return { triggers: 'elReaction', addDmgCdt: 2, exec: () => { status.minusUseCnt() } }
+        }),
 
     301301: () => shieldHeroStatus('掘进的收获').from(313004),
 
@@ -3142,8 +3052,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: 'slot-destroy',
             isAddTask: true,
             exec: eStatus => {
-                const { slotsDestroy = [], cmds } = event;
-                const cnt = Math.min(status.useCnt, slotsDestroy.reduce((a, b) => a + b, 0));
+                const { slotsDestroyCnt = [], cmds } = event;
+                const cnt = Math.min(status.useCnt, slotsDestroyCnt.reduce((a, b) => a + b, 0));
                 eStatus?.minusUseCnt(cnt);
                 cmds.getDice(cnt, { element: DICE_COST_TYPE.Omni });
             }

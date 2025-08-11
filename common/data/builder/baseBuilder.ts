@@ -1,5 +1,5 @@
-import { VersionWrapper } from "../../../typing.js";
-import { DICE_TYPE, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, VERSION, Version } from "../../constant/enum.js";
+import { Card, GameInfo, Hero, Player, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
+import { DamageType, DICE_TYPE, DiceCostType, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, SkillType, VERSION, Version } from "../../constant/enum.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 
 export class VersionMap<T> {
@@ -28,8 +28,7 @@ export class BaseBuilder {
     protected _versionMaps: VersionMap<any>[] = [];
     protected _curVersion: Version = VERSION[0];
     protected _description: VersionMap<string> = this._createVersionMap();
-
-    _createVersionMap<T>() {
+    protected _createVersionMap<T>() {
         const map = new VersionMap<T>();
         this._versionMaps.push(map);
         return map;
@@ -112,3 +111,84 @@ export class BaseCostBuilder extends BaseBuilder {
         return this.cost(cost, DICE_TYPE.Any, version);
     }
 }
+
+export interface EntityHandleEvent {
+    pidx: number,
+    hero: Hero,
+    heros: Hero[],
+    hidx: number,
+    combatStatus: Status[],
+    pile: Card[],
+    eheros: Hero[],
+    ehidx: number,
+    eCombatStatus: Status[],
+    epile: Card[],
+    reset: boolean,
+    hcard: Card | null,
+    trigger: Trigger,
+    summons: Summon[],
+    esummons: Summon[],
+    switchHeroDiceCnt: number,
+    isQuickAction: boolean,
+    hcards: Card[],
+    ehcards: Card[],
+    hcardsCnt: number,
+    ehcardsCnt: number,
+    heal: number[],
+    phase: number,
+    ephase: number,
+    isChargedAtk: boolean,
+    isFallAtk: boolean,
+    round: number,
+    playerInfo: GameInfo,
+    eplayerInfo: GameInfo,
+    dices: DiceCostType[],
+    dicesCnt: number,
+    restDmg: number,
+    skid: number,
+    sktype: SkillType,
+    isSummon: number,
+    isExec: boolean,
+    supports: Support[],
+    esupports: Support[],
+    isMinusDiceCard: boolean,
+    isMinusDiceTalent: boolean,
+    minusDiceCard: number,
+    isMinusDiceSkill: boolean,
+    isMinusDiceWeapon: boolean,
+    isMinusDiceRelic: boolean,
+    isMinusDiceVehicle: boolean,
+    minusDiceSkill: number[][],
+    dmgedHidx: number,
+    getdmg: number[],
+    dmg: number[],
+    hasDmg: boolean,
+    isExecTask: boolean,
+    selectHeros: number[],
+    selectSummon: number,
+    selectSupport: number,
+    source: number,
+    sourceHidx: number,
+    dmgSource: number,
+    discards: Card[],
+    talent: Card | null,
+    slotsDestroyCnt: number[],
+    isSelfRound: boolean,
+    isSwirlExec: boolean,
+    atkHidx: number,
+    isFirst: boolean,
+    randomInArr: <T>(arr: T[], cnt?: number) => T[],
+    randomInt: (max?: number) => number,
+    getCardIds: (filter?: (card: Card) => boolean) => number[],
+    sourceStatus?: Status,
+    dmgElement?: DamageType,
+    csummon?: Summon,
+}
+
+export type InputHandle<T extends {}> = T & {
+    pidx: number,
+    players: Player[],
+    randomInArr: <T>(arr: T[], cnt?: number) => T[],
+    randomInt: (max?: number) => number,
+    getCardIds: (filter?: (card: Card) => boolean) => number[],
+};

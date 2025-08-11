@@ -1,12 +1,75 @@
-import { Summon, Trigger, VersionWrapper } from "../../../typing";
+import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
 import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { SummonExecEvent, SummonExecRes, SummonHandleEvent, SummonHandleRes } from "../summons.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+
+export interface SummonHandleEvent {
+    tround?: number,
+
+    trigger?: Trigger,
+    heros?: Hero[],
+    combatStatus?: Status[],
+    summons?: Summon[],
+    eheros?: Hero[],
+    hidx?: number,
+    reset?: boolean,
+    isChargedAtk?: boolean,
+    isFallAtk?: boolean,
+    hcard?: Card,
+    talent?: Card | null,
+    isExec?: boolean,
+    skid?: number,
+    minusDiceCard?: number,
+    isMinusDiceSkill?: boolean,
+    minusDiceSkill?: number[][],
+    isExecTask?: boolean,
+    isSummon?: number,
+    switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
+    dmgedHidx?: number,
+    atkHidx?: number,
+    getdmg?: number[],
+}
+
+export type SummonHandleRes = {
+    triggers?: Trigger[],
+    addDmg?: number,
+    addDmgType1?: number,
+    addDmgType2?: number,
+    addDmgType3?: number,
+    addDmgCdt?: number,
+    addPdmg?: number,
+    rCombatStatus?: (number | [number, ...any])[] | number,
+    isNotAddTask?: boolean,
+    element?: ElementType,
+    pdmg?: number,
+    hidxs?: number[],
+    addDiceHero?: number,
+    minusDiceHero?: number,
+    minusDiceCard?: number,
+    minusDiceSkill?: MinusDiceSkill,
+    tround?: number,
+    willSummon?: number,
+    isQuickAction?: boolean,
+    isTrigger?: boolean,
+    exec?: (event: SummonExecEvent) => SummonExecRes | void,
+}
+
+export type SummonExecEvent = {
+    summon?: Summon,
+    heros?: Hero[],
+    eheros?: Hero[],
+    combatStatus?: Status[],
+    eCombatStatus?: Status[],
+}
+
+export type SummonExecRes = {
+    cmds?: CmdsGenerator,
+}
 
 type SummonBuilderExecEvent = SummonExecEvent & { cmds: CmdsGenerator };
 

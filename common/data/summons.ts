@@ -1,75 +1,11 @@
 
-import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger } from "../../typing";
+import { Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { ELEMENT_URL, STATUS_ICON } from "../constant/UIconst.js";
-import CmdsGenerator from "../utils/cmdsGenerator.js";
 import { allHidxs, getBackHidxs, getDerivantParentId, getFrontHidx, getHidById, getMaxHertHidxs, getMinHertHidxs, getNearestHidx, getNextBackHidx, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
-
-export type SummonHandleEvent = {
-    trigger?: Trigger,
-    heros?: Hero[],
-    combatStatus?: Status[],
-    summons?: Summon[],
-    eheros?: Hero[],
-    hidx?: number,
-    reset?: boolean,
-    isChargedAtk?: boolean,
-    isFallAtk?: boolean,
-    hcard?: Card,
-    talent?: Card | null,
-    isExec?: boolean,
-    skid?: number,
-    minusDiceCard?: number,
-    isMinusDiceSkill?: boolean,
-    minusDiceSkill?: number[][],
-    tround?: number,
-    isExecTask?: boolean,
-    isSummon?: number,
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    dmgedHidx?: number,
-    atkHidx?: number,
-    getdmg?: number[],
-}
-
-export type SummonHandleRes = {
-    triggers?: Trigger[],
-    addDmg?: number,
-    addDmgType1?: number,
-    addDmgType2?: number,
-    addDmgType3?: number,
-    addDmgCdt?: number,
-    addPdmg?: number,
-    rCombatStatus?: (number | [number, ...any])[] | number,
-    isNotAddTask?: boolean,
-    element?: ElementType,
-    pdmg?: number,
-    hidxs?: number[],
-    addDiceHero?: number,
-    minusDiceHero?: number,
-    minusDiceCard?: number,
-    minusDiceSkill?: MinusDiceSkill,
-    tround?: number,
-    willSummon?: number,
-    isQuickAction?: boolean,
-    isTrigger?: boolean,
-    exec?: (event: SummonExecEvent) => SummonExecRes | void,
-}
-
-export type SummonExecEvent = {
-    summon?: Summon,
-    heros?: Hero[],
-    eheros?: Hero[],
-    combatStatus?: Status[],
-    eCombatStatus?: Status[],
-}
-
-export type SummonExecRes = {
-    cmds?: CmdsGenerator,
-}
 
 const crd12702summon = () => {
     return new SummonBuilder('增殖生命体').useCnt(1).damage(1)
@@ -1048,9 +984,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
 
     303245: (dmg: number = 0, useCnt: number = 0) =>
-        new SummonBuilder('「邪龙」').from(332051).useCnt(useCnt + 1).addition('effect', Math.min(5, dmg + 1)).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
+        new SummonBuilder('「邪龙」').from(332051).useCnt(1 + useCnt).addition('effect', Math.min(5, 1 + dmg)).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
             .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]').tag(SUMMON_TAG.Simulanka)
-            .src('')
+            .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Elong.webp')
             .handle((summon, event) => ({
                 triggers: 'phase-end',
                 exec: execEvent => {

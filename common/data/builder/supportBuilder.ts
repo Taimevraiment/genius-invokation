@@ -1,10 +1,80 @@
-import { Card, Support, Trigger, VersionWrapper } from "../../../typing";
-import { SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
+import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing";
+import { DiceCostType, SkillType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { SupportExecEvent, SupportExecRes, SupportHandleEvent, SupportHandleRes } from "../supports.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+
+export interface SupportHandleEvent {
+    dices?: DiceCostType[],
+    trigger?: Trigger,
+    eheros?: Hero[],
+    eCombatStatus?: Status[],
+    esupports?: Support[],
+    heros?: Hero[],
+    combatStatus?: Status[],
+    summons?: Summon[],
+    supports?: Support[],
+    pile?: Card[],
+    reset?: boolean,
+    hcard?: Card,
+    hcards?: Card[],
+    csummon?: Summon,
+    isFirst?: boolean,
+    hidxs?: number[],
+    playerInfo?: GameInfo,
+    eplayerInfo?: GameInfo,
+    switchHeroDiceCnt?: number,
+    isQuickAction?: boolean,
+    minusDiceCard?: number,
+    isMinusDiceSkill?: boolean,
+    minusDiceSkill?: number[][],
+    isMinusDiceTalent?: boolean,
+    skid?: number,
+    sktype?: SkillType,
+    hidx?: number,
+    heal?: number[],
+    getdmg?: number[],
+    discards?: Card[],
+    epile?: Card[],
+    isExecTask?: boolean,
+    sourceStatus?: Status,
+    getCardIds?: (filter?: (card: Card) => boolean) => number[],
+    randomInt?: (len?: number) => number,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
+}
+
+export type SupportHandleRes = {
+    triggers?: Trigger[],
+    exec?: (support: Support, event: SupportExecEvent) => SupportExecRes | void,
+    minusDiceCard?: number,
+    minusDiceHero?: number,
+    minusDiceSkill?: MinusDiceSkill,
+    element?: DiceCostType | -2,
+    cnt?: number,
+    addRollCnt?: number,
+    isQuickAction?: boolean,
+    supportCnt?: number,
+    isNotAddTask?: boolean,
+    isOrTrigger?: boolean,
+    isLast?: boolean,
+    isExchange?: boolean,
+    isAfterSkill?: boolean,
+    summon?: (number | [number, ...any])[] | number,
+}
+
+export type SupportExecEvent = {
+    csummon?: Summon,
+    isExecTask?: boolean,
+    supports?: Support[],
+    esupports?: Support[],
+}
+
+export type SupportExecRes = {
+    cmds?: CmdsGenerator,
+    isDestroy?: boolean,
+    summon?: (number | [number, ...any])[] | number,
+}
 
 type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers' | 'exec'> & {
     triggers?: Trigger | Trigger[],
@@ -57,7 +127,7 @@ export class GISupport {
 
 export class SupportBuilder extends BaseBuilder {
     private _card: Card | undefined;
-    private _cnt: number = 0;
+    private _cnt: VersionMap<number> = new VersionMap();
     private _perCnt: VersionMap<number> = new VersionMap();
     private _type: SupportType = SUPPORT_TYPE.Permanent;
     private _heal: number = 0;
@@ -76,19 +146,19 @@ export class SupportBuilder extends BaseBuilder {
         this._perCnt.set([version, perCnt]);
         return this;
     }
-    round(cnt: number) {
+    round(cnt: number, version: Version = 'vlatest') {
         this._type = SUPPORT_TYPE.Round;
-        this._cnt = cnt;
+        this._cnt.set([version, cnt]);
         return this;
     }
-    collection(cnt: number = 0) {
+    collection(cnt: number = 0, version: Version = 'vlatest') {
         this._type = SUPPORT_TYPE.Collection;
-        this._cnt = cnt;
+        this._cnt.set([version, cnt]);
         return this;
     }
-    permanent(cnt: number = 0) {
+    permanent(cnt: number = 0, version: Version = 'vlatest') {
         this._type = SUPPORT_TYPE.Permanent;
-        this._cnt = cnt;
+        this._cnt.set([version, cnt]);
         return this;
     }
     heal(heal: number) {
@@ -102,7 +172,8 @@ export class SupportBuilder extends BaseBuilder {
     done() {
         if (this._card == undefined) throw new Error("SupportBuilder: card is undefined");
         const perCnt = this._perCnt.get(this._curVersion, 0);
-        return new GISupport(this._card, this._cnt, perCnt, this._type, this._handle, this._heal, this._curVersion);
+        const cnt = this._cnt.get(this._curVersion, 0);
+        return new GISupport(this._card, cnt, perCnt, this._type, this._handle, this._heal, this._curVersion);
     }
 }
 

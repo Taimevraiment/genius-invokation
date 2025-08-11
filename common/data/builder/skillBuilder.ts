@@ -1,14 +1,93 @@
-import { Trigger, VersionWrapper } from "../../../typing.js";
+import { Card, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger, VersionWrapper } from "../../../typing.js";
 import {
-    COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, SKILL_TYPE, SkillCostType,
-    SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
+    CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, PureElementType, SKILL_TYPE,
+    SkillCostType, SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { clone, convertToArray, isCdt } from "../../utils/utils.js";
-import { SkillHandleEvent, SkillHandleRes } from "../skills.js";
 import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+
+export interface SkillHandleEvent {
+    skill: Skill,
+    swirlEl?: PureElementType,
+
+    hero: Hero,
+    reset?: boolean,
+    hcard?: Card,
+    heros?: Hero[],
+    combatStatus?: Status[],
+    eheros?: Hero[],
+    hcards?: Card[],
+    ehcards?: Card[],
+    summons?: Summon[],
+    isChargedAtk?: boolean,
+    isFallAtk?: boolean,
+    isExec?: boolean,
+    getdmg?: number[],
+    trigger?: Trigger,
+    minusDiceSkill?: number[][],
+    heal?: number[],
+    playerInfo?: GameInfo,
+    discards?: Card[],
+    dmg?: number[],
+    talent?: Card | null,
+    pile?: Card[],
+    isExecTask?: boolean,
+    source?: number,
+    sourceHidx?: number,
+    selectHero?: number,
+    restDmg?: number,
+    randomInt?: (len?: number) => number,
+    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
+    getCardIds?: (filter?: (card: Card) => boolean) => number[],
+}
+
+export type SkillHandleRes = {
+    status?: (number | [number, ...any])[] | number,
+    statusOppo?: (number | [number, ...any])[] | number,
+    equip?: number,
+    summon?: (number | [number, ...any])[] | number,
+    triggers?: Trigger[],
+    isAttach?: boolean,
+    isAttachOppo?: boolean,
+    pdmg?: number,
+    pdmgSelf?: number,
+    addDmgCdt?: number,
+    addPdmg?: number,
+    multiDmgCdt?: number,
+    isQuickAction?: boolean,
+    statusPre?: (number | [number, ...any] | Status)[] | number,
+    statusOppoPre?: (number | [number, ...any] | Status)[] | number,
+    summonPre?: (number | [number, ...any] | Summon)[] | number,
+    statusAfter?: (number | [number, ...any | Status])[] | number,
+    statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
+    cmds?: CmdsGenerator,
+    skillAfter?: CmdsGenerator,
+    skillBefore?: CmdsGenerator,
+    heal?: number,
+    hidxs?: number[],
+    dmgElement?: ElementType,
+    atkOffset?: number,
+    atkTo?: number,
+    minusDiceSkill?: MinusDiceSkill,
+    isNotAddTask?: boolean,
+    summonTriggers?: Trigger[],
+    isForbidden?: boolean,
+    energy?: number,
+    restDmg?: number,
+    pickCard?: {
+        cnt: number,
+        card?: number[],
+        subtype?: CardSubtype[],
+        mode: number,
+        isOrdered?: boolean,
+    },
+    isTrigger?: boolean,
+    isInvalid?: boolean,
+    exec?: () => void,
+}
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
 
@@ -88,7 +167,7 @@ export class GISkill {
             const skillAfter = new CmdsGenerator();
             const skillBefore = new CmdsGenerator();
             const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds, skillAfter, skillBefore };
-            const { reset = false, hero, skill: { id }, isReadySkill = false } = hevent;
+            const { reset = false, hero, skill: { id } } = hevent;
             const builderRes = handle?.(hbevent, versionWrap(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
@@ -98,7 +177,7 @@ export class GISkill {
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }
-            if (isReadySkill) return res;
+            if (this.isReadySkill) return res;
             const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];
             if (!curskill) throw new Error(`@skill_constructor: 未找到技能, skid:${id}, hero:${hero.name}`);
             if (reset) {
@@ -128,6 +207,9 @@ export class GISkill {
                 }
             }
         }
+    }
+    get isReadySkill() {
+        return this.cost[2].cnt == -2;
     }
 }
 
