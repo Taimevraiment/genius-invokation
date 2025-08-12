@@ -1,47 +1,17 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Skill, Status, Summon, Trigger, VersionWrapper } from "../../../typing.js";
+import { MinusDiceSkill, Skill, Status, Summon, Trigger, VersionWrapper } from "../../../typing.js";
 import {
     CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, PureElementType, SKILL_TYPE,
     SkillCostType, SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getHidById, versionWrap } from "../../utils/gameUtil.js";
+import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { clone, convertToArray, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
-export interface SkillHandleEvent {
+export interface SkillHandleEvent extends EntityHandleEvent {
     skill: Skill,
-    swirlEl?: PureElementType,
-
-    hero: Hero,
-    reset?: boolean,
-    hcard?: Card,
-    heros?: Hero[],
-    combatStatus?: Status[],
-    eheros?: Hero[],
-    hcards?: Card[],
-    ehcards?: Card[],
-    summons?: Summon[],
-    isChargedAtk?: boolean,
-    isFallAtk?: boolean,
-    isExec?: boolean,
-    getdmg?: number[],
-    trigger?: Trigger,
-    minusDiceSkill?: number[][],
-    heal?: number[],
-    playerInfo?: GameInfo,
-    discards?: Card[],
-    dmg?: number[],
-    talent?: Card | null,
-    pile?: Card[],
-    isExecTask?: boolean,
-    source?: number,
-    sourceHidx?: number,
-    selectHero?: number,
-    restDmg?: number,
-    randomInt?: (len?: number) => number,
-    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
-    getCardIds?: (filter?: (card: Card) => boolean) => number[],
+    swirlEl: PureElementType,
 }
 
 export type SkillHandleRes = {
@@ -64,8 +34,8 @@ export type SkillHandleRes = {
     statusAfter?: (number | [number, ...any | Status])[] | number,
     statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
     cmds?: CmdsGenerator,
-    skillAfter?: CmdsGenerator,
-    skillBefore?: CmdsGenerator,
+    cmdsAfter?: CmdsGenerator,
+    cmdsBefore?: CmdsGenerator,
     heal?: number,
     hidxs?: number[],
     dmgElement?: ElementType,
@@ -91,7 +61,7 @@ export type SkillHandleRes = {
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
 
-type SkillBuilderHandleEvent = SkillHandleEvent & { cmds: CmdsGenerator, skillAfter: CmdsGenerator, skillBefore: CmdsGenerator };
+interface SkillBuilderHandleEvent extends SkillHandleEvent, EntityBuilderHandleEvent { }
 
 export class GISkill {
     id: number; // 唯一id
@@ -105,7 +75,7 @@ export class GISkill {
         { cnt: number, type: typeof COST_TYPE.Energy | typeof COST_TYPE.SpEnergy },
     ];
     attachElement: ElementType = ELEMENT_TYPE.Physical; // 附魔属性
-    handle: (event: SkillHandleEvent) => SkillHandleRes; // 处理函数
+    handle: (event: InputHandle<Omit<SkillHandleEvent, 'skill'>> & Pick<SkillHandleEvent, 'skill'>) => SkillHandleRes; // 处理函数
     isForbidden: boolean = false; // 是否禁用
     dmgChange: number = 0; // 伤害变化
     costChange: [number, number, number[], number[][]] = [0, 0, [], []]; // 费用变化 [元素骰, 任意骰, 生效的entityId组, 技能当前被x减费后留存的骰子数]
@@ -162,18 +132,27 @@ export class GISkill {
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
         this.addition = adt;
-        this.handle = hevent => {
+        this.handle = event => {
             const cmds = new CmdsGenerator();
-            const skillAfter = new CmdsGenerator();
-            const skillBefore = new CmdsGenerator();
-            const hbevent: SkillBuilderHandleEvent = { ...hevent, cmds, skillAfter, skillBefore };
-            const { reset = false, hero, skill: { id } } = hevent;
-            const builderRes = handle?.(hbevent, versionWrap(ver)) ?? {};
+            const cmdsBefore = new CmdsGenerator();
+            const cmdsAfter = new CmdsGenerator();
+            const { players, pidx, ...oevent } = event;
+            const pevent = getEntityHandleEvent(pidx, players, event);
+            const cevent: SkillBuilderHandleEvent = {
+                swirlEl: ELEMENT_TYPE.Anemo,
+                ...pevent,
+                ...oevent,
+                cmds,
+                cmdsBefore,
+                cmdsAfter,
+            };
+            const { reset = false, hero, skill: { id } } = cevent;
+            const builderRes = handle?.(cevent, versionWrap(ver)) ?? {};
             const res: SkillHandleRes = {
                 ...builderRes,
                 cmds,
-                skillAfter,
-                skillBefore,
+                cmdsAfter,
+                cmdsBefore,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }
@@ -188,9 +167,8 @@ export class GISkill {
             let dmgElement = res.dmgElement;
             let atkOffset = res.atkOffset;
             for (const ist of hero.heroStatus) {
-                const event = { ...clone(hevent), hidx: hero.hidx };
-                delete event.minusDiceSkill;
-                const stsres = ist.handle(ist, event) ?? {};
+                const sevent = { ...clone(event), hidx: hero.hidx };
+                const stsres = ist.handle(ist, sevent) ?? {};
                 if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
                     dmgElement = stsres.attachEl;
                 }

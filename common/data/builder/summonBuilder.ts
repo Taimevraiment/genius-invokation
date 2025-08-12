@@ -1,38 +1,14 @@
-import { Card, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
-import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
+import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SUMMON_TAG, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getElByHid, getHidById, versionWrap } from "../../utils/gameUtil.js";
+import { getElByHid, getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
-export interface SummonHandleEvent {
-    tround?: number,
-
-    trigger?: Trigger,
-    heros?: Hero[],
-    combatStatus?: Status[],
-    summons?: Summon[],
-    eheros?: Hero[],
-    hidx?: number,
-    reset?: boolean,
-    isChargedAtk?: boolean,
-    isFallAtk?: boolean,
-    hcard?: Card,
-    talent?: Card | null,
-    isExec?: boolean,
-    skid?: number,
-    minusDiceCard?: number,
-    isMinusDiceSkill?: boolean,
-    minusDiceSkill?: number[][],
-    isExecTask?: boolean,
-    isSummon?: number,
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    dmgedHidx?: number,
-    atkHidx?: number,
-    getdmg?: number[],
+export interface SummonHandleEvent extends EntityHandleEvent {
+    tround: number,
 }
 
 export type SummonHandleRes = {
@@ -95,7 +71,7 @@ export class GISummon {
     isTalent: boolean; // 是否有天赋
     statusId: number; // 可能对应的状态 -1不存在
     addition: Record<string, number>; // 额外信息
-    handle: (summon: Summon, event?: SummonHandleEvent) => SummonHandleRes; // 处理函数
+    handle: (summon: Summon, event: InputHandle<SummonHandleEvent>) => SummonHandleRes; // 处理函数
     UI: {
         src: string; // 图片url
         description: string; // 描述
@@ -161,20 +137,27 @@ export class GISummon {
         this.isDestroy = isDestroy;
         this.statusId = stsId;
         if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
-        this.handle = (summon, event = {}) => {
+        this.handle = (summon, event) => {
             const { reset, trigger } = event;
             if (reset) {
                 summon.perCnt = pct;
                 if (!spReset && trigger != 'enter') return {}
             }
             const cmds = new CmdsGenerator();
+            const { players, pidx, ...oevent } = event;
+            const pevent = getEntityHandleEvent(pidx, players, event);
+            const cevent: SummonHandleEvent = {
+                tround: 0,
+                ...pevent,
+                ...oevent,
+            };
             if (!handle) {
                 return {
                     triggers: ['phase-end'],
-                    exec: execEvent => ({ cmds: (execEvent.summon ?? summon).phaseEndAtk(event, cmds) }),
+                    exec: execEvent => ({ cmds: (execEvent.summon ?? summon).phaseEndAtk(cevent, cmds) }),
                 }
             }
-            const builderRes = handle(summon, event, versionWrap(ver)) ?? {};
+            const builderRes = handle(summon, cevent, versionWrap(ver)) ?? {};
             return {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
@@ -182,7 +165,7 @@ export class GISummon {
                     if (!builderRes.exec) {
                         builderRes.exec = execEvent => {
                             const { summon: smn = summon, cmds } = execEvent;
-                            if (!builderRes.isOnlyPhaseEnd || event.trigger == 'phase-end') smn.phaseEndAtk(event, cmds);
+                            if (!builderRes.isOnlyPhaseEnd || event.trigger == 'phase-end') smn.phaseEndAtk(cevent, cmds);
                         }
                     }
                     builderRes.exec({ ...execEvent, cmds });
@@ -265,6 +248,9 @@ export class SummonBuilder extends BaseBuilder {
         super();
         this._name = name;
     }
+    get isOnlyExplain() {
+        return this._tag.includes(SUMMON_TAG.OnlyExplain);
+    }
     id(id: number) {
         this._id = id;
         return this;
@@ -272,6 +258,10 @@ export class SummonBuilder extends BaseBuilder {
     src(src: string) {
         this._src = src;
         return this;
+    }
+    descriptionOnly(description: string, ...versions: Version[]) {
+        this.tag(SUMMON_TAG.OnlyExplain);
+        return this.description(description, ...versions);
     }
     useCnt(useCnt: number, version: Version = 'vlatest') {
         this._useCnt.set([version, useCnt]);

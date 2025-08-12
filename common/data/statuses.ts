@@ -486,7 +486,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）')
         .handle((status, event) => {
             const { randomInt, isExecTask, trigger, cmds } = event;
-            if (!isExecTask && (trigger != 'skill' || !randomInt || randomInt(9) >= status.useCnt)) return;
+            if (!isExecTask && (trigger != 'skill' || randomInt(9) >= status.useCnt)) return;
             return {
                 triggers: 'skill',
                 isAddTask: true,
@@ -1479,6 +1479,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     115121: (cnt: number = 1) => shieldCombatStatus('凤缕护盾', cnt, MAX_USE_COUNT).icon('#')
         .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`),
 
+    115130: () => new StatusBuilder('聚风真眼').type(STATUS_TYPE.OnlyExplain)
+        .description('【所在阵营选择行动前：】对所附属角色造成1点对应元素伤害，可用次数1。'),
+
     115131: () => readySkillStatus('在罪之先', 15135, 0, event => {
         const { heros = [], hidx = -1, trigger } = event;
         const sts115132 = getObjById(heros[hidx]?.heroStatus, 115132);
@@ -1621,7 +1624,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { skid = -1, isSummon = -1 } = event;
             if (skid != getVehicleIdByCid(116102) && isSummon != 116103) return;
-            return { triggers: 'Geo-dmg', addDmgCdt: 1, addPdmg: 1, exec: () => { status.minusUseCnt() } }
+            return { triggers: 'Geo-dmg', addDmgCdt: 1, exec: () => { status.minusUseCnt() } }
         }),
 
     116104: nightSoul(),
@@ -2806,7 +2809,6 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('本回合打出手牌后，随机[舍弃]1张牌或抓1张牌。')
         .handle((_, event) => {
             const { isSelfRound, cmds, randomInt } = event;
-            if (!randomInt) return;
             const triggers: Trigger[] = ['card'];
             if (isSelfRound) triggers.push('enter');
             return {
@@ -2826,7 +2828,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色使用技能后：】受到2点治疗或2点[穿透伤害]。；[useCnt]')
         .handle((_, event) => {
             const { hidx = -1, randomInt } = event;
-            const res = isCdt<StatusHandleRes>(!!randomInt, () => [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()], {});
+            const res = [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: [hidx] }][randomInt!()];
             return {
                 triggers: 'after-skill',
                 notPreview: true,
@@ -3380,7 +3382,9 @@ export const statusesTotal = (version: Version = VERSION[0]) => {
     if (version == 'vlatest') version = VERSION[0];
     const statuses: Status[] = [];
     for (const id in allStatuses) {
-        statuses.push(allStatuses[id]().version(version).id(+id).done());
+        const statusBuilder = allStatuses[id]();
+        if (statusBuilder.isOnlyExplain) continue;
+        statuses.push(statusBuilder.version(version).id(+id).done());
     }
     return statuses;
 }

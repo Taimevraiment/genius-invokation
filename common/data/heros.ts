@@ -103,11 +103,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .description('此角色被切换为「出战角色」时，附属【sts111052】。', 'v6.0.0')
                 .src('https://patchwiki.biligame.com/images/ys/b/bf/35ci2ri2f4j1n844qgcfu6mltipvy6o.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png')
-                .passive().handle(event => {
-                    const { hero: { talentSlot }, skill: { useCntPerRound } } = event;
+                .passive().perCnt(2).handle(event => {
+                    const { hero: { talentSlot, heroStatus }, skill } = event;
                     const status: number | (number | [number, ...any[]])[] = [[111052, 1, +!!talentSlot]];
-                    if (useCntPerRound < 2) status.push(111054);
-                    return { triggers: 'switch-to', status }
+                    const isAddDmg = skill.perCnt > 0 && !hasObjById(heroStatus, 111054);
+                    if (isAddDmg) status.push(111054);
+                    return { triggers: 'switch-to', status, exec: () => { isAddDmg && --skill.perCnt } }
                 })
         ),
 
@@ -1101,7 +1102,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，我方切换到下一个角色。自身附属【sts114132】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/70/s44gx2xp45eshijmd0gvbdb0j102o4m.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/4bf73369fa5d88135d922835143cd6af_1465120113594108114.png')
-                .elemental().cost(2).handle(({ skillAfter }) => (skillAfter.switchAfter(), { isAttachOppo: true, statusPre: 114132 })),
+                .elemental().cost(2).handle(({ cmdsAfter }) => (cmdsAfter.switchAfter(), { isAttachOppo: true, statusPre: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('https://patchwiki.biligame.com/images/ys/d/d8/e75533dd0qa4yzg7kafocuxki4mrowt.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/beeb23fb35fe9eb3733358e0bab70841_6737855537393504262.png')
@@ -1125,19 +1126,19 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('电掣雷驰').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成1层【sts170】。')
                 .src('/image/tmp/Skill_S_Iansan_01.png',
                     '')
-                .elemental().damage(2).cost(3).handle(({ skillAfter }) => (skillAfter.getStatus(114141).getNightSoul(), { status: 170 })),
+                .elemental().damage(2).cost(3).handle(({ cmdsAfter }) => (cmdsAfter.getStatus(114141).getNightSoul(), { status: 170 })),
             new SkillBuilder('力的三原理').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成【sts114142】。')
                 .src('/image/tmp/Skill_E_Iansan_01_HD.png',
                     '')
-                .burst(2).damage(3).cost(3).handle(({ skillAfter, talent }) => (skillAfter.getStatus(114141).getNightSoul(), { status: [[114142, !!talent]] })),
+                .burst(2).damage(3).cost(3).handle(({ cmdsAfter, talent }) => (cmdsAfter.getStatus(114141).getNightSoul(), { status: [[114142, !!talent]] })),
             new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合3次）')
                 .src('/image/tmp/UI_Talent_S_Iansan_08.png',
                     '')
                 .passive().addition('switch').perCnt(3).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
                     const nightSoul = getObjById(hero.heroStatus, 114141);
-                    if (!nightSoul || skill.perCnt <= 0) return;
-                    if (trigger == 'switch' && skill.addition.switch == 1 || trigger == 'ready-skill') {
+                    if (!nightSoul || (skill.perCnt <= 0 && trigger != 'switch')) return;
+                    if ((trigger == 'switch' && skill.perCnt > 0 && skill.addition.switch == 1) || trigger == 'ready-skill') {
                         if (nightSoul.useCnt != 2) cmds.getNightSoul(1, hero.hidx);
                         else {
                             const hidxs = getMaxHertHidxs(heros);
@@ -1147,9 +1148,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                     return {
                         triggers: ['ready-skill', 'switch'],
-                        isNotAddTask: trigger == 'switch' && skill.addition.switch != 1,
                         exec: () => {
-                            if (trigger == 'ready-skill' || skill.addition.switch == 1) --skill.perCnt;
+                            if (trigger == 'ready-skill' || (skill.addition.switch == 1 && skill.perCnt > 0)) --skill.perCnt;
                             if (trigger == 'switch') skill.addition.switch = (skill.addition.switch + 1) % 2;
                         }
                     }
@@ -1382,10 +1382,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     status: 115131,
                     isQuickAction: (getObjById(heroStatus, 115132)?.useCnt ?? 0) >= 2,
                 })),
-            new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【聚风真眼】。')
+            new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【nbotsts115130】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/ca9e299b07cc179ac411d9b0f5c6583e_8866803548218067355.png')
-                .explain(...Array.from({ length: 4 }, (_, i) => `sts${115133 + i}`))
+                .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115133 + i}`))
                 .burst(2).damage(4).cost(3).handle(({ swirlEl }) => ({ statusOppo: isCdt(swirlEl, 115132 + ELEMENT_CODE[swirlEl!]) })),
             new SkillBuilder('反论稽古').description('【我方引发了[风元素相关反应]后：】自身附属1层【sts115132】。')
                 .src('#',
@@ -1777,9 +1777,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('悬猎·游骋高狩').description('选一个我方角色，自身附属【sts117091】并进入【sts117092】。{dealDmg}，然后与所选角色交换位置。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a2/08equlc0irtfiur6id02qiwromqwpl5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/cccdba35b77374e5ef8c19c7d429f985_1146383664533306901.png')
-                .elemental().damage(1).damage(2, 'v5.8.0').cost(3).canSelectHero(1).handle(({ cmds, hero: { hidx }, selectHero = -1 }) => (
-                    cmds.exchangePos(hidx, selectHero), { statusPre: [117092, 117091] }
-                )),
+                .elemental().damage(1).damage(2, 'v5.8.0').cost(3).canSelectHero(1).handle(event => {
+                    const { cmds, hero: { hidx }, selectHeros: [selectHero] = [-1] } = event;
+                    cmds.exchangePos(hidx, selectHero);
+                    return { statusPre: [117092, 117091] }
+                }),
             new SkillBuilder('向伟大圣龙致意').description('{dealDmg}，召唤【smn117093】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1d/n9v0lfr4q0xiampd0miscmsqnfloqjt.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/1a120150229bd26a62ef3ce3dae3b478_6999667122640021034.png')
@@ -1908,7 +1910,6 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
                 .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
                     const { summons = [], randomInArr } = event;
-                    if (!randomInArr) return;
                     const opools = [122011, 122012, 122013];
                     const pools = opools.filter(smnid => !hasObjById(summons, smnid));
                     if (ver.range('v4.3.0', 'v6.0.0') && pools.length == 1) {
@@ -1925,9 +1926,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
                 .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
                     const { summons = [], randomInArr } = event;
-                    if (!randomInArr) return;
                     const opools = [122011, 122012, 122013];
                     const pools = opools.filter(smnid => !hasObjById(summons, smnid));
+                    if (pools.length == 0) return;
                     let summonId1 = -1;
                     if (pools.length == 1) {
                         if (ver.range('v4.3.0', 'v6.0.0')) return { summon: opools.filter(smnid => hasObjById(summons, smnid)) }
@@ -2469,7 +2470,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('兽境轰召').description('{dealDmg}，并使对方出战角色附属2层【sts126031】，召唤【smn126032】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/58/7e3q4ziz9klancofuscufqq9o59c250.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/4e3681910d6030538828aaca2d9a8ec4_807642467059739344.png')
-                .elemental().damage(1).cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent, 2]], summon: 126032 })),
+                .elemental().damage(2).damage(1, 'v6.0.0').cost(3).handle(event => ({ statusOppo: [[126031, !!event.talent, 2]], summon: 126032 })),
             new SkillBuilder('黄金侵绞').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]，并使所有敌方角色附属【sts126031】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e8/ii9k22imfs6cv033oudl24jprt04vpd.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/fa73097822d092389bcf8fff81b90224_4686715611294853097.png')

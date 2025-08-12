@@ -203,12 +203,14 @@ export const STATUS_TYPE = {
     NightSoul: 'NightSoul', // 夜魂加持 17
     NonEvent: 'NonEvent', // 事件牌失效 18
     Show: 'Show', // 死后也显示 19
+    OnlyExplain: 'OnlyExplain', // 仅用作解释 20
 } as const;
 
 export type StatusType = TypeConst<typeof STATUS_TYPE>;
 
 export const SUMMON_TAG = {
     Simulanka: 'Simulanka', // 希穆兰卡
+    OnlyExplain: 'OnlyExplain', // 仅用作解释
 } as const;
 
 export type SummonTag = TypeConst<typeof SUMMON_TAG>;

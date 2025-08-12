@@ -1,5 +1,6 @@
 import { Card, GameInfo, Hero, Player, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
 import { DamageType, DICE_TYPE, DiceCostType, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, SkillType, VERSION, Version } from "../../constant/enum.js";
+import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 
 export class VersionMap<T> {
@@ -155,9 +156,6 @@ export interface EntityHandleEvent {
     isMinusDiceTalent: boolean,
     minusDiceCard: number,
     isMinusDiceSkill: boolean,
-    isMinusDiceWeapon: boolean,
-    isMinusDiceRelic: boolean,
-    isMinusDiceVehicle: boolean,
     minusDiceSkill: number[][],
     dmgedHidx: number,
     getdmg: number[],
@@ -185,7 +183,16 @@ export interface EntityHandleEvent {
     csummon?: Summon,
 }
 
-export type InputHandle<T extends {}> = T & {
+export interface EntityBuilderHandleEvent extends EntityHandleEvent {
+    isMinusDiceWeapon: boolean,
+    isMinusDiceRelic: boolean,
+    isMinusDiceVehicle: boolean,
+    cmds: CmdsGenerator,
+    cmdsBefore: CmdsGenerator,
+    cmdsAfter: CmdsGenerator,
+}
+
+export type InputHandle<T extends {}> = Partial<T> & {
     pidx: number,
     players: Player[],
     randomInArr: <T>(arr: T[], cnt?: number) => T[],

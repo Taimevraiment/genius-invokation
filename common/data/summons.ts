@@ -626,7 +626,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    116097: () => new SummonBuilder('千织的自动制御人形').description('千织拥有多种自动制御人形，不但能自动发起攻击，还会提供多种增益效果。'),
+    116097: () => new SummonBuilder('千织的自动制御人形').descriptionOnly('千织拥有多种自动制御人形，不但能自动发起攻击，还会提供多种增益效果。'),
 
     116103: () => new SummonBuilder('冲天转转·脱离').useCnt(1).damage(1)
         .description('{defaultAtk，对下一个敌方后台角色造成1点[穿透伤害]。}')
@@ -984,7 +984,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
 
     303245: (dmg: number = 0, useCnt: number = 0) =>
-        new SummonBuilder('「邪龙」').from(332051).useCnt(1 + useCnt).addition('effect', Math.min(5, 1 + dmg)).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
+        new SummonBuilder('「邪龙」').from(332051).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
+            .useCnt(1 + Math.min(5, useCnt)).addition('effect', 1 + Math.min(5, dmg))
             .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]').tag(SUMMON_TAG.Simulanka)
             .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Elong.webp')
             .handle((summon, event) => ({
@@ -1002,7 +1003,9 @@ export const summonsTotal = (version: Version = VERSION[0]) => {
     if (version == 'vlatest') version = VERSION[0];
     const summons: Summon[] = [];
     for (const idx in allSummons) {
-        summons.push(allSummons[idx]().version(version).id(+idx).done());
+        const summonBuilder = allSummons[idx]();
+        if (summonBuilder.isOnlyExplain) continue;
+        summons.push(summonBuilder.version(version).id(+idx).done());
     }
     return summons;
 }

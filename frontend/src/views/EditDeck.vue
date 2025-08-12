@@ -74,10 +74,10 @@
                     <label for="isOfflineInput">实体版</label>
                 </div>
             </div>
-            <input v-model="deckName" class="deck-name" />
+            <input type="text" v-model="deckName" class="deck-name" maxlength="10" />
             <template v-if="isEditDeck">
                 <button class="edit-btn share" @click.stop="showShareCode">复制分享码</button>
-                <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" />
+                <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" maxlength="68" />
                 <button id="paste-share-code" class="edit-btn share" v-if="pShareCode.length > 0"
                     @click.stop="pasteShareCode">
                     粘贴分享码

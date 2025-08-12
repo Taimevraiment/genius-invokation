@@ -1,67 +1,13 @@
-import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
-import { CARD_TYPE, DamageType, ElementType, PureElementType, SkillType, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { AddDiceSkill, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
+import { CARD_TYPE, ElementType, PureElementType, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getHidById, versionWrap } from "../../utils/gameUtil.js";
+import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
-export type StatusHandleEvent = {
-    restDmg?: number,
-    hidx?: number,
-    heros?: Hero[],
-    combatStatus?: Status[],
-    eheros?: Hero[],
-    eCombatStatus?: Status[],
-    ehidx?: number,
-    dmgedHidx?: number,
-    dmgElement?: DamageType,
-    reset?: boolean,
-    trigger?: Trigger,
-    hcard?: Card,
-    talent?: Card | null,
-    discards?: Card[],
-    isChargedAtk?: boolean,
-    isFallAtk?: boolean,
-    phase?: number,
-    sktype?: SkillType,
-    skid?: number,
-    hasDmg?: boolean,
-    dmgSource?: number,
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    minusDiceCard?: number,
-    isMinusDiceCard?: boolean,
-    isMinusDiceTalent?: boolean,
-    isMinusDiceWeapon?: boolean,
-    isMinusDiceRelic?: boolean,
-    isMinusDiceSkill?: boolean,
-    isMinusDiceVehicle?: boolean,
-    minusDiceSkill?: number[][],
-    heal?: number[],
-    isExec?: boolean,
-    isExecTask?: boolean,
-    summons?: Summon[],
-    esummons?: Summon[],
-    hcards?: Card[],
-    ehcards?: Card[],
-    pile?: Card[],
-    dicesCnt?: number,
-    playerInfo?: GameInfo,
-    isSummon?: number,
-    source?: number,
-    sourceHidx?: number,
-    sourceStatus?: Status,
-    getdmg?: number[],
-    dmg?: number[],
-    slotsDestroyCnt?: number[],
-    isSelfRound?: boolean,
-    isSwirlExec?: boolean,
-    csummon?: Summon,
-    randomInt?: (len?: number) => number,
-    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
-}
+export interface StatusHandleEvent extends EntityHandleEvent { }
 
 export type StatusHandleRes = {
     restDmg?: number,
@@ -114,7 +60,7 @@ export type StatusExecEvent = {
 
 type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-export type StatusBuilderHandleEvent = StatusHandleEvent & { cmds: CmdsGenerator, cmdsBefore: CmdsGenerator };
+export interface StatusBuilderHandleEvent extends StatusHandleEvent, EntityBuilderHandleEvent { };
 
 export class GIStatus {
     id: number; // 唯一id
@@ -128,7 +74,7 @@ export class GIStatus {
     perCnt: number; // 每回合使用次数
     roundCnt: number; // 剩余轮次数: -1为无轮次限制
     isTalent: boolean; // 是否有天赋
-    handle: (status: Status, event?: StatusHandleEvent) => StatusHandleRes; // 处理函数
+    handle: (status: Status, event: InputHandle<StatusHandleEvent>) => StatusHandleRes; // 处理函数
     summonId: number; // 可能对应的召唤物 -1不存在
     addition: Record<string, number>; // 额外信息
     UI: {
@@ -236,12 +182,20 @@ export class GIStatus {
         //         this.UI.iconBg = STATUS_BG_COLOR.Buff;
         //     }
         // }
-        this.handle = (status, event = {}) => {
+        this.handle = (status, event) => {
             const cmds = new CmdsGenerator();
             const cmdsBefore = new CmdsGenerator();
-            const cevent = { ...event, cmds, cmdsBefore };
-            const { reset = false } = cevent;
-            if (reset) {
+            const cmdsAfter = new CmdsGenerator();
+            const { players, pidx, ...oevent } = event;
+            const pevent = getEntityHandleEvent(pidx, players, event);
+            const cevent = {
+                ...pevent,
+                ...oevent,
+                cmds,
+                cmdsBefore,
+                cmdsAfter,
+            };
+            if (cevent.reset) {
                 if (isReset) status.perCnt = pct;
                 return {}
             }
@@ -328,6 +282,9 @@ export class StatusBuilder extends BaseBuilder {
     constructor(name: string) {
         super();
         this._name.set(['vlatest', name]);
+    }
+    get isOnlyExplain() {
+        return this._type.includes(STATUS_TYPE.OnlyExplain);
     }
     id(id: number) {
         this._id = id;

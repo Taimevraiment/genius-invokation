@@ -364,9 +364,9 @@ const exit = () => {
 // 发送日志
 const sendLog = () => {
   if (client.value.phase <= PHASE.NOT_BEGIN || isLookon.value != -1) return;
-  const description = prompt('发生了什么问题');
+  const description = prompt('发生了什么问题(不超过300字)');
   if (description != null) {
-    socket.emit('sendLog', { roomId, description });
+    socket.emit('sendLog', { roomId, description: description.slice(0, 300) });
     alert('日志已发送');
   }
 }

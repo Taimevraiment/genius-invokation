@@ -8,7 +8,7 @@ import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { BaseCostBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseCostBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface CardHandleEvent extends EntityHandleEvent {
     slotUse: boolean,
@@ -53,20 +53,13 @@ export type CardHandleRes = {
     isTrigger?: boolean,
     isAfterSkill?: boolean,
     isImmediate?: boolean,
-    exec?: () => CardExecRes | void,
+    exec?: () => void,
 };
-
-export type CardExecRes = {
-    hidxs?: number[],
-}
 
 export type CardBuilderHandleRes = Omit<CardHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
 
-export interface CardBuilderHandleEvent extends CardHandleEvent {
-    cmds: CmdsGenerator,
+export interface CardBuilderHandleEvent extends CardHandleEvent, EntityBuilderHandleEvent {
     execmds: CmdsGenerator,
-    cmdsBefore: CmdsGenerator,
-    cmdsAfter: CmdsGenerator,
 }
 
 export class GICard {
@@ -87,7 +80,7 @@ export class GICard {
     perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
-    handle: (card: Card, event: InputHandle<Partial<CardHandleEvent>>) => CardHandleRes; // 卡牌发动的效果函数
+    handle: (card: Card, event: InputHandle<CardHandleEvent>) => CardHandleRes; // 卡牌发动的效果函数
     reset: () => void; // 重置每回合次数
     canSelectHero: number; // 能选择角色的数量
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
@@ -284,22 +277,18 @@ export class GICard {
             const execmds = new CmdsGenerator();
             const cmdsBefore = new CmdsGenerator();
             const cmdsAfter = new CmdsGenerator();
-            const { players, pidx, randomInArr, randomInt, getCardIds, ...oevent } = event;
-            const pevent = getEntityHandleEvent(pidx, players, oevent.hidx);
+            const { players, pidx, ...oevent } = event;
+            const pevent = getEntityHandleEvent(pidx, players, event);
             const cevent: CardBuilderHandleEvent = {
                 slotUse: false,
                 ...pevent,
                 ...oevent,
-                randomInArr,
-                randomInt,
-                getCardIds,
                 cmds,
                 execmds,
                 cmdsBefore,
                 cmdsAfter,
             };
-            const { reset = false } = cevent;
-            if (reset) {
+            if (cevent.reset) {
                 this.reset();
                 if (!spReset) return {}
             }

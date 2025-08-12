@@ -1,6 +1,7 @@
 import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
-import { COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
+import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
+import { EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 获取所有存活/死亡角色的索引hidx
@@ -437,10 +438,10 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
         + `${prefix}}\n`;
 }
 
-export const getEntityHandleEvent = (pidx: number, players: Player[], hidx?: number) => {
+export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>>(pidx: number, players: Player[], event: T) => {
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
-    hidx ??= player.hidx;
+    const { hidx = player.hidx, isMinusDiceCard = false, hcard = null } = event;
     return {
         pidx,
         hero: player.heros[hidx],
@@ -471,22 +472,22 @@ export const getEntityHandleEvent = (pidx: number, players: Player[], hidx?: num
         trigger: '' as Trigger,
         switchHeroDiceCnt: 0,
         isQuickAction: false,
-        hcard: null,
+        hcard,
         isChargedAtk: false,
-        isFallAtk: false,
+        isFallAtk: player.isFallAtk,
         round: 1,
         restDmg: -1,
         skid: -1,
         sktype: SKILL_TYPE.Vehicle,
         isSummon: -1,
         isExec: false,
-        isMinusDiceCard: false,
+        isMinusDiceCard,
         isMinusDiceTalent: false,
         minusDiceCard: 0,
         isMinusDiceSkill: false,
-        isMinusDiceWeapon: false,
-        isMinusDiceRelic: false,
-        isMinusDiceVehicle: false,
+        isMinusDiceWeapon: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Weapon),
+        isMinusDiceRelic: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Relic),
+        isMinusDiceVehicle: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle),
         minusDiceSkill: [],
         dmgedHidx: opponent.hidx,
         getdmg: player.heros.map(() => -1),

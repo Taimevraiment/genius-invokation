@@ -1,48 +1,11 @@
-import { Card, GameInfo, Hero, MinusDiceSkill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing";
-import { DiceCostType, SkillType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
+import { Card, MinusDiceSkill, Summon, Support, Trigger, VersionWrapper } from "../../../typing";
+import { DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { versionWrap } from "../../utils/gameUtil.js";
+import { getEntityHandleEvent, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
-export interface SupportHandleEvent {
-    dices?: DiceCostType[],
-    trigger?: Trigger,
-    eheros?: Hero[],
-    eCombatStatus?: Status[],
-    esupports?: Support[],
-    heros?: Hero[],
-    combatStatus?: Status[],
-    summons?: Summon[],
-    supports?: Support[],
-    pile?: Card[],
-    reset?: boolean,
-    hcard?: Card,
-    hcards?: Card[],
-    csummon?: Summon,
-    isFirst?: boolean,
-    hidxs?: number[],
-    playerInfo?: GameInfo,
-    eplayerInfo?: GameInfo,
-    switchHeroDiceCnt?: number,
-    isQuickAction?: boolean,
-    minusDiceCard?: number,
-    isMinusDiceSkill?: boolean,
-    minusDiceSkill?: number[][],
-    isMinusDiceTalent?: boolean,
-    skid?: number,
-    sktype?: SkillType,
-    hidx?: number,
-    heal?: number[],
-    getdmg?: number[],
-    discards?: Card[],
-    epile?: Card[],
-    isExecTask?: boolean,
-    sourceStatus?: Status,
-    getCardIds?: (filter?: (card: Card) => boolean) => number[],
-    randomInt?: (len?: number) => number,
-    randomInArr?: <T>(arr: T[], cnt?: number) => T[],
-}
+export interface SupportHandleEvent extends EntityHandleEvent { }
 
 export type SupportHandleRes = {
     triggers?: Trigger[],
@@ -88,7 +51,7 @@ export class GISupport {
     perCnt: number; // 每回合x次
     heal: number; // 回血数
     type: SupportType; // 类型 1轮次 2收集物 3常驻
-    handle: (support: Support, event?: SupportHandleEvent) => SupportHandleRes; // 处理效果函数
+    handle: (support: Support, event: InputHandle<SupportHandleEvent>) => SupportHandleRes; // 处理效果函数
 
     constructor(
         card: Card, cnt: number, perCnt: number, type: SupportType,
@@ -100,13 +63,18 @@ export class GISupport {
         this.perCnt = perCnt;
         this.type = type;
         this.heal = heal;
-        this.handle = (support, event = {}) => {
-            const { reset = false } = event;
-            if (reset && perCnt > 0) {
+        this.handle = (support, event) => {
+            if (event.reset && perCnt > 0) {
                 support.perCnt = perCnt;
                 return {}
             }
-            const builderRes = handle?.(support, event, versionWrap(ver)) ?? {};
+            const { players, pidx, ...oevent } = event;
+            const pevent = getEntityHandleEvent(pidx, players, event);
+            const cevent: SupportHandleEvent = {
+                ...pevent,
+                ...oevent,
+            };
+            const builderRes = handle?.(support, cevent, versionWrap(ver)) ?? {};
             const res: SupportHandleRes = {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),

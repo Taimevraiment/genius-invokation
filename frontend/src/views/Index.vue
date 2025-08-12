@@ -4,7 +4,7 @@
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
     <div style="position: absolute;right: 10px;top: 10px;">（更新至6.0v3）</div>
     <div v-if="isShowEditName" class="edit-name">
-      <input type="text" placeholder="请输入昵称" v-model="inputName" @keyup.enter="register" />
+      <input type="text" placeholder="请输入昵称(不超过10字)" maxlength="10" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto;" @click="register">
         {{ username == "" ? "确认" : inputName == "" ? "取消" : "修改" }}
       </button>
@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v0.4.0</div>
+    <div class="version">v0.4.1</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />

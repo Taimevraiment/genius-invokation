@@ -994,32 +994,40 @@ const allCards: Record<number, () => CardBuilder> = {
                     }
                 }
             }
-            if (!hasDmg) return;
-            if (trigger == 'phase-start' && card.useCnt >= 2) execmds.getStatus(301209);
+            if (!hasDmg && trigger != 'phase-start') return;
+            const triggers: Trigger[] = ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'];
+            if (trigger == 'phase-start' && card.useCnt >= 2) {
+                execmds.getStatus(301209);
+                triggers.push('phase-start');
+            }
             return {
-                triggers: ['Dendro-getdmg-oppo', 'elReaction-Dendro-oppo', 'phase-start'],
+                triggers,
                 isAddTask: true,
+                isOrTrigger: true,
                 exec: () => { trigger != 'phase-start' && card.addUseCnt() }
             }
         }),
 
     312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(2).useCnt(0).perCnt(2, 'v6.0.0')
-        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。如果「花冠水晶」数量不低于5，则生成1个[万能元素骰]，并抓1张牌。')
+        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。；【行动阶段开始时：】如果「花冠水晶」数量不低于5，则生成1个[万能元素骰]，并抓1张牌。')
         .description('【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个[万能元素骰]。（每回合至多生成2个）', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/5a997c90413e44f8147b136856facd2b_8759080322483134287.png')
         .handle((card, event, ver) => {
-            const { hero, hcards: { length: hcardsCnt } = [], execmds, hasDmg } = event;
-            if (!hero?.isFront && ver.lt('v6.0.0') || !hasDmg && ver.gte('v6.0.0')) return;
-            const isTriggered = ver.lt('v6.0.0') ? card.useCnt + 2 >= hcardsCnt && card.perCnt > 0 : card.useCnt + 1 >= 5;
+            const { hero, hcards: { length: hcardsCnt } = [], execmds, hasDmg, trigger } = event;
+            if (!hero?.isFront && ver.lt('v6.0.0') || !hasDmg && ver.gte('v6.0.0') && trigger != 'phase-start') return;
+            const isTriggered = ver.lt('v6.0.0') ? (card.useCnt + 2 >= hcardsCnt && card.perCnt > 0) : (card.useCnt >= 5 && trigger == 'phase-start');
             if (isTriggered) {
                 execmds.getDice(1, { element: DICE_COST_TYPE.Omni });
                 if (ver.gte('v6.0.0')) execmds.getCard(1);
             }
+            const triggers: Trigger[] = ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'];
+            if (ver.gte('v6.0.0') && isTriggered) triggers.push('phase-start');
             return {
-                triggers: ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'],
+                triggers,
                 isAddTask: true,
+                isOrTrigger: true,
                 exec: () => {
-                    card.addUseCnt(ver.lt('v6.0.0') ? 2 : 1);
+                    if (trigger != 'phase-start') card.addUseCnt(ver.lt('v6.0.0') ? 2 : 1);
                     if (isTriggered && ver.lt('v6.0.0')) card.minusPerCnt();
                 }
             }
@@ -1941,7 +1949,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { summons = [], randomInArr, isExec } = event;
             if (summons.length == MAX_SUMMON_COUNT) return { isValid: false }
-            if (!isExec || !randomInArr) return;
+            if (!isExec) return;
             const smnIds = [303211, 303212, 303213, 303214].filter(sid => !hasObjById(summons, sid));
             return { summon: randomInArr(smnIds) }
         }),
@@ -1953,7 +1961,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { eCombatStatus = [], randomInArr, isExec } = event;
             const stsIds = [303216, 303217, 303218, 303219].filter(sid => !hasObjById(eCombatStatus, sid));
             if (stsIds.length == 0) return { isValid: false }
-            if (!isExec || !randomInArr) return;
+            if (!isExec) return;
             return { statusOppo: randomInArr(stsIds) }
         }),
 
@@ -2574,7 +2582,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/92151754bedb92e5b3e0f97b6a83325d_6443479384111696580.png')
         .handle((card, event) => {
             const { summons = [], execmds, randomInt } = event;
-            if (!randomInt || card.perCnt <= 0 || summons.length == 0) return { notPreview: true }
+            if (card.perCnt <= 0 || summons.length == 0) return { notPreview: true }
             execmds.summonTrigger(randomInt(summons.length - 1));
             return { triggers: 'switch-to', notPreview: true, exec: () => card.minusPerCnt() }
         }),
@@ -3696,7 +3704,6 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => {
             const { supports = [], esupports = [], randomInArr, getCardIds, isExec } = event;
-            if (!randomInArr || !getCardIds) return;
             const support: number[] = [];
             const supportOppo: number[] = [];
             if (isExec) {
