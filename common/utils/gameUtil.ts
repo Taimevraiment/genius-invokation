@@ -327,7 +327,7 @@ export const statusToString = (sts: Status, prefixSpace: number = 1) => {
         + `${prefix1}addCnt: ${sts.addCnt}\n`
         + `${prefix1}type: ${sts.type}\n`
         + `${prefix1}isTalent: ${sts.isTalent}\n`
-        + `${prefix1}addition: [${sts.addition}]\n`
+        + `${prefix1}addition: [${JSON.stringify(sts.addition)}]\n`
         + `${prefix}}\n`;
 }
 
@@ -347,7 +347,7 @@ export const summonToString = (smn: Summon, prefixSpace: number = 1) => {
         + `${prefix1}shieldOrHeal: ${smn.shieldOrHeal}\n`
         + `${prefix1}isDestroy: ${smn.isDestroy}\n`
         + `${prefix1}isTalent: ${smn.isTalent}\n`
-        + `${prefix1}addition: [${smn.addition}]\n`
+        + `${prefix1}addition: [${JSON.stringify(smn.addition)}]\n`
         + `${prefix}}\n`;
 }
 
@@ -434,7 +434,7 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
         + `${prefix1}useCntPerRound: ${skill.useCntPerRound}\n`
         + `${prefix1}perCnt: ${skill.perCnt}\n`
         + `${prefix1}useCnt: ${skill.useCnt}\n`
-        + `${prefix1}addition: [${skill.addition}]\n`
+        + `${prefix1}addition: [${JSON.stringify(skill.addition)}]\n`
         + `${prefix}}\n`;
 }
 

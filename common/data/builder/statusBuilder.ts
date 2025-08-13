@@ -49,6 +49,7 @@ export type StatusHandleRes = {
     isTrigger?: boolean,
     isAfterSkill?: boolean,
     isPriority?: boolean,
+    isImmediate?: boolean,
     exec?: (eStatus?: Status, event?: StatusExecEvent) => void,
 };
 

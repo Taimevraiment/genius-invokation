@@ -2185,16 +2185,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
                 .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_02.png',
                     '')
-                .passive().addition('discardCnt').handle(event => {
-                    const { skill, discards = [] } = event;
-                    const cnt = Math.floor((skill.addition.discardCnt + discards.length) / 6);
-                    return {
-                        triggers: 'discard',
-                        status: isCdt(cnt > 0, [[123051, cnt]]),
-                        isNotAddTask: cnt == 0,
-                        exec: () => skill.addition.discardCnt = (skill.addition.discardCnt + discards.length) % 6,
-                    }
-                })
+                .passive().handle(() => ({ triggers: 'game-start', status: 123052 }))
         ),
 
     2401: () => new HeroBuilder(57).name('无相之雷').since('v3.7.0').offline('v2').maxHp(8).monster().electro()

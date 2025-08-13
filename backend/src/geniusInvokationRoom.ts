@@ -1807,7 +1807,7 @@ export default class GeniusInvokationRoom {
         }
         let ifa = false;
         const tasks0: AtkTask[] = [];
-        const usedDice = Math.max(0, (skill?.cost.reduce((a, b) => a + b.cnt, 0) ?? 0) - ((skill?.costChange.slice(0, 2) as number[])?.reduce((a, b) => a + b) ?? 0));
+        const usedDice = !skill ? 0 : Math.max(0, skill.cost[0].cnt - skill.costChange[0]) + Math.max(0, skill.cost[1].cnt - skill.costChange[1]);
         if (dmgEl && oWillDamages) {
             oWillDamages.forEach((wdmgs, wi) => {
                 const { willDamages: willDamage1, willAttachs: willAttachs1, dmgElements: dmgElements1,
@@ -1911,7 +1911,7 @@ export default class GeniusInvokationRoom {
         calcTasks(stsTasks, bPlayers, pidx);
         const tarHidx = aWillDamages.slice(epidx * ahlen, epidx * ahlen + ehlen).some(([d, p]) => d > -1 || p > 0) ? dmgedHidx : -1;
         if (skill && isExec) {
-            players[pidx].isFallAtk = ifa;
+            players[pidx].isFallAtk = skill.type != SKILL_TYPE.Vehicle ? ifa : players[pidx].isFallAtk || ifa;
             players[pidx].canAction = false;
             assgin(this.players, players);
             this.taskQueue.addTask(`useSkill-${skill.name}`, [[async () => {
@@ -3214,7 +3214,7 @@ export default class GeniusInvokationRoom {
             this._detectSupport(pidx, 'card', { hcard: currCard, minusDiceCard, isQuickAction });
             this._detectSlotAndStatus(pidx ^ 1, 'ecard', { types: STATUS_TYPE.Usage, hcard: currCard, isQuickAction });
             this._detectSupport(pidx ^ 1, 'ecard', { hcard: currCard, isQuickAction });
-            if (isAction) player.isFallAtk = ifa;
+            if (isUseSkill) player.isFallAtk = ifa;
             player.playerInfo.usedCardIds.push(currCard.id);
         }
         if (isInvalid) {
@@ -4471,6 +4471,7 @@ export default class GeniusInvokationRoom {
         const taskcmds = new CmdsGenerator();
         const statusAtks: StatusTask[] = [];
         const statusAtksPre: StatusTask[] = [];
+        const statusAtksPriority: StatusTask[] = [];
         let aWillHeals: number[] | undefined;
         let stsFallAtk = false;
         const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
@@ -4606,8 +4607,8 @@ export default class GeniusInvokationRoom {
                                     (stsres.damage || stsres.pdmg || stsres.heal)) ||
                                 stscmds.hasCmds('heal', 'revive', 'addMaxHp')
                             ) {
-                                this._doCmds(pidx, stsres.cmdsBefore);
-                                (isUnshift ? statusAtksPre : statusAtks).push({
+                                this._doCmds(pidx, stsres.cmdsBefore, { isPriority: stsres.isImmediate });
+                                (isUnshift ? statusAtksPre : stsres.isImmediate ? statusAtksPriority : statusAtks).push({
                                     id: sts.id,
                                     name: sts.name + `${trgGetcard}`,
                                     entityId: sts.entityId,
@@ -4705,6 +4706,7 @@ export default class GeniusInvokationRoom {
         if (isExec && !taskMark) {
             this.taskQueue.addStatusAtk(statusAtks.map(s => ({ ...s, isQuickAction })), { isUnshift, isPriority });
             this.taskQueue.addStatusAtk(statusAtksPre.map(s => ({ ...s, isQuickAction })), { isUnshift: true, isPriority });
+            this.taskQueue.addStatusAtk(statusAtksPriority.map(s => ({ ...s, isQuickAction })), { isUnshift, isPriority: true });
         }
         let bWillHeals: number[] | undefined;
         if (!isExec) {

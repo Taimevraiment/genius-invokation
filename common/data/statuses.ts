@@ -1515,6 +1515,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 triggers: 'end-phase',
                 damage: 1,
                 element: DAMAGE_TYPE.Anemo,
+                isImmediate: true,
                 exec: eStatus => { eStatus?.minusUseCnt() }
             }
         }),
@@ -2147,6 +2148,16 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             const { sktype = SKILL_TYPE.Vehicle } = event;
             if (sktype == SKILL_TYPE.Vehicle) return;
             return { triggers: 'dmg', addDmgCdt: status.useCnt }
+        }),
+
+    123052: () => new StatusBuilder('弃置卡牌数').heroStatus().icon(STATUS_ICON.Buff)
+        .useCnt(0).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.NonDestroy)
+        .description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。；〔目前已弃置{unt}张卡牌。〕')
+        .handle((status, event) => {
+            const { discards, cmds } = event;
+            const cnt = Math.floor((status.useCnt % 6 + discards.length) / 6);
+            if (cnt > 0) cmds.getStatus([[123051, cnt]]);
+            return { triggers: 'discard', isAddTask: true, exec: eStatus => eStatus?.addUseCnt(discards.length) }
         }),
 
     124011: () => readySkillStatus('猜拳三连击·剪刀', 24015),
