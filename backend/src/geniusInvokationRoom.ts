@@ -6977,6 +6977,7 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家索引
      */
     private _calcCardChange(pidx: number) {
+        if (!this.isStart) return;
         const player = this.players[pidx];
         if (!player) return;
         const costChange = player.handCards.map(() => [0, 0]);
