@@ -9,6 +9,9 @@ export default class CmdsGenerator {
         else if (cmds instanceof CmdsGenerator) this.value = [...cmds.value];
         else this.value = convertToArray(cmds);
     }
+    static get ins() {
+        return new CmdsGenerator();
+    }
     get isUseSkill() {
         return this.value.some(({ cmd, cnt = 0 }) => cmd == 'useSkill' && cnt > 0);
     }

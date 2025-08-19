@@ -317,7 +317,8 @@ export const CMD_MODE = {
     IsPublic: 8, // 公开抓到的牌
     GetSummon: 9, // 使用技能挑选牌
     GetCard: 10, // 挑选牌
-    UseCard: 11 // 挑选并打出牌
+    UseCard: 11, // 挑选并打出牌
+    ByOrder: 12, // 按顺序执行
 } as const;
 
 export const INFO_TYPE = {

@@ -3,7 +3,7 @@ import { CARD_TYPE, ElementType, PureElementType, STATUS_GROUP, STATUS_TYPE, Sta
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
+import { getEntityHandleEvent, getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, isCdt } from "../../utils/utils.js";
 import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
@@ -255,6 +255,23 @@ export class GIStatus {
     dispose(): void {
         this.useCnt = 0;
         this.roundCnt = 0;
+    }
+}
+
+export class ArrayStatus extends Array<GIStatus> {
+    constructor(...args: any[]) {
+        super(...args);
+    }
+    filter(predicate: (value: GIStatus, index: number, array: GIStatus[]) => unknown, thisArg?: any): ArrayStatus {
+        return super.filter(predicate, thisArg) as ArrayStatus;
+    }
+    get(id: number | StatusType) {
+        if (typeof id == 'number') return getObjById(this, id);
+        return this.find(s => s.hasType(id));
+    }
+    has(id: number | StatusType) {
+        if (typeof id == 'number') return hasObjById(this, id);
+        return this.some(s => s.hasType(id));
     }
 }
 

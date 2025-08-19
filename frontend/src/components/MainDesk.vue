@@ -661,7 +661,7 @@ const heros = computed<Hero[][]>(() => {
 });
 const combatStatuses = computed<Status[][]>(() => [opponent.value.combatStatus, player.value.combatStatus]);
 const currTime = computed<number>(() => ((props.client.countdown.limit - props.client.countdown.curr) / props.client.countdown.limit) * 100);
-const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value.status == PLAYER_STATUS.WAITING ? '#63a0e6' : '#ffb36d'} ${currTime.value + 5}%)`);
+const currTimeBg = computed<string>(() => `conic-gradient(transparent ${currTime.value}%, ${player.value?.status == PLAYER_STATUS.WAITING ? '#63a0e6' : '#ffb36d'} ${currTime.value + 5}%)`);
 const isShowHistory = computed<boolean>(() => props.client.isShowHistory);
 const getColor = (ctt: string) => {
   const preffix = ctt.match(/(?<=\[)[^\]]+(?=\])/)?.[0];

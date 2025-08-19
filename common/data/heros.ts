@@ -1378,10 +1378,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('勠心拳').description('[准备技能]：【rsk15135】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/801abac38b832f558caa5e9640bc77b5_663641721514699737.png')
-                .elemental().cost(3).handle(({ hero: { heroStatus } }) => ({
-                    status: 115131,
-                    isQuickAction: (getObjById(heroStatus, 115132)?.useCnt ?? 0) >= 2,
-                })),
+                .elemental().cost(3).addition('addDmg').handle(({ hero: { heroStatus }, skill }) => {
+                    const isTriggered = (getObjById(heroStatus, 115132)?.useCnt ?? 0) >= 2;
+                    return {
+                        status: 115131,
+                        isQuickAction: isTriggered,
+                        exec: () => isTriggered && (skill.addition.addDmg = +isTriggered),
+                    }
+                }),
             new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【nbotsts115130】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/ca9e299b07cc179ac411d9b0f5c6583e_8866803548218067355.png')

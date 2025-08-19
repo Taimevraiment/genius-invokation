@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import { createServer } from "http";
 import cron from "node-cron";
+import https from "node:https";
 import { Server } from "socket.io";
 import { versionChanges } from "../../common/constant/dependancyDict.js";
 import { PHASE, PLAYER_STATUS, PlayerStatus } from "../../common/constant/enum.js";
@@ -50,6 +51,7 @@ const todayPlayersHistory = new Map<number, {
     loginTime: number,
     logoutTime: number,
     currLogin: number,
+    location: string,
 }>(); // 当日玩家登录信息
 cron.schedule('0 0 5 * * *', () => todayPlayersHistory.clear());
 
@@ -200,7 +202,7 @@ io.on('connection', socket => {
             const info = todayPlayersHistory.get(id)!;
             info.currLogin = loginTime;
         } else {
-            todayPlayersHistory.set(pid, { ip: '', name, duration: 0, loginTime, logoutTime: -1, currLogin: loginTime });
+            todayPlayersHistory.set(pid, { ip: '', name, duration: 0, loginTime, logoutTime: -1, currLogin: loginTime, location: 'null' });
         }
         socket.emit('login', { pid, name: username });
         emitPlayerAndRoomList();
@@ -369,7 +371,24 @@ app.get('/login', (req, res) => {
     const oip = headers['x-forwarded-for'] || headers['x-real-ip'] || remoteAddress;
     const ip = Array.isArray(oip) ? oip[0] : oip;
     player.ip = ip;
-    todayPlayersHistory.get(+pid)!.ip = ip ?? '';
+    const tplayer = todayPlayersHistory.get(+pid);
+    if (tplayer) {
+        tplayer.ip = ip ?? '';
+        if (tplayer.location == 'null') {
+            https.get(`https://api.vore.top/api/IPdata?ip=${ip}`, res => {
+                let data: any = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    data = JSON.parse(data);
+                    let area: any = [];
+                    for (let i = 1; i <= 3; ++i) {
+                        if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
+                    }
+                    tplayer.location = area.join('-');
+                });
+            });
+        }
+    }
     return res.json({ ok: true });
 });
 
@@ -399,13 +418,14 @@ app.get('/info', (req, res) => {
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
         playersInfo: playerList.map(p => `${p.name}(${p.ip})[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
         todayPlayersHistory: Array.from(todayPlayersHistory.entries())
-            .map(([id, { ip, name, duration, loginTime, logoutTime }]) => ({
+            .map(([id, { ip, name, duration, loginTime, logoutTime, location }]) => ({
                 id,
                 ip,
                 name,
                 duration: (duration / 1000 / 60).toFixed(2),
                 loginTime: parseDate(loginTime).time,
                 logoutTime: parseDate(logoutTime).time,
+                location,
             })),
     });
 });

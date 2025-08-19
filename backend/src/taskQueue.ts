@@ -33,17 +33,18 @@ export default class TaskQueue {
         this.isExecuting = false;
         this.isDieWaiting = false;
     }
-    addTask(taskType: string, args: any[] | StatusTask, options: {
+    addTask(taskType: string, args: any[] | (() => Promise<void>) | (() => void) | StatusTask, options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
-        orderAfter?: string, isFinal?: boolean, isImmediate?: boolean,
+        orderAfter?: string, isFinal?: boolean, isImmediate?: boolean, delayAfter?: number, delayBefore?: number,
     } = {}) {
-        const { isUnshift, isDmg = false, addAfterNonDmg, isPriority, isFinal, source = -1, orderAfter = '', isImmediate } = options;
+        const { isUnshift, isDmg = false, addAfterNonDmg, isPriority, isFinal, source = -1, orderAfter = '', isImmediate,
+            delayAfter, delayBefore } = options;
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
         const curQueue = isCdt(isImmediate, this.immediateQueue, isCdt(isFinal, this.finalQueue, isCdt(this.isExecuting || isPriority, this.priorityQueue))) ?? this.queue;
         if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
             console.trace('重复task:', taskType);
         }
-        const queueTask: TaskItem = [taskType, args, source, isDmg];
+        const queueTask: TaskItem = [taskType, typeof args != 'function' ? args : [[args, delayAfter, delayBefore]], source, isDmg];
         const tidx = addAfterNonDmg ? this.queue.findIndex(([, , , isdmg]) => isdmg) :
             orderAfter != '' ? findLastIndex(this.queue, ([taskType]) => taskType.includes(orderAfter)) : -1;
         if (addAfterNonDmg && tidx == -1) {
@@ -56,7 +57,7 @@ export default class TaskQueue {
         }
         this._writeLog((isUnshift ? 'unshift' : isImmediate ? 'immediate' : isFinal ? 'final' : isPriority ? 'priotity' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
     }
-    async execTask(taskType: string, funcs: [() => void | Promise<void | boolean>, number?, number?][]) {
+    async execTask(taskType: string, funcs: [() => any | Promise<any>, number?, number?][]) {
         this._writeLog('execTask-start-' + taskType, 'emit');
         if (this.env == 'dev') console.time('execTask-end-' + taskType);
         if (this.queue.length > 0) {

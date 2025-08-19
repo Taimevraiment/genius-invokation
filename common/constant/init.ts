@@ -1,8 +1,8 @@
-import { CustomVersionConfig, InfoVO, Player } from '../../typing';
+import { CustomVersionConfig, DamageVO, InfoVO, Player } from '../../typing';
 import { GICard } from '../data/builder/cardBuilder.js';
-import { GIHero } from '../data/builder/heroBuilder.js';
+import { ArrayHero, GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
-import { GIStatus } from '../data/builder/statusBuilder.js';
+import { ArrayStatus, GIStatus } from '../data/builder/statusBuilder.js';
 import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
 import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from './gameOption.js';
 
@@ -11,11 +11,11 @@ export const INIT_PLAYER: () => Player = () => ({
     name: '',
     rid: -1,
     handCards: [],
-    heros: [],
+    heros: new ArrayHero(),
     pile: [],
     supports: [],
     summons: [],
-    combatStatus: [],
+    combatStatus: new ArrayStatus(),
     dice: [],
     rollCnt: INIT_ROLL_COUNT,
     status: PLAYER_STATUS.WAITING,
@@ -91,3 +91,13 @@ export const INIT_SUMMONCNT = (): number[][] => Array.from({ length: PLAYER_COUN
 
 export const INIT_SUPPORTCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
 
+export const INIT_DAMAGEVO = (): DamageVO => ({
+    dmgSource: 'null',
+    atkPidx: -1,
+    atkHidx: -1,
+    tarHidx: -1,
+    willHeals: [],
+    willDamages: [],
+    dmgElements: [],
+    elTips: [],
+});

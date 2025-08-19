@@ -1491,11 +1491,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     }),
 
     115132: () => new StatusBuilder('变格').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
-        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon('#')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).icon('#')
         .description('如果此状态有2层，则消耗2层此状态，并且本角色下次【ski,1】将视为快速行动，并且此次【rsk15135】伤害+1。（可叠加，没有上限）')
         .handle((status, event) => {
             if (status.useCnt < 2 || event.source != 115131) return;
-            return { triggers: 'ready-skill', exec: () => { status.minusUseCnt(2); status.perCnt = -2; } }
+            return { triggers: 'ready-skill', exec: () => { status.minusUseCnt(2) } }
         }),
 
     115133: () => hero1513sts(ELEMENT_TYPE.Cryo),

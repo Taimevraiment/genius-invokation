@@ -145,18 +145,18 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
 }
 
 // 是否含有某id
-export const hasObjById = <T extends { id: number }>(obj: T[] | undefined, id: number) => {
-    return !!obj?.some(o => o.id == id);
+export const hasObjById = <T extends { id: number }, U extends keyof T>(obj: T[] | undefined, value: T[U], key: U = 'id' as U) => {
+    return !!obj?.some(o => o[key] == value);
 }
 
 // 找出含有某id的对象
-export const getObjById = <T extends { id: number }>(obj: T[] | undefined, id: number): T | undefined => {
-    return obj?.find(o => o.id == id);
+export const getObjById = <T extends { id: number }, U extends keyof T>(obj: T[] | undefined, value: T[U], key: U = 'id' as U): T | undefined => {
+    return obj?.find(o => o[key] == value);
 }
 
 // 找出某id所在队列序号
-export const getObjIdxById = <T extends { id: number }>(obj: T[] | undefined, id: number): number => {
-    return obj?.findIndex(o => o.id == id) ?? -1;
+export const getObjIdxById = <T extends { id: number }, U extends keyof T>(obj: T[] | undefined, value: T[U], key: U = 'id' as U): number => {
+    return obj?.findIndex(o => o[key] == value) ?? -1;
 }
 
 // 根据id提取角色id

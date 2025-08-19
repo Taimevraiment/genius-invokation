@@ -3,7 +3,7 @@ import {
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType, StatusGroup, SWIRL_ELEMENT, Version,
 } from "./common/constant/enum"
 import { type GICard } from "./common/data/builder/cardBuilder"
-import { type GIHero } from "./common/data/builder/heroBuilder"
+import { ArrayHero, type GIHero } from "./common/data/builder/heroBuilder"
 import { type GISkill } from "./common/data/builder/skillBuilder"
 import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
@@ -33,7 +33,7 @@ type Player = {
     ip?: string, // 客户端ip地址
     rid: number, // 所在房间id
     handCards: Card[], // 手牌
-    heros: Hero[], // 登场英雄
+    heros: ArrayHero, // 登场英雄
     pile: Card[], // 牌库
     supports: Support[], // 支援物
     summons: Summon[], // 召唤物

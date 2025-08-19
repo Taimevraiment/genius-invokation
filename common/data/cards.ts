@@ -976,7 +976,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     312027: () => new CardBuilder(356).name('紫晶的花冠').since('v4.6.0').relic().costSame(0).costSame(1, 'v6.0.0').useCnt(0).perCnt(2, 'v6.0.0')
-        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。；【行动阶段开始时：】如果「花冠水晶」数量不低于2，则本回合内下次我方引发元素反应时伤害额外+2。')
+        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。（最多叠加到2）；【行动阶段开始时：】如果「花冠水晶」数量为2，则本回合内下次我方引发元素反应时伤害额外+2。')
         .description('【所附属角色为出战角色，敌方受到[草元素伤害]后：】累积1枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个随机基础元素骰。（每回合至多生成2个）', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/e431910b741b3723c64334265ce3e93e_3262613974155239712.png')
         .handle((card, event, ver) => {
@@ -995,8 +995,9 @@ const allCards: Record<number, () => CardBuilder> = {
                 }
             }
             if (!hasDmg && trigger != 'phase-start') return;
-            const triggers: Trigger[] = ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'];
-            if (trigger == 'phase-start' && card.useCnt >= 2) {
+            const triggers: Trigger[] = [];
+            if (card.useCnt < 2) triggers.push('Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo');
+            if (trigger == 'phase-start' && card.useCnt == 2) {
                 execmds.getStatus(301209);
                 triggers.push('phase-start');
             }
@@ -1008,19 +1009,20 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(2).useCnt(0).perCnt(2, 'v6.0.0')
-        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。；【行动阶段开始时：】如果「花冠水晶」数量不低于5，则生成1个[万能元素骰]，并抓1张牌。')
+    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(1).costSame(2, 'v6.0.0').useCnt(0).perCnt(2, 'v6.0.0')
+        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。（最多叠加到5）；【行动阶段开始时：】如果「花冠水晶」数量为5，则生成1个[万能元素骰]，并抓1张牌。')
         .description('【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个[万能元素骰]。（每回合至多生成2个）', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/5a997c90413e44f8147b136856facd2b_8759080322483134287.png')
         .handle((card, event, ver) => {
             const { hero, hcards: { length: hcardsCnt } = [], execmds, hasDmg, trigger } = event;
             if (!hero?.isFront && ver.lt('v6.0.0') || !hasDmg && ver.gte('v6.0.0') && trigger != 'phase-start') return;
-            const isTriggered = ver.lt('v6.0.0') ? (card.useCnt + 2 >= hcardsCnt && card.perCnt > 0) : (card.useCnt >= 5 && trigger == 'phase-start');
+            const isTriggered = ver.lt('v6.0.0') ? (card.useCnt + 2 >= hcardsCnt && card.perCnt > 0) : (card.useCnt == 5 && trigger == 'phase-start');
             if (isTriggered) {
                 execmds.getDice(1, { element: DICE_COST_TYPE.Omni });
                 if (ver.gte('v6.0.0')) execmds.getCard(1);
             }
-            const triggers: Trigger[] = ['Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo'];
+            const triggers: Trigger[] = [];
+            if (ver.lt('v6.0.0') || card.useCnt < 5) triggers.push('Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo');
             if (ver.gte('v6.0.0') && isTriggered) triggers.push('phase-start');
             return {
                 triggers,
@@ -2211,7 +2213,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(() => ({ summon: 301028, summonOppo: 301028 })),
 
     332054: () => new CardBuilder(518).name('「魔女M的祝福」').since('v6.0.0').event().costSame(0).subtype(CARD_SUBTYPE.Simulanka).canSelectSummon(1)
-        .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，如果其原本可用次数不低于3，则额外治疗我方受伤最多的角色2点。')
+        .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，如果其可用次数不低于3，则额外治疗我方受伤最多的角色2点。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ElongCry.webp')
         .handle((_, event) => {
             const { pidx = -1, summons = [], heros, selectSummon = -1, cmds } = event;

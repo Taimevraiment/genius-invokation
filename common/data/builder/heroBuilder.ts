@@ -1,9 +1,10 @@
-import { Card, Skill, Status } from "../../../typing";
+import { Card, Skill } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray } from "../../utils/utils.js";
 import { BaseCostBuilder, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder.js";
+import { ArrayStatus } from "./statusBuilder.js";
 
 export class GIHero {
     id: number; // 唯一id
@@ -25,7 +26,7 @@ export class GIHero {
     relicSlot: Card | null = null; // 圣遗物栏
     talentSlot: Card | null = null; // 天赋栏
     vehicleSlot: [Card, Skill] | null = null; // 特技栏
-    heroStatus: Status[] = []; // 角色状态
+    heroStatus: ArrayStatus = new ArrayStatus(); // 角色状态
     isFront: boolean = false; // 是否为前台角色
     attachElement: PureElementType[] = []; // 附着元素
     UI: {
@@ -69,6 +70,110 @@ export class GIHero {
     get equipments(): Card[] {
         const slots = [this.weaponSlot, this.relicSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null].filter(s => s != null) as Card[];
         return slots.sort((a, b) => b.entityId - a.entityId);
+    }
+}
+
+export class ArrayHero extends Array<GIHero> {
+    constructor(...args: any[]) {
+        super(...args);
+    }
+    get frontHidx() {
+        return this.findIndex(h => h.isFront);
+    }
+    // 获取所有存活/死亡角色的索引hidx
+    allHidxs(options: { isDie?: boolean, isAll?: boolean, exclude?: number, cdt?: (h: GIHero) => boolean, limit?: number } = {}) {
+        const { isDie = false, isAll = false, cdt = () => true, limit = -1, exclude = -1 } = options;
+        if (this.frontHidx == -1 || limit == 0) return [];
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hi = (this.frontHidx + i) % this.length;
+            const h = this[hi];
+            if (isAll || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) {
+                hidxs.push(hi);
+                if (hidxs.length == limit) break;
+            }
+        }
+        return hidxs;
+    }
+    // 获得出战角色(或按出战顺序前/后的角色)
+    getFront(options: { offset?: number, isAll?: boolean } = {}) {
+        const { offset = 0, isAll } = options;
+        const aliveHidxs = this.allHidxs({ isAll });
+        const fidx = aliveHidxs.findIndex(i => i == this.frontHidx);
+        if (fidx == -1) return;
+        return this[aliveHidxs[(fidx + offset + aliveHidxs.length) % aliveHidxs.length]];
+    }
+    // 获得距离出战角色最近的hidx
+    getNearestHidx(hidx: number = -1) {
+        if (hidx == -1) return -1;
+        const livehidxs = this.allHidxs();
+        let minDistance = livehidxs.length;
+        let hidxs: number[] = [];
+        for (const hi of livehidxs) {
+            const distance = Math.min(Math.abs(hi - hidx), hi + this.length - hidx);
+            if (distance == 0) return hi;
+            if (distance == minDistance) hidxs.push(hi);
+            else if (distance < minDistance) {
+                minDistance = distance;
+                hidxs = [hi];
+            }
+        }
+        if (hidxs.length == 0) return -1;
+        return Math.min(...hidxs);
+    }
+    // 获取受伤最多的角色的hidxs(最多一个number的数组)
+    getMaxHertHidxs(options: { isBack?: boolean } = {}) {
+        const { isBack = false } = options;
+        if (this.frontHidx == -1) return [];
+        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.maxHp - h.hp));
+        if (maxHert == 0) return [];
+        const hidxs: number[] = [];
+        for (let i = +isBack; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            const hert = this[hidx].maxHp - this[hidx].hp;
+            if (this[hidx].hp > 0 && hert == maxHert) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
+    // 获取受伤最少的角色的hidx(最多一个number的数组)
+    getMinHertHidxs() {
+        if (this.frontHidx == -1) return [];
+        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.maxHp - h.hp));
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            const hert = this[hidx].maxHp - this[hidx].hp;
+            if (this[hidx].hp > 0 && hert == minHert) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
+    // 获取生命值最低角色的hidx(只有一个number的数组)
+    getMinHpHidxs() {
+        if (this.frontHidx == -1) return [];
+        const minHp = Math.min(...this.filter(h => h.hp > 0).map(h => h.hp));
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            if (this[hidx].hp == minHp) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
+    // 获得所有后台角色hidx
+    getBackHidxs(limit?: number) {
+        return this.allHidxs({ exclude: this.frontHidx, limit });
+    }
+    // 获得下一个后台角色hidx(只有一个number的数组)
+    getNextBackHidx() {
+        return this.getBackHidxs(1);
     }
 }
 
