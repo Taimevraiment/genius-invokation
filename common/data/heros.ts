@@ -279,11 +279,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/f/fa/j91d90xnvel78ml29b5ggvgdobbtkiw.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/cad27b0e9146d4f1a743d5ae8a154aa2_6166204071621235420.png')
                 .passive().handle(event => {
-                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds, dmg = [] } = event;
+                    const { skill: { useCntPerRound = 0 }, hero: { heroStatus, hidx }, cmds, hasDmg } = event;
                     if (useCntPerRound > 0 || !hasObjById(heroStatus, 111141)) return;
                     cmds.getNightSoul(1, hidx);
                     const triggers: Trigger[] = ['pick'];
-                    if (dmg.some(v => v >= 0)) triggers.push('elReaction', 'other-elReaction');
+                    if (hasDmg) triggers.push('elReaction', 'other-elReaction');
                     return { triggers }
                 })
         ),
@@ -819,12 +819,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a2a8eb8cafea01ec4461915fe495127c_5101380063673897230.png')
                 .passive().handle(event => {
                     const { hero, heal = [], source = -1, trigger } = event;
+                    const sts122 = getObjById(hero.heroStatus, 122);
+                    if (trigger == 'skill' && sts122) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                 }),
             new SkillBuilder().passive(true).handle(event => {
-                const { restDmg = -1, hero, talent, trigger } = event;
+                const { restDmg = -1, hero, talent } = event;
                 const sts122 = getObjById(hero.heroStatus, 122);
-                if (trigger == 'skill' && sts122) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
                 if (restDmg <= 0 || !sts122 || !talent) return;
                 return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
             })
@@ -1424,10 +1425,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('天权崩玉').description('{dealDmg}，如果【sts116011】在场，就使此伤害+2。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a7/3s4vt3i6mu5kopy55xern2tdvq2tl2a.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2930a6e689cea53607ab586a8cde8c97_8943298426488751810.png')
-                .burst(3).damage(6).cost(3).handle(event => {
-                    const { combatStatus = [] } = event;
-                    return { addDmgCdt: isCdt(hasObjById(combatStatus, 116011), 2) };
-                })
+                .burst(3).damage(6).cost(3).handle(event => ({ addDmgCdt: isCdt(hasObjById(event.combatStatus, 116011), 2) }))
         ),
 
     1602: () => new HeroBuilder(43).name('诺艾尔').offline('v1').maxHp(12).maxHp(10, 'v5.5.0', 'v1').mondstadt().geo().claymore()
@@ -2544,7 +2542,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2704: () => new HeroBuilder(494).name('贪食匿叶龙山王').since('v5.8.0').maxHp(7).monster().dendro()
+    2704: () => new HeroBuilder(494).name('贪食匿叶龙山王').since('v5.8.0').maxHp(8).monster().dendro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/96ffcb7de7285bd7981cbb868e0a33d9_4577622310420998135.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/d6a56a54fa436716a950c4a890f16fa6.png')
         .normalSkill('沉重尾击')

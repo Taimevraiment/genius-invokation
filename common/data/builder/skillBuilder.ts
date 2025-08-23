@@ -6,7 +6,7 @@ import {
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
-import { clone, convertToArray, isCdt } from "../../utils/utils.js";
+import { clone, convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
 import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface SkillHandleEvent extends EntityHandleEvent {
@@ -15,32 +15,16 @@ export interface SkillHandleEvent extends EntityHandleEvent {
 }
 
 export type SkillHandleRes = {
-    status?: (number | [number, ...any])[] | number,
-    statusOppo?: (number | [number, ...any])[] | number,
-    equip?: number,
-    summon?: (number | [number, ...any])[] | number,
     triggers?: Trigger[],
-    isAttach?: boolean,
-    isAttachOppo?: boolean,
-    pdmg?: number,
-    pdmgSelf?: number,
     addDmgCdt?: number,
     addPdmg?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
-    statusPre?: (number | [number, ...any] | Status)[] | number,
-    statusOppoPre?: (number | [number, ...any] | Status)[] | number,
-    summonPre?: (number | [number, ...any] | Summon)[] | number,
     statusAfter?: (number | [number, ...any | Status])[] | number,
     statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
-    cmds?: CmdsGenerator,
+    cmds: CmdsGenerator,
     cmdsAfter?: CmdsGenerator,
     cmdsBefore?: CmdsGenerator,
-    heal?: number,
-    hidxs?: number[],
-    dmgElement?: ElementType,
-    atkOffset?: number,
-    atkTo?: number,
     minusDiceSkill?: MinusDiceSkill,
     isNotAddTask?: boolean,
     summonTriggers?: Trigger[],
@@ -57,11 +41,48 @@ export type SkillHandleRes = {
     isTrigger?: boolean,
     isInvalid?: boolean,
     exec?: () => void,
+    // todo 更新时要去掉
+    hidxs?: number[],
+    status?: (number | [number, ...any])[] | number,
+    statusOppo?: (number | [number, ...any])[] | number,
+    equip?: number,
+    summon?: (number | [number, ...any])[] | number,
+    statusPre?: (number | [number, ...any] | Status)[] | number,
+    statusOppoPre?: (number | [number, ...any] | Status)[] | number,
+    summonPre?: (number | [number, ...any] | Summon)[] | number,
+    heal?: number,
+    dmgElement?: ElementType,
+    pdmg?: number,
+    pdmgSelf?: number,
+    atkOffset?: number,
+    atkTo?: number,
+    isAttach?: boolean,
+    isAttachOppo?: boolean,
 }
 
-type SkillBuilderHandleRes = Omit<SkillHandleRes, 'summonTriggers' | 'triggers'> & { summonTriggers?: Trigger | Trigger[], triggers?: Trigger | Trigger[] };
+type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTriggers' | 'triggers'> & {
+    hidxs?: number[],
+    status?: (number | [number, ...any])[] | number,
+    statusOppo?: (number | [number, ...any])[] | number,
+    equip?: number,
+    summon?: (number | [number, ...any])[] | number,
+    statusPre?: (number | [number, ...any] | Status)[] | number,
+    statusOppoPre?: (number | [number, ...any] | Status)[] | number,
+    summonPre?: (number | [number, ...any] | Summon)[] | number,
+    heal?: number,
+    dmgElement?: ElementType,
+    pdmg?: number,
+    pdmgSelf?: number,
+    atkOffset?: number,
+    atkTo?: number,
+    isAttach?: boolean,
+    isAttachOppo?: boolean,
+    cmds?: CmdsGenerator,
+    summonTriggers?: Trigger | Trigger[],
+    triggers?: Trigger | Trigger[],
+};
 
-interface SkillBuilderHandleEvent extends SkillHandleEvent, EntityBuilderHandleEvent { }
+interface SkillBuilderHandleEvent extends SkillHandleEvent, Omit<EntityBuilderHandleEvent, 'skill'> { }
 
 export class GISkill {
     id: number; // 唯一id
@@ -141,13 +162,13 @@ export class GISkill {
             const cevent: SkillBuilderHandleEvent = {
                 swirlEl: ELEMENT_TYPE.Anemo,
                 ...pevent,
-                ...oevent,
+                ...deleteUndefinedProperties(oevent),
                 cmds,
                 cmdsBefore,
                 cmdsAfter,
             };
-            const { reset = false, hero, skill: { id } } = cevent;
-            const builderRes = handle?.(cevent, versionWrap(ver)) ?? {};
+            const { reset, hero, skill } = cevent;
+            const builderRes = handle?.(cevent, versionWrap(ver)) ?? { cmds };
             const res: SkillHandleRes = {
                 ...builderRes,
                 cmds,
@@ -156,38 +177,80 @@ export class GISkill {
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
             }
-            if (this.isReadySkill) return res;
-            const curskill = hero.skills.find(sk => sk.id == id) ?? hero.vehicleSlot?.[1];
-            if (!curskill) throw new Error(`@skill_constructor: 未找到技能, skid:${id}, hero:${hero.name}`);
+            if (skill.isReadySkill) return res;
             if (reset) {
-                curskill.useCntPerRound = 0;
-                curskill.perCnt = pct;
-                return {};
+                skill.useCntPerRound = 0;
+                skill.perCnt = pct;
+                return res;
             }
-            let dmgElement = res.dmgElement;
-            let atkOffset = res.atkOffset;
+            let { dmgElement, atkOffset } = builderRes;
+            const sevent = { ...event, hidx: hero.hidx };
             for (const ist of hero.heroStatus) {
-                const sevent = { ...clone(event), hidx: hero.hidx };
                 const stsres = ist.handle(ist, sevent) ?? {};
-                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && this.dmgElement == DAMAGE_TYPE.Physical) {
+                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && skill.dmgElement == DAMAGE_TYPE.Physical) {
                     dmgElement = stsres.attachEl;
                 }
                 if (stsres.atkOffset) atkOffset = stsres.atkOffset;
             }
+            if (sevent.trigger == 'skill' && !skill.isPassive) {
+                for (const ski of hero.skills.filter(s => s.isPassive)) {
+                    const skires = ski.handle({ ...clone(sevent), skill: ski }) ?? {};
+                    if (skires.triggers?.includes('skill')) {
+                        dmgElement = skires.dmgElement;
+                    }
+                }
+            }
+            dmgElement ??= skill.dmgElement;
+            // const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,
+            //     statusOppo, summon, equip, isAttach, isAttachOppo } = builderRes;
+            // if (heal) cmds.unshift.heal(heal, { hidxs });
+            // if (pdmgSelf) cmds.unshift.attack(pdmgSelf, DAMAGE_TYPE.Pierce, { hidxs: hero.hidx, isOppo: false });
+            // if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
+            // if (isAttachOppo) cmds.unshift.attach({ hidxs: eheros.frontHidx, isOppo: true });
+            // if (isAttach) cmds.unshift.attach({ hidxs });
+            // if (!cmds.hasCmds('attack') && skill.damage) cmds.unshift.attack();
+            // cmds.unshift
+            //     .getSummon(summonPre)
+            //     .getStatus(statusOppoPre, { hidxs, isOppo: true })
+            //     .getStatus(statusPre, { hidxs })
+            //     .push
+            //     .equip(hero.hidx, equip)
+            //     .getStatus(status, { hidxs: hidxs ?? (skill.isPassive ? hero.hidx : hidxs) })
+            //     .getStatus(statusOppo, { hidxs, isOppo: true })
+            //     .getSummon(summon);
+            // if (skill.cost[2].cnt >= 0) {
+            //     if (skill.cost[2].cnt == 0) cmds.getEnergy(1);
+            //     else cmds.getEnergy(-skill.cost[2].cnt);
+            // }
+            // if (skill.damage) {
+            //     cmds.value.forEach(c => {
+            //         if (c.cmd != 'attack') return;
+            //         c.cnt ??= skill.damage;
+            //         c.element ??= skill.dmgElement == DAMAGE_TYPE.Physical ? dmgElement : skill.dmgElement;
+            //         if (c.element == DAMAGE_TYPE.Pierce && !c.hidxs) c.hidxs = eheros.getBackHidxs();
+            //         c.hidxs ??= [eheros.getFront({ offset: atkOffset })?.hidx ?? -1];
+            //     });
+            // }
             return {
                 ...res,
                 dmgElement,
                 atkOffset,
                 exec: () => {
                     res.exec?.();
-                    ++curskill.useCnt;
-                    ++curskill.useCntPerRound;
+                    ++skill.useCnt;
+                    ++skill.useCntPerRound;
                 }
             }
         }
     }
+    get curCost() {
+        return Math.max(0, this.cost[0].cnt - this.costChange[0]) + Math.max(0, this.cost[1].cnt - this.costChange[1])
+    }
     get isReadySkill() {
         return this.cost[2].cnt == -2;
+    }
+    get isPassive() {
+        return this.type == SKILL_TYPE.Passive || this.type == SKILL_TYPE.PassiveHidden;
     }
 }
 
@@ -238,17 +301,18 @@ export class SkillBuilder extends BaseBuilder {
     }
     passive(isHide: boolean = false) {
         this._type = isHide ? SKILL_TYPE.PassiveHidden : SKILL_TYPE.Passive;
+        this._energyCost.set(['vlatest', -1]);
         return this;
     }
     readySkill(round: number = 1) {
-        if (this._energyCost.get('vlatest', 0) != -3) this._energyCost.set(['vlatest', -2]);
+        this._energyCost.set(['vlatest', -2]);
         this.costSame(0);
         this._readySkillRound = round;
         return this;
     }
     vehicle() {
         this._type = SKILL_TYPE.Vehicle;
-        this._energyCost.set(['vlatest', -3]);
+        this._energyCost.set(['vlatest', -1]);
         return this;
     }
     energy(energy: number, isSp: boolean = false, version: Version = 'vlatest') {

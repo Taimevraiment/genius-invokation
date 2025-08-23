@@ -549,6 +549,7 @@ const devOps = (cidx = 0) => {
   const setStsCnt: { hidx: number, stsid: number, type: string, val: number }[] = [];
   const setSmnCnt: { smnidx: number, type: string, val: number[] }[] = [];
   const setSptCnt: { sptidx: number, type: string, val: number }[] = [];
+  const setSlotCnt: { hidx: number, slotid: number, type: string, val: number }[] = [];
   const smnIds: number[][] = [];
   const sptIds: number[] = [];
   const h = (v: string) => (v == '' ? undefined : Number(v));
@@ -649,9 +650,15 @@ const devOps = (cidx = 0) => {
       else sptIds.push(sptid);
       flag.add('setSupport');
     } else if (op.startsWith('q')) { // 附属装备
-      const [card = 0, hidx = heros.findIndex(h => h.isFront)] = op.slice(1).split(/[:：]+/).map(h);
+      const isSetCnt = op[1] == '+';
+      const setType = op[2];
+      const [card = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
       const hidxs = hidx > heros.length ? heros.map(h => h.hidx) : [hidx];
-      cmds.push({ cmd: 'equip', hidxs, card: card || getTalentIdByHid(heros[hidx].id) });
+      if (isSetCnt) {
+        setSlotCnt.push({ hidx, slotid: card, type: setType, val });
+      } else {
+        cmds.push({ cmd: 'equip', hidxs, card: card || getTalentIdByHid(heros[hidx].id) });
+      }
       flag.add('equip');
     } else { // 摸牌
       const cards: (number | Card)[] = [];
@@ -664,7 +671,7 @@ const devOps = (cidx = 0) => {
   }
   socket.emit('sendToServerDev', {
     cpidx, rid, seed, dices, cmds, attachs, hps, clearSts, setStsCnt, setSmnCnt, setSptCnt,
-    smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&'),
+    setSlotCnt, smnIds, sptIds, disCardCnt, flag: 'dev-' + [...flag].join('&'),
   });
 };
 </script>

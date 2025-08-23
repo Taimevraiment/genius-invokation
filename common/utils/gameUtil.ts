@@ -442,11 +442,12 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
     const { hidx = player.hidx, isMinusDiceCard = false, hcard = null } = event;
+    const hero = player.heros[hidx];
     return {
         pidx,
-        hero: player.heros[hidx],
         heros: player.heros,
         hidx,
+        hero,
         combatStatus: player.combatStatus,
         pile: player.pile,
         hcards: player.handCards,
@@ -501,7 +502,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         sourceHidx: -1,
         dmgSource: -1,
         discards: [],
-        talent: null,
+        talent: hero.talentSlot,
         slotsDestroyCnt: player.heros.map(() => 0),
         isSelfRound: false,
         isSwirlExec: false,

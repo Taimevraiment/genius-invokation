@@ -303,6 +303,13 @@ export const exportFile = (name: string, content: string) => {
     }, 100);
 }
 
+/**
+ * 导入文件
+ * @param ev 事件参数
+ * @param callback 回调函数
+ * @param suffix 文件后缀
+ * @returns 读取的文件内容
+ */
 export const importFile = (ev: Event, callback: (content?: string) => void, suffix?: string) => {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
@@ -318,3 +325,17 @@ export const importFile = (ev: Event, callback: (content?: string) => void, suff
     };
     reader.readAsText(file);
 }
+
+/**
+ * 删去对象中值为空的属性
+ * @param obj 对象
+ * @returns 处理后的对象
+ */
+export const deleteUndefinedProperties = <T extends Record<string, any>>(obj: T): T => {
+    for (const key in obj) {
+        if (obj.hasOwnProperty(key) && obj[key] === undefined) {
+            delete obj[key];
+        }
+    }
+    return obj;
+};

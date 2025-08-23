@@ -2,8 +2,9 @@ import {
     ActionType, CardSubtype, CardTag, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType, StatusGroup, SWIRL_ELEMENT, Version,
 } from "./common/constant/enum"
+import { ArrayHero, ArrayStatus } from "./common/data/builder/baseBuilder"
 import { type GICard } from "./common/data/builder/cardBuilder"
-import { ArrayHero, type GIHero } from "./common/data/builder/heroBuilder"
+import { type GIHero } from "./common/data/builder/heroBuilder"
 import { type GISkill } from "./common/data/builder/skillBuilder"
 import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
@@ -40,7 +41,7 @@ type Player = {
     dice: DiceCostType[], // 骰子
     rollCnt: number, // 骰子投掷次数
     status: PlayerStatus, // 玩家当前状态
-    combatStatus: Status[], // 出战状态
+    combatStatus: ArrayStatus, // 出战状态
     phase: Phase, // 玩家当前阶段
     pidx: number, // 玩家序号
     hidx: number, // 出战角色序号
@@ -138,6 +139,7 @@ type Cmds = {
     subtype?: CardSubtype | CardSubtype[],
     cardTag?: CardTag | CardTag[],
     status?: (number | [number, ...any] | Status)[] | number,
+    summon?: (number | [number, ...any] | Summon)[] | number,
     isOppo?: boolean,
     summonTrigger?: Trigger | Trigger[],
 }
@@ -145,7 +147,7 @@ type Cmds = {
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
-    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard';
+    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -178,8 +180,10 @@ type InfoVO = {
 
 type ExplainContent = Card | Summon | Status | Skill | string;
 
+type DmgSource = 'skill' | 'status' | 'summon' | 'card' | 'support' | 'null';
+
 type DamageVO = {
-    dmgSource: 'skill' | 'status' | 'summon' | 'card' | 'support' | 'null', // 造成伤害来源
+    dmgSource: DmgSource, // 造成伤害来源
     atkPidx: number, // 攻击者玩家序号
     atkHidx: number, // 攻击者角色序号
     tarHidx: number, // 受攻击角色序号

@@ -4,7 +4,7 @@ import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
-import { convertToArray, isCdt } from "../../utils/utils.js";
+import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
 import { BaseBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface SummonHandleEvent extends EntityHandleEvent {
@@ -149,7 +149,7 @@ export class GISummon {
             const cevent: SummonHandleEvent = {
                 tround: 0,
                 ...pevent,
-                ...oevent,
+                ...deleteUndefinedProperties(oevent),
             };
             if (!handle) {
                 return {

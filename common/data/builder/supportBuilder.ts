@@ -2,10 +2,12 @@ import { Card, MinusDiceSkill, Summon, Support, Trigger, VersionWrapper } from "
 import { DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, versionWrap } from "../../utils/gameUtil.js";
-import { convertToArray, isCdt } from "../../utils/utils.js";
+import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
 import { BaseBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
-export interface SupportHandleEvent extends EntityHandleEvent { }
+export interface SupportHandleEvent extends EntityHandleEvent {
+    usedDice: number,
+}
 
 export type SupportHandleRes = {
     triggers?: Trigger[],
@@ -71,8 +73,9 @@ export class GISupport {
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event);
             const cevent: SupportHandleEvent = {
+                usedDice: 0,
                 ...pevent,
-                ...oevent,
+                ...deleteUndefinedProperties(oevent),
             };
             const builderRes = handle?.(support, cevent, versionWrap(ver)) ?? {};
             const res: SupportHandleRes = {
@@ -97,7 +100,7 @@ export class SupportBuilder extends BaseBuilder {
     private _card: Card | undefined;
     private _cnt: VersionMap<number> = new VersionMap();
     private _perCnt: VersionMap<number> = new VersionMap();
-    private _type: SupportType = SUPPORT_TYPE.Permanent;
+    private _type: VersionMap<SupportType> = new VersionMap();
     private _heal: number = 0;
     private _handle: ((support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined = () => ({});
     constructor() {
@@ -115,17 +118,17 @@ export class SupportBuilder extends BaseBuilder {
         return this;
     }
     round(cnt: number, version: Version = 'vlatest') {
-        this._type = SUPPORT_TYPE.Round;
+        this._type.set([version, SUPPORT_TYPE.Round]);
         this._cnt.set([version, cnt]);
         return this;
     }
     collection(cnt: number = 0, version: Version = 'vlatest') {
-        this._type = SUPPORT_TYPE.Collection;
+        this._type.set([version, SUPPORT_TYPE.Collection]);
         this._cnt.set([version, cnt]);
         return this;
     }
     permanent(cnt: number = 0, version: Version = 'vlatest') {
-        this._type = SUPPORT_TYPE.Permanent;
+        this._type.set([version, SUPPORT_TYPE.Permanent]);
         this._cnt.set([version, cnt]);
         return this;
     }
@@ -141,7 +144,8 @@ export class SupportBuilder extends BaseBuilder {
         if (this._card == undefined) throw new Error("SupportBuilder: card is undefined");
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const cnt = this._cnt.get(this._curVersion, 0);
-        return new GISupport(this._card, cnt, perCnt, this._type, this._handle, this._heal, this._curVersion);
+        const type = this._type.get(this._curVersion, SUPPORT_TYPE.Permanent);
+        return new GISupport(this._card, cnt, perCnt, type, this._handle, this._heal, this._curVersion);
     }
 }
 

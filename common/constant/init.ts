@@ -1,8 +1,9 @@
 import { CustomVersionConfig, DamageVO, InfoVO, Player } from '../../typing';
+import { ArrayHero, ArrayStatus } from '../data/builder/baseBuilder.js';
 import { GICard } from '../data/builder/cardBuilder.js';
-import { ArrayHero, GIHero } from '../data/builder/heroBuilder.js';
+import { GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
-import { ArrayStatus, GIStatus } from '../data/builder/statusBuilder.js';
+import { GIStatus } from '../data/builder/statusBuilder.js';
 import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
 import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from './gameOption.js';
 

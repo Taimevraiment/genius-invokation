@@ -1009,28 +1009,31 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(1).costSame(2, 'v6.0.0').useCnt(0).perCnt(2, 'v6.0.0')
-        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。（最多叠加到5）；【行动阶段开始时：】如果「花冠水晶」数量为5，则生成1个[万能元素骰]，并抓1张牌。')
+    312028: () => new CardBuilder(387).name('乐园遗落之花').since('v4.7.0').relic().costSame(2).useCnt(0).perCnt(2)
+        .description('【敌方受到伤害后：】如果此伤害是[草元素伤害]或发生了[草元素相关反应]，则累积1枚「花冠水晶」。（最多叠加到5）；【行动阶段开始或我方触发元素反应时：】如果「花冠水晶」数量为5，则生成1个[万能元素骰]，并抓1张牌。（每回合2次）')
         .description('【所附属角色为出战角色，敌方受到[草元素伤害]或发生了[草元素相关反应]后：】累积2枚「花冠水晶」。如果「花冠水晶」大于等于我方手牌数，则生成1个[万能元素骰]。（每回合至多生成2个）', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/5a997c90413e44f8147b136856facd2b_8759080322483134287.png')
         .handle((card, event, ver) => {
             const { hero, hcards: { length: hcardsCnt } = [], execmds, hasDmg, trigger } = event;
             if (!hero?.isFront && ver.lt('v6.0.0') || !hasDmg && ver.gte('v6.0.0') && trigger != 'phase-start') return;
-            const isTriggered = ver.lt('v6.0.0') ? (card.useCnt + 2 >= hcardsCnt && card.perCnt > 0) : (card.useCnt == 5 && trigger == 'phase-start');
+            const isTriggered = card.perCnt > 0 && (ver.lt('v6.0.0') ?
+                card.useCnt + 2 >= hcardsCnt :
+                (card.useCnt == 5 && (trigger == 'phase-start' || trigger.includes('elReaction')) ||
+                    card.useCnt + 1 == 5 && trigger == 'get-elReaction-Dendro-oppo'));
             if (isTriggered) {
                 execmds.getDice(1, { element: DICE_COST_TYPE.Omni });
                 if (ver.gte('v6.0.0')) execmds.getCard(1);
             }
             const triggers: Trigger[] = [];
             if (ver.lt('v6.0.0') || card.useCnt < 5) triggers.push('Dendro-getdmg-oppo', 'get-elReaction-Dendro-oppo');
-            if (ver.gte('v6.0.0') && isTriggered) triggers.push('phase-start');
+            if (ver.gte('v6.0.0') && isTriggered) triggers.push('phase-start', 'elReaction', 'other-elReaction');
             return {
                 triggers,
                 isAddTask: true,
                 isOrTrigger: true,
                 exec: () => {
-                    if (trigger != 'phase-start') card.addUseCnt(ver.lt('v6.0.0') ? 2 : 1);
-                    if (isTriggered && ver.lt('v6.0.0')) card.minusPerCnt();
+                    if (ver.lt('v6.0.0') || card.useCnt < 5) card.addUseCnt(ver.lt('v6.0.0') ? 2 : 1);
+                    if (isTriggered) card.minusPerCnt();
                 }
             }
         }),
@@ -1267,7 +1270,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/a170755e85072e3672834ae9f4d558d5_593047424158919411.png'),
 
     321004: () => new CardBuilder(182).name('晨曦酒庄').place().costAny(3).costSame(2, 'v6.0.0')
-        .description('【我方执行行动「切换角色」时：】少花费1个元素骰。（每回合至多2次）')
+        .description('【我方执行行动「切换角色」时：】少花费1个元素骰。（每回合2次）')
         .description('【我方执行行动「切换角色」时：】少花费1个元素骰。（每回合1次）', 'v4.8.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/27ea1b01a7d0011b40c0180e4fba0490_7938002191515673602.png'),
 
@@ -1284,7 +1287,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6f2b064d7711e30c742b802770bef71_3841942586663095539.png'),
 
     321008: () => new CardBuilder(186).name('鸣神大社').since('v3.6.0').place().costAny(3).costSame(2, 'v6.0.0')
-        .description('【我方角色使用技能后：】如果元素骰总数为奇数，则生成1个随机的基础元素骰。；[可用次数]：4')
+        .description('【我方角色使用技能后：】如果元素骰总数为奇数，则生成1个[万能元素骰]。（每回合2次）')
         .description('【每回合自动触发1次：】生成1个随机的基础元素骰。；[可用次数]：3', 'v6.0.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/25bee82daa48f8018a4a921319ca2686_8817000056070129488.png'),
 
@@ -1301,7 +1304,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d46d38ef070b2340e8ee9dfa697aad3f_8762501854367946191.png'),
 
     321012: () => new CardBuilder(190).name('镇守之森').since('v3.7.0').place().costSame(2).costSame(1, 'v6.0.0')
-        .description('如果当前元素骰总数为偶数，则我方角色「普通攻击」少花费1个元素骰。（每回合1次）；[可用次数]：3')
+        .description('【我方选择行动前：】如果当前元素骰总数为偶数，则我方角色「普通攻击」少花费1个[无色元素骰]。；[可用次数]：4')
         .description('【行动阶段开始时：】如果我方不是「先手牌手」，则生成1个出战角色类型的元素骰。；[可用次数]：3', 'v6.0.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5a543775e68a6f02d0ba6526712d32c3_5028743115976906315.png'),
 
@@ -1810,7 +1813,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【本回合有我方角色被击倒，才能打出：】生成1个[万能元素骰]，我方当前出战角色获得1点[充能]。', 'v4.0.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a1ae1067afcf9899a958c166b7b32fa0_5333005492197066238.png')
         .handle((_, event, ver) => {
-            const { heros = [], combatStatus = [], cmds } = event;
+            const { heros = [], combatStatus, cmds } = event;
             cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).getEnergy(1);
             return {
                 isValid: (ver.lt('v4.0.0') || !hasObjById(combatStatus, 303205)) && heros.some(h => h.hp == -1),
@@ -1872,7 +1875,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromWeapon = fromHero?.weaponSlot;
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
-                        if (ver.gte('v4.1.0') || ver.isOffline) fromWeapon.reset();
+                        if (ver.gte('v4.1.0') || ver.isOffline) fromWeapon.reset(fromWeapon);
                         execmds.equip(toHeroIdx, fromWeapon);
                     }
                 }
@@ -1894,7 +1897,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const fromRelic = fromHero?.relicSlot;
                     if (fromRelic) {
                         fromHero.relicSlot = null;
-                        if (ver.gte('v4.1.0')) fromRelic.reset();
+                        if (ver.gte('v4.1.0')) fromRelic.reset(fromRelic);
                         execmds.equip(toHeroIdx, fromRelic);
                     }
                 }
@@ -1960,7 +1963,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('在对方场上，生成1个随机类型的「愚人众伏兵」。').explain('sts303216', 'sts303217', 'sts303218', 'sts303219')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png')
         .handle((_, event) => {
-            const { eCombatStatus = [], randomInArr, isExec } = event;
+            const { eCombatStatus, randomInArr, isExec } = event;
             const stsIds = [303216, 303217, 303218, 303219].filter(sid => !hasObjById(eCombatStatus, sid));
             if (stsIds.length == 0) return { isValid: false }
             if (!isExec) return;
@@ -3002,7 +3005,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方角色造成[岩元素伤害]后：如果场上存在【sts116061】，抓1张牌。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png')
         .handle((card, event) => {
-            const { combatStatus = [], sktype = SKILL_TYPE.Vehicle, execmds } = event;
+            const { combatStatus, sktype = SKILL_TYPE.Vehicle, execmds } = event;
             if (!hasObjById(combatStatus, 116061) || card.perCnt <= 0 || sktype == SKILL_TYPE.Vehicle) return;
             execmds.getCard(1);
             return { triggers: ['Geo-dmg', 'other-Geo-dmg'], exec: () => card.minusPerCnt() }
@@ -3229,7 +3232,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】如果装备有此牌的【hro】已触发过【sts123022】，就立刻弃置此牌，为角色附属【sts123024】。；装备有此牌的【hro】触发【sts123022】时：弃置此牌，为角色附属【sts123024】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png')
         .handle((card, event) => {
-            const { heros = [], trigger } = event;
+            const { heros, trigger } = event;
             if (!hasObjById(getObjById(heros, card.userType as number)?.heroStatus, 123022) || trigger == 'will-killed') {
                 return { triggers: 'will-killed', status: 123024, isDestroy: true }
             }
@@ -3313,7 +3316,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】如果装备有此牌的【hro】已触发过【sts124061】，则使敌方出战角色失去1点[充能]。；装备有此牌的【hro】被击倒或触发【sts124061】时：弃置此牌，使敌方出战角色失去1点[充能]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/caa9283f50c2093abad5c6ba1bf73335_6393422977381042780.png').
         handle((card, event) => {
-            const { heros = [], slotUse, trigger, cmds, execmds } = event;
+            const { heros, slotUse, trigger, cmds, execmds } = event;
             if (!hasObjById(getObjById(heros, card.userType as number)?.heroStatus, 124061) || trigger == 'will-killed') {
                 cmds.getEnergy(-1, { isOppo: true });
                 execmds.addCmds(cmds);
@@ -3400,7 +3403,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('在「始基力:荒性」和「始基力:芒性」之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6b2b966c07c54e8d86dd0ef057ae5c4a_6986508112474897949.png')
         .handle((card, event) => {
-            const { heros = [], cmds } = event;
+            const { heros, cmds } = event;
             const hidx = getObjIdxById(heros, getHidById(card.id));
             if (hidx == -1) return;
             const hero = heros[hidx];
@@ -3522,14 +3525,14 @@ const allCards: Record<number, () => CardBuilder> = {
     115117: () => hero1511card(ELEMENT_TYPE.Cryo),
 
     115142: () => new CardBuilder().name('梦见风名物点心').food().costSame(0)
-        .description('【此卡牌进入手牌时：】如果我方出战角色生命值大于5，则造成1点[风元素伤害]\\；否则治疗我方出战角色2点。随后弃置此卡牌并抓1张牌。')
+        .description('【此卡牌进入手牌时：】如果我方出战角色生命值大于5，则造成1点[风元素伤害]\\；否则治疗我方出战角色2点。效果结算后抓1张牌，随后弃置此卡牌。')
         .src('tmp/UI_Gcg_CardFace_Summon_Mizuki_Food')
         .handle((_, event) => {
-            const { hero, execmds, cmdsAfter } = event;
+            const { hero, execmds } = event;
             if (!hero) return;
             if (hero.hp >= 5) execmds.attack(1, DAMAGE_TYPE.Anemo);
             else execmds.heal(2);
-            cmdsAfter.getCard(1);
+            execmds.getCard(1);
             return { triggers: 'getcard' }
         }),
 

@@ -17,9 +17,8 @@ import {
 } from '../../common/constant/gameOption.js';
 import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD } from '../../common/constant/init.js';
 import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../common/constant/UIconst.js';
-import { EntityHandleEvent, InputHandle } from '../../common/data/builder/baseBuilder.js';
+import { ArrayHero, EntityHandleEvent, InputHandle } from '../../common/data/builder/baseBuilder.js';
 import { CardHandleRes } from '../../common/data/builder/cardBuilder.js';
-import { ArrayHero } from '../../common/data/builder/heroBuilder.js';
 import { SkillHandleRes } from '../../common/data/builder/skillBuilder.js';
 import { StatusHandleRes } from '../../common/data/builder/statusBuilder.js';
 import { SummonHandleRes } from '../../common/data/builder/summonBuilder.js';
@@ -45,6 +44,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const secretKey = await getSecretData('secretKey');
 const koishiUrl = await getSecretData('koishiUrl');
+
+// Error.stackTraceLimit = 20;
 
 export default class GeniusInvokationRoom {
     private io?: Server; // socket.io
@@ -311,8 +312,8 @@ export default class GeniusInvokationRoom {
                 isQuickAction, isChange, hasReadyskill, ohidx,
             } = options;
             this.players.forEach(p => {
-                if (this.isStart) {
-                    p.handCards.sort((a, b) => a.id - b.id || b.entityId - a.entityId).forEach((c, ci) => c.cidx = ci);
+                p.handCards.sort((a, b) => a.id - b.id || b.entityId - a.entityId).forEach((c, ci) => c.cidx = ci);
+                if (this.isStart && p.hidx != -1) {
                     p.heros.forEach(h => {
                         if (!notUpdate) this._updateStatus(p.pidx, [], h.heroStatus, this.players, { hidx: h.hidx, isExec: true, isQuickAction, isAddAtkStsTask: true });
                         this._calcSkillChange(p.pidx, h.hidx);
@@ -756,6 +757,7 @@ export default class GeniusInvokationRoom {
                     selectSummon: summonIdx,
                     selectHero: heroIdxs[0],
                     isChargedAtk: odice.length % 2 == 0,
+                    usedDice: useDices.length,
                 });
                 if (invalidInfo.flag != '') {
                     player.dice = odice;
@@ -835,10 +837,11 @@ export default class GeniusInvokationRoom {
         setStsCnt: { hidx: number, stsid: number, type: string, val: number }[],
         setSmnCnt: { smnidx: number, type: string, val: number[] }[],
         setSptCnt: { sptidx: number, type: string, val: number }[],
+        setSlotCnt: { hidx: number, slotid: number, type: string, val: number }[],
         disCardCnt: number, smnIds: number[][], sptIds: number[], seed: string, flag: string
     }) {
         const { cpidx, cmds, dices, attachs = [], hps = [], disCardCnt = 0, clearSts = [], setStsCnt = [],
-            setSmnCnt = [], setSptCnt = [], smnIds = [], sptIds = [], seed = '', flag = '' } = actionData;
+            setSmnCnt = [], setSptCnt = [], setSlotCnt = [], smnIds = [], sptIds = [], seed = '', flag = '' } = actionData;
         if (flag.includes('seed')) {
             if (!this.isStart) this._setSeed(seed);
             return;
@@ -877,6 +880,13 @@ export default class GeniusInvokationRoom {
             if (type == 'p') sts.perCnt = val;
             else if (type == 'u') sts.useCnt = val;
             else if (type == 'r') sts.roundCnt = val;
+        }
+        for (const { hidx, slotid, type, val } of setSlotCnt) {
+            const hero = heros[hidx];
+            const slot = hero.equipments.find(s => s.id == slotid);
+            if (!slot) continue;
+            if (type == 'p') slot.perCnt = val;
+            else if (type == 'u') slot.useCnt = val;
         }
         if (dices) player.dice = dices;
         if (disCardCnt < 0) player.handCards.sort((a, b) => b.entityId - a.entityId).splice(disCardCnt, 10);
@@ -1125,7 +1135,7 @@ export default class GeniusInvokationRoom {
             else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
         }
         const ndices: DiceCostType[] = [];
-        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +player.heros.map(h => h.element).includes(d);
+        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +player.heros.filter(h => h.hp > 0).map(h => h.element).includes(d);
         const restDice = objToArr(tmpDice).filter(([, v]) => v > 0).sort((a, b) => {
             return effDice(b[0]) - effDice(a[0]) || b[1] - a[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0])
         });
@@ -1307,11 +1317,11 @@ export default class GeniusInvokationRoom {
         isPreview?: boolean, withCard?: Card, isSwitch?: number, isReadySkill?: boolean, otriggers?: Trigger | Trigger[],
         willDamages?: number[][][], dmgElements?: DamageType[], isSummon?: number, atkedIdxs?: number[], players?: Player[],
         selectSummon?: number, supportCnt?: number[][], pickSummon?: Summon[], isPickCard?: boolean, isQuickAction?: boolean,
-        tasks?: AtkTask[], willHeals?: number[][], selectHero?: number, isChargedAtk?: boolean,
+        tasks?: AtkTask[], willHeals?: number[][], selectHero?: number, isChargedAtk?: boolean, usedDice?: number,
     } = {}) {
         const { isPreview, withCard, isSwitch = -1, isReadySkill, otriggers = [], willDamages, dmgElements,
             willHeals, isSummon = -1, atkedIdxs, players: cplayers = this.players, selectSummon = -1,
-            supportCnt = INIT_SUPPORTCNT(), pickSummon, isPickCard, tasks: pretasks, selectHero = -1,
+            supportCnt = INIT_SUPPORTCNT(), pickSummon, isPickCard, tasks: pretasks, selectHero = -1, usedDice = 0,
         } = options;
         let isExec = !isPreview || !!isReadySkill;
         const epidx = pidx ^ 1;
@@ -1549,6 +1559,7 @@ export default class GeniusInvokationRoom {
                             isExec: false,
                             skid,
                             sktype: skill?.type,
+                            skill,
                             isAtkSelf: +!!res.isSelf,
                             supportCnt,
                             energyCnt,
@@ -1734,7 +1745,7 @@ export default class GeniusInvokationRoom {
             trigger: `skilltype${skill.type}`,
             talent: aHeros()[cahidx].talentSlot,
             selectHeros: [selectHero],
-        }) ?? {};
+        }) ?? { cmds: CmdsGenerator.ins };
         isQuickAction ||= !!skillres.isQuickAction;
         if (isExec && skillres.pickCard) {
             if (isPickCard) {
@@ -1812,7 +1823,6 @@ export default class GeniusInvokationRoom {
         }
         let ifa = false;
         const tasks0: AtkTask[] = [];
-        const usedDice = !skill ? 0 : Math.max(0, skill.cost[0].cnt - skill.costChange[0]) + Math.max(0, skill.cost[1].cnt - skill.costChange[1]);
         if (dmgEl && oWillDamages) {
             oWillDamages.forEach((wdmgs, wi) => {
                 const { willDamages: willDamage1, willAttachs: willAttachs1, dmgElements: dmgElements1,
@@ -1828,6 +1838,7 @@ export default class GeniusInvokationRoom {
                         isExec,
                         skid,
                         sktype: skill?.type,
+                        skill,
                         withCard,
                         isChargedAtk,
                         isFallAtk,
@@ -2190,7 +2201,7 @@ export default class GeniusInvokationRoom {
             dmgElements?: DamageType[], willSwitch?: boolean[][], elTips?: [string, PureElementType, PureElementType][], hcardsCnt?: number,
             willAttachs?: (PureElementType | undefined)[], multiDmg?: number, isAtkSelf?: number, withCard?: Card, isQuickAction?: boolean,
             minusDiceSkillIds?: number[], willheals?: number[][], minusDiceSkill?: number[][], supportCnt?: number[][], isSwitch?: number,
-            tasks?: AtkTask[], energyCnt?: number[][], atkHidx?: number,
+            tasks?: AtkTask[], energyCnt?: number[][], atkHidx?: number, skill?: Skill,
         } = {}) {
         const players = clone(oplayers);
         const epidx = pidx ^ 1;
@@ -2203,7 +2214,7 @@ export default class GeniusInvokationRoom {
             willAttachs = new Array<PureElementType | undefined>(isAtkSelf ? oahlen : oehlen).fill(undefined), isSwitch = -1,
             elTips = new Array(oahlen + oehlen).fill(0).map(() => ['', PURE_ELEMENT_TYPE.Cryo, PURE_ELEMENT_TYPE.Cryo]), minusDiceSkill = [],
             atriggers: atrg = new Array(oahlen).fill(0).map(() => []), etriggers: etrg = new Array(oehlen).fill(0).map(() => []),
-            discards = [], withCard, isChargedAtk, isFallAtk, supportCnt, energyCnt,
+            discards = [], withCard, isChargedAtk, isFallAtk, supportCnt, energyCnt, skill,
         } = options;
         let { multiDmg = 0, atkHidx } = options;
         let willDamages = damages;
@@ -2713,6 +2724,7 @@ export default class GeniusInvokationRoom {
             isExec,
             skid,
             sktype,
+            skill,
             getdmg: getdmg(),
             minusDiceSkillIds,
             minusDiceSkill,
@@ -2720,6 +2732,7 @@ export default class GeniusInvokationRoom {
             discards,
             supportCnt,
             energyCnt,
+            usedDice,
             isQuickAction: res.isQuickAction,
         });
         mergeWillHeals(res.bWillHeals, asptres.willHeals);
@@ -5062,14 +5075,14 @@ export default class GeniusInvokationRoom {
             switchHeroDiceCnt?: number, hcard?: Card, players?: Player[], firstPlayer?: number, minusDiceSkill?: number[][], sktype?: SkillType,
             isExec?: boolean, isQuickAction?: boolean, minusDiceCard?: number, csupport?: Support[], hidx?: number, skid?: number,
             minusDiceSkillIds?: number[], isExecTask?: boolean, getdmg?: number[], heal?: number[], discards?: Card[], supportCnt?: number[][],
-            energyCnt?: number[][], csummon?: Summon, isAfterSkill?: boolean, sourceStatus?: Status,
+            energyCnt?: number[][], csummon?: Summon, isAfterSkill?: boolean, sourceStatus?: Status, skill?: Skill, usedDice?: number,
         } = {}) {
         const states: Trigger[] = [];
         if (typeof ostates == 'string') states.push(ostates);
         else states.push(...ostates);
         const { hcard, players = this.players, isExec = true, firstPlayer = -1, hidx, skid = -1, sktype,
             isExecTask, csupport, getdmg, heal, discards, minusDiceSkillIds = [], minusDiceSkill = [],
-            supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon, isAfterSkill, sourceStatus } = options;
+            supportCnt = INIT_SUPPORTCNT(), energyCnt, csummon, isAfterSkill, sourceStatus, skill, usedDice = 0 } = options;
         let { switchHeroDiceCnt = 0, isQuickAction = false, minusDiceCard = 0 } = options;
         const cmdsAll = new CmdsGenerator();
         const task: [() => void | Promise<void | boolean>, number?, number?][] = [];
@@ -5094,6 +5107,8 @@ export default class GeniusInvokationRoom {
                     minusDiceCard,
                     skid,
                     sktype,
+                    skill,
+                    usedDice,
                     switchHeroDiceCnt,
                     isQuickAction,
                     isMinusDiceTalent: hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.cost + hcard.anydice > minusDiceCard,

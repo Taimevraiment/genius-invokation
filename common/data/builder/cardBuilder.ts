@@ -7,7 +7,7 @@ import {
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, hasObjById, versionWrap } from "../../utils/gameUtil.js";
-import { convertToArray, isCdt } from "../../utils/utils.js";
+import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
 import { BaseCostBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface CardHandleEvent extends EntityHandleEvent {
@@ -81,7 +81,7 @@ export class GICard {
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
     handle: (card: Card, event: InputHandle<CardHandleEvent>) => CardHandleRes; // 卡牌发动的效果函数
-    reset: () => void; // 重置每回合次数
+    reset: (card: Card) => void; // 重置每回合次数
     canSelectHero: number; // 能选择角色的数量
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
@@ -268,9 +268,9 @@ export class GICard {
         this.userType = userType;
         this.canSelectHero = canSelectHero;
         this.addition = adt;
-        this.reset = () => {
-            if (isResetPct) this.perCnt = pct;
-            if (isResetUct) this.useCnt = uct;
+        this.reset = card => {
+            if (isResetPct) card.perCnt = pct;
+            if (isResetUct) card.useCnt = uct;
         }
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
@@ -282,14 +282,14 @@ export class GICard {
             const cevent: CardBuilderHandleEvent = {
                 slotUse: false,
                 ...pevent,
-                ...oevent,
+                ...deleteUndefinedProperties(oevent),
                 cmds,
                 execmds,
                 cmdsBefore,
                 cmdsAfter,
             };
             if (cevent.reset) {
-                this.reset();
+                this.reset(card);
                 if (!spReset) return {}
             }
             const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};

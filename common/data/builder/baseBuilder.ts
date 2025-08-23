@@ -1,7 +1,7 @@
-import { Card, GameInfo, Hero, Player, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
-import { DamageType, DICE_TYPE, DiceCostType, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, SkillType, VERSION, Version } from "../../constant/enum.js";
+import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
+import { DamageType, DICE_TYPE, DiceCostType, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, SkillType, StatusType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { versionWrap } from "../../utils/gameUtil.js";
+import { getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
 export class VersionMap<T> {
     private _map: [VersionWrapper, T][] = [];
@@ -113,16 +113,137 @@ export class BaseCostBuilder extends BaseBuilder {
     }
 }
 
+export class ArrayHero extends Array<Hero> {
+    constructor(...args: any[]) {
+        super(...args);
+    }
+    get frontHidx() {
+        return this.findIndex(h => h.isFront);
+    }
+    // 获取所有存活/死亡角色的索引hidx
+    allHidxs(options: { isDie?: boolean, isAll?: boolean, exclude?: number, cdt?: (h: Hero) => boolean, limit?: number } = {}) {
+        const { isDie = false, isAll = false, cdt = () => true, limit = -1, exclude = -1 } = options;
+        if (this.frontHidx == -1 || limit == 0) return [];
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hi = (this.frontHidx + i) % this.length;
+            const h = this[hi];
+            if (isAll || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) {
+                hidxs.push(hi);
+                if (hidxs.length == limit) break;
+            }
+        }
+        return hidxs;
+    }
+    // 获得出战角色(或按出战顺序前/后的角色)
+    getFront(options: { offset?: number, isAll?: boolean } = {}) {
+        const { offset = 0, isAll } = options;
+        const aliveHidxs = this.allHidxs({ isAll });
+        const fidx = aliveHidxs.findIndex(i => i == this.frontHidx);
+        if (fidx == -1) return;
+        return this[aliveHidxs[(fidx + offset + aliveHidxs.length) % aliveHidxs.length]];
+    }
+    // 获得距离出战角色最近的hidx
+    getNearestHidx(hidx: number = -1) {
+        if (hidx == -1) return -1;
+        const livehidxs = this.allHidxs();
+        let minDistance = livehidxs.length;
+        let hidxs: number[] = [];
+        for (const hi of livehidxs) {
+            const distance = Math.min(Math.abs(hi - hidx), hi + this.length - hidx);
+            if (distance == 0) return hi;
+            if (distance == minDistance) hidxs.push(hi);
+            else if (distance < minDistance) {
+                minDistance = distance;
+                hidxs = [hi];
+            }
+        }
+        if (hidxs.length == 0) return -1;
+        return Math.min(...hidxs);
+    }
+    // 获取受伤最多的角色的hidxs(最多一个number的数组)
+    getMaxHertHidxs(options: { isBack?: boolean } = {}) {
+        const { isBack = false } = options;
+        if (this.frontHidx == -1) return [];
+        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.maxHp - h.hp));
+        if (maxHert == 0) return [];
+        const hidxs: number[] = [];
+        for (let i = +isBack; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            const hert = this[hidx].maxHp - this[hidx].hp;
+            if (this[hidx].hp > 0 && hert == maxHert) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
+    // 获取受伤最少的角色的hidx(最多一个number的数组)
+    getMinHertHidxs() {
+        if (this.frontHidx == -1) return [];
+        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.maxHp - h.hp));
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            const hert = this[hidx].maxHp - this[hidx].hp;
+            if (this[hidx].hp > 0 && hert == minHert) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
+    // 获取生命值最低角色的hidx(只有一个number的数组)
+    getMinHpHidxs() {
+        if (this.frontHidx == -1) return [];
+        const minHp = Math.min(...this.filter(h => h.hp > 0).map(h => h.hp));
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            if (this[hidx].hp == minHp) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
+    // 获得所有后台角色hidx
+    getBackHidxs(limit?: number) {
+        return this.allHidxs({ exclude: this.frontHidx, limit });
+    }
+    // 获得下一个后台角色hidx(只有一个number的数组)
+    getNextBackHidx() {
+        return this.getBackHidxs(1);
+    }
+}
+
+export class ArrayStatus extends Array<Status> {
+    constructor(...args: any[]) {
+        super(...args);
+    }
+    filter(predicate: (value: Status, index: number, array: Status[]) => unknown, thisArg?: any): ArrayStatus {
+        return super.filter(predicate, thisArg) as ArrayStatus;
+    }
+    get(id: number | StatusType) {
+        if (typeof id == 'number') return getObjById(this, id);
+        return this.find(s => s.hasType(id));
+    }
+    has(id: number | StatusType) {
+        if (typeof id == 'number') return hasObjById(this, id);
+        return this.some(s => s.hasType(id));
+    }
+}
+
 export interface EntityHandleEvent {
     pidx: number,
     hero: Hero,
-    heros: Hero[],
+    heros: ArrayHero,
     hidx: number,
-    combatStatus: Status[],
+    combatStatus: ArrayStatus,
     pile: Card[],
-    eheros: Hero[],
+    eheros: ArrayHero,
     ehidx: number,
-    eCombatStatus: Status[],
+    eCombatStatus: ArrayStatus,
     epile: Card[],
     reset: boolean,
     hcard: Card | null,
@@ -178,6 +299,7 @@ export interface EntityHandleEvent {
     randomInArr: <T>(arr: T[], cnt?: number) => T[],
     randomInt: (max?: number) => number,
     getCardIds: (filter?: (card: Card) => boolean) => number[],
+    skill?: Skill,
     sourceStatus?: Status,
     dmgElement?: DamageType,
     csummon?: Summon,

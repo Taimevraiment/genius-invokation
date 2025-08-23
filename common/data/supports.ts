@@ -93,15 +93,23 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 鸣神大社
-    321008: () => new SupportBuilder().round(4).round(3, 'v6.0.0').handle((_, event, ver) => {
-        const { dices = [], isExecTask } = event;
-        if (ver.gte('v6.0.0') && dices.length % 2 == 0 && !isExecTask) return;
-        return {
-            triggers: ver.lt('v6.0.0') ? ['phase-start', 'enter'] : 'after-skill',
-            supportCnt: -1,
-            exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.Random }), { isDestroy: --spt.cnt == 0 })
-        }
-    }),
+    321008: () => new SupportBuilder().permanent().round(3, 'v6.0.0').perCnt(2).perCnt(0, 'v6.0.0')
+        .handle((support, event, ver) => {
+            const { dices = [], isExecTask } = event;
+            if (ver.gte('v6.0.0') && (dices.length % 2 == 0 || support.perCnt <= 0) && !isExecTask) return;
+            return {
+                triggers: ver.lt('v6.0.0') ? ['phase-start', 'enter'] : 'after-skill',
+                supportCnt: -1,
+                exec: (spt, cmds) => {
+                    if (ver.lt('v6.0.0')) cmds.getDice(1, { mode: CMD_MODE.Random });
+                    else {
+                        --spt.perCnt;
+                        cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
+                    }
+                    return { isDestroy: --spt.cnt == 0 }
+                }
+            }
+        }),
     // 珊瑚宫
     321009: () => new SupportBuilder().round(2).handle((_, event) => {
         const { heros = [] } = event;
@@ -151,25 +159,22 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 镇守之森
-    321012: () => new SupportBuilder().round(3).perCnt(1).perCnt(0, 'v6.0.0').handle((support, event, ver) => {
-        const { isFirst = true, dices = [], isMinusDiceSkill } = event;
+    321012: () => new SupportBuilder().collection(4).collection(3, 'v6.0.0').handle((_, event, ver) => {
+        const { isFirst = true, dices = [], isMinusDiceSkill, usedDice = 0 } = event;
         if (ver.lt('v6.0.0')) {
-            if (isFirst) return;
             return {
-                triggers: 'phase-start',
+                triggers: isCdt(!isFirst, 'phase-start'),
                 exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: --spt.cnt == 0 })
             }
         }
-        if (dices.length % 2 == 1 || support.perCnt <= 0) return;
+        if ((dices.length + usedDice) % 2 == 1) return;
         return {
             triggers: 'skilltype1',
-            minusDiceSkill: { skilltype1: [0, 0, 1] },
+            minusDiceSkill: { skilltype1: [0, 1, 0] },
+            supportCnt: isCdt(isMinusDiceSkill, -1),
             isNotAddTask: true,
             exec: spt => {
-                if (isMinusDiceSkill) {
-                    --spt.perCnt;
-                    --spt.cnt;
-                }
+                if (isMinusDiceSkill) --spt.cnt;
                 return { isDestroy: spt.cnt == 0 }
             }
         }

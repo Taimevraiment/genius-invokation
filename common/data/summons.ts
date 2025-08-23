@@ -242,7 +242,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description(`{defaultAtk。}${isTalent ? '；【hro】「普通攻击」后：造成2点[雷元素伤害]。（需消耗[可用次数]）' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/ea0ab20ac46c334e1afd6483b28bb901_2978591195898491598.png')
         .handle((summon, event) => {
-            const { heros = [], trigger } = event;
+            const { heros, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             const cnt = isCdt(trigger != 'phase-end', 2);
             if (getObjById(heros, getHidById(summon.id))?.isFront && summon.isTalent) {
@@ -610,7 +610,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【〖hro〗进行「普通攻击」时：】少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1093502271962485608.png')
         .handle((summon, event) => {
-            const { heros = [], isMinusDiceSkill, trigger } = event;
+            const { heros, isMinusDiceSkill, trigger } = event;
             const hero = getObjById(heros, getHidById(summon.id));
             const triggers: Trigger[] = ['phase-end'];
             if (summon.perCnt > 0 && hero?.isFront) triggers.push('skilltype1');
@@ -749,17 +749,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     122011: () => new SummonBuilder('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png')
-        .handle((_, event) => ({
-            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
-            triggers: 'phase-end',
-        })),
+        .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),
 
     122012: () => new SummonBuilder('纯水幻形·飞鸢').useCnt(3).damage(1).description('{defaultAtk。}')
         .src('#')
-        .handle((_, event) => ({
-            willSummon: isCdt([22012, 22013].includes(event.skid ?? -1), 122011),
-            triggers: 'phase-end',
-        })),
+        .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),
 
     122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
@@ -786,7 +780,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description(`{defaultAtk${isTalent ? '\\；如果本回合中【hro】使用过「普通攻击」或「元素战技」，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
         .handle((summon, event) => {
-            const { heros = [], trigger } = event;
+            const { heros, trigger } = event;
             const hidx = getObjIdxById(heros, getHidById(summon.id));
             return {
                 triggers: ['phase-end', 'phase-start'],
@@ -849,7 +843,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk；【敌方累积打出3张行动牌后：】此牌[可用次数]+1。（最多叠加到3）；【〖hro〗受到元素反应伤害后：】此牌[可用次数]-1。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/b49d5bd6e23362e65f2819b62c1752f6_652290106975576928.png')
         .handle((summon, event) => {
-            const { trigger, heros = [], talent, dmgedHidx = -1, getdmg = [] } = event;
+            const { trigger, heros, talent, dmgedHidx = -1, getdmg = [] } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hero = getObjById(heros, getHidById(summon.id));
             if ((talent?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
