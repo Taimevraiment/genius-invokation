@@ -22,6 +22,9 @@ export default class CmdsGenerator {
     get isEmpty() {
         return this.value.length == 0;
     }
+    get notEmpty() {
+        return this.value.length > 0;
+    }
     get unshift() {
         this._addType = 'unshift';
         return this;
@@ -32,6 +35,12 @@ export default class CmdsGenerator {
     }
     get isSwitch() {
         return this.value.some(({ cmd }) => cmd.includes('switch'));
+    }
+    get hasDamage() {
+        return this.hasCmds('heal', 'addMaxHp') || this.getCmdCnt('attack') != undefined;
+    }
+    get isPriority() {
+        return this.value.some(({ cmd, mode }) => cmd.includes('attack') && mode == 1);
     }
     get res() {
         this._addType = 'push';
@@ -74,19 +83,16 @@ export default class CmdsGenerator {
         return this;
     }
     getEnergy(cnt: number, options: { hidxs?: number | number[], isOppo?: boolean, isSp?: boolean } = {}) {
+        if (cnt == 0) return this;
         let { hidxs, isOppo, isSp: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
         this._add({ cmd: 'getEnergy', cnt, hidxs, isOppo, isAttach });
         return this;
     }
-    heal(cnt?: number, options: { hidxs?: number | number[], order?: number, notPreHeal?: boolean } = {}) {
-        let { hidxs, order: mode, notPreHeal: isAttach } = options;
+    heal(cnt?: number, options: { hidxs?: number | number[], order?: boolean, notPreHeal?: boolean } = {}) {
+        let { hidxs, order, notPreHeal: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'heal', cnt, hidxs, mode, isAttach });
-        return this;
-    }
-    smnHeal(options?: { hidxs?: number | number[], order?: number, notPreHeal?: boolean }) {
-        this.heal(undefined, options);
+        this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(order, CMD_MODE.ByOrder), isAttach });
         return this;
     }
     revive(cnt: number, hidxs?: number | number[]) {
@@ -94,9 +100,9 @@ export default class CmdsGenerator {
         this._add({ cmd: 'revive', cnt, hidxs });
         return this;
     }
-    addMaxHp(cnt: number, hidxs?: number | number[], order?: number) {
+    addMaxHp(cnt: number, hidxs?: number | number[], order?: boolean) {
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: order });
+        this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(order, CMD_MODE.ByOrder) });
         return this;
     }
     getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
@@ -105,8 +111,14 @@ export default class CmdsGenerator {
         if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo });
         return this;
     }
-    getSummon(summon: number | (number | Summon | [number, ...any[]])[] | undefined, isOppo?: boolean) {
-        if (summon != undefined) this._add({ cmd: 'getSummon', summon, isOppo });
+    getSummon(summon: number | (number | Summon | [number, ...any[]])[] | undefined, options: { isOppo?: boolean, destroy?: number } = {}) {
+        const { isOppo, destroy } = options;
+        if (summon != undefined) this._add({ cmd: 'getSummon', summon, isOppo, mode: destroy });
+        return this;
+    }
+    getSupport(support: number | (number | [number, ...any[]])[] | undefined, options: { isOppo?: boolean } = {}) {
+        const { isOppo } = options;
+        if (support != undefined) this._add({ cmd: 'getSupport', summon: support, isOppo });
         return this;
     }
     reroll(cnt: number) {
@@ -137,10 +149,6 @@ export default class CmdsGenerator {
         this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode: +!!isPriority });
         return this;
     }
-    smnAttack(options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
-        this.attack(undefined, undefined, options);
-        return this;
-    }
     changeDice(options: { cnt?: number, element?: DiceCostType, isFront?: boolean } = {}) {
         const { cnt, element, isFront } = options;
         this._add({ cmd: 'changeDice', cnt, element, mode: isCdt(isFront, CMD_MODE.FrontHero) });
@@ -160,21 +168,21 @@ export default class CmdsGenerator {
     }
     useSkill(options: {
         skillId?: number, skillType?: SkillType, isOppo?: boolean,
-        isReadySkill?: boolean, selectSummon?: number, summonTrigger?: Trigger | Trigger[],
+        selectSummon?: number, summonTrigger?: Trigger | Trigger[],
     }) {
-        const { skillId, skillType, isOppo, isReadySkill: isAttach, selectSummon = -1, summonTrigger } = options;
+        const { skillId, skillType, isOppo, selectSummon = -1, summonTrigger } = options;
         this._add({
             cmd: 'useSkill',
             cnt: skillType ?? skillId ?? -1,
-            isAttach,
-            summonTrigger,
+            trigger: summonTrigger,
             hidxs: isCdt(selectSummon > -1, [selectSummon]),
             isOppo,
         });
         return this;
     }
-    summonTrigger(selectSummon: number, isOppo?: boolean) {
-        this.useSkill({ skillId: -2, selectSummon, summonTrigger: 'phase-end', isOppo });
+    summonTrigger(selectSummon: number, options: { trigger?: Trigger | Trigger[], isOppo?: boolean } = {}) {
+        const { trigger = 'phase-end', isOppo } = options;
+        this._add({ cmd: 'summonTrigger', cnt: selectSummon, trigger, isOppo })
         return this;
     }
     getSkill(hidx: number, skillId: number, skidx: number) {
@@ -213,8 +221,9 @@ export default class CmdsGenerator {
         this._add({ cmd: 'stealCard', cnt, mode });
         return this;
     }
-    putCard(card: Card | (Card | number)[] | number, scope: number) {
-        this._add({ cmd: 'putCard', card, hidxs: [scope] });
+    putCard(options: { card?: Card | (Card | number)[] | number, cnt?: number, mode?: number } = {}) {
+        const { card, cnt = 0, mode } = options;
+        this._add({ cmd: 'putCard', card, cnt, mode });
         return this;
     }
     pickCard(cnt: number, mode: number, options: {
@@ -227,7 +236,7 @@ export default class CmdsGenerator {
     }
     equip(hidxs: number | number[], card?: Card | number, isOppo?: boolean) {
         hidxs = convertToArray(hidxs);
-        this._add({ cmd: 'equip', hidxs, card, isOppo });
+        if (card != undefined) this._add({ cmd: 'equip', hidxs, card, isOppo });
         return this;
     }
     exchangePos(hidx1: number, hidx2: number) {
@@ -247,16 +256,16 @@ export default class CmdsGenerator {
         this._add({ cmd: 'getNightSoul', hidxs: hidx != undefined ? [hidx] : undefined, cnt });
         return this;
     }
-    consumeDice(diceSelect: boolean[] | number) {
-        this._add({ cmd: 'consumeDice', hidxs: typeof diceSelect == 'number' ? [-diceSelect] : diceSelect.map(Number) });
+    consumeDice(diceSelect?: boolean[] | number) {
+        this._add({ cmd: 'consumeDice', hidxs: typeof diceSelect == 'number' ? [-diceSelect] : diceSelect?.map(Number) });
         return this;
     }
     convertCard(eid: number, cid: number) {
         this._add({ cmd: 'convertCard', hidxs: [eid, cid] });
         return this;
     }
-    addCmds(cmds?: Cmds[] | CmdsGenerator) {
-        if (cmds != undefined) this._add(...(Array.isArray(cmds) ? cmds : cmds.value));
+    addCmds(cmds?: Cmds | Cmds[] | CmdsGenerator) {
+        if (cmds != undefined) this._add(...(Array.isArray(cmds) ? cmds : cmds instanceof CmdsGenerator ? cmds.value : [cmds]));
         return this;
     }
     hasCmds(...cmds: Cmd[]) {

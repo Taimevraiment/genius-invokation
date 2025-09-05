@@ -1,5 +1,5 @@
 import { delay, isCdt } from "../../common/utils/utils.js";
-import { Env, LogType, StatusTask, TaskItem } from "../../typing";
+import { Env, LogType, TaskItem } from "../../typing";
 
 const findLastIndex = <T>(arr: T[], predicate: (value: T, index: number, obj: T[]) => boolean) => {
     for (let i = arr.length - 1; i >= 0; i--) {
@@ -15,6 +15,7 @@ export default class TaskQueue {
     immediateQueue: TaskItem[] = [];
     isExecuting: boolean = false;
     isDieWaiting: boolean = false;
+    canPreview: boolean = true;
     _writeLog: (log: string, type?: LogType) => void;
     env: Env;
     constructor(_writeLog: (log: string, type?: LogType) => void, env: Env) {
@@ -32,18 +33,20 @@ export default class TaskQueue {
         this.immediateQueue = [];
         this.isExecuting = false;
         this.isDieWaiting = false;
+        this.canPreview = true;
     }
-    addTask(taskType: string, args: any[] | (() => Promise<void>) | (() => void) | StatusTask, options: {
+    addTask(taskType: string, args: any[] | (() => Promise<void>) | (() => void), options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
         orderAfter?: string, isFinal?: boolean, isImmediate?: boolean, delayAfter?: number, delayBefore?: number,
     } = {}) {
+        if (!this.canPreview) return;
         const { isUnshift, isDmg = false, addAfterNonDmg, isPriority, isFinal, source = -1, orderAfter = '', isImmediate,
             delayAfter, delayBefore } = options;
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
         const curQueue = isCdt(isImmediate, this.immediateQueue, isCdt(isFinal, this.finalQueue, isCdt(this.isExecuting || isPriority, this.priorityQueue))) ?? this.queue;
-        if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
-            console.trace('重复task:', taskType);
-        }
+        // if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
+        //     console.info('重复task:', taskType);
+        // }
         const queueTask: TaskItem = [taskType, typeof args != 'function' ? args : [[args, delayAfter, delayBefore]], source, isDmg];
         const tidx = addAfterNonDmg ? this.queue.findIndex(([, , , isdmg]) => isdmg) :
             orderAfter != '' ? findLastIndex(this.queue, ([taskType]) => taskType.includes(orderAfter)) : -1;
@@ -57,25 +60,24 @@ export default class TaskQueue {
         }
         this._writeLog((isUnshift ? 'unshift' : isImmediate ? 'immediate' : isFinal ? 'final' : isPriority ? 'priotity' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
     }
-    async execTask(taskType: string, funcs: [() => any | Promise<any>, number?, number?][]) {
+    async execTask(taskType: string, funcs: [() => any | Promise<any>, number?, number?][], isExec: boolean) {
+        if (!this.canPreview) return;
         this._writeLog('execTask-start-' + taskType, 'emit');
-        if (this.env == 'dev') console.time('execTask-end-' + taskType);
+        if (this.env == 'dev' && isExec) console.time('execTask-end-' + taskType);
         if (this.queue.length > 0) {
             if (!this.priorityQueue) this.priorityQueue = [];
             else this.queue.unshift(...this.priorityQueue.splice(0, this.priorityQueue.length + 1))
         }
-        let res = true;
         let duration = 0;
-        for (const [func, after = 0, before = 0] of funcs) {
-            if (this.env != 'test') await delay(before);
-            res = !!await func();
-            if (this.env != 'test' && !res) await delay(after);
-            duration += before + (res ? 0 : after);
+        for (const [func, after = -1, before = -1] of funcs) {
+            if (this.env != 'test' && isExec) await delay(before);
+            await func();
+            if (this.env != 'test' && isExec) await delay(after);
+            duration += Math.max(0, before) + Math.max(0, after);
         }
         this._writeLog(`execTask-end-${taskType}:${duration}ms`, 'emit');
         this.isExecuting = true;
-        if (this.env == 'dev') console.timeEnd('execTask-end-' + taskType);
-        return res;
+        if (this.env == 'dev' && isExec) console.timeEnd('execTask-end-' + taskType);
     }
     getTask(): [TaskItem, boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
@@ -111,12 +113,8 @@ export default class TaskQueue {
     isTaskEmpty() {
         return this.immediateQueue.length == 0 && (this.priorityQueue ?? []).length == 0 && this.queue.length == 0 && this.finalQueue.length == 0;
     }
-    addStatusAtk(ststask: StatusTask[], options: { isUnshift?: boolean, isPriority?: boolean } = {}) {
-        if (ststask.length == 0) return;
-        const { isUnshift, isPriority } = options;
-        for (const t of ststask) {
-            const atkname = `statusAtk-${t.name}(${t.entityId})-p${t.pidx}h${t.hidx}:${t.trigger}`;
-            this.addTask(atkname, t, { isUnshift, isPriority, isDmg: true, source: t.source });
-        }
+    stopPreview() {
+        this.canPreview = false;
+        this.init();
     }
 }

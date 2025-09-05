@@ -4,110 +4,6 @@ import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
 import { arrToObj, objToArr } from "./utils.js";
 
-// 获取所有存活/死亡角色的索引hidx
-export const allHidxs = (heros?: Hero[], options: {
-    isDie?: boolean, exclude?: number, include?: number, isAll?: boolean,
-    cdt?: (h: Hero) => boolean, limit?: number, frontIdx?: number,
-} = {}): number[] => {
-    const { isDie = false, exclude = -1, include = -1, isAll = false, cdt = () => true, limit = -1, frontIdx } = options;
-    const hidx = frontIdx ?? heros?.findIndex(h => h.isFront) ?? -1;
-    if (!heros || hidx == -1 || limit == 0) return [];
-    const hidxs: number[] = [];
-    for (let i = 0; i < heros.length; ++i) {
-        const hi = (hidx + i) % heros.length;
-        const h = heros[hi];
-        if (isAll || include == hi || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) {
-            hidxs.push(hi);
-            if (hidxs.length == limit) break;
-        }
-    }
-    return hidxs;
-}
-
-// 获取受伤最多的角色的hidxs(最多一个number的数组)
-export const getMaxHertHidxs = (heros: Hero[] = [], options: { fhidx?: number, isBack?: boolean } = {}): number[] => {
-    const { fhidx = heros.findIndex(h => h.isFront), isBack = false } = options;
-    if (fhidx == -1) return [];
-    const maxHert = Math.max(...heros.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.maxHp - h.hp));
-    if (maxHert == 0) return [];
-    const hidxs: number[] = [];
-    for (let i = +isBack; i < heros.length; ++i) {
-        const hidx = (i + fhidx) % heros.length;
-        const hert = heros[hidx].maxHp - heros[hidx].hp;
-        if (heros[hidx].hp > 0 && hert == maxHert) {
-            hidxs.push(hidx);
-            break;
-        }
-    }
-    return hidxs;
-}
-
-// 获取受伤最少的角色的hidx(最多一个number的数组)
-export const getMinHertHidxs = (heros: Hero[] = [], fhidx?: number): number[] => {
-    fhidx = fhidx ?? heros.findIndex(h => h.isFront);
-    if (fhidx == -1) return [];
-    const minHert = Math.min(...heros.filter(h => h.hp > 0).map(h => h.maxHp - h.hp));
-    const hidxs: number[] = [];
-    for (let i = 0; i < heros.length; ++i) {
-        const hidx = (i + fhidx) % heros.length;
-        const hert = heros[hidx].maxHp - heros[hidx].hp;
-        if (heros[hidx].hp > 0 && hert == minHert) {
-            hidxs.push(hidx);
-            break;
-        }
-    }
-    return hidxs;
-}
-
-// 获取生命值最低角色的hidx(只有一个number的数组)
-export const getMinHpHidxs = (heros: Hero[] = [], fhidx: number = heros.findIndex(h => h.isFront)): number[] => {
-    if (fhidx == -1) return [];
-    const minHp = Math.min(...heros.filter(h => h.hp > 0).map(h => h.hp));
-    const hidxs: number[] = [];
-    for (let i = 0; i < heros.length; ++i) {
-        const hidx = (i + fhidx) % heros.length;
-        if (heros[hidx].hp == minHp) {
-            hidxs.push(hidx);
-            break;
-        }
-    }
-    return hidxs;
-}
-
-// 获取出战角色hidx
-export const getFrontHidx = (heros?: Hero[]): number => {
-    return heros?.findIndex(h => h.isFront) ?? -1;
-}
-
-// 获得距离出战角色最近的hidx
-export const getNearestHidx = (hidx: number, heros: Hero[]): number => {
-    const livehidxs = allHidxs(heros);
-    let minDistance = livehidxs.length;
-    let hidxs: number[] = [];
-    for (const hi of livehidxs) {
-        const distance = Math.min(Math.abs(hi - hidx), hi + heros.length - hidx);
-        if (distance == 0) return hi;
-        if (distance < minDistance) {
-            minDistance = distance;
-            hidxs = [hi];
-        } else if (distance == minDistance) {
-            hidxs.push(hi);
-        }
-    }
-    if (hidxs.length == 0) return -1;
-    return Math.min(...hidxs);
-}
-
-// 获得所有后台角色hidx
-export const getBackHidxs = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1, limit?: number): number[] => {
-    return allHidxs(heros, { exclude: frontIdx, frontIdx, limit });
-}
-
-// 获得下一个后台角色hidx(只有一个number的数组)
-export const getNextBackHidx = (heros?: Hero[], frontIdx: number = heros?.findIndex(h => h.isFront) ?? -1): number[] => {
-    return getBackHidxs(heros, frontIdx, 1);
-}
-
 // 检查骰子是否合法
 export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?: Skill, heroSwitchDice?: number } = {}): boolean => {
     const { card, skill, heroSwitchDice = -1 } = options;
@@ -194,25 +90,6 @@ export const getSortedDices = (dices: DiceCostType[]) => {
     return objToArr(diceCnt)
         .sort((a, b) => b[1] * +(b[0] != DICE_COST_TYPE.Omni) - a[1] * +(a[0] != DICE_COST_TYPE.Omni) || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
         .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
-}
-
-// 合并预回血
-export const mergeWillHeals = (tarWillHeals: number[], resHeals?: number[] | number[][], players?: Player[]) => {
-    if (!resHeals) return;
-    if (typeof resHeals[0] != 'number') {
-        return (resHeals as number[][]).forEach(hl => mergeWillHeals(tarWillHeals, hl, players));
-    }
-    (resHeals as number[]).forEach((hl, hli) => {
-        if (hl > -1) {
-            if (tarWillHeals[hli] < 0) {
-                if (players) {
-                    tarWillHeals[hli] = -2;
-                    if (hl == 0) tarWillHeals[hli] = -3;
-                } else tarWillHeals[hli] = hl;
-            } else if (!players) tarWillHeals[hli] += hl;
-        }
-    });
-    players?.forEach(p => p.heros.forEach(h => h.hp = Math.min(h.maxHp, h.hp + Math.max(0, (resHeals as number[])[h.hidx + (p.pidx * players[0].heros.length)]))));
 }
 
 // 获取衍生物的父id(递归寻找追溯至card/hero)
@@ -441,7 +318,7 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
 export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>>(pidx: number, players: Player[], event: T) => {
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
-    const { hidx = player.hidx, isMinusDiceCard = false, hcard = null } = event;
+    const { hidx = player.hidx, isMinusDiceCard = false, hcard = null, skill } = event;
     const hero = player.heros[hidx];
     return {
         pidx,
@@ -475,17 +352,15 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         isQuickAction: false,
         hcard,
         isChargedAtk: false,
-        isFallAtk: player.isFallAtk,
+        isFallAtk: player.isFallAtk && skill?.type == SKILL_TYPE.Normal,
         round: 1,
         restDmg: -1,
-        skid: -1,
-        sktype: SKILL_TYPE.Vehicle,
         isSummon: -1,
         isExec: false,
         isMinusDiceCard,
-        isMinusDiceTalent: false,
         minusDiceCard: 0,
         isMinusDiceSkill: false,
+        isMinusDiceTalent: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Talent),
         isMinusDiceWeapon: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Weapon),
         isMinusDiceRelic: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Relic),
         isMinusDiceVehicle: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle),
@@ -494,14 +369,12 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         getdmg: player.heros.map(() => -1),
         dmg: player.heros.map(() => -1),
         hasDmg: false,
-        isExecTask: false,
         selectHeros: [],
         selectSummon: -1,
         selectSupport: -1,
         source: -1,
         sourceHidx: -1,
         dmgSource: -1,
-        discards: [],
         talent: hero.talentSlot,
         slotsDestroyCnt: player.heros.map(() => 0),
         isSelfRound: false,

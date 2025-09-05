@@ -1,8 +1,8 @@
 import { Card, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE_KEY, SUMMON_TAG, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
-import { allHidxs, getBackHidxs, getDerivantParentId, getMaxHertHidxs, getNextBackHidx, getObjById, getSortedDices, hasObjById } from '../utils/gameUtil.js';
-import { isCdt, objToArr } from '../utils/utils.js';
+import { getDerivantParentId, getObjById, getSortedDices, hasObjById } from '../utils/gameUtil.js';
+import { isCdt } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
@@ -15,27 +15,26 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const supportCnt = isCdt(trigger == 'after-dmg', getdmg.reduce((a, c) => a + Math.max(0, c), 0));
         return {
             triggers: ['after-dmg', 'phase-start'],
-            supportCnt,
-            exec: (spt, cmds) => {
-                if (trigger == 'after-dmg') spt.cnt += supportCnt ?? 0;
+            exec: cmds => {
+                if (trigger == 'after-dmg') support.cnt += supportCnt ?? 0;
                 else if (trigger == 'phase-start') {
-                    spt.cnt = 0;
+                    support.cnt = 0;
                     cmds.getStatus(300007);
                 }
             }
         }
     }),
     // 璃月港口
-    321001: () => new SupportBuilder().round(2).handle(() => ({
+    321001: () => new SupportBuilder().round(2).handle(support => ({
         triggers: 'phase-end',
-        exec: (spt, cmds) => (cmds.getCard(2), { isDestroy: --spt.cnt == 0 })
+        exec: cmds => (cmds.getCard(2), { isDestroy: --support.cnt == 0 })
     })),
     // 骑士团图书馆
     321002: () => new SupportBuilder().permanent().handle((_, event) => ({
         triggers: ['phase-dice', 'enter'],
         isNotAddTask: true,
         addRollCnt: 1,
-        exec: (_, cmds) => { event.trigger == 'enter' && cmds.reroll(1) }
+        exec: cmds => { event.trigger == 'enter' && cmds.reroll(1) }
     })),
     // 群玉阁
     321003: () => new SupportBuilder().permanent().handle((_, event, ver) => {
@@ -46,7 +45,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers,
             element: -2,
             cnt: 2,
-            exec: (_, cmds) => {
+            exec: cmds => {
                 if (trigger != 'phase-start') return;
                 cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
                 return { isDestroy: true }
@@ -61,26 +60,24 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'minus-switch',
             isNotAddTask: true,
             minusDiceHero: 1,
-            exec: spt => { --spt.perCnt }
+            exec: () => { --support.perCnt }
         }
     }),
     // 望舒客栈
-    321005: () => new SupportBuilder().round(2).heal(2).handle((_, event) => {
-        const { heros = [] } = event;
-        const hidxs = getMaxHertHidxs(heros, { isBack: true });
+    321005: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
+        const hidxs = event.heros.getMaxHertHidxs({ isBack: true });
         if (hidxs.length == 0) return;
         return {
             triggers: 'phase-end',
-            exec: (spt, cmds) => (cmds.heal(2, { hidxs }), { isDestroy: --spt.cnt == 0 })
+            exec: cmds => (cmds.heal(2, { hidxs }), { isDestroy: --support.cnt == 0 })
         }
     }),
     // 西风大教堂
-    321006: () => new SupportBuilder().round(2).heal(2).handle((_, event) => {
-        const { heros = [], hidx } = event;
-        if (hidx == -1 || heros[hidx].hp == heros[hidx].maxHp) return;
+    321006: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
+        if (!event.hero.isHert) return;
         return {
             triggers: 'phase-end',
-            exec: (spt, cmds) => (cmds.heal(2, { hidxs: hidx }), { isDestroy: --spt.cnt == 0 })
+            exec: cmds => (cmds.heal(2), { isDestroy: --support.cnt == 0 })
         }
     }),
     // 天守阁
@@ -89,34 +86,34 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (new Set(dices.filter(v => v != DICE_COST_TYPE.Omni)).size + dices.filter(v => v == DICE_COST_TYPE.Omni).length < 5) return;
         return {
             triggers: 'phase-start',
-            exec: (_, cmds) => cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).res,
+            exec: cmds => cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).res,
         }
     }),
     // 鸣神大社
-    321008: () => new SupportBuilder().permanent().round(3, 'v6.0.0').perCnt(2).perCnt(0, 'v6.0.0')
+    321008: () => new SupportBuilder().collection(2).round(3, 'v6.0.0')
         .handle((support, event, ver) => {
-            const { dices = [], isExecTask } = event;
-            if (ver.gte('v6.0.0') && (dices.length % 2 == 0 || support.perCnt <= 0) && !isExecTask) return;
+            const { dices, trigger } = event;
+            if (ver.gte('v6.0.0') && (dices.length % 2 == 0 || (trigger != 'phase-start' && support.cnt == 0))) return;
             return {
-                triggers: ver.lt('v6.0.0') ? ['phase-start', 'enter'] : 'after-skill',
-                supportCnt: -1,
-                exec: (spt, cmds) => {
+                triggers: ver.lt('v6.0.0') ? ['phase-start', 'enter'] : ['phase-start', 'after-skill'],
+                exec: cmds => {
                     if (ver.lt('v6.0.0')) cmds.getDice(1, { mode: CMD_MODE.Random });
-                    else {
-                        --spt.perCnt;
-                        cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
+                    else cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
+                    if (trigger == 'phase-start' && ver.gte('v6.0.0')) {
+                        support.cnt = 2;
+                        return;
                     }
-                    return { isDestroy: --spt.cnt == 0 }
+                    return { isDestroy: --support.cnt == 0 && ver.lt('v6.0.0') }
                 }
             }
         }),
     // 珊瑚宫
-    321009: () => new SupportBuilder().round(2).handle((_, event) => {
-        const { heros = [] } = event;
-        if (heros.every(h => h.hp <= 0 || h.hp == h.maxHp)) return;
+    321009: () => new SupportBuilder().round(2).handle((support, event) => {
+        const { heros } = event;
+        if (!heros.hasHert) return;
         return {
             triggers: 'phase-end',
-            exec: (spt, cmds) => (cmds.heal(1, { hidxs: allHidxs(heros) }), { isDestroy: --spt.cnt == 0 })
+            exec: cmds => (cmds.heal(1, { hidxs: heros.allHidxs() }), { isDestroy: --support.cnt == 0 })
         }
     }),
     // 须弥城
@@ -128,9 +125,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             minusDiceCard: isCdt(isMinusDiceTalent, 1),
             triggers: ['skill', 'card'],
             isNotAddTask: true,
-            exec: spt => {
+            exec: () => {
                 if (trigger == 'skill' && isMinusDiceSkill || trigger == 'card' && isMinusDiceTalent) {
-                    --spt.perCnt;
+                    --support.perCnt;
                 }
             }
         }
@@ -141,41 +138,39 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (trigger == 'phase-start' && support.perCnt == 0 || trigger == 'phase-end' && dices.length == 0) return;
         return {
             triggers: ['phase-end', 'phase-start'],
-            exec: (spt, cmds, execEvent) => {
-                if (!execEvent.isExecTask) return;
+            exec: cmds => {
                 if (trigger == 'phase-end') {
                     const pdices = getSortedDices(dices);
                     dices.length = 0;
                     dices.push(...pdices.slice(2));
-                    spt.perCnt = -pdices.slice(0, 2).map(v => DICE_WEIGHT.indexOf(v) + 1).join('');
-                    spt.cnt = pdices.slice(0, 2).length;
+                    support.perCnt = -pdices.slice(0, 2).map(v => DICE_WEIGHT.indexOf(v) + 1).join('');
+                    support.cnt = pdices.slice(0, 2).length;
                 } else if (trigger == 'phase-start') {
-                    const element = spt.perCnt.toString().slice(1).split('').map(v => DICE_WEIGHT[Number(v) - 1]);
-                    spt.cnt = 0;
-                    spt.perCnt = 0;
+                    const element = support.perCnt.toString().slice(1).split('').map(v => DICE_WEIGHT[Number(v) - 1]);
+                    support.cnt = 0;
+                    support.perCnt = 0;
                     if (element.length > 0) cmds.getDice(Math.min(2, element.length), { element });
                 }
             }
         }
     }),
     // 镇守之森
-    321012: () => new SupportBuilder().collection(4).collection(3, 'v6.0.0').handle((_, event, ver) => {
+    321012: () => new SupportBuilder().collection(4).collection(3, 'v6.0.0').handle((support, event, ver) => {
         const { isFirst = true, dices = [], isMinusDiceSkill, usedDice = 0 } = event;
         if (ver.lt('v6.0.0')) {
             return {
                 triggers: isCdt(!isFirst, 'phase-start'),
-                exec: (spt, cmds) => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: --spt.cnt == 0 })
+                exec: cmds => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: --support.cnt == 0 })
             }
         }
         if ((dices.length + usedDice) % 2 == 1) return;
         return {
             triggers: 'skilltype1',
             minusDiceSkill: { skilltype1: [0, 1, 0] },
-            supportCnt: isCdt(isMinusDiceSkill, -1),
             isNotAddTask: true,
-            exec: spt => {
-                if (isMinusDiceSkill) --spt.cnt;
-                return { isDestroy: spt.cnt == 0 }
+            exec: () => {
+                if (isMinusDiceSkill) --support.cnt;
+                return { isDestroy: support.cnt == 0 }
             }
         }
     }),
@@ -187,9 +182,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 triggers: 'card',
                 isNotAddTask: true,
                 minusDiceCard: 1,
-                exec: spt => {
-                    --spt.perCnt;
-                    return { isDestroy: --spt.cnt == 0 }
+                exec: () => {
+                    --support.perCnt;
+                    return { isDestroy: --support.cnt == 0 }
                 }
             }
         }
@@ -200,10 +195,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt == 0 || dices.length > 0) return;
         return {
             triggers: 'action-start',
-            exec: (spt, cmds) => {
-                --spt.perCnt;
+            exec: cmds => {
+                --support.perCnt;
                 cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
-                return { isDestroy: --spt.cnt == 0 }
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
@@ -214,7 +209,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             return {
                 triggers: 'enter',
                 isNotAddTask: true,
-                exec: (_, cmds) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true }).res,
+                exec: cmds => cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true }).res,
             }
         }
         const isCardMinus = isMinusDiceTalent && support.perCnt > 0;
@@ -228,21 +223,20 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             isNotAddTask: true,
             minusDiceCard: isCdt(isCardMinus, 1),
             minusDiceSkill: { skills },
-            supportCnt: isCdt(isMinus, -1),
-            exec: spt => {
+            exec: () => {
                 if (isMinus) {
-                    --spt.perCnt;
-                    --spt.cnt;
+                    --support.perCnt;
+                    --support.cnt;
                 }
-                return { isDestroy: spt.cnt == 0 }
+                return { isDestroy: support.cnt == 0 }
             }
         }
     }),
     // 湖中垂柳
-    321016: () => new SupportBuilder().round(2).handle((_, event) => {
+    321016: () => new SupportBuilder().round(2).handle((support, event) => {
         const { hcards = [] } = event;
         if (hcards.length > 2) return;
-        return { triggers: 'phase-end', exec: (spt, cmds) => (cmds.getCard(2), { isDestroy: --spt.cnt == 0 }) }
+        return { triggers: 'phase-end', exec: cmds => (cmds.getCard(2), { isDestroy: --support.cnt == 0 }) }
     }),
     // 欧庇克莱歌剧院
     321017: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
@@ -252,10 +246,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (slotCost >= eslotCost && support.perCnt > 0) {
             return {
                 triggers: 'action-start',
-                exec: (spt, cmds) => {
-                    --spt.perCnt;
+                exec: cmds => {
+                    --support.perCnt;
                     cmds.getDice(1, { mode: CMD_MODE.FrontHero });
-                    return { isDestroy: --spt.cnt == 0 }
+                    return { isDestroy: --support.cnt == 0 }
                 }
             }
         }
@@ -268,27 +262,25 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             if (getdmg[hidx] > 0) triggers.push('getdmg');
             if (heal[hidx] > 0) triggers.push('heal');
         } else triggers.push('phase-start');
-        const isAdd = triggers.some(tr => ['getdmg', 'heal'].includes(tr));
         return {
             triggers: triggers,
-            supportCnt: isCdt(isAdd, 1),
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'phase-start') {
-                    spt.cnt -= 4;
+                    support.cnt -= 4;
                     return cmds.getStatus(301018, { isOppo: true }).res;
                 }
-                spt.cnt = Math.min(4, spt.cnt + 1);
+                support.cnt = Math.min(4, support.cnt + 1);
             }
         }
     }),
     // 清籁岛
-    321019: () => new SupportBuilder().round(2).handle((_, event) => {
+    321019: () => new SupportBuilder().round(2).handle((support, event) => {
         const { heal = [], trigger } = event;
         const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl > 0).map(v => v.hli);
         return {
             triggers: ['heal', 'heal-oppo', 'phase-end'],
-            exec: (spt, cmds) => {
-                if (trigger == 'phase-end') return { isDestroy: --spt.cnt == 0 }
+            exec: cmds => {
+                if (trigger == 'phase-end') return { isDestroy: --support.cnt == 0 }
                 cmds.getStatus(301019, { hidxs, isOppo: trigger == 'heal-oppo' });
             }
         }
@@ -296,40 +288,37 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 赤王陵
     321020: () => new SupportBuilder().collection().handle(support => ({
         triggers: 'drawcard-oppo',
-        supportCnt: support.cnt < 4 ? 1 : -5,
-        exec: (spt, cmds) => {
-            if (++spt.cnt < 4) return;
+        exec: cmds => {
+            if (++support.cnt < 4) return;
             cmds.addCard(2, 301020, { scope: 2, isOppo: true }).getStatus(301022, { isOppo: true });
             return { isDestroy: true }
         },
     })),
     // 中央实验室遗址
     321021: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discards: { length: discardCnt } = [0], trigger } = event;
+        const { trigger } = event;
         return {
             triggers: ['discard', 'reconcile'],
-            supportCnt: support.cnt + discardCnt < 9 ? discardCnt : -10,
-            exec: (spt, cmds) => {
-                const ocnt = spt.cnt;
-                if (trigger == 'reconcile') ++spt.cnt;
-                else if (trigger == 'discard') spt.cnt += discardCnt;
-                const cnt = Math.floor(spt.cnt / 3) - Math.floor(ocnt / 3);
+            exec: cmds => {
+                const ocnt = support.cnt;
+                if (trigger == 'reconcile') ++support.cnt;
+                else if (trigger == 'discard') ++support.cnt;
+                const cnt = Math.floor(support.cnt / 3) - Math.floor(ocnt / 3);
                 if (cnt == 0) return;
                 cmds.getDice(cnt, { element: DICE_COST_TYPE.Omni });
-                return { isDestroy: spt.cnt >= 9 }
+                return { isDestroy: support.cnt >= 9 }
             },
         }
     }),
     // 圣火竞技场
     321022: () => new SupportBuilder().collection().handle(support => ({
         triggers: ['skill', 'vehicle'],
-        supportCnt: support.cnt < 5 ? 1 : -7,
-        exec: (spt, cmds) => {
-            ++spt.cnt;
-            if (spt.cnt == 2) cmds.getDice(1, { mode: CMD_MODE.Random });
-            else if (spt.cnt == 4) cmds.heal(2);
-            else if (spt.cnt == 6) cmds.getStatus(301023);
-            return { isDestroy: spt.cnt >= 6 }
+        exec: cmds => {
+            ++support.cnt;
+            if (support.cnt == 2) cmds.getDice(1, { mode: CMD_MODE.Random });
+            else if (support.cnt == 4) cmds.heal(2);
+            else if (support.cnt == 6) cmds.getStatus(301023);
+            return { isDestroy: support.cnt >= 6 }
         }
     })),
     // 特佩利舞台
@@ -343,13 +332,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.cnt > 0) triggers.push('phase-start');
         return {
             triggers: triggers,
-            supportCnt: trigger == 'card' ? 1 : trigger == 'ecard' ? -1 : 0,
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'phase-start') {
-                    if (spt.cnt >= 3) cmds.getDice(1, { mode: CMD_MODE.Random });
-                    if (spt.cnt >= 1) cmds.changeDice({ cnt: 1 });
-                } else if (['card', 'enter'].includes(trigger)) ++spt.cnt;
-                else if (trigger == 'ecard') --spt.cnt;
+                    if (support.cnt >= 3) cmds.getDice(1, { mode: CMD_MODE.Random });
+                    if (support.cnt >= 1) cmds.changeDice({ cnt: 1 });
+                } else if (['card', 'enter'].includes(trigger)) ++support.cnt;
+                else if (trigger == 'ecard') --support.cnt;
             }
         }
     }),
@@ -359,43 +347,40 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (!hcard || initCardIds.includes(hcard.id) || hcard.cost + hcard.anydice < support.cnt) return;
         return {
             triggers: 'card',
-            supportCnt: 1,
-            exec: (spt, cmds) => {
-                ++spt.cnt;
+            exec: cmds => {
+                ++support.cnt;
                 cmds.getDice(1, { mode: CMD_MODE.Random });
             }
         }
     }),
     // 「流泉之众」
-    321025: () => new SupportBuilder().round(3).handle(() => ({
+    321025: () => new SupportBuilder().round(3).handle((support, event) => ({
         triggers: 'summon-generate',
-        supportCnt: -1,
-        exec: (spt, _, execEvent) => {
-            execEvent.csummon?.addUseCnt(true);
-            return { isDestroy: --spt.cnt == 0 }
+        exec: () => {
+            event.sourceSummon?.addUseCnt(true);
+            return { isDestroy: --support.cnt == 0 }
         }
     })),
     // 「花羽会」
     321026: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discards: { length: discardCnt } = [0], heros } = event;
+        const { heros } = event;
         return {
             triggers: 'discard',
-            supportCnt: (support.cnt + discardCnt) % 2 - support.cnt,
-            exec: (spt, cmds) => {
-                const ncnt = spt.cnt + discardCnt;
-                spt.cnt = ncnt % 2;
+            exec: cmds => {
+                const ncnt = support.cnt + 1;
+                support.cnt = ncnt % 2;
                 if (ncnt < 2) return;
-                cmds.getStatus([[301024, Math.floor(ncnt / 2)]], { hidxs: getNextBackHidx(heros) });
+                cmds.getStatus([[301024, Math.floor(ncnt / 2)]], { hidxs: heros.getNextBackHidx() });
             }
         }
     }),
     // 「烟谜主」
     321027: () => new SupportBuilder().round(4).handle((support, event) => ({
         triggers: support.cnt > 0 ? 'pick' : 'phase-start',
-        exec: (spt, cmds) => {
+        exec: cmds => {
             const { trigger, getCardIds } = event;
             if (trigger == 'pick') {
-                --spt.cnt;
+                --support.cnt;
                 return;
             }
             cmds.pickCard(3, CMD_MODE.UseCard, { card: getCardIds?.(c => c.type == CARD_TYPE.Support && c.cost == 2) });
@@ -405,7 +390,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 「沃陆之邦」
     321028: () => new SupportBuilder().permanent().handle((_, event) => ({
         triggers: ['ready-skill', 'switch'],
-        exec: (_, cmds) => {
+        exec: cmds => {
             const { trigger, hidx, heros = [] } = event;
             const cnt = trigger == 'ready-skill' ? 3 : 2;
             cmds.getStatus([[301025, cnt]], { hidxs: hidx });
@@ -414,40 +399,40 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 墨色酒馆
-    321029: () => new SupportBuilder().collection(3).handle((_, event) => {
+    321029: () => new SupportBuilder().collection(3).handle((support, event) => {
         const { trigger, summons = [], randomInArr } = event;
-        if (trigger == 'enter') return { triggers: 'enter', exec: (_, cmds) => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
+        if (trigger == 'enter') return { triggers: 'enter', exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
         if (trigger != 'end-phase') return;
         const selectSummons = summons.filter(s => s.hasTag(SUMMON_TAG.Simulanka)) ?? [];
         if (selectSummons.length == 0) return;
         return {
             triggers: 'end-phase',
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 cmds.summonTrigger(summons.findIndex(s => s.entityId == randomInArr(selectSummons)[0].entityId));
-                return { isDestroy: --spt.cnt == 0 }
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
     // 星轨王城
-    321030: () => new SupportBuilder().permanent().handle((_, event) => {
+    321030: () => new SupportBuilder().permanent().handle((support, event) => {
         const { trigger, combatStatus } = event;
         const triggers: Trigger[] = ['enter', 'phase-end'];
         if (!hasObjById(combatStatus, 301032)) triggers.push('skilltype2');
         if (!hasObjById(combatStatus, 301037)) triggers.push('skilltype3');
         return {
             triggers,
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'enter') return cmds.getCard(1, { card: 301033 }).res;
-                if (trigger == 'phase-end') spt.cnt = 0;
+                if (trigger == 'phase-end') support.cnt = 0;
                 else if (trigger == 'skilltype2') cmds.getStatus(301032);
                 else if (trigger == 'skilltype3') cmds.getStatus(301037);
             }
         }
     }),
     // 派蒙
-    322001: () => new SupportBuilder().round(2).handle(() => ({
+    322001: () => new SupportBuilder().round(2).handle(support => ({
         triggers: 'phase-start',
-        exec: (spt, cmds) => (cmds.getDice(2, { element: DICE_COST_TYPE.Omni }), { isDestroy: --spt.cnt == 0 })
+        exec: cmds => (cmds.getDice(2, { element: DICE_COST_TYPE.Omni }), { isDestroy: --support.cnt == 0 })
     })),
     // 凯瑟琳
     322002: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
@@ -456,7 +441,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'minus-switch',
             isNotAddTask: true,
             isQuickAction: true,
-            exec: spt => { --spt.perCnt }
+            exec: () => { --support.perCnt }
         }
     }),
     // 蒂玛乌斯
@@ -471,14 +456,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
             isLast: true,
             minusDiceCard: isMinus ? hcard.cost - mdc : 0,
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'enter') return cmds.getCard(1, { subtype: CARD_SUBTYPE.Relic, isFromPile: true }).res;
-                if (trigger == 'phase-end') ++spt.cnt;
+                if (trigger == 'phase-end') ++support.cnt;
                 else if (trigger == 'card' && isMinus) {
-                    spt.cnt -= hcard.cost - mdc;
-                    --spt.perCnt;
-                    if (ver.isOffline && spt.card.useCnt > 0) {
-                        spt.card.minusUseCnt();
+                    support.cnt -= hcard.cost - mdc;
+                    --support.perCnt;
+                    if (ver.isOffline && support.card.useCnt > 0) {
+                        support.card.minusUseCnt();
                         cmds.getCard(1);
                     }
                 }
@@ -497,14 +482,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             isNotAddTask: trigger == 'card' && support.card.useCnt <= 0,
             isLast: true,
             minusDiceCard: isMinus ? hcard.cost - mdc : 0,
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'enter') return cmds.getCard(1, { subtype: CARD_SUBTYPE.Weapon, isFromPile: true }).res;
-                if (trigger == 'phase-end') ++spt.cnt;
+                if (trigger == 'phase-end') ++support.cnt;
                 else if (trigger == 'card' && isMinus) {
-                    spt.cnt -= hcard.cost - mdc;
-                    --spt.perCnt;
-                    if (ver.isOffline && spt.card.useCnt > 0) {
-                        spt.card.minusUseCnt();
+                    support.cnt -= hcard.cost - mdc;
+                    --support.perCnt;
+                    if (ver.isOffline && support.card.useCnt > 0) {
+                        support.card.minusUseCnt();
                         cmds.getCard(1);
                     }
                 }
@@ -520,13 +505,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (!isGetDice && !isGetCard) return;
         return {
             triggers: 'card',
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (isGetDice) {
-                    --spt.perCnt;
+                    --support.perCnt;
                     cmds.getDice(1, { mode: CMD_MODE.Random });
                 }
                 if ((ver.gte('v4.1.0') || ver.isOffline) && isGetCard) {
-                    --spt.cnt;
+                    --support.cnt;
                     cmds.getCard(1, { subtype: CARD_SUBTYPE.Food, isFromPile: true });
                 }
             }
@@ -540,14 +525,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             isNotAddTask: true,
             minusDiceCard: 2,
-            exec: spt => { --spt.perCnt }
+            exec: () => { --support.perCnt }
         }
     }),
     // 提米
-    322007: () => new SupportBuilder().collection().handle(() => ({
+    322007: () => new SupportBuilder().collection().handle(support => ({
         triggers: ['phase-start', 'enter'],
-        exec: (spt, cmds) => {
-            if (++spt.cnt < 3) return;
+        exec: cmds => {
+            if (++support.cnt < 3) return;
             cmds.getCard(1).getDice(1, { element: DICE_COST_TYPE.Omni });
             return { isDestroy: true }
         }
@@ -559,17 +544,17 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.cnt >= 3) triggers.push('phase-start');
         return {
             triggers,
-            exec: (spt, cmds, execEvent) => {
-                if (trigger == 'phase-end' && (execEvent.isExecTask ?? true)) {
+            exec: cmds => {
+                if (trigger == 'phase-end') {
                     const pdices = getSortedDices(dices);
                     dices.length = 0;
                     while (pdices.length > 0) {
-                        if (spt.cnt >= 3) {
+                        if (support.cnt >= 3) {
                             dices.push(...pdices);
                             break;
                         }
                         const pdice = pdices.shift()!;
-                        ++spt.cnt;
+                        ++support.cnt;
                         while (pdices[0] == pdice && pdice != DICE_COST_TYPE.Omni) {
                             dices.push(pdices.shift()!);
                         }
@@ -590,9 +575,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         ],
         isAfterSkill: true,
         isOrTrigger: true,
-        supportCnt: support.cnt < 2 ? 1 : -3,
-        exec: (spt, cmds) => {
-            if (++spt.cnt < 3) return;
+        exec: cmds => {
+            if (++support.cnt < 3) return;
             cmds.getCard(2);
             return { isDestroy: true }
         }
@@ -606,16 +590,16 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'skill',
             isNotAddTask: true,
             minusDiceSkill: { skills },
-            exec: spt => { isMinusDiceSkill && --spt.perCnt }
+            exec: () => { isMinusDiceSkill && --support.perCnt }
         }
     }),
     // 田铁嘴
-    322011: () => new SupportBuilder().round(2).handle((_, event) => {
-        const hidxs = allHidxs(event.heros, { cdt: h => h.energy != h.maxEnergy, limit: 1 });
+    322011: () => new SupportBuilder().round(2).handle((support, event) => {
+        const hidxs = event.heros.allHidxs({ cdt: h => !h.isFullEnergy, limit: 1 });
         if (hidxs.length == 0) return;
         return {
             triggers: 'phase-end',
-            exec: (spt, cmds) => (cmds.getEnergy(1, { hidxs }), { isDestroy: --spt.cnt == 0 })
+            exec: cmds => (cmds.getEnergy(1, { hidxs }), { isDestroy: --support.cnt == 0 })
         }
     }),
     // 刘苏
@@ -624,11 +608,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) != 0) return;
         return {
             triggers: 'switch',
-            supportCnt: -1,
-            exec: (spt, cmds) => {
-                --spt.perCnt;
+            exec: cmds => {
+                --support.perCnt;
                 cmds.getEnergy(1);
-                return { isDestroy: --spt.cnt == 0 }
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
@@ -640,10 +623,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: ['summon-destroy', 'card'],
             minusDiceCard: isCdt(isMinus, 2),
             isNotAddTask: trigger == 'card',
-            supportCnt: isCdt(trigger == 'summon-destroy', 1),
-            exec: spt => {
+            exec: () => {
                 if (trigger == 'card' && isMinus) return { isDestroy: true }
-                if (trigger == 'summon-destroy' && spt.cnt < 3) ++spt.cnt;
+                if (trigger == 'summon-destroy' && support.cnt < 3) ++support.cnt;
             }
         }
     }),
@@ -651,7 +633,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322014: () => new SupportBuilder().permanent().handle(() => ({
         triggers: 'phase-start',
         isExchange: true,
-        exec: (_, cmds) => cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).res,
+        exec: cmds => cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).res,
     })),
     // 旭东
     322015: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
@@ -661,7 +643,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             isNotAddTask: true,
             minusDiceCard: 2,
-            exec: spt => { --spt.perCnt }
+            exec: () => { --support.perCnt }
         }
     }),
     // 迪娜泽黛
@@ -674,10 +656,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             isNotAddTask: !isGetCard,
             minusDiceCard: isCdt(isMinus, 1),
-            exec: (spt, cmds) => {
-                if (isMinus) --spt.perCnt;
+            exec: cmds => {
+                if (isMinus) --support.perCnt;
                 if (isGetCard) {
-                    --spt.cnt;
+                    --support.cnt;
                     cmds.getCard(1, { subtype: CARD_SUBTYPE.Ally, isFromPile: true });
                 }
             }
@@ -685,11 +667,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 拉娜
     322017: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        if (support.perCnt <= 0 || getBackHidxs(event.heros).length == 0) return;
+        if (support.perCnt <= 0 || event.heros.getBackHidxs().length == 0) return;
         return {
             triggers: 'skilltype2',
-            exec: (spt, cmds) => {
-                --spt.perCnt;
+            exec: cmds => {
+                --support.perCnt;
                 cmds.getDice(1, { mode: CMD_MODE.FrontHero, frontOffset: 1 });
             }
         }
@@ -703,15 +685,15 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             isNotAddTask: true,
             minusDiceCard: 1 + heros.filter(h => h.weaponSlot != null).length,
-            exec: spt => { --spt.perCnt }
+            exec: () => { --support.perCnt }
         }
     }),
     // 塞塔蕾
-    322019: () => new SupportBuilder().collection(3).handle((_, event) => {
+    322019: () => new SupportBuilder().collection(3).handle((support, event) => {
         if ((event.hcards?.length ?? 1) > 0) return;
         return {
             triggers: ['action-after', 'action-after-oppo'],
-            exec: (spt, cmds) => (cmds.getCard(1), { isDestroy: --spt.cnt == 0 })
+            exec: cmds => (cmds.getCard(1), { isDestroy: --support.cnt == 0 })
         }
     }),
     // 弥生七月
@@ -725,7 +707,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             isNotAddTask: true,
             minusDiceCard: minusCnt,
-            exec: spt => { --spt.perCnt }
+            exec: () => { --support.perCnt }
         }
     }),
     // 玛梅赫
@@ -735,10 +717,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt <= 0 || hcard?.id == support.card.id || !hcard?.hasSubtype(...subtype)) return;
         return {
             triggers: 'card',
-            exec: (spt, cmds) => {
-                --spt.perCnt;
+            exec: cmds => {
+                --support.perCnt;
                 cmds.getCard(1, { subtype, exclude: [support.card.id] });
-                return { isDestroy: --spt.cnt == 0 }
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
@@ -752,89 +734,85 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const threshold = ver.lt('v4.6.0') ? 5 : 6;
         return {
             triggers: support.cnt >= threshold ? 'skilltype3' : 'support-destroy',
-            supportCnt: isCdt(support.cnt >= threshold, -10, 1),
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'skilltype3') {
                     if (ver.lt('v4.6.0')) {
-                        cmds.getDice(spt.cnt - 2, { element: DICE_COST_TYPE.Omni });
+                        cmds.getDice(support.cnt - 2, { element: DICE_COST_TYPE.Omni });
                         return { isDestroy: true }
                     }
                     cmds.getStatus(302205);
                     return { isDestroy: true }
                 }
-                if (trigger == 'support-destroy') spt.cnt = Math.min(6, destroyedSupport);
+                if (trigger == 'support-destroy') support.cnt = Math.min(6, destroyedSupport);
             }
         }
     }),
     // 西尔弗和迈勒斯
     322023: () => new SupportBuilder().collection().handle((support, event) => {
-        const { trigger, playerInfo: { oppoGetElDmgType = 0 } = {}, isExecTask } = event;
+        const { trigger, playerInfo: { oppoGetElDmgType } } = event;
         if (trigger == 'enter') {
             support.cnt = Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
             return;
         }
         const triggers: Trigger[] = [];
         Object.values(PURE_ELEMENT_CODE).forEach(elcode => {
-            if ((oppoGetElDmgType >> elcode & 1) == 0 || isExecTask) triggers.push(`${ELEMENT_TYPE_KEY[ELEMENT_CODE_KEY[elcode]]}-getdmg-oppo`);
+            if ((oppoGetElDmgType >> elcode & 1) == 0) triggers.push(`${ELEMENT_TYPE_KEY[ELEMENT_CODE_KEY[elcode]]}-getdmg-oppo`);
         });
         if (support.cnt >= 4) triggers.length = 0;
         if (support.cnt >= 3) triggers.push('phase-end');
-        const [el] = objToArr(PURE_ELEMENT_TYPE_KEY).find(([, elname]) => elname == trigger?.slice(0, trigger.indexOf('-getdmg-oppo'))) ?? [];
         return {
             triggers: triggers,
-            supportCnt: isCdt(el && (oppoGetElDmgType >> PURE_ELEMENT_CODE[el] & 1) == 0, 1),
-            exec: (spt, cmds) => {
-                if (trigger == 'phase-end' && spt.cnt >= 3) {
-                    cmds.getCard(spt.cnt);
+            exec: cmds => {
+                if (trigger == 'phase-end' && support.cnt >= 3) {
+                    cmds.getCard(support.cnt);
                     return { isDestroy: true }
                 }
-                if (trigger?.endsWith('-getdmg-oppo')) spt.cnt = Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
+                if (trigger?.endsWith('-getdmg-oppo')) support.cnt = Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
             }
         }
     }),
     // 太郎丸
     322024: () => new SupportBuilder().collection().handle((support, event) => {
         if (event.trigger == 'enter') {
-            return { triggers: 'enter', exec: (_, cmds) => cmds.addCard(4, 302202, { isRandom: false }).res }
+            return { triggers: 'enter', exec: cmds => cmds.addCard(4, 302202, { isRandom: false }).res }
         }
         if (event.hcard?.id != 302202) return;
         return {
             triggers: 'card',
             summon: isCdt(support.cnt == 1, 302201),
-            exec: spt => ({ isDestroy: ++spt.cnt >= 2 }),
+            exec: () => ({ isDestroy: ++support.cnt >= 2 }),
         }
     }),
     // 白手套和渔夫
-    322025: () => new SupportBuilder().round(2).handle(() => ({
+    322025: () => new SupportBuilder().round(2).handle(support => ({
         triggers: 'phase-end',
-        exec: (spt, cmds) => {
+        exec: cmds => {
             cmds.addCard(1, 302203, { scope: 5 });
-            if (spt.cnt == 1) cmds.getCard(1);
-            return { isDestroy: --spt.cnt == 0 }
+            if (support.cnt == 1) cmds.getCard(1);
+            return { isDestroy: --support.cnt == 0 }
         }
     })),
     // 亚瑟先生
     322026: () => new SupportBuilder().collection().handle((support, event) => {
-        const { discards: { length: discardCnt } = [0], trigger, epile = [] } = event;
+        const { trigger, epile = [] } = event;
         if (+(support.cnt >= 2) ^ +(trigger == 'phase-end' && epile.length > 0)) return;
         return {
             triggers: ['discard', 'reconcile', 'phase-end'],
-            supportCnt: isCdt(trigger != 'phase-end', Math.min(2 - support.cnt, discardCnt)),
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'phase-end') {
-                    spt.cnt = 0;
+                    support.cnt = 0;
                     cmds.getCard(1, { card: epile[0].id });
                 }
-                spt.cnt = Math.min(2, spt.cnt + (trigger == 'reconcile' ? 1 : discardCnt));
+                support.cnt = Math.min(2, support.cnt + 1);
             },
         }
     }),
     // 瑟琳
-    322027: () => new SupportBuilder().round(3).handle(() => ({
+    322027: () => new SupportBuilder().round(3).handle(support => ({
         triggers: ['phase-start', 'enter'],
-        exec: (spt, cmds) => {
+        exec: cmds => {
             cmds.getCard(1, { include: Array.from({ length: 10 }, (_, i) => 302206 + i) });
-            return { isDestroy: --spt.cnt == 0 }
+            return { isDestroy: --support.cnt == 0 }
         }
     })),
     // 阿伽娅
@@ -844,31 +822,30 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'vehicle',
             isNotAddTask: true,
             minusDiceSkill: { skilltype5: [0, 0, 1] },
-            exec: spt => { event.isMinusDiceSkill && --spt.perCnt }
+            exec: () => { event.isMinusDiceSkill && --support.perCnt }
         }
     }),
     // 森林的祝福
     322029: () => new SupportBuilder().permanent().handle(() => ({
         triggers: ['enter', 'elReaction'],
-        exec: (_, cmds) => cmds.getCard(1, { include: [301034, 301035, 301036] }).res,
+        exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res,
     })),
     // 预言女神的礼物
-    322030: () => new SupportBuilder().collection(2).handle((_, event) => {
-        const { trigger, csummon } = event;
+    322030: () => new SupportBuilder().collection(2).handle((support, event) => {
+        const { trigger, sourceSummon } = event;
         const triggers: Trigger[] = ['enter'];
-        if (csummon && csummon.hasTag(SUMMON_TAG.Simulanka)) triggers.push('summon-generate');
+        if (sourceSummon?.hasTag(SUMMON_TAG.Simulanka)) triggers.push('summon-generate');
         return {
             triggers,
-            exec: (spt, cmds, execEvent) => {
+            exec: cmds => {
                 if (trigger == 'enter') return cmds.getCard(2, { card: 301033 }).addCard(2, 301033).res;
                 if (trigger == 'summon-generate') {
-                    const { csummon } = execEvent;
-                    if (csummon) {
-                        if (csummon.id == 301028) ++csummon.damage;
-                        else if (csummon.id == 3010301) ++csummon.shieldOrHeal;
-                        else ++csummon.addition.effect;
+                    if (sourceSummon) {
+                        if (sourceSummon.id == 301028) ++sourceSummon.damage;
+                        else if (sourceSummon.id == 3010301) ++sourceSummon.shieldOrHeal;
+                        else ++sourceSummon.addition.effect;
                     }
-                    return { isDestroy: --spt.cnt == 0 }
+                    return { isDestroy: --support.cnt == 0 }
                 }
             },
         }
@@ -878,9 +855,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],
         isAfterSkill: true,
         isOrTrigger: true,
-        supportCnt: support.cnt < 2 ? 1 : -3,
-        exec: (spt, cmds) => {
-            if (++spt.cnt < 3) return;
+        exec: cmds => {
+            if (++support.cnt < 3) return;
             cmds.getDice(3, { mode: CMD_MODE.Random });
             return { isDestroy: true }
         }
@@ -892,8 +868,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (trigger != 'enter' && (support.perCnt <= 0 || !hcard?.hasSubtype(CARD_SUBTYPE.Food))) return;
         return {
             triggers: ['card', 'enter'],
-            exec: (spt, cmds) => {
-                if (trigger != 'enter') --spt.perCnt;
+            exec: cmds => {
+                if (trigger != 'enter') --support.perCnt;
                 cmds.getCard(1, { subtype: CARD_SUBTYPE.Food, isFromPile: true });
             }
         }
@@ -903,8 +879,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt <= 0) return;
         return {
             triggers: 'switch',
-            exec: (spt, cmds) => {
-                --spt.perCnt;
+            exec: cmds => {
+                --support.perCnt;
                 cmds.getStatus(302303);
             }
         }
@@ -913,9 +889,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     323004: () => new SupportBuilder().collection().handle(support => ({
         triggers: 'after-skill',
         isAfterSkill: true,
-        supportCnt: support.cnt < 2 ? 1 : -3,
-        exec: (spt, cmds) => {
-            if (++spt.cnt < 3) return;
+        exec: cmds => {
+            if (++support.cnt < 3) return;
             cmds.getCard(3);
             return { isDestroy: true }
         }
@@ -929,9 +904,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             minusDiceCard: 1,
             isNotAddTask: true,
-            exec: spt => {
-                --spt.perCnt;
-                return { isDestroy: --spt.cnt == 0 }
+            exec: () => {
+                --support.perCnt;
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
@@ -944,9 +919,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             minusDiceCard: 2,
             isNotAddTask: true,
-            exec: spt => {
-                --spt.perCnt;
-                return { isDestroy: --spt.cnt == 0 }
+            exec: () => {
+                --support.perCnt;
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
@@ -955,13 +930,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (support.perCnt <= 0) return;
         return {
             triggers: 'card',
-            supportCnt: isCdt(support.card.useCnt == 2, -1),
-            exec: (spt, cmds) => {
-                if (spt.card.addUseCnt() < 3) return;
-                --spt.perCnt;
-                spt.card.useCnt = 0;
+            exec: cmds => {
+                if (support.card.addUseCnt() < 3) return;
+                --support.perCnt;
+                support.card.useCnt = 0;
                 cmds.getCard(1).getDice(1, { element: DICE_COST_TYPE.Omni });
-                return { isDestroy: --spt.cnt == 0 }
+                return { isDestroy: --support.cnt == 0 }
             }
         }
     }),
@@ -974,14 +948,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: ['phase-start', 'skill', 'card'],
             minusDiceSkill: isCdt(support.perCnt > 0 && support.cnt > 0, { skill: [0, 0, 1] }),
             isNotAddTask: trigger != 'phase-start',
-            exec: (spt, cmds) => {
+            exec: cmds => {
                 if (trigger == 'phase-start') {
-                    const cnt = Math.min(hcards.length, 2 - spt.cnt);
-                    spt.cnt += cnt;
+                    const cnt = Math.min(hcards.length, 2 - support.cnt);
+                    support.cnt += cnt;
                     return cmds.discard({ cnt, mode: CMD_MODE.HighHandCard }).res;
                 }
-                if (trigger == 'card') --spt.perCnt;
-                else if (trigger == 'skill' && isMinusDiceSkill) --spt.cnt;
+                if (trigger == 'card') --support.perCnt;
+                else if (trigger == 'skill' && isMinusDiceSkill) --support.cnt;
             },
         }
     }),

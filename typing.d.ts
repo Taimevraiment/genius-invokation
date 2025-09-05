@@ -1,15 +1,15 @@
 import {
     ActionType, CardSubtype, CardTag, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
-    Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType, StatusGroup, SWIRL_ELEMENT, Version,
+    Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType,
+    SWIRL_ELEMENT, Version
 } from "./common/constant/enum"
-import { ArrayHero, ArrayStatus } from "./common/data/builder/baseBuilder"
+import { ArrayHero, ArrayStatus, ArraySummon } from "./common/data/builder/baseBuilder"
 import { type GICard } from "./common/data/builder/cardBuilder"
 import { type GIHero } from "./common/data/builder/heroBuilder"
 import { type GISkill } from "./common/data/builder/skillBuilder"
 import { type GIStatus } from "./common/data/builder/statusBuilder"
 import { type GISummon } from "./common/data/builder/summonBuilder"
 import { type GISupport } from "./common/data/builder/supportBuilder"
-import CmdsGenerator from "./common/utils/cmdsGenerator"
 import { versionWrap } from "./common/utils/gameUtil"
 
 type RoomList = {
@@ -37,7 +37,7 @@ type Player = {
     heros: ArrayHero, // 登场英雄
     pile: Card[], // 牌库
     supports: Support[], // 支援物
-    summons: Summon[], // 召唤物
+    summons: ArraySummon, // 召唤物
     dice: DiceCostType[], // 骰子
     rollCnt: number, // 骰子投掷次数
     status: PlayerStatus, // 玩家当前状态
@@ -109,25 +109,6 @@ type AddDiceSkill = {
     skilltype5?: number[],
 }
 
-type StatusTask = {
-    id: number, // 攻击状态id
-    name: string, // 状态名称
-    entityId: number, // 攻击状态entityId
-    group: StatusGroup, // 攻击状态类型：0角色状态 1阵营状态
-    pidx: number, // 攻击者pidx
-    isSelf: number, // 是否为自伤
-    trigger: Trigger, // 触发条件
-    hidx: number, // 攻击者hidx
-    skid: number, // 引起协同攻击的技能id -1为切换角色
-    sktype?: SkillType, // 引起协同攻击的技能类型
-    atkHidx?: number,// 攻击角色hidx
-    isQuickAction?: boolean, // 是否为快速行动
-    discards?: Card[], // 舍弃的牌
-    hcard?: Card, // 调和或使用的牌
-    source?: number, // 触发该状态的实体id
-    isPriority?: boolean, // 是否优先攻击出战角色，即不鞭尸
-}
-
 type Cmds = {
     cmd: Cmd,
     cnt?: number,
@@ -141,13 +122,14 @@ type Cmds = {
     status?: (number | [number, ...any] | Status)[] | number,
     summon?: (number | [number, ...any] | Summon)[] | number,
     isOppo?: boolean,
-    summonTrigger?: Trigger | Trigger[],
+    trigger?: Trigger | Trigger[],
 }
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
-    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon';
+    'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
+    'summonTrigger' | 'getSupport';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -191,7 +173,6 @@ type DamageVO = {
     willDamages: number[][], // 造成伤害
     dmgElements: DamageType[], // 元素伤害类型
     elTips: [string, PureElementType, PureElementType][], // 元素反应提示
-    curPlayers?: Player[], // 当前玩家数组
     selected?: number[], // 伤害来源闪光(状态/召唤物)
 };
 
@@ -302,7 +283,7 @@ type ServerData = Readonly<{
 type Preview = ActionData & {
     isValid: boolean,
     willHp?: (number | undefined)[],
-    willAttachs?: ElementType[][],
+    willAttachs?: (ElementType | [ElementType, ElementType])[][][],
     willSwitch?: boolean[][],
     willSummons?: Summon[][],
     changedSummons?: (Summon | undefined)[][],
@@ -319,28 +300,6 @@ type Preview = ActionData & {
 }
 
 type LogType = 'log' | 'system' | 'info' | 'emit';
-
-type CalcAtkRes = {
-    element?: DamageType | DiceCostType,
-    heal?: number,
-    damage?: number,
-    pdmg?: number,
-    isSelf?: boolean,
-    isPriority?: boolean,
-    hidxs?: number[],
-    cmds?: CmdsGenerator,
-    execmds?: CmdsGenerator,
-    damages?: SmnDamageHandle,
-    exec?: (...args: any) => any,
-}
-
-type SmnDamageHandle = (isOppo?: boolean, cnt?: number, element?: DamageType, hidxs?: number[]) => { dmgElement: DamageType, willDamages: number[][] }
-
-type AtkTask = {
-    pidx: number,
-    cmds: CmdsGenerator,
-    atkname: string,
-}
 
 type PickCard = {
     cards: Card[],

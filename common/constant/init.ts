@@ -1,11 +1,11 @@
 import { CustomVersionConfig, DamageVO, InfoVO, Player } from '../../typing';
-import { ArrayHero, ArrayStatus } from '../data/builder/baseBuilder.js';
+import { ArrayHero, ArrayStatus, ArraySummon } from '../data/builder/baseBuilder.js';
 import { GICard } from '../data/builder/cardBuilder.js';
 import { GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
 import { GIStatus } from '../data/builder/statusBuilder.js';
-import { CARD_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
-import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from './gameOption.js';
+import { CARD_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_TYPE, PHASE, PLAYER_STATUS, PURE_ELEMENT_TYPE, SKILL_TYPE, VERSION, WEAPON_TYPE } from './enum.js';
+import { INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE } from './gameOption.js';
 
 export const INIT_PLAYER: () => Player = () => ({
     id: -1,
@@ -15,7 +15,7 @@ export const INIT_PLAYER: () => Player = () => ({
     heros: new ArrayHero(),
     pile: [],
     supports: [],
-    summons: [],
+    summons: new ArraySummon(),
     combatStatus: new ArrayStatus(),
     dice: [],
     rollCnt: INIT_ROLL_COUNT,
@@ -88,17 +88,13 @@ export const NULL_MODAL = (): InfoVO => ({
 
 export const NULL_CUSTOM_VERSION_CONFIG = (): CustomVersionConfig => ({ name: '无', baseVersion: VERSION[0], diff: {}, banList: [] });
 
-export const INIT_SUMMONCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
-
-export const INIT_SUPPORTCNT = (): number[][] => Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
-
-export const INIT_DAMAGEVO = (): DamageVO => ({
+export const INIT_DAMAGEVO = (len: number): DamageVO => ({
     dmgSource: 'null',
     atkPidx: -1,
     atkHidx: -1,
     tarHidx: -1,
-    willHeals: [],
-    willDamages: [],
-    dmgElements: [],
-    elTips: [],
+    willHeals: new Array(len).fill(-1),
+    willDamages: new Array(len).fill(0).map(() => [-1, 0]),
+    dmgElements: new Array(len).fill(DAMAGE_TYPE.Physical),
+    elTips: new Array(len).fill(0).map(() => ['', PURE_ELEMENT_TYPE.Cryo, PURE_ELEMENT_TYPE.Cryo]),
 });

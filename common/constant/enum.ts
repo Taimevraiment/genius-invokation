@@ -198,12 +198,11 @@ export const STATUS_TYPE = {
     NonDestroy: 'NonDestroy', // 死后不删除 12
     NonDefeat: 'NonDefeat', // 免击倒 13
     NonAction: 'NonAction', // 无法行动 14
-    TempNonDestroy: 'TempNonDestroy', // 暂时不消失 15
-    ConditionalEnchant: 'ConditionalEnchant', // 条件附魔 16
-    NightSoul: 'NightSoul', // 夜魂加持 17
-    NonEvent: 'NonEvent', // 事件牌失效 18
-    Show: 'Show', // 死后也显示 19
-    OnlyExplain: 'OnlyExplain', // 仅用作解释 20
+    ConditionalEnchant: 'ConditionalEnchant', // 条件附魔 15
+    NightSoul: 'NightSoul', // 夜魂加持 16
+    NonEvent: 'NonEvent', // 事件牌失效 17
+    Show: 'Show', // 死后也显示 18
+    OnlyExplain: 'OnlyExplain', // 仅用作解释 19
 } as const;
 
 export type StatusType = TypeConst<typeof STATUS_TYPE>;

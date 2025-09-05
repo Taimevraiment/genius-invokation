@@ -915,7 +915,7 @@ onMounted(() => {
 .rule-desc {
   color: #c8c8c8;
   margin: 2px;
-  padding: 3px;
+  padding: 0 3px;
 }
 
 .info-hero-skill-explain,

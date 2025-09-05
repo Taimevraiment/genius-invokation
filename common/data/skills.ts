@@ -1,5 +1,5 @@
 import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, PureElementType, Version } from "../constant/enum.js"
-import { allHidxs, getHidById, getNextBackHidx, getObjById, hasObjById } from "../utils/gameUtil.js"
+import { getHidById, getObjById, hasObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 
@@ -99,17 +99,17 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     1121422: () => new SkillBuilder('鲨鲨冲浪板').description('切换到上一个我方角色，使敌方出战角色附属1层【sts112143】。（若我方后台角色均被击倒，则额外消耗1点「夜魂值」）')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/5df64b9953797e1c33fe8345f84618b9_1679708139843446825.png')
-        .vehicle().cost(1).handle(({ heros, cmds, cmdsAfter }) => {
+        .vehicle().cost(1).handle(({ heros, cmds }) => {
             cmds.switchBefore();
-            if (allHidxs(heros).length == 1) cmdsAfter.consumeNightSoul();
+            if (heros.allHidxs().length == 1) cmds.consumeNightSoul();
             return { statusOppo: 112143 }
         }),
 
     1131541: () => new SkillBuilder('跃升').description('消耗1点「夜魂值」，{dealDmg}。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/7cc24c2715c5ab0c4d6bd5a2959b9291_7360941024826114619.png')
         .vehicle().damage(4).costAny(1).handle(event => {
-            const { cmdsAfter, hero: { hidx, heroStatus } } = event;
-            cmdsAfter.consumeNightSoul(hidx);
+            const { cmds, hero: { hidx, heroStatus } } = event;
+            cmds.consumeNightSoul(hidx);
             return { isForbidden: !hasObjById(heroStatus, 113151) }
         }),
 
@@ -120,8 +120,8 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1131561: () => new SkillBuilder('疾驰').description('消耗1点「夜魂值」，然后[准备技能]：【rsk13155】。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/7a6eed5e4c9fd02aec47a0afc97b38c2_4483242706754770532.png')
         .vehicle().costAny(2).handle(event => {
-            const { cmdsAfter, hero: { hidx, heroStatus } } = event;
-            cmdsAfter.consumeNightSoul(hidx).getStatus(113157);
+            const { cmds, hero: { hidx, heroStatus } } = event;
+            cmds.consumeNightSoul(hidx).getStatus(113157);
             return { isForbidden: !hasObjById(heroStatus, 113151) }
         }),
 
@@ -132,23 +132,23 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，{dealDmg}，然后随机[舍弃]3张原本元素骰费用最高的手牌。')
         .src('#')
         .vehicle().damage(1).cost(2).handle(event => {
-            const { cmds, cmdsAfter, hero: { hidx } } = event;
+            const { cmds, hero: { hidx } } = event;
             cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
-            cmdsAfter.consumeNightSoul(hidx);
+            cmds.consumeNightSoul(hidx);
         }),
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')
         .vehicle().damage(2).cost(1).costAny(1, 'v5.7.0').handle(event => {
-            const { eheros, combatStatus, hero: { hidx }, cmdsAfter } = event;
-            const hidxs = getNextBackHidx(eheros);
-            cmdsAfter.consumeNightSoul(hidx);
+            const { eheros, combatStatus, hero: { hidx }, cmds } = event;
+            const hidxs = eheros.getNextBackHidx();
+            cmds.consumeNightSoul(hidx);
             if (hidxs.length) return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点「夜魂值」，抓3张牌。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/6e198a5ebf0245a681cbb894919886d1_5120040167043277378.png')
-        .vehicle().costAny(2).handle(({ cmdsAfter, hero: { hidx } }) => cmdsAfter.consumeNightSoul(hidx).getCard(3).res),
+        .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）；造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('#')
@@ -182,7 +182,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方「召唤物」，立刻触发其「结束阶段」效果。（每回合最多使用1次）')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({
-            summonTriggers: 'phase-end',
+            summonTrigger: 'phase-end',
             isForbidden: event.skill.perCnt == 0,
             exec: () => { --event.skill.perCnt },
         })),

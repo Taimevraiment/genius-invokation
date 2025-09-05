@@ -1,5 +1,5 @@
-import { Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
-import { ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SUMMON_TAG, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { MinusDiceSkill, Summon, Trigger, VersionWrapper } from "../../../typing";
+import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SUMMON_TAG, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -18,7 +18,6 @@ export type SummonHandleRes = {
     addDmgType2?: number,
     addDmgType3?: number,
     addDmgCdt?: number,
-    addPdmg?: number,
     rCombatStatus?: (number | [number, ...any])[] | number,
     isNotAddTask?: boolean,
     element?: ElementType,
@@ -32,26 +31,21 @@ export type SummonHandleRes = {
     willSummon?: number,
     isQuickAction?: boolean,
     isTrigger?: boolean,
-    exec?: (event: SummonExecEvent) => SummonExecRes | void,
+    exec?: () => SummonExecRes,
 }
 
-export type SummonExecEvent = {
-    summon?: Summon,
-    heros?: Hero[],
-    eheros?: Hero[],
-    combatStatus?: Status[],
-    eCombatStatus?: Status[],
+
+export interface SummonExecRes {
+    cmds: CmdsGenerator,
 }
 
-export type SummonExecRes = {
-    cmds?: CmdsGenerator,
+interface SummonBuilderHandleEvent extends SummonHandleEvent {
+    exec?: (cmds: CmdsGenerator) => SummonExecRes | void,
 }
 
-type SummonBuilderExecEvent = SummonExecEvent & { cmds: CmdsGenerator };
-
-type SummonBuilderHandleRes = Omit<SummonHandleRes, 'triggers' | 'exec'> & {
+interface SummonBuilderHandleRes extends Omit<SummonHandleRes, 'triggers' | 'exec'> {
     triggers?: Trigger | Trigger[],
-    exec?: (event: SummonBuilderExecEvent) => SummonExecRes | void,
+    exec?: (cmds: CmdsGenerator) => void,
     isOnlyPhaseEnd?: boolean,
 };
 
@@ -104,9 +98,8 @@ export class GISummon {
         this.damage = damage;
         this.element = element;
         const {
-            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = 0, stsId = -1, spReset = false,
-            expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [],
-            tag = [],
+            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = SUMMON_DESTROY_TYPE.Used, stsId = -1, spReset = false,
+            expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [], tag = [],
         } = options;
         const hid = getHidById(id);
         this.UI = {
@@ -154,21 +147,21 @@ export class GISummon {
             if (!handle) {
                 return {
                     triggers: ['phase-end'],
-                    exec: execEvent => ({ cmds: (execEvent.summon ?? summon).phaseEndAtk(cevent, cmds) }),
+                    exec: () => ({ cmds: summon.phaseEndAtk(cmds) }),
                 }
             }
             const builderRes = handle(summon, cevent, versionWrap(ver)) ?? {};
             return {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
-                exec: execEvent => {
-                    if (!builderRes.exec) {
-                        builderRes.exec = execEvent => {
-                            const { summon: smn = summon, cmds } = execEvent;
-                            if (!builderRes.isOnlyPhaseEnd || event.trigger == 'phase-end') smn.phaseEndAtk(cevent, cmds);
-                        }
-                    }
-                    builderRes.exec({ ...execEvent, cmds });
+                exec: () => {
+                    builderRes.exec ??= cmds => (!builderRes.isOnlyPhaseEnd || event.trigger == 'phase-end') && summon.phaseEndAtk(cmds);
+                    builderRes.exec(cmds);
+                    cmds.value.forEach(c => {
+                        if (c.cmd != 'attack') return;
+                        c.cnt ??= this.damage;
+                        c.element ??= this.element;
+                    });
                     return { cmds }
                 }
             }
@@ -181,11 +174,12 @@ export class GISummon {
     hasTag(...tags: SummonTag[]) {
         return this.tag.some(v => tags.includes(v));
     }
-    phaseEndAtk(event: SummonHandleEvent, cmds: CmdsGenerator, healHidxs?: number[]): CmdsGenerator {
+    phaseEndAtk(cmds: CmdsGenerator, options: { atkHidxs?: number[], healHidxs?: number[] } = {}): CmdsGenerator {
+        const { atkHidxs, healHidxs } = options;
         if (this.isDestroy == SUMMON_DESTROY_TYPE.Used) this.minusUseCnt();
-        else if (!event.isExec) this.useCnt = -100;
-        if (this.damage >= 0) cmds.attack();
-        if (this.shieldOrHeal > 0) cmds.smnHeal({ hidxs: healHidxs });
+        if (this.damage >= 0) cmds.attack(this.damage, this.element, { hidxs: atkHidxs });
+        if (this.pdmg > 0) cmds.attack(this.pdmg, DAMAGE_TYPE.Pierce);
+        if (this.shieldOrHeal > 0) cmds.heal(this.shieldOrHeal, { hidxs: healHidxs });
         return cmds;
     }
     changeAnemoElement(trigger: Trigger) {
@@ -243,7 +237,7 @@ export class SummonBuilder extends BaseBuilder {
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
     private _spReset: boolean = false;
-    private _handle: ((summon: Summon, event: SummonHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) | undefined;
+    private _handle: ((summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
         this._name = name;

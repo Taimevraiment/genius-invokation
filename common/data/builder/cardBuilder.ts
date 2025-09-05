@@ -1,65 +1,33 @@
-import { Card, MinusDiceSkill, Trigger, VersionWrapper } from "../../../typing";
+import { Card, Trigger, VersionWrapper } from "../../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_TYPE, DiceCostType, DiceType, ELEMENT_CODE, ElementType,
-    HERO_LOCAL_CODE_KEY, HeroLocalCode, OfflineVersion, OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, PureElementType,
-    STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY, WeaponType, WeaponTypeCode
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_COST_TYPE, DICE_TYPE, DiceCostType,
+    DiceType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL_CODE_KEY, HeroLocalCode, OfflineVersion,
+    OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY,
+    WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, hasObjById, versionWrap } from "../../utils/gameUtil.js";
+import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseCostBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseCostBuilder, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface CardHandleEvent extends EntityHandleEvent {
     slotUse: boolean,
 }
 
-export type CardHandleRes = {
-    support?: (number | [number, ...any])[] | number,
-    supportOppo?: (number | [number, ...any])[] | number,
-    cmds?: CmdsGenerator,
-    cmdsBefore?: CmdsGenerator,
-    cmdsAfter?: CmdsGenerator,
-    execmds?: CmdsGenerator,
-    triggers?: Trigger[],
-    status?: (number | [number, ...any])[] | number,
-    statusOppo?: (number | [number, ...any])[] | number,
+export interface CardHandleRes extends EntityHandleRes {
     canSelectHero?: boolean[],
-    summon?: (number | [number, ...any])[] | number,
-    summonOppo?: (number | [number, ...any])[] | number,
-    addDmg?: number,
-    addDmgType1?: number,
-    addDmgType2?: number,
-    addDmgType3?: number,
-    addDmgCdt?: number,
-    addPdmg?: number,
-    minusDiceSkill?: MinusDiceSkill,
-    minusDiceCard?: number,
-    minusDiceCardEl?: ElementType,
-    minusDiceHero?: number,
-    attachEl?: PureElementType,
-    hidxs?: number[],
-    isValid?: boolean,
-    element?: DiceCostType,
     cnt?: number,
     isDestroy?: boolean,
-    restDmg?: number,
-    isAddTask?: boolean,
-    notPreview?: boolean,
-    forcePreview?: boolean,
-    summonCnt?: number[][],
-    isQuickAction?: boolean,
-    isOrTrigger?: boolean,
-    isTrigger?: boolean,
-    isAfterSkill?: boolean,
-    isImmediate?: boolean,
-    exec?: () => void,
-};
-
-export type CardBuilderHandleRes = Omit<CardHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
+}
 
 export interface CardBuilderHandleEvent extends CardHandleEvent, EntityBuilderHandleEvent {
     execmds: CmdsGenerator,
+}
+
+export interface CardBuilderHandleRes extends Omit<CardHandleRes, 'triggers' | 'element'> {
+    triggers?: Trigger | Trigger[],
+    element?: DiceCostType,
 }
 
 export class GICard {
@@ -210,12 +178,12 @@ export class GICard {
                 const ressts = typeof res?.status == 'number' ? [res.status] : res?.status ?? [];
                 const { heros, cmds, combatStatus } = event;
                 return {
-                    isValid: heros?.some(h => !hasObjById(h.heroStatus, 303300)),
+                    isValid: heros?.some(h => !h.heroStatus.has(303300)),
                     ...res,
                     status: [...ressts, 303300],
                     canSelectHero: res.canSelectHero != undefined ? res.canSelectHero :
-                        cmds?.hasCmds('heal') ? heros?.map(h => h.hp < h.maxHp && h.hp > 0) :
-                            cmds.hasCmds('revive') ? heros?.map(h => h.hp <= 0 && !hasObjById(combatStatus, 303307)) :
+                        cmds?.hasCmds('heal') ? heros?.map(h => h.isHert) :
+                            cmds.hasCmds('revive') ? heros?.map(h => h.hp <= 0 && !combatStatus.has(303307)) :
                                 res.canSelectHero,
                     notPreview: true,
                 }
@@ -229,10 +197,10 @@ export class GICard {
                 const cnt = hid * 10 + (userType as number) + 1;
                 handle = (card, event, ver) => {
                     const { slotUse = false, cmds } = event;
-                    const ohandleres = ohandle?.(card, event, ver) ?? {};
-                    if (slotUse && !ohandleres.cmds?.isUseSkill) {
+                    const ohandleres = ohandle?.(card, event, ver);
+                    if (slotUse && !ohandleres?.cmds?.isUseSkill) {
                         cmds.useSkill({ skillId: cnt });
-                        return { triggers: 'skill', isValid: ohandleres.isValid }
+                        return { triggers: 'skill', isValid: ohandleres?.isValid }
                     }
                     return ohandleres;
                 }
@@ -275,8 +243,6 @@ export class GICard {
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();
-            const cmdsBefore = new CmdsGenerator();
-            const cmdsAfter = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event);
             const cevent: CardBuilderHandleEvent = {
@@ -285,21 +251,25 @@ export class GICard {
                 ...deleteUndefinedProperties(oevent),
                 cmds,
                 execmds,
-                cmdsBefore,
-                cmdsAfter,
             };
             if (cevent.reset) {
                 this.reset(card);
                 if (!spReset) return {}
             }
             const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
+            const { status, statusOppo, summon, summonOppo, support, supportOppo, hidxs, triggers, element } = builderRes;
+            cmds.getStatus(status, { hidxs })
+                .getStatus(statusOppo, { hidxs, isOppo: true })
+                .getSummon(summon, { destroy: 1 })
+                .getSummon(summonOppo, { isOppo: true, destroy: 1 })
+                .getSupport(support)
+                .getSupport(supportOppo, { isOppo: true });
             const res: CardHandleRes = {
                 ...builderRes,
                 cmds,
                 execmds,
-                cmdsBefore,
-                cmdsAfter,
-                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
+                triggers: isCdt(triggers, convertToArray(triggers) as Trigger[]),
+                element: isCdt(element == DICE_COST_TYPE.Omni, ELEMENT_TYPE.Physical, element as ElementType),
             }
             return res;
         }
@@ -501,12 +471,12 @@ export class CardBuilder extends BaseCostBuilder {
         this._handle = handle;
         return this;
     }
-    isResetUseCnt(isResetUseCnt: boolean = true) {
-        this._isResetUseCnt = isResetUseCnt;
+    isResetUseCnt() {
+        this._isResetUseCnt = true;
         return this;
     }
-    isResetPerCnt(isResetPerCnt: boolean = false) {
-        this._isResetPerCnt = isResetPerCnt;
+    notResetPerCnt() {
+        this._isResetPerCnt = false;
         return this;
     }
     isSpReset(isSpReset: boolean = true) {

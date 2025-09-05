@@ -1,8 +1,8 @@
 import type { Socket } from "socket.io-client";
 
-import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_TYPE, Version } from "@@@/constant/enum";
+import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
-import { INIT_PLAYER, INIT_SUMMONCNT, INIT_SUPPORTCNT, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
+import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
     CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_COLOR, HANDCARDS_GAP_MOBILE, HANDCARDS_GAP_PC, HANDCARDS_OFFSET_MOBILE, HANDCARDS_OFFSET_PC, SLOT_CODE_KEY,
 } from "@@@/constant/UIconst";
@@ -37,7 +37,7 @@ export default class GeniusInvokationClient {
     phase: Phase = PHASE.NOT_BEGIN; // 阶段
     showRerollBtn: boolean = true; // 是否显示重投按钮
     isReconcile: boolean = false; // 是否进入调和模式
-    willAttachs: ElementType[][] = []; // 将要附着的元素
+    willAttachs: (ElementType | [ElementType, ElementType])[][][] = []; // 将要附着的元素
     willHp: (number | undefined)[] = []; // 总共的血量变化
     damageVO: Exclude<DamageVO, -1> = this._resetDamageVO(); // 显示伤害
     isShowDmg: boolean = false; // 是否显示伤害数
@@ -488,7 +488,6 @@ export default class GeniusInvokationClient {
         let cardIds: number[] = [];
         if (!this.isStart) ({ heroIds, cardIds } = parseShareCode(shareCode));
         this.isStart = !this.isStart;
-        this._resetWillAttachs();
         this.emit({
             type: ACTION_TYPE.StartGame,
             heroIds,
@@ -531,6 +530,7 @@ export default class GeniusInvokationClient {
         this.pickModal = pickModal;
         this.watchers = watchers;
         if (flag.includes('startGame') || flag.includes('roomInfoUpdate')) {
+            this._resetWillAttachs(players);
             this.initSelect(players);
             this.updateInitCardsPos(players[this.playerIdx]);
         } else if (flag.includes('changeCard')) this.updateInitCardsPos(players[this.playerIdx]);
@@ -566,19 +566,33 @@ export default class GeniusInvokationClient {
                     setTimeout(() => this._resetHeroSelect(), 500);
                 }
                 if (statusSelect.length > 0) {
-                    const [p, g, h, s] = statusSelect;
+                    const [p, g, h, s, isDestroy] = statusSelect;
                     this.statusSelect[+(p == this.playerIdx)][g][h][s] = true;
                     setTimeout(() => this._resetStatusSelect(), 500);
+                    if (isDestroy) {
+                        const stsEid = g == STATUS_GROUP.combatStatus ?
+                            this.players[p].combatStatus[s]?.entityId :
+                            this.players[p].heros[h].heroStatus[s]?.entityId;
+                        setTimeout(() => {
+                            if ((g == STATUS_GROUP.combatStatus ?
+                                this.players[p].combatStatus[s]?.entityId :
+                                this.players[p].heros[h].heroStatus[s]?.entityId) != stsEid) return;
+                            if (g == STATUS_GROUP.combatStatus) this.players[p].combatStatus.splice(s, 1)
+                            else this.players[p].heros[h].heroStatus.splice(s, 1);
+                        }, 2250);
+                    }
                 }
                 if (summonSelect.length > 0) {
                     const [p, s, isDestroy] = summonSelect;
                     this.summonSelect[+(p == this.playerIdx)][s] = true;
                     const smnEid = this.players[p].summons[s]?.entityId;
                     setTimeout(() => this._resetSummonSelect(), 500);
-                    if (isDestroy) setTimeout(() => {
-                        if (this.players[p].summons[s]?.entityId != smnEid) return;
-                        this.players[p].summons.splice(s, 1);
-                    }, 2240);
+                    if (isDestroy) {
+                        setTimeout(() => {
+                            if (this.players[p].summons[s]?.entityId != smnEid) return;
+                            this.players[p].summons.splice(s, 1);
+                        }, 2200);
+                    }
                 }
                 if (supportSelect.length > 0) {
                     const [p, s, isDestroy] = supportSelect;
@@ -903,8 +917,16 @@ export default class GeniusInvokationClient {
             if (!this.isReconcile) {
                 this.isReconcile = true;
                 this.diceSelect = [...diceSelect!];
+                this.currSkill.id = -1;
                 this._resetHeroSelect();
                 this._resetHeroCanSelect();
+                this._resetWillHp();
+                this._resetWillSwitch();
+                this._resetWillSummons();
+                this._resetSummonCnt();
+                this._resetWillAttachs();
+                this._resetSupportCnt();
+                this._resetEnergyCnt();
             } else {
                 if (this.diceSelect.indexOf(true) == -1) return this._sendTip('骰子不符合要求');
                 this.emit({
@@ -916,7 +938,7 @@ export default class GeniusInvokationClient {
                 this.cancel();
             }
         } else {
-            this.isReconcile = bool;
+            this.cancel();
         }
         return true;
     }
@@ -1137,7 +1159,7 @@ export default class GeniusInvokationClient {
      * 重置支援物预览
      */
     private _resetSupportCnt() {
-        return this.supportCnt = INIT_SUPPORTCNT();
+        return this.supportCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUPPORT_COUNT).fill(0));
     }
     /**
      * 重置召唤物选择
@@ -1156,7 +1178,7 @@ export default class GeniusInvokationClient {
      * 重置召唤物次数预览
      */
     private _resetSummonCnt() {
-        return this.summonCnt = INIT_SUMMONCNT();
+        return this.summonCnt = Array.from({ length: PLAYER_COUNT }, () => new Array(MAX_SUMMON_COUNT).fill(0));
     }
     /**
      * 重置召唤物预览/召唤物变化/角色变化
@@ -1181,8 +1203,8 @@ export default class GeniusInvokationClient {
     /**
      * 重置附着预览
      */
-    private _resetWillAttachs(): ElementType[][] {
-        return this.willAttachs = new Array(this.players.reduce((a, c) => a + c.heros.length, 0)).fill(0).map(() => []);
+    private _resetWillAttachs(players?: Player[]): (ElementType | [ElementType, ElementType])[][][] {
+        return this.willAttachs = (players ?? this.players).map(p => p.heros.map(() => []));
     }
     /**
      * 重置伤害预览

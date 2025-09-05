@@ -1,5 +1,5 @@
-import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
-import { DamageType, DICE_TYPE, DiceCostType, DiceType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, SkillType, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
+import { DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
@@ -120,13 +120,19 @@ export class ArrayHero extends Array<Hero> {
     get frontHidx() {
         return this.findIndex(h => h.isFront);
     }
+    get hasHert() {
+        return this.some(h => h.isHert);
+    }
+    get(id: number) {
+        return getObjById(this, id);
+    }
     // 获取所有存活/死亡角色的索引hidx
-    allHidxs(options: { isDie?: boolean, isAll?: boolean, exclude?: number, cdt?: (h: Hero) => boolean, limit?: number } = {}) {
-        const { isDie = false, isAll = false, cdt = () => true, limit = -1, exclude = -1 } = options;
-        if (this.frontHidx == -1 || limit == 0) return [];
+    allHidxs(options: { isDie?: boolean, isAll?: boolean, startHidx?: number, exclude?: number, cdt?: (h: Hero) => boolean, limit?: number } = {}) {
+        const { isDie = false, isAll = false, cdt = () => true, limit = -1, exclude = -1, startHidx = this.frontHidx } = options;
+        if (startHidx == -1 || limit == 0) return [];
         const hidxs: number[] = [];
         for (let i = 0; i < this.length; ++i) {
-            const hi = (this.frontHidx + i) % this.length;
+            const hi = (startHidx + i) % this.length;
             const h = this[hi];
             if (isAll || ((isDie ? h.hp <= 0 : h.hp > 0) && exclude != hi && cdt(h))) {
                 hidxs.push(hi);
@@ -165,13 +171,12 @@ export class ArrayHero extends Array<Hero> {
     getMaxHertHidxs(options: { isBack?: boolean } = {}) {
         const { isBack = false } = options;
         if (this.frontHidx == -1) return [];
-        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.maxHp - h.hp));
+        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hertHp));
         if (maxHert == 0) return [];
         const hidxs: number[] = [];
         for (let i = +isBack; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
-            const hert = this[hidx].maxHp - this[hidx].hp;
-            if (this[hidx].hp > 0 && hert == maxHert) {
+            if (this[hidx].hp > 0 && this[hidx].hertHp == maxHert) {
                 hidxs.push(hidx);
                 break;
             }
@@ -181,12 +186,11 @@ export class ArrayHero extends Array<Hero> {
     // 获取受伤最少的角色的hidx(最多一个number的数组)
     getMinHertHidxs() {
         if (this.frontHidx == -1) return [];
-        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.maxHp - h.hp));
+        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.hertHp));
         const hidxs: number[] = [];
         for (let i = 0; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
-            const hert = this[hidx].maxHp - this[hidx].hp;
-            if (this[hidx].hp > 0 && hert == minHert) {
+            if (this[hidx].hp > 0 && this[hidx].hertHp == minHert) {
                 hidxs.push(hidx);
                 break;
             }
@@ -224,13 +228,35 @@ export class ArrayStatus extends Array<Status> {
     filter(predicate: (value: Status, index: number, array: Status[]) => unknown, thisArg?: any): ArrayStatus {
         return super.filter(predicate, thisArg) as ArrayStatus;
     }
+    get(id: number): Status | undefined;
+    get(id: StatusType): Status | undefined;
     get(id: number | StatusType) {
         if (typeof id == 'number') return getObjById(this, id);
         return this.find(s => s.hasType(id));
     }
+    has(id: number): boolean;
+    has(id: StatusType): boolean;
     has(id: number | StatusType) {
         if (typeof id == 'number') return hasObjById(this, id);
         return this.some(s => s.hasType(id));
+    }
+}
+
+export class ArraySummon extends Array<Summon> {
+    constructor(...args: any[]) {
+        super(...args);
+    }
+    get(id: number): Summon | undefined;
+    get(id: SummonTag): Summon | undefined;
+    get(id: number | SummonTag) {
+        if (typeof id == 'number') return getObjById(this, id);
+        return this.find(s => s.hasTag(id));
+    }
+    has(id: number): boolean;
+    has(id: SummonTag): boolean;
+    has(id: number | SummonTag) {
+        if (typeof id == 'number') return hasObjById(this, id);
+        return this.some(s => s.hasTag(id));
     }
 }
 
@@ -248,8 +274,8 @@ export interface EntityHandleEvent {
     reset: boolean,
     hcard: Card | null,
     trigger: Trigger,
-    summons: Summon[],
-    esummons: Summon[],
+    summons: ArraySummon,
+    esummons: ArraySummon,
     switchHeroDiceCnt: number,
     isQuickAction: boolean,
     hcards: Card[],
@@ -267,10 +293,7 @@ export interface EntityHandleEvent {
     dices: DiceCostType[],
     dicesCnt: number,
     restDmg: number,
-    skid: number,
-    sktype: SkillType,
     isSummon: number,
-    isExec: boolean,
     supports: Support[],
     esupports: Support[],
     isMinusDiceCard: boolean,
@@ -282,14 +305,12 @@ export interface EntityHandleEvent {
     getdmg: number[],
     dmg: number[],
     hasDmg: boolean,
-    isExecTask: boolean,
     selectHeros: number[],
     selectSummon: number,
     selectSupport: number,
     source: number,
     sourceHidx: number,
     dmgSource: number,
-    discards: Card[],
     talent: Card | null,
     slotsDestroyCnt: number[],
     isSelfRound: boolean,
@@ -302,7 +323,7 @@ export interface EntityHandleEvent {
     skill?: Skill,
     sourceStatus?: Status,
     dmgElement?: DamageType,
-    csummon?: Summon,
+    sourceSummon?: Summon,
 }
 
 export interface EntityBuilderHandleEvent extends EntityHandleEvent {
@@ -310,8 +331,48 @@ export interface EntityBuilderHandleEvent extends EntityHandleEvent {
     isMinusDiceRelic: boolean,
     isMinusDiceVehicle: boolean,
     cmds: CmdsGenerator,
-    cmdsBefore: CmdsGenerator,
-    cmdsAfter: CmdsGenerator,
+}
+
+export interface EntityHandleRes {
+    support?: (number | [number, ...any])[] | number,
+    supportOppo?: (number | [number, ...any])[] | number,
+    cmds?: CmdsGenerator,
+    execmds?: CmdsGenerator,
+    triggers?: Trigger[],
+    status?: (number | [number, ...any])[] | number,
+    statusOppo?: (number | [number, ...any])[] | number,
+    summon?: (number | [number, ...any])[] | number,
+    summonOppo?: (number | [number, ...any])[] | number,
+    addDmg?: number,
+    addDmgType1?: number,
+    addDmgType2?: number,
+    addDmgType3?: number,
+    addDmgCdt?: number,
+    addDiceHero?: number,
+    addDiceSkill?: AddDiceSkill,
+    getDmg?: number,
+    multiDmgCdt?: number,
+    minusDiceSkill?: MinusDiceSkill,
+    minusDiceCard?: number,
+    minusDiceCardEl?: ElementType,
+    minusDiceHero?: number,
+    attachEl?: PureElementType,
+    hidxs?: number[],
+    isValid?: boolean,
+    element?: ElementType,
+    restDmg?: number,
+    isAddTask?: boolean,
+    notPreview?: boolean,
+    forcePreview?: boolean,
+    summonCnt?: number[][],
+    isQuickAction?: boolean,
+    isOrTrigger?: boolean,
+    isTrigger?: boolean,
+    isAfterSkill?: boolean,
+    isPriority?: boolean,
+    isImmediate?: boolean,
+    notLog?: boolean,
+    exec?: () => void,
 }
 
 export type InputHandle<T extends {}> = Partial<T> & {

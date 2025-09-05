@@ -8,6 +8,9 @@ import { BLOCK_WORDS } from "../constant/gameOption.js";
 export function clone<T>(obj: T): T {
     const cache = new Map();
     function _clone<T>(_obj: T): T {
+        if (_obj instanceof Set) {
+            return new Set(_obj) as T;
+        }
         if (typeof _obj !== 'object' || _obj === null) {
             return _obj;
         }
@@ -36,14 +39,16 @@ export function clone<T>(obj: T): T {
  * @param res 返回的值
  * @param elres 否则返回的值
  */
-export const isCdt = <T>(cdt: any | (() => any), res: T | (() => T), elres?: T): T | undefined => {
+export function isCdt<T>(cdt: any | (() => any), res: T | (() => T)): T | undefined;
+export function isCdt<T, U = T>(cdt: any | (() => any), res: T | (() => T), elres: U): T | U;
+export function isCdt<T, U = T>(cdt: any | (() => any), res: T | (() => T), elres?: U): T | U | undefined {
     if (typeof cdt == 'function') cdt = cdt();
     if (cdt) {
         if (typeof res == 'function') return (res as () => T)();
         return res;
     }
     if (elres == undefined) return undefined;
-    return elres as T;
+    return elres;
 }
 
 /**
@@ -114,10 +119,13 @@ export const delay = (time: number = -1, fn: () => any = () => { }) => {
  * @param options.freq 频率(ms = 500)
  * @param options.maxtime 最大等待时间(ms = 8000)
  * @param options.isImmediate 是否立即执行
+ * @param options.callback 超时后的回调函数
  * @returns 
  */
-export const wait = async (cdt: () => boolean, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean } = {}) => {
-    const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true } = options;
+export const wait = async (cdt: () => boolean, options: {
+    delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void,
+} = {}) => {
+    const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true, callback } = options;
     let loop = 0;
     if (cdt() && isImmediate) return;
     let warn = false;
@@ -132,7 +140,10 @@ export const wait = async (cdt: () => boolean, options: { delay?: number, freq?:
             console.trace('超过30秒，可能存在死循环');
             warn = true;
         }
-        if (loop > maxtime / freq) throw new Error(`too many loops-${maxtime}ms: ${cdt.toString()}`);
+        if (loop > maxtime / freq) {
+            if (callback) callback();
+            else throw new Error(`too many loops-${maxtime}ms: ${cdt.toString()}`);
+        }
     }
 }
 
@@ -247,7 +258,8 @@ export const assgin = <T>(target: T, source: T, exclude?: string | string[]) => 
  * @param obj 对象或对象数组
  * @returns 对象数组
  */
-export const convertToArray = <T>(obj: T | T[]): T[] => {
+export const convertToArray = <T>(obj: T | T[] | Set<T>): T[] => {
+    if (obj instanceof Set) obj = [...obj];
     return Array.isArray(obj) ? obj : [obj];
 }
 

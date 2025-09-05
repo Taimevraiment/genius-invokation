@@ -23,8 +23,6 @@ export const INIT_ROLL_COUNT = 1; // 初始可重投次数
 
 export const MAX_DECK_COUNT = 16; // 最大可组卡组数
 
-export const AI_ID = 2; // ai的id
-
 export const DECK_CARD_COUNT = 30; // 卡组所需行动牌数量
 
 export const DECK_HERO_COUNT = 3; // 卡组所需角色数量
@@ -38,3 +36,9 @@ export const BLOCK_WORDS = [/64/i, /89/i, /ba9/i, /c4/i, /cag/i, /gay/i, /hjt/i,
 export const IS_USE_OFFICIAL_SRC = true; // 是否使用官方图标
 
 export const IS_DEVELOPING = true; // 是否上了开发版
+
+// -------- 特殊标记常量 -------------
+
+export const AI_ID = 2; // ai的id
+
+export const STATUS_DESTROY_ID = 3; // 将该状态的entityId标记为已弃置

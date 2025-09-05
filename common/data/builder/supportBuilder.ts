@@ -1,4 +1,4 @@
-import { Card, MinusDiceSkill, Summon, Support, Trigger, VersionWrapper } from "../../../typing";
+import { Card, MinusDiceSkill, Support, Trigger, VersionWrapper } from "../../../typing";
 import { DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, versionWrap } from "../../utils/gameUtil.js";
@@ -11,7 +11,7 @@ export interface SupportHandleEvent extends EntityHandleEvent {
 
 export type SupportHandleRes = {
     triggers?: Trigger[],
-    exec?: (support: Support, event: SupportExecEvent) => SupportExecRes | void,
+    exec?: () => SupportExecRes,
     minusDiceCard?: number,
     minusDiceHero?: number,
     minusDiceSkill?: MinusDiceSkill,
@@ -19,20 +19,11 @@ export type SupportHandleRes = {
     cnt?: number,
     addRollCnt?: number,
     isQuickAction?: boolean,
-    supportCnt?: number,
     isNotAddTask?: boolean,
     isOrTrigger?: boolean,
     isLast?: boolean,
     isExchange?: boolean,
     isAfterSkill?: boolean,
-    summon?: (number | [number, ...any])[] | number,
-}
-
-export type SupportExecEvent = {
-    csummon?: Summon,
-    isExecTask?: boolean,
-    supports?: Support[],
-    esupports?: Support[],
 }
 
 export type SupportExecRes = {
@@ -42,8 +33,9 @@ export type SupportExecRes = {
 }
 
 type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers' | 'exec'> & {
+    summon?: (number | [number, ...any])[] | number,
     triggers?: Trigger | Trigger[],
-    exec?: (support: Support, cmds: CmdsGenerator, event: SupportExecEvent) => SupportExecRes | void,
+    exec?: (cmds: CmdsGenerator) => SupportExecRes | void,
 };
 
 export class GISupport {
@@ -81,9 +73,10 @@ export class GISupport {
             const res: SupportHandleRes = {
                 ...builderRes,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
-                exec: (support, event) => {
+                exec: () => {
                     const cmds = new CmdsGenerator();
-                    const exeres = builderRes.exec?.(support, cmds, event);
+                    if (builderRes.summon) cmds.getSummon(builderRes.summon);
+                    const exeres = builderRes.exec?.(cmds);
                     return { ...exeres, cmds }
                 }
             }

@@ -1,65 +1,32 @@
-import { AddDiceSkill, Hero, MinusDiceSkill, Status, Summon, Trigger, VersionWrapper } from "../../../typing";
-import { CARD_TYPE, ElementType, PureElementType, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { Status, Trigger, VersionWrapper } from "../../../typing";
+import { CARD_TYPE, DAMAGE_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface StatusHandleEvent extends EntityHandleEvent { }
 
-export type StatusHandleRes = {
-    restDmg?: number,
+export interface StatusHandleRes extends EntityHandleRes {
     damage?: number,
     pdmg?: number,
-    element?: ElementType,
-    triggers?: Trigger[],
-    addDmg?: number,
-    addDmgType1?: number,
-    addDmgType2?: number,
-    addDmgType3?: number,
-    addDmgCdt?: number,
-    addPdmg?: number,
-    multiDmgCdt?: number,
-    addDiceSkill?: AddDiceSkill,
-    getDmg?: number,
-    minusDiceCard?: number,
-    minusDiceHero?: number,
-    addDiceHero?: number,
-    minusDiceSkill?: MinusDiceSkill,
     heal?: number,
-    hidxs?: number[],
-    isQuickAction?: boolean,
     isSelf?: boolean,
-    skill?: number,
-    cmds?: CmdsGenerator,
-    cmdsBefore?: CmdsGenerator,
-    summon?: (number | [number, ...any])[] | number,
     isInvalid?: boolean,
     onlyOne?: boolean,
-    attachEl?: PureElementType,
     isUpdateAttachEl?: boolean,
     atkOffset?: number,
-    isAddTask?: boolean,
-    notPreview?: boolean,
     isFallAtk?: boolean,
     source?: number,
-    notLog?: boolean,
-    isTrigger?: boolean,
-    isAfterSkill?: boolean,
-    isPriority?: boolean,
-    isImmediate?: boolean,
-    exec?: (eStatus?: Status, event?: StatusExecEvent) => void,
-};
-
-export type StatusExecEvent = {
-    heros?: Hero[],
-    combatStatus?: Status[],
-    summons?: Summon[],
 }
 
-type StatusBuilderHandleRes = Omit<StatusHandleRes, 'triggers'> & { triggers?: Trigger | Trigger[] };
+export interface StatusBuilderHandleRes extends Omit<StatusHandleRes, 'triggers' | 'hidxs'> {
+    skill?: number,
+    triggers?: Trigger | Trigger[],
+    hidxs?: number | number[],
+};
 
 export interface StatusBuilderHandleEvent extends StatusHandleEvent, EntityBuilderHandleEvent { };
 
@@ -142,7 +109,7 @@ export class GIStatus {
                 }
                 if (restDmg < 0) return rest;
                 const shieldDmg = Math.min(restDmg, status.useCnt);
-                return { restDmg: restDmg - shieldDmg, ...rest, triggers: 'reduce-dmg', exec: () => { status.minusUseCnt(shieldDmg) } };
+                return { restDmg: restDmg - shieldDmg, ...rest, triggers: 'reduce-dmg', exec: () => status.minusUseCnt(shieldDmg) }
             }
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             this.UI.icon = STATUS_ICON.Barrier;
@@ -156,7 +123,7 @@ export class GIStatus {
             this.UI.icon = STATUS_ICON.DebuffCountered01;
             thandle = (status, event) => {
                 if (event.hcard?.type != CARD_TYPE.Event) return;
-                return { triggers: 'card', isInvalid: true, exec: () => { status.minusUseCnt() } }
+                return { triggers: 'card', isInvalid: true, exec: () => status.minusUseCnt() }
             }
         } else if (type.includes(STATUS_TYPE.NightSoul)) {
             const element = ELEMENT_ICON_NAME[Math.floor(id / 1e3) % 10];
@@ -185,35 +152,42 @@ export class GIStatus {
         // }
         this.handle = (status, event) => {
             const cmds = new CmdsGenerator();
-            const cmdsBefore = new CmdsGenerator();
-            const cmdsAfter = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event);
             const cevent = {
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
                 cmds,
-                cmdsBefore,
-                cmdsAfter,
             };
             if (cevent.reset) {
                 if (isReset) status.perCnt = pct;
                 return {}
             }
-            const handleRes = thandle(status, cevent, versionWrap(ver)) ?? {};
-            const handleCmds = new CmdsGenerator(cmds);
+            const builderRes = thandle(status, cevent, versionWrap(ver)) ?? {};
+            const { damage, element, heal, pdmg, isSelf, isPriority, skill, status: sts, statusOppo,
+                hidxs = isCdt(isSelf && status.group == STATUS_GROUP.heroStatus, cevent.hidx), summon, summonOppo,
+            } = builderRes;
+            if (!cmds.hasDamage && this.hasType(STATUS_TYPE.Attack)) {
+                if (damage) cmds.attack(damage, element, { hidxs, isOppo: !isSelf, isPriority });
+                if (pdmg) cmds.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs, isOppo: !isSelf });
+                if (heal) cmds.heal(heal, { hidxs });
+            }
+            if (sts) cmds.getStatus(sts);
+            if (statusOppo) cmds.getStatus(statusOppo, { isOppo: true });
+            if (summon) cmds.getSummon(summon);
+            if (summonOppo) cmds.getSummon(summonOppo, { isOppo: true });
+            if (skill) cmds.useSkill({ skillId: skill });
             const res: StatusHandleRes = {
-                ...handleRes,
+                ...builderRes,
                 cmds,
-                cmdsBefore,
-                triggers: isCdt(handleRes.triggers, convertToArray(handleRes.triggers) as Trigger[]),
-                exec: (eStatus, execEvent) => {
-                    cmds.clear().addCmds(handleCmds);
-                    return handleRes.exec?.(eStatus, execEvent);
-                },
+                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
+                hidxs: isCdt(builderRes.hidxs, convertToArray(builderRes.hidxs) as number[]),
             }
             return res;
         }
+    }
+    get isDestroy() {
+        return (this.roundCnt == 0 || this.useCnt == 0 && !this.hasType(STATUS_TYPE.Accumulate)) && !this.hasType(STATUS_TYPE.NonDestroy);
     }
     setEntityId(id: number): Status {
         this.entityId = id;
@@ -255,6 +229,8 @@ export class GIStatus {
     dispose(): void {
         this.useCnt = 0;
         this.roundCnt = 0;
+        const nonDestroy = this.type.indexOf(STATUS_TYPE.NonDestroy);
+        if (nonDestroy > -1) this.type.splice(nonDestroy, 1);
     }
 }
 

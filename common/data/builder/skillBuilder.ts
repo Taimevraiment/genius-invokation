@@ -16,18 +16,16 @@ export interface SkillHandleEvent extends EntityHandleEvent {
 
 export type SkillHandleRes = {
     triggers?: Trigger[],
+    dmgElement?: ElementType,
     addDmgCdt?: number,
-    addPdmg?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
     statusAfter?: (number | [number, ...any | Status])[] | number,
     statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
     cmds: CmdsGenerator,
-    cmdsAfter?: CmdsGenerator,
-    cmdsBefore?: CmdsGenerator,
     minusDiceSkill?: MinusDiceSkill,
     isNotAddTask?: boolean,
-    summonTriggers?: Trigger[],
+    summonTrigger?: Trigger[],
     isForbidden?: boolean,
     energy?: number,
     restDmg?: number,
@@ -41,26 +39,9 @@ export type SkillHandleRes = {
     isTrigger?: boolean,
     isInvalid?: boolean,
     exec?: () => void,
-    // todo 更新时要去掉
-    hidxs?: number[],
-    status?: (number | [number, ...any])[] | number,
-    statusOppo?: (number | [number, ...any])[] | number,
-    equip?: number,
-    summon?: (number | [number, ...any])[] | number,
-    statusPre?: (number | [number, ...any] | Status)[] | number,
-    statusOppoPre?: (number | [number, ...any] | Status)[] | number,
-    summonPre?: (number | [number, ...any] | Summon)[] | number,
-    heal?: number,
-    dmgElement?: ElementType,
-    pdmg?: number,
-    pdmgSelf?: number,
-    atkOffset?: number,
-    atkTo?: number,
-    isAttach?: boolean,
-    isAttachOppo?: boolean,
 }
 
-type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTriggers' | 'triggers'> & {
+type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTrigger' | 'triggers'> & {
     hidxs?: number[],
     status?: (number | [number, ...any])[] | number,
     statusOppo?: (number | [number, ...any])[] | number,
@@ -70,7 +51,6 @@ type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTriggers' | 't
     statusOppoPre?: (number | [number, ...any] | Status)[] | number,
     summonPre?: (number | [number, ...any] | Summon)[] | number,
     heal?: number,
-    dmgElement?: ElementType,
     pdmg?: number,
     pdmgSelf?: number,
     atkOffset?: number,
@@ -78,7 +58,7 @@ type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTriggers' | 't
     isAttach?: boolean,
     isAttachOppo?: boolean,
     cmds?: CmdsGenerator,
-    summonTriggers?: Trigger | Trigger[],
+    summonTrigger?: Trigger | Trigger[],
     triggers?: Trigger | Trigger[],
 };
 
@@ -155,8 +135,6 @@ export class GISkill {
         this.addition = adt;
         this.handle = event => {
             const cmds = new CmdsGenerator();
-            const cmdsBefore = new CmdsGenerator();
-            const cmdsAfter = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event);
             const cevent: SkillBuilderHandleEvent = {
@@ -164,20 +142,15 @@ export class GISkill {
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
                 cmds,
-                cmdsBefore,
-                cmdsAfter,
             };
-            const { reset, hero, skill } = cevent;
+            const { reset, hero, skill, combatStatus, eheros } = cevent;
             const builderRes = handle?.(cevent, versionWrap(ver)) ?? { cmds };
             const res: SkillHandleRes = {
                 ...builderRes,
                 cmds,
-                cmdsAfter,
-                cmdsBefore,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
-                summonTriggers: isCdt(builderRes.summonTriggers, convertToArray(builderRes.summonTriggers) as Trigger[]),
+                summonTrigger: isCdt(builderRes.summonTrigger, convertToArray(builderRes.summonTrigger) as Trigger[]),
             }
-            if (skill.isReadySkill) return res;
             if (reset) {
                 skill.useCntPerRound = 0;
                 skill.perCnt = pct;
@@ -185,8 +158,10 @@ export class GISkill {
             }
             let { dmgElement, atkOffset } = builderRes;
             const sevent = { ...event, hidx: hero.hidx };
-            for (const ist of hero.heroStatus) {
-                const stsres = ist.handle(ist, sevent) ?? {};
+            const statuses = [...hero.heroStatus];
+            if (hero.isFront) statuses.push(...combatStatus);
+            for (const ist of statuses) {
+                const stsres = ist.handle(ist, sevent);
                 if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && skill.dmgElement == DAMAGE_TYPE.Physical) {
                     dmgElement = stsres.attachEl;
                 }
@@ -194,47 +169,49 @@ export class GISkill {
             }
             if (sevent.trigger == 'skill' && !skill.isPassive) {
                 for (const ski of hero.skills.filter(s => s.isPassive)) {
-                    const skires = ski.handle({ ...clone(sevent), skill: ski }) ?? {};
+                    const skires = ski.handle({ ...clone(sevent), skill: ski });
                     if (skires.triggers?.includes('skill')) {
                         dmgElement = skires.dmgElement;
                     }
                 }
             }
-            dmgElement ??= skill.dmgElement;
-            // const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,
-            //     statusOppo, summon, equip, isAttach, isAttachOppo } = builderRes;
-            // if (heal) cmds.unshift.heal(heal, { hidxs });
-            // if (pdmgSelf) cmds.unshift.attack(pdmgSelf, DAMAGE_TYPE.Pierce, { hidxs: hero.hidx, isOppo: false });
-            // if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
-            // if (isAttachOppo) cmds.unshift.attach({ hidxs: eheros.frontHidx, isOppo: true });
-            // if (isAttach) cmds.unshift.attach({ hidxs });
-            // if (!cmds.hasCmds('attack') && skill.damage) cmds.unshift.attack();
-            // cmds.unshift
-            //     .getSummon(summonPre)
-            //     .getStatus(statusOppoPre, { hidxs, isOppo: true })
-            //     .getStatus(statusPre, { hidxs })
-            //     .push
-            //     .equip(hero.hidx, equip)
-            //     .getStatus(status, { hidxs: hidxs ?? (skill.isPassive ? hero.hidx : hidxs) })
-            //     .getStatus(statusOppo, { hidxs, isOppo: true })
-            //     .getSummon(summon);
-            // if (skill.cost[2].cnt >= 0) {
-            //     if (skill.cost[2].cnt == 0) cmds.getEnergy(1);
-            //     else cmds.getEnergy(-skill.cost[2].cnt);
-            // }
-            // if (skill.damage) {
-            //     cmds.value.forEach(c => {
-            //         if (c.cmd != 'attack') return;
-            //         c.cnt ??= skill.damage;
-            //         c.element ??= skill.dmgElement == DAMAGE_TYPE.Physical ? dmgElement : skill.dmgElement;
-            //         if (c.element == DAMAGE_TYPE.Pierce && !c.hidxs) c.hidxs = eheros.getBackHidxs();
-            //         c.hidxs ??= [eheros.getFront({ offset: atkOffset })?.hidx ?? -1];
-            //     });
-            // }
+            dmgElement ??= skill.attachElement != DAMAGE_TYPE.Physical ? skill.attachElement : skill.dmgElement;
+            const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,
+                statusOppo, summon, equip, isAttach, isAttachOppo, addDmgCdt = 0, energy = 0 } = builderRes;
+            if (heal) cmds.unshift.heal(heal, { hidxs });
+            if (isAttachOppo) cmds.unshift.attach({ hidxs: eheros.frontHidx, isOppo: true });
+            if (isAttach) cmds.unshift.attach({ hidxs });
+            if (!cmds.hasCmds('attack')) {
+                if (pdmgSelf) cmds.unshift.attack(pdmgSelf, DAMAGE_TYPE.Pierce, { hidxs: hero.hidx, isOppo: false });
+                if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
+                if (skill.damage) cmds.unshift.attack();
+            }
+            if (!cmds.hasCmds('attack', 'heal', 'addMaxHp')) cmds.unshift.attack();
+            cmds.unshift
+                .getSummon(summonPre)
+                .getStatus(statusOppoPre, { hidxs, isOppo: true })
+                .getStatus(statusPre, { hidxs })
+                .push
+                .equip(hero.hidx, equip)
+                .getEnergy(energy)
+                .getStatus(status, { hidxs: hidxs ?? (skill.isPassive ? hero.hidx : hidxs) })
+                .getStatus(statusOppo, { hidxs, isOppo: true })
+                .getSummon(summon);
+            if (skill.cost[2].cnt >= 0) {
+                if (skill.cost[2].cnt == 0) cmds.getEnergy(1, { hidxs: hero.hidx });
+                else cmds.unshift.getEnergy(-skill.cost[2].cnt, { hidxs: hero.hidx }).res;
+            }
+            if (skill.damage) {
+                cmds.value.forEach(c => {
+                    if (c.cmd != 'attack') return;
+                    c.cnt ??= skill.damage + skill.dmgChange + addDmgCdt;
+                    c.element ??= skill.dmgElement == DAMAGE_TYPE.Physical ? dmgElement : skill.dmgElement;
+                    if (c.element == DAMAGE_TYPE.Pierce && !c.hidxs) c.hidxs = eheros.getBackHidxs();
+                    c.hidxs ??= [eheros.getFront({ offset: atkOffset })?.hidx ?? -1];
+                });
+            }
             return {
                 ...res,
-                dmgElement,
-                atkOffset,
                 exec: () => {
                     res.exec?.();
                     ++skill.useCnt;
@@ -251,6 +228,15 @@ export class GISkill {
     }
     get isPassive() {
         return this.type == SKILL_TYPE.Passive || this.type == SKILL_TYPE.PassiveHidden;
+    }
+    get isHeroSkill() {
+        return this.type != SKILL_TYPE.Vehicle;
+    }
+    addPerCnt(n: number = 1): void {
+        this.perCnt += n;
+    }
+    minusPerCnt(n: number = 1): void {
+        this.perCnt -= n;
     }
 }
 

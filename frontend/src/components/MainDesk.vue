@@ -108,7 +108,7 @@
                 supportCnt[getGroup(saidx)][siidx] >= -support.cnt ? "-" : "" }}
             </StrokedText>
             <StrokedText v-if="supportCnt[getGroup(saidx)][siidx] >= -support.cnt">
-              {{ Math.abs(supportCnt[getGroup(saidx)][siidx]) }}
+              {{ Math.floor(Math.abs(supportCnt[getGroup(saidx)][siidx])) }}
             </StrokedText>
           </div>
           <img class="support-bottom-icon" v-if="support.heal > 0" :src="getPngIcon('Element_Heal')" />
@@ -153,7 +153,6 @@
               <div :class="{ 'slot-can-use': hero.vehicleSlot[0].perCnt + hero.vehicleSlot[1].perCnt > 0 }"></div>
             </div>
           </template>
-          <!-- </div> -->
           <div class="hero-equipment" v-if="hero && hero.hp >= 0">
             <div class="hero-weapon" v-if="hero.weaponSlot != null"
               :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Weapon]] }">
@@ -182,11 +181,16 @@
                 {{ elTips[hgi][hidx][0] }}
               </div>
             </template>
-            <template v-if="hero.hp > 0">
+            <template v-if="hero.hp > 0 && willAttachs[hgi][hidx].length == 0">
               <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px;" />
-              <img class="will-attach"
-                v-for="(attach, waidx) in willAttachs[hgi][hidx]?.filter(wa => wa != ELEMENT_TYPE.Physical)"
-                :key="waidx" :src="ELEMENT_URL[attach]" />
+            </template>
+            <template v-else>
+              <template v-for="(attach, waidx) in willAttachs[hgi][hidx]" :key="waidx">
+                <img v-if="!Array.isArray(attach)" class="will-attach" :src="ELEMENT_URL[attach]" alt="">
+                <div v-else class="will-attach-bg">
+                  <img class="will-attach" v-for="(wa, waiidx) in attach" :key="waiidx" :src="ELEMENT_URL[wa]" alt="">
+                </div>
+              </template>
             </template>
           </div>
           <div class="instatus" v-if="phase >= PHASE.DICE">
@@ -334,7 +338,7 @@
             'will-add': true,
           }" :style="{
             borderImageSource: `url(${getPngIcon(`Preview${summonCnt[getGroup(saidx)][suidx] > 0 ? 3 : summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50) ? 1 : 2}`)})`,
-          }" v-if="summonCnt[getGroup(saidx)][suidx] != 0">
+          }" v-if="summonCnt[getGroup(saidx)][suidx] != 0 && !summon?.UI.isWill">
             <img
               v-if="summonCnt[getGroup(saidx)][suidx] <= -summon.useCnt && (summon.isDestroy == SUMMON_DESTROY_TYPE.Used || summonCnt[getGroup(saidx)][suidx] < -50)"
               :src="getSvgIcon('die')" style="height: 16px;" />
@@ -568,7 +572,7 @@ const heroDOMs = ref<NodeListOf<Element>>();
 const atkPidx = computed<number>(() => props.client.damageVO.atkPidx ?? -1);
 const atkHidx = computed<number>(() => props.client.damageVO.atkHidx ?? -1);
 const tarHidx = computed<number>(() => props.client.damageVO.tarHidx ?? -1);
-const willAttachs = computed<ElementType[][][]>(() => wrapArr(props.client.willAttachs ?? []));
+const willAttachs = computed<(ElementType | [ElementType, ElementType])[][][]>(() => wrapArr(props.client.willAttachs.flat()));
 let isAnimating = false;
 const willDamages = computed<number[][][]>(() => {
   const dmgs: number[][][] = wrapArr(props.client.damageVO.willDamages ?? []);
@@ -997,7 +1001,7 @@ const mouseup = () => {
 
 .hero-equipment {
   position: absolute;
-  top: 20%;
+  top: 26%;
   left: -20%;
   width: 30%;
   z-index: 1;
@@ -1010,7 +1014,7 @@ const mouseup = () => {
   position: relative;
   left: 35%;
   width: 100%;
-  border: 2px solid #525252;
+  border: 2px solid #a29d88;
   border-radius: 50%;
   background: #d2d493;
   display: flex;
@@ -1046,7 +1050,8 @@ const mouseup = () => {
 .will-heal {
   position: absolute;
   top: 5px;
-  left: 30%;
+  left: 50%;
+  transform: translateX(-50%);
   height: 23px;
   line-height: 20px;
   /* border-radius: 10px; */
@@ -1114,16 +1119,21 @@ const mouseup = () => {
 }
 
 .attach-element {
-  width: 2000%;
   position: absolute;
   top: -23px;
   left: 50%;
   transform: translateX(-50%);
-  text-align: center;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  z-index: 5;
 }
 
 .el-tip {
+  min-width: 50px;
+  text-align: center;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -1150,6 +1160,18 @@ const mouseup = () => {
   --blink-opacity: 0.5;
   animation: blink 1s linear infinite alternate;
   z-index: 5;
+}
+
+.will-attach-bg {
+  width: 50px;
+  background-color: #0000002b;
+  border-radius: 25px;
+  --blink-opacity: 0.5;
+  animation: blink 1s linear infinite alternate;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  padding: 1px 0;
 }
 
 .damages {
@@ -2005,27 +2027,27 @@ svg {
 
 @keyframes eltips {
   0% {
-    top: 0px;
+    top: 3px;
     opacity: 0;
   }
 
   15% {
-    top: 0px;
+    top: 3px;
     opacity: 0;
   }
 
   40% {
-    top: -8px;
+    top: -5px;
     opacity: 1;
   }
 
   80% {
-    top: -8px;
+    top: -5px;
     opacity: 1;
   }
 
   100% {
-    top: -8px;
+    top: -5px;
     opacity: 0;
   }
 }

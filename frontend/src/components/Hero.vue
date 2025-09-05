@@ -89,7 +89,7 @@ const isBlink = computed(() => props.isBlink);
 const hpCurcnt = computed(() => props.hpChange);
 const energyCnt = computed(() => props.energyCnt ?? 0);
 const combatStatus = computed(() => props.combatStatus ?? []);
-const hpPosY = computed(() => props.hpPosY ?? '-8%');
+const hpPosY = computed(() => props.hpPosY ?? '-5%');
 const isHideHp = computed(() => props.isHideHp ?? false);
 const isHideEnergy = computed(() => props.isHideEnergy ?? false);
 const isHideBorder = computed(() => props.isHideBorder ?? false);
@@ -149,7 +149,7 @@ const getEnergyIcon = (isCharged: boolean = false, isSp: boolean = false, isFull
 
 .hero-hp {
     position: absolute;
-    left: -10%;
+    left: -20%;
     width: 45%;
     aspect-ratio: 1/1;
     display: flex;

@@ -74,6 +74,15 @@ export class GIHero {
     get heroFields(): (Card | Status)[] {
         return [...this.heroStatus, ...this.equipments].sort((a, b) => b.entityId - a.entityId);
     }
+    get hertHp() {
+        return this.maxHp - this.hp;
+    }
+    get isHert() {
+        return this.hp > 0 && this.hertHp > 0;
+    }
+    get isFullEnergy() {
+        return this.energy == this.maxEnergy;
+    }
 }
 
 export class HeroBuilder extends BaseCostBuilder {
