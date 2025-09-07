@@ -46,6 +46,7 @@ type Player = {
     pidx: number, // 玩家序号
     hidx: number, // 出战角色序号
     isFallAtk: boolean, // 是否为下落攻击状态
+    isChargedAtk: boolean, // 是否为重击
     canAction: boolean, // 是否可以行动
     playerInfo: GameInfo,
     isOffline: boolean,

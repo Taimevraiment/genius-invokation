@@ -25,6 +25,7 @@ export const INIT_PLAYER: () => Player = () => ({
     hidx: -1,
     deckIdx: -1,
     isFallAtk: false,
+    isChargedAtk: false,
     canAction: false,
     isOffline: false,
     playerInfo: {

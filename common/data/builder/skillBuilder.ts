@@ -20,8 +20,6 @@ export type SkillHandleRes = {
     addDmgCdt?: number,
     multiDmgCdt?: number,
     isQuickAction?: boolean,
-    statusAfter?: (number | [number, ...any | Status])[] | number,
-    statusOppoAfter?: (number | [number, ...any] | Status)[] | number,
     cmds: CmdsGenerator,
     minusDiceSkill?: MinusDiceSkill,
     isNotAddTask?: boolean,
@@ -136,7 +134,7 @@ export class GISkill {
         this.handle = event => {
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
-            const pevent = getEntityHandleEvent(pidx, players, event);
+            const pevent = getEntityHandleEvent(pidx, players, event, event.skill);
             const cevent: SkillBuilderHandleEvent = {
                 swirlEl: ELEMENT_TYPE.Anemo,
                 ...pevent,
@@ -182,9 +180,9 @@ export class GISkill {
             if (isAttachOppo) cmds.unshift.attach({ hidxs: eheros.frontHidx, isOppo: true });
             if (isAttach) cmds.unshift.attach({ hidxs });
             if (!cmds.hasCmds('attack')) {
-                if (pdmgSelf) cmds.unshift.attack(pdmgSelf, DAMAGE_TYPE.Pierce, { hidxs: hero.hidx, isOppo: false });
+                if (pdmgSelf) cmds.unshift.attack(pdmgSelf, DAMAGE_TYPE.Pierce, { hidxs: hidxs ?? hero.hidx, isOppo: false });
                 if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
-                if (skill.damage) cmds.unshift.attack();
+                if (skill.damage || addDmgCdt) cmds.unshift.attack();
             }
             if (!cmds.hasCmds('attack', 'heal', 'addMaxHp')) cmds.unshift.attack();
             cmds.unshift
@@ -201,7 +199,7 @@ export class GISkill {
                 if (skill.cost[2].cnt == 0) cmds.getEnergy(1, { hidxs: hero.hidx });
                 else cmds.unshift.getEnergy(-skill.cost[2].cnt, { hidxs: hero.hidx }).res;
             }
-            if (skill.damage) {
+            if (skill.damage || addDmgCdt) {
                 cmds.value.forEach(c => {
                     if (c.cmd != 'attack') return;
                     c.cnt ??= skill.damage + skill.dmgChange + addDmgCdt;

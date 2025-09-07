@@ -121,7 +121,7 @@ export class ArrayHero extends Array<Hero> {
         return this.findIndex(h => h.isFront);
     }
     get hasHert() {
-        return this.some(h => h.isHert);
+        return this.some(h => h.isHurted);
     }
     get(id: number) {
         return getObjById(this, id);
@@ -171,12 +171,12 @@ export class ArrayHero extends Array<Hero> {
     getMaxHertHidxs(options: { isBack?: boolean } = {}) {
         const { isBack = false } = options;
         if (this.frontHidx == -1) return [];
-        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hertHp));
+        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hurtHp));
         if (maxHert == 0) return [];
         const hidxs: number[] = [];
         for (let i = +isBack; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
-            if (this[hidx].hp > 0 && this[hidx].hertHp == maxHert) {
+            if (this[hidx].hp > 0 && this[hidx].hurtHp == maxHert) {
                 hidxs.push(hidx);
                 break;
             }
@@ -186,11 +186,11 @@ export class ArrayHero extends Array<Hero> {
     // 获取受伤最少的角色的hidx(最多一个number的数组)
     getMinHertHidxs() {
         if (this.frontHidx == -1) return [];
-        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.hertHp));
+        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.hurtHp));
         const hidxs: number[] = [];
         for (let i = 0; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
-            if (this[hidx].hp > 0 && this[hidx].hertHp == minHert) {
+            if (this[hidx].hp > 0 && this[hidx].hurtHp == minHert) {
                 hidxs.push(hidx);
                 break;
             }
@@ -299,8 +299,6 @@ export interface EntityHandleEvent {
     isMinusDiceCard: boolean,
     isMinusDiceTalent: boolean,
     minusDiceCard: number,
-    isMinusDiceSkill: boolean,
-    minusDiceSkill: number[][],
     dmgedHidx: number,
     getdmg: number[],
     dmg: number[],
@@ -330,7 +328,10 @@ export interface EntityBuilderHandleEvent extends EntityHandleEvent {
     isMinusDiceWeapon: boolean,
     isMinusDiceRelic: boolean,
     isMinusDiceVehicle: boolean,
+    isMinusDiceSkill: boolean,
+    minusDiceSkill: number[][],
     cmds: CmdsGenerator,
+    eDmgedHero: Hero,
 }
 
 export interface EntityHandleRes {

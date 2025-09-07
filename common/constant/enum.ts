@@ -298,9 +298,9 @@ export const SKILL_TYPE = {
 export type SkillType = TypeConst<typeof SKILL_TYPE>;
 
 export const SUMMON_DESTROY_TYPE = {
-    Used: 0, // 次数用完直接销毁
-    UsedRoundEnd: 1, // 次数用完后，回合结束时销毁
-    RoundEnd: 2, // 回合结束时强制销毁
+    Used: 'Used', // 次数用完直接销毁
+    UsedRoundEnd: 'UsedRoundEnd', // 次数用完后，回合结束时销毁
+    RoundEnd: 'RoundEnd', // 回合结束时强制销毁
 } as const;
 
 export type SummonDestroyType = TypeConst<typeof SUMMON_DESTROY_TYPE>;

@@ -3,11 +3,9 @@ import { DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../..
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
-export interface SupportHandleEvent extends EntityHandleEvent {
-    usedDice: number,
-}
+export interface SupportHandleEvent extends EntityHandleEvent { }
 
 export type SupportHandleRes = {
     triggers?: Trigger[],
@@ -32,6 +30,8 @@ export type SupportExecRes = {
     summon?: (number | [number, ...any])[] | number,
 }
 
+export interface SupportBuilderHandleEvent extends SupportHandleEvent, Omit<EntityBuilderHandleEvent, 'cmds'> { }
+
 type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers' | 'exec'> & {
     summon?: (number | [number, ...any])[] | number,
     triggers?: Trigger | Trigger[],
@@ -49,7 +49,7 @@ export class GISupport {
 
     constructor(
         card: Card, cnt: number, perCnt: number, type: SupportType,
-        handle: ((support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined,
+        handle: ((support: Support, event: SupportBuilderHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined,
         heal = 0, ver: Version = VERSION[0],
     ) {
         this.card = card;
@@ -63,9 +63,8 @@ export class GISupport {
                 return {}
             }
             const { players, pidx, ...oevent } = event;
-            const pevent = getEntityHandleEvent(pidx, players, event);
-            const cevent: SupportHandleEvent = {
-                usedDice: 0,
+            const pevent = getEntityHandleEvent(pidx, players, event, support);
+            const cevent = {
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
             };
@@ -95,7 +94,7 @@ export class SupportBuilder extends BaseBuilder {
     private _perCnt: VersionMap<number> = new VersionMap();
     private _type: VersionMap<SupportType> = new VersionMap();
     private _heal: number = 0;
-    private _handle: ((support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined = () => ({});
+    private _handle: ((support: Support, event: SupportBuilderHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined = () => ({});
     constructor() {
         super();
     }
@@ -129,7 +128,7 @@ export class SupportBuilder extends BaseBuilder {
         this._heal = heal;
         return this;
     }
-    handle(handle: (support: Support, event: SupportHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) {
+    handle(handle: (support: Support, event: SupportBuilderHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) {
         this._handle = handle;
         return this;
     }

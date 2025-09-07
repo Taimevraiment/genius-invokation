@@ -1,7 +1,8 @@
 import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
 import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
+import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
-import { EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
+import { EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 检查骰子是否合法
@@ -56,7 +57,8 @@ export const getObjIdxById = <T extends { id: number }, U extends keyof T>(obj: 
 }
 
 // 根据id提取角色id
-export const getHidById = (id: number): number => {
+export const getHidById = (id?: number): number => {
+    if (id == undefined) return -1;
     const [first] = id.toString();
     if (first != '1' && first != '2') return 0;
     return Math.floor(id / 10) % 1e4;
@@ -146,6 +148,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}isOffline: ${player.isOffline}\n`
         + `${prefix1}canAction: ${player.canAction}\n`
         + `${prefix1}isFallAtk: ${player.isFallAtk}\n`
+        + `${prefix1}isChargedAtk: ${player.isChargedAtk}\n`
         + `${prefix1}dice: ${player.dice.map(d => `[${d}]`).join('')}\n`
         + `${prefix1}rollCnt: ${player.rollCnt}\n`
         + `${prefix1}status: ${player.status}\n`
@@ -315,10 +318,12 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
         + `${prefix}}\n`;
 }
 
-export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>>(pidx: number, players: Player[], event: T) => {
+export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>, U extends { id?: number, entityId?: number }>
+    (pidx: number, players: Player[], event: T, entity: U):
+    Omit<EntityBuilderHandleEvent, 'cmds' | 'randomInArr' | 'randomInt' | 'getCardIds'> => {
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
-    const { hidx = player.hidx, isMinusDiceCard = false, hcard = null, skill } = event;
+    const { hidx = player.hidx ?? 0, isMinusDiceCard = false, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0 } = event;
     const hero = player.heros[hidx];
     return {
         pidx,
@@ -351,21 +356,21 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         switchHeroDiceCnt: 0,
         isQuickAction: false,
         hcard,
-        isChargedAtk: false,
+        isChargedAtk: player.isChargedAtk,
         isFallAtk: player.isFallAtk && skill?.type == SKILL_TYPE.Normal,
         round: 1,
         restDmg: -1,
         isSummon: -1,
-        isExec: false,
         isMinusDiceCard,
         minusDiceCard: 0,
-        isMinusDiceSkill: false,
+        isMinusDiceSkill: !!skill?.costChange[2].includes(entity.entityId ?? entity.id ?? -1),
         isMinusDiceTalent: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Talent),
         isMinusDiceWeapon: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Weapon),
         isMinusDiceRelic: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Relic),
         isMinusDiceVehicle: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle),
-        minusDiceSkill: [],
-        dmgedHidx: opponent.hidx,
+        minusDiceSkill: skill?.costChange[3] ?? [], // 技能当前被x减费后留存的骰子数
+        dmgedHidx,
+        eDmgedHero: opponent.heros[dmgedHidx] ?? NULL_HERO(),
         getdmg: player.heros.map(() => -1),
         dmg: player.heros.map(() => -1),
         hasDmg: false,

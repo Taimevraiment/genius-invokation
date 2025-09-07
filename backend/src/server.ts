@@ -379,12 +379,16 @@ app.get('/login', (req, res) => {
                 let data: any = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
-                    data = JSON.parse(data);
-                    let area: any = [];
-                    for (let i = 1; i <= 3; ++i) {
-                        if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
+                    try {
+                        data = JSON.parse(data);
+                        let area: any = [];
+                        for (let i = 1; i <= 3; ++i) {
+                            if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
+                        }
+                        tplayer.location = area.join('-');
+                    } catch (e) {
+                        console.info(data);
                     }
-                    tplayer.location = area.join('-');
                 });
             });
         }

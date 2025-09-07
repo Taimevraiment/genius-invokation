@@ -953,7 +953,7 @@ export default class GeniusInvokationClient {
         const { isOnlyRead = false } = options;
         const skidx = this.skills.findIndex(sk => sk.id == skid);
         const isExec = !isOnlyRead && this.modalInfo.skidx == skidx && this.isValid;
-        if (skid > -1) this.currSkill = this.getFrontHero().skills.find(sk => sk.id == skid)!;
+        if (skid > -1) this.currSkill = [this.getFrontHero().vehicleSlot?.[1], ...this.getFrontHero().skills].find(sk => sk?.id == skid)!;
         if (this.currCard.id <= 0 && skid > -1 && !isExec) {
             this.modalInfo = {
                 version: this.version,

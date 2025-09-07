@@ -73,7 +73,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = heros.getMaxHertHidxs();
             const isHeal = hero.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
-            const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHert;
+            const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHurted;
             if (isHeal) triggers.push('after-skilltype1');
             return {
                 triggers,
@@ -197,11 +197,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png')
         .handle((summon, event, ver) => {
-            const { heros = [], atkHidx = -1, talent, trigger } = event;
+            const { heros, atkHidx, talent, trigger } = event;
             const triggers: Trigger[] = [];
             if (summon.useCnt == 0) triggers.push('phase-end');
             const hero = heros[atkHidx];
-            const cnt = isCdt(hero?.id == getHidById(summon.id) && trigger == 'after-skilltype1' && !!talent, ver.lt('v4.2.0') && !ver.isOffline ? 3 : 4);
+            const cnt = isCdt(hero?.id == getHidById(summon.id) && !!talent, ver.lt('v4.2.0') && !ver.isOffline ? 3 : 4);
             if (cnt) triggers.push('after-skilltype1');
             return {
                 triggers,
@@ -216,7 +216,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害\\；然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((_, event) => {
-            if (event.reset) return { triggers: 'enter', rCombatStatus: 113094 }
+            if (event.reset) return { triggers: 'enter', rCombatStatus: 113094, isNotAddTask: true, isOnlyPhaseEnd: true }
             return { triggers: 'phase-end' }
         }),
 
@@ -525,7 +525,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => {
             const { skill, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (getHidById(skill?.id ?? -1) != getHidById(summon.id) && summon.perCnt > 0) triggers.push('after-skill');
+            if (getHidById(skill?.id) != getHidById(summon.id) && summon.perCnt > 0) triggers.push('after-skill');
             return {
                 triggers,
                 exec: cmds => {
@@ -546,7 +546,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const { skill, isSummon = -1, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hid = getHidById(summon.id);
-            const isAddDmg = summon.perCnt > 0 && (getHidById(skill?.id ?? -1) == hid || getHidById(isSummon) == hid);
+            const isAddDmg = summon.perCnt > 0 && (getHidById(skill?.id) == hid || getHidById(isSummon) == hid);
             if (isAddDmg) triggers.push('Geo-dmg');
             return {
                 triggers,
@@ -650,12 +650,12 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【〖hro〗「普通攻击」后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
         .handle((summon, event, ver) => {
-            const { trigger = '', heros = [], atkHidx = -1, dmgedHidx = -1, talent, getdmg = [] } = event;
+            const { trigger, heros, atkHidx, dmgedHidx, talent, getdmg } = event;
             const triggers: Trigger[] = ['phase-end'];
             const atkHero = heros[atkHidx];
             const dmgedHero = heros[dmgedHidx];
             const isAtkHero = atkHero?.id == getHidById(summon.id);
-            const isDmgedHero = dmgedHero?.id == getHidById(summon.id) && (getdmg[dmgedHidx] ?? -1) != -1;
+            const isDmgedHero = dmgedHero?.id == getHidById(summon.id) && getdmg[dmgedHidx] != -1;
             const isTalent = isAtkHero && talent && talent.perCnt == -1 && ['after-skilltype1', 'after-skilltype2'].includes(trigger);
             if (ver.lt('v4.1.0') || isDmgedHero) triggers.push('get-elReaction');
             if (trigger == 'get-elReaction' && (ver.lt('v4.1.0') || isDmgedHero)) summon.minusUseCnt();

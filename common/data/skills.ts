@@ -12,8 +12,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     12104: () => new SkillBuilder('衡平推裁').description('{dealDmg}，如果生命值至少为6，则对自身造成1点[穿透伤害]，使伤害+1。')
         .normal().readySkill().damage(2).handle(event => {
-            const { hero: { hp } } = event;
-            if (hp >= 6) return { addDmgCdt: 1, pdmgSelf: 1 }
+            if (event.hero.hp >= 6) return { addDmgCdt: 1, pdmgSelf: 1 }
         }),
 
     12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于「始基力:荒性」形态，召唤【smn112111】。；（【hro】处于「始基力:芒性」形态时，会改为召唤【smn112112】。）')

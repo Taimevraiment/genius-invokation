@@ -20,12 +20,14 @@ export interface StatusHandleRes extends EntityHandleRes {
     atkOffset?: number,
     isFallAtk?: boolean,
     source?: number,
+    exec?: () => boolean,
 }
 
-export interface StatusBuilderHandleRes extends Omit<StatusHandleRes, 'triggers' | 'hidxs'> {
+export interface StatusBuilderHandleRes extends Omit<StatusHandleRes, 'triggers' | 'hidxs' | 'exec'> {
     skill?: number,
     triggers?: Trigger | Trigger[],
     hidxs?: number | number[],
+    exec?: () => any;
 };
 
 export interface StatusBuilderHandleEvent extends StatusHandleEvent, EntityBuilderHandleEvent { };
@@ -153,7 +155,7 @@ export class GIStatus {
         this.handle = (status, event) => {
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
-            const pevent = getEntityHandleEvent(pidx, players, event);
+            const pevent = getEntityHandleEvent(pidx, players, event, status);
             const cevent = {
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
@@ -167,7 +169,7 @@ export class GIStatus {
             const { damage, element, heal, pdmg, isSelf, isPriority, skill, status: sts, statusOppo,
                 hidxs = isCdt(isSelf && status.group == STATUS_GROUP.heroStatus, cevent.hidx), summon, summonOppo,
             } = builderRes;
-            if (!cmds.hasDamage && this.hasType(STATUS_TYPE.Attack)) {
+            if (this.hasType(STATUS_TYPE.Attack)) {
                 if (damage) cmds.attack(damage, element, { hidxs, isOppo: !isSelf, isPriority });
                 if (pdmg) cmds.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs, isOppo: !isSelf });
                 if (heal) cmds.heal(heal, { hidxs });
@@ -182,6 +184,7 @@ export class GIStatus {
                 cmds,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
                 hidxs: isCdt(builderRes.hidxs, convertToArray(builderRes.hidxs) as number[]),
+                exec: () => builderRes.exec?.() === true,
             }
             return res;
         }

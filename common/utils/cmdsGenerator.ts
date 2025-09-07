@@ -277,10 +277,6 @@ export default class CmdsGenerator {
     getCmdCnt(cmd1: Cmd) {
         return this.value.find(({ cmd }) => cmd == cmd1)?.cnt;
     }
-    reverse() {
-        this.value.reverse();
-        return this;
-    }
     order() {
         this.value.forEach((cmds, i) => cmds.mode = i);
         return this;

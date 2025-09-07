@@ -411,7 +411,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('圣仪·灰鸰衒潮').description('{dealDmg}，生成【sts112072】。')
                 .src('https://patchwiki.biligame.com/images/ys/f/fc/ipi3ncx8dl44m9og51z6g72pu1mux41.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/65b29af9633d647a90b9ff0acd90d750_1308512450439952516.png')
-                .burst(2).damage(2).cost(3).handle(event => ({ status: [[112072, !!event.talent]] }))
+                .burst(2).damage(2).cost(3).handle(({ talent }) => ({ status: [[112072, !!talent]] }))
         ),
 
     1208: () => new HeroBuilder(16).name('妮露').since('v4.2.0').sumeru().hydro().sword()
@@ -478,10 +478,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Char_AvatarIcon_FurinaOusia.webp')
         .normalSkill(new NormalSkillBuilder('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
             .handle(event => {
-                const { skill, hcards = [], cmds } = event;
+                const { skill, hcards, cmds } = event;
                 if (skill.perCnt <= 0 || hasObjById(hcards, 112113)) return;
-                cmds.getCard(1, { card: 112113 })
-                return { exec: () => { --skill.perCnt } }
+                cmds.getCard(1, { card: 112113 });
+                return { exec: () => skill.minusPerCnt() }
             }))
         .skills(
             skillTotal[12112](),
@@ -512,9 +512,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/55/m43lxh8gyu0yaq70sczycvsk9sforzc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/8a6a3792e47546b5ec81ee636445c4d8_6392784692082623561.png')
                 .passive().handle(event => {
-                    const { hero, heros, source, combatStatus, trigger, cmds } = event;
+                    const { hero, heros, combatStatus, trigger, cmds } = event;
                     const triggers: Trigger[] = ['game-start', 'killed'];
-                    if (source == 122) triggers.push('status-destroy');
                     if (trigger == 'game-start') cmds.getStatus(112136, { hidxs: heros.allHidxs() });
                     if (trigger == 'switch-to' && hasObjById(combatStatus, 112101) && !hero.isFullEnergy) {
                         triggers.push('switch-to');
@@ -546,7 +545,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(112141).getNightSoul(2), {
                         equip: 112142,
-                        isForbidden: hasObjById(heroStatus, 112141)
+                        isForbidden: heroStatus.has(112141),
                     })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/20/deylgtgmao0abaizxdec4d3ya8ivhoq.png',
@@ -596,7 +595,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('美妙旅程').description('{dealDmg}，生成【sts113031】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/13/avxfgtbz3r8qu7zk71dcr8kk3e949zi.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6cdff59fc3701119002ab7cb38157a2c_8058649649755407178.png')
-                .burst(2).damage(2).cost(4).handle(event => ({ statusAfter: [[113031, !!event.talent]] }))
+                .burst(2).damage(2).cost(4).handle(event => ({ status: [[113031, !!event.talent]] }))
         ),
 
     1304: () => new HeroBuilder(20).name('安柏').since('v3.7.0').offline('v2').maxHp(12).maxHp(10, 'v6.0.0', 'v2').mondstadt().pyro().bow()
@@ -658,8 +657,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/b/b0/cpmmff7d7wctcaepp47ix06vprvpsrs.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e2a7845bb7627390caddc5aebee27b65_4410957076093902563.png')
                 .burst(3).damage(4).cost(3).handle(event => {
-                    const { hero: { hp } } = event;
-                    const isHp6 = hp <= 6;
+                    const isHp6 = event.hero.hp <= 6;
                     return { heal: isHp6 ? 3 : 2, addDmgCdt: isCdt(isHp6, 1) }
                 })
         ),
@@ -687,11 +685,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('熔铁流狱').description('召唤【smn113093】\\；如果已存在【smn113093】，就先造成{dmg+1}点[火元素伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8c/k583v0pci7akj1fbcin40ogho11mxzr.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/b590f6bfaf00c68987b204aa33e937aa_4421699992460567189.png')
-                .elemental().cost(3).handle(event => {
-                    const { summons } = event;
-                    const isSmned = hasObjById(summons, 113093);
-                    return { summon: 113093, addDmgCdt: isCdt(isSmned, 1) }
-                }),
+                .elemental().cost(3).handle(({ summons }) => ({ summon: 113093, addDmgCdt: isCdt(summons.has(113093), 1) })),
             new SkillBuilder('炎啸狮子咬').description('{dealDmg}，然后[准备技能]：【rsk13095】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/7f/ap84alhaz0b3jc9uh4e2nl84at46do1.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/d4af1c58efe84398677b12a796a10091_49820199465503907.png')
@@ -1669,7 +1663,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(event => {
                     const { talent, heros = [] } = event;
                     const elements = heros.filter(h => h.hp > 0).map(h => h.element);
-                    return { statusAfter: [[117032, !!talent, elements.includes(ELEMENT_TYPE.Hydro)]] }
+                    return { status: [[117032, !!talent, elements.includes(ELEMENT_TYPE.Hydro)]] }
                 })
         ),
 

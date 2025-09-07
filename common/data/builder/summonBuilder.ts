@@ -5,7 +5,7 @@ import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface SummonHandleEvent extends EntityHandleEvent {
     tround: number,
@@ -39,7 +39,7 @@ export interface SummonExecRes {
     cmds: CmdsGenerator,
 }
 
-interface SummonBuilderHandleEvent extends SummonHandleEvent {
+interface SummonBuilderHandleEvent extends SummonHandleEvent, Omit<EntityBuilderHandleEvent, 'cmds'> {
     exec?: (cmds: CmdsGenerator) => SummonExecRes | void,
 }
 
@@ -83,7 +83,7 @@ export class GISummon {
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
         shieldOrHeal: number, damage: number, element: ElementType, curVersion: Version,
-        handle?: (summon: Summon, event: SummonHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined,
+        handle?: (summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
             spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[],
@@ -138,8 +138,8 @@ export class GISummon {
             }
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
-            const pevent = getEntityHandleEvent(pidx, players, event);
-            const cevent: SummonHandleEvent = {
+            const pevent = getEntityHandleEvent(pidx, players, event, summon);
+            const cevent = {
                 tround: 0,
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
@@ -206,13 +206,9 @@ export class GISummon {
     minusPerCnt(n: number = 1) {
         this.perCnt = Math.max(0, this.perCnt - n);
     }
-    dispose(isExec: boolean = true) {
-        if (isExec) {
-            this.isDestroy = SUMMON_DESTROY_TYPE.Used;
-            this.useCnt = 0;
-        } else {
-            this.useCnt = -100;
-        }
+    dispose() {
+        this.isDestroy = SUMMON_DESTROY_TYPE.Used;
+        this.useCnt = 0;
     }
 }
 
@@ -371,7 +367,7 @@ export class SummonBuilder extends BaseBuilder {
         this.addition('from', id);
         return this;
     }
-    handle(handle: (summon: Summon, event: SummonHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) {
+    handle(handle: (summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) {
         this._handle = handle;
         return this;
     }

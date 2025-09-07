@@ -74,7 +74,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 西风大教堂
     321006: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
-        if (!event.hero.isHert) return;
+        if (!event.hero.isHurted) return;
         return {
             triggers: 'phase-end',
             exec: cmds => (cmds.heal(2), { isDestroy: --support.cnt == 0 })
@@ -156,14 +156,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 镇守之森
     321012: () => new SupportBuilder().collection(4).collection(3, 'v6.0.0').handle((support, event, ver) => {
-        const { isFirst = true, dices = [], isMinusDiceSkill, usedDice = 0 } = event;
+        const { isFirst = true, isMinusDiceSkill, isChargedAtk } = event;
         if (ver.lt('v6.0.0')) {
             return {
                 triggers: isCdt(!isFirst, 'phase-start'),
                 exec: cmds => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: --support.cnt == 0 })
             }
         }
-        if ((dices.length + usedDice) % 2 == 1) return;
+        if (!isChargedAtk) return;
         return {
             triggers: 'skilltype1',
             minusDiceSkill: { skilltype1: [0, 1, 0] },

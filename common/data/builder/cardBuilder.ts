@@ -19,15 +19,18 @@ export interface CardHandleRes extends EntityHandleRes {
     canSelectHero?: boolean[],
     cnt?: number,
     isDestroy?: boolean,
+    exec?: () => boolean,
 }
 
 export interface CardBuilderHandleEvent extends CardHandleEvent, EntityBuilderHandleEvent {
     execmds: CmdsGenerator,
 }
 
-export interface CardBuilderHandleRes extends Omit<CardHandleRes, 'triggers' | 'element'> {
+export interface CardBuilderHandleRes extends Omit<CardHandleRes, 'triggers' | 'element' | 'hidxs' | 'exec'> {
     triggers?: Trigger | Trigger[],
     element?: DiceCostType,
+    hidxs?: number | number[],
+    exec?: () => boolean | void,
 }
 
 export class GICard {
@@ -119,23 +122,22 @@ export class GICard {
             if (isUseNightSoul) {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver);
-                    const { hero, trigger = '', execmds, cmds } = event;
-                    if (!hero) return res;
-                    const nightSoul = hero.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                    const { hero, trigger, execmds, cmds } = event;
+                    const nightSoul = hero.heroStatus.get(STATUS_TYPE.NightSoul);
                     if (!nightSoul) return res;
                     if (trigger == 'slot-destroy') {
                         if (!res?.triggers?.includes('slot-destroy')) {
                             cmds.clear();
                             execmds.clear();
                         }
-                        return { triggers: 'slot-destroy', exec: () => nightSoul.dispose() }
+                        return { triggers: 'slot-destroy', notLog: true, exec: () => nightSoul.dispose() }
                     }
                     if (destroyTriggers.includes(trigger) && nightSoul.useCnt == 0) {
                         if (!res?.triggers?.includes(trigger)) {
                             cmds.clear();
                             execmds.clear();
                         }
-                        return { triggers: destroyTriggers, isDestroy: true, exec: () => nightSoul.dispose() }
+                        return { triggers: destroyTriggers, isDestroy: true, notLog: true }
                     }
                     execmds.consumeNightSoul(hero.hidx);
                     return res;
@@ -182,7 +184,7 @@ export class GICard {
                     ...res,
                     status: [...ressts, 303300],
                     canSelectHero: res.canSelectHero != undefined ? res.canSelectHero :
-                        cmds?.hasCmds('heal') ? heros?.map(h => h.isHert) :
+                        cmds?.hasCmds('heal') ? heros?.map(h => h.isHurted) :
                             cmds.hasCmds('revive') ? heros?.map(h => h.hp <= 0 && !combatStatus.has(303307)) :
                                 res.canSelectHero,
                     notPreview: true,
@@ -196,11 +198,11 @@ export class GICard {
                 const ohandle = handle;
                 const cnt = hid * 10 + (userType as number) + 1;
                 handle = (card, event, ver) => {
-                    const { slotUse = false, cmds } = event;
+                    const { slotUse, cmds } = event;
                     const ohandleres = ohandle?.(card, event, ver);
-                    if (slotUse && !ohandleres?.cmds?.isUseSkill) {
+                    if (slotUse && !cmds.isUseSkill) {
                         cmds.useSkill({ skillId: cnt });
-                        return { triggers: 'skill', isValid: ohandleres?.isValid }
+                        return { triggers: 'skill', ...ohandleres }
                     }
                     return ohandleres;
                 }
@@ -244,7 +246,7 @@ export class GICard {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
-            const pevent = getEntityHandleEvent(pidx, players, event);
+            const pevent = getEntityHandleEvent(pidx, players, event, card);
             const cevent: CardBuilderHandleEvent = {
                 slotUse: false,
                 ...pevent,
@@ -258,7 +260,7 @@ export class GICard {
             }
             const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
             const { status, statusOppo, summon, summonOppo, support, supportOppo, hidxs, triggers, element } = builderRes;
-            cmds.getStatus(status, { hidxs })
+            (cevent.trigger ? execmds : cmds).getStatus(status, { hidxs })
                 .getStatus(statusOppo, { hidxs, isOppo: true })
                 .getSummon(summon, { destroy: 1 })
                 .getSummon(summonOppo, { isOppo: true, destroy: 1 })
@@ -270,6 +272,8 @@ export class GICard {
                 execmds,
                 triggers: isCdt(triggers, convertToArray(triggers) as Trigger[]),
                 element: isCdt(element == DICE_COST_TYPE.Omni, ELEMENT_TYPE.Physical, element as ElementType),
+                hidxs: isCdt(builderRes.hidxs, convertToArray(builderRes.hidxs) as number[]),
+                exec: () => !!builderRes.exec?.(),
             }
             return res;
         }
