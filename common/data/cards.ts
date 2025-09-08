@@ -598,7 +598,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/27f34fa09a68f4de71cd8ce12b2ff2ea_7632599925994945499.png')
         .handle((card, event) => {
             const { heros, execmds } = event;
-            if (card.perCnt <= 0 || !heros.hasHert) return;
+            if (card.perCnt <= 0 || !heros.hasHurt) return;
             execmds.heal(1, { hidxs: heros.allHidxs() });
             return { triggers: 'skilltype3', exec: () => card.minusPerCnt() }
         }),
@@ -1059,8 +1059,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/f2d558606c493ca9b41c6cb9224f4a0c_3510396940887157125.png')
         .handle((card, event) => {
             const { source, heros, execmds } = event;
-            if (card.perCnt <= 0 || source.toString().startsWith('312') || !heros.hasHert) return;
-            execmds.heal(1, { hidxs: heros.getMaxHertHidxs() });
+            if (card.perCnt <= 0 || source.toString().startsWith('312') || !heros.hasHurt) return;
+            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
             return { triggers: 'heal', exec: () => card.minusPerCnt() }
         }),
 
@@ -1641,7 +1641,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { heros, hero, cmds } = event;
             cmds.heal(2, { hidxs: hero.hidx }).heal(1, { hidxs: heros.getBackHidxs() });
-            return { isValid: heros.hasHert }
+            return { isValid: heros.hasHurt }
         }),
 
     331301: () => elCard(227, ELEMENT_TYPE.Pyro)
@@ -2197,7 +2197,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { summons = [], heros, selectSummon = -1, cmds } = event;
             const { useCnt = 0 } = summons[selectSummon] ?? {};
             cmds.getDice(Math.min(2, useCnt), { mode: CMD_MODE.Random });
-            const hidxs = heros.getMaxHertHidxs();
+            const hidxs = heros.getMaxHurtHidxs();
             if (useCnt >= 3 && hidxs.length > 0) cmds.heal(2, { hidxs });
             return { exec: () => summons[selectSummon]?.dispose() }
         }),
@@ -2646,8 +2646,8 @@ const allCards: Record<number, () => CardBuilder> = {
     213121: () => new CardBuilder(374).name('地狱里摇摆').since('v4.7.0').talent(0).costPyro(1).anydice(2).perCnt(1)
         .description('{action}；【装备有此牌的〖hro〗使用技能时：】如果我方手牌数量不多于1，则造成的伤害+2。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/219c7c6843e4ead2ab8ab2ce7044f5c3_8151320593747508491.png')
-        .handle((card, { hcards = [], hcard }) => {
-            if ((hcards.length - +(card.entityId == hcard?.entityId)) > 1 || card.perCnt <= 0) return;
+        .handle((card, { hcardsCnt }) => {
+            if (hcardsCnt > 1 || card.perCnt <= 0) return;
             return { triggers: 'skill', addDmgCdt: 2, exec: () => card.minusPerCnt() }
         }),
 
@@ -2665,7 +2665,7 @@ const allCards: Record<number, () => CardBuilder> = {
     213141: () => new CardBuilder(456).name('所有的仇与债皆由我偿…').since('v5.4.0').talent(-2).costPyro(1).costPyro(2, 'v5.8.0')
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出，使【hro】附属3层【sts122】。；【装备有此牌的〖hro〗受到伤害时:】如果【hro】附属了【sts122】，则消耗1层【sts122】，抵消1点伤害。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/9770a329be6b9be3965bc3240c531cb4_511464347620244194.png')
-        .handle((card, event) => ({ isValid: !!getObjById(event.heros, card.userType as number)?.isFront, status: [[122, 3]] })),
+        .handle((card, event) => ({ isValid: !!event.heros.get(card.userType as number)?.isFront, status: [[122, 3]] })),
 
     213151: () => new CardBuilder(481).name('「人之名」解放').since('v5.7.0').talent().costPyro(1).perCnt(1)
         .description('〔*[card]从3张【驰轮车】中[挑选]1张加入手牌。〕；【我方打出特技牌后：】若可能，【hro】恢复1点「夜魂值」。（每回合1次）')
@@ -2675,7 +2675,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hcard, hero, cmds, execmds } = event;
             cmds.pickCard(3, CMD_MODE.GetCard, { card: [113154, 113155, 113156] });
             if (!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle) || card.perCnt <= 0) return;
-            const nightSoul = getObjById(hero?.heroStatus, 113151);
+            const nightSoul = hero.heroStatus.get(113151);
             if (!nightSoul || nightSoul.useCnt >= nightSoul.maxCnt) return;
             execmds.getNightSoul(1, hero?.hidx);
             return { triggers: 'card', exec: () => card.minusPerCnt() }
@@ -2692,10 +2692,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event, ver) => {
             const { heros, execmds } = event;
             if (ver.gte('v4.2.0') && card.perCnt <= 0) return;
-            const hidxs = heros.allHidxs({ cdt: h => h.hp > 0 && h.element == ELEMENT_TYPE.Electro && !h.isFullEnergy, limit: 1 });
+            const hidxs = heros.allHidxs({ cdt: h => h.element == ELEMENT_TYPE.Electro && !h.isFullEnergy, limit: 1 });
             if (hidxs.length == 0) return;
             execmds.getEnergy(1, { hidxs });
-            return { triggers: 'skilltype2', exec: () => { ver.gte('v4.2.0') && card.minusPerCnt() } }
+            return { triggers: 'after-skilltype2', exec: () => { ver.gte('v4.2.0') && card.minusPerCnt() } }
         }),
 
     214031: () => new CardBuilder(88).name('抵天雷罚').offline('v1').talent(1).costElectro(3)
@@ -3443,8 +3443,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('〔*[card]【此卡牌被打出时：】随机触发我方1个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b7987132c27e1baeebf379498453f17f_5843656174627783133.png')
         .handle((_, event) => {
-            const { summons = [], cmds, randomInt } = event;
-            if (randomInt && summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
+            const { summons, cmds, randomInt } = event;
+            if (summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
+            return { notPreview: true }
         }),
 
     113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costSame(1).useCnt(2)
@@ -3457,7 +3458,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
         .handle((card, event) => {
             const { heros, cmds } = event;
-            const hero = getObjById(heros, card.userType as number);
+            const hero = heros.get(card.userType as number);
             if (!hero) return;
             if (!hero.isFront) cmds.switchTo(hero.hidx);
             cmds.useSkill({ skillId: 14032 });
@@ -3556,7 +3557,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'discard', summon }
         }),
 
-    127032: () => new CardBuilder().name('厄灵·草之灵蛇').vehicle().costSame(0).useCnt(2).perCnt(1).isSpReset()
+    127032: () => new CardBuilder().name('厄灵·草之灵蛇').vehicle().costSame(0).useCnt(2).perCnt(1)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/3261818320d16e4b8cabb03dbe540914_8652138560686355356.png')
         .handle((card, event) => {
             const { skill, combatStatus, heros, slotUse, hcard, reset, trigger, execmds } = event;

@@ -754,7 +754,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().damage(2).cost(3).handle(event => {
                     const { hcards, heros, cmds } = event;
                     if (hcards.every(c => c.id != 113131)) return;
-                    cmds.discard({ card: 113131 }).heal(1, { hidxs: heros.getMaxHertHidxs() })
+                    cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() }).discard({ card: 113131 });
                 }),
             new SkillBuilder('圆阵掷弹爆轰术').description('{dealDmg}，在敌方场上生成【sts113132】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/2c/b0tlvwd776zbom2sewxulwqzyq2fsa6.png',
@@ -766,7 +766,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { skill: { useCntPerRound }, cmds } = event;
                     if (useCntPerRound > 0) return;
-                    cmds.getCard(1, { card: 113131 })
+                    cmds.getCard(1, { card: 113131 });
                     return { triggers: 'Overload-oppo' }
                 })
         ),
@@ -776,7 +776,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u8c1lh/2b18a446223227da615ba874800e6a7e.png')
         .normalSkill(new NormalSkillBuilder('斩首之邀').description('，若可能，消耗目标至多3层【sts122】，提高等量伤害。')
             .handle(event => {
-                const sts122 = getObjById(event.eheros?.find(h => h.isFront)?.heroStatus, 122);
+                const sts122 = event.eDmgedHero.heroStatus.get(122);
                 if (!sts122) return;
                 const addDmgCdt = Math.min(3, sts122.useCnt);
                 return { addDmgCdt, exec: () => sts122.minusUseCnt(addDmgCdt) }
@@ -791,21 +791,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/deb7835cea5aa6a48d80b8880ead635b_7631695322014410848.png')
                 .burst(3).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
-                    const sts122 = getObjById(heroStatus, 122);
+                    const sts122 = heroStatus.get(122);
                     return { heal: sts122?.useCnt ?? 0, exec: () => sts122?.dispose() }
                 }),
             new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；【自身附属〖sts122〗时：】角色造成的[物理伤害]变为[火元素伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/5/54/pxn17pilom6vwve4bs6vsemh1dvt89k.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a2a8eb8cafea01ec4461915fe495127c_5101380063673897230.png')
                 .passive().handle(event => {
-                    const { hero, heal = [], source = -1, trigger } = event;
-                    const sts122 = getObjById(hero.heroStatus, 122);
+                    const { hero, heal, source, trigger } = event;
+                    const sts122 = hero.heroStatus.get(122);
                     if (trigger == 'skill' && sts122) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                 }),
             new SkillBuilder().passive(true).handle(event => {
-                const { restDmg = -1, hero, talent } = event;
-                const sts122 = getObjById(hero.heroStatus, 122);
+                const { restDmg, hero, talent } = event;
+                const sts122 = hero.heroStatus.get(122);
                 if (restDmg <= 0 || !sts122 || !talent) return;
                 return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
             })
@@ -820,14 +820,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/4/49/c9v7tv37dp19lo61rq4sk363ucfmtz7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/3b17437c8cb0d89864c9d3577ef3891a_5376680950361440983.png')
                 .explain(...Array.from({ length: 3 }, (_, i) => `botcrd${113154 + i}`))
-                .elemental().cost(3).cost(2, 'v5.8.0').handle(({ cmds }) => (
-                    cmds.getStatus(113151).getNightSoul(2), {
-                        pickCard: {
-                            cnt: 3,
-                            mode: CMD_MODE.GetCard,
-                            card: [113154, 113155, 113156],
-                        }
-                    })),
+                .elemental().cost(3).cost(2, 'v5.8.0').handle(({ cmds }) =>
+                    (cmds.getStatus(113151).getNightSoul(2).pickCard(3, CMD_MODE.GetCard, { card: [113154, 113155, 113156] }).res)),
             new SkillBuilder('燔天之时').description('本角色进入【sts113151】，获得1点「夜魂值」，消耗自身全部【战意】，对敌方出战角色造成等同于消耗【战意】数量[火元素伤害]。；若消耗了6点【战意】，则自身附属【sts113152】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/7c/7fxaa5c7j8pian4bhrsqejz095b46pp.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/000ee3af3827bb90f6449f66e46dceeb_7084427594096869810.png')
@@ -840,7 +834,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/8/8d/7lkubxbzsfo5qrfe0gkf4e8nkrmp1jm.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/73b4f45ecb5c27f78ccea53dd0459430_3782408909774728081.png')
                 .passive().handle(event => {
-                    const { trigger = '', cmds, hero: { hidx, energy, maxEnergy } } = event;
+                    const { trigger, cmds, hero: { hidx, energy, maxEnergy } } = event;
                     if (['skilltype2', 'skilltype3'].includes(trigger)) {
                         cmds.getStatus(113153);
                         return { triggers: trigger }
@@ -891,11 +885,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/5/58/8ajyn7zzhal0dopp6vi3lnryq12gq28.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/c351b44d3163278214f6f9db09c020fd_3304441541356399096.png')
                 .elemental().damage(3).cost(3).handle(event => {
-                    const { talent, hcard, hcards = [], cmds } = event;
+                    const { talent, hcard, hcards, cmds } = event;
                     const hasCard114031 = hasObjById(hcards, 114031) || hcard?.id == 114031;
                     if (!hasCard114031) cmds.getCard(1, { card: 114031 });
                     else if (hcard?.id != 114031) cmds.discard({ card: 114031 });
-                    return { status: isCdt(hasCard114031, [[114032, +!!talent]]) }
+                    return { status: isCdt(hasCard114031, [[114032, !!talent]]) }
                 }),
             new SkillBuilder('天街巡游').description('{dealDmg}，对所有敌方后台角色造成3点[穿透伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/a/a0/hl9rfd4cwbif4a7gw3zmep0cdsgn6mu.png',
@@ -1122,7 +1116,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     if ((trigger == 'switch' && skill.perCnt > 0 && skill.addition.switch == 1) || trigger == 'ready-skill') {
                         if (nightSoul.useCnt != 2) cmds.getNightSoul(1, hero.hidx);
                         else {
-                            const hidxs = heros.getMaxHertHidxs();
+                            const hidxs = heros.getMaxHurtHidxs();
                             if (hidxs.length == 0) return;
                             cmds.heal(1, { hidxs });
                         }
@@ -1538,15 +1532,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/c/c1/o1q0bq8i2xiqwwtzpadn62ht0f1mk92.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8ef27719f84860001bce5a1f5df2dcd3_8474447068629975560.png')
                 .elemental().cost(3).explain(...Array.from({ length: 6 }, (_, i) => `botsmn${116091 + i}`)).handle(event => {
-                    const { talent } = event;
-                    return {
-                        summonPre: isCdt(!!talent, 116094),
-                        pickCard: {
-                            cnt: talent ? 4 : 3,
-                            mode: CMD_MODE.GetSummon,
-                            card: [116091, 116092, 116093, 116095, 116096],
-                        }
-                    }
+                    const { talent, cmds } = event;
+                    cmds.pickCard(talent ? 4 : 3, CMD_MODE.GetSummon, { card: [116091, 116092, 116093, 116095, 116096] });
+                    return { summonPre: isCdt(!!talent, 116094) }
                 }),
             new SkillBuilder('二刀之形·比翼').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/0/02/cdpd5piic1usrgyidali0ij8m5gcu4h.png',
@@ -1593,7 +1581,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus }, heros } = event;
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
-                    cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: heros.getMaxHertHidxs() });
+                    cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: heros.getMaxHurtHidxs() });
                 }),
             new SkillBuilder('「源音采样」').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的「源音采样」。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ee/h84gvy0q7f90zsthhibu7hl8w9qxhyu.png',

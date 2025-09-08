@@ -323,7 +323,9 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
     Omit<EntityBuilderHandleEvent, 'cmds' | 'randomInArr' | 'randomInt' | 'getCardIds'> => {
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
-    const { hidx = player.hidx ?? 0, isMinusDiceCard = false, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0 } = event;
+    const { hidx = player.hidx ?? 0, minusDiceCard = 0, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0,
+        isMinusDiceCard = !!hcard && hcard.cost + hcard.anydice > minusDiceCard,
+    } = event;
     const hero = player.heros[hidx];
     return {
         pidx,
@@ -362,7 +364,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         restDmg: -1,
         isSummon: -1,
         isMinusDiceCard,
-        minusDiceCard: 0,
+        minusDiceCard,
         isMinusDiceSkill: !!skill?.costChange[2].includes(entity.entityId ?? entity.id ?? -1),
         isMinusDiceTalent: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Talent),
         isMinusDiceWeapon: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Weapon),

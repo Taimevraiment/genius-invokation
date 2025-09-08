@@ -11,14 +11,14 @@ export interface SummonHandleEvent extends EntityHandleEvent {
     tround: number,
 }
 
-export type SummonHandleRes = {
+export interface SummonHandleRes {
     triggers?: Trigger[],
     addDmg?: number,
     addDmgType1?: number,
     addDmgType2?: number,
     addDmgType3?: number,
     addDmgCdt?: number,
-    rCombatStatus?: (number | [number, ...any])[] | number,
+    status?: (number | [number, ...any])[] | number,
     isNotAddTask?: boolean,
     element?: ElementType,
     pdmg?: number,
@@ -31,6 +31,7 @@ export type SummonHandleRes = {
     willSummon?: number,
     isQuickAction?: boolean,
     isTrigger?: boolean,
+    notLog?: boolean,
     exec?: () => SummonExecRes,
 }
 
@@ -86,8 +87,7 @@ export class GISummon {
         handle?: (summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
-            spReset?: boolean, expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[],
-            tag?: SummonTag[],
+            expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[], tag?: SummonTag[],
         } = {}
     ) {
         this.id = id;
@@ -98,14 +98,14 @@ export class GISummon {
         this.damage = damage;
         this.element = element;
         const {
-            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = SUMMON_DESTROY_TYPE.Used, stsId = -1, spReset = false,
+            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = SUMMON_DESTROY_TYPE.Used, stsId = -1,
             expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [], tag = [],
         } = options;
         const hid = getHidById(id);
         this.UI = {
             description: description
                 .replace(/{([^\{\}]*)defaultAtk((?:\{.+\}|[^\{\}])*)}/, '【结束阶段：】$1{dealDmg}$2；[useCnt]')
-                .replace(/\[useCnt\]/, '【[可用次数]：{useCnt}】' + (maxUse > useCnt ? `（可叠加，${maxUse == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxUse}次`}）` : ''))
+                .replace(/\[useCnt\]/, `【[可用次数]：${useCnt}】` + (maxUse > useCnt ? `（可叠加，${maxUse == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxUse}次`}）` : ''))
                 .replace(/{dealDmg}/g, '造成{dmg}点[elDmg]')
                 .replace(/elDmg/g, ELEMENT_NAME[element] + '伤害')
                 .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
@@ -132,10 +132,6 @@ export class GISummon {
         if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
         this.handle = (summon, event) => {
             const { reset, trigger } = event;
-            if (reset) {
-                summon.perCnt = pct;
-                if (!spReset && trigger != 'enter') return {}
-            }
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, summon);
@@ -144,19 +140,28 @@ export class GISummon {
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
             };
-            if (!handle) {
+            if (!handle && trigger == 'phase-end') {
                 return {
                     triggers: ['phase-end'],
                     exec: () => ({ cmds: summon.phaseEndAtk(cmds) }),
                 }
             }
-            const builderRes = handle(summon, cevent, versionWrap(ver)) ?? {};
+            const builderRes = handle?.(summon, cevent, versionWrap(ver)) ?? {};
+            let { isOnlyPhaseEnd, ...res } = builderRes;
+            if (res.status) cmds.getStatus(res.status);
+            if (reset) {
+                summon.perCnt = pct;
+                if (!res.triggers) res.triggers = ['reset', 'enter'];
+                isOnlyPhaseEnd = true;
+                res.isNotAddTask = true;
+                res.notLog = true;
+            }
             return {
-                ...builderRes,
-                triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
+                ...res,
+                triggers: isCdt(res.triggers, convertToArray(res.triggers) as Trigger[]),
                 exec: () => {
-                    builderRes.exec ??= cmds => (!builderRes.isOnlyPhaseEnd || event.trigger == 'phase-end') && summon.phaseEndAtk(cmds);
-                    builderRes.exec(cmds);
+                    res.exec ??= cmds => (!isOnlyPhaseEnd || event.trigger == 'phase-end') && summon.phaseEndAtk(cmds);
+                    res.exec?.(cmds);
                     cmds.value.forEach(c => {
                         if (c.cmd != 'attack') return;
                         c.cnt ??= this.damage;
@@ -232,7 +237,6 @@ export class SummonBuilder extends BaseBuilder {
     private _bottomIcon: string = '';
     private _hasPlus: boolean = false;
     private _explains: string[] = [];
-    private _spReset: boolean = false;
     private _handle: ((summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) | undefined;
     constructor(name: string) {
         super();
@@ -347,10 +351,6 @@ export class SummonBuilder extends BaseBuilder {
         this._explains.push(...explains);
         return this;
     }
-    spReset() {
-        this._spReset = true;
-        return this;
-    }
     used() {
         this._isDestroy = SUMMON_DESTROY_TYPE.Used;
         return this;
@@ -388,7 +388,6 @@ export class SummonBuilder extends BaseBuilder {
                 pdmg: this._pdmg,
                 isDestroy: this._isDestroy,
                 stsId,
-                spReset: this._spReset,
                 expl: this._explains,
                 topIcon: this._topIcon,
                 bottomIcon: this._bottomIcon,

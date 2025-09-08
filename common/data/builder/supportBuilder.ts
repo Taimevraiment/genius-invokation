@@ -7,7 +7,7 @@ import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, 
 
 export interface SupportHandleEvent extends EntityHandleEvent { }
 
-export type SupportHandleRes = {
+export interface SupportHandleRes {
     triggers?: Trigger[],
     exec?: () => SupportExecRes,
     minusDiceCard?: number,
@@ -22,9 +22,10 @@ export type SupportHandleRes = {
     isLast?: boolean,
     isExchange?: boolean,
     isAfterSkill?: boolean,
+    notLog?: boolean,
 }
 
-export type SupportExecRes = {
+export interface SupportExecRes {
     cmds?: CmdsGenerator,
     isDestroy?: boolean,
     summon?: (number | [number, ...any])[] | number,
@@ -60,7 +61,7 @@ export class GISupport {
         this.handle = (support, event) => {
             if (event.reset && perCnt > 0) {
                 support.perCnt = perCnt;
-                return {}
+                return { notLog: true, triggers: ['reset'] }
             }
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, support);

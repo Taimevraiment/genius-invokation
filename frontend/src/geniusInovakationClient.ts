@@ -93,7 +93,7 @@ export default class GeniusInvokationClient {
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     targetSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 目标是否选中
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
-    pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard', skillId: -1 }; // 挑选卡牌
+    pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard' }; // 挑选卡牌
     watchers: number = 0; // 观战人数
     recordData: RecordData = { seed: '', name: '', pidx: -1, username: [], shareCode: [], version: 'v3.3.0', actionLog: [] }; // 行动日志
     customVersion?: CustomVersionConfig; // 自定义版本配置
@@ -1053,7 +1053,7 @@ export default class GeniusInvokationClient {
                     useCard: INFO_TYPE.Card,
                     summon: INFO_TYPE.Summon,
                 }[cardType],
-                info: cardType == 'summon' ? newSummon(this.version)(this.pickModal.cards[pcidx].id) : this.pickModal.cards[pcidx],
+                info: cardType == 'getSummon' ? newSummon(this.version)(this.pickModal.cards[pcidx].id) : this.pickModal.cards[pcidx],
             }
         } else {
             this.pickModal.selectIdx = -1;
@@ -1068,7 +1068,6 @@ export default class GeniusInvokationClient {
         this.emit({
             type: ACTION_TYPE.PickCard,
             cardIdxs: [this.pickModal.selectIdx],
-            skillId: this.pickModal.skillId,
             flag: 'pickCard',
         });
         this.cancel();

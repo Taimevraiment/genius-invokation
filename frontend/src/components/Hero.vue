@@ -20,8 +20,8 @@
             v-if="[...hero.heroStatus, ...combatStatus].some(sts => sts.hasType(STATUS_TYPE.Shield) && sts.useCnt > 0)">
         </div>
         <div class="hero-barrier" v-if="(
-            hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier)) ||
-            hero.isFront && combatStatus.some(ost => ost.hasType(STATUS_TYPE.Barrier)) ||
+            hero.heroStatus.some(ist => ist.hasType(STATUS_TYPE.Barrier) && ist.addition[STATUS_TYPE.Barrier] == 1) ||
+            hero.isFront && combatStatus.some(ost => ost.hasType(STATUS_TYPE.Barrier) && ost.addition[STATUS_TYPE.Barrier] == 1) ||
             hero.talentSlot?.tag.includes(CARD_TAG.Barrier) && hero.talentSlot.perCnt != 0 ||
             hero.weaponSlot?.tag.includes(CARD_TAG.Barrier) && hero.weaponSlot.perCnt != 0) ||
             hero.vehicleSlot?.[0].tag.includes(CARD_TAG.Barrier) && hero.vehicleSlot[0].perCnt != 0">

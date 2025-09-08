@@ -723,7 +723,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             const { hero: { tags }, heros } = event;
             const res: StatusHandleRes = tags.includes(HERO_TAG.ArkheOusia) ?
                 { heal: 1, hidxs: heros.getBackHidxs() } :
-                { addDmgCdt: 2, pdmg: 1, hidxs: heros.getMinHertHidxs(), isSelf: true };
+                { addDmgCdt: 2, pdmg: 1, hidxs: heros.getMinHurtHidxs(), isSelf: true };
             return {
                 attachEl: ELEMENT_TYPE.Hydro,
                 triggers: 'skilltype1',
@@ -761,8 +761,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage).icon('#')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
         .handle((status, event) => {
-            const { isSummon, skill } = event;
-            if (isSummon != 112144 && getHidById(skill?.id) != getHidById(status.id)) return;
+            const { isSummon, dmgSource } = event;
+            if (isSummon != 112144 && dmgSource != getHidById(status.id)) return;
             return { triggers: 'getdmg', getDmg: 2 * status.useCnt, exec: () => status.dispose() }
         }),
 
@@ -886,16 +886,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             const hid = getHidById(status.id);
             const hero = heros.get(hid);
             if (trigger == 'enter') {
-                if (status.hasType(STATUS_TYPE.Barrier) && hero?.isFront) {
-                    status.type = [STATUS_TYPE.Usage];
-                }
-                return;
+                status.addition[STATUS_TYPE.Barrier] = +!hero?.isFront;
+                return { notLog: true }
             }
             if (trigger == 'switch-to') {
-                const toHero = heros[hidx];
-                status.type = [STATUS_TYPE.Usage];
-                if (toHero.id != hid) status.type.push(STATUS_TYPE.Barrier);
-                return;
+                status.addition[STATUS_TYPE.Barrier] = +(heros[hidx].id != hid);
+                return { notLog: true }
             }
             if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
             return {
@@ -936,8 +932,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     113123: () => new StatusBuilder('氛围烈焰').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
         .description('【我方宣布结束时：】如果我方的手牌数量不多于1，则造成1点[火元素伤害]。；[useCnt]')
         .handle((status, event) => {
-            const { hcards } = event;
-            if (hcards.length > 1) return;
+            if (event.hcardsCnt > 1) return;
             return {
                 triggers: 'end-phase',
                 damage: 1,
@@ -976,7 +971,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 if ((getdmg[hi] ?? -1) > -1) hidxs.push(hi);
             }
             cmds.getStatus(122, { hidxs });
-            const ehero = getObjById(eheros, getHidById(status.id));
+            const ehero = eheros.get(getHidById(status.id));
             if (ehero) cmds.getStatus(122, { hidxs: ehero.hidx, isOppo: true });
             return { triggers: 'getdmg', cmds, exec: () => status.minusUseCnt(hidxs.length) }
         }),
@@ -986,22 +981,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     113152: () => new StatusBuilder('死生之炉').heroStatus().useCnt(2).icon('ski,2').icon('#')
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方全体角色的技能不消耗「夜魂值」。；我方全体角色「普通攻击」造成的伤害+1。；[useCnt]')
-        .handle((status, event) => {
-            const { restDmg = 1 } = event;
-            const cnt = Math.min(status.useCnt, restDmg);
-            return {
-                triggers: ['skilltype1', 'other-skilltype1', 'pre-consumeNightSoul'],
-                addDmgCdt: 1,
-                isInvalid: true,
-                exec: () => status.minusUseCnt(cnt)
-            }
-        }),
+        .handle((status, event) => ({
+            triggers: ['skilltype1', 'other-skilltype1', 'pre-consumeNightSoul'],
+            addDmgCdt: 1,
+            isInvalid: true,
+            exec: () => status.minusUseCnt(Math.min(status.useCnt, Math.max(1, event.restDmg)))
+        })),
 
     113153: () => new StatusBuilder('诸火武装·焚曜之环').combatStatus().icon('ski,1').icon('#')
         .type(STATUS_TYPE.Attack)
         .description('【我方其他角色使用「普通攻击」或[特技]后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
-            const { heros, cmds, trigger, source = -1 } = event;
+            const { heros, cmds, trigger, source } = event;
             if (trigger == 'status-destroy' && source == 113151) {
                 return { triggers: trigger, exec: () => status.dispose() }
             }
@@ -1011,7 +1002,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 triggers: ['after-skilltype1', 'after-skilltype5'],
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,
-                exec: () => cmds.consumeNightSoul(getObjById(heros, hid)?.hidx),
+                exec: () => cmds.consumeNightSoul(heros.get(hid)?.hidx),
             }
         }),
 
@@ -1152,7 +1143,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方切换角色后：】造成1点[雷元素伤害]，治疗我方受伤最多的角色1点。（每回合1次）；[useCnt]')
         .handle((status, event) => {
             if (status.perCnt <= 0) return;
-            event.cmds.heal(1, { hidxs: event.heros.getMaxHertHidxs() });
+            event.cmds.heal(1, { hidxs: event.heros.getMaxHurtHidxs() });
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Electro,
@@ -3109,11 +3100,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.NonDefeat).icon('#').from(331806)
         .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
-            const { hidx = -1, cmds, dicesCnt = 0 } = event;
-            status.addition[STATUS_TYPE.NonDefeat] = 0;
-            if (dicesCnt < status.useCnt) return;
+            const { hidx, cmds, dicesCnt } = event;
+            status.addition[STATUS_TYPE.NonDefeat] = +(dicesCnt >= status.useCnt);
             cmds.revive(1, hidx).consumeDice(status.useCnt);
-            status.addition[STATUS_TYPE.NonDefeat] = 1;
             return { triggers: 'will-killed', exec: () => status.addUseCnt(true) }
         }),
 

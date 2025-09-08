@@ -1,6 +1,6 @@
 import { MinusDiceSkill, Skill, Status, Summon, Trigger, VersionWrapper } from "../../../typing.js";
 import {
-    CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, PureElementType, SKILL_TYPE,
+    COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, PureElementType, SKILL_TYPE,
     SkillCostType, SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
@@ -14,7 +14,7 @@ export interface SkillHandleEvent extends EntityHandleEvent {
     swirlEl: PureElementType,
 }
 
-export type SkillHandleRes = {
+export interface SkillHandleRes {
     triggers?: Trigger[],
     dmgElement?: ElementType,
     addDmgCdt?: number,
@@ -27,15 +27,9 @@ export type SkillHandleRes = {
     isForbidden?: boolean,
     energy?: number,
     restDmg?: number,
-    pickCard?: {
-        cnt: number,
-        card?: number[],
-        subtype?: CardSubtype[],
-        mode: number,
-        isOrdered?: boolean,
-    },
     isTrigger?: boolean,
     isInvalid?: boolean,
+    notLog?: boolean,
     exec?: () => void,
 }
 
@@ -152,19 +146,12 @@ export class GISkill {
             if (reset) {
                 skill.useCntPerRound = 0;
                 skill.perCnt = pct;
-                return res;
+                return { ...res, notLog: true, triggers: ['reset'] }
             }
             let { dmgElement, atkOffset } = builderRes;
             const sevent = { ...event, hidx: hero.hidx };
             const statuses = [...hero.heroStatus];
             if (hero.isFront) statuses.push(...combatStatus);
-            for (const ist of statuses) {
-                const stsres = ist.handle(ist, sevent);
-                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && skill.dmgElement == DAMAGE_TYPE.Physical) {
-                    dmgElement = stsres.attachEl;
-                }
-                if (stsres.atkOffset) atkOffset = stsres.atkOffset;
-            }
             if (sevent.trigger == 'skill' && !skill.isPassive) {
                 for (const ski of hero.skills.filter(s => s.isPassive)) {
                     const skires = ski.handle({ ...clone(sevent), skill: ski });
@@ -173,10 +160,19 @@ export class GISkill {
                     }
                 }
             }
+            if ((!dmgElement || dmgElement == DAMAGE_TYPE.Physical) && skill.dmgElement == DAMAGE_TYPE.Physical) {
+                for (const ist of statuses) {
+                    const stsres = ist.handle(ist, sevent);
+                    if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl) {
+                        dmgElement = stsres.attachEl;
+                    }
+                    if (stsres.atkOffset) atkOffset = stsres.atkOffset;
+                }
+            }
             dmgElement ??= skill.attachElement != DAMAGE_TYPE.Physical ? skill.attachElement : skill.dmgElement;
             const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,
                 statusOppo, summon, equip, isAttach, isAttachOppo, addDmgCdt = 0, energy = 0 } = builderRes;
-            if (heal) cmds.unshift.heal(heal, { hidxs });
+            if (heal != undefined) cmds.unshift.heal(heal, { hidxs });
             if (isAttachOppo) cmds.unshift.attach({ hidxs: eheros.frontHidx, isOppo: true });
             if (isAttach) cmds.unshift.attach({ hidxs });
             if (!cmds.hasCmds('attack')) {
@@ -184,7 +180,7 @@ export class GISkill {
                 if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
                 if (skill.damage || addDmgCdt) cmds.unshift.attack();
             }
-            if (!cmds.hasCmds('attack', 'heal', 'addMaxHp')) cmds.unshift.attack();
+            if (!cmds.hasCmds('attack', 'heal', 'addMaxHp') && !skill.isPassive) cmds.unshift.attack();
             cmds.unshift
                 .getSummon(summonPre)
                 .getStatus(statusOppoPre, { hidxs, isOppo: true })

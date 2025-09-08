@@ -65,7 +65,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 望舒客栈
     321005: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
-        const hidxs = event.heros.getMaxHertHidxs({ isBack: true });
+        const hidxs = event.heros.getMaxHurtHidxs({ isBack: true });
         if (hidxs.length == 0) return;
         return {
             triggers: 'phase-end',
@@ -110,7 +110,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 珊瑚宫
     321009: () => new SupportBuilder().round(2).handle((support, event) => {
         const { heros } = event;
-        if (!heros.hasHert) return;
+        if (!heros.hasHurt) return;
         return {
             triggers: 'phase-end',
             exec: cmds => (cmds.heal(1, { hidxs: heros.allHidxs() }), { isDestroy: --support.cnt == 0 })

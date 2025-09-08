@@ -652,7 +652,7 @@ const devOps = (cidx = 0) => {
     } else if (op.startsWith('q')) { // 附属装备
       const isSetCnt = op[1] == '+';
       const setType = op[2];
-      const [card = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]+/).map(h);
+      const [card = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]/).map(h);
       const hidxs = hidx > heros.length ? heros.map(h => h.hidx) : [hidx];
       if (isSetCnt) {
         setSlotCnt.push({ hidx, slotid: card, type: setType, val });

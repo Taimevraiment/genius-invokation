@@ -58,7 +58,7 @@ export default class TaskQueue {
             if (isUnshift) curQueue.unshift(queueTask);
             else curQueue.push(queueTask);
         }
-        this._writeLog((isUnshift ? 'unshift' : isImmediate ? 'immediate' : isFinal ? 'final' : isPriority ? 'priotity' : 'add') + 'Task-' + taskType + this.queueList, 'emit');
+        this._writeLog('addTask-' + (isUnshift ? 'unshift-' : isImmediate ? 'immediate-' : isFinal ? 'final-' : isPriority ? 'priotity-' : '') + taskType + this.queueList, 'emit');
     }
     async execTask(taskType: string, funcs: [() => any | Promise<any>, number?, number?][], isExec: boolean) {
         if (!this.canPreview) return;

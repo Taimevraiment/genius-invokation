@@ -75,7 +75,7 @@ export class GIStatus {
             isTalent = false, isReset = true, adt = {}, ver = VERSION[0], versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
-            .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】' + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
+            .replace(/\[useCnt\]/g, `【[可用次数]：${useCnt}】` + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
             .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 || useCnt > -1 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
             .replace(/(?<=〖)ski,(.+?)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,(.+?)(?=】)/g, `ski${hid},$1`)
@@ -163,7 +163,7 @@ export class GIStatus {
             };
             if (cevent.reset) {
                 if (isReset) status.perCnt = pct;
-                return {}
+                return { notLog: true, triggers: isCdt(isReset, ['reset']) }
             }
             const builderRes = thandle(status, cevent, versionWrap(ver)) ?? {};
             const { damage, element, heal, pdmg, isSelf, isPriority, skill, status: sts, statusOppo,
@@ -197,6 +197,7 @@ export class GIStatus {
         return this;
     }
     hasType(...types: StatusType[]): boolean {
+        if (types.length == 0) return true;
         return this.type.some(v => types.includes(v));
     }
     addUseCnt(ignoreMax: boolean): void
@@ -409,6 +410,7 @@ export class StatusBuilder extends BaseBuilder {
             if (cdt(versionWrap(this._curVersion))) this._type.push(...types);
         });
         if (this._type.includes(STATUS_TYPE.NonDefeat)) this.addition(STATUS_TYPE.NonDefeat, 1);
+        if (this._type.includes(STATUS_TYPE.Barrier)) this.addition(STATUS_TYPE.Barrier, 1);
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
             (status: Status, event: StatusHandleEvent, ver: VersionWrapper): StatusBuilderHandleRes => {
                 const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;

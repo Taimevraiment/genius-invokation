@@ -200,7 +200,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | `${TrgPre}get-status` |
     'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
-    'getNightSoul' | 'ready-skill' | '';
+    'getNightSoul' | 'ready-skill' | 'reset' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 
@@ -306,13 +306,11 @@ type PickCard = {
     cards: Card[],
     selectIdx: number,
     cardType: PickCardType,
-    skillId: number,
     hidxs?: number[],
     phase?: Phase,
-    isQuickAction?: boolean,
 }
 
-type PickCardType = 'getCard' | 'summon' | 'useCard';
+type PickCardType = 'getCard' | 'getSummon' | 'useCard';
 
 type VersionWrapper = ReturnType<typeof versionWrap>;
 

@@ -71,7 +71,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event, ver) => {
             const { heros, hero, trigger, tround = 0 } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const hidxs = heros.getMaxHertHidxs();
+            const hidxs = heros.getMaxHurtHidxs();
             const isHeal = hero.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
             const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHurted;
             if (isHeal) triggers.push('after-skilltype1');
@@ -164,7 +164,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                     if (!hasTround) summon.phaseEndAtk(cmds).clear();
                     cmds.attack();
                     if (tround == 0) return;
-                    cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: heros.getMinHertHidxs(), isOppo: false });
+                    cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: heros.getMinHurtHidxs(), isOppo: false });
                 },
             }
         }),
@@ -182,7 +182,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                     if (!hasTround) summon.phaseEndAtk(cmds).clear();
                     cmds.heal(summon.shieldOrHeal, { hidxs: heros.allHidxs() });
                     if (tround == 0) return;
-                    cmds.clear().heal(1, { hidxs: heros.getMaxHertHidxs() });
+                    cmds.clear().heal(1, { hidxs: heros.getMaxHurtHidxs() });
                 },
             }
         }),
@@ -212,11 +212,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    113093: () => new SummonBuilder('净焰剑狱领域').useCnt(3).damage(1).spReset()
+    113093: () => new SummonBuilder('净焰剑狱领域').useCnt(3).damage(1)
         .description('{defaultAtk。}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害\\；然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((_, event) => {
-            if (event.reset) return { triggers: 'enter', rCombatStatus: 113094, isNotAddTask: true, isOnlyPhaseEnd: true }
+            if (event.reset) return { status: 113094 }
             return { triggers: 'phase-end' }
         }),
 
@@ -229,14 +229,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => {
             const { heros, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const cnt = isCdt(trigger != 'phase-end', 2);
-            if (getObjById(heros, getHidById(summon.id))?.isFront && summon.isTalent) {
+            const damage = isCdt(trigger != 'phase-end', 2);
+            if (heros.get(getHidById(summon.id))?.isFront && summon.isTalent) {
                 triggers.push('after-skilltype1');
             }
-            return {
-                triggers,
-                exec: cmds => summon.phaseEndAtk(cmds).clear().attack(cnt),
-            }
+            return { triggers, exec: cmds => summon.phaseEndAtk(cmds).clear().attack(damage) }
         }),
 
     114061: () => new SummonBuilder('天狗咒雷·伏').useCnt(1).damage(1)
@@ -365,15 +362,15 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/e78e66eddfb70ab60a6f4d3733a8c3ab_4021248491292359775.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
-            exec: cmds => summon.phaseEndAtk(cmds, { healHidxs: event.heros.getMaxHertHidxs() }),
+            exec: cmds => summon.phaseEndAtk(cmds, { healHidxs: event.heros.getMaxHurtHidxs() }),
         })),
 
-    115082: () => new SummonBuilder('惊奇猫猫盒').useCnt(2).damage(1).spReset()
+    115082: () => new SummonBuilder('惊奇猫猫盒').useCnt(2).damage(1)
         .description('{defaultAtk。}；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。（每回合1次）；【我方角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。（离场前仅限一次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
         .handle((summon, event) => {
-            const { reset, trigger = '' } = event;
-            if (reset) return { triggers: 'enter', rCombatStatus: 115083 }
+            const { reset, trigger } = event;
+            if (reset) return { status: 115083 }
             const getdmgTrgs: Trigger[] = ['Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg'];
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo && getdmgTrgs.includes(trigger)) {
@@ -523,9 +520,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此牌在场时，〖hro〗以外的我方角色使用技能后：】{dealDmg}。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/47a725b8793a1379e47d5715edbbdf15_6178888087176525256.png')
         .handle((summon, event) => {
-            const { skill, trigger } = event;
+            const { source, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
-            if (getHidById(skill?.id) != getHidById(summon.id) && summon.perCnt > 0) triggers.push('after-skill');
+            if (source != getHidById(summon.id) && summon.perCnt > 0) triggers.push('after-skill');
             return {
                 triggers,
                 exec: cmds => {
@@ -543,10 +540,10 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此牌在场时：】我方【hro】及【千织的自动制御人形】造成的[岩元素伤害]+1。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/2c436857aec7c71268ae762835386ffc_7173560903994006420.png')
         .handle((summon, event) => {
-            const { skill, isSummon = -1, trigger } = event;
+            const { source, isSummon, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             const hid = getHidById(summon.id);
-            const isAddDmg = summon.perCnt > 0 && (getHidById(skill?.id) == hid || getHidById(isSummon) == hid);
+            const isAddDmg = summon.perCnt > 0 && (source == hid || getHidById(isSummon) == hid);
             if (isAddDmg) triggers.push('Geo-dmg');
             return {
                 triggers,
@@ -607,7 +604,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             exec: cmds => {
                 const isLast = summon.isTalent && summon.useCnt == 1;
                 summon.phaseEndAtk(cmds).clear().attack(isCdt(isLast, summon.damage + 1));
-                const hidxs = event.heros.getMaxHertHidxs();
+                const hidxs = event.heros.getMaxHurtHidxs();
                 if (hidxs.length > 0) cmds.heal(isCdt(isLast, summon.shieldOrHeal + 1), { hidxs });
             }
         })),
@@ -875,7 +872,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('【结束阶段：】治疗受伤最多的我方角色{shield}点。；[useCnt]')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle((summon, event) => {
-            const hidxs = event.heros.getMaxHertHidxs();
+            const hidxs = event.heros.getMaxHurtHidxs();
             return {
                 triggers: isCdt(hidxs.length > 0, 'phase-end'),
                 exec: cmds => {

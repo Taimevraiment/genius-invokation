@@ -120,7 +120,7 @@ export class ArrayHero extends Array<Hero> {
     get frontHidx() {
         return this.findIndex(h => h.isFront);
     }
-    get hasHert() {
+    get hasHurt() {
         return this.some(h => h.isHurted);
     }
     get(id: number) {
@@ -168,15 +168,15 @@ export class ArrayHero extends Array<Hero> {
         return Math.min(...hidxs);
     }
     // 获取受伤最多的角色的hidxs(最多一个number的数组)
-    getMaxHertHidxs(options: { isBack?: boolean } = {}) {
+    getMaxHurtHidxs(options: { isBack?: boolean } = {}) {
         const { isBack = false } = options;
         if (this.frontHidx == -1) return [];
-        const maxHert = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hurtHp));
-        if (maxHert == 0) return [];
+        const maxHurt = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hurtHp));
+        if (maxHurt == 0) return [];
         const hidxs: number[] = [];
         for (let i = +isBack; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
-            if (this[hidx].hp > 0 && this[hidx].hurtHp == maxHert) {
+            if (this[hidx].hp > 0 && this[hidx].hurtHp == maxHurt) {
                 hidxs.push(hidx);
                 break;
             }
@@ -184,13 +184,13 @@ export class ArrayHero extends Array<Hero> {
         return hidxs;
     }
     // 获取受伤最少的角色的hidx(最多一个number的数组)
-    getMinHertHidxs() {
+    getMinHurtHidxs() {
         if (this.frontHidx == -1) return [];
-        const minHert = Math.min(...this.filter(h => h.hp > 0).map(h => h.hurtHp));
+        const minHurt = Math.min(...this.filter(h => h.hp > 0).map(h => h.hurtHp));
         const hidxs: number[] = [];
         for (let i = 0; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
-            if (this[hidx].hp > 0 && this[hidx].hurtHp == minHert) {
+            if (this[hidx].hp > 0 && this[hidx].hurtHp == minHurt) {
                 hidxs.push(hidx);
                 break;
             }

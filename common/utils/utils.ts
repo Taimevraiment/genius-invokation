@@ -137,7 +137,7 @@ export const wait = async (cdt: () => boolean, options: {
             break;
         }
         if (loop > 3e4 / freq && !warn) {
-            console.trace('超过30秒，可能存在死循环');
+            console.trace(`超过30秒，可能存在死循环: ${cdt.toString()}`);
             warn = true;
         }
         if (loop > maxtime / freq) {
@@ -258,7 +258,8 @@ export const assgin = <T>(target: T, source: T, exclude?: string | string[]) => 
  * @param obj 对象或对象数组
  * @returns 对象数组
  */
-export const convertToArray = <T>(obj: T | T[] | Set<T>): T[] => {
+export const convertToArray = <T>(obj?: T | T[] | Set<T>): T[] => {
+    if (obj === undefined) return [];
     if (obj instanceof Set) obj = [...obj];
     return Array.isArray(obj) ? obj : [obj];
 }

@@ -227,11 +227,10 @@ export default class CmdsGenerator {
         return this;
     }
     pickCard(cnt: number, mode: number, options: {
-        card?: number[], subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[],
-        skillId?: number, isSpecify?: boolean,
+        card?: number[], subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[], isSpecify?: boolean,
     } = {}) {
-        const { card, subtype, cardTag, skillId, isSpecify: isAttach } = options;
-        this._add({ cmd: 'pickCard', cnt, card, mode, subtype, cardTag, hidxs: isCdt(skillId, [skillId!]), isAttach });
+        const { card, subtype, cardTag, isSpecify: isAttach } = options;
+        this._add({ cmd: 'pickCard', cnt, card, mode, subtype, cardTag, isAttach });
         return this;
     }
     equip(hidxs: number | number[], card?: Card | number, isOppo?: boolean) {
@@ -283,6 +282,7 @@ export default class CmdsGenerator {
     }
     clear() {
         this.value = [];
+        this._addType = 'push';
         return this;
     }
 }

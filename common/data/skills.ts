@@ -108,7 +108,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/7cc24c2715c5ab0c4d6bd5a2959b9291_7360941024826114619.png')
         .vehicle().damage(4).costAny(1).handle(event => {
             const { cmds, hero: { hidx, heroStatus } } = event;
-            cmds.consumeNightSoul(hidx);
+            cmds.consumeNightSoul(hidx).attack();
             return { isForbidden: !hasObjById(heroStatus, 113151) }
         }),
 

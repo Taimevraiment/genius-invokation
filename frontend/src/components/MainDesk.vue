@@ -630,7 +630,7 @@ const willSummons = computed<Summon[][]>(() => props.client.willSummons);
 const willSwitch = computed<boolean[][]>(() => wrapArr(props.client.willSwitch.flat()));
 const smnAreas = computed(() => {
   const { client: { player, opponent, changedSummons } } = props;
-  const areas = [[...opponent?.summons, ...willSummons.value[0]], [...player.summons, ...willSummons.value[1]]];
+  const areas = [[...opponent?.summons, ...willSummons.value[opponent.pidx]], [...player.summons, ...willSummons.value[player.pidx]]];
   [changedSummons[opponent?.pidx], changedSummons[player.pidx]].forEach((smns, smnsi) => {
     smns?.forEach((smn, smni) => {
       if (smn == undefined) return;

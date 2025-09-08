@@ -76,7 +76,7 @@ export class GICard {
         options: {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
-            isResetUct?: boolean, isResetPct?: boolean, spReset?: boolean, ver?: Version, readySkillStatus?: number,
+            isResetUct?: boolean, isResetPct?: boolean, ver?: Version, readySkillStatus?: number,
             adt?: Record<string, number>, versionChanges?: Version[],
         } = {}
     ) {
@@ -88,13 +88,13 @@ export class GICard {
         subType ??= [];
         subType = convertToArray(subType);
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
-            isResetPct = true, isResetUct = false, spReset = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
+            isResetPct = true, isResetUct = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
             readySkillStatus = 0, adt = {}, versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,(\d)(?=】)/g, `ski${hid},$1`)
-            .replace(/\[useCnt\]/g, '【[可用次数]：{useCnt}】');
+            .replace(/\[useCnt\]/g, `【[可用次数]：${uct}】`);
         this.UI = {
             description,
             src,
@@ -109,7 +109,7 @@ export class GICard {
         else if (subType.includes(CARD_SUBTYPE.Relic)) this.UI.description += `；（角色最多装备1件「圣遗物」）`;
         else if (subType.includes(CARD_SUBTYPE.Vehicle)) {
             const vehicle = `rsk${getVehicleIdByCid(id)}`;
-            const vehicleDesc = ` [特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：{useCnt}】；` : ''}`;
+            const vehicleDesc = ` [特技]：【${vehicle}】；${uct > 0 ? `【[可用次数]：${uct}】；` : ''}`;
             if (this.UI.description.includes('{vehicle}')) {
                 this.UI.description = this.UI.description.replace('{vehicle}', vehicleDesc);
             } else {
@@ -254,10 +254,6 @@ export class GICard {
                 cmds,
                 execmds,
             };
-            if (cevent.reset) {
-                this.reset(card);
-                if (!spReset) return {}
-            }
             const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
             const { status, statusOppo, summon, summonOppo, support, supportOppo, hidxs, triggers, element } = builderRes;
             (cevent.trigger ? execmds : cmds).getStatus(status, { hidxs })
@@ -266,6 +262,11 @@ export class GICard {
                 .getSummon(summonOppo, { isOppo: true, destroy: 1 })
                 .getSupport(support)
                 .getSupport(supportOppo, { isOppo: true });
+            if (cevent.reset) {
+                this.reset(card);
+                if (!builderRes.triggers) builderRes.triggers = 'reset';
+                builderRes.notLog = true;
+            }
             const res: CardHandleRes = {
                 ...builderRes,
                 cmds,
@@ -335,7 +336,6 @@ export class CardBuilder extends BaseCostBuilder {
     private _canSelectSupport: -1 | 0 | 1 = -1;
     private _isResetUseCnt: boolean = false;
     private _isResetPerCnt: boolean = true;
-    private _isSpReset: boolean = false;
     private _src: string = '';
     private _explains: string[] = [];
     private _cnt: number = 2;
@@ -483,10 +483,6 @@ export class CardBuilder extends BaseCostBuilder {
         this._isResetPerCnt = false;
         return this;
     }
-    isSpReset(isSpReset: boolean = true) {
-        this._isSpReset = isSpReset;
-        return this;
-    }
     addition(key: string, value: number) {
         this._addition[key] = value;
         return this;
@@ -536,7 +532,6 @@ export class CardBuilder extends BaseCostBuilder {
                 canSelectHero,
                 isResetUct: this._isResetUseCnt,
                 isResetPct: this._isResetPerCnt,
-                spReset: this._isSpReset,
                 ver: this._curVersion,
                 isUseNightSoul: this._isUseNightSoul,
                 readySkillStatus: this._readySkillStatus,
