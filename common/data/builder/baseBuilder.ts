@@ -1,7 +1,7 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
 import { DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
+import { getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
 export class VersionMap<T> {
     private _map: [VersionWrapper, T][] = [];
@@ -124,7 +124,7 @@ export class ArrayHero extends Array<Hero> {
         return this.some(h => h.isHurted);
     }
     get(id: number) {
-        return getObjById(this, id);
+        return getObjById(this, id) ?? getObjById(this, getHidById(id));
     }
     // 获取所有存活/死亡角色的索引hidx
     allHidxs(options: { isDie?: boolean, isAll?: boolean, startHidx?: number, exclude?: number, cdt?: (h: Hero) => boolean, limit?: number } = {}) {

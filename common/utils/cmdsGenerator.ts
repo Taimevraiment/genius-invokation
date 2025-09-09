@@ -37,7 +37,7 @@ export default class CmdsGenerator {
         return this.value.some(({ cmd }) => cmd.includes('switch'));
     }
     get hasDamage() {
-        return this.hasCmds('heal', 'addMaxHp') || this.getCmdCnt('attack') != undefined;
+        return this.hasCmds('heal', 'addMaxHp', 'revive') || this.getCmdCnt('attack') != undefined;
     }
     get isPriority() {
         return this.value.some(({ cmd, mode }) => cmd.includes('attack') && mode == 1);

@@ -160,14 +160,12 @@ export class GISkill {
                     }
                 }
             }
-            if ((!dmgElement || dmgElement == DAMAGE_TYPE.Physical) && skill.dmgElement == DAMAGE_TYPE.Physical) {
-                for (const ist of statuses) {
-                    const stsres = ist.handle(ist, sevent);
-                    if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl) {
-                        dmgElement = stsres.attachEl;
-                    }
-                    if (stsres.atkOffset) atkOffset = stsres.atkOffset;
+            for (const ist of statuses) {
+                const stsres = ist.handle(ist, sevent);
+                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && !dmgElement) {
+                    dmgElement = stsres.attachEl;
                 }
+                if (stsres.atkOffset) atkOffset = stsres.atkOffset;
             }
             dmgElement ??= skill.attachElement != DAMAGE_TYPE.Physical ? skill.attachElement : skill.dmgElement;
             const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,
@@ -180,7 +178,7 @@ export class GISkill {
                 if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
                 if (skill.damage || addDmgCdt) cmds.unshift.attack();
             }
-            if (!cmds.hasCmds('attack', 'heal', 'addMaxHp') && !skill.isPassive) cmds.unshift.attack();
+            if (!cmds.hasCmds('attack', 'heal', 'addMaxHp', 'revive') && !skill.isPassive) cmds.unshift.attack();
             cmds.unshift
                 .getSummon(summonPre)
                 .getStatus(statusOppoPre, { hidxs, isOppo: true })

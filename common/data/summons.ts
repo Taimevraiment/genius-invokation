@@ -35,7 +35,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event) => {
             const { heros, talent, trigger } = event;
-            const hero = heros.get(getHidById(summon.id));
+            const hero = heros.get(summon.id);
             if (['enter', 'summon-destroy'].includes(trigger)) {
                 hero?.skills.forEach(skill => {
                     if (skill.type == SKILL_TYPE.Normal || skill.type == SKILL_TYPE.Elemental) {
@@ -230,7 +230,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const { heros, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             const damage = isCdt(trigger != 'phase-end', 2);
-            if (heros.get(getHidById(summon.id))?.isFront && summon.isTalent) {
+            if (heros.get(summon.id)?.isFront && summon.isTalent) {
                 triggers.push('after-skilltype1');
             }
             return { triggers, exec: cmds => summon.phaseEndAtk(cmds).clear().attack(damage) }
@@ -278,12 +278,10 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => ({
             triggers: 'phase-end',
             exec: cmds => {
-                const { heros = [] } = event;
-                const fhero = heros.find(h => h.isFront);
-                if (!fhero) return;
+                const { hero } = event;
                 summon.phaseEndAtk(cmds).clear()
-                    .heal(isCdt(fhero.hp <= 6 && summon.isTalent, summon.shieldOrHeal + 1))
-                    .getEnergy(fhero.energy == 0 && summon.isTalent ? 2 : 1);
+                    .heal(isCdt(hero.hp <= 6 && summon.isTalent, summon.shieldOrHeal + 1))
+                    .getEnergy(hero.energy == 0 && summon.isTalent ? 2 : 1);
             }
         })),
 
@@ -303,9 +301,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 addDmgCdt: isCdt(isTalent, 1),
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (trigger?.startsWith('elReaction-Anemo:') && summon.element == ELEMENT_TYPE.Anemo) {
-                        summon.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
-                    }
+                    summon.changeAnemoElement(trigger);
                 }
             }
         }),
@@ -345,7 +341,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/8296c70266ae557b635c27b20e2fd615_5814665570399175790.png')
         .handle((summon, event) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
             return {
@@ -785,7 +781,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                     if (trigger != 'get-elReaction') summon.phaseEndAtk(cmds).clear();
                     if (summon.useCnt == 0) getObjById(eCombatStatus, 124044)?.dispose();
                     if (trigger == 'get-elReaction') return;
-                    const chero = heros.get(getHidById(summon.id));
+                    const chero = heros.get(summon.id);
                     if (trigger == 'action-start') chero?.talentSlot?.minusPerCnt();
                     cmds.attack();
                 }

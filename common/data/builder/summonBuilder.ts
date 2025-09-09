@@ -32,6 +32,7 @@ export interface SummonHandleRes {
     isQuickAction?: boolean,
     isTrigger?: boolean,
     notLog?: boolean,
+    isAfterSkill?: boolean,
     exec?: () => SummonExecRes,
 }
 
@@ -76,7 +77,6 @@ export class GISummon {
         hasPlus: boolean, // 是否有加号
         isWill: boolean, // 是否为将要生成的召唤物
         willChange: boolean, // 是否将要变化的召唤物
-        isAdd: boolean, // 召唤物是否增加过次数
         explains: string[], // 要解释的文本
         curVersion: Version, // 当前版本
         versionChanges: Version[], // 版本更新
@@ -117,7 +117,6 @@ export class GISummon {
             explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
             isWill: false,
             willChange: false,
-            isAdd: false,
             descriptions: [],
             curVersion,
             versionChanges,
@@ -163,9 +162,12 @@ export class GISummon {
                     res.exec ??= cmds => (!isOnlyPhaseEnd || event.trigger == 'phase-end') && summon.phaseEndAtk(cmds);
                     res.exec?.(cmds);
                     cmds.value.forEach(c => {
-                        if (c.cmd != 'attack') return;
-                        c.cnt ??= this.damage;
-                        c.element ??= this.element;
+                        if (c.cmd == 'attack') {
+                            c.cnt ??= this.damage;
+                            c.element ??= this.element;
+                        } else if (c.cmd == 'heal') {
+                            c.cnt ??= shieldOrHeal;
+                        }
                     });
                     return { cmds }
                 }

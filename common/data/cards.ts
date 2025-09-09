@@ -2178,10 +2178,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => (cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }), { status: 303243 })),
 
     332051: () => new CardBuilder(515).name('「邪龙」的苏醒').since('v6.0.0').event().costSame(2).subtype(CARD_SUBTYPE.Simulanka)
-        .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1。（可叠加，最多叠加到5）')
+        .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1〔（当前增加{desSptCnt,5}点）〕\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1〔（当前增加{desSmnCnt,5}点）〕。（可叠加，最多叠加到5）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Elong.webp')
         .handle((_, event) => {
-            const { playerInfo: { destroyedSummon = 0, destroyedSupport = 0 } = {} } = event;
+            const { playerInfo: { destroyedSummon, destroyedSupport } = {} } = event;
             return { summon: [[303245, destroyedSummon, destroyedSupport]] }
         }),
 
@@ -2709,8 +2709,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在【sts114041】的「凭依」级数为3或5时使用【ski】时，造成的伤害额外+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png')
         .handle((card, event, ver) => {
-            const { hero } = event;
-            const stsCnt = (getObjById(hero?.heroStatus, 114041)?.useCnt ?? 0) - (ver.gte('v4.8.0') ? 1 : 0);
+            const stsCnt = (event.hero.heroStatus.get(114041)?.useCnt ?? 0) - (ver.gte('v4.8.0') ? 1 : 0);
             let addDmgCdt = 0;
             if (
                 ver.lt('v4.2.0') && [3, 5].includes(stsCnt) ||
@@ -2718,7 +2717,9 @@ const allCards: Record<number, () => CardBuilder> = {
                 ver.gte('v5.0.0') && stsCnt >= 2 && card.perCnt > 0
             ) {
                 addDmgCdt = 1;
-            } else if (ver.gte('v4.8.0') && stsCnt >= 2 && card.perCnt > 0) addDmgCdt = 2;
+            } else if (ver.gte('v4.8.0') && stsCnt >= 2 && card.perCnt > 0) {
+                addDmgCdt = 2;
+            }
             if (addDmgCdt == 0) return;
             return {
                 triggers: 'skilltype2',
@@ -2737,8 +2738,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方附属有【sts114063】的‹4雷元素›角色，「元素战技」和「元素爆发」造成的伤害额外+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/27/12109492/3eb3cbf6779afc39d7812e5dd6e504d9_148906889400555580.png')
         .handle((_, event) => {
-            const { heros } = event;
-            if (!heros.find(h => h.isFront && h.element == ELEMENT_TYPE.Electro && hasObjById(h.heroStatus, 114063))) return;
+            if (!event.heros.find(h => h.isFront && h.element == ELEMENT_TYPE.Electro && h.heroStatus.has(114063))) return;
             return {
                 addDmgCdt: 1,
                 triggers: ['skilltype2', 'skilltype3', 'other-skilltype2', 'other-skilltype3'],
@@ -2758,7 +2758,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/608b48c391745b8cbae976d971b8b8c0_2956537094434701939.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            event.cmds.getStatus(114091, { isOppo: true });
+            event.execmds.getStatus(114091, { isOppo: true });
             return { triggers: 'switch-to', exec: () => card.minusPerCnt() }
         }),
 
@@ -2773,10 +2773,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, trigger, execmds } = event;
             if (card.perCnt > 0 && trigger == 'will-killed') {
-                execmds.revive(1, hero?.hidx);
-                return { triggers: 'will-killed', exec: () => card.minusPerCnt() }
+                execmds.revive(1, hero.hidx);
+                return { triggers: trigger, exec: () => card.minusPerCnt() }
             }
-            return { triggers: 'skill', addDmgCdt: isCdt((hero?.hp ?? 10) <= 5, 1) }
+            return { triggers: 'skill', addDmgCdt: isCdt(hero.hp <= 5, 1) }
         }),
 
     214121: () => new CardBuilder(447).name('破夜的明焰').since('v5.3.0').talent(1).costElectro(2)
@@ -2784,7 +2784,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/fe3f64e0a6220b41d9db19a6cbb7c8e8_815543173218385253.png')
         .handle((_, event) => {
             const { hero, skill, execmds } = event;
-            if (!hero || !skill?.isHeroSkill || getObjById(hero.heroStatus, 114122)?.useCnt == 3) return;
+            if (!skill?.isHeroSkill || hero.heroStatus.get(114122)?.useCnt == 3) return;
             execmds.getStatus(114122, { hidxs: hero.hidx });
             return { triggers: ['elReaction-Electro', 'other-elReaction-Electro'] }
         }),
@@ -2793,8 +2793,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('〔*[card]我方【hro】获得1点[充能]。〕；我方【hro】因【ski,3】扣除[充能]后，获得1点[充能]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/c76d4ed584fd2bbc82310df761039167_284204024608898385.png')
         .handle((card, event) => {
-            const { cmds, execmds, hero, source = -1 } = event;
-            cmds.getEnergy(1, { hidxs: hero?.hidx });
+            const { cmds, execmds, hero, source } = event;
+            cmds.getEnergy(1, { hidxs: hero.hidx });
             if (card.perCnt <= 0 || source != 14134) return;
             execmds.getEnergy(1);
             return { triggers: 'trigger', exec: () => card.minusPerCnt() }
@@ -2824,8 +2824,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】引发扩散反应后：使我方角色和召唤物接下来2次所造成的的被扩散元素类型的伤害+1。（每种元素类型分别计算次数）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/dd06fa7b0ec63f3e60534a634ebd6fd2_9125107885461849882.png')
         .handle((_, event) => {
-            const { trigger = '' } = event;
-            const windEl = trigger.startsWith('elReaction-Anemo') ? PURE_ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as PureElementType] : ELEMENT_TYPE.Anemo;
+            const { trigger } = event;
+            const windEl = trigger.startsWith('elReaction-Anemo') ?
+                PURE_ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as PureElementType] :
+                ELEMENT_TYPE.Anemo;
             return {
                 triggers: 'elReaction-Anemo',
                 status: isCdt(windEl != ELEMENT_TYPE.Anemo, 115050 + (6 + ELEMENT_CODE[windEl]) % 10),
@@ -2837,8 +2839,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/25/258999284/08a42903fcff2a5249ef1fc4021ecf7a_492792879105973370.png')
         .handle((_, event) => {
             const { isChargedAtk, hero, execmds } = event;
-            const hasSts115061 = hero.heroStatus.get(115061);
-            if (isChargedAtk && hasSts115061) {
+            if (isChargedAtk && hero.heroStatus.has(115061)) {
                 execmds.getStatus(115062, { hidxs: hero.hidx });
                 return { triggers: 'skilltype1' }
             }
@@ -2848,9 +2849,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】为出战角色期间，我方引发扩散反应时：抓2张牌。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/8399149d2618f3566580df22b153579a_4849308244790424730.png')
         .handle((card, event) => {
-            const { hero, execmds } = event;
-            if (!hero?.isFront || card.perCnt <= 0) return;
-            execmds.getCard(2);
+            if (card.perCnt <= 0) return;
+            event.execmds.getCard(2);
             return { triggers: 'Swirl', exec: () => card.minusPerCnt() }
         }),
 

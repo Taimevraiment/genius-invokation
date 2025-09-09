@@ -268,7 +268,7 @@ export class StatusBuilder extends BaseBuilder {
         return this._type.includes(STATUS_TYPE.OnlyExplain);
     }
     id(id: number) {
-        this._id = id;
+        if (this._id == -1) this._id = id;
         return this;
     }
     name(name: string, version: Version = 'vlatest') {

@@ -1,7 +1,7 @@
 import { Hero, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
-import { getObjById, getObjIdxById, hasObjById } from '../utils/gameUtil.js';
+import { getObjById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { NormalSkillBuilder, SkillBuilder } from './builder/skillBuilder.js';
@@ -105,7 +105,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/26/12109492/0e41ec30bd552ebdca2caf26a53ff3c4_7388012937739952914.png')
                 .passive().perCnt(2).handle(event => {
                     const { hero: { talentSlot, heroStatus }, skill } = event;
-                    const status: number | (number | [number, ...any[]])[] = [[111052, 1, +!!talentSlot]];
+                    const status: (number | [number, ...any[]])[] = [[111052, 1, +!!talentSlot]];
                     const isAddDmg = skill.perCnt > 0 && !hasObjById(heroStatus, 111054);
                     if (isAddDmg) status.push(111054);
                     return { triggers: 'switch-to', status, exec: () => isAddDmg && skill.minusPerCnt() }
@@ -961,7 +961,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).cost(4, 'v5.7.0').handle(event => {
                     const { heros, talent, hero: { heroStatus }, cmds } = event;
                     cmds.getEnergy(2, { hidxs: heros.getBackHidxs() })
-                    return { addDmgCdt: (getObjById(heroStatus, 114072)?.useCnt ?? 0) * (talent ? 2 : 1) }
+                    return { addDmgCdt: (heroStatus.get(114072)?.useCnt ?? 0) * (talent ? 2 : 1) }
                 }),
             new SkillBuilder('诸愿百眼之轮').description('战斗开始时，初始附属【sts114072】。')
                 .src('https://patchwiki.biligame.com/images/ys/0/0f/5ardhper4s2i541lmywmazv31hfn0q9.png',
@@ -978,20 +978,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .description('召唤【smn114081】。', 'v5.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/3/3d/guf5f3kk06kmo3y0uln71jqsovem8yk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5d52bb5027ee98ea6295c7cbe6f75260_4362138600485261556.png')
-                .elemental().cost(3).handle((event, ver) => ({ summon: [[114081, isCdt(ver.gte('v5.3.0') && hasObjById(event.summons, 114081), 2)]] })),
+                .elemental().cost(3).handle((event, ver) => ({ summon: [[114081, isCdt(ver.gte('v5.3.0') && event.summons.has(114081), 2)]] })),
             new SkillBuilder('大密法·天狐显真').description('{dealDmg}\\；如果我方场上存在【smn114081】，则将其消灭，然后生成【sts114083】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ea/8y36keriq61eszpx5mm5ph7fvwa07ad.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b5ebdd77cfd7a6e12d1326c08e8f9214_6239158387266355120.png')
                 .burst(2).damage(4).cost(3).handle(event => {
-                    const { talent, summons } = event;
-                    const smn114081Idx = getObjIdxById(summons, 114081);
-                    let status: number[] = [];
-                    if (smn114081Idx > -1) {
-                        summons.splice(smn114081Idx, 1);
-                        status.push(114083);
-                        if (talent) status.push(114082);
-                    }
-                    return { status }
+                    const { talent, summons, cmds } = event;
+                    const smn114081 = summons.get(114081);
+                    if (!smn114081) return;
+                    cmds.getStatus(114083);
+                    if (talent) cmds.getStatus(114082);
+                    return { exec: () => smn114081.dispose() }
                 })
         ),
 
@@ -1006,9 +1003,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/1/13/1tkxwb0js8qxi9yi8bm6tpub8f9ba19.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/bb9487283d20c857804988ace8572ebc_971397791433710881.png')
                 .elemental().damage(2).cost(3).handle(event => {
-                    const { eheros = [] } = event;
-                    const hasSts = hasObjById(eheros.find(h => h.isFront)?.heroStatus, 114091);
-                    return { statusOppo: isCdt(!hasSts, 114091) }
+                    if (event.eheros.getFront()?.heroStatus.has(114091)) return;
+                    return { statusOppo: 114091 }
                 }),
             new SkillBuilder('蔷薇的雷光').description('{dealDmg}，召唤【smn114092】，使敌方出战角色附属【sts114091】。')
                 .description('{dealDmg}，召唤【smn114092】。', 'v4.8.0')
@@ -1052,16 +1048,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u502gh/c61c0c32057a97d78f2a1c88d228642e.png')
         .normalSkill(new NormalSkillBuilder('逐影之誓').damage(1)
             .description('如果本角色附属【sts114121】，则此技能少花费1个[无色元素骰]。')
-            .handle(event => ({ minusDiceSkill: { skilltype1: isCdt(hasObjById(event.hero.heroStatus, 114121), [0, 1, 0]) } })))
+            .handle(event => ({ minusDiceSkill: { skilltype1: isCdt(event.hero.heroStatus.has(114121), [0, 1, 0]) } })))
         .skills(
             new SkillBuilder('狩夜之巡').description('自身附属【sts114121】，移除自身所有【sts122】。然后根据所移除的层数，造成[雷元素伤害]，并治疗自身。（伤害和治疗最多4点）')
                 .src('https://patchwiki.biligame.com/images/ys/b/b7/agbainwvpxydyft7odt4jvvjlawtjhc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/46fcc98c1a7293e393ee520246fb2693_4818683097172627285.png')
                 .elemental().cost(2).handle(event => {
-                    const { hero: { heroStatus } } = event;
-                    const sts122 = getObjById(heroStatus, 122);
-                    const cnt = Math.min(4, sts122?.useCnt ?? 0) || undefined;
-                    return { addDmgCdt: cnt, heal: cnt ?? 0, status: 114121, exec: () => sts122?.dispose() }
+                    const sts122 = event.hero.heroStatus.get(122);
+                    const cnt = Math.min(4, sts122?.useCnt ?? 0);
+                    return { addDmgCdt: cnt, heal: cnt, status: 114121, exec: () => sts122?.dispose() }
                 }),
             new SkillBuilder('残光将终').description('{dealDmg}，自身附属4层【sts122】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/25/rky0mg25hu7cdg7imhukjzv1kof8zfo.png',
@@ -1111,7 +1106,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     '')
                 .passive().addition('switch').perCnt(3).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
-                    const nightSoul = getObjById(hero.heroStatus, 114141);
+                    const nightSoul = hero.heroStatus.get(114141);
                     if (!nightSoul || (skill.perCnt <= 0 && trigger != 'switch')) return;
                     if ((trigger == 'switch' && skill.perCnt > 0 && skill.addition.switch == 1) || trigger == 'ready-skill') {
                         if (nightSoul.useCnt != 2) cmds.getNightSoul(1, hero.hidx);
@@ -1124,7 +1119,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         triggers: ['ready-skill', 'switch'],
                         exec: () => {
-                            if (trigger == 'ready-skill' || (skill.addition.switch == 1 && skill.perCnt > 0)) --skill.perCnt;
+                            if (trigger == 'ready-skill' || (skill.addition.switch == 1 && skill.perCnt > 0)) skill.minusPerCnt();
                             if (trigger == 'switch') skill.addition.switch = (skill.addition.switch + 1) % 2;
                         }
                     }
@@ -1189,9 +1184,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/9/9f/7dxxr4z59ch7bsg0xaoxxi38meuaeff.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/081c165d08ff75ec2f15215cfc892056_2221900956718137863.png')
                 .burst(2).damage(4).cost(3).handle(event => {
-                    const { talent } = event;
                     const status = [115041];
-                    if (talent) status.push(115042);
+                    if (event.talent) status.push(115042);
                     return { status }
                 })
         ),
@@ -1204,9 +1198,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('千早振').description('{dealDmg}，本角色附属【sts115051】。；如果此技能引发了扩散，则将【sts115051】转换为被扩散的元素。；【此技能结算后：】我方切换到后一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/2/29/f7rwj3qb9kffejm2kt2oq7ltl843nrk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/c492b46c71485b1377cf8c9f3f5dd6e8_6376046014259793309.png')
-                .elemental().damage(1).damage(3, 'v4.8.0').cost(3).handle(({ swirlEl, cmds }) => (
-                    cmds.switchAfter(), { status: [[115051, swirlEl]] }
-                )),
+                .elemental().damage(1).damage(3, 'v4.8.0').cost(3).handle(({ swirlEl, cmds }) =>
+                    (cmds.getStatus([[115051, swirlEl]]).switchAfter().res)),
             new SkillBuilder('万叶之一刀').description('{dealDmg}，召唤【smn115052】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/47/g6cfvzw12ruiclawmxh903fcoowmr9j.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/293efb8c9d869e84be6bc02039d72104_7417737523106108019.png')
@@ -1226,9 +1219,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/3/31/jq8wshhifimtmgedysk1xlscepp9d6l.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/9b7fa91d73564e2cb0cbbbc0d1b75cb3_8357319180909129225.png')
                 .burst(3).damage(7).cost(3).handle(event => {
-                    const { hero: { heroStatus } } = event;
-                    const sts115061 = getObjById(heroStatus, 115061);
-                    return { addDmgCdt: isCdt(!!sts115061, 1), exec: () => sts115061?.dispose() }
+                    const sts115061 = event.hero.heroStatus.get(115061);
+                    return { addDmgCdt: isCdt(sts115061, 1), exec: () => sts115061?.dispose() }
                 })
         ),
 
@@ -1240,10 +1232,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('呜呼流·风隐急进').description('{dealDmg}，本角色[准备技能]：【rsk15074】。；如果当前技能引发了扩散，则【rsk15074】将改为造成被扩散元素的伤害。')
                 .src('https://patchwiki.biligame.com/images/ys/f/f1/nft00ohrbmn6j4hqssftn7kh4ha3nk5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/1b3691e9a037a54d02076135237d2925_8714311620973409736.png')
-                .elemental().damage(1).cost(3).handle(event => {
-                    const { swirlEl = ELEMENT_TYPE.Anemo } = event;
-                    return { status: [[115071, swirlEl]] }
-                }),
+                .elemental().damage(1).cost(3).handle(event => ({ status: [[115071, event.swirlEl]] })),
             new SkillBuilder('呜呼流·影貉缭乱').description('{dealDmg}，召唤【smn115072】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/74/6cc1al7p5kum4yuwp7rtqt6ymv0gl9y.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/3457c9ea9df5a90c56a5be0d8e30482b_4898602838938710962.png')

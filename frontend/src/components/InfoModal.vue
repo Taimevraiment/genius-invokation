@@ -351,7 +351,8 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       if ((!isInGame.value && !notNeedColor) || isExplain) return '';
       ctt = ctt
         .replace(/{round}/, `${round.value}`)
-        .replace(/{desSptCnt}/, `${playerInfo.value?.destroyedSupport}`)
+        .replace(/{desSptCnt(?:,(\d))?}/, (_, max: string = '100') => `${Math.min(+max, playerInfo.value?.destroyedSupport ?? 0)}`)
+        .replace(/{desSmnCnt(?:,(\d))?}/, (_, max: string = '100') => `${Math.min(+max, playerInfo.value?.destroyedSummon ?? 0)}`)
         .replace(/{elDmgCnt}/, `${playerInfo.value?.oppoGetElDmgType.toString(2).split('').filter(v => +v).length}`)
       if (typeof obj != 'string' && obj != undefined) {
         ctt = ctt.replace(/{pct}/, `${-obj.perCnt}`).replace(/{unt}/, `${obj.useCnt}`);
