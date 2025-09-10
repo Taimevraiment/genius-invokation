@@ -40,7 +40,7 @@ export default class CmdsGenerator {
         return this.hasCmds('heal', 'addMaxHp', 'revive') || this.getCmdCnt('attack') != undefined;
     }
     get isPriority() {
-        return this.value.some(({ cmd, mode }) => cmd.includes('attack') && mode == 1);
+        return this.value.some(({ cmd, mode }) => cmd == 'attack' && mode == 1);
     }
     get res() {
         this._addType = 'push';
@@ -143,10 +143,13 @@ export default class CmdsGenerator {
         this._add({ cmd: 'attach', element, hidxs, isOppo });
         return this;
     }
-    attack(damage?: number, element?: DamageType | DamageType[], options: { hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean } = {}) {
-        let { hidxs, isOppo, isPriority } = options;
+    attack(damage?: number, element?: DamageType | DamageType[], options: {
+        hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean, isOrder?: boolean,
+    } = {}) {
+        let { hidxs, isOppo, isPriority, isOrder } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode: +!!isPriority });
+        const mode = isPriority ? 1 : isOrder ? CMD_MODE.ByOrder : 0;
+        this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode });
         return this;
     }
     changeDice(options: { cnt?: number, element?: DiceCostType, isFront?: boolean } = {}) {

@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
-import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, SKILL_TYPE, VERSION, Version } from "../constant/enum.js";
+import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, VERSION, Version } from "../constant/enum.js";
 import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
@@ -324,7 +324,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
     const { hidx = player.hidx ?? 0, minusDiceCard = 0, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0,
-        isMinusDiceCard = !!hcard && hcard.cost + hcard.anydice > minusDiceCard,
+        isMinusDiceCard = !!hcard && hcard.cost + hcard.anydice > minusDiceCard, heros = player.heros,
     } = event;
     const hero = player.heros[hidx];
     return {
@@ -359,7 +359,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         isQuickAction: false,
         hcard,
         isChargedAtk: player.isChargedAtk,
-        isFallAtk: player.isFallAtk && skill?.type == SKILL_TYPE.Normal,
+        isFallAtk: player.isFallAtk,
         round: 1,
         restDmg: -1,
         isSummon: -1,
@@ -382,7 +382,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         source: -1,
         sourceHidx: -1,
         dmgSource: -1,
-        talent: hero.talentSlot,
+        talent: heros.get(entity.id ?? -1)?.talentSlot ?? hero.talentSlot,
         slotsDestroyCnt: player.heros.map(() => 0),
         isSelfRound: false,
         isSwirlExec: false,

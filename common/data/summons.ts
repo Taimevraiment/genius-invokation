@@ -365,20 +365,18 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。（每回合1次）；【我方角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。（离场前仅限一次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
         .handle((summon, event) => {
-            const { reset, trigger } = event;
+            const { reset, trigger, dmgElement } = event;
             if (reset) return { status: 115083 }
-            const getdmgTrgs: Trigger[] = ['Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg'];
             const triggers: Trigger[] = ['phase-end'];
-            if (summon.element == ELEMENT_TYPE.Anemo && getdmgTrgs.includes(trigger)) {
-                triggers.push(trigger);
+            if (summon.element == ELEMENT_TYPE.Anemo) {
+                triggers.push('Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg');
             }
             return {
                 triggers,
-                isNotAddTask: trigger.includes('-getdmg'),
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (trigger.includes('-getdmg') && summon.element == ELEMENT_TYPE.Anemo) {
-                        summon.element = ELEMENT_TYPE[trigger.slice(0, trigger.indexOf('-getdmg')) as ElementType];
+                    if (trigger.includes('-getdmg') && dmgElement && summon.element == ELEMENT_TYPE.Anemo) {
+                        summon.element = dmgElement as ElementType;
                     }
                 },
             }
@@ -388,7 +386,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【此召唤物在场时：】敌方角色受到的[风元素伤害]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/d51fd00a7e640ba13b62315e5184be58_168888966568961527.png')
         .handle((summon, event) => {
-            const { trigger = '' } = event;
+            const { trigger } = event;
             const triggers: Trigger[] = ['Anemo-getdmg-oppo', 'phase-end'];
             if (summon.isTalent) triggers.push('phase-start', 'enter');
             return {
@@ -402,9 +400,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    115143: () => new SummonBuilder('小貘').useCnt(3).icon(STATUS_ICON.Special)
+    115143: () => new SummonBuilder('小貘').useCnt(3).icon(STATUS_ICON.Special).addition('effect', 1)
         .description('【结束阶段：】生成1张【crd115142】，将其置于我方牌组顶部。；[useCnt]')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Mizuki.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/3239cfe075a9f6225356b5b540fb499d_7481632229215926025.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: cmds => summon.phaseEndAtk(cmds).addCard(1, 115142, { scope: 1 }),
@@ -446,13 +444,13 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png')
         .handle((summon, event) => {
             const { heros, trigger } = event;
-            const hero = getObjById(heros, getHidById(summon.id));
+            const hero = heros.get(summon.id);
             return {
                 triggers: ['phase-end', 'getdmg'],
                 isNotAddTask: trigger == 'getdmg',
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (summon.perCnt <= 0 || trigger != 'getdmg' || hero?.hidx == undefined || hero.hp <= 0) return;
+                    if (summon.perCnt <= 0 || trigger != 'getdmg' || !hero || hero.hp <= 0) return;
                     summon.minusPerCnt();
                     cmds.getStatus(116054, { hidxs: hero.hidx });
                 },
@@ -466,8 +464,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             triggers: 'phase-end',
             exec: cmds => {
                 summon.phaseEndAtk(cmds);
-                const { heros = [] } = event;
-                if (heros.filter(h => h.element == ELEMENT_TYPE.Geo).length >= 2) {
+                if (event.heros.filter(h => h.element == ELEMENT_TYPE.Geo).length >= 2) {
                     cmds.getStatus(111);
                 }
             }
@@ -781,8 +778,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                     if (trigger != 'get-elReaction') summon.phaseEndAtk(cmds).clear();
                     if (summon.useCnt == 0) getObjById(eCombatStatus, 124044)?.dispose();
                     if (trigger == 'get-elReaction') return;
-                    const chero = heros.get(summon.id);
-                    if (trigger == 'action-start') chero?.talentSlot?.minusPerCnt();
+                    if (trigger == 'action-start') talent?.minusPerCnt();
                     cmds.attack();
                 }
             }
@@ -896,7 +892,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         new SummonBuilder('「邪龙」').from(332051).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
             .useCnt(1 + Math.min(5, useCnt)).addition('effect', 1 + Math.min(5, dmg))
             .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]').tag(SUMMON_TAG.Simulanka)
-            .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Elong.webp')
+            .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/9362e2d9730bee84d5b41850a1e0e9bd_5229484141013095084.png')
             .handle((summon, event) => ({
                 triggers: 'phase-end',
                 exec: cmds => {

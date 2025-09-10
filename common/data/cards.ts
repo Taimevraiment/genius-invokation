@@ -325,7 +325,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     311208: () => new CardBuilder(520).name('若水').since('v6.0.0').weapon().costSame(2)
         .description('【所附属角色生命值至少为11时：】造成的伤害+2。；【入场时：】所附属角色获得1点最大生命值。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_RuoShui.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/8bc85fdc9df49d66ad2145eb848cae67_2048284066171113800.png')
         .handle((_, event) => {
             const { hero, skill, cmds } = event;
             cmds.addMaxHp(1, hero?.hidx);
@@ -1125,7 +1125,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312037: () => new CardBuilder(512).name('宗室面具').since('v6.0.0').relic().costSame(0).perCnt(1)
         .description('【附属角色使用元素爆发后：】我方下一个角色本回合内造成的伤害+1。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_ZongShixiao.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/99517acb13ab84d9312ca092d09d664d_2140052692312596706.png')
         .handle((card, event) => {
             const { heros, execmds } = event;
             if (heros.length < 2 || card.perCnt <= 0) return;
@@ -1135,7 +1135,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312038: () => new CardBuilder(513).name('未竟的遐思').since('v6.0.0').relic().costSame(2).perCnt(2)
         .description('我方【smn115】以及造成的燃烧反应伤害+1。（每回合2次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XiasiDa.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/77ccf2b24659135fed595253ac237ba3_4546566910297666745.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const triggers: Trigger[] = ['Burning'];
@@ -1145,7 +1145,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312039: () => new CardBuilder(514).name('谐律异想断章').since('v6.0.0').relic().costSame(2).perCnt(1)
         .description('【附属角色使用技能后：】我方所有角色附属1层【sts122】，下次我方角色使用技能时少花费1个元素骰。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/99517acb13ab84d9312ca092d09d664d_5281795024856996087.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const { heros, execmds } = event;
@@ -2179,7 +2179,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332051: () => new CardBuilder(515).name('「邪龙」的苏醒').since('v6.0.0').event().costSame(2).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1〔（当前增加{desSptCnt,5}点）〕\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1〔（当前增加{desSmnCnt,5}点）〕。（可叠加，最多叠加到5）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Elong.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/9362e2d9730bee84d5b41850a1e0e9bd_5229484141013095084.png')
         .handle((_, event) => {
             const { playerInfo: { destroyedSummon, destroyedSupport } = {} } = event;
             return { summon: [[303245, destroyedSummon, destroyedSupport]] }
@@ -2187,12 +2187,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332052: () => new CardBuilder(516).name('旁白的注脚').since('v6.0.0').event().costSame(0).subtype(CARD_SUBTYPE.Simulanka)
         .description('双方召唤【smn301028】。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Pangbai.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/d719f4dec1e3dcf7eb419bf155576658_4728073878915212465.png')
         .handle(() => ({ summon: 301028, summonOppo: 301028 })),
 
     332054: () => new CardBuilder(518).name('「魔女M的祝福」').since('v6.0.0').event().costSame(0).subtype(CARD_SUBTYPE.Simulanka).canSelectSummon(1)
         .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，如果其可用次数不低于3，则额外治疗我方受伤最多的角色2点。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_ElongCry.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/e626ac407752d4fa0a807ef17ecf811f_6990712266027417127.png')
         .handle((_, event) => {
             const { summons = [], heros, selectSummon = -1, cmds } = event;
             const { useCnt = 0 } = summons[selectSummon] ?? {};
@@ -2204,7 +2204,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332055: () => new CardBuilder(519).name('「狂欢节奏」').since('v6.0.0').event().costAny(2)
         .description('抓2张牌，如果我方手牌中的「武器」牌或「圣遗物」牌数量大于1张，则各生成1个[万能元素骰]。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Xilonen.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/29884039a1099e488fce5b73cfe85953_5457989995233164404.png')
         .handle((_, event) => {
             const { pile = [], hcards = [], cmds } = event;
             cmds.getCard(2);
@@ -2802,7 +2802,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     214141: () => new CardBuilder(509).name('「沃陆之邦」的训教').since('v6.0.0').talent(2).costElectro(3).energy(2)
         .description('{action}；装备有此牌的【hro】生成的【sts114142】，初始[可用次数]+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Iansan.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/ff3a1c64a570322d545de6e7d54379a3_1819244806685269268.png'),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')
@@ -2901,7 +2901,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     215141: () => new CardBuilder(510).name('缠忆君影梦相见').since('v6.0.0').talent(1).costAnemo(3).perCnt(2)
         .description('{action}；如果【hro】是出战角色，则我方造成的[冰元素伤害][水元素伤害][火元素伤害][雷元素伤害]+1。（包括角色引发的任意元素扩散的伤害，每回合2次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Mizuki.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/58631fd1402624eea99a18ae87102c34_6983160622552680267.png')
         .handle((card, event) => {
             if (!event.hero?.isFront || card.perCnt <= 0) return;
             return {
@@ -2923,7 +2923,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/4c6332fd42d6edc64633a44aa900b32f_248861550176006555.png')
         .handle((card, event) => {
             const { heros, combatStatus, execmds } = event;
-            if (!hasObjById(combatStatus, 116021) || card.perCnt <= 0) return;
+            if (!combatStatus.has(116021) || card.perCnt <= 0) return;
             execmds.heal(1, { hidxs: heros.allHidxs() });
             return { triggers: 'skilltype1', exec: () => card.minusPerCnt() }
         }),
@@ -2934,17 +2934,17 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方出战角色在[护盾]角色状态或[护盾]出战状态的保护下时，我方召唤物造成的[岩元素伤害]+1。', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/05/24/255120502/1742e240e25035ec13155e7975f7fe3e_495500543253279445.png')
         .handle((card, event, ver) => {
-            const { hero, heros, combatStatus = [], skill, isSummon = -1 } = event;
+            const { hero, heros, combatStatus, skill, isSummon } = event;
             if (ver.lt('v4.8.0') && !ver.isOffline) {
-                const fhero = heros?.find(h => h.isFront);
-                const istShield = fhero?.heroStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
-                const ostShield = combatStatus.some(sts => sts.hasType(STATUS_TYPE.Shield));
+                const fhero = heros.getFront();
+                const istShield = fhero?.heroStatus.has(STATUS_TYPE.Shield);
+                const ostShield = combatStatus.has(STATUS_TYPE.Shield);
                 if ((!istShield && !ostShield) || isSummon == -1) return;
                 return { triggers: 'Geo-dmg', addDmgCdt: 1 }
             }
-            if (!hero || hero.hp < 7 || (ver.gte('v5.7.0') && card.perCnt <= 0)) return;
+            if (hero.hp < 7 || (ver.gte('v5.7.0') && card.perCnt <= 0)) return;
             const triggers: Trigger[] = [];
-            if (hero.isFront && skill?.isHeroSkill) triggers.push('dmg');
+            if (getHidById(skill?.id) == hero.id) triggers.push('dmg');
             if (isSummon > -1) triggers.push('Geo-dmg')
             return { triggers, addDmgCdt: 1, exec: () => { ver.gte('v5.7.0') && card.minusPerCnt() } }
         }),
@@ -2955,7 +2955,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/82503813/d10a709aa03d497521636f9ef39ee531_3239361065263302475.png')
         .handle((_, event) => {
             const { summons, isFallAtk } = event;
-            if (hasObjById(summons, 116041) && isFallAtk) {
+            if (summons.has(116041) && isFallAtk) {
                 return { triggers: ['skilltype1', 'other-skilltype1'], addDmgCdt: 1 }
             }
         }),
@@ -2964,10 +2964,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】每回合第2次及以后使用【ski】时：如果触发【sts116054】，伤害额外+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/46588f6b5a254be9e797cc0cfe050dc7_8733062928845037185.png')
         .handle((_, event) => {
-            const { hero, isChargedAtk } = event;
-            if (!hero) return;
-            const { heroStatus, skills: [{ useCntPerRound }] } = hero;
-            if (isChargedAtk && useCntPerRound >= 2 && hasObjById(heroStatus, 116054)) {
+            const { hero: { heroStatus, skills: [{ useCntPerRound }] }, isChargedAtk } = event;
+            if (isChargedAtk && useCntPerRound >= 1 && heroStatus.has(116054)) {
                 return { triggers: 'skilltype1', addDmgCdt: 1 }
             }
         }),
@@ -2977,7 +2975,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5355a3c8d887fd0cc8fe8301c80d48ba_7375558397858714678.png')
         .handle((card, event) => {
             const { combatStatus, skill, execmds } = event;
-            if (!hasObjById(combatStatus, 116061) || card.perCnt <= 0 || !skill?.isHeroSkill) return;
+            if (!combatStatus.has(116061) || card.perCnt <= 0 || !skill?.isHeroSkill) return;
             execmds.getCard(1);
             return { triggers: ['Geo-dmg', 'other-Geo-dmg'], exec: () => card.minusPerCnt() }
         }),
@@ -3230,7 +3228,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     223051: () => new CardBuilder(511).name('罔极盛怒').since('v6.0.0').talent().costPyro(1).perCnt(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【敌方打出名称不存在于本局最初牌组的牌时：】所附属角色获得1点[充能]，下次造成的伤害+1。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_TheAbyssXiuhcoatl.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/76f9128c521d0057c10b2fbdc225e580_588508008413011306.png')
         .handle((card, event) => {
             const { hcard, eplayerInfo: { initCardIds = [] } = {}, execmds } = event;
             if (card.perCnt <= 0 || !hcard || initCardIds.includes(hcard.id)) return;
@@ -3496,9 +3494,9 @@ const allCards: Record<number, () => CardBuilder> = {
 
     115117: () => hero1511card(ELEMENT_TYPE.Cryo),
 
-    115142: () => new CardBuilder().name('梦见风名物点心').food().costSame(0)
+    115142: () => new CardBuilder().name('梦见风名物点心').event().costSame(0)
         .description('【此卡牌进入手牌时：】如果我方出战角色生命值大于5，则造成1点[风元素伤害]\\；否则治疗我方出战角色2点。效果结算后抓1张牌，随后弃置此卡牌。')
-        .src('tmp/UI_Gcg_CardFace_Summon_Mizuki_Food')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/10fee256b42540197e2bee0fb5748543_6592454758936975147.png')
         .handle((_, event) => {
             const { hero, execmds } = event;
             if (hero.hp >= 5) execmds.attack(1, DAMAGE_TYPE.Anemo);
@@ -3560,9 +3558,8 @@ const allCards: Record<number, () => CardBuilder> = {
     127032: () => new CardBuilder().name('厄灵·草之灵蛇').vehicle().costSame(0).useCnt(2).perCnt(1)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/3261818320d16e4b8cabb03dbe540914_8652138560686355356.png')
         .handle((card, event) => {
-            const { skill, combatStatus, heros, slotUse, hcard, reset, trigger, execmds } = event;
+            const { skill, combatStatus, slotUse, talent, hcard, reset, trigger, execmds } = event;
             const hid = getHidById(card.id);
-            const talent = getObjById(heros, hid)?.talentSlot;
             if (trigger == 'card' && hcard?.id == getTalentIdByHid(hid)) {
                 return { triggers: 'card', exec: () => { card.perCnt == 0 && card.addPerCnt() } };
             }

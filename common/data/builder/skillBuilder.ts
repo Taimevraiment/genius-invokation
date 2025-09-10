@@ -6,12 +6,12 @@ import {
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
-import { clone, convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
+import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
 import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface SkillHandleEvent extends EntityHandleEvent {
     skill: Skill,
-    swirlEl: PureElementType,
+    swirlEl?: PureElementType,
 }
 
 export interface SkillHandleRes {
@@ -30,6 +30,7 @@ export interface SkillHandleRes {
     isTrigger?: boolean,
     isInvalid?: boolean,
     notLog?: boolean,
+    isFallAtk?: boolean,
     exec?: () => void,
 }
 
@@ -130,7 +131,6 @@ export class GISkill {
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, event.skill);
             const cevent: SkillBuilderHandleEvent = {
-                swirlEl: ELEMENT_TYPE.Anemo,
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
                 cmds,
@@ -154,7 +154,7 @@ export class GISkill {
             if (hero.isFront) statuses.push(...combatStatus);
             if (sevent.trigger == 'skill' && !skill.isPassive) {
                 for (const ski of hero.skills.filter(s => s.isPassive)) {
-                    const skires = ski.handle({ ...clone(sevent), skill: ski });
+                    const skires = ski.handle({ ...sevent, skill: ski });
                     if (skires.triggers?.includes('skill')) {
                         dmgElement = skires.dmgElement;
                     }
@@ -166,6 +166,7 @@ export class GISkill {
                     dmgElement = stsres.attachEl;
                 }
                 if (stsres.atkOffset) atkOffset = stsres.atkOffset;
+                res.isFallAtk ||= stsres.isFallAtk;
             }
             dmgElement ??= skill.attachElement != DAMAGE_TYPE.Physical ? skill.attachElement : skill.dmgElement;
             const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,

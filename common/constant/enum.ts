@@ -2,19 +2,19 @@ import { swapKeysAndValues } from "../utils/utils.js";
 
 export type TypeConst<T> = T[keyof T];
 
-export const SWIRL_ELEMENT = {
+export const SWIRL_ELEMENT_TYPE = {
     Cryo: 'Cryo', // 冰 1
     Hydro: 'Hydro', // 水 2
     Pyro: 'Pyro', // 火 3
     Electro: 'Electro', // 雷 4
 } as const;
 
-export type SwirlElementType = TypeConst<typeof SWIRL_ELEMENT>;
+export type SwirlElementType = TypeConst<typeof SWIRL_ELEMENT_TYPE>;
 
-export const SWIRL_ELEMENT_TYPE_KEY: Record<SwirlElementType, keyof typeof SWIRL_ELEMENT> = swapKeysAndValues(SWIRL_ELEMENT);
+export const SWIRL_ELEMENT_TYPE_KEY: Record<SwirlElementType, keyof typeof SWIRL_ELEMENT_TYPE> = swapKeysAndValues(SWIRL_ELEMENT_TYPE);
 
 export const PURE_ELEMENT_TYPE = {
-    ...SWIRL_ELEMENT,
+    ...SWIRL_ELEMENT_TYPE,
     Anemo: 'Anemo', // 风 5
     Geo: 'Geo', // 岩 6
     Dendro: 'Dendro', // 草 7

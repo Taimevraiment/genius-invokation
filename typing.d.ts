@@ -1,7 +1,7 @@
 import {
     ActionType, CardSubtype, CardTag, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType,
-    SWIRL_ELEMENT, Version
+    SWIRL_ELEMENT_TYPE, Version
 } from "./common/constant/enum"
 import { ArrayHero, ArrayStatus, ArraySummon } from "./common/data/builder/baseBuilder"
 import { type GICard } from "./common/data/builder/cardBuilder"
@@ -177,7 +177,7 @@ type DamageVO = {
     selected?: number[], // 伤害来源闪光(状态/召唤物)
 };
 
-type TrgElRe = keyof typeof SWIRL_ELEMENT;
+type TrgElRe = keyof typeof SWIRL_ELEMENT_TYPE;
 type TrgSkType = Exclude<SkillType, 4 | 5>;
 type TrgEl = keyof typeof PURE_ELEMENT_TYPE;
 type TrgDmg = 'el' | keyof typeof DAMAGE_TYPE;
