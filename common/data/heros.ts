@@ -1539,7 +1539,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(116104).getNightSoul(2), {
                         equip: 116102,
-                        isForbidden: hasObjById(heroStatus, 116104),
+                        isForbidden: heroStatus.has(116104),
                     })),
             new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116101】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/95/ik3phxdr9icvfhohdju4ryyx1ewp9h2.png',
@@ -1559,7 +1559,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(116111).getNightSoul(), {
                         equip: 116112,
-                        isForbidden: hasObjById(heroStatus, 116111),
+                        isForbidden: heroStatus.has(116111),
                     })),
             new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方受伤最多的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的【源音采样】额外治疗1点。')
                 .src('https://patchwiki.biligame.com/images/ys/9/99/7t1wr991s8zzctfskenrhjagtj5l6bg.png',
@@ -1567,15 +1567,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus }, heros } = event;
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
-                    cmds.heal(1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0), { hidxs: heros.getMaxHurtHidxs() });
+                    const heal = 1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0);
+                    cmds.heal(heal, { hidxs: heros.getMaxHurtHidxs() });
                 }),
             new SkillBuilder('「源音采样」').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的「源音采样」。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ee/h84gvy0q7f90zsthhibu7hl8w9qxhyu.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/21cda0957fb4318fbc22e24c08107d96_3568076944477539463.png')
                 .passive().handle(event => {
-                    const { heros = [] } = event;
                     const stsId = [, 116116, 116114, 116115, 116117, , 116113];
-                    const otherHeroElement = heros.filter(h => h.id != 1611).map(h => stsId[ELEMENT_CODE[h.element]] ?? 116113);
+                    const otherHeroElement = event.heros.filter(h => h.id != 1611).map(h => stsId[ELEMENT_CODE[h.element]] ?? 116113);
                     return { triggers: 'game-start', status: [116113, ...otherHeroElement] }
                 })
         ),
@@ -1591,7 +1591,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().damage(3).cost(3).handle(event => {
                     const { talent } = event;
                     if (!talent || talent.perCnt <= 0) return;
-                    return { statusPre: 117012, exec: () => talent.minusPerCnt() };
+                    return { status: 117012, exec: () => talent.minusPerCnt() };
                 }),
             new SkillBuilder('猫猫秘宝').description('{dealDmg}，召唤【smn117011】。')
                 .src('https://patchwiki.biligame.com/images/ys/c/ca/hthhze7cs9vq6uazr06lqu2dhserw7n.png',
@@ -1623,19 +1623,19 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/hfb5j6xnze5j5e5tmixhieq59y78fwn.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ca47312e3d57bc47516b703e9a7d5615_6453606035541146217.png')
                 .elemental().damage(2).cost(3).handle(event => {
-                    const { eheros, heros } = event;
-                    const hidxs = isCdt(hasObjById(eheros.find(h => h.isFront)?.heroStatus, 117031), heros.allHidxs());
+                    const { eheros, eDmgedHero } = event;
+                    const hidxs = isCdt(eDmgedHero.heroStatus.has(117031), eheros.allHidxs());
                     return { statusOppoPre: 117031, hidxs };
                 }),
             new SkillBuilder('所闻遍计·真如').description('{dealDmg}，所有敌方角色附属【sts117031】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/64/qq68p4qre9yxfhxkn97q9quvgo3qbum.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d30e1ee8bc69a2235f36b74ddda3832b_8853500709483692571.png')
-                .elemental().damage(3).cost(5).handle(event => ({ statusOppoPre: 117031, hidxs: event.heros.allHidxs() })),
+                .elemental().damage(3).cost(5).handle(event => ({ statusOppoPre: 117031, hidxs: event.eheros.allHidxs() })),
             new SkillBuilder('心景幻成').description('{dealDmg}，生成【sts117032】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b2/hiqeufp1d8c37jqo8maxpkvjuiu32lq.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/ab5d92e19144f4e483bce180409d0ecf_4393685660579955496.png')
                 .burst(2).damage(4).cost(3).handle(event => {
-                    const { talent, heros = [] } = event;
+                    const { talent, heros } = event;
                     const elements = heros.filter(h => h.hp > 0).map(h => h.element);
                     return { status: [[117032, !!talent, elements.includes(ELEMENT_TYPE.Hydro)]] }
                 })
@@ -1685,7 +1685,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/3e3c04e07682dde6272b8569f39e7359_862983076929139931.png')
                 .burst(2).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus }, talent } = event;
-                    const sts117061 = getObjById(heroStatus, 117061);
+                    const sts117061 = heroStatus.get(117061);
                     const rcnt = sts117061?.roundCnt ?? 0;
                     return {
                         status: isCdt(!sts117061, [[117061, 3]]),
@@ -2519,12 +2519,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                     const isFood = trigger == 'card' && hcard?.hasSubtype(CARD_SUBTYPE.Food) && skill.perCnt > 0;
                     const isTalent = trigger == 'trigger' && source == talent?.id;
-                    if ((isFood || isTalent) && randomInt) {
-                        const ran = randomInt(2);
-                        if (ran == 0) cmds.getStatus(127041, { hidxs: hidx });
-                        else if (ran == 1) cmds.getStatus(127042, { hidxs: hidx });
-                        else cmds.addMaxHp(1, hidx);
-                        return { triggers: ['card', 'trigger'], exec: () => { isFood && --skill.perCnt } }
+                    if (isFood || isTalent) {
+                        return {
+                            triggers: ['card', 'trigger'],
+                            exec: () => {
+                                const ran = randomInt(2);
+                                if (ran == 0) cmds.getStatus(127041, { hidxs: hidx });
+                                else if (ran == 1) cmds.getStatus(127042, { hidxs: hidx });
+                                else cmds.addMaxHp(1, hidx);
+                                if (isFood) skill.minusPerCnt();
+                            }
+                        }
                     }
                 })
         ),

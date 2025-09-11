@@ -762,8 +762,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     112143: () => new StatusBuilder('啃咬目标').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.AddDamage).icon('#')
         .description('【受到〖hro〗或〖smn112144〗伤害时：】移除此效果，每层使此伤害+2。（层数可叠加，没有上限）')
         .handle((status, event) => {
-            const { isSummon, dmgSource } = event;
-            if (isSummon != 112144 && dmgSource != getHidById(status.id)) return;
+            const { isSummon, source } = event;
+            if (isSummon != 112144 && source != getHidById(status.id)) return;
             return { triggers: 'getdmg', getDmg: 2 * status.useCnt, exec: () => status.dispose() }
         }),
 
@@ -1425,8 +1425,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     115121: (cnt: number = 1) => shieldCombatStatus('凤缕护盾', cnt, MAX_USE_COUNT).icon('#')
         .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`),
 
-    115130: () => new StatusBuilder('聚风真眼').type(STATUS_TYPE.OnlyExplain)
-        .description('【所在阵营选择行动前：】对所附属角色造成1点对应元素伤害，可用次数1。'),
+    115130: () => new StatusBuilder('聚风真眼').descriptionOnly('【所在阵营选择行动前：】对所附属角色造成1点对应元素伤害，可用次数1。'),
 
     115131: () => readySkillStatus('在罪之先', 15135, 0, event => {
         const { hero, trigger } = event;
@@ -1563,7 +1562,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     116101: () => new StatusBuilder('超级钻钻领域').combatStatus().useCnt(3).type(STATUS_TYPE.AddDamage).icon('ski,2')
         .description('【此牌在场时：】我方【crd116102】造成的[岩元素伤害]+1，造成的[穿透伤害]+1。；[useCnt]')
         .handle((status, event) => {
-            const { skill, isSummon = -1 } = event;
+            const { skill, isSummon } = event;
             if (skill?.id != getVehicleIdByCid(116102) && isSummon != 116103) return;
             return { triggers: 'Geo-dmg', addDmgCdt: 1, exec: () => status.minusUseCnt() }
         }),
@@ -1590,6 +1589,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
                 triggers: ['elReaction-Dendro', 'other-elReaction-Dendro'],
+                isAfterSkill: true,
                 exec: () => status.minusUseCnt(),
             }
         }),
@@ -1603,6 +1603,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 summon: 117022,
                 triggers: 'skilltype1',
                 attachEl: ELEMENT_TYPE.Dendro,
+                isAddTask: false,
                 exec: () => status.minusUseCnt(),
             }
         }),
@@ -1610,21 +1611,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117031: () => new StatusBuilder('蕴种印').heroStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('#')
         .description('【任意具有蕴种印的所在阵营角色受到元素反应伤害后：】对所有附属角色造成1点[穿透伤害]。；[useCnt]')
         .handle((status, event) => {
-            const { heros, eheros, hidx = -1, eCombatStatus, dmgedHidx, hasDmg, hcard, trigger } = event;
-            const source = isCdt(trigger == 'other-get-elReaction', getObjById(heros[dmgedHidx].heroStatus, status.id)?.entityId);
-            if (trigger == 'other-get-elReaction' && !source || !hasDmg) return;
-            const hasPyro = trigger == 'get-elReaction' &&
-                (!!eheros.get(status.id)?.talentSlot || hcard?.id == 217031) &&
-                hasObjById(eCombatStatus, 117032) &&
-                eheros.some(h => h.element == ELEMENT_TYPE.Pyro);
+            const { eheros, hidx, eCombatStatus, sourceHidx, hasDmg, trigger } = event;
+            if (trigger == 'get-elReaction' && !hasDmg || trigger == 'trigger' && hidx == sourceHidx) return;
+            const hasPyro = trigger == 'get-elReaction' && !!eheros.get(status.id)?.talentSlot &&
+                eCombatStatus.has(117032) && eheros.some(h => h.element == ELEMENT_TYPE.Pyro);
             return {
                 damage: isCdt(hasPyro, 1),
                 element: DAMAGE_TYPE.Dendro,
                 pdmg: isCdt(!hasPyro, 1),
                 isSelf: true,
                 hidxs: hidx,
-                triggers: ['get-elReaction', 'other-get-elReaction'],
-                source,
+                isTrigger: trigger == 'get-elReaction',
+                triggers: ['get-elReaction', 'trigger'],
                 exec: () => status.minusUseCnt(),
             }
         }),
@@ -1639,7 +1637,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 addDmgCdt: 1,
                 exec: () => {
                     if (!status.isTalent || heros.every(h => h.element != ELEMENT_TYPE.Electro) || trigger != 'enter') return;
-                    eheros.forEach(h => getObjById(h.heroStatus, 117031)?.addUseCnt());
+                    eheros.forEach(h => h.heroStatus.get(117031)?.addUseCnt());
                 }
             }
         }),
@@ -1668,14 +1666,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117053: () => new StatusBuilder('无欲气护盾').combatStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Shield)
         .description('提供1点[护盾]，保护我方出战角色。；【此效果被移除，或被重复生成时：】造成1点[草元素伤害]，治疗我方出战角色1点。')
         .handle((status, event) => {
-            const { heros, hidx = -1, combatStatus, talent, cmds } = event;
+            const { heros, hidx, combatStatus, talent, cmds } = event;
             const fhero = heros[hidx];
             if (!fhero) return;
             const hid = getHidById(status.id);
             const triggers: Trigger[] = [];
             if (status.useCnt == 0) triggers.push('status-destroy');
             if (fhero.id == hid) triggers.push('after-skilltype3');
-            if (hasObjById(combatStatus, 117052)) triggers.push('phase-start');
+            if (combatStatus.has(117052)) triggers.push('phase-start');
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
@@ -1693,7 +1691,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: ['skilltype1', 'after-skilltype1'],
             damage: 1,
             element: DAMAGE_TYPE.Dendro,
-            exec: () => { event.isChargedAtk && status.addRoundCnt(1) }
+            exec: () => { event.isChargedAtk && event.trigger == 'skilltype1' && status.addRoundCnt(1) }
         })),
 
     117071: () => new StatusBuilder('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)

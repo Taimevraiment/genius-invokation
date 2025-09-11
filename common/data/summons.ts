@@ -486,7 +486,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             isNotAddTask: event.trigger == 'enter',
             exec: cmds => {
                 if (event.trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                cmds.getStatus(116098, { hidxs: getObjById(event.heros, getHidById(summon.id))?.hidx });
+                cmds.getStatus(116098, { hidxs: event.heros.get(summon.id)?.hidx });
             }
         })),
 
@@ -520,8 +520,10 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 triggers,
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    summon.minusPerCnt();
-                    cmds.attack();
+                    if (trigger == 'after-skill') {
+                        summon.minusPerCnt();
+                        cmds.attack();
+                    }
                 },
             }
         }),
@@ -554,12 +556,13 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1093502271962485608.png')
         .handle((summon, event) => {
             const { heros, isMinusDiceSkill, trigger } = event;
-            const hero = getObjById(heros, getHidById(summon.id));
+            const hero = heros.get(summon.id);
             const triggers: Trigger[] = ['phase-end'];
-            if (summon.perCnt > 0 && hero?.isFront) triggers.push('skilltype1');
+            const isMinus = summon.perCnt > 0 && hero?.isFront;
+            if (isMinus) triggers.push('skilltype1');
             return {
                 triggers,
-                minusDiceSkill: isCdt(summon.perCnt > 0, { skilltype1: [0, 0, 1] }),
+                minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 0, 1] }),
                 isNotAddTask: trigger != 'phase-end',
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
@@ -579,7 +582,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 const { eheros, combatStatus } = event;
                 summon.phaseEndAtk(cmds);
                 const hidxs = eheros.getNextBackHidx();
-                if (hidxs.length) cmds.attack(hasObjById(combatStatus, 116101) ? 2 : 1, DAMAGE_TYPE.Pierce, { hidxs });
+                if (hidxs.length) cmds.attack(combatStatus.has(116101) ? 2 : 1, DAMAGE_TYPE.Pierce, { hidxs });
             }
         })),
 

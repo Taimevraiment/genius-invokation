@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io-client";
 
-import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, Version } from "@@@/constant/enum";
+import { ACTION_TYPE, CARD_SUBTYPE, ElementType, INFO_TYPE, InfoType, PHASE, PLAYER_STATUS, Phase, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, Version } from "@@@/constant/enum";
 import { DECK_CARD_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT } from "@@@/constant/gameOption";
 import { INIT_PLAYER, NULL_CARD, NULL_MODAL, NULL_SKILL } from "@@@/constant/init";
 import {
@@ -15,7 +15,7 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices, versionWrap } from "@@@/utils/gameUtil";
 import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, Player, Preview, RecordData, ServerData, Skill, Status, Summon
+    ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, PickCardType, Player, Preview, RecordData, ServerData, Skill, Status, Summon
 } from "../../typing";
 
 type DeckValid = {
@@ -1048,11 +1048,11 @@ export default class GeniusInvokationClient {
             this.modalInfo = {
                 version: this.version,
                 isShow: true,
-                type: {
+                type: ({
                     getCard: INFO_TYPE.Card,
                     useCard: INFO_TYPE.Card,
-                    summon: INFO_TYPE.Summon,
-                }[cardType],
+                    getSummon: INFO_TYPE.Summon,
+                } as Record<PickCardType, InfoType>)[cardType],
                 info: cardType == 'getSummon' ? newSummon(this.version)(this.pickModal.cards[pcidx].id) : this.pickModal.cards[pcidx],
             }
         } else {

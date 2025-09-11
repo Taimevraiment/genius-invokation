@@ -308,7 +308,6 @@ export interface EntityHandleEvent {
     selectSupport: number,
     source: number,
     sourceHidx: number,
-    dmgSource: number,
     talent: Card | null,
     slotsDestroyCnt: number[],
     isSelfRound: boolean,

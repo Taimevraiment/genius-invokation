@@ -136,7 +136,7 @@ export const wait = async (cdt: () => boolean, options: {
             await delay(dl);
             break;
         }
-        if (loop > 3e4 / freq && !warn) {
+        if (loop > 3e4 / freq && !warn && maxtime < 2e5) {
             console.trace(`超过30秒，可能存在死循环: ${cdt.toString()}`);
             warn = true;
         }

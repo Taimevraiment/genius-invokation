@@ -1,5 +1,5 @@
 import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, PureElementType, Version } from "../constant/enum.js"
-import { getHidById, getObjById, hasObjById } from "../utils/gameUtil.js"
+import { getHidById, hasObjById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 
@@ -55,7 +55,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     16074: () => new SkillBuilder('长枪开相').description('{dealDmg}\\；如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
         .elemental().readySkill().damage(2).handle(event => {
-            const { playerInfo: { discardCnt = 0, reconcileCnt = 0 } = {} } = event;
+            const { playerInfo: { discardCnt, reconcileCnt } } = event;
             return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
         }),
 
@@ -63,8 +63,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     23046: () => new SkillBuilder('炽烈轰破').description('{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
         .burst().readySkill().damage(1).handle(event => {
-            const { hero: { heroStatus } } = event;
-            return { pdmg: 2, addDmgCdt: Math.floor((getObjById(heroStatus, 123041)?.useCnt ?? 0) / 2) }
+            return { pdmg: 2, addDmgCdt: Math.floor((event.hero.heroStatus.get(123041)?.useCnt ?? 0) / 2) }
         }),
 
     24015: () => new SkillBuilder('猜拳三连击·剪刀').description('{dealDmg}，然后[准备技能]：【rsk24016】。')
@@ -131,7 +130,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，{dealDmg}，然后随机[舍弃]3张原本元素骰费用最高的手牌。')
         .src('#')
         .vehicle().damage(1).cost(2).handle(event => {
-            const { cmds, hero: { hidx } } = event;
+            const { cmds, hidx } = event;
             cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
             cmds.consumeNightSoul(hidx);
         }),
@@ -139,10 +138,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')
         .vehicle().damage(2).cost(1).costAny(1, 'v5.7.0').handle(event => {
-            const { eheros, combatStatus, hero: { hidx }, cmds } = event;
+            const { eheros, combatStatus, hidx, cmds } = event;
             const hidxs = eheros.getNextBackHidx();
             cmds.consumeNightSoul(hidx);
-            if (hidxs.length) return { pdmg: hasObjById(combatStatus, 116101) ? 2 : 1, hidxs }
+            if (hidxs.length) return { pdmg: combatStatus.has(116101) ? 2 : 1, hidxs }
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点「夜魂值」，抓3张牌。')

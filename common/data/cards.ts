@@ -2388,8 +2388,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，每当【sts111092】造成伤害，就抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/bf34b0aa7f7664582ddb7eacaf1bd9ca_8982816839843813094.png')
         .handle((_, event) => {
-            const { dmgSource, execmds } = event;
-            if (dmgSource != 111092) return;
+            const { source, execmds } = event;
+            if (source != 111092) return;
             execmds.getCard(1);
             return { triggers: 'after-dmg' }
         }),
@@ -2992,7 +2992,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { pile, execmds } = event;
             if (card.perCnt <= 0 || !hasObjById(pile, 116081)) return;
             execmds.getCard(2, { card: 116081, isFromPile: true });
-            return { triggers: 'skill', exec: () => card.minusPerCnt() }
+            return { triggers: 'after-skill', exec: () => card.minusPerCnt() }
         }),
 
     216091: () => new CardBuilder(423).name('落染五色').since('v5.1.0').talent(1).costGeo(4).costGeo(3, 'v5.4.0')
@@ -3005,7 +3005,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【此牌在场时：】我方【crd116102】或【smn116103】触发效果后，抓1张牌。（每回合2次）', 'v5.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/7ea16a7248792acc5537e24a314873da_1609938321358552737.png')
         .handle((card, event, ver) => {
-            const { skill, isSummon = -1, execmds } = event;
+            const { skill, isSummon, execmds } = event;
             if (card.perCnt <= 0 || (isSummon != 116103 && skill?.id != 1161021)) return;
             execmds.getCard(1);
             return {
@@ -3022,13 +3022,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/948de7cc9342fabe613ec2ab1a4c7fd8_3345062314156566314.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { hero, heros, sourceHidx = -1, trigger } = event;
-            const thero = trigger == 'switch-to' ? hero : heros?.[sourceHidx];
+            const { hero, heros, sourceHidx, trigger } = event;
+            const thero = trigger == 'switch-to' ? hero : heros[sourceHidx];
             const nightSoul = thero?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
             const triggers: Trigger[] = [];
             if (nightSoul && nightSoul.useCnt < nightSoul.maxCnt) triggers.push('switch-to', 'switch-from');
             return {
-                isValid: !hasObjById(hero?.heroStatus, 116111),
+                isValid: !hero.heroStatus.has(116111),
                 triggers,
                 isAddTask: true,
                 exec: () => {
@@ -3047,7 +3047,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png')
         .handle((_, event) => {
             const { isChargedAtk, hero } = event;
-            if (isChargedAtk && hasObjById(hero?.heroStatus, 117021)) {
+            if (isChargedAtk && hero.heroStatus.has(117021)) {
                 return { triggers: 'skilltype1', minusDiceSkill: { skilltype1: [0, 1, 0] } }
             }
         }),
@@ -3512,7 +3512,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     116102: () => new CardBuilder().name('冲天转转').vehicle().useNightSoul().costSame(0)
         .description('【附属角色切换至后台时：】消耗1点「夜魂值」，召唤【smn116103】。')
-        .handle(() => ({ triggers: 'switch-from', isAddTask: true, summon: 116103 })),
+        .handle(() => ({ triggers: 'switch-from', summon: 116103 })),
 
     116112: () => new CardBuilder().name('刃轮装束').vehicle().useNightSoul().costSame(0).tag(CARD_TAG.Enchant)
         .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')

@@ -45,7 +45,7 @@ export default class TaskQueue {
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
         const curQueue = isCdt(isImmediate, this.immediateQueue, isCdt(isFinal, this.finalQueue, isCdt(this.isExecuting || isPriority, this.priorityQueue))) ?? this.queue;
         // if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {
-        //     console.info('重复task:', taskType);
+        //     console.trace('重复task:', taskType);
         // }
         const queueTask: TaskItem = [taskType, typeof args != 'function' ? args : [[args, delayAfter, delayBefore]], source, isDmg];
         const tidx = addAfterNonDmg ? this.queue.findIndex(([, , , isdmg]) => isdmg) :

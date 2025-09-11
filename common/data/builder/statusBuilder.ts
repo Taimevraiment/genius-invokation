@@ -19,7 +19,6 @@ export interface StatusHandleRes extends EntityHandleRes {
     isUpdateAttachEl?: boolean,
     atkOffset?: number,
     isFallAtk?: boolean,
-    source?: number,
     exec?: () => boolean,
 }
 
@@ -76,7 +75,7 @@ export class GIStatus {
         const hid = getHidById(id);
         description = description
             .replace(/\[useCnt\]/g, `【[可用次数]：${useCnt}】` + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
-            .replace(/\[roundCnt\]/g, '【[持续回合]：{roundCnt}】' + (maxCnt == 0 || useCnt > -1 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
+            .replace(/\[roundCnt\]/g, `【[持续回合]：${roundCnt}】` + (maxCnt == 0 || useCnt > -1 ? '' : `（可叠加，最多叠加到${maxCnt}回合）`))
             .replace(/(?<=〖)ski,(.+?)(?=〗)/g, `ski${hid},$1`)
             .replace(/(?<=【)ski,(.+?)(?=】)/g, `ski${hid},$1`)
             .replace(/(?<=〖)hro(?=〗)/g, `hro${hid}`)
@@ -282,6 +281,10 @@ export class StatusBuilder extends BaseBuilder {
     combatStatus() {
         this._group = STATUS_GROUP.combatStatus;
         return this;
+    }
+    descriptionOnly(description: string, ...versions: Version[]) {
+        this.type(STATUS_TYPE.OnlyExplain);
+        return this.description(description, ...versions);
     }
     type(...types: StatusType[]): StatusBuilder;
     type(cdt: boolean, ...types: StatusType[]): StatusBuilder;

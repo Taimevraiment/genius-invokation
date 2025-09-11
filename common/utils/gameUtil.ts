@@ -381,7 +381,6 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         selectSupport: -1,
         source: -1,
         sourceHidx: -1,
-        dmgSource: -1,
         talent: heros.get(entity.id ?? -1)?.talentSlot ?? hero.talentSlot,
         slotsDestroyCnt: player.heros.map(() => 0),
         isSelfRound: false,
