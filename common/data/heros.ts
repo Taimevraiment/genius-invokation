@@ -1734,7 +1734,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/a/a2/08equlc0irtfiur6id02qiwromqwpl5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/cccdba35b77374e5ef8c19c7d429f985_1146383664533306901.png')
                 .elemental().damage(1).damage(2, 'v5.8.0').cost(3).canSelectHero(1).handle(event => {
-                    const { cmds, hero: { hidx }, selectHeros: [selectHero] = [-1] } = event;
+                    const { cmds, hidx, selectHeros: [selectHero] } = event;
                     cmds.exchangePos(hidx, selectHero);
                     return { statusPre: [117092, 117091] }
                 }),
@@ -1752,7 +1752,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('撷萃调香').description('召唤【smn117101】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/b9/nefvl0fgzk3rb4v6ztu5sonr7mnmg3g.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/56c8c6c62ed792d56ccbbeaaf9aa9779_3263971776553896947.png')
-                .elemental().cost(3).handle(({ summons }) => ({ summon: 117101 + +hasObjById(summons, 117102) })),
+                .elemental().cost(3).handle(({ summons }) => ({ summon: 117101 + +summons.has(117102) })),
             new SkillBuilder('香氛演绎').description('{dealDmg}。召唤【smn117103】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/70/527jlc73ttpp3baabc3pxlllk33rg7r.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/1e918eff70dc3167325c4bee79c84959_6163012173343249974.png')
@@ -1771,7 +1771,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/549d1869ad1f7d1d27fb5c733a239373_8053361497142459397.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/22a03af7f319a9d1583bc8d33781c241.png')
         .normalSkill(new NormalSkillBuilder('冰萤棱锥').catalyst().handle(event => {
-            if (hasObjById(event.summons, 121011)) return { summon: [[121011, 1]] }
+            if (event.summons.has(121011)) return { summon: [[121011, 1]] }
         }))
         .skills(
             new SkillBuilder('虚雾摇唤').description('{dealDmg}，召唤【smn121011】。')
@@ -1781,11 +1781,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('冰枝白花').description('{dealDmg}，本角色[附着冰元素]，生成【sts121012】。')
                 .src('https://patchwiki.biligame.com/images/ys/5/54/1wmf5ct2ccet6bltjvkqs03jusibbrs.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/1368416ac693a1e50e703e92d93d2043_1088350178906732314.png')
-                .burst(3).damage(5).cost(3).handle(event => {
-                    const { summons } = event;
-                    const useCnt = getObjById(summons, 121011)?.useCnt ?? 0;
-                    return { isAttach: true, status: [[121012, useCnt]] }
-                })
+                .burst(3).damage(5).cost(3).handle(event => ({ isAttach: true, status: [[121012, event.summons.get(121011)?.useCnt]] }))
         ),
 
     2102: () => new HeroBuilder(277).name('「女士」').since('v4.3.0').fatui().cryo()
@@ -1803,7 +1799,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ heal: 2 })),
             new SkillBuilder('邪眼之威').description('战斗开始时，初始附属【sts121021】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/ed9acfc03544bd410106bc9bd50f3c49.png')
-                .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 121021 }))
+                .passive().handle(() => ({ triggers: 'game-start', status: 121021 }))
         ),
 
     2103: () => new HeroBuilder(321).name('无相之冰').since('v4.4.0').maxHp(8).monster().cryo()

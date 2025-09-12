@@ -16,6 +16,7 @@ export default class TaskQueue {
     isExecuting: boolean = false;
     isDieWaiting: boolean = false;
     canPreview: boolean = true;
+    canExecTask: boolean = false;
     _writeLog: (log: string, type?: LogType) => void;
     env: Env;
     constructor(_writeLog: (log: string, type?: LogType) => void, env: Env) {
@@ -34,6 +35,7 @@ export default class TaskQueue {
         this.isExecuting = false;
         this.isDieWaiting = false;
         this.canPreview = true;
+        this.canExecTask = false;
     }
     addTask(taskType: string, args: any[] | (() => Promise<void>) | (() => void), options: {
         isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,

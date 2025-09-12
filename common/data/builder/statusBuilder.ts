@@ -189,7 +189,8 @@ export class GIStatus {
         }
     }
     get isDestroy() {
-        return (this.roundCnt == 0 || this.useCnt == 0 && !this.hasType(STATUS_TYPE.Accumulate)) && !this.hasType(STATUS_TYPE.NonDestroy);
+        return (this.roundCnt == 0 || this.useCnt == 0 && !this.hasType(STATUS_TYPE.Accumulate)) &&
+            !this.hasType(STATUS_TYPE.NonDestroy, STATUS_TYPE.Attack);
     }
     setEntityId(id: number): Status {
         this.entityId = id;
@@ -234,6 +235,8 @@ export class GIStatus {
         this.roundCnt = 0;
         const nonDestroy = this.type.indexOf(STATUS_TYPE.NonDestroy);
         if (nonDestroy > -1) this.type.splice(nonDestroy, 1);
+        const attack = this.type.indexOf(STATUS_TYPE.Attack);
+        if (attack > -1) this.type.splice(attack, 1);
     }
 }
 

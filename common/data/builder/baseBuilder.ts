@@ -231,7 +231,7 @@ export class ArrayStatus extends Array<Status> {
     get(id: number): Status | undefined;
     get(id: StatusType): Status | undefined;
     get(id: number | StatusType) {
-        if (typeof id == 'number') return getObjById(this, id);
+        if (typeof id == 'number') return getObjById(this, id) ?? getObjById(this, id, 'entityId');
         return this.find(s => s.hasType(id));
     }
     has(id: number): boolean;

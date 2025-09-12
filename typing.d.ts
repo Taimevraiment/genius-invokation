@@ -124,6 +124,7 @@ type Cmds = {
     summon?: (number | [number, ...any] | Summon)[] | number,
     isOppo?: boolean,
     trigger?: Trigger | Trigger[],
+    callback?: () => void,
 }
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |

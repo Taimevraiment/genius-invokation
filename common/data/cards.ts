@@ -8,7 +8,7 @@ import { NULL_CARD } from '../constant/init.js';
 import { ELEMENT_ICON_NAME, ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
 import { getDerivantParentId, getHidById, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
-import { CardBuilder, CardBuilderHandleRes } from './builder/cardBuilder.js';
+import { CardBuilder } from './builder/cardBuilder.js';
 
 const normalWeapon = (shareId: number) => {
     return new CardBuilder(shareId)
@@ -3068,8 +3068,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用【ski】时，如果消耗了[持续回合]至少为1的【sts117061】，则总是附属[持续回合]为3的【sts117061】，并且抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/1ea58f5478681a7975c0b79906df7e07_2030819403219420224.png')
         .handle((_, event) => {
-            if (!hasObjById(event.hero?.heroStatus, 117061)) return;
-            event.cmds.getCard(1);
+            if (!event.hero?.heroStatus.has(117061)) return;
+            event.execmds.getCard(1);
             return { triggers: 'skilltype3' }
         }),
 
@@ -3077,12 +3077,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】为出战角色，我方进行「切换角色」行动时：少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/d00693f2246c912c56900d481e37104a_1436874897141676884.png')
         .handle((card, event) => {
-            const { switchHeroDiceCnt = 0 } = event;
-            if (card.perCnt <= 0 || switchHeroDiceCnt == 0) return;
+            if (card.perCnt <= 0 || event.switchHeroDiceCnt == 0) return;
             return {
                 triggers: 'minus-switch-from',
                 minusDiceHero: 1,
-                exec: () => card.minusPerCnt()
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -3094,7 +3093,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('装备有此牌的【hro】切换至前台或使用【ski,1】时：若我方手牌不多于对方，则窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a47cc0e0df6da9b518948c51861e73ab_5159453302126122992.png')
         .handle((card, event) => {
-            const { hcardsCnt = 0, ehcardsCnt = 0, execmds } = event;
+            const { hcardsCnt, ehcardsCnt, execmds } = event;
             if (card.perCnt <= 0 || ehcardsCnt == 0 || hcardsCnt > ehcardsCnt) return;
             execmds.stealCard(1, CMD_MODE.HighHandCard).getCard(1, { isOppo: true });
             return { triggers: ['switch-to', 'skilltype2'], exec: () => card.minusPerCnt() }
@@ -3104,11 +3103,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('所附属角色造成的[物理伤害]变为[草元素伤害]。；装备有此牌的【hro】「普通攻击」后：我方最高等级的「柔灯之匣」立刻行动1次。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/6417278fc4d517b03f1373a6579cf9f2_7434922514757306138.png')
         .handle((card, event) => {
-            const { summons = [], execmds } = event;
-            const res: CardBuilderHandleRes = { attachEl: ELEMENT_TYPE.Dendro };
+            const { hero, summons, execmds } = event;
+            const res = { attachEl: ELEMENT_TYPE.Dendro };
             if (card.perCnt <= 0) return res;
-            const hid = getHidById(card.id);
-            const smnIds = summons.filter(smn => getHidById(smn.id) == hid).map(s => s.id);
+            const smnIds = summons.filter(smn => getHidById(smn.id) == hero.id).map(s => s.id);
             if (smnIds.length == 0) return res;
             execmds.summonTrigger(Math.max(...smnIds));
             return { ...res, triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
@@ -3118,8 +3116,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png')
         .handle((card, event) => {
-            const { summons, trigger = '' } = event;
-            const summon = getObjById(summons, 121011);
+            const { summons, trigger } = event;
+            const summon = summons.get(121011);
             if (summon && ['skilltype1', 'skilltype2'].includes(trigger)) {
                 const cnt = +trigger.slice(-1);
                 if (summon.useCnt + cnt > summon.maxUse) card.perCnt = -1;
@@ -3131,10 +3129,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts121022】或【sts121022,1】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png')
         .handle((card, event) => {
-            const { hero, heros, restDmg = -1, cmds } = event;
-            if (!hero) return;
+            const { hero, heros, restDmg, cmds } = event;
             if (restDmg > -1) {
-                if (restDmg < 3 || card.perCnt == 0) return { restDmg }
+                if (restDmg < 3 || card.perCnt <= 0) return { restDmg }
                 return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => card.minusPerCnt() }
             }
             cmds.getDice(3, { element: hero.element });

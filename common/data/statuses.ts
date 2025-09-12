@@ -1666,18 +1666,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117053: () => new StatusBuilder('无欲气护盾').combatStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Shield)
         .description('提供1点[护盾]，保护我方出战角色。；【此效果被移除，或被重复生成时：】造成1点[草元素伤害]，治疗我方出战角色1点。')
         .handle((status, event) => {
-            const { heros, hidx, combatStatus, talent, cmds } = event;
-            const fhero = heros[hidx];
-            if (!fhero) return;
-            const hid = getHidById(status.id);
-            const triggers: Trigger[] = [];
+            const { combatStatus, talent, cmds, trigger } = event;
+            const triggers: Trigger[] = ['skilltype3'];
             if (status.useCnt == 0) triggers.push('status-destroy');
-            if (fhero.id == hid) triggers.push('after-skilltype3');
             if (combatStatus.has(117052)) triggers.push('phase-start');
+            const res = triggers.includes(trigger) ? { damage: 1, heal: 1 } : {};
             return {
-                damage: 1,
+                ...res,
                 element: DAMAGE_TYPE.Dendro,
-                heal: 1,
                 triggers,
                 exec: () => { talent && cmds.getDice(1, { mode: CMD_MODE.FrontHero }) },
             }
@@ -1689,7 +1685,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => ({
             attachEl: ELEMENT_TYPE.Dendro,
             triggers: ['skilltype1', 'after-skilltype1'],
-            damage: 1,
+            damage: isCdt(event.trigger == 'after-skilltype1', 1),
             element: DAMAGE_TYPE.Dendro,
             exec: () => { event.isChargedAtk && event.trigger == 'skilltype1' && status.addRoundCnt(1) }
         })),
@@ -1697,8 +1693,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117071: () => new StatusBuilder('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
         .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]')
         .handle((status, event) => {
-            const { heros, hidx = -1, cmds } = event;
-            if (heros[hidx]?.id != getHidById(status.id)) return;
+            const { heros, cmds } = event;
+            if (!heros.get(status.id)?.isFront) return;
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Dendro,
@@ -1722,7 +1718,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: 'card',
             isAddTask: true,
             exec: () => {
-                if (status.perCnt > -1) {
+                if (status.perCnt == 0) {
                     status.minusPerCnt();
                 } else {
                     status.minusUseCnt();
@@ -1746,26 +1742,28 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；[useCnt]', 'v4.8.0')
         .addition('dmg', -1).addition('cid').handle((status, event, ver) => {
             const { summons, pile, combatStatus, talent, cmds } = event;
-            if (pile.length == 0 || !hasObjById(combatStatus, 116) && !hasObjById(summons, 112082)) return;
-            cmds.discard({ mode: CMD_MODE.TopPileCard });
-            if (status.addition.dmg == -1) {
-                status.addition.dmg = pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0'));
-                status.addition.cid = pile[0].id;
-            }
-            cmds.attack(status.addition.dmg, DAMAGE_TYPE.Dendro);
-            const isPlace = talent && talent.perCnt > 0 && pile[0].hasSubtype(CARD_SUBTYPE.Place);
-            if (talent) {
-                cmds.getCard(1, { card: status.addition.cid });
-                if (isPlace) cmds.getStatus(117083);
-            }
+            if (pile.length == 0 || !combatStatus.has(116) && !summons.has(112082)) return;
             return {
                 triggers: ['action-start', 'action-start-oppo'],
+                isAddTask: true,
                 exec: () => {
-                    status.minusUseCnt();
-                    const sts116 = combatStatus.get(116);
-                    if (sts116) sts116.minusUseCnt();
-                    else summons.get(112082)?.minusUseCnt();
-                    if (talent && isPlace) talent.minusPerCnt();
+                    cmds.discard({ mode: CMD_MODE.TopPileCard });
+                    if (status.addition.dmg == -1) {
+                        status.addition.dmg = pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0'));
+                        status.addition.cid = pile[0].id;
+                    }
+                    cmds.attack(status.addition.dmg, DAMAGE_TYPE.Dendro)
+                        .callback(() => {
+                            status.minusUseCnt();
+                            const sts116 = combatStatus.get(116);
+                            if (sts116) sts116.minusUseCnt();
+                            else summons.get(112082)?.minusUseCnt();
+                        });
+                    const isPlace = talent && talent.perCnt > 0 && pile[0].hasSubtype(CARD_SUBTYPE.Place);
+                    if (talent) {
+                        cmds.getCard(1, { card: status.addition.cid });
+                        if (isPlace) cmds.getStatus(117083).callback(() => talent.minusPerCnt());
+                    }
                     status.addition.dmg = -1;
                 }
             }
@@ -1782,19 +1780,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117091: () => new StatusBuilder('钩锁链接').heroStatus().roundCnt(2).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).icon('#')
         .description('【敌方受到燃烧或我方其他角色使用特技后：】附属角色获得1点「夜魂值」。；【当「夜魂值」等于2点时：】附属角色附属【sts117094】，随后消耗2点「夜魂值」。；[roundCnt]')
         .handle((status, event) => {
-            const { heros, hidx = -1, trigger = '', cmds } = event;
+            const { hero: { heroStatus }, hidx, trigger, cmds } = event;
             return {
                 triggers: ['other-vehicle', 'Burning-oppo', 'turn-end', 'action-start', 'action-start-oppo'],
                 exec: () => {
-                    const heroStatus = heros[hidx]?.heroStatus;
-                    const nightSoul = heroStatus?.find(s => s.hasType(STATUS_TYPE.NightSoul));
+                    const nightSoul = heroStatus.get(STATUS_TYPE.NightSoul);
                     if (!nightSoul) return;
                     if (trigger == 'turn-end') {
-                        if (status.roundCnt == 1) nightSoul.roundCnt = 0;
+                        if (status.roundCnt == 1) nightSoul.dispose();
                         return;
                     }
                     if (['other-vehicle', 'Burning-oppo'].includes(trigger)) nightSoul.addUseCnt();
-                    if (nightSoul.useCnt == 2 && !hasObjById(heroStatus, 117094)) {
+                    if (nightSoul.useCnt == 2 && !heroStatus.has(117094)) {
                         cmds.getStatus(117094, { hidxs: hidx }).consumeNightSoul(hidx, 2);
                     }
                 }
@@ -1806,8 +1803,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117094: () => new StatusBuilder('钩锁准备').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign).icon('#')
         .description('【我方选择行动前，若附属角色为出战角色：】对最近的敌方角色造成3点[草元素伤害]。；[useCnt]')
         .handle((status, event) => {
-            const { heros, hidx = -1, eheros } = event;
-            if (!heros[hidx]?.isFront) return;
+            const { hero, hidx, eheros } = event;
+            if (!hero.isFront) return;
             return {
                 damage: 3,
                 element: DAMAGE_TYPE.Dendro,
@@ -1820,12 +1817,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117104: () => new StatusBuilder('余薰（生效中）').heroStatus().useCnt(1).type(STATUS_TYPE.Usage).icon(STATUS_ICON.Buff)
         .description('【双方角色使用技能后：】触发1次我方【smn115】的回合结束效果。')
         .handle((status, event) => {
-            if (!hasObjById(event.summons, 115)) return;
+            if (!event.summons.has(115)) return;
             event.cmds.summonTrigger(115);
             return {
-                triggers: ['after-skill', 'after-other-skill', 'after-skill-oppo'],
-                isAddTask: true,
-                exec: () => status.minusUseCnt()
+                triggers: ['skill', 'other-skill', 'skill-oppo'],
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -1838,37 +1834,21 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【行动阶段开始时：】如果所附属角色生命值不多于4，则移除此效果。；【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。【此效果被移除时：】所附属角色转换为[「焚尽的炽炎魔女」]形态。')
         .handle((status, event) => {
-            const { heros, hidx = -1, trigger, cmds } = event;
+            const { hero, hidx, trigger, cmds } = event;
             const triggers: Trigger[] = ['will-killed', 'skilltype3'];
-            if ((heros[hidx]?.hp ?? 10) <= 4) triggers.push('phase-start');
+            if (hero.hp <= 4) triggers.push('phase-start');
             if (trigger == 'will-killed') cmds.revive(1, hidx);
-            cmds.changePattern(hidx, 6301);
-            return {
-                triggers,
-                isAddTask: trigger != 'skilltype3',
-                exec: () => {
-                    status.minusUseCnt();
-                    if (trigger == 'skilltype3') status.minusUseCnt();
-                }
-            }
+            cmds.changePattern(hidx, 6301).callback(() => status.minusUseCnt());
+            return { triggers, isAddTask: trigger != 'skilltype3' }
         }),
 
-    121022: () => new StatusBuilder('严寒').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
+    121022: () => new StatusBuilder('严寒').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Usage)
         .icon('cryo-dice').iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成1点[冰元素伤害]。；[useCnt]；所附属角色被附属【sts163011】时，移除此效果。')
         .handle((status, event) => {
             const { trigger, hero } = event;
             if (trigger == 'enter') {
-                return {
-                    triggers: 'enter',
-                    exec: () => {
-                        const sts163011 = hero.heroStatus.get(163011);
-                        if (sts163011) {
-                            sts163011.roundCnt = 0;
-                            sts163011.useCnt = 0;
-                        }
-                    }
-                }
+                return { triggers: 'enter', exec: () => hero.heroStatus.get(163011)?.dispose() }
             }
             return {
                 damage: 1,
@@ -2389,22 +2369,13 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     127042: () => new StatusBuilder('食足体健').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
         .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(1),
 
-    163011: () => new StatusBuilder('炽热').heroStatus().useCnt(1).type(STATUS_TYPE.Attack)
+    163011: () => new StatusBuilder('炽热').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Usage)
         .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]；所附属角色被附属【sts121022】时，移除此效果。')
         .handle((status, event) => {
-            const { trigger, heros, hidx = -1 } = event;
+            const { trigger, hero } = event;
             if (trigger == 'enter') {
-                return {
-                    triggers: 'enter',
-                    exec: () => {
-                        const sts121022 = getObjById(heros[hidx]?.heroStatus, 121022);
-                        if (sts121022) {
-                            sts121022.roundCnt = 0;
-                            sts121022.useCnt = 0;
-                        }
-                    }
-                }
+                return { triggers: 'enter', exec: () => hero.heroStatus.get(121022)?.dispose() }
             }
             return {
                 damage: 1,

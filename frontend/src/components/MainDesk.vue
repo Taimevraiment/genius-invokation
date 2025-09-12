@@ -317,7 +317,7 @@
           'will-attach': summon.UI.isWill || summon.UI.willChange,
           'summon-select': summonSelect[saidx][suidx] && !summon.UI.isWill,
           'summon-can-select': summonCanSelect[saidx][suidx] && player.status == PLAYER_STATUS.PLAYING && !summon.UI.isWill,
-          'active-summoncnt': canAction && summonCnt[getGroup(saidx)][suidx] != 0,
+          'active-summoncnt': summonCnt[getGroup(saidx)][suidx] != 0 || summon.UI.willChange,
         }" v-for="(summon, suidx) in smnArea" :key="suidx"
           @click.stop="showSummonInfo(saidx, suidx, summon.UI.isWill)">
           <div class="summon-img-content">

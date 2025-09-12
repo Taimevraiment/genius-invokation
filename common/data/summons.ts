@@ -643,13 +643,13 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【〖hro〗「普通攻击」后：】此牌[可用次数]+1。；【我方角色受到元素反应伤害后：】此牌[可用次数]-1。', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/e98436c034423b951fb726977b37f6b1_915982547283319448.png')
         .handle((summon, event, ver) => {
-            const { trigger, heros, atkHidx, dmgedHidx, talent, getdmg } = event;
+            const { trigger, hero, heros, dmgedHidx, talent, getdmg } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const atkHero = heros[atkHidx];
             const dmgedHero = heros[dmgedHidx];
-            const isAtkHero = atkHero?.id == getHidById(summon.id);
-            const isDmgedHero = dmgedHero?.id == getHidById(summon.id) && getdmg[dmgedHidx] != -1;
-            const isTalent = isAtkHero && talent && talent.perCnt == -1 && ['after-skilltype1', 'after-skilltype2'].includes(trigger);
+            const hid = getHidById(summon.id);
+            const isAtkHero = hero.id == hid;
+            const isDmgedHero = dmgedHero?.id == hid && getdmg[dmgedHidx] != -1;
+            const isTalent = isAtkHero && talent?.perCnt == -1 && ['after-skilltype1', 'after-skilltype2'].includes(trigger);
             if (ver.lt('v4.1.0') || isDmgedHero) triggers.push('get-elReaction');
             if (trigger == 'get-elReaction' && (ver.lt('v4.1.0') || isDmgedHero)) summon.minusUseCnt();
             if (isAtkHero && isTalent) triggers.push(trigger);

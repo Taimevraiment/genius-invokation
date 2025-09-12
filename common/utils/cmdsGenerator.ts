@@ -241,7 +241,7 @@ export default class CmdsGenerator {
         if (card != undefined) this._add({ cmd: 'equip', hidxs, card, isOppo });
         return this;
     }
-    exchangePos(hidx1: number, hidx2: number) {
+    exchangePos(hidx1: number, hidx2: number = -1) {
         this._add({ cmd: 'exchangePos', hidxs: [hidx1, hidx2] });
         return this;
     }
@@ -264,6 +264,10 @@ export default class CmdsGenerator {
     }
     convertCard(eid: number, cid: number) {
         this._add({ cmd: 'convertCard', hidxs: [eid, cid] });
+        return this;
+    }
+    callback(cb: () => void) {
+        if (this.value.length > 0) this.value[this.value.length - 1].callback = cb;
         return this;
     }
     addCmds(cmds?: Cmds | Cmds[] | CmdsGenerator) {
