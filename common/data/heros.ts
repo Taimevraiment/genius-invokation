@@ -1838,15 +1838,16 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/8/82/izm590u04twm2v4y5md823l6fqeevof.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/78e32bb625cf50b2f92487f8577bff6b_4076485311764645060.png')
                 .passive().handle(event => {
-                    const { dmg = [], talent, eheros = [] } = event;
+                    const { source, dmg, talent, eheros } = event;
+                    if (source != 2104) return;
                     let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + Math.max(0, b), 0) - 2));
                     if (fdmg <= 0) return;
                     if (talent) {
-                        const ocnt = getObjById(eheros.find(h => h.isFront)?.heroStatus, 122)?.useCnt ?? 0;
+                        const ocnt = eheros.getFront()?.heroStatus.get(122)?.useCnt ?? 0;
                         const fcnt = (ocnt + fdmg) * 2;
                         fdmg = fcnt - ocnt;
                     }
-                    return { triggers: 'after-skill', statusOppo: [[122, fdmg]] }
+                    return { triggers: 'after-dmg', statusOppo: [[122, fdmg]] }
                 })
         ),
 
@@ -1860,51 +1861,56 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .description('随机召唤1种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
-                .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
-                    const { summons, randomInArr } = event;
-                    const opools = [122011, 122012, 122013];
-                    const pools = opools.filter(smnid => !hasObjById(summons, smnid));
-                    if (ver.range('v4.3.0', 'v6.0.0') && pools.length == 1) {
-                        pools.length = 0;
-                        pools.push(...opools.filter(smnid => hasObjById(summons, smnid)));
+                .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
+                    exec: () => {
+                        const { summons, cmds, randomInArr } = event;
+                        const opools = [122011, 122012, 122013];
+                        const pools = opools.filter(smnid => !summons.has(smnid));
+                        if (ver.range('v4.3.0', 'v6.0.0') && pools.length == 1) {
+                            pools.length = 0;
+                            pools.push(...opools.filter(smnid => summons.has(smnid)));
+                        }
+                        cmds.getSummon(randomInArr(!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0 ? opools : pools));
                     }
-                    const summon = randomInArr(!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0 ? opools : pools);
-                    return { summon }
-                }),
+                })),
             new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型）')
                 .description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
                 .description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
-                .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => {
-                    const { summons, randomInArr } = event;
-                    const opools = [122011, 122012, 122013];
-                    const pools = opools.filter(smnid => !hasObjById(summons, smnid));
-                    if (pools.length == 0) return;
-                    let summonId1 = -1;
-                    if (pools.length == 1) {
-                        if (ver.range('v4.3.0', 'v6.0.0')) return { summon: opools.filter(smnid => hasObjById(summons, smnid)) }
-                        summonId1 = pools[0];
+                .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
+                    exec: () => {
+                        const { summons, cmds, randomInArr } = event;
+                        const opools = [122011, 122012, 122013];
+                        const pools = opools.filter(smnid => !summons.has(smnid));
+                        if (pools.length == 0) return;
+                        let summonId1 = -1;
+                        if (pools.length == 1) {
+                            if (ver.range('v4.3.0', 'v6.0.0')) return cmds.getSummon(opools.filter(smnid => summons.has(smnid)));
+                            summonId1 = pools[0];
+                        }
+                        if (pools.length == 2) {
+                            if (!ver.range('v4.3.0', 'v6.0.0')) return cmds.getSummon(pools);
+                            summonId1 = opools.find(smnid => !pools.includes(smnid))!;
+                        }
+                        if (pools.length == 3 || (!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0)) {
+                            [summonId1] = randomInArr(pools, 2);
+                            pools.splice(pools.indexOf(summonId1), 1);
+                        }
+                        const [summonId2] = randomInArr(pools);
+                        cmds.getSummon([summonId1, summonId2]);
                     }
-                    if (pools.length == 2) {
-                        if (!ver.range('v4.3.0', 'v6.0.0')) return { summon: pools }
-                        summonId1 = opools.find(smnid => !pools.includes(smnid))!;
-                    }
-                    if (pools.length == 3 || (!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0)) {
-                        [summonId1] = randomInArr(pools, 2);
-                        pools.splice(pools.indexOf(summonId1), 1);
-                    }
-                    const [summonId2] = randomInArr(pools);
-                    return { summon: [summonId1, summonId2] }
-                }),
+                })),
             new SkillBuilder('潮涌与激流').description('{dealDmg}\\；我方每有1个召唤物，再使此伤害+1。')
                 .description('{dealDmg}\\；我方每有1个召唤物，再使此伤害+2。', 'v4.2.0')
                 .src('https://patchwiki.biligame.com/images/ys/3/3b/8nz5w00ylo8dxpa8gt93f4d6ldjs5d2.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/37dedea23dfa78e8fb4e356bb4a4bed4_1738280724029210097.png')
                 .burst(3).damage(4).damage(2, 'v4.2.0').cost(3).handle((event, ver) => {
                     const { talent, summons } = event;
-                    if (talent) summons.forEach(smn => smn.addUseCnt(true));
-                    return { addDmgCdt: summons.length * (ver.lt('v4.2.0') ? 2 : 1) }
+                    return {
+                        addDmgCdt: summons.length * (ver.lt('v4.2.0') ? 2 : 1),
+                        exec: () => talent && summons.forEach(smn => smn.addUseCnt(true)),
+                    }
                 })
         ),
 
@@ -1954,16 +1960,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f5c0f89cf02925ec13e306d11a5f7bd8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/942e3d28310f4395ee7e3f1580268db8_512199522496433076.png')
                 .elemental().damage(1).cost(3).explain('sts122041').handle((event, ver) => {
-                    const { hero: { heroStatus }, cmds } = event;
+                    const { hero: { heroStatus }, cmds, talent, hcards } = event;
                     cmds.discard({ mode: CMD_MODE.HighHandCard });
-                    return { addDmgCdt: Math.min(ver.lt('v4.8.0') ? 5 : ver.lt('v5.0.0') ? 4 : 3, Math.floor((getObjById(heroStatus, 122042)?.useCnt ?? 0) / 3)) }
+                    if (talent?.perCnt) cmds.heal(Math.max(...hcards.map(c => c.cost + c.anydice))).callback(() => talent && talent.minusPerCnt());
+                    return { addDmgCdt: Math.min(ver.lt('v4.8.0') ? 5 : ver.lt('v5.0.0') ? 4 : 3, Math.floor((heroStatus.get(122042)?.useCnt ?? 0) / 3)) }
                 }),
             new SkillBuilder('横噬鲸吞').description('{dealDmg}，对敌方所有后台角色造成1点[穿透伤害]。召唤【smn122043】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/347f4286f0891f1b6937c9ac8cf5b1f7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/4a25287ec5707c0cbcdfa997c1621224_1686936517736141335.png')
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { combatStatus } = event;
-                    const sts122041 = getObjById(combatStatus, 122041);
+                    const sts122041 = combatStatus.get(122041);
                     if (!sts122041) return;
                     const { maxDice, maxDiceCnt } = sts122041.addition;
                     return { pdmg: 1, summon: isCdt(maxDiceCnt > 0, [[122043, maxDice, maxDiceCnt]]) }
@@ -1983,19 +1990,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/1/10/lnygbgud3vpwaeo78le24h55nsbz1ke.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5bcf4aecbc53a844c2a25c980f2ab6ac_2541470900687128535.png')
                 .elemental().damage(3).cost(3).perCnt(1).handle(event => {
-                    const { eheros = [], skill, cmds } = event;
+                    const { eheros, eDmgedHero, skill, cmds } = event;
                     if (skill.perCnt <= 0) return;
-                    const eStatus = eheros.flatMap(h => h.heroStatus);
-                    const eAttachment = eheros.find(h => h.isFront)?.attachElement?.[0];
-                    if (eAttachment == ELEMENT_TYPE.Cryo || hasObjById(eStatus, 106) || hasObjById(eStatus, 122052)) {
+                    if (eDmgedHero.attachElement[0] == ELEMENT_TYPE.Cryo || eheros.some(h => h.heroStatus.has(106, 122052))) {
                         cmds.getEnergy(1);
-                        return { exec: () => { --skill.perCnt } }
+                        return { exec: () => skill.minusPerCnt() }
                     }
                 }),
             new SkillBuilder('浮泡攻势').description('{dealDmg}，生成手牌【crd122051】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/78/4l236g81or3zb78ozzojs6dm67wjmev.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1eef9550382f6987f37db0e387ed9ea5_1022099738869474504.png')
-                .burst(2).damage(4).damage(3, 'v5.7.0').cost(3).handle(({ cmds }) => { cmds.getCard(1, { card: 122051 }) })
+                .burst(2).damage(4).damage(3, 'v5.7.0').cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 122051 }).res)
         ),
 
     2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
@@ -2052,10 +2057,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).damage(2, 'v5.1.0').cost(3).handle((event, ver) => {
                     const { talent, summons, skill: { useCnt }, cmds } = event;
                     if (ver.lt('v5.1.0')) {
-                        const isSmned = hasObjById(summons, 123031);
                         return {
                             summon: [[123031, !!talent]],
-                            status: isCdt(!isSmned, [[123033, talent ? 2 : 1]]),
+                            status: isCdt(!summons.has(123031), [[123033, talent ? 2 : 1]]),
                         }
                     }
                     if (useCnt == 0) cmds.getCard(1, { card: 123031 });
@@ -2065,11 +2069,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u033pf/9262db8e7ec7952af306117cb67d668d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/b9854a003c9d7e5b14bed92132391e9e_754640348498205527.png')
                 .passive().handle((event, ver) => {
-                    const { hero: { hp, hidx }, skill: { useCnt, useCntPerRound }, getdmg = [], cmds } = event;
+                    const { hero: { hp, hidx }, skill: { useCnt, useCntPerRound }, getdmg, cmds } = event;
                     if (hp - getdmg[hidx] > 7) return;
                     if (ver.lt('v5.1.0') && useCnt || ver.gte('v5.1.0') && useCntPerRound) return;
-                    cmds.getEnergy(1, { hidxs: hidx })
-                    return { triggers: 'getdmg' }
+                    cmds.getEnergy(1, { hidxs: hidx });
+                    return { triggers: 'after-getdmg' }
                 })
         ),
 
@@ -2083,7 +2087,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/b73f1ffc4ba14fa027c3e36104bf7119_3142073596996390484.png')
                 .elemental().damage(1).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
-                    const sts123041Cnt = getObjById(heroStatus, 123041)?.useCnt ?? 0;
+                    const sts123041Cnt = heroStatus.get(123041)?.useCnt ?? 0;
                     return { addDmgCdt: isCdt(sts123041Cnt >= 7, 1), status: [[123041, 2]] }
                 }),
             new SkillBuilder('战阵爆轰').description('本角色[准备技能]：【rsk23046】。')
@@ -2094,7 +2098,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/8/87/qph3kacdek5tjt4zh3awlfttsdtv5sm.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/ff758e8c9934e346c98ad5e864cc097e_6735052592007467103.png')
                 .passive().handle(event => {
-                    const { hero, heros = [], combatStatus = [], talent, trigger } = event;
+                    const { hero, heros, combatStatus, talent, trigger } = event;
                     let stsCnt = 0;
                     if (trigger == 'game-start') stsCnt = 5;
                     else if (trigger == 'action-after') {
@@ -2102,14 +2106,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         if (stsCnt > 0 && (talent?.perCnt ?? 0) > 0) stsCnt += 2;
                     }
                     if (stsCnt == 0) return;
-                    stsCnt += getObjById(hero.heroStatus, 123041)?.useCnt ?? 0;
+                    stsCnt += hero.heroStatus.get(123041)?.useCnt ?? 0;
                     return {
                         triggers: ['game-start', 'action-after'],
                         status: [[123041, stsCnt]],
                         exec: () => {
                             if (trigger == 'game-start') return;
                             for (const sts of [...heros.flatMap(h => h.heroStatus), ...combatStatus]) {
-                                if (sts.hasType(STATUS_TYPE.Shield)) sts.dispose();
+                                if (sts.hasType(STATUS_TYPE.Shield)) sts.dispose(false);
                             }
                             if (talent && talent.perCnt > 0) talent.minusPerCnt();
                         }
@@ -2125,14 +2129,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('蚀灭火羽').description('{dealDmg}，我方[舍弃]牌组顶部1张牌。')
                 .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_01.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/0188e2eb7af013f151e755845d0a0b6d_2165374047345675245.png')
-                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }).res),
+                .elemental().damage(3).cost(3).handle(({ cmds }) => (cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }), { notPreview: true })),
             new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
                 .src('/image/tmp/MonsterSkill_E_TheAbyssXiuhcoatl_01_HD.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/66cb6a2a590c642c2de7cbd2c529ee2e_2098939999112434475.png')
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus } } = event;
                     cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard }).discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true });
-                    return { pdmg: 1 + (getObjById(heroStatus, 123051)?.useCnt ?? 0), status: 123051 }
+                    return { pdmg: 1 + (heroStatus.get(123051)?.useCnt ?? 0), status: 123051, notPreview: true }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
                 .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_02.png',

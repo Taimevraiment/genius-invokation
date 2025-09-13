@@ -569,7 +569,7 @@ watchEffect(() => {
     const onceDesc = obj.UI.descriptions.findIndex(v => /入场时(?:：|，)|才能打出/.test(v));
     if (onceDesc > -1) {
       obj.UI.descriptions.splice(onceDesc, 1);
-      obj.UI.explains = obj.UI.explains.filter((v, vi) => !rawDesc[onceDesc].includes(v) || (vi != onceDesc && rawDesc[vi].includes(v)));
+      obj.UI.explains = obj.UI.explains.filter((v, vi) => !rawDesc[onceDesc]?.includes(v) || (vi != onceDesc && rawDesc[vi]?.includes(v)));
     }
   }
   ruleExplain.value = [];

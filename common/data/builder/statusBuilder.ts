@@ -230,13 +230,15 @@ export class GIStatus {
         if (nrcnt < 0) throw new Error(`${this.name}(${this.entityId}).roundCnt < 0`);
         this.roundCnt = nrcnt;
     }
-    dispose(): void {
+    dispose(includeAtk: boolean = true): void {
         this.useCnt = 0;
         this.roundCnt = 0;
         const nonDestroy = this.type.indexOf(STATUS_TYPE.NonDestroy);
         if (nonDestroy > -1) this.type.splice(nonDestroy, 1);
-        const attack = this.type.indexOf(STATUS_TYPE.Attack);
-        if (attack > -1) this.type.splice(attack, 1);
+        if (includeAtk) {
+            const attack = this.type.indexOf(STATUS_TYPE.Attack);
+            if (attack > -1) this.type.splice(attack, 1);
+        }
     }
 }
 

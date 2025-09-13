@@ -31,6 +31,7 @@ export interface SkillHandleRes {
     isInvalid?: boolean,
     notLog?: boolean,
     isFallAtk?: boolean,
+    notPreview?: boolean,
     exec?: () => void,
 }
 

@@ -754,7 +754,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             // if (trigger == 'revive') return { triggers: 'revive', exec: () => status.useCnt = 3 };
             if (hidx != sourceHidx || source != 122) return;
             cmds.addMaxHp(1, hidx);
-            return { triggers: 'status-destroy', exec: () => status.minusUseCnt() }
+            return { triggers: 'status-destroy-other', exec: () => status.minusUseCnt() }
         }),
 
     112141: nightSoul(),
@@ -994,7 +994,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方其他角色使用「普通攻击」或[特技]后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
             const { heros, cmds, trigger, source } = event;
-            if (trigger == 'status-destroy' && source == 113151) {
+            if (trigger == 'status-destroy-other' && source == 113151) {
                 return { triggers: trigger, exec: () => status.dispose() }
             }
             const hid = getHidById(status.id);
@@ -1256,12 +1256,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { isMinusDiceSkill, source, trigger } = event;
             const triggers: Trigger[] = ['skilltype2'];
-            if (source == 115041) triggers.push('status-destroy');
+            if (source == 115041) triggers.push('status-destroy-other');
             return {
                 triggers,
                 minusDiceSkill: { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Anemo },
                 exec: () => {
-                    if (trigger == 'status-destroy') status.dispose();
+                    if (trigger == 'status-destroy-other') status.dispose();
                     else if (isMinusDiceSkill) status.minusUseCnt();
                 }
             }
@@ -1665,10 +1665,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     117053: () => new StatusBuilder('无欲气护盾').combatStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Shield)
         .description('提供1点[护盾]，保护我方出战角色。；【此效果被移除，或被重复生成时：】造成1点[草元素伤害]，治疗我方出战角色1点。')
-        .handle((status, event) => {
+        .handle((_, event) => {
             const { combatStatus, talent, cmds, trigger } = event;
-            const triggers: Trigger[] = ['skilltype3'];
-            if (status.useCnt == 0) triggers.push('status-destroy');
+            const triggers: Trigger[] = ['skilltype3', 'status-destroy'];
             if (combatStatus.has(117052)) triggers.push('phase-start');
             const res = triggers.includes(trigger) ? { damage: 1, heal: 1 } : {};
             return {
@@ -1847,9 +1846,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【结束阶段：】对所附属角色造成1点[冰元素伤害]。；[useCnt]；所附属角色被附属【sts163011】时，移除此效果。')
         .handle((status, event) => {
             const { trigger, hero } = event;
-            if (trigger == 'enter') {
-                return { triggers: 'enter', exec: () => hero.heroStatus.get(163011)?.dispose() }
-            }
+            if (trigger == 'enter') return { triggers: 'enter', exec: () => hero.heroStatus.get(163011)?.dispose() }
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Cryo,
@@ -1881,7 +1878,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => ({
             triggers: 'phase-end',
             pdmg: 1,
-            hidxs: event.eheros.filter(h => h.heroStatus.has(122)).map(h => h.hidx),
+            hidxs: event.eheros.allHidxs({ cdt: h => h.heroStatus.has(122) }),
             exec: () => status.minusUseCnt(),
         })),
 
@@ -1933,12 +1930,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .addition('cost1', -1).addition('cost2', -1).addition('maxDice').addition('maxDiceCnt')
         .handle((status, event, ver) => {
             const { hcard, heros, trigger, cmds } = event;
-            if (!hcard) return;
-            const triggers: Trigger[] = ['discard', 'reconcile'];
+            const triggers: Trigger[] = [];
+            if (hcard) triggers.push('discard', 'reconcile');
             if (ver.gte('v5.0.0') && status.perCnt != 0) triggers.push('phase-end');
             return {
                 triggers,
-                isAddTask: true,
+                isAddTask: triggers.length > 0,
                 exec: () => {
                     const hero = heros.get(status.id);
                     if (!hero) return;
@@ -1947,6 +1944,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                         status.perCnt = 0;
                         return cmds.getStatus([[122042, cnt]], { hidxs: hero.hidx }).addMaxHp(cnt, hero.hidx);
                     }
+                    if (!hcard) return;
                     let cnt = 0;
                     const { cost1, cost2, maxDice } = status.addition;
                     const cost = hcard.cost + hcard.anydice;
@@ -1960,9 +1958,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                         status.addition[`cost${status.useCnt + 1}`] = cost;
                         status.addUseCnt();
                     } else {
-                        ++cnt;
-                        if (cost1 == cost2 || cost == cost1 || cost == cost2) ++cnt;
-                        if (cost == cost1 && cost == cost2) ++cnt;
+                        cnt = 4 - new Set([cost1, cost2, cost]).size;
                         status.useCnt = 0;
                     }
                     if (cnt > 0) {
@@ -1981,7 +1977,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('每层为【hro】提供1点额外最大生命。'),
 
     122043: (useCnt: number = 1) => new StatusBuilder('黑色幻影').combatStatus().useCnt(useCnt).type(STATUS_TYPE.Barrier).summonId()
-        .description('【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-2。；[useCnt]').barrierUsage(2),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-2。').barrierUsage(2),
 
     122052: () => new StatusBuilder('水泡围困').heroStatus().roundCnt(1).icon('#')
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction)
@@ -1993,7 +1989,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage).type(isTalent, STATUS_TYPE.Enchant).talent(isTalent)
         .description(`所附属角色受到的伤害-1，造成的伤害+1。；[useCnt]${isTalent ? '；所附属角色造成的[物理伤害]变为[火元素伤害]。' : ''}`)
         .handle((status, event) => {
-            const { restDmg = -1 } = event;
+            const { restDmg } = event;
             return {
                 addDmg: 1,
                 restDmg: isCdt(restDmg > -1, Math.max(0, restDmg - 1)),
@@ -2019,8 +2015,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('为所附属角色提供2点[护盾]。', 'v4.6.0')
         .handle((status, event, ver) => {
             if (status.useCnt > 0 || ver.lt('v4.6.0')) return;
-            const { eheros } = event;
-            return { triggers: 'status-destroy', pdmg: 1, hidxs: eheros.allHidxs() }
+            return { triggers: 'status-destroy', pdmg: 1, hidxs: event.eheros.allHidxs() }
         }),
 
     123026: () => new StatusBuilder('火之新生·锐势').heroStatus().icon(STATUS_ICON.ElementAtkUp)
@@ -2054,7 +2049,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     123052: () => new StatusBuilder('弃置卡牌数').heroStatus().icon(STATUS_ICON.Buff)
         .useCnt(0).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.NonDestroy)
-        .description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。；〔目前已弃置{unt}张卡牌。〕')
+        .description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。；目前已弃置{useCnt}张卡牌。')
         .handle((status, event) => ({
             triggers: 'discard',
             exec: () => {

@@ -906,17 +906,17 @@ const allCards: Record<number, () => CardBuilder> = {
     312024: () => new CardBuilder(385).name('逐影猎人').since('v4.7.0').relic().costAny(3).useCnt(0).perCnt(1).isResetUseCnt()
         .description('【角色受到伤害或治疗后：】根据本回合触发此效果的次数，执行不同的效果。；【第一次触发：】生成1个此角色类型的元素骰。；【第二次触发：】抓1张牌。；【第四次触发：】生成1个此角色类型的元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/8d877f34a6ce748ac2f474d83fa05785_4045703223333362794.png')
-        .handle((card, event) => {
-            const { hero, execmds } = event;
-            if (card.perCnt <= 0 || !hero) return;
-            if (card.useCnt == 1) execmds.getCard(1);
-            else if (card.useCnt != 2) execmds.getDice(1, { element: hero.element });
-            return {
-                triggers: ['getdmg', 'heal'],
-                isAddTask: true,
-                exec: () => { card.addUseCnt() == 4 && card.minusPerCnt() }
+        .handle((card, event) => ({
+            triggers: ['getdmg', 'heal'],
+            isAddTask: true,
+            exec: () => {
+                if (card.perCnt <= 0) return true;
+                const { hero, execmds } = event;
+                if (card.useCnt == 1) execmds.getCard(1);
+                else if (card.useCnt != 2) execmds.getDice(1, { element: hero.element });
+                if (card.addUseCnt() == 4) card.minusPerCnt();
             }
-        }),
+        })),
 
     312025: () => new CardBuilder(343).name('黄金剧团的奖赏').since('v4.5.0').relic().costSame(0).useCnt(0)
         .description('【结束阶段：】如果所附属的角色在后台，则此牌累积1点「报酬」。（最多累积2点）；【对角色打出「天赋」或角色使用「元素战技」时：】此牌每有1点「报酬」，就将其消耗，以少花费1个元素骰。')
@@ -3141,10 +3141,7 @@ const allCards: Record<number, () => CardBuilder> = {
     221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
         .description('我方出战角色为【hro】时，才能打出：使其附属【sts121034】。；装备有此牌的【hro】触发【sts121034】后：对敌方出战角色附属【sts121022】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png')
-        .handle((card, event) => {
-            const { heros } = event;
-            return { isValid: isTalentFront(heros, card), status: 121034 }
-        }),
+        .handle((card, event) => ({ isValid: isTalentFront(event.heros, card), status: 121034 })),
 
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
         .description('{action}；【装备有此牌的〖hro〗触发〖ski,3〗后：】使敌方出战角色的【sts122】层数翻倍。')
@@ -3165,18 +3162,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { hero, execmds } = event;
             execmds.getStatus(122033, { isOppo: true });
-            return { triggers: 'will-killed', statusOppo: isCdt(!hasObjById(hero?.heroStatus, 122031), 122033) }
+            return { triggers: 'will-killed', statusOppo: isCdt(!hero.heroStatus.has(122031), 122033) }
         }),
 
     222041: () => new CardBuilder(377).name('无光鲸噬').since('v4.7.0').talent(1).costHydro(4).perCnt(1)
         .description('{action}；装备有此牌的【hro】使用【ski】[舍弃]1张手牌后：治疗此角色该手牌元素骰费用的点数。（每回合1次）')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6c8ce9408dc45b74242f45fb45c2e5d0_4468452485234515493.png')
-        .handle((card, event) => {
-            if (card.perCnt == 0) return;
-            const { hcards = [], hcard, execmds } = event;
-            execmds.heal(Math.max(...hcards.filter(c => c.entityId != hcard?.entityId).map(c => c.cost + c.anydice)));
-            return { triggers: 'skilltype2', exec: () => card.minusPerCnt() }
-        }),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/6c8ce9408dc45b74242f45fb45c2e5d0_4468452485234515493.png'),
 
     222051: () => new CardBuilder(412).name('轻盈水沫').since('v5.0.0').talent(1).costHydro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，我方使用「特技」时：少花费1个元素骰。（每回合1次）')
@@ -3186,7 +3177,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 triggers: ['vehicle', 'other-vehicle'],
                 minusDiceSkill: { skilltype5: [0, 0, 1], isAll: true },
-                exec: () => { event.isMinusDiceSkill && card.minusPerCnt() }
+                exec: () => event.isMinusDiceSkill && card.minusPerCnt(),
             }
         }),
 
@@ -3199,7 +3190,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/c065153c09a84ed9d7c358c8cc61171f_8734243408282507546.png')
         .handle((card, event) => {
             const { heros, trigger } = event;
-            if (!hasObjById(getObjById(heros, card.userType as number)?.heroStatus, 123022) || trigger == 'will-killed') {
+            if (!heros.get(card.userType as number)?.heroStatus.has(123022) || trigger == 'will-killed') {
                 return { triggers: 'will-killed', status: 123024, isDestroy: true }
             }
         }),
@@ -3215,19 +3206,19 @@ const allCards: Record<number, () => CardBuilder> = {
             if (skill?.id == 1230311) triggers.push('kill');
             if (trigger == 'kill') execmds.getCard(1, { card: 123031 });
             else execmds.getStatus(123032);
-            return { triggers, isAddTask: true }
+            return { triggers }
         }),
 
     223041: () => new CardBuilder(354).name('熔火铁甲').since('v4.6.0').talent().costPyro(1).perCnt(1)
         .description('【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts123041】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts123041】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
-        .handle((_, { hero, cmds }) => cmds.attach({ hidxs: hero?.hidx }).res),
+        .handle((_, { hidx, cmds }) => cmds.attach({ hidxs: hidx }).res),
 
     223051: () => new CardBuilder(511).name('罔极盛怒').since('v6.0.0').talent().costPyro(1).perCnt(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【敌方打出名称不存在于本局最初牌组的牌时：】所附属角色获得1点[充能]，下次造成的伤害+1。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/76f9128c521d0057c10b2fbdc225e580_588508008413011306.png')
         .handle((card, event) => {
-            const { hcard, eplayerInfo: { initCardIds = [] } = {}, execmds } = event;
+            const { hcard, eplayerInfo: { initCardIds }, execmds } = event;
             if (card.perCnt <= 0 || !hcard || initCardIds.includes(hcard.id)) return;
             execmds.getEnergy(1).getStatus(223052);
             return { triggers: 'ecard', exec: () => card.minusPerCnt() }

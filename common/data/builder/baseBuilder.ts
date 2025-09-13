@@ -234,11 +234,11 @@ export class ArrayStatus extends Array<Status> {
         if (typeof id == 'number') return getObjById(this, id) ?? getObjById(this, id, 'entityId');
         return this.find(s => s.hasType(id));
     }
-    has(id: number): boolean;
-    has(id: StatusType): boolean;
-    has(id: number | StatusType) {
-        if (typeof id == 'number') return hasObjById(this, id);
-        return this.some(s => s.hasType(id));
+    has(...id: number[]): boolean;
+    has(...type: StatusType[]): boolean;
+    has(...ids: number[] | StatusType[]) {
+        if (typeof ids[0] == 'number') return ids.some(id => hasObjById(this, id));
+        return this.some(s => s.hasType(...ids as StatusType[]));
     }
 }
 

@@ -3,7 +3,7 @@ import { Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { ELEMENT_URL, STATUS_ICON } from "../constant/UIconst.js";
-import { getDerivantParentId, getHidById, getObjById, getObjIdxById, hasObjById } from "../utils/gameUtil.js";
+import { getDerivantParentId, getHidById, getObjById, hasObjById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -198,8 +198,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/6864ff4d13f55e24080152f88fef542f_1635591582740112856.png')
         .handle((summon, event, ver) => {
             const { heros, atkHidx, talent, trigger } = event;
-            const triggers: Trigger[] = [];
-            if (summon.useCnt == 0) triggers.push('phase-end');
+            const triggers: Trigger[] = ['phase-end'];
             const hero = heros[atkHidx];
             const cnt = isCdt(hero?.id == getHidById(summon.id) && !!talent, ver.lt('v4.2.0') && !ver.isOffline ? 3 : 4);
             if (cnt) triggers.push('after-skilltype1');
@@ -688,11 +687,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     122013: () => new SummonBuilder('纯水幻形·蛙').useCnt(1).useCnt(2, 'v4.3.0').damage(2).shield(1).usedRoundEnd().statusId()
         .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【结束阶段，如果可用次数已耗尽：】弃置此牌以{dealDmg}。')
         .src('#')
-        .handle(summon => {
-            const triggers: Trigger[] = [];
-            if (summon.useCnt == 0) triggers.push('phase-end');
-            return { willSummon: 122011, triggers }
-        }),
+        .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),
 
     122043: (dmg: number = -1, useCnt: number = -1) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
         .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
@@ -706,26 +701,23 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     123031: (isTalent: boolean = false) => new SummonBuilder('厄灵·炎之魔蝎').useCnt(2).damage(1).plus(isTalent).talent(isTalent)
         .description(`{defaultAtk${isTalent ? '\\；如果本回合中【hro】使用过「普通攻击」或「元素战技」，则此伤害+1' : ''}。}；【入场时和行动阶段开始：】使我方【hro】附属【sts123033】。(【smn123031】在场时每回合至多${isTalent ? 2 : 1}次，使角色受到的伤害-1。)`)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/12/258999284/8bb20558ca4a0f53569eb23a7547bdff_6164361177759522363.png')
-        .handle((summon, event) => {
-            const { heros, trigger } = event;
-            const hidx = getObjIdxById(heros, getHidById(summon.id));
-            return {
-                triggers: ['phase-end', 'phase-start'],
-                exec: cmds => {
-                    const hero = heros[hidx];
-                    if (trigger == 'phase-end') {
-                        let addDmg = 0;
-                        if (hero.hp > 0) {
-                            addDmg = +(summon.isTalent && hero.skills.some(sk => (sk.type == SKILL_TYPE.Normal || sk.type == SKILL_TYPE.Elemental) && sk.useCnt > 0));
-                        }
-                        return summon.phaseEndAtk(cmds).clear().attack(summon.damage + addDmg);
+        .handle((summon, event) => ({
+            triggers: ['phase-end', 'phase-start'],
+            exec: cmds => {
+                const { heros, trigger } = event;
+                const hero = heros.get(summon.id);
+                if (trigger == 'phase-end') {
+                    let addDmg = 0;
+                    if (hero && hero.hp > 0) {
+                        addDmg = +(summon.isTalent && hero.skills.some(sk => (sk.type == SKILL_TYPE.Normal || sk.type == SKILL_TYPE.Elemental) && sk.useCnt > 0));
                     }
-                    if (trigger == 'phase-start' && hero.hp > 0) {
-                        cmds.getStatus([[123033, summon.isTalent ? 2 : 1]], { hidxs: hidx });
-                    }
-                },
-            }
-        }),
+                    return summon.phaseEndAtk(cmds).clear().attack(summon.damage + addDmg);
+                }
+                if (trigger == 'phase-start' && hero && hero.hp > 0) {
+                    cmds.getStatus([[123033, summon.isTalent ? 2 : 1]], { hidxs: hero.hidx });
+                }
+            },
+        })),
 
     124013: () => new SummonBuilder('雷锁镇域').useCnt(2).damage(1).perCnt(1)
         .description('{defaultAtk。}；【此召唤物在场时：】敌方执行「切换角色」行动的元素骰费用+1。（每回合1次）')

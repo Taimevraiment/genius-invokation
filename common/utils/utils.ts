@@ -142,7 +142,7 @@ export const wait = async (cdt: () => boolean, options: {
         }
         if (loop > maxtime / freq) {
             if (callback) callback();
-            else throw new Error(`too many loops-${maxtime}ms: ${cdt.toString()}`);
+            else console.trace(`too many loops-${maxtime}ms: ${cdt.toString()}`);
         }
     }
 }
