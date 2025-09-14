@@ -1388,6 +1388,7 @@ export default class GeniusInvokationRoom {
             skill,
             source: atkHero.id,
             trigger: 'skill',
+            multiDmg: skillres.multiDmgCdt,
             notPreview: skillres.notPreview,
         });
         if (!skillcmds.hasDamage) await this.delay(1e3);
@@ -2303,7 +2304,7 @@ export default class GeniusInvokationRoom {
         this._detectHero(pidx ^ 1, 'action-start-oppo', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage] });
         await this._execTask();
         this.players[pidx].isChargedAtk = this.players[pidx].dice.length % 2 == 0;
-        this.players[pidx ^ 1].isChargedAtk = false;
+        this.players[pidx ^ 1].isChargedAtk = this.players[pidx ^ 1].dice.length % 2 == 0;
     }
     /**
      * 玩家执行任意行动后
@@ -3236,10 +3237,11 @@ export default class GeniusInvokationRoom {
         isImmediate?: boolean, isPriority?: boolean, isUnshift?: boolean, isSummon?: number, trigger?: Trigger,
         slotSelect?: number[], summonSelect?: number[], statusSelect?: number[], canAction?: boolean, atkname?: string,
         heroSelect?: number[], supportSelect?: number[], dmgSource?: DmgSource, isActionInfo?: boolean, actionInfo?: ActionInfo,
+        multiDmg?: number,
     } = {}) {
         const { withCard, hidxs: chidxs, source, socket, skill, supportSelect, isSummon, statusSelect,
             isImmediate, isPriority, isUnshift, slotSelect, summonSelect, canAction = true, atkname,
-            heroSelect, isActionInfo, actionInfo, dmgSource = 'null', trigger = '', notPreview,
+            heroSelect, isActionInfo, actionInfo, dmgSource = 'null', trigger = '', notPreview, multiDmg,
         } = options;
         cmds = Array.isArray(cmds) ? cmds : cmds?.value ?? [];
         if (cmds.length == 0) return;
@@ -3314,6 +3316,7 @@ export default class GeniusInvokationRoom {
                                     atkId: source,
                                     isAtkSelf: +!isOppo,
                                     isFirstAtk,
+                                    multiDmg,
                                 });
                             elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
                             willDamages.forEach((wdmg, wi) => {
@@ -3510,7 +3513,7 @@ export default class GeniusInvokationRoom {
                         const scope = ohidxs?.[0] ?? 0;
                         const isRandom = !isAttach;
                         const isNotPublic = mode == CMD_MODE.IsNotPublic;
-                        this._writeLog(`[${name}](${cpidx})将${isNotPublic ? `【p${cpidx}:${cardStr}】【p${cpidx ^ 1}:${cards.length}张牌】` : `${cardStr}`}${Math.abs(scope) == cards.length ? '' : cnt < 0 ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${Math.abs(scope) == cards.length ? '' : `第${Math.abs(scope)}张`}` : ''}`);
+                        this._writeLog(`[${name}](${cpidx})将${isNotPublic ? `【p${cpidx}:${cardStr}】【p${cpidx ^ 1}:${cards.length}张牌】` : `${cardStr}`}${Math.abs(scope) == cards.length ? '' : cnt < 0 ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${cnt < 0 && Math.abs(scope) != cards.length ? '第' : ''}${Math.abs(scope) == cards.length ? '' : `${Math.abs(scope)}张`}` : ''}`);
                         const count = cards.length;
                         const cscope = scope || pile.length;
                         if (cnt < 0) {
@@ -3799,6 +3802,7 @@ export default class GeniusInvokationRoom {
                         elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
                         this.preview.triggers[cpidx].forEach((trgs, tri) => etriggers[tri].forEach(t => trgs.add(t)));
                         this.preview.triggers[cpidx ^ 1].forEach((trgs, tri) => atriggers[tri].forEach(t => trgs.add(t)));
+                        this._writeLog(`[${this.players[pidx].name}](${pidx})[${(skill ? this.players[pidx].heros.getFront()?.name : atkname)?.replace(/\(\-\d+\)/, '')}]对[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]附着${ELEMENT_NAME[attachEl]}`)
                     });
                     await this.emit('attach', cpidx, { socket, damageVO });
                 }, { isImmediate, isPriority, isUnshift });

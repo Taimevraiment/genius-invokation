@@ -207,6 +207,13 @@ export class GICard {
                     return ohandleres;
                 }
             }
+            if (userType == -3) {
+                const ohandle = handle;
+                handle = (card, event, ver) => {
+                    const ohandleres = ohandle?.(card, event, ver);
+                    return { ...ohandleres, isValid: (ohandleres?.isValid ?? true) && !!event.heros.get(hid)?.isFront };
+                }
+            }
             this.UI.description = this.UI.description
                 .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次‹#f4dca2【ski】›。`)
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
@@ -391,12 +398,12 @@ export class CardBuilder extends BaseCostBuilder {
         this._readySkillStatus = readySkillStatusId;
         return this;
     }
-    // >=0为技能序号(从0开始) -1为不使用技能仅装备 -2为不使用技能但为战斗行动地装备
+    // >=0为技能序号(从0开始) -1为不使用技能仅装备 -2为不使用技能但为战斗行动地装备 -3为必须角色出战才能装备
     talent(skillIdx: number = -1, version: Version = 'vlatest') {
         if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Talent);
         if (skillIdx != -1) {
-            if (version == 'vlatest' || skillIdx == -2) this.subtype(CARD_SUBTYPE.Action);
-            if (skillIdx > -1) this._userType.set([version, skillIdx]);
+            if ((version == 'vlatest' || skillIdx == -2) && skillIdx != -3) this.subtype(CARD_SUBTYPE.Action);
+            if (skillIdx > -1 || skillIdx == -3) this._userType.set([version, skillIdx]);
         }
         return this.equipment();
     }
@@ -495,9 +502,6 @@ export class CardBuilder extends BaseCostBuilder {
         let userType = this._userType.get(this._curVersion, 0);
         if (this._subtype.includes(CARD_SUBTYPE.Weapon)) {
             userType ||= WEAPON_TYPE_CODE_KEY[Math.floor(this._id / 100) % 10 as WeaponTypeCode];
-        }
-        if ((this._subtype.includes(CARD_SUBTYPE.Talent) && !this._subtype.includes(CARD_SUBTYPE.Action)) || userType == -1) {
-            userType = getHidById(this._id);
         }
         if (this._type == CARD_TYPE.Support) {
             const handle = this._handle;

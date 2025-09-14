@@ -2084,8 +2084,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色受到〖hro〗及其召唤物造成的伤害时：】移除此状态，使此伤害+1。；（同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。）')
         .description('【此状态存在期间，可以触发1次：】所附属角色受到〖hro〗及其召唤物造成的伤害+1。；（同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。）', 'v4.4.0')
         .handle((status, event, ver) => {
-            const { skill, isSummon } = event;
-            if (getHidById(skill?.id) != getHidById(status.id) && isSummon != 124023) return;
+            const { source, isSummon } = event;
+            if (source != getHidById(status.id) && isSummon != 124023) return;
             return {
                 triggers: 'getdmg',
                 getDmg: 1,
@@ -2101,16 +2101,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.Usage).talent(isTalent).useCnt(useCnt).perCnt(1).perCnt(2, isTalent)
         .description(`【所附属角色受到伤害时：】抵消1点伤害。；【每回合${isTalent ? 2 : 1}次：】抵消来自召唤物的伤害时不消耗[可用次数]。；[useCnt]；【我方宣布结束时：】如果所附属角色为「出战角色」，则抓1张牌。`)
         .handle((status, event) => {
-            const { restDmg = -1, heros, hidx = -1, isSummon = -1, cmds } = event;
+            const { restDmg, hero, isSummon, cmds } = event;
             if (restDmg >= 0) {
                 if (restDmg == 0) return { restDmg }
                 const smnDmg = isSummon > -1 && status.perCnt > 0;
                 return { restDmg: restDmg - 1, exec: () => { smnDmg ? status.minusPerCnt() : status.minusUseCnt() } }
             }
-            const hero = heros[hidx];
-            if (!hero || !hero.isFront) return;
+            if (!hero.isFront) return;
             cmds.getCard(1);
-            return { triggers: 'end-phase', isAddTask: true }
+            return { triggers: 'end-phase' }
         }),
 
     124042: (useCnt: number = 0) => new StatusBuilder('雷萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
@@ -2124,9 +2123,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => ({
             triggers: 'card',
             exec: () => {
-                const { esummons } = event;
                 status.addUseCnt();
-                const summon = getObjById(esummons, 124041);
+                const summon = event.esummons.get(124041);
                 if (status.useCnt >= 3 && summon && summon.useCnt < 3) {
                     summon.addUseCnt();
                     status.useCnt = 0;
@@ -2150,7 +2148,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     124061: () => new StatusBuilder('雷之新生').heroStatus().icon(STATUS_ICON.Revive).useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
         .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到4点生命值。此效果触发后，此角色造成的[雷元素伤害]+1。')
         .handle((status, event) => {
-            const { hidx = -1, cmds } = event;
+            const { hidx, cmds } = event;
             cmds.revive(4, hidx).getStatus(124062, { hidxs: hidx });
             return { triggers: 'will-killed', exec: () => status.minusUseCnt() }
         }),
@@ -2166,10 +2164,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: ['Physical-getdmg', 'Anemo-getdmg'],
             getDmg: 2,
             exec: () => {
-                const { heros, hidx, eheros, cmds } = event;
+                const { hero, heros, eheros, cmds } = event;
                 status.minusUseCnt();
                 const talent = eheros.get(status.id)?.talentSlot;
-                if (heros[hidx]?.isFront && status.useCnt == 0 && talent && talent.perCnt > 0) {
+                if (hero.isFront && status.useCnt == 0 && talent && talent.perCnt > 0) {
                     talent.minusPerCnt();
                     cmds.getStatus(125021, { hidxs: heros.getNextBackHidx() });
                 }
@@ -2195,14 +2193,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     126011: () => new StatusBuilder('岩盔').heroStatus().useCnt(3).type(STATUS_TYPE.Barrier)
         .description('【所附属角色受到伤害时：】抵消1点伤害。；抵消[岩元素伤害]时，需额外消耗1次[可用次数]。；[useCnt]')
         .handle((status, event) => {
-            const { restDmg = -1, dmgElement, heros, hidx = -1 } = event;
+            const { restDmg, dmgElement, hero } = event;
             if (restDmg <= 0) return { restDmg }
             return {
                 restDmg: restDmg - 1,
                 exec: () => {
                     status.minusUseCnt();
                     if (status.useCnt > 0 && dmgElement == DAMAGE_TYPE.Geo) status.minusUseCnt();
-                    if (status.useCnt == 0) getObjById(heros[hidx]?.heroStatus, 126012)?.dispose();
+                    if (status.useCnt == 0) hero.heroStatus.get(126012)?.dispose();
                 }
             }
         }),
@@ -2221,11 +2219,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.NonDestroy)
         .description('角色可以汲取‹1冰›/‹2水›/‹3火›/‹4雷›元素的力量，然后根据所汲取的元素类型，获得技能‹1【rsk66013】›/‹2【rsk66023】›/‹3【rsk66033】›/‹4【rsk66043】›。（角色同时只能汲取一种元素，此状态会记录角色已汲取过的元素类型数量）；【角色汲取了一种和当前不同的元素后：】生成1个所汲取元素类型的元素骰。')
         .handle((status, event) => {
-            const { heros, hidx = -1, skill, trigger = '', cmds } = event;
-            const hero = heros[hidx];
-            if (!hero) return;
+            const { hero, hidx, skill, trigger, cmds } = event;
             const triggers: Trigger[] = [];
-            const sts126022 = getObjById(hero.heroStatus, 126022);
+            const sts126022 = hero.heroStatus.get(126022);
             if (sts126022) triggers.push('Cryo-getdmg', 'Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg');
             const isSkill = skill?.id == 26022 && trigger.startsWith('elReaction-Geo:');
             if (isSkill) triggers.push('elReaction-Geo');
@@ -2243,7 +2239,6 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     if (sts126022 && trigger.endsWith('getdmg')) sts126022.minusUseCnt();
                     const isDrawed = status.perCnt != 0;
                     hero.UI.src = hero.UI.srcs[drawElCode];
-                    // const oels = status.perCnt;
                     let els = -status.perCnt;
                     if ((els >> drawElCode - 1 & 1) == 0) {
                         els |= 1 << drawElCode - 1;
@@ -2251,7 +2246,6 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                         status.perCnt = -els;
                     }
                     cmds.getDice(1, { element: ELEMENT_CODE_KEY[drawElCode] });
-                    // if (oels == status.perCnt) cmds.getStatus(126022, { hidxs: hidx });
                     if (isDrawed) cmds.loseSkill(hidx, 2);
                     cmds.getSkill(hidx, 66003 + drawElCode * 10, 2);
                 }
@@ -2264,17 +2258,17 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     126031: (isTalent: boolean = false, ucnt: number = 1) => new StatusBuilder('黄金侵蚀').heroStatus().useCnt(ucnt).maxCnt(isTalent ? 5 : 3)
         .icon(STATUS_ICON.Dot).type(STATUS_TYPE.Attack)
-        .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；【[可用次数]：{useCnt}】（可叠加，最多叠加到3次）')
+        .description('【结束阶段：】如果所附属角色位于后台，则此效果每有1次[可用次数]，就对所附属角色造成1点[穿透伤害]。；【[可用次数]：1】（可叠加，最多叠加到3次）')
         .handle((status, event) => {
-            const { heros, hidx, eheros } = event;
+            const { hero, hidx, eheros } = event;
             const isTalent = eheros.get(status.id)?.talentSlot;
-            if (heros[hidx]?.isFront && !isTalent) return;
+            if (hero.isFront && !isTalent) return;
             return {
                 triggers: 'phase-end',
                 pdmg: status.useCnt,
                 hidxs: hidx,
                 isSelf: true,
-                exec: () => status.minusUseCnt()
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -2341,7 +2335,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     status.addUseCnt(+!!(hcard?.id == 127021));
                     if (status.useCnt < 4) return;
                     status.dispose();
-                    cmds.getStatus([127027, 127028], { hidxs: getObjById(heros, getHidById(status.id))?.hidx });
+                    cmds.getStatus([127027, 127028], { hidxs: heros.get(status.id)?.hidx });
                 }
             }
         }),
@@ -2369,9 +2363,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]；所附属角色被附属【sts121022】时，移除此效果。')
         .handle((status, event) => {
             const { trigger, hero } = event;
-            if (trigger == 'enter') {
-                return { triggers: 'enter', exec: () => hero.heroStatus.get(121022)?.dispose() }
-            }
+            if (trigger == 'enter') return { triggers: trigger, exec: () => hero.heroStatus.get(121022)?.dispose() }
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Pyro,

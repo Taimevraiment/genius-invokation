@@ -6,7 +6,7 @@ import {
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
 import { NULL_CARD } from '../constant/init.js';
 import { ELEMENT_ICON_NAME, ELEMENT_NAME, PURE_ELEMENT_NAME } from '../constant/UIconst.js';
-import { getDerivantParentId, getHidById, getObjById, getObjIdxById, getTalentIdByHid, getVehicleIdByCid, hasObjById, isTalentFront } from '../utils/gameUtil.js';
+import { getDerivantParentId, getHidById, getObjById, getTalentIdByHid, getVehicleIdByCid, hasObjById } from '../utils/gameUtil.js';
 import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 
@@ -21,7 +21,7 @@ const sacrificialWeapon = (shareId: number) => {
         .description('【角色造成的伤害+1】。；【角色使用「元素战技」后：】生成1个此角色类型的元素骰（每回合1次）。')
         .weapon().costSame(3).perCnt(1).handle((card, event) => {
             const { execmds, hero } = event;
-            if (card.perCnt > 0) execmds.getDice(1, { element: hero?.element })
+            if (card.perCnt > 0) execmds.getDice(1, { element: hero.element })
             return {
                 addDmg: 1,
                 triggers: isCdt(card.perCnt > 0, 'skilltype2'),
@@ -37,7 +37,7 @@ const skywardWeapon = (shareId: number) => {
             addDmg: 1,
             addDmgCdt: card.perCnt,
             triggers: isCdt(card.perCnt > 0, 'skilltype1'),
-            exec: () => card.minusPerCnt()
+            exec: () => card.minusPerCnt(),
         }));
 }
 
@@ -58,7 +58,7 @@ const barrierWeapon = (shareId: number, mark: string) => {
         .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合1次）；【角色造成伤害时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此伤害+1，并且每消耗1点「${mark}」就抓1张牌。`)
         .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合最多触发2次）；【角色使用技能时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此技能伤害+1，并且每消耗1点「${mark}」就抓1张牌。`, 'v5.0.0')
         .handle((card, event) => {
-            const { hcards = [], hcardsCnt = hcards.length, restDmg = -1, skill, execmds } = event;
+            const { hcardsCnt, restDmg, skill, execmds } = event;
             if (restDmg > -1) {
                 if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return { restDmg }
                 execmds.discard({ mode: CMD_MODE.HighHandCard })
@@ -86,7 +86,7 @@ const normalElRelic = (shareId: number, element: PureElementType) => {
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const { trigger, isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
-            const isMinusDiceCard = isMinusDiceTalent && (hcard?.costType == element || (hcard?.anydice ?? 0) > 0);
+            const isMinusDiceCard = isMinusDiceTalent && hcard && (hcard.costType == element || hcard.anydice > 0);
             return {
                 minusDiceSkill: { skill: [1, 0, 0], elDice: element },
                 minusDiceCard: isCdt(isMinusDiceCard, 1),
@@ -106,7 +106,7 @@ const advancedElRelic = (shareId: number, element: PureElementType) => {
         .description(`【对角色打出「天赋」或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。（每回合1次）；【投掷阶段：】2个元素骰初始总是投出[${ELEMENT_NAME[element]}骰]。`)
         .handle((card, event) => {
             const { trigger, isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
-            const isMinusCard = isMinusDiceTalent && card.perCnt > 0 && (hcard?.costType == element || (hcard?.anydice ?? 0) > 0);
+            const isMinusCard = isMinusDiceTalent && card.perCnt > 0 && hcard && (hcard.costType == element || hcard.anydice > 0);
             return {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
                 minusDiceCard: isCdt(isMinusCard, 1),
@@ -188,7 +188,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a56d5cf80b505c42a3643534d3dc2821_8758750260465224130.png')
         .handle((card, event) => {
             if (!event.skill?.isHeroSkill || card.perCnt <= 0) return { addDmg: 1 }
-            return { addDmg: 1, addDmgCdt: 1, triggers: ['elReaction', 'other-elReaction'], exec: () => card.minusPerCnt() }
+            return { addDmg: 1, addDmgCdt: 1, triggers: 'elReaction', exec: () => card.minusPerCnt() }
         }),
 
     311105: () => new CardBuilder(125).name('盈满之实').since('v3.8.0').weapon().costAny(3)
@@ -211,36 +211,38 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/8f3cd8f38e2c411713f9b5e6dc826653_5506358063099958204.png')
         .handle((card, event) => {
             const { isChargedAtk, isMinusDiceSkill } = event;
+            const isMinus = card.perCnt > 0 && isChargedAtk;
             return {
                 addDmg: 1,
-                triggers: isCdt(card.perCnt > 0 && isMinusDiceSkill && isChargedAtk, 'skilltype1'),
-                minusDiceSkill: isCdt(card.perCnt > 0 && isChargedAtk, { skilltype1: [0, 1, 0] }),
-                exec: () => card.minusPerCnt()
+                triggers: isCdt(isMinus, 'skilltype1'),
+                minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 1, 0] }),
+                exec: () => isMinusDiceSkill && card.minusPerCnt(),
             }
         }),
 
     311108: () => new CardBuilder(342).name('万世流涌大典').since('v4.5.0').weapon().costSame(3).perCnt(1).useCnt(0).isResetUseCnt()
         .description('【角色造成的伤害+1】。；【角色受到伤害或治疗后：】如果本回合已受到伤害或治疗累积2次，则角色本回合中下次造成的伤害+2。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/9a6794d76b3ea150a101e354f9f5a162_9095966637954555968.png')
-        .handle((card, { hero, execmds }) => {
-            if (card.useCnt == 1) execmds.getStatus(301108, { hidxs: hero?.hidx ?? -1 });
-            return {
-                addDmg: 1,
-                triggers: isCdt(card.perCnt > 0, ['getdmg', 'heal']),
-                isAddTask: true,
-                exec: () => {
-                    if (card.useCnt < 2) card.addUseCnt();
-                    if (card.useCnt >= 2) card.minusPerCnt();
+        .handle((card, event) => ({
+            addDmg: 1,
+            triggers: isCdt(card.perCnt > 0, ['getdmg', 'heal']),
+            isAddTask: true,
+            exec: () => {
+                const { hero, execmds } = event;
+                if (card.useCnt < 2) card.addUseCnt();
+                if (card.useCnt >= 2) {
+                    execmds.getStatus(301108, { hidxs: hero.hidx });
+                    card.minusPerCnt();
                 }
             }
-        }),
+        })),
 
     311109: () => new CardBuilder(381).name('金流监督').since('v4.7.0').weapon().costSame(2).perCnt(2)
         .description('【角色受到伤害或治疗后：】使角色本回合中下一次「普通攻击」少花费1个[无色元素骰]，且造成的伤害+1。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/83ab325be102a71a7df848546e7eacbb_2193569914822395358.png')
         .handle((card, event) => {
             const { hero, execmds } = event;
-            if (!hero || hasObjById(hero.heroStatus, 301111) || card.perCnt <= 0) return;
+            if (hero.heroStatus.has(301111) || card.perCnt <= 0) return;
             execmds.getStatus(301111, { hidxs: hero.hidx });
             return { triggers: ['getdmg', 'heal'], exec: () => card.minusPerCnt() }
         }),
@@ -249,20 +251,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时和回合结束时：】角色附属1层【sts122】。；【我方行动前：】所附属角色如果未附属【sts122】，则生成1个随机基础元素骰，并且角色下次造成的伤害+1。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/6875a5c89d6dd60c91e5b79ab433a0b3_8573604898930608503.png')
         .handle((card, event) => {
-            const { hero, trigger, execmds } = event;
-            if (!hero) return;
+            const { hero, trigger, execmds, cmds } = event;
+            cmds.getStatus(122, { hidxs: hero.hidx });
             const triggers: Trigger[] = ['phase-end'];
             if (trigger == 'phase-end') execmds.getStatus(122, { hidxs: hero.hidx });
-            else if (trigger == 'action-start' && card.perCnt > 0 && !hasObjById(hero?.heroStatus, 122)) {
-                triggers.push('action-start');
+            else if (trigger == 'action-start' && card.perCnt > 0 && !hero.heroStatus.has(122)) {
+                triggers.push(trigger);
                 execmds.getDice(1, { mode: CMD_MODE.Random }).getStatus(301112, { hidxs: hero.hidx });
             }
-            return {
-                triggers,
-                isAddTask: true,
-                status: 122,
-                exec: () => { trigger == 'action-start' && card.minusPerCnt() },
-            }
+            return { triggers, exec: () => { trigger == 'action-start' && card.minusPerCnt() } }
         }),
 
     311201: () => normalWeapon(126).name('鸦羽弓').offline('v1')
@@ -282,20 +279,20 @@ const allCards: Record<number, () => CardBuilder> = {
             let isAddDmg = card.perCnt > 0 && skill?.isHeroSkill;
             if (isAddDmg) {
                 const cskill = hero.skills.find(sk => sk.id == skill?.id);
-                if (cskill) isAddDmg &&= cskill.damage > 0 && cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
+                if (cskill) isAddDmg = cskill.damage + cskill.dmgChange > 0 && cskill.cost.reduce((a, c) => a + c.cnt, 0) >= 5;
             }
             return {
                 addDmg: 1,
-                addDmgCdt: isCdt(isAddDmg, 2),
+                addDmgCdt: 2,
                 triggers: isCdt(isAddDmg, 'skill'),
-                exec: () => card.minusPerCnt()
+                exec: () => card.minusPerCnt(),
             }
         }),
 
     311205: () => new CardBuilder(130).name('终末嗟叹之诗').since('v3.7.0').offline('v2').weapon().costSame(3)
         .description('【角色造成的伤害+1】。；【角色使用「元素爆发」后：】生成【sts301102】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fc5f899e61c9236a1319ea0f3c8b7a64_3821389462721294816.png')
-        .handle((_, { hero, execmds }) => (execmds.getStatus(301102, { hidxs: hero?.hidx ?? -1 }), { addDmg: 1, triggers: 'skilltype3' })),
+        .handle((_, { hidx, execmds }) => (execmds.getStatus(301102, { hidxs: hidx }), { addDmg: 1, triggers: 'skilltype3' })),
 
     311206: () => senlin1Weapon(131, '王下近侍', 301103).since('v4.0.0').offline('v2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/203927054/c667e01fa50b448958eff1d077a7ce1b_1806864451648421284.png'),
@@ -304,7 +301,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【我方打出名称不存在于初始牌组中的行动牌后：】此牌累积1点「渔猎」。（最多累积2点，每回合最多累积2点）；【角色使用技能时：】如果此牌已有「渔猎」，则消耗所有「渔猎」，使此技能伤害+1，并且每消耗1点「渔猎」就抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ea03edad3c81f49bddc24a5689f278d2_6229118249248157024.png')
         .handle((card, event) => {
-            const { playerInfo: { initCardIds = [] } = {}, hcard, trigger, execmds } = event;
+            const { playerInfo: { initCardIds }, hcard, trigger, execmds } = event;
             const triggers: Trigger[] = [];
             if (card.useCnt > 0) triggers.push('skill');
             if (hcard && !initCardIds.includes(hcard.id) && card.useCnt < 2 && card.perCnt > 0) triggers.push('card');
@@ -328,7 +325,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/8bc85fdc9df49d66ad2145eb848cae67_2048284066171113800.png')
         .handle((_, event) => {
             const { hero, skill, cmds } = event;
-            cmds.addMaxHp(1, hero?.hidx);
+            cmds.addMaxHp(1, hero.hidx);
             if (!skill?.isHeroSkill || hero.hp < 11) return;
             return { triggers: 'dmg', addDmgCdt: 2 }
         }),
@@ -2709,7 +2706,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在【sts114041】的「凭依」级数为3或5时使用【ski】时，造成的伤害额外+1。', 'v4.2.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/b4f218c914886ea4ab9ce4e0e129a8af_2603691344610696520.png')
         .handle((card, event, ver) => {
-            const stsCnt = (event.hero.heroStatus.get(114041)?.useCnt ?? 0) - (ver.gte('v4.8.0') ? 1 : 0);
+            const stsCnt = (event.hero.heroStatus.getUseCnt(114041)) - (ver.gte('v4.8.0') ? 1 : 0);
             let addDmgCdt = 0;
             if (
                 ver.lt('v4.2.0') && [3, 5].includes(stsCnt) ||
@@ -2784,7 +2781,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/fe3f64e0a6220b41d9db19a6cbb7c8e8_815543173218385253.png')
         .handle((_, event) => {
             const { hero, skill, execmds } = event;
-            if (!skill?.isHeroSkill || hero.heroStatus.get(114122)?.useCnt == 3) return;
+            if (!skill?.isHeroSkill || hero.heroStatus.getUseCnt(114122) == 3) return;
             execmds.getStatus(114122, { hidxs: hero.hidx });
             return { triggers: ['elReaction-Electro', 'other-elReaction-Electro'] }
         }),
@@ -3125,23 +3122,22 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    221021: () => new CardBuilder(294).name('苦痛奉还').since('v4.3.0').talent().costSame(3).tag(CARD_TAG.Barrier).perCnt(1)
+    221021: () => new CardBuilder(294).name('苦痛奉还').since('v4.3.0').talent(-3).costSame(3).tag(CARD_TAG.Barrier).perCnt(1)
         .description('我方出战角色为【hro】时，才能打出：入场时，生成3个【hro】当前元素类型的元素骰。；角色受到至少为3点的伤害时：抵消1点伤害，然后根据【hro】的形态对敌方出战角色附属【sts121022】或【sts121022,1】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b053865b60ec217331ea86ff7fb8789c_3260337021267875040.png')
         .handle((card, event) => {
-            const { hero, heros, restDmg, cmds } = event;
+            const { hero, restDmg, cmds } = event;
             if (restDmg > -1) {
                 if (restDmg < 3 || card.perCnt <= 0) return { restDmg }
                 return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => card.minusPerCnt() }
             }
             cmds.getDice(3, { element: hero.element });
-            return { isValid: isTalentFront(heros, card) }
         }),
 
-    221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent().costCryo(1)
+    221031: () => new CardBuilder(325).name('严霜棱晶').since('v4.4.0').talent(-3).costCryo(1)
         .description('我方出战角色为【hro】时，才能打出：使其附属【sts121034】。；装备有此牌的【hro】触发【sts121034】后：对敌方出战角色附属【sts121022】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/71d1da569b1927b33c9cd1dcf04c7ab1_880598011600009874.png')
-        .handle((card, event) => ({ isValid: isTalentFront(event.heros, card), status: 121034 })),
+        .handle(() => ({ status: 121034 })),
 
     221041: () => new CardBuilder(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
         .description('{action}；【装备有此牌的〖hro〗触发〖ski,3〗后：】使敌方出战角色的【sts122】层数翻倍。')
@@ -3224,14 +3220,10 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'ecard', exec: () => card.minusPerCnt() }
         }),
 
-    224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent().event(true).costElectro(2).costElectro(3, 'v4.2.0')
+    224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent(-3).event(true).costElectro(2).costElectro(3, 'v4.2.0')
         .description('[战斗行动]：我方出战角色为【hro】时，治疗该角色3点，并附属【sts124014】。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/3257a4da5f15922e8f068e49f5107130_6618336041939702810.png')
-        .handle((card, event) => {
-            const { heros, cmds } = event;
-            cmds.heal(3);
-            return { isValid: isTalentFront(heros, card), status: 124014, }
-        }),
+        .handle((_, event) => (event.cmds.heal(3), { status: 124014 })),
 
     224021: () => new CardBuilder(296).name('悲号回唱').since('v4.3.0').talent(1).talent(-1, 'v4.4.0').costElectro(3).costSame(0, 'v4.4.0').perCnt(1)
         .description('{action}；装备有此牌的【hro】在场，附属有【sts124022】的敌方角色受到伤害时：我方抓1张牌。（每回合1次）')
@@ -3240,20 +3232,16 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const { dmg, eheros, execmds } = event;
-            const [ehero] = eheros.filter(h => h.heroStatus.has(124022));
-            if (!ehero || (dmg[ehero.hidx] ?? -1) < 0) return;
+            const ehero = eheros.find(h => h.heroStatus.has(124022));
+            if (!ehero || dmg[ehero.hidx] < 0) return;
             execmds.getCard(1);
             return { triggers: 'getdmg-oppo', exec: () => card.minusPerCnt() }
         }),
 
-    224031: () => new CardBuilder(326).name('明珠固化').since('v4.4.0').talent().costSame(0)
+    224031: () => new CardBuilder(326).name('明珠固化').since('v4.4.0').talent(-3).costSame(0)
         .description('我方出战角色为【hro】时，才能打出：入场时，使【hro】附属[可用次数]为1的【sts124032】\\；如果已附属【sts124032】，则使其[可用次数]+1。；装备有此牌的【hro】所附属的【sts124032】抵消召唤物造成的伤害时，改为每回合2次不消耗[可用次数]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/ec966272143de66e191950a6016cf14f_3693512171806066057.png')
-        .handle((card, event) => {
-            const { hero, heros } = event;
-            const cnt = (getObjById(hero?.heroStatus, 124032)?.useCnt ?? 0) + 1;
-            return { isValid: isTalentFront(heros, card), status: [[124032, true, cnt]] }
-        }),
+        .handle((_, event) => ({ status: [[124032, true, (event.hero.heroStatus.getUseCnt(124032)) + 1]] })),
 
     224041: () => new CardBuilder(341).name('雷萤浮闪').since('v4.5.0').talent(1).costElectro(3).perCnt(1)
         .description('{action}；装备有此牌的【hro】在场时，我方选择行动前：如果【smn124041】的[可用次数]至少为3，则【smn124041】立刻造成1点[雷元素伤害]。（需消耗[可用次数]，每回合1次）')
@@ -3274,7 +3262,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/caa9283f50c2093abad5c6ba1bf73335_6393422977381042780.png').
         handle((card, event) => {
             const { heros, slotUse, trigger, cmds, execmds } = event;
-            if (!hasObjById(getObjById(heros, card.userType as number)?.heroStatus, 124061) || trigger == 'will-killed') {
+            if (!heros.get(card.userType as number)?.heroStatus.get(124061) || trigger == 'will-killed') {
                 cmds.getEnergy(-1, { isOppo: true });
                 execmds.addCmds(cmds);
                 return { triggers: 'will-killed', isDestroy: !slotUse }
@@ -3309,23 +3297,22 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'kill' }
         }),
 
-    226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent().event(true).costSame(2)
+    226022: () => new CardBuilder(298).name('晦朔千引').since('v4.3.0').talent(-3).event(true).costSame(2)
         .description('[战斗行动]：我方出战角色为【hro】时，对该角色打出。使【hro】附属【sts126022】，然后生成每种我方角色所具有的元素类型的元素骰各1个。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/5fd09f6cb9ecdc308105a2965989fdec_6866194267097059630.png')
-        .handle((card, event) => {
+        .handle((_, event) => {
             const { heros, cmds } = event;
             const element = [...new Set(heros.map(h => h.element))];
             cmds.getDice(element.length, { element });
-            return { isValid: isTalentFront(heros, card), status: 126022 }
+            return { status: 126022 }
         }),
 
     226031: () => new CardBuilder(437).name('异兽侵蚀').since('v5.2.0').talent(1).costGeo(3)
         .description('{action}；装备有此牌的【hro】在场时，对方的【sts126031】最多可叠加到5次，并且所附属角色不在后台时也会生效。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/e61044db77d2bee655c1d045df887554_5793154205438411376.png')
         .handle((_, event) => {
-            const { eheros = [], slotUse } = event;
-            if (!slotUse) return;
-            eheros.forEach(h => h.heroStatus.forEach(sts => sts.id == 126031 && (sts.maxCnt = 5)));
+            const { eheros, slotUse } = event;
+            if (slotUse) eheros.forEach(h => h.heroStatus.forEach(sts => sts.id == 126031 && (sts.maxCnt = 5)));
         }),
 
     227011: () => new CardBuilder(120).name('孢子增殖').offline('v1').talent(1).costDendro(3)
@@ -3336,10 +3323,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】生成4张【crd127021】，随机置入我方牌库。；装备有此牌的【hro】在场时，我方【smn127022】造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/37bdaf8745b1264fdac723555ba2938b_177410860486747187.png')
         .handle((_, event) => {
-            const { isSummon = -1, cmds } = event;
+            const { isSummon, cmds } = event;
             const isAddDmg = [127022, 127023, 127024, 127025].includes(isSummon);
             cmds.addCard(4, 127021);
-            return { triggers: ['dmg', 'other-dmg'], addDmgCdt: isCdt(isAddDmg, 1) }
+            return { triggers: 'dmg', addDmgCdt: isCdt(isAddDmg, 1) }
         }),
 
     227031: () => new CardBuilder(425).name('灵蛇旋嘶').since('v5.1.0').talent(1).costDendro(3)
@@ -3350,7 +3337,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('〔*[card][快速行动]：装备给我方的【hro】，敌方抓1张牌，然后我方窃取1张原本元素骰费用最高的对方手牌。〕；【我方打出名称不存在于本局最初牌组的牌时：】触发【ski,3】1次。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/840ad57e6a3de504c1a18dd0511e172b_8571717521108052350.png')
         .handle((card, event) => {
-            const { cmds, hcard, playerInfo: { initCardIds = [] } = {} } = event;
+            const { cmds, hcard, playerInfo: { initCardIds } } = event;
             cmds.getCard(1, { isOppo: true }).stealCard(1, CMD_MODE.HighHandCard);
             if (card.perCnt <= 0 || initCardIds.includes(hcard?.id ?? 0)) return;
             return { triggers: 'card', isAddTask: true, isTrigger: true, exec: () => card.minusPerCnt() }
@@ -3361,13 +3348,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6b2b966c07c54e8d86dd0ef057ae5c4a_6986508112474897949.png')
         .handle((card, event) => {
             const { heros, cmds } = event;
-            const hidx = getObjIdxById(heros, getHidById(card.id));
-            if (hidx == -1) return;
-            const hero = heros[hidx];
+            const hero = heros.get(card.id);
+            if (!hero) return;
             const clocal = hero.tags.at(-1);
             const nsummonId = +(clocal == HERO_TAG.ArkheOusia);
-            cmds.loseSkill(hidx, 1)
-                .getSkill(hidx, 12112 + nsummonId * 10, 1)
+            cmds.loseSkill(hero.hidx, 1)
+                .getSkill(hero.hidx, 12112 + nsummonId * 10, 1)
                 .changeSummon(112111 + (nsummonId ^ 1), 112111 + nsummonId);
             return {
                 exec: () => {
@@ -3513,8 +3499,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【所附属角色受到伤害时：】如可能，失去1点[充能]，以抵消1点伤害，然后生成【sts123032】。（每回合至多2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8bb20558ca4a0f53569eb23a7547bdff_4485030285188835351.png')
         .handle((card, event) => {
-            const { hero, restDmg = -1, execmds } = event;
-            if (restDmg == -1 || !hero) return;
+            const { hero, restDmg, execmds } = event;
+            if (restDmg == -1) return;
             const isBarrier = card.perCnt > 0 && hero.energy > 0;
             if (!isBarrier || restDmg == 0) return { restDmg }
             execmds.getEnergy(-1, { hidxs: hero.hidx }).getStatus(123032);
@@ -3528,8 +3514,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event, ver) => {
             const { hero, combatStatus, cmds } = event;
             cmds.discard({ mode: CMD_MODE.HighHandCard }).getDice(1, { mode: CMD_MODE.FrontHero });
-            if (ver.lt('v4.8.0') && hero?.tags.includes(HERO_TAG.ConsecratedBeast)) cmds.getEnergy(1);
-            return { isValid: !hasObjById(combatStatus, 124053), cmds, status: 124053 }
+            if (ver.lt('v4.8.0') && hero.tags.includes(HERO_TAG.ConsecratedBeast)) cmds.getEnergy(1);
+            return { isValid: !combatStatus.has(124053), cmds, status: 124053, notPreview: true }
         }),
 
     127021: () => new CardBuilder().name('唤醒眷属').event().costDendro(2)
@@ -3539,7 +3525,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { summons } = event;
             if (summons.length == MAX_SUMMON_COUNT) return { isValid: false }
             let summon = 127022;
-            while (hasObjById(summons, summon)) ++summon;
+            while (summons.has(summon)) ++summon;
             return { triggers: 'discard', summon }
         }),
 
@@ -3549,7 +3535,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { skill, combatStatus, slotUse, talent, hcard, reset, trigger, execmds } = event;
             const hid = getHidById(card.id);
             if (trigger == 'card' && hcard?.id == getTalentIdByHid(hid)) {
-                return { triggers: 'card', exec: () => { card.perCnt == 0 && card.addPerCnt() } };
+                return { triggers: 'card', exec: () => card.perCnt == 0 && card.addPerCnt() }
             }
             if (slotUse || reset) {
                 if (!talent && card.perCnt == 1) card.minusPerCnt();
@@ -3558,9 +3544,9 @@ const allCards: Record<number, () => CardBuilder> = {
             if (talent && trigger == 'switch-to') {
                 if (card.perCnt <= 0) return;
                 execmds.attack(1, DAMAGE_TYPE.Dendro);
-                return { triggers: 'switch-to', exec: () => card.minusPerCnt() };
+                return { triggers: 'switch-to', exec: () => card.minusPerCnt() }
             }
-            if (skill?.id != getVehicleIdByCid(card.id) || hasObjById(combatStatus, 127033)) return { triggers: 'vehicle' };
+            if (skill?.id != getVehicleIdByCid(card.id) || combatStatus.has(127033)) return { triggers: 'vehicle' }
             return { exec: () => { !talent && card.perCnt == 1 && card.minusPerCnt() } }
         }),
 

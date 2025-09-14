@@ -240,6 +240,9 @@ export class ArrayStatus extends Array<Status> {
         if (typeof ids[0] == 'number') return ids.some(id => hasObjById(this, id));
         return this.some(s => s.hasType(...ids as StatusType[]));
     }
+    getUseCnt(id: number) {
+        return this.get(id)?.useCnt ?? 0;
+    }
 }
 
 export class ArraySummon extends Array<Summon> {
@@ -257,6 +260,9 @@ export class ArraySummon extends Array<Summon> {
     has(id: number | SummonTag) {
         if (typeof id == 'number') return hasObjById(this, id);
         return this.some(s => s.hasTag(id));
+    }
+    getUseCnt(id: number) {
+        return this.get(id)?.useCnt ?? 0;
     }
 }
 

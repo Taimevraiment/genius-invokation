@@ -149,7 +149,7 @@ export class GISkill {
                 skill.perCnt = pct;
                 return { ...res, notLog: true, triggers: ['reset'] }
             }
-            let { dmgElement, atkOffset } = builderRes;
+            let { dmgElement, atkOffset, atkTo } = builderRes;
             const sevent = { ...event, hidx: hero.hidx };
             const statuses = [...hero.heroStatus];
             if (hero.isFront) statuses.push(...combatStatus);
@@ -201,7 +201,7 @@ export class GISkill {
                     c.cnt ??= skill.damage + skill.dmgChange + addDmgCdt;
                     c.element ??= skill.dmgElement == DAMAGE_TYPE.Physical ? dmgElement : skill.dmgElement;
                     if (c.element == DAMAGE_TYPE.Pierce && !c.hidxs) c.hidxs = eheros.getBackHidxs();
-                    c.hidxs ??= [eheros.getFront({ offset: atkOffset })?.hidx ?? -1];
+                    c.hidxs ??= atkTo != undefined ? [atkTo] : [eheros.getFront({ offset: atkOffset })?.hidx ?? -1];
                 });
             }
             return {

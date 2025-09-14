@@ -3,7 +3,7 @@ import { Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { ELEMENT_URL, STATUS_ICON } from "../constant/UIconst.js";
-import { getDerivantParentId, getHidById, getObjById, hasObjById } from "../utils/gameUtil.js";
+import { getDerivantParentId, getHidById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
 
@@ -741,8 +741,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('【结束阶段：】对附属【sts124022】的敌方角色{dealDmg}。（如果敌方不存在符合条件角色，则改为对出战角色造成伤害）；[useCnt]')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/552ec062eef427f9a1986f92ee19c716_8843394885297317371.png')
         .handle((summon, event) => {
-            const { eheros = [] } = event;
-            const sts124022hidx = eheros.find(h => hasObjById(h.heroStatus, 124022))?.hidx ?? -1;
+            const sts124022hidx = event.eheros.find(h => h.heroStatus.has(124022))?.hidx ?? -1;
             const hidxs = isCdt(sts124022hidx != -1, [sts124022hidx]);
             return {
                 triggers: 'phase-end',
@@ -759,19 +758,17 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => {
             const { trigger, heros, talent, dmgedHidx, getdmg, eCombatStatus } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const hero = getObjById(heros, getHidById(summon.id));
+            const hero = heros.get(summon.id);
             if ((talent?.perCnt ?? 0) > 0 && summon.useCnt >= 3) triggers.push('action-start');
-            const isHero = hero?.isFront && (getdmg[dmgedHidx] ?? -1) != -1;
-            if (isHero && trigger == 'get-elReaction') {
-                triggers.push('get-elReaction');
-                summon.minusUseCnt();
-            }
+            const isHero = hero?.isFront && getdmg[dmgedHidx] != -1;
+            if (isHero) triggers.push('get-elReaction');
             return {
                 triggers,
                 isNotAddTask: trigger == 'get-elReaction',
                 exec: cmds => {
                     if (trigger != 'get-elReaction') summon.phaseEndAtk(cmds).clear();
-                    if (summon.useCnt == 0) getObjById(eCombatStatus, 124044)?.dispose();
+                    else summon.minusUseCnt();
+                    if (summon.useCnt == 0) eCombatStatus.get(124044)?.dispose();
                     if (trigger == 'get-elReaction') return;
                     if (trigger == 'action-start') talent?.minusPerCnt();
                     cmds.attack();
@@ -816,9 +813,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/3e32a0169cd4d974e63d42a9db75e7eb_6960651172648088173.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
-            exec: cmds => {
-                summon.phaseEndAtk(cmds).getStatus([[126031, !!event.talent]], { isOppo: true });
-            }
+            exec: cmds => summon.phaseEndAtk(cmds).getStatus([[126031, !!event.talent]], { isOppo: true }),
         })),
 
     127022: () => crd12702summon(),

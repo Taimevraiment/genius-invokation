@@ -63,7 +63,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     23046: () => new SkillBuilder('炽烈轰破').description('{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
         .burst().readySkill().damage(1).handle(event => {
-            return { pdmg: 2, addDmgCdt: Math.floor((event.hero.heroStatus.get(123041)?.useCnt ?? 0) / 2) }
+            return { pdmg: 2, addDmgCdt: Math.floor((event.hero.heroStatus.getUseCnt(123041)) / 2) }
         }),
 
     24015: () => new SkillBuilder('猜拳三连击·剪刀').description('{dealDmg}，然后[准备技能]：【rsk24016】。')
