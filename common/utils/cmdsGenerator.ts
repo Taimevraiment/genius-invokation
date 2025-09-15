@@ -89,10 +89,10 @@ export default class CmdsGenerator {
         this._add({ cmd: 'getEnergy', cnt, hidxs, isOppo, isAttach });
         return this;
     }
-    heal(cnt?: number, options: { hidxs?: number | number[], order?: boolean, notPreHeal?: boolean } = {}) {
-        let { hidxs, order, notPreHeal: isAttach } = options;
+    heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean } = {}) {
+        let { hidxs, isOrder, notPreHeal: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(order, CMD_MODE.ByOrder), isAttach });
+        this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach });
         return this;
     }
     revive(cnt: number, hidxs?: number | number[]) {
@@ -100,9 +100,9 @@ export default class CmdsGenerator {
         this._add({ cmd: 'revive', cnt, hidxs });
         return this;
     }
-    addMaxHp(cnt: number, hidxs?: number | number[], order?: boolean) {
+    addMaxHp(cnt: number, hidxs?: number | number[], isOrder?: boolean) {
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(order, CMD_MODE.ByOrder) });
+        this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder) });
         return this;
     }
     getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
@@ -282,10 +282,6 @@ export default class CmdsGenerator {
     }
     getCmdCnt(cmd1: Cmd) {
         return this.value.find(({ cmd }) => cmd == cmd1)?.cnt;
-    }
-    order() {
-        this.value.forEach((cmds, i) => cmds.mode = i);
-        return this;
     }
     clear() {
         this.value = [];

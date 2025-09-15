@@ -74,7 +74,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 西风大教堂
     321006: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
-        if (!event.hero.isHurted) return;
+        if (!event.hero.isHurt) return;
         return {
             triggers: 'phase-end',
             exec: cmds => (cmds.heal(2), { isDestroy: --support.cnt == 0 })

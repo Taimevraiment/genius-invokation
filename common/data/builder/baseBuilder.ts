@@ -114,14 +114,19 @@ export class BaseCostBuilder extends BaseBuilder {
 }
 
 export class ArrayHero extends Array<Hero> {
+    fhidx: number = -1;
     constructor(...args: any[]) {
         super(...args);
     }
     get frontHidx() {
-        return this.findIndex(h => h.isFront);
+        const idx = this.findIndex(h => h.isFront);
+        return idx == -1 ? this.fhidx : idx;
     }
     get hasHurt() {
-        return this.some(h => h.isHurted);
+        return this.some(h => h.isHurt);
+    }
+    get hasDeadThisTurn() {
+        return this.some(h => h.hp == -1);
     }
     get(id: number) {
         return getObjById(this, id) ?? getObjById(this, getHidById(id));
@@ -315,7 +320,6 @@ export interface EntityHandleEvent {
     source: number,
     sourceHidx: number,
     talent: Card | null,
-    slotsDestroyCnt: number[],
     isSelfRound: boolean,
     isSwirlExec: boolean,
     atkHidx: number,

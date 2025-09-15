@@ -73,7 +73,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = heros.getMaxHurtHidxs();
             const isHeal = hero.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
-            const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHurted;
+            const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHurt;
             if (isHeal) triggers.push('after-skilltype1');
             return {
                 triggers,

@@ -321,7 +321,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
     const { hidx = player.hidx ?? 0, minusDiceCard = 0, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0,
-        isMinusDiceCard = !!hcard && hcard.cost + hcard.anydice > minusDiceCard, heros = player.heros,
+        isMinusDiceCard = !!hcard && hcard.rawDiceCost > minusDiceCard, heros = player.heros,
     } = event;
     const hero = player.heros[hidx];
     return {
@@ -363,10 +363,10 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         isMinusDiceCard,
         minusDiceCard,
         isMinusDiceSkill: !!skill?.costChange[2].includes(entity.entityId ?? entity.id ?? -1),
-        isMinusDiceTalent: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Talent),
-        isMinusDiceWeapon: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Weapon),
-        isMinusDiceRelic: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Relic),
-        isMinusDiceVehicle: isMinusDiceCard && !!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle),
+        isMinusDiceTalent: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == hero.id,
+        isMinusDiceWeapon: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Weapon),
+        isMinusDiceRelic: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Relic),
+        isMinusDiceVehicle: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Vehicle),
         minusDiceSkill: skill?.costChange[3] ?? [], // 技能当前被x减费后留存的骰子数
         dmgedHidx,
         eDmgedHero: opponent.heros[dmgedHidx] ?? NULL_HERO(),
@@ -379,7 +379,6 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         source: -1,
         sourceHidx: -1,
         talent: heros.get(entity.id ?? -1)?.talentSlot ?? hero.talentSlot,
-        slotsDestroyCnt: player.heros.map(() => 0),
         isSelfRound: false,
         isSwirlExec: false,
         atkHidx: player.hidx,

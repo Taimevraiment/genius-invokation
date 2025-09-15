@@ -718,6 +718,7 @@ export default class GeniusInvokationRoom {
             const aiPlayer = this.players[1];
             aiPlayer.hidx = this._randomInt(aiPlayer.heros.length - 1);
             aiPlayer.heros[aiPlayer.hidx].isFront = true;
+            aiPlayer.heros.fhidx = aiPlayer.hidx;
             aiPlayer.phase == PHASE.DICE;
         }
         this.emit(flag, pidx);
@@ -1000,6 +1001,7 @@ export default class GeniusInvokationRoom {
         const player = this.players[pidx];
         player.hidx = hidx;
         player.heros[hidx].isFront = true;
+        player.heros.fhidx = hidx;
         player.phase = PHASE.DICE;
         this._writeLog(`[${player.name}](${player.pidx})选择[${player.heros[hidx].name}]出战`);
         if (this.players.every(p => p.phase == PHASE.DICE || p.id == AI_ID)) { // 双方都选完出战角色
@@ -1085,6 +1087,7 @@ export default class GeniusInvokationRoom {
             player.isFallAtk = true;
             player.hidx = hidx;
             player.heros.forEach((h, idx) => h.isFront = idx == hidx);
+            player.heros.fhidx = hidx;
             this._detectHero(pidx ^ 1, 'switch-oppo', { hidxs: opponent.hidx, types: STATUS_TYPE.Usage });
             if (player.heros[ohidx].hp == 0) player.heros[ohidx].hp = -1;
             await this.emit(flag, pidx, {
@@ -1386,7 +1389,7 @@ export default class GeniusInvokationRoom {
             atkname: skill.name,
             dmgSource: 'skill',
             skill,
-            source: atkHero.id,
+            source: skill.isHeroSkill ? atkHero.id : skill.id,
             trigger: 'skill',
             multiDmg: skillres.multiDmgCdt,
             notPreview: skillres.notPreview,
@@ -1754,21 +1757,22 @@ export default class GeniusInvokationRoom {
         }
         const assignDmgTrigger = (triggers: Set<Trigger>[], isA: boolean) => {
             const admgIdxOffset = isA ? aGetDmgIdxOffset : getDmgIdxOffset;
-            triggers.forEach((trg, tidx) => {
-                const [elDmg, pierceDmg] = res.willDamages[tidx + admgIdxOffset];
-                const isOtherGetDmg = res.willDamages.slice(admgIdxOffset, admgIdxOffset + ehlen)
-                    .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
-                if (isOtherGetDmg) trg.add('other-getdmg');
-                if (elDmg > 0 || pierceDmg > 0) {
-                    trg.add('getdmg');
-                    if (elDmg > 0) {
-                        if (dmgElement != ELEMENT_TYPE.Physical) trg.add('el-getdmg');
-                        trg.add(`${trgEl}-getdmg`);
+            if (!isSwirl && !swirlDmg || isSwirl && isSwirlExec) {
+                triggers.forEach((trg, tidx) => {
+                    const [elDmg, pierceDmg] = res.willDamages[tidx + admgIdxOffset];
+                    const isOtherGetDmg = res.willDamages.slice(admgIdxOffset, admgIdxOffset + ehlen)
+                        .some((dmg, didx) => (dmg[0] > -1 || dmg[1] > 0) && didx != tidx);
+                    if (isOtherGetDmg) trg.add('other-getdmg');
+                    if (elDmg > 0 || pierceDmg > 0) {
+                        trg.add('getdmg');
+                        if (elDmg > 0) {
+                            if (dmgElement != ELEMENT_TYPE.Physical) trg.add('el-getdmg');
+                            trg.add(`${trgEl}-getdmg`);
+                        }
+                        if (pierceDmg > 0) trg.add('Pierce-getdmg');
                     }
-                    if (pierceDmg > 0) trg.add('Pierce-getdmg');
-                }
-            });
-            if (!isSwirl) {
+                    if (trg.has('getdmg') || trg.has('other-getdmg')) trg.add('all-getdmg');
+                });
                 const edmgIdxOffset = isA ? getDmgIdxOffset : aGetDmgIdxOffset;
                 const wdmgs = res.willDamages.slice(edmgIdxOffset, edmgIdxOffset + ehlen);
                 if (wdmgs.some(dmg => dmg[0] > -1 || dmg[1] > 0)) {
@@ -2474,13 +2478,11 @@ export default class GeniusInvokationRoom {
      * @param options players 玩家数组, slotsDestroy 弃置的装备数量
      */
     private _doSlotDestroy(pidx: number, hidx: number, slot: Card) {
+        this._detectHero(pidx, 'slot-destroy', { hidxs: hidx, cSlot: slot });
         this._detectHero(pidx, 'slot-destroy', {
-            hidxs: hidx,
-            cSlot: slot,
             hcard: slot,
             source: slot.id,
             sourceHidx: hidx,
-            includeCombatStatus: true,
             types: [STATUS_TYPE.ReadySkill, STATUS_TYPE.Usage],
         });
         if (slot.hasTag(CARD_TAG.Enchant)) {
@@ -2714,7 +2716,13 @@ export default class GeniusInvokationRoom {
         }
         for (let i = 0; i < heal.length; ++i) {
             const hi = (hidx + i) % heal.length;
-            this._detectHero(pidx, heal[hi] > -1 ? 'heal' : 'other-heal', {
+            const trgs: Trigger[] = ['all-heal'];
+            heal.forEach((hl, hli) => {
+                if (hl == -1) return;
+                if (hli == hi) trgs.push('heal');
+                else trgs.push('other-heal');
+            });
+            this._detectHero(pidx, trgs, {
                 types: STATUS_TYPE.Usage,
                 hidxs: hi,
                 heal,
@@ -2977,12 +2985,12 @@ export default class GeniusInvokationRoom {
                         const oPct = hfield.perCnt;
                         const isCancel = hfieldres.exec?.();
                         if (isCancel) return true;
-                        this._writeLog(`[${name}](${pidx})${hfield.name}:${trigger}${hfield.useCnt != -1 ? ` useCnt:${oCnt}→${hfield.useCnt}` : ''}${hfield.perCnt != -1 ? ` perCnt:${oPct}→${hfield.perCnt}` : ''}`, 'system');
-                        this._writeLog(`[${name}](${pidx})[${hfield.name}]发动${oCnt > -1 && oCnt != hfield.useCnt ? ` ${oCnt}→${hfield.useCnt}` : ''}`, isCdt(isStatus && hfield.hasType(STATUS_TYPE.Hide), hfieldres.notLog ? 'system' : 'log'));
+                        this._writeLog(`[${name}](${pidx})${heros[hidx].name}-${hfield.name}:${trigger}${hfield.useCnt != -1 ? ` useCnt:${oCnt}→${hfield.useCnt}` : ''}${hfield.perCnt != -1 ? ` perCnt:${oPct}→${hfield.perCnt}` : ''}`, 'system');
+                        this._writeLog(`[${name}](${pidx})[${heros[hidx].name}][${hfield.name}]发动${oCnt > -1 && oCnt != hfield.useCnt ? ` ${oCnt}→${hfield.useCnt}` : ''}`, isCdt(isStatus && hfield.hasType(STATUS_TYPE.Hide), hfieldres.notLog ? 'system' : 'log'));
                     }
                     const rescmds = isStatus ? hfieldres.cmds : hfieldres.execmds;
                     if (hfieldres.isAddTask || (rescmds?.notEmpty && hfieldres.isAddTask != false)) {
-                        this.taskQueue.addTask(`do${hfieldType}-p${pidx}-${hfield.name}(${hfield.entityId}):${trigger}`, async () => {
+                        this.taskQueue.addTask(`do${hfieldType}-p${pidx}-h${hidx}-${hfield.name}(${hfield.entityId}):${trigger}`, async () => {
                             const isCancel = execute();
                             const slotSelect = isCdt(!isStatus && (rescmds?.notEmpty || hfieldres.isAddTask) && !isCancel, () => [
                                 pidx,
@@ -3338,9 +3346,9 @@ export default class GeniusInvokationRoom {
                         });
                         isFirstAtk = false;
                     }
-                    this._detectHeal(atkPidx, damageVO.willHeals, { notPreHeal, source, skill });
                     const isLast = +cmdidx == cDamageCmds.cmds.length - 1;
                     if (cDamageCmds.type == 'order' || isLast) {
+                        this._detectHeal(atkPidx, damageVO.willHeals, { notPreHeal, source, skill });
                         damageVO.dmgSource = dmgSource;
                         const needSelect = +cmdidx == 0 || cDamageCmds.type != 'order';
                         await this._doDamage(atkPidx, damageVO, {
@@ -3400,9 +3408,9 @@ export default class GeniusInvokationRoom {
                 }
                 if (cmd == 'putCard') {
                     if (mode == CMD_MODE.HighHandCard) {
-                        const hcardsSorted = clone(handCards).sort((a, b) => ((b.cost + b.anydice) - (a.cost + a.anydice)) || (b.entityId - a.entityId));
-                        const maxCost = hcardsSorted[0].cost + hcardsSorted[0].anydice;
-                        const maxCostCards = hcardsSorted.filter(c => c.cost + c.anydice == maxCost);
+                        const hcardsSorted = clone(handCards).sort((a, b) => (b.rawDiceCost - a.rawDiceCost) || (b.entityId - a.entityId));
+                        const maxCost = hcardsSorted[0].rawDiceCost;
+                        const maxCostCards = hcardsSorted.filter(c => c.rawDiceCost == maxCost);
                         cards.push(...this._randomInArr(maxCostCards, 2));
                     }
                     cmds.splice(i--, 1,
@@ -3562,7 +3570,7 @@ export default class GeniusInvokationRoom {
                                 }
                             }
                         } else {
-                            const hcardsSorted = clone(unselectedCards).sort((a, b) => ((b.cost + b.anydice) - (a.cost + a.anydice)));
+                            const hcardsSorted = clone(unselectedCards).sort((a, b) => (b.rawDiceCost - a.rawDiceCost));
                             if (card) { // 弃置指定手牌
                                 discards.push(...clone(card as Card[]));
                             } else if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
@@ -3576,8 +3584,8 @@ export default class GeniusInvokationRoom {
                                         discards.push(clone(discard));
                                     } else if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
                                         if (hcardsSorted.length == 0) break;
-                                        const maxCost = hcardsSorted[0].cost + hcardsSorted[0].anydice;
-                                        const maxCostCards = unselectedCards.filter(c => c.cost + c.anydice == maxCost);
+                                        const maxCost = hcardsSorted[0].rawDiceCost;
+                                        const maxCostCards = unselectedCards.filter(c => c.rawDiceCost == maxCost);
                                         const [{ entityId: ceid }] = isDiscard ? this._randomInArr(maxCostCards) : maxCostCards;
                                         const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
                                         discards.push(clone(discard));
@@ -3798,7 +3806,7 @@ export default class GeniusInvokationRoom {
                     const damageVO = INIT_DAMAGEVO(this.players.flatMap(p => p.heros).length);
                     (ohidxs ?? [heros.frontHidx]).forEach((hidx, hi) => {
                         const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront()?.element ?? DAMAGE_TYPE.Physical) as ElementType;
-                        const { elTips, atriggers, etriggers } = this._calcDamage(pidx, attachEl, [], hidx, { isAttach: true, isAtkSelf: +!isOppo, skill });
+                        const { elTips, atriggers, etriggers } = this._calcDamage(pidx, attachEl, [], hidx, { isAttach: true, isAtkSelf: +!isOppo, skill, atkId: source });
                         elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
                         this.preview.triggers[cpidx].forEach((trgs, tri) => etriggers[tri].forEach(t => trgs.add(t)));
                         this.preview.triggers[cpidx ^ 1].forEach((trgs, tri) => atriggers[tri].forEach(t => trgs.add(t)));
@@ -4809,7 +4817,7 @@ export default class GeniusInvokationRoom {
             c.handle(c, { pidx, ...this.handleEvent, trigger: 'hcard-calc' });
         });
         handCards.forEach((c, i) => {
-            c.costChanges[0] = Math.min(c.cost + c.anydice, costChange[i][0]);
+            c.costChanges[0] = Math.min(c.rawDiceCost, costChange[i][0]);
             c.costChanges[1] = Math.min(c.anydice, costChange[i][1]);
         });
     }

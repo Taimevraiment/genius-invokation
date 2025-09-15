@@ -1,5 +1,5 @@
 import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, PureElementType, Version } from "../constant/enum.js"
-import { getHidById, hasObjById } from "../utils/gameUtil.js"
+import { getHidById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
 
@@ -108,7 +108,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().damage(4).costAny(1).handle(event => {
             const { cmds, hero: { hidx, heroStatus } } = event;
             cmds.consumeNightSoul(hidx).attack();
-            return { isForbidden: !hasObjById(heroStatus, 113151) }
+            return { isForbidden: !heroStatus.has(113151) }
         }),
 
     1131551: () => new SkillBuilder('涉渡').description('我方切换到下一个角色，将2个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
@@ -120,7 +120,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().costAny(2).handle(event => {
             const { cmds, hero: { hidx, heroStatus } } = event;
             cmds.consumeNightSoul(hidx).getStatus(113157);
-            return { isForbidden: !hasObjById(heroStatus, 113151) }
+            return { isForbidden: !heroStatus.has(113151) }
         }),
 
     1151021: () => new SkillBuilder('仙力助推').description('治疗所附属角色2点，并使其下次「普通攻击」视为[下落攻击]，伤害+1，并且技能结算后造成1点[风元素伤害]。')
@@ -141,12 +141,12 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             const { eheros, combatStatus, hidx, cmds } = event;
             const hidxs = eheros.getNextBackHidx();
             cmds.consumeNightSoul(hidx);
-            if (hidxs.length) return { pdmg: combatStatus.has(116101) ? 2 : 1, hidxs }
+            if (hidxs.length) return { pdmg: 1 + +combatStatus.has(116101), hidxs }
         }),
 
     1161121: () => new SkillBuilder('高速腾跃').description('附属角色消耗1点「夜魂值」，抓3张牌。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/6e198a5ebf0245a681cbb894919886d1_5120040167043277378.png')
-        .vehicle().costAny(2).handle(({ cmds, hero: { hidx } }) => cmds.consumeNightSoul(hidx).getCard(3).res),
+        .vehicle().costAny(2).handle(({ cmds, hidx }) => cmds.consumeNightSoul(hidx).getCard(3).res),
 
     1220511: () => new SkillBuilder('水泡战法').description('（需准备1个行动轮）；造成1点[水元素伤害]，敌方出战角色附属【sts122052】。')
         .src('#')
@@ -171,7 +171,7 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。', 'v5.4.0')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {
-            const { hcards = [], cmds } = event;
+            const { hcards, cmds } = event;
             cmds.stealCard(1, CMD_MODE.HighHandCard);
             if (ver.gte('v5.4.0')) cmds.getCard(1, { isOppo: true });
             return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
@@ -179,16 +179,16 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方「召唤物」，立刻触发其「结束阶段」效果。（每回合最多使用1次）')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
-        .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(event => ({
-            summonTrigger: 'phase-end',
-            isForbidden: event.skill.perCnt == 0,
-            exec: () => { --event.skill.perCnt },
-        })),
+        .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(({ cmds, skill, selectSummon }) => (
+            cmds.summonTrigger(selectSummon), {
+                isForbidden: skill.perCnt == 0,
+                exec: () => skill.minusPerCnt(),
+            })),
 
     3130041: () => new SkillBuilder('掘进突击').description('抓2张牌。然后，如果手牌中存在名称不存在于本局最初牌组中的牌，则提供2点[护盾]保护所附属角色。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e9339d30ff4a5642b32bc1208063a08c_2715679545278748017.png')
         .vehicle().costAny(2).handle(event => {
-            const { hcards = [], playerInfo: { initCardIds = [] } = {}, pile = [], cmds } = event;
+            const { hcards, playerInfo: { initCardIds }, pile, cmds } = event;
             cmds.getCard(2);
             if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {
                 cmds.getStatus(301301);
@@ -197,15 +197,10 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
 
     3130051: () => new SkillBuilder('灵性援护').description('从「场地」「道具」「料理」中[挑选]1张加入手牌，并且治疗附属角色1点。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/80e0cad80855e14a1efebb4b6ba2cd67_801740963269596598.png')
-        .vehicle().costSame(1).handle(() => ({
-            pickCard: {
-                cnt: 3,
-                mode: CMD_MODE.GetCard,
-                subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food],
-                isOrdered: true,
-            },
-            heal: 1,
-        })),
+        .vehicle().costSame(1).handle(({ cmds }) => {
+            cmds.heal(1)
+                .pickCard(3, CMD_MODE.GetCard, { subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food], isSpecify: true });
+        }),
 
     3130063: () => new SkillBuilder('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')

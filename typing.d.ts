@@ -189,6 +189,7 @@ type TrgAfter = 'after-' | '';
 type TrgActive = 'active-' | '';
 type TrgDice = 'add-' | 'minus-' | '';
 type TrgPre = 'pre-' | '';
+type TrgAll = 'all-' | '';
 
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
     'end-phase' | 'any-end-phase' | `${TrgAfter}${TrgOther}skill${TrgOppo}` | `${TrgAfter}${TrgOther}skilltype${SkillType}` |
@@ -196,11 +197,11 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
-    'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
-    `heal${TrgOppo}` | `${TrgOther | TrgPre}heal` | 'useReadySkill' | 'status-destroy' | 'status-destroy-other' | 'summon-destroy' | 'slot-destroy' |
+    'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
+    `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | 'useReadySkill' | 'status-destroy' | 'status-destroy-other' | 'summon-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | `${TrgPre}get-status` |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
+    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` | 'slot-destroy' |
     'getNightSoul' | 'ready-skill' | 'reset' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;

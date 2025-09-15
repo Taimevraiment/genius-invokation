@@ -77,7 +77,7 @@ export class GIHero {
     get hurtHp() {
         return this.maxHp - this.hp;
     }
-    get isHurted() {
+    get isHurt() {
         return this.hp > 0 && this.hurtHp > 0;
     }
     get isFullEnergy() {

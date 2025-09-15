@@ -8,7 +8,7 @@ import {
 import { MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { NULL_STATUS } from "../constant/init.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, SKILL_TYPE_NAME, STATUS_BG_COLOR, STATUS_ICON } from "../constant/UIconst.js";
-import { getDerivantParentId, getHidById, getObjById, getVehicleIdByCid, hasObjById } from "../utils/gameUtil.js";
+import { getDerivantParentId, getHidById, getObjById, getVehicleIdByCid } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { StatusBuilder, StatusBuilderHandleEvent, StatusBuilderHandleRes, StatusHandleRes } from "./builder/statusBuilder.js";
 
@@ -355,7 +355,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方角色使用技能后：】如果该角色生命值未满，则治疗该角色2点。；[useCnt]')
         .handle((status, event) => {
             const { hero, skill } = event;
-            if (skill?.id == 11083 || !hero.isHurted) return;
+            if (skill?.id == 11083 || !hero.isHurt) return;
             return {
                 triggers: 'after-skill',
                 heal: 2,
@@ -1097,7 +1097,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: ['other-skilltype3', 'skilltype3'],
             exec: () => {
                 const { trigger } = event;
-                if (trigger == 'skilltype3') status.useCnt = 0;
+                if (trigger == 'skilltype3') status.setUseCnt();
                 else if (trigger == 'other-skilltype3') status.addUseCnt();
             }
         })),
@@ -1827,7 +1827,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     121012: (useCnt: number = 0) => new StatusBuilder('流萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
         .description('为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn121011】，则额外提供其[可用次数]的[护盾]。（最多额外提供3点[护盾]）'),
 
-    121013: () => shieldCombatStatus('叛逆的守护', 1, 2),
+    121013: () => shieldCombatStatus('叛逆的守护', 1, 2).from(311305),
 
     121021: () => new StatusBuilder('冰封的炽炎魔女').heroStatus().icon('ski,3').useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
@@ -1959,7 +1959,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                         status.addUseCnt();
                     } else {
                         cnt = 4 - new Set([cost1, cost2, cost]).size;
-                        status.useCnt = 0;
+                        status.setUseCnt();
                     }
                     if (cnt > 0) {
                         if (ver.lt('v5.0.0')) {
@@ -2127,7 +2127,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 const summon = event.esummons.get(124041);
                 if (status.useCnt >= 3 && summon && summon.useCnt < 3) {
                     summon.addUseCnt();
-                    status.useCnt = 0;
+                    status.setUseCnt();
                 }
             },
         })),
@@ -2285,11 +2285,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 isAddTask: trigger == 'phase-end',
                 exec: () => {
                     if (trigger == 'skilltype3') {
-                        status.useCnt = 0;
+                        status.setUseCnt();
                         return;
                     }
                     if (trigger == 'phase-end') {
-                        status.useCnt = 0;
+                        status.setUseCnt();
                         return cmds.getEnergy(-hero.energy, { hidxs: hidx });
                     }
                     if (status.useCnt < maxCnt) status.addUseCnt(true);
@@ -2708,7 +2708,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Attack).icon('#').from(302215)
         .description('【我方角色使用技能后：】受到2点治疗或2点[穿透伤害]。；[useCnt]')
         .handle((status, event) => {
-            const { hidx = -1, randomInt } = event;
+            const { hidx, randomInt } = event;
             const res = [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: hidx }][randomInt!()];
             return {
                 triggers: 'after-skill',
@@ -2738,7 +2738,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff).from(323003)
         .description('本回合中，我方执行的下次「切换角色」行动视为「[快速行动]」而非「[战斗行动]」，并且少花费1个元素骰。')
         .handle((status, event) => {
-            const { isQuickAction, switchHeroDiceCnt = 0 } = event;
+            const { isQuickAction, switchHeroDiceCnt } = event;
             if (switchHeroDiceCnt == 0 && isQuickAction) return;
             return {
                 minusDiceHero: 1,
@@ -2851,8 +2851,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff).from(332002)
         .description('【我方下次执行「切换角色」行动时：】少花费1个元素骰。')
         .handle((status, event) => {
-            const { switchHeroDiceCnt = 0 } = event;
-            if (switchHeroDiceCnt == 0) return;
+            if (event.switchHeroDiceCnt == 0) return;
             return {
                 minusDiceHero: 1,
                 triggers: 'minus-switch',
@@ -2913,7 +2912,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332023)
         .description('【本回合中，一位牌手先宣布结束时：】未宣布结束的牌手抓2张牌。')
         .handle((status, event) => {
-            const { phase = -1, cmds } = event;
+            const { phase, cmds } = event;
             cmds.getCard(2, { isOppo: phase > PHASE.ACTION });
             return {
                 triggers: 'any-end-phase',
@@ -2932,10 +2931,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: 'slot-destroy',
             isAddTask: true,
             exec: () => {
-                const { slotsDestroyCnt, cmds } = event;
-                const cnt = Math.min(status.useCnt, slotsDestroyCnt.reduce((a, b) => a + b, 0));
-                status.minusUseCnt(cnt);
-                cmds.getDice(cnt, { element: DICE_COST_TYPE.Omni });
+                status.minusUseCnt();
+                event.cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
             }
         })),
 
@@ -2947,18 +2944,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303227: () => new StatusBuilder('四叶印').heroStatus()
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332027)
         .description('【结束阶段：】切换到所附属角色。')
-        .handle((_, { cmds, hidx }) => ({
-            triggers: 'phase-end',
-            isAddTask: true,
-            exec: () => cmds.switchTo(hidx),
-        })),
+        .handle((_, { cmds, hidx }) => (cmds.switchTo(hidx), { triggers: 'phase-end' })),
 
     303228: () => new StatusBuilder('机关铸成之链（生效中）').heroStatus().useCnt(0)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon(STATUS_ICON.Special).from(332028)
         .description('【所附属角色每次受到伤害或治疗后：】累积1点「备战度」（最多累积2点）。；【我方打出原本费用不多于「备战度」的「武器」或「圣遗物」时:】移除此状态，以免费打出该牌。')
         .handle((status, event) => {
             const { hcard, trigger, isMinusDiceWeapon, isMinusDiceRelic } = event;
-            const isMinus = (isMinusDiceWeapon || isMinusDiceRelic) && status.useCnt >= (hcard?.cost ?? 3);
+            const isMinus = (isMinusDiceWeapon || isMinusDiceRelic) && hcard && status.useCnt >= hcard.rawDiceCost;
             const triggers: Trigger[] = [];
             if (status.useCnt < 2) triggers.push('getdmg', 'heal');
             if (isMinus) triggers.push('card');
@@ -2993,7 +2986,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon(STATUS_ICON.Special).from(332036)
         .description('【本回合中，每当对方获得2个元素骰时：】你获得1个[万能元素骰]。（此效果提供的元素骰除外）')
         .handle((status, event) => {
-            const { source = -1, cmds } = event;
+            const { source, cmds } = event;
             if (status.useCnt == 1) cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
             return {
                 triggers: isCdt(source != status.id, 'getdice-oppo'),
@@ -3018,7 +3011,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff).from(332042)
         .description('【本回合我方角色下次消耗「夜魂值」后：】该角色获得1点「夜魂值」。')
         .handle((status, event) => {
-            const { sourceHidx = -1, cmds } = event;
+            const { sourceHidx, cmds } = event;
             if (sourceHidx == -1 || status.roundCnt <= 0) return;
             return {
                 triggers: 'consumeNightSoul',
@@ -3053,13 +3046,13 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(332048)
         .description('【我方其他角色[准备技能]时：】所选角色下次「元素战技」少花费1个元素骰。（至多触发2次，不可叠加）')
         .handle((status, event) => {
-            const { heros, hidx = -1, sourceHidx = -1, cmds } = event;
-            if (hidx == sourceHidx || hasObjById(heros[hidx]?.heroStatus, 303242)) return;
+            const { hero, hidx, sourceHidx, cmds } = event;
+            if (hidx == sourceHidx || hero.heroStatus.has(303242)) return;
             cmds.getStatus(303242, { hidxs: hidx });
-            return { triggers: 'ready-skill', isAddTask: true, exec: () => status.minusUseCnt() }
+            return { triggers: 'ready-skill', exec: () => status.minusUseCnt() }
         }),
 
-    303242: () => new StatusBuilder('健身的成果（生效中）').heroStatus().useCnt(1)
+    303242: () => new StatusBuilder('健身的成果（生效中）').heroStatus().useCnt(1).maxCnt(2)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(303241)
         .description('该角色下次元素战技少花费1个元素骰。（不可叠加）')
         .handle((status, event) => ({
@@ -3075,7 +3068,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             const { hcard, cmds } = event;
             if (!hcard?.hasSubtype(CARD_SUBTYPE.Vehicle)) return;
             cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
-            return { triggers: 'card', isAddTask: true, exec: () => status.dispose() }
+            return { triggers: 'card', exec: () => status.dispose() }
         }),
 
     303244: () => new StatusBuilder('收获时间（生效中）').combatStatus().useCnt(1).maxCnt(2)
@@ -3205,7 +3198,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('名称不存在于初始牌组中牌加入我方手牌时，所附属角色治疗自身1点。；[useCnt]')
         .handle((status, event) => {
             const { hero, playerInfo: { initCardIds }, hidx, hcard, cmds } = event;
-            if (!hcard || initCardIds.includes(hcard?.id) || !hero.isHurted) return;
+            if (!hcard || initCardIds.includes(hcard?.id) || !hero.isHurt) return;
             cmds.heal(1, { hidxs: hidx });
             return { triggers: 'getcard', exec: () => status.minusUseCnt() }
         }),
@@ -3236,8 +3229,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(333027)
         .description('下次切换角色少花费1个[无色元素骰]。')
         .handle((status, event) => {
-            const { switchHeroDiceCnt = 0 } = event;
-            if (switchHeroDiceCnt == 0) return;
+            if (event.switchHeroDiceCnt == 0) return;
             return { minusDiceHero: 1, triggers: 'minus-switch', exec: () => status.minusUseCnt() }
         }),
 

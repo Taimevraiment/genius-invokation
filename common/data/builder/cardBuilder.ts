@@ -30,7 +30,7 @@ export interface CardBuilderHandleRes extends Omit<CardHandleRes, 'triggers' | '
     triggers?: Trigger | Trigger[],
     element?: DiceCostType,
     hidxs?: number | number[],
-    exec?: () => boolean | void,
+    exec?: () => any,
 }
 
 export class GICard {
@@ -184,7 +184,7 @@ export class GICard {
                     ...res,
                     status: [...ressts, 303300],
                     canSelectHero: res.canSelectHero != undefined ? res.canSelectHero :
-                        cmds?.hasCmds('heal') ? heros?.map(h => h.isHurted) :
+                        cmds?.hasCmds('heal') ? heros?.map(h => h.isHurt) :
                             cmds.hasCmds('revive') ? heros?.map(h => h.hp <= 0 && !combatStatus.has(303307)) :
                                 res.canSelectHero,
                     notPreview: true,
@@ -281,7 +281,7 @@ export class GICard {
                 triggers: isCdt(triggers, convertToArray(triggers) as Trigger[]),
                 element: isCdt(element == DICE_COST_TYPE.Omni, ELEMENT_TYPE.Physical, element as ElementType),
                 hidxs: isCdt(builderRes.hidxs, convertToArray(builderRes.hidxs) as number[]),
-                exec: () => !!builderRes.exec?.(),
+                exec: () => builderRes.exec?.() === true,
             }
             return res;
         }
@@ -294,6 +294,9 @@ export class GICard {
     }
     get costChange() {
         return this.costChanges.reduce((a, b) => a + b);
+    }
+    get rawDiceCost(): number {
+        return this.cost + this.anydice;
     }
     setEntityId(entityId: number): Card {
         this.entityId = entityId;

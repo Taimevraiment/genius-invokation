@@ -83,6 +83,18 @@ export class GISupport {
             return res;
         };
     }
+    addCnt(cnt: number = 1) {
+        this.cnt += cnt;
+        return this.cnt;
+    }
+    minusCnt(cnt: number = 1) {
+        this.cnt -= cnt;
+        return this.cnt;
+    }
+    setCnt(cnt: number) {
+        this.cnt = cnt;
+        return this.cnt;
+    }
     setEntityId(id: number): Support {
         this.entityId = id;
         return this;

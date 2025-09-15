@@ -218,6 +218,10 @@ export class GIStatus {
         this.useCnt = Math.max(0, this.useCnt - n);
         return this.useCnt;
     }
+    setUseCnt(n: number = 0): number {
+        this.useCnt = n;
+        return this.useCnt;
+    }
     minusPerCnt(n: number = 1): number {
         this.perCnt -= n;
         return this.perCnt;

@@ -23,7 +23,6 @@ export interface SkillHandleRes {
     cmds: CmdsGenerator,
     minusDiceSkill?: MinusDiceSkill,
     isNotAddTask?: boolean,
-    summonTrigger?: Trigger[],
     isForbidden?: boolean,
     energy?: number,
     restDmg?: number,
@@ -35,7 +34,7 @@ export interface SkillHandleRes {
     exec?: () => void,
 }
 
-type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTrigger' | 'triggers'> & {
+type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'triggers'> & {
     hidxs?: number[],
     status?: (number | [number, ...any])[] | number,
     statusOppo?: (number | [number, ...any])[] | number,
@@ -52,7 +51,6 @@ type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'summonTrigger' | 'tr
     isAttach?: boolean,
     isAttachOppo?: boolean,
     cmds?: CmdsGenerator,
-    summonTrigger?: Trigger | Trigger[],
     triggers?: Trigger | Trigger[],
 };
 
@@ -142,7 +140,6 @@ export class GISkill {
                 ...builderRes,
                 cmds,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
-                summonTrigger: isCdt(builderRes.summonTrigger, convertToArray(builderRes.summonTrigger) as Trigger[]),
             }
             if (reset) {
                 skill.useCntPerRound = 0;
@@ -216,6 +213,9 @@ export class GISkill {
     }
     get curCost() {
         return Math.max(0, this.cost[0].cnt - this.costChange[0]) + Math.max(0, this.cost[1].cnt - this.costChange[1])
+    }
+    get rawDiceCost() {
+        return this.cost[0].cnt + this.cost[1].cnt;
     }
     get isReadySkill() {
         return this.cost[2].cnt == -2;
