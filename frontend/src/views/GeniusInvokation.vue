@@ -224,7 +224,8 @@
         client.isShowSwitchHero >= 2 ||
         client.willHp.some(v => v != undefined) ||
         client.changedSummons.some(s => s.some(s => s)) ||
-        client.changedHeros.some(h => h.some(h => h)))">
+        client.changedHeros.some(h => h.some(h => h))) ||
+      client.energyCnt.some(v => v.some(v => v))">
     </div>
     <div class="debug-mask" v-if="isOpenMask" :style="{ opacity: maskOpacity }"></div>
 

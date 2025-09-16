@@ -2427,7 +2427,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。；[roundCnt]')
         .description('本回合中，所附属角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。', 'v5.8.0')
         .handle((_, event) => {
-            const { hidx = -1, sourceStatus, sourceHidx } = event;
+            const { hidx, sourceStatus, sourceHidx, trigger } = event;
+            if (trigger == 'pre-switch') return { triggers: 'pre-switch', isInvalid: true }
             if (hidx != sourceHidx || !sourceStatus?.hasType(STATUS_TYPE.NonAction)) return;
             return { triggers: 'pre-get-status', isInvalid: true }
         }),
@@ -2631,6 +2632,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 triggers: ['enter', 'card'],
                 damage: 3,
                 element: DAMAGE_TYPE.Physical,
+                notPreview: true,
                 exec: () => status.dispose(),
             }
         }),
@@ -2766,12 +2768,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(331502)
         .description('【我方下次执行「切换角色」行动时：】少花费1个元素骰。')
         .handle((status, event) => {
-            const { switchHeroDiceCnt = 0 } = event;
-            if (switchHeroDiceCnt == 0) return;
+            if (event.switchHeroDiceCnt == 0) return;
             return {
                 minusDiceHero: 1,
                 triggers: 'minus-switch',
-                exec: () => status.minusUseCnt()
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -2781,7 +2782,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => ({
             triggers: 'dmg-Swirl',
             addDmgCdt: 1,
-            exec: () => { event.isSwirlExec && status.minusUseCnt() },
+            exec: () => event.isSwirlExec && status.minusUseCnt(),
         })),
 
     303136: () => new StatusBuilder('元素共鸣：迅捷之风（生效中）').combatStatus().icon(STATUS_ICON.Buff)
@@ -2792,7 +2793,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             return {
                 isQuickAction: true,
                 triggers: 'minus-switch-from',
-                exec: () => status.minusUseCnt()
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -2832,7 +2833,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event, ver) => {
             if (ver.lt('v4.1.0') && !ver.isOffline) return continuousActionHandle(status, event);
             event.cmds.switchAfter();
-            return { triggers: 'skill', exec: () => status.dispose() }
+            return { triggers: 'after-skill', exec: () => status.dispose() }
         }),
 
     303182: () => new StatusBuilder('岩与契约（生效中）').combatStatus().useCnt(1)
@@ -2876,7 +2877,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303207: () => new StatusBuilder('鹤归之时（生效中）').combatStatus().useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332007)
         .description('【我方下一次使用技能后：】将下一个我方后台角色切换到场上。')
-        .handle((status, { cmds }) => (cmds.switchAfter(), { triggers: 'skill', exec: () => status.minusUseCnt() })),
+        .handle((status, { cmds }) => (cmds.switchAfter(), { triggers: 'after-skill', exec: () => status.minusUseCnt() })),
 
     303216: () => card332016sts(ELEMENT_TYPE.Cryo),
 
@@ -3046,8 +3047,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(332048)
         .description('【我方其他角色[准备技能]时：】所选角色下次「元素战技」少花费1个元素骰。（至多触发2次，不可叠加）')
         .handle((status, event) => {
-            const { hero, hidx, sourceHidx, cmds } = event;
-            if (hidx == sourceHidx || hero.heroStatus.has(303242)) return;
+            const { hidx, sourceHidx, cmds } = event;
+            if (hidx == sourceHidx) return;
             cmds.getStatus(303242, { hidxs: hidx });
             return { triggers: 'ready-skill', exec: () => status.minusUseCnt() }
         }),

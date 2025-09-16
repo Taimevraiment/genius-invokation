@@ -177,7 +177,7 @@ export class GISkill {
                 if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
                 if (skill.damage || addDmgCdt) cmds.unshift.attack();
             }
-            if (!cmds.hasCmds('attack', 'heal', 'addMaxHp', 'revive') && !skill.isPassive) cmds.unshift.attack();
+            if (!cmds.hasCmds('attack') && !skill.isPassive) cmds.unshift.attack();
             cmds.unshift
                 .getSummon(summonPre)
                 .getStatus(statusOppoPre, { hidxs, isOppo: true })

@@ -200,7 +200,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | 'useReadySkill' | 'status-destroy' | 'status-destroy-other' | 'summon-destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
-    `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice}switch${TrgOppo}` | 'hcard-calc' | `${TrgPre}get-status` |
+    `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' | `${TrgPre}get-status` |
     'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` | 'slot-destroy' |
     'getNightSoul' | 'ready-skill' | 'reset' | '';
 

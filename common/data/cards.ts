@@ -1224,8 +1224,8 @@ const allCards: Record<number, () => CardBuilder> = {
     313007: () => new CardBuilder(465).name('浪船').since('v5.5.0').vehicle().costSame(5).useCnt(2)
         .description('【入场时：】为我方附属角色提供2点[护盾]。；【附属角色切换至后台时：】此牌[可用次数]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/4687e93bcf167198eb10acc1b3008d0c_5520302002949225658.png')
-        .handle((card, { cmds, selectHeros }) => (
-            cmds.getStatus(301304, { hidxs: selectHeros }), {
+        .handle((card, { cmds }) => (
+            cmds.getStatus(301304), {
                 triggers: 'switch-from',
                 isAddTask: true,
                 exec: () => card.addUseCnt(),
@@ -1590,7 +1590,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色2点。；目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换，持续2个回合。')
         .description('本回合中，目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换。', 'v5.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/24/258999284/76e84615db9526436d399c79aaa9d47a_2755116418615718064.png')
-        .handle((_, { cmds, selectHeros: hidxs }, ver) => (ver.gte('v5.8.0') && cmds.heal(2, { hidxs }), { status: 300005 })),
+        .handle((_, { cmds }, ver) => (ver.gte('v5.8.0') && cmds.heal(2), { status: 300005 })),
 
     330010: () => new CardBuilder(451).name('归火圣夜巡礼').since('v5.3.0').legend().costSame(0)
         .description('在双方场上生成【crd300006】，然后我方场上的【crd300006】的「斗志」+1。（【crd300006】会将各自阵营对对方造成的伤害记录为「斗志」，每回合行动阶段开始时「斗志」较高的一方会清空「斗志」，使当前出战角色在本回合中造成的伤害+1。）')
@@ -1703,7 +1703,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 return {
                     status: 303172,
                     exec: () => {
-                        combatStatus.forEach(ost => (ost.id == 116 || ost.id == 117) && ost.addUseCnt(true));
+                        combatStatus.get(116)?.addUseCnt(true);
+                        combatStatus.get(117)?.addUseCnt(true);
                         summons.get(115)?.addUseCnt(true);
                     }
                 }
@@ -1711,7 +1712,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (combatStatus.has(116) || summons.has(112082)) cmds.attack(1, DAMAGE_TYPE.Hydro, { isOrder: true });
             if (combatStatus.has(117)) cmds.attack(1, DAMAGE_TYPE.Electro, { isOrder: true });
             if (summons.has(115)) cmds.attack(1, DAMAGE_TYPE.Pyro, { isOrder: true });
-            return { isValid: cmds.length > 0, notPreview: true }
+            return { isValid: cmds.notEmpty, notPreview: true }
         }),
 
     331801: () => new CardBuilder(237).name('风与自由').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costSame(0).costSame(1, 'v4.3.0')
@@ -1760,7 +1761,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     const isOppo = chp > 0;
                     const cnt = Math.abs(chp);
                     if (isOppo) cmds.heal(cnt, { hidxs: i, notPreHeal: true });
-                    else cmds.attack(cnt, DAMAGE_TYPE.Pierce, { hidxs: i, isOppo: false });
+                    else cmds.attack(cnt, DAMAGE_TYPE.Pierce, { hidxs: i, isOppo });
                 }
             }
             cmds.heal(1, { hidxs, isOrder: true });
@@ -1801,6 +1802,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return {
                 isValid: (ver.lt('v4.0.0') || !combatStatus.has(303205)) && heros.hasDeadThisTurn,
                 status: isCdt(ver.gte('v4.0.0'), 303205),
+                notPreview: true,
             }
         }),
 
@@ -1828,11 +1830,16 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/567c17051137fdd9e5c981ea584df298_4305321690584111415.png')
         .handle((_, event) => {
             const { heros, hero, cmds } = event;
-            for (const hidx of heros.getBackHidxs(Math.min(2, hero.maxEnergy - hero.energy))) {
+            let getEnergy = 0;
+            for (const hidx of heros.getBackHidxs()) {
+                const h = heros[hidx];
+                if (getEnergy >= 2 || getEnergy + hero.energy == hero.maxEnergy) break;
+                if (h.energy == 0) continue;
                 cmds.getEnergy(-1, { hidxs: hidx });
+                ++getEnergy;
             }
-            if (cmds.length > 0) cmds.getEnergy(cmds.length, { hidxs: hero.hidx });
-            return { isValid: !hero.isFullEnergy && cmds.length > 0 }
+            if (cmds.notEmpty) cmds.getEnergy(cmds.length, { hidxs: hero.hidx });
+            return { isValid: !hero.isFullEnergy && cmds.notEmpty }
         }),
 
     332010: () => new CardBuilder(250).name('诸武精通').offline('v2').event().costSame(0).canSelectHero(2)
@@ -1840,7 +1847,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('将一个装备在我方角色的「武器」装备牌，转移给另一个武器类型相同的我方角色。', 'v4.1.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/05625ae4eed490d0958191d8022174cd_5288127036517503589.png')
         .handle((_, event, ver) => {
-            const { heros, selectHeros, execmds } = event;
+            const { heros, selectHeros, cmds } = event;
             const selectCnt = selectHeros.length;
             let canSelectHero: boolean[] = heros.map(() => false);
             if (selectCnt == 0) {
@@ -1858,7 +1865,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     if (fromWeapon) {
                         fromHero.weaponSlot = null;
                         if (ver.gte('v4.1.0') || ver.isOffline) fromWeapon.reset(fromWeapon);
-                        execmds.equip(toHeroIdx, fromWeapon);
+                        cmds.equip(toHeroIdx, fromWeapon);
                     }
                 }
             }
@@ -1869,7 +1876,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('将一个装备在我方角色的「圣遗物」装备牌，转移给另一个我方角色。', 'v4.1.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/a67aefe7f7473b2bc9f602917bad9c5f_6329604065139808609.png')
         .handle((_, event, ver) => {
-            const { heros, selectHeros, execmds } = event;
+            const { heros, selectHeros, cmds } = event;
             const selectCnt = selectHeros.length;
             return {
                 canSelectHero: selectCnt == 0 ? heros.map(h => h.relicSlot != null) : heros.map(h => h.hp > 0),
@@ -1880,7 +1887,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     if (fromRelic) {
                         fromHero.relicSlot = null;
                         if (ver.gte('v4.1.0')) fromRelic.reset(fromRelic);
-                        execmds.equip(toHeroIdx, fromRelic);
+                        cmds.equip(toHeroIdx, fromRelic);
                     }
                 }
             }
@@ -1962,9 +1969,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('牌数小于4的牌手抓牌，直到手牌数各为4张。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/31/183046623/d5a778eb85b98892156d269044c54147_5022722922597227063.png')
         .handle((_, event) => {
-            const { cmds } = event;
+            const { cmds, hcardsCnt, ehcardsCnt } = event;
             cmds.getCard(4, { until: true }).getCard(4, { isOppo: true, until: true });
-            return { isValid: cmds.length > 0 }
+            return { isValid: hcardsCnt < 5 || ehcardsCnt < 4 }
         }),
 
     332021: () => new CardBuilder(261).name('大梦的曲调').since('v3.8.0').event().costSame(0)
@@ -2037,7 +2044,6 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/27/258999284/ce12f855ad452ad6af08c0a4068ec8fb_3736050498099832800.png')
         .handle((_, event) => ({
             status: 303229,
-            isAddTask: true,
             exec: () => {
                 const { supports, selectSupport, cmds } = event;
                 cmds.getCard(2, { subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally, CARD_SUBTYPE.Item] });
@@ -2098,7 +2104,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (canSelectPlace) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Place });
             if (canSelectItem) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Item });
             if (canSelectFood) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Food });
-            return { isValid: cmds.length > 0 }
+            return { isValid: cmds.notEmpty }
         }),
 
     332041: () => new CardBuilder(442).name('强劲冲浪拍档！').since('v5.2.0').event().costSame(0)
@@ -2108,6 +2114,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { summons, esummons, cmds, randomInt } = event;
             return {
                 isValid: summons.length + esummons.length >= 2,
+                notPreview: true,
                 exec: () => {
                     if (summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
                     if (esummons.length) cmds.summonTrigger(randomInt(esummons.length - 1), { isOppo: true });
@@ -2146,7 +2153,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { cmds, source: isFromPile, trigger } = event;
             if (trigger == 'discard') {
-                if (isFromPile != 1) return;
+                if (isFromPile == 1) return;
                 cmds.getCard(1);
                 return { triggers: 'discard' }
             }

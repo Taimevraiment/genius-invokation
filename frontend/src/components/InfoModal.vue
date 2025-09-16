@@ -344,7 +344,7 @@ const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite ==
 const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
-    .replace(/〔(\*?)(\[.+?\])?(.+)〕/g, (_, nnc: string, f: string, ctt: string) => {
+    .replace(/〔(\*?)(\[.+?\])?(.+?)〕/g, (_, nnc: string, f: string, ctt: string) => {
       const notNeedColor = !!nnc;
       const flag = (f || '').slice(1, -1);
       if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';

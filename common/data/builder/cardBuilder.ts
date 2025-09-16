@@ -265,8 +265,8 @@ export class GICard {
             const { status, statusOppo, summon, summonOppo, support, supportOppo, hidxs, triggers, element } = builderRes;
             (cevent.trigger ? execmds : cmds).getStatus(status, { hidxs })
                 .getStatus(statusOppo, { hidxs, isOppo: true })
-                .getSummon(summon, { destroy: 1 })
-                .getSummon(summonOppo, { isOppo: true, destroy: 1 })
+                .getSummon(summon)
+                .getSummon(summonOppo, { isOppo: true })
                 .getSupport(support)
                 .getSupport(supportOppo, { isOppo: true });
             if (cevent.reset) {

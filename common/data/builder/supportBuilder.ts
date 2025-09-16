@@ -91,7 +91,7 @@ export class GISupport {
         this.cnt -= cnt;
         return this.cnt;
     }
-    setCnt(cnt: number) {
+    setCnt(cnt: number = 0) {
         this.cnt = cnt;
         return this.cnt;
     }
