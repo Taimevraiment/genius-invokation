@@ -97,7 +97,8 @@
       </div>
     </DefineTemplate>
     <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
-    <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }" v-if="isShow" @click.stop="">
+    <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }"
+      :style="{ pointerEvents: isNonPointerEvent ? 'none' : 'all' }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
         @click.stop="showRule((info as Card).UI.description, ...skillExplain.flat(2))">
         <div class="info-base">
@@ -229,7 +230,10 @@
                 {{ info?.UI.curVersion ?? version }}
               </span>
             </div>
-            <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
+            <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;display: inline-block;">召唤物</div>
+            <div class="info-card-type sub" v-for="(tag, tidx) in (info as Summon).tag" :key="tidx">
+              {{ SUMMON_TAG_NAME[tag] }}
+            </div>
           </div>
         </div>
         <div class="summon-desc" v-for="(desc, didx) in (info as Summon).UI.descriptions" :key="didx" v-html="desc">
@@ -257,7 +261,7 @@ import { computed, onMounted, ref, watchEffect } from 'vue';
 import {
   CARD_SUBTYPE_NAME, CARD_SUBTYPE_URL, CARD_TYPE_NAME, CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, DICE_COLOR, ELEMENT_COLOR, ELEMENT_ICON,
   ELEMENT_NAME, ELEMENT_URL, ElementColorKey, GUYU_PREIFIX, HERO_TAG_NAME, HERO_TAG_URL, RULE_EXPLAIN, SKILL_TYPE_ABBR,
-  SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
+  SKILL_TYPE_NAME, STATUS_BG_COLOR_CODE, STATUS_BG_COLOR_KEY, STATUS_ICON, StatusBgColor, SUMMON_TAG_NAME, WEAPON_TYPE_NAME, WEAPON_TYPE_URL,
 } from '@@@/constant/UIconst';
 import {
   CARD_SUBTYPE, CardSubtype, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ElementCode, ElementType, INFO_TYPE,
@@ -283,6 +287,7 @@ const props = defineProps<{
   playerInfo?: GameInfo,
   isBot?: boolean,
   customVersion?: CustomVersionConfig,
+  isNonPointerEvent?: boolean,
 }>();
 
 const isMobile = computed<boolean>(() => props.isMobile);
@@ -297,6 +302,7 @@ const skidx = computed<number>(() => props.info.skidx ?? -1); // 技能序号
 const combatStatus = computed<Status[]>(() => props.info.combatStatus ?? []); // 出战状态
 const isBot = computed<boolean>(() => props.isBot); // 是否为bot截图
 const customVersion = computed<CustomVersionConfig | undefined>(() => props.customVersion); // 是否为版本配置界面
+const isNonPointerEvent = computed<boolean>(() => props.isNonPointerEvent);
 const isShowVersion = computed<boolean>(() => isBot.value || !!customVersion.value);
 const skills = ref<Skill[]>([]); // 展示技能
 const isShowSkill = ref<boolean[]>([]); // 是否展示技能
@@ -344,6 +350,7 @@ const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite ==
 const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
   const { isExplain, type = '', obj } = options;
   let res = desc.slice()
+    .replace(/\*入场时/, '入场时')
     .replace(/〔(\*?)(\[.+?\])?(.+?)〕/g, (_, nnc: string, f: string, ctt: string) => {
       const notNeedColor = !!nnc;
       const flag = (f || '').slice(1, -1);
@@ -369,7 +376,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       const iconUrl = subtype != undefined ? CARD_SUBTYPE_URL[subtype] :
         weapon != undefined ? WEAPON_TYPE_URL[weapon] :
           tag != undefined && !!HERO_TAG_URL[tag] ? HERO_TAG_URL[tag] : '';
-      if (iconUrl != '') {
+      if (iconUrl != '' && iconUrl != undefined) {
         icon = `<img style='width:18px;transform:translateY(20%);' src='${iconUrl}'/>`;
       }
       return `<span style='color:white;'>${prefix}${icon}${word}${suffix}</span>`;
@@ -566,7 +573,7 @@ const getEquipmentIcon = (subtype: CardSubtype) => {
 watchEffect(() => {
   const wrapPlayingDescription = <T extends { UI: { descriptions: string[], description: string, explains: string[] } }>(obj: T) => {
     const rawDesc = obj.UI.description.split(/(?<!\\)；/);
-    const onceDesc = obj.UI.descriptions.findIndex(v => /入场时(?:：|，)|才能打出/.test(v));
+    const onceDesc = rawDesc.findIndex(v => /(?<!\*)入场时(?:：|，)|才能打出/.test(v));
     if (onceDesc > -1) {
       obj.UI.descriptions.splice(onceDesc, 1);
       obj.UI.explains = obj.UI.explains.filter((v, vi) => !rawDesc[onceDesc]?.includes(v) || (vi != onceDesc && rawDesc[vi]?.includes(v)));

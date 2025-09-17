@@ -1140,7 +1140,7 @@ export default class GeniusInvokationRoom {
                 const supportres = support.handle(support, { ...handleEvent, trigger: 'phase-dice' });
                 if (this._hasNotTriggered(supportres.triggers, 'phase-dice') || diceLen == 0) continue;
                 let { element = DICE_COST_TYPE.Omni, cnt = 0, addRollCnt = 0 } = supportres;
-                if (element == -2) element = player.heros.getFront()?.element as DiceCostType;
+                if (element == 'front') element = player.heros.getFront()?.element as DiceCostType;
                 if (element == undefined) {
                     console.info('ERROR@rollDice: element is undefined');
                     break;
@@ -1403,9 +1403,13 @@ export default class GeniusInvokationRoom {
                 const hi = (player.hidx + i) % heros.length;
                 const trgs = this.preview.triggers[pidx][hi];
                 const afterTriggers = [...trgs].map(t => t.includes('skill') ? 'after-' + t as Trigger : t);
-                this._emitEvent(pidx, afterTriggers, { types: STATUS_TYPE.Attack, hidxs: +hi, skill, source: atkHero.id, isAfterSkill: true });
+                this._detectHero(pidx, afterTriggers, { types: STATUS_TYPE.Attack, hidxs: +hi, skill, source: atkHero.id, isAfterSkill: true });
                 await this._execTask();
             }
+            this._detectSummon(pidx, this.preview.triggers[pidx][player.hidx], { skill, source: atkHero.id, isAfterSkill: true });
+            await this._execTask();
+            this._detectSupport(pidx, this.preview.triggers[pidx][player.hidx], { skill, source: atkHero.id, isAfterSkill: true });
+            await this._execTask();
             this._emitEvent(pidx ^ 1, 'after-skill-oppo', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], skill });
             await this._execTask();
         }
@@ -2112,11 +2116,9 @@ export default class GeniusInvokationRoom {
      * @param options.getcard 抓到牌时触发效果(而非使用牌)的牌
      * @param options.pickCard 是否为挑选后打出
      */
-    private async _useCard(pidx: number, cardIdx: number, diceSelect: boolean[],
-        options: {
-            socket?: Socket, selectHeros?: number[], selectSummon?: number, selectSupport?: number,
-            getCard?: Card, pickCard?: Card,
-        } = {}) {
+    private async _useCard(pidx: number, cardIdx: number, diceSelect: boolean[], options: {
+        socket?: Socket, selectHeros?: number[], selectSummon?: number, selectSupport?: number, getCard?: Card, pickCard?: Card,
+    } = {}) {
         const { socket, selectHeros = [], selectSummon = -1, selectSupport = -1, getCard, pickCard } = options;
         const player = this.players[pidx];
         const currCard = getCard ?? pickCard ?? player.handCards[cardIdx];
@@ -2180,8 +2182,8 @@ export default class GeniusInvokationRoom {
             this._startTimer();
         } else {
             if (currCard.type != CARD_TYPE.Equipment) cardres.exec?.();
+            if (!getCard) await this.emit(`${pickCard ? 'pickCard' : 'useCard'}-${currCard.name}`, pidx, { actionInfo: { card: currCard } });
             if (!getCard && !pickCard) {
-                await this.emit(`useCard-${currCard.name}`, pidx, { actionInfo: isCdt(!getCard && !pickCard, { card: currCard }) });
                 let destroyedSupportCnt = oSupportCnt - player.supports.length;
                 if (cardres.support) {
                     if (player.supports.length == MAX_SUPPORT_COUNT) {
@@ -2205,15 +2207,16 @@ export default class GeniusInvokationRoom {
                 isImmediate: cardres.isImmediate,
                 actionInfo: isCdt(!getCard && !pickCard, { card: currCard }),
                 trigger: 'card',
+                isUnshift: true,
             });
             if (isAction) player.canAction = false;
-            await this._execTask();
+            await this._execTask(isCdt(pickCard, 'pickCard'));
             if (!getCard && !pickCard) {
                 this.preview.isQuickAction = !isAction;
                 this._doActionAfter(pidx);
             }
             this._startTimer();
-            await this._execTask();
+            await this._execTask(isCdt(pickCard, 'pickCard'));
             if (!getCard && !pickCard && !isUseSkill) {
                 await this._changeTurn(pidx, 'useCard');
             }
@@ -3164,40 +3167,51 @@ export default class GeniusInvokationRoom {
                 });
                 if (supportres.isLast && !isLast) lastSupport.push(support);
                 if (this._hasNotTriggered(supportres.triggers, trigger)) continue;
-                if (supportres.isLast && !isLast) continue;
-                if (isAfterSkill && !supportres.isAfterSkill && !trigger.includes('after')) continue;
+                if (supportres.isLast && !isLast) break;
+                if (!!isAfterSkill != (!!supportres.isAfterSkill || trigger.includes('after'))) break;
                 this.preview.isQuickAction ||= !!supportres.isQuickAction;
                 switchHeroDiceCnt = Math.max(0, switchHeroDiceCnt - (supportres.minusDiceHero ?? 0));
                 minusDiceCard += supportres.minusDiceCard ?? 0;
-                this.taskQueue.addTask(`_detectSupport-p${pidx}-${support.card.name}(${support.entityId}):${trigger}`, async () => {
+                const execute = () => {
                     const oCnt = support.cnt;
                     const oPct = support.perCnt;
-                    const supportexecres = supportres.exec?.() ?? {};
-                    const sptIdx = supports.findIndex(s => s.entityId == support.entityId);
-                    if (supportres.isExchange && eSupports.length < MAX_SUPPORT_COUNT) {
-                        const taskName = `doSupport-exchange:${support.card.name}(${support.entityId})`;
-                        this.taskQueue.addTask(taskName, () => {
-                            supports.splice(sptIdx, 1);
-                            eSupports.push(support);
-                            if (this.taskQueue.isTaskEmpty()) this.emit(taskName, pidx, { notPreview: true });
-                        }, { isUnshift: true });
-                    }
-                    const supportSelect = [pidx, supports.findIndex(s => s.entityId == support.entityId), +!!supportexecres.isDestroy];
-                    this._doCmds(pidx, supportexecres?.cmds, {
-                        atkname: support.card.name,
-                        dmgSource: 'support',
-                        source: support.card.id,
-                        supportSelect,
-                        trigger,
-                    });
+                    const supportexecres = supportres.exec?.();
                     this._writeLog(`[${name}](${pidx})[${support.card.name}]发动${oCnt != support.cnt ? ` ${oCnt}→${support.cnt}` : ''}`, supportres.notLog ? 'system' : 'log');
                     this._writeLog(`[${name}](${pidx})${trigger}:${support.card.name}(${support.entityId}).cnt:${oCnt}→${support.cnt}.perCnt:${oPct}→${support.perCnt}`, 'system');
-                    await this.emit(`doSupport-${support.card.name}(${support.entityId}):${trigger}`, pidx, { supportSelect });
-                    if (supportexecres.isDestroy) {
-                        assgin(supports, supports.filter(s => s.entityId != support.entityId));
-                        this._doSupportDestroy(pidx, 1);
-                    }
-                }, { delayAfter: 800 });
+                    return supportexecres ?? {};
+                }
+                const doSupportDestroy = () => {
+                    assgin(supports, supports.filter(s => s.entityId != support.entityId));
+                    this._doSupportDestroy(pidx, 1);
+                }
+                if (supportres.isNotAddTask) {
+                    const { cmds, isDestroy } = execute();
+                    this._doCmds(pidx, cmds, { source: support.card.id, trigger });
+                    if (isDestroy) doSupportDestroy();
+                } else {
+                    this.taskQueue.addTask(`_detectSupport-p${pidx}-${support.card.name}(${support.entityId}):${trigger}`, async () => {
+                        const { cmds, isDestroy } = execute();
+                        const sptIdx = supports.findIndex(s => s.entityId == support.entityId);
+                        if (supportres.isExchange && eSupports.length < MAX_SUPPORT_COUNT) {
+                            const taskName = `doSupport-exchange:${support.card.name}(${support.entityId})`;
+                            this.taskQueue.addTask(taskName, () => {
+                                supports.splice(sptIdx, 1);
+                                eSupports.push(support);
+                                if (this.taskQueue.isTaskEmpty()) this.emit(taskName, pidx, { notPreview: true });
+                            }, { isUnshift: true });
+                        }
+                        const supportSelect = [pidx, supports.findIndex(s => s.entityId == support.entityId), +!!isDestroy];
+                        this._doCmds(pidx, cmds, {
+                            atkname: support.card.name,
+                            dmgSource: 'support',
+                            source: support.card.id,
+                            supportSelect,
+                            trigger,
+                        });
+                        if (!cmds?.hasDamage) await this.emit(`doSupport-${support.card.name}(${support.entityId}):${trigger}`, pidx, { supportSelect });
+                        if (isDestroy) doSupportDestroy();
+                    }, { delayAfter: 800 });
+                }
                 if (supportres.isOrTrigger) break;
             }
         }
@@ -3256,6 +3270,7 @@ export default class GeniusInvokationRoom {
         } = options;
         cmds = Array.isArray(cmds) ? cmds : cmds?.value ?? [];
         if (cmds.length == 0) return;
+        if (isUnshift) cmds.reverse();
         const damageCmds = new CmdsGenerator();
         const doDamage = () => {
             if (damageCmds.isEmpty) return;
@@ -3294,7 +3309,7 @@ export default class GeniusInvokationRoom {
                         notPreHeal ||= !!isAttach;
                     } else if (cmd == 'attack') {
                         if (damageVO.atkHidx == -1) damageVO.atkHidx = skill && skill.type != SKILL_TYPE.Vehicle ? copponent.heros.frontHidx : -1;
-                        let cAtkedIdxs = ohidxs ?? (element == DAMAGE_TYPE.Pierce ? cplayer.heros.getBackHidxs() : [cplayer.heros.frontHidx]);
+                        let cAtkedIdxs = ohidxs ?? (element == DAMAGE_TYPE.Pierce && isOppo ? cplayer.heros.getBackHidxs() : [cplayer.heros.frontHidx]);
                         if (cnt >= 0 && isOppo) {
                             if (dmgSource == 'skill' && this.preview.tarHidx == -1) this.preview.tarHidx = cAtkedIdxs[0];
                             if (damageVO.tarHidx == -1) damageVO.tarHidx = cAtkedIdxs[0];
@@ -3510,8 +3525,9 @@ export default class GeniusInvokationRoom {
                                     await this._useCard(cpidx, -1, [], { getCard });
                                 });
                             }
+                            await this.delay(1500);
                         }
-                    }, { delayAfter: 1500, isImmediate, isPriority, isUnshift });
+                    }, { isImmediate, isPriority, isUnshift });
                 }
                 if (cmd == 'addCard') {
                     const cardMap = {};
@@ -3730,7 +3746,7 @@ export default class GeniusInvokationRoom {
                         const fhidx = (heros.frontHidx + dhidx) % heros.length;
                         const fhero = heros[fhidx];
                         if (hst[fhidx].length) {
-                            if (fhero.hp <= 0 && !hst[fhidx].has(303300) && hst[fhidx].has(STATUS_TYPE.NonDefeat)) {
+                            if (fhero.hp <= 0) {
                                 hst[(fhidx + 1) % heros.length].push(...hst[fhidx]);
                             } else {
                                 this._updateStatus(cpidx, hst[fhidx], fhero.heroStatus, { hidx: fhidx });
@@ -3931,7 +3947,7 @@ export default class GeniusInvokationRoom {
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'summonTrigger') {
                 this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}`, () => {
-                    const cSummon = cplayer.summons[cnt] ?? cplayer.summons.find(s => s.id == cnt);
+                    const cSummon = cplayer.summons[cnt] ?? cplayer.summons.find(s => s.id == cnt || s.entityId == cnt);
                     if (!cSummon) return this._writeLog(`[${name}](${cpidx})没有找到召唤物${cnt}`, 'system');
                     callback?.();
                     this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon });
@@ -4431,9 +4447,10 @@ export default class GeniusInvokationRoom {
             let csummon: Summon = oriSummon[csmnIdx];
             let isGenerate = true;
             if (csmnIdx > -1) { // 重复生成召唤物
-                oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
+                oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, smn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
                 oriSummon[csmnIdx].damage = smn.damage;
+                oriSummon[csmnIdx].addition = smn.addition;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(csmnIdx == -1 ? this._genEntityId() : csmnIdx);
                 oriSummon.push(csummon);
@@ -4788,6 +4805,7 @@ export default class GeniusInvokationRoom {
                     hidx,
                     hcard: c,
                     minusDiceCard: currCostChange(),
+                    isMinusDiceTalent: c.userType == heros[hidx].id,
                 });
                 return { minusDiceCard, minusDiceCardEl }
             }

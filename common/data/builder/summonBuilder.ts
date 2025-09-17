@@ -396,6 +396,7 @@ export class SummonBuilder extends BaseBuilder {
                 pls: this._hasPlus,
                 ver: this._curVersion,
                 versionChanges: this.versionChanges,
+                tag: this._tag,
             }
         )
     }

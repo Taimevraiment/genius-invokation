@@ -13,7 +13,7 @@ import { parseCard } from "@@@/data/cards";
 import { parseHero } from "@@@/data/heros";
 import { newSummon } from "@@@/data/summons";
 import { checkDices, versionWrap } from "@@@/utils/gameUtil";
-import { clone, isCdt, parseShareCode } from "@@@/utils/utils";
+import { clone, delay, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, PickCardType, Player, Preview, RecordData, ServerData, Skill, Status, Summon
 } from "../../typing";
@@ -384,10 +384,11 @@ export default class GeniusInvokationClient {
         this._resetHeroSelect();
         this.isShowSwitchHero = 0;
         if (this.phase == PHASE.ACTION) {
-            if (this.handcardsSelect != -1 && this.handcardsSelect != cardIdx && this.isMobile) this.mouseleave(this.handcardsSelect, true);
-            this.handcardsSelect = this.handcardsSelect == cardIdx ? -1 : cardIdx;
+            const isCancel = this.handcardsSelect == cardIdx;
+            if (this.handcardsSelect != -1 && !isCancel && this.isMobile) this.mouseleave(this.handcardsSelect, true);
+            this.handcardsSelect = isCancel ? -1 : cardIdx;
             if (this.isMobile) {
-                if (this.handcardsSelect == cardIdx) this.mouseenter(cardIdx, true);
+                if (isCancel) this.mouseenter(cardIdx, true);
                 else this.mouseleave(cardIdx, true);
             }
         }
@@ -553,66 +554,68 @@ export default class GeniusInvokationClient {
         });
         pickModal.cards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
         const setSelect = (retry = 0) => {
-            try {
-                if (slotSelect.length > 0) {
-                    const [p, h, s, isDestroy] = slotSelect;
-                    this.slotSelect[+(p == this.playerIdx)][h][s] = true;
-                    setTimeout(() => this._resetSlotSelect(), 500);
-                    if (isDestroy) setTimeout(() => this.players[p].heros[h][SLOT_CODE_KEY[s]] = null, 800);
-                }
-                if (heroSelect.length > 0) {
-                    const [p, h] = heroSelect;
-                    this.heroSelect[+(p == this.playerIdx)][h] = 1;
-                    setTimeout(() => this._resetHeroSelect(), 500);
-                }
-                if (statusSelect.length > 0) {
-                    const [p, g, h, s, isDestroy] = statusSelect;
-                    this.statusSelect[+(p == this.playerIdx)][g][h][s] = true;
-                    setTimeout(() => this._resetStatusSelect(), 500);
-                    if (isDestroy) {
-                        const stsEid = g == STATUS_GROUP.combatStatus ?
-                            this.players[p].combatStatus[s]?.entityId :
-                            this.players[p].heros[h].heroStatus[s]?.entityId;
-                        setTimeout(() => {
-                            if ((g == STATUS_GROUP.combatStatus ?
+            setTimeout(async () => {
+                try {
+                    if (slotSelect.length > 0) {
+                        const [p, h, s, isDestroy] = slotSelect;
+                        this.slotSelect[+(p == this.playerIdx)][h][s] = true;
+                        setTimeout(() => this._resetSlotSelect(), 500);
+                        if (isDestroy) setTimeout(() => this.players[p].heros[h][SLOT_CODE_KEY[s]] = null, 800);
+                    }
+                    if (heroSelect.length > 0) {
+                        const [p, h] = heroSelect;
+                        this.heroSelect[+(p == this.playerIdx)][h] = 1;
+                        setTimeout(() => this._resetHeroSelect(), 500);
+                    }
+                    if (statusSelect.length > 0) {
+                        const [p, g, h, s, isDestroy] = statusSelect;
+                        this.statusSelect[+(p == this.playerIdx)][g][h][s] = true;
+                        setTimeout(() => this._resetStatusSelect(), 500);
+                        if (isDestroy) {
+                            const stsEid = g == STATUS_GROUP.combatStatus ?
                                 this.players[p].combatStatus[s]?.entityId :
-                                this.players[p].heros[h].heroStatus[s]?.entityId) != stsEid) return;
-                            if (g == STATUS_GROUP.combatStatus) this.players[p].combatStatus.splice(s, 1)
-                            else this.players[p].heros[h].heroStatus.splice(s, 1);
-                        }, 2250);
+                                this.players[p].heros[h].heroStatus[s]?.entityId;
+                            setTimeout(() => {
+                                if ((g == STATUS_GROUP.combatStatus ?
+                                    this.players[p].combatStatus[s]?.entityId :
+                                    this.players[p].heros[h].heroStatus[s]?.entityId) != stsEid) return;
+                                if (g == STATUS_GROUP.combatStatus) this.players[p].combatStatus.splice(s, 1)
+                                else this.players[p].heros[h].heroStatus.splice(s, 1);
+                            }, 2250);
+                        }
                     }
-                }
-                if (summonSelect.length > 0) {
-                    const [p, s, isDestroy] = summonSelect;
-                    this.summonSelect[+(p == this.playerIdx)][s] = true;
-                    const smnEid = this.players[p].summons[s]?.entityId;
-                    setTimeout(() => this._resetSummonSelect(), 500);
-                    if (isDestroy) {
-                        setTimeout(() => {
-                            if (this.players[p].summons[s]?.entityId != smnEid) return;
-                            this.players[p].summons.splice(s, 1);
-                        }, 2200);
+                    if (summonSelect.length > 0) {
+                        const [p, s, isDestroy] = summonSelect;
+                        this.summonSelect[+(p == this.playerIdx)][s] = true;
+                        const smnEid = this.players[p].summons[s]?.entityId;
+                        setTimeout(() => this._resetSummonSelect(), 500);
+                        if (isDestroy) {
+                            setTimeout(() => {
+                                if (this.players[p].summons[s]?.entityId != smnEid) return;
+                                this.players[p].summons.splice(s, 1);
+                            }, 2200);
+                        }
                     }
-                }
-                if (supportSelect.length > 0) {
-                    const [p, s, isDestroy] = supportSelect;
-                    this.supportSelect[+(p == this.playerIdx)][s] = true;
-                    const sptEid = this.players[p].supports[s].entityId;
-                    setTimeout(() => this._resetSupportSelect(), 500);
-                    if (isDestroy) {
-                        setTimeout(() => {
-                            if (this.players[p].supports[s]?.entityId != sptEid) return;
-                            this.players[p].supports.splice(s, 1);
-                        }, 800);
+                    if (supportSelect.length > 0) {
+                        const [p, s, isDestroy] = supportSelect;
+                        this.supportSelect[+(p == this.playerIdx)][s] = true;
+                        const sptEid = this.players[p].supports[s].entityId;
+                        setTimeout(() => this._resetSupportSelect(), 500);
+                        if (isDestroy) {
+                            setTimeout(() => {
+                                if (this.players[p].supports[s]?.entityId != sptEid) return;
+                                this.players[p].supports.splice(s, 1);
+                            }, 800);
+                        }
                     }
+                } catch (e) {
+                    this.initSelect(players);
+                    if (retry < 2) {
+                        await delay(500);
+                        setSelect(retry + 1);
+                    } else console.error(e);
                 }
-            } catch (e) {
-                this.initSelect(players);
-                if (retry < 2) {
-                    console.warn(e);
-                    setSelect(retry + 1);
-                } else console.error(e);
-            }
+            });
         }
         setSelect();
         const destroySts = (hasDmg: boolean = false) => {

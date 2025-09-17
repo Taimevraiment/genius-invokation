@@ -185,7 +185,8 @@
     </div>
 
     <InfoModal v-if="client.phase >= PHASE.CHANGE_CARD" :info="client.modalInfo" :isMobile="isMobile" isInGame
-      :round="client.round" :playerInfo="client.player.playerInfo" :customVersion="customVersion" style="z-index: 10" />
+      :round="client.round" :playerInfo="client.player.playerInfo" :customVersion="customVersion" style="z-index: 10"
+      :isNonPointerEvent="client.supportCanSelect.some(s => s.some(s => s))" />
 
     <h1 v-if="client.isWin != -1 && client.players[client.isWin % PLAYER_COUNT]?.name" class="win-banner"
       :class="{ 'mobile-win-banner': isMobile }">

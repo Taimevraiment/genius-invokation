@@ -13,7 +13,7 @@ export interface SupportHandleRes {
     minusDiceCard?: number,
     minusDiceHero?: number,
     minusDiceSkill?: MinusDiceSkill,
-    element?: DiceCostType | -2,
+    element?: DiceCostType | 'front',
     cnt?: number,
     addRollCnt?: number,
     isQuickAction?: boolean,
@@ -28,7 +28,6 @@ export interface SupportHandleRes {
 export interface SupportExecRes {
     cmds?: CmdsGenerator,
     isDestroy?: boolean,
-    summon?: (number | [number, ...any])[] | number,
 }
 
 export interface SupportBuilderHandleEvent extends SupportHandleEvent, Omit<EntityBuilderHandleEvent, 'cmds'> { }
@@ -61,7 +60,7 @@ export class GISupport {
         this.handle = (support, event) => {
             if (event.reset && perCnt > 0) {
                 support.perCnt = perCnt;
-                return { notLog: true, triggers: ['reset'] }
+                return { notLog: true, isNotAddTask: true, triggers: ['reset'] }
             }
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, support);
@@ -83,8 +82,8 @@ export class GISupport {
             return res;
         };
     }
-    addCnt(cnt: number = 1) {
-        this.cnt += cnt;
+    addCnt(cnt: number = 1, max: number = 1e3) {
+        this.cnt = Math.min(max, this.cnt + cnt);
         return this.cnt;
     }
     minusCnt(cnt: number = 1) {
@@ -94,6 +93,12 @@ export class GISupport {
     setCnt(cnt: number = 0) {
         this.cnt = cnt;
         return this.cnt;
+    }
+    minusPerCnt(cnt: number = 1) {
+        this.perCnt -= cnt;
+    }
+    setPerCnt(cnt: number = 0) {
+        this.perCnt = cnt;
     }
     setEntityId(id: number): Support {
         this.entityId = id;

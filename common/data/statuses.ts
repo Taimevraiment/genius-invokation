@@ -1084,11 +1084,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     114063: () => new StatusBuilder('鸣煌护持').heroStatus().icon(STATUS_ICON.AtkUp).useCnt(2).type(STATUS_TYPE.AddDamage)
         .description('所附属角色「元素战技」和「元素爆发」造成的伤害+1。；[useCnt]')
-        .handle(status => ({
+        .handle((status, event) => ({
             addDmgType2: 1,
             addDmgType3: 1,
             triggers: ['skilltype2', 'skilltype3'],
-            exec: () => status.minusUseCnt(),
+            exec: () => event.hasDmg && status.minusUseCnt(),
         })),
 
     114072: () => new StatusBuilder('诸愿百眼之轮').heroStatus().icon('ski,2').useCnt(0).maxCnt(3).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Accumulate)
@@ -2532,7 +2532,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     301108: () => new StatusBuilder('万世的浪涛').heroStatus().icon(STATUS_ICON.AtkUp).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(311108)
         .description('角色在本回合中，下次造成的伤害+2。')
-        .handle(status => ({ addDmg: 2, triggers: 'skill', exec: () => status.dispose() })),
+        .handle((status, event) => ({ addDmg: 2, triggers: 'skill', exec: () => event.hasDmg && status.dispose() })),
 
     301109: (name: string) => senlin2Status(name).from(311307),
 
@@ -2549,7 +2549,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     301112: () => new StatusBuilder('纯水流华（生效中）').heroStatus().icon(STATUS_ICON.AtkUp).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(311110)
         .description('所附属角色下次造成的伤害+1。')
-        .handle(status => ({ triggers: 'skill', addDmg: 1, exec: () => status.minusUseCnt() })),
+        .handle((status, event) => ({ triggers: 'skill', addDmg: 1, exec: () => event.hasDmg && status.minusUseCnt() })),
 
     301201: () => shieldHeroStatus('重嶂不移').from(312009),
 
@@ -2668,7 +2668,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     302204: () => new StatusBuilder('「清洁工作」（生效中）').combatStatus().icon(STATUS_ICON.AtkUp).useCnt(1).maxCnt(2)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).from(302203)
         .description('我方出战角色下次造成的伤害+1。；（可叠加，最多叠加到+2）')
-        .handle(status => ({ triggers: 'skill', addDmg: status.useCnt, exec: () => status.dispose() })),
+        .handle((status, event) => ({ triggers: 'skill', addDmg: status.useCnt, exec: () => event.hasDmg && status.dispose() })),
 
     302205: () => new StatusBuilder('沙与梦').heroStatus().useCnt(1)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(322022)
@@ -2753,14 +2753,14 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303112: () => new StatusBuilder('元素共鸣：粉碎之冰（生效中）').heroStatus().icon(STATUS_ICON.Buff)
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(331102)
         .description('本回合中，我方当前出战角色下一次造成的伤害+2。')
-        .handle(status => ({ addDmg: 2, triggers: 'skill', exec: () => status.dispose() })),
+        .handle((status, event) => ({ addDmg: 2, triggers: 'skill', exec: () => event.hasDmg && status.dispose() })),
 
     303132: () => new StatusBuilder('元素共鸣：热诚之火（生效中）').heroStatus().icon(STATUS_ICON.Buff)
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(331302)
         .description('本回合中，我方当前出战角色下一次引发[火元素相关反应]时，造成的伤害+3。')
         .handle((status, event) => ({
             addDmgCdt: 3,
-            triggers: isCdt(event.skill?.isHeroSkill, 'elReaction-Pyro'),
+            triggers: isCdt(event.skill?.isHeroSkill && event.hasDmg, 'elReaction-Pyro'),
             exec: () => status.dispose(),
         })),
 
@@ -2820,10 +2820,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303172: () => new StatusBuilder('元素共鸣：蔓生之草（生效中）').combatStatus().useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff).from(331702)
         .description('本回合中，我方下一次引发元素反应时，造成的伤害+2。')
-        .handle(status => ({
+        .handle((status, event) => ({
             addDmgCdt: 2,
             triggers: ['elReaction', 'other-elReaction'],
-            exec: () => status.minusUseCnt(),
+            exec: () => event.hasDmg && status.minusUseCnt(),
         })),
 
     303181: () => new StatusBuilder('风与自由（生效中）').combatStatus().roundCnt(1)
@@ -3100,7 +3100,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303302: () => new StatusBuilder('仙跳墙（生效中）').heroStatus().roundCnt(1)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(333002)
         .description('本回合中，目标角色下一次「元素爆发」造成的伤害+3。')
-        .handle(status => ({ addDmgType3: 3, triggers: 'skilltype3', exec: () => status.dispose() })),
+        .handle((status, event) => ({ addDmgType3: 3, triggers: 'skilltype3', exec: () => event.hasDmg && status.dispose() })),
 
     303303: () => new StatusBuilder('莲花酥（生效中）').heroStatus().useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign).from(333003)
@@ -3149,7 +3149,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303309: () => new StatusBuilder('唐杜尔烤鸡（生效中）').heroStatus().roundCnt(1)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(333011)
         .description('本回合中，所附属角色下一次「元素战技」造成的伤害+2。')
-        .handle(status => ({ addDmgType2: 2, triggers: 'skilltype2', exec: () => status.dispose() })),
+        .handle((status, event) => ({ addDmgType2: 2, triggers: 'skilltype2', exec: () => event.hasDmg && status.dispose() })),
 
     303310: () => new StatusBuilder('黄油蟹蟹（生效中）').heroStatus().useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign).from(333012)

@@ -1,7 +1,7 @@
 import { swapKeysAndValues } from "../utils/utils.js";
 import {
     CARD_SUBTYPE, CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE,
-    HERO_LOCAL, HERO_TAG, SKILL_TYPE, STATUS_TYPE, TypeConst, WEAPON_TYPE
+    HERO_LOCAL, HERO_TAG, SKILL_TYPE, STATUS_TYPE, SUMMON_TAG, TypeConst, WEAPON_TYPE
 } from "./enum.js";
 
 export const HANDCARDS_GAP_PC = 48; // 电脑端手牌间隔(px)
@@ -118,6 +118,10 @@ export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Action]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_CombatAction.png',
     [CARD_SUBTYPE.Legend]: 'https://patchwiki.biligame.com/images/ys/thumb/9/90/iwrhiaj9r18jopmj1vtj6zbimxw0z72.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E7%A7%98%E4%BC%A0.png',
     [CARD_SUBTYPE.ElementResonance]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_Sync.png',
+} as const;
+
+export const SUMMON_TAG_NAME = {
+    [SUMMON_TAG.Simulanka]: '希穆兰卡',
 } as const;
 
 export const SLOT_CODE = {

@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
-import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, VERSION, Version } from "../constant/enum.js";
+import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, PHASE, VERSION, Version } from "../constant/enum.js";
 import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
@@ -141,7 +141,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}id: ${player.id}\n`
         + `${prefix1}pidx: ${player.pidx}\n`
         + `${prefix1}hidx: ${player.hidx}\n`
-        + `${prefix1}phase: ${player.phase}\n`
+        + `${prefix1}phase: ${Object.keys(PHASE)[player.phase]}\n`
         + `${prefix1}isOffline: ${player.isOffline}\n`
         + `${prefix1}canAction: ${player.canAction}\n`
         + `${prefix1}isFallAtk: ${player.isFallAtk}\n`
@@ -221,6 +221,7 @@ export const summonToString = (smn: Summon, prefixSpace: number = 1) => {
         + `${prefix1}damage: ${smn.damage}\n`
         + `${prefix1}element: ${smn.element}\n`
         + `${prefix1}pdmg: ${smn.pdmg}\n`
+        + `${prefix1}tags: ${smn.tag}\n`
         + `${prefix1}shieldOrHeal: ${smn.shieldOrHeal}\n`
         + `${prefix1}isDestroy: ${smn.isDestroy}\n`
         + `${prefix1}isTalent: ${smn.isTalent}\n`
@@ -321,7 +322,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
     const { hidx = player.hidx ?? 0, minusDiceCard = 0, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0,
-        isMinusDiceCard = !!hcard && hcard.rawDiceCost > minusDiceCard, heros = player.heros,
+        isMinusDiceCard = !!hcard && hcard.rawDiceCost > minusDiceCard, heros = player.heros, isMinusDiceTalent = true,
     } = event;
     const hero = player.heros[hidx];
     return {
@@ -363,7 +364,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         isMinusDiceCard,
         minusDiceCard,
         isMinusDiceSkill: !!skill?.costChange[2].includes(entity.entityId ?? entity.id ?? -1),
-        isMinusDiceTalent: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == hero.id,
+        isMinusDiceTalent: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && isMinusDiceTalent,
         isMinusDiceWeapon: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Weapon),
         isMinusDiceRelic: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Relic),
         isMinusDiceVehicle: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Vehicle),

@@ -323,6 +323,9 @@ export class GICard {
     minusUseCnt(n: number = 1): void {
         this.useCnt = Math.max(0, this.useCnt - n);
     }
+    setUseCnt(n: number = 0) {
+        this.useCnt = n;
+    }
     addPerCnt(n: number = 1): void {
         this.perCnt += n;
     }
@@ -509,7 +512,13 @@ export class CardBuilder extends BaseCostBuilder {
         if (this._type == CARD_TYPE.Support) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {
-                return { support: card.id, ...handle?.(card, event, ver) }
+                return { support: card.id, notPreview: true, ...handle?.(card, event, ver) }
+            };
+        }
+        if (this._subtype.includes(CARD_SUBTYPE.Weapon) || this._subtype.includes(CARD_SUBTYPE.Relic)) {
+            const handle = this._handle;
+            this._handle = (card, event, ver) => {
+                return { notPreview: true, ...handle?.(card, event, ver) }
             };
         }
         if (this._tag.includes(CARD_TAG.NonDefeat)) this.addition(CARD_TAG.NonDefeat, 1);

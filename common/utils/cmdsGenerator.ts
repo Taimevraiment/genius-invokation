@@ -64,7 +64,7 @@ export default class CmdsGenerator {
     }
     getCard(cnt: number, options: {
         subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[],
-        card?: Card | (Card | number)[] | number, exclude?: number[], include?: number[],
+        card?: Card | (Card | number)[] | number, exclude?: number | number[], include?: number | number[],
         isOppo?: boolean, isFromPile?: boolean, until?: boolean, mode?: number,
     } = {}) {
         const { subtype, cardTag, card, exclude, include, isOppo, isFromPile, until, mode } = options;
@@ -74,7 +74,7 @@ export default class CmdsGenerator {
             subtype,
             cardTag,
             card,
-            hidxs: isCdt(subtype || cardTag, exclude, include),
+            hidxs: convertToArray(isCdt(subtype || cardTag, exclude, include)),
             isOppo,
             isAttach: isCdt(card || subtype || cardTag, isFromPile),
             mode,

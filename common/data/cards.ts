@@ -75,7 +75,7 @@ const barrierWeapon = (shareId: number, mark: string) => {
             return {
                 triggers: 'dmg',
                 addDmgCdt: 1,
-                exec: () => card.useCnt = 0,
+                exec: () => card.setUseCnt(),
             }
         });
 }
@@ -311,7 +311,7 @@ const allCards: Record<number, () => CardBuilder> = {
                         card.addUseCnt();
                         card.minusPerCnt();
                     } else if (trigger == 'skill') {
-                        card.useCnt = 0;
+                        card.setUseCnt();
                     }
                 }
             }
@@ -774,7 +774,7 @@ const allCards: Record<number, () => CardBuilder> = {
                         card.addUseCnt(Math.floor(-card.perCnt / 3));
                         card.perCnt %= 3;
                     } else if (trigger == 'dmg' && skill?.isHeroSkill) {
-                        card.useCnt = 0;
+                        card.setUseCnt();
                     }
                 }
             }
@@ -801,7 +801,7 @@ const allCards: Record<number, () => CardBuilder> = {
                         card.addUseCnt(Math.floor(-card.perCnt / 3));
                         card.perCnt %= 3;
                     } else if (trigger == 'dmg' && skill?.isHeroSkill) {
-                        card.useCnt = 0;
+                        card.setUseCnt();
                     }
                 }
             }
@@ -1342,7 +1342,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/19/258999284/ee6915d12a55c0a65c9bb6cc9e0d1885_4525633690549389172.png'),
 
     321025: () => new CardBuilder(450).name('「流泉之众」').since('v5.3.0').place().costSame(2)
-        .description('【我方「召唤物」入场时：】使其[可用次数]+1。；[可用次数]：3')
+        .description('【我方「召唤物」*入场时：】使其[可用次数]+1。；[可用次数]：3')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/15deff457845725502df383e62e7c440_8867444785716505365.png'),
 
     321026: () => new CardBuilder(458).name('「花羽会」').since('v5.4.0').place().costSame(0)
@@ -2459,7 +2459,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/a0b27dbfb223e2fe52b7362ad80c3d76_4257766629162615403.png')
         .handle((card, event) => {
             const { summons, switchHeroDiceCnt } = event;
-            if (card.perCnt <= 0 || !hasObjById(summons, 112011) || switchHeroDiceCnt == 0) return;
+            if (card.perCnt <= 0 || !summons.has(112011) || switchHeroDiceCnt == 0) return;
             return {
                 triggers: 'minus-switch',
                 minusDiceHero: 1,
@@ -2875,7 +2875,7 @@ const allCards: Record<number, () => CardBuilder> = {
                     if (trigger == 'switch') {
                         card.addUseCnt();
                         card.minusPerCnt();
-                    } else if (trigger == 'skilltype1') card.useCnt = 0;
+                    } else if (trigger == 'skilltype1') card.setUseCnt();
                 }
             }
         }),
@@ -3562,7 +3562,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { combatStatus, cmds } = event;
             cmds.attack(1, DAMAGE_TYPE.Pierce, { isOppo: false }).getCard(1);
-            return { isValid: !hasObjById(combatStatus, 301021), status: 301021 }
+            return { isValid: !combatStatus.has(301021), status: 301021 }
         }),
 
     301033: () => new CardBuilder().name('积木小人').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
