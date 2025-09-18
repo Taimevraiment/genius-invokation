@@ -133,11 +133,24 @@ const hero1505sts = (swirlEl: PureElementType) => {
 }
 
 const hero1513sts = (swirlEl: PureElementType) => {
-    return new StatusBuilder(`聚风真眼·${ELEMENT_NAME[swirlEl][0]}`).combatStatus().useCnt(1)
+    return new StatusBuilder(`聚风真眼·${ELEMENT_NAME[swirlEl][0]}`).heroStatus().useCnt(1)
         .type(STATUS_TYPE.Attack).icon('#')
         .description(`【所在阵营选择行动前：】对所附属角色造成1点[${ELEMENT_NAME[swirlEl]}伤害]。；[useCnt]`)
         .handle(status => ({
             damage: 1,
+            element: swirlEl,
+            isSelf: true,
+            triggers: 'action-start',
+            exec: () => status.minusUseCnt(),
+        }));
+}
+
+const hero1515sts = (swirlEl: PureElementType) => {
+    return new StatusBuilder(`镇静标记·${ELEMENT_NAME[swirlEl][0]}`).heroStatus().useCnt(1)
+        .type(STATUS_TYPE.Attack).icon('tmp/UI_Gcg_DeBuff_Ifa_S')
+        .description(`【所在阵营选择行动前：】对所附属角色造成2点[${ELEMENT_NAME[swirlEl]}伤害]。；[useCnt]`)
+        .handle(status => ({
+            damage: 2,
             element: swirlEl,
             isSelf: true,
             triggers: 'action-start',
@@ -278,8 +291,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    170: () => new StatusBuilder('敏捷切换').combatStatus().icon(STATUS_ICON.Special)
-        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+    170: (cnt: number = 1) => new StatusBuilder('敏捷切换').combatStatus().icon(STATUS_ICON.Special)
+        .useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
         .description('【我方下次执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。；[useCnt]')
         .handle((status, event) => {
             if (event.isQuickAction) return;
@@ -1210,6 +1223,23 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'skill', addDmgCdt: 2, isAddTask: false, exec: () => { cmds.isEmpty && status.minusUseCnt() } }
         }),
 
+    114151: nightSoul({ isAccumate: false }),
+
+    114152: () => new StatusBuilder('极限驱动').heroStatus().icon('tmp/UI_Gcg_Buff_Varesa_Q')
+        .useCnt(1).type(STATUS_TYPE.Usage)
+        .description('【〖hro〗[下落攻击]后：】[准备技能]：【rsk14155】。；[useCnt]')
+        .handle((status, event) => {
+            if (!event.isFallAtk) return;
+            return { triggers: 'skill', status: 114153, exec: () => status.minusUseCnt() }
+        }),
+
+    114153: () => readySkillStatus('闪烈降临·大火山崩落', 14155),
+
+    114154: () => new StatusBuilder('突驰烈进').heroStatus().icon('tmp/UI_Gcg_Buff_Varesa_E')
+        .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('我方下次行动前，将所附属角色切换为出战角色。')
+        .handle((status, { cmds, hidx }) => (cmds.switchTo(hidx), { triggers: 'action-start', exec: () => status.dispose() })),
+
     115031: (isTalent: boolean = false) => new StatusBuilder('风域').combatStatus().icon(STATUS_ICON.Special)
         .useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
         .description(`【我方执行「切换角色」行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次「普通攻击」少花费1个[无色元素骰]。' : ''}；[useCnt]`)
@@ -1459,6 +1489,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             cmds.attack(1, DAMAGE_TYPE.Anemo);
             return { triggers: 'end-phase', exec: () => status.minusUseCnt() }
         }),
+
+    115150: () => new StatusBuilder('镇静标记').descriptionOnly('【所在阵营选择行动前：】对所附属角色造成2点对应元素伤害，可用次数1。'),
+
+    115151: nightSoul(),
+
+    115153: () => hero1515sts(ELEMENT_TYPE.Cryo),
+
+    115154: () => hero1515sts(ELEMENT_TYPE.Hydro),
+
+    115155: () => hero1515sts(ELEMENT_TYPE.Pyro),
+
+    115156: () => hero1515sts(ELEMENT_TYPE.Electro),
 
     116011: () => new StatusBuilder('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
         .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；[useCnt]')
@@ -2388,6 +2430,13 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     216117: () => hero1611sts2(ELEMENT_TYPE.Electro),
 
+    222062: () => new StatusBuilder('元素生命·水').heroStatus().icon(STATUS_ICON.Special)
+        .roundCnt(2).type(STATUS_TYPE.ImmuneDamage, STATUS_TYPE.Usage)
+        .description('角色总是[附着水元素]，并且免疫[水元素伤害]。；[roundCnt]')
+        .handle(() => {
+
+        }),
+
     223052: () => new StatusBuilder('罔极盛怒（生效中）').heroStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('所附属角色下次造成的伤害+1。')
@@ -2709,16 +2758,17 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     302217: () => new StatusBuilder('卢蒂妮的心意').combatStatus().useCnt(2)
         .type(STATUS_TYPE.Attack).icon('#').from(302215)
         .description('【我方角色使用技能后：】受到2点治疗或2点[穿透伤害]。；[useCnt]')
-        .handle((status, event) => {
-            const { hidx, randomInt } = event;
-            const res = [{ heal: 2 }, { pdmg: 2, isSelf: true, hidxs: hidx }][randomInt!()];
-            return {
-                triggers: 'after-skill',
-                notPreview: true,
-                ...res,
-                exec: () => status.minusUseCnt(),
+        .handle((status, event) => ({
+            triggers: 'after-skill',
+            notPreview: true,
+            isAddTask: true,
+            exec: () => {
+                const { cmds, randomInt } = event;
+                if (randomInt()) cmds.heal(2);
+                else cmds.attack(2, DAMAGE_TYPE.Pierce, { isOppo: false });
+                status.minusUseCnt();
             }
-        }),
+        })),
 
     302219: () => new StatusBuilder('希洛娜的心意').combatStatus().useCnt(3)
         .type(STATUS_TYPE.Round).icon('#').from(302216)
@@ -2731,7 +2781,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 event.cmds.getCard(1, {
                     subtype: CARD_SUBTYPE.ElementResonance,
                     cardTag: CARD_TAG.LocalResonance,
-                    exclude: [331101, 331201, 331331, 331401, 331501, 331601, 331701, 332015, 332016],
+                    exclude: [331101, 331201, 331301, 331401, 331501, 331601, 331701, 332015, 332016],
                 });
             }
         })),

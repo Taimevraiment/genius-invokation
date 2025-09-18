@@ -1,5 +1,5 @@
 import { Card, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
@@ -423,6 +423,28 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     }),
+    // 冒险家协会
+    321031: () => new SupportBuilder().round(3).handle(support => ({
+        triggers: 'phase-end',
+        exec: cmds => (cmds.adventure(), { isDestroy: support.minusCnt() == 0 }),
+    })),
+    // 沉玉谷
+    321032: () => new SupportBuilder().collection().handle((support, event) => ({
+        triggers: 'adventure',
+        exec: cmds => {
+            support.addCnt();
+            if (support.cnt == 2) return cmds.getCard(2, { card: 333029 }).res;
+            if (support.cnt == 4) return cmds.getStatus([[169, 3], [170, 3]]).res;
+            if (support.cnt == 7) {
+                const { heros } = event;
+                const hidxs = heros.getMaxHurtHidxs();
+                cmds.attach({ element: ELEMENT_TYPE.Hydro, hidxs: heros.allHidxs() })
+                    .heal(100, { hidxs })
+                    .addMaxHp(2, hidxs, true);
+                return { isDestroy: true }
+            }
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(support => ({
         triggers: 'phase-start',
@@ -580,13 +602,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 艾琳
     322010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
-        const { hero, isMinusDiceSkill } = event;
+        const { hero, isMinusDiceSkill, skill } = event;
         const skills = hero.skills.map(skill => [0, 0, +(skill.useCntPerRound > 0)]);
         return {
             triggers: 'skill',
             isNotAddTask: true,
             minusDiceSkill: { skills },
-            exec: () => { isMinusDiceSkill && support.minusPerCnt() }
+            exec: () => { isMinusDiceSkill && skill && skill?.useCntPerRound > 1 && support.minusPerCnt() }
         }
     }),
     // 田铁嘴
@@ -616,12 +638,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { trigger, isMinusDiceWeapon, isMinusDiceRelic } = event;
         const isMinus = support.cnt >= 3 && (isMinusDiceWeapon || isMinusDiceRelic);
         return {
-            triggers: ['summon-destroy', 'card'],
+            triggers: ['summon-destroy-other', 'card'],
             minusDiceCard: isCdt(isMinus, 2),
             isNotAddTask: trigger == 'card',
             exec: () => {
                 if (trigger == 'card' && isMinus) return { isDestroy: true }
-                if (trigger == 'summon-destroy' && support.cnt < 3) support.addCnt();
+                if (trigger == 'summon-destroy-other' && support.cnt < 3) support.addCnt();
             }
         }
     }),
@@ -675,7 +697,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 老章
     322018: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         const { heros, isMinusDiceWeapon } = event;
-        if (support.perCnt <= 0 || isMinusDiceWeapon) return;
+        if (support.perCnt <= 0 || !isMinusDiceWeapon) return;
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -742,8 +764,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 西尔弗和迈勒斯
     322023: () => new SupportBuilder().collection().handle((support, event) => {
         const { trigger, playerInfo: { oppoGetElDmgType } } = event;
+        const cnt = () => Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
         if (trigger == 'enter') {
-            support.setCnt(Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length));
+            support.setCnt(cnt());
             return;
         }
         const triggers: Trigger[] = [];
@@ -759,7 +782,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     cmds.getCard(support.cnt);
                     return { isDestroy: true }
                 }
-                if (trigger.endsWith('-getdmg-oppo')) support.setCnt(Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length));
+                if (trigger.endsWith('-getdmg-oppo')) support.setCnt(cnt() + 1);
             }
         }
     }),
@@ -794,9 +817,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: cmds => {
                 if (trigger == 'phase-end') {
                     support.setCnt();
-                    cmds.getCard(1, { card: epile[0].id });
+                    return cmds.getCard(1, { card: epile[0].id }).res;
                 }
-                support.addCnt(1, 2);
+                support.addCnt();
             },
         }
     }),
@@ -821,6 +844,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 森林的祝福
     322029: () => new SupportBuilder().permanent().handle(() => ({
         triggers: ['enter', 'elReaction'],
+        isAfterSkill: true,
         exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res,
     })),
     // 预言女神的礼物
@@ -832,12 +856,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers,
             exec: cmds => {
                 if (trigger == 'enter') return cmds.getCard(2, { card: 301033 }).addCard(2, 301033).res;
-                if (trigger == 'summon-generate') {
-                    if (sourceSummon) {
-                        if (sourceSummon.id == 301028) ++sourceSummon.damage;
-                        else if (sourceSummon.id == 3010301) ++sourceSummon.shieldOrHeal;
-                        else ++sourceSummon.addition.effect;
-                    }
+                if (trigger == 'summon-generate' && sourceSummon) {
+                    if (sourceSummon.id == 301028) ++sourceSummon.damage;
+                    else if (sourceSummon.id == 3010301) ++sourceSummon.shieldOrHeal;
+                    else ++sourceSummon.addition.effect;
                     return { isDestroy: support.minusCnt() == 0 }
                 }
             },

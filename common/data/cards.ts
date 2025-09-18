@@ -11,15 +11,15 @@ import { isCdt, objToArr } from '../utils/utils.js';
 import { CardBuilder } from './builder/cardBuilder.js';
 
 const normalWeapon = (shareId: number) => {
-    return new CardBuilder(shareId)
+    return new CardBuilder(shareId).weapon().costSame(2)
         .description('【角色造成的伤害+1】。')
-        .weapon().costSame(2).handle(() => ({ addDmg: 1 }));
+        .handle(() => ({ addDmg: 1 }));
 }
 
 const sacrificialWeapon = (shareId: number) => {
-    return new CardBuilder(shareId)
+    return new CardBuilder(shareId).weapon().costSame(3).perCnt(1)
         .description('【角色造成的伤害+1】。；【角色使用「元素战技」后：】生成1个此角色类型的元素骰（每回合1次）。')
-        .weapon().costSame(3).perCnt(1).handle((card, event) => {
+        .handle((card, event) => {
             const { execmds, hero } = event;
             if (card.perCnt > 0) execmds.getDice(1, { element: hero.element })
             return {
@@ -31,9 +31,9 @@ const sacrificialWeapon = (shareId: number) => {
 }
 
 const skywardWeapon = (shareId: number) => {
-    return new CardBuilder(shareId)
+    return new CardBuilder(shareId).weapon().costSame(3).perCnt(1)
         .description('【角色造成的伤害+1】。；【每回合1次：】角色使用「普通攻击」造成的伤害额外+1。')
-        .weapon().costSame(3).perCnt(1).handle(card => ({
+        .handle(card => ({
             addDmg: 1,
             addDmgCdt: card.perCnt,
             triggers: isCdt(card.perCnt > 0, 'skilltype1'),
@@ -77,6 +77,17 @@ const barrierWeapon = (shareId: number, mark: string) => {
                 addDmgCdt: 1,
                 exec: () => card.setUseCnt(),
             }
+        });
+}
+
+const maxHpWeapon = (shareId: number) => {
+    return new CardBuilder(shareId).weapon().costSame(2)
+        .description('【所附属角色生命值至少为11时：】造成的伤害+2。；【入场时：】所附属角色获得1点最大生命值。')
+        .handle((_, event) => {
+            const { hero, skill, cmds } = event;
+            cmds.addMaxHp(1, hero.hidx);
+            if (!skill?.isHeroSkill || hero.hp < 11) return;
+            return { triggers: 'dmg', addDmgCdt: 2 }
         });
 }
 
@@ -262,6 +273,9 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers, exec: () => trigger == 'action-start' && card.minusPerCnt() }
         }),
 
+    311111: () => maxHpWeapon(527).name('不灭月华').since('v6.1.0')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_Bumieyuehua.webp'),
+
     311201: () => normalWeapon(126).name('鸦羽弓').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/e20881692f9c3dcb128e3768347af4c0_5029781426547880539.png'),
 
@@ -317,15 +331,8 @@ const allCards: Record<number, () => CardBuilder> = {
             }
         }),
 
-    311208: () => new CardBuilder(520).name('若水').since('v6.0.0').weapon().costSame(2)
-        .description('【所附属角色生命值至少为11时：】造成的伤害+2。；【入场时：】所附属角色获得1点最大生命值。')
-        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/8bc85fdc9df49d66ad2145eb848cae67_2048284066171113800.png')
-        .handle((_, event) => {
-            const { hero, skill, cmds } = event;
-            cmds.addMaxHp(1, hero.hidx);
-            if (!skill?.isHeroSkill || hero.hp < 11) return;
-            return { triggers: 'dmg', addDmgCdt: 2 }
-        }),
+    311208: () => maxHpWeapon(520).name('若水').since('v6.0.0')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/8bc85fdc9df49d66ad2145eb848cae67_2048284066171113800.png'),
 
     311301: () => normalWeapon(132).name('白铁大剑').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/d8916ae5aaa5296a25c1f54713e2fd85_802175621117502141.png'),
@@ -1144,6 +1151,20 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'after-skill', exec: () => card.minusPerCnt() }
         }),
 
+    312040: () => new CardBuilder(528).name('恶龙的单片镜').since('v6.1.0').relic().costSame(1).perCnt(1)
+        .description('【附属角色使用「元素战技」后：】[冒险]1次。（每回合1次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Shuixianxiao.webp')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            event.cmds.adventure();
+            return { triggers: 'after-skilltype2', exec: () => card.minusPerCnt() }
+        }),
+
+    312041: () => new CardBuilder(529).name('昔日宗室之仪').since('v6.1.0').relic().costSame(2)
+        .description('【入场时：】使所附属角色获得1点[充能]。；【所附属角色使用「元素爆发」后：】我方角色下2次造成的伤害+1。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
+        .handle((_, { cmds }) => (cmds.getEnergy(1), { triggers: 'after-skilltype3', status: 301210 })),
+
     312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
 
@@ -1364,6 +1385,14 @@ const allCards: Record<number, () => CardBuilder> = {
     321030: () => new CardBuilder(501).name('星轨王城').since('v5.8.0').place().costSame(2).subtype(CARD_SUBTYPE.Simulanka)
         .description('【入场时：】生成手牌【crd301033】。；【我方角色使用「元素战技」后：】下次打出【crd301033】少花费1个元素骰。（不可叠加）；【我方角色使用「元素爆发」后：】下次打出的【crd301033】效果量+1。（不可叠加）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/26/258999284/f721ecf8a6bec7cf87a07f7669d5a583_8349369588870331854.png'),
+
+    321031: () => new CardBuilder(530).name('冒险家协会').since('v6.1.0').place().costSame(2)
+        .description('【结束阶段：】[冒险]1次。；[可用次数]：3')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_Gonghui.webp'),
+
+    321032: () => new CardBuilder().name('沉玉谷').since('v6.1.0').place().costSame(0).subtype(CARD_SUBTYPE.Adventure)
+        .description('【冒险经历达到2时：】生成2张手牌【crd333029】。；【冒险经历达到4时：】我方获得3层【sts169】和【sts170】。；【冒险经历达到7时：】我方全体角色[附着水元素]，治疗我方受伤最多的角色至最大生命值，并使其获得2点最大生命值，然后弃置此牌。')
+        .src('tmp/UI_Gcg_CardFace_Assist_Location_ChenyuGu'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -2214,6 +2243,16 @@ const allCards: Record<number, () => CardBuilder> = {
             if (cnt > 0) cmds.getDice(cnt, { element: DICE_COST_TYPE.Omni });
         }),
 
+    332056: () => new CardBuilder(531).name('祀珑在昔，灵锦歆诚').since('v6.1.0').event().costSame(1)
+        .description('[冒险]1次。；如果我方冒险经历不低于4，则对我方「出战角色」造成1点[物理伤害]，随后[冒险]1次。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Fujin.webp')
+        .handle((_, event) => {
+            const { cmds, adventureCnt } = event;
+            cmds.adventure();
+            if (adventureCnt < 3) return;
+            cmds.attack(1, DAMAGE_TYPE.Physical, { isOppo: false }).adventure();
+        }),
+
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次「普通攻击」造成的伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1e59df2632c1822d98a24047f97144cd_5355214783454165570.png')
@@ -2329,6 +2368,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('治疗目标角色1点，目标角色之后2次[准备技能]时：治疗自身1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/bf2ec0fa0b9b29e7d9ab281075af73eb_586432453009953293.png')
         .handle((_, { cmds, heros }) => (cmds.heal(1), { status: 303322, canSelectHero: heros.map(() => true) })),
+
+    333029: () => new CardBuilder(532).name('沉玉茶露').since('v6.1.0').food().costSame(0).canSelectHero(1)
+        .description('选择一个我方角色，我方下2次[冒险]或结束阶段时，治疗目标角色1点。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Chalu.webp')
+        .handle(() => ({ status: 303323 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -2803,6 +2847,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【sts114142】，初始[可用次数]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/ff3a1c64a570322d545de6e7d54379a3_1819244806685269268.png'),
 
+    214151: () => new CardBuilder(524).name('正义英雄的凯旋').since('v6.1.0').talent().costElectro(2).perCnt(2)
+        .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【其他我方角色使用技能后：】【hro】附属【sts114154】。（每回合2次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Varesa.webp')
+        .handle(card => {
+            if (card.perCnt <= 0) return;
+            return { triggers: 'after-other-skill', status: 114154, exec: () => card.minusPerCnt() }
+        }),
+
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/93fb13495601c24680e2299f9ed4f582_2499309288429565866.png'),
@@ -2881,7 +2933,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     215111: () => new CardBuilder(482).name('子弹的戏法').since('v5.7.0').talent().event().costAnemo(1)
-        .description('〔*[card][快速行动]：我方恰斯卡在场时，对该角色打出。〕；将一张【crd115113】加入手牌。')
+        .description('〔*[card][快速行动]：我方【hro】在场时，对该角色打出。〕；将一张【crd115113】加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/d0d3e9ce9700c9ba9225042e22b0d25c_108209558149032615.png')
         .handle((_, { cmds }) => cmds.getCard(1, { card: 115113 }).res),
 
@@ -2911,6 +2963,17 @@ const allCards: Record<number, () => CardBuilder> = {
                 ],
                 exec: () => card.minusPerCnt(),
             }
+        }),
+
+    215151: () => new CardBuilder(525).name('温敷战术包扎').since('v6.1.0').talent().costAnemo(1).perCnt(2)
+        .description('〔*[card][快速行动]：装备给我方的【hro】，治疗我方生命值最低的角色1点。〕；装备有此牌的【hro】在场时，我方触发[风元素相关反应]或感电反应后，治疗我方受伤最多的角色1点。（每回合2次）')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Ifa.webp')
+        .handle((card, event) => {
+            const { heros, cmds, execmds } = event;
+            cmds.heal(1, { hidxs: heros.getMinHpHidxs() });
+            if (card.perCnt <= 0) return;
+            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            return { triggers: ['elReaction-Anemo', 'ElectroCharged'], exec: () => card.minusPerCnt() }
         }),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(3).costGeo(4, 'v6.0.0')
@@ -3177,6 +3240,19 @@ const allCards: Record<number, () => CardBuilder> = {
                 minusDiceSkill: { skilltype5: [0, 0, 1], isAll: true },
                 exec: () => event.isMinusDiceSkill && card.minusPerCnt(),
             }
+        }),
+
+    222061: () => new CardBuilder(526).name('汇流').since('v6.1.0').talent().costHydro(2)
+        .description('〔*[card][快速行动]：装备给我方的【hro】，使其附属【sts222062】。〕；装备有此牌的【hro】在场时，我方宣布结束后，如果所附属角色生命值不低于3，则所附属角色受到2点[穿透伤害]，召唤1个独立的【smn122061】。')
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Narcissusborn.webp')
+        .handle((_, event) => {
+            const { hero: { hp }, summons, cmds, execmds } = event;
+            cmds.getStatus(222062);
+            if (hp < 3 || summons.length == MAX_SUMMON_COUNT) return;
+            execmds.attack(2, DAMAGE_TYPE.Pierce, { isOppo: false });
+            let summon = 122061;
+            while (summons.has(summon)) ++summon;
+            return { triggers: 'end-phase', summon }
         }),
 
     223011: () => new CardBuilder(115).name('悉数讨回').offline('v2').talent(1).costPyro(3)
@@ -3481,6 +3557,9 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'getcard' }
         }),
 
+    115152: () => new CardBuilder().name('咔库库').vehicle().useNightSoul().costSame(0)
+        .src('tmp/UI_Gcg_CardFace_Summon_Ifa.png'),
+
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/cab5b83ad4392bcc286804ebc8f664db_6422552968387467695.png')
@@ -3630,7 +3709,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('复制对方牌库顶部的3张牌，加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => {
-            const { epile = [], cmds } = event;
+            const { epile, cmds } = event;
             cmds.getCard(3, { card: epile.slice(0, 3) });
         }),
 
@@ -3642,8 +3721,8 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds.getCard(2, { subtype: CARD_SUBTYPE.Legend });
             return {
                 exec: () => {
-                    if (playerInfo) playerInfo.isUsedLegend = false;
-                    if (eplayerInfo) eplayerInfo.isUsedLegend = false;
+                    playerInfo.isUsedLegend = false;
+                    eplayerInfo.isUsedLegend = false;
                 }
             }
         }),

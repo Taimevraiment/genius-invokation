@@ -136,6 +136,7 @@ export const CARD_SUBTYPE = {
     Legend: 'Legend', // 秘传
     ElementResonance: 'ElementResonance', // 元素共鸣
     Simulanka: 'Simulanka', // 希穆兰卡
+    Adventure: 'Adventure', // 冒险地点
 } as const;
 
 export type CardSubtype = TypeConst<typeof CARD_SUBTYPE>;
@@ -203,6 +204,7 @@ export const STATUS_TYPE = {
     NonEvent: 'NonEvent', // 事件牌失效 17
     Show: 'Show', // 死后也显示 18
     OnlyExplain: 'OnlyExplain', // 仅用作解释 19
+    ImmuneDamage: 'ImmuneDamage', // 免疫伤害 20
 } as const;
 
 export type StatusType = TypeConst<typeof STATUS_TYPE>;
@@ -373,7 +375,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
-    'v6.0.0',
+    'v6.1.0', 'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',

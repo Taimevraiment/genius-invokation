@@ -1094,15 +1094,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('负重锥击')
         .skills(
             new SkillBuilder('电掣雷驰').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成1层【sts170】。')
-                .src('/image/tmp/Skill_S_Iansan_01.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/3be19f896d2d69abf23bea715e6b6bc9_6991635084269005010.png')
                 .elemental().damage(2).cost(3).handle(({ cmds }) => (cmds.getStatus(114141).getNightSoul(), { status: 170 })),
             new SkillBuilder('力的三原理').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成【sts114142】。')
-                .src('/image/tmp/Skill_E_Iansan_01_HD.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/d1c5a8d4608f2298ca4f55bc251cd9f6_758051669045626887.png')
                 .burst(2).damage(3).cost(3).handle(({ cmds, talent }) => (cmds.getStatus(114141).getNightSoul(), { status: [[114142, !!talent]] })),
             new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合3次）')
-                .src('/image/tmp/UI_Talent_S_Iansan_08.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/371370a0816db0ff4c07a72e3dda8957_3785382152197264817.png')
                 .passive().addition('switch').perCnt(3).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
@@ -1126,6 +1126,31 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
+    1415: () => new HeroBuilder(521).name('瓦雷莎').since('v6.1.0').natlan().electro().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Varesa.webp')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Varesa.png')
+        .normalSkill(new NormalSkillBuilder('角力搏摔').description('【此次技能为[下落攻击]时：】造成的伤害+1，自身进入【sts114151】，并获得1点「夜魂值」。')
+            .handle(({ cmds, isFallAtk }) => (cmds.getStatus(114151).getNightSoul(1), { addDmgCdt: +isFallAtk })))
+        .skills(
+            new SkillBuilder('夜虹逐跃').description('{dealDmg}，自身附属【sts114154】，进入【sts114151】，并获得1点「夜魂值」，然后我方切换到下一个角色。')
+                .src('/image/tmp/Skill_S_Varesa_01.png',
+                    '')
+                .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.getStatus([114154, 114151]).getNightSoul(1).switchAfter().res),
+            new SkillBuilder('闪烈降临！').description('{dealDmg}，自身附属【sts114152】。')
+                .src('/image/tmp/Skill_E_Varesa_01_HD.png',
+                    '')
+                .burst(3).damage(3).cost(3).handle(() => ({ status: 114152 })),
+            new SkillBuilder('连势，三重腾跃！').description('【〖hro〗使用技能后：】如果自身「夜魂值」等于2，则消耗2点「夜魂值」，自身附属【sts114152】。')
+                .src('/image/tmp/UI_Talent_S_Varesa_05.png',
+                    '')
+                .passive().handle(event => {
+                    const { hero: { heroStatus }, hidx, cmds } = event;
+                    if (heroStatus.getUseCnt(STATUS_TYPE.NightSoul) != 2) return;
+                    cmds.consumeNightSoul(2, hidx).getStatus(114152);
+                    return { triggers: 'after-skill' }
+                })
+        ),
+
     1501: () => new HeroBuilder(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')
@@ -1134,7 +1159,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('风灵作成·陆叁零捌').description('{dealDmg}，使对方强制切换到前一个角色。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6a/lu1s5jeliurancx62txk0i7pbgeu07d.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/20e905e459a535c372b1c0eacf6dd9d8_1859277343951133632.png')
-                .elemental().damage(3).cost(3).handle(({ cmds }) => { cmds.switchBefore(true) }),
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.switchBefore(true).res),
             new SkillBuilder('禁·风灵作成·柒伍同构贰型').description('{dealDmg}，召唤【smn115011】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8b/mfq7sbev9evjdy9lxkfsp96np5fockl.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/2f7e7dededadbb4bec6cd5a1e3b8714a_8254714025319039539.png')
@@ -1367,13 +1392,33 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('梦我梦心')
         .skills(
             new SkillBuilder('秋沙歌枕巡礼').description('{dealDmg}，自身附属【sts115141】。')
-                .src('/image/tmp/Skill_S_Mizuki_01.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/abe5eb59a21fdf49f4cb90909157b9bb_1293806030185619412.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 115141 })),
             new SkillBuilder('安乐秘汤疗法').description('{dealDmg}，生成1张【crd115142】，将其置于我方牌组顶部，并召唤【smn115143】。')
-                .src('/image/tmp/Skill_E_Mizuki_01_HD.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/3f88bf3940047ec5c272d5a42682fb9e_1499047667187194260.png')
                 .burst(2).damage(3).cost(3).handle(({ cmds }) => (cmds.addCard(1, 115142, { scope: 1 }), { summon: 115143 }))
+        ),
+
+    1515: () => new HeroBuilder(522).name('伊法').since('v6.1.0').natlan().anemo().catalyst()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Ifa.webp')
+        .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Ifa.png')
+        .normalSkill('祛风妙仪')
+        .skills(
+            new SkillBuilder('空天疾护').description('{dealDmg}，自身进入【sts115151】，获得2点「夜魂值」，并附属【crd115152】。')
+                .src('/image/tmp/Skill_S_Ifa_01.png',
+                    '')
+                .elemental().damage(1).cost(2).handle(({ cmds }) => (cmds.getStatus(115151).getNightSoul(2), { equip: 115152 })),
+            new SkillBuilder('复合镇静域').description('{dealDmg}，治疗我方受伤最多的角色2点。如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【sts115150】。')
+                .src('/image/tmp/Skill_E_Ifa_01_HD.png',
+                    '')
+                .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115153 + i}`))
+                .burst(2).damage(2).cost(3).handle(event => {
+                    const { heros, cmds, swirlEl } = event;
+                    cmds.heal(2, { hidxs: heros.getMaxHurtHidxs() });
+                    return { statusOppo: isCdt(swirlEl, 115152 + ELEMENT_CODE[swirlEl!]) }
+                })
         ),
 
     1601: () => new HeroBuilder(42).name('凝光').offline('v1').liyue().geo().catalyst()
@@ -1973,7 +2018,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const sts122041 = combatStatus.get(122041);
                     if (!sts122041) return;
                     const { maxDice, maxDiceCnt } = sts122041.addition;
-                    return { pdmg: 1, summon: isCdt(maxDiceCnt > 0, [[122043, maxDice, maxDiceCnt]]) }
+                    return { pdmg: 1, summon: [[122043, maxDice, maxDiceCnt]] }
                 }),
             new SkillBuilder('无尽食欲').description('战斗开始时，生成【sts122041】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/a9e29da334dce66803ef9edb13b8e8d9.png',
@@ -2001,6 +2046,34 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/7/78/4l236g81or3zb78ozzojs6dm67wjmev.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1eef9550382f6987f37db0e387ed9ea5_1022099738869474504.png')
                 .burst(2).damage(4).damage(3, 'v5.7.0').cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 122051 }).res)
+        ),
+
+    2206: () => new HeroBuilder(523).name('水形幻人').since('v6.1.0').maxHp(12).monster().hydro()
+        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Monster_Narcissusborn.webp')
+        .avatar('/image/tmp/UI_Gcg_Char_MonsterIcon_Narcissusborn.png')
+        .normalSkill(new NormalSkillBuilder('涌浪').catalyst())
+        .skills(
+            new SkillBuilder('疾波').description('{dealDmg}，随机触发我方1个「召唤物」的「结束阶段」效果。如果自身生命值不低于2，则自身受到1点[穿透伤害]。')
+                .src('/image/tmp/MonsterSkill_S_Narcissusborn_01.png',
+                    '')
+                .elemental().damage(2).cost(3).handle(event => {
+                    const { cmds, hero: { hp }, randomInArr, summons } = event;
+                    return { pdmgSelf: isCdt(hp >= 2, 1), notPreview: true, exec: () => cmds.summonTrigger(randomInArr(summons)[0].entityId) }
+                }),
+            new SkillBuilder('洪啸').description('{dealDmg}，触发我方所有「召唤物」的「结束阶段」效果。')
+                .src('/image/tmp/MonsterSkill_E_Narcissusborn_01_HD.png',
+                    '')
+                .burst(3).damage(4).cost(3).handle(({ cmds, summons }) => ({ exec: () => cmds.summonTrigger(summons.map(s => s.entityId)) })),
+            new SkillBuilder('分流').description('【自身生命值不低于3，我方〖smn122061〗以外的「召唤物」离场时：】自身受到2点[穿透伤害]，召唤1个独立的【smn122061】。（每回合1次）')
+                .src('/image/tmp/MonsterSkill_S_Narcissusborn_02.png',
+                    '')
+                .passive().perCnt(1).handle(event => {
+                    const { hero: { hp }, skill, source, summons } = event;
+                    if (hp < 3 || skill.perCnt <= 0 || [122061, 122062, 122063, 122064].includes(source)) return;
+                    let summon = 122061;
+                    while (summons.has(summon)) ++summon;
+                    return { triggers: 'summon-destroy', pdmgSelf: 2, summon, exec: () => skill.minusPerCnt() }
+                })
         ),
 
     2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
@@ -2127,11 +2200,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('虚界玄爪')
         .skills(
             new SkillBuilder('蚀灭火羽').description('{dealDmg}，我方[舍弃]牌组顶部1张牌。')
-                .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_01.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/0188e2eb7af013f151e755845d0a0b6d_2165374047345675245.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => (cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }), { notPreview: true })),
             new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
-                .src('/image/tmp/MonsterSkill_E_TheAbyssXiuhcoatl_01_HD.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/66cb6a2a590c642c2de7cbd2c529ee2e_2098939999112434475.png')
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus } } = event;
@@ -2139,7 +2212,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { pdmg: 1 + (heroStatus.getUseCnt(123051)), status: 123051, notPreview: true }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
-                .src('/image/tmp/MonsterSkill_S_TheAbyssXiuhcoatl_02.png',
+                .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/565c62d3863ea70e42d8f691a3279613_7912349647631776754.png')
                 .passive().handle(() => ({ triggers: 'game-start', status: 123052 }))
         ),

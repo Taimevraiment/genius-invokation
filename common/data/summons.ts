@@ -13,6 +13,18 @@ const crd12702summon = () => {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/5c6f5f310243aea5eff849b26dd80269_2475050287145431617.png');
 }
 
+const hero2206summon = () => {
+    return new SummonBuilder('半幻人').useCnt(2).damage(1)
+        .description('{defaultAtk。；【此卡牌被弃置时：】治疗我方【hro】2点。}')
+        .src('/image/tmp/UI_Gcg_CardFace_Summon_Narcissusborn.png')
+        .handle((summon, event) => {
+            const { trigger, heros } = event;
+            if (trigger == 'summon-destroy') {
+                return { triggers: trigger, exec: cmds => cmds.heal(2, { hidxs: heros.get(summon.id)?.hidx }) }
+            }
+        });
+}
+
 
 const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
@@ -689,10 +701,18 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('#')
         .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),
 
-    122043: (dmg: number = -1, useCnt: number = -1) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
+    122043: (dmg: number = 0, useCnt: number = 0) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
         .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
         .handle(() => ({ triggers: ['phase-end', 'end-phase'] })),
+
+    122061: () => hero2206summon(),
+
+    122062: () => hero2206summon(),
+
+    122063: () => hero2206summon(),
+
+    122064: () => hero2206summon(),
 
     123021: () => new SummonBuilder('黯火炉心').useCnt(2).damage(1).pdmg(1)
         .description('{defaultAtk，对所有敌方后台角色造成1点[穿透伤害]。}')

@@ -131,7 +131,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
-    'summonTrigger' | 'getSupport';
+    'summonTrigger' | 'getSupport' | 'adventure';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -185,6 +185,7 @@ type TrgDmg = 'el' | keyof typeof DAMAGE_TYPE;
 type TrgOppo = '-oppo' | '';
 type TrgGet = 'get-' | '';
 type TrgOther = 'other-' | '';
+type TrgOtherR = '-other' | '';
 type TrgAfter = 'after-' | '';
 type TrgActive = 'active-' | '';
 type TrgDice = 'add-' | 'minus-' | '';
@@ -198,11 +199,11 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
-    `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | 'useReadySkill' | 'status-destroy' | 'status-destroy-other' | 'summon-destroy' |
+    `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | 'useReadySkill' | `status-destroy${TrgOtherR}` | `summon-destroy${TrgOtherR}` |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
-    `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' | `${TrgPre}get-status` |
-    'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` | 'slot-destroy' |
-    'getNightSoul' | 'ready-skill' | 'reset' | '';
+    `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' |
+    `${TrgPre}get-status` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
+    'slot-destroy' | 'getNightSoul' | 'ready-skill' | 'reset' | 'adventure' | '';
 
 type Entity = Skill | Status | Summon | Card | Support;
 

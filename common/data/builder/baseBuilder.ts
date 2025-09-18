@@ -245,7 +245,10 @@ export class ArrayStatus extends Array<Status> {
         if (typeof ids[0] == 'number') return ids.some(id => hasObjById(this, id));
         return this.some(s => s.hasType(...ids as StatusType[]));
     }
-    getUseCnt(id: number) {
+    getUseCnt(id: number): number;
+    getUseCnt(id: StatusType): number;
+    getUseCnt(id: number | StatusType) {
+        if (typeof id == 'number') return this.get(id)?.useCnt ?? 0;
         return this.get(id)?.useCnt ?? 0;
     }
 }
@@ -257,7 +260,7 @@ export class ArraySummon extends Array<Summon> {
     get(id: number): Summon | undefined;
     get(id: SummonTag): Summon | undefined;
     get(id: number | SummonTag) {
-        if (typeof id == 'number') return getObjById(this, id);
+        if (typeof id == 'number') return getObjById(this, id) ?? getObjById(this, id, 'entityId');
         return this.find(s => s.hasTag(id));
     }
     has(id: number): boolean;
@@ -324,6 +327,7 @@ export interface EntityHandleEvent {
     isSwirlExec: boolean,
     atkHidx: number,
     isFirst: boolean,
+    adventureCnt: number,
     randomInArr: <T>(arr: T[], cnt?: number) => T[],
     randomInt: (max?: number) => number,
     getCardIds: (filter?: (card: Card) => boolean) => number[],

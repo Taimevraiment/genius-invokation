@@ -1399,18 +1399,19 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         player.isFallAtk = !skill.isHeroSkill && oIsFallAtk;
         if (!skill.isReadySkill) {
+            const convertToAfter = (trgs: Set<Trigger>) => [...trgs].map(t => t.includes('skill') ? 'after-' + t as Trigger : t);
             for (let i = 0; i < heros.length; ++i) {
                 const hi = (player.hidx + i) % heros.length;
                 const trgs = this.preview.triggers[pidx][hi];
-                const afterTriggers = [...trgs].map(t => t.includes('skill') ? 'after-' + t as Trigger : t);
-                this._detectHero(pidx, afterTriggers, { types: STATUS_TYPE.Attack, hidxs: +hi, skill, source: atkHero.id, isAfterSkill: true });
+                this._detectHero(pidx, convertToAfter(trgs), { types: STATUS_TYPE.Attack, hidxs: +hi, skill, source: atkHero.id, isAfterSkill: true });
                 await this._execTask();
             }
-            this._detectSummon(pidx, this.preview.triggers[pidx][player.hidx], { skill, source: atkHero.id, isAfterSkill: true });
+            const afterTriggers = (p: number) => convertToAfter(new Set(this.preview.triggers[p].flatMap(t => [...t])));
+            this._detectSummon(pidx, afterTriggers(pidx), { skill, source: atkHero.id, isAfterSkill: true });
             await this._execTask();
-            this._detectSupport(pidx, this.preview.triggers[pidx][player.hidx], { skill, source: atkHero.id, isAfterSkill: true });
+            this._detectSupport(pidx, afterTriggers(pidx), { skill, source: atkHero.id, isAfterSkill: true });
             await this._execTask();
-            this._emitEvent(pidx ^ 1, 'after-skill-oppo', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], skill });
+            this._emitEvent(pidx ^ 1, afterTriggers(pidx ^ 1), { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], skill, isAfterSkill: true });
             await this._execTask();
         }
         this._doActionAfter(pidx);
@@ -2525,9 +2526,12 @@ export default class GeniusInvokationRoom {
     private _doSummonDestroy(pidx: number, summon: Summon) {
         ++this.players[pidx].playerInfo.destroyedSummon;
         this._writeLog(`[${this.players[pidx].name}](${pidx})弃置召唤物[${summon.name}](${summon.entityId})`, 'system');
+        // 弃置的召唤物触发
         this._detectSummon(pidx, 'summon-destroy', { cSummon: summon });
-        this._detectSupport(pidx, 'summon-destroy');
-        this._detectSupport(pidx ^ 1, 'summon-destroy');
+        // 其他因弃置召唤物触发
+        this._detectHero(pidx, 'summon-destroy-other', { source: summon.id })
+        this._detectSupport(pidx, 'summon-destroy-other', { source: summon.id });
+        this._detectSupport(pidx ^ 1, 'summon-destroy-other', { source: summon.id });
     }
     /**
      * 支援物消失时发动
@@ -2537,7 +2541,7 @@ export default class GeniusInvokationRoom {
     private _doSupportDestroy(pidx: number, destroyedCnt: number) {
         if (destroyedCnt <= 0) return;
         this.players[pidx].playerInfo.destroyedSupport += destroyedCnt;
-        this._writeLog(`[${this.players[pidx].name}](${pidx})弃置支援物[${destroyedCnt}个]`, 'system');
+        this._writeLog(`[${this.players[pidx].name}](${pidx})弃置支援物${destroyedCnt}个`, 'system');
         this._detectSupport(pidx, 'support-destroy');
     }
     /**
@@ -2833,9 +2837,10 @@ export default class GeniusInvokationRoom {
                     hidx,
                     trigger,
                     restDmg,
+                    isQuickAction: this.preview.isQuickAction,
                 });
                 if (this._hasNotTriggered(skillres.triggers, trigger)) continue;
-                if (isAfterSkill && !trigger.includes('after')) continue;
+                if ((!!isAfterSkill && !!skill) != trigger.startsWith('after')) continue;
                 this.preview.isQuickAction ||= !!skillres.isQuickAction;
                 restDmg = skillres.restDmg ?? -1;
                 isInvalid ||= !!skillres.isInvalid;
@@ -2948,10 +2953,11 @@ export default class GeniusInvokationRoom {
                         isSwirlExec,
                         sourceSummon,
                         dmgedHidx,
+                        isQuickAction: this.preview.isQuickAction,
                         reset: trigger == 'reset',
                     });
                     if (this._hasNotTriggered(hfieldres.triggers, trigger)) continue;
-                    if (isAfterSkill && !hfieldres.isAfterSkill && !trigger.includes('after')) continue;
+                    if ((!!isAfterSkill && !!skill) != (!!hfieldres.isAfterSkill || trigger.startsWith('after'))) continue;
                     if (hfieldres.notPreview && !this.preview.isExec) {
                         this.taskQueue.stopPreview();
                         break;
@@ -3073,10 +3079,11 @@ export default class GeniusInvokationRoom {
                     dmgedHidx,
                     dmgElement,
                     source,
+                    isQuickAction: this.preview.isQuickAction,
                     reset: trigger == 'enter' || trigger == 'reset',
                 });
                 if (this._hasNotTriggered(summonres.triggers, trigger)) continue;
-                if (isAfterSkill && !summonres.isAfterSkill && !trigger.includes('after')) continue;
+                if ((!!isAfterSkill && !!skill) != (!!summonres.isAfterSkill || trigger.startsWith('after'))) continue;
                 if (trigger == 'phase-end' && summon.isDestroy == SUMMON_DESTROY_TYPE.UsedRoundEnd && summon.useCnt > 0) continue;
                 this.preview.isQuickAction ||= !!summonres.isQuickAction;
                 addDmg += summonres.addDmgCdt ?? 0;
@@ -3163,12 +3170,13 @@ export default class GeniusInvokationRoom {
                     sourceStatus,
                     sourceSummon,
                     dmgElement,
+                    isQuickAction: this.preview.isQuickAction,
                     reset: trigger == 'reset',
                 });
                 if (supportres.isLast && !isLast) lastSupport.push(support);
                 if (this._hasNotTriggered(supportres.triggers, trigger)) continue;
                 if (supportres.isLast && !isLast) break;
-                if (!!isAfterSkill != (!!supportres.isAfterSkill || trigger.includes('after'))) break;
+                if ((!!isAfterSkill && !!skill) != (!!supportres.isAfterSkill || trigger.startsWith('after'))) break;
                 this.preview.isQuickAction ||= !!supportres.isQuickAction;
                 switchHeroDiceCnt = Math.max(0, switchHeroDiceCnt - (supportres.minusDiceHero ?? 0));
                 minusDiceCard += supportres.minusDiceCard ?? 0;
@@ -3945,10 +3953,10 @@ export default class GeniusInvokationRoom {
                     const cidx = handCards.findIndex(c => c.entityId == eid);
                     handCards.splice(cidx, 1, this.newCard(cid).setEntityId(eid));
                 }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'summonTrigger') {
+            } else if (cmd == 'summonTrigger' && ohidxs) {
                 this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}`, () => {
-                    const cSummon = cplayer.summons[cnt] ?? cplayer.summons.find(s => s.id == cnt || s.entityId == cnt);
-                    if (!cSummon) return this._writeLog(`[${name}](${cpidx})没有找到召唤物${cnt}`, 'system');
+                    const cSummon = ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !v)
+                    if (cSummon.length == 0) return this._writeLog(`[${name}](${cpidx})没有找到召唤物${cnt}`, 'system');
                     callback?.();
                     this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon });
                 }, { isImmediate, isPriority, isUnshift });
@@ -4436,6 +4444,7 @@ export default class GeniusInvokationRoom {
         const newSummon: Summon[] = clone(nSummon);
         const oriSummon: Summon[] = clone(summons);
         const { isSummon = -1, destroy = 0, trigger } = options;
+        const generateSummonEntityIds: number[] = [];
         newSummon.forEach(smn => {
             let csmnIdx = oriSummon.findIndex(osm => osm.id == smn.id);
             const oriSmn = oriSummon[csmnIdx];
@@ -4457,51 +4466,55 @@ export default class GeniusInvokationRoom {
                 this._detectSummon(pidx, 'enter', { cSummon: smn });
                 this._writeLog(`[${name}](${pidx})召唤[${smn.name}]【(${smn.entityId})】`);
             } else isGenerate = false;
-            if (isGenerate) {
-                this._detectHero(pidx, 'summon-generate', { types: STATUS_TYPE.Usage, sourceSummon: csummon });
-                this._detectSupport(pidx, 'summon-generate', { sourceSummon: csummon });
-            }
+            if (isGenerate) generateSummonEntityIds.push(csummon.entityId);
         });
-        if (isSummon > -1) return assgin(summons, oriSummon);
-        assgin(summons, oriSummon.filter(smn => {
-            if (smn.statusId > 0) { // 召唤物有关联状态
-                const nSmnStatus = this.newStatus(smn.statusId);
-                const group = nSmnStatus.group;
-                const statuses = [heros[hidx].heroStatus, combatStatus][group];
-                let smnStatus = statuses.find(sts => sts.id == smn.statusId);
-                if (smnStatus || smn.useCnt > 0) {
-                    smnStatus ??= nSmnStatus;
-                    smnStatus.useCnt = smn.useCnt;
-                    this._updateStatus(pidx, this._getStatusById([smnStatus]), statuses, { hidx, isLog: false });
-                }
-            }
-            if (destroy != 1 && (!destroy || destroy != smn.entityId)) return true;
-            if ( // 召唤物消失
-                (smn.useCnt == 0 &&
-                    (smn.isDestroy == SUMMON_DESTROY_TYPE.Used ||
-                        (smn.isDestroy == SUMMON_DESTROY_TYPE.UsedRoundEnd && trigger == 'phase-end'))) ||
-                (smn.isDestroy == SUMMON_DESTROY_TYPE.RoundEnd && trigger == 'phase-end')
-            ) {
-                const combatSts = combatStatus.find(sts => sts.summonId == smn.id);
-                if (combatSts) {
-                    combatSts.dispose();
-                    this._updateStatus(pidx, [], combatStatus);
-                } else {
-                    for (let i = 0; i < heros.length; ++i) {
-                        const hi = (hidx + i) % heros.length;
-                        const heroSts = heros[hi].heroStatus.find(sts => sts.summonId == smn.id);
-                        if (heroSts) {
-                            heroSts.dispose();
-                            this._updateStatus(pidx, [], heros[hi].heroStatus, { hidx: hi });
-                            break;
-                        }
+        if (isSummon > -1) assgin(summons, oriSummon);
+        else {
+            assgin(summons, oriSummon.filter(smn => {
+                if (smn.statusId > 0) { // 召唤物有关联状态
+                    const nSmnStatus = this.newStatus(smn.statusId);
+                    const group = nSmnStatus.group;
+                    const statuses = [heros[hidx].heroStatus, combatStatus][group];
+                    let smnStatus = statuses.find(sts => sts.id == smn.statusId);
+                    if (smnStatus || smn.useCnt > 0) {
+                        smnStatus ??= nSmnStatus;
+                        smnStatus.useCnt = smn.useCnt;
+                        this._updateStatus(pidx, this._getStatusById([smnStatus]), statuses, { hidx, isLog: false });
                     }
                 }
-                this._doSummonDestroy(pidx, smn);
-                return false;
-            }
-            return true;
-        }));
+                if (destroy != 1 && (!destroy || destroy != smn.entityId)) return true;
+                if ( // 召唤物消失
+                    (smn.useCnt == 0 &&
+                        (smn.isDestroy == SUMMON_DESTROY_TYPE.Used ||
+                            (smn.isDestroy == SUMMON_DESTROY_TYPE.UsedRoundEnd && trigger == 'phase-end'))) ||
+                    (smn.isDestroy == SUMMON_DESTROY_TYPE.RoundEnd && trigger == 'phase-end')
+                ) {
+                    const combatSts = combatStatus.find(sts => sts.summonId == smn.id);
+                    if (combatSts) {
+                        combatSts.dispose();
+                        this._updateStatus(pidx, [], combatStatus);
+                    } else {
+                        for (let i = 0; i < heros.length; ++i) {
+                            const hi = (hidx + i) % heros.length;
+                            const heroSts = heros[hi].heroStatus.find(sts => sts.summonId == smn.id);
+                            if (heroSts) {
+                                heroSts.dispose();
+                                this._updateStatus(pidx, [], heros[hi].heroStatus, { hidx: hi });
+                                break;
+                            }
+                        }
+                    }
+                    this._doSummonDestroy(pidx, smn);
+                    return false;
+                }
+                return true;
+            }));
+        }
+        generateSummonEntityIds.forEach(eid => {
+            const sourceSummon = summons.get(eid);
+            this._detectHero(pidx, 'summon-generate', { types: STATUS_TYPE.Usage, sourceSummon });
+            this._detectSupport(pidx, 'summon-generate', { sourceSummon });
+        });
     }
     /**
      * 开始计时

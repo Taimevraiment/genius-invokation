@@ -92,7 +92,7 @@ export default class CmdsGenerator {
     heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean } = {}) {
         let { hidxs, isOrder, notPreHeal: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach });
+        if (hidxs?.length) this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach });
         return this;
     }
     revive(cnt: number, hidxs?: number | number[]) {
@@ -102,7 +102,7 @@ export default class CmdsGenerator {
     }
     addMaxHp(cnt: number, hidxs?: number | number[], isOrder?: boolean) {
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder) });
+        if (hidxs?.length) this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder) });
         return this;
     }
     getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
@@ -183,9 +183,10 @@ export default class CmdsGenerator {
         });
         return this;
     }
-    summonTrigger(selectSummon: number, options: { trigger?: Trigger | Trigger[], isOppo?: boolean } = {}) {
+    summonTrigger(selectSummon: number | number[], options: { trigger?: Trigger | Trigger[], isOppo?: boolean } = {}) {
         const { trigger = 'phase-end', isOppo } = options;
-        this._add({ cmd: 'summonTrigger', cnt: selectSummon, trigger, isOppo })
+        selectSummon = convertToArray(selectSummon);
+        this._add({ cmd: 'summonTrigger', hidxs: selectSummon, trigger, isOppo })
         return this;
     }
     getSkill(hidx: number, skillId: number, skidx: number) {
@@ -264,6 +265,10 @@ export default class CmdsGenerator {
     }
     convertCard(eid: number, cid: number) {
         this._add({ cmd: 'convertCard', hidxs: [eid, cid] });
+        return this;
+    }
+    adventure() {
+        this._add({ cmd: 'adventure' });
         return this;
     }
     callback(cb: () => void) {

@@ -36,6 +36,9 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             if (event.talent && (ver.gte('v4.2.0') || ver.isOffline)) return { status: 114052 }
         }),
 
+    14155: () => new SkillBuilder('闪烈降临·大火山崩落').description('{dealDmg}，此技能视为[下落攻击]。')
+        .burst().readySkill().damage(4).handle(() => ({ isFallAtk: true })),
+
     15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}（或被扩散元素的伤害）。').elemental().readySkill().damage(2),
 
     15075: () => ski1507x(ELEMENT_TYPE.Cryo),
@@ -134,6 +137,11 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
             cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
             cmds.consumeNightSoul(hidx);
         }),
+
+    1151521: () => new SkillBuilder('援护射击').description('消耗1点「夜魂值」，对上一个敌方角色{dealDmg}，并治疗我方受伤最多的角色2点。')
+        .src('/image/tmp/Skill_S_Ifa_03.png')
+        .vehicle().damage(1).costAny(2).handle(({ cmds, heros }) =>
+            (cmds.consumeNightSoul(), { atkOffset: -1, heal: 2, hidxs: heros.getMaxHurtHidxs() })),
 
     1161021: () => new SkillBuilder('转转冲击').description('附属角色消耗1点「夜魂值」，{dealDmg}，对敌方下一个后台角色造成1点[穿透伤害]。')
         .src('#')

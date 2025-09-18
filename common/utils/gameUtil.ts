@@ -384,5 +384,6 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         isSwirlExec: false,
         atkHidx: player.hidx,
         isFirst: false,
+        adventureCnt: player.supports.find(s => s.card.hasSubtype(CARD_SUBTYPE.Adventure))?.cnt ?? 0,
     }
 }
