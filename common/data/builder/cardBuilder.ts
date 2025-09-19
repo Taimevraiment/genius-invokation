@@ -150,7 +150,7 @@ export class GICard {
                         if (card.useCnt == 0 && trigger == 'status-destroy' && source == readySkillStatus) {
                             cmds.clear();
                             execmds.clear();
-                            return { triggers: 'status-destroy', isDestroy: true }
+                            return { triggers: trigger, isDestroy: true }
                         }
                     } else if (destroyTriggers.includes(trigger) && card.useCnt == 0) {
                         cmds.clear();
@@ -518,7 +518,7 @@ export class CardBuilder extends BaseCostBuilder {
         if (this._subtype.includes(CARD_SUBTYPE.Weapon) || this._subtype.includes(CARD_SUBTYPE.Relic)) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {
-                return { notPreview: true, ...handle?.(card, event, ver) }
+                return { notPreview: event.slotUse, ...handle?.(card, event, ver) }
             };
         }
         if (this._tag.includes(CARD_TAG.NonDefeat)) this.addition(CARD_TAG.NonDefeat, 1);

@@ -185,7 +185,7 @@
               <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px;" />
             </template>
             <template v-else>
-              <template v-for="(attach, waidx) in willAttachs[hgi][hidx]" :key="waidx">
+              <template v-for="(attach) in willAttachs[hgi][hidx]">
                 <img v-if="!Array.isArray(attach)" class="will-attach" :src="ELEMENT_URL[attach]" alt="">
                 <div v-else class="will-attach-bg">
                   <img class="will-attach" v-for="(wa, waiidx) in attach" :key="waiidx" :src="ELEMENT_URL[wa]" alt="">

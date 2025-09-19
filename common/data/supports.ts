@@ -638,12 +638,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { trigger, isMinusDiceWeapon, isMinusDiceRelic } = event;
         const isMinus = support.cnt >= 3 && (isMinusDiceWeapon || isMinusDiceRelic);
         return {
-            triggers: ['summon-destroy-other', 'card'],
+            triggers: ['summon-destroy', 'card'],
             minusDiceCard: isCdt(isMinus, 2),
             isNotAddTask: trigger == 'card',
             exec: () => {
                 if (trigger == 'card' && isMinus) return { isDestroy: true }
-                if (trigger == 'summon-destroy-other' && support.cnt < 3) support.addCnt();
+                if (trigger == 'summon-destroy' && support.cnt < 3) support.addCnt();
             }
         }
     }),

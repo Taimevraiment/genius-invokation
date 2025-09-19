@@ -92,7 +92,7 @@ export default class CmdsGenerator {
     heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean } = {}) {
         let { hidxs, isOrder, notPreHeal: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (hidxs?.length) this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach });
+        if (hidxs?.length != 0) this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach });
         return this;
     }
     revive(cnt: number, hidxs?: number | number[]) {
@@ -102,7 +102,7 @@ export default class CmdsGenerator {
     }
     addMaxHp(cnt: number, hidxs?: number | number[], isOrder?: boolean) {
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (hidxs?.length) this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder) });
+        if (hidxs?.length != 0) this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder) });
         return this;
     }
     getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
@@ -186,7 +186,7 @@ export default class CmdsGenerator {
     summonTrigger(selectSummon: number | number[], options: { trigger?: Trigger | Trigger[], isOppo?: boolean } = {}) {
         const { trigger = 'phase-end', isOppo } = options;
         selectSummon = convertToArray(selectSummon);
-        this._add({ cmd: 'summonTrigger', hidxs: selectSummon, trigger, isOppo })
+        if (selectSummon.length) this._add({ cmd: 'summonTrigger', hidxs: selectSummon, trigger, isOppo })
         return this;
     }
     getSkill(hidx: number, skillId: number, skidx: number) {

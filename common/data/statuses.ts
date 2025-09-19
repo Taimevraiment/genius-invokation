@@ -767,7 +767,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             // if (trigger == 'revive') return { triggers: 'revive', exec: () => status.useCnt = 3 };
             if (hidx != sourceHidx || source != 122) return;
             cmds.addMaxHp(1, hidx);
-            return { triggers: 'status-destroy-other', exec: () => status.minusUseCnt() }
+            return { triggers: 'status-destroy', exec: () => status.minusUseCnt() }
         }),
 
     112141: nightSoul(),
@@ -1007,7 +1007,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方其他角色使用「普通攻击」或[特技]后：】消耗【hro】1点「夜魂值」，造成1点[火元素伤害]。（【hro】退出【sts113151】后销毁）')
         .handle((status, event) => {
             const { heros, cmds, trigger, source } = event;
-            if (trigger == 'status-destroy-other' && source == 113151) {
+            if (trigger == 'status-destroy' && source == 113151) {
                 return { triggers: trigger, exec: () => status.dispose() }
             }
             const hid = getHidById(status.id);
@@ -1225,7 +1225,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     114151: nightSoul({ isAccumate: false }),
 
-    114152: () => new StatusBuilder('极限驱动').heroStatus().icon('tmp/UI_Gcg_Buff_Varesa_Q')
+    114152: () => new StatusBuilder('极限驱动').heroStatus().icon('tmp/UI_Gcg_Buff_Varesa_S')
         .useCnt(1).type(STATUS_TYPE.Usage)
         .description('【〖hro〗[下落攻击]后：】[准备技能]：【rsk14155】。；[useCnt]')
         .handle((status, event) => {
@@ -1233,7 +1233,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'skill', status: 114153, exec: () => status.minusUseCnt() }
         }),
 
-    114153: () => readySkillStatus('闪烈降临·大火山崩落', 14155),
+    114153: () => readySkillStatus('闪烈降临·大火山崩落', 14155).icon('tmp/UI_Gcg_Buff_Varesa_Q'),
 
     114154: () => new StatusBuilder('突驰烈进').heroStatus().icon('tmp/UI_Gcg_Buff_Varesa_E')
         .useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
@@ -1286,12 +1286,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { isMinusDiceSkill, source, trigger } = event;
             const triggers: Trigger[] = ['skilltype2'];
-            if (source == 115041) triggers.push('status-destroy-other');
+            if (source == 115041) triggers.push('status-destroy');
             return {
                 triggers,
                 minusDiceSkill: { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Anemo },
                 exec: () => {
-                    if (trigger == 'status-destroy-other') status.dispose();
+                    if (trigger == 'status-destroy') status.dispose();
                     else if (isMinusDiceSkill) status.minusUseCnt();
                 }
             }
@@ -1317,11 +1317,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 }
                 const isQuickAction = trigger == 'minus-switch-to' && !iqa && status.perCnt > 0;
                 return {
-                    triggers: ['minus-switch-to', 'action-start', 'skilltype1'],
+                    triggers: ['minus-switch-to', 'useReadySkill', 'skilltype1'],
                     isQuickAction,
                     attachEl: swirlEl,
                     exec: () => {
-                        if (trigger == 'action-start' && heros.get(status.id)?.isFront) return cmds.useSkill({ skillType: SKILL_TYPE.Normal });
+                        if (trigger == 'useReadySkill' && heros.get(status.id)?.isFront) return cmds.useSkill({ skillType: SKILL_TYPE.Normal });
                         else if (trigger == 'skilltype1' && status.useCnt > 0) status.minusUseCnt();
                         if (isQuickAction) status.minusPerCnt();
                     },
@@ -1709,7 +1709,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('提供1点[护盾]，保护我方出战角色。；【此效果被移除，或被重复生成时：】造成1点[草元素伤害]，治疗我方出战角色1点。')
         .handle((_, event) => {
             const { combatStatus, talent, cmds, trigger } = event;
-            const triggers: Trigger[] = ['skilltype3', 'status-destroy'];
+            const triggers: Trigger[] = ['skilltype3', 'destroy'];
             if (combatStatus.has(117052)) triggers.push('phase-start');
             const res = triggers.includes(trigger) ? { damage: 1, heal: 1 } : {};
             return {
@@ -2057,7 +2057,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('为所附属角色提供2点[护盾]。', 'v4.6.0')
         .handle((status, event, ver) => {
             if (status.useCnt > 0 || ver.lt('v4.6.0')) return;
-            return { triggers: 'status-destroy', pdmg: 1, hidxs: event.eheros.allHidxs() }
+            return { triggers: 'destroy', pdmg: 1, hidxs: event.eheros.allHidxs() }
         }),
 
     123026: () => new StatusBuilder('火之新生·锐势').heroStatus().icon(STATUS_ICON.ElementAtkUp)
@@ -2432,10 +2432,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     222062: () => new StatusBuilder('元素生命·水').heroStatus().icon(STATUS_ICON.Special)
         .roundCnt(2).type(STATUS_TYPE.ImmuneDamage, STATUS_TYPE.Usage)
-        .description('角色总是[附着水元素]，并且免疫[水元素伤害]。；[roundCnt]')
-        .handle(() => {
-
-        }),
+        .description('角色总是[附着水元素]，并且免疫[水元素伤害]。；[roundCnt]'),
 
     223052: () => new StatusBuilder('罔极盛怒（生效中）').heroStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
@@ -2655,6 +2652,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             if (!event.hasDmg) return;
             return { triggers: 'elReaction', addDmgCdt: 2, exec: () => status.minusUseCnt() }
         }),
+
+    301210: () => new StatusBuilder('昔日宗室之仪（生效中）').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(2).type(STATUS_TYPE.AddDamage).from(312041)
+        .description('我方角色造成的伤害+1。；[useCnt]')
+        .handle((status, event) => ({ addDmg: 1, triggers: 'skill', exec: () => event.hasDmg && status.minusUseCnt() })),
 
     301301: () => shieldHeroStatus('掘进的收获').from(313004),
 
@@ -3288,11 +3290,25 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(333028)
         .description('【该角色[准备技能]时：】治疗自身1点。；[useCnt]')
         .handle((status, event) => {
-            const { hidx, sourceHidx, cmds } = event;
-            if (hidx != sourceHidx) return;
+            const { hidx, sourceHidx, cmds, hero } = event;
+            if (hidx != sourceHidx || !hero.isHurt) return;
             cmds.heal(1, { hidxs: hidx });
             return { triggers: 'ready-skill', exec: () => status.minusUseCnt() }
         }),
+
+    303323: () => new StatusBuilder('沉玉茶露（生效中）').heroStatus().useCnt(2)
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(333029)
+        .description('我方下2次冒险或结束阶段时，治疗所附属角色1点。')
+        .handle((status, event) => ({
+            triggers: ['adventure', 'phase-end'],
+            isAddTask: true,
+            exec: () => {
+                const { cmds, hidx, hero } = event;
+                if (!hero.isHurt) return true;
+                cmds.heal(1, { hidxs: hidx });
+                status.minusUseCnt();
+            }
+        })),
 
 };
 

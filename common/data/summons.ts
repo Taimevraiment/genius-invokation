@@ -17,12 +17,14 @@ const hero2206summon = () => {
     return new SummonBuilder('半幻人').useCnt(2).damage(1)
         .description('{defaultAtk。；【此卡牌被弃置时：】治疗我方【hro】2点。}')
         .src('/image/tmp/UI_Gcg_CardFace_Summon_Narcissusborn.png')
-        .handle((summon, event) => {
-            const { trigger, heros } = event;
-            if (trigger == 'summon-destroy') {
-                return { triggers: trigger, exec: cmds => cmds.heal(2, { hidxs: heros.get(summon.id)?.hidx }) }
+        .handle((summon, event) => ({
+            triggers: ['destroy', 'phase-end'],
+            exec: cmds => {
+                const { trigger, heros } = event;
+                if (trigger == 'destroy') return cmds.heal(2, { hidxs: heros.get(summon.id)?.hidx });
+                if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
             }
-        });
+        }));
 }
 
 
@@ -48,7 +50,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle((summon, event) => {
             const { heros, talent, trigger } = event;
             const hero = heros.get(summon.id);
-            if (['enter', 'summon-destroy'].includes(trigger)) {
+            if (['enter', 'destroy'].includes(trigger)) {
                 hero?.skills.forEach(skill => {
                     if (skill.type == SKILL_TYPE.Normal || skill.type == SKILL_TYPE.Elemental) {
                         skill.cost[2].cnt = trigger == 'enter' ? -1 : 0;

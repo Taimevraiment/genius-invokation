@@ -384,11 +384,10 @@ export default class GeniusInvokationClient {
         this._resetHeroSelect();
         this.isShowSwitchHero = 0;
         if (this.phase == PHASE.ACTION) {
-            const isCancel = this.handcardsSelect == cardIdx;
-            if (this.handcardsSelect != -1 && !isCancel && this.isMobile) this.mouseleave(this.handcardsSelect, true);
-            this.handcardsSelect = isCancel ? -1 : cardIdx;
+            if (this.handcardsSelect != -1 && this.handcardsSelect != cardIdx && this.isMobile) this.mouseleave(this.handcardsSelect, true);
+            this.handcardsSelect = this.handcardsSelect == cardIdx ? -1 : cardIdx;
             if (this.isMobile) {
-                if (isCancel) this.mouseenter(cardIdx, true);
+                if (this.handcardsSelect == cardIdx) this.mouseenter(cardIdx, true);
                 else this.mouseleave(cardIdx, true);
             }
         }

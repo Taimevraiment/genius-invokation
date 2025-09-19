@@ -185,7 +185,6 @@ type TrgDmg = 'el' | keyof typeof DAMAGE_TYPE;
 type TrgOppo = '-oppo' | '';
 type TrgGet = 'get-' | '';
 type TrgOther = 'other-' | '';
-type TrgOtherR = '-other' | '';
 type TrgAfter = 'after-' | '';
 type TrgActive = 'active-' | '';
 type TrgDice = 'add-' | 'minus-' | '';
@@ -199,7 +198,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
-    `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | 'useReadySkill' | `status-destroy${TrgOtherR}` | `summon-destroy${TrgOtherR}` |
+    `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | 'useReadySkill' | `status-destroy` | `summon-destroy` | 'destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' |
     `${TrgPre}get-status` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |

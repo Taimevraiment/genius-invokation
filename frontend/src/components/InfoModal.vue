@@ -347,8 +347,8 @@ const wrapExplCtt = (content: string) => {
 }
 type WrapExplainType = 'slot' | 'card' | 'support' | '';
 const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite == '' ? ` style='color:white;'` : ''}>${wrapExplCtt(ctt).name}</span>`;
-const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent }): string => {
-  const { isExplain, type = '', obj } = options;
+const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent, isRule?: boolean }): string => {
+  const { isExplain, type = '', obj, isRule } = options;
   let res = desc.slice()
     .replace(/\*入场时/, '入场时')
     .replace(/〔(\*?)(\[.+?\])?(.+?)〕/g, (_, nnc: string, f: string, ctt: string) => {
@@ -399,7 +399,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       }
       const [subtype] = objToArr(CARD_SUBTYPE_NAME).find(([, name]) => name == ctt) ?? [];
       if (subtype) wpicon ||= `<img style='width:18px;transform:translateY(20%);' src='${CARD_SUBTYPE_URL[subtype]}'/>`;
-      const underline = isUnderline == '' ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
+      const underline = isUnderline == '' && !isRule ? `border-bottom:2px solid ${color};cursor:pointer;` : '';
       // const underline = isUnderline == '' ? `text-decoration: underline;cursor:pointer;` : '';
       // const marginLeft = el == undefined || el == DAMAGE_TYPE.Pierce || el == DICE_TYPE.Same ? 'margin-left:2px;' : '';
       // return `${wpicon}<span style='color:${color};${underline}margin-right:2px;${marginLeft}'>${ctt}</span>`;
@@ -520,11 +520,11 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
 }
 
 const wrapRule = (...desc: string[]) => {
-  ruleExplain.value = [];
-  [...new Set(desc.join('').replace(/<img[^<>]+>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=\[).*?(?=\])/g))].forEach(title => {
+  [...new Set(desc.join('').replace(/<img.+?>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=[^*]\[).*?(?=\])/g))].forEach(title => {
     if (title in RULE_EXPLAIN) {
-      ruleExplain.value.push(`<div div style = 'font-weight:bold;border-top: 2px solid #6f84a0;padding-top:5px;' > ${wrapDesc(`*[${title}]`, { isExplain: true })} </div>`);
-      ruleExplain.value.push(...RULE_EXPLAIN[title].split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true })));
+      ruleExplain.value.push(`<div style='font-weight:bold;border-top:2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`, { isExplain: true, isRule: true })}</div>`);
+      ruleExplain.value.push(...RULE_EXPLAIN[title].split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true, isRule: true })));
+      wrapRule(...RULE_EXPLAIN[title].split(/(?<!\\)；/));
     }
   });
 }
@@ -657,7 +657,10 @@ const showDesc = (obj: boolean[], sidx: number) => {
 // 是否显示规则
 const showRule = (...desc: string[]) => {
   isShowRule.value = !isShowRule.value;
-  if (isShowRule.value) wrapRule(...desc);
+  if (isShowRule.value) {
+    ruleExplain.value = [];
+    wrapRule(...desc);
+  }
 }
 
 onMounted(() => {

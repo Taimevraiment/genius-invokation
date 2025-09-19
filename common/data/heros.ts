@@ -261,7 +261,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().damage(2).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(111141).getNightSoul(), {
                         status: [111142, 111143],
-                        isForbidden: heroStatus.has(111141),
+                        isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
                     })),
             new SkillBuilder('诸曜饬令').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。如可能，获得2点「夜魂值」。')
                 .src('https://patchwiki.biligame.com/images/ys/3/3d/q2dsp3cno86nz4hqmhelua8t7039p0m.png',
@@ -545,7 +545,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(112141).getNightSoul(2), {
                         equip: 112142,
-                        isForbidden: heroStatus.has(112141),
+                        isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
                     })),
             new SkillBuilder('爆瀑飞弹').description('{dealDmg}，召唤【smn112144】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/20/deylgtgmao0abaizxdec4d3ya8ivhoq.png',
@@ -1130,7 +1130,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Char_Avatar_Varesa.webp')
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Varesa.png')
         .normalSkill(new NormalSkillBuilder('角力搏摔').description('【此次技能为[下落攻击]时：】造成的伤害+1，自身进入【sts114151】，并获得1点「夜魂值」。')
-            .handle(({ cmds, isFallAtk }) => (cmds.getStatus(114151).getNightSoul(1), { addDmgCdt: +isFallAtk })))
+            .handle(event => {
+                if (!event.isFallAtk) return;
+                event.cmds.getStatus(114151).getNightSoul(1);
+                return { addDmgCdt: 1 }
+            }))
         .skills(
             new SkillBuilder('夜虹逐跃').description('{dealDmg}，自身附属【sts114154】，进入【sts114151】，并获得1点「夜魂值」，然后我方切换到下一个角色。')
                 .src('/image/tmp/Skill_S_Varesa_01.png',
@@ -1146,7 +1150,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => {
                     const { hero: { heroStatus }, hidx, cmds } = event;
                     if (heroStatus.getUseCnt(STATUS_TYPE.NightSoul) != 2) return;
-                    cmds.consumeNightSoul(2, hidx).getStatus(114152);
+                    cmds.consumeNightSoul(hidx, 2).getStatus(114152, { hidxs: hidx });
                     return { triggers: 'after-skill' }
                 })
         ),
@@ -1331,7 +1335,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     cmds.getCard(1).getStatus(115111).getNightSoul(2), {
                         equip: 115112,
                         status: 115118,
-                        isForbidden: heroStatus.has(115111),
+                        isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
                     })),
             new SkillBuilder('索魂命袭').description('{dealDmg}，对敌方所有后台角色造成1点穿透伤害，并抓3张牌。')
                 .src('https://patchwiki.biligame.com/images/ys/4/47/c00k2jsyfpdgrf5w14na5o4p9v30jxj.png',
@@ -1406,10 +1410,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_AvatarIcon_Ifa.png')
         .normalSkill('祛风妙仪')
         .skills(
-            new SkillBuilder('空天疾护').description('{dealDmg}，自身进入【sts115151】，获得2点「夜魂值」，并附属【crd115152】。')
+            new SkillBuilder('空天疾护').description('{dealDmg}，自身进入【sts115151】，获得2点「夜魂值」，并附属【crd115152】。（角色进入【sts115151】后不可使用此技能）')
                 .src('/image/tmp/Skill_S_Ifa_01.png',
                     '')
-                .elemental().damage(1).cost(2).handle(({ cmds }) => (cmds.getStatus(115151).getNightSoul(2), { equip: 115152 })),
+                .elemental().damage(1).cost(2).handle(({ cmds, hero: { heroStatus } }) => (
+                    cmds.getStatus(115151).getNightSoul(2), {
+                        equip: 115152,
+                        isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
+                    })),
             new SkillBuilder('复合镇静域').description('{dealDmg}，治疗我方受伤最多的角色2点。如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【sts115150】。')
                 .src('/image/tmp/Skill_E_Ifa_01_HD.png',
                     '')
@@ -1584,7 +1592,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(116104).getNightSoul(2), {
                         equip: 116102,
-                        isForbidden: heroStatus.has(116104),
+                        isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
                     })),
             new SkillBuilder('现在，认真时间！').description('{dealDmg}，生成【sts116101】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/95/ik3phxdr9icvfhohdju4ryyx1ewp9h2.png',
@@ -1604,7 +1612,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .elemental().cost(2).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(116111).getNightSoul(), {
                         equip: 116112,
-                        isForbidden: heroStatus.has(116111),
+                        isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
                     })),
             new SkillBuilder('豹烈律动！').description('{dealDmg}，抓1张牌，并且治疗我方受伤最多的角色1点。每层【sts116113】额外抓1张牌，每层其他属性的【源音采样】额外治疗1点。')
                 .src('https://patchwiki.biligame.com/images/ys/9/99/7t1wr991s8zzctfskenrhjagtj5l6bg.png',
@@ -2057,13 +2065,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('/image/tmp/MonsterSkill_S_Narcissusborn_01.png',
                     '')
                 .elemental().damage(2).cost(3).handle(event => {
-                    const { cmds, hero: { hp }, randomInArr, summons } = event;
-                    return { pdmgSelf: isCdt(hp >= 2, 1), notPreview: true, exec: () => cmds.summonTrigger(randomInArr(summons)[0].entityId) }
+                    const { cmds, hero: { hp }, randomInt, summons } = event;
+                    return {
+                        pdmgSelf: isCdt(hp >= 2, 1),
+                        notPreview: true,
+                        exec: () => cmds.summonTrigger(randomInt(summons.length - 1)),
+                    }
                 }),
             new SkillBuilder('洪啸').description('{dealDmg}，触发我方所有「召唤物」的「结束阶段」效果。')
                 .src('/image/tmp/MonsterSkill_E_Narcissusborn_01_HD.png',
                     '')
-                .burst(3).damage(4).cost(3).handle(({ cmds, summons }) => ({ exec: () => cmds.summonTrigger(summons.map(s => s.entityId)) })),
+                .burst(3).damage(4).cost(3).handle(({ cmds, summons }) => cmds.summonTrigger(summons.map(s => s.entityId)).res),
             new SkillBuilder('分流').description('【自身生命值不低于3，我方〖smn122061〗以外的「召唤物」离场时：】自身受到2点[穿透伤害]，召唤1个独立的【smn122061】。（每回合1次）')
                 .src('/image/tmp/MonsterSkill_S_Narcissusborn_02.png',
                     '')

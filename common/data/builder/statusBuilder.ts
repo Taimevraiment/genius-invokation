@@ -3,7 +3,7 @@ import { CARD_TYPE, DAMAGE_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusT
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
-import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
+import { getElByHid, getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
 import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
 
@@ -101,7 +101,7 @@ export class GIStatus {
         if (type.includes(STATUS_TYPE.Shield)) {
             this.UI.icon ||= STATUS_ICON.Shield;
             thandle = (status, event) => {
-                let { restDmg = -1 } = event;
+                let { restDmg } = event;
                 let rest: StatusBuilderHandleRes = {};
                 if (handle) {
                     const { restDmg: dmg = -1, ...other } = handle(status, event, versionWrap(ver)) ?? {};
@@ -115,10 +115,24 @@ export class GIStatus {
         } else if (type.includes(STATUS_TYPE.Barrier) && this.UI.icon == '') {
             this.UI.icon = STATUS_ICON.Barrier;
             thandle = (status, event) => {
-                const { restDmg = -1 } = event;
+                const { restDmg } = event;
                 const handleres = handle?.(status, event, versionWrap(ver)) ?? {};
                 if (restDmg == -1) return handleres;
                 return { ...handleres, triggers: 'reduce-dmg' }
+            }
+        } else if (type.includes(STATUS_TYPE.ImmuneDamage)) {
+            thandle = (status, event) => {
+                const { dmgElement, trigger, cmds } = event;
+                const el = getElByHid(hid);
+                const res = handle?.(status, event, versionWrap(ver));
+                if (trigger == 'reduce-dmg' && dmgElement == el) {
+                    return { ...res, restDmg: 0, triggers: trigger }
+                }
+                if (trigger == 'enter') {
+                    cmds.attach({ element: el });
+                    return { ...res, triggers: trigger }
+                }
+                return res;
             }
         } else if (type.includes(STATUS_TYPE.NonEvent)) {
             this.UI.icon = STATUS_ICON.DebuffCountered01;
@@ -418,9 +432,7 @@ export class StatusBuilder extends BaseBuilder {
         const roundCnt = this._roundCnt.get(this._curVersion, -1);
         const smnId = this._summonId == -2 ? this._id : this._summonId;
         const maxCnt = this._maxCnt.get(this._curVersion, 0);
-        this._typeCdt.forEach(([cdt, types]) => {
-            if (cdt(versionWrap(this._curVersion))) this._type.push(...types);
-        });
+        this._typeCdt.forEach(([cdt, types]) => cdt(versionWrap(this._curVersion)) && this._type.push(...types));
         if (this._type.includes(STATUS_TYPE.NonDefeat)) this.addition(STATUS_TYPE.NonDefeat, 1);
         if (this._type.includes(STATUS_TYPE.Barrier)) this.addition(STATUS_TYPE.Barrier, 1);
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?

@@ -1156,14 +1156,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Shuixianxiao.webp')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            event.cmds.adventure();
+            event.execmds.adventure();
             return { triggers: 'after-skilltype2', exec: () => card.minusPerCnt() }
         }),
 
     312041: () => new CardBuilder(529).name('昔日宗室之仪').since('v6.1.0').relic().costSame(2)
         .description('【入场时：】使所附属角色获得1点[充能]。；【所附属角色使用「元素爆发」后：】我方角色下2次造成的伤害+1。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
-        .handle((_, { cmds }) => (cmds.getEnergy(1), { triggers: 'after-skilltype3', status: 301210 })),
+        .handle((_, { cmds, execmds }) => (cmds.getEnergy(1), execmds.getStatus(301210), { triggers: 'after-skilltype3' })),
 
     312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
@@ -2145,8 +2145,8 @@ const allCards: Record<number, () => CardBuilder> = {
                 isValid: summons.length + esummons.length >= 2,
                 notPreview: true,
                 exec: () => {
-                    if (summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
-                    if (esummons.length) cmds.summonTrigger(randomInt(esummons.length - 1), { isOppo: true });
+                    cmds.summonTrigger(randomInt(summons.length - 1));
+                    cmds.summonTrigger(randomInt(esummons.length - 1), { isOppo: true });
                 }
             }
         }),
@@ -2850,9 +2850,10 @@ const allCards: Record<number, () => CardBuilder> = {
     214151: () => new CardBuilder(524).name('正义英雄的凯旋').since('v6.1.0').talent().costElectro(2).perCnt(2)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【其他我方角色使用技能后：】【hro】附属【sts114154】。（每回合2次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Varesa.webp')
-        .handle(card => {
+        .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            return { triggers: 'after-other-skill', status: 114154, exec: () => card.minusPerCnt() }
+            event.execmds.getStatus(114154, { hidxs: event.hidx });
+            return { triggers: 'after-other-skill', exec: () => card.minusPerCnt() }
         }),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
@@ -2973,7 +2974,10 @@ const allCards: Record<number, () => CardBuilder> = {
             cmds.heal(1, { hidxs: heros.getMinHpHidxs() });
             if (card.perCnt <= 0) return;
             execmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
-            return { triggers: ['elReaction-Anemo', 'ElectroCharged'], exec: () => card.minusPerCnt() }
+            return {
+                triggers: ['elReaction-Anemo', 'other-elReaction-Anemo', 'other-ElectroCharged', 'ElectroCharged'],
+                exec: () => card.minusPerCnt(),
+            }
         }),
 
     216011: () => new CardBuilder(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(3).costGeo(4, 'v6.0.0')
@@ -3494,7 +3498,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b7987132c27e1baeebf379498453f17f_5843656174627783133.png')
         .handle((_, event) => {
             const { summons, cmds, randomInt } = event;
-            if (summons.length) cmds.summonTrigger(randomInt(summons.length - 1));
+            cmds.summonTrigger(randomInt(summons.length - 1));
             return { notPreview: true }
         }),
 
