@@ -58,7 +58,7 @@ export class GISupport {
         this.type = type;
         this.heal = heal;
         this.handle = (support, event) => {
-            if (event.reset && perCnt > 0) {
+            if (event.trigger == 'reset' && perCnt > 0) {
                 support.perCnt = perCnt;
                 return { notLog: true, isNotAddTask: true, triggers: ['reset'] }
             }

@@ -87,7 +87,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const triggers: Trigger[] = ['phase-end'];
             const hidxs = heros.getMaxHurtHidxs();
             const isHeal = hero.id == getHidById(summon.id) && trigger == 'after-skilltype1' && hidxs.length > 0;
-            const hasTround = ver.gte('v4.7.0') && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHurt;
+            const hasTround = (ver.gte('v4.7.0') || ver.isOffline) && trigger == 'after-skilltype1' && tround == 0 && summon.perCnt > 0 && hero.isHurt;
             if (isHeal) triggers.push('after-skilltype1');
             return {
                 triggers,
@@ -229,7 +229,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【当此召唤物在场且〖hro〗在我方后台，我方出战角色受到伤害时：】抵消1点伤害\\；然后，如果【hro】生命值至少为7，则对其造成1点[穿透伤害]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((_, event) => {
-            if (event.reset) return { status: 113094 }
+            const { trigger } = event;
+            if (['enter', 'reset'].includes(trigger)) return { triggers: trigger, status: 113094 }
             return { triggers: 'phase-end' }
         }),
 
@@ -378,8 +379,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}；【当此召唤物在场，我方出战角色受到伤害时：】抵消1点伤害。（每回合1次）；【我方角色受到‹1冰›/‹2水›/‹3火›/‹4雷›元素伤害时：】转换此牌的元素类型，改为造成所受到的元素类型的伤害。（离场前仅限一次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
         .handle((summon, event) => {
-            const { reset, trigger, dmgElement } = event;
-            if (reset) return { status: 115083 }
+            const { trigger, dmgElement } = event;
+            if (['enter', 'reset'].includes(trigger)) return { triggers: trigger, status: 115083 }
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo) {
                 triggers.push('Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg');
@@ -413,7 +414,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
-    115143: () => new SummonBuilder('小貘').useCnt(3).icon(STATUS_ICON.Special).addition('effect', 1)
+    115143: () => new SummonBuilder('小貘').useCnt(3).icon(STATUS_ICON.Special).variables('effect', 1)
         .description('【结束阶段：】生成1张【crd115142】，将其置于我方牌组顶部。；[useCnt]')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/3239cfe075a9f6225356b5b540fb499d_7481632229215926025.png')
         .handle(summon => ({
@@ -663,15 +664,15 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const isAtkHero = hero.id == hid;
             const isDmgedHero = dmgedHero?.id == hid && getdmg[dmgedHidx] != -1;
             const isTalent = isAtkHero && talent?.perCnt == -1 && ['after-skilltype1', 'after-skilltype2'].includes(trigger);
-            if (ver.lt('v4.1.0') || isDmgedHero) triggers.push('get-elReaction');
-            if (trigger == 'get-elReaction' && (ver.lt('v4.1.0') || isDmgedHero)) summon.minusUseCnt();
+            if (ver.lt('v4.1.0') && !ver.isOffline || isDmgedHero) triggers.push('get-elReaction');
+            if (trigger == 'get-elReaction' && (ver.lt('v4.1.0') && !ver.isOffline || isDmgedHero)) summon.minusUseCnt();
             if (isAtkHero && isTalent) triggers.push(trigger);
             return {
                 triggers,
                 isNotAddTask: !isTalent && trigger != 'phase-end',
                 exec: cmds => {
                     if (isTalent) {
-                        talent.perCnt = 0;
+                        talent.setPerCnt();
                         return cmds.attack(2);
                     }
                     if (trigger == 'phase-end') summon.phaseEndAtk(cmds);
@@ -850,24 +851,24 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .description('{defaultAtk。}').tag(SUMMON_TAG.Simulanka)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/80704cf14d47841ff54dfd658bdffba4_5364615516522900370.png'),
 
-    301029: () => new SummonBuilder('折纸飞鼠').from(301034).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Special)
+    301029: () => new SummonBuilder('折纸飞鼠').from(301034).useCnt(2).variables('effect', 1).icon(STATUS_ICON.Special)
         .description(`【结束阶段：】获得{effect}层【sts169】。；[useCnt]`).tag(SUMMON_TAG.Simulanka)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b1d95145d18301e8c5d22b8f314d95b3_4086315130176794183.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: cmds => {
-                cmds.getStatus([[169, summon.addition.effect]]);
+                cmds.getStatus([[169, summon.variables.effect]]);
                 summon.minusUseCnt();
             }
         })),
 
-    301030: () => new SummonBuilder('跳跳纸蛙').from(301035).useCnt(2).addition('effect', 1).icon(STATUS_ICON.Special)
+    301030: () => new SummonBuilder('跳跳纸蛙').from(301035).useCnt(2).variables('effect', 1).icon(STATUS_ICON.Special)
         .description(`【结束阶段：】抓{effect}张牌。；[useCnt]`).tag(SUMMON_TAG.Simulanka)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/40278ec42e615000753d766e5e6ddf22_1265067356573715766.png')
         .handle(summon => ({
             triggers: 'phase-end',
             exec: cmds => {
-                cmds.getCard(summon.addition.effect);
+                cmds.getCard(summon.variables.effect);
                 summon.minusUseCnt();
             }
         })),

@@ -361,7 +361,7 @@
             <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill"
               :class="{ 'is-change': summonBottomCurcnt[saidx][suidx].isChange }">
               {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal > 0 ? summon.shieldOrHeal :
-                (summon.addition.effect ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
+                (summon.variables.effect ?? '') }}{{ summon.UI.hasPlus ? "+" : "" }}
             </StrokedText>
           </template>
         </div>
@@ -543,7 +543,7 @@ const player = computed<Player>(() => {
             summonTopCurcnt.value[pi][smni] = { sid: smn.id, val: smn.useCnt, isChange: false };
           }
         }
-        const summonBottomCnt = Math.max(smn.damage, Math.abs(smn.shieldOrHeal), smn.addition?.[0] ?? -1);
+        const summonBottomCnt = Math.max(smn.damage, Math.abs(smn.shieldOrHeal), smn.variables?.[0] ?? -1);
         if (summonBottomCurcnt.value[pi][smni].val != summonBottomCnt) {
           if (summonBottomCurcnt.value[pi][smni].sid == smn.id) {
             summonBottomCurcnt.value[pi][smni] = { sid: smn.id, val: summonBottomCnt, isChange: true };

@@ -340,7 +340,7 @@ const wrapExplCtt = (content: string) => {
           type == 'ski' ? newHero(cversion, options)(a1).skills[a2] :
             type == 'hro' ? newHero(cversion, options)(a1) :
               { name: content, default: true };
-  if ((botFlag != 'null' && (+isBot.value ^ +(botFlag == 'bot')))) {
+  if ((botFlag != 'null' && (isBot.value != (botFlag == 'bot')))) {
     return { name: res.name, default: true }
   }
   return res;
@@ -416,7 +416,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
       const dmg = Number(res.match(/{dmg\+?(\d*)}/)?.[1]) || 0;
       res = res.replace(/{dmg\+?\d*}/g, `${Math.abs(obj.damage + dmg)}`);
     }
-    if ('addition' in obj) res = res.replace('{effect}', `${obj.addition.effect ?? 0}`);
+    if ('variables' in obj) res = res.replace('{effect}', `${obj.variables.effect ?? 0}`);
     if ('useCnt' in obj && 'roundCnt' in obj) res = res.replace('{useCnt}', `${obj.useCnt > -1 ? obj.useCnt : obj.roundCnt}`);
     if ('useCnt' in obj && !('roundCnt' in obj)) res = res.replace('{useCnt}', `${obj.useCnt}`);
     if ('roundCnt' in obj) res = res.replace('{roundCnt}', `${obj.roundCnt}`); // Status

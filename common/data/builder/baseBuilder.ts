@@ -285,7 +285,6 @@ export interface EntityHandleEvent {
     ehidx: number,
     eCombatStatus: ArrayStatus,
     epile: Card[],
-    reset: boolean,
     hcard: Card | null,
     trigger: Trigger,
     summons: ArraySummon,

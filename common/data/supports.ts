@@ -93,20 +93,20 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     321008: () => new SupportBuilder().collection(2).round(3, 'v6.0.0')
         .handle((support, event, ver) => {
             const { dices, trigger } = event;
-            if (ver.gte('v6.0.0') && (dices.length % 2 == 0 || (trigger != 'phase-start' && support.cnt == 0))) return;
+            if ((ver.gte('v6.0.0') || ver.isOffline) && (dices.length % 2 == 0 || (trigger != 'phase-start' && support.cnt == 0))) return;
             const triggers: Trigger[] = ['phase-start'];
-            triggers.push(ver.lt('v6.0.0') ? 'enter' : 'after-skill');
+            triggers.push(ver.lt('v6.0.0') && !ver.isOffline ? 'enter' : 'after-skill');
             return {
                 triggers,
                 isNotAddTask: trigger == 'phase-start',
                 exec: cmds => {
-                    if (ver.lt('v6.0.0')) cmds.getDice(1, { mode: CMD_MODE.Random });
+                    if (ver.lt('v6.0.0') && !ver.isOffline) cmds.getDice(1, { mode: CMD_MODE.Random });
                     else cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
-                    if (trigger == 'phase-start' && ver.gte('v6.0.0')) {
+                    if (trigger == 'phase-start' && (ver.gte('v6.0.0') || ver.isOffline)) {
                         support.setCnt(2);
                         return;
                     }
-                    return { isDestroy: support.minusCnt() == 0 && ver.lt('v6.0.0') }
+                    return { isDestroy: support.minusCnt() == 0 && ver.lt('v6.0.0') && !ver.isOffline }
                 }
             }
         }),
@@ -669,7 +669,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { hcard, isMinusDiceCard, pile } = event;
         if (!hcard || !hcard.hasSubtype(CARD_SUBTYPE.Ally)) return;
         const isMinus = isMinusDiceCard && support.perCnt > 0;
-        const isGetCard = ver.gte('v4.1.0') && support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally));
+        const isGetCard = (ver.gte('v4.1.0') || ver.isOffline) && support.cnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally));
         return {
             triggers: 'card',
             isNotAddTask: !isGetCard,
@@ -811,7 +811,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 亚瑟先生
     322026: () => new SupportBuilder().collection().handle((support, event) => {
         const { trigger, epile } = event;
-        if (+(support.cnt >= 2) ^ +(trigger == 'phase-end' && epile.length > 0)) return;
+        if (support.cnt >= 2 != (trigger == 'phase-end' && epile.length > 0)) return;
         return {
             triggers: ['discard', 'reconcile', 'phase-end'],
             exec: cmds => {
@@ -859,7 +859,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 if (trigger == 'summon-generate' && sourceSummon) {
                     if (sourceSummon.id == 301028) ++sourceSummon.damage;
                     else if (sourceSummon.id == 3010301) ++sourceSummon.shieldOrHeal;
-                    else ++sourceSummon.addition.effect;
+                    else ++sourceSummon.variables.effect;
                     return { isDestroy: support.minusCnt() == 0 }
                 }
             },

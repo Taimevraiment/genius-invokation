@@ -142,7 +142,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 111073 }))
         ),
 
-    1108: () => new HeroBuilder(8).name('七七').since('v4.0.0').liyue().cryo().sword()
+    1108: () => new HeroBuilder(8).name('七七').since('v4.0.0').offline('v3').liyue().cryo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png')
         .normalSkill('云来古剑法')
@@ -329,7 +329,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(event => ({ triggers: 'active-switch-from', isNotAddTask: true, isQuickAction: event.skill.useCntPerRound == 0 }))
         ),
 
-    1204: () => new HeroBuilder(12).name('达达利亚').since('v3.7.0').fatui().hydro().bow()
+    1204: () => new HeroBuilder(12).name('达达利亚').since('v3.7.0').offline('v3').fatui().hydro().bow()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a892e95a4bfde50980ebda3eb93e0ea3_7272571451164412234.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/013727346ac991708abee93c3dca762a.png')
         .normalSkill('断雨')
@@ -348,7 +348,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/3/3f/s2ril7y96ghgom0365u65uu1iq3hdoe.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/de5fd6fc3f4530233cba1774deea0706_8854785564582245062.png')
                 .burst(3).damage(5).damage(4, 'v4.1.0').cost(3).handle((event, ver) => {
-                    if (event.hero.heroStatus.has(112042)) return { addDmgCdt: ver.lt('v4.1.0') ? 3 : 2 }
+                    if (event.hero.heroStatus.has(112042)) return { addDmgCdt: ver.lt('v4.1.0') && !ver.isOffline ? 3 : 2 }
                     return { statusOppo: 112043, energy: 2 }
                 }),
             new SkillBuilder('遏浪').description('战斗开始时，初始附属【sts112041】。；角色所附属的【sts112042】效果结束时，重新附属【sts112041】。')
@@ -384,7 +384,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1206: () => new HeroBuilder(14).name('神里绫人').since('v3.6.0').inazuma().hydro().sword()
+    1206: () => new HeroBuilder(14).name('神里绫人').since('v3.6.0').offline('v3').inazuma().hydro().sword()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/8abc91faf473b3d11fb53db32862737a_4252453982763739636.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/774d77ccc6fe33be0c5953238090d926.png')
         .normalSkill('神里流·转')
@@ -613,7 +613,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ pdmg: 2 }))
         ),
 
-    1305: () => new HeroBuilder(21).name('宵宫').inazuma().pyro().bow()
+    1305: () => new HeroBuilder(21).name('宵宫').offline('v3').inazuma().pyro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0ab761b86c16f0c1f8088132e488d641_2788225354118870949.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6230c2cdf9f915b6297d0782e6510ad.png')
         .normalSkill('烟火打扬')
@@ -662,7 +662,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1308: () => new HeroBuilder(24).name('烟绯').since('v3.8.0').liyue().pyro().catalyst()
+    1308: () => new HeroBuilder(24).name('烟绯').since('v3.8.0').offline('v3').liyue().pyro().catalyst()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/df1805ae68d4dee99369058360f397cd_6712537786885000576.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/c3cba1bf2d63f748a32392d259264ccc.png')
         .normalSkill('火漆印制')
@@ -711,7 +711,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(3).cost(3).handle(() => ({ summon: 113101, status: 113102 }))
         ),
 
-    1311: () => new HeroBuilder(319).name('托马').since('v4.4.0').inazuma().pyro().polearm()
+    1311: () => new HeroBuilder(319).name('托马').since('v4.4.0').offline('v3').inazuma().pyro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/a21241c40833d2aee5336ae8fdd58c41_7254789917363324478.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/23fd1154d3898bf8082c562634250f8d.png')
         .normalSkill('迅破枪势')
@@ -861,7 +861,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(4).cost(3).handle(() => ({ pdmg: 2 }))
         ),
 
-    1402: () => new HeroBuilder(27).name('雷泽').mondstadt().electro().claymore()
+    1402: () => new HeroBuilder(27).name('雷泽').offline('v3').mondstadt().electro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/52cc6519a87290840830b64f25117070_8992911737218383504.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/04a1d8fdbc395113542897c6ea6f13c5.png')
         .normalSkill('钢脊')
@@ -946,7 +946,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(4).handle(() => ({ summon: 114062 }))
         ),
 
-    1407: () => new HeroBuilder(32).name('雷电将军').since('v3.7.0').inazuma().electro().polearm()
+    1407: () => new HeroBuilder(32).name('雷电将军').since('v3.7.0').offline('v3').inazuma().electro().polearm()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e9cb40e812da2147e3786f7cc3b2bd7d_208524583698335951.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4069a33a82e3fc1327f97e14de6d16eb.png')
         .normalSkill('源流')
@@ -960,8 +960,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/e32265b2715186774b8d4bcf3d918880_1471851977626289486.png')
                 .burst(2).damage(3).cost(3).cost(4, 'v5.7.0').handle(event => {
                     const { heros, talent, hero: { heroStatus }, cmds } = event;
-                    cmds.getEnergy(2, { hidxs: heros.getBackHidxs() })
-                    return { addDmgCdt: (heroStatus.getUseCnt(114072)) * (talent ? 2 : 1) }
+                    cmds.getEnergy(2, { hidxs: heros.getBackHidxs() });
+                    return { addDmgCdt: heroStatus.getUseCnt(114072) * (talent ? 2 : 1) }
                 }),
             new SkillBuilder('诸愿百眼之轮').description('战斗开始时，初始附属【sts114072】。')
                 .src('https://patchwiki.biligame.com/images/ys/0/0f/5ardhper4s2i541lmywmazv31hfn0q9.png',
@@ -969,7 +969,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 114072 }))
         ),
 
-    1408: () => new HeroBuilder(33).name('八重神子').since('v3.7.0').inazuma().electro().catalyst()
+    1408: () => new HeroBuilder(33).name('八重神子').since('v3.7.0').offline('v3').inazuma().electro().catalyst()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/7e55525ee5cff216360b46322aa107ee_5470950562732053429.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/82839e50c43ef6d72676e9b6957fadba.png')
         .normalSkill('狐灵食罪式')
@@ -978,7 +978,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .description('召唤【smn114081】。', 'v5.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/3/3d/guf5f3kk06kmo3y0uln71jqsovem8yk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/5d52bb5027ee98ea6295c7cbe6f75260_4362138600485261556.png')
-                .elemental().cost(3).handle((event, ver) => ({ summon: [[114081, isCdt(ver.gte('v5.3.0') && event.summons.has(114081), 2)]] })),
+                .elemental().cost(3).handle((event, ver) =>
+                    ({ summon: [[114081, isCdt((ver.gte('v5.3.0') || ver.isOffline) && event.summons.has(114081), 2)]] })),
             new SkillBuilder('大密法·天狐显真').description('{dealDmg}\\；如果我方场上存在【smn114081】，则将其消灭，然后生成【sts114083】。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ea/8y36keriq61eszpx5mm5ph7fvwa07ad.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/b5ebdd77cfd7a6e12d1326c08e8f9214_6239158387266355120.png')
@@ -1104,11 +1105,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合3次）')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/371370a0816db0ff4c07a72e3dda8957_3785382152197264817.png')
-                .passive().addition('switch').perCnt(3).handle(event => {
+                .passive().variables('switch').perCnt(3).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
                     const nightSoul = hero.heroStatus.get(114141);
                     if (!nightSoul || (skill.perCnt <= 0 && trigger != 'switch')) return;
-                    if ((trigger == 'switch' && skill.perCnt > 0 && skill.addition.switch == 1) || trigger == 'ready-skill') {
+                    if ((trigger == 'switch' && skill.perCnt > 0 && skill.variables.switch == 1) || trigger == 'ready-skill') {
                         if (nightSoul.useCnt != 2) cmds.getNightSoul(1, hero.hidx);
                         else {
                             const hidxs = heros.getMaxHurtHidxs();
@@ -1119,8 +1120,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         triggers: ['ready-skill', 'switch'],
                         exec: () => {
-                            if (trigger == 'ready-skill' || (skill.addition.switch == 1 && skill.perCnt > 0)) skill.minusPerCnt();
-                            if (trigger == 'switch') skill.addition.switch = (skill.addition.switch + 1) % 2;
+                            if (trigger == 'ready-skill' || (skill.variables.switch == 1 && skill.perCnt > 0)) skill.minusPerCnt();
+                            if (trigger == 'switch') skill.variables.switch = (skill.variables.switch + 1) % 2;
                         }
                     }
                 })
@@ -1219,7 +1220,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1505: () => new HeroBuilder(40).name('枫原万叶').since('v3.8.0').inazuma().anemo().sword()
+    1505: () => new HeroBuilder(40).name('枫原万叶').since('v3.8.0').offline('v3').inazuma().anemo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/0aedb983698b4d5abcd1a4405a0ed634_7726035612370611710.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/83f16b6621747e630856b4e1a831f750.png')
         .normalSkill('我流剑术')
@@ -1371,12 +1372,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('勠心拳').description('[准备技能]：【rsk15135】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/20/07procgc99pweylzwcaucr8f14p9q3w.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/801abac38b832f558caa5e9640bc77b5_663641721514699737.png')
-                .elemental().cost(3).addition('addDmg').handle(({ hero: { heroStatus }, skill }) => {
+                .elemental().cost(3).variables('addDmg').handle(({ hero: { heroStatus }, skill }) => {
                     const isTriggered = (heroStatus.getUseCnt(115132)) >= 2;
                     return {
                         status: 115131,
                         isQuickAction: isTriggered,
-                        exec: () => isTriggered && (skill.addition.addDmg = +isTriggered),
+                        exec: () => isTriggered && (skill.variables.addDmg = +isTriggered),
                     }
                 }),
             new SkillBuilder('聚风蹴').description('{dealDmg}，如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【nbotsts115130】。')
@@ -1493,7 +1494,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).cost(3).handle(event => ({ addDmgCdt: isCdt(event.summons.has(116041), 2) }))
         ),
 
-    1605: () => new HeroBuilder(46).name('荒泷一斗').since('v3.6.0').inazuma().geo().claymore()
+    1605: () => new HeroBuilder(46).name('荒泷一斗').since('v3.6.0').offline('v3').inazuma().geo().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/0f6a96fb219e919f92c2768dd4a8d17d_2763599020845762537.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a7f896027d32b91c3cbab7a77d53b62e.png')
         .normalSkill('喧哗屋传说')
@@ -1508,7 +1509,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(4).damage(5, 'v4.2.0').cost(3).handle(() => ({ status: 116053 }))
         ),
 
-    1606: () => new HeroBuilder(283).name('五郎').since('v4.3.0').inazuma().geo().bow()
+    1606: () => new HeroBuilder(283).name('五郎').since('v4.3.0').offline('v3').inazuma().geo().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/a7a11aafd2166bd18514eb85107bbe6f_8372190332816763613.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/25cce22b0e3bb52323b98ca51942645c.png')
         .normalSkill('呲牙裂扇箭')
@@ -1652,7 +1653,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 117011 }))
         ),
 
-    1702: () => new HeroBuilder(48).name('提纳里').since('v3.6.0').sumeru().dendro().bow()
+    1702: () => new HeroBuilder(48).name('提纳里').since('v3.6.0').offline('v3').sumeru().dendro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/33a72f8ddf94c32c750dd7c5c75d928e_176590332162344255.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0ca272d70321db004cae3cb271b330f3.png')
         .normalSkill('藏蕴破障')
@@ -1748,7 +1749,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1707: () => new HeroBuilder(336).name('绮良良').since('v4.5.0').inazuma().dendro().sword()
+    1707: () => new HeroBuilder(336).name('绮良良').since('v4.5.0').offline('v3').inazuma().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/650f884967057168a0b9b4025a032c11_2097188456727270580.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5a8903dcc480dd442f17404bd3630d93.png')
         .normalSkill('箱纸切削术')
@@ -1820,7 +1821,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').fatui().cryo()
+    2101: () => new HeroBuilder(52).name('愚人众·冰萤术士').since('v3.7.0').offline('v3').fatui().cryo()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/549d1869ad1f7d1d27fb5c733a239373_8053361497142459397.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/22a03af7f319a9d1583bc8d33781c241.png')
         .normalSkill(new NormalSkillBuilder('冰萤棱锥').catalyst().handle(event => {
@@ -1909,9 +1910,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/aead2d2ae3013f2a1de52e4c77dcffa2.png')
         .normalSkill(new NormalSkillBuilder('翻涌').catalyst())
         .skills(
-            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。（优先生成不同的类型）')
+            new SkillBuilder('纯水幻造').description('随机召唤1种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0', 'vlatest')
                 .description('随机召唤1种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
-                .description('随机召唤1种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
                 .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
@@ -1926,9 +1926,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         cmds.getSummon(randomInArr(!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0 ? opools : pools));
                     }
                 })),
-            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型）')
+            new SkillBuilder('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0', 'vlatest')
                 .description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
-                .description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0')
                 .src('https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
                 .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
@@ -1967,7 +1966,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2202: () => new HeroBuilder(54).name('愚人众·藏镜仕女').fatui().hydro()
+    2202: () => new HeroBuilder(54).name('愚人众·藏镜仕女').offline('v3').fatui().hydro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3fc3ca86fcfc5333343aed2bb93f972c_2058660383709712628.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/31cf07745466716c6ecddaa137aaf642.png')
         .normalSkill(new NormalSkillBuilder('水弹').catalyst())
@@ -1975,7 +1974,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('潋波绽破').description('{dealDmg}，目标角色附属【sts122021】。')
                 .src('https://patchwiki.biligame.com/images/ys/b/bb/ejgc07c2acyw7emun013j336cvmksvt.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/72eb60be8d1a88f12671264e29101ad4_5912821621104766081.png')
-                .elemental().damage(3).damage(2, 'v5.3.0').damage(3, 'v3.7.0').cost(3)
+                .elemental().damage(3, 'v3.7.0', 'vlatest').damage(2, 'v5.3.0').cost(3)
                 .handle(event => ({ statusOppo: [[122021, !!event.talent]] })),
             new SkillBuilder('粼镜折光').description('{dealDmg}。')
                 .src('https://patchwiki.biligame.com/images/ys/8/80/1dsnenenx6cm0ojaln742iwx60rzc1r.png',
@@ -2025,7 +2024,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { combatStatus } = event;
                     const sts122041 = combatStatus.get(122041);
                     if (!sts122041) return;
-                    const { maxDice, maxDiceCnt } = sts122041.addition;
+                    const { maxDice, maxDiceCnt } = sts122041.variables;
                     return { pdmg: 1, summon: [[122043, maxDice, maxDiceCnt]] }
                 }),
             new SkillBuilder('无尽食欲').description('战斗开始时，生成【sts122041】。')
@@ -2267,7 +2266,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: 'game-start', statusOppo: 124021 }))
         ),
 
-    2403: () => new HeroBuilder(322).name('千年珍珠骏麟').since('v4.4.0').maxHp(8).monster().electro()
+    2403: () => new HeroBuilder(322).name('千年珍珠骏麟').since('v4.4.0').offline('v3').maxHp(8).monster().electro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/6ea12823806de2c2c7fe62d839410c8b_8031642621604475811.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/54bce42537a3bc38d77aa159d8f61355.png')
         .normalSkill('旋尾扇击')
@@ -2363,7 +2362,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: 124061 }))
         ),
 
-    2501: () => new HeroBuilder(58).name('魔偶剑鬼').monster().anemo()
+    2501: () => new HeroBuilder(58).name('魔偶剑鬼').offline('v3').monster().anemo()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/5b21d3abb8dd7245a8f5f540d8049fcb_59481287402207724.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f6a1743d67ca3e21074e1f0c704c4549.png')
         .normalSkill('一文字')

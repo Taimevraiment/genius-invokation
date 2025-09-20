@@ -532,7 +532,7 @@ const updateInfo = (init = false) => {
         const st = cardFilterRes[1].length == 0 || cardFilterRes[1].every(v => c.hasSubtype(v));
         const co = cardFilterRes[2].length == 0 || cardFilterRes[2].includes(c.cost + c.anydice);
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
-        const sinceVersion = sinceVersionFilter.value == '实装版本' || c.sinceVersion == sinceVersionFilter.value;
+        const sinceVersion = sinceVersionFilter.value == '实装版本' || c.sinceVersion == sinceVersionFilter.value || c.offlineVersion == sinceVersionFilter.value;
         const isConfigTalent = isEditDeck || !c.hasSubtype(CARD_SUBTYPE.Talent);
         const isConfigShow = !isOnlyShowConfiged.value || customVersion.value.diff[c.id] || customVersion.value.diff[getHidById(c.id)] || customVersion.value.banList.includes(c.id);
         return t && st && co && ct && sinceVersion && isConfigTalent && isConfigShow;
@@ -548,7 +548,7 @@ const updateInfo = (init = false) => {
         const tag = heroFilterRes[0].length == 0 || heroFilterRes[0].every(hl => h.tags.includes(hl));
         const element = heroFilterRes[1].length == 0 || heroFilterRes[1].includes(h.element);
         const weapon = heroFilterRes[2].length == 0 || heroFilterRes[2].includes(h.weaponType);
-        const sinceVersion = sinceVersionFilter.value == '实装版本' || h.sinceVersion == sinceVersionFilter.value;
+        const sinceVersion = sinceVersionFilter.value == '实装版本' || h.sinceVersion == sinceVersionFilter.value || h.offlineVersion == sinceVersionFilter.value;
         const isConfigShow = !isOnlyShowConfiged.value || customVersion.value.diff[h.id] || customVersion.value.banList.includes(h.id);
         return tag && element && weapon && sinceVersion && isConfigShow;
     });

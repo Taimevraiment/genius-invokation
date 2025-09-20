@@ -47,8 +47,6 @@ export class GICard {
     subType: CardSubtype[]; // 副类型
     tag: CardTag[]; // 特殊作用标签
     userType: number | WeaponType; // 使用人类型匹配：0全匹配 匹配武器Hero.weaponType 匹配天赋/特技Hero.id
-    useCnt: number; // 累积点数
-    perCnt: number; // 每回合的效果使用次数
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
     handle: (card: Card, event: InputHandle<CardHandleEvent>) => CardHandleRes; // 卡牌发动的效果函数
@@ -57,7 +55,7 @@ export class GICard {
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
     cidx: number = -1; // 在手牌中的序号
-    addition: Record<string, number> = {}; // 额外信息
+    variables: Record<string, number> = {}; // 变量
     UI: {
         src: string, // 图片url
         description: string, // 卡牌描述
@@ -77,7 +75,7 @@ export class GICard {
             tag?: CardTag[], uct?: number, pct?: number, expl?: string[], energy?: number, anydice?: number, cnt?: number,
             canSelectSummon?: 0 | 1 | -1, canSelectSupport?: 0 | 1 | -1, canSelectHero?: number, isUseNightSoul?: boolean,
             isResetUct?: boolean, isResetPct?: boolean, ver?: Version, readySkillStatus?: number,
-            adt?: Record<string, number>, versionChanges?: Version[],
+            vars?: Record<string, number>, versionChanges?: Version[],
         } = {}
     ) {
         this.id = id;
@@ -89,7 +87,7 @@ export class GICard {
         subType = convertToArray(subType);
         const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
             isResetPct = true, isResetUct = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
-            readySkillStatus = 0, adt = {}, versionChanges = [] } = options;
+            readySkillStatus = 0, vars = {}, versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -145,7 +143,7 @@ export class GICard {
             } else {
                 handle = (card, event, ver) => {
                     const res = ohandle?.(card, event, ver) ?? {};
-                    const { trigger = '', cmds, execmds, source = -1 } = event;
+                    const { trigger, cmds, execmds, source } = event;
                     if (readySkillStatus > 0) {
                         if (card.useCnt == 0 && trigger == 'status-destroy' && source == readySkillStatus) {
                             cmds.clear();
@@ -244,10 +242,10 @@ export class GICard {
         this.tag = tag;
         this.userType = userType;
         this.canSelectHero = canSelectHero;
-        this.addition = adt;
+        this.variables = vars;
         this.reset = card => {
-            if (isResetPct) card.perCnt = pct;
-            if (isResetUct) card.useCnt = uct;
+            if (isResetPct) card.setPerCnt(pct);
+            if (isResetUct) card.setUseCnt(uct);
         }
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
@@ -269,10 +267,11 @@ export class GICard {
                 .getSummon(summonOppo, { isOppo: true })
                 .getSupport(support)
                 .getSupport(supportOppo, { isOppo: true });
-            if (cevent.reset) {
+            if (cevent.trigger == 'reset') {
                 this.reset(card);
                 if (!builderRes.triggers) builderRes.triggers = 'reset';
                 builderRes.notLog = true;
+                builderRes.isAddTask = false;
             }
             const res: CardHandleRes = {
                 ...builderRes,
@@ -285,12 +284,20 @@ export class GICard {
             }
             return res;
         }
-        this.useCnt = uct;
-        this.perCnt = pct;
+        this.setUseCnt(uct);
+        this.setPerCnt(pct);
         this.energy = energy;
         this.anydice = anydice;
         this.canSelectSummon = canSelectSummon;
         this.canSelectSupport = canSelectSupport;
+    }
+    // 累积点数
+    get useCnt() {
+        return this.variables.useCnt;
+    }
+    // 每回合的效果使用次数
+    get perCnt() {
+        return this.variables.perCnt;
     }
     get costChange() {
         return this.costChanges.reduce((a, b) => a + b);
@@ -313,24 +320,27 @@ export class GICard {
         return this.tag.some(v => tags.includes(v));
     }
     addUseCnt(n: number = 1): number {
-        this.useCnt += n;
+        this.variables.useCnt += n;
         return this.useCnt;
     }
     addUseCntMax(max: number, n?: number): void {
         this.addUseCnt(n);
-        this.useCnt = Math.min(max, this.useCnt);
+        this.variables.useCnt = Math.min(max, this.useCnt);
     }
     minusUseCnt(n: number = 1): void {
-        this.useCnt = Math.max(0, this.useCnt - n);
+        this.variables.useCnt = Math.max(0, this.useCnt - n);
     }
     setUseCnt(n: number = 0) {
-        this.useCnt = n;
+        this.variables.useCnt = n;
     }
     addPerCnt(n: number = 1): void {
-        this.perCnt += n;
+        this.variables.perCnt += n;
     }
     minusPerCnt(n: number = 1): void {
-        this.perCnt -= n;
+        this.variables.perCnt -= n;
+    }
+    setPerCnt(n: number = 0) {
+        this.variables.perCnt = n;
     }
 }
 
@@ -354,7 +364,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _cnt: number = 2;
     private _isUseNightSoul: boolean = false;
     private _readySkillStatus: number = 0;
-    private _addition: Record<string, number> = {};
+    private _variables: Record<string, number> = {};
     constructor(shareId?: number) {
         super(shareId ?? -1);
         if (shareId == undefined) this._cnt = -2;
@@ -496,12 +506,12 @@ export class CardBuilder extends BaseCostBuilder {
         this._isResetPerCnt = false;
         return this;
     }
-    addition(key: string, value: number) {
-        this._addition[key] = value;
+    variables(key: string, value: number) {
+        this._variables[key] = value;
         return this;
     }
     from(id: number) {
-        this.addition('from', id);
+        this.variables('from', id);
         return this;
     }
     done() {
@@ -521,7 +531,7 @@ export class CardBuilder extends BaseCostBuilder {
                 return { notPreview: event.slotUse, ...handle?.(card, event, ver) }
             };
         }
-        if (this._tag.includes(CARD_TAG.NonDefeat)) this.addition(CARD_TAG.NonDefeat, 1);
+        if (this._tag.includes(CARD_TAG.NonDefeat)) this.variables(CARD_TAG.NonDefeat, 1);
         const description = this._description.get(this._curVersion, '') +
             (this._isUseNightSoul ? '；{vehicle}；所附属角色「夜魂值」为0时，弃置此牌\\；此牌被弃置时，所附属角色结束【夜魂加持】。' : '');
         if (this._isUseNightSoul) {
@@ -552,7 +562,7 @@ export class CardBuilder extends BaseCostBuilder {
                 ver: this._curVersion,
                 isUseNightSoul: this._isUseNightSoul,
                 readySkillStatus: this._readySkillStatus,
-                adt: this._addition,
+                vars: this._variables,
                 versionChanges: this.versionChanges,
             });
     }

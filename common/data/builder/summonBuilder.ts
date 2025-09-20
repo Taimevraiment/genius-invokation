@@ -66,7 +66,7 @@ export class GISummon {
     perCnt: number; // 每回合次数
     isTalent: boolean; // 是否有天赋
     statusId: number; // 可能对应的状态 -1不存在
-    addition: Record<string, number>; // 额外信息
+    variables: Record<string, number>; // 变量
     handle: (summon: Summon, event: InputHandle<SummonHandleEvent>) => SummonHandleRes; // 处理函数
     UI: {
         src: string; // 图片url
@@ -86,7 +86,7 @@ export class GISummon {
         shieldOrHeal: number, damage: number, element: ElementType, curVersion: Version,
         handle?: (summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined,
         options: {
-            pct?: number, isTalent?: boolean, adt?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
+            pct?: number, isTalent?: boolean, vars?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
             expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[], tag?: SummonTag[],
         } = {}
     ) {
@@ -98,7 +98,7 @@ export class GISummon {
         this.damage = damage;
         this.element = element;
         const {
-            pct = 0, isTalent = false, adt = {}, pdmg = 0, isDestroy = SUMMON_DESTROY_TYPE.Used, stsId = -1,
+            pct = 0, isTalent = false, vars = {}, pdmg = 0, isDestroy = SUMMON_DESTROY_TYPE.Used, stsId = -1,
             expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [], tag = [],
         } = options;
         const hid = getHidById(id);
@@ -124,13 +124,13 @@ export class GISummon {
         this.tag = tag;
         this.perCnt = pct;
         this.isTalent = isTalent;
-        this.addition = adt;
+        this.variables = vars;
         this.pdmg = pdmg;
         this.isDestroy = isDestroy;
         this.statusId = stsId;
         if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
         this.handle = (summon, event) => {
-            const { reset, trigger } = event;
+            const { trigger } = event;
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, summon);
@@ -148,7 +148,7 @@ export class GISummon {
             const builderRes = handle?.(summon, cevent, versionWrap(ver)) ?? {};
             let { isOnlyPhaseEnd, ...res } = builderRes;
             if (res.status) cmds.getStatus(res.status);
-            if (reset) {
+            if (trigger == 'reset' || trigger == 'enter') {
                 summon.perCnt = pct;
                 if (!res.triggers) res.triggers = ['reset', 'enter'];
                 isOnlyPhaseEnd = true;
@@ -232,7 +232,7 @@ export class SummonBuilder extends BaseBuilder {
     private _tag: SummonTag[] = [];
     private _perCnt: VersionMap<number> = this._createVersionMap();
     private _isTalent: boolean = false;
-    private _addition: Record<string, number> = {};
+    private _variables: Record<string, number> = {};
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
     private _statusId: number = -1;
     private _topIcon: string = 'TimeState';
@@ -329,8 +329,8 @@ export class SummonBuilder extends BaseBuilder {
         this._tag.push(...tag);
         return this;
     }
-    addition(key: string, value: number) {
-        this._addition[key] = value;;
+    variables(key: string, value: number) {
+        this._variables[key] = value;;
         return this;
     }
     statusId(stsId?: number) {
@@ -366,7 +366,7 @@ export class SummonBuilder extends BaseBuilder {
         return this;
     }
     from(id: number) {
-        this.addition('from', id);
+        this.variables('from', id);
         return this;
     }
     handle(handle: (summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined) {
@@ -386,7 +386,7 @@ export class SummonBuilder extends BaseBuilder {
             {
                 pct: perCnt,
                 isTalent: this._isTalent,
-                adt: this._addition,
+                vars: this._variables,
                 pdmg: this._pdmg,
                 isDestroy: this._isDestroy,
                 stsId,

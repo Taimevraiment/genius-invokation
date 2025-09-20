@@ -77,7 +77,7 @@ export class GISkill {
     useCnt: number = 0; // 整局技能使用次数
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectHero: -1 | 0 | 1; // 能选择的角色 -1不能选择 0能选择敌方 1能选择我方
-    addition: Record<string, number>; // 额外信息
+    variables: Record<string, number>; // 变量
     UI: {
         src: string, // 图片url
         description: string; // 技能描述
@@ -88,7 +88,7 @@ export class GISkill {
         name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
         options: {
             id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version,
-            canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, adt?: Record<string, number>, spe?: boolean,
+            canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, vars?: Record<string, number>, spe?: boolean,
         } = {},
         src?: string | string[],
         handle?: (hevent: SkillBuilderHandleEvent, version: VersionWrapper) => SkillBuilderHandleRes | undefined | void
@@ -96,7 +96,7 @@ export class GISkill {
         this.name = name;
         this.type = type;
         this.damage = damage;
-        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], adt = {},
+        const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], vars = {},
             canSelectSummon = -1, canSelectHero = -1, spe = false,
         } = options;
         costElement ??= DICE_TYPE.Same;
@@ -124,7 +124,7 @@ export class GISkill {
         this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
-        this.addition = adt;
+        this.variables = vars;
         this.handle = event => {
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
@@ -134,17 +134,17 @@ export class GISkill {
                 ...deleteUndefinedProperties(oevent),
                 cmds,
             };
-            const { reset, hero, skill, combatStatus, eheros } = cevent;
+            const { trigger, hero, skill, combatStatus, eheros } = cevent;
             const builderRes = handle?.(cevent, versionWrap(ver)) ?? { cmds };
             const res: SkillHandleRes = {
                 ...builderRes,
                 cmds,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
             }
-            if (reset) {
+            if (trigger == 'reset') {
                 skill.useCntPerRound = 0;
                 skill.perCnt = pct;
-                return { ...res, notLog: true, triggers: ['reset'] }
+                return { ...res, notLog: true, isNotAddTask: true, triggers: ['reset'] }
             }
             let { dmgElement, atkOffset, atkTo } = builderRes;
             const sevent = { ...event, hidx: hero.hidx };
@@ -252,7 +252,7 @@ export class SkillBuilder extends BaseBuilder {
     private _readySkillRound: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectHero: -1 | 0 | 1 = -1;
-    private _addition: Record<string, number> = {};
+    private _variables: Record<string, number> = {};
     constructor(name: string = '') {
         super();
         this._name = name;
@@ -300,8 +300,9 @@ export class SkillBuilder extends BaseBuilder {
         this._isSpEnergy = isSp;
         return this;
     }
-    damage(damage: number, version: Version = 'vlatest') {
-        this._damage.set([version, damage]);
+    damage(damage: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => this._damage.set([version, damage]));
         return this;
     }
     dmgElement(element: ElementType) {
@@ -371,8 +372,8 @@ export class SkillBuilder extends BaseBuilder {
         this._canSelectHero = canSelectHero;
         return this;
     }
-    addition(key: string, value?: number) {
-        this._addition[key] = value ?? 0;
+    variables(key: string, value?: number) {
+        this._variables[key] = value ?? 0;
         return this;
     }
     done() {
@@ -400,7 +401,7 @@ export class SkillBuilder extends BaseBuilder {
                 ver: this._curVersion,
                 canSelectSummon: this._canSelectSummon,
                 canSelectHero: this._canSelectHero,
-                adt: this._addition,
+                vars: this._variables,
                 spe: this._isSpEnergy,
             },
             this._src, this._handle);

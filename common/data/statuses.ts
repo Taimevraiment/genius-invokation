@@ -576,7 +576,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event, ver) => {
             const { hero, hidx, eheros, trigger, cmds } = event;
             const triggers: Trigger[] = ['killed'];
-            const isTalent = !!eheros.get(status.id)?.talentSlot && (ver.lt('v4.1.0') || hero.isFront);
+            const isTalent = !!eheros.get(status.id)?.talentSlot && (ver.lt('v4.1.0') && !ver.isOffline || hero.isFront);
             if (isTalent) triggers.push('phase-end');
             return {
                 triggers,
@@ -813,7 +813,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             damage: isCdt(status.isTalent && event.trigger == 'after-skilltype1', 1),
             element: DAMAGE_TYPE.Pyro,
             attachEl: ELEMENT_TYPE.Pyro,
-            exec: () => +status.isTalent ^ +(event.trigger == 'skilltype1') && status.minusUseCnt(),
+            exec: () => status.isTalent != (event.trigger == 'skilltype1') && status.minusUseCnt(),
         })),
 
     113052: () => new StatusBuilder('琉金火光').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
@@ -900,11 +900,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             const hid = getHidById(status.id);
             const hero = heros.get(hid);
             if (trigger == 'enter') {
-                status.addition[STATUS_TYPE.Barrier] = +!hero?.isFront;
+                status.variables[STATUS_TYPE.Barrier] = +!hero?.isFront;
                 return { notLog: true }
             }
             if (trigger == 'switch-to') {
-                status.addition[STATUS_TYPE.Barrier] = +(heros[hidx].id != hid);
+                status.variables[STATUS_TYPE.Barrier] = +(heros[hidx].id != hid);
                 return { notLog: true }
             }
             if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
@@ -1302,12 +1302,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             .id(115051 + (swirlEl == ELEMENT_TYPE.Anemo ? 0 : 1 + ELEMENT_CODE[swirlEl]))
             .heroStatus().icon('#').useCnt(1).iconBg(STATUS_BG_COLOR[swirlEl]).perCnt(1).perCnt(0, 'v4.8.0')
             .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign, STATUS_TYPE.ConditionalEnchant)
-            .type(ver => ver.gte('v4.8.0'), STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill)
+            .type(ver => ver.gte('v4.8.0') || ver.isOffline, STATUS_TYPE.Usage, STATUS_TYPE.ReadySkill)
             .description(`【我方下次通过「切换角色」行动切换到所附属角色时：】将此次切换视为「[快速行动]」而非「[战斗行动]」。；【我方选择行动前：】如果所附属角色为「出战角色」，则直接使用「普通攻击」\\；本次「普通攻击」造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，结算后移除此效果。`)
             .description(`【所附属角色进行[下落攻击]时：】造成的[物理伤害]变为[${ELEMENT_NAME[swirlEl]}伤害]，且伤害+1。；【角色使用技能后：】移除此效果。`, 'v4.8.0')
             .handle((status, event, ver) => {
                 const { isFallAtk, isQuickAction: iqa, trigger, heros, cmds } = event;
-                if (ver.lt('v4.8.0')) {
+                if (ver.lt('v4.8.0') && !ver.isOffline) {
                     return {
                         addDmgCdt: isCdt(isFallAtk, 1),
                         triggers: 'skilltype1',
@@ -1355,10 +1355,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => event.trigger == 'switch-from' && status.minusUseCnt(),
         })),
 
-    115071: (swirlEl: PureElementType) => readySkillStatus('风风轮', 15074).addition('element', ELEMENT_CODE[swirlEl])
+    115071: (swirlEl: PureElementType) => readySkillStatus('风风轮', 15074).variables('element', ELEMENT_CODE[swirlEl])
         .handle(status => ({
             triggers: ['switch-from', 'useReadySkill'],
-            skill: 15074 + (status.addition.element % 5),
+            skill: 15074 + (status.variables.element % 5),
             exec: () => status.minusUseCnt(),
         })),
 
@@ -1545,7 +1545,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('所附属角色「普通攻击」造成的伤害+1，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色「普通攻击」后：】为其附属【sts116054】。（每回合1次）')
         .description('所附属角色「普通攻击」造成的伤害+2，造成的[物理伤害]变为[岩元素伤害]。；[roundCnt]；【所附属角色「普通攻击」后：】为其附属【sts116054】。（每回合1次）', 'v4.2.0')
         .handle((status, { cmds }, ver) => ({
-            addDmgType1: isCdt(ver.lt('v4.2.0'), 2, 1),
+            addDmgType1: isCdt(ver.lt('v4.2.0') && !ver.isOffline, 2, 1),
             attachEl: ELEMENT_TYPE.Geo,
             triggers: 'skilltype1',
             exec: () => {
@@ -1781,7 +1781,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     117082: (useCnt: number = 1) => new StatusBuilder('迸发扫描').combatStatus().icon('ski,1').useCnt(useCnt).maxCnt(3).type(STATUS_TYPE.Attack)
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用的[草元素伤害]。；[useCnt]')
         .description('【双方选择行动前：】如果我方场上存在【sts116】或【smn112082】，则使其[可用次数]-1，并[舍弃]我方牌库顶的1张卡牌。然后，造成所[舍弃]卡牌的元素骰费用+1的[草元素伤害]。；[useCnt]', 'v4.8.0')
-        .addition('dmg', -1).addition('cid').handle((status, event, ver) => {
+        .variables('dmg', -1).variables('cid').handle((status, event, ver) => {
             const { summons, pile, combatStatus, talent, cmds } = event;
             if (pile.length == 0 || !combatStatus.has(116) && !summons.has(112082)) return;
             return {
@@ -1789,11 +1789,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 isAddTask: true,
                 exec: () => {
                     cmds.discard({ mode: CMD_MODE.TopPileCard });
-                    if (status.addition.dmg == -1) {
-                        status.addition.dmg = pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0'));
-                        status.addition.cid = pile[0].id;
+                    if (status.variables.dmg == -1) {
+                        status.variables.dmg = pile[0].cost + pile[0].anydice + +(ver.lt('v4.8.0'));
+                        status.variables.cid = pile[0].id;
                     }
-                    cmds.attack(status.addition.dmg, DAMAGE_TYPE.Dendro)
+                    cmds.attack(status.variables.dmg, DAMAGE_TYPE.Dendro)
                         .callback(() => {
                             status.minusUseCnt();
                             const sts116 = combatStatus.get(116);
@@ -1802,10 +1802,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                         });
                     const isPlace = talent && talent.perCnt > 0 && pile[0].hasSubtype(CARD_SUBTYPE.Place);
                     if (talent) {
-                        cmds.getCard(1, { card: status.addition.cid });
+                        cmds.getCard(1, { card: status.variables.cid });
                         if (isPlace) cmds.getStatus(117083).callback(() => talent.minusPerCnt());
                     }
-                    status.addition.dmg = -1;
+                    status.variables.dmg = -1;
                 }
             }
         }),
@@ -1933,8 +1933,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description(`所附属角色切换到其他角色时元素骰费用+1${isTalent ? '，并且会使所附属角色受到的[水元素伤害]+1' : ''}。；[roundCnt]；（同一方场上最多存在一个此状态）`)
         .description(`所附属角色受到的[水元素伤害]+1${isTalent ? '，并且会使所附属角色切换到其他角色时元素骰费用+1' : ''}。；[roundCnt]；（同一方场上最多存在一个此状态）`, 'v4.8.0')
         .handle((status, _, ver) => ({
-            addDiceHero: isCdt(ver.gte('v4.8.0') || status.isTalent, 1),
-            getDmg: isCdt(ver.lt('v4.8.0') || status.isTalent, 1),
+            addDiceHero: isCdt(ver.gte('v4.8.0') || ver.isOffline || status.isTalent, 1),
+            getDmg: isCdt(ver.lt('v4.8.0') && !ver.isOffline || status.isTalent, 1),
             triggers: ['Hydro-getdmg', 'add-switch-from'],
             onlyOne: true,
         })),
@@ -1969,7 +1969,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     122041: () => new StatusBuilder('深噬之域').combatStatus().icon('ski,3').useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。', 'v5.0.0')
-        .addition('cost1', -1).addition('cost2', -1).addition('maxDice').addition('maxDiceCnt')
+        .variables('cost1', -1).variables('cost2', -1).variables('maxDice').variables('maxDiceCnt')
         .handle((status, event, ver) => {
             const { hcard, heros, trigger, cmds } = event;
             const triggers: Trigger[] = [];
@@ -1988,16 +1988,16 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     }
                     if (!hcard) return;
                     let cnt = 0;
-                    const { cost1, cost2, maxDice } = status.addition;
+                    const { cost1, cost2, maxDice } = status.variables;
                     const cost = hcard.cost + hcard.anydice;
                     if (cost > maxDice) {
-                        status.addition.maxDice = cost;
-                        status.addition.maxDiceCnt = 1;
+                        status.variables.maxDice = cost;
+                        status.variables.maxDiceCnt = 1;
                     } else if (cost == maxDice) {
-                        ++status.addition.maxDiceCnt;
+                        ++status.variables.maxDiceCnt;
                     }
                     if (status.useCnt < 2) {
-                        status.addition[`cost${status.useCnt + 1}`] = cost;
+                        status.variables[`cost${status.useCnt + 1}`] = cost;
                         status.addUseCnt();
                     } else {
                         cnt = 4 - new Set([cost1, cost2, cost]).size;
@@ -3090,7 +3090,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【本回合内，所附属角色被击倒时：】如可能，消耗等同于此牌「重燃」的元素骰，使角色[免于被击倒]，并治疗该角色到1点生命值。然后此牌「重燃」+1。')
         .handle((status, event) => {
             const { hidx, cmds, dicesCnt } = event;
-            status.addition[STATUS_TYPE.NonDefeat] = +(dicesCnt >= status.useCnt);
+            status.variables[STATUS_TYPE.NonDefeat] = +(dicesCnt >= status.useCnt);
             cmds.revive(1, hidx).consumeDice(status.useCnt);
             return { triggers: 'will-killed', exec: () => status.addUseCnt(true) }
         }),

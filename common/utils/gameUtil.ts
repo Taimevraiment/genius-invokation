@@ -103,7 +103,7 @@ export const getDerivantParentId = (id: number, dict: Record<number, number>) =>
 // 比较版本大小
 export const compareVersion = (v1: Version, v2: Version | null) => {
     if (v1 === v2) return 0;
-    if (v2 === null || +OFFLINE_VERSION.includes(v1 as OfflineVersion) ^ +OFFLINE_VERSION.includes(v2 as OfflineVersion)) {
+    if (v2 === null || OFFLINE_VERSION.includes(v1 as OfflineVersion) != OFFLINE_VERSION.includes(v2 as OfflineVersion)) {
         return -1;
     }
     if (v1 === 'vlatest') return 1;
@@ -204,7 +204,7 @@ export const statusToString = (sts: Status, prefixSpace: number = 1) => {
         + `${prefix1}addCnt: ${sts.addCnt}\n`
         + `${prefix1}type: ${sts.type}\n`
         + `${prefix1}isTalent: ${sts.isTalent}\n`
-        + `${prefix1}addition: [${JSON.stringify(sts.addition)}]\n`
+        + `${prefix1}variables: [${JSON.stringify(sts.variables)}]\n`
         + `${prefix}}\n`;
 }
 
@@ -225,7 +225,7 @@ export const summonToString = (smn: Summon, prefixSpace: number = 1) => {
         + `${prefix1}shieldOrHeal: ${smn.shieldOrHeal}\n`
         + `${prefix1}isDestroy: ${smn.isDestroy}\n`
         + `${prefix1}isTalent: ${smn.isTalent}\n`
-        + `${prefix1}addition: [${JSON.stringify(smn.addition)}]\n`
+        + `${prefix1}variables: [${JSON.stringify(smn.variables)}]\n`
         + `${prefix}}\n`;
 }
 
@@ -312,7 +312,7 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
         + `${prefix1}useCntPerRound: ${skill.useCntPerRound}\n`
         + `${prefix1}perCnt: ${skill.perCnt}\n`
         + `${prefix1}useCnt: ${skill.useCnt}\n`
-        + `${prefix1}addition: [${JSON.stringify(skill.addition)}]\n`
+        + `${prefix1}variables: [${JSON.stringify(skill.variables)}]\n`
         + `${prefix}}\n`;
 }
 
@@ -351,7 +351,6 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         ehcardsCnt: opponent.handCards.length,
         ephase: opponent.phase,
         eplayerInfo: opponent.playerInfo,
-        reset: false,
         trigger: '' as Trigger,
         switchHeroDiceCnt: 0,
         isQuickAction: false,

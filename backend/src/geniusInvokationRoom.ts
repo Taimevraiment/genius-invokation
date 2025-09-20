@@ -911,8 +911,8 @@ export default class GeniusInvokationRoom {
             const hero = heros[hidx];
             const slot = hero.equipments.find(s => s.id == slotid);
             if (!slot) continue;
-            if (type == 'p') slot.perCnt = val;
-            else if (type == 'u') slot.useCnt = val;
+            if (type == 'p') slot.setPerCnt(val);
+            else if (type == 'u') slot.setUseCnt(val);
         }
         if (dices) player.dice = dices;
         if (disCardCnt < 0) player.handCards.sort((a, b) => b.entityId - a.entityId).splice(disCardCnt, 10);
@@ -2348,8 +2348,8 @@ export default class GeniusInvokationRoom {
             player.playerInfo.reconcileCnt = 0;
             const handleEvent = { pidx: player.pidx, ...this.handleEvent };
             player.heros.forEach(h => { // 重置技能
-                h.vehicleSlot?.[1].handle({ ...handleEvent, reset: true, hero: h, skill: h.vehicleSlot[1] });
-                h.skills.filter(s => !s.isPassive).forEach(skill => skill.handle({ ...handleEvent, reset: true, skill, hero: h }));
+                h.vehicleSlot?.[1].handle({ ...handleEvent, trigger: 'reset', hero: h, skill: h.vehicleSlot[1] });
+                h.skills.filter(s => !s.isPassive).forEach(skill => skill.handle({ ...handleEvent, trigger: 'reset', skill, hero: h }));
             });
             this._emitEvent(player.pidx, 'reset');
         });
@@ -2627,7 +2627,7 @@ export default class GeniusInvokationRoom {
                             isOnlyHero: true,
                         });
                         // 被击倒
-                        if (h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.addition[STATUS_TYPE.NonDefeat] == 0) &&
+                        if (h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.variables[STATUS_TYPE.NonDefeat] == 0) &&
                             (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.perCnt <= 0)
                         ) {
                             this.players[p.pidx ^ 1].canAction = false;
@@ -2665,7 +2665,7 @@ export default class GeniusInvokationRoom {
                         h.vehicleSlot = null;
                         h.attachElement.length = 0;
                         h.energy = 0;
-                        h.skills.forEach(s => s.handle({ pidx: cpidx, ...this.handleEvent, hero: h, skill: s, reset: true }));
+                        h.skills.forEach(s => s.handle({ pidx: cpidx, ...this.handleEvent, hero: h, skill: s, trigger: 'reset' }));
                         if (!h.isFront) {
                             heroDie[cpidx].splice(heroDie[cpidx].indexOf(chidx), 1);
                             if (heroDie[cpidx].length == 0) isDie.delete(cpidx);
@@ -2932,15 +2932,15 @@ export default class GeniusInvokationRoom {
                 }
                 for (const otrigger of triggers) {
                     const trigger = isStatus && hfield.group == STATUS_GROUP.combatStatus ? otrigger.replace('other-', '') as Trigger : otrigger;
-                    if (trigger == 'reduce-dmg' && isStatus && hfield.hasType(STATUS_TYPE.Barrier) && hfield.addition[STATUS_TYPE.Barrier] == 0) continue;
+                    if (trigger == 'reduce-dmg' && isStatus && hfield.hasType(STATUS_TYPE.Barrier) && hfield.variables[STATUS_TYPE.Barrier] == 0) continue;
                     if (trigger == 'status-destroy' && isStatus && hfield.id == source) continue;
                     if (trigger == 'will-killed') {
                         if (heros[hidx].hp > 0) {
                             if (isStatus && hfield.hasType(STATUS_TYPE.NonDefeat)) continue;
                             if (!isStatus && hfield.hasTag(CARD_TAG.NonDefeat)) continue;
                         } else {
-                            if (hfield.addition[STATUS_TYPE.NonDefeat] == 0) continue;
-                            if (hfield.addition[CARD_TAG.NonDefeat] == 0) continue;
+                            if (hfield.variables[STATUS_TYPE.NonDefeat] == 0) continue;
+                            if (hfield.variables[CARD_TAG.NonDefeat] == 0) continue;
                         }
                     }
                     const hfieldres = hfield.handle(hfield as any, {
@@ -2967,7 +2967,6 @@ export default class GeniusInvokationRoom {
                         sourceSummon,
                         dmgedHidx,
                         isQuickAction: this.preview.isQuickAction,
-                        reset: trigger == 'reset',
                     });
                     if (this._hasNotTriggered(hfieldres.triggers, trigger)) continue;
                     if ((!!isAfterSkill && !!skill) != (!!hfieldres.isAfterSkill || trigger.startsWith('after'))) continue;
@@ -3096,7 +3095,6 @@ export default class GeniusInvokationRoom {
                     dmgElement,
                     source,
                     isQuickAction: this.preview.isQuickAction,
-                    reset: trigger == 'enter' || trigger == 'reset',
                 });
                 if (this._hasNotTriggered(summonres.triggers, trigger)) continue;
                 if ((!!isAfterSkill && !!skill) != (!!summonres.isAfterSkill || trigger.startsWith('after'))) continue;
@@ -3187,7 +3185,6 @@ export default class GeniusInvokationRoom {
                     sourceSummon,
                     dmgElement,
                     isQuickAction: this.preview.isQuickAction,
-                    reset: trigger == 'reset',
                 });
                 if (supportres.isLast && !isLast) lastSupport.push(support);
                 if (this._hasNotTriggered(supportres.triggers, trigger)) continue;
@@ -3338,7 +3335,7 @@ export default class GeniusInvokationRoom {
                             if (dmgSource == 'skill' && this.preview.tarHidx == -1) this.preview.tarHidx = cAtkedIdxs[0];
                             if (damageVO.tarHidx == -1) damageVO.tarHidx = cAtkedIdxs[0];
                         }
-                        if (mode == 1) { // isPriority
+                        if (mode == CMD_MODE.IsPriority) {
                             for (let i = 0; i < cAtkedIdxs.length; ++i) {
                                 const chidx = cAtkedIdxs[i];
                                 if (cplayer.heros[chidx].hp <= 0) {
@@ -3704,7 +3701,7 @@ export default class GeniusInvokationRoom {
                     callback?.();
                     heros.forEach((h, hi) => {
                         if (h.hp > 0 && (ohidxs == undefined && h.isFront || ohidxs?.includes(hi))) {
-                            if (+(h.maxEnergy > 0) ^ +isAttach) {
+                            if (h.maxEnergy > 0 != isAttach) {
                                 if ((cnt > 0 && Math.abs(h.energy) < Math.abs(h.maxEnergy)) || (cnt < 0 && Math.abs(h.energy) > 0)) {
                                     const pcnt = isAttach ?
                                         Math.max(h.energy, Math.min(h.energy - h.maxEnergy, cnt)) :
@@ -3770,7 +3767,7 @@ export default class GeniusInvokationRoom {
                         const fhidx = (heros.frontHidx + dhidx) % heros.length;
                         const fhero = heros[fhidx];
                         if (hst[fhidx].length) {
-                            if (fhero.hp <= 0) {
+                            if (fhero.hp <= 0 && mode == CMD_MODE.IsPriority) {
                                 hst[(fhidx + 1) % heros.length].push(...hst[fhidx]);
                             } else {
                                 this._updateStatus(cpidx, hst[fhidx], fhero.heroStatus, { hidx: fhidx });
@@ -4382,7 +4379,7 @@ export default class GeniusInvokationRoom {
                 if (sts.maxCnt == 0) { // 不可叠加
                     oStatus[cstIdx] = clone(sts).setEntityId(oStatus[cstIdx].entityId);
                     oStatus[cstIdx].useCnt = Math.max(oStatus[cstIdx].useCnt, cStatus.useCnt);
-                    oStatus[cstIdx].addition = cStatus.addition;
+                    oStatus[cstIdx].variables = cStatus.variables;
                 } else { // 可叠加
                     cStatus.maxCnt = sts.maxCnt;
                     cStatus.perCnt = sts.perCnt;
@@ -4485,7 +4482,7 @@ export default class GeniusInvokationRoom {
                 oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, smn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
                 oriSummon[csmnIdx].perCnt = smn.perCnt;
                 oriSummon[csmnIdx].damage = smn.damage;
-                oriSummon[csmnIdx].addition = smn.addition;
+                oriSummon[csmnIdx].variables = smn.variables;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(csmnIdx == -1 ? this._genEntityId() : csmnIdx);
                 oriSummon.push(csummon);

@@ -45,7 +45,7 @@ export class GIStatus {
     isTalent: boolean; // 是否有天赋
     handle: (status: Status, event: InputHandle<StatusHandleEvent>) => StatusHandleRes; // 处理函数
     summonId: number; // 可能对应的召唤物 -1不存在
-    addition: Record<string, number>; // 额外信息
+    variables: Record<string, number>; // 变量
     UI: {
         icon: string, // 图标
         description: string, // 描述
@@ -60,7 +60,7 @@ export class GIStatus {
         handle?: (status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined,
         options: {
             smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, adt?: Record<string, number>, ver?: Version, versionChanges?: Version[],
+            isTalent?: boolean, isReset?: boolean, vars?: Record<string, number>, ver?: Version, versionChanges?: Version[],
         } = {}
     ) {
         this.id = id;
@@ -71,7 +71,7 @@ export class GIStatus {
         this.maxCnt = maxCnt;
         this.roundCnt = roundCnt;
         const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
-            isTalent = false, isReset = true, adt = {}, ver = VERSION[0], versionChanges = [] } = options;
+            isTalent = false, isReset = true, vars = {}, ver = VERSION[0], versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
             .replace(/\[useCnt\]/g, `【[可用次数]：${useCnt}】` + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
@@ -96,7 +96,7 @@ export class GIStatus {
         this.summonId = smnId;
         this.perCnt = pct;
         this.isTalent = isTalent;
-        this.addition = adt;
+        this.variables = vars;
         let thandle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
             this.UI.icon ||= STATUS_ICON.Shield;
@@ -174,9 +174,9 @@ export class GIStatus {
                 ...deleteUndefinedProperties(oevent),
                 cmds,
             };
-            if (cevent.reset) {
+            if (cevent.trigger == 'reset') {
                 if (isReset) status.perCnt = pct;
-                return { notLog: true, triggers: isCdt(isReset, ['reset']) }
+                return { notLog: true, isAddTask: false, triggers: isCdt(isReset, ['reset']) }
             }
             const builderRes = thandle(status, cevent, versionWrap(ver)) ?? {};
             const { damage, element, heal, pdmg, isSelf, isPriority, skill, status: sts, statusOppo,
@@ -275,7 +275,7 @@ export class StatusBuilder extends BaseBuilder {
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
     private _summonId: number = -1;
-    private _addition: Record<string, number> = {};
+    private _variables: Record<string, number> = {};
     private _isReset: boolean = true;
     private _handle: ((status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionWrapper) => boolean, StatusType[]][] = [];
@@ -386,8 +386,8 @@ export class StatusBuilder extends BaseBuilder {
         this._summonId = smnId ?? -2;
         return this;
     }
-    addition(key: string, value?: number) {
-        this._addition[key] = value ?? 0;
+    variables(key: string, value?: number) {
+        this._variables[key] = value ?? 0;
         return this;
     }
     notReset() {
@@ -420,7 +420,7 @@ export class StatusBuilder extends BaseBuilder {
         return this;
     }
     from(id: number) {
-        this.addition('from', id);
+        this.variables('from', id);
         return this;
     }
     done() {
@@ -433,8 +433,8 @@ export class StatusBuilder extends BaseBuilder {
         const smnId = this._summonId == -2 ? this._id : this._summonId;
         const maxCnt = this._maxCnt.get(this._curVersion, 0);
         this._typeCdt.forEach(([cdt, types]) => cdt(versionWrap(this._curVersion)) && this._type.push(...types));
-        if (this._type.includes(STATUS_TYPE.NonDefeat)) this.addition(STATUS_TYPE.NonDefeat, 1);
-        if (this._type.includes(STATUS_TYPE.Barrier)) this.addition(STATUS_TYPE.Barrier, 1);
+        if (this._type.includes(STATUS_TYPE.NonDefeat)) this.variables(STATUS_TYPE.NonDefeat, 1);
+        if (this._type.includes(STATUS_TYPE.Barrier)) this.variables(STATUS_TYPE.Barrier, 1);
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
             (status: Status, event: StatusHandleEvent, ver: VersionWrapper): StatusBuilderHandleRes => {
                 const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;
@@ -459,7 +459,7 @@ export class StatusBuilder extends BaseBuilder {
                 icbg: this._iconBg,
                 isTalent: this._isTalent,
                 smnId,
-                adt: this._addition,
+                vars: this._variables,
                 expl: this._explains,
                 isReset: this._isReset,
                 ver: this._curVersion,

@@ -40,7 +40,7 @@ export default class CmdsGenerator {
         return this.hasCmds('heal', 'addMaxHp', 'revive') || this.getCmdCnt('attack') != undefined;
     }
     get isPriority() {
-        return this.value.some(({ cmd, mode }) => cmd == 'attack' && mode == 1);
+        return this.value.some(({ cmd, mode }) => cmd == 'attack' && mode == CMD_MODE.IsPriority);
     }
     get res() {
         this._addType = 'push';
@@ -105,10 +105,12 @@ export default class CmdsGenerator {
         if (hidxs?.length != 0) this._add({ cmd: 'addMaxHp', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder) });
         return this;
     }
-    getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
-        let { hidxs, isOppo } = options;
+    getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: {
+        hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean,
+    } = {}) {
+        let { hidxs, isOppo, isPriority } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo });
+        if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo, mode: isCdt(isPriority, CMD_MODE.IsPriority) });
         return this;
     }
     getSummon(summon: number | (number | Summon | [number, ...any[]])[] | undefined, options: { isOppo?: boolean, destroy?: number } = {}) {
@@ -148,7 +150,7 @@ export default class CmdsGenerator {
     } = {}) {
         let { hidxs, isOppo, isPriority, isOrder } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        const mode = isPriority ? 1 : isOrder ? CMD_MODE.ByOrder : 0;
+        const mode = isPriority ? CMD_MODE.IsPriority : isOrder ? CMD_MODE.ByOrder : 0;
         this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode });
         return this;
     }

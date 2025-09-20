@@ -11,13 +11,13 @@ const versionChanges: Record<number, Version[]> = {};
 herosTotal(VERSION[0]).forEach(h => versionChanges[h.id] = []);
 const allCards = cardsTotal(VERSION[0]);
 allCards.forEach(c => {
-    if (c.addition.from) dict[c.id] = c.addition.from;
+    if (c.variables.from) dict[c.id] = c.variables.from;
     if (c.shareId > 0) versionChanges[c.id] = [];
     versionChanges[getHidById(c.id)]?.push(...c.UI.versionChanges);
 });
-allCards.forEach(c => versionChanges[c.addition.from ?? -1]?.push(...c.UI.versionChanges));
+allCards.forEach(c => versionChanges[c.variables.from ?? -1]?.push(...c.UI.versionChanges));
 statusesTotal(VERSION[0]).forEach(s => {
-    const { from } = s.addition;
+    const { from } = s.variables;
     if (from) {
         dict[s.id] = from;
         versionChanges[from]?.push(...s.UI.versionChanges);
@@ -25,7 +25,7 @@ statusesTotal(VERSION[0]).forEach(s => {
     versionChanges[getHidById(s.id)]?.push(...s.UI.versionChanges);
 });
 summonsTotal(VERSION[0]).forEach(s => {
-    const { from } = s.addition;
+    const { from } = s.variables;
     if (from) {
         dict[s.id] = from;
         versionChanges[from]?.push(...s.UI.versionChanges);

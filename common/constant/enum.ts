@@ -320,6 +320,7 @@ export const CMD_MODE = {
     GetCard: 10, // 挑选牌
     UseCard: 11, // 挑选并打出牌
     ByOrder: 12, // 按顺序执行
+    IsPriority: 13, // 是否优先执行
 } as const;
 
 export const INFO_TYPE = {
@@ -383,7 +384,7 @@ export const VERSION = [
 
 export type OnlineVersion = typeof VERSION[number] | 'vlatest';
 
-export const OFFLINE_VERSION = ['v2', 'v1'] as const;
+export const OFFLINE_VERSION = ['v3', 'v2', 'v1'] as const;
 
 export type OfflineVersion = typeof OFFLINE_VERSION[number];
 
