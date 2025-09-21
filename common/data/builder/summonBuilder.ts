@@ -150,7 +150,10 @@ export class GISummon {
             if (res.status) cmds.getStatus(res.status);
             if (trigger == 'reset' || trigger == 'enter') {
                 summon.perCnt = pct;
-                if (!res.triggers) res.triggers = ['reset', 'enter'];
+                if (!res.triggers?.includes(trigger)) {
+                    res = { triggers: ['reset', 'enter'] }
+                    cmds.clear();
+                }
                 isOnlyPhaseEnd = true;
                 res.isNotAddTask = true;
                 res.notLog = true;

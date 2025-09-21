@@ -1,4 +1,5 @@
-import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, PureElementType, Version } from "../constant/enum.js"
+import { Skill } from "../../typing.js"
+import { CARD_SUBTYPE, CMD_MODE, ELEMENT_TYPE, PureElementType, VERSION, Version } from "../constant/enum.js"
 import { getHidById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { SkillBuilder } from "./builder/skillBuilder.js"
@@ -7,7 +8,7 @@ const ski1507x = (swirlEl: PureElementType) => {
     return new SkillBuilder('风风轮舞踢').description('{dealDmg}。').elemental().readySkill().damage(2).dmgElement(swirlEl);
 }
 
-export const skillTotal: Record<number, () => SkillBuilder> = {
+export const allSkills: Record<number, () => SkillBuilder> = {
     12074: () => new SkillBuilder('苍鹭震击').description('{dealDmg}。').elemental().readySkill().damage(3),
 
     12104: () => new SkillBuilder('衡平推裁').description('{dealDmg}，如果生命值至少为6，则对自身造成1点[穿透伤害]，使伤害+1。')
@@ -226,11 +227,22 @@ export const skillTotal: Record<number, () => SkillBuilder> = {
         .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 
 }
+
+export const skillsTotal = (version: Version = VERSION[0]) => {
+    if (version == 'vlatest') version = VERSION[0];
+    const skills: Skill[] = [];
+    for (const id in allSkills) {
+        const skillBuilder = allSkills[id]();
+        skills.push(skillBuilder.version(version).id(+id).done());
+    }
+    return skills;
+}
+
 export const newSkill = (version: Version, options: { diff?: Record<number, Version> } = {}) => {
     return (id: number) => {
         const { diff = {} } = options;
         const dversion = diff[Math.floor(id / 10)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
-        return skillTotal[id]().version(dversion).id(id).done();
+        return allSkills[id]().version(dversion).id(id).done();
     }
 }
 

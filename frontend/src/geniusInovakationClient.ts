@@ -9,10 +9,11 @@ import {
 import { GICard } from "@@@/data/builder/cardBuilder";
 import { GIHero } from "@@@/data/builder/heroBuilder";
 import { GIStatus } from "@@@/data/builder/statusBuilder";
+import { GISupport } from "@@@/data/builder/supportBuilder";
 import { parseCard } from "@@@/data/cards";
 import { parseHero } from "@@@/data/heros";
 import { newSummon } from "@@@/data/summons";
-import { checkDices, versionWrap } from "@@@/utils/gameUtil";
+import { checkDices } from "@@@/utils/gameUtil";
 import { clone, delay, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
     ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, PickCardType, Player, Preview, RecordData, ServerData, Skill, Status, Summon
@@ -136,7 +137,7 @@ export default class GeniusInvokationClient {
             error: '当前出战卡组不完整',
         };
         this.isDeckVersionValid = {
-            isValid: ver == 'null' || !!customVersion || versionWrap(ver).lte(version) || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
+            isValid: ver == 'null' || !!customVersion || !heroIds.some(hid => parseHero(hid, version).id == 0) && !cardIds.some(cid => parseCard(cid, version).id == 0),
             error: '当前卡组版本不匹配',
         };
     }
@@ -549,7 +550,10 @@ export default class GeniusInvokationClient {
                 h.equipments.forEach(s => s && Reflect.setPrototypeOf(s, GICard.prototype));
             });
             p.handCards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
-            p.supports.forEach(s => Reflect.setPrototypeOf(s.card, GICard.prototype));
+            p.supports.forEach(s => {
+                Reflect.setPrototypeOf(s, GISupport.prototype);
+                Reflect.setPrototypeOf(s.card, GICard.prototype);
+            });
         });
         pickModal.cards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
         const setSelect = (retry = 0) => {

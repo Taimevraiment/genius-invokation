@@ -1,5 +1,5 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
-import { DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
@@ -22,6 +22,57 @@ export class VersionMap<T> {
     }
     get versions() {
         return this._map.filter(([v]) => (Array.from(VERSION) as string[]).includes(v.ver)).map(([v]) => v.ver);
+    }
+}
+
+export class Entity {
+    id: number; // 唯一id
+    entityId: number = -1; // 实体id
+    name: string; // 名字
+    variables: Record<string, number>; // 变量
+    constructor(id: number, name: string, options: { uct?: number, pct?: number, vars?: Record<string, number> } = {}) {
+        this.id = id;
+        this.name = name;
+        const { uct = -1, pct = 0, vars = {} } = options;
+        this.variables = vars;
+        this.setUseCnt(uct);
+        this.setPerCnt(pct);
+    }
+    // 累积点数
+    get useCnt() {
+        return this.variables.useCnt;
+    }
+    // 每回合的效果使用次数
+    get perCnt() {
+        return this.variables.perCnt;
+    }
+    setEntityId(entityId: number) {
+        this.entityId = entityId;
+        return this;
+    }
+    addUseCnt(n: number = 1): number {
+        this.variables.useCnt += n;
+        return this.useCnt;
+    }
+    addUseCntMax(max: number, n?: number): void {
+        this.addUseCnt(n);
+        this.variables.useCnt = Math.min(max, this.useCnt);
+    }
+    minusUseCnt(n: number = 1): number {
+        this.variables.useCnt = Math.max(0, this.useCnt - n);
+        return this.useCnt;
+    }
+    setUseCnt(n: number = 0) {
+        this.variables.useCnt = n;
+    }
+    addPerCnt(n: number = 1): void {
+        this.variables.perCnt += n;
+    }
+    minusPerCnt(n: number = 1): void {
+        this.variables.perCnt -= n;
+    }
+    setPerCnt(n: number = 0) {
+        this.variables.perCnt = n;
     }
 }
 
@@ -129,7 +180,7 @@ export class ArrayHero extends Array<Hero> {
         return this.some(h => h.hp == -1);
     }
     get(id: number) {
-        return getObjById(this, id) ?? getObjById(this, getHidById(id));
+        return getObjById(this, id) ?? getObjById(this, id, 'entityId') ?? getObjById(this, getHidById(id));
     }
     // 获取所有存活/死亡角色的索引hidx
     allHidxs(options: { isDie?: boolean, isAll?: boolean, startHidx?: number, exclude?: number, cdt?: (h: Hero) => boolean, limit?: number } = {}) {
@@ -274,6 +325,24 @@ export class ArraySummon extends Array<Summon> {
     }
 }
 
+export class ArraySupport extends Array<Support> {
+    constructor(...args: any[]) {
+        super(...args);
+    }
+    get(id: number): Support | undefined;
+    get(id: CardSubtype): Support | undefined;
+    get(id: number | CardSubtype) {
+        if (typeof id == 'number') return this.find(s => s.card.id == id || s.entityId == id);
+        return this.find(s => s.card.hasSubtype(id));
+    }
+    has(id: number): boolean;
+    has(id: CardSubtype): boolean;
+    has(id: number | CardSubtype) {
+        if (typeof id == 'number') return this.some(s => s.card.id == id || s.entityId == id);
+        return this.some(s => s.card.hasSubtype(id));
+    }
+}
+
 export interface EntityHandleEvent {
     pidx: number,
     hero: Hero,
@@ -307,8 +376,8 @@ export interface EntityHandleEvent {
     dicesCnt: number,
     restDmg: number,
     isSummon: number,
-    supports: Support[],
-    esupports: Support[],
+    supports: ArraySupport,
+    esupports: ArraySupport,
     isMinusDiceCard: boolean,
     isMinusDiceTalent: boolean,
     minusDiceCard: number,

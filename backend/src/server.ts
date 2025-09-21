@@ -9,6 +9,8 @@ import { PHASE, PLAYER_STATUS, PlayerStatus } from "../../common/constant/enum.j
 import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
 import { cardsTotal } from "../../common/data/cards.js";
 import { herosTotal } from "../../common/data/heros.js";
+import { skillsTotal } from "../../common/data/skills.js";
+import { statusesTotal } from "../../common/data/statuses.js";
 import { summonsTotal } from "../../common/data/summons.js";
 import { compareVersion } from '../../common/utils/gameUtil.js';
 import { convertToArray, getSecretData, parseDate } from '../../common/utils/utils.js';
@@ -444,6 +446,24 @@ app.get('/versions', (req, res) => {
         result[entity.name] = [...entity.UI.versionChanges, ...versionChanges[entity.id]].sort((a, b) => compareVersion(a, b));
     });
     res.json(result);
+});
+
+app.get('/explain', (req, res) => {
+    if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
+    const stsExplain = statusesTotal().map(v => ({ id: `sts${v.id}`, name: v.name, desc: v.UI.description }));
+    const crdExplain = cardsTotal(undefined, true).map(v => ({ id: `crd${v.id}`, name: v.name, desc: v.UI.description }));
+    const rskExplain = skillsTotal().map(v => ({ id: `rsk${v.id}`, name: v.name, desc: v.UI.description }));
+    const smnExplain = summonsTotal().map(v => ({ id: `smn${v.id}`, name: v.name, desc: v.UI.description }));
+    const hroExplain = herosTotal(undefined, true).map(v => ({ id: `hro${v.id}`, name: v.name, desc: '' }));
+    const explain = [...stsExplain, ...crdExplain, ...rskExplain, ...smnExplain, ...hroExplain];
+    res.json(explain.map(v => {
+        v.desc = v.desc.replace(/【(?:sts|crd|rsk|hro)\d+?】/g, id => {
+            const name = explain.find(v => v.id == id.slice(1, -1))?.name;
+            if (!name) return id;
+            return `[${name}]`;
+        }).replace(/【|】/g, '');
+        return v;
+    }));
 });
 
 httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV ?? 'production'}端口${PORT}启动......`));

@@ -93,21 +93,21 @@
             :src="getPngIcon(support.type == SUPPORT_TYPE.Round ? 'TimeState' : 'Counter')" />
           <StrokedText class="support-top-num" :class="{ 'is-change': supportCurcnt[saidx][siidx].isChange }"
             v-if="support.type != SUPPORT_TYPE.Permanent">
-            {{ support.cnt }}
+            {{ support.useCnt }}
           </StrokedText>
           <div :class="{
             // 'will-destroy': supportCnt[getGroup(saidx)][siidx] < 0,
             'will-add': supportCnt[getGroup(saidx)][siidx] != 0,
           }" :style="{
-            'border-image-source': `url(${getPngIcon(`Preview${supportCnt[getGroup(saidx)][siidx] > 0 ? 3 : supportCnt[getGroup(saidx)][siidx] < -support.cnt ? 1 : 2}`)})`,
+            'border-image-source': `url(${getPngIcon(`Preview${supportCnt[getGroup(saidx)][siidx] > 0 ? 3 : supportCnt[getGroup(saidx)][siidx] < -support.useCnt ? 1 : 2}`)})`,
           }">
-            <img v-if="supportCnt[getGroup(saidx)][siidx] < -support.cnt" :src="getSvgIcon('die')"
+            <img v-if="supportCnt[getGroup(saidx)][siidx] < -support.useCnt" :src="getSvgIcon('die')"
               style="height: 16px;" />
             <StrokedText>
               {{ supportCnt[getGroup(saidx)][siidx] > 0 ? "+" :
-                supportCnt[getGroup(saidx)][siidx] >= -support.cnt ? "-" : "" }}
+                supportCnt[getGroup(saidx)][siidx] >= -support.useCnt ? "-" : "" }}
             </StrokedText>
-            <StrokedText v-if="supportCnt[getGroup(saidx)][siidx] >= -support.cnt">
+            <StrokedText v-if="supportCnt[getGroup(saidx)][siidx] >= -support.useCnt">
               {{ Math.floor(Math.abs(supportCnt[getGroup(saidx)][siidx])) }}
             </StrokedText>
           </div>
@@ -525,12 +525,12 @@ const player = computed<Player>(() => {
         });
       });
       p.supports.forEach((st, sti) => {
-        if (supportCurcnt.value[pi][sti].val != st.cnt) {
+        if (supportCurcnt.value[pi][sti].val != st.useCnt) {
           if (supportCurcnt.value[pi][sti].sid == st.entityId) {
-            supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: true };
+            supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.useCnt, isChange: true };
             setTimeout(() => supportCurcnt.value[pi][sti].isChange = false, 300);
           } else {
-            supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.cnt, isChange: false };
+            supportCurcnt.value[pi][sti] = { sid: st.entityId, val: st.useCnt, isChange: false };
           }
         }
       });

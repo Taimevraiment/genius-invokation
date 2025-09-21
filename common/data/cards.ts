@@ -1627,11 +1627,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/30/258999284/d672bab118d384d06e9422e74c47b50b_903174325403791558.png')
         .handle((_, event) => {
             const { supports, esupports } = event;
-            const spt = supports.find(s => s.card.id == 300006);
+            const spt = supports.get(300006);
             return {
                 support: isCdt(!spt, [[300006, 1]]),
-                supportOppo: isCdt(esupports.every(s => s.card.id != 300006), 300006),
-                exec: () => spt?.addCnt(),
+                supportOppo: isCdt(!esupports.has(300006), 300006),
+                exec: () => spt?.addUseCnt(),
             }
         }),
 

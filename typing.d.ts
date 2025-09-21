@@ -3,7 +3,7 @@ import {
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType,
     SWIRL_ELEMENT_TYPE, Version
 } from "./common/constant/enum"
-import { ArrayHero, ArrayStatus, ArraySummon } from "./common/data/builder/baseBuilder"
+import { ArrayHero, ArrayStatus, ArraySummon, ArraySupport } from "./common/data/builder/baseBuilder"
 import { type GICard } from "./common/data/builder/cardBuilder"
 import { type GIHero } from "./common/data/builder/heroBuilder"
 import { type GISkill } from "./common/data/builder/skillBuilder"
@@ -36,7 +36,7 @@ type Player = {
     handCards: Card[], // 手牌
     heros: ArrayHero, // 登场英雄
     pile: Card[], // 牌库
-    supports: Support[], // 支援物
+    supports: ArraySupport, // 支援物
     summons: ArraySummon, // 召唤物
     dice: DiceCostType[], // 骰子
     rollCnt: number, // 骰子投掷次数

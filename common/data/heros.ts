@@ -5,7 +5,7 @@ import { getObjById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { HeroBuilder } from './builder/heroBuilder.js';
 import { NormalSkillBuilder, SkillBuilder } from './builder/skillBuilder.js';
-import { skillTotal } from './skills.js';
+import { allSkills } from './skills.js';
 
 // 11xx：冰
 // 12xx：水
@@ -484,7 +484,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 return { exec: () => skill.minusPerCnt() }
             }))
         .skills(
-            skillTotal[12112](),
+            allSkills[12112](),
             new SkillBuilder('万众狂欢').description('{dealDmg}，生成【sts112114】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/41d5043a50d5e8617dfa47e1a21aa25c.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/808b53862627bda5900f820650997a77_3050208693053163874.png')

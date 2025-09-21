@@ -9,7 +9,7 @@ import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseCostBuilder, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseCostBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface CardHandleEvent extends EntityHandleEvent {
     slotUse: boolean,
@@ -33,11 +33,8 @@ export interface CardBuilderHandleRes extends Omit<CardHandleRes, 'triggers' | '
     exec?: () => any,
 }
 
-export class GICard {
-    id: number; // 唯一id
+export class GICard extends Entity {
     shareId: number; // 分享码id
-    entityId: number = -1; // 实体id
-    name: string; // 卡牌名
     sinceVersion: OnlineVersion; // 加入的版本
     offlineVersion: OfflineVersion | null; // 线下版本
     cost: number; // 费用
@@ -55,7 +52,6 @@ export class GICard {
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
     cidx: number = -1; // 在手牌中的序号
-    variables: Record<string, number> = {}; // 变量
     UI: {
         src: string, // 图片url
         description: string, // 卡牌描述
@@ -78,16 +74,15 @@ export class GICard {
             vars?: Record<string, number>, versionChanges?: Version[],
         } = {}
     ) {
-        this.id = id;
+        const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
+            isResetPct = true, isResetUct = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
+            readySkillStatus = 0, vars, versionChanges = [] } = options;
+        super(id, name, { uct, pct, vars });
         this.shareId = shareId;
-        this.name = name;
         this.sinceVersion = version;
         this.offlineVersion = offlineVersion;
         subType ??= [];
         subType = convertToArray(subType);
-        const { tag = [], uct = -1, pct = 0, expl = [], energy = 0, anydice = 0, canSelectSummon = -1, cnt = 2, canSelectHero = 0,
-            isResetPct = true, isResetUct = false, canSelectSupport = -1, ver = VERSION[0], isUseNightSoul,
-            readySkillStatus = 0, vars = {}, versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
             .replace(/(?<=〖)ski,(\d)(?=〗)/g, `ski${hid},$1`)
@@ -240,9 +235,8 @@ export class GICard {
         this.type = type;
         this.subType = subType ?? [];
         this.tag = tag;
-        this.userType = userType;
+        this.userType = userType == -1 ? hid : userType;
         this.canSelectHero = canSelectHero;
-        this.variables = vars;
         this.reset = card => {
             if (isResetPct) card.setPerCnt(pct);
             if (isResetUct) card.setUseCnt(uct);
@@ -259,7 +253,7 @@ export class GICard {
                 cmds,
                 execmds,
             };
-            const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
+            let builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
             const { status, statusOppo, summon, summonOppo, support, supportOppo, hidxs, triggers, element } = builderRes;
             (cevent.trigger ? execmds : cmds).getStatus(status, { hidxs })
                 .getStatus(statusOppo, { hidxs, isOppo: true })
@@ -269,7 +263,11 @@ export class GICard {
                 .getSupport(supportOppo, { isOppo: true });
             if (cevent.trigger == 'reset') {
                 this.reset(card);
-                if (!builderRes.triggers) builderRes.triggers = 'reset';
+                if (!builderRes.triggers?.includes('reset')) {
+                    builderRes = { triggers: 'reset' }
+                    cmds.clear();
+                    execmds.clear();
+                }
                 builderRes.notLog = true;
                 builderRes.isAddTask = false;
             }
@@ -291,23 +289,11 @@ export class GICard {
         this.canSelectSummon = canSelectSummon;
         this.canSelectSupport = canSelectSupport;
     }
-    // 累积点数
-    get useCnt() {
-        return this.variables.useCnt;
-    }
-    // 每回合的效果使用次数
-    get perCnt() {
-        return this.variables.perCnt;
-    }
-    get costChange() {
+    get costChange(): number {
         return this.costChanges.reduce((a, b) => a + b);
     }
     get rawDiceCost(): number {
         return this.cost + this.anydice;
-    }
-    setEntityId(entityId: number): Card {
-        this.entityId = entityId;
-        return this;
     }
     setCnt(cnt: number): Card {
         this.UI.cnt = cnt;
@@ -318,29 +304,6 @@ export class GICard {
     }
     hasTag(...tags: CardTag[]): boolean {
         return this.tag.some(v => tags.includes(v));
-    }
-    addUseCnt(n: number = 1): number {
-        this.variables.useCnt += n;
-        return this.useCnt;
-    }
-    addUseCntMax(max: number, n?: number): void {
-        this.addUseCnt(n);
-        this.variables.useCnt = Math.min(max, this.useCnt);
-    }
-    minusUseCnt(n: number = 1): void {
-        this.variables.useCnt = Math.max(0, this.useCnt - n);
-    }
-    setUseCnt(n: number = 0) {
-        this.variables.useCnt = n;
-    }
-    addPerCnt(n: number = 1): void {
-        this.variables.perCnt += n;
-    }
-    minusPerCnt(n: number = 1): void {
-        this.variables.perCnt -= n;
-    }
-    setPerCnt(n: number = 0) {
-        this.variables.perCnt = n;
     }
 }
 

@@ -7,7 +7,7 @@ import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface SkillHandleEvent extends EntityHandleEvent {
     skill: Skill,
@@ -56,9 +56,7 @@ type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'triggers'> & {
 
 interface SkillBuilderHandleEvent extends SkillHandleEvent, Omit<EntityBuilderHandleEvent, 'skill'> { }
 
-export class GISkill {
-    id: number; // 唯一id
-    name: string; // 技能名
+export class GISkill extends Entity {
     type: SkillType; // 技能类型：0隐藏被动 1普通攻击 2元素战技 3元素爆发 4被动技能 5特技
     damage: number; // 伤害量
     dmgElement: ElementType; // 伤害元素
@@ -73,11 +71,8 @@ export class GISkill {
     dmgChange: number = 0; // 伤害变化
     costChange: [number, number, number[], number[][]] = [0, 0, [], []]; // 费用变化 [元素骰, 任意骰, 生效的entityId组, 技能当前被x减费后留存的骰子数]
     useCntPerRound: number = 0; // 本回合技能已使用次数
-    perCnt: number = 0; // 每回合使用次数
-    useCnt: number = 0; // 整局技能使用次数
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectHero: -1 | 0 | 1; // 能选择的角色 -1不能选择 0能选择敌方 1能选择我方
-    variables: Record<string, number>; // 变量
     UI: {
         src: string, // 图片url
         description: string; // 技能描述
@@ -93,12 +88,12 @@ export class GISkill {
         src?: string | string[],
         handle?: (hevent: SkillBuilderHandleEvent, version: VersionWrapper) => SkillBuilderHandleRes | undefined | void
     ) {
-        this.name = name;
-        this.type = type;
-        this.damage = damage;
         const { id = -1, ac = 0, ec = 0, de, pct = 0, expl = [], ver = VERSION[0], vars = {},
             canSelectSummon = -1, canSelectHero = -1, spe = false,
         } = options;
+        super(id, name, { uct: 0, pct, vars });
+        this.type = type;
+        this.damage = damage;
         costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         const hid = getHidById(id);
@@ -121,10 +116,8 @@ export class GISkill {
         };
         this.id = id;
         this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: spe ? COST_TYPE.SpEnergy : COST_TYPE.Energy }];
-        this.perCnt = pct;
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
-        this.variables = vars;
         this.handle = event => {
             const cmds = new CmdsGenerator();
             const { players, pidx, ...oevent } = event;
@@ -143,8 +136,10 @@ export class GISkill {
             }
             if (trigger == 'reset') {
                 skill.useCntPerRound = 0;
-                skill.perCnt = pct;
-                return { ...res, notLog: true, isNotAddTask: true, triggers: ['reset'] }
+                skill.setPerCnt(pct);
+                if (res.triggers?.includes('reset')) return { ...res, notLog: true, isNotAddTask: true }
+                cmds.clear();
+                return { cmds, notLog: true, isNotAddTask: true, triggers: ['reset'] }
             }
             let { dmgElement, atkOffset, atkTo } = builderRes;
             const sevent = { ...event, hidx: hero.hidx };
@@ -205,7 +200,7 @@ export class GISkill {
                 ...res,
                 exec: () => {
                     res.exec?.();
-                    ++skill.useCnt;
+                    skill.addUseCnt();
                     ++skill.useCntPerRound;
                 }
             }
@@ -225,12 +220,6 @@ export class GISkill {
     }
     get isHeroSkill() {
         return this.type != SKILL_TYPE.Vehicle;
-    }
-    addPerCnt(n: number = 1): void {
-        this.perCnt += n;
-    }
-    minusPerCnt(n: number = 1): void {
-        this.perCnt -= n;
     }
 }
 

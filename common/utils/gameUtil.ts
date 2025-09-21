@@ -1,4 +1,4 @@
-import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
+import { Card, Entity, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
 import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, PHASE, VERSION, Version } from "../constant/enum.js";
 import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
@@ -233,13 +233,14 @@ export const supportToString = (spt: Support, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
     const prefix1 = '  '.repeat(prefixSpace + 1);
     return `${prefix}{\n`
-        + `${prefix1}name: ${spt.card.name}\n`
-        + `${prefix1}id: ${spt.card.id}\n`
+        + `${prefix1}name: ${spt.name}\n`
+        + `${prefix1}id: ${spt.id}\n`
         + `${prefix1}entityId: ${spt.entityId}\n`
-        + `${prefix1}cnt: ${spt.cnt}\n`
+        + `${prefix1}useCnt: ${spt.useCnt}\n`
         + `${prefix1}perCnt: ${spt.perCnt}\n`
         + `${prefix1}type: ${spt.type}\n`
         + `${prefix1}heal: ${spt.heal}\n`
+        + `${prefix1}variables: [${JSON.stringify(spt.variables)}]\n`
         + `${prefix}}\n`;
 }
 
@@ -316,7 +317,7 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
         + `${prefix}}\n`;
 }
 
-export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>, U extends { id?: number, entityId?: number }>
+export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>, U extends Entity>
     (pidx: number, players: Player[], event: T, entity: U):
     Omit<EntityBuilderHandleEvent, 'cmds' | 'randomInArr' | 'randomInt' | 'getCardIds'> => {
     const player = players[pidx];
@@ -378,11 +379,11 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         selectSupport: -1,
         source: -1,
         sourceHidx: -1,
-        talent: heros.get(entity.id ?? -1)?.talentSlot ?? hero.talentSlot,
+        talent: heros.get(entity.id)?.talentSlot ?? hero.talentSlot,
         isSelfRound: false,
         isSwirlExec: false,
         atkHidx: player.hidx,
         isFirst: false,
-        adventureCnt: player.supports.find(s => s.card.hasSubtype(CARD_SUBTYPE.Adventure))?.cnt ?? 0,
+        adventureCnt: player.supports.get(CARD_SUBTYPE.Adventure)?.useCnt ?? 0,
     }
 }

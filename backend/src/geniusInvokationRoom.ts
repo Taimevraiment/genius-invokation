@@ -18,7 +18,7 @@ import {
 } from '../../common/constant/gameOption.js';
 import { INIT_DAMAGEVO, INIT_PLAYER, NULL_CARD } from '../../common/constant/init.js';
 import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../common/constant/UIconst.js';
-import { ArrayHero, ArrayStatus, ArraySummon, EntityHandleEvent, InputHandle } from '../../common/data/builder/baseBuilder.js';
+import { ArrayHero, ArrayStatus, ArraySummon, ArraySupport, EntityHandleEvent, InputHandle } from '../../common/data/builder/baseBuilder.js';
 import { CardHandleRes } from '../../common/data/builder/cardBuilder.js';
 import { StatusHandleRes } from '../../common/data/builder/statusBuilder.js';
 import { SummonHandleRes } from '../../common/data/builder/summonBuilder.js';
@@ -927,7 +927,7 @@ export default class GeniusInvokationRoom {
             if (type == 'p') smn.perCnt = val[0];
             else if (type == 'u') smn.useCnt = val[0];
         }
-        if (sptIds[0] == 0) player.supports = [];
+        if (sptIds[0] == 0) player.supports = new ArraySupport();
         else if (sptIds[0] < 0) player.supports.splice(sptIds[0]);
         else {
             while (sptIds.length > 0 && player.supports.length < MAX_SUPPORT_COUNT) {
@@ -937,8 +937,8 @@ export default class GeniusInvokationRoom {
         for (const { sptidx, type, val } of setSptCnt) {
             const spt = player.supports[sptidx];
             if (!spt) continue;
-            if (type == 'p') spt.perCnt = val;
-            else if (type == 'u') spt.cnt = val;
+            if (type == 'p') spt.setPerCnt(val);
+            else if (type == 'u') spt.setUseCnt(val);
         }
         this._doCmds(cpidx, cmds);
         await this._execTask();
@@ -3194,11 +3194,11 @@ export default class GeniusInvokationRoom {
                 switchHeroDiceCnt = Math.max(0, switchHeroDiceCnt - (supportres.minusDiceHero ?? 0));
                 minusDiceCard += supportres.minusDiceCard ?? 0;
                 const execute = () => {
-                    const oCnt = support.cnt;
+                    const oCnt = support.useCnt;
                     const oPct = support.perCnt;
                     const supportexecres = supportres.exec?.();
-                    this._writeLog(`[${name}](${pidx})[${support.card.name}]发动${oCnt != support.cnt ? ` ${oCnt}→${support.cnt}` : ''}`, supportres.notLog ? 'system' : 'log');
-                    this._writeLog(`[${name}](${pidx})${trigger}:${support.card.name}(${support.entityId}).cnt:${oCnt}→${support.cnt}.perCnt:${oPct}→${support.perCnt}`, 'system');
+                    this._writeLog(`[${name}](${pidx})[${support.name}]发动${oCnt != support.useCnt ? ` ${oCnt}→${support.useCnt}` : ''}`, supportres.notLog ? 'system' : 'log');
+                    this._writeLog(`[${name}](${pidx})${trigger}:${support.name}(${support.entityId}).cnt:${oCnt}→${support.useCnt}.perCnt:${oPct}→${support.perCnt}`, 'system');
                     return supportexecres ?? {};
                 }
                 const doSupportDestroy = () => {
@@ -3207,14 +3207,14 @@ export default class GeniusInvokationRoom {
                 }
                 if (supportres.isNotAddTask) {
                     const { cmds, isDestroy } = execute();
-                    this._doCmds(pidx, cmds, { source: support.card.id, trigger });
+                    this._doCmds(pidx, cmds, { source: support.id, trigger });
                     if (isDestroy) doSupportDestroy();
                 } else {
-                    this.taskQueue.addTask(`_detectSupport-p${pidx}-${support.card.name}(${support.entityId}):${trigger}`, async () => {
+                    this.taskQueue.addTask(`_detectSupport-p${pidx}-${support.name}(${support.entityId}):${trigger}`, async () => {
                         const { cmds, isDestroy } = execute();
                         const sptIdx = supports.findIndex(s => s.entityId == support.entityId);
                         if (supportres.isExchange && eSupports.length < MAX_SUPPORT_COUNT) {
-                            const taskName = `doSupport-exchange:${support.card.name}(${support.entityId})`;
+                            const taskName = `doSupport-exchange:${support.name}(${support.entityId})`;
                             this.taskQueue.addTask(taskName, () => {
                                 supports.splice(sptIdx, 1);
                                 eSupports.push(support);
@@ -3223,13 +3223,13 @@ export default class GeniusInvokationRoom {
                         }
                         const supportSelect = [pidx, supports.findIndex(s => s.entityId == support.entityId), +!!isDestroy];
                         this._doCmds(pidx, cmds, {
-                            atkname: support.card.name,
+                            atkname: support.name,
                             dmgSource: 'support',
-                            source: support.card.id,
+                            source: support.id,
                             supportSelect,
                             trigger,
                         });
-                        if (!cmds?.hasDamage) await this.emit(`doSupport-${support.card.name}(${support.entityId}):${trigger}`, pidx, { supportSelect });
+                        if (!cmds?.hasDamage) await this.emit(`doSupport-${support.name}(${support.entityId}):${trigger}`, pidx, { supportSelect });
                         if (isDestroy) doSupportDestroy();
                     }, { delayAfter: 800 });
                 }
@@ -3435,6 +3435,7 @@ export default class GeniusInvokationRoom {
                     const { isInvalid } = this._emitEvent(cpidx, 'pre-switch', { types: STATUS_TYPE.Usage, hidxs: heros.frontHidx });
                     if (isInvalid) return;
                     const toHidx = sdir == 0 ? heros.getNearestHidx(hidxs?.[0]) : heros.getFront({ offset: sdir })?.hidx ?? -1;
+                    if (toHidx == -1) throw new Error(`EEROR@doCmd--${cmd}: toHidx is not found, hidxs:${hidxs}, sdir:${sdir}`);
                     if (!this.preview.isExec) this.preview.willSwitch[cpidx][toHidx] = true;
                     this._switchHero(cpidx, toHidx, `doCmd--switch:${source}`, { socket, skill });
                 }, { isImmediate, isPriority, isUnshift });
@@ -3976,7 +3977,7 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'adventure') {
                 this.taskQueue.addTask(`doCmd--adventure-p${cpidx}:${trigger}`, () => {
                     callback?.();
-                    const adventure = cplayer.supports.find(s => s.card.hasSubtype(CARD_SUBTYPE.Adventure));
+                    const adventure = cplayer.supports.has(CARD_SUBTYPE.Adventure);
                     if (!adventure) {
                         if (cplayer.supports.length == MAX_SUPPORT_COUNT) return;
                         this._doCmds(cpidx, CmdsGenerator.ins.pickCard(3, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
@@ -4027,7 +4028,7 @@ export default class GeniusInvokationRoom {
         const changedHeros = oplayers.map((p, pi) => {
             const cheros = this.players[pi].heros;
             return p.heros.map(h => {
-                const cSrc = cheros.find(ch => ch.entityId == h.entityId)?.UI.src;
+                const cSrc = cheros.get(h.entityId)?.UI.src;
                 if (h.UI.src == cSrc) return undefined;
                 return cSrc;
             });
@@ -4043,7 +4044,7 @@ export default class GeniusInvokationRoom {
         const summonCnt = oplayers.map((p, pi) => {
             const csummons = this.players[pi].summons;
             return p.summons.map(osmn => {
-                const csmn = csummons.find(cs => cs.entityId == osmn.entityId);
+                const csmn = csummons.get(osmn.entityId);
                 if (!csmn) return -100;
                 return csmn.useCnt - osmn.useCnt + +(this.preview.summonChange.includes(osmn.entityId));
             });
@@ -4051,9 +4052,9 @@ export default class GeniusInvokationRoom {
         const supportCnt = oplayers.map((p, pi) => {
             const csupport = this.players[pi].supports;
             return p.supports.map(ospt => {
-                if (csupport.findIndex(s => s.entityId == ospt.entityId) == -1) return -100;
-                const cspt = csupport.find(cs => cs.entityId == ospt.entityId)!;
-                return cspt.cnt - ospt.cnt + +(this.preview.supportChange.includes(ospt.entityId));
+                const cspt = csupport.get(ospt.entityId);
+                if (!cspt) return -100;
+                return cspt.useCnt - ospt.useCnt + +(this.preview.supportChange.includes(ospt.entityId));
             });
         });
         return { willHp, willSummons, summonCnt, energyCnt, supportCnt, changedHeros }

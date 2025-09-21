@@ -1,5 +1,5 @@
 import { CustomVersionConfig, DamageVO, InfoVO, Player } from '../../typing';
-import { ArrayHero, ArrayStatus, ArraySummon } from '../data/builder/baseBuilder.js';
+import { ArrayHero, ArrayStatus, ArraySummon, ArraySupport } from '../data/builder/baseBuilder.js';
 import { GICard } from '../data/builder/cardBuilder.js';
 import { GIHero } from '../data/builder/heroBuilder.js';
 import { GISkill } from '../data/builder/skillBuilder.js';
@@ -14,7 +14,7 @@ export const INIT_PLAYER: () => Player = () => ({
     handCards: [],
     heros: new ArrayHero(),
     pile: [],
-    supports: [],
+    supports: new ArraySupport(),
     summons: new ArraySummon(),
     combatStatus: new ArrayStatus(),
     dice: [],
