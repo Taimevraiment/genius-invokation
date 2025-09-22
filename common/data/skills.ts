@@ -38,7 +38,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         }),
 
     14155: () => new SkillBuilder('闪烈降临·大火山崩落').description('{dealDmg}，此技能视为[下落攻击]。')
-        .burst().readySkill().damage(4).handle(() => ({ isFallAtk: true })),
+        .burst().readySkill().damage(2).handle(() => ({ isFallAtk: true })),
 
     15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}（或被扩散元素的伤害）。').elemental().readySkill().damage(2),
 

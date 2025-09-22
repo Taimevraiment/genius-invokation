@@ -5,7 +5,7 @@ import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface SummonHandleEvent extends EntityHandleEvent {
     tround: number,
@@ -51,11 +51,7 @@ interface SummonBuilderHandleRes extends Omit<SummonHandleRes, 'triggers' | 'exe
     isOnlyPhaseEnd?: boolean,
 };
 
-export class GISummon {
-    id: number; // 唯一id
-    entityId: number = -1; // 实体id
-    name: string; // 名字
-    useCnt: number; // 可用次数
+export class GISummon extends Entity {
     maxUse: number; // 最大次数
     shieldOrHeal: number; // 挡伤量(<0)/回复量(>0)
     damage: number; // 伤害量
@@ -63,10 +59,8 @@ export class GISummon {
     element: ElementType; // 伤害元素
     tag: SummonTag[]; // 标签
     isDestroy: SummonDestroyType; // 是否销毁：0次数用完销毁 1次数用完回合结束时销毁 2回合结束时强制销毁
-    perCnt: number; // 每回合次数
     isTalent: boolean; // 是否有天赋
     statusId: number; // 可能对应的状态 -1不存在
-    variables: Record<string, number>; // 变量
     handle: (summon: Summon, event: InputHandle<SummonHandleEvent>) => SummonHandleRes; // 处理函数
     UI: {
         src: string; // 图片url
@@ -90,17 +84,15 @@ export class GISummon {
             expl?: string[], topIcon?: string, bottomIcon?: string, pls?: boolean, ver?: Version, versionChanges?: Version[], tag?: SummonTag[],
         } = {}
     ) {
-        this.id = id;
-        this.name = name;
-        this.useCnt = useCnt;
-        this.maxUse = maxUse;
-        this.shieldOrHeal = shieldOrHeal;
-        this.damage = damage;
-        this.element = element;
         const {
             pct = 0, isTalent = false, vars = {}, pdmg = 0, isDestroy = SUMMON_DESTROY_TYPE.Used, stsId = -1,
             expl = [], topIcon = '', bottomIcon = '', pls = false, ver = VERSION[0], versionChanges = [], tag = [],
         } = options;
+        super(id, name, { uct: useCnt, pct, vars });
+        this.maxUse = maxUse;
+        this.shieldOrHeal = shieldOrHeal;
+        this.damage = damage;
+        this.element = element;
         const hid = getHidById(id);
         this.UI = {
             description: description
@@ -114,7 +106,11 @@ export class GISummon {
             topIcon,
             bottomIcon,
             hasPlus: pls,
-            explains: [...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []), ...expl],
+            explains: [
+                ...(description.match(/(?<=〖)[^〖〗]+\d(?=〗)/g) ?? []),
+                ...(description.match(/(?<=【)[^【】]+\d(?=】)/g) ?? []),
+                ...expl,
+            ],
             isWill: false,
             willChange: false,
             descriptions: [],
@@ -122,9 +118,7 @@ export class GISummon {
             versionChanges,
         }
         this.tag = tag;
-        this.perCnt = pct;
         this.isTalent = isTalent;
-        this.variables = vars;
         this.pdmg = pdmg;
         this.isDestroy = isDestroy;
         this.statusId = stsId;
@@ -149,7 +143,7 @@ export class GISummon {
             let { isOnlyPhaseEnd, ...res } = builderRes;
             if (res.status) cmds.getStatus(res.status);
             if (trigger == 'reset' || trigger == 'enter') {
-                summon.perCnt = pct;
+                summon.setPerCnt(pct);
                 if (!res.triggers?.includes(trigger)) {
                     res = { triggers: ['reset', 'enter'] }
                     cmds.clear();
@@ -177,10 +171,6 @@ export class GISummon {
             }
         };
     }
-    setEntityId(id: number): Summon {
-        this.entityId = id;
-        return this;
-    }
     hasTag(...tags: SummonTag[]) {
         return this.tag.some(v => tags.includes(v));
     }
@@ -197,28 +187,20 @@ export class GISummon {
             this.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
         }
     }
-    addUseCnt(ignoreMax: boolean): void
-    addUseCnt(n?: number, ignoreMax?: boolean): void
-    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false) {
-        if (typeof n == 'boolean' && n) ++this.useCnt;
+    addUseCnt(ignoreMax: boolean): number;
+    addUseCnt(n?: number, ignoreMax?: boolean): number;
+    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false): number {
+        if (typeof n == 'boolean' && n) super.addUseCnt();
         else {
             if (n == false) n = 1;
-            if (ignoreMax) this.useCnt += n;
-            else this.useCnt = Math.max(this.useCnt, Math.min(this.maxUse, this.useCnt + n));
+            if (ignoreMax || this.maxUse == 0) super.addUseCnt(n);
+            else super.setUseCnt(Math.max(this.useCnt, Math.min(this.maxUse, this.useCnt + n)));
         }
-    }
-    minusUseCnt(n: number = 1) {
-        this.useCnt = Math.max(0, this.useCnt - n);
-    }
-    addPerCnt(n: number = 1) {
-        this.perCnt += n;
-    }
-    minusPerCnt(n: number = 1) {
-        this.perCnt = Math.max(0, this.perCnt - n);
+        return this.useCnt;
     }
     dispose() {
         this.isDestroy = SUMMON_DESTROY_TYPE.Used;
-        this.useCnt = 0;
+        this.setUseCnt();
     }
 }
 

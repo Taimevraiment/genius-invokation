@@ -209,7 +209,7 @@ const continuousActionHandle = (status: Status, event: StatusBuilderHandleEvent)
         triggers: ['change-turn', 'kill'],
         isQuickAction: trigger == 'change-turn',
         exec: () => {
-            if (trigger == 'kill') status.useCnt = 1;
+            if (trigger == 'kill') status.setUseCnt(1);
             else if (trigger == 'change-turn') status.dispose();
         },
     }
@@ -467,7 +467,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     if (trigger.includes('skilltype')) {
                         cmds.putCard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(Math.min(hcards.length, 2));
                     } else if (trigger == 'drawcard' && status.minusPerCnt() == -3) {
-                        status.perCnt = 0;
+                        status.setPerCnt();
                         cmds.getStatus(111123, { hidxs: hidx });
                     }
                 }
@@ -481,14 +481,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { randomInt, trigger, cmds } = event;
             if (trigger != 'skill' || randomInt(9) >= status.useCnt) return;
-            return {
-                triggers: 'skill',
-                isAddTask: true,
-                exec: () => {
-                    status.useCnt = Math.floor(status.useCnt / 2);
-                    cmds.getStatus(111133);
-                }
-            }
+            cmds.getStatus(111133);
+            return { triggers: 'skill', exec: () => status.setUseCnt(Math.floor(status.useCnt / 2)) }
         }),
 
     111133: () => new StatusBuilder('强攻破绽').combatStatus().useCnt(1).icon('#')
@@ -638,7 +632,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 attachEl: isCdt(isWeapon, ELEMENT_TYPE.Hydro),
                 exec: () => {
                     const trg = ['switch-from', 'after-skilltype1'].indexOf(trigger);
-                    if (trg > -1) status.perCnt &= ~(1 << trg);
+                    if (trg > -1) status.setPerCnt(status.perCnt & ~(1 << trg));
                 },
             }
         }),
@@ -1227,11 +1221,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     114152: () => new StatusBuilder('极限驱动').heroStatus().icon('tmp/UI_Gcg_Buff_Varesa_S')
         .useCnt(1).type(STATUS_TYPE.Usage)
-        .description('【〖hro〗[下落攻击]后：】[准备技能]：【rsk14155】。；[useCnt]')
-        .handle((status, event) => {
-            if (!event.isFallAtk) return;
-            return { triggers: 'skill', status: 114153, exec: () => status.minusUseCnt() }
-        }),
+        .description('【〖hro〗切换为「出战角色」后：】[准备技能]：【rsk14155】。；[useCnt]')
+        .handle(status => ({ triggers: 'switch-to', status: 114153, exec: () => status.minusUseCnt() })),
 
     114153: () => readySkillStatus('闪烈降临·大火山崩落', 14155).icon('tmp/UI_Gcg_Buff_Varesa_Q'),
 
@@ -1462,7 +1453,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         const sts = hero.heroStatus.get(115132);
         if (!sts || sts.perCnt != -2) return;
         if (sts.useCnt == 0) sts.dispose();
-        if (trigger == 'switch-from') sts.perCnt = -1;
+        if (trigger == 'switch-from') sts.setPerCnt(-1);
     }),
 
     115132: () => new StatusBuilder('变格').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
@@ -1763,7 +1754,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     status.minusPerCnt();
                 } else {
                     status.minusUseCnt();
-                    status.perCnt = 0;
+                    status.setPerCnt();
                 }
             },
         })),
@@ -1967,13 +1958,17 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle(() => ({ attachEl: ELEMENT_TYPE.Hydro, addDmg: 1 })),
 
     122041: () => new StatusBuilder('深噬之域').combatStatus().icon('ski,3').useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
+        .description('我方从手牌中[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕')
+        .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】在回合结束时获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。〔（本回合结束时获得{pct}点）〕', 'v6.1.0')
         .description('我方[舍弃]或[调和]的卡牌，会被吞噬。；【每吞噬3张牌：】【hro】获得1点额外最大生命\\；如果其中存在原本元素骰费用值相同的牌，则额外获得1点\\；如果3张均相同，再额外获得1点。', 'v5.0.0')
         .variables('cost1', -1).variables('cost2', -1).variables('maxDice').variables('maxDiceCnt')
         .handle((status, event, ver) => {
-            const { hcard, heros, trigger, cmds } = event;
+            const { hcard, heros, trigger, cmds, source: isFromPile } = event;
             const triggers: Trigger[] = [];
-            if (hcard) triggers.push('discard', 'reconcile');
+            if (hcard) {
+                triggers.push('reconcile');
+                if (ver.lt('v6.1.0') || isFromPile == 0) triggers.push('discard');
+            }
             if (ver.gte('v5.0.0') && status.perCnt != 0) triggers.push('phase-end');
             return {
                 triggers,
@@ -1983,7 +1978,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     if (!hero) return;
                     if (trigger == 'phase-end') {
                         const cnt = -status.perCnt;
-                        status.perCnt = 0;
+                        status.setPerCnt();
                         return cmds.getStatus([[122042, cnt]], { hidxs: hero.hidx }).addMaxHp(cnt, hero.hidx);
                     }
                     if (!hcard) return;
@@ -2008,7 +2003,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                             cmds.getStatus([[122042, cnt]], { hidxs: hero.hidx });
                             for (let i = 0; i < cnt; ++i) cmds.addMaxHp(1, hero.hidx, true);
                         }
-                        status.perCnt -= cnt;
+                        status.minusPerCnt(cnt);
                     }
                 }
             }
@@ -2285,7 +2280,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                     if ((els >> drawElCode - 1 & 1) == 0) {
                         els |= 1 << drawElCode - 1;
                         status.addUseCnt();
-                        status.perCnt = -els;
+                        status.setPerCnt(-els);
                     }
                     cmds.getDice(1, { element: ELEMENT_CODE_KEY[drawElCode] });
                     if (isDrawed) cmds.loseSkill(hidx, 2);
@@ -2654,7 +2649,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     301210: () => new StatusBuilder('昔日宗室之仪（生效中）').combatStatus().icon(STATUS_ICON.Buff)
-        .useCnt(2).type(STATUS_TYPE.AddDamage).from(312041)
+        .useCnt(3).type(STATUS_TYPE.AddDamage).from(312041)
         .description('我方角色造成的伤害+1。；[useCnt]')
         .handle((status, event) => ({ addDmg: 1, triggers: 'skill', exec: () => event.hasDmg && status.minusUseCnt() })),
 
@@ -2676,7 +2671,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【我方打出特技牌时：】若本局游戏我方累计打出了6张【特技牌】，我方出战角色获得3点[护盾]，然后造成3点[物理伤害]。')
         .handle((status, event) => {
             const { playerInfo: { usedVehcileCnt = 0 }, cmds } = event;
-            if (usedVehcileCnt > 0) status.useCnt = usedVehcileCnt;
+            if (usedVehcileCnt > 0) status.setUseCnt(usedVehcileCnt);
             if (usedVehcileCnt < 6) return;
             cmds.getStatus(301307);
             return {

@@ -111,7 +111,11 @@ export class GISkill extends Entity {
                 }
                 return v;
             })[0] ?? '',
-            explains: [...(description.match(/(?<=【).+?(?=】)/g) ?? []), ...expl],
+            explains: [
+                ...(description.match(/(?<=〖).+?(?=〗)/g) ?? []),
+                ...(description.match(/(?<=【).+?(?=】)/g) ?? []),
+                ...expl,
+            ],
             descriptions: [],
         };
         this.id = id;

@@ -155,11 +155,15 @@ const magicCount = (cnt: number, shareId?: number) => {
 
 const hero1511card = (el: SwirlElementType) => {
     return new CardBuilder().name(`焕光追影弹·${ELEMENT_NAME[el][0]}`).event().cost(3, el)
-        .description(`【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
+        .description(`【打出或从手牌中[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
+        .description(`【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`, 'v6.1.0')
         .src(`https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Chasca_${ELEMENT_ICON_NAME[ELEMENT_CODE[el]]}.webp`)
         .handle((_, event) => {
-            event.cmds.attack(1, el, { isPriority: true }).addCard(1, 115113);
-            return { triggers: 'discard', notPreview: true }
+            const { cmds, source: isFromPile } = event;
+            cmds.attack(1, el, { isPriority: true }).addCard(1, 115113);
+            const triggers: Trigger[] = [];
+            if (isFromPile == 0) triggers.push('discard');
+            return { triggers, notPreview: true }
         });
 }
 
@@ -1160,8 +1164,8 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'after-skilltype2', exec: () => card.minusPerCnt() }
         }),
 
-    312041: () => new CardBuilder(529).name('昔日宗室之仪').since('v6.1.0').relic().costSame(2)
-        .description('【入场时：】使所附属角色获得1点[充能]。；【所附属角色使用「元素爆发」后：】我方角色下2次造成的伤害+1。')
+    312041: () => new CardBuilder(529).name('昔日宗室之仪').since('v6.1.0').relic().costAny(3)
+        .description('【入场时：】使所附属角色获得1点[充能]。；【所附属角色使用「元素爆发」后：】我方角色下3次造成的伤害+1。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
         .handle((_, { cmds, execmds }) => (cmds.getEnergy(1), execmds.getStatus(301210), { triggers: 'after-skilltype3' })),
 
@@ -2245,13 +2249,12 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     332056: () => new CardBuilder(531).name('祀珑在昔，灵锦歆诚').since('v6.1.0').event().costSame(1)
-        .description('[冒险]1次。；如果我方冒险经历不低于4，则对我方「出战角色」造成1点[物理伤害]，随后[冒险]1次。')
+        .description('[冒险]1次。如果我方冒险经历不低于4，则对我方「出战角色」造成1点[物理伤害]，改为[冒险]2次。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Fujin.webp')
         .handle((_, event) => {
             const { cmds, adventureCnt } = event;
+            if (adventureCnt >= 4) cmds.attack(1, DAMAGE_TYPE.Physical, { isOppo: false }).adventure();
             cmds.adventure();
-            if (adventureCnt < 3) return;
-            cmds.attack(1, DAMAGE_TYPE.Physical, { isOppo: false }).adventure();
         }),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
@@ -2371,7 +2374,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds, heros }) => (cmds.heal(1), { status: 303322, canSelectHero: heros.map(() => true) })),
 
     333029: () => new CardBuilder(532).name('沉玉茶露').since('v6.1.0').food().costSame(0).canSelectHero(1)
-        .description('选择一个我方角色，我方下2次[冒险]或结束阶段时，治疗目标角色1点。')
+        .description('选择1个我方角色，我方下2次[冒险]或结束阶段时，治疗目标角色1点。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Chalu.webp')
         .handle(() => ({ status: 303323 })),
 
@@ -2849,13 +2852,17 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】生成的【sts114142】，初始[可用次数]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/ff3a1c64a570322d545de6e7d54379a3_1819244806685269268.png'),
 
-    214151: () => new CardBuilder(524).name('正义英雄的凯旋').since('v6.1.0').talent().costElectro(2).perCnt(2)
-        .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【其他我方角色使用技能后：】【hro】附属【sts114154】。（每回合2次）')
+    214151: () => new CardBuilder(524).name('正义英雄的凯旋').since('v6.1.0').talent().costElectro(1)
+        .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【〖hro〗触发〖ski,3〗后：】获得1点[充能]。；装备有此牌的【hro】的「元素爆发」造成的伤害+1。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Varesa.webp')
-        .handle((card, event) => {
-            if (card.perCnt <= 0) return;
-            event.execmds.getStatus(114154, { hidxs: event.hidx });
-            return { triggers: 'after-other-skill', exec: () => card.minusPerCnt() }
+        .handle((_, event) => {
+            const { execmds, hero, hidx, source } = event;
+            const triggers: Trigger[] = [];
+            if (source == 14154 && !hero.isFullEnergy) {
+                triggers.push('trigger');
+                execmds.getEnergy(1, { hidxs: hidx });
+            }
+            return { triggers, addDmgType3: 1 }
         }),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
@@ -2954,10 +2961,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/5a397c87c8f81a20fb69d9483299781f_5902943097195617602.png'),
 
     215141: () => new CardBuilder(510).name('缠忆君影梦相见').since('v6.0.0').talent(1).costAnemo(3).perCnt(2)
-        .description('{action}；如果【hro】是出战角色，则我方造成的[冰元素伤害][水元素伤害][火元素伤害][雷元素伤害]+1。（包括角色引发的任意元素扩散的伤害，每回合2次）')
+        .description('{action}；如果【hro】是出战角色，则我方造成的[冰元素伤害][水元素伤害][火元素伤害][雷元素伤害]+1。（包括我方引发的任意元素扩散的伤害，每回合2次）')
+        .description('{action}；如果【hro】是出战角色，则我方造成的[冰元素伤害][水元素伤害][火元素伤害][雷元素伤害]+1。（包括角色引发的任意元素扩散的伤害，每回合2次）', 'v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/58631fd1402624eea99a18ae87102c34_6983160622552680267.png')
-        .handle((card, event) => {
-            if (!event.hero?.isFront || card.perCnt <= 0) return;
+        .handle((card, event, ver) => {
+            if ((ver.lt('v6.1.0') && !event.hero?.isFront) || card.perCnt <= 0) return;
             return {
                 addDmgCdt: 1,
                 triggers: [
@@ -3024,7 +3032,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { summons, isFallAtk } = event;
             if (summons.has(116041) && isFallAtk) {
-                return { triggers: ['skilltype1', 'other-skilltype1'], addDmgCdt: 1 }
+                return { triggers: ['skill', 'useReadySkill', 'other-skill'], addDmgCdt: 1 }
             }
         }),
 
@@ -3528,11 +3536,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/6ff110643c36e30384bde2805a97ca01_5779765981432713193.png'),
 
     115113: () => new CardBuilder().name('追影弹').event().costAnemo(3)
-        .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。')
+        .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或从手牌中[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。')
+        .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。', 'v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/be0fea5e603570c03e7c728698bdd297_5978114668085840517.png')
         .handle((card, event) => {
-            const { hero, execmds, cmds } = event;
-            const triggers: Trigger[] = ['discard'];
+            const { hero, execmds, cmds, source: isFromPile } = event;
+            const triggers: Trigger[] = [];
+            if (isFromPile == 0) triggers.push('discard');
             if (hero) {
                 const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
                 if (ncardId) {

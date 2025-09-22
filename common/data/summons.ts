@@ -433,7 +433,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const { talent, isFallAtk, isMinusDiceSkill, isQuickAction, trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
             let minusDiceCdt = isFallAtk;
-            if (isFallAtk) triggers.push('skilltype1');
+            if (isFallAtk) triggers.push('skill', 'useReadySkill');
             if (ver.lt('v4.8.0') && !ver.isOffline) {
                 minusDiceCdt &&= summon.perCnt > 0;
             } else {
@@ -447,7 +447,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 isQuickAction: trigger == 'minus-switch',
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (trigger == 'skilltype1' && isMinusDiceSkill && (ver.lt('v4.8.0') && !ver.isOffline)) summon.minusPerCnt();
+                    if (['skill', 'useReadySkill'].includes(trigger) && isMinusDiceSkill && (ver.lt('v4.8.0') && !ver.isOffline)) summon.minusPerCnt();
                     if (trigger == 'minus-switch') summon.minusPerCnt();
                 }
             }
@@ -705,9 +705,14 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),
 
     122043: (dmg: number = 0, useCnt: number = 0) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
-        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
+        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
+        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。', 'v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
-        .handle(() => ({ triggers: ['phase-end', 'end-phase'] })),
+        .handle((_s, _e, ver) => {
+            const triggers: Trigger[] = ['phase-end'];
+            if (ver.lt('v6.1.0')) triggers.push('end-phase');
+            return { triggers }
+        }),
 
     122061: () => hero2206summon(),
 

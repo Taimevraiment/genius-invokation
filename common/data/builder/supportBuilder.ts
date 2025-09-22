@@ -35,7 +35,7 @@ export interface SupportBuilderHandleEvent extends SupportHandleEvent, Omit<Enti
 type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers' | 'exec'> & {
     summon?: (number | [number, ...any])[] | number,
     triggers?: Trigger | Trigger[],
-    exec?: (cmds: CmdsGenerator) => SupportExecRes | void,
+    exec?: (cmds: CmdsGenerator) => SupportExecRes | number | void,
 };
 
 export class GISupport extends Entity {
@@ -72,6 +72,7 @@ export class GISupport extends Entity {
                     const cmds = new CmdsGenerator();
                     if (builderRes.summon) cmds.getSummon(builderRes.summon);
                     const exeres = builderRes.exec?.(cmds);
+                    if (typeof exeres == 'number') return { cmds }
                     return { ...exeres, cmds }
                 }
             }

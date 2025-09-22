@@ -9,6 +9,7 @@ import {
 import { GICard } from "@@@/data/builder/cardBuilder";
 import { GIHero } from "@@@/data/builder/heroBuilder";
 import { GIStatus } from "@@@/data/builder/statusBuilder";
+import { GISummon } from "@@@/data/builder/summonBuilder";
 import { GISupport } from "@@@/data/builder/supportBuilder";
 import { parseCard } from "@@@/data/cards";
 import { parseHero } from "@@@/data/heros";
@@ -550,6 +551,7 @@ export default class GeniusInvokationClient {
                 h.equipments.forEach(s => s && Reflect.setPrototypeOf(s, GICard.prototype));
             });
             p.handCards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
+            p.summons.forEach(s => Reflect.setPrototypeOf(s, GISummon.prototype))
             p.supports.forEach(s => {
                 Reflect.setPrototypeOf(s, GISupport.prototype);
                 Reflect.setPrototypeOf(s.card, GICard.prototype);

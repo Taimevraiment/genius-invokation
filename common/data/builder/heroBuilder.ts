@@ -2,14 +2,11 @@ import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray } from "../../utils/utils.js";
-import { ArrayStatus, BaseCostBuilder, VersionMap } from "./baseBuilder.js";
+import { ArrayStatus, BaseCostBuilder, Entity, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder.js";
 
-export class GIHero {
-    id: number; // 唯一id
+export class GIHero extends Entity {
     shareId: number; // 分享码id
-    entityId: number = -1; // 实体id
-    name: string; // 角色名
     sinceVersion: OnlineVersion; // 加入的版本
     offlineVersion: OfflineVersion | null; // 线下版本
     tags: HeroTag[]; // 所属
@@ -42,9 +39,8 @@ export class GIHero {
         weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null,
         skills: GISkill[] = [], maxEnergy: number = 0, versionChanges: Version[] = [],
     ) {
-        this.id = id;
+        super(id, name);
         this.shareId = shareId;
-        this.name = name;
         this.sinceVersion = version;
         this.tags = convertToArray(tags);
         this.maxHp = maxHp;

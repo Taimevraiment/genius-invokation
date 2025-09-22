@@ -1152,7 +1152,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const { hero: { heroStatus }, hidx, cmds } = event;
                     if (heroStatus.getUseCnt(STATUS_TYPE.NightSoul) != 2) return;
                     cmds.consumeNightSoul(hidx, 2).getStatus(114152, { hidxs: hidx });
-                    return { triggers: 'after-skill' }
+                    return { triggers: 'after-skill', isTrigger: true }
                 })
         ),
 

@@ -5,7 +5,7 @@ import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBg
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseBuilder, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
+import { BaseBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface StatusHandleEvent extends EntityHandleEvent { }
 
@@ -31,21 +31,15 @@ export interface StatusBuilderHandleRes extends Omit<StatusHandleRes, 'triggers'
 
 export interface StatusBuilderHandleEvent extends StatusHandleEvent, EntityBuilderHandleEvent { };
 
-export class GIStatus {
-    id: number; // 唯一id
-    entityId: number = -1; // 实体id
-    name: string; // 名字
+export class GIStatus extends Entity {
     group: StatusGroup; // 0角色状态 1阵营状态
-    type: StatusType[]; // 类型: 0隐藏 1攻击 2挡伤 3回合 4使用 5翻倍伤害 6条件加伤 7护盾 8元素附魔 9累积 10标记 11准备技能 12死后不删除 13免击倒 14无法行动 15暂时不消失 16条件附魔
-    useCnt: number; // 剩余使用次数: -1为无次数限制
+    type: StatusType[]; // 类型
     maxCnt: number; // 最多叠加的次数: 0为不能叠加
     addCnt: number; // 叠加时次数
-    perCnt: number; // 每回合使用次数
     roundCnt: number; // 剩余轮次数: -1为无轮次限制
     isTalent: boolean; // 是否有天赋
     handle: (status: Status, event: InputHandle<StatusHandleEvent>) => StatusHandleRes; // 处理函数
     summonId: number; // 可能对应的召唤物 -1不存在
-    variables: Record<string, number>; // 变量
     UI: {
         icon: string, // 图标
         description: string, // 描述
@@ -63,15 +57,15 @@ export class GIStatus {
             isTalent?: boolean, isReset?: boolean, vars?: Record<string, number>, ver?: Version, versionChanges?: Version[],
         } = {}
     ) {
+        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
+            isTalent = false, isReset = true, vars = {}, ver = VERSION[0], versionChanges = [] } = options;
+        super(id, name, { uct: useCnt, pct, vars });
         this.id = id;
         this.name = name;
         this.group = group;
         this.type = type;
-        this.useCnt = useCnt;
         this.maxCnt = maxCnt;
         this.roundCnt = roundCnt;
-        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
-            isTalent = false, isReset = true, vars = {}, ver = VERSION[0], versionChanges = [] } = options;
         const hid = getHidById(id);
         description = description
             .replace(/\[useCnt\]/g, `【[可用次数]：${useCnt}】` + (maxCnt == 0 ? '' : `（可叠加，${maxCnt == MAX_USE_COUNT ? '没有上限' : `最多叠加到${maxCnt}次`}）`))
@@ -94,9 +88,7 @@ export class GIStatus {
         }
         this.addCnt = act == -1 ? Math.max(useCnt, roundCnt) : act;
         this.summonId = smnId;
-        this.perCnt = pct;
         this.isTalent = isTalent;
-        this.variables = vars;
         let thandle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined = handle ?? (() => ({}));
         if (type.includes(STATUS_TYPE.Shield)) {
             this.UI.icon ||= STATUS_ICON.Shield;
@@ -175,7 +167,7 @@ export class GIStatus {
                 cmds,
             };
             if (cevent.trigger == 'reset') {
-                if (isReset) status.perCnt = pct;
+                if (isReset) status.setPerCnt(pct);
                 return { notLog: true, isAddTask: false, triggers: isCdt(isReset, ['reset']) }
             }
             const builderRes = thandle(status, cevent, versionWrap(ver)) ?? {};
@@ -206,39 +198,24 @@ export class GIStatus {
         return (this.roundCnt == 0 || this.useCnt == 0 && !this.hasType(STATUS_TYPE.Accumulate)) &&
             !this.hasType(STATUS_TYPE.NonDestroy, STATUS_TYPE.Attack);
     }
-    setEntityId(id: number): Status {
-        this.entityId = id;
-        return this;
-    }
     hasType(...types: StatusType[]): boolean {
         if (types.length == 0) return true;
         return this.type.some(v => types.includes(v));
     }
-    addUseCnt(ignoreMax: boolean): void
-    addUseCnt(n?: number, ignoreMax?: boolean): void
-    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false): void {
-        if (typeof n == 'boolean' && n) ++this.useCnt;
+    addUseCnt(ignoreMax: boolean): number;
+    addUseCnt(n?: number, ignoreMax?: boolean): number;
+    addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false): number {
+        if (typeof n == 'boolean' && n) super.addUseCnt();
         else {
             if (n == false) n = 1;
-            if (ignoreMax || this.maxCnt == 0) this.useCnt += n;
-            else this.useCnt = Math.max(this.useCnt, Math.min(this.maxCnt, this.useCnt + n));
+            if (ignoreMax || this.maxCnt == 0) super.addUseCnt(n);
+            else super.setUseCnt(Math.max(this.useCnt, Math.min(this.maxCnt, this.useCnt + n)));
         }
+        return this.useCnt;
     }
     addUseCntMod(mod: number, n?: number): void {
         this.addUseCnt(n);
-        this.useCnt %= mod;
-    }
-    minusUseCnt(n: number = 1): number {
-        this.useCnt = Math.max(0, this.useCnt - n);
-        return this.useCnt;
-    }
-    setUseCnt(n: number = 0): number {
-        this.useCnt = n;
-        return this.useCnt;
-    }
-    minusPerCnt(n: number = 1): number {
-        this.perCnt -= n;
-        return this.perCnt;
+        this.setUseCnt(this.useCnt % mod);
     }
     addRoundCnt(n: number = 1): void {
         this.roundCnt = Math.max(this.roundCnt, Math.min(this.maxCnt, this.roundCnt + n));
@@ -249,7 +226,7 @@ export class GIStatus {
         this.roundCnt = nrcnt;
     }
     dispose(includeAtk: boolean = true): void {
-        this.useCnt = 0;
+        this.setUseCnt();
         this.roundCnt = 0;
         const nonDestroy = this.type.indexOf(STATUS_TYPE.NonDestroy);
         if (nonDestroy > -1) this.type.splice(nonDestroy, 1);

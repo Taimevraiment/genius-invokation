@@ -682,7 +682,7 @@ export default class GeniusInvokationRoom {
             p.phase = this.phase;
             p.hidx = -1;
             p.heros.forEach((h, hidx) => {
-                h.entityId = this._genEntityId();
+                h.setEntityId(this._genEntityId());
                 h.hidx = hidx;
             });
             p.supports.splice(0, MAX_SUPPORT_COUNT);
@@ -903,8 +903,8 @@ export default class GeniusInvokationRoom {
             const hero = heros[hidx];
             const sts = [...player.combatStatus, ...(hero?.heroStatus ?? [])].find(s => s.id == stsid);
             if (!sts) continue;
-            if (type == 'p') sts.perCnt = val;
-            else if (type == 'u') sts.useCnt = val;
+            if (type == 'p') sts.setPerCnt(val);
+            else if (type == 'u') sts.setUseCnt(val);
             else if (type == 'r') sts.roundCnt = val;
         }
         for (const { hidx, slotid, type, val } of setSlotCnt) {
@@ -924,8 +924,8 @@ export default class GeniusInvokationRoom {
         for (const { smnidx, type, val } of setSmnCnt) {
             const smn = player.summons[smnidx];
             if (!smn) continue;
-            if (type == 'p') smn.perCnt = val[0];
-            else if (type == 'u') smn.useCnt = val[0];
+            if (type == 'p') smn.setPerCnt(val[0]);
+            else if (type == 'u') smn.setUseCnt(val[0]);
         }
         if (sptIds[0] == 0) player.supports = new ArraySupport();
         else if (sptIds[0] < 0) player.supports.splice(sptIds[0]);
@@ -1834,9 +1834,9 @@ export default class GeniusInvokationRoom {
         if (isSwirl) {
             atriggers[atkHidx].add(`${trgEl}-dmg-Swirl` as Trigger).add('dmg-Swirl');
             etriggers[dmgedHidx].add(`${trgEl}-getdmg-Swirl` as Trigger);
-        } else {
-            if (skill?.isReadySkill) atriggers[atkHidx].add('useReadySkill');
-            else if (skill) {
+        } else if (!isAtkSelf && isFirstAtk && skill) {
+            if (skill.isReadySkill) atriggers[atkHidx].add('useReadySkill');
+            else {
                 const sktrg = skill.type == SKILL_TYPE.Vehicle ? 'vehicle' : 'skill';
                 atriggers.forEach((trg, ti) => {
                     const isOther = ti != atkHidx ? 'other-' : '';
@@ -4379,11 +4379,11 @@ export default class GeniusInvokationRoom {
                 const cStatus = oStatus[cstIdx];
                 if (sts.maxCnt == 0) { // 不可叠加
                     oStatus[cstIdx] = clone(sts).setEntityId(oStatus[cstIdx].entityId);
-                    oStatus[cstIdx].useCnt = Math.max(oStatus[cstIdx].useCnt, cStatus.useCnt);
+                    oStatus[cstIdx].setUseCnt(Math.max(oStatus[cstIdx].useCnt, cStatus.useCnt));
                     oStatus[cstIdx].variables = cStatus.variables;
                 } else { // 可叠加
                     cStatus.maxCnt = sts.maxCnt;
-                    cStatus.perCnt = sts.perCnt;
+                    cStatus.setPerCnt(sts.perCnt);
                     let oCnt = -1;
                     let nCnt = -1;
                     if (cStatus.roundCnt > -1 && cStatus.useCnt == -1) {
@@ -4398,7 +4398,7 @@ export default class GeniusInvokationRoom {
                         cStatus.addUseCnt(sts.addCnt);
                         nCnt = cStatus.useCnt;
                     } else {
-                        cStatus.useCnt = sts.useCnt;
+                        cStatus.setUseCnt(sts.useCnt);
                     }
                     this._writeLog(`[${name}](${pidx})${sts.group == STATUS_GROUP.heroStatus ? `[${heros[hidx].name}]` : ''}[${sts.name}]【(${cStatus.entityId})】 ${oCnt}→${nCnt}`);
                 }
@@ -4480,8 +4480,8 @@ export default class GeniusInvokationRoom {
             let csummon: Summon = oriSummon[csmnIdx];
             let isGenerate = true;
             if (csmnIdx > -1) { // 重复生成召唤物
-                oriSummon[csmnIdx].useCnt = Math.max(oriSmn.useCnt, smn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt));
-                oriSummon[csmnIdx].perCnt = smn.perCnt;
+                oriSummon[csmnIdx].setUseCnt(Math.max(oriSmn.useCnt, smn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt)));
+                oriSummon[csmnIdx].setPerCnt(smn.perCnt);
                 oriSummon[csmnIdx].damage = smn.damage;
                 oriSummon[csmnIdx].variables = smn.variables;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
@@ -4502,7 +4502,7 @@ export default class GeniusInvokationRoom {
                     let smnStatus = statuses.find(sts => sts.id == smn.statusId);
                     if (smnStatus || smn.useCnt > 0) {
                         smnStatus ??= nSmnStatus;
-                        smnStatus.useCnt = smn.useCnt;
+                        smnStatus.setUseCnt(smn.useCnt);
                         this._updateStatus(pidx, this._getStatusById([smnStatus]), statuses, { hidx, isLog: false });
                     }
                 }

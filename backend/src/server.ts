@@ -457,13 +457,13 @@ app.get('/explain', (req, res) => {
     const hroExplain = herosTotal(undefined, true).map(v => ({ id: `hro${v.id}`, name: v.name, desc: '' }));
     const explain = [...stsExplain, ...crdExplain, ...rskExplain, ...smnExplain, ...hroExplain];
     res.json(explain.map(v => {
-        v.desc = v.desc.replace(/【(?:sts|crd|rsk|hro)\d+?】/g, id => {
+        v.desc = v.desc.replace(/(?:【(?:sts|crd|rsk|smn|hro)\d+?】)|(?:〖(?:sts|crd|rsk|smn|hro)\d+?〗)/g, id => {
             const name = explain.find(v => v.id == id.slice(1, -1))?.name;
             if (!name) return id;
             return `[${name}]`;
-        }).replace(/【|】/g, '');
+        });
         return v;
-    }));
+    }).reduce((a, c) => (a[c.id] = { name: c.name, desc: c.desc }, a), {} as Record<string, { name: string, desc: string }>));
 });
 
 httpServer.listen(PORT, () => console.info(`服务器已在${process.env.NODE_ENV ?? 'production'}端口${PORT}启动......`));

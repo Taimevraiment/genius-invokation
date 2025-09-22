@@ -50,7 +50,9 @@ export class Entity {
         this.entityId = entityId;
         return this;
     }
-    addUseCnt(n: number = 1): number {
+    addUseCnt(n?: number, ignoreMax?: boolean): number;
+    addUseCnt(n: number | boolean = 1, _ignoreMax: boolean = false): number {
+        n = +n;
         this.variables.useCnt += n;
         return this.useCnt;
     }
@@ -62,14 +64,16 @@ export class Entity {
         this.variables.useCnt = Math.max(0, this.useCnt - n);
         return this.useCnt;
     }
-    setUseCnt(n: number = 0) {
+    setUseCnt(n: number = 0): void {
         this.variables.useCnt = n;
     }
-    addPerCnt(n: number = 1): void {
+    addPerCnt(n: number = 1): number {
         this.variables.perCnt += n;
+        return this.perCnt;
     }
-    minusPerCnt(n: number = 1): void {
+    minusPerCnt(n: number = 1): number {
         this.variables.perCnt -= n;
+        return this.perCnt;
     }
     setPerCnt(n: number = 0) {
         this.variables.perCnt = n;
@@ -285,7 +289,7 @@ export class ArrayStatus extends Array<Status> {
         return super.filter(predicate, thisArg) as ArrayStatus;
     }
     get(id: number): Status | undefined;
-    get(id: StatusType): Status | undefined;
+    get(type: StatusType): Status | undefined;
     get(id: number | StatusType) {
         if (typeof id == 'number') return getObjById(this, id) ?? getObjById(this, id, 'entityId');
         return this.find(s => s.hasType(id));
@@ -297,7 +301,7 @@ export class ArrayStatus extends Array<Status> {
         return this.some(s => s.hasType(...ids as StatusType[]));
     }
     getUseCnt(id: number): number;
-    getUseCnt(id: StatusType): number;
+    getUseCnt(type: StatusType): number;
     getUseCnt(id: number | StatusType) {
         if (typeof id == 'number') return this.get(id)?.useCnt ?? 0;
         return this.get(id)?.useCnt ?? 0;
@@ -309,13 +313,13 @@ export class ArraySummon extends Array<Summon> {
         super(...args);
     }
     get(id: number): Summon | undefined;
-    get(id: SummonTag): Summon | undefined;
+    get(tag: SummonTag): Summon | undefined;
     get(id: number | SummonTag) {
         if (typeof id == 'number') return getObjById(this, id) ?? getObjById(this, id, 'entityId');
         return this.find(s => s.hasTag(id));
     }
     has(id: number): boolean;
-    has(id: SummonTag): boolean;
+    has(tag: SummonTag): boolean;
     has(id: number | SummonTag) {
         if (typeof id == 'number') return hasObjById(this, id);
         return this.some(s => s.hasTag(id));
@@ -330,13 +334,13 @@ export class ArraySupport extends Array<Support> {
         super(...args);
     }
     get(id: number): Support | undefined;
-    get(id: CardSubtype): Support | undefined;
+    get(type: CardSubtype): Support | undefined;
     get(id: number | CardSubtype) {
         if (typeof id == 'number') return this.find(s => s.card.id == id || s.entityId == id);
         return this.find(s => s.card.hasSubtype(id));
     }
     has(id: number): boolean;
-    has(id: CardSubtype): boolean;
+    has(type: CardSubtype): boolean;
     has(id: number | CardSubtype) {
         if (typeof id == 'number') return this.some(s => s.card.id == id || s.entityId == id);
         return this.some(s => s.card.hasSubtype(id));
