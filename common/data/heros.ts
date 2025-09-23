@@ -2220,7 +2220,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus } } = event;
                     cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard }).discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true });
-                    return { pdmg: 1 + (heroStatus.getUseCnt(123051)), status: 123051, notPreview: true }
+                    return { pdmg: 1 + heroStatus.getUseCnt(123051), status: 123051, notPreview: true }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
                 .src('#',

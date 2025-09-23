@@ -3032,7 +3032,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, event) => {
             const { summons, isFallAtk } = event;
             if (summons.has(116041) && isFallAtk) {
-                return { triggers: ['skill', 'useReadySkill', 'other-skill'], addDmgCdt: 1 }
+                return { triggers: ['fallatk', 'other-fallatk'], addDmgCdt: 1 }
             }
         }),
 

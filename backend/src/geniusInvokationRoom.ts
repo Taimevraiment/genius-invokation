@@ -123,7 +123,7 @@ export default class GeniusInvokationRoom {
         this.allowLookon = allowLookon;
         this.customVersionConfig = customVersionConfig;
         this.recordData = { name: this.name, pidx: -1, username: [], shareCode: [], seed: '', version, actionLog: [], customVersionConfig }
-        this.env = env;
+        this.env = 'prod'; env
         const { diff = [] } = customVersionConfig ?? {};
         this.newStatus = newStatus(version, { diff, dict });
         this.newCard = newCard(version, { diff, dict });
@@ -840,7 +840,7 @@ export default class GeniusInvokationRoom {
                         this.recordData.isPlaying = false;
                         this.recordData.isExecuting = false;
                     } catch (e) {
-                        await this.emitError('录像文件损坏');
+                        this.emitError('录像文件损坏');
                     }
                 });
                 break;
@@ -848,8 +848,8 @@ export default class GeniusInvokationRoom {
                 this.recordData.isPlaying = false;
                 break;
             default:
-                const a: never = actionData.type;
-                throw new Error(`@getAction: 未知的ActionType[${a}]`);
+                const actionType: never = actionData.type;
+                throw new Error(`@getAction: 未知的ActionType[${actionType}]`);
         }
     }
     /**
@@ -1477,7 +1477,7 @@ export default class GeniusInvokationRoom {
         const dmgedPidx = epidx ^ +isAtkSelf;
         const atkPidx = dmgedPidx ^ 1;
         const { heros: dmgedheros, heros: { length: ehlen } } = this.players[dmgedPidx];
-        const { heros: { length: ahlen }, combatStatus: aCombatStatus } = this.players[atkPidx];
+        const { heros: { length: ahlen }, combatStatus: aCombatStatus, isFallAtk } = this.players[atkPidx];
         const dmgedfhero = dmgedheros[dmgedHidx];
         const getDmgIdxOffset = ehlen * dmgedPidx;
         const aGetDmgIdxOffset = ahlen * pidx;
@@ -1844,6 +1844,7 @@ export default class GeniusInvokationRoom {
                 });
                 etriggers.forEach(trgs => trgs.add(`${sktrg}-oppo`));
             }
+            if (isFallAtk) atriggers.forEach((trg, ti) => trg.add(ti == atkHidx ? 'fallatk' : 'other-fallatk'));
         }
 
         const source = isSummon > -1 ? isSummon : atkId; // 角色/状态/召唤物id
@@ -2240,7 +2241,7 @@ export default class GeniusInvokationRoom {
      * @param selectIdx 选择卡牌的序号
      */
     private async _pickCard(pidx: number, selectIdx: number) {
-        this._writeLog(`[${this.players[pidx].name}](${pidx})挑选了[${this.pickModal.cards[selectIdx].name}]`);
+        this._writeLog(`【p:${pidx}:[${this.players[pidx].name}](${pidx})挑选了[${this.pickModal.cards[selectIdx].name}]】`);
         const { cardType, phase = PHASE.ACTION, hidxs } = this.pickModal;
         this.players[pidx].phase = phase;
         const selectId = this.pickModal.cards[selectIdx].id;
@@ -3617,7 +3618,6 @@ export default class GeniusInvokationRoom {
                             } else if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
                                 discards.push(...hcardsSorted);
                             } else {
-                                const targetCnt = discardCnt;
                                 while (discardCnt > 0 && unselectedCards.length > 0) {
                                     if (mode == CMD_MODE.Random) { // 弃置随机手牌
                                         const didx = this._randomInt(unselectedCards.length - 1);
@@ -3633,8 +3633,8 @@ export default class GeniusInvokationRoom {
                                         hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);
                                     } else if (mode == CMD_MODE.TopPileCard) { // 弃置牌堆顶的牌 
                                         if (pile.length == 0) break;
-                                        discards.push(clone(pile[targetCnt - discardCnt]));
-                                        discardIdxs.push(targetCnt - discardCnt);
+                                        discards.push(clone(pile[discardCnt - 1]));
+                                        discardIdxs.push(discardCnt - 1);
                                     } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
                                         if (pile.length == 0) break;
                                         const disIdx = this._randomInt(pile.length - 1);
@@ -3691,7 +3691,7 @@ export default class GeniusInvokationRoom {
                         elements.push(...Array.from({ length: cnt }, () => element));
                     }
                     const nel = (element as DiceCostType | undefined) ?? elements;
-                    this._writeLog(`[${name}](${cpidx})获得${cnt}个骰子【p${cpidx}:${(Array.isArray(nel) ? nel : new Array(cnt).fill(nel)).map(e => `[${ELEMENT_NAME[e].replace('元素', '')}]`).join('')}】`);
+                    this._writeLog(`[${name}](${cpidx})获得${cnt}个骰子【p${cpidx}:${(Array.isArray(nel) ? nel : new Array<DiceCostType>(cnt).fill(nel)).map(e => `[${ELEMENT_NAME[e]?.replace('元素', '')}]`).join('')}】`);
                     assgin(dice, this._getDice(cpidx, cnt, nel));
                     for (let i = 0; i < cnt; ++i) {
                         this._detectHero(cpidx ^ 1, 'getdice-oppo', { types: STATUS_TYPE.Usage, source, hidxs: this.players[cpidx ^ 1].hidx });

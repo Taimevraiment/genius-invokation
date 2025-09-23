@@ -431,9 +431,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
         .handle((summon, event, ver) => {
             const { talent, isFallAtk, isMinusDiceSkill, isQuickAction, trigger } = event;
-            const triggers: Trigger[] = ['phase-end'];
+            const triggers: Trigger[] = ['phase-end', 'fallatk'];
             let minusDiceCdt = isFallAtk;
-            if (isFallAtk) triggers.push('skill', 'useReadySkill');
             if (ver.lt('v4.8.0') && !ver.isOffline) {
                 minusDiceCdt &&= summon.perCnt > 0;
             } else {
@@ -447,7 +446,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 isQuickAction: trigger == 'minus-switch',
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (['skill', 'useReadySkill'].includes(trigger) && isMinusDiceSkill && (ver.lt('v4.8.0') && !ver.isOffline)) summon.minusPerCnt();
+                    if (trigger == 'fallatk' && isMinusDiceSkill && (ver.lt('v4.8.0') && !ver.isOffline)) summon.minusPerCnt();
                     if (trigger == 'minus-switch') summon.minusPerCnt();
                 }
             }

@@ -1,8 +1,8 @@
-import { Card, Entity, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
+import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
 import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, PHASE, VERSION, Version } from "../constant/enum.js";
 import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
-import { EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
+import { Entity, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 检查骰子是否合法
