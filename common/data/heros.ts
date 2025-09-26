@@ -2213,14 +2213,14 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('蚀灭火羽').description('{dealDmg}，我方[舍弃]牌组顶部1张牌。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/0188e2eb7af013f151e755845d0a0b6d_2165374047345675245.png')
-                .elemental().damage(3).cost(3).handle(({ cmds }) => (cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }), { notPreview: true })),
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }).res),
             new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/66cb6a2a590c642c2de7cbd2c529ee2e_2098939999112434475.png')
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus } } = event;
                     cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard }).discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true });
-                    return { pdmg: 1 + heroStatus.getUseCnt(123051), status: 123051, notPreview: true }
+                    return { pdmg: 1 + heroStatus.getUseCnt(123051), status: 123051 }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
                 .src('#',

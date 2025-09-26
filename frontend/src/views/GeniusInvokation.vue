@@ -9,7 +9,7 @@
       <span v-if="roomId > 0">房间号{{ roomId }}</span>
       <span v-else>回放</span>
       <u v-if="client.roomId > 0" @click.stop="sendLog" style="margin-left: 5px;cursor: pointer;">发送日志</u>
-      <u v-if="client.recordData.actionLog.length && client.roomId > 0 && false" @click.stop="exportLog"
+      <u v-if="client.recordData.actionLog.length && client.roomId > 0 && false || isDev" @click.stop="exportLog"
         style="margin-left: 5px;cursor: pointer;">导出录像数据</u>
     </div>
     <div class="lookon-count" v-if="client.watchers > 0">
@@ -336,7 +336,7 @@ const mouseleave = (idx: number) => {
 };
 // 取消选择
 const cancel = () => {
-  if (client.value.player.phase <= PHASE.NOT_BEGIN) return;
+  if (client.value.player.phase <= PHASE.NOT_BEGIN && client.value.roomId > 0) return;
   client.value.cancel();
 };
 // 选择要换的卡牌

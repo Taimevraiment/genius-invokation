@@ -205,8 +205,11 @@ export class ArrayHero extends Array<Hero> {
     getFront(options: { offset?: number, isAll?: boolean } = {}) {
         const { offset = 0, isAll } = options;
         const aliveHidxs = this.allHidxs({ isAll });
-        const fidx = aliveHidxs.findIndex(i => i == this.frontHidx);
-        if (fidx == -1) return;
+        let fidx = aliveHidxs.findIndex(i => i == this.frontHidx);
+        if (fidx == -1) {
+            aliveHidxs.unshift(this.frontHidx);
+            fidx = 0;
+        }
         return this[aliveHidxs[(fidx + offset + aliveHidxs.length) % aliveHidxs.length]];
     }
     // 获得距离出战角色最近的hidx

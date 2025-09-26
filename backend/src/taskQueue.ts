@@ -76,7 +76,6 @@ export default class TaskQueue {
             duration += Math.max(0, before) + Math.max(0, after);
         }
         this._writeLog(`execTask-end-${taskType}:${duration}ms`, 'emit');
-        this.isExecuting = true;
         if (this.env == 'dev' && isExec) console.timeEnd('execTask-end-' + taskType);
     }
     getTask(): [TaskItem, boolean] {

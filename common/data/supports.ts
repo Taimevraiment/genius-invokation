@@ -307,7 +307,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 圣火竞技场
     321022: () => new SupportBuilder().collection().handle(support => ({
-        triggers: ['skill', 'vehicle'],
+        triggers: ['after-skill', 'after-skilltype5'],
         exec: cmds => {
             support.addUseCnt();
             if (support.useCnt == 2) cmds.getDice(1, { mode: CMD_MODE.Random });

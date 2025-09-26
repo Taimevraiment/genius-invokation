@@ -1,6 +1,6 @@
 <template>
   <div class="main-container">
-    <div class="side" :style="{ opacity: +((player?.phase ?? 0) >= PHASE.CHOOSE_HERO) }">
+    <div class="side" :style="{ opacity: +((player?.phase ?? 0) >= PHASE.CHOOSE_HERO || client.roomId < 0) }">
       <div class="round" @click.stop="showHistory">
         <img class="round-bg" src="@@/image/TimeState.png" alt="回合" />
         <StrokedText class="round-text">{{ client.round }}</StrokedText>
@@ -57,11 +57,11 @@
         <StrokedText class="pile-cnt">{{ pileCnt[playerIdx] }}</StrokedText>
         <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
-          v-for="(card, cidx) in player.UI.willAddCard.cards" :key="cidx">
+          v-for="(card, cidx) in player?.UI.willAddCard.cards" :key="cidx">
         </Handcard>
         <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
           :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard.pile.length)}px` }"
-          v-for="(card, cidx) in player.UI.willDiscard.pile" :key="cidx">
+          v-for="(card, cidx) in player?.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
       <div class="history-info" v-if="isShowHistory">
@@ -181,7 +181,7 @@
                 {{ elTips[hgi][hidx][0] }}
               </div>
             </template>
-            <template v-if="hero.hp > 0 && willAttachs[hgi][hidx].length == 0">
+            <template v-if="hero.hp > 0 && willAttachs[hgi][hidx]?.length == 0">
               <img v-for="(el, eidx) in hero.attachElement" :key="eidx" :src="ELEMENT_URL[el]" style="width: 20px;" />
             </template>
             <template v-else>

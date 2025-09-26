@@ -52,14 +52,14 @@
         </div>
       </div>
       <div class="btn-group">
-        <button v-if="false">导入回放<input type="file" accept=".gi" @change="importRecord" /></button>
+        <button v-if="isDev">导入回放<input type="file" accept=".gi" @change="importRecord" /></button>
         <button @click="openRename">改名</button>
         <button @click="enterEditDeck">查看卡组</button>
         <button @click="openEnterRoom()">加入房间</button>
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v1.0.6</div>
+    <div class="version">v1.0.7</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -202,6 +202,7 @@ const enterRoom = (roomId: string, options: { roomPassword?: string; isForce?: b
 const importRecord = (e: Event) => {
   importFile(e, res => {
     const recordData: RecordData = JSON.parse(LZString.decompressFromBase64(res ?? '{}'));
+    if (isDev) console.info(recordData);
     const pidx = Math.max(0, recordData.pidx);
     createRoom(recordData.name, recordData.version, '', 0, false, recordData.customVersionConfig, {
       pidx,

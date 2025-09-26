@@ -333,6 +333,7 @@ export default class GeniusInvokationClient {
      * @param player 最新的玩家数据
      */
     updateInitCardsPos(player: Player) {
+        if (!player) return;
         const width = this.isMobile ? 60 : 90;
         const isChangedCard = (c: Card) => c.UI.class == 'changed-card';
         const isChangeCard = (c: Card) => c.UI.class == 'change-card';
@@ -403,7 +404,7 @@ export default class GeniusInvokationClient {
                 type: INFO_TYPE.Card,
                 info: this.currCard,
             }
-            if (this.player.status == PLAYER_STATUS.PLAYING && this.player.canAction && this.isLookon == -1) {
+            if (this.player.status == PLAYER_STATUS.PLAYING && this.player.canAction && this.isLookon == -1 && this.roomId > 0) {
                 const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && cardIdx == pre.cardIdxs![0]);
                 if (!preview) throw new Error('卡牌预览未找到');
                 this.diceSelect.fill(false);

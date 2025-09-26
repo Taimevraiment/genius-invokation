@@ -103,7 +103,7 @@ export default class GeniusInvokationRoom {
     private _random: number = 0; // 随机数
     private delay: (time?: number, fn?: () => any) => Promise<void> | void;
     private wait = async (cdt: () => boolean, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void } = {}) => {
-        if (this.env == 'test' || !this.preview.isExec) return;
+        if (this.env == 'test' || !this.preview.isExec && this.id > 0) return;
         await wait(cdt, options);
     }
     testDmgFn: (() => void)[] = []; // 伤害测试用
@@ -123,7 +123,7 @@ export default class GeniusInvokationRoom {
         this.allowLookon = allowLookon;
         this.customVersionConfig = customVersionConfig;
         this.recordData = { name: this.name, pidx: -1, username: [], shareCode: [], seed: '', version, actionLog: [], customVersionConfig }
-        this.env = 'prod'; env
+        this.env = id < 0 ? 'prod' : env;
         const { diff = [] } = customVersionConfig ?? {};
         this.newStatus = newStatus(version, { diff, dict });
         this.newCard = newCard(version, { diff, dict });
@@ -151,7 +151,8 @@ export default class GeniusInvokationRoom {
         this._currentPlayerIdx = (val + PLAYER_COUNT) % PLAYER_COUNT;
     }
     get needWait() {
-        return this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting && this.players.every(p => p.status != PLAYER_STATUS.DIESWITCH);
+        return this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting && !this.taskQueue.canExecTask &&
+            this.players.every(p => p.status != PLAYER_STATUS.DIESWITCH);
     }
     get string() {
         return `{\n`
@@ -370,12 +371,13 @@ export default class GeniusInvokationRoom {
             // 计算预测行动的所有情况
             const cplayer = this.players[this.currentPlayerIdx];
             if (
-                this.phase == PHASE.ACTION && !notPreview && cplayer.canAction && !flag.includes('update') &&
-                !this.hasDieSwitch && this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting &&
-                cplayer.status == PLAYER_STATUS.PLAYING
+                this.phase == PHASE.ACTION && !notPreview && cplayer.canAction && !flag.includes('update') && !this.hasDieSwitch &&
+                this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting && cplayer.status == PLAYER_STATUS.PLAYING
             ) {
-                this.previews = [];
-                this.previews = await this._getPreview(this.currentPlayerIdx);
+                if (this.id > 0) {
+                    this.previews = [];
+                    this.previews = await this._getPreview(this.currentPlayerIdx);
+                }
                 this.preview.isQuickAction = isQuickAction;
                 if ( // AI行动
                     (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
@@ -820,14 +822,18 @@ export default class GeniusInvokationRoom {
                         this.recordData.isPlaying = true;
                         while (this.recordData.isPlaying && this.recordData.actionLog.length > 0) {
                             await this.delay(1e3 + Math.random() * 1e3);
-                            await this.wait(() => this.needWait || ([PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(this.phase), { maxtime: 3e6 });
+                            const [{ pidx: willPidx }] = this.recordData.actionLog;
+                            const player = this.players[willPidx];
+                            await this.wait(() => this.needWait && this.preview.isExec && player.canAction ||
+                                player.phase == PHASE.PICK_CARD || player.status == PLAYER_STATUS.DIESWITCH ||
+                                ([PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(this.phase), { maxtime: 3e6 });
                             await this.delay((this.phase == PHASE.ACTION ? 4e3 : 5e2) + Math.random() * 1e3);
                             this.recordData.isExecuting = true;
                             if (!this.recordData.isPlaying) break;
                             const { actionData, pidx } = this.recordData.actionLog.shift()!;
                             const { phase } = this.players[pidx];
                             if (
-                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(phase) ||
+                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE, PHASE.PICK_CARD] as Phase[]).includes(phase) ||
                                 actionData.type == ACTION_TYPE.ChangeCard && phase != PHASE.CHANGE_CARD && phase != PHASE.ACTION ||
                                 actionData.type == ACTION_TYPE.ChooseInitHero && phase != PHASE.CHOOSE_HERO ||
                                 actionData.type == ACTION_TYPE.Reroll && phase != PHASE.DICE && phase != PHASE.ACTION
@@ -1039,7 +1045,7 @@ export default class GeniusInvokationRoom {
         const player = this.players[pidx];
         const opponent = this.players[pidx ^ 1];
         const isDieSwitch = player.status == PLAYER_STATUS.DIESWITCH;
-        if (this.preview.isExec) {
+        if (this.preview.isExec && this.id > 0) {
             const { switchHeroDiceCnt: needDices = INIT_SWITCH_HERO_DICE } = this.previews.find(pre => pre.type == ACTION_TYPE.SwitchHero && pre.heroIdxs![0] == hidx) ?? {};
             if (!isDieSwitch && diceSelect && diceSelect.filter(d => d).length != needDices) return this.emit('switchHeroDiceError', pidx, { socket, tip: '骰子不符合要求' });
         }
@@ -1216,7 +1222,7 @@ export default class GeniusInvokationRoom {
         const player = this.players[pidx];
         const currCard = player.handCards[cardIdx];
         const reconcileDice = player.heros.getFront()?.element as DiceCostType | undefined;
-        if (!reconcileDice) return this.emit('reconcileDiceError', pidx, { socket, tip: '没有可以调和的骰子' });
+        if (!reconcileDice) return this.emit('reconcileDiceError', pidx, { socket, tip: '未找到出战角色' });
         if (player.dice.every(d => d == DICE_COST_TYPE.Omni || d == reconcileDice)) return this.emit('reconcileDiceError', pidx, { socket, tip: '没有可以调和的骰子' });
         if (currCard.hasTag(CARD_TAG.NonReconcile)) return this.emit('reconcileCardError', pidx, { socket, tip: '该卡牌不能调和' });
         this.preview.isQuickAction = true;
@@ -1836,14 +1842,12 @@ export default class GeniusInvokationRoom {
             etriggers[dmgedHidx].add(`${trgEl}-getdmg-Swirl` as Trigger);
         } else if (!isAtkSelf && isFirstAtk && skill) {
             if (skill.isReadySkill) atriggers[atkHidx].add('useReadySkill');
-            else {
-                const sktrg = skill.type == SKILL_TYPE.Vehicle ? 'vehicle' : 'skill';
-                atriggers.forEach((trg, ti) => {
-                    const isOther = ti != atkHidx ? 'other-' : '';
-                    trg.add(`${isOther}${sktrg}`).add(`${isOther}skilltype${skill.type}`);
-                });
-                etriggers.forEach(trgs => trgs.add(`${sktrg}-oppo`));
-            }
+            const sktrg = skill.type == SKILL_TYPE.Vehicle ? 'vehicle' : 'skill';
+            atriggers.forEach((trg, ti) => {
+                const isOther = ti != atkHidx ? 'other-' : '';
+                trg.add(`${isOther}${sktrg}`).add(`${isOther}skilltype${skill.type}`);
+            });
+            etriggers.forEach(trgs => trgs.add(`${sktrg}-oppo`));
             if (isFallAtk) atriggers.forEach((trg, ti) => trg.add(ti == atkHidx ? 'fallatk' : 'other-fallatk'));
         }
 
@@ -2282,7 +2286,7 @@ export default class GeniusInvokationRoom {
         const isOppoActionEnd = this.players[pidx ^ 1]?.phase >= PHASE.ACTION_END;
         this.players[pidx].canAction = false;
         const isChange = () => !this.preview.isQuickAction && !isDie &&
-            (!isDieSwitch && !isOppoActionEnd || isDieSwitch && this.players[pidx]?.phase < PHASE.ACTION_END);
+            (!isDieSwitch && !isOppoActionEnd || isDieSwitch && this.players[pidx].phase < PHASE.ACTION_END);
         if (isChange()) this._detectHero(pidx ^ +isDieSwitch, 'change-turn', { types: STATUS_TYPE.Usage });
         if (isChange()) {
             this.players[this.currentPlayerIdx].canAction = false;
@@ -3887,7 +3891,7 @@ export default class GeniusInvokationRoom {
                     }
                     this.players[pidx].phase = PHASE.PICK_CARD;
                     this._writeLog(`[${cplayer.name}]在(${cpidx})${this.pickModal.cards.map(c => `[${c.name}]`).join('')}中进行挑选`, 'system');
-                    await this.emit(`pickCard-p${cpidx}-idx${i}`, cpidx);
+                    await this.emit(`pickCard-p${cpidx}-cmdidx${i}`, cpidx);
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'equip') {
                 if (!card) throw new Error('ERROR@_doCmds-equip: card is undefined');
