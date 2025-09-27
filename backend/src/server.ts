@@ -439,7 +439,7 @@ app.get('/info', (req, res) => {
 app.get('/versions', (req, res) => {
     const result = {};
     (convertToArray(req.query.query) as string[]).forEach(query => {
-        const entity = [...herosTotal(undefined, true), ...cardsTotal(undefined, true), ...summonsTotal()].find(e => {
+        const entity = [...herosTotal(undefined, true), ...cardsTotal(undefined, { force: true }), ...summonsTotal()].find(e => {
             return e.id.toString() == query || e.name.includes(query);
         });
         if (!entity) return;
@@ -451,7 +451,7 @@ app.get('/versions', (req, res) => {
 app.get('/explain', (req, res) => {
     if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
     const stsExplain = statusesTotal().map(v => ({ id: `sts${v.id}`, name: v.name, desc: v.UI.description }));
-    const crdExplain = cardsTotal(undefined, true).map(v => ({ id: `crd${v.id}`, name: v.name, desc: v.UI.description }));
+    const crdExplain = cardsTotal(undefined, { force: true }).map(v => ({ id: `crd${v.id}`, name: v.name, desc: v.UI.description }));
     const rskExplain = skillsTotal().map(v => ({ id: `rsk${v.id}`, name: v.name, desc: v.UI.description }));
     const smnExplain = summonsTotal().map(v => ({ id: `smn${v.id}`, name: v.name, desc: v.UI.description }));
     const hroExplain = herosTotal(undefined, true).map(v => ({ id: `hro${v.id}`, name: v.name, desc: '' }));

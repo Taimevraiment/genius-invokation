@@ -3816,12 +3816,13 @@ const allCards: Record<number, () => CardBuilder> = {
 
 }
 
-export const cardsTotal = (version: Version = VERSION[0], force: boolean = false, ignoreVersion: boolean = false) => {
+export const cardsTotal = (version: Version = VERSION[0], options: { force?: boolean, ignoreVersion?: boolean, ignoreInPool?: boolean } = {}) => {
+    const { force, ignoreVersion, ignoreInPool } = options;
     if (version == 'vlatest') version = VERSION[0];
     const cards: Card[] = [];
     for (const id in allCards) {
         const cardBuilder = allCards[id]().version(version);
-        if (((cardBuilder.notExist && !ignoreVersion) || cardBuilder.notInCardPool) && !force) continue;
+        if (((cardBuilder.notExist && !ignoreVersion) || (cardBuilder.notInCardPool && !ignoreInPool)) && !force) continue;
         cards.push(cardBuilder.id(+id).done()!);
     }
     return cards;

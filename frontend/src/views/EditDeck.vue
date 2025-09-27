@@ -274,7 +274,7 @@ const editDeckIdx = ref<number>(-1); // 当前编辑卡组索引
 const oriVersion = computed(() => oriDecks.value[editDeckIdx.value]?.version ?? 'vlatest');
 const version = ref<Version>(versionWrap(oriVersion.value).value); // 当前版本
 const herosPool = computed<Hero[]>(() => herosTotal(version.value, false, !isEditDeck)); // 选择的角色池
-const cardsPool = computed<Card[]>(() => cardsTotal(version.value, false, !isEditDeck)); // 选择的卡组池
+const cardsPool = computed<Card[]>(() => cardsTotal(version.value, { ignoreVersion: !isEditDeck })); // 选择的卡组池
 
 const currIdx = ref<TagIndex>(TAG_INDEX.Hero); // 当前选择的标签页
 const allHeros = ref<Hero[]>([...herosPool.value]); // 可选择角色池

@@ -2486,7 +2486,7 @@ export default class GeniusInvokationRoom {
         });
         this.players[this.currentPlayerIdx].canAction = true;
         this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
-        await this.emit(flag, pidx, { tip: isCdt(isActionEnd, '回合结束阶段') });
+        await this.emit(flag, pidx, { tip: isCdt(isActionEnd, '回合结束阶段', `[${player.name}](${player.pidx})结束了回合`) });
         if (isActionEnd) { // 双方都结束回合，进入回合结束阶段
             this.phase = PHASE.ACTION_END;
             this._writeLog(`第${this.round}回合结束`);
@@ -4963,6 +4963,6 @@ export default class GeniusInvokationRoom {
      * @returns 卡牌id数组
      */
     private _getCardIds(filter: (cards: Card) => boolean = () => true): number[] {
-        return cardsTotal(this.version.value, true).filter(filter).map(card => card.id);
+        return cardsTotal(this.version.value, { ignoreInPool: true }).filter(filter).map(card => card.id);
     }
 }
