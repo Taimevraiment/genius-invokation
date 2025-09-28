@@ -516,7 +516,10 @@ export default class GeniusInvokationClient {
         if (this.isDev) console.info(flag);
         const hasDmg = damageVO && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
-        if (recordData) this.recordData = recordData;
+        if (recordData) {
+            this.recordData = recordData;
+            if (this.recordData.pidx == -1) this.recordData.pidx = this.playerIdx;
+        }
         if ((this.isLookon > -1 && this.isLookon != this.playerIdx) || players.length == 0) return;
         this.previews = previews;
         this.reconcileValid = previews.filter(pre => pre.type == ACTION_TYPE.Reconcile).sort((a, b) => a.cardIdxs![0] - b.cardIdxs![0]).map(v => v.isValid);

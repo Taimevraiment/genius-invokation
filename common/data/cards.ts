@@ -477,7 +477,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/000bcdedf14ef6af2cfa36a003841098_4382151758785122038.png')
         .handle((card, event) => {
             const { heros, hero, getdmg, heal, execmds } = event;
-            const fhidx = heros.getFront()?.hidx ?? -1;
+            const fhidx = heros.getFront().hidx ?? -1;
             const trigger: Trigger[] = [];
             if ((getdmg[fhidx] ?? -1) > 0) trigger.push('all-getdmg');
             if ((heal[fhidx] ?? -1) >= 0) trigger.push('all-heal');
@@ -1618,7 +1618,7 @@ const allCards: Record<number, () => CardBuilder> = {
     330008: () => new CardBuilder(392).name('旧日鏖战').since('v4.7.0').offline('v3').legend().costSame(0)
         .description('敌方出战角色失去1点[充能]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e09e62a684575d632c731f3725280df2_7385957084481452662.png')
-        .handle((_, { eheros, cmds }) => (cmds.getEnergy(-1, { isOppo: true }), { isValid: !!eheros.getFront()?.energy })),
+        .handle((_, { eheros, cmds }) => (cmds.getEnergy(-1, { isOppo: true }), { isValid: !!eheros.getFront().energy })),
 
     330009: () => new CardBuilder(419).name('赦免宣告').since('v5.0.0').legend().costSame(1).costSame(0, 'v5.8.0').canSelectHero(1)
         .description('治疗目标角色2点。；目标角色免疫冻结、眩晕、石化等无法使用技能的效果，并且该角色为「出战角色」时不会因效果而切换，持续2个回合。')
@@ -2448,7 +2448,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { heros, eheros, execmds } = event;
             if (card.perCnt <= 0 || eheros.every(h => !h.heroStatus.has(111101))) return;
-            if (!heros.getFront()?.isHurt) return;
+            if (!heros.getFront().isHurt) return;
             execmds.heal(2);
             return { triggers: ['skilltype1', 'other-skilltype1'], exec: () => card.minusPerCnt() }
         }),

@@ -9,7 +9,7 @@
       <span v-if="roomId > 0">房间号{{ roomId }}</span>
       <span v-else>回放</span>
       <u v-if="client.roomId > 0" @click.stop="sendLog" style="margin-left: 5px;cursor: pointer;">发送日志</u>
-      <u v-if="client.recordData.actionLog.length && client.roomId > 0 && false || isDev" @click.stop="exportLog"
+      <u v-if="client.recordData.actionLog.length && client.roomId > 0 && false || isDev" @click.stop="exportRecord"
         style="margin-left: 5px;cursor: pointer;">导出录像数据</u>
     </div>
     <div class="lookon-count" v-if="client.watchers > 0">
@@ -374,8 +374,8 @@ const sendLog = () => {
     alert('日志已发送');
   }
 }
-// 导出行动日志
-const exportLog = () => {
+// 导出录像数据
+const exportRecord = () => {
   if (client.value.recordData.actionLog.length == 0) return;
   exportFile(`game${version.value.replace(/\./g, '_')}-r${roomId}.gi`, LZString.compressToBase64(JSON.stringify(client.value.recordData)));
   client.value.recordData.actionLog = [];

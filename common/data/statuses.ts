@@ -545,7 +545,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('角色造成的[物理伤害]转换为[水元素伤害]。；【角色进行[重击]后：】目标角色附属【sts112043】。；角色对附属有【sts112043】的角色造成的伤害+1;；【角色对已附属有断流的角色使用技能后：】对下一个敌方后台角色造成1点[穿透伤害]。（每回合至多2次）；[roundCnt]')
         .handle((status, event) => {
             const { isChargedAtk, eheros, trigger, cmds, hidx } = event;
-            const isDuanliu = eheros.getFront()?.heroStatus.has(112043);
+            const isDuanliu = eheros.getFront().heroStatus.has(112043);
             const hidxs = eheros.getNextBackHidx();
             const isPdmg = status.perCnt > 0 && isDuanliu && hidxs.length && trigger == 'skill';
             const triggers: Trigger[] = ['skill'];

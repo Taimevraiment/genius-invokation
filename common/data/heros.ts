@@ -1004,7 +1004,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/1/13/1tkxwb0js8qxi9yi8bm6tpub8f9ba19.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/08/03/203927054/bb9487283d20c857804988ace8572ebc_971397791433710881.png')
                 .elemental().damage(2).cost(3).handle(event => {
-                    if (event.eheros.getFront()?.heroStatus.has(114091)) return;
+                    if (event.eheros.getFront().heroStatus.has(114091)) return;
                     return { statusOppo: 114091 }
                 }),
             new SkillBuilder('蔷薇的雷光').description('{dealDmg}，召唤【smn114092】，使敌方出战角色附属【sts114091】。')
@@ -1897,7 +1897,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     let fdmg = Math.min(5, Math.max(0, dmg.reduce((a, b) => a + Math.max(0, b), 0) - 2));
                     if (fdmg <= 0) return;
                     if (talent) {
-                        const ocnt = eheros.getFront()?.heroStatus.getUseCnt(122) ?? 0;
+                        const ocnt = eheros.getFront().heroStatus.getUseCnt(122) ?? 0;
                         const fcnt = (ocnt + fdmg) * 2;
                         fdmg = fcnt - ocnt;
                     }
@@ -2468,7 +2468,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/5ab059679b08fba559b68f7d361a64be.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/b49c1863d6b6a61ec13501c27d8204bf_1566255463657696734.png')
                 .elemental().damage(3).cost(3).handle(event => {
-                    const crystallizeEl = event.eheros.getFront()?.attachElement.find(el => (Object.values<PureElementType>(SWIRL_ELEMENT_TYPE)).includes(el));
+                    const crystallizeEl = event.eheros.getFront().attachElement.find(el => (Object.values<PureElementType>(SWIRL_ELEMENT_TYPE)).includes(el));
                     if (!crystallizeEl) return { status: 126022 }
                 }),
             new SkillBuilder('山崩毁阵').description('{dealDmg}，每汲取过一种元素此伤害+1。')

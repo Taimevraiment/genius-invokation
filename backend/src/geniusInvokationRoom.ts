@@ -9,7 +9,7 @@ import {
     ACTION_TYPE, ActionType, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE,
     DICE_COST_TYPE, DICE_TYPE, DamageType, DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE,
     PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY, Phase,
-    PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SWIRL_ELEMENT_TYPE, SkillType, StatusGroup, StatusType, SwirlElementType, Version
+    PureElementType, SKILL_COST_TYPE, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SWIRL_ELEMENT_TYPE, SkillType, StatusGroup, StatusType, SwirlElementType, Version
 } from '../../common/constant/enum.js';
 import {
     AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
@@ -273,7 +273,7 @@ export default class GeniusInvokationRoom {
         const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
         if (!this.isDev) {
-            const recordData: RecordData = { ...this.recordData, username: this.players.map(v => v.name) };
+            const recordData: RecordData = { ...this.recordData, username: this.players.map(v => v.name), pidx: 0 };
             fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(recordData)), err => err && console.error('err:', err));
         }
         if (!this.isDev) http.get(`${koishiUrl}?message=${isError ? `7szh报错了[${this.players.map(p => p.name).join('vs')}]` : `7szh有日志被发送了:${info}`}`, { headers: { flag: secretKey } });
@@ -332,6 +332,7 @@ export default class GeniusInvokationRoom {
         heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], trigger?: Trigger,
     } = {}, callback?: () => void) {
         if (pidx < 0) return;
+        flag += `-p${pidx}`;
         try {
             const { socket, tip = '', actionInfo, damageVO = null, notPreview, isActionInfo, canAction = true,
                 slotSelect = [], heroSelect = [], statusSelect = [], summonSelect = [], supportSelect = [], notUpdate,
@@ -462,7 +463,7 @@ export default class GeniusInvokationRoom {
                 supportSelect,
                 pickModal: this.pickModal,
                 watchers: this.watchers.length,
-                flag: `[${this.id}]${flag}-p${pidx}`,
+                flag: `[${this.id}]${flag}`,
             };
             const _serverDataVO = (vopidx: number, tip: string | string[]) => {
                 const log = this.log.map(lg => {
@@ -1148,7 +1149,7 @@ export default class GeniusInvokationRoom {
                 const supportres = support.handle(support, { ...handleEvent, trigger: 'phase-dice' });
                 if (this._hasNotTriggered(supportres.triggers, 'phase-dice') || diceLen == 0) continue;
                 let { element = DICE_COST_TYPE.Omni, cnt = 0, addRollCnt = 0 } = supportres;
-                if (element == 'front') element = player.heros.getFront()?.element as DiceCostType;
+                if (element == 'front') element = player.heros.getFront().element as DiceCostType;
                 if (element == undefined) {
                     console.info('ERROR@rollDice: element is undefined');
                     break;
@@ -1221,7 +1222,7 @@ export default class GeniusInvokationRoom {
         if (diceSelect.indexOf(true) == -1) return this.emit('reconcileDiceError', pidx, { socket, tip: '骰子不符合要求' });
         const player = this.players[pidx];
         const currCard = player.handCards[cardIdx];
-        const reconcileDice = player.heros.getFront()?.element as DiceCostType | undefined;
+        const reconcileDice = player.heros.getFront().element as DiceCostType | undefined;
         if (!reconcileDice) return this.emit('reconcileDiceError', pidx, { socket, tip: '未找到出战角色' });
         if (player.dice.every(d => d == DICE_COST_TYPE.Omni || d == reconcileDice)) return this.emit('reconcileDiceError', pidx, { socket, tip: '没有可以调和的骰子' });
         if (currCard.hasTag(CARD_TAG.NonReconcile)) return this.emit('reconcileCardError', pidx, { socket, tip: '该卡牌不能调和' });
@@ -1257,24 +1258,26 @@ export default class GeniusInvokationRoom {
             anyDiceCnt = elDiceCnt;
             elDiceCnt = 0;
         }
-        const heroEle = player.heros.filter(h => h.element != ELEMENT_TYPE.Physical && h.hp > 0).map(h => h.element) as DiceCostType[];
-        const frontEle = player.heros.getFront()?.element as DiceCostType;
+        const heroEle = new Set<DiceCostType>(player.heros.filter(h => h.hp > 0)
+            .flatMap(h => h.skills.map(s => s.cost[0].type))
+            .filter(d => d != SKILL_COST_TYPE.Same));
+        const frontEle = player.heros.getFront().element;
         if (costType == COST_TYPE.Same && elDiceCnt > 0) {
             let maxDice: DiceCostType | null = null;
             const weight = (el: DiceCostType, cnt = 0) => {
                 return +(el == DICE_COST_TYPE.Omni) * 1000
                     + +(el == frontEle) * 500
-                    + +heroEle.includes(el) * 400
+                    + +heroEle.has(el) * 400
                     - +(cnt == elDiceCnt) * 300
                     - cnt * 10
                     - DICE_WEIGHT.indexOf(el);
             };
             const omniCnt = player.dice.filter(d => d == DICE_COST_TYPE.Omni).length;
             const diceCnts = objToArr(diceCnt).filter(([el, cnt]) => cnt > 0 && el != DICE_COST_TYPE.Omni).sort((a, b) => weight(...a) - weight(...b));
-            const diceOther = diceCnts.find(([el]) => !heroEle.includes(el));
+            const diceOther = diceCnts.find(([el]) => !heroEle.has(el));
             if (diceOther && diceOther[1] + omniCnt >= elDiceCnt) maxDice = diceOther[0];
             else {
-                const diceHeroEl = diceCnts.find(([el]) => heroEle.includes(el));
+                const diceHeroEl = diceCnts.find(([el]) => heroEle.has(el));
                 if (diceHeroEl && diceHeroEl[1] + omniCnt >= elDiceCnt) maxDice = diceHeroEl[0];
                 else maxDice = DICE_COST_TYPE.Omni;
             }
@@ -1288,7 +1291,7 @@ export default class GeniusInvokationRoom {
             const weight = (el: DiceCostType) => {
                 return +(el == DICE_COST_TYPE.Omni) * 900
                     + +(el == costType || el == frontEle) * 400
-                    + +heroEle.includes(el) * 300
+                    + +heroEle.has(el) * 300
                     + diceCnt[el] * 10
                     - DICE_WEIGHT.indexOf(el);
             };
@@ -1370,7 +1373,7 @@ export default class GeniusInvokationRoom {
             ...this.handleEvent,
             skill,
             hcard: withCard,
-            swirlEl: eheros.getFront()?.attachElement?.find(el => Object.values(SWIRL_ELEMENT_TYPE).includes(el as SwirlElementType)),
+            swirlEl: eheros.getFront().attachElement?.find(el => Object.values(SWIRL_ELEMENT_TYPE).includes(el as SwirlElementType)),
             trigger: skill.isReadySkill ? 'useReadySkill' : 'skill',
             selectHeros: [selectHero],
             selectSummon,
@@ -1383,7 +1386,7 @@ export default class GeniusInvokationRoom {
         this._writeLog(`[${player.name}](${pidx})[${atkHero.name}]使用了[${SKILL_TYPE_NAME[skill.type]}][${skill.name}]`, 'info');
         skillres.exec?.();
         const isVehicle = skill.type == SKILL_TYPE.Vehicle;
-        await this.emit(`useSkill-p${pidx}-${skill.name}`, pidx, {
+        await this.emit(`useSkill-${skill.name}`, pidx, {
             socket,
             canAction: false,
             slotSelect: isCdt(isVehicle, [pidx, heros.frontHidx, SLOT_CODE.Vehicle]),
@@ -2083,7 +2086,7 @@ export default class GeniusInvokationRoom {
                 cardres.isValid == false ||
                 currCard.hasSubtype(CARD_SUBTYPE.Legend) && isUsedLegend ||
                 Math.abs(heros[hidx].energy) < Math.abs(energy)) ||
-            isReconcile && (currCard.tag.includes(CARD_TAG.NonReconcile) || dice.every(d => d == DICE_COST_TYPE.Omni || d == heros.getFront()?.element))
+            isReconcile && (currCard.tag.includes(CARD_TAG.NonReconcile) || dice.every(d => d == DICE_COST_TYPE.Omni || d == heros.getFront().element))
         ) {
             return res;
         }
@@ -2191,7 +2194,7 @@ export default class GeniusInvokationRoom {
             player.playerInfo.usedCardIds.push(currCard.id);
         }
         if (isInvalid) {
-            await this.emit(`useCard-${currCard.name}-invalid-${pidx}`, pidx, { actionInfo: { card: currCard }, isQuickAction: true });
+            await this.emit(`useCard-${currCard.name}-invalid`, pidx, { actionInfo: { card: currCard }, isQuickAction: true });
             this._doActionAfter(pidx);
             this._startTimer();
             await this._execTask();
@@ -3691,7 +3694,7 @@ export default class GeniusInvokationRoom {
                             elements.push(...this._randomInArr(Object.values(PURE_ELEMENT_TYPE), cnt));
                         }
                     } else if (mode == CMD_MODE.FrontHero) { // 当前出战角色(或者前后,用hidxs[0]控制)
-                        const element = heros.getFront({ offset: ohidxs?.[0] })?.element as PureElementType;
+                        const element = heros.getFront({ offset: ohidxs?.[0] }).element as PureElementType;
                         elements.push(...Array.from({ length: cnt }, () => element));
                     }
                     const nel = (element as DiceCostType | undefined) ?? elements;
@@ -3731,7 +3734,7 @@ export default class GeniusInvokationRoom {
             } else if (cmd == 'changeDice') {
                 this.taskQueue.addTask(`doCmd--changeDice-p${cpidx}:${trigger}`, () => {
                     callback?.();
-                    const nel = (mode == CMD_MODE.FrontHero ? heros.getFront()?.element : element ?? DICE_COST_TYPE.Omni) as DiceCostType;
+                    const nel = (mode == CMD_MODE.FrontHero ? heros.getFront().element : element ?? DICE_COST_TYPE.Omni) as DiceCostType;
                     let ndice = dice.slice();
                     const diceCnt = arrToObj(DICE_WEIGHT, 0);
                     ndice.forEach(d => ++diceCnt[d]);
@@ -3848,13 +3851,13 @@ export default class GeniusInvokationRoom {
                     callback?.();
                     const damageVO = INIT_DAMAGEVO(this.players.flatMap(p => p.heros).length);
                     (ohidxs ?? [heros.frontHidx]).forEach((hidx, hi) => {
-                        const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront()?.element ?? DAMAGE_TYPE.Physical) as ElementType;
+                        const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront().element) as ElementType;
                         const { elTips, atriggers, etriggers } = this._calcDamage(pidx, attachEl, [], hidx, { isAttach: true, isAtkSelf: +!isOppo, skill, atkId: source });
                         elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
                         this.preview.triggers[cpidx].forEach((trgs, tri) => etriggers[tri].forEach(t => trgs.add(t)));
                         this.preview.triggers[cpidx ^ 1].forEach((trgs, tri) => atriggers[tri].forEach(t => trgs.add(t)));
                         const phidx = hidx + cpidx * this.players[0].heros.length;
-                        this._writeLog(`[${this.players[pidx].name}](${pidx})[${(skill ? this.players[pidx].heros.getFront()?.name : atkname)?.replace(/\(\-\d+\)/, '')}]对[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]附着${ELEMENT_NAME[attachEl]}${elTips[phidx][0] ? `（${elTips[phidx][0]}）` : ''}`)
+                        this._writeLog(`[${this.players[pidx].name}](${pidx})[${(skill ? this.players[pidx].heros.getFront().name : atkname)?.replace(/\(\-\d+\)/, '')}]对[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]附着${ELEMENT_NAME[attachEl]}${elTips[phidx][0] ? `（${elTips[phidx][0]}）` : ''}`)
                     });
                     await this.emit('attach', cpidx, { socket, damageVO });
                 }, { isImmediate, isPriority, isUnshift });
@@ -3891,7 +3894,7 @@ export default class GeniusInvokationRoom {
                     }
                     this.players[pidx].phase = PHASE.PICK_CARD;
                     this._writeLog(`[${cplayer.name}]在(${cpidx})${this.pickModal.cards.map(c => `[${c.name}]`).join('')}中进行挑选`, 'system');
-                    await this.emit(`pickCard-p${cpidx}-cmdidx${i}`, cpidx);
+                    await this.emit(`pickCard-cmdidx${i}`, cpidx);
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'equip') {
                 if (!card) throw new Error('ERROR@_doCmds-equip: card is undefined');
