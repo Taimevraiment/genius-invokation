@@ -172,15 +172,16 @@ export default class CmdsGenerator {
         return this;
     }
     useSkill(options: {
-        skillId?: number, skillType?: SkillType, isOppo?: boolean,
-        selectSummon?: number, summonTrigger?: Trigger | Trigger[],
+        skillId?: number, skillType?: SkillType, isOppo?: boolean, selectSummon?: number,
+        summonTrigger?: Trigger | Trigger[], hidx?: number,
     }) {
-        const { skillId, skillType, isOppo, selectSummon = -1, summonTrigger } = options;
+        const { skillId, skillType, isOppo, selectSummon = -1, summonTrigger, hidx } = options;
         this._add({
             cmd: 'useSkill',
             cnt: skillType ?? skillId ?? -1,
             trigger: summonTrigger,
             hidxs: isCdt(selectSummon > -1, [selectSummon]),
+            status: hidx,
             isOppo,
         });
         return this;

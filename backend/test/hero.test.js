@@ -33,6 +33,7 @@ const changeFrontHero = (player, hidx) => {
     const { heros } = player;
     heros[player.hidx].isFront = false;
     heros[hidx].isFront = true;
+    heros.fhidx = hidx;
     player.hidx = hidx;
 }
 const roomWait = room => wait(() => room.needWait, { isImmediate: false, freq: 10 });

@@ -1428,8 +1428,10 @@ export default class GeniusInvokationRoom {
         }
         this._doActionAfter(pidx);
         await this._execTask();
-        await this._changeTurn(pidx, 'useSkill');
-        await this._execTask();
+        if (!withCard) {
+            await this._changeTurn(pidx, 'useSkill');
+            await this._execTask();
+        }
     }
     /**
      * 计算伤害
@@ -2177,7 +2179,6 @@ export default class GeniusInvokationRoom {
         if (cardres.notPreview && !this.preview.isExec) return;
         const isAction = currCard.hasSubtype(CARD_SUBTYPE.Action);
         const cardcmds = getCard ? cardres.execmds : cardres.cmds;
-        const isUseSkill = cardcmds?.isUseSkill;
         if (getCard && !cardcmds?.hasCmds('convertCard')) {
             cardcmds?.discard({ card: currCard.entityId, notTrigger: true, mode: CMD_MODE.IsPublic });
         }
@@ -2237,7 +2238,7 @@ export default class GeniusInvokationRoom {
             }
             this._startTimer();
             await this._execTask(isCdt(pickCard, 'pickCard'));
-            if (!getCard && !pickCard && !isUseSkill) {
+            if (!getCard && !pickCard) {
                 await this._changeTurn(pidx, 'useCard');
             }
         }
@@ -3431,6 +3432,9 @@ export default class GeniusInvokationRoom {
             if (cmd == 'useSkill') {
                 this.taskQueue.addTask(`doCmd--useSkill:${cnt}-p${cpidx}:${trigger}`, async () => {
                     callback?.();
+                    if (typeof stsargs == 'number' && !cplayer.heros[stsargs].isFront) {
+                        return this.emit('useSkill-cancel', cpidx);
+                    }
                     await this._useSkill(cpidx, cnt || -2, {
                         selectSummon: ohidxs?.[0],
                         withCard,

@@ -1984,7 +1984,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/a3aa3a8c13499a0c999fc765c4a0623d_2838069371786460200.png')
         .handle((_, event) => {
             const { heros, selectHeros: [hidx], cmds } = event;
-            cmds.switchTo(hidx).useSkill({ skillType: SKILL_TYPE.Normal });
+            cmds.switchTo(hidx).useSkill({ skillType: SKILL_TYPE.Normal, hidx });
             const canSelectHero = heros.map(h => !h.isFront && h.hp > 0 && !h.heroStatus.has(STATUS_TYPE.NonAction));
             return { canSelectHero, notPreview: true }
         }),
@@ -3525,7 +3525,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const hero = heros.get(card.userType as number);
             if (!hero) return;
             if (!hero.isFront) cmds.switchTo(hero.hidx);
-            cmds.useSkill({ skillId: 14032 });
+            cmds.useSkill({ skillId: 14032, hidx: hero.hidx });
             return { triggers: 'skilltype2' }
         }),
 
