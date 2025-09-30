@@ -2249,7 +2249,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     332056: () => new CardBuilder(531).name('祀珑在昔，灵锦歆诚').since('v6.1.0').event().costSame(1)
-        .description('[冒险]1次。如果我方冒险经历不低于4，则对我方「出战角色」造成1点[物理伤害]，改为[冒险]2次。')
+        .description('[冒险]1次。如果我方冒险经历不低于4，则改为对我方「出战角色」造成1点[物理伤害]，[冒险]2次。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Fujin.webp')
         .handle((_, event) => {
             const { cmds, adventureCnt } = event;
@@ -2977,13 +2977,14 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     215151: () => new CardBuilder(525).name('温敷战术包扎').since('v6.1.0').talent().costAnemo(1).perCnt(2)
-        .description('〔*[card][快速行动]：装备给我方的【hro】，治疗我方生命值最低的角色1点。〕；装备有此牌的【hro】在场时，我方触发[风元素相关反应]或感电反应后，治疗我方受伤最多的角色1点。（每回合2次）')
+        .description('〔*[card][快速行动]：装备给我方的【hro】，治疗我方受伤最多的角色1点。〕；装备有此牌的【hro】在场时，我方触发[风元素相关反应]或感电反应后，治疗我方受伤最多的角色1点。（每回合2次）')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Ifa.webp')
         .handle((card, event) => {
             const { heros, cmds, execmds } = event;
-            cmds.heal(1, { hidxs: heros.getMinHpHidxs() });
-            if (card.perCnt <= 0) return;
-            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            const hidxs = heros.getMaxHurtHidxs();
+            cmds.heal(1, { hidxs });
+            if (card.perCnt <= 0 || hidxs.length == 0) return;
+            execmds.heal(1, { hidxs });
             return {
                 triggers: ['elReaction-Anemo', 'other-elReaction-Anemo', 'other-ElectroCharged', 'ElectroCharged'],
                 exec: () => card.minusPerCnt(),

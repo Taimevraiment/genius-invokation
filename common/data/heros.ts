@@ -2060,7 +2060,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/UI_Gcg_Char_MonsterIcon_Narcissusborn.png')
         .normalSkill(new NormalSkillBuilder('涌浪').catalyst())
         .skills(
-            new SkillBuilder('疾波').description('{dealDmg}，随机触发我方1个「召唤物」的「结束阶段」效果。如果自身生命值不低于2，则自身受到1点[穿透伤害]。')
+            new SkillBuilder('汛波').description('{dealDmg}，随机触发我方1个「召唤物」的「结束阶段」效果。如果自身生命值不低于2，则自身受到1点[穿透伤害]。')
                 .src('/image/tmp/MonsterSkill_S_Narcissusborn_01.png',
                     '')
                 .elemental().damage(2).cost(3).handle(event => {

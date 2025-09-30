@@ -908,7 +908,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     303245: (dmg: number = 0, useCnt: number = 0) =>
         new SummonBuilder('「邪龙」').from(332051).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
             .useCnt(1 + Math.min(5, useCnt)).damage(1 + Math.min(5, dmg))
-            .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]').tag(SUMMON_TAG.Simulanka)
+            .description('【结束阶段：】造成{effect}点[穿透伤害]。；[useCnt]')
             .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/9362e2d9730bee84d5b41850a1e0e9bd_5229484141013095084.png')
             .handle((summon, event) => ({
                 triggers: 'phase-end',
