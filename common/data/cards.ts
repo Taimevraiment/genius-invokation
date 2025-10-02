@@ -1961,6 +1961,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332015: () => new CardBuilder(255).name('深渊的呼唤').offline('v3').tag(CARD_TAG.LocalResonance).costSame(2)
         .description('召唤一个随机「丘丘人」召唤物！').explain('smn303211', 'smn303212', 'smn303213', 'smn303214')
+        .description('召唤一个随机「丘丘人」召唤物！；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「丘丘人」的元素类型。', 'v3')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/011610bb3aedb5dddfa1db1322c0fd60_7383120485374723900.png')
         .handle((_, event) => {
             const { summons, randomInArr, cmds } = event;
@@ -1971,6 +1972,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332016: () => new CardBuilder(256).name('愚人众的阴谋').since('v3.7.0').offline('v3').tag(CARD_TAG.LocalResonance).costSame(2)
         .description('在对方场上，生成1个随机类型的「愚人众伏兵」。').explain('sts303216', 'sts303217', 'sts303218', 'sts303219')
+        .description('在对方场上，生成1个随机类型的「愚人众伏兵」。；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「愚人众伏兵」的元素类型。', 'v3')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png')
         .handle((_, event) => {
             const { eCombatStatus, randomInArr, cmds } = event;
