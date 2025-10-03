@@ -769,6 +769,7 @@ export default class GeniusInvokationRoom {
                 if (this.winner > -1 && this.winner < PLAYER_COUNT) this.winner += PLAYER_COUNT;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
                     this.start(pidx, flag, isCdt(isRecord, this.recordData.seed));
+                    return 1;
                 } else {
                     this.emit(flag, pidx);
                 }
@@ -4663,7 +4664,7 @@ export default class GeniusInvokationRoom {
     * @param options.skid 使用的技能id
     */
     private _calcSkillChange(pidx: number, options: { hidx?: number, skid?: number } = {}) {
-        if (!this.isStart) return;
+        if (!this.isStart || this.phase < PHASE.ACTION_START) return;
         const player = this.players[pidx];
         const { skid = -1, hidx = player.hidx } = options;
         const { heros, combatStatus } = player;
@@ -4834,7 +4835,7 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家索引
      */
     private _calcCardChange(pidx: number) {
-        if (!this.isStart) return;
+        if (!this.isStart || this.phase < PHASE.ACTION_START) return;
         const player = this.players[pidx];
         if (!player) return;
         const { handCards, heros, combatStatus, summons, supports } = player;

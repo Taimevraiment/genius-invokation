@@ -55,7 +55,11 @@ const todayPlayersHistory = new Map<number, {
     currLogin: number,
     location: string,
 }>(); // 当日玩家登录信息
-cron.schedule('0 0 5 * * *', () => todayPlayersHistory.clear());
+let todayGames = 0; // 今日开局数
+cron.schedule('0 0 5 * * *', () => {
+    todayPlayersHistory.clear();
+    todayGames = 0;
+});
 
 // 生成id
 const genId = <T extends { id: number }[]>(arr: T, option: { len?: number, prefix?: number, isMinus?: boolean } = {}) => {
@@ -303,7 +307,8 @@ io.on('connection', socket => {
         if (!room) return console.error(`ERROR@sendToServer:未找到房间-rid:${me.rid}`);
         let isStart = room.isStart;
         try {
-            room.getAction(actionData, (me as Player)?.pidx, socket);
+            const start = await room.getAction(actionData, (me as Player)?.pidx, socket) ?? 0;
+            todayGames += start;
         } catch (e) {
             const error: Error = e as Error;
             console.error(error);
@@ -415,6 +420,7 @@ app.get('/detail', (req, res) => {
             rid: p.rid,
             status: p.status,
         })),
+        todayGames,
     });
 });
 
@@ -433,6 +439,7 @@ app.get('/info', (req, res) => {
                 logoutTime: parseDate(logoutTime).time,
                 location,
             })),
+        todayGames,
     });
 });
 
