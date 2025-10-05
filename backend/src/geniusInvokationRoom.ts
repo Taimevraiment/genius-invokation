@@ -742,7 +742,7 @@ export default class GeniusInvokationRoom {
      * @param pidx 发起行动的玩家序号
      * @param socket 发送请求socket
      */
-    getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket, isRecord?: boolean) {
+    async getAction(actionData: ActionData, pidx: number = this.currentPlayerIdx, socket?: Socket, isRecord?: boolean) {
         if (this.taskQueue.isExecuting) return;
         if (this.id < -1 && !isRecord && actionData.type != ACTION_TYPE.PlayRecord && actionData.type != ACTION_TYPE.PuaseRecord) return;
         if (this.id > 0) this.recordData.actionLog.push({ actionData, pidx });
@@ -771,7 +771,7 @@ export default class GeniusInvokationRoom {
                     this.start(pidx, flag, isCdt(isRecord, this.recordData.seed));
                     return 1;
                 } else {
-                    this.emit(flag, pidx);
+                    await this.emit(flag, pidx);
                 }
                 break;
             case ACTION_TYPE.ChangeCard:
@@ -784,29 +784,29 @@ export default class GeniusInvokationRoom {
                 this._reroll(diceSelect, pidx, flag, socket);
                 break;
             case ACTION_TYPE.SwitchHero:
-                this._switchHero(pidx, heroIdxs[0], flag, { socket, diceSelect });
+                await this._switchHero(pidx, heroIdxs[0], flag, { socket, diceSelect });
                 break;
             case ACTION_TYPE.UseSkill:
-                this._useSkill(pidx, skillId, {
+                await this._useSkill(pidx, skillId, {
                     selectSummon: summonIdx,
                     selectHero: heroIdxs[0],
                     diceSelect,
                 });
                 break;
             case ACTION_TYPE.UseCard:
-                this._useCard(pidx, cardIdxs[0], diceSelect, { socket, selectHeros: heroIdxs, selectSummon: summonIdx, selectSupport: supportIdx });
+                await this._useCard(pidx, cardIdxs[0], diceSelect, { socket, selectHeros: heroIdxs, selectSummon: summonIdx, selectSupport: supportIdx });
                 break;
             case ACTION_TYPE.Reconcile:
-                this._reconcile(pidx, diceSelect, cardIdxs[0], flag, socket);
+                await this._reconcile(pidx, diceSelect, cardIdxs[0], flag, socket);
                 break;
             case ACTION_TYPE.EndPhase:
-                this._doEndPhase(pidx, flag);
+                await this._doEndPhase(pidx, flag);
                 break;
             case ACTION_TYPE.GiveUp:
                 this._giveup(pidx);
                 break;
             case ACTION_TYPE.PickCard:
-                this._pickCard(pidx, cardIdxs[0]);
+                await this._pickCard(pidx, cardIdxs[0]);
                 break;
             case ACTION_TYPE.PlayRecord:
                 if (this.recordData.isPlaying) return;
