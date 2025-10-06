@@ -161,6 +161,7 @@ export default class GeniusInvokationRoom {
             + `  version: ${this.version.value}\n`
             + `  password: ${this.password}\n`
             + `  seed: ${this.seed}\n`
+            + `  currentPlayerIdx: ${this.currentPlayerIdx}\n`
             + `  onlinePlayersCnt: ${this.onlinePlayersCnt}\n`
             + `  preview: ${JSON.stringify(this.preview)}\n`
             + `  players: [\n`
@@ -843,7 +844,7 @@ export default class GeniusInvokationRoom {
                                 this.recordData.actionLog.unshift({ actionData, pidx });
                                 continue;
                             }
-                            this.getAction(actionData, pidx, socket, true);
+                            await this.getAction(actionData, pidx, socket, true);
                         }
                         this.recordData.isPlaying = false;
                         this.recordData.isExecuting = false;
@@ -1055,7 +1056,7 @@ export default class GeniusInvokationRoom {
         if (isDieSwitch) { // 被击倒后选择出战角色
             this.preview.isQuickAction = !this.isDieBackChange;
             const isOppoActioning = opponent.phase == PHASE.ACTION && this.preview.isQuickAction;
-            player.UI.info = isOppoActioning ? '对方行动中....' : '我方行动中....';
+            player.UI.info = (isOppoActioning ? '对方' : '我方') + '行动中....';
             player.status = PLAYER_STATUS.WAITING;
             const isActioning = player.phase == PHASE.ACTION && !this.preview.isQuickAction;
             opponent.UI.info = isActioning ? '对方行动中....' : player.phase > PHASE.ACTION ? '对方已结束回合...' : '我方行动中....';
@@ -2291,7 +2292,7 @@ export default class GeniusInvokationRoom {
         const isOppoActionEnd = this.players[pidx ^ 1]?.phase >= PHASE.ACTION_END;
         this.players[pidx].canAction = false;
         const isChange = () => !this.preview.isQuickAction && !isDie &&
-            (!isDieSwitch && !isOppoActionEnd || isDieSwitch && this.players[pidx].phase < PHASE.ACTION_END);
+            (isDieSwitch ? this.players[pidx].phase < PHASE.ACTION_END : !isOppoActionEnd);
         if (isChange()) this._detectHero(pidx ^ +isDieSwitch, 'change-turn', { types: STATUS_TYPE.Usage });
         if (isChange()) {
             this.players[this.currentPlayerIdx].canAction = false;
@@ -2300,8 +2301,7 @@ export default class GeniusInvokationRoom {
             this.players[this.currentPlayerIdx].status = PLAYER_STATUS.PLAYING;
             if (type != 'endPhase') {
                 this.players.forEach(p => {
-                    if (p.pidx == this.currentPlayerIdx) p.UI.info = '我方行动中....';
-                    else p.UI.info = '对方行动中....';
+                    p.UI.info = (p.pidx == this.currentPlayerIdx ? '我方' : '对方') + '行动中....';
                 });
             }
         }
@@ -2377,12 +2377,12 @@ export default class GeniusInvokationRoom {
         await this.delay(1250);
         for (const cpidx of [this.startIdx, this.startIdx ^ 1]) {
             if (this.round == 1) { // 检测游戏开始 game-start
-                this.players[cpidx].isFallAtk = true;
                 this._detectHero(cpidx, 'game-start');
                 await this._execTask();
                 this._detectHero(cpidx, 'switch-to', { hidxs: this.players[cpidx].hidx });
                 await this._execTask();
             }
+            this.players[cpidx].isFallAtk = this.round == 1;
             // 检测回合开始阶段 phase-start
             this.preview.isQuickAction = true;
             this._detectHero(cpidx, 'phase-start', {
@@ -2483,6 +2483,8 @@ export default class GeniusInvokationRoom {
         }
         await this.wait(() => this.needWait);
         const isActionEnd = this.players.every(p => p.phase == PHASE.ACTION_END);
+        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
+        await this.emit(flag, pidx, { tip: isCdt(isActionEnd, '回合结束阶段', `${pidx == player.pidx ? '我方' : '对方'}结束了回合`) });
         if (!isActionEnd) await this._changeTurn(pidx, 'endPhase');
         this.players.forEach(p => {
             if (isActionEnd) p.UI.info = '结束阶段...';
@@ -2490,8 +2492,6 @@ export default class GeniusInvokationRoom {
             else p.UI.info = '对方行动中....';
         });
         this.players[this.currentPlayerIdx].canAction = true;
-        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
-        await this.emit(flag, pidx, { tip: isCdt(isActionEnd, '回合结束阶段', `[${player.name}](${player.pidx})结束了回合`) });
         if (isActionEnd) { // 双方都结束回合，进入回合结束阶段
             this.phase = PHASE.ACTION_END;
             this._writeLog(`第${this.round}回合结束`);
@@ -3630,28 +3630,32 @@ export default class GeniusInvokationRoom {
                             } else if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
                                 discards.push(...hcardsSorted);
                             } else {
-                                while (discardCnt > 0 && unselectedCards.length > 0) {
-                                    if (mode == CMD_MODE.Random) { // 弃置随机手牌
-                                        const didx = this._randomInt(unselectedCards.length - 1);
-                                        const [discard] = unselectedCards.splice(didx, 1);
-                                        discards.push(clone(discard));
-                                    } else if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
-                                        if (hcardsSorted.length == 0) break;
-                                        const maxCost = hcardsSorted[0].rawDiceCost;
-                                        const maxCostCards = unselectedCards.filter(c => c.rawDiceCost == maxCost);
-                                        const [{ entityId: ceid }] = isDiscard ? this._randomInArr(maxCostCards) : maxCostCards;
-                                        const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
-                                        discards.push(clone(discard));
-                                        hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);
-                                    } else if (mode == CMD_MODE.TopPileCard) { // 弃置牌堆顶的牌 
-                                        if (pile.length == 0) break;
-                                        discards.push(clone(pile[discardCnt - 1]));
-                                        discardIdxs.push(discardCnt - 1);
-                                    } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
-                                        if (pile.length == 0) break;
-                                        const disIdx = this._randomInt(pile.length - 1);
-                                        discards.push(clone(pile[disIdx]));
-                                        discardIdxs.push(disIdx);
+                                while (discardCnt > 0) {
+                                    if (mode == CMD_MODE.Random || mode == CMD_MODE.HighHandCard) {
+                                        if (unselectedCards.length == 0) break;
+                                        if (mode == CMD_MODE.Random) { // 弃置随机手牌
+                                            const didx = this._randomInt(unselectedCards.length - 1);
+                                            const [discard] = unselectedCards.splice(didx, 1);
+                                            discards.push(clone(discard));
+                                        } else if (mode == CMD_MODE.HighHandCard) { // 弃置花费最高的手牌 
+                                            const maxCost = hcardsSorted[0].rawDiceCost;
+                                            const maxCostCards = unselectedCards.filter(c => c.rawDiceCost == maxCost);
+                                            const [{ entityId: ceid }] = isDiscard ? this._randomInArr(maxCostCards) : maxCostCards;
+                                            const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
+                                            discards.push(clone(discard));
+                                            hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);
+                                        }
+                                    } else {
+                                        if (pile.length - (cnt - discardCnt) == 0) break;
+                                        if (mode == CMD_MODE.TopPileCard) { // 弃置牌堆顶的牌 
+                                            const discardIdx = Math.min(pile.length, cnt) - (cnt - discardCnt) - 1;
+                                            discards.push(clone(pile[discardIdx]));
+                                            discardIdxs.push(discardIdx);
+                                        } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
+                                            const disIdx = this._randomInt(pile.length - 1);
+                                            discards.push(clone(pile[disIdx]));
+                                            discardIdxs.push(disIdx);
+                                        }
                                     }
                                     --discardCnt;
                                 }

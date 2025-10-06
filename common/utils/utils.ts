@@ -129,6 +129,7 @@ export const wait = async (cdt: () => boolean, options: {
     let loop = 0;
     if (cdt() && isImmediate) return;
     let warn = false;
+    let error = false;
     while (true) {
         ++loop;
         await delay(freq);
@@ -140,9 +141,10 @@ export const wait = async (cdt: () => boolean, options: {
             console.trace(`超过30秒，可能存在死循环: ${cdt.toString()}`);
             warn = true;
         }
-        if (loop > maxtime / freq) {
+        if (loop > maxtime / freq && !error) {
             if (callback) callback();
             else console.trace(`too many loops-${maxtime}ms: ${cdt.toString()}`);
+            error = true;
         }
     }
 }

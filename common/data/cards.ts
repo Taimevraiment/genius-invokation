@@ -3565,7 +3565,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     115117: () => hero1511card(ELEMENT_TYPE.Cryo),
 
-    115142: () => new CardBuilder().name('梦见风名物点心').event().costSame(0)
+    115142: () => new CardBuilder().name('梦见风名物点心').food().costSame(0)
         .description('【此卡牌进入手牌时：】如果我方出战角色生命值大于5，则造成1点[风元素伤害]\\；否则治疗我方出战角色2点。效果结算后抓1张牌，随后弃置此卡牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/10fee256b42540197e2bee0fb5748543_6592454758936975147.png')
         .handle((_, event) => {
