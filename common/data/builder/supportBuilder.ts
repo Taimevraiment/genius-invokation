@@ -28,6 +28,7 @@ export interface SupportHandleRes {
 export interface SupportExecRes {
     cmds?: CmdsGenerator,
     isDestroy?: boolean,
+    isCancel?: boolean,
 }
 
 export interface SupportBuilderHandleEvent extends SupportHandleEvent, Omit<EntityBuilderHandleEvent, 'cmds'> { }

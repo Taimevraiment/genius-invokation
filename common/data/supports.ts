@@ -623,10 +623,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 刘苏
     322012: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
         const { heros, hidx } = event;
-        if (support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) != 0) return;
+        const isInvalid = () => support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) != 0;
+        if (isInvalid()) return;
         return {
             triggers: 'switch',
             exec: cmds => {
+                if (isInvalid()) return { isCancel: true }
                 support.minusPerCnt();
                 cmds.getEnergy(1);
                 return { isDestroy: support.minusUseCnt() == 0 }

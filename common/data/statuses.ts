@@ -1079,7 +1079,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => { event.isMinusDiceSkill && status.minusUseCnt() }
         })),
 
-    114053: () => new StatusBuilder('雷兽之盾').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.Barrier)
+    114053: () => new StatusBuilder('雷兽之盾').combatStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack, STATUS_TYPE.Barrier)
         .description('【我方角色「普通攻击」后：】造成1点[雷元素伤害]。；【我方角色受到至少为3的伤害时：】抵消其中1点伤害。；[roundCnt]')
         .handle((_, event) => {
             const { restDmg } = event;

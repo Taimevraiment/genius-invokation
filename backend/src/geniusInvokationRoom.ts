@@ -7,7 +7,7 @@ import { Server, Socket } from 'socket.io';
 import { dict } from '../../common/constant/dependancyDict.js';
 import {
     ACTION_TYPE, ActionType, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CardSubtype, CardTag, CostType, DAMAGE_TYPE,
-    DICE_COST_TYPE, DICE_TYPE, DamageType, DiceCostType, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE,
+    DICE_COST_TYPE, DICE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE,
     PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY, Phase,
     PureElementType, SKILL_COST_TYPE, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SWIRL_ELEMENT_TYPE, SkillType, StatusGroup, StatusType, SwirlElementType, Version
 } from '../../common/constant/enum.js';
@@ -481,7 +481,7 @@ export default class GeniusInvokationRoom {
                     return { content, type: lg.type }
                 });
                 const content = actionInfo?.content || (isActionInfo ? log.filter(lg => lg.type == 'info').at(-1)?.content.replace(/\s*\d→\d/g, '') ?? '' : '');
-                if (flag == 'game-end' && this.recordData.username.length == 0) this.recordData.username = this.players.map(v => v.name);
+                if (flag.startsWith('game-end') && this.recordData.username.length == 0) this.recordData.username = this.players.map(v => v.name);
                 return {
                     players: this.players.map(pvo => {
                         const heros = clone(pvo.heros).map(h => {
@@ -536,7 +536,7 @@ export default class GeniusInvokationRoom {
                         isShow: content != '' || !!actionInfo?.card,
                         isOppo: pidx != vopidx,
                     },
-                    recordData: isCdt(flag == 'game-end' || this.id < -1, { ...this.recordData, pidx: vopidx }),
+                    recordData: isCdt(flag.startsWith('game-end') || this.id < -1, { ...this.recordData, pidx: vopidx }),
                 }
             }
             this._writeLog(serverData.flag, 'emit');
@@ -1691,7 +1691,11 @@ export default class GeniusInvokationRoom {
                     } else if (hasEls(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Electro)) { // 火雷 超载
                         res.willDamages[getDmgIdx][0] += 2;
                         if (dmgedfhero.isFront) {
-                            this._doCmds(dmgedPidx, [{ cmd: 'switch-after' }], { isPriority: true, isUnshift: true });
+                            this._doCmds(dmgedPidx, CmdsGenerator.ins.switchAfter(), {
+                                source: ELEMENT_REACTION.Overload,
+                                isPriority: true,
+                                isUnshift: true,
+                            });
                         }
                         res.elTips[elTipIdx] = ['超载', attachElement, dmgElement];
                         atriggers.forEach((trg, tri) => {
@@ -3207,8 +3211,10 @@ export default class GeniusInvokationRoom {
                     const oCnt = support.useCnt;
                     const oPct = support.perCnt;
                     const supportexecres = supportres.exec?.();
-                    this._writeLog(`[${name}](${pidx})[${support.name}]发动${oCnt != support.useCnt ? ` ${oCnt}→${support.useCnt}` : ''}`, supportres.notLog ? 'system' : 'log');
-                    this._writeLog(`[${name}](${pidx})${trigger}:${support.name}(${support.entityId}).cnt:${oCnt}→${support.useCnt}.perCnt:${oPct}→${support.perCnt}`, 'system');
+                    if (!supportexecres?.isCancel) {
+                        this._writeLog(`[${name}](${pidx})[${support.name}]发动${oCnt != support.useCnt ? ` ${oCnt}→${support.useCnt}` : ''}`, supportres.notLog ? 'system' : 'log');
+                        this._writeLog(`[${name}](${pidx})${trigger}:${support.name}(${support.entityId}).cnt:${oCnt}→${support.useCnt}.perCnt:${oPct}→${support.perCnt}`, 'system');
+                    }
                     return supportexecres ?? {};
                 }
                 const doSupportDestroy = () => {
@@ -3216,19 +3222,22 @@ export default class GeniusInvokationRoom {
                     this._doSupportDestroy(pidx, 1);
                 }
                 if (supportres.isNotAddTask) {
-                    const { cmds, isDestroy } = execute();
+                    const { cmds, isDestroy, isCancel } = execute();
+                    if (isCancel) continue;
                     this._doCmds(pidx, cmds, { source: support.id, trigger });
                     if (isDestroy) doSupportDestroy();
                 } else {
-                    this.taskQueue.addTask(`_detectSupport-p${pidx}-${support.name}(${support.entityId}):${trigger}`, async () => {
-                        const { cmds, isDestroy } = execute();
+                    const taskName = `_detectSupport-p${pidx}-${support.name}(${support.entityId}):${trigger}`;
+                    this.taskQueue.addTask(taskName, async () => {
+                        const { cmds, isDestroy, isCancel } = execute();
+                        if (isCancel) return this.emit(`${taskName}-cancel`, pidx, { notPreview: true });
                         const sptIdx = supports.findIndex(s => s.entityId == support.entityId);
                         if (supportres.isExchange && eSupports.length < MAX_SUPPORT_COUNT) {
-                            const taskName = `doSupport-exchange:${support.name}(${support.entityId})`;
-                            this.taskQueue.addTask(taskName, () => {
+                            const exchangeTaskName = `doSupport-exchange:${support.name}(${support.entityId})`;
+                            this.taskQueue.addTask(exchangeTaskName, () => {
                                 supports.splice(sptIdx, 1);
                                 eSupports.push(support);
-                                if (this.taskQueue.isTaskEmpty()) this.emit(taskName, pidx, { notPreview: true });
+                                if (this.taskQueue.isTaskEmpty()) this.emit(exchangeTaskName, pidx, { notPreview: true });
                             }, { isUnshift: true });
                         }
                         const supportSelect = [pidx, supports.findIndex(s => s.entityId == support.entityId), +!!isDestroy];
@@ -3443,14 +3452,14 @@ export default class GeniusInvokationRoom {
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd.startsWith('switch-')) {
                 const sdir = cmd == 'switch-before' ? -1 : cmd == 'switch-after' ? 1 : 0;
-                this.taskQueue.addTask(`doCmd--switch-p${cpidx}:${source}:${trigger}`, () => {
+                this.taskQueue.addTask(`doCmd--switch-p${cpidx}:${source}:${trigger}`, async () => {
                     callback?.();
                     const { isInvalid } = this._emitEvent(cpidx, 'pre-switch', { types: STATUS_TYPE.Usage, hidxs: heros.frontHidx });
                     if (isInvalid) return;
                     const toHidx = sdir == 0 ? heros.getNearestHidx(hidxs?.[0]) : heros.getFront({ offset: sdir })?.hidx ?? -1;
-                    if (toHidx == -1) throw new Error(`EEROR@doCmd--${cmd}: toHidx is not found, hidxs:${hidxs}, sdir:${sdir}`);
+                    if (toHidx == -1) throw new Error(`ERROR@doCmd--${cmd}: toHidx is not found, hidxs:${hidxs}, sdir:${sdir}`);
                     if (!this.preview.isExec) this.preview.willSwitch[cpidx][toHidx] = true;
-                    this._switchHero(cpidx, toHidx, `doCmd--switch:${source}`, { socket, skill });
+                    await this._switchHero(cpidx, toHidx, `doCmd--switch:${source}`, { socket, skill });
                 }, { isImmediate, isPriority, isUnshift });
             } else if (['getCard', 'addCard', 'putCard'].includes(cmd)) {
                 const cards: Card[] = [];
@@ -4394,9 +4403,9 @@ export default class GeniusInvokationRoom {
             if (cstIdx > -1) { // 重复生成状态
                 const cStatus = oStatus[cstIdx];
                 if (sts.maxCnt == 0) { // 不可叠加
+                    oStatus[cstIdx].variables = cStatus.variables;
                     oStatus[cstIdx] = clone(sts).setEntityId(oStatus[cstIdx].entityId);
                     oStatus[cstIdx].setUseCnt(Math.max(oStatus[cstIdx].useCnt, cStatus.useCnt));
-                    oStatus[cstIdx].variables = cStatus.variables;
                 } else { // 可叠加
                     cStatus.maxCnt = sts.maxCnt;
                     cStatus.setPerCnt(sts.perCnt);
@@ -4496,10 +4505,10 @@ export default class GeniusInvokationRoom {
             let csummon: Summon = oriSummon[csmnIdx];
             let isGenerate = true;
             if (csmnIdx > -1) { // 重复生成召唤物
+                oriSummon[csmnIdx].variables = smn.variables;
                 oriSummon[csmnIdx].setUseCnt(Math.max(oriSmn.useCnt, smn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt)));
                 oriSummon[csmnIdx].setPerCnt(smn.perCnt);
                 oriSummon[csmnIdx].damage = smn.damage;
-                oriSummon[csmnIdx].variables = smn.variables;
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(csmnIdx == -1 ? this._genEntityId() : csmnIdx);
                 oriSummon.push(csummon);

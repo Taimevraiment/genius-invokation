@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v1.0.10</div>
+    <div class="version">v1.0.12</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -298,6 +298,16 @@ onMounted(async () => {
   // 继续游戏
   socket.on('continueGame', data => socket.emit('enterRoom', data));
 });
+
+const loadedFonts = new Set<string>();
+document.fonts.onloadingdone = event => {
+  (event as FontFaceSetLoadEvent).fontfaces.forEach(fontface => {
+    if (!loadedFonts.has(fontface.family) && fontface.status === 'loaded') {
+      loadedFonts.add(fontface.family);
+      console.log(`font ${fontface.family} loaded`);
+    }
+  });
+};
 
 onUnmounted(() => {
   socket.removeAllListeners();
