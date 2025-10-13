@@ -122,7 +122,7 @@ export const delay = (time: number = -1, fn: () => any = () => { }) => {
  * @param options.callback 超时后的回调函数
  * @returns 
  */
-export const wait = async (cdt: () => boolean, options: {
+export const wait = async (cdt: () => any, options: {
     delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void,
 } = {}) => {
     const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true, callback } = options;

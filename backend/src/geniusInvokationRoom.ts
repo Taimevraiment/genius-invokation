@@ -102,7 +102,7 @@ export default class GeniusInvokationRoom {
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
     private delay: (time?: number, fn?: () => any) => Promise<void> | void;
-    private wait = async (cdt: () => boolean, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void } = {}) => {
+    private wait = async (cdt: () => any, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void } = {}) => {
         if (this.env == 'test' || !this.preview.isExec && this.id > 0) return;
         await wait(cdt, options);
     }
@@ -836,13 +836,21 @@ export default class GeniusInvokationRoom {
                             const { actionData, pidx } = this.recordData.actionLog.shift()!;
                             const { phase } = this.players[pidx];
                             if (
-                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE, PHASE.PICK_CARD] as Phase[]).includes(phase) ||
+                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(phase) ||
                                 actionData.type == ACTION_TYPE.ChangeCard && phase != PHASE.CHANGE_CARD && phase != PHASE.ACTION ||
                                 actionData.type == ACTION_TYPE.ChooseInitHero && phase != PHASE.CHOOSE_HERO ||
-                                actionData.type == ACTION_TYPE.Reroll && phase != PHASE.DICE && phase != PHASE.ACTION
+                                actionData.type == ACTION_TYPE.Reroll && phase != PHASE.DICE && phase != PHASE.ACTION ||
+                                actionData.type != ACTION_TYPE.PickCard && phase == PHASE.PICK_CARD
                             ) {
                                 this.recordData.actionLog.unshift({ actionData, pidx });
                                 continue;
+                            }
+                            if (recordData?.actionLog[0]?.actionData.type == ACTION_TYPE.PickCard) {
+                                const { actionData, pidx } = this.recordData.actionLog.shift()!;
+                                this.delay(4e3 + Math.random() * 1e3, async () => {
+                                    await this.wait(() => this.recordData.isPlaying, { freq: 1e3 });
+                                    this.getAction(actionData, pidx, socket, true);
+                                });
                             }
                             await this.getAction(actionData, pidx, socket, true);
                         }

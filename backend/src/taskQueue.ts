@@ -63,7 +63,7 @@ export default class TaskQueue {
     async execTask(taskType: string, funcs: [() => any | Promise<any>, number?, number?][], isExec: boolean) {
         if (!this.canPreview) return;
         this._writeLog('execTask-start-' + taskType, 'emit');
-        if (this.env == 'dev' && isExec) console.time('execTask-end-' + taskType);
+        if (this.env == 'dev' && isExec) console.time('execTask-' + taskType);
         if (this.queue.length > 0) {
             if (!this.priorityQueue) this.priorityQueue = [];
             else this.queue.unshift(...this.priorityQueue.splice(0, this.priorityQueue.length + 1))
@@ -76,7 +76,7 @@ export default class TaskQueue {
             duration += Math.max(0, before) + Math.max(0, after);
         }
         this._writeLog(`execTask-end-${taskType}:${duration}ms`, 'emit');
-        if (this.env == 'dev' && isExec) console.timeEnd('execTask-end-' + taskType);
+        if (this.env == 'dev' && isExec) console.timeEnd('execTask-' + taskType);
     }
     getTask(): [TaskItem, boolean] {
         const isPriority = (this.priorityQueue?.length ?? 0) > 0;
