@@ -1095,15 +1095,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('负重锥击')
         .skills(
             new SkillBuilder('电掣雷驰').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成1层【sts170】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/2/29/5i2wyurywnnditvmsehswyu870y20bu.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/3be19f896d2d69abf23bea715e6b6bc9_6991635084269005010.png')
                 .elemental().damage(2).cost(3).handle(({ cmds }) => (cmds.getStatus(114141).getNightSoul(), { status: 170 })),
             new SkillBuilder('力的三原理').description('{dealDmg}，自身进入【sts114141】，获得1点「夜魂值」，生成【sts114142】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/5/5d/3ijtov92wgmsy4lqk7nf6d38qqwq21s.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/d1c5a8d4608f2298ca4f55bc251cd9f6_758051669045626887.png')
                 .burst(2).damage(3).cost(3).handle(({ cmds, talent }) => (cmds.getStatus(114141).getNightSoul(), { status: [[114142, !!talent]] })),
             new SkillBuilder('热量均衡计划').description('自身处于【sts114141】时，我方角色[准备技能]或累计2次「切换角色」后，如果「夜魂值」为2，则治疗我方受伤最多的角色1点，否则，获得1点「夜魂值」。（每回合3次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/f/f6/cvlk7z91f8097gd4j74iwx5h8kk7gjl.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/371370a0816db0ff4c07a72e3dda8957_3785382152197264817.png')
                 .passive().variables('switch').perCnt(3).handle(event => {
                     const { skill, hero, heros, trigger, cmds } = event;
@@ -1397,11 +1397,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('梦我梦心')
         .skills(
             new SkillBuilder('秋沙歌枕巡礼').description('{dealDmg}，自身附属【sts115141】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/0/09/i8hgtjecul2n3a0ttf2ijwu6mib8rc8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/abe5eb59a21fdf49f4cb90909157b9bb_1293806030185619412.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 115141 })),
             new SkillBuilder('安乐秘汤疗法').description('{dealDmg}，生成1张【crd115142】，将其置于我方牌组顶部，并召唤【smn115143】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/0/09/i8hgtjecul2n3a0ttf2ijwu6mib8rc8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/3f88bf3940047ec5c272d5a42682fb9e_1499047667187194260.png')
                 .burst(2).damage(3).cost(3).handle(({ cmds }) => (cmds.addCard(1, 115142, { scope: 1 }), { summon: 115143 }))
         ),
@@ -2211,11 +2211,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('虚界玄爪')
         .skills(
             new SkillBuilder('蚀灭火羽').description('{dealDmg}，我方[舍弃]牌组顶部1张牌。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/e/e4/lhpb4a32f5zq76s8yueyk638lpgvpyi.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/0188e2eb7af013f151e755845d0a0b6d_2165374047345675245.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }).res),
             new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/8/86/6y2xa7b5670clz4p8003wpw968bxxud.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/66cb6a2a590c642c2de7cbd2c529ee2e_2098939999112434475.png')
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus } } = event;
@@ -2223,7 +2223,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { pdmg: 1 + heroStatus.getUseCnt(123051), status: 123051 }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/2/21/p4xpaxrbwc50rasjcr4v2ncxcelgmct.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/565c62d3863ea70e42d8f691a3279613_7912349647631776754.png')
                 .passive().handle(() => ({ triggers: 'game-start', status: 123052 }))
         ),
