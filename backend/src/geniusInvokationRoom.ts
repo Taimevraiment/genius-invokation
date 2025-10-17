@@ -3253,10 +3253,10 @@ export default class GeniusInvokationRoom {
                             atkname: support.name,
                             dmgSource: 'support',
                             source: support.id,
-                            supportSelect,
+                            supportSelect: isCdt(!isDestroy, supportSelect),
                             trigger,
                         });
-                        if (!cmds?.hasDamage) await this.emit(`doSupport-${support.name}(${support.entityId}):${trigger}`, pidx, { supportSelect });
+                        if (!cmds?.hasDamage || isDestroy) await this.emit(`doSupport-${support.name}(${support.entityId}):${trigger}`, pidx, { supportSelect });
                         if (isDestroy) doSupportDestroy();
                     }, { delayAfter: 800 });
                 }

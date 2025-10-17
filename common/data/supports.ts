@@ -429,7 +429,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         exec: cmds => (cmds.adventure(), { isDestroy: support.minusUseCnt() == 0 }),
     })),
     // 沉玉谷
-    321032: () => new SupportBuilder().collection().handle((support, event) => ({
+    321032: () => new SupportBuilder().collection(1).handle((support, event) => ({
         triggers: 'adventure',
         exec: cmds => {
             support.addUseCnt();
@@ -440,7 +440,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 const hidxs = heros.getMaxHurtHidxs();
                 cmds.attach({ element: ELEMENT_TYPE.Hydro, hidxs: heros.allHidxs() })
                     .heal(100, { hidxs })
-                    .addMaxHp(2, hidxs, true);
+                    .addMaxHp(2, hidxs);
                 return { isDestroy: true }
             }
         }
