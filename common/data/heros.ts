@@ -2063,18 +2063,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('汛波').description('{dealDmg}，随机触发我方1个「召唤物」的「结束阶段」效果。如果自身生命值不低于2，则自身受到1点[穿透伤害]。')
                 .src('/image/tmp/MonsterSkill_S_Narcissusborn_01.png',
                     '')
-                .elemental().damage(2).cost(3).handle(event => {
-                    const { cmds, hero: { hp }, randomInt, summons } = event;
-                    return {
-                        pdmgSelf: isCdt(hp >= 2, 1),
-                        notPreview: true,
-                        exec: () => cmds.summonTrigger(randomInt(summons.length - 1)),
-                    }
-                }),
+                .elemental().damage(2).cost(3).handle(({ hero: { hp } }) => ({ pdmgSelf: isCdt(hp >= 2, 1) })),
             new SkillBuilder('洪啸').description('{dealDmg}，触发我方所有「召唤物」的「结束阶段」效果。')
                 .src('/image/tmp/MonsterSkill_E_Narcissusborn_01_HD.png',
                     '')
-                .burst(3).damage(4).cost(3).handle(({ cmds, summons }) => cmds.summonTrigger(summons.map(s => s.entityId)).res),
+                .burst(3).damage(4).cost(3),
             new SkillBuilder('分流').description('【自身生命值不低于3，我方〖smn122061〗以外的「召唤物」离场时：】自身受到2点[穿透伤害]，召唤1个独立的【smn122061】。（每回合1次）')
                 .src('/image/tmp/MonsterSkill_S_Narcissusborn_02.png',
                     '')
@@ -2084,7 +2077,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     let summon = 122061;
                     while (summons.has(summon)) ++summon;
                     return { triggers: 'summon-destroy', pdmgSelf: 2, summon, exec: () => skill.minusPerCnt() }
-                })
+                }),
+            new SkillBuilder().passive(true).handle(event => {
+                const { trigger, cmds, summons } = event;
+                if (summons.length == 0 || (trigger != 'after-skilltype2' && trigger != 'after-skilltype3')) return;
+                cmds.summonTrigger({ isRandom: trigger == 'after-skilltype2', isAll: trigger == 'after-skilltype3' });
+                return { triggers: trigger }
+            }),
         ),
 
     2301: () => new HeroBuilder(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()

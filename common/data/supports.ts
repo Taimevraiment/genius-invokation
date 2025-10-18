@@ -394,7 +394,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 墨色酒馆
     321029: () => new SupportBuilder().collection(3).handle((support, event) => {
-        const { trigger, summons, randomInArr } = event;
+        const { trigger, summons } = event;
         if (trigger == 'enter') return { triggers: 'enter', exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
         if (trigger != 'end-phase') return;
         const selectSummons = summons.filter(s => s.hasTag(SUMMON_TAG.Simulanka));
@@ -402,7 +402,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         return {
             triggers: 'end-phase',
             exec: cmds => {
-                cmds.summonTrigger(randomInArr(selectSummons)[0].entityId);
+                cmds.summonTrigger({ isRandom: true });
                 return { isDestroy: support.minusUseCnt() == 0 }
             }
         }

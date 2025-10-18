@@ -1850,7 +1850,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【双方角色使用技能后：】触发1次我方【smn115】的回合结束效果。')
         .handle((status, event) => {
             if (!event.summons.has(115)) return;
-            event.cmds.summonTrigger(115);
+            event.cmds.summonTrigger({ selectSummon: 115 });
             return {
                 triggers: ['skill', 'other-skill', 'skill-oppo'],
                 exec: () => status.minusUseCnt(),

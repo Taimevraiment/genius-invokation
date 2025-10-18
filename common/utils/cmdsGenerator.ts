@@ -186,10 +186,10 @@ export default class CmdsGenerator {
         });
         return this;
     }
-    summonTrigger(selectSummon: number | number[], options: { trigger?: Trigger | Trigger[], isOppo?: boolean } = {}) {
-        const { trigger = 'phase-end', isOppo } = options;
-        selectSummon = convertToArray(selectSummon);
-        if (selectSummon.length) this._add({ cmd: 'summonTrigger', hidxs: selectSummon, trigger, isOppo })
+    summonTrigger(options: { selectSummon?: number | number[], trigger?: Trigger | Trigger[], isOppo?: boolean, isRandom?: boolean, isAll?: boolean } = {}) {
+        const { selectSummon, trigger = 'phase-end', isOppo, isRandom, isAll } = options;
+        const mode = isCdt(isRandom, CMD_MODE.Random, isCdt(isAll, CMD_MODE.ByOrder));
+        this._add({ cmd: 'summonTrigger', hidxs: convertToArray(selectSummon), trigger, isOppo, mode })
         return this;
     }
     getSkill(hidx: number, skillId: number, skidx: number) {

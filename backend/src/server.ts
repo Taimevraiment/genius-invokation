@@ -43,6 +43,7 @@ process.on('uncaughtException', err => console.error(err));
 process.on('exit', code => console.error(code));
 
 const serverSecretKey = await getSecretData('secretKey');
+const juheSecretKey = await getSecretData('juheSecretKey');
 const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus, ip?: string } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
@@ -382,19 +383,31 @@ app.get('/login', (req, res) => {
     if (tplayer) {
         tplayer.ip = ip ?? '';
         if (tplayer.location == 'null') {
-            https.get(`https://api.vore.top/api/IPdata?ip=${ip}`, res => {
+            // https.get(`https://api.vore.top/api/IPdata?ip=${ip}`, res => {
+            //     let data: any = '';
+            //     res.on('data', chunk => data += chunk);
+            //     res.on('end', () => {
+            //         try {
+            //             data = JSON.parse(data);
+            //             let area: any = [];
+            //             for (let i = 1; i <= 3; ++i) {
+            //                 if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
+            //             }
+            //             tplayer.location = area.join('-');
+            //         } catch (e) {
+            //             console.info('err:', e);
+            //         }
+            //     });
+            // });
+            https.get(`https://apis.juhe.cn/ip/ipNewV3?ip=${ip}&key=${juheSecretKey}`, res => {
                 let data: any = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
                     try {
                         data = JSON.parse(data);
-                        let area: any = [];
-                        for (let i = 1; i <= 3; ++i) {
-                            if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
-                        }
-                        tplayer.location = area.join('-');
+                        tplayer.location = data.resultcode == '200' ? Object.values(data.result).filter(v => v).join('-') : '未知';
                     } catch (e) {
-                        console.info(data);
+                        console.info('err:', e);
                     }
                 });
             });

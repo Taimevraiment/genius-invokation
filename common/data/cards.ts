@@ -2147,13 +2147,13 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【双方场上至少存在合计2个「召唤物」时，才能打出：】随机触发我方和敌方各1个「召唤物」的「结束阶段」效果。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/0a500a2d6316ffc96851715d545815da_8008891091384379637.png')
         .handle((_, event) => {
-            const { summons, esummons, cmds, randomInt } = event;
+            const { summons, esummons, cmds } = event;
             return {
                 isValid: summons.length + esummons.length >= 2,
                 notPreview: true,
                 exec: () => {
-                    cmds.summonTrigger(randomInt(summons.length - 1));
-                    cmds.summonTrigger(randomInt(esummons.length - 1), { isOppo: true });
+                    cmds.summonTrigger({ isRandom: true });
+                    cmds.summonTrigger({ isRandom: true, isOppo: true });
                 }
             }
         }),
@@ -2607,9 +2607,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【装备有此牌的〖hro〗切换为「出战角色」时：】触发1个随机我方「召唤物」的「结束阶段」效果。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/92151754bedb92e5b3e0f97b6a83325d_6443479384111696580.png')
         .handle((card, event) => {
-            const { summons, execmds, randomInt } = event;
+            const { summons, execmds } = event;
             if (card.perCnt <= 0 || summons.length == 0) return { notPreview: true }
-            execmds.summonTrigger(randomInt(summons.length - 1));
+            execmds.summonTrigger({ isRandom: true });
             return { triggers: 'switch-to', notPreview: true, exec: () => card.minusPerCnt() }
         }),
 
@@ -3187,7 +3187,7 @@ const allCards: Record<number, () => CardBuilder> = {
             if (card.perCnt <= 0) return res;
             const smnIds = summons.filter(smn => getHidById(smn.id) == hero.id).map(s => s.id);
             if (smnIds.length == 0) return res;
-            execmds.summonTrigger(Math.max(...smnIds));
+            execmds.summonTrigger({ selectSummon: Math.max(...smnIds) });
             return { ...res, triggers: 'after-skilltype1', exec: () => card.minusPerCnt() }
         }),
 
@@ -3509,11 +3509,7 @@ const allCards: Record<number, () => CardBuilder> = {
     113155: () => new CardBuilder().name('驰轮车·涉渡').vehicle().userType().costAny(2).useCnt(2)
         .description('〔*[card]【此卡牌被打出时：】随机触发我方1个「召唤物」的「结束阶段」效果。〕；{vehicle}；（仅【hro】可用）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b7987132c27e1baeebf379498453f17f_5843656174627783133.png')
-        .handle((_, event) => {
-            const { summons, cmds, randomInt } = event;
-            cmds.summonTrigger(randomInt(summons.length - 1));
-            return { notPreview: true }
-        }),
+        .handle((_, { cmds }) => (cmds.summonTrigger({ isRandom: true }), { notPreview: true })),
 
     113156: () => new CardBuilder().name('驰轮车·疾驰').vehicle().userType().costSame(1).useCnt(2)
         .description('〔*[card]【此卡牌可使用次数为0时：】抓4张牌。〕；{vehicle}；（仅【hro】可用）')

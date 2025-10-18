@@ -189,7 +189,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     3130031: () => new SkillBuilder('游隙灵道').description('选择一个我方「召唤物」，立刻触发其「结束阶段」效果。（每回合最多使用1次）')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/8a8518fd7fb8b5be6968d77a1d34f2ac_127972242004343862.png')
         .vehicle().costSame(1).canSelectSummon(1).perCnt(1).handle(({ cmds, skill, selectSummon }) => (
-            cmds.summonTrigger(selectSummon), {
+            cmds.summonTrigger({ selectSummon }), {
                 isForbidden: skill.perCnt == 0,
                 exec: () => skill.minusPerCnt(),
             })),

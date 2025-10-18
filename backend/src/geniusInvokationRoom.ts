@@ -2496,8 +2496,10 @@ export default class GeniusInvokationRoom {
         await this.wait(() => this.needWait);
         const isActionEnd = this.players.every(p => p.phase == PHASE.ACTION_END);
         this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
-        await this.emit(flag, pidx, { tip: isCdt(isActionEnd, '回合结束阶段', `${pidx == player.pidx ? '我方' : '对方'}结束了回合`) });
+        await this.emit(flag, pidx, { tip: `{p}结束了回合` });
+        await this.delay(1500);
         if (!isActionEnd) await this._changeTurn(pidx, 'endPhase');
+        else await this.emit(flag, pidx, { tip: '回合结束阶段' });
         this.players.forEach(p => {
             if (isActionEnd) p.UI.info = '结束阶段...';
             else if (p.pidx == this.currentPlayerIdx) p.UI.info = '对方已结束回合...';
@@ -2900,7 +2902,7 @@ export default class GeniusInvokationRoom {
                         this._doCmds(pidx, skillres.cmds, { dmgSource: 'skill', actionInfo, heroSelect, atkname: skill.name, trigger });
                         if (!skillres.cmds.hasDamage) this.emit(`doSkill-${skill.name}:${trigger}`, pidx, { heroSelect, actionInfo });
                         if (skillres.isTrigger) this._emitEvent(pidx, 'trigger', { source: skill.id, sourceHidx: hidx });
-                    }, { delayAfter: isCdt(!isPassiveHidden, 1e3) });
+                    }, { delayAfter: 1e3 });
                 }
             }
         }
@@ -4001,8 +4003,10 @@ export default class GeniusInvokationRoom {
                     handCards.splice(cidx, 1, this.newCard(cid).setEntityId(eid));
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'summonTrigger' && ohidxs) {
-                const cSummon = ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !!v)
-                if (cSummon.length == 0) return;
+                const cSummon = mode == CMD_MODE.ByOrder ? cplayer.summons :
+                    mode == CMD_MODE.Random ? this._randomInArr(cplayer.summons, ohidxs?.[0]) :
+                        ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !!v);
+                if (mode == CMD_MODE.Random && !this.preview.isExec) return this.taskQueue.stopPreview();
                 this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}`, () => {
                     callback?.();
                     this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon });
@@ -4284,10 +4288,24 @@ export default class GeniusInvokationRoom {
                         this._checkCard(pidx, +cidx, { summonIdx: i });
                         await this._useCard(pidx, +cidx, diceSelect, { selectHeros: heroSelect, selectSummon: i });
                         await this._execTask();
-                        const { summonCnt } = this._calcPreview(curPlayers);
+                        const { willHp, willSummons, summonCnt, energyCnt, supportCnt, changedHeros } = this._calcPreview(curPlayers);
                         previews.push({
-                            ...preview,
+                            willSupportChange: supportCnt,
+                            type: ACTION_TYPE.UseCard,
+                            willHp,
+                            willSwitch: this.preview.willSwitch,
+                            diceSelect,
+                            cardIdxs: [+cidx],
+                            heroIdxs: heroSelect,
+                            heroCanSelect: hCanSelect,
+                            supportCanSelect,
+                            summonCanSelect,
+                            willSummons,
                             willSummonChange: summonCnt,
+                            changedHeros,
+                            changedSummons: clone(this.preview.changedSummons),
+                            willAttachs: clone(this.preview.willAttachs),
+                            willEnergyChange: energyCnt,
                             isValid: diceValid,
                             summonIdx: i,
                         });
