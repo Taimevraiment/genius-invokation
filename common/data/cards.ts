@@ -57,13 +57,14 @@ const barrierWeapon = (shareId: number, mark: string) => {
     return new CardBuilder(shareId).weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
         .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合1次）；【角色造成伤害时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此伤害+1，并且每消耗1点「${mark}」就抓1张牌。`)
         .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合最多触发2次）；【角色使用技能时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此技能伤害+1，并且每消耗1点「${mark}」就抓1张牌。`, 'v5.0.0')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { hcardsCnt, restDmg, skill, execmds } = event;
             if (restDmg > -1) {
                 if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return { restDmg }
                 execmds.discard({ mode: CMD_MODE.HighHandCard })
                 return {
                     restDmg: restDmg - 1,
+                    notPreview: ver.gte('v6.1.0'),
                     exec: () => {
                         card.addUseCnt();
                         card.minusPerCnt();
@@ -72,11 +73,7 @@ const barrierWeapon = (shareId: number, mark: string) => {
             }
             if (card.useCnt == 0 || !skill?.isHeroSkill) return;
             execmds.getCard(card.useCnt)
-            return {
-                triggers: 'dmg',
-                addDmgCdt: 1,
-                exec: () => card.setUseCnt(),
-            }
+            return { triggers: 'dmg', addDmgCdt: 1, exec: () => card.setUseCnt() }
         });
 }
 
@@ -158,11 +155,11 @@ const hero1511card = (el: SwirlElementType) => {
         .description(`【打出或从手牌中[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`)
         .description(`【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，然后将一张【crd115113】随机放进牌库。`, 'v6.1.0')
         .src(`https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_CardFace_Summon_Chasca_${ELEMENT_ICON_NAME[ELEMENT_CODE[el]]}.webp`)
-        .handle((_, event) => {
+        .handle((_, event, ver) => {
             const { cmds, source: isFromPile } = event;
             cmds.attack(1, el, { isPriority: true }).addCard(1, 115113);
             const triggers: Trigger[] = [];
-            if (isFromPile == 0) triggers.push('discard');
+            if (ver.lt('v6.1.0') || isFromPile == 0) triggers.push('discard');
             return { triggers, notPreview: true }
         });
 }
@@ -1049,11 +1046,11 @@ const allCards: Record<number, () => CardBuilder> = {
     312030: () => new CardBuilder(427).name('指挥的礼帽').since('v5.1.0').relic().costSame(1).perCnt(1)
         .description('【我方切换到所附属角色后：】[舍弃]原本元素骰费用最高的1张手牌，将2个元素骰转换为[万能元素骰]，并使角色下次使用技能或打出「天赋」时少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/a304d1400ed0bcb463f93b2be2558833_8026218308357759960.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { hcardsCnt, hidx, execmds } = event;
             if (card.perCnt <= 0 || hcardsCnt == 0) return;
             execmds.discard({ mode: CMD_MODE.HighHandCard }).changeDice({ cnt: 2 }).getStatus(301204, { hidxs: hidx });
-            return { triggers: 'switch-to', exec: () => card.minusPerCnt() }
+            return { triggers: 'switch-to', notPreview: ver.gte('v6.1.0'), exec: () => card.minusPerCnt() }
         }),
 
     312031: () => new CardBuilder(439).name('少女易逝的芳颜').since('v5.2.0').relic().costSame(1).perCnt(2)
@@ -1167,7 +1164,12 @@ const allCards: Record<number, () => CardBuilder> = {
     312041: () => new CardBuilder(529).name('昔日宗室之仪').since('v6.1.0').relic().costAny(3)
         .description('【入场时：】使所附属角色获得1点[充能]。；【所附属角色使用「元素爆发」后：】我方角色下3次造成的伤害+1。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
-        .handle((_, { cmds, execmds }) => (cmds.getEnergy(1), execmds.getStatus(301210), { triggers: 'after-skilltype3' })),
+        .handle((_, event) => {
+            const { cmds, selectHeros: [hidxs], execmds } = event;
+            cmds.getEnergy(1, { hidxs });
+            execmds.getStatus(301210);
+            return { triggers: 'after-skilltype3' }
+        }),
 
     312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75720734/65841e618f66c6cb19823657118de30e_3244206711075165707.png'),
@@ -1229,7 +1231,7 @@ const allCards: Record<number, () => CardBuilder> = {
     313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(1).useCnt(2)
         .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为「[快速行动]」而非「[战斗行动]」，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/9a5a0408639062f81d7ed4007eea7a19_7598137844845621529.png')
-        .handle((_, event) => {
+        .handle((_, event, ver) => {
             const { eheros, eDmgedHero, hcardsCnt, switchHeroDiceCnt, cmds, execmds } = event;
             const triggers: Trigger[] = [];
             const isTriggered = hcardsCnt > 0 && eDmgedHero.heroStatus.has(301302) && switchHeroDiceCnt > 0;
@@ -1242,6 +1244,7 @@ const allCards: Record<number, () => CardBuilder> = {
                 triggers,
                 minusDiceHero: isCdt(isTriggered, 1),
                 isQuickAction: isTriggered,
+                notPreview: ver.gte('v6.1.0'),
                 exec: () => eheros.forEach(h => h.heroStatus.get(301302)?.dispose()),
             }
         }),
@@ -2186,15 +2189,15 @@ const allCards: Record<number, () => CardBuilder> = {
     332046: () => new CardBuilder(488).name('飞行队出击！').since('v5.7.0').event().costAny(3)
         .description('随机[舍弃]至多2张原本元素骰费用最高的手牌，随后抓牌直至手牌中有4张牌。；【此牌在手牌被[舍弃]后：】抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/495fa2cc19ba2fa4ca9534c58a926b63_7007260530446437361.png')
-        .handle((_, event) => {
+        .handle((_, event, ver) => {
             const { cmds, source: isFromPile, trigger } = event;
             if (trigger == 'discard') {
                 if (isFromPile == 1) return;
                 cmds.getCard(1);
-                return { triggers: 'discard' }
+                return { triggers: 'discard', notPreview: ver.gte('v6.1.0') }
             }
             cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(4, { until: true });
-            return { isImmediate: true }
+            return { isImmediate: true, notPreview: ver.gte('v6.1.0') }
         }),
 
     332048: () => new CardBuilder(490).name('健身的成果').since('v5.7.0').event().costSame(0).canSelectHero(1)
@@ -3263,13 +3266,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('〔*[card][快速行动]：装备给我方的【hro】，使其附属【sts222062】。〕；装备有此牌的【hro】在场时，我方宣布结束后，如果所附属角色生命值不低于3，则所附属角色受到2点[穿透伤害]，召唤1个独立的【smn122061】。')
         .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Narcissusborn.webp')
         .handle((_, event) => {
-            const { hero: { hp }, summons, cmds, execmds } = event;
+            const { hero: { hp, hidx }, summons, cmds, execmds } = event;
             cmds.getStatus(222062);
             if (hp < 3 || summons.length == MAX_SUMMON_COUNT) return;
-            execmds.attack(2, DAMAGE_TYPE.Pierce, { isOppo: false });
+            execmds.attack(2, DAMAGE_TYPE.Pierce, { hidxs: hidx, isOppo: false });
             let summon = 122061;
             while (summons.has(summon)) ++summon;
-            return { triggers: 'end-phase', summon }
+            execmds.getSummon(summon);
+            return { triggers: 'end-phase' }
         }),
 
     223011: () => new CardBuilder(115).name('悉数讨回').offline('v2').talent(1).costPyro(3)
@@ -3538,10 +3542,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或从手牌中[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。')
         .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。', 'v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/be0fea5e603570c03e7c728698bdd297_5978114668085840517.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { hero, execmds, cmds, source: isFromPile } = event;
             const triggers: Trigger[] = [];
-            if (isFromPile == 0) triggers.push('discard');
+            if (ver.lt('v6.1.0') || isFromPile == 0) triggers.push('discard');
             if (hero) {
                 const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
                 if (ncardId) {

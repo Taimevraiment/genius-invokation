@@ -734,13 +734,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('热情拂扫').description('{dealDmg}，随机[舍弃]1张元素骰费用最高的手牌，生成【sts113121】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png')
-                .elemental().damage(2).cost(3).handle(({ cmds }) => (cmds.discard({ mode: CMD_MODE.HighHandCard }), { status: 113121 })),
+                .elemental().damage(2).cost(3).handle((event, ver) => {
+                    event.cmds.discard({ mode: CMD_MODE.HighHandCard });
+                    return { status: 113121, notPreview: ver.gte('v6.1.0') }
+                }),
             new SkillBuilder('叛逆刮弦').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]\\；[舍弃]我方所有手牌，生成【sts113123】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/0f007a2905436bfbbcc0f286889fea82.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/6387793092d6e4fbf598834d1c4735b0_3596019311060413612.png')
-                .burst(2).damage(3).dmgElement(DAMAGE_TYPE.Physical).cost(3).handle(({ cmds }) => (
-                    cmds.discard({ mode: CMD_MODE.AllHandCards }), { pdmg: 2, status: 113123 }
-                ))
+                .burst(2).damage(3).dmgElement(DAMAGE_TYPE.Physical).cost(3).handle((event, ver) => {
+                    event.cmds.discard({ mode: CMD_MODE.AllHandCards });
+                    return { pdmg: 2, status: 113123, notPreview: ver.gte('v6.1.0') }
+                })
         ),
 
     1313: () => new HeroBuilder(395).name('夏沃蕾').since('v4.8.0').fontaine(HERO_TAG.ArkheOusia).pyro().polearm()
@@ -2212,14 +2216,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('蚀灭火羽').description('{dealDmg}，我方[舍弃]牌组顶部1张牌。')
                 .src('https://patchwiki.biligame.com/images/ys/e/e4/lhpb4a32f5zq76s8yueyk638lpgvpyi.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/0188e2eb7af013f151e755845d0a0b6d_2165374047345675245.png')
-                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard }).res),
+                .elemental().damage(3).cost(3).handle((event, ver) => {
+                    event.cmds.discard({ cnt: 1, mode: CMD_MODE.TopPileCard });
+                    return { notPreview: ver.gte('v6.1.0') }
+                }),
             new SkillBuilder('斫劫源焰').description('{dealDmg}，对所有敌方后台角色造成1点[穿透伤害]。双方[舍弃]牌组顶部3张牌，自身附属1层【sts123051】.')
                 .src('https://patchwiki.biligame.com/images/ys/8/86/6y2xa7b5670clz4p8003wpw968bxxud.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/66cb6a2a590c642c2de7cbd2c529ee2e_2098939999112434475.png')
                 .burst(2).damage(1).cost(3).handle(event => {
                     const { cmds, hero: { heroStatus } } = event;
                     cmds.discard({ cnt: 3, mode: CMD_MODE.TopPileCard }).discard({ cnt: 3, mode: CMD_MODE.TopPileCard, isOppo: true });
-                    return { pdmg: 1 + heroStatus.getUseCnt(123051), status: 123051 }
+                    return { pdmg: 1 + heroStatus.getUseCnt(123051), status: 123051, notPreview: true }
                 }),
             new SkillBuilder('忿恨').description('我方每[舍弃]6张卡牌，自身附属1层【sts123051】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/21/p4xpaxrbwc50rasjcr4v2ncxcelgmct.png',

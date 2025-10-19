@@ -181,7 +181,7 @@ export class GICard extends Entity {
                     ...res,
                     status: [...ressts, 303300],
                     canSelectHero: res.canSelectHero != undefined ? res.canSelectHero :
-                        cmds?.hasCmds('heal') ? heros?.map(h => h.isHurt) :
+                        cmds?.hasCmds('heal') && ver.lt('v6.1.0') ? heros?.map(h => h.isHurt) :
                             cmds.hasCmds('revive') ? heros?.map(h => h.hp <= 0 && !combatStatus.has(303307)) :
                                 res.canSelectHero,
                     notPreview: true,

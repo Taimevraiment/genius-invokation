@@ -3292,8 +3292,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     303323: () => new StatusBuilder('沉玉茶露（生效中）').heroStatus().useCnt(2)
-        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(333029)
-        .description('我方下2次冒险或结束阶段时，治疗所附属角色1点。')
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).from(333029)
+        .description('我方下2次[冒险]或结束阶段时，治疗所附属角色1点。')
         .handle((status, event) => ({
             triggers: ['adventure', 'phase-end'],
             isAddTask: true,

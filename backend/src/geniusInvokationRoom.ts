@@ -271,7 +271,7 @@ export default class GeniusInvokationRoom {
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}\n`).join('');
         if (isShowRoomInfo) log += this.roomInfoLog;
-        const path = `${__dirname}/../../../logs/${this.seed || `${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
+        const path = `${__dirname}/../../../logs/${this.seed || `${new Date().toISOString().split('T')[0]}-${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
         if (!this.isDev) {
             const recordData: RecordData = { ...this.recordData, username: this.players.map(v => v.name), pidx: 0 };
@@ -750,8 +750,9 @@ export default class GeniusInvokationRoom {
         const { heroIds = [], cardIds = [], cardIdxs = [], heroIdxs = [], diceSelect = [], skillId = -1,
             summonIdx = -1, supportIdx = -1, shareCode = '', recordData, flag = 'noflag' } = actionData;
         const player = this.players[pidx];
+        if (!player) return;
         // this.resetHeartBreak(pidx);
-        if (this.players[pidx].phase == PHASE.ACTION && this.taskQueue.isTaskEmpty()) this._resetPreview();
+        if (player.phase == PHASE.ACTION && this.taskQueue.isTaskEmpty()) this._resetPreview();
         switch (actionData.type) {
             case ACTION_TYPE.StartGame:
                 if (this.players.length < PLAYER_COUNT) return this.emit('playersError', pidx, { socket, tip: `玩家为${PLAYER_COUNT}人才能开始游戏` });

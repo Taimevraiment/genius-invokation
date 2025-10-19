@@ -417,7 +417,7 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/detail', (req, res) => {
-    if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
+    if (!validateSK(req, res)) return;
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,
@@ -438,7 +438,7 @@ app.get('/detail', (req, res) => {
 });
 
 app.get('/info', (req, res) => {
-    if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
+    if (!validateSK(req, res)) return;
     res.json({
         roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
         playersInfo: playerList.map(p => `${p.name}(${p.ip})[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
@@ -469,7 +469,7 @@ app.get('/versions', (req, res) => {
 });
 
 app.get('/explain', (req, res) => {
-    if (!validateSK(req, res)) return res.json({ err: '非法请求！' });
+    if (!validateSK(req, res)) return;
     const stsExplain = statusesTotal().map(v => ({ id: `sts${v.id}`, name: v.name, desc: v.UI.description }));
     const crdExplain = cardsTotal(undefined, { force: true }).map(v => ({ id: `crd${v.id}`, name: v.name, desc: v.UI.description }));
     const rskExplain = skillsTotal().map(v => ({ id: `rsk${v.id}`, name: v.name, desc: v.UI.description }));

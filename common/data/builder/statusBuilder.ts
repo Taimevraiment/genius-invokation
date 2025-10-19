@@ -114,15 +114,15 @@ export class GIStatus extends Entity {
             }
         } else if (type.includes(STATUS_TYPE.ImmuneDamage)) {
             thandle = (status, event) => {
-                const { dmgElement, trigger, cmds } = event;
+                const { dmgElement, trigger, cmds, hidx } = event;
                 const el = getElByHid(hid);
                 const res = handle?.(status, event, versionWrap(ver));
                 if (trigger == 'reduce-dmg' && dmgElement == el) {
                     return { ...res, restDmg: 0, triggers: trigger }
                 }
                 if (trigger == 'enter') {
-                    cmds.attach({ element: el });
-                    return { ...res, triggers: trigger }
+                    cmds.attach({ element: el, hidxs: hidx });
+                    return { ...res, isAddTask: false, triggers: trigger }
                 }
                 return res;
             }
