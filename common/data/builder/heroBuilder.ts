@@ -1,5 +1,6 @@
 import { Card, Skill, Status } from "../../../typing";
 import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
+import { GUYU_PREIFIX } from "../../constant/UIconst.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray } from "../../utils/utils.js";
 import { ArrayStatus, BaseCostBuilder, Entity, VersionMap } from "./baseBuilder.js";
@@ -47,6 +48,7 @@ export class GIHero extends Entity {
         this.hp = maxHp;
         this.element = element;
         this.weaponType = weaponType;
+        if (src == '#') src = `${GUYU_PREIFIX}${id}`;
         src = convertToArray(src);
         avatar = convertToArray(avatar);
         this.UI = {
@@ -78,6 +80,9 @@ export class GIHero extends Entity {
     }
     get isFullEnergy() {
         return this.energy == this.maxEnergy;
+    }
+    get isDie() {
+        return this.hp <= 0;
     }
 }
 

@@ -303,7 +303,7 @@ export const STATUS_ICON = {
     DebuffCostSwitch: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSwitch.webp',
 } as const;
 
-export const GUYU_PREIFIX = 'https://gi-tcg-assets.guyutongxue.site/api/v3/images/';
+export const GUYU_PREIFIX = 'https://static-data.7shengzhaohuan.online/api/v4/image/';
 
 export const REACTION_COLOR = {
     融化: '#f1d08e',
@@ -330,9 +330,9 @@ const elReactionExplain: Record<string, (...args: any) => string> = {
     绽放: (isAttach = false) => `【绽放】：${!isAttach ? '本伤害+1，' : ''}生成使下次火元素或雷元素伤害+2的\\[草原核]`,
     原激化: (isAttach = false) => `【原激化】：${!isAttach ? '本伤害+1，' : ''}生成使下2次草元素或雷元素伤害+1的\\[激化领域]`,
     扩散: (el: string) => `【扩散（${el}）】：对目标以外的所有敌方角色造成1点${el}元素伤害`,
-    结晶: (el: string) => `【结晶（${el}）】：本伤害+1，我方出战角色获得1点护盾（可叠加，最多2点）`,
+    结晶: (el: string, isAttach = false) => `【结晶（${el}）】：${!isAttach ? '本伤害+1，我' : '敌'}方出战角色获得1点护盾（可叠加，最多2点）`,
 }
-const elr = (elrname: string, elOrIsAttach?: string | boolean) => elReactionExplain[elrname](elOrIsAttach);
+const elr = (elrname: string, elOrIsAttach?: string | boolean, isAttach?: boolean) => elReactionExplain[elrname](elOrIsAttach, isAttach);
 
 const diceExpl = (el: DiceCostType) => `花费投出了*[${ELEMENT_NAME[el]}骰]的元素骰，来支付此费用。；（*[万能元素骰]也可以支付此费用。）`
 
@@ -372,6 +372,7 @@ export const RULE_EXPLAIN: { [key: string]: string } = {
     风元素相关反应: `‹5›‹1›${elr('扩散', '冰')}；‹5›‹2›${elr('扩散', '水')}；‹5›‹3›${elr('扩散', '火')}；‹5›‹4›${elr('扩散', '雷')}`,
     岩元素骰: diceExpl(DICE_TYPE.Geo),
     岩元素伤害: `和已附着的元素发生元素反应：；‹6›‹1›${elr('结晶', '冰')}；‹6›‹2›${elr('结晶', '水')}；‹6›‹3›${elr('结晶', '火')}；‹6›‹4›${elr('结晶', '雷')}`,
+    附着岩元素: `不通过伤害附着‹6›岩元素时，发生的元素反应会忽略伤害效果：；‹6›‹1›${elr('结晶', '冰', true)}；‹6›‹2›${elr('结晶', '水', true)}；‹6›‹3›${elr('结晶', '火', true)}；‹6›‹4›${elr('结晶', '雷', true)}`,
     岩元素相关反应: `‹6›‹1›${elr('结晶', '冰')}；‹6›‹2›${elr('结晶', '水')}；‹6›‹3›${elr('结晶', '火')}；‹6›‹4›${elr('结晶', '雷')}`,
     草元素骰: diceExpl(DICE_TYPE.Dendro),
     草元素伤害: `附着‹7›草元素元素，可发生元素反应：；‹7›‹2›${elr('绽放')}；‹7›‹3›${elr('燃烧')}；‹7›‹4›${elr('原激化')}`,

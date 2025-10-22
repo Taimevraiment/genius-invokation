@@ -1,5 +1,5 @@
 import { Card, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
@@ -7,6 +7,15 @@ import { SupportBuilder } from './builder/supportBuilder.js';
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
+    // 全频谱多重任务厨艺机关
+    111159: () => new SupportBuilder().collection(2).handle(support => ({
+        triggers: ['elReaction-Cryo', 'elReaction-Cryo-oppo'],
+        isOrTrigger: true,
+        exec: cmds => {
+            cmds.getCard(1, { include: [111152, 111153, 111154, 111155] });
+            return { isDestroy: support.minusUseCnt() == 0 }
+        }
+    })),
     // 斗争之火
     300006: (cnt: number = 0) => new SupportBuilder().collection(cnt).handle((support, event) => {
         const { getdmg = [], supports = [], esupports = [], trigger } = event;
@@ -445,6 +454,21 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     })),
+    // 自体自身之塔
+    321033: () => new SupportBuilder().collection(1).handle((support, event) => ({
+        triggers: ['adventure', 'enter'],
+        exec: cmds => {
+            const { trigger, heros } = event;
+            if (trigger == 'enter') return cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs(), isOppo: false }).res;
+            support.addUseCnt();
+            if (support.useCnt % 2 == 0) cmds.getDice(1, { mode: CMD_MODE.Random });
+            if (support.useCnt == 5) return cmds.getCard(1, { card: 301038 }).res;
+            if (support.useCnt == 12) {
+                cmds.getCard(1, { card: 301039 });
+                return { isDestroy: true }
+            }
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(support => ({
         triggers: 'phase-start',
@@ -865,6 +889,23 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     return { isDestroy: support.minusUseCnt() == 0 }
                 }
             },
+        }
+    }),
+    // 西摩尔
+    322031: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
+        const { hcard, playerInfo: { initCardIds }, trigger, epile } = event;
+        if (trigger == 'enter') {
+            if (epile.length == 0) return;
+            return { triggers: trigger, exec: cmds => cmds.getCard(1, { card: epile[0] }).res }
+        }
+        if (hcard && initCardIds.includes(hcard.id) || support.perCnt <= 0) return;
+        return {
+            triggers: 'card',
+            exec: cmds => {
+                cmds.adventure();
+                support.minusPerCnt();
+                return { isDestroy: support.minusUseCnt() == 0 }
+            }
         }
     }),
     // 参量质变仪

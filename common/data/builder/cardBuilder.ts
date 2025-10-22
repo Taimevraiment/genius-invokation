@@ -5,7 +5,7 @@ import {
     OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY,
     WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
-import { ELEMENT_NAME, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
+import { ELEMENT_NAME, GUYU_PREIFIX, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
@@ -245,6 +245,7 @@ export class GICard extends Entity {
             if (isResetPct) card.setPerCnt(pct);
             if (isResetUct) card.setUseCnt(uct);
         }
+        if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
         this.handle = (card, event) => {
             const cmds = new CmdsGenerator();
             const execmds = new CmdsGenerator();

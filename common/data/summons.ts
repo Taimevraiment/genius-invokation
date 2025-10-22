@@ -16,7 +16,7 @@ const crd12702summon = () => {
 const hero2206summon = () => {
     return new SummonBuilder('半幻人').useCnt(2).damage(1)
         .description('{defaultAtk。；【此卡牌被弃置时：】治疗我方【hro】2点。}')
-        .src('/image/tmp/UI_Gcg_CardFace_Summon_Narcissusborn.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/1906bcb36b9dc5833a487e1107e7c6b2_809703029653444517.png')
         .handle((summon, event) => ({
             triggers: ['destroy', 'phase-end'],
             exec: cmds => {
@@ -126,6 +126,16 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             triggers: 'phase-end',
             exec: cmds => summon.phaseEndAtk(cmds).getStatus([[111131, isCdt(ver.lt('v5.3.0'), 1)]]),
         })),
+
+    111151: () => new SummonBuilder('厨艺机关·低温冷藏模式').useCnt(2).damage(1)
+        .description('{defaultAtk。}')
+        .src('#')
+        .handle((summon, event) => {
+            const { trigger, talent, source } = event;
+            if (trigger == 'phase-end') return { triggers: trigger, exec: cmds => summon.phaseEndAtk(cmds) }
+            if (source != talent?.id) return;
+            return { triggers: 'trigger', exec: cmds => cmds.attack() }
+        }),
 
     112011: () => new SummonBuilder('歌声之环').useCnt(2).heal(1)
         .description('【结束阶段：】治疗所有我方角色{shield}点，然后对我方出战角色[附着水元素]。；[useCnt]')

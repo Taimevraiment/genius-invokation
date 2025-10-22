@@ -35,7 +35,7 @@ export interface SkillHandleRes {
 }
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'triggers'> & {
-    hidxs?: number[],
+    hidxs?: number[] | number,
     status?: (number | [number, ...any])[] | number,
     statusOppo?: (number | [number, ...any])[] | number,
     equip?: number,

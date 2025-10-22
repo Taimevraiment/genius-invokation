@@ -32,6 +32,8 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     13155: () => new SkillBuilder('驰轮车·疾驰').description('【行动阶段开始时：】生成2个[万能元素骰]。')
         .elemental().readySkill().handle(() => ({ status: 113158 })),
 
+    13164: () => new SkillBuilder('踏云献瑞').description('{dealDmg}。').normal().readySkill().damage(2).handle(() => ({ isQuickAction: true })),
+
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。')
         .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle((event, ver) => {
             if (event.talent && (ver.gte('v4.2.0') || ver.isOffline)) return { status: 114052 }
@@ -82,6 +84,11 @@ export const allSkills: Record<number, () => SkillBuilder> = {
 
     25026: () => new SkillBuilder('终幕涤流').description('对上一个敌方后台角色{dealDmg}。（敌方没有后台角色时，改为对出战角色造成伤害）')
         .elemental().readySkill().damage(2).handle(() => ({ atkOffset: -1 })),
+
+    26045: () => new SkillBuilder('巨铖强袭').description('{dealDmg}，[准备技能]：【rsk26047】。')
+        .burst().readySkill().damage(3).handle(() => ({ status: 126043 })),
+
+    26047: () => new SkillBuilder('大师之击').description('{dealDmg}。').burst().readySkill().damage(3),
 
     66013: () => new SkillBuilder('霜刺破袭').description('{dealDmg}，此角色附属【sts126022】。')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_skill_icon_u084qf/ac22f83f25890eca87720581f6b06408.png')
@@ -140,7 +147,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         }),
 
     1151521: () => new SkillBuilder('援护射击').description('消耗1点「夜魂值」，对上一个敌方角色{dealDmg}，并治疗我方受伤最多的角色2点。')
-        .src('/image/tmp/Skill_S_Ifa_03.png')
+        .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/55ad4a6dc1a4a33f2e72500b9603371d_8733074424400146705.png')
         .vehicle().damage(1).costAny(2).handle(({ cmds, heros }) =>
             (cmds.consumeNightSoul(), { atkOffset: -1, heal: 2, hidxs: heros.getMaxHurtHidxs() })),
 

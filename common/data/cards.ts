@@ -275,7 +275,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     311111: () => maxHpWeapon(527).name('不灭月华').since('v6.1.0')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Weapon_Bumieyuehua.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/b1d91536731f3986eff3aab55bcd2e36_7557845508902426698.png'),
 
     311201: () => normalWeapon(126).name('鸦羽弓').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/e20881692f9c3dcb128e3768347af4c0_5029781426547880539.png'),
@@ -1154,7 +1154,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312040: () => new CardBuilder(528).name('恶龙的单片镜').since('v6.1.0').relic().costSame(1).perCnt(1)
         .description('【附属角色使用「元素战技」后：】[冒险]1次。（每回合1次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_Shuixianxiao.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/c076e204fb7c15485af1b8e21434894b_8763839258582566566.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.adventure();
@@ -1163,12 +1163,23 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312041: () => new CardBuilder(529).name('昔日宗室之仪').since('v6.1.0').relic().costAny(3)
         .description('【入场时：】使所附属角色获得1点[充能]。；【所附属角色使用「元素爆发」后：】我方角色下3次造成的伤害+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Artifact_XieLveDa.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/99517acb13ab84d9312ca092d09d664d_1023746029901190339.png')
         .handle((_, event) => {
-            const { cmds, selectHeros: [hidxs], execmds } = event;
-            cmds.getEnergy(1, { hidxs });
+            const { cmds, execmds } = event;
+            cmds.getEnergy(1);
             execmds.getStatus(301210);
             return { triggers: 'after-skilltype3' }
+        }),
+
+    312043: () => new CardBuilder(539).name('水仙之梦').since('v6.2.0').relic().costSame(2).perCnt(2)
+        .description('【附属角色使用技能后：】[冒险]1次。（每回合2次）；如果我方已经完成过冒险，则所附属角色造成的伤害+1。')
+        .src('#')
+        .handle((card, event) => {
+            const { trigger, combatStatus, execmds } = event;
+            if (trigger == 'skill') return { triggers: trigger, addDmgCdt: +combatStatus.has(171) }
+            if (card.perCnt <= 0) return;
+            execmds.adventure();
+            return { triggers: 'after-skill', exec: () => card.minusPerCnt() }
         }),
 
     312101: () => normalElRelic(165, ELEMENT_TYPE.Cryo).name('破冰踏雪的回音')
@@ -1395,11 +1406,15 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321031: () => new CardBuilder(530).name('冒险家协会').since('v6.1.0').place().costSame(2)
         .description('【结束阶段：】[冒险]1次。；[可用次数]：3')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Assist_Location_Gonghui.webp'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/82cd8a4a820b5608e57a3661dcb49b8f_8218775068142851712.png'),
 
     321032: () => new CardBuilder().name('沉玉谷').since('v6.1.0').place().costSame(0).subtype(CARD_SUBTYPE.Adventure)
         .description('【冒险经历达到2时：】生成2张手牌【crd333029】。；【冒险经历达到4时：】我方获得3层【sts169】和【sts170】。；【冒险经历达到7时：】我方全体角色[附着水元素]，治疗我方受伤最多的角色至最大生命值，并使其获得2点最大生命值，然后弃置此牌。')
-        .src('tmp/UI_Gcg_CardFace_Assist_Location_ChenyuGu'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/679857616a563d304118fcd478c4cc2a_8197286737146985507.png'),
+
+    321033: () => new CardBuilder().name('自体自身之塔').since('v6.2.0').place().costSame(0).subtype(CARD_SUBTYPE.Adventure)
+        .description('【入场时：】对我方所有角色造成1点[穿透伤害]。；【冒险经历达到偶数次时：】生成1个随机基础元素骰。；【冒险经历达到5时：】生成手牌【crd301038】。；【冒险经历达到12时：】生成手牌【crd301039】。')
+        .src('#'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1532,6 +1547,10 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】生成2张手牌【crd301033】，并生成2张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/45dae777fd99897142752609a238470f_3519286704122229551.png'),
 
+    322031: () => new CardBuilder(540).name('西摩尔').since('v6.2.0').ally().costAny(2)
+        .description('【入场时：】复制对方牌组顶的1张牌加入我方手牌。；【我方打出名称不存在于本局最初牌组的牌时：】[冒险]1次。（每回合1次，最多生效2次）')
+        .src('#'),
+
     323001: () => new CardBuilder(214).name('参量质变仪').offline('v1').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个「质变进度」。；此牌已累积3个「质变进度」时，弃置此牌并生成3个不同的基础元素骰。')
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个「质变进度」。；如果此牌已累积3个「质变进度」，则弃置此牌，投掷并获得3个元素骰。', 'v1')
@@ -1651,6 +1670,11 @@ const allCards: Record<number, () => CardBuilder> = {
             const death = heros.allHidxs({ isDie: true }).length;
             if (death > 0) cmds.addMaxHp(2 * death, heros.allHidxs());
         }),
+
+    330012: () => new CardBuilder(541).name('「沙中遗事」').since('v6.2.0').legend().costSame(1)
+        .description('[挑选]一项：；将敌方2张费用最高的手牌置于牌组底。；或；将我方所有手牌置于牌组底，然后抓相同数量+2张手牌。')
+        .src('#')
+        .handle((_, { cmds }) => cmds.pickCard(2, CMD_MODE.UseCard, { card: [300008, 300009] })),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -2137,12 +2161,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/d95d31b9e43e517d1044e7b6bfdea685_4585783706555955668.png')
         .handle((_, event) => {
             const { heros, cmds } = event;
-            const canSelectPlace = new Set(heros.map(h => h.element)).size < heros.length;
-            const canSelectItem = new Set(heros.map(h => h.weaponType)).size < heros.length;
-            const canSelectFood = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
-            if (canSelectPlace) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Place });
-            if (canSelectItem) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Item });
-            if (canSelectFood) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Food });
+            const hasSameElement = new Set(heros.map(h => h.element)).size < heros.length;
+            const hasSameWeapon = new Set(heros.map(h => h.weaponType)).size < heros.length;
+            const hasSameLocal = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
+            if (hasSameElement) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Place });
+            if (hasSameWeapon) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Item });
+            if (hasSameLocal) cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Food });
             return { isValid: cmds.notEmpty }
         }),
 
@@ -2255,12 +2279,31 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332056: () => new CardBuilder(531).name('祀珑在昔，灵锦歆诚').since('v6.1.0').event().costSame(1)
         .description('[冒险]1次。如果我方冒险经历不低于4，则改为对我方「出战角色」造成1点[物理伤害]，[冒险]2次。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Event_Fujin.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/19f755738e765cd98343c74654f1cce8_5038695666985738596.png')
         .handle((_, event) => {
             const { cmds, adventureCnt } = event;
             if (adventureCnt >= 4) cmds.attack(1, DAMAGE_TYPE.Physical, { isOppo: false }).adventure();
             cmds.adventure();
         }),
+
+    332057: () => new CardBuilder(542).name('水仙十字大冒险').since('v6.2.0').event().costSame(1)
+        .description('如果我方存在相同元素类型的角色，则治疗我方受伤最多的角色1点\\；；如果我方存在相同武器类型的角色，抓1张牌\\；；如果我方存在相同所属势力的角色，则[冒险]1次。')
+        .src('#')
+        .handle((_, event) => {
+            const { heros, cmds } = event;
+            const hasSameElement = new Set(heros.map(h => h.element)).size < heros.length;
+            const hasSameWeapon = new Set(heros.map(h => h.weaponType)).size < heros.length;
+            const hasSameLocal = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
+            if (hasSameElement) cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            if (hasSameWeapon) cmds.getCard(1);
+            if (hasSameLocal) cmds.adventure();
+            return { isValid: cmds.notEmpty }
+        }),
+
+    332058: () => new CardBuilder(543).name('拯救世界的计划').since('v6.2.0').event().costSame(2)
+        .description('下个回合结束时，双方出战角色生命值变为5。')
+        .src('#')
+        .handle(() => ({ status: 303247 })),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次「普通攻击」造成的伤害+1。')
@@ -2380,7 +2423,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     333029: () => new CardBuilder(532).name('沉玉茶露').since('v6.1.0').food().costSame(0).canSelectHero(1)
         .description('选择1个我方角色，我方下2次[冒险]或结束阶段时，治疗目标角色1点。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Event_Food_Chalu.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/87fa17a97eba2f588d873a268dc81aad_8008270654175984249.png')
         .handle(() => ({ status: 303323 })),
 
     211011: () => new CardBuilder(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
@@ -2506,6 +2549,15 @@ const allCards: Record<number, () => CardBuilder> = {
             if (card.perCnt <= 0 || !hasDmg) return;
             execmds.getStatus(211142).getNightSoul(1, hero.hidx);
             return { triggers: ['Frozen-oppo', 'Melt-oppo'], exec: () => card.minusPerCnt() }
+        }),
+
+    211151: () => new CardBuilder(536).name('虹彩缤纷的甜点茶话').since('v6.2.0').talent(1).costCryo(4).perCnt(1)
+        .description('{action}；【我方其他角色使用「普通攻击」后：】触发我方【smn111151】的「结束阶段」效果。（不消耗使用次数，每回合1次）')
+        .src('#')
+        .handle((card, event) => {
+            if (card.perCnt <= 0) return;
+            event.execmds.summonTrigger({ selectSummon: 111151, trigger: 'trigger' });
+            return { triggers: 'after-other-skilltype1', exec: () => card.minusPerCnt() }
         }),
 
     212011: () => new CardBuilder(69).name('光辉的季节').offline('v1').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
@@ -2734,6 +2786,17 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'card', exec: () => card.minusPerCnt() }
         }),
 
+    213161: () => new CardBuilder(537).name('通明庇佑').since('v6.2.0').talent(2).costPyro(3).energy(2).perCnt(1)
+        .description('{action}；【所附属角色进行[下落攻击]时】：伤害额外+1。；【所附属角色使用「元素战技」后：】治疗所附属角色2点。（每回合1次）')
+        .src('#')
+        .handle((card, event) => {
+            const { trigger, execmds, hidx, isFallAtk } = event;
+            if (trigger == 'fallatk') return { triggers: trigger, addDmgCdt: +isFallAtk }
+            if (card.perCnt <= 0) return;
+            execmds.heal(2, { hidxs: hidx });
+            return { triggers: 'after-skilltype2', exec: () => card.minusPerCnt() }
+        }),
+
     214011: () => new CardBuilder(86).name('噬星魔鸦').talent(1).costElectro(3)
         .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】「普通攻击」后造成2点[雷元素伤害]。（需消耗[可用次数]）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png'),
@@ -2859,7 +2922,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     214151: () => new CardBuilder(524).name('正义英雄的凯旋').since('v6.1.0').talent().costElectro(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【〖hro〗触发〖ski,3〗后：】获得1点[充能]。；装备有此牌的【hro】的「元素爆发」造成的伤害+1。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Varesa.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/1383d6710957d9fd50914d36ffec2c59_6222275807968976109.png')
         .handle((_, event) => {
             const { execmds, hero, hidx, source } = event;
             const triggers: Trigger[] = [];
@@ -2983,7 +3046,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     215151: () => new CardBuilder(525).name('温敷战术包扎').since('v6.1.0').talent().costAnemo(1).perCnt(2)
         .description('〔*[card][快速行动]：装备给我方的【hro】，治疗我方受伤最多的角色1点。〕；装备有此牌的【hro】在场时，我方触发[风元素相关反应]或感电反应后，治疗我方受伤最多的角色1点。（每回合2次）')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Ifa.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/775d537c80b16d221072fd4d4f86bbda_2936420837169196536.png')
         .handle((card, event) => {
             const { heros, cmds, execmds } = event;
             const hidxs = heros.getMaxHurtHidxs();
@@ -3264,7 +3327,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     222061: () => new CardBuilder(526).name('汇流').since('v6.1.0').talent().costHydro(2)
         .description('〔*[card][快速行动]：装备给我方的【hro】，使其附属【sts222062】。〕；装备有此牌的【hro】在场时，我方宣布结束后，如果所附属角色生命值不低于3，则所附属角色受到2点[穿透伤害]，召唤1个独立的【smn122061】。')
-        .src('https://api.hakush.in/gi/UI/UI_Gcg_CardFace_Modify_Talent_Narcissusborn.webp')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/3280d5cf9ecdd8f5df379683bdf4c417_4859183962332045900.png')
         .handle((_, event) => {
             const { hero: { hp, hidx }, summons, cmds, execmds } = event;
             cmds.getStatus(222062);
@@ -3414,6 +3477,16 @@ const allCards: Record<number, () => CardBuilder> = {
             if (slotUse) eheros.forEach(h => h.heroStatus.forEach(sts => sts.id == 126031 && (sts.maxCnt = 5)));
         }),
 
+    226041: () => new CardBuilder(538).name('「曾如磐石抵挡黑水奔流…」').since('v6.2.0').talent(-2).costGeo(1)
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【〔*[card]打出或〕行动阶段开始时：】使【hro】[附着岩元素]。')
+        .src('#')
+        .handle((card, event) => {
+            const { cmds, execmds, hidx } = event;
+            cmds.attach({ element: ELEMENT_TYPE.Geo, hidxs: hidx });
+            execmds.addCmds(cmds);
+            return { isValid: !!event.heros.get(card.userType as number)?.isFront, triggers: 'phase-start' }
+        }),
+
     227011: () => new CardBuilder(120).name('孢子增殖').offline('v1').talent(1).costDendro(3)
         .description('{action}；装备有此牌的【hro】可累积的「【sts127011】」层数+1。')
         .src('https://patchwiki.biligame.com/images/ys/4/41/bj27pgk1uzd78oc9twitrw7aj1fzatb.png'),
@@ -3441,6 +3514,30 @@ const allCards: Record<number, () => CardBuilder> = {
             if (card.perCnt <= 0 || initCardIds.includes(hcard?.id ?? 0)) return;
             return { triggers: 'card', isAddTask: true, isTrigger: true, exec: () => card.minusPerCnt() }
         }),
+
+    111152: () => new CardBuilder().name('鎏金殿堂').food().costSame(0).canSelectHero(1).from(111159)
+        .description('本回合中，目标角色下次造成的伤害+2。')
+        .src('#')
+        .handle(() => ({ status: 111156 })),
+
+    111153: () => new CardBuilder().name('雾凇秋分').food().costSame(0).canSelectHero(1).from(111159)
+        .description('治疗目标角色1点，目标角色获得1点额外最大生命值。')
+        .src('#')
+        .handle((_, { cmds }) => cmds.heal(1).addMaxHp(1)),
+
+    111154: () => new CardBuilder().name('白浪拂沙').food().costAny(2).from(111159)
+        .description('所有我方角色获得【sts303300】，并且下次使用技能时少花费1个元素骰。')
+        .src('#')
+        .handle((_, { heros }) => ({ status: 111157, hidxs: heros.allHidxs({ cdt: h => !h.heroStatus.has(303300) }) })),
+
+    111155: () => new CardBuilder().name('一捧绿野').food().costSame(1).from(111159)
+        .description('所有我方角色获得【sts303300】，并且下次造成的伤害+1。')
+        .src('#')
+        .handle((_, { heros }) => ({ status: 111158, hidxs: heros.allHidxs({ cdt: h => !h.heroStatus.has(303300) }) })),
+
+    111159: () => new CardBuilder().name('全频谱多重任务厨艺机关').place().costSame(0)
+        .description('【任意一方触发[冰元素相关反应]后：】从【crd111152】、【crd111153】、【crd111154】、【crd111155】中随机生成1张手牌。；[可用次数]：2')
+        .src('#'),
 
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0).canSelectHero(1).userType()
         .description('在「始基力:荒性」和「始基力:芒性」之中，切换【hro】的形态。；如果我方场上存在【smn112111】或【smn112112】，也切换其形态。')
@@ -3577,7 +3674,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     115152: () => new CardBuilder().name('咔库库').vehicle().useNightSoul().costSame(0)
-        .src('tmp/UI_Gcg_CardFace_Summon_Ifa.png'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/5fab729d51a8343c95a532156451dd47_4245641290755684283.png'),
 
     116081: () => new CardBuilder().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')
@@ -3650,9 +3747,22 @@ const allCards: Record<number, () => CardBuilder> = {
             return { exec: () => { !talent && card.perCnt == 1 && card.minusPerCnt() } }
         }),
 
-    300006: () => new CardBuilder().name('斗争之火').place().from(330010)
+    300006: () => new CardBuilder().name('斗争之火').since('v5.3.0').place().from(330010)
         .description('此牌会记录本回合你对敌方角色造成的伤害，记为「斗志」。；【行动阶段开始时：】若此牌是场上「斗志」最高的斗争之火，则清空此牌的「斗志」，使我方出战角色本回合造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2e88a5df59e2b48de1bc62d60dd1ba5b_5370407805539882566.png'),
+
+    300008: () => new CardBuilder().name('驱逐灾厄').since('v6.2.0').event().from(330012)
+        .description('将敌方2张费用最高的手牌置于牌组底。')
+        .src('#')
+        .handle((_, { cmds }) => cmds.putCard({ cnt: 2, mode: CMD_MODE.HighHandCard, isOppo: true })),
+
+    300009: () => new CardBuilder().name('肃净污染').since('v6.2.0').event().from(330012)
+        .description('将我方所有手牌置于牌组底，然后抓相同数量+2张手牌。')
+        .src('#')
+        .handle((_, event) => {
+            const { cmds, hcardsCnt } = event;
+            cmds.putCard({ mode: CMD_MODE.AllHandCards }).getCard(hcardsCnt + 2);
+        }),
 
     301020: () => new CardBuilder().name('禁忌知识').event().costSame(0).tag(CARD_TAG.NonReconcile)
         .description('无法使用此牌进行元素调和，且每回合最多只能打出1张「禁忌知识」。；对我方出战角色造成1点[穿透伤害]，抓1张牌。')
@@ -3663,25 +3773,35 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: !combatStatus.has(301021), status: 301021 }
         }),
 
-    301033: () => new CardBuilder().name('积木小人').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
+    301033: () => new CardBuilder().name('积木小人').since('v5.8.0').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301028】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/80704cf14d47841ff54dfd658bdffba4_5364615516522900370.png')
         .handle(() => ({ summon: 301028 })),
 
-    301034: () => new CardBuilder().name('折纸飞鼠').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
+    301034: () => new CardBuilder().name('折纸飞鼠').since('v5.8.0').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301029】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/b1d95145d18301e8c5d22b8f314d95b3_4086315130176794183.png')
         .handle(() => ({ summon: 301029 })),
 
-    301035: () => new CardBuilder().name('跳跳纸蛙').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
+    301035: () => new CardBuilder().name('跳跳纸蛙').since('v5.8.0').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301030】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/40278ec42e615000753d766e5e6ddf22_1265067356573715766.png')
         .handle(() => ({ summon: 301030 })),
 
-    301036: () => new CardBuilder().name('折纸胖胖鼠').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
+    301036: () => new CardBuilder().name('折纸胖胖鼠').since('v5.8.0').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka)
         .description('召唤【smn301031】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle(() => ({ summon: 301031 })),
+
+    301038: () => new CardBuilder().name('木质玩具剑').since('v6.2.0').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka).canSelectHero(1).from(321033)
+        .description('治疗目标角色2点，生成2个随机基础元素骰。')
+        .src('#')
+        .handle((_, { cmds }) => cmds.heal(2).getDice(2, { mode: CMD_MODE.Random })),
+
+    301039: () => new CardBuilder().name('重铸圣剑').since('v6.2.0').event().costAny(4).subtype(CARD_SUBTYPE.Simulanka).canSelectHero(1).from(321033)
+        .description('治疗目标角色12点，使其获得效果：【[重击]后：】造成5点该角色元素类型的伤害。')
+        .src('#')
+        .handle((_, { cmds }) => (cmds.heal(12), { status: 301040 })),
 
     302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0).from(322024)
         .description('生成1个[万能元素骰]。')

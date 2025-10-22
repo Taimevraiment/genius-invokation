@@ -617,6 +617,10 @@ const devOps = (cidx = 0) => {
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态
+      if (op[1] == '=') {
+        flag.add('resetLegend')
+        continue;
+      }
       const isSetCnt = op[1] == '+';
       const setType = op[2];
       const [stsid = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]/).map(h);

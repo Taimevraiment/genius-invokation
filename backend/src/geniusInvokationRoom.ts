@@ -958,6 +958,7 @@ export default class GeniusInvokationRoom {
             if (type == 'p') spt.setPerCnt(val);
             else if (type == 'u') spt.setUseCnt(val);
         }
+        if (flag.includes('resetLegend')) player.playerInfo.isUsedLegend = false;
         this._doCmds(cpidx, cmds);
         await this._execTask();
         this.players[this.currentPlayerIdx].isChargedAtk = this.players[this.currentPlayerIdx].dice.length % 2 == 0;
@@ -1554,7 +1555,7 @@ export default class GeniusInvokationRoom {
                     });
                     swirlDmg = attachElement;
                 } else if (dmgElement == ELEMENT_TYPE.Geo) { // 结晶
-                    ++res.willDamages[getDmgIdx][0];
+                    if (!isAttach) ++res.willDamages[getDmgIdx][0];
                     res.elTips[elTipIdx] = ['结晶', attachElement, dmgElement];
                     atriggers.forEach((trg, tri) => {
                         if (!isAtkSelf) {
@@ -1784,7 +1785,7 @@ export default class GeniusInvokationRoom {
                             if (tri == dmgedHidx) elReactionTriggers.forEach(t => trgs.add(t));
                             else otherElReactionTriggers.forEach(t => trgs.add(t));
                         }
-                        if (tri == dmgedHidx) elReactionTriggers.map(t => `get-${t}` as Trigger).forEach(t => trgs.add(t));
+                        if (tri == dmgedHidx) elReactionTriggers.flatMap(t => [`get-${t}`, `${t}-oppo`] as Trigger[]).forEach(t => trgs.add(t));
                         else trgs.add('other-get-elReaction');
                     });
                 }
@@ -2111,13 +2112,12 @@ export default class GeniusInvokationRoom {
             const canSelectHeros = cardres.canSelectHero?.[i] ?? (hero.hp > 0);
             return canSelectHero > 0 && canSelectHeros && (
                 type == CARD_TYPE.Support ||
-                type == CARD_TYPE.Event && currCard.subType.length == 0 && (userType == 0 || userType == hero.id) ||
+                type == CARD_TYPE.Event && !currCard.hasSubtype(CARD_SUBTYPE.Food, CARD_SUBTYPE.Talent) && (userType == 0 || userType == hero.id) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Weapon) && userType == hero.weaponType ||
                 currCard.hasSubtype(CARD_SUBTYPE.Relic) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Food) && !hero.heroStatus.has(303300) ||
                 currCard.hasSubtype(CARD_SUBTYPE.Talent) && userType == hero.id && (hero.isFront || !currCard.hasSubtype(CARD_SUBTYPE.Action) || currCard.type == CARD_TYPE.Event) ||
-                currCard.hasSubtype(CARD_SUBTYPE.Vehicle) && (userType == 0 || userType == hero.id) ||
-                currCard.hasSubtype(CARD_SUBTYPE.Action, CARD_SUBTYPE.Legend, CARD_SUBTYPE.ElementResonance) && userType == 0
+                currCard.hasSubtype(CARD_SUBTYPE.Vehicle) && (userType == 0 || userType == hero.id)
             );
         });
         if (isReconcile) {
@@ -2180,11 +2180,11 @@ export default class GeniusInvokationRoom {
             currCard.canSelectSupport != -1 ? [selectSupport] :
                 currCard.canSelectHero == 0 ? [player.hidx] : selectHeros;
         assgin(player.handCards, player.handCards.filter((_, ci) => ci != cardIdx));
-        const oSupportCnt = player.supports.length;
+        const destroyedSupports = clone(player.supports);
         const cardres = currCard.handle(currCard, {
             pidx,
             ...this.handleEvent,
-            hero: player.heros[selectHeros?.[0] ?? player.hidx],
+            hero: player.heros[selectHeros[0] ?? player.hidx],
             selectHeros,
             selectSummon,
             selectSupport,
@@ -2220,18 +2220,18 @@ export default class GeniusInvokationRoom {
             if (currCard.type != CARD_TYPE.Equipment) cardres.exec?.();
             if (!getCard) await this.emit(`${pickCard ? 'pickCard' : 'useCard'}-${currCard.name}`, pidx, { actionInfo: { card: currCard } });
             if (!getCard && !pickCard) {
-                let destroyedSupportCnt = oSupportCnt - player.supports.length;
+                assgin(destroyedSupports, destroyedSupports.filter(s => player.supports.every(ps => ps.entityId != s.entityId)));
                 if (cardres.support) {
                     if (player.supports.length == MAX_SUPPORT_COUNT) {
                         if (selectSupport > -1) {
-                            player.supports.splice(selectSupport, 1);
-                            ++destroyedSupportCnt;
+                            const [destroyedSupport] = player.supports.splice(selectSupport, 1);
+                            destroyedSupports.push(destroyedSupport);
                         } else if (currCard.type == CARD_TYPE.Support) {
                             throw new Error('ERROR@_useCard: selectSupport is invalid');
                         }
                     }
                 }
-                if (destroyedSupportCnt) this._doSupportDestroy(pidx, destroyedSupportCnt);
+                destroyedSupports.forEach(spt => this._doSupportDestroy(pidx, spt))
             }
             if (cardres.hidxs && currCard.type != CARD_TYPE.Equipment) assgin(hidxs, cardres.hidxs);
             this._doCmds(pidx, cardcmds, {
@@ -2576,11 +2576,11 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      * @param isExec 是否执行
      */
-    private _doSupportDestroy(pidx: number, destroyedCnt: number) {
-        if (destroyedCnt <= 0) return;
-        this.players[pidx].playerInfo.destroyedSupport += destroyedCnt;
-        this._writeLog(`[${this.players[pidx].name}](${pidx})弃置支援物${destroyedCnt}个`, 'system');
+    private _doSupportDestroy(pidx: number, support: Support) {
+        this.players[pidx].playerInfo.destroyedSupport++;
+        this._writeLog(`[${this.players[pidx].name}](${pidx})弃置支援物${support.name}(${support.entityId})`, 'system');
         this._detectSupport(pidx, 'support-destroy');
+        if (support.card.hasSubtype(CARD_SUBTYPE.Adventure)) this._doCmds(pidx, CmdsGenerator.ins.getStatus(171));
     }
     /**
      * 进行伤害
@@ -3230,7 +3230,7 @@ export default class GeniusInvokationRoom {
                 }
                 const doSupportDestroy = () => {
                     assgin(supports, supports.filter(s => s.entityId != support.entityId));
-                    this._doSupportDestroy(pidx, 1);
+                    this._doSupportDestroy(pidx, support);
                 }
                 if (supportres.isNotAddTask) {
                     const { cmds, isDestroy, isCancel } = execute();
@@ -3339,7 +3339,7 @@ export default class GeniusInvokationRoom {
                     const cplayer = this.players[cpidx];
                     const copponent = this.players[cpidx ^ 1];
                     const atkPidx = cpidx ^ +(cmd == 'attack');
-                    const { hidxs = chidxs ?? [cplayer.heros.frontHidx] } = cmds;
+                    const { hidxs = chidxs ?? ohidxs ?? [cplayer.heros.frontHidx] } = cmds;
                     if (mode == CMD_MODE.ByOrder) {
                         damageVO = INIT_DAMAGEVO(allHeroLen);
                         isFirstAtk = true;
@@ -3445,10 +3445,9 @@ export default class GeniusInvokationRoom {
             const cplayer = this.players[cpidx];
             const copponent = this.players[cpidx ^ 1];
             const { name, heros, dice, handCards, pile, UI, playerInfo, summons } = cplayer;
-            let { hidxs, subtype, cardTag } = cmds[i];
+            let { hidxs = chidxs, subtype, cardTag } = cmds[i];
             subtype = convertToArray(subtype);
             cardTag = convertToArray(cardTag);
-            if (!hidxs && chidxs) hidxs = [...chidxs];
             if (!['attack', 'heal', 'addMaxHp', 'revive'].includes(cmd)) doDamage();
             if (cmd == 'useSkill') {
                 this.taskQueue.addTask(`doCmd--useSkill:${cnt}-p${cpidx}:${trigger}`, async () => {
@@ -3485,11 +3484,15 @@ export default class GeniusInvokationRoom {
                         const maxCost = hcardsSorted[0].rawDiceCost;
                         const maxCostCards = hcardsSorted.filter(c => c.rawDiceCost == maxCost);
                         cards.push(...this._randomInArr(maxCostCards, 2));
+                    } else if (mode == CMD_MODE.AllHandCards) {
+                        cards.push(...clone(handCards));
                     }
-                    cmds.splice(i--, 1,
-                        { cmd: 'discard', cnt: cards.length, card: cards, mode: CMD_MODE.IsNotPublic, isAttach: true },
-                        { cmd: 'addCard', card: cards, hidxs: [-cards.length], mode: CMD_MODE.IsNotPublic }
-                    );
+                    const putCardCmds: Cmds[] = [
+                        { cmd: 'discard', cnt: cards.length, card: cards, mode: CMD_MODE.IsNotPublic, isAttach: true, isOppo },
+                        { cmd: 'addCard', card: cards, hidxs: [-cards.length], mode: CMD_MODE.IsNotPublic, isOppo }
+                    ];
+                    if (isUnshift) putCardCmds.reverse();
+                    cmds.splice(i--, 1, ...putCardCmds);
                     continue;
                 }
                 if (cmd == 'getCard') {
@@ -3737,7 +3740,7 @@ export default class GeniusInvokationRoom {
                 this.taskQueue.addTask(`doCmd--getEnergy-p${cpidx}:${trigger}`, () => {
                     callback?.();
                     heros.forEach((h, hi) => {
-                        if (h.hp > 0 && (ohidxs == undefined && h.isFront || ohidxs?.includes(hi))) {
+                        if (h.hp > 0 && (hidxs == undefined && h.isFront || hidxs?.includes(hi))) {
                             if (h.maxEnergy > 0 != isAttach) {
                                 if ((cnt > 0 && Math.abs(h.energy) < Math.abs(h.maxEnergy)) || (cnt < 0 && Math.abs(h.energy) > 0)) {
                                     const pcnt = isAttach ?
@@ -4008,9 +4011,9 @@ export default class GeniusInvokationRoom {
                     mode == CMD_MODE.Random ? this._randomInArr(cplayer.summons, ohidxs?.[0]) :
                         ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !!v);
                 if (mode == CMD_MODE.Random && !this.preview.isExec) return this.taskQueue.stopPreview();
-                this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}`, () => {
+                this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}(${cmdtrg})`, () => {
                     callback?.();
-                    this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon });
+                    this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon, source });
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'adventure') {
                 this.taskQueue.addTask(`doCmd--adventure-p${cpidx}:${trigger}`, () => {

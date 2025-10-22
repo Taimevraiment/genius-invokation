@@ -31,7 +31,7 @@ export const MAX_USE_COUNT = 2 ** 32 - 1; // 最大使用次数
 
 export const MAX_STATUS_COUNT = 20; // 最大状态数量
 
-export const BLOCK_WORDS = [/64/i, /89/i, /ba9/i, /c4/i, /cag/i, /gay/i, /hjt/i, /jba/i, /jzm/i, /ntr/i, /pcp/i, /rbq/i, /xjp/i]; // 分享码禁词
+export const BLOCK_WORDS = [/64/i, /89/i, /ba9/i, /c4/i, /cag/i, /gay/i, /hjt/i, /jba/i, /jzm/i, /ntr/i, /pcp/i, /rbq/i, /xjp/i, /flg/i]; // 分享码禁词
 
 export const IS_USE_OFFICIAL_SRC = true; // 是否使用官方图标
 

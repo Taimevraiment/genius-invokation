@@ -89,10 +89,10 @@ export default class CmdsGenerator {
         this._add({ cmd: 'getEnergy', cnt, hidxs, isOppo, isAttach });
         return this;
     }
-    heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean } = {}) {
-        let { hidxs, isOrder, notPreHeal: isAttach } = options;
+    heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean, isOppo?: boolean } = {}) {
+        let { hidxs, isOrder, notPreHeal: isAttach, isOppo } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (hidxs?.length != 0) this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach });
+        if (hidxs?.length != 0) this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach, isOppo });
         return this;
     }
     revive(cnt: number, hidxs?: number | number[]) {
@@ -228,9 +228,9 @@ export default class CmdsGenerator {
         this._add({ cmd: 'stealCard', cnt, mode });
         return this;
     }
-    putCard(options: { card?: Card | (Card | number)[] | number, cnt?: number, mode?: number } = {}) {
-        const { card, cnt = 0, mode } = options;
-        this._add({ cmd: 'putCard', card, cnt, mode });
+    putCard(options: { card?: Card | (Card | number)[] | number, cnt?: number, mode?: number, isOppo?: boolean } = {}) {
+        const { card, cnt = 0, mode, isOppo } = options;
+        this._add({ cmd: 'putCard', card, cnt, mode, isOppo });
         return this;
     }
     pickCard(cnt: number, mode: number, options: {
