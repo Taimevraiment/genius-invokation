@@ -1,5 +1,5 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
-import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
@@ -183,6 +183,9 @@ export class ArrayHero extends Array<Hero> {
     get hasDeadThisTurn() {
         return this.some(h => h.hp == -1);
     }
+    get hasSubHurt() {
+        return this.some(h => h.hasSubHurt);
+    }
     get(id: number) {
         return getObjById(this, id) ?? getObjById(this, id, 'entityId') ?? getObjById(this, getHidById(id));
     }
@@ -287,6 +290,9 @@ export class ArrayHero extends Array<Hero> {
 export class ArrayStatus extends Array<Status> {
     constructor(...args: any[]) {
         super(...args);
+    }
+    get hasSubHurt() {
+        return this.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier);
     }
     filter(predicate: (value: Status, index: number, array: Status[]) => unknown, thisArg?: any): ArrayStatus {
         return super.filter(predicate, thisArg) as ArrayStatus;

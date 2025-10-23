@@ -2359,9 +2359,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { eDmgedHero, eCombatStatus, hasDmg } = event;
             if (!hasDmg) return;
-            const isMultiDmg = eDmgedHero.heroStatus.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier) ||
-                eDmgedHero.equipments.some(eq => eq.hasTag(CARD_TAG.Barrier)) ||
-                eCombatStatus.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier);
+            const isMultiDmg = eDmgedHero.hasSubHurt || (eDmgedHero.isFront && eCombatStatus.hasSubHurt);
             return {
                 triggers: 'skill',
                 addDmgCdt: isCdt(!isMultiDmg, 1),
@@ -3202,18 +3200,20 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    303247: () => new StatusBuilder('拯救世界的计划（生效中）').combatStatus().useCnt(1)
-        .type(STATUS_TYPE.Attack).icon(STATUS_ICON.Special)
+    303247: () => new StatusBuilder('拯救世界的计划（生效中）').combatStatus().useCnt(2)
+        .type(STATUS_TYPE.Attack).icon(STATUS_ICON.Special).from(332058)
         .description('下个回合结束时，双方出战角色生命值变为5。')
         .handle((status, event) => {
-            const { hero, eDmgedHero, cmds } = event;
-            const cnt = hero.hp - 5;
-            if (cnt < 0) cmds.heal(-cnt);
-            else if (cnt > 0) cmds.attack(cnt, DAMAGE_TYPE.Pierce, { isOppo: false });
-            const ecnt = eDmgedHero.hp - 5;
-            if (ecnt < 0) cmds.heal(-ecnt, { isOppo: true });
-            else if (ecnt > 0) cmds.attack(ecnt, DAMAGE_TYPE.Pierce, { hidxs: eDmgedHero.hidx });
-            return { triggers: 'phase-end', exec: () => status.dispose() }
+            if (status.useCnt == 1) {
+                const { hero, eDmgedHero, cmds } = event;
+                const cnt = hero.hp - 5;
+                if (cnt < 0) cmds.heal(-cnt);
+                else if (cnt > 0) cmds.attack(cnt, DAMAGE_TYPE.Pierce, { isOppo: false });
+                const ecnt = eDmgedHero.hp - 5;
+                if (ecnt < 0) cmds.heal(-ecnt, { isOppo: true });
+                else if (ecnt > 0) cmds.attack(ecnt, DAMAGE_TYPE.Pierce, { hidxs: eDmgedHero.hidx });
+            }
+            return { triggers: 'phase-end', exec: () => status.minusUseCnt() }
         }),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().roundCnt(1)

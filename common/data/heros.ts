@@ -1,5 +1,5 @@
 import { Hero, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT_TYPE, VERSION, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CMD_MODE, DAMAGE_TYPE, ELEMENT_CODE, ELEMENT_TYPE, HERO_TAG, PureElementType, STATUS_TYPE, SWIRL_ELEMENT_TYPE, VERSION, Version } from '../constant/enum.js';
 import { NULL_HERO } from '../constant/init.js';
 import { getObjById, hasObjById } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
@@ -2557,16 +2557,13 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('攻阵气势').description('如果敌方场上存在[护盾]或减伤状态，我方角色使用技能后，自身附属1层【sts126041】。')
                 .src('#',
                     '')
-                .passive().handle(event => {
-                    const { hidx, eheros, eCombatStatus } = event;
-                    if (
-                        eheros.some(h =>
-                            h.heroStatus.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier) ||
-                            h.equipments.some(eq => eq.hasTag(CARD_TAG.Barrier))) ||
-                        eCombatStatus.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier)
-                    ) {
-                        return { triggers: ['after-skill', 'after-other-skill'], status: 126041, hidxs: hidx }
+                .passive().variables('hasSubHurt').handle(event => {
+                    const { hidx, eheros, eCombatStatus, trigger, skill } = event;
+                    if (['skill', 'other-skill'].includes(trigger)) {
+                        skill.variables.hasSubHurt = +(eheros.hasSubHurt || eCombatStatus.hasSubHurt);
                     }
+                    if (skill.variables.hasSubHurt == 0) return;
+                    return { triggers: ['after-skill', 'after-other-skill'], status: 126041, hidxs: hidx }
                 }),
         ),
 

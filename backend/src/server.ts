@@ -383,31 +383,30 @@ app.get('/login', (req, res) => {
     if (tplayer) {
         tplayer.ip = ip ?? '';
         if (tplayer.location == 'null') {
-            // https.get(`https://api.vore.top/api/IPdata?ip=${ip}`, res => {
-            //     let data: any = '';
-            //     res.on('data', chunk => data += chunk);
-            //     res.on('end', () => {
-            //         try {
-            //             data = JSON.parse(data);
-            //             let area: any = [];
-            //             for (let i = 1; i <= 3; ++i) {
-            //                 if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
-            //             }
-            //             tplayer.location = area.join('-');
-            //         } catch (e) {
-            //             console.info('err:', e);
-            //         }
-            //     });
-            // });
-            https.get(`https://apis.juhe.cn/ip/ipNewV3?ip=${ip}&key=${juheSecretKey}`, res => {
+            https.get(`https://api.vore.top/api/IPdata?ip=${ip}`, res => {
                 let data: any = '';
                 res.on('data', chunk => data += chunk);
                 res.on('end', () => {
                     try {
                         data = JSON.parse(data);
-                        tplayer.location = data.resultcode == '200' ? Object.values(data.result).filter(v => v).join('-') : '未知';
+                        let area: any = [];
+                        for (let i = 1; i <= 3; ++i) {
+                            if (data.ipdata[`info${i}`]) area.push(data.ipdata[`info${i}`]);
+                        }
+                        tplayer.location = area.join('-');
                     } catch (e) {
-                        console.info('err:', e);
+                        https.get(`https://apis.juhe.cn/ip/ipNewV3?ip=${ip}&key=${juheSecretKey}`, res => {
+                            let data: any = '';
+                            res.on('data', chunk => data += chunk);
+                            res.on('end', () => {
+                                try {
+                                    data = JSON.parse(data);
+                                    tplayer.location = data.resultcode == '200' ? Object.values(data.result).filter(v => v).join('-') : '未知';
+                                } catch (e) {
+                                    console.info('err:', e);
+                                }
+                            });
+                        });
                     }
                 });
             });

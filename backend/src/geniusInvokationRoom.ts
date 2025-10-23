@@ -2580,7 +2580,6 @@ export default class GeniusInvokationRoom {
         this.players[pidx].playerInfo.destroyedSupport++;
         this._writeLog(`[${this.players[pidx].name}](${pidx})弃置支援物${support.name}(${support.entityId})`, 'system');
         this._detectSupport(pidx, 'support-destroy');
-        if (support.card.hasSubtype(CARD_SUBTYPE.Adventure)) this._doCmds(pidx, CmdsGenerator.ins.getStatus(171));
     }
     /**
      * 进行伤害

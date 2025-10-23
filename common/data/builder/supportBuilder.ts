@@ -1,5 +1,5 @@
 import { Card, MinusDiceSkill, Support, Trigger, VersionWrapper } from "../../../typing";
-import { DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
+import { CARD_SUBTYPE, DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
@@ -74,6 +74,7 @@ export class GISupport extends Entity {
                     if (builderRes.summon) cmds.getSummon(builderRes.summon);
                     const exeres = builderRes.exec?.(cmds);
                     if (typeof exeres == 'number') return { cmds }
+                    if (exeres?.isDestroy && support.card.hasSubtype(CARD_SUBTYPE.Adventure)) cmds.getStatus(171);
                     return { ...exeres, cmds }
                 }
             }

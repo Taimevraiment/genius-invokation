@@ -1,5 +1,5 @@
 import { Card, Skill, Status } from "../../../typing";
-import { ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
+import { CARD_TAG, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { GUYU_PREIFIX } from "../../constant/UIconst.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray } from "../../utils/utils.js";
@@ -83,6 +83,10 @@ export class GIHero extends Entity {
     }
     get isDie() {
         return this.hp <= 0;
+    }
+    get hasSubHurt() {
+        return this.heroStatus.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier) ||
+            this.equipments.some(eq => eq.hasTag(CARD_TAG.Barrier));
     }
 }
 

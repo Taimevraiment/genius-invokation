@@ -3523,17 +3523,17 @@ const allCards: Record<number, () => CardBuilder> = {
     111153: () => new CardBuilder().name('雾凇秋分').food().costSame(0).canSelectHero(1).from(111159)
         .description('治疗目标角色1点，目标角色获得1点额外最大生命值。')
         .src('#')
-        .handle((_, { cmds }) => cmds.heal(1).addMaxHp(1)),
+        .handle((_, { cmds }) => cmds.heal(1, { isOrder: true }).addMaxHp(1)),
 
     111154: () => new CardBuilder().name('白浪拂沙').food().costAny(2).from(111159)
         .description('所有我方角色获得【sts303300】，并且下次使用技能时少花费1个元素骰。')
         .src('#')
-        .handle((_, { heros }) => ({ status: 111157, hidxs: heros.allHidxs({ cdt: h => !h.heroStatus.has(303300) }) })),
+        .handle((_, { heros }) => ({ status: 111157, hidxs: heros.allHidxs(), isValid: heros.every(h => !h.heroStatus.has(303300)) })),
 
     111155: () => new CardBuilder().name('一捧绿野').food().costSame(1).from(111159)
         .description('所有我方角色获得【sts303300】，并且下次造成的伤害+1。')
         .src('#')
-        .handle((_, { heros }) => ({ status: 111158, hidxs: heros.allHidxs({ cdt: h => !h.heroStatus.has(303300) }) })),
+        .handle((_, { heros }) => ({ status: 111158, hidxs: heros.allHidxs(), isValid: heros.every(h => !h.heroStatus.has(303300)) })),
 
     111159: () => new CardBuilder().name('全频谱多重任务厨艺机关').place().costSame(0)
         .description('【任意一方触发[冰元素相关反应]后：】从【crd111152】、【crd111153】、【crd111154】、【crd111155】中随机生成1张手牌。；[可用次数]：2')
