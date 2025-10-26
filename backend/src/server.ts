@@ -407,6 +407,18 @@ app.get('/login', (req, res) => {
                                 }
                             });
                         });
+                        // https.get(`https://ip.zxinc.org/api.php?ip=${ip}&type=json`, res => {
+                        //     let data: any = '';
+                        //     res.on('data', chunk => data += chunk);
+                        //     res.on('end', () => {
+                        //         try {
+                        //             data = JSON.parse(data);
+                        //             tplayer.location = data.code == 0 ? data.data.location : '未知';
+                        //         } catch (e) {
+                        //             console.info('err:', e);
+                        //         }
+                        //     });
+                        // });
                     }
                 });
             });

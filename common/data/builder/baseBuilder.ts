@@ -238,7 +238,7 @@ export class ArrayHero extends Array<Hero> {
         const { isBack = false } = options;
         if (this.frontHidx == -1) return [];
         const maxHurt = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hurtHp));
-        if (maxHurt == 0) return [];
+        if (maxHurt == 0) return isBack ? [] : [this.frontHidx];
         const hidxs: number[] = [];
         for (let i = +isBack; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;

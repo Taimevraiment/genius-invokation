@@ -2718,7 +2718,7 @@ export default class GeniusInvokationRoom {
             const [cpidx, group, chidx, cidx] = statusSelect;
             const player = this.players[cpidx];
             const sts = (group == STATUS_GROUP.combatStatus ? player.combatStatus : player.heros[chidx].heroStatus)[cidx];
-            if (sts?.hasType(STATUS_TYPE.Attack) && sts.useCnt == 0) sts.dispose();
+            if (sts?.hasType(STATUS_TYPE.Attack) && !sts.hasType(STATUS_TYPE.Accumulate) && sts.useCnt == 0) sts.dispose();
         }
         await this.emit(`${damageVO.dmgSource}-doDamage-${atkname}`, pidx, {
             damageVO,
@@ -3349,7 +3349,7 @@ export default class GeniusInvokationRoom {
                         const offsetHidx = atkPidx * this.players[0].heros.length;
                         cplayer.heros.forEach((h, hi) => {
                             if (cmd == 'addMaxHp' && hidxs.includes(hi)) h.maxHp += cnt;
-                            const heal = hidxs.includes(hi) ? cnt - (cmd == 'revive' ? 0.3 : 0) : -1;
+                            const heal = hidxs.includes(hi) ? (cnt == CMD_MODE.MaxHp ? h.maxHp : cnt) - (cmd == 'revive' ? 0.3 : 0) : -1;
                             if (heal == -1) return;
                             const chi = offsetHidx + hi;
                             if (damageVO.willHeals[chi] == -1) damageVO.willHeals[chi] = 0;
@@ -4019,7 +4019,6 @@ export default class GeniusInvokationRoom {
                     callback?.();
                     const adventure = cplayer.supports.has(CARD_SUBTYPE.Adventure);
                     if (!adventure) {
-                        if (cplayer.supports.length == MAX_SUPPORT_COUNT) return;
                         this._doCmds(cpidx, CmdsGenerator.ins.pickCard(3, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
                     }
                     this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
@@ -4501,7 +4500,7 @@ export default class GeniusInvokationRoom {
         });
         assgin(oStatus, oStatus.sort((a, b) => +b.hasType(STATUS_TYPE.NightSoul) - +a.hasType(STATUS_TYPE.NightSoul) || Math.sign(a.summonId) - Math.sign(b.summonId))
             .filter(sts => {
-                const isStsAtk = isAddAtkStsTask && sts.useCnt == 0 && sts.hasType(STATUS_TYPE.Attack);
+                const isStsAtk = isAddAtkStsTask && sts.useCnt == 0 && sts.hasType(STATUS_TYPE.Attack) && !sts.hasType(STATUS_TYPE.Accumulate);
                 if ((sts.isDestroy || isStsAtk) && sts.entityId != STATUS_DESTROY_ID) this._doStatusDestroy(pidx, sts, hidx);
                 return !sts.isDestroy;
             }));

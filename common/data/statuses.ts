@@ -922,7 +922,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 status.variables[STATUS_TYPE.Barrier] = +(heros[hidx].id != hid);
                 return { notLog: true }
             }
-            if (restDmg <= 0 || !hero || hero.isFront) return { restDmg }
+            if (restDmg <= 0 || !hero || hero.isFront || hero.isDie) return { restDmg }
             return {
                 restDmg: restDmg - 1,
                 pdmg: isCdt(hero.hp >= 7, 1),

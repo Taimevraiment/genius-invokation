@@ -240,7 +240,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/22/258999284/5fe195423d5308573221c9d25f08d6d7_2012000078881285374.png')
         .handle((_, event) => {
             const { trigger } = event;
-            if (['enter', 'reset'].includes(trigger)) return { triggers: trigger, status: 113094 }
+            if (['enter', 'turn-end'].includes(trigger)) return { triggers: trigger, isOnlyPhaseEnd: true, isNotAddTask: true, status: 113094 }
             return { triggers: 'phase-end' }
         }),
 
@@ -390,7 +390,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/18e98a957a314ade3c2f0722db5a36fe_4019045966791621132.png')
         .handle((summon, event) => {
             const { trigger, dmgElement } = event;
-            if (['enter', 'reset'].includes(trigger)) return { triggers: trigger, status: 115083 }
+            if (['enter', 'turn-end'].includes(trigger)) return { triggers: trigger, isOnlyPhaseEnd: true, isNotAddTask: true, status: 115083 }
             const triggers: Trigger[] = ['phase-end'];
             if (summon.element == ELEMENT_TYPE.Anemo) {
                 triggers.push('Hydro-getdmg', 'Pyro-getdmg', 'Electro-getdmg', 'Cryo-getdmg');

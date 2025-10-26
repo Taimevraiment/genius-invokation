@@ -2557,12 +2557,9 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('攻阵气势').description('如果敌方场上存在[护盾]或减伤状态，我方角色使用技能后，自身附属1层【sts126041】。')
                 .src('#',
                     '')
-                .passive().variables('hasSubHurt').handle(event => {
-                    const { hidx, eheros, eCombatStatus, trigger, skill } = event;
-                    if (['skill', 'other-skill'].includes(trigger)) {
-                        skill.variables.hasSubHurt = +(eheros.hasSubHurt || eCombatStatus.hasSubHurt);
-                    }
-                    if (skill.variables.hasSubHurt == 0) return;
+                .passive().handle(event => {
+                    const { hidx, eheros, eCombatStatus } = event;
+                    if (!eheros.hasSubHurt && !eCombatStatus.hasSubHurt) return;
                     return { triggers: ['after-skill', 'after-other-skill'], status: 126041, hidxs: hidx }
                 }),
         ),
