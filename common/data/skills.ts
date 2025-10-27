@@ -85,7 +85,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     25026: () => new SkillBuilder('终幕涤流').description('对上一个敌方后台角色{dealDmg}。（敌方没有后台角色时，改为对出战角色造成伤害）')
         .elemental().readySkill().damage(2).handle(() => ({ atkOffset: -1 })),
 
-    26045: () => new SkillBuilder('巨铖强袭').description('{dealDmg}，[准备技能]：【rsk26047】。')
+    26045: () => new SkillBuilder('巨钺强袭').description('{dealDmg}，[准备技能]：【rsk26047】。')
         .burst().readySkill().damage(3).handle(() => ({ status: 126043 })),
 
     26047: () => new SkillBuilder('大师之击').description('{dealDmg}。').burst().readySkill().damage(3),

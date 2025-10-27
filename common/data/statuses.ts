@@ -2353,7 +2353,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    126041: () => new StatusBuilder('催岩伟力').heroStatus().useCnt(1)
+    126041: () => new StatusBuilder('摧岩伟力').heroStatus().useCnt(1)
         .type(STATUS_TYPE.AddDamage, STATUS_TYPE.MultiDamage).icon('#')
         .description('所附属角色造成的伤害+1，对处于[护盾]或减伤状态下的敌方角色则改为造成的伤害翻倍。；[useCnt]')
         .handle((status, event) => {

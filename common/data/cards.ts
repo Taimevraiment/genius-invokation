@@ -3793,12 +3793,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/8f36cb575445a91e8db23f3d50c9e96c_5654752298718783353.png')
         .handle(() => ({ summon: 301031 })),
 
-    301038: () => new CardBuilder().name('木质玩具剑').since('v6.2.0').event().costSame(1).subtype(CARD_SUBTYPE.Simulanka).canSelectHero(1).from(321033)
+    301038: () => new CardBuilder().name('木质玩具剑').since('v6.2.0').event().costSame(1).canSelectHero(1).from(321033)
         .description('治疗目标角色2点，生成2个随机基础元素骰。')
         .src('#')
         .handle((_, { cmds }) => cmds.heal(2).getDice(2, { mode: CMD_MODE.Random })),
 
-    301039: () => new CardBuilder().name('重铸圣剑').since('v6.2.0').event().costAny(4).subtype(CARD_SUBTYPE.Simulanka).canSelectHero(1).from(321033)
+    301039: () => new CardBuilder().name('重铸圣剑').since('v6.2.0').event().costAny(4).canSelectHero(1).from(321033)
         .description('治疗目标角色12点，使其获得效果：【[重击]后：】造成5点该角色元素类型的伤害。')
         .src('#')
         .handle((_, { cmds }) => (cmds.heal(12), { status: 301040 })),
