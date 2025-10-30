@@ -1951,16 +1951,13 @@ export default class GeniusInvokationRoom {
             source: source,
         });
 
-        const immueSts = dmgedheros[dmgedHidx].heroStatus.get(STATUS_TYPE.ImmuneDamage);
-        if (immueSts) {
-            const el = getElByHid(getHidById(immueSts.id)) as PureElementType;
-            const elIdx = this.preview.willAttachs[dmgedPidx][dmgedHidx].indexOf(el);
-            if (elIdx == -1) this.preview.willAttachs[dmgedPidx][dmgedHidx].push(el);
-            dmgedfhero.attachElement = [el];
-            isAttachElement = 'null';
-        }
         if (isAttachElement == 'attach') dmgedfhero.attachElement.push(dmgElement as PureElementType);
         else if (isAttachElement == 'consume') dmgedfhero.attachElement.shift();
+        const immueSts = dmgedheros[dmgedHidx].heroStatus.get(STATUS_TYPE.ImmuneDamage);
+        if (immueSts && dmgedfhero.attachElement.length == 0) {
+            const el = getElByHid(getHidById(immueSts.id)) as PureElementType;
+            this._doCmds(pidx, CmdsGenerator.ins.attach({ element: el, hidxs: dmgedHidx }));
+        }
 
         if (res.atriggers[atkHidx].has('el-getdmg-oppo')) {
             let elcnt = playerInfo.oppoGetElDmgType;
@@ -2734,7 +2731,7 @@ export default class GeniusInvokationRoom {
             notPreview: !this.preview.isQuickAction,
             trigger,
         });
-        await this.delay(2250);
+        await this.delay(2250 + (damageVO.willDamages.some(([d, p]) => d >= 0 && p > 0) ? 2100 : 0));
     }
     /**
      * 检测治疗
@@ -3891,6 +3888,7 @@ export default class GeniusInvokationRoom {
                         this._writeLog(`[${this.players[pidx].name}](${pidx})[${(skill ? this.players[pidx].heros.getFront().name : atkname)?.replace(/\(\-\d+\)/, '')}]对[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]附着${ELEMENT_NAME[attachEl]}${elTips[phidx][0] ? `（${elTips[phidx][0]}）` : ''}`)
                     });
                     await this.emit('attach', cpidx, { socket, damageVO });
+                    if (damageVO.elTips.some(([t]) => t != '')) await this.delay(2e3);
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'pickCard') {
                 this.taskQueue.addTask(`doCmd--pickCard-p${cpidx}:${trigger}`, async () => {
@@ -4457,7 +4455,7 @@ export default class GeniusInvokationRoom {
                 }
             } else { // 新附属状态
                 sts.setEntityId(this._genEntityId());
-                this._detectHero(pidx, 'enter', { types: STATUS_TYPE.Usage, cStatus: sts, hidxs: [hidx] });
+                this._detectHero(pidx, 'enter', { types: STATUS_TYPE.Usage, cStatus: sts, hidxs: [hidx], source: sts.id });
                 const { isInvalid } = this._detectHero(pidx, 'pre-get-status', {
                     types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack],
                     hidxs: heros.allHidxs(),

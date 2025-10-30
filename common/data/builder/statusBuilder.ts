@@ -114,7 +114,7 @@ export class GIStatus extends Entity {
             }
         } else if (type.includes(STATUS_TYPE.ImmuneDamage)) {
             thandle = (status, event) => {
-                const { dmgElement, trigger, cmds, hidx } = event;
+                const { dmgElement, trigger, cmds, hero, hidx } = event;
                 const el = getElByHid(hid);
                 const res = handle?.(status, event, versionWrap(ver));
                 if (trigger == 'reduce-dmg' && dmgElement == el) {
@@ -122,6 +122,7 @@ export class GIStatus extends Entity {
                 }
                 if (trigger == 'enter') {
                     cmds.attach({ element: el, hidxs: hidx });
+                    if (hero.attachElement.length > 1) cmds.attach({ element: el, hidxs: hidx });
                     return { ...res, isAddTask: false, triggers: trigger }
                 }
                 return res;
