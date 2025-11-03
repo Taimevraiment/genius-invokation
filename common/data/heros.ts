@@ -2554,7 +2554,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     '')
                 .burst(2).cost(3).handle(() => ({ isAttach: true, status: 126042 })),
-            new SkillBuilder('攻阵气势').description('如果敌方场上存在[护盾]或减伤状态，我方角色使用技能后，自身附属1层【sts126041】。')
+            new SkillBuilder('攻阵气势').description('如果敌方场上存在[护盾]、【伤害抵消】状态\\；或存在[护盾]、【伤害抵消】出战状态，则我方角色使用技能后，自身附属1层【sts126041】。')
                 .src('#',
                     '')
                 .passive().handle(event => {

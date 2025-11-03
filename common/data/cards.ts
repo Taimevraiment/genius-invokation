@@ -1413,7 +1413,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/679857616a563d304118fcd478c4cc2a_8197286737146985507.png'),
 
     321033: () => new CardBuilder().name('自体自身之塔').since('v6.2.0').place().costSame(0).subtype(CARD_SUBTYPE.Adventure)
-        .description('【入场时：】对我方所有角色造成1点[穿透伤害]。；【冒险经历达到偶数次时：】生成1个随机基础元素骰。；【冒险经历达到5时：】生成手牌【crd301038】。；【冒险经历达到12时：】生成手牌【crd301039】。')
+        .description('【入场时：】对我方所有角色造成1点[穿透伤害]。；【冒险经历达到偶数次时：】生成1个随机基础元素骰。；【冒险经历达到5时：】生成手牌【crd301038】。；【冒险经历达到12时：】生成手牌【crd301039】，然后弃置此牌。')
         .src('#'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)

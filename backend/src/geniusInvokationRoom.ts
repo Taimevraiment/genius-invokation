@@ -2642,11 +2642,7 @@ export default class GeniusInvokationRoom {
                     if (pdmg > 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][1]}点穿透伤害 hp:${ohp}→${ohp - pdmg}`);
                     if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点 hp:${ohp}→${ohp + rheal}`);
                     if (h.hp == 0 && !isDead) {
-                        this._detectHero(p.pidx, 'will-killed', {
-                            types: STATUS_TYPE.NonDefeat,
-                            hidxs: h.hidx,
-                            isOnlyHero: true,
-                        });
+                        this._detectHero(p.pidx, 'will-killed', { types: STATUS_TYPE.NonDefeat, hidxs: h.hidx, isOnlyHero: true });
                         // 被击倒
                         if (h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.variables[STATUS_TYPE.NonDefeat] == 0) &&
                             (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.perCnt <= 0)

@@ -779,7 +779,6 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Hide, STATUS_TYPE.Usage, STATUS_TYPE.NonDestroy)
         .handle((status, event) => {
             const { hidx, source, sourceHidx, cmds, heros } = event;
-            // if (trigger == 'revive') return { triggers: 'revive', exec: () => status.useCnt = 3 };
             if (hidx != sourceHidx || source != 122 || heros.get(status.id)?.isDie) return;
             cmds.addMaxHp(1, hidx);
             return { triggers: 'status-destroy', exec: () => status.minusUseCnt() }
