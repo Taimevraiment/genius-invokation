@@ -2237,7 +2237,7 @@ export default class GeniusInvokationRoom {
                 source: currCard.id,
                 atkname: currCard.name,
                 dmgSource: 'card',
-                isImmediate: cardres.isImmediate,
+                isImmediate: true,
                 actionInfo: isCdt(!getCard && !pickCard, { card: currCard }),
                 trigger: 'card',
                 isUnshift: true,
@@ -3565,14 +3565,20 @@ export default class GeniusInvokationRoom {
                             }
                             for (const getCard of getcards) {
                                 this.taskQueue.addTask(`doCmd--getCard-p${cpidx}-${getCard.name}(${getCard.entityId}):drawcard`, async () => {
-                                    this._detectHero(cpidx, atriggers, { types: STATUS_TYPE.Usage, hcard: getCard });
-                                    this._detectSupport(cpidx ^ 1, etriggers);
+                                    if (cplayer.handCards.some(c => c.entityId == getCard.entityId)) {
+                                        this._detectHero(cpidx, atriggers, { types: STATUS_TYPE.Usage, hcard: getCard });
+                                        this._detectSupport(cpidx ^ 1, etriggers);
+                                    }
                                     if (this.taskQueue.isTaskEmpty()) await this.emit('getCard:drawcard-cancel', cpidx);
                                 });
                                 const cardres = getCard.handle(getCard, { pidx: cpidx, ...this.handleEvent, trigger: 'getcard' });
                                 if (this._hasNotTriggered(cardres.triggers, 'getcard')) continue;
                                 this.taskQueue.addTask(`doCmd--getCard-p${cpidx}-${getCard.name}(${getCard.entityId}):getcard`, async () => {
-                                    await this._useCard(cpidx, -1, [], { getCard });
+                                    if (cplayer.handCards.some(c => c.entityId == getCard.entityId)) {
+                                        await this._useCard(cpidx, -1, [], { getCard });
+                                    } else if (this.taskQueue.isTaskEmpty()) {
+                                        await this.emit('getCard:getcard-cancel', cpidx);
+                                    }
                                 });
                             }
                             await this.delay(1500);
