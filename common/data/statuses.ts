@@ -988,9 +988,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => status.minusUseCnt(),
         })),
 
-    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(5).type(STATUS_TYPE.Usage).icon('#')
-        .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属1层【sts122】。；[useCnt]')
-        .handle((status, event) => {
+    113141: () => new StatusBuilder('血债勒令').combatStatus().useCnt(3).useCnt(5, 'v6.2.0').type(STATUS_TYPE.Usage).icon('#')
+        .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属2层【sts122】。；[useCnt]')
+        .description('【我方角色受伤后：】我方受到伤害的角色和敌方【hro】均附属1层【sts122】。；[useCnt]', 'v6.2.0')
+        .handle((status, event, ver) => {
             const { hidx = -1, heros, eheros, getdmg, cmds } = event;
             const hidxs: number[] = [];
             for (let i = 0; i < getdmg.length; ++i) {
@@ -998,9 +999,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 const hi = (hidx + i) % heros.length;
                 if ((getdmg[hi] ?? -1) > -1) hidxs.push(hi);
             }
-            cmds.getStatus(122, { hidxs });
+            cmds.getStatus([[122, ver.lt('v6.2.0') ? 1 : 2]], { hidxs });
             const ehero = eheros.get(status.id);
-            if (ehero) cmds.getStatus(122, { hidxs: ehero.hidx, isOppo: true });
+            if (ehero) cmds.getStatus([[122, ver.lt('v6.2.0') ? 1 : 2]], { hidxs: ehero.hidx, isOppo: true });
             return { triggers: 'getdmg', cmds, exec: () => status.minusUseCnt(hidxs.length) }
         }),
 
@@ -1048,11 +1049,12 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    113161: () => new StatusBuilder('舞兽之法').heroStatus().useCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon('ski,1')
-        .description('【我方选择行动前，如果所附属角色为出战角色：】[准备技能]：【rsk13164】，并且此技能将视为[快速行动]。')
+    113161: () => new StatusBuilder('舞兽之法').heroStatus().useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign, STATUS_TYPE.ReadySkill).icon('ski,1')
+        .description('我方选择行动前，如果所附属角色为出战角色，则使用技能【rsk13164】。')
         .handle((status, event) => {
             if (!event.hero.isFront) return;
-            return { triggers: 'action-start', status: 113163, exec: () => status.dispose() }
+            return { triggers: 'useReadySkill', skill: 13164, exec: () => status.dispose() }
         }),
 
     113162: () => new StatusBuilder('猊兽·文仔').heroStatus().useCnt(2).type(STATUS_TYPE.Usage).icon('ski,2')
@@ -2353,16 +2355,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     126041: () => new StatusBuilder('摧岩伟力').heroStatus().useCnt(1)
-        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.MultiDamage).icon('#')
-        .description('所附属角色造成的伤害+1，对处于[护盾]或减伤状态下的敌方角色则改为造成的伤害翻倍。；[useCnt]')
+        .type(STATUS_TYPE.AddDamage).icon('#')
+        .description('所附属角色造成的伤害+1，对处于[护盾]或减伤状态下的敌方角色则改为造成的伤害+3。；[useCnt]')
         .handle((status, event) => {
             const { eDmgedHero, eCombatStatus, hasDmg } = event;
             if (!hasDmg) return;
-            const isMultiDmg = eDmgedHero.hasSubHurt || (eDmgedHero.isFront && eCombatStatus.hasSubHurt);
+            const isAddExtraDmg = eDmgedHero.hasSubHurt || (eDmgedHero.isFront && eCombatStatus.hasSubHurt);
             return {
                 triggers: 'skill',
-                addDmgCdt: isCdt(!isMultiDmg, 1),
-                multiDmgCdt: isCdt(isMultiDmg, 2),
+                addDmgCdt: isAddExtraDmg ? 3 : 1,
                 exec: () => status.minusUseCnt(),
             }
         }),
@@ -3201,7 +3202,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     303247: () => new StatusBuilder('拯救世界的计划（生效中）').combatStatus().useCnt(2)
         .type(STATUS_TYPE.Attack).icon(STATUS_ICON.Special).from(332058)
-        .description('下个回合结束时，双方出战角色生命值变为5。')
+        .description('下回合结束阶段时，双方出战角色生命值变为5。')
         .handle((status, event) => {
             if (status.useCnt == 1) {
                 const { hero, eDmgedHero, cmds } = event;

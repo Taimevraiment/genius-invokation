@@ -32,7 +32,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     13155: () => new SkillBuilder('驰轮车·疾驰').description('【行动阶段开始时：】生成2个[万能元素骰]。')
         .elemental().readySkill().handle(() => ({ status: 113158 })),
 
-    13164: () => new SkillBuilder('踏云献瑞').description('{dealDmg}。').normal().readySkill().damage(2).handle(() => ({ isQuickAction: true })),
+    13164: () => new SkillBuilder('踏云献瑞').description('{dealDmg}。').normal().readySkill(0).damage(2).handle(() => ({ isQuickAction: true })),
 
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。')
         .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle((event, ver) => {
@@ -40,7 +40,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         }),
 
     14155: () => new SkillBuilder('闪烈降临·大火山崩落').description('{dealDmg}，此技能视为[下落攻击]。')
-        .burst().readySkill().damage(2).handle(() => ({ isFallAtk: true })),
+        .burst().readySkill().damage(3).damage(2, 'v6.2.0').handle(() => ({ isFallAtk: true })),
 
     15074: () => new SkillBuilder('风风轮舞踢').description('{dealDmg}（或被扩散元素的伤害）。').elemental().readySkill().damage(2),
 

@@ -1547,7 +1547,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【入场时：】生成2张手牌【crd301033】，并生成2张【crd301033】，随机置入我方牌组中。；我方打出[「希穆兰卡」召唤物]后，使其效果量+1。；[可用次数]：2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/27/258999284/45dae777fd99897142752609a238470f_3519286704122229551.png'),
 
-    322031: () => new CardBuilder(540).name('西摩尔').since('v6.2.0').ally().costAny(2)
+    322031: () => new CardBuilder(540).name('西摩尔').since('v6.2.0').ally().costSame(1)
         .description('【入场时：】复制对方牌组顶的1张牌加入我方手牌。；【我方打出名称不存在于本局最初牌组的牌时：】[冒险]1次。（每回合1次，最多生效2次）')
         .src('#'),
 
@@ -1671,8 +1671,8 @@ const allCards: Record<number, () => CardBuilder> = {
             if (death > 0) cmds.addMaxHp(2 * death, heros.allHidxs());
         }),
 
-    330012: () => new CardBuilder(541).name('「沙中遗事」').since('v6.2.0').legend().costSame(1)
-        .description('[挑选]一项：；将敌方2张费用最高的手牌置于牌组底。；或；将我方所有手牌置于牌组底，然后抓相同数量+2张手牌。')
+    330012: () => new CardBuilder(541).name('「沙中遗事」').since('v6.2.0').legend().costSame(0)
+        .description('[挑选]一项：；将敌方1张费用最高的手牌置于牌组底。；或；将我方所有手牌置于牌组底，然后抓相同数量+1张手牌。')
         .src('#')
         .handle((_, { cmds }) => cmds.pickCard(2, CMD_MODE.UseCard, { card: [300008, 300009] })),
 
@@ -2240,7 +2240,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => (cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }), { status: 303243 })),
 
     332051: () => new CardBuilder(515).name('「邪龙」的苏醒').since('v6.0.0').event().costSame(2).subtype(CARD_SUBTYPE.Simulanka)
-        .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1〔（当前增加{desSptCnt,5}点）〕\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1〔（当前增加{desSmnCnt,5}点）〕。（可叠加，最多叠加到5）')
+        .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1〔（当前增加{desSptCnt,4}点）〕\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1〔（当前增加{desSmnCnt,4}点）〕。（可叠加，最多叠加到4）')
+        .description('召唤【smn303245】。；本场对局中，我方支援区每弃置1张卡牌，则【smn303245】可用次数+1〔（当前增加{desSptCnt,5}点）〕\\；我方召唤区每弃置1张卡牌，则【smn303245】效果量+1〔（当前增加{desSmnCnt,5}点）〕。（可叠加，最多叠加到5）', 'v6.2.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/9362e2d9730bee84d5b41850a1e0e9bd_5229484141013095084.png')
         .handle((_, event) => {
             const { playerInfo: { destroyedSummon, destroyedSupport } } = event;
@@ -2301,7 +2302,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     332058: () => new CardBuilder(543).name('拯救世界的计划').since('v6.2.0').event().costSame(2)
-        .description('下个回合结束时，双方出战角色生命值变为5。')
+        .description('下回合结束阶段时，双方出战角色生命值变为5。')
         .src('#')
         .handle(() => ({ status: 303247 })),
 
@@ -2408,11 +2409,12 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => cmds.pickCard(3, CMD_MODE.UseCard, { card: [333021, 333022, 333023, 333024, 333025, 333026] })),
 
     333027: () => new CardBuilder(476).name('纵声欢唱').since('v5.6.0').food().costAny(3)
-        .description('所有我方角色获得【sts303300】，抓3张牌，下2次切换角色少花费1个元素骰。')
+        .description('所有我方角色获得【sts303300】，抓2张牌，下2次切换角色少花费1个元素骰。')
+        .description('所有我方角色获得【sts303300】，抓3张牌，下2次切换角色少花费1个元素骰。', 'v6.2.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/01/258999284/68aec147b8b8ad595f67e23817c6c82c_8949148080317603022.png')
-        .handle((_, event) => {
+        .handle((_, event, ver) => {
             const { cmds, heros } = event;
-            cmds.getCard(3).getStatus(303321);
+            cmds.getCard(ver.lt('v6.2.0') ? 3 : 2).getStatus(303321);
             return { hidxs: heros.allHidxs(), isValid: heros.every(h => !h.heroStatus.has(303300)) }
         }),
 
@@ -2786,7 +2788,7 @@ const allCards: Record<number, () => CardBuilder> = {
             return { triggers: 'card', exec: () => card.minusPerCnt() }
         }),
 
-    213161: () => new CardBuilder(537).name('通明庇佑').since('v6.2.0').talent(2).costPyro(3).energy(2).perCnt(1)
+    213161: () => new CardBuilder(537).name('通明庇佑').since('v6.2.0').talent(2).costPyro(3).energy(3).perCnt(1)
         .description('{action}；【所附属角色进行[下落攻击]时】：伤害额外+1。；【所附属角色使用「元素战技」后：】治疗所附属角色2点。（每回合1次）')
         .src('#')
         .handle((card, event) => {
@@ -3752,16 +3754,16 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2e88a5df59e2b48de1bc62d60dd1ba5b_5370407805539882566.png'),
 
     300008: () => new CardBuilder().name('驱逐灾厄').since('v6.2.0').event().from(330012)
-        .description('将敌方2张费用最高的手牌置于牌组底。')
+        .description('将敌方1张费用最高的手牌置于牌组底。')
         .src('#')
-        .handle((_, { cmds }) => cmds.putCard({ cnt: 2, mode: CMD_MODE.HighHandCard, isOppo: true })),
+        .handle((_, { cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })),
 
     300009: () => new CardBuilder().name('肃净污染').since('v6.2.0').event().from(330012)
-        .description('将我方所有手牌置于牌组底，然后抓相同数量+2张手牌。')
+        .description('将我方所有手牌置于牌组底，然后抓相同数量+1张手牌。')
         .src('#')
         .handle((_, event) => {
             const { cmds, hcardsCnt } = event;
-            cmds.putCard({ mode: CMD_MODE.AllHandCards }).getCard(hcardsCnt + 2);
+            cmds.putCard({ mode: CMD_MODE.AllHandCards }).getCard(hcardsCnt + 1);
         }),
 
     301020: () => new CardBuilder().name('禁忌知识').event().costSame(0).tag(CARD_TAG.NonReconcile)

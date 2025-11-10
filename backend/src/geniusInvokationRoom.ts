@@ -3475,7 +3475,7 @@ export default class GeniusInvokationRoom {
                         const hcardsSorted = clone(handCards).sort((a, b) => (b.rawDiceCost - a.rawDiceCost) || (b.entityId - a.entityId));
                         const maxCost = hcardsSorted[0].rawDiceCost;
                         const maxCostCards = hcardsSorted.filter(c => c.rawDiceCost == maxCost);
-                        cards.push(...this._randomInArr(maxCostCards, 2));
+                        cards.push(...this._randomInArr(maxCostCards, cnt));
                     } else if (mode == CMD_MODE.AllHandCards) {
                         cards.push(...clone(handCards));
                     }

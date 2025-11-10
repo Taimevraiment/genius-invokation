@@ -258,7 +258,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('霜昼黑星').description('{dealDmg}。自身进入【sts111141】，并获得1点「夜魂值」。生成1点【sts111142】和【sts111143】。（角色进入【sts111141】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/c/c9/82anvuwlko9jlztsdevhmg9r0hik446.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/b1d0e25e76b566167390330c5effc80e_4161361711767872548.png')
-                .elemental().damage(2).cost(3).handle(({ hero: { heroStatus }, cmds }) => (
+                .elemental().damage(1).damage(2, 'v6.2.0').cost(3).handle(({ hero: { heroStatus }, cmds }) => (
                     cmds.getStatus(111141).getNightSoul(), {
                         status: [111142, 111143],
                         isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
@@ -280,7 +280,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1115: () => new HeroBuilder(533).name('爱可菲').since('v6.2.0').fontaine(HERO_TAG.ArkheOusia).cryo().polearm()
+    1115: () => new HeroBuilder(533).name('爱可菲').since('v6.2.0').maxHp(11).fontaine(HERO_TAG.ArkheOusia).cryo().polearm()
         .src('#')
         .avatar('/image/tmp/v6.2.0/UI_Gcg_CardFace_Char_Avatar_Escoffier_Avatar.png')
         .normalSkill('后厨手艺')
@@ -490,7 +490,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ pdmg: 1, status: [[112101, 2]] }))
         ),
 
-    1211: () => new HeroBuilder(364).name('芙宁娜').since('v4.7.0').fontaine(HERO_TAG.ArkheOusia).hydro().sword()
+    1211: () => new HeroBuilder(364).name('芙宁娜').since('v4.7.0').maxHp(12).maxHp(10, 'v6.2.0').fontaine(HERO_TAG.ArkheOusia).hydro().sword()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e958e09d88022d4a18633be9bf51b399.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/fa0204761d8dae8b0dbaac46a494752f.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e330408cba4b278428656f4e5c7a8915.png',
@@ -791,7 +791,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    1314: () => new HeroBuilder(454).name('阿蕾奇诺').since('v5.4.0').fatui().pyro().polearm()
+    1314: () => new HeroBuilder(454).name('阿蕾奇诺').since('v5.4.0').maxHp(11).maxHp(10, 'v6.2.0').fatui().pyro().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/6d1379337d377cb94b3a5df789c57af0_4432986078863302985.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u8c1lh/2b18a446223227da615ba874800e6a7e.png')
         .normalSkill(new NormalSkillBuilder('斩首之邀').description('，若可能，消耗目标至多3层【sts122】，提高等量伤害。')
@@ -802,7 +802,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 return { addDmgCdt, exec: () => sts122.minusUseCnt(addDmgCdt) }
             }))
         .skills(
-            new SkillBuilder('万相化灰').description('在对方场上生成5层【sts113141】，然后{dealDmg}。')
+            new SkillBuilder('万相化灰').description('在对方场上生成3层【sts113141】，然后{dealDmg}。')
+                .description('在对方场上生成5层【sts113141】，然后{dealDmg}。', 'v6.2.0')
                 .src('https://patchwiki.biligame.com/images/ys/d/d5/ggy5txvitobnp70gsp8u761qxv84y43.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/7810c834269545540dea50ba88c3a25c_6894619581902279780.png')
                 .elemental().damage(2).cost(3).handle(() => ({ statusOppoPre: 113141 })),
@@ -874,11 +875,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('瑞兽登高楼').description('{dealDmg}，自身附属【sts113161】，我方切换到下一个角色。')
                 .src('#',
                     '')
-                .elemental().damage(2).cost(3).handle(({ cmds }) => (cmds.switchAfter(), { statusPre: 113161 })),
+                .elemental().damage(1).cost(3).handle(({ cmds }) => (cmds.switchAfter(), { statusPre: 113161 })),
             new SkillBuilder('璨焰金猊舞').description('{dealDmg}，自身附属【sts113162】。')
                 .src('#',
                     '')
-                .burst(2).damage(3).cost(3).handle(() => ({ status: 113162 }))
+                .burst(3).damage(2).cost(3).handle(() => ({ status: 113162 }))
         ),
 
     1401: () => new HeroBuilder(26).name('菲谢尔').mondstadt().electro().bow()
