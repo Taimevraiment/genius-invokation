@@ -3201,20 +3201,18 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         })),
 
     303247: () => new StatusBuilder('拯救世界的计划（生效中）').combatStatus().useCnt(2)
-        .type(STATUS_TYPE.Attack).icon(STATUS_ICON.Special).from(332058)
+        .type(STATUS_TYPE.Round).icon(STATUS_ICON.Special).from(332058)
         .description('下回合结束阶段时，双方出战角色生命值变为5。')
-        .handle((status, event) => {
-            if (status.useCnt == 1) {
-                const { hero, eDmgedHero, cmds } = event;
-                const cnt = hero.hp - 5;
-                if (cnt < 0) cmds.heal(-cnt);
-                else if (cnt > 0) cmds.attack(cnt, DAMAGE_TYPE.Pierce, { isOppo: false });
-                const ecnt = eDmgedHero.hp - 5;
-                if (ecnt < 0) cmds.heal(-ecnt, { isOppo: true });
-                else if (ecnt > 0) cmds.attack(ecnt, DAMAGE_TYPE.Pierce, { hidxs: eDmgedHero.hidx });
+        .handle((status, event) => ({
+            triggers: 'phase-end',
+            isAddTask: status.useCnt == 1,
+            exec: () => {
+                if (status.minusUseCnt() > 0) return;
+                const { hero, eDmgedHero } = event;
+                hero.hp = 5;
+                eDmgedHero.hp = 5;
             }
-            return { triggers: 'phase-end', exec: () => status.minusUseCnt() }
-        }),
+        })),
 
     303300: () => new StatusBuilder('饱腹').heroStatus().roundCnt(1)
         .icon(STATUS_ICON.Food).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
