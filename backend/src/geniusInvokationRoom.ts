@@ -3348,7 +3348,7 @@ export default class GeniusInvokationRoom {
                             if (damageVO.willHeals[chi] == -1) damageVO.willHeals[chi] = 0;
                             damageVO.willHeals[chi] += heal;
                         });
-                        if (cmd == 'revive') this._emitEvent(cpidx, 'revive', { types: STATUS_TYPE.NonDestroy, hidxs });
+                        if (cmd == 'revive') this._emitEvent(cpidx, 'revive', { types: STATUS_TYPE.NonDestroy, hidxs, source });
                         notPreHeal ||= !!isAttach;
                     } else if (cmd == 'attack') {
                         if (damageVO.atkHidx == -1) damageVO.atkHidx = skill && skill.type != SKILL_TYPE.Vehicle ? copponent.heros.frontHidx : -1;

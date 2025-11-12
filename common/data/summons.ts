@@ -504,14 +504,19 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     116091: () => new SummonBuilder('不悦挥刀之袖').useCnt(2).damage(1)
         .description('{defaultAtk。}；【此牌在场时：】我方【hro】造成的[物理伤害]变为[岩元素伤害]，且「普通攻击」造成的[岩元素伤害]+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8c0d9573073fee39837238debd80774c_1966112146303462873.png')
-        .handle((summon, event) => ({
-            triggers: ['enter', 'phase-end'],
-            isNotAddTask: event.trigger == 'enter',
-            exec: cmds => {
-                if (event.trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                cmds.getStatus(116098, { hidxs: event.heros.get(summon.id)?.hidx });
+        .handle((summon, event) => {
+            const hero = event.heros.get(summon.id);
+            const triggers: Trigger[] = ['enter', 'phase-end'];
+            if (!hero?.heroStatus.has(116098)) triggers.push('revive');
+            return {
+                triggers,
+                isNotAddTask: event.trigger == 'enter',
+                exec: cmds => {
+                    if (event.trigger == 'phase-end') return summon.phaseEndAtk(cmds);
+                    cmds.getStatus(116098, { hidxs: hero?.hidx });
+                }
             }
-        })),
+        }),
 
     116092: () => new SummonBuilder('无事发生之袖').useCnt(2).damage(1).perCnt(1)
         .description('{defaultAtk。}；【此牌在场时，我方使用技能后：】切换至下一个我方角色。（每回合1次）')
