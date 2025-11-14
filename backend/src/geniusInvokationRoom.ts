@@ -3342,7 +3342,7 @@ export default class GeniusInvokationRoom {
                         const offsetHidx = atkPidx * this.players[0].heros.length;
                         cplayer.heros.forEach((h, hi) => {
                             if (cmd == 'addMaxHp' && hidxs.includes(hi)) h.maxHp += cnt;
-                            const heal = hidxs.includes(hi) ? (cnt == CMD_MODE.MaxHp ? h.maxHp : cnt) - (cmd == 'revive' ? 0.3 : 0) : -1;
+                            const heal = hidxs.includes(hi) ? cnt - (cmd == 'revive' ? 0.3 : 0) : -1;
                             if (heal == -1) return;
                             const chi = offsetHidx + hi;
                             if (damageVO.willHeals[chi] == -1) damageVO.willHeals[chi] = 0;

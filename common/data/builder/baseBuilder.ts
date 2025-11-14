@@ -292,7 +292,7 @@ export class ArrayStatus extends Array<Status> {
         super(...args);
     }
     get hasSubHurt() {
-        return this.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier);
+        return this.some(s => s.summonId != s.id && s.hasType(STATUS_TYPE.Shield, STATUS_TYPE.Barrier));
     }
     filter(predicate: (value: Status, index: number, array: Status[]) => unknown, thisArg?: any): ArrayStatus {
         return super.filter(predicate, thisArg) as ArrayStatus;

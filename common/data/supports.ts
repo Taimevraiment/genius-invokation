@@ -448,7 +448,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 const { heros } = event;
                 const hidxs = heros.getMaxHurtHidxs();
                 cmds.attach({ element: ELEMENT_TYPE.Hydro, hidxs: heros.allHidxs() })
-                    .heal(CMD_MODE.MaxHp, { hidxs })
+                    .heal(999, { hidxs })
                     .addMaxHp(2, hidxs);
                 return { isDestroy: true }
             }
