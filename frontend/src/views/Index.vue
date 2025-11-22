@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v1.1.7</div>
+    <div class="version">v1.2.0</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -75,7 +75,7 @@ import EnterRoomModal from '@/components/EnterRoomModal.vue';
 import InfoModal from '@/components/InfoModal.vue';
 import { getSocket } from '@/store/socket';
 import { ACTION_TYPE, OFFLINE_VERSION, VERSION, Version } from '@@@/constant/enum';
-import { MAX_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
+import { MIN_DECK_COUNT, PLAYER_COUNT } from '@@@/constant/gameOption';
 import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
@@ -118,7 +118,7 @@ if (username.value != '') {
 // 初始化卡组
 if (localStorage.getItem('GIdecks') == null) {
   const gidecks = JSON.stringify(
-    new Array(MAX_DECK_COUNT).fill(0).map(() => ({
+    new Array(MIN_DECK_COUNT).fill(0).map(() => ({
       name: '默认卡组',
       shareCode: genShareCode([0, 0, 0]),
     }))

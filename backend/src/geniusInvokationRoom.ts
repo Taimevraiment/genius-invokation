@@ -2343,10 +2343,13 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         this._detectHero(pidx ^ 1, 'action-start-oppo', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage] });
         await this._execTask();
-        this.players[pidx].isChargedAtk = this.players[pidx].dice.length % 2 == 0;
+        const player = this.players[pidx];
+        player.isChargedAtk = player.dice.length % 2 == 0;
         this.players[pidx ^ 1].isChargedAtk = this.players[pidx ^ 1].dice.length % 2 == 0;
-        this._detectHero(pidx, 'useReadySkill', { types: STATUS_TYPE.ReadySkill });
-        await this._execTask();
+        if (!player.heros[player.hidx].heroStatus.has(STATUS_TYPE.NonAction)) {
+            this._detectHero(pidx, 'useReadySkill', { types: STATUS_TYPE.ReadySkill });
+            await this._execTask();
+        }
     }
     /**
      * 玩家执行任意行动后

@@ -28,10 +28,14 @@
                 </div>
                 <div class="edit-btn-group">
                     <div class="edit-list-icon" @click.stop="selectDeck(did)">出战</div>
+                    <div class="edit-list-icon" @click.stop="moveDeck(did, -1)">↑</div>
+                    <div class="edit-list-icon" @click.stop="moveDeck(did, 1)">↓</div>
                     <img class="edit-list-icon" @click.stop="deleteDeck(did)" src="@@/svg/delete.svg"
                         style="width: 15%;" alt="删" />
                 </div>
             </div>
+            <div class="deck" style="justify-content: center;font-weight: bolder;" @click="addDeck"
+                v-if="oriDecks.length < MAX_DECK_COUNT">+</div>
         </div>
         <div v-else class="edit-container">
             <button class="edit-btn exit" @click.stop="exit">返回</button>
@@ -227,7 +231,7 @@ import {
     HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE,
     TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
-import { DECK_CARD_COUNT } from '@@@/constant/gameOption';
+import { DECK_CARD_COUNT, MAX_DECK_COUNT, MIN_DECK_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_CUSTOM_VERSION_CONFIG, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
     CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_NAME_KEY, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
@@ -352,6 +356,14 @@ const selectDeck = (didx: number) => {
     localStorage.setItem('GIdeckIdx', didx.toString());
 }
 
+// 移动卡组
+const moveDeck = (did: number, dir: number) => {
+    if (did == 0 && dir == -1 || did == oriDecks.value.length - 1 && dir == 1) return;
+    [oriDecks.value[did], oriDecks.value[did + dir]] = [oriDecks.value[did + dir], oriDecks.value[did]];
+    const decks = JSON.stringify(oriDecks.value);
+    localStorage.setItem('GIdecks', decks);
+}
+
 // 保存卡组
 const saveDeck = () => {
     updateShareCode();
@@ -369,14 +381,29 @@ const saveDeck = () => {
 const deleteDeck = (did: number) => {
     const isConfirm = confirm('确认删除？');
     if (isConfirm) {
-        oriDecks.value[did] = {
-            name: '默认卡组',
-            version: VERSION[0],
-            shareCode: genShareCode([0, 0, 0]),
-        };
+        if (oriDecks.value.length > MIN_DECK_COUNT) {
+            oriDecks.value.splice(did, 1);
+        } else {
+            oriDecks.value[did] = {
+                name: '默认卡组',
+                version: VERSION[0],
+                shareCode: genShareCode([0, 0, 0]),
+            };
+        }
         const decks = JSON.stringify(oriDecks.value);
         localStorage.setItem('GIdecks', decks);
     }
+}
+
+// 新增卡组
+const addDeck = () => {
+    oriDecks.value.push({
+        name: '默认卡组',
+        version: VERSION[0],
+        shareCode: genShareCode([0, 0, 0]),
+    });
+    const decks = JSON.stringify(oriDecks.value);
+    localStorage.setItem('GIdecks', decks);
 }
 
 // 分享卡组

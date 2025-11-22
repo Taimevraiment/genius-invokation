@@ -12,9 +12,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     12074: () => new SkillBuilder('苍鹭震击').description('{dealDmg}。').elemental().readySkill().damage(3),
 
     12104: () => new SkillBuilder('衡平推裁').description('{dealDmg}，如果生命值至少为6，则对自身造成1点[穿透伤害]，使伤害+1。')
-        .normal().readySkill().damage(2).handle(event => {
-            if (event.hero.hp >= 6) return { addDmgCdt: 1, pdmgSelf: 1 }
-        }),
+        .normal().readySkill().damage(2).handle(event => isCdt(event.hero.hp >= 6, { addDmgCdt: 1, pdmgSelf: 1 })),
 
     12112: () => new SkillBuilder('孤心沙龙').description('【hro】当前处于「始基力:荒性」形态，召唤【smn112111】。；（【hro】处于「始基力:芒性」形态时，会改为召唤【smn112112】。）')
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/629f7630db6af1831478699dbe6a04e0.png',
@@ -32,7 +30,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     13155: () => new SkillBuilder('驰轮车·疾驰').description('【行动阶段开始时：】生成2个[万能元素骰]。')
         .elemental().readySkill().handle(() => ({ status: 113158 })),
 
-    13164: () => new SkillBuilder('踏云献瑞').description('{dealDmg}。').normal().readySkill(0).damage(2).handle(() => ({ isQuickAction: true })),
+    13164: () => new SkillBuilder('踏云献瑞').description('{dealDmg}。').normal().damage(2),
 
     14054: () => new SkillBuilder('踏潮').description('{dealDmg}。')
         .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle((event, ver) => {

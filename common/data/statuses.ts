@@ -31,10 +31,8 @@ const readySkillStatus = (name: string, skill: number, statusId: number = 0, exe
             if (trigger == 'slot-destroy' && source == -statusId) {
                 return { triggers: trigger, exec: () => status.dispose() }
             }
-            const triggers: Trigger[] = ['switch-from'];
-            if (!hero.heroStatus.has(STATUS_TYPE.NonAction)) triggers.push('useReadySkill');
             return {
-                triggers,
+                triggers: ['switch-from', 'useReadySkill'],
                 skill: isCdt(trigger == 'useReadySkill', skill),
                 exec: () => {
                     status.minusUseCnt();
@@ -2354,7 +2352,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    126041: () => new StatusBuilder('摧岩伟力').heroStatus().useCnt(1)
+    126041: () => new StatusBuilder('摧岩伟力').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
         .type(STATUS_TYPE.AddDamage).icon('#')
         .description('所附属角色造成的伤害+1，对处于[护盾]或减伤状态下的敌方角色则改为造成的伤害+3。；[useCnt]')
         .handle((status, event) => {
