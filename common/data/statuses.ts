@@ -2608,13 +2608,13 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             return { triggers: 'summon-generate', exec: () => status.dispose() }
         }),
 
-    301040: () => new StatusBuilder('水仙十字圣剑（生效中）').heroStatus().useCnt(1)
+    301040: () => new StatusBuilder('水仙十字圣剑（生效中）').heroStatus()
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Sign).icon(STATUS_ICON.AtkSelf).from(301039)
         .description('【所附属角色[重击]后：】造成5点该角色元素类型的伤害。')
-        .handle((status, event) => {
+        .handle((_, event) => {
             const { isChargedAtk, hero } = event;
             if (!isChargedAtk) return;
-            return { triggers: 'after-skilltype1', damage: 5, element: hero.element, exec: () => status.minusUseCnt() }
+            return { triggers: 'after-skilltype1', damage: 5, element: hero.element }
         }),
 
     301101: (useCnt: number) => new StatusBuilder('千岩之护').heroStatus()

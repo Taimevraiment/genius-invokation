@@ -3798,12 +3798,12 @@ const allCards: Record<number, () => CardBuilder> = {
     301038: () => new CardBuilder().name('木质玩具剑').since('v6.2.0').event().costSame(1).canSelectHero(1).from(321033)
         .description('治疗目标角色2点，生成2个随机基础元素骰。')
         .src('#')
-        .handle((_, { cmds }) => cmds.heal(2).getDice(2, { mode: CMD_MODE.Random })),
+        .handle((_, { cmds }) => (cmds.heal(2).getDice(2, { mode: CMD_MODE.Random }), { notPreview: true })),
 
     301039: () => new CardBuilder().name('重铸圣剑').since('v6.2.0').event().costAny(4).canSelectHero(1).from(321033)
         .description('治疗目标角色12点，使其获得效果：【[重击]后：】造成5点该角色元素类型的伤害。')
         .src('#')
-        .handle((_, { cmds }) => (cmds.heal(12), { status: 301040 })),
+        .handle((_, { cmds }) => (cmds.heal(12), { status: 301040, notPreview: true })),
 
     302202: () => new CardBuilder().name('太郎丸的存款').event().costSame(0).from(322024)
         .description('生成1个[万能元素骰]。')

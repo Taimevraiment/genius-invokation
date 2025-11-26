@@ -820,8 +820,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a2a8eb8cafea01ec4461915fe495127c_5101380063673897230.png')
                 .passive().handle(event => {
                     const { hero, heal, source, trigger } = event;
-                    const sts122 = hero.heroStatus.get(122);
-                    if (trigger == 'skill' && sts122) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
+                    if (trigger == 'skill' && hero.heroStatus.has(122)) return { triggers: trigger, dmgElement: DAMAGE_TYPE.Pyro, isNotAddTask: true }
                     if (trigger == 'pre-heal' && source != 13143) heal[hero.hidx] = -1;
                 }),
             new SkillBuilder().passive(true).handle(event => {
