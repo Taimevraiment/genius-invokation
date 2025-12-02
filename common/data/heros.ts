@@ -813,7 +813,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(3).damage(4).cost(3).handle(event => {
                     const { hero: { heroStatus } } = event;
                     const sts122 = heroStatus.get(122);
-                    return { heal: sts122?.useCnt ?? 0, exec: () => sts122?.dispose() }
+                    if (!sts122) return;
+                    return { heal: sts122.useCnt, exec: () => sts122.dispose() }
                 }),
             new SkillBuilder('唯厄月可知晓').description('角色不会受到【ski,2】以外的治疗。；【自身附属〖sts122〗时：】角色造成的[物理伤害]变为[火元素伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/5/54/pxn17pilom6vwve4bs6vsemh1dvt89k.png',

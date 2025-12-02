@@ -1709,7 +1709,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     331402: () => new CardBuilder(230).name('元素共鸣：强能之雷').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costElectro(1)
         .description('我方出战角色和下一名充能未满的角色获得1点[充能]。')
-        .description('我方一名充能未满的角色获得1点[充能]。（出战角色优先）', 'v5.5.0')
+        .description('我方一名充能未满的角色获得1点[充能]。（出战角色优先）', 'v5.5.0', 'v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/24c0eec5aa696696abeacd2a9ab2e443_2548840222933909920.png')
         .handle((_, event, ver) => {
             const { heros, hero, cmds } = event;
@@ -1731,13 +1731,13 @@ const allCards: Record<number, () => CardBuilder> = {
 
     331502: () => new CardBuilder(232).name('元素共鸣：迅捷之风').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costAnemo(1)
         .description('【我方下次执行「切换角色」行动时：】将此次切换视为「[快速行动]」而非「[战斗行动]」，并且少花费1个元素骰。；我方下次触发扩散反应时对目标以外的所有敌方角色造成的伤害+1。')
-        .description('切换到目标角色，并生成1点[万能元素骰]。', 'v5.5.0').canSelectHero(1, 'v5.5.0')
+        .description('切换到目标角色，并生成1点[万能元素骰]。', 'v5.5.0', 'v1').canSelectHero(1, 'v5.5.0', 'v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/707f537df32de90d61b3ac8e8dcd4daf_7351067372939949818.png')
         .handle((_, event, ver) => {
             if (ver.lt('v5.5.0')) {
                 const { heros, selectHeros: [hidx], cmds } = event;
                 cmds.switchTo(hidx).getDice(1, { element: DICE_COST_TYPE.Omni });
-                return { canSelectHero: heros.map(h => !h.isFront && h.hp > 0) }
+                return { canSelectHero: heros.map(h => !h.isFront && h.hp > 0), notPreview: true }
             }
             return { status: [303133, 303134, 303136] }
         }),
@@ -1747,7 +1747,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     331602: () => new CardBuilder(234).name('元素共鸣：坚定之岩').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costGeo(1)
         .description('为我方出战角色提供3点[护盾]。')
-        .description('本回合中，我方角色下一次造成[岩元素伤害]后：如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。', 'v5.5.0')
+        .description('本回合中，我方角色下一次造成[岩元素伤害]后：如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。', 'v5.5.0', 'v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/504be5406c58bbc3e269ceb8780eaa54_8358329092517997158.png')
         .handle(() => ({ status: 303162 })),
 
@@ -1756,7 +1756,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     331702: () => new CardBuilder(236).name('元素共鸣：蔓生之草').offline('v1').subtype(CARD_SUBTYPE.ElementResonance).costDendro(1)
         .description('若我方场上存在【smn115】/【sts116】或【smn112082】/【sts117】，则对对方出战角色造成1点[火元素伤害]/[水元素伤害]/[雷元素伤害]。')
-        .description('本回合中，我方角色下一次引发元素反应时，造成的伤害+2。；使我方场上的「【smn115】」、「【sts116】」和「【sts117】」[可用次数]+1。', 'v5.5.0')
+        .description('本回合中，我方角色下一次引发元素反应时，造成的伤害+2。；使我方场上的「【smn115】」、「【sts116】」和「【sts117】」[可用次数]+1。', 'v5.5.0', 'v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/af52f6c4f7f85bb3d3242778dc257c5c_1159043703701983776.png')
         .handle((_, event, ver) => {
             const { combatStatus, summons, cmds } = event;

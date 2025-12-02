@@ -271,8 +271,9 @@ export class StatusBuilder extends BaseBuilder {
         if (this._id == -1) this._id = id;
         return this;
     }
-    name(name: string, version: Version = 'vlatest') {
-        this._name.set([version, name]);
+    name(name: string, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(v => this._name.set([v, name]));
         return this;
     }
     heroStatus() {
@@ -344,8 +345,9 @@ export class StatusBuilder extends BaseBuilder {
         }
         return this;
     }
-    icon(icon: string, version: Version = 'vlatest') {
-        this._icon.set([version, icon]);
+    icon(icon: string, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => this._icon.set([version, icon]));
         return this;
     }
     explains(...explains: string[]) {

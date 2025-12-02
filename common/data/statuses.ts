@@ -2911,22 +2911,23 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    303162: () => new StatusBuilder('护盾').name('元素共鸣：坚定之岩（生效中）', 'v5.5.0').combatStatus().useCnt(3)
-        .type(ver => ver.gte('v5.5.0'), STATUS_TYPE.Shield).icon(STATUS_ICON.Buff, 'v5.5.0').from(331602)
-        .type(ver => ver.lt('v5.5.0'), STATUS_TYPE.Usage, STATUS_TYPE.Sign).useCnt(1, 'v5.5.0').roundCnt(1, 'v5.5.0')
+    303162: () => new StatusBuilder('护盾').name('元素共鸣：坚定之岩（生效中）', 'v5.5.0', 'v1').combatStatus().useCnt(3)
+        .type(ver => ver.gte('v5.5.0'), STATUS_TYPE.Shield).icon(STATUS_ICON.Buff, 'v5.5.0', 'v1').from(331602)
+        .type(ver => ver.lt('v5.5.0'), STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .useCnt(1, 'v5.5.0').useCnt(1, 'v1').roundCnt(1, 'v5.5.0').roundCnt(1, 'v1')
         .description('为我方出战角色提供3点[护盾]。')
-        .description('【本回合中，我方角色下一次造成[岩元素伤害]后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。', 'v5.5.0')
+        .description('【本回合中，我方角色下一次造成[岩元素伤害]后：】如果我方存在提供[护盾]的出战状态，则为一个此类出战状态补充3点[护盾]。', 'v5.5.0', 'v1')
         .handle((status, event, ver) => {
-            if (ver.gte('v5.5.0')) return;
+            if (ver.gte('v5.5.0') && !ver.isOffline) return;
             return {
                 triggers: 'Geo-dmg',
                 isAddTask: true,
+                isAfterSkill: true,
                 exec: () => {
                     const shieldStatus = event.combatStatus.get(STATUS_TYPE.Shield);
-                    if (shieldStatus && event.skill?.isHeroSkill) {
-                        shieldStatus.addUseCnt(3, true);
-                        status.minusUseCnt();
-                    }
+                    if (!shieldStatus) return true;
+                    shieldStatus.addUseCnt(3, true);
+                    status.minusUseCnt();
                 }
             }
         }),

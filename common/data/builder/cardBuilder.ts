@@ -450,8 +450,9 @@ export class CardBuilder extends BaseCostBuilder {
         this._anydice = anydice;
         return this;
     }
-    canSelectHero(canSelectHero: number, version: Version = 'vlatest') {
-        this._canSelectHero.set([version, canSelectHero]);
+    canSelectHero(canSelectHero: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(v => this._canSelectHero.set([v, canSelectHero]));
         return this;
     }
     canSelectSummon(canSelectSummon: 0 | 1) {
