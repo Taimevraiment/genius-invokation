@@ -1,5 +1,5 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
-import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SUMMON_TAG, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
@@ -157,8 +157,9 @@ export class BaseCostBuilder extends BaseBuilder {
     costGeo(cost: number, version?: Version) {
         return this.cost(cost, DICE_TYPE.Geo, version);
     }
-    costDendro(cost: number, version?: Version) {
-        return this.cost(cost, DICE_TYPE.Dendro, version);
+    costDendro(cost: number, ...versions: Version[]) {
+        versions.forEach(v => this.cost(cost, DICE_TYPE.Dendro, v));
+        return this;
     }
     costSame(cost: number, version?: Version) {
         return this.cost(cost, DICE_TYPE.Same, version);
@@ -277,6 +278,20 @@ export class ArrayHero extends Array<Hero> {
         }
         return hidxs;
     }
+    // 获取生命值最高角色的hidx(只有一个number的数组)
+    getMaxHpHidxs() {
+        if (this.frontHidx == -1) return [];
+        const maxHp = Math.max(...this.filter(h => h.hp > 0).map(h => h.hp));
+        const hidxs: number[] = [];
+        for (let i = 0; i < this.length; ++i) {
+            const hidx = (i + this.frontHidx) % this.length;
+            if (this[hidx].hp == maxHp) {
+                hidxs.push(hidx);
+                break;
+            }
+        }
+        return hidxs;
+    }
     // 获得所有后台角色hidx
     getBackHidxs(limit?: number) {
         return this.allHidxs({ exclude: this.frontHidx, limit });
@@ -335,6 +350,9 @@ export class ArraySummon extends Array<Summon> {
     }
     getUseCnt(id: number) {
         return this.get(id)?.useCnt ?? 0;
+    }
+    getSimulanka() {
+        return this.filter(s => s.hasTag(SUMMON_TAG.Simulanka));
     }
 }
 
@@ -439,6 +457,7 @@ export interface EntityHandleRes {
     summon?: (number | [number, ...any])[] | number,
     summonOppo?: (number | [number, ...any])[] | number,
     addDmg?: number,
+    addPdmg?: number,
     addDmgType1?: number,
     addDmgType2?: number,
     addDmgType3?: number,

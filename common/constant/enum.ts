@@ -80,10 +80,17 @@ export const DICE_TYPE = {
 
 export type DiceType = TypeConst<typeof DICE_TYPE>;
 
+export const ENERGY_COST_TYPE = {
+    Energy: 'Energy', // 充能 9
+    SpEnergy1315: 'SpEnergy1315', // 战意 10
+    SpEnergy1116: 'SpEnergy1116', // 蛇之狡谋 11
+}
+
+export type EnergyCostType = TypeConst<typeof ENERGY_COST_TYPE>;
+
 export const COST_TYPE = {
     ...DICE_TYPE,
-    Energy: 'Energy', // 充能 9
-    SpEnergy: 'SpEnergy', // 战意 10
+    ...ENERGY_COST_TYPE,
 } as const;
 
 export type CostType = TypeConst<typeof COST_TYPE>;
@@ -239,6 +246,7 @@ export const HERO_LOCAL = {
     ArkheOusia: 'ArkheOusia', // 始基力:荒性 11
     ArkhePneuma: 'ArkhePneuma', // 始基力:芒性 12
     ConsecratedBeast: 'ConsecratedBeast', // 圣骸兽 13
+    CosmicCalamity: 'CosmicCalamity', // 寰宇劫灭 14
 } as const;
 
 export type HeroLocal = TypeConst<typeof HERO_LOCAL>;
@@ -321,6 +329,7 @@ export const CMD_MODE = {
     UseCard: 11, // 挑选并打出牌
     ByOrder: 12, // 按顺序执行
     IsPriority: 13, // 是否优先执行
+    LowHandCard: 14, // 弃置花费最低的手牌 
 } as const;
 
 export const INFO_TYPE = {
@@ -376,7 +385,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
-    'v6.2.0', 'v6.1.0', 'v6.0.0',
+    'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',

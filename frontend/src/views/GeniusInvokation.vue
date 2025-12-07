@@ -226,7 +226,7 @@
         client.willHp.some(v => v != undefined) ||
         client.changedSummons.some(s => s.some(s => s)) ||
         client.changedHeros.some(h => h.some(h => h))) ||
-      client.energyCnt.some(v => v.some(v => v)) ||
+      client.energyIcons != undefined ||
       client.willAttachs.some(v => v.some(v => v.length)) ||
       client.supportCnt.some(v => v.some(v => v))">
     </div>
@@ -587,7 +587,7 @@ const devOps = (cidx = 0) => {
       flag.add('setHp');
     } else if (op.startsWith('@')) { // 充能
       const isSpEnergy = op[1] == '@';
-      const [cnt = 6, hidx = heros.findIndex(h => h.isFront)] = op.slice(isSpEnergy ? 2 : 1).split(/[:：]+/).map(h);
+      const [cnt = 20, hidx = heros.findIndex(h => h.isFront)] = op.slice(isSpEnergy ? 2 : 1).split(/[:：]+/).map(h);
       cmds.push({ cmd: 'getEnergy', cnt, isAttach: isSpEnergy, hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx] });
       flag.add('setEnergy');
     } else if (op.startsWith('#')) { // 骰子

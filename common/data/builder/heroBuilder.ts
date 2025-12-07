@@ -1,8 +1,8 @@
-import { Card, Skill, Status } from "../../../typing";
+import { Card, EnergyIcons, Skill, Status } from "../../../typing";
 import { CARD_TAG, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, STATUS_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { GUYU_PREIFIX } from "../../constant/UIconst.js";
 import { versionWrap } from "../../utils/gameUtil.js";
-import { convertToArray } from "../../utils/utils.js";
+import { clone, convertToArray } from "../../utils/utils.js";
 import { ArrayStatus, BaseCostBuilder, Entity, VersionMap } from "./baseBuilder.js";
 import { GISkill, NormalSkillBuilder, SkillBuilder } from "./skillBuilder.js";
 
@@ -26,6 +26,7 @@ export class GIHero extends Entity {
     heroStatus: ArrayStatus = new ArrayStatus(); // 角色状态
     isFront: boolean = false; // 是否为前台角色
     attachElement: PureElementType[] = []; // 附着元素
+    updateEnergyIcon: (hero: GIHero, energyCnt: number) => EnergyIcons; // 更新充能图标
     UI: {
         src: string, // 立绘url
         srcs: string[], // 所有立绘url
@@ -34,11 +35,14 @@ export class GIHero extends Entity {
         isActive: boolean, // 是否发光
         curVersion: Version, // 当前版本
         versionChanges: Version[], // 版本变更
+        maxEnergy: number, // 最大充能图标数量
+        energyIcons: EnergyIcons, // 充能图标[底色，前色，是否闪烁]
     };
     constructor(
-        id: number, shareId: number, name: string, version: OnlineVersion, curVersion: Version, tags: HeroTag | HeroTag[], maxHp: number, element: ElementType,
-        weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null,
-        skills: GISkill[] = [], maxEnergy: number = 0, versionChanges: Version[] = [],
+        id: number, shareId: number, name: string, version: OnlineVersion, curVersion: Version, tags: HeroTag | HeroTag[], maxHp: number,
+        element: ElementType, weaponType: WeaponType, src: string | string[], avatar: string | string[], offlineVersion: OfflineVersion | null = null,
+        skills: GISkill[] = [], maxEnergy: number = 0, versionChanges: Version[] = [], uiMaxEnergy?: number,
+        updateEnergyIcon?: (hero: GIHero, energyCnt: number) => EnergyIcons,
     ) {
         super(id, name);
         this.shareId = shareId;
@@ -48,9 +52,14 @@ export class GIHero extends Entity {
         this.hp = maxHp;
         this.element = element;
         this.weaponType = weaponType;
-        if (src == '#') src = `${GUYU_PREIFIX}${id}`;
-        src = convertToArray(src);
+        src = convertToArray(src).filter(v => v != '').map(v => {
+            if (v.startsWith('#')) return `${GUYU_PREIFIX}${v.slice(1) || id}`;
+            return v;
+        });
         avatar = convertToArray(avatar);
+        this.skills.push(...skills);
+        this.maxEnergy = maxEnergy || (this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0);
+        uiMaxEnergy ??= Math.abs(this.maxEnergy);
         this.UI = {
             src: src[0],
             srcs: src,
@@ -59,10 +68,22 @@ export class GIHero extends Entity {
             isActive: false,
             curVersion,
             versionChanges,
+            maxEnergy: uiMaxEnergy,
+            energyIcons: [new Array(uiMaxEnergy).fill('/image/energy-empty.png'), [], []],
         }
-        this.skills.push(...skills);
-        this.maxEnergy = maxEnergy || (this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0);
         this.offlineVersion = offlineVersion;
+        this.updateEnergyIcon = updateEnergyIcon ?? ((hero, energyCnt) => {
+            const energyIcons = clone(hero.UI.energyIcons);
+            energyIcons[1] = new Array(uiMaxEnergy).fill(0).map((_, eidx) => {
+                if (hero.energy + Math.max(0, energyCnt) - 1 >= eidx) return '/image/energy-charged.png';
+                return '/image/energy-empty.png';
+            });
+            energyIcons[2] = new Array(uiMaxEnergy).fill(0).map((_, eidx) => {
+                if (energyCnt < 0) return -energyCnt - 1 >= eidx ? 2 : 0;
+                return +(hero.energy - 1 < eidx && hero.energy + energyCnt - 1 >= eidx);
+            });
+            return energyIcons;
+        });
     }
     get equipments(): Card[] {
         return [this.weaponSlot, this.relicSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null]
@@ -88,6 +109,10 @@ export class GIHero extends Entity {
         return this.heroStatus.has(STATUS_TYPE.Shield, STATUS_TYPE.Barrier) ||
             this.equipments.some(eq => eq.hasTag(CARD_TAG.Barrier));
     }
+    get spEnergy() {
+        if (this.energy >= 0) return 0;
+        return -this.energy;
+    }
 }
 
 export class HeroBuilder extends BaseCostBuilder {
@@ -100,6 +125,8 @@ export class HeroBuilder extends BaseCostBuilder {
     private _src: string[] = [];
     private _avatar: string[] = [];
     private _normalSkill: NormalSkillBuilder | undefined;
+    private _uiMaxEnergy: number | undefined;
+    private _updateEnergyIcon: ((hero: GIHero, energyCnt: number) => EnergyIcons) | undefined;
     constructor(shareId?: number) {
         super(shareId ?? -1);
     }
@@ -169,6 +196,10 @@ export class HeroBuilder extends BaseCostBuilder {
     }
     consecratedBeast() {
         this._tags.push(HERO_LOCAL.Monster, HERO_LOCAL.ConsecratedBeast);
+        return this;
+    }
+    cosmicCalamity() {
+        this._tags.push(HERO_LOCAL.CosmicCalamity);
         return this;
     }
     physical() {
@@ -255,6 +286,14 @@ export class HeroBuilder extends BaseCostBuilder {
         this._avatar.push(...avatar.filter(v => v != ''));
         return this;
     }
+    uiMaxEnergy(maxEnergy: number) {
+        this._uiMaxEnergy = maxEnergy;
+        return this;
+    }
+    updateEnergyIcon(updateEnergyIcon: (hero: GIHero, energyCnt: number) => EnergyIcons) {
+        this._updateEnergyIcon = updateEnergyIcon;
+        return this;
+    }
     get versionChanges() {
         const vchanges = super.versionChanges;
         return [...new Set([...vchanges, ...this._skills.map(skill => skill.versionChanges)].flat())];
@@ -267,6 +306,6 @@ export class HeroBuilder extends BaseCostBuilder {
         return new GIHero(this._id, this._shareId, this._name, this._version, this._curVersion, this._tags,
             maxHp, element, this._weaponType, this._src, this._avatar, this._offlineVersion,
             skills.map((skill, skidx) => skill.costElement(element).id(this._id * 10 + skidx + 1).version(this._curVersion).done()),
-            this._maxEnergy, this.versionChanges);
+            this._maxEnergy, this.versionChanges, this._uiMaxEnergy, this._updateEnergyIcon);
     }
 }

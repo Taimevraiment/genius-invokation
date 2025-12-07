@@ -123,6 +123,11 @@ export default class CmdsGenerator {
         if (support != undefined) this._add({ cmd: 'getSupport', summon: support, isOppo });
         return this;
     }
+    destroySummon(options: { cnt?: number, isOppo?: boolean, summon?: number } = {}) {
+        const { cnt = 1, isOppo, summon } = options;
+        this._add({ cmd: 'destroySummon', cnt, isOppo, summon });
+        return this;
+    }
     reroll(cnt: number) {
         this._add({ cmd: 'reroll', cnt });
         return this;
@@ -150,6 +155,7 @@ export default class CmdsGenerator {
     } = {}) {
         let { hidxs, isOppo, isPriority, isOrder } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
+        if (hidxs?.length == 0) return this;
         const mode = isPriority ? CMD_MODE.IsPriority : isOrder ? CMD_MODE.ByOrder : 0;
         this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode });
         return this;

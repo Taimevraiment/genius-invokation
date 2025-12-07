@@ -122,7 +122,7 @@
     <div class="heros" :class="{ 'mobile-heros': isMobile }">
       <div class="hero-group" v-for="(hgroup, hgi) in heros" :key="hgi">
         <GIHero :hero="hero" :isMobile="isMobile" :isBlink="changedHeros[getGroup(hgi)][hidx]"
-          :hpChange="hpCurcnt[hgi][hidx]" :energyCnt="energyCnt?.[hgi]?.[hidx]"
+          :hpChange="hpCurcnt[hgi][hidx]" :energyIcons="energyIcons?.[hgi]?.[hidx]"
           :combatStatus="hero.isFront ? combatStatuses[hgi] : []" @click.stop="selectHero(hgi, hidx)" v-if="!!opponent"
           :style="{
             backgroundColor: hero.UI.src == '' ? ELEMENT_COLOR[hero.element ?? ELEMENT_TYPE.Physical] : '',
@@ -135,7 +135,7 @@
             'hero-select': heroSelect[hgi][hidx],
             'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
             'active-willhp': canAction && (
-              willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyCnt[hgi][hidx] ||
+              willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyIcons[hgi][hidx][2].some(v => v) ||
               (heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 ||
               willSwitch[hgi][hidx] || targetSelect?.[hgi]?.[hidx] || changedHeros[getGroup(hgi)][hidx]
             ),
@@ -357,7 +357,7 @@
             v-if="!summon?.UI.isWill && (summon.damage >= 0 || summon.shieldOrHeal > 0 || summon.UI.bottomIcon)">
             <img class="summon-bottom-icon"
               :style="{ background: `radial-gradient(${ELEMENT_COLOR.Heal} 30%, ${ELEMENT_COLOR.Heal}19 60%, transparent 80%)` }"
-              :src="summon.damage >= 0 ? ELEMENT_URL[summon.element] : summon.shieldOrHeal > 0 ? getPngIcon('Element_Heal') : summon.UI.bottomIcon" />
+              :src="summon.UI.bottomIcon || summon.damage >= 0 ? ELEMENT_URL[summon.element] : summon.shieldOrHeal > 0 ? getPngIcon('Element_Heal') : summon.UI.bottomIcon" />
             <StrokedText class="summon-bottom-num" v-if="!summon?.UI.isWill"
               :class="{ 'is-change': summonBottomCurcnt[saidx][suidx].isChange }">
               {{ summon.damage >= 0 ? summon.damage : summon.shieldOrHeal > 0 ? summon.shieldOrHeal :
@@ -447,7 +447,7 @@ import { CARD_SUBTYPE_URL, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_URL, REACTION_CO
 import { newHero } from '@@@/data/heros';
 import { newSkill } from '@@@/data/skills';
 import { computed, onMounted, ref, watchEffect } from 'vue';
-import { Card, Hero, Player, Skill, Status, Summon } from '../../../typing';
+import { Card, EnergyIcons, Hero, Player, Skill, Status, Summon } from '../../../typing';
 import GIHero from './Hero.vue';
 import StrokedText from './StrokedText.vue';
 
@@ -646,7 +646,7 @@ const canAction = computed<boolean>(() => props.canAction);
 const heroSwitchDice = computed<number>(() => props.client.heroSwitchDice);
 const supportCnt = computed<number[][]>(() => props.client.supportCnt);
 const summonCnt = computed<number[][]>(() => props.client.summonCnt);
-const energyCnt = computed<number[][]>(() => wrapArr(props.client.energyCnt.flat()));
+const energyIcons = computed<EnergyIcons[][]>(() => wrapArr((props.client.energyIcons ?? props.client.players.map(p => p.heros.map(h => h.UI.energyIcons))).flat()));
 const initCardsSelect = ref<boolean[]>(new Array(player.value.handCards.length).fill(false));
 const heroSelect = computed<number[][]>(() => props.client.heroSelect);
 const heroCanSelect = computed<boolean[]>(() => props.client.heroCanSelect);
@@ -1539,7 +1539,9 @@ const mouseup = () => {
 .status-select,
 .slot-select,
 .pick-select {
-  box-shadow: 4px 4px 6px #ffeb56, -4px 4px 6px #ffeb56, 4px -4px 6px #ffeb56,
+  box-shadow: 4px 4px 6px #ffeb56,
+    -4px 4px 6px #ffeb56,
+    4px -4px 6px #ffeb56,
     -4px -4px 6px #ffeb56 !important;
 }
 

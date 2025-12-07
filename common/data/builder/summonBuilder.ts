@@ -1,5 +1,5 @@
 import { MinusDiceSkill, Summon, Trigger, VersionWrapper } from "../../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SUMMON_TAG, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { DAMAGE_TYPE, DamageType, ELEMENT_TYPE, ElementType, SUMMON_DESTROY_TYPE, SUMMON_TAG, SummonDestroyType, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -56,7 +56,7 @@ export class GISummon extends Entity {
     shieldOrHeal: number; // 挡伤量(<0)/回复量(>0)
     damage: number; // 伤害量
     pdmg: number; // 穿透伤害
-    element: ElementType; // 伤害元素
+    element: DamageType; // 伤害元素
     tag: SummonTag[]; // 标签
     isDestroy: SummonDestroyType; // 是否销毁：0次数用完销毁 1次数用完回合结束时销毁 2回合结束时强制销毁
     isTalent: boolean; // 是否有天赋
@@ -77,7 +77,7 @@ export class GISummon extends Entity {
     };
     constructor(
         id: number, name: string, description: string, src: string, useCnt: number, maxUse: number,
-        shieldOrHeal: number, damage: number, element: ElementType, curVersion: Version,
+        shieldOrHeal: number, damage: number, element: DamageType, curVersion: Version,
         handle?: (summon: Summon, event: SummonBuilderHandleEvent, ver: VersionWrapper) => SummonBuilderHandleRes | undefined,
         options: {
             pct?: number, isTalent?: boolean, vars?: Record<string, number>, pdmg?: number, isDestroy?: SummonDestroyType, stsId?: number,
@@ -162,6 +162,7 @@ export class GISummon extends Entity {
                         if (c.cmd == 'attack') {
                             c.cnt ??= this.damage;
                             c.element ??= this.element;
+                            if (c.element == DAMAGE_TYPE.Pierce) c.hidxs ??= [cevent.eheros.frontHidx];
                         } else if (c.cmd == 'heal') {
                             c.cnt ??= shieldOrHeal;
                         }
@@ -186,6 +187,12 @@ export class GISummon extends Entity {
         if (trigger.includes('elReaction-Anemo:') && this.element == ELEMENT_TYPE.Anemo) {
             this.element = ELEMENT_TYPE[trigger.slice(trigger.indexOf(':') + 1) as ElementType];
         }
+    }
+    addSimulankaEffect() {
+        if (!this.hasTag(SUMMON_TAG.Simulanka)) return;
+        if (this.id == 301028) ++this.damage;
+        else if (this.id == 3010301) ++this.shieldOrHeal;
+        else ++this.variables.effect;
     }
     addUseCnt(ignoreMax: boolean): number;
     addUseCnt(n?: number, ignoreMax?: boolean): number;
@@ -213,7 +220,7 @@ export class SummonBuilder extends BaseBuilder {
     private _shieldOrHeal: number = 0;
     private _damage: VersionMap<number> = this._createVersionMap();
     private _pdmg: number = 0;
-    private _element: ElementType | undefined;
+    private _element: DamageType | undefined;
     private _tag: SummonTag[] = [];
     private _perCnt: VersionMap<number> = this._createVersionMap();
     private _isTalent: boolean = false;
@@ -296,6 +303,10 @@ export class SummonBuilder extends BaseBuilder {
     }
     dendro() {
         this._element = ELEMENT_TYPE.Dendro;
+        return this;
+    }
+    pierce() {
+        this._element = DAMAGE_TYPE.Pierce;
         return this;
     }
     pdmg(pdmg: number) {

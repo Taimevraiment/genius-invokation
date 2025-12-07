@@ -38,21 +38,24 @@
             </StrokedText>
         </div>
         <div class="hero-right-bar" v-if="hero && hero.hp > 0 && !isHideEnergy">
-            <div v-for="(_, eidx) in Math.abs(hero.maxEnergy) / (hero.maxEnergy >= 0 ? 1 : 2)" :key="eidx"
-                class="hero-energy" :class="{ 'mobile-energy': isMobile }">
-                <img class="hero-energy-img" :src="getEnergyIcon(
-                    hero.maxEnergy < 0 && Math.abs(hero.energy) + Math.max(0, energyCnt) + (hero.maxEnergy / 2) - 1 >= eidx,
-                    hero.maxEnergy < 0
-                )">
-                <img class="hero-energy-img" :class="{
-                    blink: (Math.abs(hero.energy) - 1 < eidx && Math.abs(hero.energy) + (energyCnt) - 1 >= eidx) ||
-                        (Math.abs(hero.energy) + (hero.maxEnergy / 2) - 1 < eidx && Math.abs(hero.energy) + (energyCnt) + (hero.maxEnergy / 2) - 1 >= eidx)
-                }" :src="getEnergyIcon(
-                    Math.abs(hero.energy) + Math.max(0, energyCnt) - 1 >= eidx,
-                    hero.maxEnergy < 0,
-                    Math.abs(hero.energy) + Math.max(0, energyCnt) + (hero.maxEnergy / 2) - 1 >= eidx
-                )" />
+            <div v-if="hero.id == 1116" class="hero-sp-energy-1116" :class="{ 'mobile-sp-energy-1116': isMobile }">
+                <img class="hero-energy-img" :src="energyIcons[0][0]">
+                <img :class="['hero-energy-img', { blink: energyIcons[2][0] != 2 }]" :src="energyIcons[1][0]" :style="{
+                    clipPath: `xywh(0 ${energyIcons[1][2]} 100% 100%)`,
+                    filter: `brightness(${energyIcons[2][0] == 2 ? 0.8 : 1})`
+                }">
+                <img class="hero-energy-img" :src="energyIcons[1][0]"
+                    :style="{ clipPath: `xywh(0 ${energyIcons[1][1]} 100% 100%)` }">
             </div>
+            <template v-else>
+                <div v-for="(_, eidx) in energyIcons[0]" :key="eidx" class="hero-energy"
+                    :class="{ 'mobile-energy': isMobile }">
+                    <img class="hero-energy-img" :src="energyIcons[0][eidx]">
+                    <img class="hero-energy-img" :class="{ blink: energyIcons[2][eidx] == 1 }"
+                        :src="energyIcons[1][eidx]"
+                        :style="{ filter: `brightness(${energyIcons[2][eidx] == 2 ? 0.8 : 1})` }" />
+                </div>
+            </template>
             <slot name="hero-right-bar"></slot>
         </div>
         <slot></slot>
@@ -63,7 +66,7 @@ import { CARD_TAG, ELEMENT_TYPE, STATUS_TYPE } from '@@@/constant/enum';
 import { ELEMENT_COLOR, NIGHT_SOUL_BG_COLOR } from '@@@/constant/UIconst';
 import { hasObjById } from '@@@/utils/gameUtil';
 import { computed } from 'vue';
-import { Hero, Status } from '../../../typing';
+import { EnergyIcons, Hero, Status } from '../../../typing';
 import NightSoul from './NightSoul.vue';
 import StrokedText from './StrokedText.vue';
 
@@ -75,7 +78,7 @@ const props = defineProps<{
         isChange: boolean,
         val: number
     },
-    energyCnt?: number,
+    energyIcons?: EnergyIcons,
     combatStatus?: Status[],
     hpPosY?: string,
     isHideHp?: boolean,
@@ -87,7 +90,7 @@ const hero = computed(() => props.hero);
 const isMobile = computed(() => props.isMobile ?? false);
 const isBlink = computed(() => props.isBlink);
 const hpCurcnt = computed(() => props.hpChange);
-const energyCnt = computed(() => props.energyCnt ?? 0);
+const energyIcons = computed(() => props.energyIcons ?? props.hero.UI.energyIcons);
 const combatStatus = computed(() => props.combatStatus ?? []);
 const hpPosY = computed(() => props.hpPosY ?? '-5%');
 const isHideHp = computed(() => props.isHideHp ?? false);
@@ -98,10 +101,6 @@ const isHideBorder = computed(() => props.isHideBorder ?? false);
 const getPngIcon = (name: string) => {
     if (name.startsWith('http') || name == '') return name;
     return `/image/${name}.png`;
-};
-// 获取充能图标
-const getEnergyIcon = (isCharged: boolean = false, isSp: boolean = false, isFull: boolean = false) => {
-    return `/image/${isSp ? 'sp-' : ''}energy-${isCharged ? 'charged' : 'empty'}${isSp && isFull ? '-full' : ''}.png`;
 };
 </script>
 <style scoped>
@@ -188,6 +187,12 @@ const getEnergyIcon = (isCharged: boolean = false, isSp: boolean = false, isFull
     width: 15px;
     height: 15px;
     margin-bottom: 1px;
+}
+
+.hero-sp-energy-1116 {
+    position: relative;
+    width: 12px;
+    height: 62px;
 }
 
 .hero-energy-img {
@@ -286,6 +291,12 @@ const getEnergyIcon = (isCharged: boolean = false, isSp: boolean = false, isFull
     width: 12px;
     height: 12px;
     margin: 0;
+}
+
+.mobile-sp-energy-1116 {
+    position: relative;
+    width: 8px;
+    height: 42px;
 }
 
 @keyframes blink {

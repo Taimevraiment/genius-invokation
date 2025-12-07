@@ -406,8 +406,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { trigger, summons } = event;
         if (trigger == 'enter') return { triggers: 'enter', exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
         if (trigger != 'end-phase') return;
-        const selectSummons = summons.filter(s => s.hasTag(SUMMON_TAG.Simulanka));
-        if (selectSummons.length == 0) return;
+        if (summons.getSimulanka().length == 0) return;
         return {
             triggers: 'end-phase',
             exec: cmds => {
@@ -438,13 +437,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         exec: cmds => (cmds.adventure(), { isDestroy: support.minusUseCnt() == 0 }),
     })),
     // 沉玉谷
-    321032: () => new SupportBuilder().collection(1).handle((support, event) => ({
+    321032: () => new SupportBuilder().collection(1).handle((support, event, ver) => ({
         triggers: 'adventure',
         exec: cmds => {
             support.addUseCnt();
             if (support.useCnt == 2) return cmds.getCard(2, { card: 333029 }).res;
             if (support.useCnt == 4) return cmds.getStatus([[169, 3], [170, 3]]).res;
-            if (support.useCnt == 7) {
+            if (support.useCnt == (ver.lt('v6.3.0') ? 7 : 8)) {
                 const { heros } = event;
                 const hidxs = heros.getMaxHurtHidxs();
                 cmds.attach({ element: ELEMENT_TYPE.Hydro, hidxs: heros.allHidxs() })
@@ -465,6 +464,20 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             if (support.useCnt == 5) return cmds.getCard(1, { card: 301038 }).res;
             if (support.useCnt == 12) {
                 cmds.getCard(1, { card: 301039 });
+                return { isDestroy: true }
+            }
+        }
+    })),
+    // 天蛇船
+    321034: () => new SupportBuilder().collection(1).handle(support => ({
+        triggers: 'adventure',
+        exec: cmds => {
+            support.addUseCnt();
+            cmds.changeDice({ cnt: 1 });
+            if (support.useCnt == 2) return cmds.getCard(1).res;
+            if (support.useCnt == 4) return cmds.getStatus([[172, 2]]).res;
+            if (support.useCnt == 6) {
+                cmds.destroySummon({ isOppo: true }).getSummon(301041);
                 return { isDestroy: true }
             }
         }
@@ -883,9 +896,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             exec: cmds => {
                 if (trigger == 'enter') return cmds.getCard(2, { card: 301033 }).addCard(2, 301033).res;
                 if (trigger == 'summon-generate' && sourceSummon) {
-                    if (sourceSummon.id == 301028) ++sourceSummon.damage;
-                    else if (sourceSummon.id == 3010301) ++sourceSummon.shieldOrHeal;
-                    else ++sourceSummon.variables.effect;
+                    sourceSummon.addSimulankaEffect();
                     return { isDestroy: support.minusUseCnt() == 0 }
                 }
             },
@@ -905,6 +916,19 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 cmds.adventure();
                 support.minusPerCnt();
                 return { isDestroy: support.minusUseCnt() == 0 }
+            }
+        }
+    }),
+    // 玻娜与「绿松石」
+    322032: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+        const { trigger } = event;
+        if (trigger == 'enter') return { triggers: trigger, exec: cmds => cmds.adventure().res }
+        if (support.perCnt <= 0) return;
+        return {
+            triggers: 'after-skilltype5',
+            exec: cmds => {
+                support.minusPerCnt();
+                cmds.adventure();
             }
         }
     }),

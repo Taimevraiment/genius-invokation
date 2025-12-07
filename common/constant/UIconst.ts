@@ -31,7 +31,8 @@ export const ELEMENT_NAME = {
     [STATUS_TYPE.Shield]: '护盾',
     [DICE_COST_TYPE.Omni]: '万能元素骰',
     [DICE_TYPE.Any]: '无色元素骰',
-    [COST_TYPE.SpEnergy]: '战意',
+    [COST_TYPE.SpEnergy1315]: '战意',
+    [COST_TYPE.SpEnergy1116]: '蛇之狡谋',
 } as const;
 
 export const ELEMENT_NAME_KEY = swapKeysAndValues(ELEMENT_NAME);
@@ -49,7 +50,8 @@ export const ELEMENT_COLOR = {
     [ELEMENT_TYPE.Dendro]: '#72c269',
     [COST_TYPE.Same]: 'white',
     [COST_TYPE.Energy]: 'white',
-    [COST_TYPE.SpEnergy]: 'white',
+    [COST_TYPE.SpEnergy1315]: 'white',
+    [COST_TYPE.SpEnergy1116]: '#a3a4ffff',
     [DAMAGE_TYPE.Pierce]: '#e9e9e9',
     [STATUS_TYPE.Shield]: 'white',
     [DICE_COST_TYPE.Omni]: 'white',
@@ -60,6 +62,7 @@ export const ELEMENT_COLOR = {
 export type ElementColorKey = keyof typeof ELEMENT_COLOR;
 
 export const ELEMENT_URL = {
+    [DAMAGE_TYPE.Pierce]: 'https://patchwiki.biligame.com/images/ys/thumb/9/9b/5s42slt4q9wwwemq431j6nxkcc5rkp1.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%85%83%E7%B4%A0-%E7%89%A9%E7%90%86.png',
     [ELEMENT_TYPE.Physical]: 'https://patchwiki.biligame.com/images/ys/thumb/9/9b/5s42slt4q9wwwemq431j6nxkcc5rkp1.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%85%83%E7%B4%A0-%E7%89%A9%E7%90%86.png',
     [ELEMENT_TYPE.Hydro]: 'https://patchwiki.biligame.com/images/ys/a/ab/6m3r7j2tmwx5x6zkvzs25davcm6add5.png',
     [ELEMENT_TYPE.Pyro]: 'https://patchwiki.biligame.com/images/ys/c/c6/bj6s4no20w4btn8no6gze4sfejhl51b.png',
@@ -116,9 +119,10 @@ export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Food]: 'https://patchwiki.biligame.com/images/ys/thumb/3/3e/c3w8tms9npmrntwlvptylijslt7ujn1.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%96%99%E7%90%86.png',
     [CARD_SUBTYPE.Talent]: 'https://patchwiki.biligame.com/images/ys/thumb/8/82/pg8v7zj01kq1lohm9objnn9tv9ffdn4.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%A4%A9%E8%B5%8B.png',
     // [CARD_SUBTYPE.Talent]: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Equip_Talent.webp',
-    [CARD_SUBTYPE.Action]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_CombatAction.png',
+    [CARD_SUBTYPE.Action]: 'https://gi.yatta.moe/assets/UI/UI_Gcg_Tag_Card_CombatAction.png',
     [CARD_SUBTYPE.Legend]: 'https://patchwiki.biligame.com/images/ys/thumb/9/90/iwrhiaj9r18jopmj1vtj6zbimxw0z72.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E7%A7%98%E4%BC%A0.png',
-    [CARD_SUBTYPE.ElementResonance]: 'https://api.ambr.top/assets/UI/UI_Gcg_Tag_Card_Sync.png',
+    [CARD_SUBTYPE.ElementResonance]: 'https://gi.yatta.moe/assets/UI/UI_Gcg_Tag_Card_Sync.png',
+    [CARD_SUBTYPE.Adventure]: '/image/Adventure.png',
 } as const;
 
 export const SUMMON_TAG_NAME = {
@@ -166,7 +170,8 @@ export const ELEMENT_ICON = {
     [STATUS_TYPE.Shield]: 'shield',
     [DICE_COST_TYPE.Omni]: 'omni',
     [COST_TYPE.Any]: 'any',
-    [COST_TYPE.SpEnergy]: 'sp-energy',
+    [COST_TYPE.SpEnergy1315]: 'sp-energy-1315',
+    [COST_TYPE.SpEnergy1116]: 'sp-energy-1116',
 } as const;
 
 export const CHANGE_GOOD_COLOR = '#4dff00'; // 减骰绿色
@@ -226,6 +231,7 @@ export const HERO_LOCAL_NAME = {
     [HERO_TAG.ArkheOusia]: '始基力：荒性',
     [HERO_TAG.ArkhePneuma]: '始基力：芒性',
     [HERO_TAG.ConsecratedBeast]: '圣骸兽',
+    [HERO_TAG.CosmicCalamity]: '寰宇劫灭',
 } as const;
 
 export const HERO_TAG_NAME = {
@@ -251,6 +257,7 @@ export const HERO_TAG_URL = {
     [HERO_TAG.ArkhePneuma]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bb176892163d7c0d63e664b01217802d.png',
     [HERO_TAG.Pneuma]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bb176892163d7c0d63e664b01217802d.png',
     [HERO_TAG.ConsecratedBeast]: '/image/local13.png',
+    [HERO_TAG.CosmicCalamity]: '/image/local14.png',
 } as const;
 
 export const WEAPON_TYPE_NAME = {

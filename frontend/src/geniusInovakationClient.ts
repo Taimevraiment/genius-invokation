@@ -17,7 +17,7 @@ import { newSummon } from "@@@/data/summons";
 import { checkDices } from "@@@/utils/gameUtil";
 import { clone, delay, isCdt, parseShareCode } from "@@@/utils/utils";
 import {
-    ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, Hero, InfoVO, PickCard, PickCardType, Player, Preview, RecordData, ServerData, Skill, Status, Summon
+    ActionData, ActionInfo, Card, Countdown, CustomVersionConfig, DamageVO, EnergyIcons, Hero, InfoVO, PickCard, PickCardType, Player, Preview, RecordData, ServerData, Skill, Status, Summon
 } from "../../typing";
 
 type DeckValid = {
@@ -53,7 +53,7 @@ export default class GeniusInvokationClient {
     willSwitch: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 是否将要切换角色
     supportCnt: number[][] = this._resetSupportCnt(); // 支援物变化数
     summonCnt: number[][] = this._resetSummonCnt(); // 召唤物变化数
-    energyCnt: number[][] = []; // 充能变化数
+    energyIcons: EnergyIcons[][] | undefined; // 充能图标
     round: number = 1; // 回合数
     isWin: number = -1; // 胜者idx
     modalInfo: InfoVO = NULL_MODAL(); // 展示信息
@@ -260,7 +260,7 @@ export default class GeniusInvokationClient {
         this._resetSummonCnt();
         this._resetWillAttachs();
         this._resetSupportCnt();
-        this._resetEnergyCnt();
+        this._resetEnergyIcons();
         if (!notTarget) {
             this.modalInfo = NULL_MODAL();
             this.currSkill = NULL_SKILL();
@@ -414,7 +414,7 @@ export default class GeniusInvokationClient {
                 this.willSwitch = clone(preview.willSwitch) ?? this._resetWillSwitch();
                 if (preview.changedSummons) this.changedSummons = clone(preview.changedSummons);
                 if (preview.changedHeros) this.changedHeros = clone(preview.changedHeros);
-                this.energyCnt = clone(preview.willEnergyChange) ?? this._resetEnergyCnt();
+                this.energyIcons = clone(preview.energyIcons);
                 this.isValid = preview.isValid;
                 this.heroCanSelect = clone(preview.heroCanSelect) ?? this._resetHeroCanSelect();
                 this.summonCanSelect = clone(preview.summonCanSelect) ?? this._resetSummonCanSelect();
@@ -736,8 +736,8 @@ export default class GeniusInvokationClient {
             this.willAttachs = preview.willAttachs?.slice() ?? this._resetWillAttachs();
             this.willSummons = preview.willSummons?.slice() ?? this._resetWillSummons();
             this.willSwitch = preview.willSwitch?.slice() ?? this._resetWillSwitch();
-            this.supportCnt = [...clone(preview.willSupportChange)!];
-            this.energyCnt = [...clone(preview.willEnergyChange)!];
+            this.supportCnt = clone(preview.willSupportChange)!;
+            this.energyIcons = clone(preview.energyIcons);
             this.isValid = preview.isValid;
             if (this.currSkill.canSelectHero == -1) this.modalInfo = NULL_MODAL();
         }
@@ -938,7 +938,7 @@ export default class GeniusInvokationClient {
                 this._resetSummonCnt();
                 this._resetWillAttachs();
                 this._resetSupportCnt();
-                this._resetEnergyCnt();
+                this._resetEnergyIcons();
             } else {
                 if (this.diceSelect.indexOf(true) == -1) return this._sendTip('骰子不符合要求');
                 this.emit({
@@ -1002,16 +1002,16 @@ export default class GeniusInvokationClient {
             const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseSkill && pre.skillId == skid);
             if (!preview) throw new Error('技能预览未找到');
             this.willHp = [...preview.willHp!.slice()];
-            this.willAttachs = [...clone(preview.willAttachs)!];
-            this.willSummons = [...clone(preview.willSummons)!];
-            this.changedSummons = [...clone(preview.changedSummons)!];
-            this.changedHeros = [...clone(preview.changedHeros)!];
-            this.summonCnt = [...clone(preview.willSummonChange)!];
-            this.supportCnt = [...clone(preview.willSupportChange)!];
-            this.willSwitch = [...preview.willSwitch!];
-            this.summonCanSelect = [...clone(preview.summonCanSelect)!];
-            this.heroCanSelect = [...clone(preview.heroCanSelect)!];
-            this.energyCnt = [...clone(preview.willEnergyChange)!];
+            this.willAttachs = clone(preview.willAttachs)!;
+            this.willSummons = clone(preview.willSummons)!;
+            this.changedSummons = clone(preview.changedSummons)!;
+            this.changedHeros = clone(preview.changedHeros)!;
+            this.summonCnt = clone(preview.willSummonChange)!;
+            this.supportCnt = clone(preview.willSupportChange)!;
+            this.willSwitch = preview.willSwitch!;
+            this.summonCanSelect = clone(preview.summonCanSelect)!;
+            this.heroCanSelect = clone(preview.heroCanSelect)!;
+            this.energyIcons = clone(preview.energyIcons);
             this.heroSelect[1].forEach((_, i, a) => a[i] = +(preview.heroIdxs?.[0] == i));
             this._resetTargetSelect();
             this._resetSummonSelect();
@@ -1232,9 +1232,8 @@ export default class GeniusInvokationClient {
     /**
      * 重置充能预览
      */
-    private _resetEnergyCnt() {
-        this.energyCnt.forEach(v => v.fill(0));
-        return this.energyCnt;
+    private _resetEnergyIcons() {
+        this.energyIcons = undefined;
     }
     /**
      * 重置目标选择预览
@@ -1270,7 +1269,6 @@ export default class GeniusInvokationClient {
      */
     initSelect(players: Player[] = this.players) {
         this.heroCanSelect = (players[this.playerIdx]?.heros ?? []).map(() => false);
-        this.energyCnt = players.map(p => p?.heros.map(() => 0) ?? []);
         this.targetSelect = players.map(p => p?.heros.map(() => false) ?? []);
         this.statusSelect.forEach((p, pi) => {
             p.forEach((_, i, a) => {

@@ -2,7 +2,7 @@
 import { Summon, Trigger } from "../../typing";
 import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
-import { ELEMENT_URL, STATUS_ICON } from "../constant/UIconst.js";
+import { STATUS_ICON } from "../constant/UIconst.js";
 import { getDerivantParentId, getHidById } from "../utils/gameUtil.js";
 import { isCdt } from "../utils/utils.js";
 import { SummonBuilder } from "./builder/summonBuilder.js";
@@ -129,7 +129,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     111151: () => new SummonBuilder('厨艺机关·低温冷藏模式').useCnt(2).damage(1)
         .description('{defaultAtk。}')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/6036432e36226ad491e4c46c7e8eb20a_8935428837111338396.png')
         .handle((summon, event) => {
             const { trigger, talent, source } = event;
             if (trigger == 'phase-end') return { triggers: trigger, exec: cmds => summon.phaseEndAtk(cmds) }
@@ -309,13 +309,22 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
+    114161: () => new SummonBuilder('超音灵眼').useCnt(3).damage(1)
+        .description('{defaultAtk。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌可用次数-1。（每回合1次）}')
+        .src('#')
+        .handle((_, event) => {
+            const { trigger } = event;
+            if (['enter', 'turn-end'].includes(trigger)) return { triggers: trigger, isOnlyPhaseEnd: true, isNotAddTask: true, status: 114161 }
+            return { triggers: 'phase-end' }
+        }),
+
     115011: (isTalent: boolean = false) => new SummonBuilder('大型风灵').useCnt(3).damage(2).talent(isTalent)
         .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；【此召唤物在场时：】如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9ed867751e0b4cbb697279969593a81c_1968548064764444761.png')
         .handle((summon, event) => {
             const { trigger } = event;
             const triggers: Trigger[] = ['phase-end'];
-            const changeElTrgs = ['-dmg', '-dmg-Swirl'].map(t => ELEMENT_TYPE[summon.element] + t) as Trigger[];
+            const changeElTrgs = ['-dmg', '-dmg-Swirl'].map(t => ELEMENT_TYPE[summon.element as ElementType] + t) as Trigger[];
             if (summon.element == ELEMENT_TYPE.Anemo) triggers.push('elReaction-Anemo');
             const isTalent = summon.isTalent && summon.element != ELEMENT_TYPE.Anemo && changeElTrgs.some(t => t == trigger);
             if (isTalent) triggers.push(...changeElTrgs);
@@ -905,6 +914,20 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         }),
 
+    301041: () => new SummonBuilder('回天的圣主').from(321034).useCnt(3).damage(2).pierce()
+        .description('{defaultAtk。；此卡牌被弃置时，对双方场上生命值最多的角色造成5点[穿透伤害]。}')
+        .src('#')
+        .handle((summon, event) => ({
+            triggers: ['phase-end', 'destroy'],
+            exec: cmds => {
+                const { trigger, heros, eheros } = event;
+                if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
+                const maxHp = Math.max(...[...heros, ...eheros].map(h => h.hp));
+                cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }), isOppo: false })
+                    .attack(5, DAMAGE_TYPE.Pierce, { hidxs: eheros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }) });
+            }
+        })),
+
     302201: () => new SummonBuilder('愤怒的太郎丸').from(322024).useCnt(2).damage(2).physical().description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/21981b1c1976bec9d767097aa861227d_6685318429748077021.png'),
 
@@ -921,18 +944,11 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/183046623/084fbb351267f4a6eb5b4eb167cebe51_7018603863032841385.png'),
 
     303245: (dmg: number = 0, useCnt: number = 0) =>
-        new SummonBuilder('「邪龙」').from(332051).icon(ELEMENT_URL[DAMAGE_TYPE.Physical])
+        new SummonBuilder('「邪龙」').from(332051).pierce()
             .useCnt(1 + Math.min(4, useCnt)).useCnt(1 + Math.min(5, useCnt), 'v6.2.0')
             .damage(1 + Math.min(4, dmg)).damage(1 + Math.min(5, dmg), 'v6.2.0')
-            .description('【结束阶段：】造成{dmg}点[穿透伤害]。；[useCnt]')
-            .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/9362e2d9730bee84d5b41850a1e0e9bd_5229484141013095084.png')
-            .handle((summon, event) => ({
-                triggers: 'phase-end',
-                exec: cmds => {
-                    cmds.attack(summon.damage, DAMAGE_TYPE.Pierce, { hidxs: event.eheros.frontHidx });
-                    summon.minusUseCnt();
-                }
-            })),
+            .description('{defaultAtk。}')
+            .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/9362e2d9730bee84d5b41850a1e0e9bd_5229484141013095084.png'),
 
 }
 

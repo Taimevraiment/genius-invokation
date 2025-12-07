@@ -1,6 +1,6 @@
 import { MinusDiceSkill, Skill, Status, Summon, Trigger, VersionWrapper } from "../../../typing.js";
 import {
-    COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, PureElementType, SKILL_TYPE,
+    COST_TYPE, DAMAGE_TYPE, DICE_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, EnergyCostType, PureElementType, SKILL_TYPE,
     SkillCostType, SkillType, STATUS_TYPE, VERSION, Version, WEAPON_TYPE, WEAPON_TYPE_CODE, WeaponType
 } from "../../constant/enum.js";
 import { ELEMENT_NAME, GUYU_PREIFIX } from "../../constant/UIconst.js";
@@ -31,7 +31,7 @@ export interface SkillHandleRes {
     notLog?: boolean,
     isFallAtk?: boolean,
     notPreview?: boolean,
-    exec?: () => void,
+    exec?: () => any,
 }
 
 type SkillBuilderHandleRes = Omit<SkillHandleRes, 'cmds' | 'triggers'> & {
@@ -63,7 +63,7 @@ export class GISkill extends Entity {
     cost: [ // 费用列表 [元素骰, 任意骰, 充能]
         { cnt: number, type: SkillCostType },
         { cnt: number, type: typeof DICE_TYPE.Any },
-        { cnt: number, type: typeof COST_TYPE.Energy | typeof COST_TYPE.SpEnergy },
+        { cnt: number, type: EnergyCostType },
     ];
     attachElement: ElementType = ELEMENT_TYPE.Physical; // 附魔属性
     handle: (event: InputHandle<Omit<SkillHandleEvent, 'skill'>> & Pick<SkillHandleEvent, 'skill'>) => SkillHandleRes; // 处理函数
@@ -105,10 +105,7 @@ export class GISkill extends Entity {
         this.UI = {
             description,
             src: convertToArray(src).filter(v => v != '').map(v => {
-                if (v?.startsWith('#')) {
-                    if (v == '#') return `${GUYU_PREIFIX}${id}`;
-                    return `${GUYU_PREIFIX}${v.slice(1)}`;
-                }
+                if (v.startsWith('#')) return `${GUYU_PREIFIX}${v.slice(1) || id}`;
                 return v;
             })[0] ?? '',
             explains: [
@@ -119,7 +116,7 @@ export class GISkill extends Entity {
             descriptions: [],
         };
         this.id = id;
-        this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: spe ? COST_TYPE.SpEnergy : COST_TYPE.Energy }];
+        this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: spe ? `SpEnergy${hid}` : COST_TYPE.Energy }];
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
         this.handle = event => {
@@ -203,9 +200,9 @@ export class GISkill extends Entity {
             return {
                 ...res,
                 exec: () => {
-                    res.exec?.();
                     skill.addUseCnt();
                     ++skill.useCntPerRound;
+                    return res.exec?.();
                 }
             }
         }

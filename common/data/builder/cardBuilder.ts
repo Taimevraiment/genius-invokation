@@ -223,6 +223,8 @@ export class GICard extends Entity {
         } else if (subType.includes(CARD_SUBTYPE.ElementResonance)) {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
             this.UI.description += `；（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）`;
+        } else if (subType.includes(CARD_SUBTYPE.Adventure)) {
+            this.UI.description += `；（「冒险地点」只能通过冒险生成，无法加入牌组）`;
         }
         if (tag.includes(CARD_TAG.Barrier)) {
             const ohandle = handle;
@@ -423,6 +425,15 @@ export class CardBuilder extends BaseCostBuilder {
     legend() {
         this._subtype.push(CARD_SUBTYPE.Legend);
         this._cnt = 1;
+        return this;
+    }
+    simulanka() {
+        this._subtype.push(CARD_SUBTYPE.Simulanka);
+        return this;
+    }
+    adventure() {
+        this.place();
+        this._subtype.push(CARD_SUBTYPE.Adventure);
         return this;
     }
     subtype(...subtypes: CardSubtype[]) {

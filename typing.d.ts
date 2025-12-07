@@ -131,7 +131,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
-    'summonTrigger' | 'getSupport' | 'adventure';
+    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -195,7 +195,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     'end-phase' | 'any-end-phase' | `${TrgAfter}${TrgOther}skill${TrgOppo}` | `${TrgAfter}${TrgOther}skilltype${SkillType}` |
     `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
     `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
-    `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `elReaction-Anemo:${TrgElRe}` | 'ecard' | `elReaction-Geo:${TrgElRe}` |
+    `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `${TrgOther}elReaction-Anemo:${TrgElRe}` | `${TrgOther}elReaction-Geo:${TrgElRe}` | 'ecard' |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | `useReadySkill` | `status-destroy` | `summon-destroy` | 'destroy' |
@@ -290,7 +290,7 @@ type Preview = ActionData & {
     changedSummons?: (Summon | undefined)[][],
     willSummonChange?: number[][],
     willSupportChange?: number[][],
-    willEnergyChange?: number[][],
+    energyIcons?: EnergyIcons[][],
     changedHeros?: (string | undefined)[][],
     heroCanSelect?: boolean[],
     supportCanSelect?: boolean[][],
@@ -329,3 +329,5 @@ type CustomVersionConfig = {
     diff: Record<number, Version>,
     banList: number[],
 }
+
+type EnergyIcons = [string[], string[], number[]];

@@ -121,8 +121,7 @@
                 <StrokedText class="cost-text">{{ (info as Card).anydice }}</StrokedText>
               </div>
               <div class="info-card-energy" v-if="(info as Card).energy != 0">
-                <img class="cost-img"
-                  :src="getDiceIcon(ELEMENT_ICON[(info as Card).energy > 0 ? COST_TYPE.Energy : COST_TYPE.SpEnergy])" />
+                <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[COST_TYPE.Energy])" />
                 <StrokedText class="cost-text">{{ (info as Card).energy }}</StrokedText>
               </div>
               <div class="info-card-legend" v-if="(info as Card).hasSubtype(CARD_SUBTYPE.Legend)">
@@ -230,8 +229,8 @@
                 {{ info?.UI.curVersion ?? version }}
               </span>
             </div>
-            <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;display: inline-block;">召唤物</div>
-            <div class="info-card-type sub" v-for="(tag, tidx) in (info as Summon).tag" :key="tidx">
+            <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
+            <div class="info-card-type sub" v-for="(tag, tidx) in (info as Summon).tag" :key="tidx" style="margin: 3px;">
               {{ SUMMON_TAG_NAME[tag] }}
             </div>
           </div>
@@ -572,11 +571,10 @@ const getEquipmentIcon = (subtype: CardSubtype) => {
 
 watchEffect(() => {
   const wrapPlayingDescription = <T extends { UI: { descriptions: string[], description: string, explains: string[] } }>(obj: T) => {
-    const rawDesc = obj.UI.description.split(/(?<!\\)；/);
-    const onceDesc = rawDesc.findIndex(v => /(?<!\*)入场时(?:：|，)|才能打出/.test(v));
+    const onceDesc = obj.UI.descriptions.findIndex(v => /(?<!\*)入场时(?:：|，)|才能打出/.test(v));
     if (onceDesc > -1) {
+      obj.UI.explains = obj.UI.explains.filter((v, vi) => !obj.UI.descriptions[onceDesc]?.includes(v) || (vi != onceDesc && obj.UI.descriptions[vi]?.includes(v)));
       obj.UI.descriptions.splice(onceDesc, 1);
-      obj.UI.explains = obj.UI.explains.filter((v, vi) => !rawDesc[onceDesc]?.includes(v) || (vi != onceDesc && rawDesc[vi]?.includes(v)));
     }
   }
   ruleExplain.value = [];

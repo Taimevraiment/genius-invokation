@@ -206,9 +206,9 @@ export class GIStatus extends Entity {
     addUseCnt(ignoreMax: boolean): number;
     addUseCnt(n?: number, ignoreMax?: boolean): number;
     addUseCnt(n: number | boolean = 1, ignoreMax: boolean = false): number {
-        if (typeof n == 'boolean' && n) super.addUseCnt();
+        if (n === true) super.addUseCnt();
         else {
-            if (n == false) n = 1;
+            if (n === false) n = 1;
             if (ignoreMax || this.maxCnt == 0) super.addUseCnt(n);
             else super.setUseCnt(Math.max(this.useCnt, Math.min(this.maxCnt, this.useCnt + n)));
         }
@@ -227,7 +227,7 @@ export class GIStatus extends Entity {
         this.roundCnt = nrcnt;
     }
     dispose(includeAtk: boolean = true): void {
-        this.setUseCnt();
+        // this.setUseCnt();
         this.roundCnt = 0;
         const nonDestroy = this.type.indexOf(STATUS_TYPE.NonDestroy);
         if (nonDestroy > -1) this.type.splice(nonDestroy, 1);
