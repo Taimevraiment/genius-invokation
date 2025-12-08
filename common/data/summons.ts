@@ -915,7 +915,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         }),
 
     301041: () => new SummonBuilder('回天的圣主').from(321034).useCnt(3).damage(2).pierce()
-        .description('{defaultAtk。；此卡牌被弃置时，对双方场上生命值最多的角色造成5点[穿透伤害]。}')
+        .description('{defaultAtk。；此卡牌被弃置时，对场上生命值最高的一名角色造成5点[穿透伤害]。}')
         .src('#')
         .handle((summon, event) => ({
             triggers: ['phase-end', 'destroy'],
@@ -923,8 +923,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 const { trigger, heros, eheros } = event;
                 if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
                 const maxHp = Math.max(...[...heros, ...eheros].map(h => h.hp));
-                cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }), isOppo: false })
-                    .attack(5, DAMAGE_TYPE.Pierce, { hidxs: eheros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }) });
+                const hidxs = heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 });
+                if (hidxs.length > 0) cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs, isOppo: false });
+                else cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs: eheros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }) });
             }
         })),
 

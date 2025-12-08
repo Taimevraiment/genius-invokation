@@ -1,5 +1,6 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
 import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SUMMON_TAG, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { MAX_SUPPORT_COUNT } from "../../constant/gameOption.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
 
@@ -371,6 +372,9 @@ export class ArraySupport extends Array<Support> {
     has(id: number | CardSubtype) {
         if (typeof id == 'number') return this.some(s => s.card.id == id || s.entityId == id);
         return this.some(s => s.card.hasSubtype(id));
+    }
+    get isFull() {
+        return this.length == MAX_SUPPORT_COUNT;
     }
 }
 

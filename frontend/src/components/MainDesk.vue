@@ -133,6 +133,7 @@
             'is-front-oppo': hero?.isFront && phase >= PHASE.DICE && hgi == 0,
             'is-front-my': hero?.isFront && hgi == 1,
             'hero-select': heroSelect[hgi][hidx],
+            'hero-effect': true,
             'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
             'active-willhp': canAction && (
               willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyIcons[hgi][hidx][2].some(v => v) ||

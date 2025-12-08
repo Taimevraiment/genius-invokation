@@ -364,7 +364,7 @@ export default class GeniusInvokationRoom {
                     }
                 }
                 p.canAction = canAction && (p.pidx == this.currentPlayerIdx || !isChange) &&
-                    (isQuickAction || p.canAction) && this.taskQueue.isTaskEmpty() &&
+                    (isQuickAction || p.canAction || flag.includes('Update')) && this.taskQueue.isTaskEmpty() &&
                     this.isStart && p.phase == PHASE.ACTION && p.status == PLAYER_STATUS.PLAYING &&
                     (p.heros[p.hidx].heroStatus.has(STATUS_TYPE.NonAction) ||
                         !p.heros[p.hidx].heroStatus.has(STATUS_TYPE.ReadySkill));
@@ -374,7 +374,7 @@ export default class GeniusInvokationRoom {
             // 计算预测行动的所有情况
             const cplayer = this.players[this.currentPlayerIdx];
             if (
-                this.phase == PHASE.ACTION && !notPreview && cplayer.canAction && !flag.includes('update') && !this.hasDieSwitch &&
+                this.phase == PHASE.ACTION && !notPreview && cplayer.canAction && !flag.includes('Update') && !this.hasDieSwitch &&
                 this.taskQueue.isTaskEmpty() && !this.taskQueue.isExecuting && cplayer.status == PLAYER_STATUS.PLAYING
             ) {
                 if (this.id > 0) {
@@ -949,7 +949,7 @@ export default class GeniusInvokationRoom {
         if (sptIds[0] == 0) player.supports = new ArraySupport();
         else if (sptIds[0] < 0) player.supports.splice(sptIds[0]);
         else {
-            while (sptIds.length > 0 && player.supports.length < MAX_SUPPORT_COUNT) {
+            while (sptIds.length > 0 && !player.supports.isFull) {
                 player.supports.push(this.newSupport(sptIds.shift()!).setEntityId(this._genEntityId()));
             }
         }
@@ -1123,7 +1123,7 @@ export default class GeniusInvokationRoom {
                     subContent: isCdt(!!isQuickSwitch, '（快速行动）'),
                 }
             });
-        }, { delayAfter: 1e3, isUnshift: true, orderAfter: 'minus-switch' });
+        }, { delayAfter: 1e3, isUnshift: true, isImmediate: true, orderAfter: 'minus-switch' });
         await this._execTask();
         if (diceSelect != undefined) this._doActionAfter(pidx);
         await this._execTask();
@@ -1440,6 +1440,7 @@ export default class GeniusInvokationRoom {
             this._emitEvent(pidx ^ 1, afterTriggers(pidx ^ 1), { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], skill, isAfterSkill: true });
             await this._execTask();
         }
+        this.preview.triggers.forEach(trgs => trgs.forEach(t => t.clear()));
         this._doActionAfter(pidx);
         await this._execTask();
         if (!withCard) {
@@ -2222,7 +2223,7 @@ export default class GeniusInvokationRoom {
             if (!getCard && !pickCard) {
                 assgin(destroyedSupports, destroyedSupports.filter(s => player.supports.every(ps => ps.entityId != s.entityId)));
                 if (cardres.support) {
-                    if (player.supports.length == MAX_SUPPORT_COUNT) {
+                    if (player.supports.isFull) {
                         if (selectSupport > -1) {
                             const [destroyedSupport] = player.supports.splice(selectSupport, 1);
                             destroyedSupports.push(destroyedSupport);
@@ -3253,7 +3254,7 @@ export default class GeniusInvokationRoom {
                         const { cmds, isDestroy, isCancel } = execute();
                         if (isCancel) return this.emit(`${taskName}-cancel`, pidx, { notPreview: true });
                         const sptIdx = supports.findIndex(s => s.entityId == support.entityId);
-                        if (supportres.isExchange && eSupports.length < MAX_SUPPORT_COUNT) {
+                        if (supportres.isExchange && !eSupports.isFull) {
                             const exchangeTaskName = `doSupport-exchange:${support.name}(${support.entityId})`;
                             this.taskQueue.addTask(exchangeTaskName, () => {
                                 supports.splice(sptIdx, 1);
@@ -3872,7 +3873,7 @@ export default class GeniusInvokationRoom {
                 this.taskQueue.addTask(`doCmd--getSupport-p${cpidx}:${trigger}`, () => {
                     callback?.();
                     this._getSupportById(smnargs as number | (number | [number, ...any[]])).forEach(support => {
-                        if (cplayer.supports.length < MAX_SUPPORT_COUNT) {
+                        if (!cplayer.supports.isFull) {
                             cplayer.supports.push(support.setEntityId(this._genEntityId()));
                             this._detectSupport(cpidx, 'enter', { cSupport: support });
                         }
@@ -4080,10 +4081,11 @@ export default class GeniusInvokationRoom {
                 this.taskQueue.addTask(`doCmd--adventure-p${cpidx}:${trigger}`, () => {
                     callback?.();
                     const adventure = cplayer.supports.has(CARD_SUBTYPE.Adventure);
+                    const canAdventure = adventure || !cplayer.supports.isFull;
                     if (!adventure) {
                         this._doCmds(cpidx, CmdsGenerator.ins.pickCard(3, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
                     }
-                    this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
+                    if (canAdventure) this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
                 }, { isImmediate, isPriority, isUnshift });
             }
         }
@@ -4305,7 +4307,7 @@ export default class GeniusInvokationRoom {
                 const summonCanSelect: boolean[][] = this.players.map(() => new Array(MAX_SUMMON_COUNT).fill(false));
                 const isSupportAvalible = isValid;
                 if (type == CARD_TYPE.Support) {
-                    const isAvalible = supports.length < MAX_SUPPORT_COUNT;
+                    const isAvalible = !supports.isFull;
                     isValid &&= isAvalible;
                     if (isSupportAvalible && !isAvalible) supportCanSelect[1].fill(true);
                 }

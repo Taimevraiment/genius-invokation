@@ -304,7 +304,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/v6.3.0/UI_Gcg_Char_AvatarIcon_SkirkNew.png')
         .normalSkill('极恶技·断')
         .skills(
-            new SkillBuilder('极恶技·闪').description('获得2点*[蛇之狡谋]，生成1张【crd111161】加入手牌。（每回合1次）')
+            new SkillBuilder('极恶技·闪').description('获得2点*[蛇之狡谋]，生成手牌【crd111161】。（每回合1次）')
                 .src('#',
                     '')
                 .elemental().cost(2).perCnt(1).handle(event => {
@@ -315,7 +315,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { exec: () => skill.minusPerCnt() }
                 }),
             allSkills[11163](),
-            new SkillBuilder('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；我方触发冻结/冰扩散/超导/冰结晶反应后：在手牌中加入1张【crd111163】。（每回合3次）')
+            new SkillBuilder('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；我方触发冻结/冰扩散/超导/冰结晶反应后：生成手牌【crd111163】。（每回合3次）')
                 .src('#',
                     '')
                 .passive().perCnt(3).handle(event => {
@@ -1260,7 +1260,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('/image/tmp/v6.3.0/UI_Gcg_Char_AvatarIcon_Olorun.png')
         .normalSkill('宿灵闪箭')
         .skills(
-            new SkillBuilder('暝色缒索').description('{dealDmg}。；【行动阶段开始时：】造成1点[雷元素伤害]。')
+            new SkillBuilder('暝色缒索').description('{dealDmg}，生成【sts114162】。')
                 .src('#',
                     '')
                 .elemental().damage(1).cost(3).handle(() => ({ status: 114162 })),
@@ -1268,17 +1268,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 114161 })),
-            new SkillBuilder('夜翳的通感').description('敌方受到此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合2次）；【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。')
+            new SkillBuilder('夜翳的通感').description('敌方出战角色受到此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合2次）；【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。')
                 .src('#',
                     '')
                 .passive().perCnt(2).handle(event => {
-                    const { source, cmds, skill, trigger, hero } = event;
+                    const { source, cmds, skill, trigger, hero, eDmgedHero } = event;
                     const triggers: Trigger[] = ['ElectroCharged', 'other-ElectroCharged'];
                     if (triggers.includes(trigger)) {
                         if (hero.heroStatus.get(114163)?.useCnt != 2) return;
                         return { triggers, exec: () => cmds.consumeNightSoul(hero.hidx, 2).attack(1, DAMAGE_TYPE.Electro) }
                     }
-                    if (source == skill.id || skill.perCnt <= 0) return;
+                    if (source == skill.id || skill.perCnt <= 0 || !eDmgedHero.isFront) return;
                     return {
                         triggers: ['Hydro-getdmg-oppo', 'Electro-getdmg-oppo'],
                         exec: () => {
