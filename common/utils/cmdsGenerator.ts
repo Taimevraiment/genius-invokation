@@ -4,6 +4,8 @@ import { convertToArray, isCdt } from "./utils.js";
 
 export default class CmdsGenerator {
     value: Cmds[];
+    private _curGroup: string = 'default';
+    private _group: Record<string, Cmds[]> = { default: [] };
     private _addType: 'push' | 'unshift' = 'push';
     constructor(cmds?: Cmds | Cmds[] | CmdsGenerator) {
         if (cmds == undefined) this.value = [];
@@ -44,7 +46,11 @@ export default class CmdsGenerator {
     }
     get res() {
         this._addType = 'push';
+        this.group();
         return undefined;
+    }
+    get after() {
+        return this.group('after');
     }
     private _add(...cmd: Cmds[]) {
         if (this._addType == 'push') this.value.push(...cmd);
@@ -300,6 +306,13 @@ export default class CmdsGenerator {
     clear() {
         this.value = [];
         this._addType = 'push';
+        return this;
+    }
+    group(name: string = 'default') {
+        if (this._curGroup == name) return this;
+        this._group[this._curGroup] = [...this.value];
+        this.value = [...this._group[name] ?? []];
+        this._curGroup = name;
         return this;
     }
 }

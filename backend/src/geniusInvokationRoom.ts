@@ -1419,6 +1419,7 @@ export default class GeniusInvokationRoom {
             trigger: 'skill',
             multiDmg: skillres.multiDmgCdt,
             notPreview: skillres.notPreview,
+            isImmediate: true,
         });
         if (!skillcmds.hasDamage) await this.delay(1e3);
         await this._execTask();
@@ -1441,6 +1442,15 @@ export default class GeniusInvokationRoom {
             await this._execTask();
         }
         this.preview.triggers.forEach(trgs => trgs.forEach(t => t.clear()));
+        this._doCmds(pidx, skillcmds.after, {
+            atkname: skill.name,
+            dmgSource: 'skill',
+            skill,
+            source: skill.isHeroSkill ? atkHero.id : skill.id,
+            trigger: 'skill',
+            notPreview: skillres.notPreview,
+        });
+        await this._execTask();
         this._doActionAfter(pidx);
         await this._execTask();
         if (!withCard) {
@@ -1457,7 +1467,7 @@ export default class GeniusInvokationRoom {
      * @param options isAttach 是否为自己附着元素, isSummon 召唤物攻击id, isSwirl 是否为扩散伤害, isSwirlExec 扩散伤害是否执行,
      *                atriggers 攻击者触发时机, etriggers 受击者触发时机, skill 技能, atkId 造成伤害来源id/entityId, 
      *                isAtkSelf 是否为对自身攻击, withCard 可能使用的卡, elTips 元素反应提示, dmgElements 本次伤害元素,
-     *                isFirstAtk 是否为第一次攻击(用于会同时造成后台伤害的情况导致的重复触发)
+     *                isFirstAtk 是否为第一次攻击(用于会同时造成后台伤害的情况导致的重复触发), isImmediate 是否加入立即执行队列
      * @returns willDamages: 所有角色将要受到的伤害[p0, p1][普攻伤害, 穿透伤害], 
      *          willHeals 将治疗量
      *          dmgElements 本次伤害元素,
@@ -1468,7 +1478,7 @@ export default class GeniusInvokationRoom {
     private _calcDamage(pidx: number, dmgElement: DamageType, damages: number[][], dmgedHidx: number, options: {
         isAttach?: boolean, isSummon?: number, isSwirl?: boolean, skill?: Skill, isSwirlExec?: boolean,
         atkId?: number, willHeals?: number[], elTips?: [string, PureElementType, PureElementType][],
-        dmgElements?: DamageType[], multiDmg?: number, isAtkSelf?: number, withCard?: Card,
+        dmgElements?: DamageType[], multiDmg?: number, isAtkSelf?: number, withCard?: Card, isImmediate?: boolean,
         atkHidx?: number, atriggers?: Set<Trigger>[], etriggers?: Set<Trigger>[], isFirstAtk?: boolean,
     } = {}) {
         const epidx = pidx ^ 1;
@@ -1478,7 +1488,7 @@ export default class GeniusInvokationRoom {
             dmgElements = new Array<DamageType>(oehlen + oahlen).fill(DAMAGE_TYPE.Physical),
             elTips = new Array(oahlen + oehlen).fill(0).map(() => ['', PURE_ELEMENT_TYPE.Cryo, PURE_ELEMENT_TYPE.Cryo]),
             atriggers: atrg = new Array(oahlen).fill(0).map(() => new Set()), etriggers: etrg = new Array(oehlen).fill(0).map(() => new Set()),
-            withCard, skill, willHeals = new Array(oahlen + oehlen).fill(-1),
+            withCard, skill, willHeals = new Array(oahlen + oehlen).fill(-1), isImmediate,
         } = options;
         let { multiDmg = 0, atkHidx } = options;
         let willDamages = damages;
@@ -1892,6 +1902,7 @@ export default class GeniusInvokationRoom {
                 hasDmg: res.willDamages[getDmgIdx][0] > -1,
                 hcard: withCard,
                 isSwirlExec,
+                isImmediate,
             });
             res.willDamages[getDmgIdx][0] += hfieldres.addDmg;
             multiDmg += hfieldres.multiDmg;
@@ -2929,12 +2940,12 @@ export default class GeniusInvokationRoom {
         sourceHidx?: number, source?: number, minusDiceCard?: number, heal?: number[], switchHeroDiceCnt?: number,
         getdmg?: number[], dmg?: number[], hasDmg?: boolean, isSummon?: number, sourceStatus?: Status, isSwirlExec?: boolean,
         dmgElement?: DamageType, sourceSummon?: Summon, cStatus?: Status, cSlot?: Card, isOnlyHero?: boolean, skill?: Skill,
-        includeCombatStatus?: boolean, dmgedHidx?: number, isAfterSkill?: boolean,
+        includeCombatStatus?: boolean, dmgedHidx?: number, isAfterSkill?: boolean, isImmediate?: boolean,
     } = {}) {
         const player = this.players[pidx];
         const { name, heros, hidx: ahidx, combatStatus } = player;
-        const { types, hcard, heal, getdmg, dmg, hasDmg, isSummon, source, sourceHidx, dmgElement, isAfterSkill,
-            sourceStatus, isSwirlExec, dmgedHidx, sourceSummon, cStatus, cSlot, isOnlyHero, skill, includeCombatStatus,
+        const { types, hcard, heal, getdmg, dmg, hasDmg, isSummon, source, sourceHidx, dmgElement, isAfterSkill, sourceStatus,
+            isSwirlExec, dmgedHidx, sourceSummon, cStatus, cSlot, isOnlyHero, skill, includeCombatStatus, isImmediate,
         } = options;
         let { hidxs = heros.allHidxs(), restDmg = -1, minusDiceCard = 0, switchHeroDiceCnt = 0 } = options;
         if (Array.isArray(hidxs)) {
@@ -3076,6 +3087,7 @@ export default class GeniusInvokationRoom {
                                     statusSelect,
                                     trigger,
                                     isUnshift: trigger == 'dmg' || rescmds?.hasCmds('revive'),
+                                    isImmediate: isImmediate && trigger == 'dmg',
                                 });
                             }
                             if (!rescmds?.hasDamage || (isCancel && this.taskQueue.isTaskEmpty())) {
@@ -3084,7 +3096,7 @@ export default class GeniusInvokationRoom {
                             }
                             if (hfieldres.isTrigger) this._emitEvent(pidx, 'trigger', { source: hfield.id, sourceHidx: hidx });
                             await this.delay(!rescmds?.hasDamage ? 600 : -1);
-                        }, { isDmg: rescmds?.hasDamage, isUnshift: trigger == 'dmg' });
+                        }, { isDmg: rescmds?.hasDamage, isUnshift: trigger == 'dmg', isImmediate: isImmediate && trigger == 'dmg' });
                     } else {
                         const isCancel = execute();
                         if (isCancel) break;
@@ -3424,6 +3436,7 @@ export default class GeniusInvokationRoom {
                                     isAtkSelf: +!isOppo,
                                     isFirstAtk,
                                     multiDmg,
+                                    isImmediate,
                                 });
                             elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
                             willDamages.forEach((wdmg, wi) => {

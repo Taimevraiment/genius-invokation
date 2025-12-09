@@ -1362,7 +1362,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/2/29/f7rwj3qb9kffejm2kt2oq7ltl843nrk.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/c492b46c71485b1377cf8c9f3f5dd6e8_6376046014259793309.png')
                 .elemental().damage(1).damage(3, 'v4.8.0').cost(3).handle(({ swirlEl, cmds }) =>
-                    (cmds.getStatus([[115051, swirlEl]]).switchAfter().res)),
+                    (cmds.getStatus([[115051, swirlEl]]).after.switchAfter().res)),
             new SkillBuilder('万叶之一刀').description('{dealDmg}，召唤【smn115052】。')
                 .src('https://patchwiki.biligame.com/images/ys/4/47/g6cfvzw12ruiclawmxh903fcoowmr9j.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/07/07/183046623/293efb8c9d869e84be6bc02039d72104_7417737523106108019.png')

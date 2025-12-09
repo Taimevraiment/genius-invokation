@@ -249,8 +249,8 @@ export class GICard extends Entity {
         }
         if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
         this.handle = (card, event) => {
-            const cmds = new CmdsGenerator();
-            const execmds = new CmdsGenerator();
+            const cmds = CmdsGenerator.ins;
+            const execmds = CmdsGenerator.ins;
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, card);
             const cevent: CardBuilderHandleEvent = {

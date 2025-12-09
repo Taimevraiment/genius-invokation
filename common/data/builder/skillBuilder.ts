@@ -120,7 +120,7 @@ export class GISkill extends Entity {
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
         this.handle = event => {
-            const cmds = new CmdsGenerator();
+            const cmds = CmdsGenerator.ins;
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, event.skill);
             const cevent: SkillBuilderHandleEvent = {
@@ -165,6 +165,7 @@ export class GISkill extends Entity {
             dmgElement ??= skill.attachElement != DAMAGE_TYPE.Physical ? skill.attachElement : skill.dmgElement;
             const { heal, pdmgSelf, pdmg, statusPre, statusOppoPre, summonPre, hidxs, status,
                 statusOppo, summon, equip, isAttach, isAttachOppo, addDmgCdt = 0, energy = 0 } = builderRes;
+            cmds.group();
             if (heal != undefined) cmds.unshift.heal(heal, { hidxs });
             if (isAttachOppo) cmds.unshift.attach({ hidxs: eheros.frontHidx, isOppo: true });
             if (isAttach) cmds.unshift.attach({ hidxs });
