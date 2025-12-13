@@ -14,24 +14,22 @@
         </span>
         <StrokedText class="pile-cnt">{{ pileCnt[playerIdx ^ 1] }}</StrokedText>
         <Handcard class="will-getcard-oppo" :class="{
-          'mobile-will-card': isMobile,
           'will-getcard-oppo-pile': opponent?.UI.willGetCard.isFromPile,
           'will-getcard-oppo-generate': !opponent?.UI.willGetCard.isFromPile
         }" v-if="opponent?.UI.willGetCard"
           :style="{ left: `${getLeft(cidx, opponent?.UI.willGetCard.cards.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willGetCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
         </Handcard>
-        <Handcard class="will-addcard-oppo" :class="{ 'mobile-will-card': isMobile }"
-          v-if="opponent?.UI.willAddCard.cards"
+        <Handcard class="will-addcard-oppo" v-if="opponent?.UI.willAddCard.cards"
           :style="{ left: `${getLeft(cidx, opponent?.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willAddCard.cards" :card="card" :isMobile="isMobile" :key="cidx">
         </Handcard>
-        <Handcard class="will-discard-hcard-oppo" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard.hcards.length)}px` }"
+        <Handcard class="will-discard-hcard-oppo" :card="card" :isMobile="isMobile"
+          :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard.hcards.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willDiscard.hcards" :key="cidx">
         </Handcard>
-        <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard.pile.length)}px` }"
+        <Handcard class="will-discard-pile-my" :card="card" :isMobile="isMobile"
+          :style="{ left: `${getLeft(cidx, opponent?.UI.willDiscard.pile.length)}px` }"
           v-for="(card, cidx) in opponent?.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
@@ -55,12 +53,12 @@
           </div>
         </span>
         <StrokedText class="pile-cnt">{{ pileCnt[playerIdx] }}</StrokedText>
-        <Handcard class="will-addcard-my" :class="{ 'mobile-will-card': isMobile }" :card="card" :isMobile="isMobile"
+        <Handcard class="will-addcard-my" :card="card" :isMobile="isMobile"
           :style="{ left: `${getLeft(cidx, player.UI.willAddCard.cards.length)}px` }"
           v-for="(card, cidx) in player?.UI.willAddCard.cards" :key="cidx">
         </Handcard>
-        <Handcard class="will-discard-pile-my" :class="{ 'mobile-will-card': isMobile }" :card="card"
-          :isMobile="isMobile" :style="{ left: `${getLeft(cidx, player?.UI.willDiscard.pile.length)}px` }"
+        <Handcard class="will-discard-pile-my" :card="card" :isMobile="isMobile"
+          :style="{ left: `${getLeft(cidx, player?.UI.willDiscard.pile.length)}px` }"
           v-for="(card, cidx) in player?.UI.willDiscard.pile" :key="cidx">
         </Handcard>
       </div>
@@ -1884,11 +1882,6 @@ const mouseup = () => {
 
 .mobile-combatstatus {
   bottom: -14px;
-}
-
-.mobile-will-card {
-  width: 60px;
-  height: 90px;
 }
 
 .not-show {

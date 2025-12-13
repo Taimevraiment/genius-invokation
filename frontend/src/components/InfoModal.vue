@@ -96,7 +96,9 @@
         </div>
       </div>
     </DefineTemplate>
-    <!-- <img class="info-img" v-if="type != 'skill' && (info?.UI.src.length ?? 0) > 0" :src="info?.UI.src" :alt="info?.name"> -->
+    <GIHero class="info-img" v-if="type == 'hero' && !isBot" :hero="info as Hero" :is-mobile="isMobile" />
+    <GICard class="info-img" v-if="(type == 'card' || type == 'support' || type == 'summon') && !isBot" :card="info as Card"
+      :is-mobile="isMobile" is-hide-cost />
     <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }"
       :style="{ pointerEvents: isNonPointerEvent ? 'none' : 'all' }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
@@ -230,7 +232,8 @@
               </span>
             </div>
             <div style="font-weight: bolder;color: #afa04b;padding-left: 4px;">召唤物</div>
-            <div class="info-card-type sub" v-for="(tag, tidx) in (info as Summon).tag" :key="tidx" style="margin: 3px;">
+            <div class="info-card-type sub" v-for="(tag, tidx) in (info as Summon).tag" :key="tidx"
+              style="margin: 3px;">
               {{ SUMMON_TAG_NAME[tag] }}
             </div>
           </div>
@@ -277,6 +280,8 @@ import { getVehicleIdByCid } from '@@@/utils/gameUtil';
 import StrokedText from './StrokedText.vue';
 import { createReusableTemplate } from '@vueuse/core';
 import { dict } from '@@@/constant/dependancyDict';
+import GIHero from './Hero.vue';
+import GICard from './Card.vue';
 
 const props = defineProps<{
   info: InfoVO,
@@ -675,6 +680,7 @@ onMounted(() => {
   position: absolute;
   top: 40px;
   left: 20px;
+  width: 95%;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -690,8 +696,10 @@ onMounted(() => {
 }
 
 .info-img {
+  position: relative;
   width: 10vw;
   margin-right: 5px;
+  margin-left: 3%;
 }
 
 .info-container {

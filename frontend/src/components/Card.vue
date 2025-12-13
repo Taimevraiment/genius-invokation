@@ -4,7 +4,7 @@
         <img class="card-img" :src="getPngIcon('card-bg')" alt="" style="transform: rotateY(180deg);" />
         <img class="card-img" v-if="card.UI.src" :src="getPngIcon(card.UI.src)" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
-            <img class="legend-border" v-if="card.subType.includes(CARD_SUBTYPE.Legend)"
+            <img class="legend-border" v-if="card.subType?.includes(CARD_SUBTYPE.Legend)"
                 :src="getPngIcon('legend-border')" draggable="false" />
             <div class="card-cost" v-if="!isHideCost" :class="{ 'mobile-card-cost': isMobile }"
                 :style="{ color: card.costChanges[0] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
@@ -13,7 +13,7 @@
                 <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChanges[0]) }}</StrokedText>
             </div>
             <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
-                v-if="card.anydice > 0 && !isHideCost"
+                v-if="!isHideCost && card.anydice > 0"
                 :style="{ color: card.costChange - card.cost > 0 || card.costChanges[1] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
@@ -21,19 +21,19 @@
                     {{ Math.max(0, card.anydice - card.costChanges[1] - Math.max(0, card.costChanges[0] - card.cost)) }}
                 </StrokedText>
             </div>
-            <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="card.energy > 0 && !isHideCost">
+            <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="!isHideCost && card.energy > 0">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" draggable="false" />
                 <StrokedText class="cost-text">{{ card.energy }}</StrokedText>
             </div>
             <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }"
-                v-if="card.subType.includes(CARD_SUBTYPE.Legend) && !isHideCost">
+                v-if="!isHideCost && card.subType.includes(CARD_SUBTYPE.Legend)">
                 <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
                     :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
             </div>
-            <div class="card-content">
-                <span v-if="card?.UI.src?.length == 0">{{ card.name }}</span>
-            </div>
+            <span class="card-content" v-if="card?.UI.src?.length == 0">
+                {{ card.name }}
+            </span>
         </template>
         <slot></slot>
     </div>
@@ -76,7 +76,8 @@ const getPngIcon = (name: string) => {
 .card {
     position: absolute;
     width: 90px;
-    height: 154px;
+    aspect-ratio: 7/12;
+    /* height: 154px; */
     top: 0;
     cursor: pointer;
     text-align: center;
@@ -114,18 +115,24 @@ const getPngIcon = (name: string) => {
 }
 
 .card-content {
-    position: relative;
+    position: absolute;
     width: 100%;
     height: 100%;
+    top: 0;
     padding-top: 20px;
+    box-sizing: border-box;
 }
 
 .card-cost {
     position: absolute;
-    left: -30px;
+    /* left: -30px;
     top: -10px;
     width: 30px;
-    height: 30px;
+    height: 30px; */
+    left: -45%;
+    top: -5%;
+    width: 50%;
+    aspect-ratio: 1/1;
     color: white;
     text-align: center;
     line-height: 30px;
@@ -178,7 +185,7 @@ const getPngIcon = (name: string) => {
 
 .mobile-card {
     width: 60px;
-    height: 105px;
+    /* height: 105px; */
 }
 
 .mobile-card-cost,

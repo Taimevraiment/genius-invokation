@@ -838,9 +838,9 @@ export default class GeniusInvokationRoom {
                             const { actionData, pidx } = this.recordData.actionLog.shift()!;
                             const { phase } = this.players[pidx];
                             if (
-                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(phase) ||
-                                actionData.type == ACTION_TYPE.ChangeCard && phase != PHASE.CHANGE_CARD && phase != PHASE.ACTION ||
-                                actionData.type == ACTION_TYPE.ChooseInitHero && phase != PHASE.CHOOSE_HERO ||
+                                !([PHASE.ACTION, PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE, PHASE.ACTION_END] as Phase[]).includes(phase) ||
+                                actionData.type == ACTION_TYPE.ChangeCard && !([PHASE.CHANGE_CARD, PHASE.ACTION, PHASE.CHOOSE_HERO] as Phase[]).includes(phase) ||
+                                actionData.type == ACTION_TYPE.ChooseInitHero && phase != PHASE.CHOOSE_HERO && phase != PHASE.DICE ||
                                 actionData.type == ACTION_TYPE.Reroll && phase != PHASE.DICE && phase != PHASE.ACTION ||
                                 actionData.type != ACTION_TYPE.PickCard && phase == PHASE.PICK_CARD
                             ) {
