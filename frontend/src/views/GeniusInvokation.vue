@@ -47,11 +47,10 @@
       </div>
     </div>
 
-    <div :class="{
-      'player-display': true,
+    <div :class="['player-display', {
       'curr-player': client.player?.status == PLAYER_STATUS.PLAYING && client.phase <= PHASE.ACTION && client.phase >= PHASE.CHOOSE_HERO && client.isWin == -1,
       'mobile-player-display': isMobile,
-    }" @click.stop="devOps()">
+    }]" @click.stop="devOps()">
       <span v-if="isLookon > -1">旁观中......</span>
       <p>{{ client.recordData.username[client.playerIdx] ?? client.player?.name }}</p>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{ 'mobile-rest-card': isMobile }">

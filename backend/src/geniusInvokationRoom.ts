@@ -383,12 +383,13 @@ export default class GeniusInvokationRoom {
                 }
                 this.preview.isQuickAction = isQuickAction;
                 if ( // AI行动
-                    (flag.startsWith('changeTurn') && flag.includes('setCanAction') ||
+                    (flag.startsWith('changeTurn') && flag.includes('setP1CanAction') ||
                         flag.includes('reroll') || flag.includes('reconcile') ||
                         ((flag.includes('useCard') || flag.includes('card-doDamage') || flag.endsWith('card')) && !isChange)
                     ) && cplayer.id == AI_ID
                 ) {
                     this.delay(2e3, () => {
+                        this._resetPreview();
                         const actionType: ActionType[] = [ACTION_TYPE.UseCard, ACTION_TYPE.UseSkill, ACTION_TYPE.Reconcile, ACTION_TYPE.SwitchHero];
                         const { pidx: cpidx, dice, heros } = cplayer;
                         if (cplayer.phase == PHASE.DICE) {
@@ -625,7 +626,7 @@ export default class GeniusInvokationRoom {
             h.tags.forEach(lc => lc in lcMap && ++lcMap[lc]);
         });
         const cardIdsMap = new Map<number, number>();
-        const cardIdsPool = this._getCardIds();
+        const cardIdsPool = this._getCardIds(c => c.UI.cnt > 0);
         let hasLegend = false;
         while (aiPlayer.pile.length < DECK_CARD_COUNT) {
             const card = this.newCard(this._randomInArr(cardIdsPool)[0]);
@@ -2466,7 +2467,10 @@ export default class GeniusInvokationRoom {
             ++this.round;
             if (this.round == MAX_GAME_ROUND) return this._gameEnd(-2);
             for (const cpidx of [this.startIdx, this.startIdx ^ 1]) {
-                this._detectHero(cpidx, 'turn-end', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Round, STATUS_TYPE.Accumulate] });
+                this._detectHero(cpidx, 'turn-end', {
+                    types: [STATUS_TYPE.Attack, STATUS_TYPE.Round, STATUS_TYPE.Accumulate],
+                    hidxs: this.players[cpidx].heros.allHidxs({ isAll: true }),
+                });
                 await this._execTask();
                 this._detectSummon(cpidx, 'turn-end');
                 await this._execTask();
@@ -2877,52 +2881,54 @@ export default class GeniusInvokationRoom {
         let { restDmg = -1, isAfterSkill } = options;
         let isInvalid = false;
         const triggers = convertToArray(otrigger);
-        const { skills, name: hname, UI: { avatar } } = heros[hidx];
-        for (const skill of skills.filter(s => s.isPassive)) {
-            for (const trigger of triggers) {
-                const skillres = skill.handle({
-                    pidx,
-                    ...this.handleEvent,
-                    ...options,
-                    skill,
-                    hidx,
-                    trigger,
-                    restDmg,
-                    isQuickAction: this.preview.isQuickAction,
-                });
-                if (this._hasNotTriggered(skillres.triggers, trigger)) continue;
-                if ((!!isAfterSkill && !!skill) != trigger.startsWith('after')) continue;
-                this.preview.isQuickAction ||= !!skillres.isQuickAction;
-                restDmg = skillres.restDmg ?? -1;
-                isInvalid ||= !!skillres.isInvalid;
-                const isPassiveHidden = skill.type == SKILL_TYPE.PassiveHidden && skill.name == '';
-                const execute = () => {
-                    const isCancel = skillres.exec?.() === true;
-                    if (isCancel) return isCancel;
-                    this._updateStatus(pidx, [], heros[hidx].heroStatus, { hidx });
-                    this._writeLog(`[${name}](${pidx})[${hname}][${skill.name}]发动`, isPassiveHidden || skillres.notLog ? 'system' : 'info');
-                }
-                if (skillres.isNotAddTask) {
-                    const isCancel = execute();
-                    if (isCancel) break;
-                    this._doCmds(pidx, skillres.cmds, { source: skill.id, trigger });
-                } else {
-                    this.taskQueue.addTask(`doSkill-${skill.name}(${skill.id}):${trigger}`, async () => {
+        const { skills, name: hname, UI: { avatar }, isDie } = heros[hidx];
+        if (!isDie) {
+            for (const skill of skills.filter(s => s.isPassive)) {
+                for (const trigger of triggers) {
+                    const skillres = skill.handle({
+                        pidx,
+                        ...this.handleEvent,
+                        ...options,
+                        skill,
+                        hidx,
+                        trigger,
+                        restDmg,
+                        isQuickAction: this.preview.isQuickAction,
+                    });
+                    if (this._hasNotTriggered(skillres.triggers, trigger)) continue;
+                    if ((!!isAfterSkill && !!skill) != trigger.startsWith('after')) continue;
+                    this.preview.isQuickAction ||= !!skillres.isQuickAction;
+                    restDmg = skillres.restDmg ?? -1;
+                    isInvalid ||= !!skillres.isInvalid;
+                    const isPassiveHidden = skill.type == SKILL_TYPE.PassiveHidden && skill.name == '';
+                    const execute = () => {
+                        const isCancel = skillres.exec?.() === true;
+                        if (isCancel) return isCancel;
+                        this._updateStatus(pidx, [], heros[hidx].heroStatus, { hidx });
+                        if (trigger != 'reset') this._writeLog(`[${name}](${pidx})[${hname}][${skill.name}]发动`, isPassiveHidden || skillres.notLog ? 'system' : 'info');
+                    }
+                    if (skillres.isNotAddTask) {
                         const isCancel = execute();
-                        if (isCancel) {
-                            if (this.taskQueue.isTaskEmpty()) await this.emit(`doSkill-${skill.name}:${trigger}-cancel`, pidx);
-                            return;
-                        }
-                        const heroSelect = [pidx, hidx];
-                        const actionInfo = isCdt(!isPassiveHidden, {
-                            avatar,
-                            content: skill.name,
-                            subContent: SKILL_TYPE_NAME[skill.type],
-                        });
-                        this._doCmds(pidx, skillres.cmds, { dmgSource: 'skill', actionInfo, heroSelect, atkname: skill.name, source: skill.id, trigger });
-                        if (!skillres.cmds.hasDamage) this.emit(`doSkill-${skill.name}:${trigger}`, pidx, { heroSelect, actionInfo });
-                        if (skillres.isTrigger) this._emitEvent(pidx, 'trigger', { source: skill.id, sourceHidx: hidx });
-                    }, { delayAfter: 1e3 });
+                        if (isCancel) break;
+                        this._doCmds(pidx, skillres.cmds, { source: skill.id, trigger });
+                    } else {
+                        this.taskQueue.addTask(`doSkill-${skill.name}(${skill.id}):${trigger}`, async () => {
+                            const isCancel = execute();
+                            if (isCancel) {
+                                if (this.taskQueue.isTaskEmpty()) await this.emit(`doSkill-${skill.name}:${trigger}-cancel`, pidx);
+                                return;
+                            }
+                            const heroSelect = [pidx, hidx];
+                            const actionInfo = isCdt(!isPassiveHidden, {
+                                avatar,
+                                content: skill.name,
+                                subContent: SKILL_TYPE_NAME[skill.type],
+                            });
+                            this._doCmds(pidx, skillres.cmds, { dmgSource: 'skill', actionInfo, heroSelect, atkname: skill.name, source: skill.id, trigger });
+                            if (!skillres.cmds.hasDamage) this.emit(`doSkill-${skill.name}:${trigger}`, pidx, { heroSelect, actionInfo });
+                            if (skillres.isTrigger) this._emitEvent(pidx, 'trigger', { source: skill.id, sourceHidx: hidx });
+                        }, { delayAfter: 1e3 });
+                    }
                 }
             }
         }
@@ -3058,8 +3064,10 @@ export default class GeniusInvokationRoom {
                         const oPct = hfield.perCnt;
                         const isCancel = hfieldres.exec?.();
                         if (isCancel) return true;
-                        this._writeLog(`[${name}](${pidx})${heros[hidx].name}-${hfield.name}:${trigger}${hfield.useCnt != -1 ? ` useCnt:${oCnt}→${hfield.useCnt}` : ''}${hfield.perCnt != -1 ? ` perCnt:${oPct}→${hfield.perCnt}` : ''}`, 'system');
-                        this._writeLog(`[${name}](${pidx})[${heros[hidx].name}][${hfield.name}]发动${oCnt > -1 && oCnt != hfield.useCnt ? ` ${oCnt}→${hfield.useCnt}` : ''}`, isCdt(isStatus && hfield.hasType(STATUS_TYPE.Hide), hfieldres.notLog ? 'system' : 'log'));
+                        if (trigger != 'reset') {
+                            this._writeLog(`[${name}](${pidx})${heros[hidx].name}-${hfield.name}:${trigger}${hfield.useCnt != -1 ? ` useCnt:${oCnt}→${hfield.useCnt}` : ''}${hfield.perCnt != -1 ? ` perCnt:${oPct}→${hfield.perCnt}` : ''}`, 'system');
+                            this._writeLog(`[${name}](${pidx})[${heros[hidx].name}][${hfield.name}]发动${oCnt > -1 && oCnt != hfield.useCnt ? ` ${oCnt}→${hfield.useCnt}` : ''}`, isCdt(isStatus && hfield.hasType(STATUS_TYPE.Hide), hfieldres.notLog ? 'system' : 'log'));
+                        }
                     }
                     const rescmds = isStatus ? hfieldres.cmds : hfieldres.execmds;
                     if (hfieldres.isAddTask || (rescmds?.notEmpty && hfieldres.isAddTask != false)) {
@@ -3155,7 +3163,7 @@ export default class GeniusInvokationRoom {
                     const oCnt = summon.useCnt;
                     const oPct = summon.perCnt;
                     const smnexecres = summonres.exec?.();
-                    this._writeLog(`[${name}](${pidx})${summon.name}:${trigger}${oCnt != -1 ? `.useCnt:${oCnt}→${summon.useCnt}` : ''}${summon.perCnt != -1 ? `.perCnt:${oPct}→${summon.perCnt}` : ''}`, 'system');
+                    if (trigger != 'reset') this._writeLog(`[${name}](${pidx})${summon.name}:${trigger}${oCnt != -1 ? `.useCnt:${oCnt}→${summon.useCnt}` : ''}${summon.perCnt != -1 ? `.perCnt:${oPct}→${summon.perCnt}` : ''}`, 'system');
                     return smnexecres?.cmds;
                 }
                 if (summonres.isNotAddTask) this._doCmds(pidx, execute(), { source: summon.entityId, trigger });
@@ -3245,7 +3253,7 @@ export default class GeniusInvokationRoom {
                     const oCnt = support.useCnt;
                     const oPct = support.perCnt;
                     const supportexecres = supportres.exec?.();
-                    if (!supportexecres?.isCancel) {
+                    if (!supportexecres?.isCancel && trigger != 'reset') {
                         this._writeLog(`[${name}](${pidx})[${support.name}]发动${oCnt != support.useCnt ? ` ${oCnt}→${support.useCnt}` : ''}`, supportres.notLog ? 'system' : 'log');
                         this._writeLog(`[${name}](${pidx})${trigger}:${support.name}(${support.entityId}).cnt:${oCnt}→${support.useCnt}.perCnt:${oPct}→${support.perCnt}`, 'system');
                     }
@@ -3308,7 +3316,7 @@ export default class GeniusInvokationRoom {
                 if (this._hasNotTriggered(handcardres.triggers, trigger)) continue;
                 this.taskQueue.addTask(`doHandcards-${card.name}(${card.id}):${trigger}`, () => {
                     handcardres.exec?.();
-                    this._writeLog(`[${this.players[pidx].name}](${pidx})[${card.name}]发动`);
+                    if (trigger != 'reset') this._writeLog(`[${this.players[pidx].name}](${pidx})[${card.name}]发动`);
                     this._doCmds(pidx, handcardres.execmds, { trigger });
                 });
             }

@@ -228,9 +228,9 @@ const allCards: Record<number, () => CardBuilder> = {
             const isMinus = card.perCnt > 0 && isChargedAtk;
             return {
                 addDmg: 1,
-                triggers: isCdt(isMinus, 'skilltype1'),
+                triggers: isCdt(isMinus && isMinusDiceSkill, 'skilltype1'),
                 minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 1, 0] }),
-                exec: () => isMinusDiceSkill && card.minusPerCnt(),
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -279,15 +279,13 @@ const allCards: Record<number, () => CardBuilder> = {
     311111: () => maxHpWeapon(527).name('不灭月华').since('v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/b1d91536731f3986eff3aab55bcd2e36_7557845508902426698.png'),
 
-    311112: () => new CardBuilder(550).name('祭星者之望').since('v6.3.0').weapon().costSame(2).perCnt(1)
-        .description('【我方打出名称不属于初始牌组的牌时：】该卡牌少花费1个元素骰，附属角色下次造成的伤害+1。（每回合1次）')
+    311112: () => new CardBuilder(550).name('祭星者之望').since('v6.3.0').weapon().costSame(1).perCnt(1)
+        .description('【我方每回合首次打出名称不属于初始牌组的牌时：】该卡牌少花费1个元素骰，所附属角色下次造成的伤害+1。（可叠加，最多叠加到2）')
         .src('#')
         .handle((card, event) => {
-            const { trigger, hcard, playerInfo: { initCardIds }, isMinusDiceCard, cmds } = event;
-            cmds.getStatus(301113);
-            if (trigger == 'phase-start') return { triggers: trigger, status: 301113 }
-            if (card.perCnt <= 0 || initCardIds.includes(hcard?.id ?? 0) || !isMinusDiceCard) return;
-            return { minusDiceCard: 1, triggers: 'card', exec: () => card.minusPerCnt() }
+            const { hcard, playerInfo: { initCardIds } } = event;
+            if (card.perCnt <= 0 || initCardIds.includes(hcard?.id ?? 0)) return;
+            return { minusDiceCard: 1, triggers: 'card', status: 301113, exec: () => card.minusPerCnt() }
         }),
 
     311201: () => normalWeapon(126).name('鸦羽弓').offline('v1')
@@ -420,21 +418,19 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/12bb81a54a568778a58e8ba5094501c8_8843117623857806924.png'),
 
     311310: () => new CardBuilder(551).name('拾慧铸熔').since('v6.3.0').weapon().costAny(2).useCnt(0)
-        .description('【所附属角色引发元素反应时：】伤害额外+1。；【我方引发元素反应时：】累计1层【盛放的思绪】，当【盛放的思绪】不低于2层时，消耗2层【盛放的思绪】使所附属角色获得1点[充能]。')
+        .description('角色使用「元素爆发」造成的伤害+2。；【我方引发元素反应时：】累计1层【盛放的思绪】，当【盛放的思绪】不低于2层时，消耗2层【盛放的思绪】使所附属角色获得1点[充能]。')
         .src('#')
-        .handle((card, event) => {
-            const { skill, trigger, execmds, hero } = event;
-            return {
-                triggers: ['elReaction', 'other-elReaction'],
-                addDmgCdt: isCdt(skill?.isHeroSkill && trigger == 'elReaction', 1),
-                isAddTask: true,
-                exec: () => {
-                    if (card.addUseCnt() < 2 || hero.isFullEnergy) return;
-                    card.minusUseCnt(2);
-                    execmds.getEnergy(1, { hidxs: hero.hidx });
-                }
+        .handle((card, event) => ({
+            triggers: ['elReaction', 'other-elReaction'],
+            addDmgType3: 2,
+            isAddTask: true,
+            exec: () => {
+                const { execmds, hero } = event;
+                if (card.addUseCnt() < 2 || hero.isFullEnergy) return;
+                card.minusUseCnt(2);
+                execmds.getEnergy(1, { hidxs: hero.hidx });
             }
-        }),
+        })),
 
     311401: () => normalWeapon(137).name('白缨枪').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/2618b55f8449904277794039473df17c_5042678227170067991.png'),
@@ -1067,9 +1063,9 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hcardsCnt, isMinusDiceSkill } = event;
             if (hcardsCnt > 2 || card.perCnt <= 0) return;
             return {
-                triggers: 'skilltype1',
+                triggers: isCdt(isMinusDiceSkill, 'skilltype1'),
                 minusDiceSkill: { skilltype1: [0, 0, 1] },
-                exec: () => { isMinusDiceSkill && card.minusPerCnt() }
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -3418,9 +3414,9 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             return {
-                triggers: ['vehicle', 'other-vehicle'],
+                triggers: isCdt(event.isMinusDiceSkill, ['vehicle', 'other-vehicle']),
                 minusDiceSkill: { skilltype5: [0, 0, 1], isAll: true },
-                exec: () => event.isMinusDiceSkill && card.minusPerCnt(),
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -3650,19 +3646,19 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/3533a71348b9aebfd3610469994d540c_2300129169062275237.png'),
 
     111161: () => new CardBuilder().name('诸武相授').event().costSame(0).canSelectHero(1).userType()
-        .description('我方【hro】附属【sts111162】。；【回合开始或我方执行切换后：】[舍弃]此牌，获得1点*[蛇之狡谋]。')
+        .description('我方【hro】附属【sts111162】，并且下次造成的伤害+1。；【回合开始或我方执行切换后：】[舍弃]此牌，获得1点*[蛇之狡谋]。')
         .src('#')
         .handle((card, event) => {
             const { cmds, execmds, heros } = event;
             const hero = heros.get(card.id);
             if (!hero) return;
-            cmds.getStatus(111162, { hidxs: hero.hidx });
+            cmds.getStatus([111162, 111164], { hidxs: hero.hidx });
             execmds.discard({ card: card.entityId }).getEnergy(1, { hidxs: hero.hidx, isSp: true });
             return { triggers: ['phase-start', 'active-switch'] }
         }),
 
     111163: () => new CardBuilder().name('虚境裂隙').event().costSame(0)
-        .description('[舍弃]1张原本元素骰费用为3的手牌，【hro】获得2点*[蛇之狡谋]。')
+        .description('[舍弃]1张原本元素骰费用为3的手牌，我方【hro】获得2点*[蛇之狡谋]。')
         .src('#')
         .handle((card, event) => {
             const { cmds, heros, hcards } = event;

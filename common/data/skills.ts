@@ -9,24 +9,23 @@ const ski1507x = (swirlEl: PureElementType) => {
 }
 
 export const allSkills: Record<number, () => SkillBuilder> = {
-    11163: () => new SkillBuilder('极恶技·灭').description('消耗所有*[蛇之狡谋]，造成等同于消耗*[蛇之狡谋]数量的[冰元素伤害]，对后台角色造成2点的[穿透伤害]，如果消耗了7点*[蛇之狡谋]，则改为对后台角色造成2点[冰元素伤害]。')
+    11163: () => new SkillBuilder('极恶技·灭').description('消耗所有*[蛇之狡谋]，造成等同于消耗*[蛇之狡谋]数量的[冰元素伤害]，对后台角色造成2点[穿透伤害]，如果消耗了7点*[蛇之狡谋]，则改为对后台角色造成3点[穿透伤害]。')
         .src('#',
             '')
         .burstSp(2).cost(3).handle(event => {
             const { hero: { spEnergy }, cmds, eheros } = event;
             cmds.attack(spEnergy)
-                .attack(2, spEnergy == 7 ? DAMAGE_TYPE.Cryo : DAMAGE_TYPE.Pierce, { hidxs: eheros.getBackHidxs() })
+                .attack(2 + +(spEnergy == 7), DAMAGE_TYPE.Pierce, { hidxs: eheros.getBackHidxs() })
                 .getEnergy(-spEnergy, { isSp: true });
         }),
 
-    11165: () => new SkillBuilder('极恶技·尽').description('[舍弃]至多2张原本元素骰花费为0的卡牌，每[舍弃]1张，【hro】额外获得1点*[蛇之狡谋]，并将一个非万能元素骰转化为[冰元素骰]。')
+    11165: () => new SkillBuilder('极恶技·尽').description('将2个非万能元素骰转化为[冰元素骰]，[舍弃]至多2张原本元素骰花费为0骰的卡牌，每[舍弃]1张，【hro】获得1点*[蛇之狡谋]。')
         .src('#',
             '')
         .burst().cost(1).handle(event => {
             const { hcards, cmds } = event;
             const cnt = Math.min(2, hcards.filter(c => c.rawDiceCost == 0).length);
-            cmds.discard({ cnt, card: 0 }).getEnergy(cnt, { isSp: true }).changeDice({ cnt, element: COST_TYPE.Cryo });
-            return { isForbidden: cnt == 0 }
+            cmds.changeDice({ cnt: 2, element: COST_TYPE.Cryo }).discard({ cnt, card: 0 }).getEnergy(cnt, { isSp: true });
         }),
 
     12074: () => new SkillBuilder('苍鹭震击').description('{dealDmg}。').elemental().readySkill().damage(3),

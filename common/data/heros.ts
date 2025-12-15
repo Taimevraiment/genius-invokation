@@ -315,7 +315,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return { exec: () => skill.minusPerCnt() }
                 }),
             allSkills[11163](),
-            new SkillBuilder('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；我方触发冻结/冰扩散/超导/冰结晶反应后：生成手牌【crd111163】。（每回合3次）')
+            new SkillBuilder('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；【我方触发冻结/冰扩散/超导/冰结晶反应后：】生成手牌【crd111163】。（每回合3次）')
                 .src('#',
                     '')
                 .passive().perCnt(3).handle(event => {
@@ -1263,15 +1263,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('暝色缒索').description('{dealDmg}，生成【sts114162】。')
                 .src('#',
                     '')
-                .elemental().damage(1).cost(3).handle(() => ({ status: 114162 })),
+                .elemental().damage(2).cost(3).handle(() => ({ status: 114162 })),
             new SkillBuilder('黯声回响').description('{dealDmg}，召唤【smn114161】。')
                 .src('#',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 114161 })),
-            new SkillBuilder('夜翳的通感').description('敌方出战角色受到此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合2次）；【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。')
+            new SkillBuilder('夜翳的通感').description('【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；敌方角色受到此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
                 .src('#',
                     '')
-                .passive().perCnt(2).handle(event => {
+                .passive().perCnt(1).handle(event => {
                     const { source, cmds, skill, trigger, hero, eDmgedHero } = event;
                     const triggers: Trigger[] = ['ElectroCharged', 'other-ElectroCharged'];
                     if (triggers.includes(trigger)) {
@@ -2188,7 +2188,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .burst(2).damage(4).damage(3, 'v5.7.0').cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 122051 }).res)
         ),
 
-    2206: () => new HeroBuilder(523).name('水形幻人').since('v6.1.0').maxHp(12).monster().hydro()
+    2206: () => new HeroBuilder(523).name('水形幻人').since('v6.1.0').maxHp(11).maxHp(12, 'v6.3.0').monster().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/0216f62a3d64b105cabc5ea80c4e3819_9208952187097720286.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/49f90b5353035a7edeaa050c7bcd2f0a.png')
         .normalSkill(new NormalSkillBuilder('涌浪').catalyst())
@@ -2227,7 +2227,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('鳄齿锐波').description('{dealDmg}，将至多1张原本元素骰费用最高的手牌置入牌组底，生成手牌【crd124051】。')
                 .src('#',
                     '')
-                .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard }).getCard(1, { card: 124051 }).res),
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard }).getCard(1, { card: 124051 }).res),
             new SkillBuilder('凶鳄狂浪').description('{dealDmg}，[舍弃]至多3张【crd124051】，每[舍弃]1张，治疗我方受伤最多的角色1点，并使其获得1点最大生命值。')
                 .src('#',
                     '')

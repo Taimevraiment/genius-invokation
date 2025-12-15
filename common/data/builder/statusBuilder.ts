@@ -197,7 +197,7 @@ export class GIStatus extends Entity {
     }
     get isDestroy() {
         return (this.roundCnt == 0 || this.useCnt == 0 && !this.hasType(STATUS_TYPE.Accumulate)) &&
-            !this.hasType(STATUS_TYPE.NonDestroy, STATUS_TYPE.Attack);
+            (this.hasType(STATUS_TYPE.Show) || !this.hasType(STATUS_TYPE.NonDestroy, STATUS_TYPE.Attack));
     }
     hasType(...types: StatusType[]): boolean {
         if (types.length == 0) return true;

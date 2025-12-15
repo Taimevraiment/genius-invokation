@@ -233,7 +233,7 @@ export default class CmdsGenerator {
         notTrigger?: boolean, cidxs?: number[], mode?: number,
     }) {
         const { cnt, card, isOppo, notTrigger: isAttach, cidxs: hidxs, mode } = options;
-        this._add({ cmd: 'discard', cnt, card, isOppo, isAttach, hidxs, mode });
+        if (cnt != 0) this._add({ cmd: 'discard', cnt, card, isOppo, isAttach, hidxs, mode });
         return this;
     }
     stealCard(cnt: number, mode: number) {

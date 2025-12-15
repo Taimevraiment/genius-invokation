@@ -420,7 +420,7 @@
       <div class="pick-cards">
         <Handcard class="pick-card" v-for="(card, cidx) in pickCards" :key="`${card.entityId}-pickcard`" :card="card"
           :isMobile="isMobile" :class="{ 'pick-select': cidx == pickCardIdx }" @click.stop="selectCardPick(cidx)">
-          <div style="position: relative;color: white;top: 20px;">{{ card.name }}</div>
+          <div style="position: absolute;color: white;bottom: -30%;">{{ card.name }}</div>
         </Handcard>
       </div>
       <button class="button" @click="pickCard" v-if="pickCardIdx > -1 && client.roomId > 0">确认</button>
