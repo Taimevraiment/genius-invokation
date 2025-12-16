@@ -450,7 +450,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/02/82503813/5e2b48f4db9bfae76d4ab9400f535b4f_1116777827962231889.png')
         .handle((summon, event, ver) => {
             const { talent, isFallAtk, isMinusDiceSkill, isQuickAction, trigger } = event;
-            const triggers: Trigger[] = ['phase-end', 'fallatk'];
+            const triggers: Trigger[] = ['phase-end'];
+            if (isMinusDiceSkill && (ver.lt('v4.8.0') && !ver.isOffline)) triggers.push('fallatk');
             let minusDiceCdt = isFallAtk;
             if (ver.lt('v4.8.0') && !ver.isOffline) {
                 minusDiceCdt &&= summon.perCnt > 0;
@@ -465,7 +466,7 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 isQuickAction: trigger == 'minus-switch',
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (trigger == 'fallatk' && isMinusDiceSkill && (ver.lt('v4.8.0') && !ver.isOffline)) summon.minusPerCnt();
+                    if (trigger == 'fallatk') return summon.minusPerCnt();
                     if (trigger == 'minus-switch') summon.minusPerCnt();
                 }
             }
@@ -596,14 +597,14 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             const hero = heros.get(summon.id);
             const triggers: Trigger[] = ['phase-end'];
             const isMinus = summon.perCnt > 0 && hero?.isFront;
-            if (isMinus) triggers.push('skilltype1');
+            if (isMinus && isMinusDiceSkill) triggers.push('skilltype1');
             return {
                 triggers,
                 minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 0, 1] }),
                 isNotAddTask: trigger != 'phase-end',
                 exec: cmds => {
                     if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
-                    if (trigger == 'skilltype1' && isMinusDiceSkill) summon.minusPerCnt();
+                    if (trigger == 'skilltype1') summon.minusPerCnt();
                 }
             }
         }),

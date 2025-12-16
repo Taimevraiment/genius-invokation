@@ -130,18 +130,17 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     }),
     // 须弥城
     321010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        const { dices, hcards, isMinusDiceTalent, isMinusDiceSkill, trigger } = event;
+        const { dices, hcards, isMinusDiceTalent, isMinusDiceSkill } = event;
         if (dices.length > hcards.length || support.perCnt <= 0) return;
+        const triggers: Trigger[] = [];
+        if (isMinusDiceTalent) triggers.push('card');
+        if (isMinusDiceSkill) triggers.push('skill');
         return {
+            triggers,
             minusDiceSkill: { skill: [0, 0, 1] },
             minusDiceCard: isCdt(isMinusDiceTalent, 1),
-            triggers: ['skill', 'card'],
             isNotAddTask: true,
-            exec: () => {
-                if (trigger == 'skill' && isMinusDiceSkill || trigger == 'card' && isMinusDiceTalent) {
-                    support.minusPerCnt();
-                }
-            }
+            exec: () => support.minusPerCnt(),
         }
     }),
     // 桓那兰那
@@ -175,15 +174,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 exec: cmds => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: support.minusUseCnt() == 0 })
             }
         }
-        if (!isChargedAtk) return;
         return {
-            triggers: 'skilltype1',
+            triggers: isCdt(isMinusDiceSkill && isChargedAtk, 'skilltype1'),
             minusDiceSkill: { skilltype1: [0, 1, 0] },
             isNotAddTask: true,
-            exec: () => {
-                if (isMinusDiceSkill) support.minusUseCnt();
-                return { isDestroy: support.useCnt == 0 }
-            }
+            exec: () => ({ isDestroy: support.minusUseCnt() == 0 }),
         }
     }),
     // 黄金屋
@@ -222,23 +217,22 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                 exec: cmds => cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true }).res,
             }
         }
-        const isCardMinus = isMinusDiceTalent && support.perCnt > 0;
+        if (support.perCnt <= 0) return;
         const skills = hero.skills.map(skill => {
             if (support.perCnt > 0 && skill.rawDiceCost >= 4) return [0, 0, 1];
             return [0, 0, 0];
         });
-        const isMinus = support.perCnt > 0 && (trigger == 'card' && isCardMinus || trigger == 'skill' && isMinusDiceSkill);
+        const triggers: Trigger[] = [];
+        if (isMinusDiceTalent) triggers.push('card');
+        if (isMinusDiceSkill) triggers.push('skill');
         return {
-            triggers: ['skill', 'card'],
+            triggers,
             isNotAddTask: true,
-            minusDiceCard: isCdt(isCardMinus, 1),
+            minusDiceCard: 1,
             minusDiceSkill: { skills },
             exec: () => {
-                if (isMinus) {
-                    support.minusPerCnt();
-                    support.minusUseCnt();
-                }
-                return { isDestroy: support.useCnt == 0 }
+                support.minusPerCnt();
+                return { isDestroy: support.minusUseCnt() == 0 }
             }
         }
     }),
@@ -640,12 +634,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
         const { hero, isMinusDiceSkill, skill } = event;
-        const skills = hero.skills.map(skill => [0, 0, +(skill.useCntPerRound > 0)]);
         return {
-            triggers: 'skill',
+            triggers: isCdt(isMinusDiceSkill && skill && skill.useCntPerRound > 1, 'skill'),
             isNotAddTask: true,
-            minusDiceSkill: { skills },
-            exec: () => { isMinusDiceSkill && skill && skill?.useCntPerRound > 1 && support.minusPerCnt() }
+            minusDiceSkill: { skills: hero.skills.map(skill => [0, 0, +(skill.useCntPerRound > 0)]) },
+            exec: () => support.minusPerCnt(),
         }
     }),
     // 田铁嘴
@@ -676,12 +669,14 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     322013: () => new SupportBuilder().collection().handle((support, event) => {
         const { trigger, isMinusDiceWeapon, isMinusDiceRelic } = event;
         const isMinus = support.useCnt >= 3 && (isMinusDiceWeapon || isMinusDiceRelic);
+        const triggers: Trigger[] = ['summon-destroy'];
+        if (isMinus) triggers.push('card');
         return {
-            triggers: ['summon-destroy', 'card'],
+            triggers,
             minusDiceCard: isCdt(isMinus, 2),
             isNotAddTask: trigger == 'card',
             exec: () => {
-                if (trigger == 'card' && isMinus) return { isDestroy: true }
+                if (trigger == 'card') return { isDestroy: true }
                 if (trigger == 'summon-destroy' && support.useCnt < 3) support.addUseCnt();
             }
         }
@@ -709,6 +704,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         if (!hcard || !hcard.hasSubtype(CARD_SUBTYPE.Ally)) return;
         const isMinus = isMinusDiceCard && support.perCnt > 0;
         const isGetCard = (ver.gte('v4.1.0') || ver.isOffline) && support.useCnt > 0 && pile.some(c => c.hasSubtype(CARD_SUBTYPE.Ally));
+        if (!isMinus && !isGetCard) return;
         return {
             triggers: 'card',
             isNotAddTask: !isGetCard,
@@ -763,7 +759,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             triggers: 'card',
             isNotAddTask: true,
             minusDiceCard: minusCnt,
-            exec: () => { support.minusPerCnt() }
+            exec: () => support.minusPerCnt(),
         }
     }),
     // 玛梅赫
@@ -871,15 +867,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 阿伽娅
-    322028: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
-        if (support.perCnt <= 0) return;
-        return {
-            triggers: 'vehicle',
-            isNotAddTask: true,
-            minusDiceSkill: { skilltype5: [0, 0, 1] },
-            exec: () => { event.isMinusDiceSkill && support.minusPerCnt() }
-        }
-    }),
+    322028: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => ({
+        triggers: isCdt(event.isMinusDiceSkill && support.perCnt > 0, 'vehicle'),
+        isNotAddTask: true,
+        minusDiceSkill: { skilltype5: [0, 0, 1] },
+        exec: () => support.minusPerCnt(),
+    })),
     // 森林的祝福
     322029: () => new SupportBuilder().permanent().handle(() => ({
         triggers: ['enter', 'elReaction'],
@@ -1025,8 +1018,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const { hcards, trigger, isMinusDiceSkill } = event;
         if (trigger == 'phase-start' && (support.useCnt >= 2 || hcards.length == 0)) return;
         if (support.perCnt == 0 && (trigger == 'card' || (trigger == 'skill' && support.useCnt == 0))) return;
+        const triggers: Trigger[] = ['phase-start', 'card'];
+        if (isMinusDiceSkill) triggers.push('skill');
         return {
-            triggers: ['phase-start', 'skill', 'card'],
+            triggers,
             minusDiceSkill: isCdt(support.perCnt > 0 && support.useCnt > 0, { skill: [0, 0, 1] }),
             isNotAddTask: trigger != 'phase-start',
             exec: cmds => {
@@ -1036,7 +1031,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     return cmds.discard({ cnt, mode: CMD_MODE.HighHandCard }).res;
                 }
                 if (trigger == 'card') support.minusPerCnt();
-                else if (trigger == 'skill' && isMinusDiceSkill) support.minusUseCnt();
+                else if (trigger == 'skill') support.minusUseCnt();
             },
         }
     }),

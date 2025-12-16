@@ -1,35 +1,32 @@
 <template>
-    <div class="card" :class="{ 'mobile-card': isMobile }">
+    <div class="card" :class="{ 'mobile-card': isMobile }" :style="{ '--card-width': `${cardWidth}px` }">
         <div class="card-border" v-if="!isHideBorder"></div>
         <img class="card-img" :src="getPngIcon('card-bg')" alt="" style="transform: rotateY(180deg);" />
         <img class="card-img" v-if="card.UI.src" :src="getPngIcon(card.UI.src)" :alt="card.name" />
         <template v-if="(card?.id ?? 0) != 0">
             <img class="legend-border" v-if="card.subType?.includes(CARD_SUBTYPE.Legend)"
                 :src="getPngIcon('legend-border')" draggable="false" />
-            <div class="card-cost" v-if="!isHideCost" :class="{ 'mobile-card-cost': isMobile }"
-                :style="{ color: card.costChanges[0] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-                <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" draggable="false" />
-                <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChanges[0]) }}</StrokedText>
-            </div>
-            <div class="card-energy" :class="{ 'card-energy': !isMobile, 'mobile-card-energy': isMobile }"
-                v-if="!isHideCost && card.anydice > 0"
-                :style="{ color: card.costChange - card.cost > 0 || card.costChanges[1] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-                <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
-                <StrokedText class="cost-text">
-                    {{ Math.max(0, card.anydice - card.costChanges[1] - Math.max(0, card.costChanges[0] - card.cost)) }}
-                </StrokedText>
-            </div>
-            <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }" v-if="!isHideCost && card.energy > 0">
-                <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" draggable="false" />
-                <StrokedText class="cost-text">{{ card.energy }}</StrokedText>
-            </div>
-            <div class="card-energy" :class="{ 'mobile-card-energy': isMobile }"
-                v-if="!isHideCost && card.subType.includes(CARD_SUBTYPE.Legend)">
-                <img class="cost-img hcard" :class="{ 'mobile-hcard': isMobile }"
-                    :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
+            <div class="side-icons">
+                <div class="card-cost" v-if="!isHideCost"
+                    :style="{ color: card.costChanges[0] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+                    <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" draggable="false" />
+                    <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChanges[0]) }}</StrokedText>
+                </div>
+                <div class="card-cost" v-if="!isHideCost && card.anydice > 0"
+                    :style="{ color: card.costChange - card.cost > 0 || card.costChanges[1] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
+                    <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
+                    <StrokedText class="cost-text">
+                        {{ Math.max(0, card.anydice - card.costChanges[1] - Math.max(0, card.costChanges[0] -
+                            card.cost)) }}
+                    </StrokedText>
+                </div>
+                <div class="card-cost" v-if="!isHideCost && card.energy > 0">
+                    <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Energy])" draggable="false" />
+                    <StrokedText class="cost-text">{{ card.energy }}</StrokedText>
+                </div>
+                <div class="card-cost" v-if="!isHideCost && card.subType.includes(CARD_SUBTYPE.Legend)">
+                    <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
+                </div>
             </div>
             <span class="card-content" v-if="card?.UI.src?.length == 0">
                 {{ card.name }}
@@ -50,12 +47,14 @@ import StrokedText from './StrokedText.vue';
 const props = defineProps<{
     card: Card,
     isMobile: boolean,
+    width?: number,
     isHideCost?: boolean,
     isHideBorder?: boolean,
 }>();
 
 const card = computed<Card>(() => props.card);
 const isMobile = computed<boolean>(() => props.isMobile);
+const cardWidth = computed(() => props.width ?? (isMobile.value ? 60 : 90));
 const isHideCost = computed<boolean>(() => props.isHideCost || false);
 const isHideBorder = computed<boolean>(() => props.isHideBorder || false);
 
@@ -73,9 +72,15 @@ const getPngIcon = (name: string) => {
 </script>
 
 <style scoped>
+@property --card-width {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 90px;
+}
+
 .card {
     position: absolute;
-    width: 90px;
+    width: var(--card-width);
     aspect-ratio: 7/12;
     /* height: 154px; */
     top: 0;
@@ -123,52 +128,43 @@ const getPngIcon = (name: string) => {
     box-sizing: border-box;
 }
 
-.card-cost {
+.side-icons {
     position: absolute;
-    /* left: -30px;
-    top: -10px;
-    width: 30px;
-    height: 30px; */
-    left: -45%;
+    display: flex;
+    flex-direction: column;
+    left: -15%;
     top: -5%;
-    width: 50%;
+    width: max(30px, 45%);
+    height: 100%;
+    gap: 1%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.card-cost {
+    position: relative;
     aspect-ratio: 1/1;
     color: white;
     text-align: center;
     line-height: 30px;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.card-energy {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    left: -25px;
-    top: 30px;
-    color: white;
-    text-align: center;
-    line-height: 20px;
-    z-index: 1;
-    pointer-events: none;
-}
-
-.cost-text {
-    position: absolute;
-    font-size: 20px;
-    width: 40px;
-    height: 42px;
 }
 
 .cost-img {
     position: absolute;
-    width: 25px;
-    height: 25px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 }
 
-.hcard {
-    width: 40px;
-    height: 40px;
+.cost-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    font-size: calc(var(--card-width)*0.25);
+    line-height: calc(var(--card-width)*0.25);
 }
 
 .card-border {
@@ -183,33 +179,8 @@ const getPngIcon = (name: string) => {
     z-index: 1;
 }
 
-.mobile-card {
-    width: 60px;
-    /* height: 105px; */
-}
-
-.mobile-card-cost,
-.mobile-card-energy {
-    left: -20px;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-}
-
-.mobile-card-energy {
-    top: 20px;
-}
-
-.mobile-card-cost>.cost-text,
-.mobile-card-energy>.cost-text {
-    position: absolute;
-    font-size: 16px;
-    left: 5px;
-    top: -5px;
-}
-
-.mobile-hcard {
-    width: 30px;
-    height: 30px;
+.mobile-card .cost-text {
+    font-size: calc(var(--card-width)*0.2);
+    line-height: calc(var(--card-width)*0.2);
 }
 </style>

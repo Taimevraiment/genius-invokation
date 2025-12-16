@@ -924,13 +924,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【角色进行[重击]时：】少花费1个[火元素骰]。（每回合1次）；【结束阶段：】角色附属【sts113081】。；[roundCnt]')
         .handle((status, event) => {
             const { isChargedAtk, isMinusDiceSkill, trigger, cmds, hidx } = event;
+            const triggers: Trigger[] = ['phase-end'];
+            if (isMinusDiceSkill && isChargedAtk && status.perCnt > 0) triggers.push('skilltype1');
             return {
-                triggers: ['skilltype1', 'phase-end'],
+                triggers,
                 isAddTask: trigger == 'phase-end',
                 minusDiceSkill: isCdt(isChargedAtk && status.perCnt > 0, { skilltype1: [1, 0, 0], elDice: ELEMENT_TYPE.Pyro }),
                 exec: () => {
                     if (trigger == 'phase-end') cmds.getStatus(113081, { hidxs: hidx });
-                    else if (trigger == 'skilltype1' && isChargedAtk && isMinusDiceSkill) status.minusPerCnt();
+                    else if (trigger == 'skilltype1') status.minusPerCnt();
                 }
             }
         }),
@@ -1377,14 +1379,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色使用〖ski,1〗时：】少花费1个[风元素骰]。；[useCnt]；【所附属角色不再附属〖sts115041〗时：】移除此效果。')
         .handle((status, event) => {
             const { isMinusDiceSkill, source, trigger } = event;
-            const triggers: Trigger[] = ['skilltype2'];
+            const triggers: Trigger[] = [];
+            if (isMinusDiceSkill) triggers.push('skilltype2');
             if (source == 115041) triggers.push('status-destroy');
             return {
                 triggers,
                 minusDiceSkill: { skilltype2: [1, 0, 0], elDice: ELEMENT_TYPE.Anemo },
                 exec: () => {
                     if (trigger == 'status-destroy') status.dispose();
-                    else if (isMinusDiceSkill) status.minusUseCnt();
+                    else if (trigger == 'skilltype2') status.minusUseCnt();
                 }
             }
         }),
@@ -1674,16 +1677,16 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     116073: (useCnt: number = 1) => new StatusBuilder('飞云旗阵').combatStatus().icon('ski,1').useCnt(useCnt).maxCnt(4)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage)
         .description('我方角色进行「普通攻击」时：如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]')
-        .description('我方角色进行「普通攻击」时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]】', 'v4.8.0')
+        .description('我方角色进行「普通攻击」时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]', 'v4.8.0')
         .handle((status, event, ver) => {
             const { hcardsCnt, talent, isMinusDiceSkill } = event;
-            const isTriggered = ver.gte('v4.8.0') || isMinusDiceSkill;
+            const isTriggered = ver.lt('v4.8.0') || isMinusDiceSkill;
             return {
-                triggers: 'skilltype1',
+                triggers: isCdt(isTriggered, 'skilltype1'),
                 minusDiceSkill: isCdt(hcardsCnt <= 1, { skilltype1: [0, 0, 1] }),
                 addDmgType1: isCdt(ver.lt('v4.8.0'), 1),
-                addDmgCdt: isCdt(hcardsCnt == 0 && !!talent && isTriggered, 2),
-                exec: () => isTriggered && status.minusUseCnt(),
+                addDmgCdt: isCdt(hcardsCnt == 0 && talent && isTriggered, 2),
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -2568,11 +2571,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { isMinusDiceWeapon, isMinusDiceRelic } = event;
             if (!isMinusDiceWeapon && !isMinusDiceRelic) return;
-            return {
-                minusDiceCard: 2,
-                triggers: 'card',
-                exec: () => status.dispose(),
-            }
+            return { triggers: 'card', minusDiceCard: 2, exec: () => status.dispose() }
         }),
 
     300002: () => new StatusBuilder('自由的新风（生效中）').combatStatus().roundCnt(1).icon(STATUS_ICON.Special)
@@ -2742,16 +2741,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(312030)
         .description('【所附属角色下次使用技能或打出「天赋」时：】少花费1个元素骰。；[useCnt]')
         .handle((status, event) => {
-            const { trigger, isMinusDiceSkill, isMinusDiceTalent } = event;
+            const { isMinusDiceSkill, isMinusDiceTalent } = event;
+            const triggers: Trigger[] = [];
+            if (isMinusDiceSkill) triggers.push('skill');
+            if (isMinusDiceTalent) triggers.push('card');
             return {
+                triggers,
                 minusDiceSkill: { skill: [0, 0, 1] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 1),
-                triggers: ['card', 'skill'],
-                exec: () => {
-                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
-                        status.minusUseCnt();
-                    }
-                },
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -2827,15 +2825,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     301308: () => new StatusBuilder('龙伙伴的鼓舞！').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(313009)
         .description('我方下次打出【特技牌】少花费2个元素骰。')
-        .handle((status, event) => {
-            const { isMinusDiceVehicle } = event;
-            if (!isMinusDiceVehicle) return;
-            return {
-                minusDiceCard: 2,
-                triggers: 'card',
-                exec: () => status.minusUseCnt()
-            }
-        }),
+        .handle((status, event) => ({
+            triggers: isCdt(event.isMinusDiceVehicle, 'card'),
+            minusDiceCard: 2,
+            exec: () => status.minusUseCnt(),
+        })),
 
     302021: () => new StatusBuilder('大梦的曲调（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(332021)
@@ -2860,16 +2854,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【对角色打出「天赋」或角色使用技能时：】少花费3个元素骰。；[useCnt]')
         .handle((status, event) => {
             if (status.useCnt <= 0) return;
-            const { trigger, isMinusDiceSkill, isMinusDiceTalent } = event;
+            const { isMinusDiceSkill, isMinusDiceTalent } = event;
+            const triggers: Trigger[] = [];
+            if (isMinusDiceSkill) triggers.push('skill');
+            if (isMinusDiceTalent) triggers.push('card');
             return {
+                triggers,
                 minusDiceSkill: { skill: [0, 0, 3] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 3),
-                triggers: ['card', 'skill'],
-                exec: () => {
-                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skill' && isMinusDiceSkill) {
-                        status.minusUseCnt();
-                    }
-                },
+                exec: () => status.minusUseCnt(),
             }
         }),
 
@@ -3087,14 +3080,11 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
     303222: () => new StatusBuilder('藏锋何处（生效中）').combatStatus().roundCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff).from(332022)
         .description('【本回合中，我方下一次打出「武器」手牌时：】少花费2个元素骰。')
-        .handle((status, event) => {
-            if (!event.isMinusDiceWeapon) return;
-            return {
-                minusDiceCard: 2,
-                triggers: 'card',
-                exec: () => status.dispose(),
-            }
-        }),
+        .handle((status, event) => ({
+            triggers: isCdt(event.isMinusDiceWeapon, 'card'),
+            minusDiceCard: 2,
+            exec: () => status.dispose(),
+        })),
 
     303223: () => new StatusBuilder('拳力斗技！（生效中）').combatStatus().useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon(STATUS_ICON.Special).from(332023)
@@ -3148,11 +3138,8 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 minusDiceCard: isCdt(isMinus, status.useCnt),
                 isAddTask: trigger != 'card',
                 exec: () => {
-                    if (trigger == 'getdmg' || trigger == 'heal') {
-                        status.addUseCnt();
-                    } else if (trigger == 'card' && isMinus) {
-                        status.dispose();
-                    }
+                    if (trigger == 'getdmg' || trigger == 'heal') status.addUseCnt();
+                    else if (trigger == 'card') status.dispose();
                 }
             }
         }),

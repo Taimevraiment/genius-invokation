@@ -94,18 +94,17 @@ const normalElRelic = (shareId: number, element: PureElementType) => {
         .description(`【对角色打出「天赋」或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。（每回合1次）`)
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { trigger, isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
+            const { isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
             const isMinusDiceCard = isMinusDiceTalent && hcard && (hcard.costType == element || hcard.anydice > 0);
+            const triggers: Trigger[] = [];
+            if (isMinusDiceCard) triggers.push('card');
+            if (isMinusDiceSkill) triggers.push('skill');
             return {
-                minusDiceSkill: { skill: [1, 0, 0], elDice: element },
+                minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
                 minusDiceCard: isCdt(isMinusDiceCard, 1),
                 minusDiceCardEl: element,
-                triggers: ['skill', 'card'],
-                exec: () => {
-                    if (trigger == 'card' && isMinusDiceCard || trigger == 'skill' && isMinusDiceSkill) {
-                        card.minusPerCnt();
-                    }
-                }
+                triggers,
+                exec: () => card.minusPerCnt(),
             }
         });
 }
@@ -115,19 +114,18 @@ const advancedElRelic = (shareId: number, element: PureElementType) => {
         .description(`【对角色打出「天赋」或角色使用技能时：】少花费1个[${ELEMENT_NAME[element]}骰]。（每回合1次）；【投掷阶段：】2个元素骰初始总是投出[${ELEMENT_NAME[element]}骰]。`)
         .handle((card, event) => {
             const { trigger, isMinusDiceTalent, isMinusDiceSkill, hcard } = event;
-            const isMinusCard = isMinusDiceTalent && card.perCnt > 0 && hcard && (hcard.costType == element || hcard.anydice > 0);
+            const isMinusDiceCard = isMinusDiceTalent && card.perCnt > 0 && hcard && (hcard.costType == element || hcard.anydice > 0);
+            const triggers: Trigger[] = ['phase-dice'];
+            if (isMinusDiceCard) triggers.push('card');
+            if (isMinusDiceSkill) triggers.push('skill');
             return {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skill: [1, 0, 0], elDice: element }),
-                minusDiceCard: isCdt(isMinusCard, 1),
+                minusDiceCard: isCdt(isMinusDiceCard, 1),
                 minusDiceCardEl: element,
-                triggers: ['skill', 'card', 'phase-dice'],
+                triggers,
                 element,
                 cnt: 2,
-                exec: () => {
-                    if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skill' && isMinusDiceSkill)) {
-                        card.minusPerCnt();
-                    }
-                }
+                exec: () => trigger != 'phase-dice' && card.minusPerCnt(),
             }
         });
 }
@@ -719,16 +717,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/d136fc0fd368a268fe3adaba8c0e64bb_8574805937216108762.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
+            const { isMinusDiceTalent, isMinusDiceSkill } = event;
+            const triggers: Trigger[] = [];
+            if (isMinusDiceTalent) triggers.push('card');
+            if (isMinusDiceSkill) triggers.push('skilltype1');
             return {
                 minusDiceSkill: { skilltype1: [0, 0, 1] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 1),
-                triggers: ['skilltype1', 'card'],
-                exec: () => {
-                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skilltype1' && isMinusDiceSkill) {
-                        card.minusPerCnt();
-                    }
-                }
+                triggers,
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -739,15 +736,16 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hidx, trigger, isMinusDiceTalent, isMinusDiceSkill, execmds } = event;
             const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
             if (trigger == 'switch-to') execmds.getStatus(301203, { hidxs: hidx });
+            const triggers: Trigger[] = ['switch-to'];
+            if (card.perCnt > 0) {
+                if (isMinusCard) triggers.push('card');
+                if (isMinusDiceSkill) triggers.push('skilltype1');
+            }
             return {
                 minusDiceSkill: isCdt(card.perCnt > 0, { skilltype1: [0, 0, 1] }),
                 minusDiceCard: isCdt(isMinusCard, 1),
-                triggers: ['skilltype1', 'card', 'switch-to'],
-                exec: () => {
-                    if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype1' && isMinusDiceSkill)) {
-                        card.minusPerCnt();
-                    }
-                }
+                triggers,
+                exec: () => trigger != 'switch-to' && card.minusPerCnt(),
             }
         }),
 
@@ -756,16 +754,15 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/e2a6d4ad4958d5fff80bb17ec93189ab_7011820758446145491.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
+            const { isMinusDiceTalent, isMinusDiceSkill } = event;
+            const triggers: Trigger[] = [];
+            if (isMinusDiceTalent) triggers.push('card');
+            if (isMinusDiceSkill) triggers.push('skilltype2');
             return {
                 minusDiceSkill: { skilltype2: [0, 0, 1] },
                 minusDiceCard: isCdt(isMinusDiceTalent, 1),
-                triggers: ['skilltype2', 'card'],
-                exec: () => {
-                    if (trigger == 'card' && isMinusDiceTalent || trigger == 'skilltype2' && isMinusDiceSkill) {
-                        card.minusPerCnt();
-                    }
-                }
+                triggers,
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -773,20 +770,21 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('【对角色打出「天赋」或角色使用「元素战技」时：】少花费1个元素骰。（每回合1次）；【如果角色具有至少2点[充能]，】就使角色「普通攻击」和「元素战技」造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/24/183046623/48be75f0a23375adb34789dcb1e95a97_850843251536084281.png')
         .handle((card, event) => {
-            const { hero, trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
+            const { hero, isMinusDiceTalent, isMinusDiceSkill } = event;
             const isMinusCard = isMinusDiceTalent && card.perCnt > 0;
             const isAddDmg = Math.abs(hero.energy) >= 2;
+            const triggers: Trigger[] = [];
+            if (card.perCnt > 0) {
+                if (isMinusCard) triggers.push('card');
+                if (isMinusDiceSkill) triggers.push('skilltype2');
+            }
             return {
                 addDmgType1: isCdt(isAddDmg, 1),
                 addDmgType2: isCdt(isAddDmg, 1),
                 minusDiceSkill: isCdt(card.perCnt > 0, { skilltype2: [0, 0, 1] }),
                 minusDiceCard: isCdt(isMinusCard, 1),
-                triggers: ['skilltype2', 'card'],
-                exec: () => {
-                    if (card.perCnt > 0 && (trigger == 'card' && isMinusCard || trigger == 'skilltype2' && isMinusDiceSkill)) {
-                        card.minusPerCnt();
-                    }
-                }
+                triggers,
+                exec: () => card.minusPerCnt(),
             }
         }),
 
@@ -953,18 +951,21 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, hcard, trigger, isMinusDiceTalent, isMinusDiceSkill, minusDiceCard: mdc, minusDiceSkill, skill } = event;
             const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 2 && !hero.isFront;
+            const triggers: Trigger[] = ['phase-end'];
+            if (isMinusDiceTalent) triggers.push('card');
+            if (isMinusDiceSkill) triggers.push('skilltype2');
             return {
                 minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
                 minusDiceCard: isCdt(isMinusDiceTalent, card.useCnt),
-                triggers: ['phase-end', 'card', 'skilltype2'],
+                triggers,
                 isAddTask: isPhaseEnd,
                 exec: () => {
                     if (isPhaseEnd) {
                         card.addUseCnt();
-                    } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
+                    } else if (trigger == 'card' && hcard) {
                         card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
-                    } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
-                        card.minusUseCnt((skill?.rawDiceCost ?? 0) - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]);
+                    } else if (trigger == 'skilltype2' && skill) {
+                        card.minusUseCnt(skill.rawDiceCost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]);
                     }
                 }
             }
@@ -976,18 +977,21 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, hcard, trigger, isMinusDiceTalent, isMinusDiceSkill, minusDiceCard: mdc, minusDiceSkill, skill } = event;
             const isPhaseEnd = trigger == 'phase-end' && card.useCnt < 4 && !hero.isFront;
+            const triggers: Trigger[] = ['phase-end'];
+            if (isMinusDiceTalent) triggers.push('card');
+            if (isMinusDiceSkill) triggers.push('skilltype2');
             return {
                 minusDiceSkill: { skilltype2: [0, 0, card.useCnt] },
                 minusDiceCard: isCdt(isMinusDiceTalent, card.useCnt),
-                triggers: ['phase-end', 'card', 'skilltype2'],
+                triggers,
                 isAddTask: isPhaseEnd,
                 exec: () => {
                     if (isPhaseEnd) {
                         card.addUseCntMax(4, 2);
-                    } else if (trigger == 'card' && isMinusDiceTalent && hcard) {
+                    } else if (trigger == 'card' && hcard) {
                         card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
-                    } else if (trigger == 'skilltype2' && isMinusDiceSkill) {
-                        card.minusUseCnt((skill?.rawDiceCost ?? 0) - minusDiceSkill.find(([eid]) => eid == card.entityId)![1])
+                    } else if (trigger == 'skilltype2' && skill) {
+                        card.minusUseCnt(skill.rawDiceCost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1])
                     }
                 }
             }

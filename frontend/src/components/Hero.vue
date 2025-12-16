@@ -38,7 +38,7 @@
             </StrokedText>
         </div>
         <div class="hero-right-bar" v-if="hero && hero.hp > 0 && !isHideEnergy">
-            <div v-if="hero.id == 1116" class="hero-sp-energy-1116" :class="{ 'mobile-sp-energy-1116': isMobile }">
+            <div v-if="hero.id == 1116" class="hero-sp-energy-1116">
                 <img class="hero-energy-img" :src="energyIcons[0][0]">
                 <img :class="['hero-energy-img', { blink: energyIcons[2][0] != 2 }]" :src="energyIcons[1][0]" :style="{
                     clipPath: `xywh(0 ${energyIcons[1][2]} 100% 100%)`,
@@ -48,8 +48,7 @@
                     :style="{ clipPath: `xywh(0 ${energyIcons[1][1]} 100% 100%)` }">
             </div>
             <template v-else>
-                <div v-for="(_, eidx) in energyIcons[0]" :key="eidx" class="hero-energy"
-                    :class="{ 'mobile-energy': isMobile }">
+                <div v-for="(_, eidx) in energyIcons[0]" :key="eidx" class="hero-energy">
                     <img class="hero-energy-img" :src="energyIcons[0][eidx]">
                     <img class="hero-energy-img" :class="{ blink: energyIcons[2][eidx] == 1 }"
                         :src="energyIcons[1][eidx]"
@@ -174,25 +173,30 @@ const getPngIcon = (name: string) => {
 .hero-right-bar {
     position: absolute;
     right: -3%;
-    top: 15px;
-    width: 30%;
+    top: 10px;
+    width: 18%;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     z-index: 1;
+    gap: 1%;
 }
 
 .hero-energy {
     position: relative;
-    width: 15px;
+    width: 100%;
+    aspect-ratio: 1/1;
+    /* width: 15px;
     height: 15px;
-    margin-bottom: 1px;
+    margin-bottom: 1px; */
 }
 
 .hero-sp-energy-1116 {
     position: relative;
-    width: 12px;
-    height: 62px;
+    width: 75%;
+    aspect-ratio: 1/5;
+    /* width: 12px;
+    height: 62px; */
 }
 
 .hero-energy-img {
@@ -285,18 +289,6 @@ const getPngIcon = (name: string) => {
 
 .mobile-hero-hp {
     width: 55%;
-}
-
-.mobile-energy {
-    width: 12px;
-    height: 12px;
-    margin: 0;
-}
-
-.mobile-sp-energy-1116 {
-    position: relative;
-    width: 8px;
-    height: 42px;
 }
 
 @keyframes blink {

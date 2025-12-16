@@ -1140,7 +1140,7 @@ input#isOfflineInput:checked {
 .cards-total {
     position: absolute;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 130px);
+    grid-template-columns: repeat(auto-fill, 105px);
     justify-content: center;
     left: 50%;
     bottom: 20%;
@@ -1160,8 +1160,9 @@ input#isOfflineInput:checked {
 .card-deck {
     position: relative;
     /* background-color: #ffd0a2; */
-    width: 115px;
-    height: 197px;
+    width: 90px;
+    /* height: 197px; */
+    aspect-ratio: 7/12;
     border-radius: 10px;
     display: inline-flex;
     justify-content: center;
@@ -1213,8 +1214,8 @@ input#isOfflineInput:checked {
     border: 2px solid black;
     border-radius: 10px;
     position: absolute;
-    top: -3px;
-    right: -3px;
+    top: -2px;
+    right: -2px;
     width: 20px;
     height: 20px;
     display: flex;
@@ -1364,7 +1365,7 @@ option.active {
     width: 65px;
     height: 111px;
     border-radius: 8px;
-    font-size: 8px;
+    font-size: 15px;
 }
 
 .mobile-cards-deck,

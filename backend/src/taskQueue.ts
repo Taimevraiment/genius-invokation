@@ -17,8 +17,8 @@ export default class TaskQueue {
     isDieWaiting: boolean = false;
     canPreview: boolean = true;
     canExecTask: boolean = false;
-    _writeLog: (log: string, type?: LogType) => void;
     env: Env;
+    _writeLog: (log: string, type?: LogType) => void;
     constructor(_writeLog: (log: string, type?: LogType) => void, env: Env) {
         this._writeLog = _writeLog;
         this.env = env;
@@ -113,7 +113,7 @@ export default class TaskQueue {
         return this.immediateQueue.length == 0 && (this.priorityQueue ?? []).length == 0 && this.queue.length == 0 && this.finalQueue.length == 0;
     }
     stopPreview() {
-        this.canPreview = false;
         this.init();
+        this.canPreview = false;
     }
 }

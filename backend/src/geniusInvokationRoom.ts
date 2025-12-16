@@ -4754,6 +4754,7 @@ export default class GeniusInvokationRoom {
         this.countdown.curr = 0;
         this.seed = '';
         this.shareCodes = ['', ''];
+        this.taskQueue.stopPreview();
         this.emit('game-end', winnerIdx);
     }
     /**

@@ -38,9 +38,9 @@ const io = new Server(httpServer, {
     cors: { origin, methods: ['GET', 'POST'] }
 });
 
-process.on('uncaughtException', err => console.error(err));
+process.on('uncaughtException', err => console.error('uncaughtErr:', err));
 
-process.on('exit', code => console.error(code));
+process.on('exit', code => console.error('exit:', code));
 
 const serverSecretKey = await getSecretData('secretKey');
 const juheSecretKey = await getSecretData('juheSecretKey');
@@ -312,7 +312,7 @@ io.on('connection', socket => {
             todayGames += start;
         } catch (e) {
             const error: Error = e as Error;
-            console.error(error);
+            console.error(`ERROR@sendToServer:${error}`);
             room.emitError(error);
         }
         if (isStart != room.isStart) emitPlayerAndRoomList();
