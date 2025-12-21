@@ -84,6 +84,7 @@ export class GIHero extends Entity {
             });
             return energyIcons;
         });
+        this.UI.energyIcons = this.updateEnergyIcon(this, 0);
     }
     get equipments(): Card[] {
         return [this.weaponSlot, this.relicSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null]

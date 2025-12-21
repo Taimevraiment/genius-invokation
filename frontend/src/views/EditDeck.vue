@@ -1365,7 +1365,7 @@ option.active {
     width: 65px;
     height: 111px;
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 8px;
 }
 
 .mobile-cards-deck,

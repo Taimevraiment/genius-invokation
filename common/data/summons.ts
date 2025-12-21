@@ -186,9 +186,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
                 tround: isCdt(hasTround, 1),
                 exec: cmds => {
                     if (!hasTround) summon.phaseEndAtk(cmds).clear();
+                    if (tround == 1) cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: heros.getMinHurtHidxs(), isOppo: false });
                     cmds.attack();
-                    if (tround == 0) return;
-                    cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: heros.getMinHurtHidxs(), isOppo: false });
                 },
             }
         }),

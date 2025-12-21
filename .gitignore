@@ -25,3 +25,4 @@ dist-ssr
 
 # 隐私数据
 secretData.ts
+.env

@@ -1282,7 +1282,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     return {
                         triggers: ['Hydro-getdmg-oppo', 'Electro-getdmg-oppo'],
                         exec: () => {
-                            cmds.getStatus(114163, { hidxs: hero.hidx }).getNightSoul(1);
+                            cmds.getStatus(114163, { hidxs: hero.hidx }).getNightSoul(1, hero.hidx);
                             skill.minusPerCnt();
                         }
                     }

@@ -97,8 +97,8 @@
       </div>
     </DefineTemplate>
     <GIHero class="info-img" v-if="type == 'hero' && !isBot" :hero="info as Hero" :is-mobile="isMobile" />
-    <GICard class="info-img" v-if="(type == 'card' || type == 'support' || type == 'summon') && !isBot" :card="info as Card"
-      :is-mobile="isMobile" is-hide-cost />
+    <GICard class="info-img" v-if="(type == 'card' || type == 'support' || type == 'summon') && !isBot"
+      :card="info as Card" :is-mobile="isMobile" is-hide-cost />
     <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }"
       :style="{ pointerEvents: isNonPointerEvent ? 'none' : 'all' }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"
@@ -155,7 +155,7 @@
             <StrokedText class="hero-hp-cnt">{{ (info as Hero).maxHp }}</StrokedText>
           </div>
           <img v-if="isBot && type == INFO_TYPE.Hero" class="info-base-img info-hero-base-img"
-            :src="getPngIcon(info?.UI.src, true)" :alt="info?.name">
+            :src="getPngIcon(info?.UI.src, true)" :alt="info?.name" />
           <div>
             <div v-if="type == INFO_TYPE.Hero" class="name">
               {{ (info as Hero).name }}

@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v1.3.5</div>
+    <div class="version">v1.3.6</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -80,7 +80,7 @@ import { cardsTotal } from '@@@/data/cards';
 import { herosTotal } from '@@@/data/heros';
 import { summonsTotal } from '@@@/data/summons';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
-import { genShareCode, getSecretData, importFile } from '@@@/utils/utils';
+import { genShareCode, importFile } from '@@@/utils/utils';
 import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -270,7 +270,7 @@ onMounted(async () => {
     userid.value = pid;
     username.value = name;
     localStorage.setItem('7szh_userid', pid.toString());
-    let loginApi = await getSecretData('loginApi');
+    let loginApi: string = import.meta.env.VITE_loginApi;
     if (isDev) loginApi = loginApi.replace(/.+\.site/, 'http://localhost:7000');
     fetch(`${loginApi}${pid}`);
   });

@@ -4061,7 +4061,7 @@ export default class GeniusInvokationRoom {
                 const hidx = ohidxs?.[0] ?? heros.frontHidx;
                 this.taskQueue.addTask(`getNightSoul-p${cpidx}-h${hidx}:${trigger}`, () => {
                     callback?.();
-                    const nightSoul = heros[hidx].heroStatus.find(sts => sts.hasType(STATUS_TYPE.NightSoul));
+                    const nightSoul = heros[hidx].heroStatus.get(STATUS_TYPE.NightSoul);
                     if (!nightSoul) return;
                     const ocnt = nightSoul.useCnt;
                     nightSoul.addUseCnt(cnt);
