@@ -307,12 +307,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('极恶技·闪').description('获得2点*[蛇之狡谋]，生成手牌【crd111161】。（每回合1次）')
                 .src('#',
                     '')
-                .elemental().cost(2).perCnt(1).handle(event => {
-                    const { cmds, skill } = event;
-                    cmds.getEnergy(2, { isSp: true });
-                    if (skill.perCnt <= 0) return;
-                    cmds.getCard(1, { card: 111161 });
-                    return { exec: () => skill.minusPerCnt() }
+                .elemental().cost(2).handle(event => {
+                    const { cmds, skill: { useCntPerRound } } = event;
+                    cmds.getEnergy(2, { isSp: true }).getCard(1, { card: 111161 });
+                    return { isForbidden: useCntPerRound > 0 }
                 }),
             allSkills[11163](),
             new SkillBuilder('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；【我方触发冻结/冰扩散/超导/冰结晶反应后：】生成手牌【crd111163】。（每回合3次）')
@@ -2134,7 +2132,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: 122031 }))
         ),
 
-    2204: () => new HeroBuilder(368).name('吞星之鲸').since('v4.7.0').maxHp(5).monster().hydro()
+    2204: () => new HeroBuilder(368).name('吞星之鲸').since('v4.7.0').maxHp(5).monster().hydro().cosmicCalamity()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/17c1739ef970603be767fa88764fc44f_4845015785088476307.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e29c46b79a53a6c428d46017eecb52c2.png')
         .normalSkill('碎涛旋跃')
