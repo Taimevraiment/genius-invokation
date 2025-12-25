@@ -335,6 +335,7 @@ export class CardBuilder extends BaseCostBuilder {
     private _isUseNightSoul: boolean = false;
     private _readySkillStatus: number = 0;
     private _variables: Record<string, number> = {};
+    private _subtypeCdt: [(ver: VersionWrapper) => boolean, CardSubtype[]][] = [];
     constructor(shareId?: number) {
         super(shareId ?? -1);
         if (shareId == undefined) this._cnt = -2;
@@ -364,16 +365,16 @@ export class CardBuilder extends BaseCostBuilder {
         return this;
     }
     weapon(weaponType?: WeaponType) {
-        this._subtype.push(CARD_SUBTYPE.Weapon);
+        this.subtype(CARD_SUBTYPE.Weapon);
         if (weaponType != undefined) this._userType.set(['vlatest', weaponType]);
         return this.equipment();
     }
     relic() {
-        this._subtype.push(CARD_SUBTYPE.Relic);
+        this.subtype(CARD_SUBTYPE.Relic);
         return this.equipment();
     }
     vehicle() {
-        this._subtype.push(CARD_SUBTYPE.Vehicle);
+        this.subtype(CARD_SUBTYPE.Vehicle);
         return this.equipment();
     }
     useNightSoul() {
@@ -398,45 +399,50 @@ export class CardBuilder extends BaseCostBuilder {
         return this;
     }
     place() {
-        this._subtype.push(CARD_SUBTYPE.Place);
+        this.subtype(CARD_SUBTYPE.Place);
         return this.support();
     }
     ally() {
-        this._subtype.push(CARD_SUBTYPE.Ally);
+        this.subtype(CARD_SUBTYPE.Ally);
         return this.support();
     }
     item() {
-        this._subtype.push(CARD_SUBTYPE.Item);
+        this.subtype(CARD_SUBTYPE.Item);
         return this.support();
     }
     support() {
         this._type = CARD_TYPE.Support;
         return this;
     }
-    event(isAction: boolean = false) {
+    event(cdt?: (ver: VersionWrapper) => boolean): CardBuilder;
+    event(isAction?: boolean): CardBuilder;
+    event(isAction: ((ver: VersionWrapper) => boolean) | boolean = false) {
         this._type = CARD_TYPE.Event;
-        if (isAction) this._subtype.push(CARD_SUBTYPE.Action);
+        if (typeof isAction == 'function') return this.subtype(isAction, CARD_SUBTYPE.Action);
+        if (isAction) this.subtype(CARD_SUBTYPE.Action);
         return this;
     }
     food() {
-        this._subtype.push(CARD_SUBTYPE.Food);
-        return this;
+        return this.subtype(CARD_SUBTYPE.Food);
     }
     legend() {
-        this._subtype.push(CARD_SUBTYPE.Legend);
         this._cnt = 1;
-        return this;
+        return this.subtype(CARD_SUBTYPE.Legend);
     }
     simulanka() {
-        this._subtype.push(CARD_SUBTYPE.Simulanka);
-        return this;
+        return this.subtype(CARD_SUBTYPE.Simulanka);
     }
     adventure() {
         this.place();
-        this._subtype.push(CARD_SUBTYPE.Adventure);
-        return this;
+        return this.subtype(CARD_SUBTYPE.Adventure);
     }
-    subtype(...subtypes: CardSubtype[]) {
+    subtype(...subtypes: CardSubtype[]): CardBuilder;
+    subtype(cdt: (ver: VersionWrapper) => boolean, ...subtypes: CardSubtype[]): CardBuilder;
+    subtype(cdt: CardSubtype | ((ver: VersionWrapper) => boolean), ...subtypes: CardSubtype[]) {
+        if (typeof cdt == 'function') {
+            this._subtypeCdt.push([cdt, subtypes]);
+            return this;
+        }
         this._subtype.push(...subtypes);
         return this;
     }
@@ -505,6 +511,7 @@ export class CardBuilder extends BaseCostBuilder {
                 return { support: card.id, notPreview: true, ...handle?.(card, event, ver) }
             };
         }
+        this._subtypeCdt.forEach(([cdt, subtypes]) => cdt(versionWrap(this._curVersion)) && this._subtype.push(...subtypes));
         if (this._subtype.includes(CARD_SUBTYPE.Weapon) || this._subtype.includes(CARD_SUBTYPE.Relic)) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {

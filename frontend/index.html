@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no" />
   <title>七圣召唤模拟器</title>
   <script type="module">
-    if (process.env.NODE_ENV != 'development') {
+    if (import.meta.env.MODE != 'development') {
       var _hmt = _hmt || [];
       (function () {
         var hm = document.createElement("script");

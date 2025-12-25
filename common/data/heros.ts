@@ -1266,7 +1266,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 114161 })),
-            new SkillBuilder('夜翳的通感').description('【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；敌方角色受到此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
+            new SkillBuilder('夜翳的通感').description('【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；我方造成此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
                 .src('#',
                     '')
                 .passive().perCnt(1).handle(event => {
@@ -1278,7 +1278,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     }
                     if (source == skill.id || skill.perCnt <= 0 || !eDmgedHero.isFront) return;
                     return {
-                        triggers: ['Hydro-getdmg-oppo', 'Electro-getdmg-oppo'],
+                        triggers: ['Hydro-dmg', 'Electro-dmg', 'other-Hydro-dmg', 'other-Electro-dmg'],
                         exec: () => {
                             cmds.getStatus(114163, { hidxs: hero.hidx }).getNightSoul(1, hero.hidx);
                             skill.minusPerCnt();
@@ -2217,7 +2217,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             }),
         ),
 
-    2207: () => new HeroBuilder(546).name('圣骸角鳄').since('v6.3.0').consecratedBeast().hydro()
+    2207: () => new HeroBuilder(546).name('圣骸角鳄').since('v6.3.0').maxHp(11).consecratedBeast().hydro()
         .src('#')
         .avatar('/image/tmp/v6.3.0/UI_Gcg_Char_MonsterIcon_GatorSacred.png')
         .normalSkill('尖牙噬咬')
@@ -2363,7 +2363,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 })
         ),
 
-    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0').maxHp(12).monster().pyro()
+    2305: () => new HeroBuilder(508).name('蚀灭的源焰之主').since('v6.0.0').maxHp(11).maxHp(12, 'v6.3.0').monster().pyro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/09/258999284/4cc93e07a691d8192164e1ac424ad054_4947694412306522143.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/68c0b1b4/2aa84d81075016be2b56bc7963fbc99d.png')
         .normalSkill('虚界玄爪')

@@ -4804,7 +4804,7 @@ export default class GeniusInvokationRoom {
         const { skid = -1, hidx = player.hidx } = options;
         const { heros, combatStatus } = player;
         const curHero = heros[hidx];
-        if (!curHero) throw new Error(`ERROR@_calcSkillChange: hero not found\n pidx:${pidx},hidx:${player.hidx},skid:${skid},heros:[${heros.map(h => heroToString(h))}]`);
+        if (!curHero) throw new Error(`ERROR@_calcSkillChange: hero not found\n pidx:${pidx},hidx:${hidx},skid:${skid},heros:[${heros.map(h => heroToString(h))}]`);
         const skills = [...curHero.skills.filter(sk => !sk.isPassive)];
         if (curHero.vehicleSlot) skills.unshift(curHero.vehicleSlot[1]);
         const skill = skid == -1 ? null : skills.find(s => s.type == skid || s.id == skid) ?? this.newSkill(skid);

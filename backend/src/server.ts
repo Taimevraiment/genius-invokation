@@ -359,6 +359,7 @@ io.on('connection', socket => {
 const validateSK = (req, res) => {
     if (serverSecretKey == 'wrong') {
         console.info(`获取serverSecretKey失败`);
+        res.status(505).json({ err: '服务器发生错误' });
         return false;
     }
     if (!isDev && req.headers.flag != serverSecretKey) {

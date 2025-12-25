@@ -3157,10 +3157,10 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
 
     303232: () => card332024sts(1),
 
-    303236: () => new StatusBuilder('「看到那小子挣钱…」（生效中）').combatStatus().useCnt(2).useCnt(0, 'v6.3.0').roundCnt(1)
+    303236: () => new StatusBuilder('「看到那小子挣钱…」（生效中）').combatStatus().useCnt(3).useCnt(0, 'v6.3.0').roundCnt(1)
         .type(STATUS_TYPE.Usage).type(ver => ver.lt('v6.3.0'), STATUS_TYPE.Accumulate)
         .icon(STATUS_ICON.Special).from(332036)
-        .description('本回合中，每当对方获得1个元素骰，若你未宣布回合结束，则你获得1个[万能元素骰]\\；否则，生成1点上阵区[护盾]。；[useCnt]')
+        .description('本回合中，对方每获得1个元素骰，如果你未宣布回合结束，则你生成1个[万能元素骰]\\；否则，生成1点[护盾]。；[useCnt]')
         .description('【本回合中，每当对方获得2个元素骰时：】你获得1个[万能元素骰]。（此效果提供的元素骰除外）', 'v6.3.0')
         .handle((status, event, ver) => {
             const { source, cmds, phase } = event;

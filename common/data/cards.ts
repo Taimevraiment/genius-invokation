@@ -397,17 +397,20 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/9d317a3a81e47ab989c633ff609b5861_5509350951295616421.png'),
 
     311308: () => new CardBuilder(401).name('「究极霸王超级魔剑」').since('v4.8.0').weapon().costSame(2)
-        .description('此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌数量，称为「声援」。〔[card]（当前为{unt}点）〕如果此牌的「声援」至少为2/4/8，则角色造成的伤害+1/2/3。')
+        .description('此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌数量，称为「声援」。〔[card]（当前为{unt}点）〕如果此牌的「声援」至少为2/4/9，则角色造成的伤害+1/2/3。')
+        .description('此牌会记录本局游戏中你打出过的名称不存在于初始牌组中的行动牌数量，称为「声援」。〔[card]（当前为{unt}点）〕如果此牌的「声援」至少为2/4/8，则角色造成的伤害+1/2/3。', 'v6.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/21e68f35af52025a6088ca7aec78ef8f_7867921157902864538.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { playerInfo: { usedCardIds, initCardIds }, hcard, trigger } = event;
             if (trigger == 'hcard-calc') {
                 card.setUseCnt(usedCardIds.filter(c => !initCardIds.includes(c)).length);
                 return;
             }
+            let addDmg = Math.min(3, Math.floor(Math.log2(card.useCnt)));
+            if (ver.gte('v6.3.0') && card.useCnt == 8) addDmg = 2;
             return {
                 triggers: isCdt(!initCardIds.includes(hcard?.id ?? 0), 'card'),
-                addDmg: Math.min(3, Math.floor(Math.log2(card.useCnt))),
+                addDmg,
                 exec: () => card.addUseCnt(),
             }
         }),
@@ -1648,7 +1651,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     330004: () => new CardBuilder(221).name('自由的新风').since('v4.1.0').legend().costSame(0)
-        .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1')
+        .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：1】')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/09/24/258999284/bccf12a9c926bec7203e543c469ac58d_1423280855629304603.png')
         .handle(() => ({ status: 300002 })),
 
@@ -1817,7 +1820,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     331801: () => new CardBuilder(237).name('风与自由').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costSame(0).costSame(1, 'v4.3.0')
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
-        .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：】1', 'v4.1.0')
+        .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：1】', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png')
         .handle((_, { heros }, ver) => ({ isValid: (ver.lt('v4.1.0') && !ver.isOffline) || heros.allHidxs().length > 1, status: 303181 })),
 
@@ -2179,7 +2182,7 @@ const allCards: Record<number, () => CardBuilder> = {
     332032: () => magicCount(3, 394).since('v4.7.0'),
 
     332036: () => new CardBuilder(405).name('「看到那小子挣钱…」').since('v4.8.0').event().costSame(0)
-        .description('本回合中，每当对方获得1个元素骰，若你未宣布回合结束，则你获得1个[万能元素骰]\\；否则，生成1点上阵区[护盾]。')
+        .description('本回合中，对方每获得1个元素骰，如果你未宣布回合结束，则你生成1个[万能元素骰]\\；否则，生成1点[护盾]。；【[可用次数]：3】')
         .description('本回合中，每当对方获得2个元素骰，你就获得1个[万能元素骰]。（此效果提供的元素骰除外）', 'v6.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/def6430ab4786110ca59b7c0b5db74bb_6410535231278063665.png')
         .handle(() => ({ status: 303236 })),
@@ -2214,8 +2217,9 @@ const allCards: Record<number, () => CardBuilder> = {
             return { isValid: cmds.notEmpty }
         }),
 
-    332041: () => new CardBuilder(442).name('强劲冲浪拍档！').since('v5.2.0').event().costSame(0)
-        .description('【双方场上至少存在合计2个「召唤物」时，才能打出：】随机触发我方和敌方各1个「召唤物」的「结束阶段」效果。')
+    332041: () => new CardBuilder(442).name('强劲冲浪拍档！').since('v5.2.0').event(ver => ver.gte('v6.3.0')).costSame(0)
+        .description('[战斗行动]：【双方场上至少存在合计2个「召唤物」时，才能打出，】随机触发我方和敌方各1个「召唤物」的「结束阶段」效果。')
+        .description('【双方场上至少存在合计2个「召唤物」时，才能打出：】随机触发我方和敌方各1个「召唤物」的「结束阶段」效果。', 'v6.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/0a500a2d6316ffc96851715d545815da_8008891091384379637.png')
         .handle((_, event) => {
             const { summons, esummons, cmds } = event;
@@ -2365,13 +2369,14 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(() => ({ status: 303247 })),
 
     332059: () => new CardBuilder(554).name('「穿越晨霭的冒险」').since('v6.3.0').event().costSame(0)
-        .description('将费用最低的2张手牌置入牌组底，然后抓2张牌。；【此牌被[舍弃]后：】[冒险]1次。')
+        .description('将费用最低的至多2张手牌置入牌组底，然后抓等量的牌。；【此牌被[舍弃]后：】[冒险]1次。')
         .src('#')
         .handle((_, event) => {
             const { hcardsCnt, cmds, execmds } = event;
-            cmds.putCard({ cnt: 2, mode: CMD_MODE.LowHandCard }).getCard(2);
+            const cnt = Math.min(2, hcardsCnt);
+            cmds.putCard({ cnt, mode: CMD_MODE.LowHandCard }).getCard(cnt);
             execmds.adventure();
-            return { isValid: hcardsCnt >= 2, triggers: 'discard' }
+            return { triggers: 'discard' }
         }),
 
     333001: () => new CardBuilder(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
