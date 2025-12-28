@@ -465,6 +465,7 @@ const resetCardFilter = () => {
             name,
             val: cardVal[aidx][i],
             tap: false,
+            color: aidx == 3 ? ELEMENT_COLOR[ELEMENT_NAME_KEY[name + '元素']] : 'white',
         })),
     })) as CardFilter;
 }

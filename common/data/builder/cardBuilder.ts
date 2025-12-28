@@ -443,7 +443,7 @@ export class CardBuilder extends BaseCostBuilder {
             this._subtypeCdt.push([cdt, subtypes]);
             return this;
         }
-        this._subtype.push(...subtypes);
+        this._subtype.push(cdt, ...subtypes);
         return this;
     }
     tag(...tags: CardTag[]) {

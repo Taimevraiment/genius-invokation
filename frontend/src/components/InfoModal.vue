@@ -524,13 +524,18 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
 }
 
 const wrapRule = (...desc: string[]) => {
-  [...new Set(desc.join('').replace(/<img.+?>/g, '').replace(/\>/g, '[').replace(/\</g, ']').match(/(?<=[^*]\[).*?(?=\])/g))].forEach(title => {
-    if (title in RULE_EXPLAIN) {
-      ruleExplain.value.push(`<div style='font-weight:bold;border-top:2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`, { isExplain: true, isRule: true })}</div>`);
-      ruleExplain.value.push(...RULE_EXPLAIN[title].split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true, isRule: true })));
-      wrapRule(...RULE_EXPLAIN[title].split(/(?<!\\)；/));
-    }
-  });
+  [...new Set(desc
+    .join('')
+    .replace(/<img.+?>/g, '')
+    .replace(/>/g, '[')
+    .replace(/</g, ']')
+    .match(/(?<!\*\[)(?<=\[).*?(?=\])/g))].forEach(title => {
+      if (title in RULE_EXPLAIN) {
+        ruleExplain.value.push(`<div style='font-weight:bold;border-top:2px solid #6f84a0;padding-top:5px;'>${wrapDesc(`*[${title}]`, { isExplain: true, isRule: true })}</div>`);
+        ruleExplain.value.push(...RULE_EXPLAIN[title].split(/(?<!\\)；/).map(desc => wrapDesc(desc, { isExplain: true, isRule: true })));
+        wrapRule(...RULE_EXPLAIN[title].split(/(?<!\\)；/));
+      }
+    });
 }
 
 // 获取骰子背景
