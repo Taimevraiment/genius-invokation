@@ -145,7 +145,7 @@
           <img class="hero-center-icon" style="width: 30%;opacity: 1;" src="@@/image/Select_Check_01.png"
             v-if="targetSelect?.[hgi]?.[hidx]" />
           <template #hero-right-bar>
-            <div class="hero-vehicle" v-if="hero.vehicleSlot != null" style="margin-top: 15%;" :class="{
+            <div class="hero-vehicle" v-if="hero.vehicleSlot != null" :class="{
               'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Vehicle]],
             }">
               <img :src="hero.vehicleSlot[1].UI.src || CARD_SUBTYPE_URL[CARD_SUBTYPE.Vehicle]" />
@@ -1023,16 +1023,16 @@ const mouseup = () => {
   transition: 0.3s;
 }
 
+.hero-vehicle {
+  width: 160%;
+  margin-top: 30%;
+}
+
 .hero-weapon>img,
 .hero-relic>img,
 .hero-talent>img,
 .hero-vehicle>img {
   width: 100%;
-  border-radius: 50%;
-  filter: brightness(0.3);
-}
-
-.hero-vehicle>img {
   border-radius: 50%;
   filter: brightness(0.3);
 }
