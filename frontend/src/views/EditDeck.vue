@@ -208,6 +208,7 @@
                     <div class="filter-tags">
                         <span class="filter-tag" :class="{ active: val.tap }" v-for="(val, sidx) in htitle.value"
                             :style="{ color: val.color }" :key="sidx" @click.stop="selectFilter(fidx, sidx)">
+                            <img class="filter-tag-icon" v-if="val.icon" :src="val.icon" :alt="val.name" />
                             {{ val.name }}
                         </span>
                     </div>
@@ -215,7 +216,8 @@
             </div>
             <div class="filter-selected" v-if="filterSelected.length > 0">
                 <span class="filter-tag active" v-for="(stag, atidx) in filterSelected" :key="atidx">
-                    {{ stag }}
+                    <img class="filter-tag-icon" v-if="stag.includes('icon')" :src="stag.slice(5)" />
+                    <span v-else>{{ stag }}</span>
                 </span>
             </div>
         </div>
@@ -234,7 +236,7 @@ import {
 import { DECK_CARD_COUNT, MAX_DECK_COUNT, MIN_DECK_COUNT } from '@@@/constant/gameOption';
 import { NULL_CARD, NULL_CUSTOM_VERSION_CONFIG, NULL_HERO, NULL_MODAL } from '@@@/constant/init';
 import {
-    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_NAME_KEY, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
+    CARD_SUBTYPE_NAME, CARD_TYPE_NAME, ELEMENT_COLOR, ELEMENT_ICON, ELEMENT_NAME_KEY, ELEMENT_URL, HERO_LOCAL_NAME, PURE_ELEMENT_NAME, WEAPON_TYPE_NAME,
 } from '@@@/constant/UIconst';
 import { DeckVO, OriDeck } from 'typing';
 import { computed, ref } from 'vue';
@@ -255,6 +257,7 @@ type Filter<T> = {
         val: T,
         tap: boolean,
         color: string,
+        icon: string,
     }[]
 }
 type HeroFilter = [Filter<HeroTag>, Filter<ElementType>, Filter<WeaponType>];
@@ -437,10 +440,11 @@ const resetHeroFilter = () => {
     ].map((arr, aidx) => ({
         name: heroFilterTitle[aidx],
         value: arr.map((name, i) => ({
-            name,
+            name: aidx == 1 ? '' : name,
             val: heroVal[aidx][i],
             tap: false,
             color: aidx == 1 ? ELEMENT_COLOR[ELEMENT_NAME_KEY[name + '元素']] : 'white',
+            icon: aidx == 1 ? ELEMENT_URL[ELEMENT_NAME_KEY[name + '元素']] : '',
         })),
     })) as HeroFilter;
 }
@@ -458,14 +462,15 @@ const resetCardFilter = () => {
         Object.values(CARD_TYPE_NAME),
         Object.values(CARD_SUBTYPE_NAME),
         [0, 1, 2, 3, 4, 5],
-        ['任意', ...Object.values(PURE_ELEMENT_NAME).map(([v]) => v), '同色'],
+        ['无色元素骰', ...Object.values(PURE_ELEMENT_NAME).map(([v]) => v + '元素'), '同色'],
     ].map((arr, aidx) => ({
         name: cardFilterTitle[aidx],
         value: arr.map((name, i) => ({
-            name,
+            name: aidx == 3 ? '' : name,
             val: cardVal[aidx][i],
             tap: false,
-            color: aidx == 3 ? ELEMENT_COLOR[ELEMENT_NAME_KEY[name + '元素']] : 'white',
+            color: aidx == 3 ? ELEMENT_COLOR[ELEMENT_NAME_KEY[name]] : 'white',
+            icon: aidx == 3 ? `/image/${ELEMENT_ICON[ELEMENT_NAME_KEY[name]]}-dice-bg.png` : '',
         })),
     })) as CardFilter;
 }
@@ -583,7 +588,7 @@ const updateInfo = (init = false) => {
     filterSelected.value = (sinceVersionFilter.value == '实装版本' ? [] : [sinceVersionFilter.value])
         .concat([heroFilter, cardFilter][currIdx.value].value
             ?.filter(ftype => ftype.value.filter(v => v.tap).length > 0)
-            .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => v.name)) ?? []);
+            .flatMap(ftype => ftype.value.filter(v => v.tap).map(v => `${v.name}` || 'icon:' + v.icon)) ?? []);
 }
 
 // 进入配置版本页面
@@ -1340,6 +1345,11 @@ input#isOfflineInput:checked {
 .filter-tag:active,
 .filter-tag.active {
     background-color: #4b65cd;
+}
+
+.filter-tag-icon {
+    height: 1.1rem;
+    vertical-align: middle;
 }
 
 .filter-selected {

@@ -44,3 +44,5 @@ export const IS_DEVELOPING = true; // 是否上了开发版
 export const AI_ID = 2; // ai的id
 
 export const STATUS_DESTROY_ID = 3; // 将该状态的entityId标记为已弃置
+
+export const NOT_FOUND_PLAYER_ID = 4; // 未找到玩家的id

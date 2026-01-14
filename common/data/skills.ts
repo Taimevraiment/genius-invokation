@@ -11,7 +11,7 @@ const ski1507x = (swirlEl: PureElementType) => {
 export const allSkills: Record<number, () => SkillBuilder> = {
     11163: () => new SkillBuilder('极恶技·灭').description('消耗所有*[蛇之狡谋]，造成等同于消耗*[蛇之狡谋]数量的[冰元素伤害]，对后台角色造成2点[穿透伤害]，如果消耗了7点*[蛇之狡谋]，则改为对后台角色造成3点[穿透伤害]。')
         .src('#',
-            '')
+            'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/e886b8ebfa2d73c7dbfc49fa09841135_2622571023137656584.png')
         .burstSp(2).cost(3).handle(event => {
             const { hero: { spEnergy }, cmds, eheros } = event;
             cmds.attack(spEnergy)

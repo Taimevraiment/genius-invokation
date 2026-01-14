@@ -953,7 +953,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
                 status.variables[STATUS_TYPE.Barrier] = +(heros[hidx].id != hid);
                 return { notLog: true }
             }
-            if (restDmg <= 0 || !hero || hero.isFront || hero.isDie) return { restDmg }
+            if (restDmg <= 0 || !hero || hero.isFront || hero.isDie) return;
             return {
                 restDmg: restDmg - 1,
                 pdmg: isCdt(hero.hp >= 7, 1),
@@ -1309,15 +1309,15 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, { cmds, hidx }) => (cmds.switchTo(hidx), { triggers: 'action-start', exec: () => status.dispose() })),
 
     114161: () => new StatusBuilder('超音灵眼').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
-        .description('【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-1。（每回合1次）')
+        .description('【我方出战角色受到伤害时：】抵消1点伤害，然后[可用次数]-1。（每回合1次）').perCnt(-2)
         .handle((status, event) => {
             const { restDmg, summons } = event;
-            if (restDmg < 0) return;
+            if (restDmg < 0 || status.perCnt == -1) return;
             return {
                 triggers: 'reduce-dmg',
                 restDmg: restDmg - 1,
                 exec: () => {
-                    status.minusUseCnt();
+                    status.addPerCnt();
                     summons.get(status.summonId)?.minusUseCnt();
                 }
             }
@@ -1602,7 +1602,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { restDmg, talent } = event;
             if (restDmg >= 0) {
-                if (restDmg < 2) return { restDmg }
+                if (restDmg < 2) return;
                 return { restDmg: restDmg - 1, exec: () => status.minusUseCnt() }
             }
             if (!talent) return;
@@ -1613,7 +1613,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('为我方出战角色提供2点[护盾]。此[护盾]耗尽前，我方受到的[物理伤害]减半。（向上取整）')
         .handle((_, event) => {
             const { restDmg, dmgElement } = event;
-            if (restDmg < 2 || dmgElement != DAMAGE_TYPE.Physical) return { restDmg }
+            if (restDmg < 2 || dmgElement != DAMAGE_TYPE.Physical) return;
             return { restDmg: Math.ceil(restDmg / 2) }
         }),
 
@@ -2244,7 +2244,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle((status, event) => {
             const { restDmg, hero, isSummon, cmds } = event;
             if (restDmg >= 0) {
-                if (restDmg == 0) return { restDmg }
+                if (restDmg == 0) return;
                 const smnDmg = isSummon > -1 && status.perCnt > 0;
                 return { restDmg: restDmg - 1, exec: () => { smnDmg ? status.minusPerCnt() : status.minusUseCnt() } }
             }
@@ -2335,7 +2335,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .description('【所附属角色受到伤害时：】抵消1点伤害。；抵消[岩元素伤害]时，需额外消耗1次[可用次数]。；[useCnt]')
         .handle((status, event) => {
             const { restDmg, dmgElement, hero } = event;
-            if (restDmg <= 0) return { restDmg }
+            if (restDmg <= 0) return;
             return {
                 restDmg: restDmg - 1,
                 exec: () => {

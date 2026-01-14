@@ -41,11 +41,11 @@
             <div v-if="hero.id == 1116" class="hero-sp-energy-1116">
                 <img class="hero-energy-img" :src="energyIcons[0][0]">
                 <img :class="['hero-energy-img', { blink: energyIcons[2][0] != 2 }]" :src="energyIcons[1][0]" :style="{
-                    clipPath: `xywh(0 ${energyIcons[1][2]} 100% 100%)`,
+                    clipPath: `polygon(0% ${energyIcons[1][2]}, 100% ${energyIcons[1][2]}, 100% 100%, 0% 100%)`,
                     filter: `brightness(${energyIcons[2][0] == 2 ? 0.8 : 1})`
                 }">
                 <img class="hero-energy-img" :src="energyIcons[1][0]"
-                    :style="{ clipPath: `xywh(0 ${energyIcons[1][1]} 100% 100%)` }">
+                    :style="{ clipPath: `polygon(0% ${energyIcons[1][1]}, 100% ${energyIcons[1][1]}, 100% 100%, 0% 100%)` }">
             </div>
             <template v-else>
                 <div v-for="(_, eidx) in energyIcons[0]" :key="eidx" class="hero-energy">

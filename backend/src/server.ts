@@ -6,7 +6,7 @@ import https from "node:https";
 import { Server } from "socket.io";
 import { versionChanges } from "../../common/constant/dependancyDict.js";
 import { PHASE, PLAYER_STATUS, PlayerStatus } from "../../common/constant/enum.js";
-import { AI_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
+import { AI_ID, NOT_FOUND_PLAYER_ID, PLAYER_COUNT } from "../../common/constant/gameOption.js";
 import { cardsTotal } from "../../common/data/cards.js";
 import { herosTotal } from "../../common/data/heros.js";
 import { skillsTotal } from "../../common/data/skills.js";
@@ -25,7 +25,6 @@ const origin = [
     'https://taim.site',
     'http://gi-tcg.taim.site',
     'https://gi-tcg.taim.site',
-    'http://7szh.taim.site',
     'http://localhost:5500',
     'http://localhost:5501',
 ]
@@ -38,7 +37,10 @@ const io = new Server(httpServer, {
     cors: { origin, methods: ['GET', 'POST'] }
 });
 
-process.on('uncaughtException', err => console.error('uncaughtErr:', err));
+process.on('uncaughtException', err => {
+    if (err.message.includes('vore')) return;
+    console.error('uncaughtErr:', err)
+});
 
 process.on('exit', code => console.error('exit:', code));
 
@@ -222,7 +224,8 @@ io.on('connection', socket => {
     socket.on('createRoom', data => {
         const { roomName, version, roomPassword, countdown, customVersion, allowLookon, isRecord } = data;
         const roomId = genId(roomList, { isMinus: !!isRecord });
-        const me = getPlayer(pid) as Player;
+        let me = getPlayer(pid) as { id: number, name: string };
+        if (!me && isRecord) me = { id: NOT_FOUND_PLAYER_ID, name: '未找到玩家' };
         const newRoom = new GeniusInvokationRoom(roomId, roomName, version, roomPassword, countdown, allowLookon, isDev ? 'dev' : 'prod', customVersion, io);
         const player = newRoom.init(me);
         if (isRecord) newRoom.init({ id: 0, name: isRecord.username[1] });
@@ -452,7 +455,7 @@ app.get('/detail', (req, res) => {
 app.get('/info', (req, res) => {
     if (!validateSK(req, res)) return;
     res.json({
-        roomsInfo: roomList.map(r => `${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
+        roomsInfo: roomList.map(r => `${r.id}: ${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
         playersInfo: playerList.map(p => `${p.name}(${p.ip})[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
         todayPlayersHistory: Array.from(todayPlayersHistory.entries())
             .map(([id, { ip, name, duration, loginTime, logoutTime, location }]) => ({
@@ -466,6 +469,14 @@ app.get('/info', (req, res) => {
             })),
         todayGames,
     });
+});
+
+app.get('/rooms', (_, res) => {
+    res.json(roomList.map(r => ({
+        roomId: r.id,
+        player0: r.players[0]?.name ?? '[空位]',
+        player1: r.players[1]?.name ?? '[空位]',
+    })));
 });
 
 app.get('/versions', (req, res) => {

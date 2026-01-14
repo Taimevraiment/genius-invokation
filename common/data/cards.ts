@@ -61,7 +61,7 @@ const barrierWeapon = (shareId: number, mark: string) => {
         .handle((card, event, ver) => {
             const { hcardsCnt, restDmg, skill, execmds } = event;
             if (restDmg > -1) {
-                if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return { restDmg }
+                if (card.perCnt <= 0 || hcardsCnt == 0 || restDmg == 0) return;
                 execmds.discard({ mode: CMD_MODE.HighHandCard })
                 return {
                     restDmg: restDmg - 1,
@@ -279,7 +279,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     311112: () => new CardBuilder(550).name('祭星者之望').since('v6.3.0').weapon().costSame(1).perCnt(1)
         .description('【我方每回合首次打出名称不属于初始牌组的牌时：】该卡牌少花费1个元素骰，所附属角色下次造成的伤害+1。（可叠加，最多叠加到2）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/08/258999284/7701448c0d01e03a627bf446cf90db2e_2504575026789785900.png')
         .handle((card, event) => {
             const { hcard, playerInfo: { initCardIds } } = event;
             if (card.perCnt <= 0 || initCardIds.includes(hcard?.id ?? 0)) return;
@@ -420,7 +420,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     311310: () => new CardBuilder(551).name('拾慧铸熔').since('v6.3.0').weapon().costAny(2).useCnt(0)
         .description('角色使用「元素爆发」造成的伤害+2。；【我方引发元素反应时：】累计1层【盛放的思绪】，当【盛放的思绪】不低于2层时，消耗2层【盛放的思绪】使所附属角色获得1点[充能]。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/08/258999284/dc2f8218a79c244a0b7e5612ff96fc76_2733081123646982331.png')
         .handle((card, event) => ({
             triggers: ['elReaction', 'other-elReaction'],
             addDmgType3: 2,
@@ -1217,7 +1217,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     312044: () => new CardBuilder(552).name('被浸染的缨盔').since('v6.3.0').relic().costAny(2).perCnt(0b11)
         .description('【附属角色[重击]时：】造成的伤害+1。（每回合1次）；【附属角色[下落攻击]后：】生成1层【sts169】。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/08/258999284/8f7124edeb720e7a0af9775b14f8ed1c_6145607073913895391.png')
         .handle((card, event) => {
             const { trigger, isChargedAtk } = event;
             if (trigger == 'fallatk') {
@@ -1591,7 +1591,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     322032: () => new CardBuilder(553).name('玻娜与「绿松石」').since('v6.3.0').ally().costAny(2).perCnt(1)
         .description('【入场时：】[冒险]1次。；【我方使用「特技」后：】[冒险]1次。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/08/258999284/3609cbfd13a837e631514a752a882c14_3054248767389141569.png'),
 
     323001: () => new CardBuilder(214).name('参量质变仪').offline('v1').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个「质变进度」。；此牌已累积3个「质变进度」时，弃置此牌并生成3个不同的基础元素骰。')
@@ -2303,7 +2303,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332053: () => new CardBuilder(517).name('破碎之海').since('v6.3.0').event().costSame(1).simulanka().canSelectSupport(1)
         .description('选择一张我方支援区的牌，将其弃置。然后使我方所有[「希穆兰卡」召唤物]的可用次数和效果量+1。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/08/258999284/3b774e66b88442238ed109fdf4e0fe8c_7125634701232601605.png')
         .handle((_, event) => ({
             exec: () => {
                 const { supports, selectSupport, summons } = event;
@@ -2370,7 +2370,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     332059: () => new CardBuilder(554).name('「穿越晨霭的冒险」').since('v6.3.0').event().costSame(0)
         .description('将费用最低的至多2张手牌置入牌组底，然后抓等量的牌。；【此牌被[舍弃]后：】[冒险]1次。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/07/258999284/d3c497c9d49542509973ce5610a9bfd2_4740578275200717567.png')
         .handle((_, event) => {
             const { hcardsCnt, cmds, execmds } = event;
             const cnt = Math.min(2, hcardsCnt);
@@ -2637,7 +2637,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     211161: () => new CardBuilder(547).name('湮远').since('v6.3.0').talent().costCryo(1).perCnt(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；装备有此牌的【hro】在场，我方打出或[舍弃]【crd111163】时：对敌方出战角色造成1点[冰元素伤害]。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/25f0da057b1480e86eeb2ed92241e6e7_2329386620477613058.png')
         .handle((card, event) => {
             const { hcard, execmds } = event;
             if (card.perCnt <= 0 || hcard?.id != 111163) return;
@@ -3026,7 +3026,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     214161: () => new CardBuilder(548).name('林雾间的行迹').since('v6.3.0').talent().costElectro(1).perCnt(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；我方每回合首次引发的感电反应造成的[穿透伤害]+1。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/a8e80c34d2dbcc14c144e8c706fbadc4_6701785820151555329.png')
         .handle(card => {
             if (card.perCnt <= 0) return;
             return {
@@ -3380,7 +3380,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((card, event) => {
             const { hero, restDmg, cmds } = event;
             if (restDmg > -1) {
-                if (restDmg < 3 || card.perCnt <= 0) return { restDmg }
+                if (restDmg < 3 || card.perCnt <= 0) return;
                 return { restDmg: restDmg - 1, statusOppo: hero.element == ELEMENT_TYPE.Cryo ? 121022 : 163011, exec: () => card.minusPerCnt() }
             }
             cmds.getDice(3, { element: hero.element });
@@ -3445,7 +3445,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     222071: () => new CardBuilder(549).name('亡水溢流').since('v6.3.0').talent().costHydro(1)
         .description('〔*[card][快速行动]：装备给我方的【hro】。〕；【入场时：】生成手牌【crd124051】。；装备有此牌的【hro】在场时，我方使用【crd124051】后，治疗我方受伤最多的角色1点。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/d379b7969a4837e36670611756e23e38_7494165190112208048.png')
         .handle((_, event) => {
             const { cmds, execmds, heros, hcard } = event;
             cmds.getCard(1, { card: 124051 });
@@ -3656,7 +3656,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     111161: () => new CardBuilder().name('诸武相授').event().costSame(0).canSelectHero(1).userType()
         .description('我方【hro】附属【sts111162】，并且下次造成的伤害+1。；【回合开始或我方执行切换后：】[舍弃]此牌，获得1点*[蛇之狡谋]。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/fcacf7404126d41f650f07291464c42f_7342403777055892176.png')
         .handle((card, event) => {
             const { cmds, execmds, heros } = event;
             const hero = heros.get(card.id);
@@ -3668,12 +3668,12 @@ const allCards: Record<number, () => CardBuilder> = {
 
     111163: () => new CardBuilder().name('虚境裂隙').event().costSame(0)
         .description('[舍弃]1张原本元素骰费用为3的手牌，我方【hro】获得2点*[蛇之狡谋]。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/ea0465d67ba6042b24ca003aa9f271d4_6391061726152297915.png')
         .handle((card, event) => {
             const { cmds, heros, hcards } = event;
+            if (hcards.every(c => c.rawDiceCost != 3)) return;
             const hero = heros.get(card.id);
             cmds.discard({ cnt: 1, card: 3 }).getEnergy(2, { hidxs: hero?.hidx, isSp: true });
-            return { isValid: hcards.some(c => c.rawDiceCost == 3) }
         }),
 
     112113: () => new CardBuilder().name('圣俗杂座').event().costSame(0).canSelectHero(1).userType()
@@ -3836,7 +3836,7 @@ const allCards: Record<number, () => CardBuilder> = {
             const { hero, restDmg, execmds } = event;
             if (restDmg == -1) return;
             const isBarrier = card.perCnt > 0 && hero.energy > 0;
-            if (!isBarrier || restDmg == 0) return { restDmg }
+            if (!isBarrier || restDmg == 0) return;
             execmds.getEnergy(-1, { hidxs: hero.hidx }).getStatus(123032);
             return { restDmg: restDmg - 1, exec: () => card.minusPerCnt() }
         }),
@@ -4049,7 +4049,7 @@ const allCards: Record<number, () => CardBuilder> = {
 
     321034: () => new CardBuilder().name('天蛇船').since('v6.3.0').adventure().costSame(0)
         .description('【冒险经历增加时：】将1个元素骰转换为[万能元素骰]。；【冒险经历达到2时：】抓1张牌。；【冒险经历达到4时：】我方出战角色附属2层【sts172】。；【冒险经历达到6时：】弃置敌方场上1个随机召唤物，召唤【smn301041】，然后弃置此牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/fe103e0d884968a8748b0fc93fba9ed4_2144437725451546476.png'),
 
     332033: () => magicCount(2).from(332032),
 

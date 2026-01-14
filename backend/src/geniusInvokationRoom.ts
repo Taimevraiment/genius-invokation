@@ -2898,7 +2898,7 @@ export default class GeniusInvokationRoom {
                     if (this._hasNotTriggered(skillres.triggers, trigger)) continue;
                     if ((!!isAfterSkill && !!skill) != trigger.startsWith('after')) continue;
                     this.preview.isQuickAction ||= !!skillres.isQuickAction;
-                    restDmg = skillres.restDmg ?? -1;
+                    restDmg = skillres.restDmg ?? restDmg;
                     isInvalid ||= !!skillres.isInvalid;
                     const isPassiveHidden = skill.type == SKILL_TYPE.PassiveHidden && skill.name == '';
                     const execute = () => {
@@ -3032,7 +3032,7 @@ export default class GeniusInvokationRoom {
                         isStatus && hfield.hasType(STATUS_TYPE.Shield, STATUS_TYPE.Barrier, STATUS_TYPE.ImmuneDamage) ||
                         !isStatus && hfield.hasTag(CARD_TAG.Barrier)
                     ) {
-                        restDmg = hfieldres.restDmg ?? -1;
+                        restDmg = hfieldres.restDmg ?? restDmg;
                     }
                     if (isStatus) {
                         isInvalid ||= !!(hfieldres as StatusHandleRes).isInvalid;

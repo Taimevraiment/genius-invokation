@@ -96,7 +96,7 @@ export class GIStatus extends Entity {
                 let { restDmg } = event;
                 let rest: StatusBuilderHandleRes = {};
                 if (handle) {
-                    const { restDmg: dmg = -1, ...other } = handle(status, event, versionWrap(ver)) ?? {};
+                    const { restDmg: dmg = restDmg, ...other } = handle(status, event, versionWrap(ver)) ?? {};
                     if (dmg > -1) restDmg = dmg;
                     rest = { ...other };
                 }
@@ -417,7 +417,7 @@ export class StatusBuilder extends BaseBuilder {
         if (this._type.includes(STATUS_TYPE.Barrier)) this.variables(STATUS_TYPE.Barrier, 1);
         const handle = this._type.includes(STATUS_TYPE.Barrier) && !this._handle ?
             (status: Status, event: StatusHandleEvent, ver: VersionWrapper): StatusBuilderHandleRes => {
-                const { restDmg = -1, summons = [], getdmg = [], hidx = -1 } = event;
+                const { restDmg, summons, getdmg, hidx } = event;
                 const triggers: Trigger = 'reduce-dmg';
                 if (restDmg < this._barrierCdt.reduce((a, c) => c[0](ver) ? c[1] : a, 1)) return { triggers, restDmg }
                 const summon = summons.find(smn => smn.id == status.summonId);

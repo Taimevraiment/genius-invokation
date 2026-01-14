@@ -286,27 +286,28 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('后厨手艺')
         .skills(
             new SkillBuilder('低温烹饪').description('{dealDmg}，召唤【smn111151】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/8/8d/k6oqleep7ovtakr6vdo4ux75txswf24.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/79e50495b3877a64e45b4bb3de37dd7c_5076878668457312979.png')
                 .elemental().damage(1).cost(3).handle(() => ({ summon: 111151 })),
             new SkillBuilder('花刀技法').description('{dealDmg}，治疗我方所有角色2点。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/92/1jhkhnrrnueqljebyptqii3cs4jpxwk.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/7279cf48f2069f28f9c244603668ad4e_7049710180960428477.png')
                 .burst(2).damage(1).cost(3).handle(({ heros }) => ({ heal: 2, hidxs: heros.allHidxs() })),
             new SkillBuilder('时时刻刻的即兴料理').description('战斗开始时，生成【crd111159】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/3/3f/i305nwa35n0zkiz2z2h399qn82lntun.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/799dba42a72ef8a1a251758fdb55baa2_2041351956466456003.png')
                 .passive().handle(({ cmds }) => (cmds.getSupport(111159), { triggers: 'game-start' })),
         ),
 
     1116: () => new HeroBuilder(544).name('丝柯克').since('v6.3.0').spMaxEnergy(7).cosmicCalamity().cryo().sword()
-        .src('#', '#6605')
-        .avatar('/image/tmp/v6.3.0/UI_Gcg_Char_AvatarIcon_SkirkNew.png')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dcbb/792673111d3461580f1344757ed93abb.png',
+            'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/7244ae4292fef550204eaf8d087b5035_3553632365591858769.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dce3/54667f8409be4f7b9bcb35a958ffdfb8.png')
         .normalSkill('极恶技·断')
         .skills(
             new SkillBuilder('极恶技·闪').description('获得2点*[蛇之狡谋]，生成手牌【crd111161】。（每回合1次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/404a493d3b7964a708c6cd5eab69343c_1955116646191902022.png')
                 .elemental().cost(2).handle(event => {
                     const { cmds, skill: { useCntPerRound } } = event;
                     cmds.getEnergy(2, { isSp: true }).getCard(1, { card: 111161 });
@@ -315,7 +316,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             allSkills[11163](),
             new SkillBuilder('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；【我方触发冻结/冰扩散/超导/冰结晶反应后：】生成手牌【crd111163】。（每回合3次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/a2b8fba62b565fe8974be882752896d1_2070236635156012985.png')
                 .passive().perCnt(3).handle(event => {
                     const { skill, cmds } = event;
                     if (skill.perCnt <= 0) return;
@@ -930,11 +931,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('刃爪悬星')
         .skills(
             new SkillBuilder('瑞兽登高楼').description('{dealDmg}，自身附属【sts113161】，我方切换到下一个角色。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/4/4f/ie34sm1j4j5ini8zral4i0iche8kl24.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/161962d980fe4c8fa3b5347a8ba9a978_56842598150926854.png')
                 .elemental().damage(1).cost(3).handle(({ cmds }) => (cmds.switchAfter(), { statusPre: 113161 })),
             new SkillBuilder('璨焰金猊舞').description('{dealDmg}，自身附属【sts113162】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/b/b6/5b3mcpwua7s0c4z73d3114fire4cpry.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/24fc35907cdf894b68b8b19f9ce18020_6441721330980571018.png')
                 .burst(3).damage(2).cost(3).handle(() => ({ status: 113162 }))
         ),
@@ -1235,15 +1236,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
             }))
         .skills(
             new SkillBuilder('夜虹逐跃').description('{dealDmg}，自身附属【sts114154】，进入【sts114151】，并获得1点「夜魂值」，然后我方切换到下一个角色。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/6/64/5urbvso0qhm0b77t5vj3lr9m3t741fp.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/839e11eebc9df599f89df322364261d1_7154275250751623092.png')
                 .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.getStatus([114154, 114151]).getNightSoul(1).switchAfter().res),
             new SkillBuilder('闪烈降临！').description('{dealDmg}，自身附属【sts114152】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/c/cd/qaqebxrnja20b64924duql0z3523bn3.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/7028abae2ff6172ce29f8a6a6660e833_2206190065272515264.png')
                 .burst(3).damage(3).cost(3).handle(() => ({ status: 114152 })),
             new SkillBuilder('连势，三重腾跃！').description('【〖hro〗使用技能后：】如果自身「夜魂值」等于2，则消耗2点「夜魂值」，自身附属【sts114152】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/e/e5/2phe6jv2402t53p4pohqr6urtbacxk5.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/120e7d4a50cb1fe0f77f7d9a4c1c0dac_2932626368172569270.png')
                 .passive().handle(event => {
                     const { hero: { heroStatus }, hidx, cmds } = event;
@@ -1254,21 +1255,21 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     1416: () => new HeroBuilder(545).name('欧洛伦').since('v6.3.0').natlan().electro().bow()
-        .src('#')
-        .avatar('/image/tmp/v6.3.0/UI_Gcg_Char_AvatarIcon_Olorun.png')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dcbb/b5c814d87bb619b8f0da38e463b26c5b.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dce3/12c74aa8d1f230d4ccb06ba9347eaac7.png')
         .normalSkill('宿灵闪箭')
         .skills(
             new SkillBuilder('暝色缒索').description('{dealDmg}，生成【sts114162】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/ddaffb5f60f5a848ab869aeed66963d7_4194742434903521590.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 114162 })),
             new SkillBuilder('黯声回响').description('{dealDmg}，召唤【smn114161】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/9b42c01c5434aa2eb62d15e344727cea_4055010393150111801.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 114161 })),
             new SkillBuilder('夜翳的通感').description('【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；我方造成此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/33ccac2adea6cd18a9c2d59f14843ae6_3282756831587509125.png')
                 .passive().perCnt(1).handle(event => {
                     const { source, cmds, skill, trigger, hero, eDmgedHero } = event;
                     const triggers: Trigger[] = ['ElectroCharged', 'other-ElectroCharged'];
@@ -1543,7 +1544,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('祛风妙仪')
         .skills(
             new SkillBuilder('空天疾护').description('{dealDmg}，自身进入【sts115151】，获得2点「夜魂值」，并附属【crd115152】。（角色进入【sts115151】后不可使用此技能）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/3/33/oa27ioa4arhh43owp0rn37fi5yyw27i.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/b2d1b7b516530565e722ded4abf10751_7101356055499665736.png')
                 .elemental().damage(1).cost(2).handle(({ cmds, hero: { heroStatus } }) => (
                     cmds.getStatus(115151).getNightSoul(2), {
@@ -1551,7 +1552,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),
                     })),
             new SkillBuilder('复合镇静域').description('{dealDmg}，治疗我方受伤最多的角色2点。如果此技能引发了[风元素相关反应]，则敌方出战角色附属对应元素的【sts115150】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/2/20/3te5vpwe3cuf00eyu206wiwu5rp9xku.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/0179cb3d8dc090c33ea8dcb1f2f23367_6900272809255141821.png')
                 .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115153 + i}`))
                 .burst(2).damage(2).cost(3).handle(event => {
@@ -2192,15 +2193,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill(new NormalSkillBuilder('涌浪').catalyst())
         .skills(
             new SkillBuilder('汛波').description('{dealDmg}，随机触发我方1个「召唤物」的「结束阶段」效果。如果自身生命值不低于2，则自身受到1点[穿透伤害]。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/1/10/su0sccv2spovcnu82xt4chyy2dcmj4p.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/def43673b9ab24e997dc05bfaed0c41f_6460874372753487667.png')
                 .elemental().damage(2).cost(3).handle(({ hero: { hp } }) => ({ pdmgSelf: isCdt(hp >= 2, 1) })),
             new SkillBuilder('洪啸').description('{dealDmg}，触发我方所有「召唤物」的「结束阶段」效果。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/7/71/tqxncstxl5dxpclzngtam26ugro55zr.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/2f9df765e37a12df49709ea337f815a0_1921835653620442794.png')
                 .burst(3).damage(4).cost(3),
             new SkillBuilder('分流').description('【自身生命值不低于3，我方〖smn122061〗以外的「召唤物」离场时：】自身受到2点[穿透伤害]，召唤1个独立的【smn122061】。（每回合1次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/6/67/3u45omq6usccdetx4567mxp1w90rzpg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/04527aa814e29d5f801efff742695576_8625775376586066698.png')
                 .passive().perCnt(1).handle(event => {
                     const { hero: { hp }, skill, source, summons } = event;
@@ -2218,17 +2219,17 @@ const allHeros: Record<number, () => HeroBuilder> = {
         ),
 
     2207: () => new HeroBuilder(546).name('圣骸角鳄').since('v6.3.0').maxHp(11).consecratedBeast().hydro()
-        .src('#')
-        .avatar('/image/tmp/v6.3.0/UI_Gcg_Char_MonsterIcon_GatorSacred.png')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f6fc/49d8176cf43a866b88bed5709e6a80c5.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/5ea3cab5d35d44096106216727b4670e.png')
         .normalSkill('尖牙噬咬')
         .skills(
             new SkillBuilder('鳄齿锐波').description('{dealDmg}，将至多1张原本元素骰费用最高的手牌置入牌组底，生成手牌【crd124051】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/c357668a3d1a749e4003f578687c54c7_8666737310344464188.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard }).getCard(1, { card: 124051 }).res),
             new SkillBuilder('凶鳄狂浪').description('{dealDmg}，[舍弃]至多3张【crd124051】，每[舍弃]1张，治疗我方受伤最多的角色1点，并使其获得1点最大生命值。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/261dce21bdb6e5cc2e0161f88538979c_2126152053723761736.png')
                 .burst(2).damage(4).cost(3).handle(event => {
                     const { hcards, cmds, heros } = event;
                     const cnt = Math.min(3, hcards.filter(c => c.id == 124051).length);
@@ -2237,7 +2238,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 }),
             new SkillBuilder('圣骸感应').description('我方打出或[舍弃]【crd124051】后，治疗我方受伤最多的角色1点。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/b539b03ea17283551f0c25327826656a_224956877266432226.png')
                 .passive().handle(event => {
                     const { cmds, hcard, heros } = event;
                     if (hcard?.id != 124051) return;
@@ -2667,15 +2668,15 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .normalSkill('顶位迅斩')
         .skills(
             new SkillBuilder('斧盾震击').description('{dealDmg}。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/6/6d/rmvzlb8ijzthe7kueujes4ywn77sa9q.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/5d52c080e2ba4add7a7784c11c77f73b_6776461233509557648.png')
                 .elemental().damage(3).cost(3),
             new SkillBuilder('坚岩姿态').description('自身[附着岩元素]，[准备技能]：【rsk26045】，然后[准备技能]：【rsk26047】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/0/05/3t8r6jlyi5c23j1bykv14re0uufy47z.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/613e8f744522764ebd6b8f67062e232b_4584080494583545370.png')
                 .burst(2).cost(3).handle(() => ({ isAttach: true, status: 126042 })),
             new SkillBuilder('攻阵气势').description('如果敌方场上存在【伤害抵消】、[护盾]状态\\；或存在【伤害抵消】、[护盾]出战状态，则我方角色使用技能后，自身附属1层【sts126041】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/5/55/nh2m4dta3lud00vlua0wlprba01enbb.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/ec0154083d9656851cbd15a7f881cd86_1936941983190120409.png')
                 .passive().variables('hasSubHurt').handle(event => {
                     const { hidx, eheros, eCombatStatus, trigger, skill } = event;

@@ -308,14 +308,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
             }
         })),
 
-    114161: () => new SummonBuilder('超音灵眼').useCnt(3).damage(1)
+    114161: () => new SummonBuilder('超音灵眼').useCnt(3).damage(1).statusId()
         .description('{defaultAtk。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌可用次数-1。（每回合1次）}')
-        .src('#')
-        .handle((_, event) => {
-            const { trigger } = event;
-            if (['enter', 'turn-end'].includes(trigger)) return { triggers: trigger, isOnlyPhaseEnd: true, isNotAddTask: true, status: 114161 }
-            return { triggers: 'phase-end' }
-        }),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/2a179be505d2c8e9097709a17b223db7_4957973981423613982.png'),
 
     115011: (isTalent: boolean = false) => new SummonBuilder('大型风灵').useCnt(3).damage(2).talent(isTalent)
         .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；【此召唤物在场时：】如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
