@@ -1,5 +1,5 @@
 import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
-import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, PHASE, VERSION, Version } from "../constant/enum.js";
+import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DICE_TYPE_CODE_KEY, DiceCostType, DiceCostTypeCode, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, PHASE, VERSION, Version } from "../constant/enum.js";
 import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
 import { Entity, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
@@ -14,7 +14,8 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
     const diceCntArr = objToArr(diceCnt);
     const typeCnt = diceCntArr.filter(([v, n]) => v != DICE_COST_TYPE.Omni && n > 0).length;
     if (card) { // 选择卡所消耗的骰子
-        const { cost, costType, anydice, costChange, costChanges } = card;
+        const { cost, costType: rawCostType, anydice, costChange, costChanges, variables: { cardDiceType } } = card;
+        const costType = cardDiceType != undefined ? DICE_TYPE_CODE_KEY[cardDiceType as DiceCostTypeCode] : rawCostType;
         if (diceLen != cost + anydice - costChange) return false;
         if (costType == DICE_TYPE.Any) return true;
         if (costType != DICE_TYPE.Same) {
@@ -149,8 +150,8 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix1}dice: ${player.dice.map(d => `[${d}]`).join('')}\n`
         + `${prefix1}rollCnt: ${player.rollCnt}\n`
         + `${prefix1}status: ${player.status}\n`
-        + `${prefix1}handCards: ${player.handCards.map(c => `[${c.name}](${c.entityId})`).join('')}\n`
-        + `${prefix1}pile: ${player.pile.map(c => `[${c.name}]`).join('')}\n`
+        + `${prefix1}handCards: ${player.handCards.map(c => `[${c.name}](${c.entityId})${c.attachments.length ? `(${c.attachments.map(a => `${a.name}[${a.useCnt}]`).join('')})` : ''}`).join('')}\n`
+        + `${prefix1}pile: ${player.pile.map(c => `[${c.name}]${c.attachments.length ? `(${c.attachments.map(a => `${a.name}[${a.useCnt}]`).join('')})` : ''}`).join('')}\n`
         + `${prefix1}playerInfo: ${playerInfoToString(player.playerInfo, prefixSpace + 2)}\n`
         + `${prefix1}combatStatus: [\n`
         + `${player.combatStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`

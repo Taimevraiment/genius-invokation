@@ -8,16 +8,23 @@
                 :src="getPngIcon('legend-border')" draggable="false" />
             <div class="side-icons">
                 <div class="card-cost" v-if="!isHideCost"
-                    :style="{ color: card.costChanges[0] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
-                    <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[card.costType])" draggable="false" />
-                    <StrokedText class="cost-text">{{ Math.max(0, card.cost - card.costChanges[0]) }}</StrokedText>
+                    :style="{ color: card.costChanges[0] + card.costChanges[2] > 0 ? CHANGE_GOOD_COLOR : card.costChanges[0] + card.costChanges[2] < 0 ? CHANGE_BAD_COLOR : 'white' }">
+                    <img class="cost-img"
+                        :src="getDiceBgIcon(ELEMENT_ICON[card.variables.cardDiceType == undefined ? card.costType : DICE_TYPE_CODE_KEY[card.variables.cardDiceType]])"
+                        draggable="false" />
+                    <StrokedText class="cost-text">
+                        {{ card.variables.cardDiceType == undefined ?
+                            Math.max(0, card.cost - card.costChanges[0] - card.costChanges[2]) :
+                            Math.max(0, card.rawDiceCost - card.costChange) }}
+                    </StrokedText>
                 </div>
-                <div class="card-cost" v-if="!isHideCost && card.anydice > 0"
+                <div class="card-cost"
+                    v-if="!isHideCost && card.anydice > 0 && card.costType != DICE_TYPE.Any && card.variables.cardDiceType == undefined"
                     :style="{ color: card.costChange - card.cost > 0 || card.costChanges[1] > 0 ? CHANGE_GOOD_COLOR : 'white' }">
                     <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[COST_TYPE.Any])" draggable="false" />
                     <StrokedText class="cost-text">
                         {{ Math.max(0, card.anydice - card.costChanges[1] - Math.max(0, card.costChanges[0] -
-                            card.cost)) }}
+                            card.costChanges[2] - card.cost)) }}
                     </StrokedText>
                 </div>
                 <div class="card-cost" v-if="!isHideCost && card.energy > 0">
@@ -26,6 +33,17 @@
                 </div>
                 <div class="card-cost" v-if="!isHideCost && card.subType.includes(CARD_SUBTYPE.Legend)">
                     <img class="cost-img" :src="getDiceBgIcon(ELEMENT_ICON[CARD_SUBTYPE.Legend])" />
+                </div>
+            </div>
+            <div class="attachments" v-if="isShowAttachment">
+                <div class="attachment"
+                    v-for="(atch, atchi) in card.attachments.filter((_, ati) => card.attachments.length <= 2 || ati < 1)"
+                    :key="atchi">
+                    <img class="attachment-icon" :src="getPngIcon(atch.UI.icon)" />
+                </div>
+                <div class="attachment" v-if="card.attachments.length > 2"
+                    style="background-color: #faebd767;border-radius: 50%;margin: 5%;width: 35%;">
+                    <span style="color: beige;">…</span>
                 </div>
             </div>
             <span class="card-content" v-if="card?.UI.src?.length == 0">
@@ -39,8 +57,8 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 
-import { CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
-import { CARD_SUBTYPE, COST_TYPE } from '@@@/constant/enum';
+import { CHANGE_BAD_COLOR, CHANGE_GOOD_COLOR, ELEMENT_ICON } from '@@@/constant/UIconst';
+import { CARD_SUBTYPE, COST_TYPE, DICE_TYPE, DICE_TYPE_CODE_KEY } from '@@@/constant/enum';
 import { Card } from '../../../typing';
 import StrokedText from './StrokedText.vue';
 
@@ -50,6 +68,7 @@ const props = defineProps<{
     width?: number,
     isHideCost?: boolean,
     isHideBorder?: boolean,
+    isShowAttachment?: boolean,
 }>();
 
 const card = computed<Card>(() => props.card);
@@ -57,6 +76,7 @@ const isMobile = computed<boolean>(() => props.isMobile);
 const cardWidth = computed(() => props.width ?? (isMobile.value ? 60 : 90));
 const isHideCost = computed<boolean>(() => props.isHideCost || false);
 const isHideBorder = computed<boolean>(() => props.isHideBorder || false);
+const isShowAttachment = computed(() => props.isShowAttachment || false);
 
 // 获取骰子背景
 const getDiceBgIcon = (name: string) => {
@@ -117,6 +137,27 @@ const getPngIcon = (name: string) => {
     left: 0;
     top: 0;
     border-radius: inherit;
+}
+
+.attachments {
+    position: absolute;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    top: 12%;
+}
+
+.attachment {
+    width: 40%;
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.attachment-icon {
+    width: 100%;
 }
 
 .card-content {

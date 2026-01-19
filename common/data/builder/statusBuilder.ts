@@ -1,5 +1,5 @@
 import { Status, Trigger, VersionWrapper } from "../../../typing";
-import { CARD_TYPE, DAMAGE_TYPE, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
+import { CARD_TYPE, DAMAGE_TYPE, DiceCostType, DiceType, STATUS_GROUP, STATUS_TYPE, StatusGroup, StatusType, VERSION, Version } from "../../constant/enum.js";
 import { IS_USE_OFFICIAL_SRC, MAX_USE_COUNT } from "../../constant/gameOption.js";
 import { ELEMENT_ICON_NAME, GUYU_PREIFIX, STATUS_BG_COLOR, STATUS_ICON, StatusBgColor } from "../../constant/UIconst.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -19,6 +19,8 @@ export interface StatusHandleRes extends EntityHandleRes {
     isUpdateAttachEl?: boolean,
     atkOffset?: number,
     isFallAtk?: boolean,
+    diceEl?: DiceCostType,
+    cardDiceType?: DiceType,
     exec?: () => boolean,
 }
 
@@ -135,14 +137,14 @@ export class GIStatus extends Entity {
             }
         } else if (type.includes(STATUS_TYPE.NightSoul)) {
             const element = ELEMENT_ICON_NAME[Math.floor(id / 1e3) % 10];
-            this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Nightsoul_${element}.webp`;
+            this.UI.icon = `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Nightsoul_${element}`;
         } else if (Object.values<string>(STATUS_ICON).slice(0, 4).includes(icon) && IS_USE_OFFICIAL_SRC) {
             const element = icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp ? ELEMENT_ICON_NAME[Math.floor(id / 1e3) % 10] : '';
             const iconName = icon == STATUS_ICON.Enchant ? 'Element_Enchant_' :
                 icon == STATUS_ICON.ElementAtkUp ? 'Element_Atk_Up_' :
                     icon == STATUS_ICON.AtkUp ? 'Common_Atk_Up' :
                         icon == STATUS_ICON.AtkSelf ? 'Common_Atk_Self' : '';
-            this.UI.icon = `https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_${iconName}${element}.webp`;
+            this.UI.icon = `${GUYU_PREIFIX}raw/UI_Gcg_Buff_${iconName}${element}`;
             this.UI.iconBg = STATUS_BG_COLOR.Transparent;
         }
         if (IS_USE_OFFICIAL_SRC && !/^http|tmp/.test(this.UI.icon)) {
@@ -282,6 +284,10 @@ export class StatusBuilder extends BaseBuilder {
     }
     combatStatus() {
         this._group = STATUS_GROUP.combatStatus;
+        return this;
+    }
+    attachment() {
+        this._group = STATUS_GROUP.attachment;
         return this;
     }
     descriptionOnly(description: string, ...versions: Version[]) {

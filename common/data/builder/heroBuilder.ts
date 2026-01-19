@@ -56,7 +56,10 @@ export class GIHero extends Entity {
             if (v.startsWith('#')) return `${GUYU_PREIFIX}${v.slice(1) || id}`;
             return v;
         });
-        avatar = convertToArray(avatar);
+        avatar = convertToArray(avatar).map(v => {
+            if (v.startsWith('#')) return `${GUYU_PREIFIX}raw/UI_Gcg_Char_${v.slice(1)}`;
+            return v;
+        });
         this.skills.push(...skills);
         this.maxEnergy = maxEnergy || (this.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].cnt ?? 0);
         uiMaxEnergy ??= Math.abs(this.maxEnergy);
@@ -201,6 +204,10 @@ export class HeroBuilder extends BaseCostBuilder {
     }
     cosmicCalamity() {
         this._tags.push(HERO_LOCAL.CosmicCalamity);
+        return this;
+    }
+    nodkrai() {
+        this._tags.push(HERO_LOCAL.Nodkrai);
         return this;
     }
     physical() {

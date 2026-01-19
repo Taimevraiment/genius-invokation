@@ -1,8 +1,9 @@
 import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
-import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SUMMON_TAG, SummonTag, VERSION, Version } from "../../constant/enum.js";
+import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ELEMENT_TYPE, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SUMMON_TAG, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_SUPPORT_COUNT } from "../../constant/gameOption.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getHidById, getObjById, hasObjById, versionWrap } from "../../utils/gameUtil.js";
+import { arrToObj } from "../../utils/utils.js";
 
 export class VersionMap<T> {
     private _map: [VersionWrapper, T][] = [];
@@ -301,6 +302,12 @@ export class ArrayHero extends Array<Hero> {
     getNextBackHidx() {
         return this.getBackHidxs(1);
     }
+    // 判断角色中是否含有且只含有两个元素
+    hasOnlyElements(...els: ElementType[]) {
+        const elMap = arrToObj<ElementType, boolean>(Object.values(ELEMENT_TYPE), false);
+        this.forEach(h => !h.isDie && (elMap[h.element] = true));
+        return Object.entries(elMap).every(([el, v]) => v == els.includes(el as ElementType));
+    }
 }
 
 export class ArrayStatus extends Array<Status> {
@@ -330,6 +337,9 @@ export class ArrayStatus extends Array<Status> {
     getUseCnt(id: number | StatusType) {
         if (typeof id == 'number') return this.get(id)?.useCnt ?? 0;
         return this.get(id)?.useCnt ?? 0;
+    }
+    clear() {
+        this.splice(0, this.length);
     }
 }
 
@@ -468,6 +478,7 @@ export interface EntityHandleRes {
     addDmgCdt?: number,
     addDiceHero?: number,
     addDiceSkill?: AddDiceSkill,
+    addDiceCard?: number,
     getDmg?: number,
     multiDmgCdt?: number,
     minusDiceSkill?: MinusDiceSkill,
@@ -477,7 +488,7 @@ export interface EntityHandleRes {
     attachEl?: PureElementType,
     hidxs?: number[],
     isValid?: boolean,
-    element?: ElementType,
+    element?: DamageType,
     restDmg?: number,
     isAddTask?: boolean,
     notPreview?: boolean,

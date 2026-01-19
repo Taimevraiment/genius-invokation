@@ -220,27 +220,27 @@ export const swapKeysAndValues = <K extends string | number | symbol, V extends 
     return swapped;
 }
 
+const equal = (tar: any, src: any) => {
+    if (src?.entityId !== undefined) return src.entityId !== -1 && src.entityId == tar.entityId;
+    return src?.id !== undefined && src.id === tar.id;
+}
 /**
  * 不改变地址复制一个对象
  * @param target 目标对象
  * @param source 源对象
  * @param exclude 排除的属性
  */
-export const assgin = <T>(target: T, source: T, exclude?: string | string[]) => {
+export const assign = <T>(target: T, source: T, exclude?: string | string[]) => {
     if (typeof exclude === 'string') exclude = [exclude];
     if (target === source) source = clone(source);
     if (Array.isArray(target) && Array.isArray(source)) {
-        const equal = (tar: any, src: any) => {
-            if (src?.entityId !== undefined && src.entityId !== -1) return src.entityId == tar.entityId;
-            return src?.id !== undefined && src.id === tar.id;
-        }
         const existObj = target.filter(tar => (source as (T & any[])).some(src => equal(src, tar)));
         target.length = 0;
         for (const src of source) {
             const tar = existObj.find(tar => equal(tar, src));
             if (tar === undefined) target.push(src);
             else {
-                assgin(tar, src, exclude);
+                assign(tar, src, exclude);
                 target.push(tar);
             }
         }
@@ -250,7 +250,7 @@ export const assgin = <T>(target: T, source: T, exclude?: string | string[]) => 
         !source?.hasOwnProperty(key) && delete target[key];
     }
     for (const key in source) {
-        if (typeof source[key] === 'object' && source[key] !== null && target[key] !== null) assgin(target[key], source[key], exclude);
+        if (typeof source[key] === 'object' && source[key] !== null && target[key] !== null) assign(target[key], source[key], exclude);
         else if (!exclude?.includes(key)) target[key] = source[key];
     }
 }

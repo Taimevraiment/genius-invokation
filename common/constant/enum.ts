@@ -80,11 +80,19 @@ export const DICE_TYPE = {
 
 export type DiceType = TypeConst<typeof DICE_TYPE>;
 
+export const DICE_TYPE_CODE = {
+    [DICE_TYPE.Any]: 0,
+    ...PURE_ELEMENT_CODE,
+    [DICE_TYPE.Same]: 8,
+} as const;
+
+export const DICE_TYPE_CODE_KEY = swapKeysAndValues(DICE_TYPE_CODE);
+
 export const ENERGY_COST_TYPE = {
     Energy: 'Energy', // 充能 9
     SpEnergy1315: 'SpEnergy1315', // 战意 10
     SpEnergy1116: 'SpEnergy1116', // 蛇之狡谋 11
-}
+} as const;
 
 export type EnergyCostType = TypeConst<typeof ENERGY_COST_TYPE>;
 
@@ -102,7 +110,6 @@ export const CARD_TYPE = {
 } as const;
 
 export type CardType = TypeConst<typeof CARD_TYPE>;
-
 
 export const DICE_COST_TYPE = {
     Omni: 'Omni', // 万能骰 0
@@ -130,6 +137,7 @@ export const CARD_SUBTYPE_SUPPORT = {
     Place: 'Place', // 场地
     Ally: 'Ally', // 伙伴
     Item: 'Item', // 道具
+    Blessing: 'Blessing', // 元素幻变
 } as const;
 
 export type CardSubtypeSupport = TypeConst<typeof CARD_SUBTYPE_SUPPORT>;
@@ -186,6 +194,7 @@ export const WEAPON_TYPE_CODE_KEY = swapKeysAndValues(WEAPON_TYPE_CODE);
 export const STATUS_GROUP = {
     heroStatus: 0, // 角色状态
     combatStatus: 1, // 出战状态
+    attachment: 2, // 附着效果状态
 } as const;
 
 export type StatusGroup = TypeConst<typeof STATUS_GROUP>;
@@ -247,6 +256,7 @@ export const HERO_LOCAL = {
     ArkhePneuma: 'ArkhePneuma', // 始基力:芒性 12
     ConsecratedBeast: 'ConsecratedBeast', // 圣骸兽 13
     CosmicCalamity: 'CosmicCalamity', // 寰宇劫灭 14
+    Nodkrai: 'Nodkrai', // 挪德卡莱 15
 } as const;
 
 export type HeroLocal = TypeConst<typeof HERO_LOCAL>;
@@ -266,6 +276,7 @@ export const HERO_LOCAL_CODE = {
     [HERO_LOCAL.ArkheOusia]: 0,
     [HERO_LOCAL.ArkhePneuma]: 0,
     [HERO_LOCAL.ConsecratedBeast]: 0,
+    [HERO_LOCAL.Nodkrai]: 0,
 } as const;
 
 export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
@@ -281,17 +292,17 @@ export const HERO_TAG = {
 export type HeroTag = TypeConst<typeof HERO_TAG>;
 
 export const ELEMENT_REACTION = {
+    Melt: 101, // 融化
+    Vaporize: 102, // 蒸发
     Overload: 103, // 超载
     Superconduct: 104, // 超导
-    Swirl: 107, // 扩散
     ElectroCharged: 105, // 感电
-    Vaporize: 102, // 蒸发
-    Melt: 101, // 融化
-    Burning: 115, // 燃烧
     Frozen: 106, // 冻结
+    Swirl: 107, // 扩散
     Crystallize: 111, // 结晶
-    Quicken: 117, // 原激化
+    Burning: 115, // 燃烧
     Bloom: 116, // 绽放
+    Quicken: 117, // 原激化
 } as const;
 
 export type ElementReaction = TypeConst<typeof ELEMENT_REACTION>;
@@ -316,20 +327,21 @@ export const SUMMON_DESTROY_TYPE = {
 export type SummonDestroyType = TypeConst<typeof SUMMON_DESTROY_TYPE>;
 
 export const CMD_MODE = {
-    Random: 1, // 随机不重复基础骰子
-    FrontHero: 2, // 当前出战角色(hidxs[0]控制前后)元素骰子
-    HighHandCard: 3, // 弃置花费最高的手牌 
-    AllHandCards: 4, // 弃置所有手牌
-    TopPileCard: 5, // 弃置牌堆顶的牌
-    RandomPileCard: 6, // 弃置牌库中随机一张牌
-    IsNotPublic: 7, // 不公开加入牌库的牌
-    IsPublic: 8, // 公开抓到的牌
-    GetSummon: 9, // 使用技能挑选牌
-    GetCard: 10, // 挑选牌
-    UseCard: 11, // 挑选并打出牌
-    ByOrder: 12, // 按顺序执行
-    IsPriority: 13, // 是否优先执行
-    LowHandCard: 14, // 弃置花费最低的手牌 
+    Random: 70001, // 随机不重复基础骰子
+    FrontHero: 70002, // 当前出战角色(hidxs[0]控制前后)元素骰子
+    HighHandCard: 70003, // 弃置花费最高的手牌 
+    AllHandCards: 70004, // 弃置所有手牌
+    TopPileCard: 70005, // 弃置牌堆顶的牌
+    RandomPileCard: 70006, // 弃置牌库中随机一张牌
+    IsNotPublic: 70007, // 不公开加入牌库的牌
+    IsPublic: 70008, // 公开抓到的牌
+    GetSummon: 70009, // 使用技能挑选牌
+    GetCard: 70010, // 挑选牌
+    UseCard: 70011, // 挑选并打出牌
+    ByOrder: 70012, // 按顺序执行
+    IsPriority: 70013, // 是否优先执行
+    LowHandCard: 70014, // 弃置花费最低的手牌
+    MaxHpHero: 70015, // 生命值最高的角色
 } as const;
 
 export const INFO_TYPE = {
@@ -385,7 +397,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
-    'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
+    'v6.4.0', 'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',

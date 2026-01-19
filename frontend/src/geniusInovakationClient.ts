@@ -554,7 +554,10 @@ export default class GeniusInvokationClient {
                 h.heroStatus.forEach(s => Reflect.setPrototypeOf(s, GIStatus.prototype));
                 h.equipments.forEach(s => s && Reflect.setPrototypeOf(s, GICard.prototype));
             });
-            p.handCards.forEach(c => Reflect.setPrototypeOf(c, GICard.prototype));
+            p.handCards.forEach(c => {
+                Reflect.setPrototypeOf(c, GICard.prototype);
+                c.attachments.forEach(a => Reflect.setPrototypeOf(a, GIStatus.prototype));
+            });
             p.summons.forEach(s => Reflect.setPrototypeOf(s, GISummon.prototype))
             p.supports.forEach(s => {
                 Reflect.setPrototypeOf(s, GISupport.prototype);
@@ -608,7 +611,7 @@ export default class GeniusInvokationClient {
                     if (supportSelect.length > 0) {
                         const [p, s, isDestroy] = supportSelect;
                         this.supportSelect[+(p == this.playerIdx)][s] = true;
-                        const sptEid = this.players[p].supports[s].entityId;
+                        const sptEid = this.players[p].supports[s]?.entityId;
                         setTimeout(() => this._resetSupportSelect(), 500);
                         if (isDestroy) {
                             setTimeout(() => {

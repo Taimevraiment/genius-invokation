@@ -1,6 +1,9 @@
 import { Card, Trigger, VersionWrapper } from "../../../typing";
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType, DICE_COST_TYPE, DICE_TYPE, DiceCostType,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardTag, CardType,
+    DICE_COST_TYPE, DICE_TYPE,
+    DICE_TYPE_CODE,
+    DiceCostType,
     DiceType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL_CODE_KEY, HeroLocalCode, OfflineVersion,
     OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY,
     WeaponType, WeaponTypeCode
@@ -9,7 +12,7 @@ import { ELEMENT_NAME, GUYU_PREIFIX, HERO_LOCAL_NAME, WEAPON_TYPE_NAME } from ".
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getElByHid, getEntityHandleEvent, getHidById, getVehicleIdByCid, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
-import { BaseCostBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
+import { ArrayStatus, BaseCostBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, EntityHandleRes, InputHandle, VersionMap } from "./baseBuilder.js";
 
 export interface CardHandleEvent extends EntityHandleEvent {
     slotUse: boolean,
@@ -38,7 +41,7 @@ export class GICard extends Entity {
     sinceVersion: OnlineVersion; // 加入的版本
     offlineVersion: OfflineVersion | null; // 线下版本
     cost: number; // 费用
-    costChanges: number[] = [0, 0]; // 费用变化 [主, 无色(用于天赋的无色骰)]
+    costChanges: number[] = [0, 0, 0]; // 费用变化 [主, 无色(用于天赋的无色骰), 附着状态使费用变化]
     costType: DiceType; // 费用类型
     type: CardType; // 牌类型
     subType: CardSubtype[]; // 副类型
@@ -46,6 +49,7 @@ export class GICard extends Entity {
     userType: number | WeaponType; // 使用人类型匹配：0全匹配 匹配武器Hero.weaponType 匹配天赋/特技Hero.id
     energy: number; // 需要的充能
     anydice: number; // 除了元素骰以外需要的任意骰
+    attachments: ArrayStatus = new ArrayStatus(); // 附着效果状态
     handle: (card: Card, event: InputHandle<CardHandleEvent>) => CardHandleRes; // 卡牌发动的效果函数
     reset: (card: Card) => void; // 重置每回合次数
     canSelectHero: number; // 能选择角色的数量
@@ -213,6 +217,7 @@ export class GICard extends Entity {
             }
             this.UI.description = this.UI.description
                 .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次‹#f4dca2【ski】›。`)
+                .replace(/{quick([^\}]*)}/, '〔*[card][快速行动]：装备给我方的【hro】$1〕')
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
                 .replace(/(?<=【)ski(?=】)/g, ski)
                 + `；（牌组中包含【${hro}】，才能加入牌组）`;
@@ -225,6 +230,8 @@ export class GICard extends Entity {
             this.UI.description += `；（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）`;
         } else if (subType.includes(CARD_SUBTYPE.Adventure)) {
             this.UI.description += `；（「冒险地点」只能通过冒险生成，无法加入牌组）`;
+        } else if (subType.includes(CARD_SUBTYPE.Blessing)) {
+            this.UI.cnt = 1;
         }
         if (tag.includes(CARD_TAG.Barrier)) {
             const ohandle = handle;
@@ -271,13 +278,18 @@ export class GICard extends Entity {
             if (cevent.trigger == 'reset') {
                 this.reset(card);
                 if (!builderRes.triggers?.includes('reset')) {
-                    builderRes = { triggers: 'reset' }
+                    // builderRes = { triggers: 'reset' }
                     cmds.clear();
                     execmds.clear();
                 }
                 builderRes.notLog = true;
                 builderRes.isAddTask = false;
             }
+            card.attachments.forEach(atch => {
+                const { cardDiceType } = atch.handle(atch, event);
+                if (cardDiceType == undefined) return;
+                card.variables.cardDiceType = DICE_TYPE_CODE[cardDiceType];
+            });
             const res: CardHandleRes = {
                 ...builderRes,
                 cmds,
@@ -302,6 +314,9 @@ export class GICard extends Entity {
     get rawDiceCost(): number {
         return this.cost + this.anydice;
     }
+    get currDiceCost(): number {
+        return this.rawDiceCost - this.costChanges[2];
+    }
     setCnt(cnt: number): Card {
         this.UI.cnt = cnt;
         return this;
@@ -311,6 +326,9 @@ export class GICard extends Entity {
     }
     hasTag(...tags: CardTag[]): boolean {
         return this.tag.some(v => tags.includes(v));
+    }
+    hasAttachment(...attachments: number[]) {
+        return this.attachments.some(v => attachments.includes(v.id));
     }
 }
 
@@ -435,6 +453,10 @@ export class CardBuilder extends BaseCostBuilder {
     adventure() {
         this.place();
         return this.subtype(CARD_SUBTYPE.Adventure);
+    }
+    blessing() {
+        this.subtype(CARD_SUBTYPE.Blessing);
+        return this.support();
     }
     subtype(...subtypes: CardSubtype[]): CardBuilder;
     subtype(cdt: (ver: VersionWrapper) => boolean, ...subtypes: CardSubtype[]): CardBuilder;

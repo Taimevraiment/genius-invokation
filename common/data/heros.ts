@@ -302,7 +302,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
     1116: () => new HeroBuilder(544).name('丝柯克').since('v6.3.0').spMaxEnergy(7).cosmicCalamity().cryo().sword()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dcbb/792673111d3461580f1344757ed93abb.png',
             'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/7244ae4292fef550204eaf8d087b5035_3553632365591858769.png')
-        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dce3/54667f8409be4f7b9bcb35a958ffdfb8.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dce3/54667f8409be4f7b9bcb35a958ffdfb8.png',
+            '#Avatar_SkirkNew02')
         .normalSkill('极恶技·断')
         .skills(
             new SkillBuilder('极恶技·闪').description('获得2点*[蛇之狡谋]，生成手牌【crd111161】。（每回合1次）')
@@ -340,6 +341,29 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 [energyCnt < 0 ? 2 : +(energyCnt > 0)],
             ]
         }),
+
+    1117: () => new HeroBuilder(555).name('米卡').since('v6.4.0').mondstadt().cryo().polearm()
+        .src('#')
+        .avatar('/image/tmp/v6.4.0/UI_Gcg_Char_AvatarIcon_Mika.png')
+        .normalSkill('西风枪术·镝传')
+        .skills(
+            new SkillBuilder('星霜的流旋').description('{dealDmg}，生成【sts111171】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(() => ({ status: 111171 })),
+            new SkillBuilder('苍翎的颂愿').description('治疗我方所有角色1点，生成【sts111172】。')
+                .src('#',
+                    '')
+                .burst(2).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), status: 111172 })),
+            new SkillBuilder('速射牵制').description('【自身使用技能后：】生成【sts111173】。（每回合2次）')
+                .src('#',
+                    '')
+                .passive().perCnt(2).handle(event => {
+                    const { skill } = event;
+                    if (skill.perCnt <= 0) return;
+                    return { triggers: 'after-skill', status: 111173, exec: () => skill.minusPerCnt() }
+                })
+        ),
 
     1201: () => new HeroBuilder(9).name('芭芭拉').offline('v1').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
@@ -484,10 +508,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/7/70/eou9puc088y2tptuyz5obaecxu4mlwe.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/dda23813ac8a901419da3fcfe5fdcdd3_1625330009471386599.png')
                 .elemental().damage(3).cost(3).handle(event => {
-                    const { heros } = event;
-                    const onlyHydroOrDendro = heros.every(h => h.element == ELEMENT_TYPE.Hydro || h.element == ELEMENT_TYPE.Dendro);
-                    const hasDendro = heros.some(h => h.element == ELEMENT_TYPE.Dendro);
-                    return { statusPre: isCdt(onlyHydroOrDendro && hasDendro, 112081) }
+                    if (!event.heros.hasOnlyElements(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro)) return;
+                    return { statusPre: 112081 }
                 }),
             new SkillBuilder('浮莲舞步·远梦聆泉').description('{dealDmg}，目标及下一个角色附属【sts112083】。')
                 .description('{dealDmg}，目标角色附属【sts112083】。', 'v5.6.0')
@@ -536,7 +558,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e958e09d88022d4a18633be9bf51b399.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/fa0204761d8dae8b0dbaac46a494752f.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e330408cba4b278428656f4e5c7a8915.png',
-            'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Char_AvatarIcon_FurinaOusia.webp')
+            '#AvatarIcon_FurinaOusia')
         .normalSkill(new NormalSkillBuilder('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
             .handle(event => {
                 const { skill, hcards, cmds } = event;
@@ -1167,7 +1189,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
             new SkillBuilder('古仪·鸣砂掣雷').description('敌方出战角色[附着雷元素]，我方切换到下一个角色。自身附属【sts114132】。')
                 .src('https://patchwiki.biligame.com/images/ys/7/70/s44gx2xp45eshijmd0gvbdb0j102o4m.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/4bf73369fa5d88135d922835143cd6af_1465120113594108114.png')
-                .elemental().cost(2).handle(({ cmds }) => (cmds.switchAfter(), { isAttachOppo: true, statusPre: 114132 })),
+                .elemental().cost(2).handle(({ cmds }) => (cmds.after.switchAfter(), { isAttachOppo: true, statusPre: 114132 })),
             new SkillBuilder('秘仪·瞑光贯影').description('{dealDmg}，自身附属【sts114131】。')
                 .src('https://patchwiki.biligame.com/images/ys/d/d8/e75533dd0qa4yzg7kafocuxki4mrowt.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/beeb23fb35fe9eb3733358e0bab70841_6737855537393504262.png')
@@ -1275,7 +1297,8 @@ const allHeros: Record<number, () => HeroBuilder> = {
                     const triggers: Trigger[] = ['ElectroCharged', 'other-ElectroCharged'];
                     if (triggers.includes(trigger)) {
                         if (hero.heroStatus.get(114163)?.useCnt != 2) return;
-                        return { triggers, exec: () => cmds.consumeNightSoul(hero.hidx, 2).attack(1, DAMAGE_TYPE.Electro) }
+                        cmds.consumeNightSoul(hero.hidx, 2).attack(1, DAMAGE_TYPE.Electro, { isPriority: true });
+                        return { triggers }
                     }
                     if (source == skill.id || skill.perCnt <= 0 || !eDmgedHero.isFront) return;
                     return {
@@ -1286,6 +1309,30 @@ const allHeros: Record<number, () => HeroBuilder> = {
                         }
                     }
                 })
+        ),
+
+    1417: () => new HeroBuilder(556).name('伊涅芙').since('v6.4.0').nodkrai().electro().polearm()
+        .src('#')
+        .avatar('/image/tmp/v6.4.0/UI_Gcg_Char_AvatarIcon_Ineffa.png')
+        .normalSkill('除尘旋刃')
+        .skills(
+            new SkillBuilder('涤净模式·稳态载频').description('生成2点【sts203】，召唤【smn114171】。')
+                .src('#',
+                    '')
+                .elemental().cost(3).handle(() => ({ status: [[203, 2]], summon: 114171 })),
+            new SkillBuilder('至高律令·全域扫灭').description('{dealDmg}，召唤【smn114171】。')
+                .src('#',
+                    '')
+                .burst(2).damage(4).cost(3).handle(() => ({ summon: 114171 })),
+            new SkillBuilder('月兆祝赐·象拟中继').description('我方角色触发‹2›‹4›【感电反应】时，将转为触发[月感电]反应。；敌方行动牌被赋予【sts204】时也会赋予【sts207】状态。')
+                .src('#',
+                    '')
+                .passive().handle(event => {
+                    const { source, sourceHidx, cmds } = event;
+                    if (source != 204) return;
+                    cmds.getStatus(207, { isOppo: true, hidxs: Math.abs(sourceHidx), mode: isCdt(sourceHidx < 0, CMD_MODE.RandomPileCard) });
+                    return { triggers: 'get-status-oppo' }
+                }),
         ),
 
     1501: () => new HeroBuilder(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
@@ -2144,9 +2191,10 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f5c0f89cf02925ec13e306d11a5f7bd8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/942e3d28310f4395ee7e3f1580268db8_512199522496433076.png')
                 .elemental().damage(1).cost(3).explain('sts122041').handle((event, ver) => {
-                    const { hero: { heroStatus }, cmds, talent, hcards } = event;
-                    cmds.discard({ mode: CMD_MODE.HighHandCard });
-                    if (talent?.perCnt) cmds.heal(Math.max(...hcards.map(c => c.cost + c.anydice))).callback(() => talent && talent.minusPerCnt());
+                    const { hero: { heroStatus }, cmds, talent } = event;
+                    cmds.discard({ mode: CMD_MODE.HighHandCard }).callback((c, cards) => {
+                        if (talent?.perCnt) c.heal(cards![0].rawDiceCost).callback(() => talent?.minusPerCnt());
+                    });
                     return { addDmgCdt: Math.min(ver.lt('v4.8.0') ? 5 : ver.lt('v5.0.0') ? 4 : 3, Math.floor((heroStatus.getUseCnt(122042)) / 3)) }
                 }),
             new SkillBuilder('横噬鲸吞').description('{dealDmg}，对敌方所有后台角色造成1点[穿透伤害]。召唤【smn122043】。')
@@ -2390,6 +2438,28 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: 123052 }))
         ),
 
+    2306: () => new HeroBuilder(557).name('金焰绒翼龙暴君').since('v6.4.0').maxHp(11).monster().pyro()
+        .src('#')
+        .avatar('/image/tmp/v6.4.0/UI_Gcg_Char_MonsterIcon_FlamingoPrimo.png')
+        .normalSkill('翼斩')
+        .skills(
+            new SkillBuilder('升腾炽风').description('{dealDmg}，自身附属2层【sts123062】。')
+                .src('#',
+                    '')
+                .elemental().damage(1).cost(3).handle(() => ({ status: [[123062, 2]] })),
+            new SkillBuilder('金焰爆轰').description('{dealDmg}，对所有敌方角色造成1点[穿透伤害]，自身附属1层【sts123061】。')
+                .src('#',
+                    '')
+                .burst(2).damage(3).cost(3).handle(() => ({ pdmg: 1, status: 123061 })),
+            new SkillBuilder('古老者的血脉').description('【偶数回合阶段开始时：】自身附属1层【sts123061】。')
+                .src('#',
+                    '')
+                .passive().handle(event => {
+                    if (event.round % 2 == 1) return;
+                    return { triggers: 'phase-start', status: 123061 }
+                }),
+        ),
+
     2401: () => new HeroBuilder(57).name('无相之雷').since('v3.7.0').offline('v2').maxHp(8).monster().electro()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/df234a18db1aa6f769ac3b32b0168ebf_4040044349475544115.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/1a3098561b2f1526156ad02d258e6ed5.png')
@@ -2515,7 +2585,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('https://patchwiki.biligame.com/images/ys/0/0c/g9ebbv77szz3in5lhcizahlcs1l19ft.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/7315eed5a999d03bf46e6fa40a97d2ab_3785888462903729262.png')
                 .burst(2).damage(3).cost(3).handle(event => {
-                    if (Math.abs(event.eDmgedHero.energy) > 1) return;
+                    if (event.eDmgedHero.energy > 1) return;
                     return { addDmgCdt: 2 }
                 }),
             new SkillBuilder('雷之新生').description('战斗开始时，初始附属【sts124061】。')
@@ -2623,7 +2693,11 @@ const allHeros: Record<number, () => HeroBuilder> = {
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/e1688d349ca1ff0f5f78bb6bdae07b6f.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/8e7128d60419e53054de5daa1e096252.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/6bfb045422ca297b5ead653065fecfbe.png')
-        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/949d01e6a23ceba1d6adeae6ac445374.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/949d01e6a23ceba1d6adeae6ac445374.png',
+            '#MonsterIcon_DahakaIce',
+            '#MonsterIcon_DahakaWater',
+            '#MonsterIcon_DahakaFire',
+            '#MonsterIcon_DahakaElec')
         .normalSkill('碎岩冲撞')
         .skills(
             new SkillBuilder('磅礴之气').description('{dealDmg}，如果发生了结晶反应，则角色[汲取对应元素的力量]。；如果本技能中角色未汲取元素的力量，则附属【sts126021】。')

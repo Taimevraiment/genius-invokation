@@ -1,9 +1,22 @@
 import { Card, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
 import { SupportBuilder } from './builder/supportBuilder.js';
+
+const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Trigger, code: number) => {
+    return new SupportBuilder().permanent().handle((_, event) => ({
+        triggers: ['phase-dice', reactionTrg],
+        element: [el1, el2],
+        cnt: [2, 2],
+        exec: cmds => {
+            if (event.trigger != reactionTrg) return;
+            cmds.pickCard(2, CMD_MODE.GetCard, { card: [+`3030${code}1`, +`3030${code}2`] });
+            return { isDestroy: true }
+        }
+    }));
+}
 
 const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
 
@@ -30,6 +43,65 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
                     support.setUseCnt();
                     cmds.getStatus(300007);
                 }
+            }
+        }
+    }),
+    // 超导祝佑·极寒
+    303041: () => new SupportBuilder().collection(2).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
+        if (support.useCnt > 0) triggers.push('Physical-getdmg-oppo', 'Cryo-getdmg-oppo');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Electro],
+            cnt: [2, 2],
+            exec: cmds => {
+                if (event.trigger == 'phase-start') return support.setUseCnt(2);
+                if (event.trigger == 'phase-dice') return;
+                cmds.getStatus([207, 201], { isOppo: true });
+                support.minusUseCnt();
+            }
+        }
+    }),
+    // 超导祝佑·电冲
+    303042: () => new SupportBuilder().collection(3).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-start'];
+        if (support.useCnt > 0) triggers.push('Superconduct');
+        return {
+            triggers,
+            exec: cmds => {
+                if (event.trigger == 'phase-start') return support.setUseCnt(3);
+                cmds.attack(2, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHpHero });
+                support.minusUseCnt();
+            }
+        }
+    }),
+    // 蒸发祝佑·狂浪
+    303051: () => new SupportBuilder().collection(2).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-start'];
+        if (support.useCnt > 0) triggers.push('Vaporize');
+        return {
+            triggers,
+            exec: cmds => {
+                const { trigger, heros } = event;
+                if (trigger == 'phase-start') return support.setUseCnt(2);
+                const hidxs = heros.getMaxHurtHidxs();
+                cmds.heal(2, { hidxs }).getStatus(303053, { hidxs });
+                support.minusUseCnt();
+            }
+        }
+    }),
+    // 蒸发祝佑·炽燃
+    303052: () => new SupportBuilder().collection(2).handle((support, event) => {
+        const { hero, trigger, isMinusDiceSkill } = event;
+        const triggers: Trigger[] = ['phase-start'];
+        const isMinus = support.useCnt > 0 && hero.element == ELEMENT_TYPE.Pyro;
+        if (isMinus && isMinusDiceSkill) triggers.push('skilltype2');
+        return {
+            triggers,
+            minusDiceSkill: isCdt(isMinus, { skilltype2: [0, 0, 1] }),
+            exec: () => {
+                if (trigger == 'phase-start') return support.setUseCnt(2);
+                support.minusUseCnt();
             }
         }
     }),
@@ -182,9 +254,11 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 黄金屋
-    321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
+    321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
         const { hcard, isMinusDiceWeapon, isMinusDiceRelic } = event;
-        if (support.perCnt <= 0 || !hcard || hcard.rawDiceCost < 3 || (!isMinusDiceWeapon && !isMinusDiceRelic)) return;
+        if (support.perCnt <= 0 ||
+            !hcard || (ver.lt('v6.4.0') || ver.isOffline ? hcard.rawDiceCost : hcard.currDiceCost) < 3 ||
+            (!isMinusDiceWeapon && !isMinusDiceRelic)) return;
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -339,9 +413,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 「悬木人」
-    321024: () => new SupportBuilder().round(1).handle((support, event) => {
+    321024: () => new SupportBuilder().round(1).handle((support, event, ver) => {
         const { hcard, playerInfo: { initCardIds } } = event;
-        if (!hcard || initCardIds.includes(hcard.id) || hcard.rawDiceCost < support.useCnt) return;
+        if (!hcard || initCardIds.includes(hcard.id) ||
+            (ver.lt('v6.4.0') ? hcard.rawDiceCost : hcard.currDiceCost) < support.useCnt) return;
         return {
             triggers: 'card',
             exec: cmds => {
@@ -353,8 +428,8 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 「流泉之众」
     321025: () => new SupportBuilder().round(3).handle((support, event) => ({
         triggers: 'summon-generate',
-        exec: () => {
-            event.sourceSummon?.addUseCnt(true);
+        exec: cmds => {
+            cmds.addUseSummon(event.sourceSummon!.entityId);
             return { isDestroy: support.minusUseCnt() == 0 }
         }
     })),
@@ -476,6 +551,56 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }
     })),
+    // 银月之庭
+    321035: () => new SupportBuilder().collection().handle((support, event) => {
+        if (![201, 206].includes(event.source)) return;
+        return {
+            triggers: 'get-status',
+            exec: cmds => {
+                if (support.addUseCnt() < 3) return;
+                cmds.changeDice();
+                support.setUseCnt();
+            }
+        }
+    }),
+    // 汐印石
+    321036: () => new SupportBuilder().round(2).handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            cmds.getStatus([201, 207], { isOppo: true });
+            return { isDestroy: support.minusUseCnt() == 0 }
+        }
+    })),
+    // 霜月之坊
+    321037: () => new SupportBuilder().round(2).handle((support, event) => ({
+        triggers: ['enter', 'phase-end'],
+        exec: cmds => {
+            const { trigger, heros } = event;
+            if (trigger == 'enter') return cmds.getCard(2).heal(2, { hidxs: heros.getMaxHurtHidxs() }).res;
+            cmds.getStatus(202, { cnt: 2, cardFilter: c => c.currDiceCost > 0 });
+            return { isDestroy: support.minusUseCnt() == 0 }
+        }
+    })),
+    // 那夏镇
+    321038: () => new SupportBuilder().round(2).handle(support => ({
+        triggers: 'phase-end',
+        exec: cmds => {
+            cmds.getStatus(206, { cnt: 2, cardFilter: c => c.currDiceCost >= 2 });
+            if (support.minusUseCnt() == 0) {
+                cmds.attack(2, DAMAGE_TYPE.Physical);
+                return { isDestroy: true }
+            }
+        }
+    })),
+    // 月矩力试验设计局
+    321039: () => new SupportBuilder().round(2).handle((support, event) => ({
+        triggers: ['phase-end', 'destroy'],
+        exec: cmds => {
+            if (event.trigger == 'destroy') return cmds.getCard(2, { cardAttachment: 206, isFromPile: true }).getDice(1, { mode: CMD_MODE.Random }).res;
+            cmds.getStatus(206, { cnt: 2, mode: CMD_MODE.RandomPileCard });
+            return { isDestroy: support.minusUseCnt() == 0 }
+        }
+    })),
     // 派蒙
     322001: () => new SupportBuilder().round(2).handle(support => ({
         triggers: 'phase-start',
@@ -497,7 +622,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && relicCnt >= 6) triggers.push('enter');
         const isMinus = support.perCnt > 0 && hcard && hcard.hasSubtype(CARD_SUBTYPE.Relic) &&
-            isMinusDiceCard && support.useCnt >= hcard.rawDiceCost - mdc;
+            isMinusDiceCard && support.useCnt >= hcard.currDiceCost - mdc;
         if (trigger == 'card' && !isMinus) return;
         return {
             triggers: triggers,
@@ -524,7 +649,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && weaponTypeCnt >= 3) triggers.push('enter');
         const isMinus = support.perCnt > 0 && hcard && hcard.hasSubtype(CARD_SUBTYPE.Weapon) &&
-            isMinusDiceCard && support.useCnt >= hcard.rawDiceCost - mdc;
+            isMinusDiceCard && support.useCnt >= hcard.currDiceCost - mdc;
         if (trigger == 'card' && !isMinus) return;
         return {
             triggers: triggers,
@@ -1035,6 +1160,10 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             },
         }
     }),
+    // 元素幻变：超导祝佑
+    331004: () => elTransfiguration(ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Electro, 'Superconduct', 4),
+    // 元素幻变：蒸发祝佑
+    331005: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, 'Vaporize', 5),
 
 }
 

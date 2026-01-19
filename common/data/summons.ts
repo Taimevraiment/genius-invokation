@@ -27,11 +27,22 @@ const hero2206summon = () => {
         }));
 }
 
-
 const allSummons: Record<number, (...args: any) => SummonBuilder> = {
 
     115: () => new SummonBuilder('燃烧烈焰').useCnt(1).maxUse(2).damage(1).pyro().description('{defaultAtk。}')
         .src('https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png'),
+
+    205: () => new SummonBuilder('雷暴云').useCnt(1).maxUse(MAX_USE_COUNT).damage(1).electro()
+        .description('{defaultAtk。}；【自身入场或可用次数增加时：】赋予敌方随机1张手牌【sts204】。')
+        .src('#')
+        .handle((summon, event) => ({
+            triggers: ['phase-end', 'enter', 'summon-usecnt-add'],
+            exec: cmds => {
+                const { trigger } = event;
+                if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
+                cmds.getStatus(204, { isOppo: true });
+            }
+        })),
 
     111011: () => new SummonBuilder('冰灵珠').useCnt(2).damage(1).pdmg(1)
         .description('{defaultAtk，对所有后台敌人造成1点[穿透伤害]。}')
@@ -311,6 +322,9 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
     114161: () => new SummonBuilder('超音灵眼').useCnt(3).damage(1).statusId()
         .description('{defaultAtk。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌可用次数-1。（每回合1次）}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/2a179be505d2c8e9097709a17b223db7_4957973981423613982.png'),
+
+    114171: () => new SummonBuilder('薇尔琪塔').useCnt(2).damage(1).description('{defaultAtk。}')
+        .src('#'),
 
     115011: (isTalent: boolean = false) => new SummonBuilder('大型风灵').useCnt(3).damage(2).talent(isTalent)
         .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；【此召唤物在场时：】如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
@@ -723,7 +737,8 @@ const allSummons: Record<number, (...args: any) => SummonBuilder> = {
         .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),
 
     122043: (dmg: number = 0, useCnt: number = 0) => new SummonBuilder('黑色幻影').useCnt(useCnt).damage(dmg).electro().statusId()
-        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
+        .description('【入场时：】获得我方已吞噬卡牌中最高[当前元素骰费用]的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。')
+        .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。', 'v6.4.0')
         .description('【入场时：】获得我方已吞噬卡牌中最高元素骰费用值的「攻击力」，获得该费用的已吞噬卡牌数量的[可用次数]。；【结束阶段和我方宣布结束时：】造成此牌「攻击力」值的[雷元素伤害]。；【我方出战角色受到伤害时：】抵消1点伤害，然后此牌[可用次数]-2。', 'v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/71d21daf1689d58b7b86691b894a1d2c_6622906347878958966.png')
         .handle((_s, _e, ver) => {

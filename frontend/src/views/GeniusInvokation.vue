@@ -107,7 +107,7 @@
       <Handcard v-for="(card, idx) in client.player.handCards" :key="`${card.entityId}-myhandcard`"
         :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
         :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
-        @mouseleave="mouseleave(idx)">
+        isShowAttachment @mouseleave="mouseleave(idx)">
         <img :src="STATUS_ICON.DebuffCountered01" alt="" v-if="card.type == CARD_TYPE.Event && isNonEvent"
           style="position: absolute;top: 3%;width: 30%;opacity: 0.8;">
       </Handcard>
@@ -615,19 +615,24 @@ const devOps = (cidx = 0) => {
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态
-      if (op[1] == '=') {
+      if (op[1] == '0') {
         flag.add('resetLegend')
         continue;
       }
       const isSetCnt = op[1] == '+';
       const setType = op[2];
-      const [stsid = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : 1).split(/[:：]/).map(h);
+      const isAttachment = op[1] == '=';
+      const [stsid = 0, hidx = heros.findIndex(h => h.isFront), val = 0] = op.slice(isSetCnt ? 3 : isAttachment ? 2 : 1).split(/[:：]/).map(h);
       if (isSetCnt) {
         setStsCnt.push({ hidx, stsid, type: setType, val });
       } else if (stsid <= 0) {
         clearSts.push({ hidx, stsid });
       } else {
-        cmds.push({ cmd: 'getStatus', hidxs: hidx > 2 ? new Array(heros.length).fill(0).map((_, i) => i) : [hidx], status: stsid });
+        const handCardsLen = client.value.players[cpidx].handCards.length - 1;
+        const mode = hidx < 0 ? 70006 : 0;
+        const chidx = Math.abs(hidx);
+        const hidxs = chidx > 2 && !isAttachment ? new Array(heros.length).fill(0).map((_, i) => i) : [Math.min(chidx, handCardsLen)];
+        cmds.push({ cmd: 'getStatus', hidxs, status: stsid, mode });
       }
       flag.add('setStatus');
     } else if (op.startsWith('+')) { // 在牌库中加牌

@@ -116,7 +116,11 @@ export class GISkill extends Entity {
             descriptions: [],
         };
         this.id = id;
-        this.cost = [{ cnt: cost, type: costElement }, { cnt: ac, type: COST_TYPE.Any }, { cnt: ec, type: spe ? `SpEnergy${hid}` : COST_TYPE.Energy }];
+        this.cost = [
+            { cnt: cost, type: costElement },
+            { cnt: ac, type: COST_TYPE.Any },
+            { cnt: ec, type: spe ? `SpEnergy${hid}` as EnergyCostType : COST_TYPE.Energy },
+        ];
         this.canSelectSummon = canSelectSummon;
         this.canSelectHero = canSelectHero;
         this.handle = event => {
@@ -175,6 +179,12 @@ export class GISkill extends Entity {
                 if (skill.damage || addDmgCdt) cmds.unshift.attack();
             }
             if (!cmds.hasCmds('attack') && !skill.isPassive) cmds.unshift.attack();
+            if (cmds.hasCmds('attack') && skill.isPassive) {
+                const cmd = cmds.getCmd('attack')!;
+                if (cmd.element != DAMAGE_TYPE.Pierce && cmd.cnt) {
+                    cmd.cnt += skill.dmgChange;
+                }
+            }
             cmds.unshift
                 .getSummon(summonPre)
                 .getStatus(statusOppoPre, { hidxs, isOppo: true })

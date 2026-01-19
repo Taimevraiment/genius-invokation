@@ -98,6 +98,7 @@ export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Place]: '场地',
     [CARD_SUBTYPE.Ally]: '伙伴',
     [CARD_SUBTYPE.Item]: '道具',
+    [CARD_SUBTYPE.Blessing]: '元素幻变\uFEFF',
     [CARD_SUBTYPE.Food]: '料理',
     [CARD_SUBTYPE.Talent]: '天赋',
     [CARD_SUBTYPE.Action]: '战斗行动\uFEFF',
@@ -107,22 +108,26 @@ export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Adventure]: '冒险地点',
 } as const;
 
+// old: https://gi-tcg-assets.guyutongxue.site/assets/{name}.webp
+export const GUYU_PREIFIX = 'https://static-data.7shengzhaohuan.online/api/v4/image/';
+
 export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Weapon]: 'https://patchwiki.biligame.com/images/ys/thumb/c/ce/l98mlw9whvdgy6w95qlteb9wwc2dc5i.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%AD%A6%E5%99%A8.png',
-    // [CARD_SUBTYPE.Weapon]: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Equip_Weapon.webp',
+    // [CARD_SUBTYPE.Weapon]: `${GUYU_PREIFIX}UI_Gcg_Buff_Equip_Weapon`,
     [CARD_SUBTYPE.Relic]: 'https://patchwiki.biligame.com/images/ys/thumb/7/75/540z6nuruz9nb2do1epuwnocpe054kz.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%A3%E9%81%97%E7%89%A9.png',
-    // [CARD_SUBTYPE.Relic]: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Equip_Relic.webp',
+    // [CARD_SUBTYPE.Relic]: `${GUYU_PREIFIX}UI_Gcg_Buff_Equip_Relic`,
     [CARD_SUBTYPE.Vehicle]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2e/70kbksdgkoky3vb89js27kqxxj0n9oe.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E7%89%B9%E6%8A%80.png',
     [CARD_SUBTYPE.Place]: 'https://patchwiki.biligame.com/images/ys/thumb/2/2b/54crg8w1f0ccqmh8x4qc6yg8qxnvy4c.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%9C%BA%E5%9C%B0.png',
     [CARD_SUBTYPE.Ally]: 'https://patchwiki.biligame.com/images/ys/thumb/a/aa/nwz9v6fm3wn5cdtnmq5m33nnzlubx8s.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E4%BC%99%E4%BC%B4.png',
     [CARD_SUBTYPE.Item]: 'https://patchwiki.biligame.com/images/ys/thumb/1/1c/9ljzczmf9xjnk6qwdx893iicjkw392h.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E9%81%93%E5%85%B7.png',
     [CARD_SUBTYPE.Food]: 'https://patchwiki.biligame.com/images/ys/thumb/3/3e/c3w8tms9npmrntwlvptylijslt7ujn1.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%96%99%E7%90%86.png',
     [CARD_SUBTYPE.Talent]: 'https://patchwiki.biligame.com/images/ys/thumb/8/82/pg8v7zj01kq1lohm9objnn9tv9ffdn4.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E5%A4%A9%E8%B5%8B.png',
-    // [CARD_SUBTYPE.Talent]: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Equip_Talent.webp',
+    // [CARD_SUBTYPE.Talent]: `${GUYU_PREIFIX}UI_Gcg_Buff_Equip_Talent`,
     [CARD_SUBTYPE.Action]: 'https://gi.yatta.moe/assets/UI/UI_Gcg_Tag_Card_CombatAction.png',
     [CARD_SUBTYPE.Legend]: 'https://patchwiki.biligame.com/images/ys/thumb/9/90/iwrhiaj9r18jopmj1vtj6zbimxw0z72.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E7%A7%98%E4%BC%A0.png',
     [CARD_SUBTYPE.ElementResonance]: 'https://gi.yatta.moe/assets/UI/UI_Gcg_Tag_Card_Sync.png',
     [CARD_SUBTYPE.Adventure]: '/image/Adventure.png',
+    [CARD_SUBTYPE.Blessing]: '/image/Blessing.png',
 } as const;
 
 export const SUMMON_TAG_NAME = {
@@ -232,6 +237,7 @@ export const HERO_LOCAL_NAME = {
     [HERO_TAG.ArkhePneuma]: '始基力：芒性',
     [HERO_TAG.ConsecratedBeast]: '圣骸兽',
     [HERO_TAG.CosmicCalamity]: '寰宇劫灭',
+    [HERO_TAG.Nodkrai]: '挪德卡莱',
 } as const;
 
 export const HERO_TAG_NAME = {
@@ -258,6 +264,7 @@ export const HERO_TAG_URL = {
     [HERO_TAG.Pneuma]: 'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/bb176892163d7c0d63e664b01217802d.png',
     [HERO_TAG.ConsecratedBeast]: '/image/local13.png',
     [HERO_TAG.CosmicCalamity]: '/image/local14.png',
+    [HERO_TAG.Nodkrai]: '/image/local15.png',
 } as const;
 
 export const WEAPON_TYPE_NAME = {
@@ -296,26 +303,30 @@ export const STATUS_ICON = {
     ElementAtkUp: 'elementAtkUp',
     AtkUp: 'atkUp',
     AtkSelf: 'atkSelf',
-    Dot: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Dot.webp',
-    Buff: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Buff.webp',
-    Special: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Special.webp',
-    Food: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Food.webp',
-    Debuff: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Debuff.webp',
-    Heal: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Heal.webp',
-    Revive: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Revive.webp',
-    Barrier: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Barrier.webp',
-    Shield: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Buff_Common_Shield.webp',
-    DebuffCountered01: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_Countered01.webp',
-    DebuffCostSkill: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSkill.webp',
-    DebuffCostSwitch: 'https://gi-tcg-assets.guyutongxue.site/assets/UI_Gcg_Debuff_Common_CostSwitch.webp',
+    Dot: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Dot`,
+    Buff: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Buff`,
+    Special: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Special`,
+    Food: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Food`,
+    Debuff: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Debuff`,
+    Heal: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Heal`,
+    Revive: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Revive`,
+    Barrier: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Barrier`,
+    Shield: `${GUYU_PREIFIX}raw/UI_Gcg_Buff_Common_Shield`,
+    DebuffCostSkill: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_CostSkill`,
+    DebuffCostSwitch: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_CostSwitch`,
+    DebuffCountered01: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_Countered01`,
+    DebuffCountered02: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_Countered02`,
+    DebuffCountered03: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_Countered03`,
+    DebuffCountered04: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_Countered04`,
+    DebuffCountered05: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_Countered05`,
+    DebuffCountered06: `${GUYU_PREIFIX}raw/UI_Gcg_Debuff_Common_Countered06`,
 } as const;
-
-export const GUYU_PREIFIX = 'https://static-data.7shengzhaohuan.online/api/v4/image/';
 
 export const REACTION_COLOR = {
     融化: '#f1d08e',
     蒸发: '#f6bd6f',
     感电: '#c0a7e5',
+    月感电: '#c0a7e5',
     超导: '#bcb4ff',
     超载: '#f198a3',
     冻结: '#93d6e4',
@@ -395,4 +406,7 @@ export const RULE_EXPLAIN: { [key: string]: string } = {
     '「希穆兰卡」召唤物': '可能出现的「希穆兰卡」召唤物共有4种：；积木小人：结束阶段造成1点*[物理伤害]，可用次数2。；折纸飞鼠：结束阶段获得1层【高效切换】，可用次数2。；跳跳纸蛙：结束阶段抓1张牌，可用次数2。；折纸胖胖鼠：结束阶段治疗受伤最多的我方角色2点，可用次数1。',
     '「希穆兰卡」卡牌': '「希穆兰卡」卡牌包括：【墨色酒馆】、【星轨王城】、【森林的祝福】、【预言女神的礼物】、【「邪龙」的苏醒】、【旁白的注脚】、【「魔女M的祝福」】。',
     冒险: '从冒险地点中[挑选]1个生成。；如果我方已存在冒险地点，则改为使该冒险地点的冒险经历+1。',
+    元素幻变: '我方行动前，若队伍中包含元素幻变的两种元素类型的角色且不包含其他元素的角色，则将此牌弃置并生成至场上，然后将4个骰子转化为幻变的元素类型。',
+    月感电: '生成回合结束时造成1点[雷元素伤害]的\\[【雷暴云】]（可用次数1，可叠加，没有上限）；\\[【雷暴云】]入场或可用次数增加时，施予敌方随机1张手牌\\[【电击】]。',
+    当前元素骰费用: '打出此牌所需的元素骰数目。；被施予【费用增加】和【费用降低】时，会发生变化。',
 }

@@ -2,6 +2,21 @@ import { Card, Cmd, Cmds, Status, Summon, Trigger } from "../../typing";
 import { CMD_MODE, CardSubtype, CardTag, DamageType, DiceCostType, ELEMENT_TYPE, ElementType, SkillType } from "../constant/enum.js";
 import { convertToArray, isCdt } from "./utils.js";
 
+const getCardFilter = (subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[], cardAttachment?: number | number[]) => {
+    if (!subtype && !cardTag && !cardAttachment) return;
+    const nsubtype = convertToArray(subtype);
+    const ncardTag = convertToArray(cardTag);
+    const ncardAttachment = convertToArray(cardAttachment);
+    return (card: Card, idx?: number) => {
+        if (idx == undefined) {
+            return nsubtype.length > 0 && card.hasSubtype(...nsubtype) ||
+                ncardTag.length > 0 && card.hasTag(...ncardTag) ||
+                ncardAttachment.length > 0 && card.hasAttachment(...ncardAttachment);
+        }
+        return card.hasSubtype(nsubtype[idx]) || card.hasTag(ncardTag[idx]) || card.hasAttachment(ncardAttachment[idx]);
+    }
+}
+
 export default class CmdsGenerator {
     value: Cmds[];
     private _curGroup: string = 'default';
@@ -39,7 +54,7 @@ export default class CmdsGenerator {
         return this.value.some(({ cmd }) => cmd.includes('switch'));
     }
     get hasDamage() {
-        return this.hasCmds('heal', 'addMaxHp', 'revive') || this.getCmdCnt('attack') != undefined;
+        return this.hasCmds('heal', 'addMaxHp', 'revive') || this.getCmd('attack', 'cnt') != undefined;
     }
     get isPriority() {
         return this.value.some(({ cmd, mode }) => cmd == 'attack' && mode == CMD_MODE.IsPriority);
@@ -69,22 +84,22 @@ export default class CmdsGenerator {
         return this;
     }
     getCard(cnt: number, options: {
-        subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[],
+        subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[], cardAttachment?: number | number[],
         card?: Card | (Card | number)[] | number, exclude?: number | number[], include?: number | number[],
-        isOppo?: boolean, isFromPile?: boolean, until?: boolean, mode?: number,
+        isOppo?: boolean, isFromPile?: boolean, until?: boolean, mode?: number, cardFilter?: (card: Card) => boolean,
     } = {}) {
-        const { subtype, cardTag, card, exclude, include, isOppo, isFromPile, until, mode } = options;
+        const { subtype, cardTag, card, exclude, include, isOppo, isFromPile, until, mode,
+            cardAttachment, cardFilter = getCardFilter(subtype, cardTag, cardAttachment) } = options;
         this._add({
             cmd: 'getCard',
             cnt,
-            subtype,
-            cardTag,
             card,
             hidxs: convertToArray(isCdt(subtype || cardTag, exclude, include)),
             isOppo,
-            isAttach: isCdt(card || subtype || cardTag, isFromPile),
+            isAttach: isCdt(card || subtype || cardTag || cardAttachment, isFromPile),
             mode,
             status: +!!until,
+            cardFilter,
         });
         return this;
     }
@@ -112,11 +127,12 @@ export default class CmdsGenerator {
         return this;
     }
     getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: {
-        hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean,
+        hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean, mode?: number, cnt?: number,
+        cardFilter?: (card: Card) => boolean,
     } = {}) {
-        let { hidxs, isOppo, isPriority } = options;
+        let { hidxs, isOppo, isPriority, mode = isCdt(isPriority, CMD_MODE.IsPriority), cnt, cardFilter } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo, mode: isCdt(isPriority, CMD_MODE.IsPriority) });
+        if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo, mode, cnt, cardFilter });
         return this;
     }
     getSummon(summon: number | (number | Summon | [number, ...any[]])[] | undefined, options: { isOppo?: boolean, destroy?: number } = {}) {
@@ -157,13 +173,13 @@ export default class CmdsGenerator {
         return this;
     }
     attack(damage?: number, element?: DamageType | DamageType[], options: {
-        hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean, isOrder?: boolean,
+        hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean, isOrder?: boolean, target?: number,
     } = {}) {
-        let { hidxs, isOppo, isPriority, isOrder } = options;
+        let { hidxs, isOppo, isPriority, isOrder, target: status } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
         if (hidxs?.length == 0) return this;
         const mode = isPriority ? CMD_MODE.IsPriority : isOrder ? CMD_MODE.ByOrder : 0;
-        this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode });
+        this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode, status });
         return this;
     }
     changeDice(options: { cnt?: number, element?: DiceCostType, isFront?: boolean } = {}) {
@@ -249,7 +265,7 @@ export default class CmdsGenerator {
         card?: number[], subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[], isSpecify?: boolean,
     } = {}) {
         const { card, subtype, cardTag, isSpecify: isAttach } = options;
-        this._add({ cmd: 'pickCard', cnt, card, mode, subtype, cardTag, isAttach });
+        this._add({ cmd: 'pickCard', cnt, card, mode, cardFilter: getCardFilter(subtype, cardTag), isAttach });
         return this;
     }
     equip(hidxs: number | number[], card?: Card | number, isOppo?: boolean) {
@@ -286,7 +302,11 @@ export default class CmdsGenerator {
         this._add({ cmd: 'adventure' });
         return this;
     }
-    callback(cb: () => void) {
+    addUseSummon(smnidx: number) {
+        this._add({ cmd: 'addUseSummon', hidxs: [smnidx] });
+        return this;
+    }
+    callback(cb: (cmds: CmdsGenerator, cards?: Card[]) => void) {
         if (this.value.length > 0) this.value[this.value.length - 1].callback = cb;
         return this;
     }
@@ -300,8 +320,12 @@ export default class CmdsGenerator {
     filterCmds(...cmds: Cmd[]) {
         return this.value.filter(({ cmd }) => cmds.includes(cmd));
     }
-    getCmdCnt(cmd1: Cmd) {
-        return this.value.find(({ cmd }) => cmd == cmd1)?.cnt;
+    getCmd(cmd1: Cmd): Cmds | undefined;
+    getCmd<T extends keyof Cmds>(cmd1: Cmd, attr: T): Cmds[T] | undefined;
+    getCmd(cmd1: Cmd, attr?: keyof Cmds) {
+        const cmd = this.value.find(({ cmd }) => cmd == cmd1);
+        if (!attr) return cmd;
+        return cmd?.[attr];
     }
     clear() {
         this.value = [];

@@ -1,7 +1,8 @@
 <template>
   <div class="info-outer-container">
     <DefineTemplate>
-      <div class="info-equipment" v-if="(info as Hero).equipments.length > 0">
+      <div class="info-equipment"
+        v-if="(type == INFO_TYPE.Hero || type == INFO_TYPE.Skill) && (info as Hero).equipments.length > 0">
         <div class="title">—— 角色装备 ——</div>
         <div class="equipment" v-for="(slot, slidx) in (info as Hero).equipments" :key="slidx">
           <div class="equipment-title" @click.stop="showDesc(isEquipment, slidx)">
@@ -30,10 +31,13 @@
           </div>
         </div>
       </div>
-      <div v-if="(info as Hero).heroStatus.length > 0" class="info-status">
-        <div class="title">—— 角色状态 ——</div>
-        <div v-for="(ist, idx) in (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ist.id"
-          class="status">
+      <div
+        v-if="(type == INFO_TYPE.Hero || type == INFO_TYPE.Skill) && (info as Hero).heroStatus.length > 0 || type == INFO_TYPE.Card && (info as Card).attachments.length > 0"
+        class="info-status">
+        <div class="title">{{ type == INFO_TYPE.Card ? '—— 附着效果状态 ——' : '—— 角色状态 ——' }}</div>
+        <div
+          v-for="(ist, idx) in type == INFO_TYPE.Card ? (info as Card).attachments : (info as Hero).heroStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))"
+          :key="ist.id" class="status">
           <div class="status-title" @click.stop="showDesc(isHeroStatus, idx)">
             <span class="status-title-left">
               <div class="status-icon">
@@ -41,7 +45,7 @@
                 <img v-if="getPngIcon(ist.UI.icon) != ''" :src="getPngIcon(ist.UI.icon)" :style="{
                   filter: (getPngIcon(ist.UI.icon).startsWith('https') ||
                     ist.UI.icon.startsWith('buff') ||
-                    ist.UI.icon.endsWith('dice')) && !getPngIcon(ist.UI.icon).includes('guyutongxue')
+                    ist.UI.icon.endsWith('dice')) && !getPngIcon(ist.UI.icon).includes('7shengzhaohuan')
                     ? getSvgFilter(ist.UI.iconBg) : ''
                 }" />
                 <div v-else style="color: white;">{{ ist.name[0] }}</div>
@@ -62,7 +66,7 @@
           </div>
         </div>
       </div>
-      <div v-if="combatStatus.length > 0" class="info-status">
+      <div v-if="(type == INFO_TYPE.Hero || type == INFO_TYPE.Skill) && combatStatus.length > 0" class="info-status">
         <div class="title">—— 阵营出战状态 ——</div>
         <div v-for="(ost, idx) in combatStatus.filter(sts => !sts.hasType(STATUS_TYPE.Hide))" :key="ost.id"
           class="status">
@@ -73,7 +77,7 @@
                 <img v-if="getPngIcon(ost.UI.icon) != ''" :src="getPngIcon(ost.UI.icon)" :style="{
                   filter: (getPngIcon(ost.UI.icon).startsWith('https') ||
                     ost.UI.icon.startsWith('buff') ||
-                    ost.UI.icon.endsWith('dice')) && !getPngIcon(ost.UI.icon).includes('guyutongxue')
+                    ost.UI.icon.endsWith('dice')) && !getPngIcon(ost.UI.icon).includes('7shengzhaohuan')
                     ? getSvgFilter(ost.UI.iconBg) : ''
                 }" />
                 <div v-else style="color: white;">{{ ost.name[0] }}</div>
@@ -118,7 +122,8 @@
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[(info as Card).costType])" />
                 <StrokedText class="cost-text">{{ (info as Card).cost }}</StrokedText>
               </div>
-              <div class="info-card-anydice" v-if="(info as Card).anydice > 0">
+              <div class="info-card-anydice"
+                v-if="(info as Card).anydice > 0 && (info as Card).costType != DICE_TYPE.Any">
                 <img class="cost-img" :src="getDiceIcon(ELEMENT_ICON[DICE_TYPE.Any])" />
                 <StrokedText class="cost-text">{{ (info as Card).anydice }}</StrokedText>
               </div>
@@ -246,7 +251,7 @@
       </div>
     </div>
     <div class="info-container" :class="{ 'mobile-font': isMobile }" @click.stop=""
-      v-if="isShow && type == INFO_TYPE.Hero && ((info as Hero).equipments.length > 0 || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0)">
+      v-if="isShow && (type == INFO_TYPE.Hero && ((info as Hero).equipments.length > 0 || (info as Hero).heroStatus.length > 0 || combatStatus.length > 0) || type == INFO_TYPE.Card && (info as Card).attachments.length > 0)">
       <UseTemplate />
     </div>
     <div class="info-container info-rule" :class="{ 'mobile-font': isMobile }"
@@ -314,8 +319,8 @@ const isHeroStatus = ref<boolean[]>([]); // 是否展示角色状态
 const isCombatStatus = ref<boolean[]>([]); // 是否展示阵营出战状态
 const isEquipment = ref<boolean[]>([]); // 是否展示装备
 const skillExplain = ref<(string[][] | string[])[]>([]); // 技能/卡牌解释
-const heroStatusExplain = ref<any[]>([]); // 状态技能解释
-const combatStatusExplain = ref<any[]>([]); // 状态技能解释
+const heroStatusExplain = ref<any[]>([]); // 角色/附着效果状态技能解释
+const combatStatusExplain = ref<any[]>([]); // 出战状态技能解释
 const slotExplain = ref<any[]>([]); // 装备解释
 const smnExplain = ref<any[]>([]); // 召唤物解释
 const ruleExplain = ref<any[]>([]); // 规则解释
@@ -507,7 +512,7 @@ const wrapExpl = (expls: ExplainContent[], memo: string | string[]): string[][] 
            <div style="display:flex;flex-direction:column;margin-left:2px;${'damage' in expl ? 'gap:3px;' : ''}" >
             ${nameEl}
             <span style="color:#d0c298;">
-             ${'group' in expl ? `${['角色', '出战'][expl.group]}状态` : '召唤物'}
+             ${'group' in expl ? `${['角色', '出战', '附着效果'][expl.group]}状态` : '召唤物'}
             </span>
            </div>`
         }
@@ -599,6 +604,10 @@ watchEffect(() => {
     if (type.value == INFO_TYPE.Support) { // 支援物
       wrapPlayingDescription(info.value);
     }
+    info.value.attachments.forEach(atch => {
+      atch.UI.descriptions = atch.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: atch }));
+      heroStatusExplain.value.push(wrapExpl(atch.UI.explains, atch.id + atch.name));
+    });
     if (info.value.hasSubtype(CARD_SUBTYPE.Vehicle)) {
       const vehicle = newSkill(version.value)(getVehicleIdByCid(info.value.id));
       vehicle.UI.descriptions = vehicle.UI.description.split(/(?<!\\)；/).map(desc => wrapDesc(desc, { obj: vehicle }));
@@ -703,6 +712,7 @@ onMounted(() => {
 .info-img {
   position: relative;
   width: 10vw;
+  max-width: 100px;
   margin-right: 5px;
   margin-left: 3%;
 }

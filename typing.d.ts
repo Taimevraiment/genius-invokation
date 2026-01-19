@@ -1,5 +1,7 @@
+import CmdsGenerator from "@@@/utils/cmdsGenerator"
 import {
-    ActionType, CardSubtype, CardTag, DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
+    ActionType,
+    DAMAGE_TYPE, DamageType, DiceCostType, ELEMENT_REACTION, ElementType, InfoType,
     Phase, PlayerStatus, PURE_ELEMENT_TYPE, PureElementType, SkillType,
     SWIRL_ELEMENT_TYPE, Version
 } from "./common/constant/enum"
@@ -118,20 +120,19 @@ type Cmds = {
     hidxs?: number[],
     isAttach?: boolean,
     card?: Card | number | (Card | number)[],
-    subtype?: CardSubtype | CardSubtype[],
-    cardTag?: CardTag | CardTag[],
     status?: (number | [number, ...any] | Status)[] | number,
     summon?: (number | [number, ...any] | Summon)[] | number,
     isOppo?: boolean,
     trigger?: Trigger | Trigger[],
-    callback?: () => void,
+    callback?: (cmds: CmdsGenerator, cards?: Card[]) => void,
+    cardFilter?: (card: Card, idx?: number) => boolean,
 }
 
 type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll' | 'revive' | 'switch-to' | 'switch-before' |
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
-    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon';
+    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'addUseSummon';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -194,15 +195,15 @@ type TrgAll = 'all-' | '';
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
     'end-phase' | 'any-end-phase' | `${TrgAfter}${TrgOther}skill${TrgOppo}` | `${TrgAfter}${TrgOther}skilltype${SkillType}` |
     `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
-    `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` |
+    `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` | 'skill-dmg' |
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `${TrgOther}elReaction-Anemo:${TrgElRe}` | `${TrgOther}elReaction-Geo:${TrgElRe}` | 'ecard' |
     'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | `useReadySkill` | `status-destroy` | `summon-destroy` | 'destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' |
-    `${TrgPre}get-status` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
-    'slot-destroy' | 'getNightSoul' | 'ready-skill' | 'reset' | 'adventure' | `${TrgOther}fallatk` | '';
+    `${TrgPre}get-status${TrgOppo}` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
+    'slot-destroy' | 'getNightSoul' | 'ready-skill' | 'reset' | 'adventure' | `${TrgOther}fallatk` | 'summon-usecnt-add' | '';
 
 type Countdown = {
     limit: number, // 倒计时配置
