@@ -56,7 +56,7 @@ const senlin2Weapon = (shareId: number, name: string, stsId: number) => {
 
 const barrierWeapon = (shareId: number, mark: string) => {
     return new CardBuilder(shareId).weapon().costSame(2).tag(CARD_TAG.Barrier).useCnt(0).perCnt(1).perCnt(2, 'v5.0.0')
-        .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合1次）；【角色造成伤害时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此伤害+1，并且每消耗1点「${mark}」就抓1张牌。`)
+        .description(`【所附属角色受到伤害时：】如可能，[舍弃]1张[当前元素骰费用]最高的手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合1次）；【角色造成伤害时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此伤害+1，并且每消耗1点「${mark}」就抓1张牌。`)
         .description(`【所附属角色受到伤害时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，以抵消1点伤害，然后累积1点「${mark}」。（每回合最多触发2次）；【角色使用技能时：】如果此牌已有「${mark}」，则消耗所有「${mark}」，使此技能伤害+1，并且每消耗1点「${mark}」就抓1张牌。`, 'v5.0.0')
         .handle((card, event, ver) => {
             const { hcardsCnt, restDmg, skill, execmds } = event;
@@ -1097,7 +1097,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     312030: () => new CardBuilder(427).name('指挥的礼帽').since('v5.1.0').relic().costSame(1).perCnt(1)
-        .description('【我方切换到所附属角色后：】[舍弃]原本元素骰费用最高的1张手牌，将2个元素骰转换为[万能元素骰]，并使角色下次使用技能或打出「天赋」时少花费1个元素骰。（每回合1次）')
+        .description('【我方切换到所附属角色后：】[舍弃]1张[当前元素骰费用]最高的手牌，将2个元素骰转换为[万能元素骰]，并使角色下次使用技能或打出「天赋」时少花费1个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/a304d1400ed0bcb463f93b2be2558833_8026218308357759960.png')
         .handle((card, event, ver) => {
             const { hcardsCnt, hidx, execmds } = event;
@@ -1306,7 +1306,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/13/258999284/73fa32443ce6c88b50cc8ef3546e5feb_8093849092566791328.png'),
 
     313006: () => new CardBuilder(449).name('绒翼龙').since('v5.3.0').vehicle().costSame(1).useCnt(2)
-        .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]原本元素骰费用最高的1张手牌，将此次切换视为「[快速行动]」而非「[战斗行动]」，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
+        .description('【入场时：】敌方出战角色附属【sts301302】。；【附属角色切换为出战角色时，且敌方出战角色附属〖sts301302〗时：】如可能，[舍弃]1张[当前元素骰费用]最高的手牌，将此次切换视为「[快速行动]」而非「[战斗行动]」，少花费1个元素骰，并移除对方所有角色的【sts301302】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/9a5a0408639062f81d7ed4007eea7a19_7598137844845621529.png')
         .handle((_, event, ver) => {
             const { eheros, eDmgedHero, hcardsCnt, switchHeroDiceCnt, cmds, execmds } = event;
@@ -1477,7 +1477,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/19/258999284/82cd8a4a820b5608e57a3661dcb49b8f_8218775068142851712.png'),
 
     321035: () => new CardBuilder(561).name('银月之庭').since('v6.4.0').place().costSame(0)
-        .description('【我方卡牌被赋予〖sts201〗或〖sts206〗时：】累计1点计数。；【此卡牌计数达到3时：】清空计数，并将我方所有元素骰转换为[万能元素骰]。')
+        .description('【我方卡牌被赋予〖sts202〗或〖sts206〗时：】累计1点计数。；【此卡牌计数达到3时：】清空计数，并将我方所有元素骰转换为[万能元素骰]。')
         .src('#'),
 
     321036: () => new CardBuilder(562).name('汐印石').since('v6.4.0').place().costSame(0)
@@ -1493,7 +1493,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('#'),
 
     321039: () => new CardBuilder(565).name('月矩力试验设计局').since('v6.4.0').place().costSame(2)
-        .description('【结束阶段：】赋予我方牌组中随机2张牌【sts206】。；[可用次数]：2；【此卡牌被弃置时：】抓2张赋予了【sts206】的卡牌，并生成1个随机基础元素骰。')
+        .description('【结束阶段：】赋予我方牌组中随机2张牌【sts206】。；[可用次数]：2；【此卡牌在场上被弃置时：】抓2张赋予了【sts206】的卡牌，并生成1个随机基础元素骰。')
         .src('#'),
 
     322001: () => new CardBuilder(194).name('派蒙').offline('v1').ally().costSame(3)
@@ -1654,7 +1654,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/4321ae941ccf75069eb630547df61e3c_1672242083656433331.png'),
 
     323005: () => new CardBuilder(312).name('化种匣').since('v4.3.0').offline('v2').item().costSame(0)
-        .description('【我方打出原本元素骰费用至少为2的支援牌时：】少花费1个元素骰。（每回合1次）；[可用次数]：2')
+        .description('【我方打出[当前元素骰费用]至少为2的支援牌时：】少花费1个元素骰。（每回合1次）；[可用次数]：2')
         .description('【我方打出原本元素骰费用为1的支援牌时：】少花费1个元素骰。（每回合1次）；[可用次数]：2', 'v4.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/3a16ca3da02eaf503cc8169d5e29e938_8021832463219302062.png'),
 
@@ -1667,7 +1667,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/f705b86904d8413be39df62741a8c81e_885257763287819413.png'),
 
     323008: () => new CardBuilder(391).name('苦舍桓').since('v4.7.0').item().costSame(1).costSame(0, 'v4.8.0')
-        .description('【行动阶段开始时：】[舍弃]最多2张原本元素骰费用最高的手牌，每[舍弃]1张，此牌就累积1点「记忆和梦」。（最多2点）；【我方角色使用技能时：】如果我方本回合未打出过行动牌，则消耗1点「记忆和梦」，以使此技能少花费1个元素骰。')
+        .description('【行动阶段开始时：】[舍弃]最多2张[当前元素骰费用]最高的手牌，每[舍弃]1张，此牌就累积1点「记忆和梦」。（最多2点）；【我方角色使用技能时：】如果我方本回合未打出过行动牌，则消耗1点「记忆和梦」，以使此技能少花费1个元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/67607b9684e9fb62a44f68c0f3a2e30c_5397809820905590818.png'),
 
     330001: () => new CardBuilder(218).name('旧时庭园').since('v3.8.0').offline('v3').legend().costSame(0)
@@ -1756,7 +1756,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     330012: () => new CardBuilder(541).name('「沙中遗事」').since('v6.2.0').legend().costSame(0)
-        .description('[挑选]一项：；将敌方1张费用最高的手牌置于牌组底。；或；将我方所有手牌置于牌组底，然后抓相同数量+1张手牌。')
+        .description('[挑选]一项：；将敌方1张[当前元素骰费用]最高的手牌置于牌组底。；或；将我方所有手牌置于牌组底，然后抓相同数量+1张手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/01/258999284/fed75202c9f5e3db571baa83ccd17632_6952420244278365959.png')
         .handle((_, { cmds }) => cmds.pickCard(2, CMD_MODE.UseCard, { card: [300008, 300009] })),
 
@@ -2307,7 +2307,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => (cmds.pickCard(3, CMD_MODE.GetCard, { subtype: CARD_SUBTYPE.Vehicle }), { status: 303239 })),
 
     332046: () => new CardBuilder(488).name('飞行队出击！').since('v5.7.0').event().costAny(3)
-        .description('随机[舍弃]至多2张原本元素骰费用最高的手牌，随后抓牌直至手牌中有4张牌。；【此牌在手牌被[舍弃]后：】抓1张牌。')
+        .description('随机[舍弃]至多2张[当前元素骰费用]最高的手牌，随后抓牌直至手牌中有4张牌。；【此牌在手牌被[舍弃]后：】抓1张牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/495fa2cc19ba2fa4ca9534c58a926b63_7007260530446437361.png')
         .handle((_, event, ver) => {
             const { cmds, source: isFromPile, trigger } = event;
@@ -2417,7 +2417,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle(() => ({ status: 303247 })),
 
     332059: () => new CardBuilder(554).name('「穿越晨霭的冒险」').since('v6.3.0').event().costSame(0)
-        .description('将费用最低的至多2张手牌置入牌组底，然后抓等量的牌。；【此牌被[舍弃]后：】[冒险]1次。')
+        .description('将[当前元素骰费用]最低的至多2张手牌置入牌组底，然后抓等量的牌。；【此牌被[舍弃]后：】[冒险]1次。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/07/258999284/d3c497c9d49542509973ce5610a9bfd2_4740578275200717567.png')
         .handle((_, event) => {
             const { hcardsCnt, cmds, execmds } = event;
@@ -2433,11 +2433,11 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => cmds.getStatus(206, { cnt: 2, mode: CMD_MODE.HighHandCard })),
 
     332061: () => new CardBuilder(569).name('叮铃哐啷军团').since('v6.4.0').event().costSame(1)
-        .description('生成3张随机的[当前元素骰费用]不低于3的卡牌加入手牌。；如果此卡牌被赋予了【sts206】，则赋予3张[当前元素骰费用]最高的手牌【sts206】。')
+        .description('生成3张随机的[当前元素骰费用]等于3的卡牌加入手牌。；如果此卡牌被赋予了【sts206】，则赋予3张[当前元素骰费用]最高的手牌【sts206】。')
         .src('#')
         .handle((card, event) => {
             const { cmds } = event;
-            cmds.getCard(3, { cardFilter: c => c.currDiceCost >= 3 });
+            cmds.getCard(3, { card: 3 });
             if (card.hasAttachment(206)) cmds.getStatus(206, { cnt: 3, mode: CMD_MODE.HighHandCard });
         }),
 
@@ -2708,7 +2708,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     211171: () => new CardBuilder(558).name('依随的策援').since('v6.4.0').talent(1).costCryo(3)
-        .description('{action}；装备有此卡牌的【hro】在场时，【sts111171】触发后会额外附属【sts111175】。')
+        .description('{action}；装备有此卡牌的【hro】在场时，【sts111171】触发后会额外使该角色本回合下次「普通攻击」造成的物理伤害+2。')
         .src('#'),
 
     212011: () => new CardBuilder(69).name('光辉的季节').offline('v1').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
@@ -3105,7 +3105,8 @@ const allCards: Record<number, () => CardBuilder> = {
 
     214171: () => new CardBuilder(559).name('循环整流引擎').since('v6.4.0').talent().costElectro(1)
         .description('{quick。}；〔*[card]赋予敌方随机2张手牌【sts204】。〕；【我方触发[月感电]反应后：】赋予敌方随机1张手牌【sts201】。')
-        .src('#'),
+        .src('#')
+        .handle((_, { cmds }) => (cmds.getStatus(201, { isOppo: true }), { triggers: ['LunarElectroCharged', 'other-LunarElectroCharged'] })),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')
@@ -3219,7 +3220,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     215151: () => new CardBuilder(525).name('温敷战术包扎').since('v6.1.0').talent().costAnemo(1).perCnt(2)
-        .description('{quick，治疗我方受伤最多的角色1点。}；装备有此牌的【hro】在场时，我方触发[风元素相关反应]或感电反应后，治疗我方受伤最多的角色1点。（每回合2次）')
+        .description('{quick，治疗我方受伤最多的角色1点。}；装备有此牌的【hro】在场时，我方触发[风元素相关反应]、感电或月感电反应后，治疗我方受伤最多的角色1点。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/775d537c80b16d221072fd4d4f86bbda_2936420837169196536.png')
         .handle((card, event) => {
             const { heros, cmds, execmds } = event;
@@ -3228,7 +3229,11 @@ const allCards: Record<number, () => CardBuilder> = {
             if (card.perCnt <= 0 || hidxs.length == 0) return;
             execmds.heal(1, { hidxs });
             return {
-                triggers: ['elReaction-Anemo', 'other-elReaction-Anemo', 'other-ElectroCharged', 'ElectroCharged'],
+                triggers: [
+                    'elReaction-Anemo', 'other-elReaction-Anemo',
+                    'ElectroCharged', 'other-ElectroCharged',
+                    'LunarElectroCharged', 'other-LunarElectroCharged',
+                ],
                 exec: () => card.minusPerCnt(),
             }
         }),
@@ -3409,8 +3414,8 @@ const allCards: Record<number, () => CardBuilder> = {
         .description('{action}；装备有此牌的【hro】在场时，我方触发【sts117082】的效果后：将1张所[舍弃]卡牌的复制加入你的手牌。如果该牌为「场地」牌，则使本回合中我方下次打出「场地」时少花费2个元素骰。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/10ea9432a97b89788ede72906f5af735_8657249785871520397.png'),
 
-    217091: () => new CardBuilder(457).name('索报皆偿').since('v5.4.0').talent().costDendro(1).perCnt(1)
-        .description('装备有此牌的【hro】切换至前台或使用【ski,1】时：若我方手牌不多于对方，则窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。（每回合1次）')
+    217091: () => new CardBuilder(457).name('夜域赐礼·索报皆偿').since('v5.4.0').talent().costDendro(1).perCnt(1)
+        .description('装备有此牌的【hro】切换至前台或使用【ski,1】时：若我方手牌不多于对方，则窃取1张[当前元素骰费用]最高的对方手牌，然后对手抓1张牌。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/a47cc0e0df6da9b518948c51861e73ab_5159453302126122992.png')
         .handle((card, event) => {
             const { hcardsCnt, ehcardsCnt, execmds } = event;
@@ -3570,7 +3575,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     223061: () => new CardBuilder(560).name('「焰主之祝」').since('v6.4.0').talent(2).costPyro(3).energy(2)
-        .description('{action}；我方【sts123061】触发时，额外[舍弃]1张随机手牌，【sts123061】造成的伤害额外提高，其数值等同于所[舍弃]手牌的元素骰费用。')
+        .description('{action}；我方【sts123061】触发时，额外[舍弃]1张随机手牌，【sts123061】造成的伤害额外提高，其数值等同于所[舍弃]手牌的[当前元素骰费用]。')
         .src('#'),
 
     224011: () => new CardBuilder(117).name('汲能棱晶').since('v3.7.0').offline('v2').talent(-3).event(true).costElectro(2).costElectro(3, 'v4.2.0')
@@ -3697,7 +3702,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f6a41cd2ca30f56ff066b73a5be903d_3952798209334004681.png'),
 
     227041: () => new CardBuilder(497).name('饕噬尽吞').since('v5.8.0').talent().costDendro(1).perCnt(1)
-        .description('{quick，敌方抓1张牌，然后我方窃取1张原本元素骰费用最高的对方手牌。}；【我方打出名称不存在于本局最初牌组的牌时：】触发【ski,3】1次。（每回合1次）')
+        .description('{quick，敌方抓1张牌，然后我方窃取1张[当前元素骰费用]最高的对方手牌。}；【我方打出名称不存在于本局最初牌组的牌时：】触发【ski,3】1次。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/840ad57e6a3de504c1a18dd0511e172b_8571717521108052350.png')
         .handle((card, event) => {
             const { cmds, hcard, playerInfo: { initCardIds } } = event;
@@ -3743,7 +3748,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     111163: () => new CardBuilder().name('虚境裂隙').event().costSame(0)
-        .description('[舍弃]1张原本元素骰费用为3的手牌，我方【hro】获得2点*[蛇之狡谋]。')
+        .description('[舍弃]1张[当前元素骰费用]为3的手牌，我方【hro】获得2点*[蛇之狡谋]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/ea0465d67ba6042b24ca003aa9f271d4_6391061726152297915.png')
         .handle((card, event) => {
             const { cmds, heros, hcards } = event;
@@ -3919,8 +3924,8 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     124051: () => new CardBuilder().name('噬骸能量块').event().costSame(0)
-        .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。（每回合最多打出1张）')
-        .description('随机[舍弃]1张原本元素骰费用最高的手牌，生成1个我方出战角色类型的元素骰。如果我方出战角色是「圣骸兽」角色，则使其获得1点[充能]。（每回合最多打出1张）', 'v4.8.0')
+        .description('随机[舍弃]1张[当前元素骰费用]最高的手牌，生成1个我方出战角色类型的元素骰。（每回合最多打出1张）')
+        .description('随机[舍弃]1张原本元素骰最高的手牌，生成1个我方出战角色类型的元素骰。如果我方出战角色是「圣骸兽」角色，则使其获得1点[充能]。（每回合最多打出1张）', 'v4.8.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/7cb3ab81a7226897afdff50f4d567c13_7393439119842323642.png')
         .handle((_, event, ver) => {
             const { hero, combatStatus, cmds } = event;
@@ -3966,7 +3971,7 @@ const allCards: Record<number, () => CardBuilder> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2e88a5df59e2b48de1bc62d60dd1ba5b_5370407805539882566.png'),
 
     300008: () => new CardBuilder().name('驱逐灾厄').since('v6.2.0').event().from(330012)
-        .description('将敌方1张费用最高的手牌置于牌组底。')
+        .description('将敌方1张[当前元素骰费用]最高的手牌置于牌组底。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/01/258999284/fed75202c9f5e3db571baa83ccd17632_6952420244278365959.png')
         .handle((_, { cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })),
 
@@ -4105,19 +4110,19 @@ const allCards: Record<number, () => CardBuilder> = {
         .handle((_, { cmds }) => (cmds.getCard(2), { status: 302217, statusOppo: 302217 })),
 
     303041: () => new CardBuilder().name('超导祝佑·极寒').support().costCryo(1).from(331004)
-        .description('【投掷阶段：】总是骰出两个[冰元素骰]和两个[雷元素骰]。；【敌方受到[物理伤害]或[冰元素伤害]后：】赋予敌方随机1张手牌【sts207】和【sts201】。（每回合2次）')
+        .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[雷元素骰]。；【我方造成[物理伤害]或[冰元素伤害]后：】赋予敌方随机1张手牌【sts207】和【sts201】。（每回合2次）')
         .src('#'),
 
     303042: () => new CardBuilder().name('超导祝佑·电冲').support().costElectro(2).from(331004)
-        .description('【投掷阶段：】总是骰出两个[冰元素骰]和两个[雷元素骰]。；【我方触发‹1›‹4›超导反应后：】敌方生命值最高的一名角色受到2点[穿透伤害]。（每回合3次）')
+        .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[雷元素骰]。；【我方触发‹1›‹4›超导反应后：】敌方生命值最高的一名角色受到2点[穿透伤害]。（每回合3次）')
         .src('#'),
 
     303051: () => new CardBuilder().name('蒸发祝佑·狂浪').support().costHydro(2).from(331005)
-        .description('【投掷阶段：】总是骰出两个[水元素骰]和两个[火元素骰]。；【我方触发‹2›‹3›蒸发反应后：】治疗我方受伤最多的角色2点，并使其下次造成的伤害+1。（每回合2次）')
+        .description('【投掷阶段：】总是投出2个[水元素骰]和2个[火元素骰]。；【我方触发‹2›‹3›蒸发反应后：】治疗我方受伤最多的角色2点，并使其下次造成的伤害+1。（每回合2次）')
         .src('#'),
 
     303052: () => new CardBuilder().name('蒸发祝佑·炽燃').support().costPyro(2).from(331005)
-        .description('【投掷阶段：】总是骰出两个[水元素骰]和两个[火元素骰]。；【我方火元素角色使用「元素战技」时：】少花费1个元素骰。（每回合2次）')
+        .description('【投掷阶段：】总是投出2个[水元素骰]和2个[火元素骰]。；【我方火元素角色使用「元素战技」时：】少花费1个元素骰。（每回合2次）')
         .src('#'),
 
     303230: () => new CardBuilder().name('海底宝藏').event().costSame(0).from(322027)

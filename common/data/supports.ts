@@ -49,7 +49,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     // 超导祝佑·极寒
     303041: () => new SupportBuilder().collection(2).handle((support, event) => {
         const triggers: Trigger[] = ['phase-dice', 'phase-start'];
-        if (support.useCnt > 0) triggers.push('Physical-getdmg-oppo', 'Cryo-getdmg-oppo');
+        if (support.useCnt > 0) triggers.push('Physical-dmg', 'Cryo-dmg');
         return {
             triggers,
             element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Electro],
@@ -254,11 +254,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 黄金屋
-    321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
+    321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
         const { hcard, isMinusDiceWeapon, isMinusDiceRelic } = event;
-        if (support.perCnt <= 0 ||
-            !hcard || (ver.lt('v6.4.0') || ver.isOffline ? hcard.rawDiceCost : hcard.currDiceCost) < 3 ||
-            (!isMinusDiceWeapon && !isMinusDiceRelic)) return;
+        if (support.perCnt <= 0 || !hcard || hcard.currDiceCost < 3 || (!isMinusDiceWeapon && !isMinusDiceRelic)) return;
         return {
             triggers: 'card',
             isNotAddTask: true,
@@ -413,10 +411,9 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 「悬木人」
-    321024: () => new SupportBuilder().round(1).handle((support, event, ver) => {
+    321024: () => new SupportBuilder().round(1).handle((support, event) => {
         const { hcard, playerInfo: { initCardIds } } = event;
-        if (!hcard || initCardIds.includes(hcard.id) ||
-            (ver.lt('v6.4.0') ? hcard.rawDiceCost : hcard.currDiceCost) < support.useCnt) return;
+        if (!hcard || initCardIds.includes(hcard.id) || hcard.currDiceCost < support.useCnt) return;
         return {
             triggers: 'card',
             exec: cmds => {
@@ -553,7 +550,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     })),
     // 银月之庭
     321035: () => new SupportBuilder().collection().handle((support, event) => {
-        if (![201, 206].includes(event.source)) return;
+        if (![202, 206].includes(event.source)) return;
         return {
             triggers: 'get-status',
             exec: cmds => {
@@ -1098,7 +1095,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
     323005: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
         const { hcard, isMinusDiceCard } = event;
         if (!hcard || hcard.type != CARD_TYPE.Support || support.perCnt <= 0 || !isMinusDiceCard) return;
-        if (ver.lt('v4.6.0') && !ver.isOffline ? hcard.rawDiceCost != 1 : hcard.rawDiceCost < 2) return;
+        if (ver.lt('v4.6.0') && !ver.isOffline ? hcard.currDiceCost != 1 : hcard.currDiceCost < 2) return;
         return {
             triggers: 'card',
             minusDiceCard: 1,

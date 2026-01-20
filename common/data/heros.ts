@@ -355,7 +355,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     '')
                 .burst(2).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), status: 111172 })),
-            new SkillBuilder('速射牵制').description('【自身使用技能后：】生成【sts111173】。（每回合2次）')
+            new SkillBuilder('速射牵制').description('【自身使用技能后：】下次我方造成的[物理伤害]+1。（每回合2次）')
                 .src('#',
                     '')
                 .passive().perCnt(2).handle(event => {
@@ -811,7 +811,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/78f87dda37f211ee6e090ee66503335d.png')
         .normalSkill('炎舞')
         .skills(
-            new SkillBuilder('热情拂扫').description('{dealDmg}，随机[舍弃]1张元素骰费用最高的手牌，生成【sts113121】。')
+            new SkillBuilder('热情拂扫').description('{dealDmg}，随机[舍弃]1张[当前元素骰费用]最高的手牌，生成【sts113121】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png')
                 .elemental().damage(2).cost(3).handle((event, ver) => {
@@ -1289,12 +1289,12 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/9b42c01c5434aa2eb62d15e344727cea_4055010393150111801.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 114161 })),
-            new SkillBuilder('夜翳的通感').description('【我方触发感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；我方造成此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
+            new SkillBuilder('夜翳的通感').description('【我方触发感电或月感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；我方造成此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/33ccac2adea6cd18a9c2d59f14843ae6_3282756831587509125.png')
                 .passive().perCnt(1).handle(event => {
                     const { source, cmds, skill, trigger, hero, eDmgedHero } = event;
-                    const triggers: Trigger[] = ['ElectroCharged', 'other-ElectroCharged'];
+                    const triggers: Trigger[] = ['ElectroCharged', 'other-ElectroCharged', 'LunarElectroCharged', 'other-LunarElectroCharged'];
                     if (triggers.includes(trigger)) {
                         if (hero.heroStatus.get(114163)?.useCnt != 2) return;
                         cmds.consumeNightSoul(hero.hidx, 2).attack(1, DAMAGE_TYPE.Electro, { isPriority: true });
@@ -1324,7 +1324,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
                 .src('#',
                     '')
                 .burst(2).damage(4).cost(3).handle(() => ({ summon: 114171 })),
-            new SkillBuilder('月兆祝赐·象拟中继').description('我方角色触发‹2›‹4›【感电反应】时，将转为触发[月感电]反应。；敌方行动牌被赋予【sts204】时也会赋予【sts207】状态。')
+            new SkillBuilder('月兆祝赐·象拟中继').description('本局游戏中，我方角色触发‹2›‹4›【感电反应】时，将转为触发[月感电]反应。；自身在场，敌方行动牌被赋予【sts204】时：额外赋予【sts207】状态。')
                 .src('#',
                     '')
                 .passive().handle(event => {
@@ -2271,7 +2271,7 @@ const allHeros: Record<number, () => HeroBuilder> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/5ea3cab5d35d44096106216727b4670e.png')
         .normalSkill('尖牙噬咬')
         .skills(
-            new SkillBuilder('鳄齿锐波').description('{dealDmg}，将至多1张原本元素骰费用最高的手牌置入牌组底，生成手牌【crd124051】。')
+            new SkillBuilder('鳄齿锐波').description('{dealDmg}，将至多1张[当前元素骰费用]最高的手牌置入牌组底，生成手牌【crd124051】。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/c357668a3d1a749e4003f578687c54c7_8666737310344464188.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard }).getCard(1, { card: 124051 }).res),

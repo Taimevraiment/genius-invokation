@@ -303,6 +303,7 @@ export const ELEMENT_REACTION = {
     Burning: 115, // 燃烧
     Bloom: 116, // 绽放
     Quicken: 117, // 原激化
+    LunarElectroCharged: 118, // 月感电
 } as const;
 
 export type ElementReaction = TypeConst<typeof ELEMENT_REACTION>;
@@ -329,7 +330,7 @@ export type SummonDestroyType = TypeConst<typeof SUMMON_DESTROY_TYPE>;
 export const CMD_MODE = {
     Random: 70001, // 随机不重复基础骰子
     FrontHero: 70002, // 当前出战角色(hidxs[0]控制前后)元素骰子
-    HighHandCard: 70003, // 弃置花费最高的手牌 
+    HighHandCard: 70003, // 弃置当前花费最高的手牌 
     AllHandCards: 70004, // 弃置所有手牌
     TopPileCard: 70005, // 弃置牌堆顶的牌
     RandomPileCard: 70006, // 弃置牌库中随机一张牌

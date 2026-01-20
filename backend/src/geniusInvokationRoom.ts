@@ -1647,6 +1647,20 @@ export default class GeniusInvokationRoom {
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro)) { // 水雷 感电
                         if (aheros.some(h => h.id == 1417)) { // 转化为月感电
                             res.elTips[elTipIdx] = ['月感电', attachElement, dmgElement];
+                            atriggers.forEach((trg, tri) => {
+                                if (!isAtkSelf) {
+                                    if (tri == atkHidx) trg.add('LunarElectroCharged');
+                                    else trg.add('other-LunarElectroCharged');
+                                }
+                                trg.add('ElectroCharged-oppo');
+                            });
+                            etriggers.forEach((trg, tri) => {
+                                if (isAtkSelf) {
+                                    if (tri == dmgedHidx) trg.add('LunarElectroCharged');
+                                    else trg.add('other-LunarElectroCharged');
+                                }
+                                if (tri == dmgedHidx) trg.add('get-LunarElectroCharged')
+                            });
                             const cpidx = dmgedPidx ^ 1;
                             this._updateSummon(cpidx, this._getSummonById(205), { isSummon, destroy: +(isSummon == -1) });
                         } else {
@@ -1801,12 +1815,12 @@ export default class GeniusInvokationRoom {
                     const elReactionTriggers: Trigger[] = [
                         'elReaction',
                         `elReaction-${trgEl}${SwirlOrCrystallize}` as Trigger,
-                        `elReaction-${PURE_ELEMENT_TYPE_KEY[attachElement]}` as Trigger,
+                        `elReaction-${PURE_ELEMENT_TYPE_KEY[attachElement]}`,
                     ];
                     const otherElReactionTriggers: Trigger[] = [
                         'other-elReaction',
                         `other-elReaction-${trgEl}${SwirlOrCrystallize}` as Trigger,
-                        `other-elReaction-${ELEMENT_TYPE_KEY[attachElement]}` as Trigger,
+                        `other-elReaction-${PURE_ELEMENT_TYPE_KEY[attachElement]}`,
                     ];
                     atriggers.forEach((trgs, tri) => {
                         if (!isAtkSelf) {
@@ -3639,14 +3653,14 @@ export default class GeniusInvokationRoom {
                     if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
                         let restCnt = cnt;
                         let hcardsSorted = clone(handCards).sort((a, b) =>
-                            (b.rawDiceCost - a.rawDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
+                            (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
                         while (hcardsSorted.length > 0) {
-                            const cost = hcardsSorted[0].rawDiceCost;
-                            const costCards = hcardsSorted.filter(c => c.rawDiceCost == cost);
+                            const cost = hcardsSorted[0].currDiceCost;
+                            const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
                             cards.push(...this._randomInArr(costCards, restCnt));
                             if (cards.length == cnt) break;
                             restCnt -= cards.length;
-                            hcardsSorted = hcardsSorted.filter(c => c.rawDiceCost != cost);
+                            hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
                         }
                     } else if (mode == CMD_MODE.AllHandCards) {
                         cards.push(...clone(handCards));
@@ -3809,13 +3823,13 @@ export default class GeniusInvokationRoom {
                             if (unselectedCards.length > 0) {
                                 let curIdx = -1;
                                 while (discardCnt-- > 0) {
-                                    curIdx = unselectedCards.findIndex((c, ci) => ci > curIdx && (c.id == card || c.entityId == card || c.rawDiceCost == card));
+                                    curIdx = unselectedCards.findIndex((c, ci) => ci > curIdx && (c.id == card || c.entityId == card || c.currDiceCost == card));
                                     if (curIdx == -1) break;
                                     discards.push(clone(unselectedCards[curIdx]));
                                 }
                             }
                         } else {
-                            const hcardsSorted = clone(unselectedCards).sort((a, b) => (b.rawDiceCost - a.rawDiceCost));
+                            const hcardsSorted = clone(unselectedCards).sort((a, b) => (b.currDiceCost - a.currDiceCost));
                             if (card) { // 弃置指定牌
                                 (convertToArray(clone(card)) as Card[]).forEach(c => {
                                     if (c.entityId == -1) discardIdxs.push(c.cidx);
@@ -3832,8 +3846,8 @@ export default class GeniusInvokationRoom {
                                             const [discard] = unselectedCards.splice(didx, 1);
                                             discards.push(clone(discard));
                                         } else if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) { // 弃置花费最高/低的手牌
-                                            const cost = hcardsSorted.at(mode == CMD_MODE.HighHandCard ? 0 : -1)!.rawDiceCost;
-                                            const costCards = unselectedCards.filter(c => c.rawDiceCost == cost);
+                                            const cost = hcardsSorted.at(mode == CMD_MODE.HighHandCard ? 0 : -1)!.currDiceCost;
+                                            const costCards = unselectedCards.filter(c => c.currDiceCost == cost);
                                             const [{ entityId: ceid }] = isDiscard ? this._randomInArr(costCards) : costCards;
                                             const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
                                             discards.push(clone(discard));

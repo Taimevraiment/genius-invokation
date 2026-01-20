@@ -155,7 +155,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/5a01bcb1b784636d628ab0397e1cd3a5_6599178806120748311.png')
         .vehicle().costSame(1).handle(() => ({ heal: 2, statusPre: 115103 })),
 
-    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，{dealDmg}，然后随机[舍弃]3张原本元素骰费用最高的手牌。')
+    1151121: () => new SkillBuilder('多重瞄准').description('消耗1点「夜魂值」，{dealDmg}，然后随机[舍弃]3张[当前元素骰费用]最高的手牌。')
         .src('#')
         .vehicle().damage(1).cost(2).handle(event => {
             const { cmds, hidx } = event;
@@ -200,7 +200,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/5f3971c1d0665eb3d72f68415c3da8ae_6268200576026280012.png')
         .vehicle().damage(2).costAny(2),
 
-    3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌，然后对手抓1张牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
+    3130021: () => new SkillBuilder('钩物巧技').description('{dealDmg}，窃取1张[当前元素骰费用]最高的对方手牌，然后对手抓1张牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
         .description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。', 'v5.4.0')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {

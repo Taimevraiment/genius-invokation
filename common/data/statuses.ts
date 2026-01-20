@@ -496,7 +496,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         }),
 
     111122: () => new StatusBuilder('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
-        .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用「普通攻击」或「元素战技」后：】将原本元素骰费用最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
+        .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用「普通攻击」或「元素战技」后：】将[当前元素骰费用]最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
             const { hero, hidx, hcardsCnt, trigger, cmds } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
@@ -601,7 +601,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
         .handle(status => ({ triggers: 'skill-dmg', addDmg: 1, exec: () => status.dispose() })),
 
     111171: () => new StatusBuilder('灵风').combatStatus().icon('ski,1').useCnt(1).type(STATUS_TYPE.Usage)
-        .description('【我方角色「普通攻击」时：】附属【sts111174】。；[useCnt]')
+        .description('【我方角色「普通攻击」后：】该角色本回合下次「普通攻击」少花费2个[无色元素骰]。；[useCnt]')
         .handle((status, event) => {
             const statuses = [111174];
             if (event.talent) statuses.push(111175);
@@ -621,7 +621,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             },
         })),
 
-    111173: () => new StatusBuilder('爆裂信标').combatStatus().icon(STATUS_ICON.Buff).useCnt(1).type(STATUS_TYPE.AddDamage)
+    111173: () => new StatusBuilder('速射牵制（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1).type(STATUS_TYPE.AddDamage)
         .description('我方造成的[物理伤害]+1。；[useCnt]')
         .handle(status => ({ triggers: 'Physical-dmg', addDmgCdt: 1, exec: () => status.minusUseCnt() })),
 
@@ -633,7 +633,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             exec: () => event.isMinusDiceSkill && status.dispose(),
         })),
 
-    111175: () => new StatusBuilder('速射牵制').heroStatus().icon(STATUS_ICON.Buff)
+    111175: () => new StatusBuilder('爆裂信标').heroStatus().icon(STATUS_ICON.Buff)
         .roundCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .description('本回合所附属角色下次「普通攻击」造成的[物理伤害]+2。')
         .handle((status, event) => ({
@@ -3026,7 +3026,7 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             }
         }),
 
-    303053: () => new StatusBuilder('蒸发祝佑·狂狼（生效中）').heroStatus().icon(STATUS_ICON.AtkUp)
+    303053: () => new StatusBuilder('蒸发祝佑·狂浪（生效中）').heroStatus().icon(STATUS_ICON.AtkUp)
         .useCnt(1).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(303051)
         .description('所附属角色下次造成的伤害+1。')
         .handle(status => ({ triggers: 'skill-dmg', addDmg: 1, exec: () => status.dispose() })),
