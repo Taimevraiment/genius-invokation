@@ -335,14 +335,14 @@ export default class GeniusInvokationRoom {
     async emit(flag: string, pidx: number, options: {
         socket?: Socket, tip?: string | string[], damageVO?: DamageVO, notPreview?: boolean, notUpdate?: boolean, actionInfo?: ActionInfo,
         isQuickAction?: boolean, canAction?: boolean, isChange?: boolean, isActionInfo?: boolean, slotSelect?: number[], ohidx?: number,
-        heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], trigger?: Trigger,
+        heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], trigger?: Trigger, handcardSelect?: number[],
     } = {}, callback?: () => void) {
         if (pidx < 0) return;
         flag += `-p${pidx}`;
         try {
             const { socket, tip = '', actionInfo, damageVO = null, notPreview, isActionInfo, canAction = true,
                 slotSelect = [], heroSelect = [], statusSelect = [], summonSelect = [], supportSelect = [], notUpdate,
-                isQuickAction = this.preview.isQuickAction, isChange, ohidx, trigger,
+                isQuickAction = this.preview.isQuickAction, isChange, ohidx, trigger, handcardSelect = [],
             } = options;
             const isDelay = (statusSelect + '' + summonSelect) ? 0 : -1;
             this.players.forEach(p => {
@@ -458,7 +458,10 @@ export default class GeniusInvokationRoom {
                 diceCnt: this.players.map(p => p.dice.length),
                 handCardsInfo: {
                     count: this.players.map(p => p.handCards.length),
-                    forbiddenKnowledge: this.players.map(p => p.handCards.filter(c => c.id == 301020).length),
+                    info: this.players.map(p => ({
+                        forbiddenKnowledge: p.handCards.filter(c => c.id == 301020).length,
+                        conductive: p.handCards.filter(c => c.hasAttachment(204)).length,
+                    })),
                 },
                 damageVO,
                 tip: typeof tip == 'string' ? tip : '',
@@ -469,6 +472,7 @@ export default class GeniusInvokationRoom {
                 statusSelect,
                 summonSelect,
                 supportSelect,
+                handcardSelect,
                 pickModal: this.pickModal,
                 watchers: this.watchers.length,
                 flag: `[${this.id}]${flag}`,
@@ -2677,11 +2681,11 @@ export default class GeniusInvokationRoom {
     private async _doDamage(pidx: number, damageVO: DamageVO, options: {
         slotSelect?: number[], summonSelect?: number[], canAction?: boolean, skill?: Skill,
         atkname?: string, supportSelect?: number[], heroSelect?: number[], trigger?: Trigger,
-        isActionInfo?: boolean, actionInfo?: ActionInfo, statusSelect?: number[],
+        isActionInfo?: boolean, actionInfo?: ActionInfo, statusSelect?: number[], handcardSelect?: number[],
     } = {}) {
         const isDie = new Set<number>();
         const heroDie: number[][] = this.players.map(() => []);
-        const { slotSelect, summonSelect, supportSelect, heroSelect, canAction = true,
+        const { slotSelect, summonSelect, supportSelect, heroSelect, handcardSelect, canAction = true,
             atkname = '', skill, isActionInfo, actionInfo, statusSelect, trigger,
         } = options;
         const { atkPidx, atkHidx, dmgElements, willDamages, willHeals, elTips } = damageVO;
@@ -2800,6 +2804,7 @@ export default class GeniusInvokationRoom {
             supportSelect,
             heroSelect,
             statusSelect,
+            handcardSelect,
             canAction,
             isQuickAction: this.preview.isQuickAction && isDie.size == 0,
             actionInfo,
@@ -3392,7 +3397,13 @@ export default class GeniusInvokationRoom {
                     this.taskQueue.addTask(`doHandcardsAttachment-${card.name}(${card.id})-${attachment.name}(${attachment.id}):${trigger}`, () => {
                         attachmentres.exec?.();
                         if (trigger != 'reset') this._writeLog(`[${this.players[pidx].name}](${pidx})手牌【p${pidx}[${card.name}]】附着状态[${attachment.name}]发动`);
-                        this._doCmds(pidx, attachmentres.cmds, { trigger, atkname: attachment.name, source: attachment.id, dmgSource: 'status' });
+                        this._doCmds(pidx, attachmentres.cmds, {
+                            trigger,
+                            atkname: attachment.name,
+                            source: attachment.id,
+                            dmgSource: 'status',
+                            handcardSelect: [pidx, card.cidx],
+                        });
                     });
                 }
             }
@@ -3476,9 +3487,10 @@ export default class GeniusInvokationRoom {
         isImmediate?: boolean, isPriority?: boolean, isUnshift?: boolean, isSummon?: number, trigger?: Trigger,
         slotSelect?: number[], summonSelect?: number[], statusSelect?: number[], canAction?: boolean, atkname?: string,
         heroSelect?: number[], supportSelect?: number[], dmgSource?: DmgSource, isActionInfo?: boolean, actionInfo?: ActionInfo,
-        multiDmg?: number,
+        multiDmg?: number, handcardSelect?: number[],
+
     } = {}) {
-        const { withCard, hidxs: chidxs, source, socket, skill, supportSelect, isSummon, statusSelect,
+        const { withCard, hidxs: chidxs, source, socket, skill, supportSelect, isSummon, statusSelect, handcardSelect,
             isImmediate, isPriority, isUnshift, slotSelect, summonSelect, canAction = true, atkname,
             heroSelect, isActionInfo, actionInfo, dmgSource = 'null', trigger = '', notPreview, multiDmg,
         } = options;
@@ -3593,6 +3605,7 @@ export default class GeniusInvokationRoom {
                             statusSelect: isCdt(needSelect, statusSelect),
                             heroSelect: isCdt(needSelect, heroSelect),
                             supportSelect: isCdt(needSelect, supportSelect),
+                            handcardSelect: isCdt(handcardSelect, handcardSelect),
                             canAction: canAction && isLast,
                             skill,
                             atkname,

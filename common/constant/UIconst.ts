@@ -160,6 +160,11 @@ export const SKILL_TYPE_ABBR = {
     [SKILL_TYPE.Vehicle]: '特',
 } as const;
 
+export const HANDCARD_INFO = {
+    forbiddenKnowledge: '禁忌知识',
+    conductive: '电击',
+} as const;
+
 export const ELEMENT_ICON = {
     [ELEMENT_TYPE.Physical]: 'physical',
     [COST_TYPE.Hydro]: 'hydro',

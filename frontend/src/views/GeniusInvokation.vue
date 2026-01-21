@@ -77,13 +77,19 @@
       <strong v-if="client.opponent.id != AI_ID && client.opponent.phase == PHASE.NOT_BEGIN" style="color: #eaff8d;">
         已准备
       </strong>
-      <div v-if="client.isWin > -1 || client.isStart" class="rest-card"
-        :class="{ 'mobile-rest-card': isMobile, 'has-forbidden-knowledge': handCardsInfo.forbiddenKnowledge[client.playerIdx ^ 1] }"
-        @click.stop="showHandCardInfo()" @mouseenter="showHandCardInfo(true)">
+      <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{
+        'mobile-rest-card': isMobile,
+        'has-forbidden-knowledge': Object.values(handCardsInfo.info[client.playerIdx ^ 1]).some(v => v > 0),
+        'handcard-select': client.handcardSelect[client.playerIdx ^ 1] != -1,
+      }" @click.stop="showHandCardInfo()" @mouseenter="showHandCardInfo(true)">
         <StrokedText>{{ handCardsInfo.count[client.playerIdx ^ 1] }}</StrokedText>
       </div>
       <div v-if="client.isShowHandCardInfo" class="has-forbidden-knowledge forbidden-knowledge">
-        <StrokedText>禁忌知识：{{ handCardsInfo.forbiddenKnowledge[client.playerIdx ^ 1] }}</StrokedText>
+        <div v-for="(val, key) in handCardsInfo.info[client.playerIdx ^ 1]" :key="key">
+          <StrokedText v-if="val > 0">
+            {{ HANDCARD_INFO[key] }}：{{ val }}
+          </StrokedText>
+        </div>
       </div>
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
       <img v-if="isLookon > -1 || client.roomId < -1" src="@@/svg/lookon.svg" class="lookon" alt="旁观"
@@ -105,9 +111,9 @@
       :class="{ 'mobile-hand-card': isMobile, 'skill-will': canAction && client.currSkill.id != -1 }"
       :style="client.handcardsGroupOffset">
       <Handcard v-for="(card, idx) in client.player.handCards" :key="`${card.entityId}-myhandcard`"
-        :class="[{ selected: client.handcardsSelect == idx }, card.UI.class ?? '']" :card="card" :isMobile="isMobile"
-        :style="{ left: `${client.handcardsPos[idx]}px` }" @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)"
-        isShowAttachment @mouseleave="mouseleave(idx)">
+        :class="[{ selected: client.handcardsSelect == idx, 'handcard-select': client.handcardSelect[client.playerIdx] == idx }, card.UI.class ?? '']"
+        :card="card" :isMobile="isMobile" :style="{ left: `${client.handcardsPos[idx]}px` }"
+        @click.stop="selectCard(idx)" @mouseenter="mouseenter(idx)" isShowAttachment @mouseleave="mouseleave(idx)">
         <img :src="STATUS_ICON.DebuffCountered01" alt="" v-if="card.type == CARD_TYPE.Event && isNonEvent"
           style="position: absolute;top: 3%;width: 30%;opacity: 0.8;">
       </Handcard>
@@ -262,7 +268,7 @@ import {
   Version
 } from '@@@/constant/enum';
 import { AI_ID, PLAYER_COUNT } from '@@@/constant/gameOption';
-import { ELEMENT_COLOR, ELEMENT_ICON, SKILL_TYPE_ABBR, STATUS_ICON } from '@@@/constant/UIconst';
+import { ELEMENT_COLOR, ELEMENT_ICON, HANDCARD_INFO, SKILL_TYPE_ABBR, STATUS_ICON } from '@@@/constant/UIconst';
 import { parseHero } from '@@@/data/heros';
 import { getTalentIdByHid } from '@@@/utils/gameUtil';
 import { debounce, exportFile, isCdt, parseShareCode } from '@@@/utils/utils';
@@ -450,7 +456,8 @@ const showHistory = () => {
 };
 // 显示手牌信息 
 const showHandCardInfo = (isMouseOver: boolean = false) => {
-  client.value.isShowHandCardInfo = (!client.value.isShowHandCardInfo || isMouseOver) && !!handCardsInfo.value.forbiddenKnowledge[client.value.playerIdx ^ 1];
+  client.value.isShowHandCardInfo = (!client.value.isShowHandCardInfo || isMouseOver) &&
+    Object.values(handCardsInfo.value.info[client.value.playerIdx ^ 1]).some(v => v > 0);
 }
 // 更新diceSelect
 const updateDiceSelect = (didx: number, newVal?: boolean) => {
@@ -628,10 +635,11 @@ const devOps = (cidx = 0) => {
       } else if (stsid <= 0) {
         clearSts.push({ hidx, stsid });
       } else {
-        const handCardsLen = client.value.players[cpidx].handCards.length - 1;
+        const handCardsLen = client.value.handCardsInfo.count[cpidx];
         const mode = hidx < 0 ? 70006 : 0;
         const chidx = Math.abs(hidx);
         const hidxs = chidx > 2 && !isAttachment ? new Array(heros.length).fill(0).map((_, i) => i) : [Math.min(chidx, handCardsLen)];
+        console.log('hidxs:', handCardsLen);
         cmds.push({ cmd: 'getStatus', hidxs, status: stsid, mode });
       }
       flag.add('setStatus');
@@ -1081,7 +1089,8 @@ button {
   color: white;
 }
 
-.curr-player {
+.curr-player,
+.handcard-select {
   box-shadow: 4px 4px 6px #ffeb56, -4px 4px 6px #ffeb56, 4px -4px 6px #ffeb56,
     -4px -4px 6px #ffeb56;
 }
@@ -1362,7 +1371,7 @@ button {
 
 .forbidden-knowledge {
   position: absolute;
-  bottom: -2rem;
+  top: 120px;
   color: white;
   border-radius: 5px;
   padding: 5%;

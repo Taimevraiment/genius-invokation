@@ -266,7 +266,10 @@ type ServerData = Readonly<{
     diceCnt: number[],
     handCardsInfo: {
         count: number[],
-        forbiddenKnowledge: number[],
+        info: {
+            forbiddenKnowledge: number,
+            conductive: number,
+        }[]
     }
     isWin: number,
     tip: string,
@@ -276,6 +279,7 @@ type ServerData = Readonly<{
     statusSelect: number[],
     summonSelect: number[],
     supportSelect: number[],
+    handcardSelect: number[],
     pickModal: PickCard,
     watchers: number,
     recordData?: RecordData,

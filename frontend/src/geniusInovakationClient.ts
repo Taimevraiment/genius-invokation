@@ -71,10 +71,13 @@ export default class GeniusInvokationClient {
     log: string[] = []; // 当局游戏日志
     pileCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 牌库数量
     diceCnt: number[] = new Array(PLAYER_COUNT).fill(0); // 骰子数量
-    handCardsInfo: { count: number[], forbiddenKnowledge: number[] } = {
-        count: new Array(PLAYER_COUNT).fill(0),
-        forbiddenKnowledge: new Array(PLAYER_COUNT).fill(0),
-    }; // 手牌数量
+    handCardsInfo: ServerData['handCardsInfo'] = {
+        count: new Array(PLAYER_COUNT).fill(0), // 手牌数量
+        info: new Array(PLAYER_COUNT).fill(0).map(() => ({
+            forbiddenKnowledge: 0, // 禁忌知识数量
+            conductive: 0, // 电击数量
+        })),
+    };
     isMobile: boolean; // 是否为手机
     diceSelect: boolean[]; // 骰子是否选中
     initcardsPos: string[] = []; // 换牌手牌位置
@@ -95,6 +98,7 @@ export default class GeniusInvokationClient {
     statusSelect: boolean[][][][] = Array.from({ length: PLAYER_COUNT }, () => Array.from({ length: 2 }, () => [])); // 状态是否发光
     targetSelect: boolean[][] = Array.from({ length: PLAYER_COUNT }, () => []); // 目标是否选中
     slotSelect: boolean[][][] = Array.from({ length: PLAYER_COUNT }, () => []); // 装备是否发光
+    handcardSelect: number[] = Array.from({ length: PLAYER_COUNT }, () => -1); // 手牌是否发光
     pickModal: PickCard = { cards: [], selectIdx: -1, cardType: 'getCard' }; // 挑选卡牌
     watchers: number = 0; // 观战人数
     recordData: RecordData = { seed: '', name: '', pidx: -1, username: [], shareCode: [], version: 'v3.3.0', actionLog: [] }; // 行动日志
@@ -241,6 +245,7 @@ export default class GeniusInvokationClient {
             this._resetSummonCanSelect();
             this._resetSupportSelect();
             this._resetSupportCanSelect();
+            this._resetHandcardSelect();
             if (onlySupportAndSummon) return;
         }
         if (this.currCard.canSelectSupport != -1 && this.modalInfo.type != null) {
@@ -512,7 +517,7 @@ export default class GeniusInvokationClient {
     getServerInfo(data: Readonly<ServerData>) {
         const { players, previews, phase, isStart, round, currCountdown, pileCnt, diceCnt, handCardsInfo, damageVO,
             tip, actionInfo, slotSelect, heroSelect, statusSelect, summonSelect, supportSelect, log, isWin, pickModal,
-            watchers, recordData, flag } = data;
+            watchers, recordData, handcardSelect, flag } = data;
         if (this.isDev) console.info(flag);
         const hasDmg = damageVO && (!!damageVO?.willDamages?.some(([d, p]) => d >= 0 || p > 0) || !!damageVO?.willHeals?.some(h => h != -1));
         this.isWin = isWin;
@@ -619,6 +624,11 @@ export default class GeniusInvokationClient {
                                 this.players[p].supports.splice(s, 1);
                             }, 800);
                         }
+                    }
+                    if (handcardSelect.length > 0) {
+                        const [p, cidx] = handcardSelect;
+                        this.handcardSelect[p] = cidx;
+                        setTimeout(() => this._resetHandcardSelect(), 500);
                     }
                 } catch (e) {
                     this.initSelect(players);
@@ -1213,6 +1223,12 @@ export default class GeniusInvokationClient {
      */
     private _resetSlotSelect() {
         this.slotSelect.forEach(p => p.forEach(h => h.fill(false)));
+    }
+    /**
+     * 重置手牌发光
+     */
+    private _resetHandcardSelect() {
+        this.handcardSelect = Array.from({ length: PLAYER_COUNT }, () => -1);
     }
     /**
      * 重置附着预览

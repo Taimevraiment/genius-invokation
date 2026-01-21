@@ -2708,7 +2708,7 @@ const allCards: Record<number, () => CardBuilder> = {
         }),
 
     211171: () => new CardBuilder(558).name('依随的策援').since('v6.4.0').talent(1).costCryo(3)
-        .description('{action}；装备有此卡牌的【hro】在场时，【sts111171】触发后会额外使该角色本回合下次「普通攻击」造成的物理伤害+2。')
+        .description('{action}；装备有此卡牌的【hro】在场时，【sts111171】触发后会额外使该角色本回合下次「普通攻击」造成的[物理伤害]+2。')
         .src('#'),
 
     212011: () => new CardBuilder(69).name('光辉的季节').offline('v1').talent(1).costHydro(3).costHydro(4, 'v4.2.0').perCnt(1)
