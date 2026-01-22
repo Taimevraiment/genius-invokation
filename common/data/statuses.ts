@@ -614,8 +614,9 @@ const allStatuses: Record<number, (...args: any) => StatusBuilder> = {
             triggers: ['skilltype1', 'after-skilltype1'],
             minusDiceSkill: { skilltype1: [0, 0, 1] },
             exec: () => {
-                const { trigger, cmds } = event;
+                const { trigger, cmds, isMinusDiceSkill } = event;
                 if (trigger != 'after-skilltype1') return;
+                if (!isMinusDiceSkill) return true;
                 cmds.heal(1);
                 status.minusUseCnt();
             },

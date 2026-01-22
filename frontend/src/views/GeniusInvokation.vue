@@ -49,7 +49,6 @@
 
     <div :class="['player-display', {
       'curr-player': client.player?.status == PLAYER_STATUS.PLAYING && client.phase <= PHASE.ACTION && client.phase >= PHASE.CHOOSE_HERO && client.isWin == -1,
-      'mobile-player-display': isMobile,
     }]" @click.stop="devOps()">
       <span v-if="isLookon > -1">旁观中......</span>
       <p>{{ client.recordData.username[client.playerIdx] ?? client.player?.name }}</p>
@@ -62,7 +61,6 @@
 
     <div v-if="client.opponent" :class="['player-display-oppo', {
       'curr-player': client.opponent?.status == PLAYER_STATUS.PLAYING && client.phase <= PHASE.ACTION && client.phase >= PHASE.CHOOSE_HERO && client.isWin == -1,
-      'mobile-player-display': isMobile,
     }]" @click.stop="devOps(1)">
       <p v-if="client.opponent?.name">{{ client.recordData.username[client.playerIdx ^ 1] ?? client.opponent?.name }}
       </p>
@@ -79,16 +77,14 @@
       </strong>
       <div v-if="client.isWin > -1 || client.isStart" class="rest-card" :class="{
         'mobile-rest-card': isMobile,
-        'has-forbidden-knowledge': Object.values(handCardsInfo.info[client.playerIdx ^ 1]).some(v => v > 0),
+        'has-handcard-info': Object.values(handCardsInfo.info[client.playerIdx ^ 1]).some(v => v > 0),
         'handcard-select': client.handcardSelect[client.playerIdx ^ 1] != -1,
       }" @click.stop="showHandCardInfo()" @mouseenter="showHandCardInfo(true)">
         <StrokedText>{{ handCardsInfo.count[client.playerIdx ^ 1] }}</StrokedText>
       </div>
-      <div v-if="client.isShowHandCardInfo" class="has-forbidden-knowledge forbidden-knowledge">
+      <div v-if="client.isShowHandCardInfo" class="has-handcard-info handcard-info">
         <div v-for="(val, key) in handCardsInfo.info[client.playerIdx ^ 1]" :key="key">
-          <StrokedText v-if="val > 0">
-            {{ HANDCARD_INFO[key] }}：{{ val }}
-          </StrokedText>
+          <StrokedText v-if="val > 0">{{ HANDCARD_INFO[key] }}：{{ val }}</StrokedText>
         </div>
       </div>
       <img v-if="client.opponent?.isOffline" src="@@/svg/offline.svg" class="offline" alt="断线..." />
@@ -1052,8 +1048,8 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100px;
-  height: 120px;
+  width: 10vw;
+  height: 18vh;
   border: 2px solid black;
   border-radius: 5px;
 }
@@ -1091,6 +1087,7 @@ button {
 
 .curr-player,
 .handcard-select {
+  transition: 0.4s box-shadow;
   box-shadow: 4px 4px 6px #ffeb56, -4px 4px 6px #ffeb56, 4px -4px 6px #ffeb56,
     -4px -4px 6px #ffeb56;
 }
@@ -1346,11 +1343,6 @@ button {
   font-size: 12px;
 }
 
-.mobile-player-display {
-  width: 70px;
-  height: 70px;
-}
-
 .mobile-hand-card {
   bottom: 70px;
   font-size: medium;
@@ -1363,15 +1355,15 @@ button {
   left: 3px;
 }
 
-.has-forbidden-knowledge {
+.has-handcard-info {
   background-image: linear-gradient(45deg, #d1acff, #774497, #d1acff, #774497);
   background-size: 500% 100%;
   animation: gradient-move 2s infinite linear;
 }
 
-.forbidden-knowledge {
+.handcard-info {
   position: absolute;
-  top: 120px;
+  top: 20vh;
   color: white;
   border-radius: 5px;
   padding: 5%;

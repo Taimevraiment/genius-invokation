@@ -174,7 +174,7 @@ const elTransfiguration = (shareId: number, el1: PureElementType, el2: PureEleme
         .handle((card, event) => {
             const { heros, execmds } = event;
             if (!heros.hasOnlyElements(el1, el2)) return;
-            execmds.discard({ card, notTrigger: true })
+            execmds.discard({ card, mode: CMD_MODE.IsPublic, notTrigger: true })
                 .changeDice({ cnt: 2, element: el1 })
                 .changeDice({ cnt: 2, element: el2 });
             return { triggers: 'action-start' }
@@ -3106,7 +3106,12 @@ const allCards: Record<number, () => CardBuilder> = {
     214171: () => new CardBuilder(559).name('循环整流引擎').since('v6.4.0').talent().costElectro(1)
         .description('{quick。}；〔*[card]赋予敌方随机2张手牌【sts204】。〕；【我方触发[月感电]反应后：】赋予敌方随机1张手牌【sts201】。')
         .src('#')
-        .handle((_, { cmds }) => (cmds.getStatus(201, { isOppo: true }), { triggers: ['LunarElectroCharged', 'other-LunarElectroCharged'] })),
+        .handle((_, event) => {
+            const { cmds, execmds } = event;
+            cmds.getStatus(204, { cnt: 2, isOppo: true });
+            execmds.getStatus(201, { isOppo: true });
+            return { triggers: ['LunarElectroCharged', 'other-LunarElectroCharged'] }
+        }),
 
     215011: () => new CardBuilder(96).name('混元熵增论').offline('v1').talent(2).costAnemo(3).energy(2).energy(3, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】生成的【smn115011】已转换成另一种元素后：我方造成的此类元素伤害+1。')
