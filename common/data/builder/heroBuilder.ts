@@ -119,7 +119,7 @@ export class GIHero extends Entity {
     }
 }
 
-export class HeroBuilder extends BaseCostBuilder {
+class HeroBuilder extends BaseCostBuilder {
     private _tags: HeroTag[] = [];
     private _maxHp: VersionMap<number> = this._createVersionMap();
     private _maxEnergy: number = 0;
@@ -277,9 +277,9 @@ export class HeroBuilder extends BaseCostBuilder {
         this._weaponType = WEAPON_TYPE.Sword;
         return this;
     }
-    normalSkill(normalSkillBuilder: NormalSkillBuilder | string) {
+    normalSkill(normalSkillBuilder: string | ((nskill: (name: string) => NormalSkillBuilder) => NormalSkillBuilder)) {
         if (typeof normalSkillBuilder == 'string') this._normalSkill = new NormalSkillBuilder(normalSkillBuilder);
-        else this._normalSkill = normalSkillBuilder;
+        else this._normalSkill = normalSkillBuilder(name => new NormalSkillBuilder(name));
         return this;
     }
     skills(...skills: SkillBuilder[]) {
@@ -317,3 +317,5 @@ export class HeroBuilder extends BaseCostBuilder {
             this._maxEnergy, this.versionChanges, this._uiMaxEnergy, this._updateEnergyIcon);
     }
 }
+
+export const hero = (shareId?: number) => new HeroBuilder(shareId);

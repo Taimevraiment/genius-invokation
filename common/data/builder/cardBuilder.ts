@@ -332,7 +332,7 @@ export class GICard extends Entity {
     }
 }
 
-export class CardBuilder extends BaseCostBuilder {
+class CardBuilder extends BaseCostBuilder {
     private _type: CardType = CARD_TYPE.Event;
     private _subtype: CardSubtype[] = [];
     private _tag: CardTag[] = [];
@@ -576,3 +576,5 @@ export class CardBuilder extends BaseCostBuilder {
             });
     }
 }
+
+export const card = (shareId?: number) => new CardBuilder(shareId);

@@ -211,7 +211,7 @@ export class GISummon extends Entity {
     }
 }
 
-export class SummonBuilder extends BaseBuilder {
+class SummonBuilder extends BaseBuilder {
     private _id: number = -1;
     private _name: string;
     private _src: string = '';
@@ -397,3 +397,5 @@ export class SummonBuilder extends BaseBuilder {
         )
     }
 }
+
+export const summon = (name: string) => new SummonBuilder(name)

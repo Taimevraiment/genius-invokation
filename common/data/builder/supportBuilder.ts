@@ -83,7 +83,7 @@ export class GISupport extends Entity {
     }
 }
 
-export class SupportBuilder extends BaseBuilder {
+class SupportBuilder extends BaseBuilder {
     private _card: Card | undefined;
     private _useCnt: VersionMap<number> = new VersionMap();
     private _perCnt: VersionMap<number> = new VersionMap();
@@ -136,3 +136,4 @@ export class SupportBuilder extends BaseBuilder {
     }
 }
 
+export const support = () => new SupportBuilder();

@@ -240,7 +240,7 @@ export class GIStatus extends Entity {
     }
 }
 
-export class StatusBuilder extends BaseBuilder {
+class StatusBuilder extends BaseBuilder {
     private _id: number = -1;
     private _name: VersionMap<string> = this._createVersionMap();
     private _group: StatusGroup = STATUS_GROUP.heroStatus;
@@ -455,3 +455,5 @@ export class StatusBuilder extends BaseBuilder {
     }
 
 }
+
+export const status = (name: string) => new StatusBuilder(name);

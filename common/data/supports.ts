@@ -3,10 +3,10 @@ import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCos
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
-import { SupportBuilder } from './builder/supportBuilder.js';
+import { support } from './builder/supportBuilder.js';
 
 const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Trigger, code: number) => {
-    return new SupportBuilder().permanent().handle((_, event) => ({
+    return support().permanent().handle((_, event) => ({
         triggers: ['phase-dice', reactionTrg],
         element: [el1, el2],
         cnt: [2, 2],
@@ -18,10 +18,10 @@ const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Tr
     }));
 }
 
-const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
+const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>> = {
 
     // 全频谱多重任务厨艺机关
-    111159: () => new SupportBuilder().collection(2).handle(support => ({
+    111159: () => support().collection(2).handle(support => ({
         triggers: ['elReaction-Cryo', 'elReaction-Cryo-oppo'],
         isOrTrigger: true,
         exec: cmds => {
@@ -30,7 +30,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 斗争之火
-    300006: (cnt: number = 0) => new SupportBuilder().collection(cnt).handle((support, event) => {
+    300006: (cnt: number = 0) => support().collection(cnt).handle((support, event) => {
         const { getdmg = [], supports = [], esupports = [], trigger } = event;
         const isTriggered = support.useCnt > Math.max(...[...supports, ...esupports].filter(s => s.id == support.id && s.entityId != support.entityId).map(s => s.useCnt));
         if (trigger == 'phase-start' && !isTriggered) return;
@@ -47,7 +47,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 超导祝佑·极寒
-    303041: () => new SupportBuilder().collection(2).handle((support, event) => {
+    303041: () => support().collection(2).handle((support, event) => {
         const triggers: Trigger[] = ['phase-dice', 'phase-start'];
         if (support.useCnt > 0) triggers.push('Physical-dmg', 'Cryo-dmg');
         return {
@@ -63,7 +63,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 超导祝佑·电冲
-    303042: () => new SupportBuilder().collection(3).handle((support, event) => {
+    303042: () => support().collection(3).handle((support, event) => {
         const triggers: Trigger[] = ['phase-start'];
         if (support.useCnt > 0) triggers.push('Superconduct');
         return {
@@ -76,7 +76,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 蒸发祝佑·狂浪
-    303051: () => new SupportBuilder().collection(2).handle((support, event) => {
+    303051: () => support().collection(2).handle((support, event) => {
         const triggers: Trigger[] = ['phase-start'];
         if (support.useCnt > 0) triggers.push('Vaporize');
         return {
@@ -91,7 +91,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 蒸发祝佑·炽燃
-    303052: () => new SupportBuilder().collection(2).handle((support, event) => {
+    303052: () => support().collection(2).handle((support, event) => {
         const { hero, trigger, isMinusDiceSkill } = event;
         const triggers: Trigger[] = ['phase-start'];
         const isMinus = support.useCnt > 0 && hero.element == ELEMENT_TYPE.Pyro;
@@ -106,19 +106,19 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 璃月港口
-    321001: () => new SupportBuilder().round(2).handle(support => ({
+    321001: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
         exec: cmds => (cmds.getCard(2), { isDestroy: support.minusUseCnt() == 0 })
     })),
     // 骑士团图书馆
-    321002: () => new SupportBuilder().permanent().handle((_, event) => ({
+    321002: () => support().permanent().handle((_, event) => ({
         triggers: ['phase-dice', 'enter'],
         isNotAddTask: true,
         addRollCnt: 1,
         exec: cmds => { event.trigger == 'enter' && cmds.reroll(1) }
     })),
     // 群玉阁
-    321003: () => new SupportBuilder().permanent().handle((_, event, ver) => {
+    321003: () => support().permanent().handle((_, event, ver) => {
         const { hcards = [], trigger } = event;
         const triggers: Trigger[] = ['phase-dice'];
         if ((ver.gte('v4.5.0') || ver.isOffline) && hcards.length <= 3) triggers.push('phase-start');
@@ -134,7 +134,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 晨曦酒庄
-    321004: () => new SupportBuilder().permanent().perCnt(2).perCnt(1, 'v4.8.0')
+    321004: () => support().permanent().perCnt(2).perCnt(1, 'v4.8.0')
         .handle((support, event) => {
             if (support.perCnt <= 0 || event.switchHeroDiceCnt == 0) return;
             return {
@@ -145,7 +145,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }),
     // 望舒客栈
-    321005: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
+    321005: () => support().round(2).heal(2).handle((support, event) => {
         const hidxs = event.heros.getMaxHurtHidxs({ isBack: true });
         if (hidxs.length == 0) return;
         return {
@@ -154,7 +154,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 西风大教堂
-    321006: () => new SupportBuilder().round(2).heal(2).handle((support, event) => {
+    321006: () => support().round(2).heal(2).handle((support, event) => {
         if (!event.hero.isHurt) return;
         return {
             triggers: 'phase-end',
@@ -162,7 +162,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 天守阁
-    321007: () => new SupportBuilder().permanent().handle((_, event) => {
+    321007: () => support().permanent().handle((_, event) => {
         const { dices } = event;
         if (new Set(dices.filter(v => v != DICE_COST_TYPE.Omni)).size + dices.filter(v => v == DICE_COST_TYPE.Omni).length < 5) return;
         return {
@@ -171,7 +171,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 鸣神大社
-    321008: () => new SupportBuilder().collection(2).round(3, 'v6.0.0')
+    321008: () => support().collection(2).round(3, 'v6.0.0')
         .handle((support, event, ver) => {
             const { dices, trigger } = event;
             const triggers: Trigger[] = ['phase-start'];
@@ -192,7 +192,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
             }
         }),
     // 珊瑚宫
-    321009: () => new SupportBuilder().round(2).handle((support, event) => {
+    321009: () => support().round(2).handle((support, event) => {
         const { heros } = event;
         if (!heros.hasHurt) return;
         return {
@@ -201,7 +201,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 须弥城
-    321010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    321010: () => support().permanent().perCnt(1).handle((support, event) => {
         const { dices, hcards, isMinusDiceTalent, isMinusDiceSkill } = event;
         if (dices.length > hcards.length || support.perCnt <= 0) return;
         const triggers: Trigger[] = [];
@@ -216,7 +216,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 桓那兰那
-    321011: () => new SupportBuilder().collection().handle((support, event) => {
+    321011: () => support().collection().handle((support, event) => {
         const { dices, trigger } = event;
         if (trigger == 'phase-start' && support.perCnt == 0 || trigger == 'phase-end' && dices.length == 0) return;
         return {
@@ -238,7 +238,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 镇守之森
-    321012: () => new SupportBuilder().collection(4).collection(3, 'v6.0.0').handle((support, event, ver) => {
+    321012: () => support().collection(4).collection(3, 'v6.0.0').handle((support, event, ver) => {
         const { isFirst, isMinusDiceSkill, isChargedAtk } = event;
         if (ver.lt('v6.0.0')) {
             return {
@@ -254,7 +254,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 黄金屋
-    321013: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
+    321013: () => support().collection(2).perCnt(1).handle((support, event) => {
         const { hcard, isMinusDiceWeapon, isMinusDiceRelic } = event;
         if (support.perCnt <= 0 || !hcard || hcard.currDiceCost < 3 || (!isMinusDiceWeapon && !isMinusDiceRelic)) return;
         return {
@@ -268,7 +268,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 化城郭
-    321014: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
+    321014: () => support().collection(3).perCnt(1).handle((support, event) => {
         if (support.perCnt == 0 || event.dices.length > 0) return;
         return {
             triggers: 'action-start',
@@ -280,7 +280,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 风龙废墟
-    321015: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
+    321015: () => support().collection(3).perCnt(1).handle((support, event) => {
         const { hero, trigger, isMinusDiceTalent, isMinusDiceSkill } = event;
         if (trigger == 'enter') {
             return {
@@ -309,12 +309,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 湖中垂柳
-    321016: () => new SupportBuilder().round(2).handle((support, event) => {
+    321016: () => support().round(2).handle((support, event) => {
         if (event.hcards.length > 2) return;
         return { triggers: 'phase-end', exec: cmds => (cmds.getCard(2), { isDestroy: support.minusUseCnt() == 0 }) }
     }),
     // 欧庇克莱歌剧院
-    321017: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
+    321017: () => support().collection(3).perCnt(1).handle((support, event) => {
         const { heros, eheros } = event;
         const slotCost = heros.flatMap(h => h.equipments).reduce((a, b) => a + b.rawDiceCost, 0);
         const eslotCost = eheros.flatMap(h => h.equipments).reduce((a, b) => a + b.rawDiceCost, 0);
@@ -329,7 +329,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 梅洛彼得堡
-    321018: () => new SupportBuilder().collection().handle((support, event) => {
+    321018: () => support().collection().handle((support, event) => {
         const { hidx, getdmg, heal, trigger } = event;
         const triggers: Trigger[] = [];
         if (support.useCnt < 4) {
@@ -348,7 +348,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 清籁岛
-    321019: () => new SupportBuilder().round(2).handle((support, event) => {
+    321019: () => support().round(2).handle((support, event) => {
         const { heal, trigger } = event;
         const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl >= 0).map(v => v.hli);
         return {
@@ -360,7 +360,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 赤王陵
-    321020: () => new SupportBuilder().collection().handle(support => ({
+    321020: () => support().collection().handle(support => ({
         triggers: 'drawcard-oppo',
         exec: cmds => {
             if (support.addUseCnt() < 4) return;
@@ -369,7 +369,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         },
     })),
     // 中央实验室遗址
-    321021: () => new SupportBuilder().collection().handle(support => ({
+    321021: () => support().collection().handle(support => ({
         triggers: ['discard', 'reconcile'],
         exec: cmds => {
             const ocnt = support.useCnt;
@@ -381,7 +381,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         },
     })),
     // 圣火竞技场
-    321022: () => new SupportBuilder().collection().handle(support => ({
+    321022: () => support().collection().handle(support => ({
         triggers: ['after-skill', 'after-skilltype5'],
         exec: cmds => {
             support.addUseCnt();
@@ -392,7 +392,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 特佩利舞台
-    321023: () => new SupportBuilder().collection().handle((support, event) => {
+    321023: () => support().collection().handle((support, event) => {
         const { trigger, playerInfo: { initCardIds: acids }, eplayerInfo: { initCardIds: ecids } } = event;
         const hcard = event.hcard ?? support.card;
         const triggers: Trigger[] = [];
@@ -411,7 +411,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 「悬木人」
-    321024: () => new SupportBuilder().round(1).handle((support, event) => {
+    321024: () => support().round(1).handle((support, event) => {
         const { hcard, playerInfo: { initCardIds } } = event;
         if (!hcard || initCardIds.includes(hcard.id) || hcard.currDiceCost < support.useCnt) return;
         return {
@@ -423,7 +423,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 「流泉之众」
-    321025: () => new SupportBuilder().round(3).handle((support, event) => ({
+    321025: () => support().round(3).handle((support, event) => ({
         triggers: 'summon-generate',
         exec: cmds => {
             cmds.addUseSummon(event.sourceSummon!.entityId);
@@ -431,7 +431,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 「花羽会」
-    321026: () => new SupportBuilder().collection().handle((support, event) => ({
+    321026: () => support().collection().handle((support, event) => ({
         triggers: 'discard',
         exec: cmds => {
             const ncnt = support.useCnt + 1;
@@ -441,7 +441,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 「烟谜主」
-    321027: () => new SupportBuilder().round(4).handle((support, event) => ({
+    321027: () => support().round(4).handle((support, event) => ({
         triggers: support.useCnt > 0 ? 'pick' : 'phase-start',
         exec: cmds => {
             const { trigger, getCardIds } = event;
@@ -454,7 +454,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 「沃陆之邦」
-    321028: () => new SupportBuilder().permanent().handle((_, event) => {
+    321028: () => support().permanent().handle((_, event) => {
         const { trigger, hidx, heros } = event;
         const ocnt = heros[hidx].heroStatus.getUseCnt(301025);
         if (ocnt == 5) return;
@@ -468,7 +468,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 墨色酒馆
-    321029: () => new SupportBuilder().collection(3).handle((support, event) => {
+    321029: () => support().collection(3).handle((support, event) => {
         const { trigger, summons } = event;
         if (trigger == 'enter') return { triggers: 'enter', exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res }
         if (trigger != 'end-phase') return;
@@ -482,7 +482,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 星轨王城
-    321030: () => new SupportBuilder().permanent().handle((support, event) => {
+    321030: () => support().permanent().handle((support, event) => {
         const { trigger, combatStatus } = event;
         const triggers: Trigger[] = ['enter', 'phase-end'];
         if (!combatStatus.has(301032)) triggers.push('skilltype2');
@@ -498,12 +498,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 冒险家协会
-    321031: () => new SupportBuilder().round(3).handle(support => ({
+    321031: () => support().round(3).handle(support => ({
         triggers: 'phase-end',
         exec: cmds => (cmds.adventure(), { isDestroy: support.minusUseCnt() == 0 }),
     })),
     // 沉玉谷
-    321032: () => new SupportBuilder().collection(1).handle((support, event, ver) => ({
+    321032: () => support().collection(1).handle((support, event, ver) => ({
         triggers: 'adventure',
         exec: cmds => {
             support.addUseCnt();
@@ -520,7 +520,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 自体自身之塔
-    321033: () => new SupportBuilder().collection(1).handle((support, event) => ({
+    321033: () => support().collection(1).handle((support, event) => ({
         triggers: ['adventure', 'enter'],
         exec: cmds => {
             const { trigger, heros } = event;
@@ -535,7 +535,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 天蛇船
-    321034: () => new SupportBuilder().collection(1).handle(support => ({
+    321034: () => support().collection(1).handle(support => ({
         triggers: 'adventure',
         exec: cmds => {
             support.addUseCnt();
@@ -549,7 +549,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 银月之庭
-    321035: () => new SupportBuilder().collection().handle((support, event) => {
+    321035: () => support().collection().handle((support, event) => {
         if (![202, 206].includes(event.source)) return;
         return {
             triggers: 'get-status',
@@ -561,7 +561,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 汐印石
-    321036: () => new SupportBuilder().round(2).handle(support => ({
+    321036: () => support().round(2).handle(support => ({
         triggers: 'phase-start',
         exec: cmds => {
             cmds.getStatus([201, 207], { isOppo: true });
@@ -569,7 +569,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 霜月之坊
-    321037: () => new SupportBuilder().round(2).handle((support, event) => ({
+    321037: () => support().round(2).handle((support, event) => ({
         triggers: ['enter', 'phase-end'],
         exec: cmds => {
             const { trigger, heros } = event;
@@ -579,7 +579,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 那夏镇
-    321038: () => new SupportBuilder().round(2).handle(support => ({
+    321038: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
         exec: cmds => {
             cmds.getStatus(206, { cnt: 2, cardFilter: c => c.currDiceCost >= 2 });
@@ -590,7 +590,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 月矩力试验设计局
-    321039: () => new SupportBuilder().round(2).handle((support, event) => ({
+    321039: () => support().round(2).handle((support, event) => ({
         triggers: ['phase-end', 'destroy'],
         exec: cmds => {
             if (event.trigger == 'destroy') return cmds.getCard(2, { cardAttachment: 206, isFromPile: true }).getDice(1, { mode: CMD_MODE.Random }).res;
@@ -599,12 +599,12 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 派蒙
-    322001: () => new SupportBuilder().round(2).handle(support => ({
+    322001: () => support().round(2).handle(support => ({
         triggers: 'phase-start',
         exec: cmds => (cmds.getDice(2, { element: DICE_COST_TYPE.Omni }), { isDestroy: support.minusUseCnt() == 0 })
     })),
     // 凯瑟琳
-    322002: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322002: () => support().permanent().perCnt(1).handle((support, event) => {
         if (event.isQuickAction || support.perCnt <= 0) return;
         return {
             triggers: 'minus-switch',
@@ -614,7 +614,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 蒂玛乌斯
-    322003: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
+    322003: () => support().collection(2).perCnt(1).handle((support, event, ver) => {
         const { hcard, trigger, isMinusDiceCard, minusDiceCard: mdc, playerInfo: { relicCnt } } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && relicCnt >= 6) triggers.push('enter');
@@ -641,7 +641,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 瓦格纳
-    322004: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
+    322004: () => support().collection(2).perCnt(1).handle((support, event, ver) => {
         const { hcard, trigger, isMinusDiceCard, minusDiceCard: mdc, playerInfo: { weaponTypeCnt } } = event;
         const triggers: Trigger[] = ['phase-end', 'card'];
         if (ver.gte('v4.3.0') && weaponTypeCnt >= 3) triggers.push('enter');
@@ -668,7 +668,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 卯师傅
-    322005: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
+    322005: () => support().permanent(1).perCnt(1).handle((support, event, ver) => {
         const { hcard, pile } = event;
         if (!hcard?.hasSubtype(CARD_SUBTYPE.Food)) return;
         const isGetDice = support.perCnt > 0;
@@ -689,7 +689,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 阿圆
-    322006: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322006: () => support().permanent().perCnt(1).handle((support, event) => {
         const { hcard, isMinusDiceCard } = event;
         if (support.perCnt <= 0 || !hcard?.hasSubtype(CARD_SUBTYPE.Place) || !isMinusDiceCard) return;
         return {
@@ -700,7 +700,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 提米
-    322007: () => new SupportBuilder().collection().handle(support => ({
+    322007: () => support().collection().handle(support => ({
         triggers: ['phase-start', 'enter'],
         exec: cmds => {
             if (support.addUseCnt() < 3) return;
@@ -709,7 +709,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 立本
-    322008: () => new SupportBuilder().collection().handle((support, event) => {
+    322008: () => support().collection().handle((support, event) => {
         const { dices, trigger } = event;
         const triggers: Trigger[] = ['phase-end'];
         if (support.useCnt >= 3) triggers.push('phase-start');
@@ -738,7 +738,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 常九爷
-    322009: () => new SupportBuilder().collection().handle(support => ({
+    322009: () => support().collection().handle(support => ({
         triggers: [
             'Physical-dmg', 'Physical-getdmg', 'Physical-getdmg-oppo',
             'Pierce-dmg', 'Pierce-getdmg', 'Pierce-getdmg-oppo',
@@ -753,7 +753,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 艾琳
-    322010: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322010: () => support().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0) return;
         const { hero, isMinusDiceSkill, skill } = event;
         return {
@@ -764,7 +764,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 田铁嘴
-    322011: () => new SupportBuilder().round(2).handle((support, event) => {
+    322011: () => support().round(2).handle((support, event) => {
         const hidxs = event.heros.allHidxs({ cdt: h => !h.isFullEnergy, limit: 1 });
         if (hidxs.length == 0) return;
         return {
@@ -773,7 +773,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 刘苏
-    322012: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
+    322012: () => support().collection(2).perCnt(1).handle((support, event) => {
         const { heros, hidx } = event;
         const isInvalid = () => support.perCnt <= 0 || (heros[hidx]?.energy ?? 1) != 0;
         if (isInvalid()) return;
@@ -788,7 +788,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 花散里
-    322013: () => new SupportBuilder().collection().handle((support, event) => {
+    322013: () => support().collection().handle((support, event) => {
         const { trigger, isMinusDiceWeapon, isMinusDiceRelic } = event;
         const isMinus = support.useCnt >= 3 && (isMinusDiceWeapon || isMinusDiceRelic);
         const triggers: Trigger[] = ['summon-destroy'];
@@ -804,13 +804,13 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 鲸井小弟
-    322014: () => new SupportBuilder().permanent().handle(() => ({
+    322014: () => support().permanent().handle(() => ({
         triggers: 'phase-start',
         isExchange: true,
         exec: cmds => cmds.getDice(1, { element: DICE_COST_TYPE.Omni }).res,
     })),
     // 旭东
-    322015: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322015: () => support().permanent().perCnt(1).handle((support, event) => {
         const { hcard, isMinusDiceCard } = event;
         if (support.perCnt <= 0 || !hcard || !hcard.hasSubtype(CARD_SUBTYPE.Food) || !isMinusDiceCard) return;
         return {
@@ -821,7 +821,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 迪娜泽黛
-    322016: () => new SupportBuilder().permanent(1).perCnt(1).handle((support, event, ver) => {
+    322016: () => support().permanent(1).perCnt(1).handle((support, event, ver) => {
         const { hcard, isMinusDiceCard, pile } = event;
         if (!hcard || !hcard.hasSubtype(CARD_SUBTYPE.Ally)) return;
         const isMinus = isMinusDiceCard && support.perCnt > 0;
@@ -841,7 +841,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 拉娜
-    322017: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322017: () => support().permanent().perCnt(1).handle((support, event) => {
         if (support.perCnt <= 0 || event.heros.getBackHidxs().length == 0) return;
         return {
             triggers: 'after-skilltype2',
@@ -852,7 +852,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 老章
-    322018: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322018: () => support().permanent().perCnt(1).handle((support, event) => {
         const { heros, isMinusDiceWeapon } = event;
         if (support.perCnt <= 0 || !isMinusDiceWeapon) return;
         return {
@@ -863,7 +863,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 塞塔蕾
-    322019: () => new SupportBuilder().collection(3).handle((support, event) => {
+    322019: () => support().collection(3).handle((support, event) => {
         if (event.hcards.length > 0) return;
         return {
             triggers: ['action-after', 'action-after-oppo'],
@@ -871,7 +871,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 弥生七月
-    322020: () => new SupportBuilder().permanent().perCnt(1).handle((support, event, ver) => {
+    322020: () => support().permanent().perCnt(1).handle((support, event, ver) => {
         if (support.perCnt <= 0) return;
         const { heros, isMinusDiceRelic } = event;
         if (!isMinusDiceRelic) return;
@@ -885,7 +885,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 玛梅赫
-    322021: () => new SupportBuilder().collection(3).perCnt(1).handle((support, event) => {
+    322021: () => support().collection(3).perCnt(1).handle((support, event) => {
         const { hcard } = event;
         const subtype = [CARD_SUBTYPE.Food, CARD_SUBTYPE.Ally, CARD_SUBTYPE.Place, CARD_SUBTYPE.Item];
         if (support.perCnt <= 0 || hcard?.id == support.id || !hcard?.hasSubtype(...subtype)) return;
@@ -899,7 +899,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 婕德
-    322022: () => new SupportBuilder().collection().handle((support, event, ver) => {
+    322022: () => support().collection().handle((support, event, ver) => {
         const { trigger, playerInfo: { destroyedSupport } } = event;
         if (trigger == 'enter') {
             support.setUseCnt(Math.min(6, destroyedSupport));
@@ -919,7 +919,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 西尔弗和迈勒斯
-    322023: () => new SupportBuilder().collection().handle((support, event) => {
+    322023: () => support().collection().handle((support, event) => {
         const { trigger, playerInfo: { oppoGetElDmgType } } = event;
         const cnt = () => Math.min(4, oppoGetElDmgType.toString(2).split('').filter(v => +v).length);
         if (trigger == 'enter') {
@@ -944,7 +944,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 太郎丸
-    322024: () => new SupportBuilder().collection().handle((support, event) => {
+    322024: () => support().collection().handle((support, event) => {
         const { trigger, hcard } = event;
         if (trigger == 'enter') {
             return { triggers: trigger, exec: cmds => cmds.addCard(4, 302202, { isRandom: false }).res }
@@ -957,7 +957,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 白手套和渔夫
-    322025: () => new SupportBuilder().round(2).handle(support => ({
+    322025: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
         exec: cmds => {
             cmds.addCard(1, 302203, { scope: 5 });
@@ -966,7 +966,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 亚瑟先生
-    322026: () => new SupportBuilder().collection().handle((support, event) => {
+    322026: () => support().collection().handle((support, event) => {
         const { trigger, epile } = event;
         if (support.useCnt >= 2 != (trigger == 'phase-end' && epile.length > 0)) return;
         return {
@@ -981,7 +981,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 瑟琳
-    322027: () => new SupportBuilder().round(3).handle(support => ({
+    322027: () => support().round(3).handle(support => ({
         triggers: ['phase-start', 'enter'],
         exec: cmds => {
             cmds.getCard(1, { include: Array.from({ length: 10 }, (_, i) => 302206 + i) });
@@ -989,20 +989,20 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 阿伽娅
-    322028: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => ({
+    322028: () => support().permanent().perCnt(1).handle((support, event) => ({
         triggers: isCdt(event.isMinusDiceSkill && support.perCnt > 0, 'vehicle'),
         isNotAddTask: true,
         minusDiceSkill: { skilltype5: [0, 0, 1] },
         exec: () => support.minusPerCnt(),
     })),
     // 森林的祝福
-    322029: () => new SupportBuilder().permanent().handle(() => ({
+    322029: () => support().permanent().handle(() => ({
         triggers: ['enter', 'elReaction'],
         isAfterSkill: true,
         exec: cmds => cmds.getCard(1, { include: [301034, 301035, 301036] }).res,
     })),
     // 预言女神的礼物
-    322030: () => new SupportBuilder().collection(2).handle((support, event) => {
+    322030: () => support().collection(2).handle((support, event) => {
         const { trigger, sourceSummon } = event;
         const triggers: Trigger[] = ['enter'];
         if (sourceSummon?.hasTag(SUMMON_TAG.Simulanka)) triggers.push('summon-generate');
@@ -1018,7 +1018,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 西摩尔
-    322031: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
+    322031: () => support().collection(2).perCnt(1).handle((support, event) => {
         const { hcard, playerInfo: { initCardIds }, trigger, epile } = event;
         if (trigger == 'enter') {
             if (epile.length == 0) return;
@@ -1035,7 +1035,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 玻娜与「绿松石」
-    322032: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    322032: () => support().permanent().perCnt(1).handle((support, event) => {
         const { trigger } = event;
         if (trigger == 'enter') return { triggers: trigger, exec: cmds => cmds.adventure().res }
         if (support.perCnt <= 0) return;
@@ -1048,7 +1048,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 参量质变仪
-    323001: () => new SupportBuilder().collection().handle(support => ({
+    323001: () => support().collection().handle(support => ({
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],
         isAfterSkill: true,
         isOrTrigger: true,
@@ -1059,7 +1059,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 便携营养袋
-    323002: () => new SupportBuilder().permanent().perCnt(1).handle((support, event) => {
+    323002: () => support().permanent().perCnt(1).handle((support, event) => {
         const { hcard, pile, trigger } = event;
         if (!pile.some(c => c.hasSubtype(CARD_SUBTYPE.Food))) return;
         if (trigger != 'enter' && (support.perCnt <= 0 || !hcard?.hasSubtype(CARD_SUBTYPE.Food))) return;
@@ -1072,7 +1072,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 红羽团扇
-    323003: () => new SupportBuilder().permanent().perCnt(1).handle(support => {
+    323003: () => support().permanent().perCnt(1).handle(support => {
         if (support.perCnt <= 0) return;
         return {
             triggers: 'switch',
@@ -1083,7 +1083,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 寻宝仙灵
-    323004: () => new SupportBuilder().collection().handle(support => ({
+    323004: () => support().collection().handle(support => ({
         triggers: 'after-skill',
         exec: cmds => {
             if (support.addUseCnt() < 3) return;
@@ -1092,7 +1092,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     })),
     // 化种匣
-    323005: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event, ver) => {
+    323005: () => support().collection(2).perCnt(1).handle((support, event, ver) => {
         const { hcard, isMinusDiceCard } = event;
         if (!hcard || hcard.type != CARD_TYPE.Support || support.perCnt <= 0 || !isMinusDiceCard) return;
         if (ver.lt('v4.6.0') && !ver.isOffline ? hcard.currDiceCost != 1 : hcard.currDiceCost < 2) return;
@@ -1107,7 +1107,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 留念镜
-    323006: () => new SupportBuilder().collection(2).perCnt(1).handle((support, event) => {
+    323006: () => support().collection(2).perCnt(1).handle((support, event) => {
         const { hcard, playerInfo: { usedCardIds }, isMinusDiceCard } = event;
         const subtypes = [CARD_SUBTYPE.Weapon, CARD_SUBTYPE.Relic, CARD_SUBTYPE.Place, CARD_SUBTYPE.Ally];
         if (!hcard || !usedCardIds.includes(hcard.id) || !hcard.hasSubtype(...subtypes) || support.perCnt <= 0 || !isMinusDiceCard) return;
@@ -1122,7 +1122,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 流明石触媒
-    323007: () => new SupportBuilder().collection(3).perCnt(1).handle(support => {
+    323007: () => support().collection(3).perCnt(1).handle(support => {
         if (support.perCnt <= 0) return;
         return {
             triggers: 'card',
@@ -1136,7 +1136,7 @@ const supportTotal: Record<number, (...args: any) => SupportBuilder> = {
         }
     }),
     // 苦舍桓
-    323008: () => new SupportBuilder().collection().perCnt(1).handle((support, event) => {
+    323008: () => support().collection().perCnt(1).handle((support, event) => {
         const { hcards, trigger, isMinusDiceSkill } = event;
         if (trigger == 'phase-start' && (support.useCnt >= 2 || hcards.length == 0)) return;
         if (support.perCnt == 0 && (trigger == 'card' || (trigger == 'skill' && support.useCnt == 0))) return;

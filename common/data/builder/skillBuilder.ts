@@ -505,3 +505,6 @@ export class NormalSkillBuilder extends BaseBuilder {
             .done();
     }
 }
+
+export const skill = (name?: string) => new SkillBuilder(name);
+export const normalSkill = (name: string) => new NormalSkillBuilder(name);
