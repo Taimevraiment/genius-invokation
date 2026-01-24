@@ -132,7 +132,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
-    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'addUseSummon';
+    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'modifyUseCnt';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -202,8 +202,8 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | `useReadySkill` | `status-destroy` | `summon-destroy` | 'destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' |
-    `${TrgPre}get-status${TrgOppo}` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | `${TrgPre}consumeNightSoul` |
-    'slot-destroy' | 'getNightSoul' | 'ready-skill' | 'reset' | 'adventure' | `${TrgOther}fallatk` | 'summon-usecnt-add' | '';
+    `${TrgPre}get-status${TrgOppo}` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'slot-destroy' |
+    `${TrgPre}consumeNightSoul` | 'getNightSoul' | 'ready-skill' | 'reset' | 'adventure' | `${TrgOther}fallatk` | 'usecnt-add' | '';
 
 type Countdown = {
     limit: number, // 倒计时配置

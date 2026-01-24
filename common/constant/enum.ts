@@ -336,13 +336,13 @@ export const CMD_MODE = {
     RandomPileCard: 70006, // 弃置牌库中随机一张牌
     IsNotPublic: 70007, // 不公开加入牌库的牌
     IsPublic: 70008, // 公开抓到的牌
-    GetSummon: 70009, // 使用技能挑选牌
+    Summon: 70009, // 使用技能挑选牌
     GetCard: 70010, // 挑选牌
     UseCard: 70011, // 挑选并打出牌
     ByOrder: 70012, // 按顺序执行
     IsPriority: 70013, // 是否优先执行
     LowHandCard: 70014, // 弃置花费最低的手牌
-    MaxHpHero: 70015, // 生命值最高的角色
+    MaxHp: 70015, // 生命值最高的角色
 } as const;
 
 export const INFO_TYPE = {

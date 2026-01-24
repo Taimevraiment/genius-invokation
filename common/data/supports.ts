@@ -70,7 +70,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             triggers,
             exec: cmds => {
                 if (event.trigger == 'phase-start') return support.setUseCnt(3);
-                cmds.attack(2, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHpHero });
+                cmds.attack(2, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHp });
                 support.minusUseCnt();
             }
         }
@@ -426,7 +426,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     321025: () => support().round(3).handle((support, event) => ({
         triggers: 'summon-generate',
         exec: cmds => {
-            cmds.addUseSummon(event.sourceSummon!.entityId);
+            cmds.addUseCnt({ summon: event.sourceSummon!.entityId, ignoreMax: true });
             return { isDestroy: support.minusUseCnt() == 0 }
         }
     })),

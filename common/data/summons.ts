@@ -36,7 +36,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         .description('{defaultAtk。}；【自身入场或可用次数增加时：】赋予敌方随机1张手牌【sts204】。')
         .src('#')
         .handle((summon, event) => ({
-            triggers: ['phase-end', 'enter', 'summon-usecnt-add'],
+            triggers: ['phase-end', 'enter', 'usecnt-add'],
             exec: cmds => {
                 const { trigger } = event;
                 if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);

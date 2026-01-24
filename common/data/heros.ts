@@ -1752,7 +1752,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/8ef27719f84860001bce5a1f5df2dcd3_8474447068629975560.png')
                 .elemental().cost(3).explain(...Array.from({ length: 6 }, (_, i) => `botsmn${116091 + i}`)).handle(event => {
                     const { talent, cmds } = event;
-                    cmds.pickCard(talent ? 4 : 3, CMD_MODE.GetSummon, { card: [116091, 116092, 116093, 116095, 116096] });
+                    cmds.pickCard(talent ? 4 : 3, CMD_MODE.Summon, { card: [116091, 116092, 116093, 116095, 116096] });
                     return { summonPre: isCdt(!!talent, 116094) }
                 }),
             skill('二刀之形·比翼').description('{dealDmg}。')

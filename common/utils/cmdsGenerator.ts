@@ -302,8 +302,14 @@ export default class CmdsGenerator {
         this._add({ cmd: 'adventure' });
         return this;
     }
-    addUseSummon(smnidx: number) {
-        this._add({ cmd: 'addUseSummon', hidxs: [smnidx] });
+    addUseCnt(options: { summon?: number | number[], status?: number | number[], cnt?: number, ignoreMax?: boolean } = {}) {
+        const { summon, status, cnt = 1, ignoreMax } = options;
+        this._add({ cmd: 'modifyUseCnt', status, summon, cnt, isAttach: ignoreMax });
+        return this;
+    }
+    consumeUseCnt(options: { summon?: number, status?: number, cnt?: number } = {}) {
+        const { summon, status, cnt = 1 } = options;
+        this._add({ cmd: 'modifyUseCnt', status, summon, cnt: -Math.abs(cnt) });
         return this;
     }
     callback(cb: (cmds: CmdsGenerator, cards?: Card[]) => void) {

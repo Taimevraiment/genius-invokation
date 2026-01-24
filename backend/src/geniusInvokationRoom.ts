@@ -3538,7 +3538,7 @@ export default class GeniusInvokationRoom {
                         notPreHeal ||= !!isAttach;
                     } else if (cmd == 'attack') {
                         if (damageVO.atkHidx == -1) damageVO.atkHidx = skill && skill.type != SKILL_TYPE.Vehicle ? copponent.heros.frontHidx : -1;
-                        let cAtkedIdxs = target == CMD_MODE.MaxHpHero ? cplayer.heros.getMaxHpHidxs() :
+                        let cAtkedIdxs = target == CMD_MODE.MaxHp ? cplayer.heros.getMaxHpHidxs() :
                             ohidxs ?? (element == DAMAGE_TYPE.Pierce && isOppo ? cplayer.heros.getBackHidxs() : [cplayer.heros.frontHidx]);
                         if (cnt >= 0 && isOppo && skill?.type != SKILL_TYPE.Passive) {
                             if (dmgSource == 'skill' && this.preview.tarHidx == -1) this.preview.tarHidx = cAtkedIdxs[0];
@@ -3625,7 +3625,7 @@ export default class GeniusInvokationRoom {
             const cpidx = pidx ^ +!!isOppo ^ +(cmd == 'stealCard');
             const cplayer = this.players[cpidx];
             const copponent = this.players[cpidx ^ 1];
-            const { name, heros, dice, handCards, pile, UI, playerInfo, summons } = cplayer;
+            const { name, heros, dice, handCards, pile, UI, playerInfo, summons, combatStatus } = cplayer;
             let { hidxs = chidxs } = cmds[i];
             if (!['attack', 'heal', 'addMaxHp', 'revive'].includes(cmd)) doDamage();
             if (cmd == 'useSkill') {
@@ -4198,7 +4198,7 @@ export default class GeniusInvokationRoom {
                     if (mode == CMD_MODE.GetCard || mode == CMD_MODE.UseCard) {
                         this.pickModal.cardType = mode == CMD_MODE.GetCard ? 'getCard' : 'useCard';
                         this.pickModal.cards = cardIds.map(c => this.newCard(c));
-                    } else if (mode == CMD_MODE.GetSummon) {
+                    } else if (mode == CMD_MODE.Summon) {
                         this.pickModal.cardType = 'getSummon';
                         this.pickModal.cards = cardIds.map(c => {
                             const card = NULL_CARD();
@@ -4262,11 +4262,18 @@ export default class GeniusInvokationRoom {
                     const ncmds = new CmdsGenerator();
                     callback?.(ncmds);
                     this._doCmds(cpidx, ncmds);
-                    const { isInvalid } = this._emitEvent(cpidx, 'pre-consumeNightSoul', { types: STATUS_TYPE.Usage, restDmg: cnt, hidxs: heros.allHidxs(), sourceHidx: hidx });
+                    const { isInvalid } = this._emitEvent(cpidx, 'pre-consumeNightSoul', {
+                        types: STATUS_TYPE.Usage,
+                        restDmg: cnt,
+                        hidxs: heros.allHidxs(),
+                        sourceHidx: hidx,
+                    });
                     if (isInvalid) return;
                     const nightSoul = heros[hidx].heroStatus.get(STATUS_TYPE.NightSoul);
                     if (!nightSoul) return;
+                    const ocnt = nightSoul.useCnt;
                     nightSoul.minusUseCnt(cnt);
+                    this._writeLog(`[${name}](${cpidx})[${heros[hidx].name}]消耗${cnt}点「夜魂值」${ocnt}→${nightSoul.useCnt}`);
                     this._detectHero(pidx, 'consumeNightSoul', { types: STATUS_TYPE.Usage, sourceHidx: hidx, source: nightSoul?.id });
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'getNightSoul') {
@@ -4332,11 +4339,25 @@ export default class GeniusInvokationRoom {
                     }
                     if (canAdventure) this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
                 }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'addUseSummon') {
-                const eid = ohidxs![0];
-                const smn = summons.find(s => s.id == eid || s.entityId == eid) ?? summons[eid];
-                smn.addUseCnt(cnt || 1, true);
-                this._detectSummon(cpidx, 'summon-usecnt-add', { cSummon: smn });
+            } else if (cmd == 'modifyUseCnt') {
+                const eids = smnargs ?? stsargs;
+                if (eids == undefined) continue;
+                for (const eid of convertToArray(eids as number | number[])) {
+                    const entities = smnargs != undefined ? summons : ohidxs ? heros[ohidxs![0]].heroStatus : combatStatus;
+                    const entity = entities.find(e => e.id == eid || e.entityId == eid) ?? entities[eid as number];
+                    if (entity == undefined) continue;
+                    const ocnt = entity.useCnt;
+                    this.taskQueue.addTask(`modifyUseCnt-p${cpidx}-${cnt > 0 ? 'add' : 'minus'}-${entity.name}(${entity.entityId}):${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        if (cnt > 0) entity.addUseCnt(cnt, isAttach);
+                        else entity.minusUseCnt(-cnt);
+                        if (smnargs != undefined && entity.useCnt > ocnt) {
+                            this._detectSummon(cpidx, 'usecnt-add', { cSummon: entity as Summon });
+                        }
+                    }, { isImmediate, isPriority, isUnshift });
+                }
             }
         }
         doDamage();
@@ -4753,14 +4774,14 @@ export default class GeniusInvokationRoom {
             }
             if (cstIdx > -1) { // 重复生成状态
                 const cStatus = oStatus[cstIdx];
+                let oCnt = cStatus.useCnt;
                 if (sts.maxCnt == 0) { // 不可叠加
                     oStatus[cstIdx].variables = cStatus.variables;
                     oStatus[cstIdx] = clone(sts).setEntityId(oStatus[cstIdx].entityId);
-                    oStatus[cstIdx].setUseCnt(Math.max(oStatus[cstIdx].useCnt, cStatus.useCnt));
+                    oStatus[cstIdx].setUseCnt(Math.max(oCnt, cStatus.useCnt));
                 } else { // 可叠加
                     cStatus.maxCnt = sts.maxCnt;
                     cStatus.setPerCnt(sts.perCnt);
-                    let oCnt = -1;
                     let nCnt = -1;
                     if (cStatus.roundCnt > -1 && cStatus.useCnt == -1) {
                         oCnt = cStatus.roundCnt;
@@ -4865,10 +4886,10 @@ export default class GeniusInvokationRoom {
             if (csmnIdx > -1) { // 重复生成召唤物
                 const ocnt = oriSummon[csmnIdx].useCnt;
                 oriSummon[csmnIdx].variables = smn.variables;
-                oriSummon[csmnIdx].setUseCnt(Math.max(oriSmn.useCnt, smn.useCnt, Math.min(oriSmn.maxUse, oriSmn.useCnt + smn.useCnt)));
+                oriSummon[csmnIdx].setUseCnt(Math.max(ocnt, smn.useCnt, Math.min(oriSmn.maxUse, ocnt + smn.useCnt)));
                 oriSummon[csmnIdx].setPerCnt(smn.perCnt);
                 oriSummon[csmnIdx].damage = smn.damage;
-                if (ocnt < oriSummon[csmnIdx].useCnt) this._detectSummon(pidx, 'summon-usecnt-add', { cSummon: oriSummon[csmnIdx] });
+                if (oriSummon[csmnIdx].useCnt > ocnt) this._detectSummon(pidx, 'usecnt-add', { cSummon: oriSummon[csmnIdx] });
             } else if (oriSummon.filter(smn => smn.isDestroy != SUMMON_DESTROY_TYPE.Used || smn.useCnt != 0).length < MAX_SUMMON_COUNT) { // 召唤区未满才能召唤
                 csummon = smn.setEntityId(csmnIdx == -1 ? this._genEntityId() : csmnIdx);
                 oriSummon.push(csummon);

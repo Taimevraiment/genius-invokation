@@ -1851,12 +1851,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle((_, event, ver) => {
             const { combatStatus, summons, cmds } = event;
             if (ver.lt('v5.5.0')) {
+                cmds.addUseCnt({ summon: 115, ignoreMax: true });
                 return {
                     status: 303172,
                     exec: () => {
                         combatStatus.get(116)?.addUseCnt(true);
                         combatStatus.get(117)?.addUseCnt(true);
-                        summons.get(115)?.addUseCnt(true);
                     }
                 }
             }
@@ -2048,8 +2048,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('选择一个我方「召唤物」，使其[可用次数]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/79683714/1ede638fa4bb08aef24d03edf5c5d1d9_6232288201967488424.png')
         .handle((_, event) => {
-            const { summons, selectSummon } = event;
-            return { exec: () => summons[selectSummon]?.addUseCnt(true) }
+            const { selectSummon, cmds } = event;
+            cmds.addUseCnt({ summon: selectSummon, ignoreMax: true });
         }),
 
     332013: () => card(253).name('送你一程').offline('v1').event().costAny(2).canSelectSummon(0)
@@ -2352,16 +2352,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     332053: () => card(517).name('破碎之海').since('v6.3.0').event().costSame(1).simulanka().canSelectSupport(1)
         .description('选择一张我方支援区的牌，将其弃置。然后使我方所有[「希穆兰卡」召唤物]的可用次数和效果量+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/08/258999284/3b774e66b88442238ed109fdf4e0fe8c_7125634701232601605.png')
-        .handle((_, event) => ({
-            exec: () => {
-                const { supports, selectSupport, summons } = event;
-                supports.splice(selectSupport, 1);
-                summons.getSimulanka().forEach(smn => {
-                    smn.addUseCnt(1, true);
-                    smn.addSimulankaEffect();
-                });
+        .handle((_, event) => {
+            const { supports, selectSupport, summons, execmds } = event;
+            execmds.addUseCnt({ summon: summons.getSimulanka().map(s => s.entityId), ignoreMax: true });
+            return {
+                exec: () => {
+                    supports.splice(selectSupport, 1);
+                    summons.getSimulanka().forEach(smn => smn.addSimulankaEffect());
+                }
             }
-        })),
+        }),
 
     332054: () => card(518).name('「魔女M的祝福」').since('v6.0.0').event().costSame(0).simulanka().canSelectSummon(1)
         .description('选择并弃置一个我方召唤物，将其可用次数转化为至多2个不同类型的基础元素骰，如果其可用次数不低于3，则额外治疗我方受伤最多的角色2点。')
@@ -3351,19 +3351,17 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/948de7cc9342fabe613ec2ab1a4c7fd8_3345062314156566314.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
-            const { hero, heros, sourceHidx, trigger } = event;
-            const thero = trigger == 'switch-to' ? hero : heros[sourceHidx];
-            const nightSoul = thero?.heroStatus.find(s => s.hasType(STATUS_TYPE.NightSoul));
+            const { hero, heros, sourceHidx, trigger, execmds } = event;
+            const thidx = trigger == 'switch-to' ? hero.hidx : sourceHidx;
+            const nightSoul = heros[thidx]?.heroStatus.get(STATUS_TYPE.NightSoul);
             const triggers: Trigger[] = [];
             if (nightSoul && nightSoul.useCnt < nightSoul.maxCnt) triggers.push('switch-to', 'switch-from');
+            execmds.getNightSoul(1, thidx);
             return {
                 isValid: !hero.heroStatus.has(116111),
                 triggers,
                 isAddTask: true,
-                exec: () => {
-                    nightSoul?.addUseCnt();
-                    card.minusPerCnt();
-                }
+                exec: () => card.minusPerCnt(),
             }
         }),
 

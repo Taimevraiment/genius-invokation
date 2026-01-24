@@ -326,7 +326,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Attack)
         .description('【结束阶段：】对我方生命值最高角色造成等同于自身层数的[穿透伤害]。(可叠加，没有上限）')
         .handle((status, event) => {
-            event.cmds.attack(status.useCnt, DAMAGE_TYPE.Pierce, { isOppo: false, target: CMD_MODE.MaxHpHero });
+            event.cmds.attack(status.useCnt, DAMAGE_TYPE.Pierce, { isOppo: false, target: CMD_MODE.MaxHp });
             return { triggers: 'phase-end' }
         }),
 
