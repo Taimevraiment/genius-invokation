@@ -2282,15 +2282,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     const { hcards, cmds, heros } = event;
                     const cnt = Math.min(3, hcards.filter(c => c.id == 124051).length);
                     const hidxs = heros.getMaxHurtHidxs();
-                    cmds.discard({ cnt, card: 124051 }).heal(cnt, { hidxs }).addMaxHp(cnt, hidxs);
+                    cmds.discard({ cnt, card: 124051 }).addMaxHp(cnt, hidxs).heal(cnt, { hidxs });
                 }),
             skill('圣骸感应').description('我方打出或[舍弃]【crd124051】后，治疗我方受伤最多的角色1点。')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/b539b03ea17283551f0c25327826656a_224956877266432226.png')
                 .passive().handle(event => {
-                    const { cmds, hcard, heros } = event;
+                    const { cmds, hcard } = event;
                     if (hcard?.id != 124051) return;
-                    return { triggers: ['card', 'discard'], exec: () => cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() }) }
+                    return { triggers: ['card', 'discard'], exec: () => cmds.heal(1, { target: CMD_MODE.MaxHurt }) }
                 })
         ),
 

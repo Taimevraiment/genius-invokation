@@ -110,10 +110,10 @@ export default class CmdsGenerator {
         this._add({ cmd: 'getEnergy', cnt, hidxs, isOppo, isAttach });
         return this;
     }
-    heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean, isOppo?: boolean } = {}) {
-        let { hidxs, isOrder, notPreHeal: isAttach, isOppo } = options;
+    heal(cnt?: number, options: { hidxs?: number | number[], isOrder?: boolean, notPreHeal?: boolean, isOppo?: boolean, target?: number } = {}) {
+        let { hidxs, isOrder, notPreHeal: isAttach, isOppo, target } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (hidxs?.length != 0) this._add({ cmd: 'heal', cnt, hidxs, mode: isCdt(isOrder, CMD_MODE.ByOrder), isAttach, isOppo });
+        if (hidxs?.length != 0) this._add({ cmd: 'heal', cnt, hidxs, mode: target ?? isCdt(isOrder, CMD_MODE.ByOrder), isAttach, isOppo });
         return this;
     }
     revive(cnt: number, hidxs?: number | number[]) {

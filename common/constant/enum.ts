@@ -343,6 +343,7 @@ export const CMD_MODE = {
     IsPriority: 70013, // 是否优先执行
     LowHandCard: 70014, // 弃置花费最低的手牌
     MaxHp: 70015, // 生命值最高的角色
+    MaxHurt: 70016, // 受伤最多的角色
 } as const;
 
 export const INFO_TYPE = {

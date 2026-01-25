@@ -3517,7 +3517,7 @@ export default class GeniusInvokationRoom {
                     const cplayer = this.players[cpidx];
                     const copponent = this.players[cpidx ^ 1];
                     const atkPidx = cpidx ^ +(isOppo && cmd == 'attack');
-                    const { hidxs = chidxs ?? ohidxs ?? [cplayer.heros.frontHidx] } = cmds;
+                    let { hidxs = chidxs ?? ohidxs ?? [cplayer.heros.frontHidx] } = cmds;
                     if (mode == CMD_MODE.ByOrder) {
                         damageVO = INIT_DAMAGEVO(allHeroLen);
                         isFirstAtk = true;
@@ -3526,6 +3526,7 @@ export default class GeniusInvokationRoom {
                     let notPreHeal = cmd == 'revive' || (this.version.lt('v5.0.0') && cmd == 'addMaxHp');
                     if (['heal', 'addMaxHp', 'revive'].includes(cmd)) {
                         const offsetHidx = atkPidx * this.players[0].heros.length;
+                        if (mode == CMD_MODE.MaxHurt) hidxs = cplayer.heros.getMaxHurtHidxs();
                         cplayer.heros.forEach((h, hi) => {
                             if (cmd == 'addMaxHp' && hidxs.includes(hi)) h.maxHp += cnt;
                             const heal = hidxs.includes(hi) ? cnt - (cmd == 'revive' ? 0.3 : 0) : -1;
