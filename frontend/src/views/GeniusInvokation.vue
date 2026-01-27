@@ -121,7 +121,7 @@
 
     <div class="btn-group" v-if="client.isShowButton">
       <div class="forbidden-card"
-        v-if="client.currCard.id > 0 && client.currCard.type == CARD_TYPE.Event && isNonEvent">
+        v-if="client.currCard.id > 0 && (client.currCard.type == CARD_TYPE.Event && isNonEvent || client.currCard.attachments.some(a => a.id == 208))">
         <StrokedText stroke-color="red">此牌效果将被无效</StrokedText>
       </div>
       <button :class="{ forbidden: !client.isValid }" v-if="!client.isReconcile && client.currCard.id > 0 && canAction"
@@ -635,7 +635,6 @@ const devOps = (cidx = 0) => {
         const mode = hidx < 0 ? 70006 : 0;
         const chidx = Math.abs(hidx);
         const hidxs = chidx > 2 && !isAttachment ? new Array(heros.length).fill(0).map((_, i) => i) : [Math.min(chidx, handCardsLen)];
-        console.log('hidxs:', handCardsLen);
         cmds.push({ cmd: 'getStatus', hidxs, status: stsid, mode });
       }
       flag.add('setStatus');

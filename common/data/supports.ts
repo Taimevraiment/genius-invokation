@@ -84,8 +84,8 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             exec: cmds => {
                 const { trigger, heros } = event;
                 if (trigger == 'phase-start') return support.setUseCnt(2);
-                const hidxs = heros.getMaxHurtHidxs();
-                cmds.heal(2, { hidxs }).getStatus(303053, { hidxs });
+                const hidxs = heros.getMinHpHidxs();
+                cmds.heal(1, { hidxs }).getStatus(303053, { hidxs });
                 support.minusUseCnt();
             }
         }
@@ -329,12 +329,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 梅洛彼得堡
-    321018: () => support().collection().handle((support, event) => {
+    321018: () => support().collection().handle((support, event, ver) => {
         const { hidx, getdmg, heal, trigger } = event;
         const triggers: Trigger[] = [];
-        if (support.useCnt < 4) {
-            if (getdmg[hidx] > 0) triggers.push('getdmg');
-            if (heal[hidx] > 0) triggers.push('heal');
+        if (ver.gte('v6.4.0') || support.useCnt < 4) {
+            if (getdmg[hidx] >= 0) triggers.push('getdmg');
+            if (heal[hidx] >= 0) triggers.push('heal');
         } else triggers.push('phase-start');
         return {
             triggers: triggers,
@@ -343,7 +343,11 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                     support.minusUseCnt(4);
                     return cmds.getStatus(301018, { isOppo: true }).res;
                 }
-                support.addUseCntMax(4);
+                if (ver.lt('v6.4.0')) support.addUseCntMax(4);
+                else if (support.addUseCnt() >= 5) {
+                    support.minusUseCnt(5);
+                    cmds.getStatus(208, { isOppo: true });
+                }
             }
         }
     }),
@@ -550,13 +554,18 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     })),
     // 银月之庭
     321035: () => support().collection().handle((support, event) => {
-        if (![202, 206].includes(event.source)) return;
+        const triggers: Trigger[] = [];
+        if ([202, 206].includes(event.source)) triggers.push('get-status');
+        if (support.useCnt >= 3) triggers.push('phase-start');
         return {
-            triggers: 'get-status',
+            triggers,
             exec: cmds => {
-                if (support.addUseCnt() < 3) return;
-                cmds.changeDice();
-                support.setUseCnt();
+                const { trigger } = event;
+                if (trigger == 'get-status') support.addUseCnt();
+                else if (trigger == 'phase-start') {
+                    support.minusUseCnt(3);
+                    cmds.getDice(1, { mode: CMD_MODE.Random });
+                }
             }
         }
     }),
@@ -593,7 +602,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     321039: () => support().round(2).handle((support, event) => ({
         triggers: ['phase-end', 'destroy'],
         exec: cmds => {
-            if (event.trigger == 'destroy') return cmds.getCard(2, { cardAttachment: 206, isFromPile: true }).getDice(1, { mode: CMD_MODE.Random }).res;
+            if (event.trigger == 'destroy') return cmds.getCard(2, { cardAttachment: 206, isFromPile: true }).getStatus(172).res;
             cmds.getStatus(206, { cnt: 2, mode: CMD_MODE.RandomPileCard });
             return { isDestroy: support.minusUseCnt() == 0 }
         }

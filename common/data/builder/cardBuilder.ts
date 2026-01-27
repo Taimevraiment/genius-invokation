@@ -530,7 +530,8 @@ class CardBuilder extends BaseCostBuilder {
         if (this._type == CARD_TYPE.Support) {
             const handle = this._handle;
             this._handle = (card, event, ver) => {
-                return { support: card.id, notPreview: true, ...handle?.(card, event, ver) }
+                event.cmds.getSupport(card.id);
+                return { notPreview: true, ...handle?.(card, event, ver) }
             };
         }
         this._subtypeCdt.forEach(([cdt, subtypes]) => cdt(versionWrap(this._curVersion)) && this._subtype.push(...subtypes));

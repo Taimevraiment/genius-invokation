@@ -280,7 +280,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    1115: () => hero(533).name('爱可菲').since('v6.2.0').maxHp(11).fontaine(HERO_TAG.ArkheOusia).cryo().polearm()
+    1115: () => hero(533).name('爱可菲').since('v6.2.0').maxHp(11, 'v6.4.0').fontaine(HERO_TAG.ArkheOusia).cryo().polearm()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/9e04d801217c2e828a5f1a4e1a8477f0_2829659460750210968.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/692f7dc7/0074d47dbeefa4b467a56f02c7e9a14b.png')
         .normalSkill('后厨手艺')
@@ -351,10 +351,10 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 111171 })),
-            skill('苍翎的颂愿').description('治疗我方所有角色1点，生成【sts111172】。')
+            skill('苍翎的颂愿').description('治疗我方所有角色1点，生成【sts111172】和【sts111176】。')
                 .src('#',
                     '')
-                .burst(2).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), status: 111172 })),
+                .burst(2).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), status: [111172, 111176] })),
             skill('速射牵制').description('【自身使用技能后：】下次我方造成的[物理伤害]+1。（每回合2次）')
                 .src('#',
                     '')
@@ -520,7 +520,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    1209: () => hero(280).name('夜兰').since('v4.3.0').liyue().hydro().bow()
+    1209: () => hero(280).name('夜兰').since('v4.3.0').maxHp(11).maxHp(10, 'v6.4.0').liyue().hydro().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/5e7cb3adbfd464b00dbc707f442fe96d_6990020566246221581.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/7c33c2830e1d5dba89d671e18b507f23.png')
         .normalSkill('潜形隐曜弓')
@@ -1324,7 +1324,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(2).damage(4).cost(3).handle(() => ({ summon: 114171 })),
-            skill('月兆祝赐·象拟中继').description('本局游戏中，我方角色触发‹2›‹4›【感电反应】时，将转为触发[月感电]反应。；自身在场，敌方行动牌被赋予【sts204】时：额外赋予【sts207】状态。')
+            skill('月兆祝赐·象拟中继').description('本局游戏中，敌方受到‹2›‹4›【感电反应】时，改为[月感电]反应。；自身在场，敌方行动牌被赋予【sts204】时：额外赋予【sts207】状态。')
                 .src('#',
                     '')
                 .passive().handle(event => {
@@ -2180,7 +2180,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: 122031 }))
         ),
 
-    2204: () => hero(368).name('吞星之鲸').since('v4.7.0').maxHp(5).monster().hydro().cosmicCalamity()
+    2204: () => hero(368).name('吞星之鲸').since('v4.7.0').maxHp(6).maxHp(5, 'v6.4.0').monster().hydro().cosmicCalamity()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/17c1739ef970603be767fa88764fc44f_4845015785088476307.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e29c46b79a53a6c428d46017eecb52c2.png')
         .normalSkill('碎涛旋跃')
@@ -2235,7 +2235,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(4).damage(3, 'v5.7.0').cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 122051 }).res)
         ),
 
-    2206: () => hero(523).name('水形幻人').since('v6.1.0').maxHp(11).maxHp(12, 'v6.3.0').monster().hydro()
+    2206: () => hero(523).name('水形幻人').since('v6.1.0').maxHp(11, 'v6.4.0').maxHp(12, 'v6.3.0').monster().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/0216f62a3d64b105cabc5ea80c4e3819_9208952187097720286.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/67c7f716/49f90b5353035a7edeaa050c7bcd2f0a.png')
         .normalSkill(skill => skill('涌浪').catalyst())
@@ -2294,7 +2294,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    2301: () => hero(55).name('愚人众·火之债务处理人').offline('v2').maxHp(9).maxHp(10, 'v4.3.0').fatui().pyro()
+    2301: () => hero(55).name('愚人众·火之债务处理人').offline('v2').maxHp(11).maxHp(9, 'v6.4.0', 'v2').maxHp(10, 'v4.3.0').fatui().pyro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9f134f05bb71f0ee1afb33785cf945e9_8487118119361104507.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/de42691212adcb46a66595c833bd3598.png')
         .normalSkill('突刺')
@@ -2451,7 +2451,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(2).damage(3).cost(3).handle(() => ({ pdmg: 1, status: 123061 })),
-            skill('古老者的血脉').description('【偶数回合阶段开始时：】自身附属1层【sts123061】。')
+            skill('古老者的血脉').description('【偶数行动阶段开始时：】自身附属1层【sts123061】。')
                 .src('#',
                     '')
                 .passive().handle(event => {
@@ -2668,7 +2668,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 124051, { isRandom: false }), { triggers: 'game-start' }))
         ),
 
-    2601: () => hero(59).name('丘丘岩盔王').offline('v2').maxHp(8).hilichurl().geo()
+    2601: () => hero(59).name('丘丘岩盔王').offline('v2').maxHp(8, 'v6.4.0', 'v2').hilichurl().geo()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/db05474f6bdc3a5080e141d72c876548_5712469579238063350.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2886b95ca3fcd79cf72577fd0276cb94.png')
         .normalSkill('Plama Lawa')
@@ -2762,7 +2762,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 }),
         ),
 
-    2701: () => hero(60).name('翠翎恐蕈').offline('v1').monster().dendro()
+    2701: () => hero(60).name('翠翎恐蕈').offline('v1').maxHp(12).maxHp(10, 'v6.4.0', 'v1').monster().dendro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/83e1eecf95f1e3ba10afad2e2a4de03c_4053328098702513548.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0c8a00c0737279e0349769448e7a1f35.png')
         .normalSkill('菌王舞步')

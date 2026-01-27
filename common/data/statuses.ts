@@ -5,7 +5,7 @@ import {
     SKILL_TYPE, SkillType, STATUS_TYPE, VERSION,
     Version, WEAPON_TYPE, WeaponType
 } from "../constant/enum.js";
-import { MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
+import { MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_USE_COUNT } from "../constant/gameOption.js";
 import { NULL_STATUS } from "../constant/init.js";
 import { DEBUFF_BG_COLOR, ELEMENT_ICON, ELEMENT_NAME, SKILL_TYPE_NAME, STATUS_BG_COLOR, STATUS_ICON } from "../constant/UIconst.js";
 import { getDerivantParentId, getHidById, getObjById, getVehicleIdByCid } from "../utils/gameUtil.js";
@@ -312,19 +312,19 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     201: () => status('费用增加').attachment().icon(STATUS_ICON.DebuffCountered03)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('此牌的元素骰费用增加1。（可叠加，没有上限）')
+        .description('每层使打出此卡牌多花费1个元素骰。（可叠加，没有上限）')
         .handle(status => ({ addDiceCard: status.useCnt })),
 
     202: () => status('费用降低').attachment().icon(STATUS_ICON.DebuffCountered02)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('此牌的元素骰费用降低1。（可叠加，没有上限）')
+        .description('每层使打出此卡牌少花费1个元素骰。（可叠加，没有上限）')
         .handle(status => ({ minusDiceCard: status.useCnt })),
 
     203: (cnt: number = 1) => shieldCombatStatus('护盾', cnt, MAX_USE_COUNT),
 
     204: () => status('电击').attachment().icon(STATUS_ICON.DebuffCountered05)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Attack)
-        .description('【结束阶段：】对我方生命值最高角色造成等同于自身层数的[穿透伤害]。(可叠加，没有上限）')
+        .description('【结束阶段：】如果此牌在手牌中，则对我方生命值最高角色造成等同于自身层数的[穿透伤害]。(可叠加，没有上限）')
         .handle((status, event) => {
             event.cmds.attack(status.useCnt, DAMAGE_TYPE.Pierce, { isOppo: false, target: CMD_MODE.MaxHp });
             return { triggers: 'phase-end' }
@@ -341,7 +341,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     207: () => status('不可调和').attachment().icon(STATUS_ICON.DebuffCountered06).type(STATUS_TYPE.Usage)
         .description('此牌无法进行调和。'),
 
-    208: () => status('无效化').attachment().icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage)
+    208: () => status('无效化').attachment().icon(STATUS_ICON.DebuffCountered01).type(STATUS_TYPE.Usage)
         .description('此牌打出效果无效。')
         .handle(() => ({ triggers: 'card', isInvalid: true })),
 
@@ -579,8 +579,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【所附属角色使用「普通攻击」时：】造成的[物理伤害]变为[冰元素伤害]。若可能，消耗至多2点*[蛇之狡谋]，每消耗1点，则少花费1个[无色元素骰]。；自身元素爆发切换为【rsk11165】。；[roundCnt]')
         .handle((status, event) => {
             const { hero: { spEnergy, hidx, UI }, skill, minusDiceSkill, isMinusDiceSkill, cmds, trigger } = event;
+            const triggers: Trigger[] = ['enter', 'destroy'];
+            if (isMinusDiceSkill) triggers.push('skilltype1');
             return {
-                triggers: ['skilltype1', 'enter', 'destroy'],
+                triggers,
                 minusDiceSkill: { skilltype1: [0, Math.min(2, spEnergy), 0] },
                 attachEl: ELEMENT_TYPE.Cryo,
                 exec: () => {
@@ -590,7 +592,6 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                         UI.src = UI.srcs[isEnter];
                         return;
                     }
-                    if (!isMinusDiceSkill) return;
                     cmds.getEnergy(minusDiceSkill.find(([eid]) => eid == status.entityId)![1] - skill!.rawDiceCost, { hidxs: hidx, isSp: true });
                 }
             }
@@ -608,18 +609,12 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             return { triggers: 'skilltype1', status: statuses, exec: () => status.minusUseCnt() }
         }),
 
-    111172: () => status('鹰翎').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Usage)
-        .description('我方角色「普通攻击」少花费1个元素骰，并且「普通攻击」后治疗自身1点。；[useCnt]')
+    111172: () => status('鹰翎心得').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Usage)
+        .description('我方角色「普通攻击」少花费1个元素骰。；[useCnt]')
         .handle((status, event) => ({
-            triggers: ['skilltype1', 'after-skilltype1'],
+            triggers: isCdt(event.isMinusDiceSkill, 'skilltype1'),
             minusDiceSkill: { skilltype1: [0, 0, 1] },
-            exec: () => {
-                const { trigger, cmds, isMinusDiceSkill } = event;
-                if (trigger != 'after-skilltype1') return;
-                if (!isMinusDiceSkill) return true;
-                cmds.heal(1);
-                status.minusUseCnt();
-            },
+            exec: () => status.minusUseCnt(),
         })),
 
     111173: () => status('速射牵制（生效中）').combatStatus().icon(STATUS_ICON.Buff).useCnt(1).type(STATUS_TYPE.AddDamage)
@@ -629,9 +624,9 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     111174: () => status('侦明').heroStatus().icon(STATUS_ICON.Buff).roundCnt(1).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('本回合所附属角色下次「普通攻击」少花费2个[无色元素骰]。')
         .handle((status, event) => ({
-            triggers: 'skilltype1',
+            triggers: isCdt(event.isMinusDiceSkill, 'skilltype1'),
             minusDiceSkill: { skilltype1: [0, 2, 0] },
-            exec: () => event.isMinusDiceSkill && status.dispose(),
+            exec: () => status.dispose(),
         })),
 
     111175: () => status('爆裂信标').heroStatus().icon(STATUS_ICON.Buff)
@@ -641,6 +636,14 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             triggers: isCdt(event.skill?.type == SKILL_TYPE.Normal, 'Physical-dmg'),
             addDmgCdt: 2,
             exec: () => status.dispose(),
+        })),
+
+    111176: () => status('鹰翎祝念').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
+        .description('我方角色「普通攻击」后治疗自身1点。；[useCnt]')
+        .handle(status => ({
+            triggers: 'after-skilltype1',
+            heal: 1,
+            exec: () => status.minusUseCnt(),
         })),
 
     112021: (isTalent: boolean = false) => status('雨帘剑').combatStatus().useCnt(2).useCnt(3, isTalent)
@@ -2678,8 +2681,20 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .handle(continuousActionHandle),
 
     300003: () => status('裁定之时（生效中）').combatStatus()
-        .useCnt(3).roundCnt(1).type(STATUS_TYPE.NonEvent).from(330006)
-        .description('本回合中，我方打出的事件牌无效。；[useCnt]'),
+        .useCnt(3, 'v6.4.0').roundCnt(1).from(330006)
+        .type(ver => ver.lt('v6.4.0'), STATUS_TYPE.NonEvent)
+        .type(ver => ver.gte('v6.4.0'), STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【本回合中，我方下次打出事件牌后：】赋予敌方手牌中所有事件牌【sts208】。；【本回合中，我方[舍弃]卡牌后：】将我方手牌中2张[当前元素骰费用]最高的卡牌置入牌组底。')
+        .description('本回合中，我方打出的事件牌无效。；[useCnt]', 'v6.4.0')
+        .handle((_, event, ver) => {
+            if (ver.lt('v6.4.0')) return;
+            const { hcard, trigger, cmds } = event;
+            const triggers: Trigger[] = ['discard'];
+            if (hcard?.type == CARD_TYPE.Event) triggers.push('card');
+            if (trigger == 'card') cmds.getStatus(208, { cnt: MAX_HANDCARDS_COUNT, cardFilter: c => c.type == CARD_TYPE.Event });
+            else cmds.putCard({ cnt: 2, mode: CMD_MODE.HighHandCard });
+            return { triggers }
+        }),
 
     300004: () => status('抗争之日·碎梦之时（生效中）').heroStatus()
         .useCnt(4).roundCnt(1).type(STATUS_TYPE.Barrier).from(330007)

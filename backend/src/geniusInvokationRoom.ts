@@ -1649,7 +1649,7 @@ export default class GeniusInvokationRoom {
                             if (tri == dmgedHidx) trg.add('get-Melt')
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro)) { // 水雷 感电
-                        if (aheros.some(h => h.id == 1417)) { // 转化为月感电
+                        if (this.players[atkPidx].heros.some(h => h.id == 1417)) { // 转化为月感电
                             res.elTips[elTipIdx] = ['月感电', attachElement, dmgElement];
                             atriggers.forEach((trg, tri) => {
                                 if (!isAtkSelf) {
@@ -2253,6 +2253,7 @@ export default class GeniusInvokationRoom {
             selectSummon,
             selectSupport,
             slotUse: currCard.type == CARD_TYPE.Equipment,
+            trigger: isCdt(getCard, 'getcard'),
         });
         if (getCard && this._hasNotTriggered(cardres.triggers, 'getcard')) return;
         if (cardres.notPreview && !this.preview.isExec) return;
@@ -2261,7 +2262,6 @@ export default class GeniusInvokationRoom {
         if (getCard && !cardcmds?.hasCmds('convertCard')) {
             cardcmds?.discard({ card: currCard.entityId, notTrigger: true, mode: CMD_MODE.IsPublic });
         }
-        this._doEquip(pidx, player.heros[hidxs[0]], currCard, { isDestroy: cardres.isDestroy });
         let isInvalid = false;
         if (!getCard && !pickCard) {
             player.playerInfo.isUsedCardPerRound = true;
@@ -2274,6 +2274,7 @@ export default class GeniusInvokationRoom {
             player.playerInfo.usedCardIds.push(currCard.id);
         }
         if (isInvalid) {
+            await this._execTask();
             await this.emit(`useCard-${currCard.name}-invalid`, pidx, { actionInfo: { card: currCard }, isQuickAction: true });
             this._doActionAfter(pidx);
             this._startTimer();
@@ -2281,6 +2282,7 @@ export default class GeniusInvokationRoom {
             await this._doActionStart(pidx);
             this._startTimer();
         } else {
+            this._doEquip(pidx, player.heros[hidxs[0]], currCard, { isDestroy: cardres.isDestroy });
             if (currCard.type != CARD_TYPE.Equipment) cardres.exec?.();
             if (!getCard) await this.emit(`${pickCard ? 'pickCard' : 'useCard'}-${currCard.name}`, pidx, { actionInfo: { card: currCard } });
             if (!getCard && !pickCard) {
@@ -2476,6 +2478,7 @@ export default class GeniusInvokationRoom {
             this._detectSummon(cpidx, 'phase-start');
             this._detectSupport(cpidx, 'phase-start', { firstPlayer: this.startIdx });
             this._detectHandcards(cpidx, 'phase-start');
+            this._detectPilecards(cpidx, 'phase-start');
         }
         await this._execTask();
         await this.wait(() => this.players.every(p => p.phase == PHASE.ACTION_START) && this.needWait, { maxtime: 6e6 });
@@ -2506,7 +2509,6 @@ export default class GeniusInvokationRoom {
                 this._detectSummon(cpidx, 'phase-end');
                 this._detectSupport(cpidx, 'phase-end');
                 this._detectHandcards(cpidx, 'phase-end');
-                this._detectPilecards(cpidx, 'phase-end');
             }
             await this._execTask();
             await this.wait(() => this.needWait, { maxtime: 6e6 });
@@ -2866,8 +2868,9 @@ export default class GeniusInvokationRoom {
         isPriority?: boolean, isUnshift?: boolean, isFromPile?: boolean,
     } = {}) {
         const { isPriority, isUnshift, isFromPile } = options;
+        const source = +!!isFromPile;
         for (const card of discards) {
-            const cardres = card.handle(card, { pidx, ...this.handleEvent, source: +!!isFromPile, trigger: 'discard' });
+            const cardres = card.handle(card, { pidx, ...this.handleEvent, source, trigger: 'discard' });
             if (!this._hasNotTriggered(cardres.triggers, 'discard')) {
                 const cmds = new CmdsGenerator(cardres.execmds);
                 if (cmds.isEmpty) cmds.addCmds(cardres.cmds);
@@ -2878,8 +2881,8 @@ export default class GeniusInvokationRoom {
                     trigger: 'discard',
                 });
             }
-            this._detectHero(pidx, 'discard', { types: STATUS_TYPE.Usage, source: +!!isFromPile, hcard: card });
-            this._detectSupport(pidx, 'discard', { hcard: card, source: +!!isFromPile });
+            this._detectHero(pidx, 'discard', { types: STATUS_TYPE.Usage, source, hcard: card });
+            this._detectSupport(pidx, 'discard', { hcard: card, source });
         }
     }
     /**
@@ -3373,7 +3376,7 @@ export default class GeniusInvokationRoom {
     private _detectHandcards(pidx: number, otrigger: Trigger | Trigger[] | Set<Trigger>, options: { cCard?: Card } = {}) {
         const { cCard } = options;
         const triggers = convertToArray(otrigger);
-        const handcards = cCard ? [cCard] : this.players[pidx].handCards.sort((a, b) => b.entityId - a.entityId);
+        const handcards = cCard ? [cCard] : this.players[pidx].handCards.slice().sort((a, b) => b.entityId - a.entityId);
         let isInvalid = false;
         let diceEl: DiceCostType | undefined;
         for (const card of handcards) {
@@ -3472,7 +3475,7 @@ export default class GeniusInvokationRoom {
         let { isInvalid, minusDiceCard } = this._detectHero(pidx, trigger, options);
         this._detectSummon(pidx, trigger, options);
         this._detectSupport(pidx, trigger, { ...options, minusDiceCard });
-        isInvalid ||= this._detectHandcards(pidx, trigger).isInvalid;
+        isInvalid ||= this._detectHandcards(pidx, trigger, { cCard: options.hcard }).isInvalid;
         return { isInvalid }
     }
     /**
@@ -4042,7 +4045,7 @@ export default class GeniusInvokationRoom {
                                         hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
                                     }
                                 } else if (isHandcard) {
-                                    cdidxs = handCards.map(c => c.cidx);
+                                    cdidxs = handCards.filter(c => cardFilter?.(c) ?? true).map(c => c.cidx);
                                 }
                                 if (chidxs.length == 0) chidxs.push(...this._randomInArr(cdidxs, cnt || 1));
                                 ((isOppo ? ohidxs : hidxs) ?? chidxs).forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));

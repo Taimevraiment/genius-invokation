@@ -32,7 +32,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
     115: () => summon('燃烧烈焰').useCnt(1).maxUse(2).damage(1).pyro().description('{defaultAtk。}')
         .src('https://patchwiki.biligame.com/images/ys/8/8b/2nnf0b70wnuaw0yn45i9db61l6dwg9x.png'),
 
-    205: () => summon('雷暴云').useCnt(1).maxUse(MAX_USE_COUNT).damage(1).electro()
+    205: () => summon('雷暴云').useCnt(1).maxUse(MAX_USE_COUNT).damage(2).electro()
         .description('{defaultAtk。}；【自身入场或可用次数增加时：】赋予敌方随机1张手牌【sts204】。')
         .src('#')
         .handle((summon, event) => ({

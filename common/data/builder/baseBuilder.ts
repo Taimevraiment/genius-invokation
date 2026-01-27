@@ -160,14 +160,19 @@ export class BaseCostBuilder extends BaseBuilder {
         return this.cost(cost, DICE_TYPE.Geo, version);
     }
     costDendro(cost: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
         versions.forEach(v => this.cost(cost, DICE_TYPE.Dendro, v));
         return this;
     }
-    costSame(cost: number, version?: Version) {
-        return this.cost(cost, DICE_TYPE.Same, version);
+    costSame(cost: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(v => this.cost(cost, DICE_TYPE.Same, v));
+        return this;
     }
-    costAny(cost: number, version?: Version) {
-        return this.cost(cost, DICE_TYPE.Any, version);
+    costAny(cost: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(v => this.cost(cost, DICE_TYPE.Any, v));
+        return this;
     }
 }
 
