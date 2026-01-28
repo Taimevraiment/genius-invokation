@@ -559,7 +559,7 @@ export default class GeniusInvokationRoom {
             } else {
                 this.io?.to(`7szh-${this.id}`).emit('getServerInfo', Object.freeze({
                     ...serverData,
-                    ..._serverDataVO(this.id > 0 ? -1 : this.recordData.pidx, tip),
+                    ..._serverDataVO(-1, tip),
                 }));
                 this.players.forEach(p => {
                     this.io?.to(`7szh-${this.id}-p${p.pidx}`).emit('getServerInfo', Object.freeze({
@@ -841,7 +841,7 @@ export default class GeniusInvokationRoom {
                             const [{ pidx: willPidx }] = this.recordData.actionLog;
                             const player = this.players[willPidx];
                             await this.wait(() => this.needWait && this.preview.isExec && player.canAction ||
-                                player.phase == PHASE.PICK_CARD || player.status == PLAYER_STATUS.DIESWITCH ||
+                                player.phase == PHASE.PICK_CARD || player.phase == PHASE.DICE || player.status == PLAYER_STATUS.DIESWITCH ||
                                 ([PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(this.phase), { maxtime: 3e6 });
                             await this.delay((this.phase == PHASE.ACTION ? 4e3 : 5e2) + Math.random() * 1e3);
                             this.recordData.isExecuting = true;
@@ -4317,7 +4317,7 @@ export default class GeniusInvokationRoom {
                     this._doCmds(cpidx, ncmds);
                     const cidx = handCards.findIndex(c => c.entityId == eid);
                     const ncard = this.newCard(cid).setEntityId(eid);
-                    ncard.attachments = new ArrayStatus(handCards[cidx].attachments.slice());
+                    ncard.attachments = new ArrayStatus(...handCards[cidx].attachments.slice());
                     handCards.splice(cidx, 1, ncard);
                 }, { isImmediate, isPriority, isUnshift });
             } else if (cmd == 'summonTrigger' && ohidxs) {

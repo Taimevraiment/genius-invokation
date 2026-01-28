@@ -3875,15 +3875,13 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【加入手牌时：】若我方出战角色为火/水/雷/冰，则将此牌转化为对应元素。；【打出或[舍弃]此牌时：】优先对敌方出战角色造成1点[风元素伤害]，然后将一张【crd115113】随机放进牌库。', 'v6.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/be0fea5e603570c03e7c728698bdd297_5978114668085840517.png')
         .handle((card, event, ver) => {
-            const { hero, execmds, cmds, source: isFromPile } = event;
+            const { hero, execmds, cmds, source: isFromPile, trigger } = event;
             const triggers: Trigger[] = [];
             if (ver.lt('v6.1.0') || isFromPile == 0) triggers.push('discard');
-            if (hero) {
-                const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
-                if (ncardId) {
-                    execmds.convertCard(card.entityId, ncardId);
-                    triggers.push('getcard');
-                }
+            const ncardId = [, 115117, 115115, 115114, 115116][ELEMENT_CODE[hero.element]];
+            if (ncardId && trigger == 'getcard') {
+                execmds.convertCard(card.entityId, ncardId);
+                triggers.push('getcard');
             }
             cmds.attack(1, DAMAGE_TYPE.Anemo, { isPriority: true }).addCard(1, 115113);
             return { triggers, notPreview: true }

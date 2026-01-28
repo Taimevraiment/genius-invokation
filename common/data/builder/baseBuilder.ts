@@ -178,7 +178,7 @@ export class BaseCostBuilder extends BaseBuilder {
 
 export class ArrayHero extends Array<Hero> {
     fhidx: number = -1;
-    constructor(...args: any[]) {
+    constructor(...args: Hero[]) {
         super(...args);
     }
     get frontHidx() {
@@ -316,7 +316,7 @@ export class ArrayHero extends Array<Hero> {
 }
 
 export class ArrayStatus extends Array<Status> {
-    constructor(...args: any[]) {
+    constructor(...args: Status[]) {
         super(...args);
     }
     get hasSubHurt() {
@@ -349,7 +349,7 @@ export class ArrayStatus extends Array<Status> {
 }
 
 export class ArraySummon extends Array<Summon> {
-    constructor(...args: any[]) {
+    constructor(...args: Summon[]) {
         super(...args);
     }
     get(id: number): Summon | undefined;
@@ -373,7 +373,7 @@ export class ArraySummon extends Array<Summon> {
 }
 
 export class ArraySupport extends Array<Support> {
-    constructor(...args: any[]) {
+    constructor(...args: Support[]) {
         super(...args);
     }
     get(id: number): Support | undefined;
