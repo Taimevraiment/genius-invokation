@@ -19,12 +19,12 @@ export const allSkills: Record<number, () => SkillBuilder> = {
                 .getEnergy(-spEnergy, { isSp: true });
         }),
 
-    11165: () => new SkillBuilder('极恶技·尽').description('将2个非万能元素骰转化为[冰元素骰]，[舍弃]至多2张原本元素骰花费为0骰的卡牌，每[舍弃]1张，【hro】获得1点*[蛇之狡谋]。')
+    11165: () => new SkillBuilder('极恶技·尽').description('将2个非万能元素骰转化为[冰元素骰]，[舍弃]至多2张[当前元素骰费用]为0骰的卡牌，每[舍弃]1张，【hro】获得1点*[蛇之狡谋]。')
         .src('#',
             '')
         .burst().cost(1).handle(event => {
             const { hcards, cmds } = event;
-            const cnt = Math.min(2, hcards.filter(c => c.rawDiceCost == 0).length);
+            const cnt = Math.min(2, hcards.filter(c => c.currDiceCost == 0).length);
             cmds.changeDice({ cnt: 2, element: COST_TYPE.Cryo }).discard({ cnt, card: 0 }).getEnergy(cnt, { isSp: true });
         }),
 

@@ -638,7 +638,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             exec: () => status.dispose(),
         })),
 
-    111176: () => status('鹰翎祝念').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
+    111176: () => status('鹰翎祝念').combatStatus().icon(STATUS_ICON.Buff).useCnt(2).type(STATUS_TYPE.Attack)
         .description('我方角色「普通攻击」后治疗自身1点。；[useCnt]')
         .handle(status => ({
             triggers: 'after-skilltype1',

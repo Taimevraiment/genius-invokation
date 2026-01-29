@@ -2185,7 +2185,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e29c46b79a53a6c428d46017eecb52c2.png')
         .normalSkill('碎涛旋跃')
         .skills(
-            skill('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+3）。然后[舍弃]1张原本元素骰费用最高的手牌。')
+            skill('迸落星雨').description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+3）。然后[舍弃]1张[当前元素骰费用]最高的手牌。')
                 .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+4）。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v5.0.0')
                 .description('{dealDmg}，此角色每有3点【无尽食欲】提供的额外最大生命，此伤害+1（最多+5）。然后[舍弃]1张原本元素骰费用最高的手牌。', 'v4.8.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/f5c0f89cf02925ec13e306d11a5f7bd8.png',
@@ -2193,7 +2193,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .elemental().damage(1).cost(3).explain('sts122041').handle((event, ver) => {
                     const { hero: { heroStatus }, cmds, talent } = event;
                     cmds.discard({ mode: CMD_MODE.HighHandCard }).callback((c, cards) => {
-                        if (talent?.perCnt) c.heal(cards![0].rawDiceCost).callback(() => talent?.minusPerCnt());
+                        if (talent?.perCnt) c.heal(cards![0].currDiceCost).callback(() => talent?.minusPerCnt());
                     });
                     return { addDmgCdt: Math.min(ver.lt('v4.8.0') ? 5 : ver.lt('v5.0.0') ? 4 : 3, Math.floor((heroStatus.getUseCnt(122042)) / 3)) }
                 }),
