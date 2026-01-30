@@ -2171,7 +2171,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                     if (!hcard) return;
                     let cnt = 0;
                     const { cost1, cost2, maxDice } = status.variables;
-                    const cost = ver.lt('v6.4.0') ? hcard.rawDiceCost : hcard.currDiceCost;
+                    const cost = hcard.currDiceCost;
                     if (cost > maxDice) {
                         status.variables.maxDice = cost;
                         status.variables.maxDiceCnt = 1;

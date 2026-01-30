@@ -3768,7 +3768,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/ea0465d67ba6042b24ca003aa9f271d4_6391061726152297915.png')
         .handle((card, event) => {
             const { cmds, heros, hcards } = event;
-            if (hcards.every(c => c.rawDiceCost != 3)) return;
+            if (hcards.every(c => c.currDiceCost != 3)) return;
             const hero = heros.get(card.id);
             cmds.discard({ cnt: 1, card: 3 }).getEnergy(2, { hidxs: hero?.hidx, isSp: true });
             return { notPreview: true }
