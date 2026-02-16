@@ -2330,7 +2330,7 @@ export default class GeniusInvokationRoom {
      * @param selectIdx 选择卡牌的序号
      */
     private async _pickCard(pidx: number, selectIdx: number) {
-        this._writeLog(`【p:${pidx}:[${this.players[pidx].name}](${pidx})挑选了[${this.pickModal.cards[selectIdx].name}]】`);
+        this._writeLog(`【p:${pidx}:[${this.players[pidx].name}](${pidx})挑选了[${this.pickModal.cards[selectIdx]?.name}]】`);
         const { cardType, phase = PHASE.ACTION, hidxs } = this.pickModal;
         this.players[pidx].phase = phase;
         const selectId = this.pickModal.cards[selectIdx].id;

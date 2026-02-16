@@ -2449,7 +2449,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('#')
         .handle((card, event) => {
             const { cmds } = event;
-            cmds.getCard(3, { card: 3 });
+            cmds.getCard(3, { cardFilter: c => c.currDiceCost == 3 && !c.hasSubtype(CARD_SUBTYPE.Talent) });
             if (card.hasAttachment(206)) cmds.getStatus(206, { cnt: 3, mode: CMD_MODE.HighHandCard });
         }),
 

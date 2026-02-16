@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "vite --port 5500",
+    "dev": "vite",
     "build": "vue-tsc && cross-env NODE_ENV=production vite build",
-    "preview": "vite preview --port 5500"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@vueuse/core": "^13.4.0",
