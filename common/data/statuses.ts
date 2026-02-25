@@ -2684,12 +2684,13 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .useCnt(3, 'v6.4.0').roundCnt(1).from(330006)
         .type(ver => ver.lt('v6.4.0'), STATUS_TYPE.NonEvent)
         .type(ver => ver.gte('v6.4.0'), STATUS_TYPE.Usage, STATUS_TYPE.Sign)
-        .description('【本回合中，我方下次打出事件牌后：】赋予敌方手牌中所有事件牌【sts208】。；【本回合中，我方[舍弃]卡牌后：】将我方手牌中2张[当前元素骰费用]最高的卡牌置入牌组底。')
+        .description('【本回合中，我方下次打出事件牌后：】赋予敌方手牌中所有事件牌【sts208】。；【本回合中，我方[舍弃]手牌后：】将我方手牌中2张[当前元素骰费用]最高的卡牌置入牌组底。')
         .description('本回合中，我方打出的事件牌无效。；[useCnt]', 'v6.4.0')
         .handle((_, event, ver) => {
             if (ver.lt('v6.4.0')) return;
-            const { hcard, trigger, cmds } = event;
-            const triggers: Trigger[] = ['discard'];
+            const { hcard, trigger, cmds, source: isFromPile } = event;
+            const triggers: Trigger[] = [];
+            if (isFromPile == 0) triggers.push('discard');
             if (hcard?.type == CARD_TYPE.Event) triggers.push('card');
             if (trigger == 'card') cmds.getStatus(208, { cnt: MAX_HANDCARDS_COUNT, cardFilter: c => c.type == CARD_TYPE.Event });
             else cmds.putCard({ cnt: 2, mode: CMD_MODE.HighHandCard });

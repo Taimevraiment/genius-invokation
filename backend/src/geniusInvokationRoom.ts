@@ -2389,6 +2389,7 @@ export default class GeniusInvokationRoom {
         await this.emit(`changeTurn-${type}-isChange:${isChange()}`, pidx, { tip, isChange: isChange() });
         await this.delay(1e3);
         const currPlayer = this.players[this.currentPlayerIdx];
+        if (!currPlayer) return;
         const hasReadyskill = !currPlayer.heros[currPlayer.hidx].heroStatus.has(STATUS_TYPE.NonAction) &&
             currPlayer.heros[currPlayer.hidx].heroStatus.has(STATUS_TYPE.ReadySkill);
         if (!isDie) await this._doActionStart(this.currentPlayerIdx);

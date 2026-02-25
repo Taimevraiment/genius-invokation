@@ -307,7 +307,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('极恶技·断')
         .skills(
             skill('极恶技·闪').description('获得2点*[蛇之狡谋]，生成手牌【crd111161】。（每回合1次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/9e/bbxug2pr5p2cl1fxmdmgqae2xdvghe2.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/404a493d3b7964a708c6cd5eab69343c_1955116646191902022.png')
                 .elemental().cost(2).handle(event => {
                     const { cmds, skill: { useCntPerRound } } = event;
@@ -316,7 +316,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 }),
             allSkills[11163](),
             skill('理外之理').description('【hro】无法获得[充能]，改为可以积累*[蛇之狡谋]，最多7点。；【我方触发冻结/冰扩散/超导/冰结晶反应后：】生成手牌【crd111163】。（每回合3次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/8/85/3y86r70fb8dxlzx5kz929d2mc60r7lv.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/a2b8fba62b565fe8974be882752896d1_2070236635156012985.png')
                 .passive().perCnt(3).handle(event => {
                     const { skill, cmds } = event;
@@ -343,21 +343,21 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         }),
 
     1117: () => hero(555).name('米卡').since('v6.4.0').mondstadt().cryo().polearm()
-        .src('#')
-        .avatar('/image/tmp/v6.4.0/UI_Gcg_Char_AvatarIcon_Mika.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/1dd8c9d34d35efb1a229eed4f8584e8a_1723021599615540573.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/699e3484/0526b0bbfce91a818f1e583375e13111.png')
         .normalSkill('西风枪术·镝传')
         .skills(
             skill('星霜的流旋').description('{dealDmg}，生成【sts111171】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/de9d17bb1d5cf5224c6b547fbba77c2b_3911333309938261254.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 111171 })),
             skill('苍翎的颂愿').description('治疗我方所有角色1点，生成【sts111172】和【sts111176】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/3b332d8afca0840bb389ab100490627b_1849286135454196117.png')
                 .burst(2).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), status: [111172, 111176] })),
             skill('速射牵制').description('【自身使用技能后：】下次我方造成的[物理伤害]+1。（每回合2次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/829e1287b033cd13966293beca779d2b_8476985699734096608.png')
                 .passive().perCnt(2).handle(event => {
                     const { skill } = event;
                     if (skill.perCnt <= 0) return;
@@ -1282,15 +1282,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('宿灵闪箭')
         .skills(
             skill('暝色缒索').description('{dealDmg}，生成【sts114162】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/8/87/qpdvvjam3tgvtin7ruqxmxqkmw0d8l1.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/ddaffb5f60f5a848ab869aeed66963d7_4194742434903521590.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 114162 })),
             skill('黯声回响').description('{dealDmg}，召唤【smn114161】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/4/48/c79dz8w66gkncqnzx5qilgsfj2srdjk.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/9b42c01c5434aa2eb62d15e344727cea_4055010393150111801.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 114161 })),
             skill('夜翳的通感').description('【我方触发感电或月感电反应后：】如果可能，消耗2点「夜魂值」，造成1点[雷元素伤害]。；我方造成此技能以外的[水元素伤害]或[雷元素伤害]后，自身进入【sts114163】，并获得1点「夜魂值」。（每回合1次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/90/d7vslyt0lkx687b5rv8t3q52div2uh7.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/33ccac2adea6cd18a9c2d59f14843ae6_3282756831587509125.png')
                 .passive().perCnt(1).handle(event => {
                     const { source, cmds, skill, trigger, hero, eDmgedHero } = event;
@@ -1312,21 +1312,21 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1417: () => hero(556).name('伊涅芙').since('v6.4.0').nodkrai().electro().polearm()
-        .src('#')
-        .avatar('/image/tmp/v6.4.0/UI_Gcg_Char_AvatarIcon_Ineffa.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/383e910b7c4f8afbecd33aae64f83f83_1492533290277562328.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/699e3484/92b2f1481ebbf678390fa1ad25ea5f6c.png')
         .normalSkill('除尘旋刃')
         .skills(
             skill('涤净模式·稳态载频').description('生成2点【sts203】，召唤【smn114171】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/d5e9e4c887176cfeb314b9bb6db22a55_5325643536553566871.png')
                 .elemental().cost(3).handle(() => ({ status: [[203, 2]], summon: 114171 })),
             skill('至高律令·全域扫灭').description('{dealDmg}，召唤【smn114171】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/039b55c9cc622899e554c30d65cc80b7_8830435731277881166.png')
                 .burst(2).damage(4).cost(3).handle(() => ({ summon: 114171 })),
             skill('月兆祝赐·象拟中继').description('本局游戏中，敌方受到‹2›‹4›【感电反应】时，改为[月感电]反应。；自身在场，敌方行动牌被赋予【sts204】时：额外赋予【sts207】状态。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/f147a4e227a2b03d776bf87717a9f9a0_1564233371995092023.png')
                 .passive().handle(event => {
                     const { source, sourceHidx, cmds } = event;
                     if (source != 204) return;
@@ -2272,11 +2272,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('尖牙噬咬')
         .skills(
             skill('鳄齿锐波').description('{dealDmg}，将至多1张[当前元素骰费用]最高的手牌置入牌组底，生成手牌【crd124051】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/7/7d/jul1gbkikb5878hk9v2jfj81cuenk4y.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/c357668a3d1a749e4003f578687c54c7_8666737310344464188.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.putCard({ cnt: 1, mode: CMD_MODE.HighHandCard }).getCard(1, { card: 124051 }).res),
             skill('凶鳄狂浪').description('{dealDmg}，[舍弃]至多3张【crd124051】，每[舍弃]1张，治疗我方受伤最多的角色1点，并使其获得1点最大生命值。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/95/2da3lnnji0bsybdstugpy3kvosxe97a.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/261dce21bdb6e5cc2e0161f88538979c_2126152053723761736.png')
                 .burst(2).damage(4).cost(3).handle(event => {
                     const { hcards, cmds, heros } = event;
@@ -2285,7 +2285,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     cmds.discard({ cnt, card: 124051 }).addMaxHp(cnt, hidxs).heal(cnt, { hidxs });
                 }),
             skill('圣骸感应').description('我方打出或[舍弃]【crd124051】后，治疗我方受伤最多的角色1点。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/b/b6/kwiamko28pwwcgtxksrp7i2n31u7j6n.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/02/11/258999284/b539b03ea17283551f0c25327826656a_224956877266432226.png')
                 .passive().handle(event => {
                     const { cmds, hcard } = event;
@@ -2439,21 +2439,21 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     2306: () => hero(557).name('金焰绒翼龙暴君').since('v6.4.0').maxHp(11).monster().pyro()
-        .src('#')
-        .avatar('/image/tmp/v6.4.0/UI_Gcg_Char_MonsterIcon_FlamingoPrimo.png')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/3c81f7679978b506a4f564ff8c65e374_1316728194635485749.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/699e3484/f17ef867ac6f52eefce8077d38b1c0d1.png')
         .normalSkill('翼斩')
         .skills(
             skill('升腾炽风').description('{dealDmg}，自身附属2层【sts123062】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/6b0596cdcd0525f2d0b60045e7a15803_5605616860627063235.png')
                 .elemental().damage(1).cost(3).handle(() => ({ status: [[123062, 2]] })),
             skill('金焰爆轰').description('{dealDmg}，对所有敌方角色造成1点[穿透伤害]，自身附属1层【sts123061】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/8f0b4016fab01793e2a5b1ab69eb1f42_6537823244984634876.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ pdmg: 1, status: 123061 })),
             skill('古老者的血脉').description('【偶数行动阶段开始时：】自身附属1层【sts123061】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/c22a44612144c3abf0c6c27b56d3bb0f_4784423027843795323.png')
                 .passive().handle(event => {
                     if (event.round % 2 == 1) return;
                     return { triggers: 'phase-start', status: 123061 }

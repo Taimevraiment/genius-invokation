@@ -34,7 +34,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
 
     205: () => summon('雷暴云').useCnt(1).maxUse(MAX_USE_COUNT).damage(2).electro()
         .description('{defaultAtk。}；【自身入场或可用次数增加时：】赋予敌方随机1张手牌【sts204】。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/05b4b00e37213ee98813a4be67352327_4154918409935579035.png')
         .handle((summon, event) => ({
             triggers: ['phase-end', 'enter', 'usecnt-add'],
             exec: cmds => {
@@ -324,7 +324,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/2a179be505d2c8e9097709a17b223db7_4957973981423613982.png'),
 
     114171: () => summon('薇尔琪塔').useCnt(2).damage(1).description('{defaultAtk。}')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/27cd7d32d8108332a19ea56241928e4a_1680338304291637262.png'),
 
     115011: (isTalent: boolean = false) => summon('大型风灵').useCnt(3).damage(2).talent(isTalent)
         .description(`{defaultAtk。}；【我方角色或召唤物引发扩散反应后：】转换此牌的元素类型，改为造成被扩散的元素类型的伤害。（离场前仅限一次）${isTalent ? '；【此召唤物在场时：】如果此牌的元素已转换，则使我方造成的此类元素伤害+1。' : ''}`)
@@ -926,7 +926,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
 
     301041: () => summon('回天的圣主').from(321034).useCnt(3).damage(2).pierce()
         .description('{defaultAtk。；此卡牌被弃置时，对场上生命值最高的一名角色造成5点[穿透伤害]。}')
-        .src('#')
+        .src('https://patchwiki.biligame.com/images/ys/7/7d/f40k9q77njtzc0xwvggtce8cj4h7drn.png')
         .handle((summon, event) => ({
             triggers: ['phase-end', 'destroy'],
             exec: cmds => {
