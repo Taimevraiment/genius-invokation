@@ -207,7 +207,7 @@ export default class GeniusInvokationRoom {
             players: this.players,
             randomInt: this._randomInt.bind(this),
             randomInArr: this._randomInArr.bind(this),
-            getCardIds: this._getCardIds.bind(this),
+            getCardIds: (filter?: (card: Card) => boolean) => this._getCardIds.bind(this)(filter, true),
         }
     }
     get hasDieSwitch() {
@@ -1076,6 +1076,7 @@ export default class GeniusInvokationRoom {
         }
         const ohidx = player.hidx;
         if (isDieSwitch) { // 被击倒后选择出战角色
+            if (player.heros[hidx].hp <= 0) return;
             this.preview.isQuickAction = !this.isDieBackChange;
             const isOppoActioning = opponent.phase == PHASE.ACTION && this.preview.isQuickAction;
             player.UI.info = (isOppoActioning ? '对方' : '我方') + '行动中....';
@@ -1964,7 +1965,8 @@ export default class GeniusInvokationRoom {
         const asmnres = this._detectSummon(atkPidx, atriggers[atkHidx], { skill, isSummon, dmgElement, source: source });
         res.willDamages[getDmgIdx][0] += asmnres.addDmg;
 
-        this._detectSupport(atkPidx, atriggers[atkHidx], { skill, getdmg: getdmg(), dmgElement, source: source });
+        const supportres = this._detectSupport(atkPidx, atriggers[atkHidx], { skill, getdmg: getdmg(), dmgElement, source: source });
+        res.willDamages[getDmgIdx][0] += supportres.addDmg;
 
         for (let i = 0; i < ehlen; ++i) {
             const chi = (dmgedHidx + i) % ehlen;
@@ -2728,10 +2730,12 @@ export default class GeniusInvokationRoom {
                     if (pdmg > 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]造成${willDamages[phidx][1]}点穿透伤害 hp:${ohp}→${ohp - pdmg}`);
                     if ((willHeals[phidx] ?? -1) >= 0) logs.push(`${logPrefix}[${p.name}](${p.pidx})[${h.name}]治疗${rheal}点 hp:${ohp}→${ohp + rheal}`);
                     if (h.hp == 0 && !isDead) {
-                        this._detectHero(p.pidx, 'will-killed', { types: STATUS_TYPE.NonDefeat, hidxs: h.hidx, isOnlyHero: true });
+                        this._detectHero(p.pidx, 'will-killed', { types: STATUS_TYPE.NonDefeat, hidxs: h.hidx, sourceHidx: h.hidx, isOnlyHero: true });
+                        this._detectHero(p.pidx, 'other-will-killed', { types: STATUS_TYPE.NonDefeat, hidxs: p.heros.allHidxs({ exclude: h.hidx }), sourceHidx: h.hidx });
                         // 被击倒
                         if (h.heroStatus.every(sts => !sts.hasType(STATUS_TYPE.NonDefeat) || sts.variables[STATUS_TYPE.NonDefeat] == 0) &&
-                            (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.perCnt <= 0)
+                            (!h.talentSlot || !h.talentSlot.hasTag(CARD_TAG.NonDefeat) || h.talentSlot.variables[CARD_TAG.NonDefeat] == 0) &&
+                            p.heros.every(oh => oh.hidx == h.hidx || oh.talentSlot?.variables[CARD_TAG.NonDefeat] != 2)
                         ) {
                             this.players[p.pidx ^ 1].canAction = false;
                             isDie.add(p.pidx);
@@ -3017,7 +3021,7 @@ export default class GeniusInvokationRoom {
     } = {}) {
         const player = this.players[pidx];
         const { name, heros, hidx: ahidx, combatStatus } = player;
-        const { types, hcard, heal, getdmg, dmg, hasDmg, isSummon, source, sourceHidx, dmgElement, isAfterSkill, sourceStatus,
+        const { types, hcard, heal, getdmg, dmg, hasDmg, isSummon, source, sourceHidx = -1, dmgElement, isAfterSkill, sourceStatus,
             isSwirlExec, dmgedHidx, sourceSummon, cStatus, cSlot, isOnlyHero, skill, includeCombatStatus, isImmediate,
         } = options;
         let { hidxs = heros.allHidxs(), restDmg = -1, minusDiceCard = 0, switchHeroDiceCnt = 0 } = options;
@@ -3052,8 +3056,8 @@ export default class GeniusInvokationRoom {
                     const trigger = isStatus && hfield.group == STATUS_GROUP.combatStatus ? otrigger.replace('other-', '') as Trigger : otrigger;
                     if (trigger == 'reduce-dmg' && isStatus && hfield.hasType(STATUS_TYPE.Barrier) && hfield.variables[STATUS_TYPE.Barrier] == 0) continue;
                     if (trigger == 'status-destroy' && isStatus && hfield.id == source) continue;
-                    if (trigger == 'will-killed') {
-                        if (heros[hidx].hp > 0) {
+                    if (trigger == 'will-killed' || trigger == 'other-will-killed') {
+                        if (heros[sourceHidx]?.hp > 0) {
                             if (isStatus && hfield.hasType(STATUS_TYPE.NonDefeat)) continue;
                             if (!isStatus && hfield.hasTag(CARD_TAG.NonDefeat)) continue;
                         } else {
@@ -3288,6 +3292,7 @@ export default class GeniusInvokationRoom {
         const { supports: eSupports } = this.players[pidx ^ 1];
         const exeSupport = !cSupport ? supports : convertToArray(cSupport);
         const lastSupport: Support[] = [];
+        let addDmg = 0;
         let isLast = false;
         const detectSupport = (support: Support) => {
             for (const trigger of triggers) {
@@ -3316,6 +3321,7 @@ export default class GeniusInvokationRoom {
                 this.preview.isQuickAction ||= !!supportres.isQuickAction;
                 switchHeroDiceCnt = Math.max(0, switchHeroDiceCnt - (supportres.minusDiceHero ?? 0));
                 minusDiceCard += supportres.minusDiceCard ?? 0;
+                addDmg += supportres.addDmgCdt ?? 0;
                 const execute = () => {
                     const oCnt = support.useCnt;
                     const oPct = support.perCnt;
@@ -3367,7 +3373,7 @@ export default class GeniusInvokationRoom {
         exeSupport.forEach(detectSupport);
         isLast = true;
         lastSupport.forEach(detectSupport);
-        return { switchHeroDiceCnt, minusDiceCard }
+        return { switchHeroDiceCnt, minusDiceCard, addDmg }
     }
     /**
      * 手牌效果发动
@@ -3630,738 +3636,799 @@ export default class GeniusInvokationRoom {
             const cpidx = pidx ^ +!!isOppo ^ +(cmd == 'stealCard');
             const cplayer = this.players[cpidx];
             const copponent = this.players[cpidx ^ 1];
-            const { name, heros, dice, handCards, pile, UI, playerInfo, summons, combatStatus } = cplayer;
+            const { name, heros, dice, handCards, pile, UI, playerInfo, summons, supports, combatStatus } = cplayer;
             let { hidxs = chidxs } = cmds[i];
             if (!['attack', 'heal', 'addMaxHp', 'revive'].includes(cmd)) doDamage();
-            if (cmd == 'useSkill') {
-                this.taskQueue.addTask(`doCmd--useSkill:${cnt}-p${cpidx}:${trigger}`, async () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    if (typeof stsargs == 'number' && !cplayer.heros[stsargs].isFront) {
-                        return this.emit('useSkill-cancel', cpidx);
-                    }
-                    await this._useSkill(cpidx, cnt || -2, {
-                        selectSummon: ohidxs?.[0],
-                        withCard,
-                    });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd.startsWith('switch-')) {
-                const sdir = cmd == 'switch-before' ? -1 : cmd == 'switch-after' ? 1 : 0;
-                this.taskQueue.addTask(`doCmd--switch-p${cpidx}:${source}:${trigger}`, async () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const { isInvalid } = this._emitEvent(cpidx, 'pre-switch', { types: STATUS_TYPE.Usage, hidxs: heros.frontHidx });
-                    if (isInvalid) return;
-                    const toHidx = sdir == 0 ? heros.getNearestHidx(hidxs?.[0]) : heros.getFront({ offset: sdir })?.hidx ?? -1;
-                    if (toHidx == -1) throw new Error(`ERROR@doCmd--${cmd}: toHidx is not found, hidxs:${hidxs}, sdir:${sdir}`);
-                    if (!this.preview.isExec) this.preview.willSwitch[cpidx][toHidx] = true;
-                    await this._switchHero(cpidx, toHidx, `doCmd--switch:${source}`, { socket, skill });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (['getCard', 'addCard', 'putCard'].includes(cmd)) {
-                const cards: Card[] = [];
-                const count = Math.abs(cnt);
-                if (card) {
-                    cards.push(...(Array.isArray(card) ? card : Array.from({ length: count }, () => clone(card)))
-                        .map(c => typeof c == 'number' ? this.newCard(c) : c));
-                }
-                if (cmd == 'putCard') {
-                    if (handCards.length == 0) continue;
-                    if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
-                        let restCnt = cnt;
-                        let hcardsSorted = clone(handCards).sort((a, b) =>
-                            (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
-                        while (hcardsSorted.length > 0) {
-                            const cost = hcardsSorted[0].currDiceCost;
-                            const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
-                            cards.push(...this._randomInArr(costCards, restCnt));
-                            if (cards.length == cnt) break;
-                            restCnt -= cards.length;
-                            hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
-                        }
-                    } else if (mode == CMD_MODE.AllHandCards) {
-                        cards.push(...clone(handCards));
-                    }
-                    const putCardCmds: Cmds[] = [
-                        { cmd: 'discard', cnt: cards.length, card: cards, mode: CMD_MODE.IsNotPublic, isAttach: true, isOppo },
-                        { cmd: 'addCard', card: cards, hidxs: [-cards.length], mode: CMD_MODE.IsNotPublic, isOppo }
-                    ];
-                    if (isUnshift) putCardCmds.reverse();
-                    cmds.splice(i--, 1, ...putCardCmds);
-                    continue;
-                }
-                if (cmd == 'getCard') {
-                    this.taskQueue.addTask(`doCmd--getCard-p${cpidx}:${trigger}`, async () => {
+            switch (cmd) {
+                case 'useSkill':
+                    this.taskQueue.addTask(`doCmd--useSkill:${cnt}-p${cpidx}:${trigger}`, async () => {
                         const ncmds = new CmdsGenerator();
                         callback?.(ncmds);
                         this._doCmds(cpidx, ncmds);
-                        const willGetCard: Card[] = [];
-                        const exclude = ohidxs ?? [];
-                        let restCnt = stsargs ? count - handCards.filter(c => c.UI.class != 'discard').length : (count || cards.length);
-                        let isFromPile = isAttach;
-                        while (restCnt-- > 0) {
-                            let wcard: Card | null = null;
-                            if (cards[count - restCnt - 1]) { // 摸指定卡
-                                if (isAttach) { // 从牌库摸
-                                    const cid = cards[count - restCnt - 1].id;
-                                    const cardIdx = pile.findIndex(c => c.id == cid);
-                                    if (cardIdx > -1) [wcard] = pile.splice(cardIdx, 1);
-                                } else { // 直接生成
-                                    wcard = cards[count - restCnt - 1];
-                                }
-                            } else if (cardFilter) { // 指定类型
-                                if (isAttach) {
-                                    if (pile.every(c => !cardFilter(c))) break;
-                                    while (wcard == null) {
-                                        const cardIdx = pile.findIndex(c => cardFilter(c) && !exclude.includes(c.id));
-                                        if (cardIdx > -1) [wcard] = pile.splice(cardIdx, 1);
-                                    }
-                                } else {
-                                    const cardsIdPool = this._getCardIds(c => cardFilter(c) && !exclude.includes(c.id));
-                                    wcard = this.newCard(this._randomInArr(cardsIdPool)[0]);
-                                }
-                            } else {
-                                if (exclude.length > 0) { // 在指定的某几张牌中随机模
-                                    wcard = this.newCard(this._randomInArr(exclude)[0]);
-                                } else { // 从牌库直接摸牌
-                                    isFromPile = true;
-                                    wcard = pile.shift() ?? null;
-                                }
-                            }
-                            if (wcard && wcard.id != 0) {
-                                willGetCard.push(clone(wcard).setEntityId(this._genEntityId()));
-                            }
+                        if (typeof stsargs == 'number' && !cplayer.heros[stsargs].isFront) {
+                            return this.emit('useSkill-cancel', cpidx);
                         }
-                        if (willGetCard.length > 0) {
-                            const rest = MAX_HANDCARDS_COUNT - handCards.length;
-                            const getcards = willGetCard.slice(0, rest);
-                            const cardNames = willGetCard.map(c => `[${c.name}]`).join('');
-                            const cardEntityIds = willGetCard.map(c => `(${c.entityId})`).join('');
-                            if (stsargs && count - handCards.length < willGetCard.length) {
-                                let excess = willGetCard.length - count + handCards.length;
-                                while (excess-- > 0) {
-                                    const excard = willGetCard.pop();
-                                    if (excard) pile.unshift(excard);
-                                }
-                            }
-                            if (mode != CMD_MODE.IsPublic) this._writeLog(`[${name}](${cpidx})抓${willGetCard.length}张牌【p${cpidx}:${cardNames}】【${cardEntityIds}】`);
-                            willGetCard.forEach((c, ci) => {
-                                c.UI.class = (isFromPile ? 'will-getcard-my-pile' : 'will-getcard-my-generate') + (ci < rest ? '' : '-over');
-                            });
-                            UI.willGetCard = {
-                                cards: [...willGetCard],
-                                isFromPile,
-                                isNotPublic: mode != CMD_MODE.IsPublic,
-                            }
-                            handCards.push(...willGetCard.slice(0, rest));
-                            await this.emit('getCard', cpidx);
-                            UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
-                            handCards.forEach(c => delete c.UI.class);
-                            const atriggers: Trigger[] = ['getcard'];
-                            const etriggers: Trigger[] = ['getcard-oppo'];
-                            if (isFromPile) {
-                                atriggers.push('drawcard');
-                                etriggers.push('drawcard-oppo');
-                            }
-                            for (const getCard of getcards) {
-                                this.taskQueue.addTask(`doCmd--getCard-p${cpidx}-${getCard.name}(${getCard.entityId}):drawcard`, async () => {
-                                    if (cplayer.handCards.some(c => c.entityId == getCard.entityId)) {
-                                        this._detectHero(cpidx, atriggers, { types: STATUS_TYPE.Usage, hcard: getCard });
-                                        this._detectSupport(cpidx ^ 1, etriggers);
-                                    }
-                                    if (this.taskQueue.isTaskEmpty()) await this.emit('getCard:drawcard-cancel', cpidx);
-                                });
-                                const cardres = getCard.handle(getCard, { pidx: cpidx, ...this.handleEvent, trigger: 'getcard' });
-                                if (this._hasNotTriggered(cardres.triggers, 'getcard')) continue;
-                                this.taskQueue.addTask(`doCmd--getCard-p${cpidx}-${getCard.name}(${getCard.entityId}):getcard`, async () => {
-                                    if (cplayer.handCards.some(c => c.entityId == getCard.entityId)) {
-                                        await this._useCard(cpidx, -1, [], { getCard });
-                                    } else if (this.taskQueue.isTaskEmpty()) {
-                                        await this.emit('getCard:getcard-cancel', cpidx);
-                                    }
-                                });
-                            }
-                            await this.delay(1500);
-                        }
+                        await this._useSkill(cpidx, cnt || -2, {
+                            selectSummon: ohidxs?.[0],
+                            withCard,
+                        });
                     }, { isImmediate, isPriority, isUnshift });
-                }
-                if (cmd == 'addCard') {
-                    const cardMap = {};
-                    cards.forEach(c => cardMap[c.name] = (cardMap[c.name] ?? 0) + 1);
-                    const cardStr = Object.entries(cardMap).map(([name, cnt]) => `${cnt}张[${name}]`).join('');
-                    this.taskQueue.addTask(`doCmd--addCard-p${cpidx}:${trigger}:${cardStr}`, async () => {
+                    break;
+                case 'switch-after':
+                case 'switch-before':
+                case 'switch-to': {
+                    const sdir = cmd == 'switch-before' ? -1 : cmd == 'switch-after' ? 1 : 0;
+                    this.taskQueue.addTask(`doCmd--switch-p${cpidx}:${source}:${trigger}`, async () => {
                         const ncmds = new CmdsGenerator();
                         callback?.(ncmds);
                         this._doCmds(cpidx, ncmds);
-                        UI.willAddCard.cards.push(...cards);
-                        UI.willAddCard.isNotPublic = mode == CMD_MODE.IsNotPublic;
-                        const scope = ohidxs?.[0] ?? 0;
-                        const isRandom = !isAttach;
-                        const isNotPublic = mode == CMD_MODE.IsNotPublic;
-                        this._writeLog(`[${name}](${cpidx})将${isNotPublic ? `【p${cpidx}:${cardStr}】【p${cpidx ^ 1}:${cards.length}张牌】` : `${cardStr}`}${Math.abs(scope) == cards.length ? '' : cnt < 0 ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${cnt < 0 && Math.abs(scope) != cards.length ? '第' : ''}${Math.abs(scope) == cards.length ? '' : `${Math.abs(scope)}张`}` : ''}`);
-                        const count = cards.length;
-                        const cscope = scope || pile.length;
-                        if (cnt < 0) {
-                            pile.splice(Math.abs(scope) - 1, 0, ...cards);
-                        } else if (isRandom) {
-                            const ranIdxs: number[] = [];
-                            for (let i = 1; i <= count; ++i) {
-                                let pos = this._randomInt(cscope - i * Math.sign(cscope));
-                                if (cscope < 0 && pos == 0) pos = pile.length;
-                                ranIdxs.push(pos);
+                        const { isInvalid } = this._emitEvent(cpidx, 'pre-switch', { types: STATUS_TYPE.Usage, hidxs: heros.frontHidx });
+                        if (isInvalid) return;
+                        const toHidx = sdir == 0 ? heros.getNearestHidx(hidxs?.[0]) : heros.getFront({ offset: sdir })?.hidx ?? -1;
+                        if (toHidx == -1) throw new Error(`ERROR@doCmd--${cmd}: toHidx is not found, hidxs:${hidxs}, sdir:${sdir}`);
+                        if (!this.preview.isExec) this.preview.willSwitch[cpidx][toHidx] = true;
+                        await this._switchHero(cpidx, toHidx, `doCmd--switch:${source}`, { socket, skill });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                } case 'getCard':
+                case 'addCard':
+                case 'putCard': {
+                    const cards: Card[] = [];
+                    const count = Math.abs(cnt);
+                    if (card) {
+                        cards.push(...(Array.isArray(card) ? this._randomInArr(card, count) : Array.from({ length: count }, () => clone(card)))
+                            .map(c => typeof c == 'number' ? this.newCard(c) : c));
+                    }
+                    if (cmd == 'putCard') {
+                        if (handCards.length == 0) continue;
+                        if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
+                            let restCnt = cnt;
+                            let hcardsSorted = clone(handCards).sort((a, b) =>
+                                (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
+                            while (hcardsSorted.length > 0) {
+                                const cost = hcardsSorted[0].currDiceCost;
+                                const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
+                                cards.push(...this._randomInArr(costCards, restCnt));
+                                if (cards.length == cnt) break;
+                                restCnt -= cards.length;
+                                hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
                             }
-                            ranIdxs.sort((a, b) => (a - b) * cscope).forEach(pos => pile.splice(pos, 0, cards.shift()!));
-                        } else {
-                            const step = parseInt(`${cscope / (count + 1)}`);
-                            let rest = Math.abs(cscope % (count + 1));
-                            for (let i = 1; i <= count; ++i) {
-                                let pos = step * i + ((i - 1 + Math.min(rest, i))) * Math.sign(step);
-                                if (cscope < 0 && pos == 0) pos = pile.length;
-                                pile.splice(pos, 0, cards.shift()!);
-                            }
+                        } else if (mode == CMD_MODE.AllHandCards) {
+                            cards.push(...clone(handCards));
                         }
-                        this._writeLog(`[${name}](${cpidx})加牌后牌库：${pile.map(c => `[${c.name}]`).join('')}`, 'system');
-                        await this.emit('addcard', cpidx);
-                        UI.willAddCard = { cards: [], isNotPublic: false };
-                    }, { delayAfter: 1500, isImmediate, isPriority, isUnshift });
-                }
-            } else if (['discard', 'stealCard'].includes(cmd)) {
-                this.taskQueue.addTask(`doCmd--discard-p${cpidx}:${trigger}`, async () => {
-                    const isDiscard = cmd == 'discard';
-                    const discards: Card[] = [];
-                    let discardCnt = cnt || 1;
-                    const unselectedCards = handCards.filter(c => c.entityId != withCard?.entityId).sort((a, b) => b.entityId - a.entityId);
-                    if (cmd == 'stealCard' && unselectedCards.length == 0) return;
-                    const discardIdxs = (ohidxs ?? []).map(ci => handCards.filter(c => c.entityId != withCard?.entityId)[ci].entityId);
-                    if (discardIdxs.length > 0) {
-                        discards.push(...clone(unselectedCards.filter(c => discardIdxs.includes(c.entityId))));
-                    } else {
-                        if (typeof card == 'number') {
-                            if (unselectedCards.length > 0) {
-                                let curIdx = -1;
-                                while (discardCnt-- > 0) {
-                                    curIdx = unselectedCards.findIndex((c, ci) => ci > curIdx && (c.id == card || c.entityId == card || c.currDiceCost == card));
-                                    if (curIdx == -1) break;
-                                    discards.push(clone(unselectedCards[curIdx]));
-                                }
-                            }
-                        } else {
-                            const hcardsSorted = clone(unselectedCards).sort((a, b) => (b.currDiceCost - a.currDiceCost));
-                            if (card) { // 弃置指定牌
-                                (convertToArray(clone(card)) as Card[]).forEach(c => {
-                                    if (c.entityId == -1) discardIdxs.push(c.cidx);
-                                    discards.push(c);
-                                });
-                            } else if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
-                                discards.push(...hcardsSorted);
-                            } else {
-                                while (discardCnt > 0) {
-                                    if (mode == CMD_MODE.Random || mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
-                                        if (unselectedCards.length == 0) break;
-                                        if (mode == CMD_MODE.Random) { // 弃置随机手牌
-                                            const didx = this._randomInt(unselectedCards.length - 1);
-                                            const [discard] = unselectedCards.splice(didx, 1);
-                                            discards.push(clone(discard));
-                                        } else if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) { // 弃置花费最高/低的手牌
-                                            const cost = hcardsSorted.at(mode == CMD_MODE.HighHandCard ? 0 : -1)!.currDiceCost;
-                                            const costCards = unselectedCards.filter(c => c.currDiceCost == cost);
-                                            const [{ entityId: ceid }] = isDiscard ? this._randomInArr(costCards) : costCards;
-                                            const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
-                                            discards.push(clone(discard));
-                                            hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);
+                        const putCardCmds: Cmds[] = [
+                            { cmd: 'discard', cnt: cards.length, card: cards, mode: CMD_MODE.IsNotPublic, isAttach: true, isOppo },
+                            { cmd: 'addCard', card: cards, hidxs: [-cards.length], mode: CMD_MODE.IsNotPublic, isOppo }
+                        ];
+                        if (isUnshift) putCardCmds.reverse();
+                        cmds.splice(i--, 1, ...putCardCmds);
+                        continue;
+                    }
+                    if (cmd == 'getCard') {
+                        this.taskQueue.addTask(`doCmd--getCard-p${cpidx}:${trigger}`, async () => {
+                            const ncmds = new CmdsGenerator();
+                            callback?.(ncmds);
+                            this._doCmds(cpidx, ncmds);
+                            const willGetCard: Card[] = [];
+                            const exclude = ohidxs ?? [];
+                            let restCnt = stsargs ? count - handCards.filter(c => c.UI.class != 'discard').length : (count || cards.length);
+                            let isFromPile = isAttach;
+                            while (restCnt-- > 0) {
+                                let wcard: Card | null = null;
+                                if (cards[count - restCnt - 1]) { // 摸指定卡
+                                    if (isAttach) { // 从牌库摸
+                                        const cid = cards[count - restCnt - 1].id;
+                                        const cardIdx = pile.findIndex(c => c.id == cid);
+                                        if (cardIdx > -1) [wcard] = pile.splice(cardIdx, 1);
+                                    } else { // 直接生成
+                                        wcard = cards[count - restCnt - 1];
+                                    }
+                                } else if (cardFilter) { // 指定类型
+                                    if (isAttach) {
+                                        if (pile.every(c => !cardFilter(c))) break;
+                                        while (wcard == null) {
+                                            const cardIdx = pile.findIndex(c => cardFilter(c) && !exclude.includes(c.id));
+                                            if (cardIdx > -1) [wcard] = pile.splice(cardIdx, 1);
                                         }
                                     } else {
-                                        if (pile.length - (cnt - discardCnt) == 0) break;
-                                        if (mode == CMD_MODE.TopPileCard) { // 弃置牌堆顶的牌 
-                                            const discardIdx = Math.min(pile.length, cnt) - (cnt - discardCnt) - 1;
-                                            discards.push(clone(pile[discardIdx]));
-                                            discardIdxs.push(discardIdx);
-                                        } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
-                                            const disIdx = this._randomInt(pile.length - 1);
-                                            discards.push(clone(pile[disIdx]));
-                                            discardIdxs.push(disIdx);
+                                        const cardsIdPool = this._getCardIds(c => cardFilter(c) && !exclude.includes(c.id));
+                                        wcard = this.newCard(this._randomInArr(cardsIdPool)[0]);
+                                    }
+                                } else if (mode == CMD_MODE.HighLowCard) { // 摸牌库中费用最高或最低的牌
+                                    isFromPile = true;
+                                    const maxCost = Math.max(...pile.map(c => c.currDiceCost));
+                                    const minCost = Math.min(...pile.map(c => c.currDiceCost)); const cost = mode == CMD_MODE.HighLowCard ? maxCost : minCost;
+                                    const costCards = pile.filter(c => c.currDiceCost == cost);
+                                    [wcard] = this._randomInArr(costCards);
+                                    pile.splice(wcard.cidx, 1);
+                                } else {
+                                    if (exclude.length > 0) { // 在指定的某几张牌中随机模
+                                        wcard = this.newCard(this._randomInArr(exclude)[0]);
+                                    } else { // 从牌库直接摸牌
+                                        isFromPile = true;
+                                        wcard = pile.shift() ?? null;
+                                    }
+                                }
+                                if (wcard && wcard.id != 0) {
+                                    willGetCard.push(clone(wcard).setEntityId(this._genEntityId()));
+                                }
+                            }
+                            if (willGetCard.length > 0) {
+                                const rest = MAX_HANDCARDS_COUNT - handCards.length;
+                                const getcards = willGetCard.slice(0, rest);
+                                const cardNames = willGetCard.map(c => `[${c.name}]`).join('');
+                                const cardEntityIds = willGetCard.map(c => `(${c.entityId})`).join('');
+                                if (stsargs && count - handCards.length < willGetCard.length) {
+                                    let excess = willGetCard.length - count + handCards.length;
+                                    while (excess-- > 0) {
+                                        const excard = willGetCard.pop();
+                                        if (excard) pile.unshift(excard);
+                                    }
+                                }
+                                if (mode != CMD_MODE.IsPublic) this._writeLog(`[${name}](${cpidx})抓${willGetCard.length}张牌【p${cpidx}:${cardNames}】【${cardEntityIds}】`);
+                                willGetCard.forEach((c, ci) => {
+                                    c.UI.class = (isFromPile ? 'will-getcard-my-pile' : 'will-getcard-my-generate') + (ci < rest ? '' : '-over');
+                                });
+                                UI.willGetCard = {
+                                    cards: [...willGetCard],
+                                    isFromPile,
+                                    isNotPublic: mode != CMD_MODE.IsPublic,
+                                }
+                                handCards.push(...willGetCard.slice(0, rest));
+                                await this.emit('getCard', cpidx);
+                                UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
+                                handCards.forEach(c => delete c.UI.class);
+                                const atriggers: Trigger[] = ['getcard'];
+                                const etriggers: Trigger[] = ['getcard-oppo'];
+                                if (isFromPile) {
+                                    atriggers.push('drawcard');
+                                    etriggers.push('drawcard-oppo');
+                                }
+                                for (const getCard of getcards) {
+                                    this.taskQueue.addTask(`doCmd--getCard-p${cpidx}-${getCard.name}(${getCard.entityId}):drawcard`, async () => {
+                                        if (cplayer.handCards.some(c => c.entityId == getCard.entityId)) {
+                                            this._detectHero(cpidx, atriggers, { types: STATUS_TYPE.Usage, hcard: getCard });
+                                            this._detectSupport(cpidx ^ 1, etriggers);
                                         }
-                                    }
-                                    --discardCnt;
+                                        if (this.taskQueue.isTaskEmpty()) await this.emit('getCard:drawcard-cancel', cpidx);
+                                    });
+                                    const cardres = getCard.handle(getCard, { pidx: cpidx, ...this.handleEvent, trigger: 'getcard' });
+                                    if (this._hasNotTriggered(cardres.triggers, 'getcard')) continue;
+                                    this.taskQueue.addTask(`doCmd--getCard-p${cpidx}-${getCard.name}(${getCard.entityId}):getcard`, async () => {
+                                        if (cplayer.handCards.some(c => c.entityId == getCard.entityId)) {
+                                            await this._useCard(cpidx, -1, [], { getCard });
+                                        } else if (this.taskQueue.isTaskEmpty()) {
+                                            await this.emit('getCard:getcard-cancel', cpidx);
+                                        }
+                                    });
+                                }
+                                await this.delay(1500);
+                            }
+                        }, { isImmediate, isPriority, isUnshift });
+                    }
+                    if (cmd == 'addCard') {
+                        const cardMap = {};
+                        cards.forEach(c => cardMap[c.name] = (cardMap[c.name] ?? 0) + 1);
+                        const cardStr = Object.entries(cardMap).map(([name, cnt]) => `${cnt}张[${name}]`).join('');
+                        this.taskQueue.addTask(`doCmd--addCard-p${cpidx}:${trigger}:${cardStr}`, async () => {
+                            const ncmds = new CmdsGenerator();
+                            callback?.(ncmds);
+                            this._doCmds(cpidx, ncmds);
+                            UI.willAddCard.cards.push(...cards);
+                            UI.willAddCard.isNotPublic = mode == CMD_MODE.IsNotPublic;
+                            const scope = ohidxs?.[0] ?? 0;
+                            const isRandom = !isAttach;
+                            const isNotPublic = mode == CMD_MODE.IsNotPublic;
+                            this._writeLog(`[${name}](${cpidx})将${isNotPublic ? `【p${cpidx}:${cardStr}】【p${cpidx ^ 1}:${cards.length}张牌】` : `${cardStr}`}${Math.abs(scope) == cards.length ? '' : cnt < 0 ? '' : isRandom ? '随机' : '均匀'}加入牌库${scope != 0 ? `${scope > 0 ? '顶' : '底'}${cnt < 0 && Math.abs(scope) != cards.length ? '第' : ''}${Math.abs(scope) == cards.length ? '' : `${Math.abs(scope)}张`}` : ''}`);
+                            const count = cards.length;
+                            const cscope = scope || pile.length;
+                            if (cnt < 0) {
+                                pile.splice(Math.abs(scope) - 1, 0, ...cards);
+                            } else if (isRandom) {
+                                const ranIdxs: number[] = [];
+                                for (let i = 1; i <= count; ++i) {
+                                    let pos = this._randomInt(cscope - i * Math.sign(cscope));
+                                    if (cscope < 0 && pos == 0) pos = pile.length;
+                                    ranIdxs.push(pos);
+                                }
+                                ranIdxs.sort((a, b) => (a - b) * cscope).forEach(pos => pile.splice(pos, 0, cards.shift()!));
+                            } else {
+                                const step = parseInt(`${cscope / (count + 1)}`);
+                                let rest = Math.abs(cscope % (count + 1));
+                                for (let i = 1; i <= count; ++i) {
+                                    let pos = step * i + ((i - 1 + Math.min(rest, i))) * Math.sign(step);
+                                    if (cscope < 0 && pos == 0) pos = pile.length;
+                                    pile.splice(pos, 0, cards.shift()!);
                                 }
                             }
-                        }
+                            this._writeLog(`[${name}](${cpidx})加牌后牌库：${pile.map(c => `[${c.name}]`).join('')}`, 'system');
+                            await this.emit('addcard', cpidx);
+                            UI.willAddCard = { cards: [], isNotPublic: false };
+                        }, { delayAfter: 1500, isImmediate, isPriority, isUnshift });
                     }
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds, discards);
-                    this._doCmds(cpidx, ncmds);
-                    if (discards.length > 0) {
-                        const isDiscardHand = mode == CMD_MODE.Random || mode == CMD_MODE.AllHandCards ||
-                            mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard || ohidxs ||
-                            (card != undefined && (!(card instanceof GICard) || card.entityId != -1));
-                        if (isDiscard) {
-                            playerInfo.discardCnt += discards.length;
-                            playerInfo.discardIds.push(...discards.map(c => c.id));
-                        }
-                        const cardNames = discards.map(c => `[${c.name}]【(${c.entityId})】`).join('');
-                        handCards.forEach(c => discards.some(dc => dc.entityId == c.entityId) && (c.UI.class = 'discard'));
-                        if (isDiscardHand) { // 舍弃手牌
-                            discards.forEach(dc => UI.willDiscard.hcards.push(dc));
-                            handCards.filter(dc => discards.map(c => c.entityId).includes(dc.entityId)).forEach(c => {
-                                c.UI.class = 'will-discard-hcard-my';
-                            });
-                        } else { // 舍弃牌库中的牌
-                            UI.willDiscard.pile.push(...clone(pile.filter((_, dcidx) => discardIdxs.includes(dcidx))));
-                            assign(pile, pile.filter((_, dcidx) => !discardIdxs.includes(dcidx)));
-                        }
-                        UI.willDiscard.isNotPublic = mode != CMD_MODE.IsPublic && isAttach;
-                        this._writeLog(`[${name}](${cpidx})${isDiscard ? '舍弃了' : '被夺取了'}${cardNames}`, isCdt(isAttach, 'system'));
-                        const getcard = clone(UI.willDiscard.hcards);
-                        await this.emit('discard', cpidx);
-                        assign(handCards, handCards.filter(dc => !discards.map(c => c.entityId).includes(dc.entityId)));
-                        handCards.forEach((c, ci) => c.cidx = ci);
-                        UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
-                        if (!isAttach) {
-                            if (isDiscard) this._doDiscard(cpidx, discards, { isFromPile: !isDiscardHand, isPriority, isUnshift });
-                            else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { trigger, isPriority: true, isUnshift: true });
-                        }
-                    }
-                }, { delayAfter: 1500, isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getDice') {
-                this.taskQueue.addTask(`doCmd--getDice-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    let elements: DiceCostType[] = [];
-                    if (mode == CMD_MODE.Random) { // 随机骰子
-                        if (this.version.isOffline) { // 随机可重复骰子
-                            for (let i = 0; i < cnt; ++i) elements.push(this._randomInArr(Object.values(DICE_COST_TYPE))[0]);
-                        } else { // 随机不重复基础骰子
-                            elements.push(...this._randomInArr(Object.values(PURE_ELEMENT_TYPE), cnt));
-                        }
-                    } else if (mode == CMD_MODE.FrontHero) { // 当前出战角色(或者前后,用hidxs[0]控制)
-                        const element = heros.getFront({ offset: ohidxs?.[0] }).element as PureElementType;
-                        elements.push(...Array.from({ length: cnt }, () => element));
-                    }
-                    const nel = (element as DiceCostType | undefined) ?? elements;
-                    this._writeLog(`[${name}](${cpidx})获得${cnt}个骰子【p${cpidx}:${(Array.isArray(nel) ? nel : new Array<DiceCostType>(cnt).fill(nel)).map(e => `[${ELEMENT_NAME[e]?.replace('元素', '')}]`).join('')}】`);
-                    assign(dice, this._getDice(cpidx, cnt, nel));
-                    for (let i = 0; i < cnt; ++i) {
-                        this._detectHero(cpidx ^ 1, 'getdice-oppo', { types: STATUS_TYPE.Usage, source, hidxs: this.players[cpidx ^ 1].hidx });
-                    }
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getEnergy') {
-                this.taskQueue.addTask(`doCmd--getEnergy-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    heros.forEach((h, hi) => {
-                        if (h.hp > 0 && (hidxs == undefined && h.isFront || hidxs?.includes(hi))) {
-                            if (h.maxEnergy > 0 != isAttach) {
-                                if ((cnt > 0 && Math.abs(h.energy) < Math.abs(h.maxEnergy)) || (cnt < 0 && Math.abs(h.energy) > 0)) {
-                                    const pcnt = isAttach ?
-                                        Math.max(h.energy, Math.min(h.energy - h.maxEnergy, cnt)) :
-                                        Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
-                                    h.energy += pcnt * (isAttach ? -1 : 1);
-                                    if (pcnt != 0) {
-                                        this._writeLog(`[${name}](${cpidx})[${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点${isAttach ? ELEMENT_NAME[h.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].type ?? COST_TYPE.Energy] : '充能'}`);
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'reroll') {
-                if (dice.length == 0) continue;
-                this.taskQueue.addTask(`doCmd--reroll-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    cplayer.phase = PHASE.DICE;
-                    cplayer.rollCnt = cnt;
-                    UI.showRerollBtn = true;
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'changeDice') {
-                this.taskQueue.addTask(`doCmd--changeDice-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const nel = (mode == CMD_MODE.FrontHero ? heros.getFront().element : element ?? DICE_COST_TYPE.Omni) as DiceCostType;
-                    let ndice = dice.slice();
-                    const diceCnt = arrToObj(DICE_WEIGHT, 0);
-                    ndice.forEach(d => ++diceCnt[d]);
-                    const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +heros.map(h => h.element).includes(d);
-                    ndice = objToArr(diceCnt)
-                        .sort((a, b) => effDice(a[0]) - effDice(b[0]) || a[1] - b[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
-                        .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
-                    const changedDice: DiceCostType[] = [];
-                    for (let i = 0; i < Math.min(cnt || ndice.length, ndice.length); ++i) {
-                        if (ndice[i] == DICE_COST_TYPE.Omni || ndice[i] == nel) continue;
-                        changedDice.push(ndice[i]);
-                        ndice[i] = nel;
-                    }
-                    if (changedDice.length == 0) return;
-                    this._writeLog(`[${name}](${cpidx})将${cnt || ndice.length}个骰子【p${cpidx}:${changedDice.map(d => `[${ELEMENT_NAME[d].replace('元素', '')}]`).join('')}】变为[${ELEMENT_NAME[nel].replace('元素', '')}]`);
-                    assign(dice, ndice);
-                    assign(dice, this._rollDice(cpidx));
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'changeCard') {
-                this.taskQueue.addTask(`doCmd--changeCard-p${cpidx}:${trigger}`, async () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    cplayer.phase = PHASE.CHANGE_CARD;
-                    await this.emit(cmd, pidx, { notPreview: true, notUpdate: true, socket });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getStatus') {
-                this.taskQueue.addTask(`doCmd--getStatus-p${cpidx}:${trigger}`, () => {
-                    if (heros.frontHidx == -1) return;
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const getsts = this._getStatusById(stsargs);
-                    const ast: ArrayStatus[] = new Array(handCards.length).fill(0).map(() => new ArrayStatus());
-                    const pst: ArrayStatus[] = new Array(pile.length).fill(0).map(() => new ArrayStatus());
-                    const hst: ArrayStatus[] = new Array(heros.length).fill(0).map(() => new ArrayStatus());
-                    const cst: ArrayStatus = new ArrayStatus();
-                    const chidxs: number[] = [];
-                    getsts.forEach(sts => {
-                        switch (sts.group) {
-                            case STATUS_GROUP.heroStatus:
-                                ((isOppo ? ohidxs : hidxs) ?? [heros.frontHidx]).forEach(fhidx => hst[fhidx].push(sts));
-                                break;
-                            case STATUS_GROUP.combatStatus:
-                                cst.push(sts);
-                                break;
-                            case STATUS_GROUP.attachment:
-                                const isHandcard = mode != CMD_MODE.RandomPileCard;
-                                let cdidxs = pile.map((_, i) => i);
-                                if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
-                                    cdidxs = [];
-                                    let restCnt = cnt;
-                                    let hcardsSorted = clone(handCards).sort((a, b) =>
-                                        (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
-                                    while (hcardsSorted.length > 0) {
-                                        const cost = hcardsSorted[0].currDiceCost;
-                                        const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
-                                        cdidxs.push(...this._randomInArr(costCards, restCnt).map(c => c.cidx));
-                                        if (cdidxs.length == cnt) break;
-                                        restCnt -= cdidxs.length;
-                                        hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
-                                    }
-                                } else if (isHandcard) {
-                                    cdidxs = handCards.filter(c => cardFilter?.(c) ?? true).map(c => c.cidx);
-                                }
-                                if (chidxs.length == 0) chidxs.push(...this._randomInArr(cdidxs, cnt || 1));
-                                ((isOppo ? ohidxs : hidxs) ?? chidxs).forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));
-                                break;
-                            default:
-                                const e: never = sts.group;
-                                throw new Error(`ERROR@_doCmds_getStatus: unknown statusType: ${e}`);
-                        }
-                    });
-                    for (let hcidx = 0; hcidx < handCards.length; ++hcidx) {
-                        if (ast[hcidx].length == 0) continue;
-                        this._updateStatus(cpidx, ast[hcidx], handCards[hcidx].attachments, { hidx: hcidx });
-                    }
-                    for (let pcidx = 0; pcidx < pile.length; ++pcidx) {
-                        if (pst[pcidx].length == 0) continue;
-                        this._updateStatus(cpidx, pst[pcidx], pile[pcidx].attachments, { hidx: -pcidx });
-                    }
-                    for (let dhidx = 0; dhidx < heros.length; ++dhidx) {
-                        const fhidx = (heros.frontHidx + dhidx) % heros.length;
-                        const fhero = heros[fhidx];
-                        if (hst[fhidx].length == 0) continue;
-                        if (fhero.hp <= 0 && mode == CMD_MODE.IsPriority) {
-                            hst[(fhidx + 1) % heros.length].push(...hst[fhidx]);
+                    break;
+                } case 'discard':
+                case 'stealCard':
+                    this.taskQueue.addTask(`doCmd--discard-p${cpidx}:${trigger}`, async () => {
+                        const isDiscard = cmd == 'discard';
+                        const discards: Card[] = [];
+                        let discardCnt = cnt || 1;
+                        const unselectedCards = handCards.filter(c => c.entityId != withCard?.entityId).sort((a, b) => b.entityId - a.entityId);
+                        if (cmd == 'stealCard' && unselectedCards.length == 0) return;
+                        const discardIdxs = (ohidxs ?? []).map(ci => handCards.filter(c => c.entityId != withCard?.entityId)[ci].entityId);
+                        if (discardIdxs.length > 0) {
+                            discards.push(...clone(unselectedCards.filter(c => discardIdxs.includes(c.entityId))));
                         } else {
-                            this._updateStatus(cpidx, hst[fhidx], fhero.heroStatus, { hidx: fhidx });
+                            if (typeof card == 'number') {
+                                if (unselectedCards.length > 0) {
+                                    let curIdx = -1;
+                                    while (discardCnt-- > 0) {
+                                        curIdx = unselectedCards.findIndex((c, ci) => ci > curIdx && (c.id == card || c.entityId == card || c.currDiceCost == card));
+                                        if (curIdx == -1) break;
+                                        discards.push(clone(unselectedCards[curIdx]));
+                                    }
+                                }
+                            } else {
+                                const hcardsSorted = clone(unselectedCards).sort((a, b) => (b.currDiceCost - a.currDiceCost));
+                                if (card) { // 弃置指定牌
+                                    (convertToArray(clone(card)) as Card[]).forEach(c => {
+                                        if (c.entityId == -1) discardIdxs.push(c.cidx);
+                                        discards.push(c);
+                                    });
+                                } else if (mode == CMD_MODE.AllHandCards) { // 弃置所有手牌
+                                    discards.push(...hcardsSorted);
+                                } else {
+                                    while (discardCnt > 0) {
+                                        if (mode == CMD_MODE.Random || mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
+                                            if (unselectedCards.length == 0) break;
+                                            if (mode == CMD_MODE.Random) { // 弃置随机手牌
+                                                const didx = this._randomInt(unselectedCards.length - 1);
+                                                const [discard] = unselectedCards.splice(didx, 1);
+                                                discards.push(clone(discard));
+                                            } else if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) { // 弃置花费最高/低的手牌
+                                                const cost = hcardsSorted.at(mode == CMD_MODE.HighHandCard ? 0 : -1)!.currDiceCost;
+                                                const costCards = unselectedCards.filter(c => c.currDiceCost == cost);
+                                                const [{ entityId: ceid }] = isDiscard ? this._randomInArr(costCards) : costCards;
+                                                const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
+                                                discards.push(clone(discard));
+                                                hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);
+                                            }
+                                        } else {
+                                            if (pile.length - (cnt - discardCnt) == 0) break;
+                                            if (mode == CMD_MODE.TopPileCard) { // 弃置牌堆顶的牌 
+                                                const discardIdx = Math.min(pile.length, cnt) - (cnt - discardCnt) - 1;
+                                                discards.push(clone(pile[discardIdx]));
+                                                discardIdxs.push(discardIdx);
+                                            } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
+                                                const disIdx = this._randomInt(pile.length - 1);
+                                                discards.push(clone(pile[disIdx]));
+                                                discardIdxs.push(disIdx);
+                                            }
+                                        }
+                                        --discardCnt;
+                                    }
+                                }
+                            }
                         }
-                    }
-                    if (cst.length) this._updateStatus(cpidx, cst, cplayer.combatStatus);
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getSummon') {
-                this.taskQueue.addTask(`doCmd--getSummon-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    this._updateSummon(cpidx, this._getSummonById(smnargs), { destroy: mode })
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getSupport') {
-                this.taskQueue.addTask(`doCmd--getSupport-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    this._getSupportById(smnargs as number | (number | [number, ...any[]])).forEach(support => {
-                        if (!cplayer.supports.isFull) {
-                            cplayer.supports.push(support.setEntityId(this._genEntityId()));
-                            this._detectSupport(cpidx, 'enter', { cSupport: support });
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds, discards);
+                        this._doCmds(cpidx, ncmds);
+                        if (discards.length > 0) {
+                            const isDiscardHand = mode == CMD_MODE.Random || mode == CMD_MODE.AllHandCards ||
+                                mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard || ohidxs ||
+                                (card != undefined && (!(card instanceof GICard) || card.entityId != -1));
+                            if (isDiscard) {
+                                playerInfo.discardCnt += discards.length;
+                                playerInfo.discardIds.push(...discards.map(c => c.id));
+                            }
+                            const cardNames = discards.map(c => `[${c.name}]【(${c.entityId})】`).join('');
+                            handCards.forEach(c => discards.some(dc => dc.entityId == c.entityId) && (c.UI.class = 'discard'));
+                            if (isDiscardHand) { // 舍弃手牌
+                                discards.forEach(dc => UI.willDiscard.hcards.push(dc));
+                                handCards.filter(dc => discards.map(c => c.entityId).includes(dc.entityId)).forEach(c => {
+                                    c.UI.class = 'will-discard-hcard-my';
+                                });
+                            } else { // 舍弃牌库中的牌
+                                UI.willDiscard.pile.push(...clone(pile.filter((_, dcidx) => discardIdxs.includes(dcidx))));
+                                assign(pile, pile.filter((_, dcidx) => !discardIdxs.includes(dcidx)));
+                            }
+                            UI.willDiscard.isNotPublic = mode != CMD_MODE.IsPublic && isAttach;
+                            this._writeLog(`[${name}](${cpidx})${isDiscard ? '舍弃了' : '被夺取了'}${cardNames}`, isCdt(isAttach, 'system'));
+                            const getcard = clone(UI.willDiscard.hcards);
+                            await this.emit('discard', cpidx);
+                            assign(handCards, handCards.filter(dc => !discards.map(c => c.entityId).includes(dc.entityId)));
+                            handCards.forEach((c, ci) => c.cidx = ci);
+                            UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
+                            if (!isAttach) {
+                                if (isDiscard) this._doDiscard(cpidx, discards, { isFromPile: !isDiscardHand, isPriority, isUnshift });
+                                else this._doCmds(cpidx ^ 1, [{ cmd: 'getCard', cnt, card: getcard, mode: CMD_MODE.IsPublic }], { trigger, isPriority: true, isUnshift: true });
+                            }
                         }
-                    });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'destroySummon') {
-                this.taskQueue.addTask(`doCmd--destroySummon-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    if (!this.preview.isExec) return this.taskQueue.stopPreview();
-                    if (smnargs) {
-                        const smnIds = convertToArray(smnargs);
-                        this._randomInArr(summons.filter((smn, suidx) => smnIds.includes(smn.id) || smnIds.includes(suidx) || smnIds.includes(smn.entityId)), cnt)
-                            .forEach(smn => smn.dispose());
-                    } else {
-                        this._randomInArr(summons, cnt).forEach(smn => smn.dispose());
-                    }
-                    this._updateSummon(cpidx, [], { destroy: mode })
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (['heal', 'revive', 'addMaxHp', 'attack'].includes(cmd)) {
-                damageCmds.addCmds(cmds[i]);
-            } else if (cmd == 'changeSummon') {
-                this.taskQueue.addTask(`doCmd--changeSummon-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const osummon = summons[ohidxs?.[0] ?? -1] ?? summons.find(s => s.id == ohidxs?.[0]);
-                    if (!osummon) return;
-                    const nsummon = this.newSummon(cnt, osummon.useCnt).setEntityId(osummon.entityId);
-                    const suidx = getObjIdxById(summons, osummon.id);
-                    summons.splice(suidx, 1, nsummon);
-                    if (!this.preview.isExec) {
-                        nsummon.UI.willChange = true;
-                        this.preview.changedSummons[cpidx][suidx] = nsummon;
-                    }
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'changePattern') {
-                if (hidxs == undefined) throw new Error('hidxs is undefined');
-                this.taskQueue.addTask(`doCmd--changePattern-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const newPattern = this.newHero(cnt);
-                    const { id, entityId, heroStatus: chsts, hp, isFront, hidx, attachElement, talentSlot, relicSlot, weaponSlot, vehicleSlot, energy } = clone(heros[hidxs[0]]);
-                    assign(heros[hidxs[0]], newPattern);
-                    heros[hidxs[0]].id = id;
-                    heros[hidxs[0]].entityId = entityId;
-                    assign(heros[hidxs[0]].heroStatus, chsts);
-                    heros[hidxs[0]].hp = hp;
-                    heros[hidxs[0]].isFront = isFront;
-                    heros[hidxs[0]].hidx = hidx;
-                    assign(heros[hidxs[0]].attachElement, attachElement);
-                    heros[hidxs[0]].talentSlot = talentSlot;
-                    heros[hidxs[0]].relicSlot = relicSlot;
-                    heros[hidxs[0]].weaponSlot = weaponSlot;
-                    heros[hidxs[0]].vehicleSlot = vehicleSlot;
-                    heros[hidxs[0]].energy = energy;
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getSkill') {
-                if (hidxs == undefined) throw new Error('ERROR@_doCmds-getSkill: hidxs is undefined');
-                this.taskQueue.addTask(`doCmd--getSkill-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    heros[hidxs[0]].skills.splice(mode, 0, this.newSkill(cnt));
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'loseSkill') {
-                if (hidxs == undefined) throw new Error('ERROR@_doCmds-loseSkill: hidxs is undefined');
-                this.taskQueue.addTask(`doCmd--loseSkill-p${cpidx}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    heros[hidxs[0]].skills.splice(mode, 1);
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'attach') {
-                this.taskQueue.addTask(`doCmd--attach-p${cpidx}:${trigger}`, async () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const damageVO = INIT_DAMAGEVO(this.players.flatMap(p => p.heros).length);
-                    (ohidxs ?? [heros.frontHidx]).forEach((hidx, hi) => {
-                        const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront().element) as ElementType;
-                        const { elTips, atriggers, etriggers } = this._calcDamage(pidx, attachEl, [], hidx, { isAttach: true, isAtkSelf: +!isOppo, skill, atkId: source });
-                        elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
-                        this.preview.triggers[cpidx].forEach((trgs, tri) => etriggers[tri].forEach(t => trgs.add(t)));
-                        this.preview.triggers[cpidx ^ 1].forEach((trgs, tri) => atriggers[tri].forEach(t => trgs.add(t)));
-                        const phidx = hidx + cpidx * this.players[0].heros.length;
-                        this._writeLog(`[${this.players[pidx].name}](${pidx})[${(skill ? this.players[pidx].heros.getFront().name : atkname)?.replace(/\(\-\d+\)/, '')}]对[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]附着${ELEMENT_NAME[attachEl]}${elTips[phidx][0] ? `（${elTips[phidx][0]}）` : ''}`)
-                    });
-                    await this.emit('attach', cpidx, { socket, damageVO });
-                    if (damageVO.elTips.some(([t]) => t != '')) await this.delay(2e3);
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'pickCard') {
-                this.taskQueue.addTask(`doCmd--pickCard-p${cpidx}:${trigger}`, async () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    let cardIds: number[] = [];
-                    if (isAttach) {
-                        for (let i = 0; i < cnt; ++i) {
-                            const cardsIdPool = this._getCardIds(c => cardFilter?.(c, i));
-                            cardIds.push(this._randomInArr(cardsIdPool)[0]);
-                        }
-                    } else {
-                        const cardsIdPool = this._getCardIds(cardFilter);
-                        cardIds = this._randomInArr((card ? card as number[] : cardsIdPool), cnt);
-                    }
-                    this.pickModal.phase = this.players[pidx].phase;
-                    this.pickModal.hidxs = hidxs;
-                    if (mode == CMD_MODE.GetCard || mode == CMD_MODE.UseCard) {
-                        this.pickModal.cardType = mode == CMD_MODE.GetCard ? 'getCard' : 'useCard';
-                        this.pickModal.cards = cardIds.map(c => this.newCard(c));
-                    } else if (mode == CMD_MODE.Summon) {
-                        this.pickModal.cardType = 'getSummon';
-                        this.pickModal.cards = cardIds.map(c => {
-                            const card = NULL_CARD();
-                            const summon = this.newSummon(c);
-                            card.id = summon.id;
-                            card.UI = { ...summon.UI, cnt: 1 };
-                            card.name = summon.name;
-                            return card;
-                        });
-                    } else {
-                        throw new Error('ERROR@_doCmds-pickCard: mode is undefined');
-                    }
-                    this.players[pidx].phase = PHASE.PICK_CARD;
-                    this._writeLog(`[${cplayer.name}]在(${cpidx})${this.pickModal.cards.map(c => `[${c.name}]`).join('')}中进行挑选`, 'system');
-                    await this.emit(`pickCard-cmdidx${i}`, cpidx);
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'equip') {
-                if (!card) throw new Error('ERROR@_doCmds-equip: card is undefined');
-                this.taskQueue.addTask(`doCmd--equip-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    (ohidxs ?? [heros.frontHidx]).forEach(hidx => {
-                        this._doEquip(pidx, heros[hidx], card as Card | number);
-                    });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'exchangePos') {
-                const [h1 = -1, h2 = -1] = ohidxs ?? [];
-                if (h1 == -1 || h2 == -1) throw new Error('ERROR@_doCmds-exchangePos: hidxs is undefined');
-                this.taskQueue.addTask(`doCmd--exchangePos-h${h1}-h${h2}:${trigger}`, async () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    [heros[h1], heros[h2]] = [heros[h2], heros[h1]];
-                    heros[h1].hidx = h1;
-                    heros[h2].hidx = h2;
-                    if (heros[h1].isFront) cplayer.hidx = h1;
-                    if (heros[h2].isFront) cplayer.hidx = h2;
-                    await this.emit('exchangePos', cpidx);
-                }, { delayAfter: 600, isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'exchangeHandCards') {
-                this.taskQueue.addTask(`doCmd--exchangeHandCards-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const hcards = [...handCards];
-                    const ehcards = [...copponent.handCards];
-                    assign(handCards, ehcards);
-                    assign(copponent.handCards, hcards);
-                    for (const hcard of handCards) {
-                        this._emitEvent(cpidx, 'getcard', { types: STATUS_TYPE.Usage, hidxs: heros.allHidxs(), hcard });
-                    }
-                    for (const hcard of copponent.handCards) {
-                        this._emitEvent(cpidx ^ 1, 'getcard', { types: STATUS_TYPE.Usage, hidxs: copponent.heros.allHidxs(), hcard });
-                    }
-                    this._writeLog('双方交换了手牌');
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'consumeNightSoul') {
-                const hidx = ohidxs?.[0] ?? heros.frontHidx;
-                this.taskQueue.addTask(`doCmd--consumeNightSoul-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const { isInvalid } = this._emitEvent(cpidx, 'pre-consumeNightSoul', {
-                        types: STATUS_TYPE.Usage,
-                        restDmg: cnt,
-                        hidxs: heros.allHidxs(),
-                        sourceHidx: hidx,
-                    });
-                    if (isInvalid) return;
-                    const nightSoul = heros[hidx].heroStatus.get(STATUS_TYPE.NightSoul);
-                    if (!nightSoul) return;
-                    const ocnt = nightSoul.useCnt;
-                    nightSoul.minusUseCnt(cnt);
-                    this._writeLog(`[${name}](${cpidx})[${heros[hidx].name}]消耗${cnt}点「夜魂值」${ocnt}→${nightSoul.useCnt}`);
-                    this._detectHero(pidx, 'consumeNightSoul', { types: STATUS_TYPE.Usage, sourceHidx: hidx, source: nightSoul?.id });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'getNightSoul') {
-                const hidx = ohidxs?.[0] ?? heros.frontHidx;
-                this.taskQueue.addTask(`getNightSoul-p${cpidx}-h${hidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const nightSoul = heros[hidx].heroStatus.get(STATUS_TYPE.NightSoul);
-                    if (!nightSoul) return;
-                    const ocnt = nightSoul.useCnt;
-                    nightSoul.addUseCnt(cnt);
-                    this._writeLog(`[${name}](${cpidx})[${heros[hidx].name}]获得${cnt}点「夜魂值」${ocnt}→${nightSoul.useCnt}`);
-                    this._detectHero(pidx, 'getNightSoul', {
-                        types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack],
-                        source: nightSoul.id,
-                        sourceHidx: hidx,
-                    });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'consumeDice') {
-                if (!ohidxs || ohidxs.length == 0) continue;
-                const ncmds = new CmdsGenerator();
-                callback?.(ncmds);
-                this._doCmds(cpidx, ncmds);
-                if (ohidxs[0] < 0) {
-                    const pdices = getSortedDices(dice);
-                    assign(dice, pdices.slice(-ohidxs[0]));
-                    assign(dice, this._rollDice(cpidx, dice.map(() => false)));
-                } else {
-                    assign(dice, dice.filter((_, i) => !ohidxs[i]));
-                }
-            } else if (cmd == 'convertCard') {
-                const [eid = -1, cid = -1] = ohidxs ?? [];
-                this.taskQueue.addTask(`doCmd--convertCard-p${cpidx}-${eid}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const cidx = handCards.findIndex(c => c.entityId == eid);
-                    const ncard = this.newCard(cid).setEntityId(eid);
-                    ncard.attachments = new ArrayStatus(...handCards[cidx].attachments.slice());
-                    handCards.splice(cidx, 1, ncard);
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'summonTrigger' && ohidxs) {
-                const cSummon = mode == CMD_MODE.ByOrder ? cplayer.summons :
-                    mode == CMD_MODE.Random ? this._randomInArr(cplayer.summons, ohidxs?.[0]) :
-                        ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !!v);
-                if (mode == CMD_MODE.Random && !this.preview.isExec) return this.taskQueue.stopPreview();
-                this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}(${cmdtrg})`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon, source });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'adventure') {
-                this.taskQueue.addTask(`doCmd--adventure-p${cpidx}:${trigger}`, () => {
-                    const ncmds = new CmdsGenerator();
-                    callback?.(ncmds);
-                    this._doCmds(cpidx, ncmds);
-                    const adventure = cplayer.supports.has(CARD_SUBTYPE.Adventure);
-                    const canAdventure = adventure || !cplayer.supports.isFull;
-                    if (!adventure) {
-                        this._doCmds(cpidx, CmdsGenerator.ins.pickCard(3, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
-                    }
-                    if (canAdventure) this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
-                }, { isImmediate, isPriority, isUnshift });
-            } else if (cmd == 'modifyUseCnt') {
-                const eids = smnargs ?? stsargs;
-                if (eids == undefined) continue;
-                for (const eid of convertToArray(eids as number | number[])) {
-                    const entities = smnargs != undefined ? summons : ohidxs ? heros[ohidxs![0]].heroStatus : combatStatus;
-                    const entity = entities.find(e => e.id == eid || e.entityId == eid) ?? entities[eid as number];
-                    if (entity == undefined) continue;
-                    const ocnt = entity.useCnt;
-                    this.taskQueue.addTask(`modifyUseCnt-p${cpidx}-${cnt > 0 ? 'add' : 'minus'}-${entity.name}(${entity.entityId}):${trigger}`, () => {
+                    }, { delayAfter: 1500, isImmediate, isPriority, isUnshift });
+                    break;
+                case 'getDice':
+                    this.taskQueue.addTask(`doCmd--getDice-p${cpidx}:${trigger}`, () => {
                         const ncmds = new CmdsGenerator();
                         callback?.(ncmds);
                         this._doCmds(cpidx, ncmds);
-                        if (cnt > 0) entity.addUseCnt(cnt, isAttach);
-                        else entity.minusUseCnt(-cnt);
-                        if (smnargs != undefined && entity.useCnt > ocnt) {
-                            this._detectSummon(cpidx, 'usecnt-add', { cSummon: entity as Summon });
+                        let elements: DiceCostType[] = [];
+                        if (mode == CMD_MODE.Random) { // 随机骰子
+                            if (this.version.isOffline) { // 随机可重复骰子
+                                for (let i = 0; i < cnt; ++i) elements.push(this._randomInArr(Object.values(DICE_COST_TYPE))[0]);
+                            } else { // 随机不重复基础骰子
+                                elements.push(...this._randomInArr(Object.values(PURE_ELEMENT_TYPE), cnt));
+                            }
+                        } else if (mode == CMD_MODE.FrontHero) { // 当前出战角色(或者前后,用hidxs[0]控制)
+                            const element = heros.getFront({ offset: ohidxs?.[0] }).element as PureElementType;
+                            elements.push(...Array.from({ length: cnt }, () => element));
+                        }
+                        const nel = (element as DiceCostType | undefined) ?? elements;
+                        this._writeLog(`[${name}](${cpidx})获得${cnt}个骰子【p${cpidx}:${(Array.isArray(nel) ? nel : new Array<DiceCostType>(cnt).fill(nel)).map(e => `[${ELEMENT_NAME[e]?.replace('元素', '')}]`).join('')}】`);
+                        assign(dice, this._getDice(cpidx, cnt, nel));
+                        for (let i = 0; i < cnt; ++i) {
+                            this._detectHero(cpidx ^ 1, 'getdice-oppo', { types: STATUS_TYPE.Usage, source, hidxs: this.players[cpidx ^ 1].hidx });
                         }
                     }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'getEnergy':
+                    this.taskQueue.addTask(`doCmd--getEnergy-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        heros.forEach((h, hi) => {
+                            if (h.hp > 0 && (hidxs == undefined && h.isFront || hidxs?.includes(hi))) {
+                                if (h.maxEnergy > 0 != isAttach) {
+                                    if ((cnt > 0 && Math.abs(h.energy) < Math.abs(h.maxEnergy)) || (cnt < 0 && Math.abs(h.energy) > 0)) {
+                                        const pcnt = isAttach ?
+                                            Math.max(h.energy, Math.min(h.energy - h.maxEnergy, cnt)) :
+                                            Math.max(-h.energy, Math.min(h.maxEnergy - h.energy, cnt));
+                                        h.energy += pcnt * (isAttach ? -1 : 1);
+                                        if (pcnt != 0) {
+                                            this._writeLog(`[${name}](${cpidx})[${h.name}]${pcnt > 0 ? '获得' : '失去'}${Math.abs(pcnt)}点${isAttach ? ELEMENT_NAME[h.skills.find(s => s.type == SKILL_TYPE.Burst)?.cost[2].type ?? COST_TYPE.Energy] : '充能'}`);
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'reroll':
+                    if (dice.length == 0) continue;
+                    this.taskQueue.addTask(`doCmd--reroll-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        cplayer.phase = PHASE.DICE;
+                        cplayer.rollCnt = cnt;
+                        UI.showRerollBtn = true;
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'changeDice':
+                    this.taskQueue.addTask(`doCmd--changeDice-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const nel = (mode == CMD_MODE.FrontHero ? heros.getFront().element : element ?? DICE_COST_TYPE.Omni) as DiceCostType;
+                        let ndice = dice.slice();
+                        const diceCnt = arrToObj(DICE_WEIGHT, 0);
+                        ndice.forEach(d => ++diceCnt[d]);
+                        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +heros.map(h => h.element).includes(d);
+                        ndice = objToArr(diceCnt)
+                            .sort((a, b) => effDice(a[0]) - effDice(b[0]) || a[1] - b[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
+                            .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
+                        const changedDice: DiceCostType[] = [];
+                        for (let i = 0; i < Math.min(cnt || ndice.length, ndice.length); ++i) {
+                            if (ndice[i] == DICE_COST_TYPE.Omni || ndice[i] == nel) continue;
+                            changedDice.push(ndice[i]);
+                            ndice[i] = nel;
+                        }
+                        if (changedDice.length == 0) return;
+                        this._writeLog(`[${name}](${cpidx})将${cnt || ndice.length}个骰子【p${cpidx}:${changedDice.map(d => `[${ELEMENT_NAME[d].replace('元素', '')}]`).join('')}】变为[${ELEMENT_NAME[nel].replace('元素', '')}]`);
+                        assign(dice, ndice);
+                        assign(dice, this._rollDice(cpidx));
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'changeCard':
+                    this.taskQueue.addTask(`doCmd--changeCard-p${cpidx}:${trigger}`, async () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        cplayer.phase = PHASE.CHANGE_CARD;
+                        await this.emit(cmd, pidx, { notPreview: true, notUpdate: true, socket });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'getStatus':
+                    this.taskQueue.addTask(`doCmd--getStatus-p${cpidx}:${trigger}`, () => {
+                        if (heros.frontHidx == -1) return;
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const getsts = this._getStatusById(stsargs);
+                        const ast: ArrayStatus[] = new Array(handCards.length).fill(0).map(() => new ArrayStatus());
+                        const pst: ArrayStatus[] = new Array(pile.length).fill(0).map(() => new ArrayStatus());
+                        const hst: ArrayStatus[] = new Array(heros.length).fill(0).map(() => new ArrayStatus());
+                        const cst: ArrayStatus = new ArrayStatus();
+                        const chidxs: number[] = [];
+                        getsts.forEach(sts => {
+                            switch (sts.group) {
+                                case STATUS_GROUP.heroStatus:
+                                    ((isOppo ? ohidxs : hidxs) ?? [heros.frontHidx]).forEach(fhidx => hst[fhidx].push(sts));
+                                    break;
+                                case STATUS_GROUP.combatStatus:
+                                    cst.push(sts);
+                                    break;
+                                case STATUS_GROUP.attachment:
+                                    const isHandcard = mode != CMD_MODE.RandomPileCard;
+                                    let cdidxs = pile.map((_, i) => i);
+                                    const canDuplicate = (c: Card) => sts.useCnt > 0 || sts.id == 207 || !c.hasAttachment(sts.id);
+                                    if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
+                                        cdidxs = [];
+                                        let restCnt = cnt;
+                                        let hcardsSorted = clone(handCards)
+                                            .filter(canDuplicate)
+                                            .sort((a, b) => (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
+                                        while (hcardsSorted.length > 0) {
+                                            const cost = hcardsSorted[0].currDiceCost;
+                                            const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
+                                            cdidxs.push(...this._randomInArr(costCards, restCnt).map(c => c.cidx));
+                                            if (cdidxs.length == cnt) break;
+                                            restCnt -= cdidxs.length;
+                                            hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
+                                        }
+                                    } else if (isHandcard) {
+                                        cdidxs = handCards.filter(c => (cardFilter?.(c) ?? true) && canDuplicate(c)).map(c => c.cidx);
+                                    }
+                                    if (chidxs.length == 0) chidxs.push(...this._randomInArr(cdidxs, cnt || 1));
+                                    ((isOppo ? ohidxs : hidxs) ?? chidxs).forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));
+                                    break;
+                                default:
+                                    const e: never = sts.group;
+                                    throw new Error(`ERROR@_doCmds_getStatus: unknown statusType: ${e}`);
+                            }
+                        });
+                        for (let hcidx = 0; hcidx < handCards.length; ++hcidx) {
+                            if (ast[hcidx].length == 0) continue;
+                            this._updateStatus(cpidx, ast[hcidx], handCards[hcidx].attachments, { hidx: hcidx });
+                        }
+                        for (let pcidx = 0; pcidx < pile.length; ++pcidx) {
+                            if (pst[pcidx].length == 0) continue;
+                            this._updateStatus(cpidx, pst[pcidx], pile[pcidx].attachments, { hidx: -pcidx });
+                        }
+                        for (let dhidx = 0; dhidx < heros.length; ++dhidx) {
+                            const fhidx = (heros.frontHidx + dhidx) % heros.length;
+                            const fhero = heros[fhidx];
+                            if (hst[fhidx].length == 0) continue;
+                            if (fhero.hp <= 0 && mode == CMD_MODE.IsPriority) {
+                                hst[(fhidx + 1) % heros.length].push(...hst[fhidx]);
+                            } else {
+                                this._updateStatus(cpidx, hst[fhidx], fhero.heroStatus, { hidx: fhidx });
+                            }
+                        }
+                        if (cst.length) this._updateStatus(cpidx, cst, cplayer.combatStatus);
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'getSummon':
+                    this.taskQueue.addTask(`doCmd--getSummon-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        this._updateSummon(cpidx, this._getSummonById(smnargs), { destroy: mode })
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'getSupport':
+                    this.taskQueue.addTask(`doCmd--getSupport-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        this._getSupportById(smnargs as number | (number | [number, ...any[]])).forEach(support => {
+                            if (!cplayer.supports.isFull) {
+                                cplayer.supports.push(support.setEntityId(this._genEntityId()));
+                                this._detectSupport(cpidx, 'enter', { cSupport: support });
+                            }
+                        });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'destroySummon':
+                    this.taskQueue.addTask(`doCmd--destroySummon-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        if (!this.preview.isExec) return this.taskQueue.stopPreview();
+                        if (smnargs) {
+                            const smnIds = convertToArray(smnargs);
+                            this._randomInArr(summons.filter((smn, suidx) => smnIds.includes(smn.id) || smnIds.includes(suidx) || smnIds.includes(smn.entityId)), cnt)
+                                .forEach(smn => smn.dispose());
+                        } else {
+                            this._randomInArr(summons, cnt).forEach(smn => smn.dispose());
+                        }
+                        this._updateSummon(cpidx, [], { destroy: mode })
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'heal':
+                case 'revive':
+                case 'addMaxHp':
+                case 'attack':
+                    damageCmds.addCmds(cmds[i]);
+                    break;
+                case 'changeSummon':
+                    this.taskQueue.addTask(`doCmd--changeSummon-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const osummon = summons[ohidxs?.[0] ?? -1] ?? summons.find(s => s.id == ohidxs?.[0]);
+                        if (!osummon) return;
+                        const nsummon = this.newSummon(cnt, osummon.useCnt).setEntityId(osummon.entityId);
+                        const suidx = getObjIdxById(summons, osummon.id);
+                        summons[suidx] = nsummon;
+                        if (!this.preview.isExec) {
+                            nsummon.UI.willChange = true;
+                            this.preview.changedSummons[cpidx][suidx] = nsummon;
+                        }
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'changePattern':
+                    if (hidxs == undefined) throw new Error('ERROR@_doCmds-changePattern: hidxs is undefined');
+                    this.taskQueue.addTask(`doCmd--changePattern-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const newPattern = this.newHero(cnt);
+                        const { id, entityId, heroStatus: chsts, hp, isFront, hidx, attachElement, talentSlot, relicSlot, weaponSlot, vehicleSlot, energy } = clone(heros[hidxs[0]]);
+                        assign(heros[hidxs[0]], newPattern);
+                        heros[hidxs[0]].id = id;
+                        heros[hidxs[0]].entityId = entityId;
+                        assign(heros[hidxs[0]].heroStatus, chsts);
+                        heros[hidxs[0]].hp = hp;
+                        heros[hidxs[0]].isFront = isFront;
+                        heros[hidxs[0]].hidx = hidx;
+                        assign(heros[hidxs[0]].attachElement, attachElement);
+                        heros[hidxs[0]].talentSlot = talentSlot;
+                        heros[hidxs[0]].relicSlot = relicSlot;
+                        heros[hidxs[0]].weaponSlot = weaponSlot;
+                        heros[hidxs[0]].vehicleSlot = vehicleSlot;
+                        heros[hidxs[0]].energy = energy;
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'getSkill':
+                    if (hidxs == undefined) throw new Error('ERROR@_doCmds-getSkill: hidxs is undefined');
+                    this.taskQueue.addTask(`doCmd--getSkill-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        heros[hidxs[0]].skills.splice(mode, 0, this.newSkill(cnt));
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'loseSkill':
+                    if (hidxs == undefined) throw new Error('ERROR@_doCmds-loseSkill: hidxs is undefined');
+                    this.taskQueue.addTask(`doCmd--loseSkill-p${cpidx}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        heros[hidxs[0]].skills.splice(mode, 1);
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'attach':
+                    this.taskQueue.addTask(`doCmd--attach-p${cpidx}:${trigger}`, async () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const damageVO = INIT_DAMAGEVO(this.players.flatMap(p => p.heros).length);
+                        (ohidxs ?? [heros.frontHidx]).forEach((hidx, hi) => {
+                            const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront().element) as ElementType;
+                            const { elTips, atriggers, etriggers } = this._calcDamage(pidx, attachEl, [], hidx, { isAttach: true, isAtkSelf: +!isOppo, skill, atkId: source });
+                            elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
+                            this.preview.triggers[cpidx].forEach((trgs, tri) => etriggers[tri].forEach(t => trgs.add(t)));
+                            this.preview.triggers[cpidx ^ 1].forEach((trgs, tri) => atriggers[tri].forEach(t => trgs.add(t)));
+                            const phidx = hidx + cpidx * this.players[0].heros.length;
+                            this._writeLog(`[${this.players[pidx].name}](${pidx})[${(skill ? this.players[pidx].heros.getFront().name : atkname)?.replace(/\(\-\d+\)/, '')}]对[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]附着${ELEMENT_NAME[attachEl]}${elTips[phidx][0] ? `（${elTips[phidx][0]}）` : ''}`)
+                        });
+                        await this.emit('attach', cpidx, { socket, damageVO });
+                        if (damageVO.elTips.some(([t]) => t != '')) await this.delay(2e3);
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'pickCard':
+                    this.taskQueue.addTask(`doCmd--pickCard-p${cpidx}:${trigger}`, async () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        let cardIds: number[] = [];
+                        if (isAttach) {
+                            for (let i = 0; i < cnt; ++i) {
+                                const cardsIdPool = this._getCardIds(c => cardFilter?.(c, i) ?? true);
+                                cardIds.push(this._randomInArr(cardsIdPool)[0]);
+                            }
+                        } else {
+                            const cardsIdPool = this._getCardIds(c => cardFilter?.(c) ?? true);
+                            cardIds = this._randomInArr((card ? card as number[] : cardsIdPool), cnt);
+                        }
+                        this.pickModal.phase = this.players[pidx].phase;
+                        this.pickModal.hidxs = hidxs;
+                        if (mode == CMD_MODE.GetCard || mode == CMD_MODE.UseCard) {
+                            this.pickModal.cardType = mode == CMD_MODE.GetCard ? 'getCard' : 'useCard';
+                            this.pickModal.cards = cardIds.map(c => this.newCard(c));
+                        } else if (mode == CMD_MODE.Summon) {
+                            this.pickModal.cardType = 'getSummon';
+                            this.pickModal.cards = cardIds.map(c => {
+                                const card = NULL_CARD();
+                                const summon = this.newSummon(c);
+                                card.id = summon.id;
+                                card.UI = { ...summon.UI, cnt: 1 };
+                                card.name = summon.name;
+                                return card;
+                            });
+                        } else {
+                            throw new Error('ERROR@_doCmds-pickCard: mode is undefined');
+                        }
+                        this.players[pidx].phase = PHASE.PICK_CARD;
+                        this._writeLog(`[${cplayer.name}]在(${cpidx})${this.pickModal.cards.map(c => `[${c.name}]`).join('')}中进行挑选`, 'system');
+                        await this.emit(`pickCard-cmdidx${i}`, cpidx);
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'equip':
+                    if (!card) throw new Error('ERROR@_doCmds-equip: card is undefined');
+                    this.taskQueue.addTask(`doCmd--equip-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        (ohidxs ?? [heros.frontHidx]).forEach(hidx => {
+                            this._doEquip(pidx, heros[hidx], card as Card | number);
+                        });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'exchangePos': {
+                    const [h1 = -1, h2 = -1] = ohidxs ?? [];
+                    if (h1 == -1 || h2 == -1) throw new Error('ERROR@_doCmds-exchangePos: hidxs is undefined');
+                    this.taskQueue.addTask(`doCmd--exchangePos-h${h1}-h${h2}:${trigger}`, async () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        [heros[h1], heros[h2]] = [heros[h2], heros[h1]];
+                        heros[h1].hidx = h1;
+                        heros[h2].hidx = h2;
+                        if (heros[h1].isFront) cplayer.hidx = h1;
+                        if (heros[h2].isFront) cplayer.hidx = h2;
+                        await this.emit('exchangePos', cpidx);
+                    }, { delayAfter: 600, isImmediate, isPriority, isUnshift });
+                    break;
+                } case 'exchangeHandCards':
+                    this.taskQueue.addTask(`doCmd--exchangeHandCards-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const hcards = [...handCards];
+                        const ehcards = [...copponent.handCards];
+                        assign(handCards, ehcards);
+                        assign(copponent.handCards, hcards);
+                        for (const hcard of handCards) {
+                            this._emitEvent(cpidx, 'getcard', { types: STATUS_TYPE.Usage, hidxs: heros.allHidxs(), hcard });
+                        }
+                        for (const hcard of copponent.handCards) {
+                            this._emitEvent(cpidx ^ 1, 'getcard', { types: STATUS_TYPE.Usage, hidxs: copponent.heros.allHidxs(), hcard });
+                        }
+                        this._writeLog('双方交换了手牌');
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'consumeNightSoul': {
+                    const hidx = ohidxs?.[0] ?? heros.frontHidx;
+                    this.taskQueue.addTask(`doCmd--consumeNightSoul-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const { isInvalid } = this._emitEvent(cpidx, 'pre-consumeNightSoul', {
+                            types: STATUS_TYPE.Usage,
+                            restDmg: cnt,
+                            hidxs: heros.allHidxs(),
+                            sourceHidx: hidx,
+                        });
+                        if (isInvalid) return;
+                        const nightSoul = heros[hidx].heroStatus.get(STATUS_TYPE.NightSoul);
+                        if (!nightSoul) return;
+                        const ocnt = nightSoul.useCnt;
+                        nightSoul.minusUseCnt(cnt);
+                        this._writeLog(`[${name}](${cpidx})[${heros[hidx].name}]消耗${cnt}点「夜魂值」${ocnt}→${nightSoul.useCnt}`);
+                        this._detectHero(pidx, 'consumeNightSoul', { types: STATUS_TYPE.Usage, sourceHidx: hidx, source: nightSoul?.id });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                } case 'getNightSoul': {
+                    const hidx = ohidxs?.[0] ?? heros.frontHidx;
+                    this.taskQueue.addTask(`getNightSoul-p${cpidx}-h${hidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const nightSoul = heros[hidx].heroStatus.get(STATUS_TYPE.NightSoul);
+                        if (!nightSoul) return;
+                        const ocnt = nightSoul.useCnt;
+                        nightSoul.addUseCnt(cnt);
+                        this._writeLog(`[${name}](${cpidx})[${heros[hidx].name}]获得${cnt}点「夜魂值」${ocnt}→${nightSoul.useCnt}`);
+                        this._detectHero(pidx, 'getNightSoul', {
+                            types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack],
+                            source: nightSoul.id,
+                            sourceHidx: hidx,
+                        });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                } case 'consumeDice': {
+                    if (!ohidxs || ohidxs.length == 0) continue;
+                    const ncmds = new CmdsGenerator();
+                    callback?.(ncmds);
+                    this._doCmds(cpidx, ncmds);
+                    if (ohidxs[0] < 0) {
+                        const pdices = getSortedDices(dice);
+                        assign(dice, pdices.slice(-ohidxs[0]));
+                        assign(dice, this._rollDice(cpidx, dice.map(() => false)));
+                    } else {
+                        assign(dice, dice.filter((_, i) => !ohidxs[i]));
+                    }
+                    break;
+                } case 'convertCard': {
+                    const [eid = -1, cid = -1] = ohidxs ?? [];
+                    this.taskQueue.addTask(`doCmd--convertCard-p${cpidx}-${eid}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const cidx = handCards.findIndex(c => c.entityId == eid);
+                        const ncard = this.newCard(cid).setEntityId(eid);
+                        ncard.attachments = new ArrayStatus(...handCards[cidx].attachments.slice());
+                        handCards[cidx] = ncard;
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                } case 'summonTrigger': {
+                    if (ohidxs == undefined) break;
+                    const cSummon = mode == CMD_MODE.ByOrder ? cplayer.summons :
+                        mode == CMD_MODE.Random ? this._randomInArr(cplayer.summons, ohidxs?.[0]) :
+                            ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !!v);
+                    if (mode == CMD_MODE.Random && !this.preview.isExec) return this.taskQueue.stopPreview();
+                    this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}(${cmdtrg})`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        this._detectSummon(cpidx, cmdtrg ?? 'phase-end', { cSummon, source });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                } case 'adventure':
+                    this.taskQueue.addTask(`doCmd--adventure-p${cpidx}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const adventure = cplayer.supports.has(CARD_SUBTYPE.Adventure);
+                        const canAdventure = adventure || !cplayer.supports.isFull;
+                        if (!adventure) {
+                            this._doCmds(cpidx, CmdsGenerator.ins.pickCard(3, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
+                        }
+                        if (canAdventure) this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
+                case 'modifyUseCnt': {
+                    const eids = smnargs ?? stsargs;
+                    if (eids == undefined) continue;
+                    for (const eid of convertToArray(eids as number | number[])) {
+                        const entities = smnargs != undefined ? summons : ohidxs ? heros[ohidxs![0]].heroStatus : combatStatus;
+                        const entity = entities.find(e => e.id == eid || e.entityId == eid) ?? entities[eid as number];
+                        if (entity == undefined) continue;
+                        const ocnt = entity.useCnt;
+                        this.taskQueue.addTask(`modifyUseCnt-p${cpidx}-${cnt > 0 ? 'add' : 'minus'}-${entity.name}(${entity.entityId}):${trigger}`, () => {
+                            const ncmds = new CmdsGenerator();
+                            callback?.(ncmds);
+                            this._doCmds(cpidx, ncmds);
+                            if (cnt > 0) entity.addUseCnt(cnt, isAttach);
+                            else entity.minusUseCnt(-cnt);
+                            if (smnargs != undefined && entity.useCnt > ocnt) {
+                                this._detectSummon(cpidx, 'usecnt-add', { cSummon: entity as Summon });
+                            }
+                        }, { isImmediate, isPriority, isUnshift });
+                    }
+                    break;
+                } case 'convertSupport': {
+                    const [eid = -1, cid = -1] = ohidxs ?? [];
+                    this.taskQueue.addTask(`doCmd--convertSupport-p${cpidx}-${eid}:${trigger}`, () => {
+                        const ncmds = new CmdsGenerator();
+                        callback?.(ncmds);
+                        this._doCmds(cpidx, ncmds);
+                        const sptidx = supports.findIndex(s => s.entityId == eid);
+                        const nspt = this._getSupportById(cid)[0].setEntityId(eid);
+                        supports[sptidx] = nspt;
+                    }, { isImmediate, isPriority, isUnshift });
+                    break;
                 }
             }
         }
@@ -5381,7 +5448,10 @@ export default class GeniusInvokationRoom {
      * @param filter 筛选条件
      * @returns 卡牌id数组
      */
-    private _getCardIds(filter: (cards: Card) => any = () => true): number[] {
-        return cardsTotal(this.version.value, { ignoreInPool: true }).filter(filter).map(card => card.id);
+    private _getCardIds(filter: (cards: Card) => any = () => true, isDisCover?: boolean): number[] {
+        const filterDiscover = (c: Card) => !c.hasSubtype(CARD_SUBTYPE.Legend, CARD_SUBTYPE.Talent, CARD_SUBTYPE.Blessing) && c.id != 322025;
+        return cardsTotal(this.version.value, { ignoreInPool: !isDisCover })
+            .filter(c => filter(c) && (!isDisCover || filterDiscover(c)))
+            .map(card => card.id);
     }
 }

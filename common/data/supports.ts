@@ -1,5 +1,5 @@
 import { Card, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, SUMMON_TAG, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, STATUS_TYPE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
 import { isCdt } from '../utils/utils.js';
@@ -46,6 +46,84 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             }
         }
     }),
+    // 医疗器材投资·大计划
+    302220: () => support().collection().handle((support, event) => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            cmds.heal(2, { hidxs: event.heros.getMaxHurtHidxs() });
+            return { isDestroy: support.addUseCnt() == 1 }
+        }
+    })),
+    // 医疗器材投资·特大计划
+    302221: () => support().collection().handle((support, event) => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            if (support.addUseCnt() != 2) return;
+            cmds.heal(4, { hidxs: event.heros.getMaxHurtHidxs() });
+            return { isDestroy: true }
+        }
+    })),
+    // 医疗器材投资·超级大计划
+    302222: () => support().collection().handle((support, event) => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            if (support.addUseCnt() != 3) return;
+            cmds.heal(6, { hidxs: event.heros.getMaxHurtHidxs() });
+            return { isDestroy: true }
+        }
+    })),
+    // 图形对抗投资·大计划
+    302223: () => support().collection().handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            cmds.getCard(2);
+            return { isDestroy: support.addUseCnt() == 1 }
+        }
+    })),
+    // 图形对抗投资·特大计划
+    302224: () => support().collection().handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            if (support.addUseCnt() != 2) return;
+            cmds.getCard(4);
+            return { isDestroy: true }
+        }
+    })),
+    // 图形对抗投资·超级大计划
+    302225: () => support().collection().handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            if (support.addUseCnt() != 3) return;
+            cmds.getCard(6);
+            return { isDestroy: true }
+        }
+    })),
+    // 能量机关投资·大计划
+    302226: () => support().collection().handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            cmds.getDice(1, { mode: CMD_MODE.Random });
+            return { isDestroy: support.addUseCnt() == 1 }
+        }
+    })),
+    // 能量机关投资·特大计划
+    302227: () => support().collection().handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            if (support.addUseCnt() != 2) return;
+            cmds.getDice(2, { mode: CMD_MODE.Random });
+            return { isDestroy: true }
+        }
+    })),
+    // 能量机关投资·超级大计划
+    302228: () => support().collection().handle(support => ({
+        triggers: 'phase-start',
+        exec: cmds => {
+            if (support.addUseCnt() != 3) return;
+            cmds.getDice(3, { mode: CMD_MODE.Random });
+            return { isDestroy: true }
+        }
+    })),
     // 超导祝佑·极寒
     303041: () => support().collection(2).handle((support, event) => {
         const triggers: Trigger[] = ['phase-dice', 'phase-start'];
@@ -64,43 +142,120 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 超导祝佑·电冲
     303042: () => support().collection(3).handle((support, event) => {
-        const triggers: Trigger[] = ['phase-start'];
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
         if (support.useCnt > 0) triggers.push('Superconduct');
         return {
             triggers,
+            element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Electro],
+            cnt: [2, 2],
             exec: cmds => {
                 if (event.trigger == 'phase-start') return support.setUseCnt(3);
-                cmds.attack(2, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHp });
-                support.minusUseCnt();
+                if (event.trigger == 'Superconduct') {
+                    cmds.attack(2, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHp });
+                    support.minusUseCnt();
+                }
             }
         }
     }),
     // 蒸发祝佑·狂浪
     303051: () => support().collection(2).handle((support, event) => {
-        const triggers: Trigger[] = ['phase-start'];
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
         if (support.useCnt > 0) triggers.push('Vaporize');
         return {
             triggers,
+            element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Pyro],
+            cnt: [2, 2],
             exec: cmds => {
                 const { trigger, heros } = event;
                 if (trigger == 'phase-start') return support.setUseCnt(2);
-                const hidxs = heros.getMinHpHidxs();
-                cmds.heal(1, { hidxs }).getStatus(303053, { hidxs });
-                support.minusUseCnt();
+                if (trigger == 'Vaporize') {
+                    const hidxs = heros.getMinHpHidxs();
+                    cmds.heal(1, { hidxs }).getStatus(303053, { hidxs });
+                    support.minusUseCnt();
+                }
             }
         }
     }),
     // 蒸发祝佑·炽燃
     303052: () => support().collection(2).handle((support, event) => {
         const { hero, trigger, isMinusDiceSkill } = event;
-        const triggers: Trigger[] = ['phase-start'];
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
         const isMinus = support.useCnt > 0 && hero.element == ELEMENT_TYPE.Pyro;
         if (isMinus && isMinusDiceSkill) triggers.push('skilltype2');
         return {
             triggers,
+            element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Pyro],
+            cnt: [2, 2],
             minusDiceSkill: isCdt(isMinus, { skilltype2: [0, 0, 1] }),
             exec: () => {
                 if (trigger == 'phase-start') return support.setUseCnt(2);
+                if (trigger == 'skilltype2') support.minusUseCnt();
+            }
+        }
+    }),
+    // 绽放祝佑·甘露
+    303061: () => support().collection().handle((support, event) => {
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
+        if (support.useCnt < 2) triggers.push('card');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Dendro],
+            cnt: [2, 2],
+            exec: cmds => {
+                const { trigger, heros } = event;
+                if (trigger == 'phase-start') return support.setUseCnt();
+                if (trigger == 'card' && support.addUseCnt() == 2) {
+                    cmds.addMaxHp(2, heros.getMinHpHidxs());
+                }
+            }
+        }
+    }),
+    // 绽放祝佑·蔓生
+    303062: () => support().collection(1).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
+        if (support.useCnt > 0) triggers.push('elReaction');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Dendro],
+            cnt: [2, 2],
+            exec: cmds => {
+                if (event.trigger == 'phase-start') return support.setUseCnt(1);
+                if (event.trigger == 'elReaction') {
+                    cmds.attack(1, DAMAGE_TYPE.Hydro);
+                    support.minusUseCnt();
+                }
+            }
+        }
+    }),
+    // 火岩祝佑·回火
+    303071: () => support().collection(3).handle((support, event) => {
+        const { trigger, combatStatus, hero: { heroStatus } } = event;
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
+        if (support.useCnt > 0 && (combatStatus.has(STATUS_TYPE.Shield) || heroStatus.has(STATUS_TYPE.Shield))) triggers.push('Pyro-dmg', 'Geo-dmg');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Geo],
+            cnt: [2, 2],
+            addDmgCdt: 1,
+            exec: () => {
+                if (trigger == 'phase-start') return support.setUseCnt(3);
+                if (trigger == 'phase-dice') return;
+                support.minusUseCnt();
+            }
+        }
+    }),
+    // 火岩祝佑·重熔
+    303072: () => support().collection(1).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
+        if (support.useCnt > 0) triggers.push('Pyro-dmg', 'Geo-dmg');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Geo],
+            cnt: [2, 2],
+            exec: cmds => {
+                if (event.trigger == 'phase-start') return support.setUseCnt(1);
+                if (event.trigger == 'phase-dice') return;
+                cmds.getStatus([[203, 2]]);
                 support.minusUseCnt();
             }
         }
@@ -119,9 +274,9 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     })),
     // 群玉阁
     321003: () => support().permanent().handle((_, event, ver) => {
-        const { hcards = [], trigger } = event;
+        const { hcardsCnt, trigger } = event;
         const triggers: Trigger[] = ['phase-dice'];
-        if ((ver.gte('v4.5.0') || ver.isOffline) && hcards.length <= 3) triggers.push('phase-start');
+        if ((ver.gte('v4.5.0') || ver.isOffline) && hcardsCnt <= 3) triggers.push('phase-start');
         return {
             triggers,
             element: 'front',
@@ -202,8 +357,8 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 须弥城
     321010: () => support().permanent().perCnt(1).handle((support, event) => {
-        const { dices, hcards, isMinusDiceTalent, isMinusDiceSkill } = event;
-        if (dices.length > hcards.length || support.perCnt <= 0) return;
+        const { dicesCnt, hcardsCnt, isMinusDiceTalent, isMinusDiceSkill } = event;
+        if (dicesCnt > hcardsCnt || support.perCnt <= 0) return;
         const triggers: Trigger[] = [];
         if (isMinusDiceTalent) triggers.push('card');
         if (isMinusDiceSkill) triggers.push('skill');
@@ -310,7 +465,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 湖中垂柳
     321016: () => support().round(2).handle((support, event) => {
-        if (event.hcards.length > 2) return;
+        if (event.hcardsCnt > 2) return;
         return { triggers: 'phase-end', exec: cmds => (cmds.getCard(2), { isDestroy: support.minusUseCnt() == 0 }) }
     }),
     // 欧庇克莱歌剧院
@@ -330,7 +485,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 梅洛彼得堡
     321018: () => support().collection().handle((support, event, ver) => {
-        const { hidx, getdmg, heal, trigger } = event;
+        const { hidx, getdmg, heal, trigger, ehcardsCnt } = event;
         const triggers: Trigger[] = [];
         if (ver.gte('v6.4.0') || support.useCnt < 4) {
             if (getdmg[hidx] >= 0) triggers.push('getdmg');
@@ -344,7 +499,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                     return cmds.getStatus(301018, { isOppo: true }).res;
                 }
                 if (ver.lt('v6.4.0')) support.addUseCntMax(4);
-                else if (support.addUseCnt() >= 5) {
+                else if (support.addUseCntMax(5) == 5 && ehcardsCnt > 0) {
                     support.minusUseCnt(5);
                     cmds.getStatus(208, { isOppo: true });
                 }
@@ -607,6 +762,25 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             return { isDestroy: support.minusUseCnt() == 0 }
         }
     })),
+    // 层岩巨渊
+    321040: () => support().collection(1).handle((support, event) => {
+        const { source, trigger, getCardIds } = event;
+        const triggers: Trigger[] = ['adventure', 'enter'];
+        if (source == 301042) triggers.push('trigger');
+        return {
+            triggers,
+            isNotAddTask: trigger == 'trigger',
+            exec: cmds => {
+                if (trigger == 'enter') return cmds.addCard(5, getCardIds(c => c.type == CARD_TYPE.Event), { isNotPublic: true }).res;
+                if (trigger == 'adventure') {
+                    if (support.addUseCnt() % 2 == 0) cmds.getDice(1, { mode: CMD_MODE.Random });
+                    if (support.useCnt == 10) cmds.getStatus(301042);
+                    return;
+                }
+                return { isDestroy: true }
+            }
+        }
+    }),
     // 派蒙
     322001: () => support().round(2).handle(support => ({
         triggers: 'phase-start',
@@ -873,7 +1047,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 塞塔蕾
     322019: () => support().collection(3).handle((support, event) => {
-        if (event.hcards.length > 0) return;
+        if (event.hcardsCnt > 0) return;
         return {
             triggers: ['action-after', 'action-after-oppo'],
             exec: cmds => (cmds.getCard(1), { isDestroy: support.minusUseCnt() == 0 })
@@ -1056,6 +1230,11 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             }
         }
     }),
+    // 乐平波琳
+    322033: () => support().permanent().handle(() => ({
+        triggers: 'enter',
+        exec: cmds => cmds.pickCard(3, CMD_MODE.UseCard, { card: [302229, 302230, 302231] }).res,
+    })),
     // 参量质变仪
     323001: () => support().collection().handle(support => ({
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],
@@ -1146,8 +1325,8 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 苦舍桓
     323008: () => support().collection().perCnt(1).handle((support, event) => {
-        const { hcards, trigger, isMinusDiceSkill } = event;
-        if (trigger == 'phase-start' && (support.useCnt >= 2 || hcards.length == 0)) return;
+        const { hcardsCnt, trigger, isMinusDiceSkill } = event;
+        if (trigger == 'phase-start' && (support.useCnt >= 2 || hcardsCnt == 0)) return;
         if (support.perCnt == 0 && (trigger == 'card' || (trigger == 'skill' && support.useCnt == 0))) return;
         const triggers: Trigger[] = ['phase-start', 'card'];
         if (isMinusDiceSkill) triggers.push('skill');
@@ -1157,7 +1336,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             isNotAddTask: trigger != 'phase-start',
             exec: cmds => {
                 if (trigger == 'phase-start') {
-                    const cnt = Math.min(hcards.length, 2 - support.useCnt);
+                    const cnt = Math.min(hcardsCnt, 2 - support.useCnt);
                     support.addUseCnt(cnt);
                     return cmds.discard({ cnt, mode: CMD_MODE.HighHandCard }).res;
                 }
@@ -1170,6 +1349,10 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     331004: () => elTransfiguration(ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Electro, 'Superconduct', 4),
     // 元素幻变：蒸发祝佑
     331005: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, 'Vaporize', 5),
+    // 元素幻变：绽放祝佑
+    331006: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro, 'Bloom', 6),
+    // 元素幻变：火岩祝佑
+    331007: () => elTransfiguration(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Geo, 'elReaction-Geo:Pyro', 7),
 
 }
 

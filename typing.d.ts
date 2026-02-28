@@ -132,7 +132,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
-    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'modifyUseCnt';
+    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'modifyUseCnt' | 'convertSupport';
 
 type GameInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -197,7 +197,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
     `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` | 'skill-dmg' |
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `${TrgOther}elReaction-Anemo:${TrgElRe}` | `${TrgOther}elReaction-Geo:${TrgElRe}` | 'ecard' |
-    'get-elReaction-oppo' | 'kill' | 'killed' | 'will-killed' | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
+    'get-elReaction-oppo' | 'kill' | 'killed' | `${TrgOther}will-killed` | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
     `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | `useReadySkill` | `status-destroy` | `summon-destroy` | 'destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |

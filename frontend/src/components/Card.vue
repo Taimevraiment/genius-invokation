@@ -42,7 +42,7 @@
                     <img class="attachment-icon" :src="getPngIcon(atch.UI.icon)" />
                 </div>
                 <div class="attachment" v-if="card.attachments.length > 2"
-                    style="background-color: #faebd767;border-radius: 50%;margin: 5%;width: 35%;">
+                    style="background-color: #faebd767;border-radius: 50%;margin: 5%;width: 20%;height: 80%;">
                     <span style="color: beige;">…</span>
                 </div>
             </div>
@@ -145,11 +145,12 @@ const getPngIcon = (name: string) => {
     width: 100%;
     display: flex;
     justify-content: center;
-    top: 12%;
+    top: 5%;
+    left: 5%;
 }
 
 .attachment {
-    width: 40%;
+    width: 25%;
     aspect-ratio: 1/1;
     display: flex;
     align-items: center;

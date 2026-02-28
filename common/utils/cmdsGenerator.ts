@@ -229,10 +229,13 @@ export default class CmdsGenerator {
         return this;
     }
     addCard(cnt: number, card: Card | (Card | number)[] | number,
-        options: { scope?: number, isRandom?: boolean, isNotPublic?: boolean, addTo?: number, isOppo?: boolean } = {}
+        options: {
+            scope?: number, isRandom?: boolean, isNotPublic?: boolean,
+            addTo?: number, isOppo?: boolean, isBottom?: boolean,
+        } = {}
     ) {
-        const { scope, isRandom = true, isNotPublic, addTo, isOppo } = options;
-        const hidx = addTo ?? scope;
+        const { scope, isRandom = true, isNotPublic, addTo, isOppo, isBottom } = options;
+        const hidx = isBottom ? -cnt : (addTo ?? scope);
         this._add({
             cmd: 'addCard',
             cnt: cnt * (addTo ? -1 : 1),
@@ -296,6 +299,10 @@ export default class CmdsGenerator {
     }
     convertCard(eid: number, cid: number) {
         this._add({ cmd: 'convertCard', hidxs: [eid, cid] });
+        return this;
+    }
+    convertSupport(eid: number, cid: number) {
+        this._add({ cmd: 'convertSupport', hidxs: [eid, cid] });
         return this;
     }
     adventure() {

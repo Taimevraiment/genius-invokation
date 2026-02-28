@@ -58,9 +58,10 @@ export class Entity {
         this.variables.useCnt += n;
         return this.useCnt;
     }
-    addUseCntMax(max: number, n?: number): void {
+    addUseCntMax(max: number, n?: number): number {
         this.addUseCnt(n);
         this.variables.useCnt = Math.min(max, this.useCnt);
+        return this.useCnt;
     }
     minusUseCnt(n: number = 1): number {
         this.variables.useCnt = Math.max(0, this.useCnt - n);

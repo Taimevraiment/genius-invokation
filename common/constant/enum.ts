@@ -269,14 +269,14 @@ export const HERO_LOCAL_CODE = {
     [HERO_LOCAL.Sumeru]: 4,
     [HERO_LOCAL.Fontaine]: 5,
     [HERO_LOCAL.Natlan]: 6,
-    [HERO_LOCAL.Snezhnaya]: 7,
+    [HERO_LOCAL.Snezhnaya]: 0,
     [HERO_LOCAL.Fatui]: 216,
     [HERO_LOCAL.Hilichurl]: 0,
     [HERO_LOCAL.Eremite]: 0,
     [HERO_LOCAL.ArkheOusia]: 0,
     [HERO_LOCAL.ArkhePneuma]: 0,
     [HERO_LOCAL.ConsecratedBeast]: 0,
-    [HERO_LOCAL.Nodkrai]: 0,
+    [HERO_LOCAL.Nodkrai]: 7,
 } as const;
 
 export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
@@ -327,6 +327,23 @@ export const SUMMON_DESTROY_TYPE = {
 
 export type SummonDestroyType = TypeConst<typeof SUMMON_DESTROY_TYPE>;
 
+export const EFFECT_TYPE = {
+    Discard: '舍弃',
+    Pick: '挑选',
+    ReadySkill: '准备技能',
+    Summon: '召唤',
+    Heal: '治疗',
+    Shield: '护盾',
+    NightSoul: '夜魂',
+    BondofLife: '生命之契',
+    Vehicle: '特技',
+    PierceDmg: '穿透伤害',
+    GenerateCard: '生成行动牌',
+    Energy: '充能',
+    Adventure: '冒险',
+} as const;
+export type EffectType = TypeConst<typeof EFFECT_TYPE>;
+
 export const CMD_MODE = {
     Random: 70001, // 随机不重复基础骰子
     FrontHero: 70002, // 当前出战角色(hidxs[0]控制前后)元素骰子
@@ -344,6 +361,7 @@ export const CMD_MODE = {
     LowHandCard: 70014, // 弃置花费最低的手牌
     MaxHp: 70015, // 生命值最高的角色
     MaxHurt: 70016, // 受伤最多的角色
+    HighLowCard: 70017, // 费用最高或最低的牌
 } as const;
 
 export const INFO_TYPE = {
@@ -399,7 +417,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
-    'v6.4.0', 'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
+    'v6.5.0', 'v6.4.0', 'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',

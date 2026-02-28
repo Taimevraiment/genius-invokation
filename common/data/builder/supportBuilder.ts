@@ -23,6 +23,7 @@ export interface SupportHandleRes {
     isExchange?: boolean,
     isAfterSkill?: boolean,
     notLog?: boolean,
+    addDmgCdt?: number,
 }
 
 export interface SupportExecRes {

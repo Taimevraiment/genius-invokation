@@ -495,7 +495,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             }
         }),
 
-    111122: () => status('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notReset()
+    111122: () => status('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notResetPerCnt()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用「普通攻击」或「元素战技」后：】将[当前元素骰费用]最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
         .handle((status, event) => {
             const { hero, hidx, hcardsCnt, trigger, cmds } = event;
@@ -904,6 +904,19 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             const { isSummon, source } = event;
             if (isSummon != 112144 && source != getHidById(status.id)) return;
             return { triggers: 'getdmg', getDmg: 2 * status.useCnt, exec: () => status.dispose() }
+        }),
+
+    112151: () => status('西风之眷').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Usage)
+        .description('【我方出战角色受到伤害后：】生成1层【sts203】。；[useCnt]')
+        .handle(status => ({ triggers: 'after-getdmg', status: 203, exec: () => status.minusUseCnt() })),
+
+    112152: () => status('雾雨秘迹').combatStatus().icon('ski,1').useCnt(1).type(STATUS_TYPE.Usage)
+        .description('【敌方切换角色后：】对敌方出战角色造成1点[水元素伤害]。；【我方切换角色后：】生成1个随机基础元素骰。；[useCnt]')
+        .handle((status, event) => {
+            const { trigger, cmds } = event;
+            if (trigger == 'switch') cmds.getDice(1, { mode: CMD_MODE.Random });
+            else cmds.attack(1, DAMAGE_TYPE.Hydro);
+            return { triggers: ['switch', 'switch-oppo'], exec: () => status.minusUseCnt() }
         }),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
@@ -2323,7 +2336,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     124022: () => status('雷鸣探知').heroStatus().icon(STATUS_ICON.Debuff).useCnt(1).perCnt(1, 'v4.4.0')
-        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).notReset()
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).notResetPerCnt()
         .description('【所附属角色受到〖hro〗及其召唤物造成的伤害时：】移除此状态，使此伤害+1。；（同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。）')
         .description('【此状态存在期间，可以触发1次：】所附属角色受到〖hro〗及其召唤物造成的伤害+1。；（同一方场上最多存在一个此状态。【hro】的部分技能，会以所附属角色为目标。）', 'v4.4.0')
         .handle((status, event, ver) => {
@@ -2618,6 +2631,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     127042: () => status('食足体健').heroStatus().icon(STATUS_ICON.Buff).useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
         .description('自身下次受到的伤害-1。（可叠加，没有上限）').barrierCnt(1),
 
+    127051: () => readySkillStatus('催萌腐草', 27055),
+
     163011: () => status('炽热').heroStatus().useCnt(1).type(STATUS_TYPE.Attack, STATUS_TYPE.Usage)
         .icon('pyro-dice').iconBg(DEBUFF_BG_COLOR)
         .description('【结束阶段：】对所附属角色造成1点[火元素伤害]。；[useCnt]；所附属角色被附属【sts121022】时，移除此效果。')
@@ -2795,6 +2810,24 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             const { isChargedAtk, hero } = event;
             if (!isChargedAtk) return;
             return { triggers: 'after-skilltype1', damage: 5, element: hero.element }
+        }),
+
+    301042: () => status('层岩巨渊（生效中）').combatStatus().useCnt(0).resetUseCnt()
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon(STATUS_ICON.Buff).from(321040)
+        .description('【我方本回合内打出2张名称不存在于本局最初牌组的牌时：】生成3个万能元素骰，然后弃置【crd321040】。')
+        .handle((status, event) => {
+            const { hcard, playerInfo: { initCardIds }, cmds } = event;
+            if (!hcard || initCardIds.includes(hcard.id)) return;
+            return {
+                triggers: 'card',
+                isTrigger: status.useCnt == 1,
+                isAddTask: status.useCnt == 1,
+                exec: () => {
+                    if (status.addUseCnt() < 2) return;
+                    cmds.getDice(3, { element: DICE_COST_TYPE.Omni });
+                    status.dispose();
+                }
+            }
         }),
 
     301101: (useCnt: number) => status('千岩之护').heroStatus()
@@ -3145,6 +3178,33 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 status.minusUseCnt();
                 cmds.getDice(3, { element: DICE_COST_TYPE.Omni }).getCard(1);
             },
+        })),
+
+    303183: () => status('月与故乡（生效中）').combatStatus().icon(STATUS_ICON.Special).useCnt(1).roundCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(331807)
+        .description('【本回合内我方打出下张卡牌后：】在下个回合开始时，创建1张所打出的卡牌加入手牌。')
+        .handle((status, event) => ({
+            triggers: 'card',
+            exec: () => {
+                event.cmds.getStatus(303184);
+                status.minusUseCnt();
+            }
+        })),
+
+    303184: () => status('月与故乡（生效中）').combatStatus().icon(STATUS_ICON.Special).useCnt(1)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).from(331807)
+        .description('【行动阶段开始时：】创建所记录的卡牌加入手牌。')
+        .handle((status, event) => ({
+            triggers: ['phase-start', 'enter'],
+            exec: () => {
+                const { cmds, playerInfo: { usedCardIds }, trigger } = event;
+                if (trigger == 'enter') {
+                    status.variables.card = usedCardIds.at(-1)!;
+                    return;
+                }
+                cmds.getCard(1, { card: status.variables.card });
+                status.minusUseCnt();
+            }
         })),
 
     303202: () => status('换班时间（生效中）').combatStatus().useCnt(1)

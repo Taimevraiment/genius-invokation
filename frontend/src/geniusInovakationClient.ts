@@ -730,7 +730,7 @@ export default class GeniusInvokationClient {
             return this.selectHero(1, hidx);
         }
         if (this.player.status == PLAYER_STATUS.DIESWITCH) { // 阵亡选择角色
-            this.isValid = true;
+            this.isValid = this.player.heros[hidx].hp > 0;
             return this.switchHero();
         }
         if (this.player.phase >= PHASE.ACTION_START && (this.isShowSwitchHero > 0 || this.currSkill.canSelectHero == 1)) { // 准备切换角色
@@ -783,7 +783,7 @@ export default class GeniusInvokationClient {
             }
             if (pidx == 1 && this.player.status == PLAYER_STATUS.DIESWITCH) {
                 if (isTargetSelect) return this.chooseHero();
-                this.targetSelect[1].forEach((_, hi, ha) => ha[hi] = hi == hidx);
+                this.targetSelect[1].forEach((_, hi, ha) => ha[hi] = hi == hidx && this.player.heros[hi].hp > 0);
             }
         }
         if (this.isLookon > -1) return;

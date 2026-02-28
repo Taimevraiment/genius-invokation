@@ -55,12 +55,12 @@ export class GIStatus extends Entity {
         useCnt: number, maxCnt: number, roundCnt: number,
         handle?: (status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined,
         options: {
-            smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number,
-            isTalent?: boolean, isReset?: boolean, vars?: Record<string, number>, ver?: Version, versionChanges?: Version[],
+            smnId?: number, pct?: number, icbg?: StatusBgColor, expl?: string[], act?: number, isTalent?: boolean,
+            isResetPerCnt?: boolean, isResetUseCnt?: boolean, vars?: Record<string, number>, ver?: Version, versionChanges?: Version[],
         } = {}
     ) {
-        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1,
-            isTalent = false, isReset = true, vars = {}, ver = VERSION[0], versionChanges = [] } = options;
+        const { smnId = -1, pct = 0, icbg = STATUS_BG_COLOR.Transparent, expl = [], act = -1, isTalent = false,
+            isResetPerCnt = true, isResetUseCnt = false, vars = {}, ver = VERSION[0], versionChanges = [] } = options;
         super(id, name, { uct: useCnt, pct, vars });
         this.id = id;
         this.name = name;
@@ -170,8 +170,9 @@ export class GIStatus extends Entity {
                 cmds,
             };
             if (cevent.trigger == 'reset') {
-                if (isReset) status.setPerCnt(pct);
-                return { notLog: true, isAddTask: false, triggers: isCdt(isReset, ['reset']) }
+                if (isResetPerCnt) status.setPerCnt(pct);
+                if (isResetUseCnt) status.setUseCnt(useCnt);
+                return { notLog: true, isAddTask: false, triggers: isCdt(isResetPerCnt || isResetUseCnt, ['reset']) }
             }
             const builderRes = thandle(status, cevent, versionWrap(ver)) ?? {};
             const { damage, element, heal, pdmg, isSelf, isPriority, skill, status: sts, statusOppo,
@@ -256,7 +257,8 @@ class StatusBuilder extends BaseBuilder {
     private _isTalent: boolean = false;
     private _summonId: number = -1;
     private _variables: Record<string, number> = {};
-    private _isReset: boolean = true;
+    private _isResetPerCnt: boolean = true;
+    private _isResetUseCnt: boolean = false;
     private _handle: ((status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined | void) | undefined;
     private _typeCdt: [(ver: VersionWrapper) => boolean, StatusType[]][] = [];
     private _barrierCdt: [(ver: VersionWrapper) => boolean, number][] = [];
@@ -376,8 +378,12 @@ class StatusBuilder extends BaseBuilder {
         this._variables[key] = value ?? 0;
         return this;
     }
-    notReset() {
-        this._isReset = false;
+    notResetPerCnt() {
+        this._isResetPerCnt = false;
+        return this;
+    }
+    resetUseCnt() {
+        this._isResetUseCnt = true;
         return this;
     }
     handle(handle: (status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined | void) {
@@ -447,7 +453,8 @@ class StatusBuilder extends BaseBuilder {
                 smnId,
                 vars: this._variables,
                 expl: this._explains,
-                isReset: this._isReset,
+                isResetPerCnt: this._isResetPerCnt,
+                isResetUseCnt: this._isResetUseCnt,
                 ver: this._curVersion,
                 versionChanges: this.versionChanges,
             }

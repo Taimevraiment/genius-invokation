@@ -227,7 +227,8 @@ export class GICard extends Entity {
             this.UI.cnt = 1;
         } else if (subType.includes(CARD_SUBTYPE.ElementResonance)) {
             const elCode = Math.floor(id / 100) % 10 as PureElementCode;
-            this.UI.description += `；（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）`;
+            if (id == 331721) this.UI.description += `；（牌组包含至少2个「${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[7]]}」角色，才能加入牌组）`;
+            else this.UI.description += `；（牌组中包含至少2个‹${elCode}${ELEMENT_NAME[PURE_ELEMENT_CODE_KEY[elCode]]}›角色，才能加入牌组）`;
         } else if (subType.includes(CARD_SUBTYPE.Adventure)) {
             this.UI.description += `；（「冒险地点」只能通过冒险生成，无法加入牌组）`;
         } else if (subType.includes(CARD_SUBTYPE.Blessing)) {
@@ -278,7 +279,6 @@ export class GICard extends Entity {
             if (cevent.trigger == 'reset') {
                 this.reset(card);
                 if (!builderRes.triggers?.includes('reset')) {
-                    // builderRes = { triggers: 'reset' }
                     cmds.clear();
                     execmds.clear();
                 }
@@ -449,6 +449,9 @@ class CardBuilder extends BaseCostBuilder {
     }
     simulanka() {
         return this.subtype(CARD_SUBTYPE.Simulanka);
+    }
+    resonance() {
+        return this.subtype(CARD_SUBTYPE.ElementResonance);
     }
     adventure() {
         this.place();

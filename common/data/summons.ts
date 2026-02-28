@@ -224,6 +224,9 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
     112144: () => summon('鲨鲨飞弹').useCnt(2).maxUse(MAX_USE_COUNT).damage(2).description('{defaultAtk。}')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2cac5c299862a3ba055935093fd9baa1_2832493176442019382.png'),
 
+    112161: () => summon('冷静一下鸭').useCnt(2).damage(2).description('{defaultAtk。}')
+        .src('#'),
+
     113021: () => summon('锅巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),
 

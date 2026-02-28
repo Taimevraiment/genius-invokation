@@ -229,7 +229,7 @@
 <script setup lang="ts">
 import InfoModal from '@/components/InfoModal.vue';
 import {
-    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, DICE_TYPE, DiceType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
+    CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, DICE_TYPE, DiceType, EFFECT_TYPE, EffectType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
     HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE,
     TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
@@ -260,8 +260,8 @@ type Filter<T> = {
         icon: string,
     }[]
 }
-type HeroFilter = [Filter<HeroTag>, Filter<ElementType>, Filter<WeaponType>];
-type CardFilter = [Filter<CardType>, Filter<CardSubtype>, Filter<number>, Filter<DiceType>];
+type HeroFilter = [Filter<HeroTag>, Filter<ElementType>, Filter<WeaponType>, Filter<EffectType>];
+type CardFilter = [Filter<CardType>, Filter<CardSubtype>, Filter<number>, Filter<DiceType>, Filter<EffectType>];
 
 const TAG_INDEX = { // 标签页
     Hero: 0,
@@ -427,16 +427,18 @@ const switchOfflineVersion = () => {
 
 // 重置角色筛选
 const resetHeroFilter = () => {
-    const heroFilterTitle = ['所属', '元素', '武器'];
+    const heroFilterTitle = ['所属', '元素', '武器', '效果'];
     const heroVal = [
         Object.values(HERO_LOCAL),
         Object.values(PURE_ELEMENT_TYPE),
         Object.values(WEAPON_TYPE),
+        Object.values(EFFECT_TYPE).slice(0, -1),
     ];
     heroFilter.value = [
         Object.values(HERO_LOCAL_NAME),
         Object.values(PURE_ELEMENT_NAME).map(([v]) => v),
         Object.values(WEAPON_TYPE_NAME),
+        // Object.values(EFFECT_TYPE_NAME).slice(0, -1),
     ].map((arr, aidx) => ({
         name: heroFilterTitle[aidx],
         value: arr.map((name, i) => ({
@@ -451,18 +453,20 @@ const resetHeroFilter = () => {
 
 // 重置卡牌筛选
 const resetCardFilter = () => {
-    const cardFilterTitle = ['类型', '副类型', '花费', '花费类型'];
+    const cardFilterTitle = ['类型', '副类型', '花费', '花费类型', '效果'];
     const cardVal = [
         Object.values(CARD_TYPE),
-        Object.values(CARD_SUBTYPE),
+        Object.values(CARD_SUBTYPE).slice(0, -1),
         [0, 1, 2, 3, 4, 5],
         Object.values(DICE_TYPE),
+        Object.values(EFFECT_TYPE),
     ];
     cardFilter.value = [
         Object.values(CARD_TYPE_NAME),
-        Object.values(CARD_SUBTYPE_NAME),
+        Object.values(CARD_SUBTYPE_NAME).slice(0, -1),
         [0, 1, 2, 3, 4, 5],
         ['无色元素骰', ...Object.values(PURE_ELEMENT_NAME).map(([v]) => v + '元素'), '同色'],
+        // Object.values(EFFECT_TYPE_NAME),
     ].map((arr, aidx) => ({
         name: cardFilterTitle[aidx],
         value: arr.map((name, i) => ({
@@ -475,6 +479,8 @@ const resetCardFilter = () => {
     })) as CardFilter;
 }
 
+const elementResonances = [...Object.values(ELEMENT_TYPE), HERO_LOCAL.Nodkrai];
+const localResonances = Object.values(HERO_LOCAL);
 const updateInfo = (init = false) => {
     if (isEditDeck) {
         herosDeck.value = herosDeck.value.map(h => herosPool.value.some(ph => ph.id == h.id) ? h : NULL_HERO());
@@ -497,11 +503,12 @@ const updateInfo = (init = false) => {
             });
             cardsDeck.value.sort((a, b) => a.id - b.id);
         }
-        const elMap = arrToObj(Object.values(ELEMENT_TYPE), 0);
-        const lcMap = arrToObj(Object.values(HERO_LOCAL), 0);
+        const elMap = arrToObj(elementResonances, 0);
+        const lcMap = arrToObj(localResonances, 0);
         herosDeck.value.forEach((h, hi, ha) => {
             if (customVersion.value.banList.includes(h.id)) return ha[hi] = NULL_HERO();
             ++elMap[h.element];
+            if (h.tags.includes(HERO_LOCAL.Nodkrai)) ++elMap[HERO_LOCAL.Nodkrai];
             h.tags.forEach(lc => lc in lcMap && ++lcMap[lc as HeroLocal]);
         });
         cardsDeck.value = cardsDeck.value.filter(c => {
@@ -512,6 +519,7 @@ const updateInfo = (init = false) => {
             if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
                 const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
                 if (element == ELEMENT_TYPE.Physical) return false;
+                if (element == HERO_LOCAL.Nodkrai) return c.id == 331721;
                 const elCode = PURE_ELEMENT_CODE[element] * 100;
                 return [331001 + elCode, 331002 + elCode].includes(c.id);
             }
@@ -528,7 +536,11 @@ const updateInfo = (init = false) => {
                 else if (c.UI.cnt == -1) c.UI.cnt = 2;
             } else if (c.hasSubtype(CARD_SUBTYPE.ElementResonance)) { // 元素共鸣
                 const [element] = objToArr(elMap).find(([, el]) => el > 1) ?? [ELEMENT_TYPE.Physical];
-                if (element == ELEMENT_TYPE.Physical || !Array.from({ length: 2 }, (_, i) => 331001 + i + PURE_ELEMENT_CODE[element] * 100).includes(c.id)) {
+                if (
+                    element == ELEMENT_TYPE.Physical ||
+                    (element == HERO_LOCAL.Nodkrai ? c.id != 331721 :
+                        !Array.from({ length: 2 }, (_, i) => 331001 + i + PURE_ELEMENT_CODE[element] * 100).includes(c.id))
+                ) {
                     c.UI.cnt = -1;
                 } else if (c.UI.cnt == -1) c.UI.cnt = 2;
             } else if (c.hasTag(CARD_TAG.LocalResonance)) { // 所属地区(包括魔物、愚人众)
@@ -559,31 +571,33 @@ const updateInfo = (init = false) => {
     }
     const cardFilterRes = cardFilter.value?.map(ftype => {
         return ftype.value.filter(v => v.tap).map(v => v.val);
-    }) as [CardType[], CardSubtype[], number[], DiceType[]];
+    }) as [CardType[], CardSubtype[], number[], DiceType[], EffectType[]];
     allCards.value = allCards.value.filter(c => {
         const t = cardFilterRes[0].length == 0 || cardFilterRes[0].includes(c.type);
         const st = cardFilterRes[1].length == 0 || cardFilterRes[1].every(v => c.hasSubtype(v));
         const co = cardFilterRes[2].length == 0 || cardFilterRes[2].includes(c.cost + c.anydice);
         const ct = cardFilterRes[3].length == 0 || cardFilterRes[3].includes(c.costType);
+        const ef = true || cardFilterRes[4].length == 0 || cardFilterRes[4].every(ef => c.UI.description.includes(ef));
         const sinceVersion = sinceVersionFilter.value == '实装版本' || c.sinceVersion == sinceVersionFilter.value || c.offlineVersion == sinceVersionFilter.value;
         const isConfigTalent = isEditDeck || !c.hasSubtype(CARD_SUBTYPE.Talent);
         const isConfigShow = !isOnlyShowConfiged.value || customVersion.value.diff[c.id] || customVersion.value.diff[getHidById(c.id)] || customVersion.value.banList.includes(c.id);
-        return t && st && co && ct && sinceVersion && isConfigTalent && isConfigShow;
+        return t && st && co && ct && ef && sinceVersion && isConfigTalent && isConfigShow;
     }).sort((a, b) => {
         if (a.UI.cnt == -1 && b.UI.cnt != -1) return 1;
         if (a.UI.cnt != -1 && b.UI.cnt == -1) return -1;
         return 0;
     });
-    const heroFilterRes: [HeroTag[], ElementType[], WeaponType[]] = heroFilter.value?.map(ftype => {
+    const heroFilterRes = heroFilter.value?.map(ftype => {
         return ftype.value.filter(v => v.tap).map(v => v.val);
-    }) as [HeroTag[], ElementType[], WeaponType[]];
+    }) as [HeroTag[], ElementType[], WeaponType[], EffectType[]];
     allHeros.value = allHeros.value.filter(h => {
         const tag = heroFilterRes[0].length == 0 || heroFilterRes[0].every(hl => h.tags.includes(hl));
         const element = heroFilterRes[1].length == 0 || heroFilterRes[1].includes(h.element);
         const weapon = heroFilterRes[2].length == 0 || heroFilterRes[2].includes(h.weaponType);
+        const effect = true || heroFilterRes[3].length == 0 || heroFilterRes[3].every(ef => h.skills.some(sk => sk.UI.description.includes(ef)));
         const sinceVersion = sinceVersionFilter.value == '实装版本' || h.sinceVersion == sinceVersionFilter.value || h.offlineVersion == sinceVersionFilter.value;
         const isConfigShow = !isOnlyShowConfiged.value || customVersion.value.diff[h.id] || customVersion.value.banList.includes(h.id);
-        return tag && element && weapon && sinceVersion && isConfigShow;
+        return tag && element && weapon && effect && sinceVersion && isConfigShow;
     });
     filterSelected.value = (sinceVersionFilter.value == '实装版本' ? [] : [sinceVersionFilter.value])
         .concat([heroFilter, cardFilter][currIdx.value].value

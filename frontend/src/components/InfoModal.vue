@@ -359,10 +359,9 @@ const wrapName = (_: string, isWhite: string, ctt: string) => `<span${isWhite ==
 const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExplainType, obj?: ExplainContent, isRule?: boolean }): string => {
   const { isExplain, type = '', obj, isRule } = options;
   let res = desc.slice()
-    .replace(/\*入场时/, '入场时')
     .replace(/〔(\*?)(\[.+?\])?(.+?)〕/g, (_, nnc: string, f: string, ctt: string) => {
       const notNeedColor = !!nnc;
-      const flag = (f || '').slice(1, -1);
+      const flag = (f || '').slice(0, -1);
       if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';
       if ((!isInGame.value && !notNeedColor) || isExplain) return '';
       ctt = ctt
@@ -418,8 +417,9 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   if (obj && typeof obj != 'string') {
     if ('dmgChange' in obj) { // Skill
       const isChange = obj.dmgChange > 0;
-      const dmg = Number(res.match(/{dmg\+?(\d*)}/)?.[1]) || 0;
-      res = res.replace(/{dmg\+?\d*}/g, `${isChange ? `<span style='color:${CHANGE_GOOD_COLOR};'>` : ''}${Math.abs(obj.damage + obj.dmgChange + dmg)}${isChange ? '</span>' : ''}`);
+      res = res.replace(/{dmg\+?(\d*)}/g, (_, dmg) => {
+        return `${isChange ? `<span style='color:${CHANGE_GOOD_COLOR};'>` : ''}${Math.abs(obj.damage + obj.dmgChange + +dmg)}${isChange ? '</span>' : ''}`;
+      });
     }
     if ('damage' in obj) { // Summon | Skill
       const dmg = Number(res.match(/{dmg\+?(\d*)}/)?.[1]) || 0;
@@ -583,15 +583,15 @@ const getEquipmentIcon = (subtype: CardSubtype) => {
   return CARD_SUBTYPE_URL[subtype];
 }
 
+const wrapPlayingDescription = <T extends { UI: { descriptions: string[], description: string, explains: string[] } }>(obj: T) => {
+  const onceDesc = obj.UI.descriptions.findIndex(v => /(?<!\*)入场时(?:：|，)|才能打出/.test(v));
+  if (onceDesc > -1) {
+    obj.UI.explains = obj.UI.explains.filter((v, vi) => !obj.UI.descriptions[onceDesc]?.includes(v) || (vi != onceDesc && obj.UI.descriptions[vi]?.includes(v)));
+    obj.UI.descriptions.splice(onceDesc, 1);
+  }
+}
 
 watchEffect(() => {
-  const wrapPlayingDescription = <T extends { UI: { descriptions: string[], description: string, explains: string[] } }>(obj: T) => {
-    const onceDesc = obj.UI.descriptions.findIndex(v => /(?<!\*)入场时(?:：|，)|才能打出/.test(v));
-    if (onceDesc > -1) {
-      obj.UI.explains = obj.UI.explains.filter((v, vi) => !obj.UI.descriptions[onceDesc]?.includes(v) || (vi != onceDesc && obj.UI.descriptions[vi]?.includes(v)));
-      obj.UI.descriptions.splice(onceDesc, 1);
-    }
-  }
   ruleExplain.value = [];
   skills.value = [];
   isShowSkill.value = [];
@@ -661,6 +661,9 @@ watchEffect(() => {
     isHeroStatus.value = new Array(info.value.heroStatus.length).fill(false);
     isCombatStatus.value = new Array(combatStatus.value.length).fill(false);
     isEquipment.value = new Array(info.value.equipments.length).fill(false);
+  }
+  if (info.value?.UI && 'descriptions' in info.value.UI) {
+    info.value.UI.descriptions = info.value.UI.descriptions.map(desc => desc.replace(/\*入场时/, '入场时'));
   }
   if (isBot.value) isShowSkill.value.fill(true);
 });

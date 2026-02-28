@@ -633,6 +633,46 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 112144 })),
         ),
 
+    1215: () => hero(570).name('塔利雅').since('v6.5.0').mondstadt().hydro().sword()
+        .src('#')
+        .avatar('#AvatarIcon_Dahlia')
+        .normalSkill('西风剑术·祭仪')
+        .skills(
+            skill('圣浸的礼典').description('{dealDmg}，生成【sts112152】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(() => ({ status: 112152 })),
+            skill('纯耀的祷咏').description('{dealDmg}，生成2层【sts203】和2层【sts112151】。')
+                .src('#',
+                    '')
+                .burst(2).damage(2).cost(3).handle(() => ({ status: [[203, 2], 112151] }))
+        ),
+
+    1216: () => hero(571).name('爱诺').since('v6.5.0').nodkrai().hydro().claymore()
+        .src('#')
+        .avatar('#AvatarIcon_Aino')
+        .normalSkill('敲打修理法')
+        .skills(
+            skill('妙思捕手').description('{dealDmg}，生成1层【sts170】。如果手牌中有卡牌具有【sts206】，则改为造成{dmg+1}点伤害。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(({ hcards }) => ({ status: 170, addDmgCdt: +hcards.some(c => c.hasAttachment(206)) })),
+            skill('精密水冷仪').description('{dealDmg}，召唤【smn112161】。')
+                .src('#',
+                    '')
+                .burst(2).damage(2).cost(3).handle(() => ({ summon: 112161 })),
+            skill('模块式高效运作').description('【我方卡牌被赋予〖sts206〗时：】如果我方场上存在【smn112161】，则使其[可用次数]+1，否则自身获得1点[充能]。')
+                .src('#',
+                    '')
+                .passive().handle(event => {
+                    const { summons, cmds, hidx, source } = event;
+                    if (source != 206) return;
+                    if (summons.has(112161)) cmds.addUseCnt({ summon: 112161, ignoreMax: true });
+                    else cmds.getEnergy(1, { hidxs: hidx });
+                    return { triggers: 'get-status' }
+                })
+        ),
+
     1301: () => hero(17).name('迪卢克').offline('v1').mondstadt().pyro().claymore()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/62a4fe60bee58508b5cb8ea1379bc975_5924535359245042441.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/844c962c95ae1dfe1b3b14cafdb277c3.png')
@@ -2863,6 +2903,38 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                             }
                         }
                     }
+                })
+        ),
+
+    2705: () => hero(572).name('圣骸牙兽').since('v6.5.0').consecratedBeast().dendro()
+        .src('#')
+        .avatar('#MonsterIcon_PantherSacred')
+        .normalSkill('利爪猛击')
+        .skills(
+            skill('掠能绿波').description('{dealDmg}，从牌组中抓1张【crd124051】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 124051, isFromPile: true }).res),
+            skill('横生厄蔓').description('{dealDmg}，如果手牌中存在【crd124051】，则[舍弃]1张并[准备技能]：【rsk27055】。')
+                .src('#',
+                    '')
+                .burst(2).damage(4).cost(3).handle(event => {
+                    const { hcards, cmds } = event;
+                    if (!hasObjById(hcards, 124051)) return;
+                    cmds.discard({ card: 124051 });
+                    return { status: 127051 }
+                }),
+            skill('亡骸饥渴').description('战斗开始时，生成2张【crd124051】放入牌组底。我方每回合可以额外打出1张【crd124051】。')
+                .src('#',
+                    '')
+                .passive().perCnt(1).handle(event => {
+                    const { skill, cmds, source, trigger } = event;
+                    if (trigger == 'pre-get-status') {
+                        if (skill.perCnt <= 0 || source != 124053) return;
+                        return { triggers: 'pre-get-status', isNotAddTask: true, isInvalid: true, exec: () => skill.minusPerCnt() }
+                    }
+                    cmds.addCard(2, 124051, { isBottom: true });
+                    return { triggers: 'game-start' }
                 })
         ),
 

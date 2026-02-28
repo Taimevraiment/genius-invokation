@@ -1,6 +1,6 @@
 import { swapKeysAndValues } from "../utils/utils.js";
 import {
-    CARD_SUBTYPE, CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, ELEMENT_CODE, ELEMENT_TYPE,
+    CARD_SUBTYPE, CARD_TYPE, COST_TYPE, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE, DiceCostType, EFFECT_TYPE, ELEMENT_CODE, ELEMENT_TYPE,
     HERO_LOCAL, HERO_TAG, SKILL_TYPE, STATUS_TYPE, SUMMON_TAG, TypeConst, WEAPON_TYPE
 } from "./enum.js";
 
@@ -272,6 +272,22 @@ export const HERO_TAG_URL = {
     [HERO_TAG.Nodkrai]: '/image/local15.png',
 } as const;
 
+export const EFFECT_TYPE_NAME = {
+    [EFFECT_TYPE.Discard]: '舍弃',
+    [EFFECT_TYPE.Pick]: '挑选',
+    [EFFECT_TYPE.ReadySkill]: '准备技能',
+    [EFFECT_TYPE.Summon]: '召唤物',
+    [EFFECT_TYPE.Heal]: '治疗',
+    [EFFECT_TYPE.Shield]: '护盾',
+    [EFFECT_TYPE.NightSoul]: '夜魂状态',
+    [EFFECT_TYPE.BondofLife]: '生命之契',
+    [EFFECT_TYPE.Vehicle]: '特技',
+    [EFFECT_TYPE.PierceDmg]: '穿透伤害',
+    [EFFECT_TYPE.GenerateCard]: '生成行动牌',
+    [EFFECT_TYPE.Energy]: '充能',
+    [EFFECT_TYPE.Adventure]: '冒险',
+}
+
 export const WEAPON_TYPE_NAME = {
     [WEAPON_TYPE.Other]: '其他武器',
     [WEAPON_TYPE.Catalyst]: '法器',
@@ -415,4 +431,5 @@ export const RULE_EXPLAIN: { [key: string]: string } = {
     元素幻变: '行动阶段开始时，若队伍中包含元素幻变的两种元素类型的角色且不包含其他元素的角色，则将此牌抓起，然后弃置并生成至场上，然后将4个骰子转化为幻变的元素类型。',
     月感电: '生成回合结束时造成2点[雷元素伤害]的\\[【雷暴云】]。（可用次数1，可叠加，没有上限）；\\[【雷暴云】]入场或可用次数增加时，赋予敌方随机1张手牌\\[【电击】]。',
     当前元素骰费用: '行动牌被赋予【费用增加】和【费用降低】时，当前元素骰费用会对应变化。；（打出时少花费元素骰的效果不会影响此费用）',
+    投资计划: '【投资计划包括：】；对我方出战角色造成1点[穿透伤害]，执行1个「治疗」效果相关的计划。；[舍弃]1张随机手牌，执行1个「抓牌」效果相关的计划。；移除我方1个元素骰，执行1个「元素骰」效果相关的计划。',
 }
