@@ -4058,7 +4058,7 @@ export default class GeniusInvokationRoom {
                                     cst.push(sts);
                                     break;
                                 case STATUS_GROUP.attachment:
-                                    const isHandcard = mode != CMD_MODE.RandomPileCard;
+                                    const isHandcard = mode != CMD_MODE.RandomPileCard && mode != CMD_MODE.TopPileCard;
                                     let cdidxs = pile.map((_, i) => i);
                                     const canDuplicate = (c: Card) => sts.useCnt > 0 || sts.id == 207 || !c.hasAttachment(sts.id);
                                     if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
@@ -4075,6 +4075,9 @@ export default class GeniusInvokationRoom {
                                             restCnt -= cdidxs.length;
                                             hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
                                         }
+                                    } else if (mode == CMD_MODE.TopPileCard) {
+                                        const cdidx = pile.findIndex(c => (cardFilter?.(c) ?? true) && canDuplicate(c));
+                                        if (cdidx != -1) cdidxs = [cdidx];
                                     } else if (isHandcard) {
                                         cdidxs = handCards.filter(c => (cardFilter?.(c) ?? true) && canDuplicate(c)).map(c => c.cidx);
                                     }
@@ -5306,13 +5309,14 @@ export default class GeniusInvokationRoom {
         if (!this.isStart || this.phase < PHASE.ACTION_START) return;
         const player = this.players[pidx];
         if (!player) return;
-        const { handCards, heros, combatStatus, summons, supports } = player;
-        const costChange = handCards.map(() => [0, 0, 0]);
+        const { handCards, heros, combatStatus, summons, supports, pile } = player;
+        const handCardsCostChange = handCards.map(() => [0, 0, 0]);
+        const pileCostChange = pile.map(() => [0, 0, 0]);
         const curHero = heros.getFront();
         if (!curHero) return;
         const handleEvent = { pidx, ...this.handleEvent }
         handCards.forEach((c, ci) => {
-            const currCostChange = () => costChange[ci].reduce((a, b) => a + b);
+            const currCostChange = () => handCardsCostChange[ci].reduce((a, b) => a + b);
             const getMinusDiceCard = <T extends {
                 handle: (entity: any, event: InputHandle<Partial<EntityHandleEvent>>) =>
                     { minusDiceCard?: number, minusDiceCardEl?: ElementType }
@@ -5332,17 +5336,17 @@ export default class GeniusInvokationRoom {
                     hcard: c,
                     minusDiceCard: currCostChange(),
                 });
-                costChange[ci][2] += minusDiceCard - addDiceCard;
+                handCardsCostChange[ci][2] += minusDiceCard - addDiceCard;
                 if (cardDiceType == undefined) delete c.variables.cardDiceType;
             });
             heros.allHidxs().forEach(hidx => {
                 for (const hfield of [...heros[hidx].heroFields, ...isCdt(hidx == heros.frontHidx, combatStatus, [])]) {
                     const { minusDiceCard, minusDiceCardEl } = getMinusDiceCard(hfield, hidx);
-                    costChange[ci][+!!(minusDiceCardEl && minusDiceCardEl != c.costType)] += minusDiceCard;
+                    handCardsCostChange[ci][+!!(minusDiceCardEl && minusDiceCardEl != c.costType)] += minusDiceCard;
                 }
             });
             summons.forEach(smn => {
-                costChange[ci][0] += smn.handle(smn, {
+                handCardsCostChange[ci][0] += smn.handle(smn, {
                     ...handleEvent,
                     minusDiceCard: currCostChange(),
                 })?.minusDiceCard ?? 0;
@@ -5355,21 +5359,34 @@ export default class GeniusInvokationRoom {
                     minusDiceCard: currCostChange(),
                 });
                 if (isLast) lastSupport.push(spt);
-                else costChange[ci][0] += minusDiceCard;
+                else handCardsCostChange[ci][0] += minusDiceCard;
             });
             lastSupport.forEach(spt => {
-                costChange[ci][0] += spt.handle(spt, {
+                handCardsCostChange[ci][0] += spt.handle(spt, {
                     ...handleEvent,
                     hcard: c,
                     minusDiceCard: currCostChange(),
                 })?.minusDiceCard ?? 0;
             });
             c.handle(c, { pidx, ...this.handleEvent, trigger: 'hcard-calc' });
+            c.costChanges[2] = handCardsCostChange[ci][2];
+            c.costChanges[0] = Math.min(c.currDiceCost, handCardsCostChange[ci][0]);
+            c.costChanges[1] = Math.min(c.anydice, handCardsCostChange[ci][1]);
         });
-        handCards.forEach((c, i) => {
-            c.costChanges[2] = costChange[i][2];
-            c.costChanges[0] = Math.min(c.currDiceCost, costChange[i][0]);
-            c.costChanges[1] = Math.min(c.anydice, costChange[i][1]);
+        pile.forEach((c, ci) => {
+            const currCostChange = () => pileCostChange[ci].reduce((a, b) => a + b);
+            c.attachments.forEach(att => {
+                const { minusDiceCard = 0, addDiceCard = 0, cardDiceType } = att.handle(att, {
+                    ...handleEvent,
+                    hcard: c,
+                    minusDiceCard: currCostChange(),
+                });
+                pileCostChange[ci][2] += minusDiceCard - addDiceCard;
+                if (cardDiceType == undefined) delete c.variables.cardDiceType;
+            });
+            c.costChanges[2] = pileCostChange[ci][2];
+            c.costChanges[0] = Math.min(c.currDiceCost, pileCostChange[ci][0]);
+            c.costChanges[1] = Math.min(c.anydice, pileCostChange[ci][1]);
         });
     }
     /**

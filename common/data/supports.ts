@@ -205,7 +205,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                 const { trigger, heros } = event;
                 if (trigger == 'phase-start') return support.setUseCnt();
                 if (trigger == 'card' && support.addUseCnt() == 2) {
-                    cmds.addMaxHp(2, heros.getMinHpHidxs());
+                    cmds.addMaxHp(2, heros.getMaxHurtHidxs());
                 }
             }
         }

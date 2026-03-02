@@ -335,7 +335,7 @@ export const EFFECT_TYPE = {
     Heal: '治疗',
     Shield: '护盾',
     NightSoul: '夜魂',
-    BondofLife: '生命之契',
+    BondofLife: 'sts122',
     Vehicle: '特技',
     PierceDmg: '穿透伤害',
     GenerateCard: '生成行动牌',

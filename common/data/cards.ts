@@ -1903,11 +1903,11 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     331721: () => card(581).name('月兆·满辉').since('v6.5.0').resonance().costSame(0)
-        .description('赋予我方随机1张[当前元素骰费用]不为0的手牌以及牌组中随机1张卡牌【sts202】。')
+        .description('赋予我方随机1张[当前元素骰费用]不为0的手牌以及牌组顶[当前元素骰费用]不为0的卡牌【sts202】。')
         .src('#')
         .handle((_, { cmds }) => {
-            cmds.getStatus(202, { cardFilter: c => c.currDiceCost != 0 })
-                .getStatus(202, { cnt: 1, mode: CMD_MODE.RandomPileCard });
+            const cardFilter = (c: Card) => c.currDiceCost != 0;
+            cmds.getStatus(202, { cardFilter }).getStatus(202, { cardFilter, mode: CMD_MODE.TopPileCard });
         }),
 
     331801: () => card(237).name('风与自由').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costSame(0).costSame(1, 'v4.3.0')
@@ -4306,7 +4306,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/6cefde16b12d20492f13b63a28bf9cac_6861741050253678167.png'),
 
     303061: () => card().name('绽放祝佑·甘露').support().costHydro(2).from(331006)
-        .description('【投掷阶段：】总是投出2个[水元素骰]和2个[草元素骰]。；【每回合第2次打出卡牌后：】我方生命值最低角色生命上限+2。')
+        .description('【投掷阶段：】总是投出2个[水元素骰]和2个[草元素骰]。；【每回合第2次打出卡牌后：】我方受伤最多的角色获得2点额外最大生命值。')
         .src('#'),
 
     303062: () => card().name('绽放祝佑·蔓生').support().costDendro(2).from(331006)

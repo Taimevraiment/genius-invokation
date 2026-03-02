@@ -661,15 +661,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 112161 })),
-            skill('模块式高效运作').description('【我方卡牌被赋予〖sts206〗时：】如果我方场上存在【smn112161】，则使其[可用次数]+1，否则自身获得1点[充能]。')
+            skill('模块式高效运作').description('【我方卡牌被赋予〖sts206〗时：】如果我方场上存在【smn112161】，则使其[可用次数]+1，否则自身获得1点[充能]。（每回合1次）')
                 .src('#',
                     '')
-                .passive().handle(event => {
-                    const { summons, cmds, hidx, source } = event;
-                    if (source != 206) return;
+                .passive().perCnt(1).handle(event => {
+                    const { skill, summons, cmds, hidx, source } = event;
+                    if (source != 206 || skill.perCnt <= 0) return;
                     if (summons.has(112161)) cmds.addUseCnt({ summon: 112161, ignoreMax: true });
                     else cmds.getEnergy(1, { hidxs: hidx });
-                    return { triggers: 'get-status' }
+                    return { triggers: 'get-status', exec: () => skill.minusPerCnt() }
                 })
         ),
 
