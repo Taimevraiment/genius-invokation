@@ -252,7 +252,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/20748df108ea0370a5060050796a2f1d_3076328206173195867.png')
         .vehicle().costAny(2).handle(({ cmds }) => cmds.getCard(1, { subtype: CARD_SUBTYPE.Vehicle, isFromPile: true }).getStatus(301308).res),
 
-    3130101: () => skill('膨膨音波').description('切换到下一个角色，从牌组里随机抽取1张费用最高或最低的牌。')
+    3130101: () => skill('膨膨音波').description('切换到下一个角色，从牌组里随机抓1张[当前元素骰费用]最高或最低的牌。')
         .src('#')
         .vehicle().costSame(1).handle(({ cmds }) => cmds.switchAfter().getCard(1, { mode: CMD_MODE.HighLowCard }).res),
 

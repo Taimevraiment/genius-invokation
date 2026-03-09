@@ -55,8 +55,8 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
     111051: () => summon('霜见雪关扉').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/0e04dc93febea28566d127704a0eef5c_8035762422701723644.png'),
 
-    111062: () => summon('光降之剑').maxUse(MAX_USE_COUNT).damage(3).damage(2, 'v3.8.0').physical().collection().plus().roundEnd()
-        .description('【〖hro〗使用「普通攻击」或「元素战技」时：】此牌累积2点「能量层数」，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点「能量层数」，都使次伤害+1。（影响此牌「[可用次数]」的效果会作用于「能量层数」。）')
+    111062: () => summon('光降之剑').maxUse(MAX_USE_COUNT).damage(4).damage(3, 'v6.5.0').damage(2, 'v3.8.0').physical().collection().plus().roundEnd()
+        .description('【〖hro〗使用「普通攻击」或「元素战技」时：】此卡牌累积2点「能量层数」，但是【hro1106】不会获得[充能]。；【结束阶段：】弃置此牌。{dealDmg}\\；每有1点「能量层数」，都使次伤害+1。（影响此牌「[可用次数]」的效果会作用于「能量层数」。）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/a475346a830d9b62d189dc9267b35a7a_4963009310206732642.png')
         .handle((summon, event) => {
             const { heros, talent, trigger } = event;
@@ -484,16 +484,20 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         }),
 
     116051: () => summon('阿丑').useCnt(1).damage(1).shield(1).perCnt(1).statusId().roundEnd()
-        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，{dealDmg}。')
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，{dealDmg}，并为【hro】附属【sts116054】。')
+        .description('【我方出战角色受到伤害时：】抵消{shield}点伤害。；[useCnt]，耗尽时不弃置此牌。；【此召唤物在场期间可触发1次：】我方角色受到伤害后，为【hro】附属【sts116054】。；【结束阶段：】弃置此牌，{dealDmg}。', 'v6.5.0')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/03/28/12109492/9beb8c255664a152c8e9ca35697c7d9e_263220232522666772.png')
-        .handle((summon, event) => {
+        .handle((summon, event, ver) => {
             const { heros, trigger } = event;
             const hero = heros.get(summon.id);
             return {
                 triggers: ['phase-end', 'getdmg'],
                 isNotAddTask: trigger == 'getdmg',
                 exec: cmds => {
-                    if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
+                    if (trigger == 'phase-end') {
+                        if (ver.gte('v6.5.0')) cmds.getStatus(116054, { hidxs: hero?.hidx })
+                        return summon.phaseEndAtk(cmds);
+                    }
                     if (summon.perCnt <= 0 || trigger != 'getdmg' || !hero || hero.hp <= 0) return;
                     summon.minusPerCnt();
                     cmds.getStatus(116054, { hidxs: hero.hidx });

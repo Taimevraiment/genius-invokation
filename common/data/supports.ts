@@ -694,12 +694,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 天蛇船
-    321034: () => support().collection(1).handle(support => ({
+    321034: () => support().collection(1).handle((support, _, ver) => ({
         triggers: 'adventure',
         exec: cmds => {
             support.addUseCnt();
             cmds.changeDice({ cnt: 1 });
-            if (support.useCnt == 2) return cmds.getCard(1).res;
+            if (support.useCnt == 2) return cmds.getCard(ver.lt('v6.5.0') ? 1 : 2).res;
             if (support.useCnt == 4) return cmds.getStatus([[172, 2]]).res;
             if (support.useCnt == 6) {
                 cmds.destroySummon({ isOppo: true }).getSummon(301041);

@@ -365,7 +365,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    1201: () => hero(9).name('芭芭拉').offline('v1').mondstadt().hydro().catalyst()
+    1201: () => hero(9).name('芭芭拉').offline('v1').maxHp(12).maxHp(10, 'v6.5.0').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e92854385a3584dbbbd087ee5c49c69d.png')
         .normalSkill('水之浅唱')
@@ -653,7 +653,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Aino')
         .normalSkill('敲打修理法')
         .skills(
-            skill('妙思捕手').description('{dealDmg}，生成1层【sts170】。如果手牌中有卡牌具有【sts206】，则改为造成{dmg+1}点伤害。')
+            skill('妙思捕手').description('{dealDmg}，生成1层【sts170】。如果手牌中有卡牌具有【sts206】，则改为造成{dmg+1}点[水元素伤害]。')
                 .src('#',
                     '')
                 .elemental().damage(2).cost(3).handle(({ hcards }) => ({ status: 170, addDmgCdt: +hcards.some(c => c.hasAttachment(206)) })),
@@ -2918,7 +2918,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('横生厄蔓').description('{dealDmg}，如果手牌中存在【crd124051】，则[舍弃]1张并[准备技能]：【rsk27055】。')
                 .src('#',
                     '')
-                .burst(2).damage(4).cost(3).handle(event => {
+                .burst(2).damage(2).cost(3).handle(event => {
                     const { hcards, cmds } = event;
                     if (!hasObjById(hcards, 124051)) return;
                     cmds.discard({ card: 124051 });

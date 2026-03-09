@@ -477,13 +477,14 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     111121: () => status('佩伊刻计').heroStatus().icon(STATUS_ICON.Buff).useCnt(0)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成2点[物理伤害]。')
-        .handle((status, event) => {
+        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成3点[物理伤害]。')
+        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成2点[物理伤害]。', 'v6.5.0')
+        .handle((status, event, ver) => {
             const { trigger } = event;
             return {
                 triggers: ['drawcard', 'after-skilltype2'],
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
-                damage: isCdt(status.useCnt >= 4 && trigger == 'after-skilltype2', 2),
+                damage: isCdt(status.useCnt >= 4 && trigger == 'after-skilltype2', ver.lt('v6.5.0') ? 2 : 3),
                 element: DAMAGE_TYPE.Physical,
                 exec: () => {
                     if (trigger == 'after-skilltype2' && status.useCnt >= 2) {
@@ -3591,10 +3592,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             exec: () => status.dispose(),
         })),
 
-    303318: () => status('奇瑰之汤·激愤（生效中）').heroStatus().roundCnt(1)
-        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).from(333023)
-        .description('本回合中，该角色下一次造成的伤害+2。')
-        .handle(status => ({ addDmg: 2, triggers: 'skill', exec: () => status.dispose() })),
+    303318: () => status('奇瑰之汤·激愤（生效中）').heroStatus().useCnt(2).useCnt(1, 'v6.5.0').roundCnt(1)
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.AddDamage).type(ver => ver.lt('v6.5.0'), STATUS_TYPE.Sign).from(333023)
+        .description('本回合中，目标角色下次造成的伤害+1。；[useCnt]')
+        .description('本回合中，该角色下一次造成的伤害+2。', 'v6.5.0')
+        .handle((status, _, ver) => ({ addDmg: ver.lt('v6.5.0') ? 2 : 1, triggers: 'skill', exec: () => status.minusUseCnt() })),
 
     303319: () => status('奇瑰之汤·宁静（生效中）').heroStatus().useCnt(1).roundCnt(1)
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign).icon(STATUS_ICON.Buff).from(333024)

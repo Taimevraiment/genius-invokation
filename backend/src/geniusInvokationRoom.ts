@@ -3737,8 +3737,8 @@ export default class GeniusInvokationRoom {
                                 } else if (mode == CMD_MODE.HighLowCard) { // 摸牌库中费用最高或最低的牌
                                     isFromPile = true;
                                     const maxCost = Math.max(...pile.map(c => c.currDiceCost));
-                                    const minCost = Math.min(...pile.map(c => c.currDiceCost)); const cost = mode == CMD_MODE.HighLowCard ? maxCost : minCost;
-                                    const costCards = pile.filter(c => c.currDiceCost == cost);
+                                    const minCost = Math.min(...pile.map(c => c.currDiceCost));
+                                    const costCards = pile.filter(c => c.currDiceCost == maxCost || c.currDiceCost == minCost);
                                     [wcard] = this._randomInArr(costCards);
                                     pile.splice(wcard.cidx, 1);
                                 } else {
