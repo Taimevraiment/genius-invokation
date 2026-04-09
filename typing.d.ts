@@ -50,7 +50,7 @@ type Player = {
     isFallAtk: boolean, // 是否为下落攻击状态
     isChargedAtk: boolean, // 是否为重击
     canAction: boolean, // 是否可以行动
-    playerInfo: GameInfo,
+    playerInfo: PlayerInfo,
     isOffline: boolean,
     UI: {
         info: string, // 右上角提示信息
@@ -134,7 +134,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
     'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'modifyUseCnt' | 'convertSupport';
 
-type GameInfo = {
+type PlayerInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
     relicCnt: number, // 初始牌堆圣遗物数量
     relicTypeCnt: number, // 初始牌堆圣遗物种类
@@ -152,6 +152,7 @@ type GameInfo = {
     initCardIds: number[], // 初始牌组id
     isUsedCardPerRound: boolean, // 我方本回合是否使用过行动卡
     usedVehcileCnt: number, // 本局打出过的特技牌数量
+    isLunarElectroCharged: boolean, // 是否转化为月感电
 }
 
 type InfoVO = {

@@ -1650,7 +1650,7 @@ export default class GeniusInvokationRoom {
                             if (tri == dmgedHidx) trg.add('get-Melt')
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro)) { // 水雷 感电
-                        if (this.players[atkPidx].heros.some(h => h.id == 1417)) { // 转化为月感电
+                        if (this.players[atkPidx].playerInfo.isLunarElectroCharged) { // 转化为月感电
                             res.elTips[elTipIdx] = ['月感电', attachElement, dmgElement];
                             atriggers.forEach((trg, tri) => {
                                 if (!isAtkSelf) {

@@ -1,8 +1,8 @@
-import { Card, GameInfo, Hero, Player, Skill, Status, Summon, Support, Trigger } from "../../typing";
+import { Card, Hero, Player, PlayerInfo, Skill, Status, Summon, Support, Trigger } from "../../typing";
 import { CARD_SUBTYPE, COST_TYPE, DICE_COST_TYPE, DICE_TYPE, DICE_TYPE_CODE_KEY, DiceCostType, DiceCostTypeCode, ELEMENT_CODE_KEY, ElementCode, ElementType, OFFLINE_VERSION, OfflineVersion, PHASE, VERSION, Version } from "../constant/enum.js";
 import { NULL_HERO } from "../constant/init.js";
 import { DICE_WEIGHT, SKILL_TYPE_NAME } from "../constant/UIconst.js";
-import { Entity, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder";
+import { Entity, EntityBuilderHandleEvent, EntityHandleEvent, InputHandle } from "../data/builder/baseBuilder.js";
 import { arrToObj, objToArr } from "./utils.js";
 
 // 检查骰子是否合法
@@ -168,7 +168,7 @@ export const playerToString = (player: Player, prefixSpace: number = 1) => {
         + `${prefix}}\n`;
 }
 
-export const playerInfoToString = (playerInfo: GameInfo, prefixSpace: number = 1) => {
+export const playerInfoToString = (playerInfo: PlayerInfo, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace - 1);
     const prefix1 = '  '.repeat(prefixSpace);
     return `{\n`

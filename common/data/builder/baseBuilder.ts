@@ -1,4 +1,4 @@
-import { AddDiceSkill, Card, GameInfo, Hero, MinusDiceSkill, Player, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
+import { AddDiceSkill, Card, Hero, MinusDiceSkill, Player, PlayerInfo, Skill, Status, Summon, Support, Trigger, VersionWrapper } from "../../../typing.js";
 import { CardSubtype, DamageType, DICE_TYPE, DiceCostType, DiceType, ELEMENT_TYPE, ElementType, OFFLINE_VERSION, OfflineVersion, OnlineVersion, PureElementType, STATUS_TYPE, StatusType, SUMMON_TAG, SummonTag, VERSION, Version } from "../../constant/enum.js";
 import { MAX_SUPPORT_COUNT } from "../../constant/gameOption.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
@@ -421,8 +421,8 @@ export interface EntityHandleEvent {
     isChargedAtk: boolean,
     isFallAtk: boolean,
     round: number,
-    playerInfo: GameInfo,
-    eplayerInfo: GameInfo,
+    playerInfo: PlayerInfo,
+    eplayerInfo: PlayerInfo,
     dices: DiceCostType[],
     dicesCnt: number,
     restDmg: number,

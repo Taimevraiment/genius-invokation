@@ -225,7 +225,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/2cac5c299862a3ba055935093fd9baa1_2832493176442019382.png'),
 
     112161: () => summon('冷静一下鸭').useCnt(2).damage(2).description('{defaultAtk。}')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/bc5410590c8655456cf5a60eeaafe63c_822767775418607946.png'),
 
     113021: () => summon('锅巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/19b63677c8f4e6cabed15711be406e09_2795447472820195792.png'),

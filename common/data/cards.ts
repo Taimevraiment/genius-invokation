@@ -391,7 +391,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/09/08/258999284/8bc85fdc9df49d66ad2145eb848cae67_2048284066171113800.png'),
 
     311209: () => energyWeapon(576, '矫捷无影').name('罗网勾针').since('v6.5.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/6420383d39397b2fb30e95afc2b882bc_2817574587956241825.png'),
 
     311301: () => normalWeapon(132).name('白铁大剑').offline('v1')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/75720734/d8916ae5aaa5296a25c1f54713e2fd85_802175621117502141.png'),
@@ -1363,7 +1363,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle((_, { cmds }) => cmds.getStatus(301306).res),
 
     313010: () => card(577).name('膨膨兽').since('v6.5.0').vehicle().costSame(1).useCnt(2)
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/a14cd0222a0a7ca329ffe35d5ca16b3c_4876844031330752708.png'),
 
     321001: () => card(179).name('璃月港口').offline('v1').place().costSame(2)
         .description('【结束阶段：】抓2张牌。；[可用次数]：2。')
@@ -1506,7 +1506,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/24/288180982/0cb05c1020cc4d0eb0c6d89f8b65c968_8019206931954092523.png'),
 
     321037: () => card(563).name('霜月之坊').since('v6.4.0').place().costSame(4)
-        .description('【入场时：】抓2张牌，治疗我方受伤最多的角色2点。；【结束阶段：】赋予我方随机2张[当前元素骰费用]不为0的手牌【sts202】。；[可用次数]：2')
+        .description('【入场时：】抓2张牌，治疗我方受伤最多的角色2点。；【结束阶段：】赋予我方随机2张手牌【sts202】。；[可用次数]：2')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/24/288180982/96ac16c6f3a14db71a147bc310768ee4_8186906079872455830.png'),
 
     321038: () => card(564).name('那夏镇').since('v6.4.0').place().costSame(1)
@@ -1519,7 +1519,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     321040: () => card().name('层岩巨渊').since('v6.5.0').adventure().costSame(0)
         .description('【入场时：】在我方牌组中随机生成5张事件牌。；【冒险经历达到偶数次时：】生成1个随机基础元素骰并抓1张牌。；【冒险经历达到10次，我方单回合内打出2张名称不存在于本局最初牌组的牌时：】生成3个[万能元素骰]，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/03/29/80663279/f28c26f99db147b058626925522e6e66_846506133598698955.png'),
 
     322001: () => card(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
@@ -1662,7 +1662,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     322033: () => card(578).name('乐平波琳').since('v6.5.0').ally().costSame(0)
         .description('【入场时：】[挑选]1个[投资计划]。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     323001: () => card(214).name('参量质变仪').offline('v1').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个「质变进度」。；此牌已累积3个「质变进度」时，弃置此牌并生成3个不同的基础元素骰。')
@@ -1797,10 +1797,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/2a067c791015b110950ee8f14bc63ddf_2851212168686619998.png'),
 
     331006: () => elTransfiguration(579, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro, '绽放', 6).since('v6.5.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/5ced1b4b1e89eecdf056d75e4da83f67_3327557449895811907.png'),
 
     331007: () => elTransfiguration(580, ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Geo, ['火岩', '火结晶'], 7).since('v6.5.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/5d480884a12c541a1b29844f5ffa67c3_5625649056324702367.png'),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -1903,12 +1903,9 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     331721: () => card(581).name('月兆·满辉').since('v6.5.0').resonance().costSame(0)
-        .description('赋予我方随机1张[当前元素骰费用]不为0的手牌以及牌组顶[当前元素骰费用]不为0的卡牌【sts202】。')
-        .src('#')
-        .handle((_, { cmds }) => {
-            const cardFilter = (c: Card) => c.currDiceCost != 0;
-            cmds.getStatus(202, { cardFilter }).getStatus(202, { cardFilter, mode: CMD_MODE.TopPileCard });
-        }),
+        .description('赋予我方随机1张手牌以及牌组顶的卡牌【sts202】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/a51f7808cabe0721c2a6e2e0e4836d52_6900755572655899243.png')
+        .handle((_, { cmds }) => cmds.getStatus(202).getStatus(202, { mode: CMD_MODE.TopPileCard })),
 
     331801: () => card(237).name('风与自由').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costSame(0).costSame(1, 'v4.3.0')
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
@@ -1969,7 +1966,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     331807: () => card(582).name('月与故乡').since('v6.5.0').tag(CARD_TAG.LocalResonance).costSame(0)
         .description('【本回合内我方打出下张卡牌后：】在下个回合开始时，创建1张所打出的卡牌加入手牌。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/160c35eee3bc9cf971670675a36f56a4_4178694185384672747.png')
         .handle(() => ({ status: 303183 })),
 
     332001: () => card(241).name('最好的伙伴！').offline('v1').event().costAny(2)
@@ -2493,7 +2490,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     332062: () => card(583).name('清扫时间').since('v6.5.0').event().costSame(0)
         .description('我方手牌中每存在1种附着状态，则生成1个随机基础元素骰。（至多生成2个）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/164bd46cc77f0088e8d8c0f80829ecbd_8462176553023300821.png')
         .handle((_, event) => {
             const { hcards, cmds } = event;
             const cnt = new Set(hcards.flatMap(c => c.attachments.map(a => a.id))).size;
@@ -2887,7 +2884,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     212151: () => card(573).name('愿一切欢睦陪伴你').since('v6.5.0').talent(2).costHydro(3).energy(2).tag(CARD_TAG.NonDefeat)
         .description('{action}；【装备有此牌的〖hro〗在场时，我方角色被击倒时：】如果我方场上存在【sts112151】，则消耗所有【sts112151】，使该角色[免于被击倒]，并治疗该角色到2点生命值。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/9a0eb459e86399a81ad6d57be21a1c67_7762291992829725301.png')
         .handle((status, event) => {
             const { execmds, sourceHidx, combatStatus } = event;
             status.variables[CARD_TAG.NonDefeat] = combatStatus.has(112151) ? 2 : 0;
@@ -2900,7 +2897,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     212161: () => card(574).name('天才之为构造之责任').since('v6.5.0').talent(2).costPyro(3).energy(2).perCnt(1)
         .description('{action}；【装备有此牌的〖hro〗在场时，我方触发感电、月感电及绽放反应时：】该次伤害+2，并且赋予我方[当前元素骰费用]最高的1张手牌【sts206】。（每回合1次）。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/be2e26f9fedcd9f7641d94b885688034_4719055711681842693.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.getStatus(206, { cnt: 1, mode: CMD_MODE.HighHandCard });
@@ -3816,7 +3813,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     227051: () => card(575).name('亡草蔽日').since('v6.5.0').talent().costDendro(1).perCnt(1)
         .description('{quick。}；【我方打出或[舍弃]〖crd124051〗时：】抓1张牌。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/a4db74c92acff5c8d52ca0ab8c129c3d_5902273944150136351.png')
         .handle((card, event) => {
             const { execmds, hcard } = event;
             if (card.perCnt <= 0 || hcard?.id != 124051) return;
@@ -4223,43 +4220,43 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     302220: () => card().name('医疗器材投资·大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到1时，治疗我方受伤最多的角色2点，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302221: () => card().name('医疗器材投资·特大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到2时，治疗我方受伤最多的角色4点，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302222: () => card().name('医疗器材投资·超级大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到3时，治疗我方受伤最多的角色6点，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302223: () => card().name('图形对抗投资·大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到1时，抓2张牌，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302224: () => card().name('图形对抗投资·特大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到2时，抓4张牌，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302225: () => card().name('图形对抗投资·超级大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到3时，抓6张牌，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302226: () => card().name('能量机关投资·大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到1时，获得1个随机基础元素骰，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302227: () => card().name('能量机关投资·特大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到2时，获得2个随机基础元素骰，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302228: () => card().name('能量机关投资·超级大计划').ally().costSame(0).from(322033)
         .description('【行动阶段开始时：】此卡牌累计1点「进度」。「进度」达到3时，获得3个随机基础元素骰，然后弃置此卡牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     302229: () => card().name('乐平波琳的医疗器材投资').ally().costSame(0).from(322033)
         .description('对我方出战角色造成1点[穿透伤害]，执行1个「治疗」效果相关的计划。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => {
             const { cmds, supports, randomInArr } = event;
             const [sptId] = randomInArr([302220, 302221, 302222]);
@@ -4269,7 +4266,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     302230: () => card().name('乐平波琳的图形对抗投资').ally().costSame(0).from(322033)
         .description('[舍弃]1张随机手牌，执行1个「抓牌」效果相关的计划。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => {
             const { cmds, supports, randomInArr } = event;
             const [sptId] = randomInArr([302223, 302224, 302225]);
@@ -4279,7 +4276,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     302231: () => card().name('乐平波琳的能量机关投资').ally().costSame(0).from(322033)
         .description('移除我方1个元素骰，执行1个「元素骰」效果相关的计划。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => ({
             exec: () => {
                 const { cmds, supports, dices, randomInArr, randomInt } = event;
@@ -4308,19 +4305,19 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     303061: () => card().name('绽放祝佑·甘露').support().costHydro(2).from(331006)
         .description('【投掷阶段：】总是投出2个[水元素骰]和2个[草元素骰]。；【每回合第2次打出卡牌后：】我方受伤最多的角色获得2点额外最大生命值。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/4fa666c69857c144c9f790ba8208e228_3189621672988665237.png'),
 
     303062: () => card().name('绽放祝佑·蔓生').support().costDendro(2).from(331006)
         .description('【投掷阶段：】总是投出2个[水元素骰]和2个[草元素骰]。；【我方触发元素反应后：】造成1点[水元素伤害]。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/dc80cc3afbe6174ad546f2acd3ebe188_6001594869439196326.png'),
 
     303071: () => card().name('火岩祝佑·回火').support().costPyro(2).from(331007)
         .description('【投掷阶段：】总是投出2个[火元素骰]和2个[岩元素骰]。；我方场上存在[护盾]角色状态或[护盾]出战状态时，造成的[火元素伤害]和[岩元素伤害]+1。（每回合3次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f85c37d1496ce4df0a802bd4232e6142_5557095500474527073.png'),
 
     303072: () => card().name('火岩祝佑·重熔').support().costGeo(3).from(331007)
         .description('【投掷阶段：】总是投出2个[火元素骰]和2个[岩元素骰]。；【我方造成[火元素伤害]或[岩元素伤害]后：】生成2层【sts203】。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/b979576ce63b9a960d8700769d1c6906_906928291198687109.png'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。（每个角色每回合最多受到1次来自本效果的治疗。）')

@@ -46,6 +46,7 @@ export const INIT_PLAYER: () => Player = () => ({
         initCardIds: [],
         isUsedCardPerRound: false,
         usedVehcileCnt: 0,
+        isLunarElectroCharged: false,
     },
     UI: {
         info: '',

@@ -280,7 +280,7 @@ import { newSkill } from '@@@/data/skills';
 import { newStatus } from '@@@/data/statuses';
 import { newSummon } from '@@@/data/summons';
 import { objToArr } from '@@@/utils/utils';
-import { Card, CustomVersionConfig, ExplainContent, GameInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
+import { Card, CustomVersionConfig, ExplainContent, PlayerInfo, Hero, InfoVO, Skill, Status, Summon } from '../../../typing';
 import { getVehicleIdByCid } from '@@@/utils/gameUtil';
 import StrokedText from './StrokedText.vue';
 import { createReusableTemplate } from '@vueuse/core';
@@ -293,7 +293,7 @@ const props = defineProps<{
   isMobile: boolean,
   isInGame?: boolean,
   round?: number,
-  playerInfo?: GameInfo,
+  playerInfo?: PlayerInfo,
   isBot?: boolean,
   customVersion?: CustomVersionConfig,
   isNonPointerEvent?: boolean,
@@ -302,7 +302,7 @@ const props = defineProps<{
 const isMobile = computed<boolean>(() => props.isMobile);
 const isInGame = computed<boolean>(() => !!props.isInGame); // 是否在游戏中显示(用于一些游戏实时数据的显示)
 const round = computed<number>(() => props.round ?? 0); // 当前回合
-const playerInfo = computed<GameInfo | undefined>(() => props.playerInfo); // 玩家全局信息
+const playerInfo = computed<PlayerInfo | undefined>(() => props.playerInfo); // 玩家全局信息
 const version = computed<Version>(() => props.info.version); // 版本
 const isShow = computed<boolean>(() => props.info.isShow); // 是否显示
 const type = computed<InfoType | null>(() => props.info.type); // 显示类型：技能 角色 卡牌 召唤物 支援物

@@ -348,15 +348,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('西风枪术·镝传')
         .skills(
             skill('星霜的流旋').description('{dealDmg}，生成【sts111171】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/9b/pved6ic89avudkd03st8uyhl9s0jxsi.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/de9d17bb1d5cf5224c6b547fbba77c2b_3911333309938261254.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 111171 })),
             skill('苍翎的颂愿').description('治疗我方所有角色1点，生成【sts111172】和【sts111176】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/6/62/tayyoxjc2aaerkgi5urlus6j12854vk.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/3b332d8afca0840bb389ab100490627b_1849286135454196117.png')
                 .burst(2).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), status: [111172, 111176] })),
             skill('速射牵制').description('【自身使用技能后：】下次我方造成的[物理伤害]+1。（每回合2次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/5/55/t0s29b9x62ag7eoc86hwr52j4v4im7z.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/829e1287b033cd13966293beca779d2b_8476985699734096608.png')
                 .passive().perCnt(2).handle(event => {
                     const { skill } = event;
@@ -634,36 +634,36 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1215: () => hero(570).name('塔利雅').since('v6.5.0').mondstadt().hydro().sword()
-        .src('#')
-        .avatar('#AvatarIcon_Dahlia')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/bc99a9444bf70a760e7633830ecfcd90_703407404707934753.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/69d58cbe/3d819990ea80ea82815395ae7d0fef32.png')
         .normalSkill('西风剑术·祭仪')
         .skills(
             skill('圣浸的礼典').description('{dealDmg}，生成【sts112152】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/3c1850e116b0f80d811562d703c4b198_4087077675870347000.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 112152 })),
             skill('纯耀的祷咏').description('{dealDmg}，生成2层【sts203】和2层【sts112151】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/dc26fdb19ee55b08615725a19587b6e5_8747152806504774179.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ status: [[203, 2], 112151] }))
         ),
 
     1216: () => hero(571).name('爱诺').since('v6.5.0').nodkrai().hydro().claymore()
-        .src('#')
-        .avatar('#AvatarIcon_Aino')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/0a36fe532f561960a6d322240ad1efb5_2920976328061516355.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/69d58cbe/751c2a66dfbd3fb158870012ff33b364.png')
         .normalSkill('敲打修理法')
         .skills(
             skill('妙思捕手').description('{dealDmg}，生成1层【sts170】。如果手牌中有卡牌具有【sts206】，则改为造成{dmg+1}点[水元素伤害]。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/5a3cfa5c1b98957179502d7afe817875_5236060972182232136.png')
                 .elemental().damage(2).cost(3).handle(({ hcards }) => ({ status: 170, addDmgCdt: +hcards.some(c => c.hasAttachment(206)) })),
             skill('精密水冷仪').description('{dealDmg}，召唤【smn112161】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/e9a8ef22e31beb757d2842181fd4515f_2004790559202312239.png')
                 .burst(2).damage(2).cost(3).handle(() => ({ summon: 112161 })),
             skill('模块式高效运作').description('【我方卡牌被赋予〖sts206〗时：】如果我方场上存在【smn112161】，则使其[可用次数]+1，否则自身获得1点[充能]。（每回合1次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/5b3e65c21e663a2e662181046b8af66a_6215754318127711453.png')
                 .passive().perCnt(1).handle(event => {
                     const { skill, summons, cmds, hidx, source } = event;
                     if (source != 206 || skill.perCnt <= 0) return;
@@ -1357,19 +1357,22 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('除尘旋刃')
         .skills(
             skill('涤净模式·稳态载频').description('生成2点【sts203】，召唤【smn114171】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/a/a7/azg66uo8f7u8ivm2a2gmalchwzz44bk.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/d5e9e4c887176cfeb314b9bb6db22a55_5325643536553566871.png')
                 .elemental().cost(3).handle(() => ({ status: [[203, 2]], summon: 114171 })),
             skill('至高律令·全域扫灭').description('{dealDmg}，召唤【smn114171】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/3/3d/l488aqs6hl2x5jg1ga62jtdrye3ly5l.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/039b55c9cc622899e554c30d65cc80b7_8830435731277881166.png')
                 .burst(2).damage(4).cost(3).handle(() => ({ summon: 114171 })),
             skill('月兆祝赐·象拟中继').description('本局游戏中，敌方受到‹2›‹4›【感电反应】时，改为[月感电]反应。；自身在场，敌方行动牌被赋予【sts204】时：额外赋予【sts207】状态。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/1/1b/erfgu50905guur9xa0j1yqv6iieeqzg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/f147a4e227a2b03d776bf87717a9f9a0_1564233371995092023.png')
                 .passive().handle(event => {
-                    const { source, sourceHidx, cmds } = event;
-                    if (source != 204) return;
+                    const { source, sourceHidx, cmds, playerInfo } = event;
+                    if (source != 204) {
+                        playerInfo.isLunarElectroCharged = true;
+                        return { triggers: 'game-start', isNotAddTask: true }
+                    }
                     cmds.getStatus(207, { isOppo: true, hidxs: Math.abs(sourceHidx), mode: isCdt(sourceHidx < 0, CMD_MODE.RandomPileCard) });
                     return { triggers: 'get-status-oppo' }
                 }),
@@ -2484,15 +2487,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('翼斩')
         .skills(
             skill('升腾炽风').description('{dealDmg}，自身附属2层【sts123062】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/e/ee/jv3v8p7znsdk4nkazs9tlaa61sjvhyo.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/6b0596cdcd0525f2d0b60045e7a15803_5605616860627063235.png')
                 .elemental().damage(1).cost(3).handle(() => ({ status: [[123062, 2]] })),
             skill('金焰爆轰').description('{dealDmg}，对所有敌方角色造成1点[穿透伤害]，自身附属1层【sts123061】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/9d/awaea5l4xqbus6cocjir8vrzr2gmzi1.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/8f0b4016fab01793e2a5b1ab69eb1f42_6537823244984634876.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ pdmg: 1, status: 123061 })),
             skill('古老者的血脉').description('【偶数行动阶段开始时：】自身附属1层【sts123061】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/5/5f/finz2l94pxyps43lp4fdq8ublizurbb.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/c22a44612144c3abf0c6c27b56d3bb0f_4784423027843795323.png')
                 .passive().handle(event => {
                     if (event.round % 2 == 1) return;
@@ -2907,17 +2910,17 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     2705: () => hero(572).name('圣骸牙兽').since('v6.5.0').consecratedBeast().dendro()
-        .src('#')
-        .avatar('#MonsterIcon_PantherSacred')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/38583a92c69536525928a01c89c9c256_8070851558250435843.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/69d58cbe/b998ab30c21ae8e20f6240e01cb81384.png')
         .normalSkill('利爪猛击')
         .skills(
             skill('掠能绿波').description('{dealDmg}，从牌组中抓1张【crd124051】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/e1d38bec07cfa5ce84fad8d3530e025f_1101470830853027438.png')
                 .elemental().damage(2).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 124051, isFromPile: true }).res),
             skill('横生厄蔓').description('{dealDmg}，如果手牌中存在【crd124051】，则[舍弃]1张并[准备技能]：【rsk27055】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/9b29dc1cff1a46e02f657f5eb4a8bf31_4123768422811973345.png')
                 .burst(2).damage(2).cost(3).handle(event => {
                     const { hcards, cmds } = event;
                     if (!hasObjById(hcards, 124051)) return;
@@ -2926,7 +2929,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 }),
             skill('亡骸饥渴').description('战斗开始时，生成2张【crd124051】放入牌组底。我方每回合可以额外打出1张【crd124051】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/1594a979d127d201365885fcb11e6605_3699164519647751207.png')
                 .passive().perCnt(1).handle(event => {
                     const { skill, cmds, source, trigger } = event;
                     if (trigger == 'pre-get-status') {

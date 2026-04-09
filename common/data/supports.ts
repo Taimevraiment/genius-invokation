@@ -221,7 +221,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             exec: cmds => {
                 if (event.trigger == 'phase-start') return support.setUseCnt(1);
                 if (event.trigger == 'elReaction') {
-                    cmds.attack(1, DAMAGE_TYPE.Hydro);
+                    cmds.attack(1, DAMAGE_TYPE.Hydro, { isPriority: true });
                     support.minusUseCnt();
                 }
             }
@@ -738,7 +738,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         exec: cmds => {
             const { trigger, heros } = event;
             if (trigger == 'enter') return cmds.getCard(2).heal(2, { hidxs: heros.getMaxHurtHidxs() }).res;
-            cmds.getStatus(202, { cnt: 2, cardFilter: c => c.currDiceCost > 0 });
+            cmds.getStatus(202, { cnt: 2 });
             return { isDestroy: support.minusUseCnt() == 0 }
         }
     })),
