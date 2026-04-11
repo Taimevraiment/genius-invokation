@@ -361,7 +361,7 @@ const wrapDesc = (desc: string, options: { isExplain?: boolean, type?: WrapExpla
   let res = desc.slice()
     .replace(/〔(\*?)(\[.+?\])?(.+?)〕/g, (_, nnc: string, f: string, ctt: string) => {
       const notNeedColor = !!nnc;
-      const flag = (f || '').slice(0, -1);
+      const flag = (f || '').slice(1, -1);
       if (typeof obj != 'string' && obj != undefined && flag != '' && type != '' && flag != type) return '';
       if ((!isInGame.value && !notNeedColor) || isExplain) return '';
       ctt = ctt

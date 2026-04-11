@@ -191,12 +191,12 @@ export class GISkill extends Entity {
                 .getStatus(statusPre, { hidxs })
                 .push
                 .equip(hero.hidx, equip)
-                .getEnergy(energy)
+                .getEnergy(energy, { hidxs: hidxs ?? hero.hidx })
                 .getStatus(status, { hidxs: hidxs ?? (skill.isPassive ? hero.hidx : hidxs) })
                 .getStatus(statusOppo, { hidxs, isOppo: true })
                 .getSummon(summon);
             if (skill.cost[2].cnt >= 0) {
-                if (skill.cost[2].cnt == 0) cmds.getEnergy(1, { hidxs: hero.hidx });
+                if (skill.cost[2].cnt == 0) cmds.unshift.getEnergy(1, { hidxs: hero.hidx });
                 else cmds.unshift.getEnergy(-skill.cost[2].cnt, { hidxs: hero.hidx }).res;
             }
             if (skill.damage || addDmgCdt) {

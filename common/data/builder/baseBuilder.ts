@@ -314,6 +314,10 @@ export class ArrayHero extends Array<Hero> {
         this.forEach(h => !h.isDie && (elMap[h.element] = true));
         return Object.entries(elMap).every(([el, v]) => v == els.includes(el as ElementType));
     }
+    // 是否有角色具有某元素附着
+    hasAttach(el: PureElementType) {
+        return this.some(h => h.hasAttach(el));
+    }
 }
 
 export class ArrayStatus extends Array<Status> {
@@ -335,7 +339,7 @@ export class ArrayStatus extends Array<Status> {
     has(...id: number[]): boolean;
     has(...type: StatusType[]): boolean;
     has(...ids: number[] | StatusType[]) {
-        if (typeof ids[0] == 'number') return ids.some(id => hasObjById(this, id));
+        if (typeof ids[0] == 'number') return (ids as number[]).some(id => hasObjById(this, id) || hasObjById(this, id, 'entityId'));
         return this.some(s => s.hasType(...ids as StatusType[]));
     }
     getUseCnt(id: number): number;

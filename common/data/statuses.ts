@@ -179,12 +179,12 @@ const hero1611sts2 = (el: ElementType) => {
 
 const shieldCombatStatus = (name: string, cnt = 2, mcnt = 0) => {
     return status(name).combatStatus().type(STATUS_TYPE.Shield).useCnt(cnt).maxCnt(mcnt)
-        .description(`为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `（可叠加${mcnt < MAX_USE_COUNT ? `，最多到${mcnt}` : ''}）` : ''}`);
+        .description(`为我方出战角色提供${cnt}点[护盾]。${mcnt > 0 ? `（可叠加${mcnt < MAX_USE_COUNT ? `，最多到${mcnt}` : '没有上限'}）` : ''}`);
 }
 
 const shieldHeroStatus = (name: string, cnt = 2, maxCnt = 0) => {
     return status(name).heroStatus().useCnt(cnt).maxCnt(maxCnt).type(STATUS_TYPE.Shield)
-        .description(`提供${cnt}点[护盾]，保护所附属角色。${maxCnt > 0 ? `（可叠加${maxCnt < MAX_USE_COUNT ? `，最多到${maxCnt}` : ''}）` : ''}`)
+        .description(`提供${cnt}点[护盾]，保护所附属角色。${maxCnt > 0 ? `（可叠加${maxCnt < MAX_USE_COUNT ? `，最多到${maxCnt}` : '没有上限'}）` : ''}`)
 }
 
 const readySkillShieldStatus = (name: string) => {
@@ -344,6 +344,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     208: () => status('无效化').attachment().icon(STATUS_ICON.DebuffCountered01).type(STATUS_TYPE.Usage)
         .description('此牌打出效果无效。')
         .handle(() => ({ triggers: 'card', isInvalid: true })),
+
+    209: () => status('打磨利刃').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
+        .icon(STATUS_ICON.Special).type(STATUS_TYPE.AddDamage)
+        .description('所附属角色下次造成的伤害+1。；[useCnt]')
+        .handle(status => ({ triggers: 'skill-dmg', addDmg: 1, exec: () => status.minusUseCnt() })),
 
     111012: () => status('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
@@ -1430,6 +1435,12 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     114163: nightSoul({ isAccumate: false }),
 
+    114181: () => status('幽焰显迹').heroStatus().roundCnt(1).type(STATUS_TYPE.Enchant, STATUS_TYPE.AddDamage).icon('ski,1')
+        .description('本回合所附属角色造成的[物理伤害]变为[雷元素伤害]，并且「普通攻击」造成的伤害+1。；[roundCnt]')
+        .handle(() => ({ attachEl: ELEMENT_TYPE.Electro, addDmgType1: 1 })),
+
+    114182: () => readySkillStatus('北国枪阵', 14185).icon('#'),
+
     115031: (isTalent: boolean = false) => status('风域').combatStatus().icon(STATUS_ICON.Special)
         .useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
         .description(`【我方执行「切换角色」行动时：】少花费1个元素骰。${isTalent ? '触发该效果后，使本回合中我方角色下次「普通攻击」少花费1个[无色元素骰]。' : ''}；[useCnt]`)
@@ -1923,12 +1934,13 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         })),
 
     117071: () => status('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
-        .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]')
-        .handle((status, event) => {
+        .description('【〖hro〗为出战角色时，我方切换角色后：】造成2点[草元素伤害]，抓1张牌。；[useCnt]')
+        .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]', 'v6.6.0')
+        .handle((status, event, ver) => {
             const { heros, cmds } = event;
             if (!heros.get(status.id)?.isFront) return;
             return {
-                damage: 1,
+                damage: ver.lt('v6.6.0') ? 1 : 2,
                 element: DAMAGE_TYPE.Dendro,
                 triggers: 'switch-from',
                 exec: () => {
@@ -1938,7 +1950,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             }
         }),
 
-    117072: () => shieldCombatStatus('安全运输护盾'),
+    117072: (cnt: number = 1) => shieldCombatStatus('安全运输护盾', cnt, MAX_USE_COUNT)
+        .useCnt(2, 'v6.6.0').maxCnt(0, 'v6.6.0')
+        .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`)
+        .description(`为我方出战角色提供2点[护盾]。`, 'v6.6.0'),
 
     117073: () => status('猫草豆蔻').combatStatus().icon('ski,2').useCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).iconBg(DEBUFF_BG_COLOR)
@@ -2056,6 +2071,14 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 exec: () => status.minusUseCnt(),
             }
         }),
+
+    117111: (addDmg: number = 0) => status('霜林圣域').combatStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('ski,1')
+        .description(`【结束阶段：】造成${1 + addDmg}点[草元素伤害]。；[useCnt]`)
+        .handle(status => ({ triggers: 'phase-end', damage: 1 + addDmg, element: DAMAGE_TYPE.Dendro, exec: () => status.minusUseCnt() })),
+
+    117112: () => status('「苍色祷歌」').combatStatus().useCnt(3).type(STATUS_TYPE.AddDamage).icon('ski,2')
+        .description('我方触发[月绽放]造成的伤害+1。；[useCnt]')
+        .handle(status => ({ triggers: 'LunarBloom', addDmgCdt: 1, exec: () => status.minusUseCnt() })),
 
     121012: (useCnt: number = 0) => status('流萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
         .description('为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn121011】，则额外提供其[可用次数]的[护盾]。（最多额外提供3点[护盾]）'),
@@ -2546,6 +2569,36 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     126043: () => readySkillStatus('大师之击', 26047),
 
+    126051: () => status('低重力背景').combatStatus().roundCnt(2).type(STATUS_TYPE.Usage).icon('#')
+        .description('【双方角色使用技能后：】自身附属【sts126053】并切换至下一名角色。；[roundCnt]')
+        .handle((_, event) => {
+            const { cmds, trigger, skill } = event;
+            if (skill?.id == 26053) return;
+            const isOppo = trigger == 'after-skill-oppo';
+            cmds.getStatus(126053, { isOppo }).switchAfter(isOppo);
+            return { triggers: ['after-skill', 'after-skill-oppo'] }
+        }),
+
+    126052: () => status('振荡冲击').combatStatus().useCnt(2).roundCnt(2).type(STATUS_TYPE.Attack).icon('ski,2')
+        .description('【结束阶段：】对所有未附属【sts126053】的角色造成1点[穿透伤害]。；[roundCnt]')
+        .handle((status, event) => {
+            const { cmds, heros, eheros } = event;
+            cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs({ cdt: h => !h.heroStatus.has(126053) }), isOppo: false })
+                .attack(1, DAMAGE_TYPE.Pierce, { hidxs: eheros.allHidxs({ cdt: h => !h.heroStatus.has(126053) }) });
+            return { triggers: 'phase-end', exec: () => status.minusUseCnt() }
+        }),
+
+    126053: () => status('回避').heroStatus().roundCnt(1).icon('#')
+        .description('本回合结束阶段不会受到来自【sts126052】的伤害。；[roundCnt]'),
+
+    126054: () => status('力场操控').heroStatus().roundCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.Usage).icon(STATUS_ICON.Special)
+        .description('本回合中，该角色下次「普通攻击」少花费1个[无色元素骰]。')
+        .handle((status, event) => ({
+            triggers: isCdt(event.isMinusDiceSkill, 'skilltype1'),
+            minusDiceSkill: { skilltype1: [0, 1, 0] },
+            exec: () => status.dispose(),
+        })),
+
     127011: () => status('活化激能').heroStatus().useCnt(0).maxCnt(3).type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate).icon('#')
         .description('【本角色造成或受到元素伤害后：】累积1层「活化激能」。（最多累积3层）；【结束阶段：】如果「活化激能」层数已达到上限，就将其清空。同时，角色失去所有[充能]。')
         .handle((status, event) => {
@@ -2732,6 +2785,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .type(STATUS_TYPE.AddDamage).from(300006)
         .description('本回合中出战角色造成的伤害+1。')
         .handle(() => ({ triggers: 'skill', addDmg: 1 })),
+
+    300010: () => status('另一侧的霜月·生效中').combatStatus().from(330013)
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【行动阶段开始时：】赋予我方随机1张手牌【sts202】。')
+        .handle(() => ({ triggers: 'phase-start', status: 202 })),
 
     301018: () => status('严格禁令').combatStatus()
         .useCnt(1).roundCnt(1).type(STATUS_TYPE.NonEvent).from(321018)

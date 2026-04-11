@@ -1,17 +1,21 @@
 import { Card, Trigger } from '../../typing';
-import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, STATUS_TYPE, SUMMON_TAG, Version } from '../constant/enum.js';
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PureElementType, STATUS_TYPE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
-import { isCdt } from '../utils/utils.js';
+import { convertToArray, isCdt } from '../utils/utils.js';
 import { support } from './builder/supportBuilder.js';
 
-const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Trigger, code: number) => {
+const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Trigger | Trigger[], code: number) => {
     return support().permanent().handle((_, event) => ({
-        triggers: ['phase-dice', reactionTrg],
+        triggers: ['phase-dice', ...convertToArray(reactionTrg)],
         element: [el1, el2],
         cnt: [2, 2],
         exec: cmds => {
-            if (event.trigger != reactionTrg) return;
+            const { trigger, eheros } = event;
+            if (!convertToArray(reactionTrg).includes(trigger) ||
+                trigger == 'action-start' && eheros.every(h => !h.hasAttach(el1 as PureElementType) || !h.hasAttach(el2 as PureElementType))) {
+                return { isCancel: true }
+            }
             cmds.pickCard(2, CMD_MODE.GetCard, { card: [+`3030${code}1`, +`3030${code}2`] });
             return { isDestroy: true }
         }
@@ -125,9 +129,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 超导祝佑·极寒
-    303041: () => support().collection(2).handle((support, event) => {
+    303041: () => support().collection(2).handle((support, event, ver) => {
         const triggers: Trigger[] = ['phase-dice', 'phase-start'];
-        if (support.useCnt > 0) triggers.push('Physical-dmg', 'Cryo-dmg');
+        if (support.useCnt > 0) {
+            if (ver.lt('v6.6.0')) triggers.push('Physical-dmg', 'Cryo-dmg');
+            else triggers.push('Physical-getdmg-oppo', 'Cryo-getdmg-oppo');
+        }
         return {
             triggers,
             element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Electro],
@@ -211,18 +218,17 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 绽放祝佑·蔓生
-    303062: () => support().collection(1).handle((support, event) => {
-        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
-        if (support.useCnt > 0) triggers.push('elReaction');
+    303062: () => support().permanent().perCnt(1).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-dice'];
+        if (support.perCnt > 0) triggers.push('elReaction');
         return {
             triggers,
             element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Dendro],
             cnt: [2, 2],
             exec: cmds => {
-                if (event.trigger == 'phase-start') return support.setUseCnt(1);
                 if (event.trigger == 'elReaction') {
                     cmds.attack(1, DAMAGE_TYPE.Hydro, { isPriority: true });
-                    support.minusUseCnt();
+                    support.minusPerCnt();
                 }
             }
         }
@@ -245,21 +251,77 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 火岩祝佑·重熔
-    303072: () => support().collection(1).handle((support, event) => {
-        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
-        if (support.useCnt > 0) triggers.push('Pyro-dmg', 'Geo-dmg');
+    303072: () => support().permanent().perCnt(1).handle((support, event) => {
+        const triggers: Trigger[] = ['phase-dice'];
+        if (support.perCnt > 0) triggers.push('Pyro-dmg', 'Geo-dmg');
         return {
             triggers,
             element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Geo],
             cnt: [2, 2],
             exec: cmds => {
-                if (event.trigger == 'phase-start') return support.setUseCnt(1);
                 if (event.trigger == 'phase-dice') return;
                 cmds.getStatus([[203, 2]]);
-                support.minusUseCnt();
+                support.minusPerCnt();
             }
         }
     }),
+    // 冰草祝佑·棘霜
+    303081: () => support().permanent().handle((_, event) => {
+        const { trigger, eheros } = event;
+        const triggers: Trigger[] = ['phase-dice'];
+        if (eheros.hasAttach(ELEMENT_TYPE.Cryo)) triggers.push('phase-end');
+        return {
+            triggers: ['phase-dice', 'phase-end'],
+            cnt: [2, 2],
+            element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Dendro],
+            exec: cmds => {
+                if (trigger == 'phase-dice') return;
+                const hidxs = eheros.allHidxs({ cdt: h => h.hasAttach(ELEMENT_TYPE.Cryo) });
+                cmds.attack(2, DAMAGE_TYPE.Pierce, { hidxs }).removeAttach(ELEMENT_TYPE.Cryo, { hidxs, isOppo: true });
+            }
+        }
+    }),
+    // 冰草祝佑·寒蔓
+    303082: () => support().collection(2).handle((support, event) => ({
+        triggers: ['phase-dice', 'phase-start', 'after-skill'],
+        element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Dendro],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger, eDmgedHero } = event;
+            if (trigger == 'phase-start') return support.setUseCnt(2);
+            if (trigger == 'phase-dice') return;
+            if (!eDmgedHero.hasAttach(ELEMENT_TYPE.Dendro) || support.useCnt <= 0) return { isCancel: true }
+            cmds.getCard(1).heal(1, { target: CMD_MODE.MaxHurt }).removeAttach(ELEMENT_TYPE.Dendro, { isOppo: true });
+            support.minusUseCnt();
+        }
+    })),
+    // 雷风祝佑·疾霆
+    303091: () => support().permanent().handle((_, event) => ({
+        triggers: ['phase-dice', 'phase-end'],
+        element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Anemo],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger, heros, eheros, randomInArr } = event;
+            if (trigger == 'phase-dice') return;
+            eheros.forEach(h => {
+                if (!h.hasAttach(ELEMENT_TYPE.Electro)) return;
+                cmds.getEnergy(1, { hidxs: randomInArr(heros.allHidxs()) })
+            });
+        }
+    })),
+    // 雷风祝佑·罡风
+    303092: () => support().permanent().perCnt(1).handle((support, event) => ({
+        triggers: ['phase-dice', 'Swirl'],
+        element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Anemo],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger } = event;
+            if (trigger == 'phase-dice') return;
+            if (support.perCnt <= 0) return { isCancel: true }
+            cmds.attack(2, DAMAGE_TYPE.Anemo);
+            support.minusPerCnt();
+        }
+    })),
     // 璃月港口
     321001: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
@@ -1235,6 +1297,15 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         triggers: 'enter',
         exec: cmds => cmds.pickCard(3, CMD_MODE.UseCard, { card: [302229, 302230, 302231] }).res,
     })),
+    // 涅朵奇卡
+    322034: () => support().permanent().perCnt(1).handle(support => ({
+        triggers: ['LunarElectroCharged', 'LunarBloom'],
+        exec: cmds => {
+            if (support.perCnt <= 0) return { isCancel: true }
+            cmds.getStatus(172);
+            support.minusPerCnt();
+        }
+    })),
     // 参量质变仪
     323001: () => support().collection().handle(support => ({
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],
@@ -1260,13 +1331,14 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 红羽团扇
-    323003: () => support().permanent().perCnt(1).handle(support => {
+    323003: () => support().permanent().perCnt(1).handle((support, _, ver) => {
         if (support.perCnt <= 0) return;
         return {
             triggers: 'switch',
             exec: cmds => {
                 support.minusPerCnt();
-                cmds.getStatus(302303);
+                if (ver.lt('v6.6.0')) cmds.getStatus(302303);
+                else cmds.getStatus([169, 170]);
             }
         }
     }),
@@ -1350,9 +1422,13 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     // 元素幻变：蒸发祝佑
     331005: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Pyro, 'Vaporize', 5),
     // 元素幻变：绽放祝佑
-    331006: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro, 'Bloom', 6),
+    331006: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro, ['Bloom', 'LunarBloom'], 6),
     // 元素幻变：火岩祝佑
     331007: () => elTransfiguration(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Geo, 'elReaction-Geo:Pyro', 7),
+    // 元素幻变：冰草祝佑
+    331008: () => elTransfiguration(ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Dendro, 'action-start', 8),
+    // 元素幻变：雷风祝佑
+    331009: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Anemo, 'elReaction-Anemo:Electro', 9),
 
 }
 

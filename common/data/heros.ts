@@ -193,7 +193,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(1).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), summon: 111102 }))
         ),
 
-    1111: () => hero(363).name('莱欧斯利').since('v4.7.0').fontaine(HERO_TAG.ArkheOusia).cryo().catalyst()
+    1111: () => hero(363).name('莱欧斯利').since('v4.7.0').maxHp(11).maxHp(10, 'v6.6.0').fontaine(HERO_TAG.ArkheOusia).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/064e881b99d30a1ce455d16a11768a24_8173906534678189661.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a9641995fd67126ff2b1e0d0294db57.png')
         .normalSkill('迅烈倾霜拳')
@@ -1099,7 +1099,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('煌煌千道镇式').description('{dealDmg}，召唤【smn114062】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/88/a454xedesmgk8h4a9q4f4wddudzzkwq.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/affa346d8b3bdc6281da340c52f5c4a4_394143682255893684.png')
-                .burst(2).damage(1).cost(4).handle(() => ({ summon: 114062 }))
+                .burst(2).damage(2).damage(1, 'v6.6.0').cost(4).handle(() => ({ summon: 114062 }))
         ),
 
     1407: () => hero(32).name('雷电将军').since('v3.7.0').offline('v3').inazuma().electro().polearm()
@@ -1378,6 +1378,37 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 }),
         ),
 
+    1418: () => hero(584).name('菲林斯').since('v6.6.0').nodkrai().electro().polearm()
+        .src('#')
+        .avatar('#AvatarIcon_Flins')
+        .normalSkill('扈圣魔枪')
+        .skills(
+            skill('古律·孤灯遗秘').description('每回合首次使用此技能时，造成{dmg+1}点[elDmg]，自身附属【sts114181】。再次使用此技能，消耗2点[充能]，自身[准备技能]：【rsk14185】。')
+                .src('#',
+                    '')
+                .elemental().cost(2).handle(event => {
+                    const { skill: { useCntPerRound }, hero: { energy } } = event;
+                    if (useCntPerRound == 0) return { addDmgCdt: 1, status: 114181 }
+                    return { status: 114182, isInvalid: energy < 1, energy: -2 }
+                }),
+            skill('旧仪·夜客致访').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
+                .src('#',
+                    '')
+                .burst(4).damage(6).cost(4).handle(() => ({ pdmg: 2 })),
+            skill('月兆祝赐·旧世潜藏').description('本局游戏中，敌方受到‹2›‹4›【感电反应】时，改为[月感电]反应。；【自身在场，敌方行动牌被赋予〖sts204〗时：】对敌方场上生命值最高的角色造成1点[穿透伤害]。')
+                .src('#',
+                    '')
+                .passive().handle(event => {
+                    const { source, playerInfo, cmds } = event;
+                    if (source != 204) {
+                        playerInfo.isLunarElectroCharged = true;
+                        return { triggers: 'game-start', isNotAddTask: true }
+                    }
+                    cmds.attack(1, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHp });
+                    return { triggers: 'get-status-oppo' }
+                })
+        ),
+
     1501: () => hero(36).name('砂糖').offline('v1').mondstadt().anemo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/a6944247959cfa7caa4d874887b40aaa_8329961295999544635.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/f21012595a86a127fcdb5cc4aec87e05.png')
@@ -1531,7 +1562,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(1).cost(3).handle(event => ({ summon: [[115093, !!event.talent]] }))
         ),
 
-    1510: () => hero(408).name('闲云').since('v5.0.0').liyue().anemo().catalyst()
+    1510: () => hero(408).name('闲云').since('v5.0.0').maxHp(11).maxHp(10, 'v6.6.0').liyue().anemo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/25d2e76748611db680909e98c1629e41_2183137475204023064.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/895c928cc596421e6ecb3e12a8f9ff5d.png')
         .normalSkill('清风散花词')
@@ -1976,10 +2007,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/5a8903dcc480dd442f17404bd3630d93.png')
         .normalSkill('箱纸切削术')
         .skills(
-            skill('呜喵町飞足').description('生成【sts117071】和【sts117072】。')
+            skill('呜喵町飞足').description('生成【sts117071】和2层【sts117072】。')
+                .description('生成【sts117071】和【sts117072】。', 'v6.6.0')
                 .src('https://patchwiki.biligame.com/images/ys/e/e6/t5pihmh5sg8ccu6nm7stvb71maxxz9x.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/02/28/258999284/f19df62c04e80071c2278ae5ef2f21ff_8786745388682460864.png')
-                .elemental().cost(3).handle(() => ({ status: [117071, 117072] })),
+                .elemental().cost(3).handle(() => ({ status: [117071, [117072, 2]] })),
             skill('秘法·惊喜特派').description('{dealDmg}，在敌方场上生成【sts117073】。')
                 .src('https://patchwiki.biligame.com/images/ys/9/9a/dbkhj9brr5xbkjgx56nabv1dgk7gxio.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/02/28/258999284/562bc0909575afbc29f1971ae2c4b24d_5181008040290623097.png')
@@ -2040,6 +2072,41 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     const { skill: { useCntPerRound } } = event;
                     if (useCntPerRound > 1) return;
                     return { triggers: ['Burning-oppo'], isNotAddTask: true, status: 117104 }
+                })
+        ),
+
+    1711: () => hero(585).name('菈乌玛').since('v6.6.0').maxHp(11).nodkrai().dendro().catalyst()
+        .src('#')
+        .avatar('#AvatarIcon_Lauma')
+        .normalSkill('林麓旅踏')
+        .skills(
+            skill('圣言述咏·终宵永眠').description('{dealDmg}，生成【sts117111】。如果我方手牌中存在附着有【sts202】的卡牌，则移除随机1张牌的1层【sts202】效果并使生成的【sts117111】造成的伤害+1。')
+                .src('#',
+                    '')
+                .elemental().damage(1).cost(3).handle(event => {
+                    const { cmds, hcards } = event;
+                    const isTriggered = hcards.some(c => c.hasAttachment(202));
+                    if (isTriggered) cmds.consumeUseCnt({ attachment: 202, cnt: 1 });
+                    return { status: [[117111, +isTriggered]] }
+                }),
+            skill('圣言述咏·众心为月').description('赋予我方随机3张[当前元素骰费用]不为0的手牌【sts202】。生成3层【sts117112】。')
+                .src('#',
+                    '')
+                .burst(2).cost(3).handle(event => {
+                    event.cmds.getStatus(202, { cnt: 3 });
+                    return { status: [[117112, 3]] }
+                }),
+            skill('月兆祝赐·千籁恩宠').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方触发[月绽放]反应时：】使我方牌组中随机1张卡牌附着【sts202】。')
+                .src('#',
+                    '')
+                .passive().handle(event => {
+                    const { trigger, playerInfo, cmds } = event;
+                    if (trigger == 'game-start') {
+                        playerInfo.isLunarBloom = true;
+                        return { triggers: trigger, isNotAddTask: true }
+                    }
+                    cmds.getStatus(202, { cnt: 1, mode: CMD_MODE.RandomPileCard });
+                    return { triggers: 'LunarBloom-oppo' }
                 })
         ),
 
@@ -2805,6 +2872,25 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 }),
         ),
 
+    2605: () => hero(586).name('实验性场力发生装置').since('v6.6.0').maxHp(11).monster().geo()
+        .src('#')
+        .avatar('#MonsterIcon_Gravitas')
+        .normalSkill('重力应用程式·砸击')
+        .skills(
+            skill('重力应用程式·点状抵消').description('{dealDmg}，生成2层【sts169】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(() => ({ status: [[169, 2]] })),
+            skill('重力应用程式·削减场域').description('{dealDmg}，生成【sts126051】和【sts126052】，本回合中我方所有后台角色下次「普通攻击」少花费1个[无色元素骰]。')
+                .src('#',
+                    '')
+                .burst(2).damage(3).cost(3).handle(event => {
+                    const { cmds, heros } = event;
+                    cmds.getStatus(126054, { hidxs: heros.getBackHidxs() });
+                    return { status: [126051, 126052] }
+                }),
+        ),
+
     2701: () => hero(60).name('翠翎恐蕈').offline('v1').maxHp(12).maxHp(10, 'v6.4.0', 'v1').monster().dendro()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/83e1eecf95f1e3ba10afad2e2a4de03c_4053328098702513548.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/0c8a00c0737279e0349769448e7a1f35.png')
@@ -2864,10 +2950,9 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://patchwiki.biligame.com/images/ys/6/6e/5l8jvgeetqk54cioz7rf7a9ugv4yo26.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/6f2fc1e2e7ad6747577d954f3db9012f_2120144226908224970.png')
                 .passive().handle(event => {
-                    const { hero: { hp, hidx }, skill: { useCntPerRound }, getdmg, cmds } = event;
+                    const { hero: { hp, hidx }, skill: { useCntPerRound }, getdmg } = event;
                     if (hp - getdmg[hidx] > 7 || useCntPerRound) return;
-                    cmds.getEnergy(1, { hidxs: hidx });
-                    return { triggers: 'getdmg' }
+                    return { triggers: 'getdmg', energy: 1 }
                 })
         ),
 

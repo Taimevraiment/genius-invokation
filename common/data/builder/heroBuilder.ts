@@ -117,6 +117,9 @@ export class GIHero extends Entity {
         if (this.energy >= 0) return 0;
         return -this.energy;
     }
+    hasAttach(element: PureElementType) {
+        return this.attachElement.includes(element);
+    }
 }
 
 class HeroBuilder extends BaseCostBuilder {

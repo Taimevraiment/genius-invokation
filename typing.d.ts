@@ -153,6 +153,7 @@ type PlayerInfo = {
     isUsedCardPerRound: boolean, // 我方本回合是否使用过行动卡
     usedVehcileCnt: number, // 本局打出过的特技牌数量
     isLunarElectroCharged: boolean, // 是否转化为月感电
+    isLunarBloom: boolean, // 是否转化为月绽放
 }
 
 type InfoVO = {

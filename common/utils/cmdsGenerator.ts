@@ -166,11 +166,14 @@ export default class CmdsGenerator {
         this._add({ cmd: 'switch-after', isOppo });
         return this;
     }
-    attach(options: { element?: ElementType | ElementType[], hidxs?: number | number[], isOppo?: boolean } = {}) {
-        let { element, hidxs, isOppo } = options;
+    attach(options: { element?: ElementType | ElementType[], hidxs?: number | number[], isOppo?: boolean, remove?: boolean } = {}) {
+        let { element, hidxs, isOppo, remove: isAttach } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'attach', element, hidxs, isOppo });
+        this._add({ cmd: 'attach', element, hidxs, isOppo, isAttach });
         return this;
+    }
+    removeAttach(element?: ElementType | ElementType[], options: { hidxs?: number | number[], isOppo?: boolean } = {}) {
+        return this.attach({ ...options, element, remove: true });
     }
     attack(damage?: number, element?: DamageType | DamageType[], options: {
         hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean, isOrder?: boolean, target?: number,
@@ -314,9 +317,9 @@ export default class CmdsGenerator {
         this._add({ cmd: 'modifyUseCnt', status, summon, cnt, isAttach: ignoreMax });
         return this;
     }
-    consumeUseCnt(options: { summon?: number, status?: number, cnt?: number } = {}) {
-        const { summon, status, cnt = 1 } = options;
-        this._add({ cmd: 'modifyUseCnt', status, summon, cnt: -Math.abs(cnt) });
+    consumeUseCnt(options: { summon?: number, status?: number, attachment?: number | number[], cnt?: number } = {}) {
+        const { summon, status, attachment, cnt = 1 } = options;
+        this._add({ cmd: 'modifyUseCnt', status: status ?? attachment, summon, cnt: -Math.abs(cnt), isAttach: !!attachment });
         return this;
     }
     callback(cb: (cmds: CmdsGenerator, cards?: Card[]) => void) {

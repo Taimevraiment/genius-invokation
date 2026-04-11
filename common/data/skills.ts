@@ -59,6 +59,9 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     14155: () => skill('闪烈降临·大火山崩落').description('{dealDmg}，此技能视为[下落攻击]。')
         .burst().readySkill().damage(3).damage(2, 'v6.2.0').handle(() => ({ isFallAtk: true })),
 
+    14185: () => skill('雷霆交响').description('{dealDmg}，如果我方场上存在【smn205】，则造成的伤害额外+2。')
+        .burst().readySkill().damage(2).handle(({ summons }) => ({ addDmgCdt: isCdt(summons.has(205), 2) })),
+
     15074: () => skill('风风轮舞踢').description('{dealDmg}（或被扩散元素的伤害）。').elemental().readySkill().damage(2),
 
     15075: () => ski1507x(ELEMENT_TYPE.Cryo),
@@ -141,7 +144,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             return { isForbidden: !heroStatus.has(113151) }
         }),
 
-    1131551: () => skill('涉渡').description('我方切换到下一个角色，将2个元素骰转换为[万能元素骰]。（此技能释放后，我方可继续行动）')
+    1131551: () => skill('涉渡').description('我方切换到下一个角色，将2个元素骰转换为[万能元素骰]。（使用此技能后，我方可继续行动）')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/62a45ed9d0d6b948f17911a41aec92df_2245350266406096827.png')
         .vehicle().costSame(0).handle(({ cmds }) => (cmds.switchAfter().changeDice({ cnt: 2 }), { isQuickAction: true })),
 
@@ -236,9 +239,15 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             cmds.heal(1).pickCard(3, CMD_MODE.GetCard, { subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food], isSpecify: true });
         }),
 
-    3130063: () => skill('迅疾滑翔').description('切换到下一名角色，敌方出战角色附属【sts301302】。')
+    3130063: () => skill('迅疾滑翔').description('[舍弃]1张[当前元素骰费用]最高的手牌，切换到下一名角色，敌方出战角色附属【sts301302】。')
+        .description('切换到下一名角色，敌方出战角色附属【sts301302】。', 'v6.6.0')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
-        .vehicle().costSame(1).handle(({ cmds }) => (cmds.switchAfter(), { statusOppo: 301302 })),
+        .vehicle().costSame(1).handle((event, ver) => {
+            const { cmds, hcardsCnt } = event;
+            if (ver.gte('v6.6.0')) cmds.discard({ cnt: 1, mode: CMD_MODE.HighHandCard });
+            cmds.switchAfter();
+            return { isInvalid: ver.gte("v6.6.0") && hcardsCnt == 0, statusOppo: 301302 }
+        }),
 
     3130071: () => skill('浪船·迅击炮').description('{dealDmg}。')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2025/03/22/258999284/d51ae51bce40330458cea198b5dba91d_9095998201034503166.png')

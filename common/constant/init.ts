@@ -47,6 +47,7 @@ export const INIT_PLAYER: () => Player = () => ({
         isUsedCardPerRound: false,
         usedVehcileCnt: 0,
         isLunarElectroCharged: false,
+        isLunarBloom: false,
     },
     UI: {
         info: '',
