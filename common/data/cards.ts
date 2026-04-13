@@ -4424,7 +4424,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('#'),
 
     303091: () => card().name('雷风祝佑·疾霆').support().costElectro(2).from(331009)
-        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【结束阶段：】敌方每有一个角色附着‹4雷元素›，我方随机角色获得1点[充能]。')
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【结束阶段：】敌方每有一个角色附着‹4雷元素›，我方一名角色获得1点[充能]（出战角色优先）。')
         .src('#'),
 
     303092: () => card().name('雷风祝佑·罡风').support().costAnemo(1).from(331009)

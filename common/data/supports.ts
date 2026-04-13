@@ -301,11 +301,15 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Anemo],
         cnt: [2, 2],
         exec: cmds => {
-            const { trigger, heros, eheros, randomInArr } = event;
+            const { trigger, heros, eheros } = event;
             if (trigger == 'phase-dice') return;
-            eheros.forEach(h => {
-                if (!h.hasAttach(ELEMENT_TYPE.Electro)) return;
-                cmds.getEnergy(1, { hidxs: randomInArr(heros.allHidxs()) })
+            let energy = eheros.filter(h => h.hasAttach(ELEMENT_TYPE.Electro)).length;
+            heros.allHidxs({ cdt: h => !h.isFullEnergy || h.maxEnergy < 0 }).forEach(hidx => {
+                if (energy == 0) return;
+                const hero = heros[hidx];
+                const cnt = Math.min(energy, hero.maxEnergy - hero.energy);
+                energy -= cnt;
+                cmds.getEnergy(cnt, { hidxs: hidx });
             });
         }
     })),

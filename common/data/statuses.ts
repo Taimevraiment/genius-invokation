@@ -1439,7 +1439,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('本回合所附属角色造成的[物理伤害]变为[雷元素伤害]，并且「普通攻击」造成的伤害+1。；[roundCnt]')
         .handle(() => ({ attachEl: ELEMENT_TYPE.Electro, addDmgType1: 1 })),
 
-    114182: () => readySkillStatus('北国枪阵', 14185).icon('#'),
+    114182: () => readySkillStatus('雷霆交响', 14185).icon('#'),
 
     115031: (isTalent: boolean = false) => status('风域').combatStatus().icon(STATUS_ICON.Special)
         .useCnt(2).type(STATUS_TYPE.Usage).talent(isTalent)
