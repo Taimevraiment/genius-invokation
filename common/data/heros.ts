@@ -2080,7 +2080,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Lauma')
         .normalSkill('林麓旅踏')
         .skills(
-            skill('圣言述咏·终宵永眠').description('{dealDmg}，生成【sts117111】。如果我方手牌中存在附着有【sts202】的卡牌，则移除随机1张牌的1层【sts202】效果并使生成的【sts117111】造成的伤害+1。')
+            skill('圣言述咏·终宵永眠').description('{dealDmg}，生成【sts117111】。如果我方手牌中存在附着有【sts202】的卡牌，则移除随机1张牌的1层【sts202】效果并改为生成可造成2点伤害的【sts117111】。')
                 .src('#',
                     '')
                 .elemental().damage(1).cost(3).handle(event => {
@@ -2096,7 +2096,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     event.cmds.getStatus(202, { cnt: 3 });
                     return { status: [[117112, 3]] }
                 }),
-            skill('月兆祝赐·千籁恩宠').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方触发[月绽放]反应时：】使我方牌组中随机1张卡牌附着【sts202】。')
+            skill('月兆祝赐·千籁恩宠').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【敌方受到[月绽放]反应时：】使我方牌组中随机1张卡牌附着【sts202】。')
                 .src('#',
                     '')
                 .passive().handle(event => {
