@@ -154,12 +154,13 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('仙法·救苦度厄').description('{dealDmg}，生成【sts111082】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/p0xq33l7riqu49e0oryu8p1pjg6vzyb.png',
                     'https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/fbf260ac04da9e7eafa3967cd9bed42c_824806426983130530.jpg')
-                .burst(3).damage(3).cost(3).handle(event => {
-                    const { talent, heros, cmds } = event;
+                .burst(3).damage(3).cost(3).variables('talent', -1).handle(event => {
+                    const { talent, heros, cmds, skill } = event;
+                    if (talent && skill.variables.talent == -1) skill.variables.talent = 2;
                     const hidxs = heros.allHidxs({ isDie: true });
-                    const isTalent = hidxs.length > 0 && talent && talent.perCnt > 0;
-                    if (isTalent) cmds.revive(2, hidxs);
-                    return { status: 111082, exec: () => { isTalent && talent.minusPerCnt() } }
+                    const isTalent = talent && skill.variables.talent > 0;
+                    if (isTalent && hidxs.length) cmds.revive(2, hidxs);
+                    return { status: 111082, exec: () => { isTalent && --skill.variables.talent } }
                 })
         ),
 

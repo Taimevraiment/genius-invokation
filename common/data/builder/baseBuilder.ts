@@ -36,7 +36,7 @@ export class Entity {
         this.id = id;
         this.name = name;
         const { uct = -1, pct = 0, vars = {} } = options;
-        this.variables = vars;
+        this.variables = { ...vars };
         this.setUseCnt(uct);
         this.setPerCnt(pct);
     }

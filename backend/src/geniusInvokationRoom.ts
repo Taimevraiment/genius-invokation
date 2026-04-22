@@ -2795,7 +2795,11 @@ export default class GeniusInvokationRoom {
                         h.vehicleSlot = null;
                         h.attachElement.length = 0;
                         h.energy = 0;
-                        h.skills.forEach(s => s.handle({ pidx: cpidx, ...this.handleEvent, hero: h, skill: s, trigger: 'reset' }));
+                        h.skills.forEach(s => {
+                            s.handle({ pidx: cpidx, ...this.handleEvent, hero: h, skill: s, trigger: 'reset' });
+                            s.handle({ pidx: cpidx, ...this.handleEvent, hero: h, skill: s, trigger: 'killed' });
+                            s.setUseCnt();
+                        });
                         if (!h.isFront) {
                             heroDie[cpidx].splice(heroDie[cpidx].indexOf(chidx), 1);
                             if (heroDie[cpidx].length == 0) isDie.delete(cpidx);

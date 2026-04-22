@@ -146,6 +146,10 @@ export class GISkill extends Entity {
                 cmds.clear();
                 return { cmds, notLog: true, isNotAddTask: true, triggers: ['reset'] }
             }
+            if (trigger == 'killed') {
+                skill.variables = { ...vars };
+                return { triggers: ['killed'], cmds, notLog: true, isNotAddTask: true }
+            }
             let { dmgElement, atkOffset, atkTo } = builderRes;
             const sevent = { ...event, hidx: hero.hidx };
             const statuses = [...hero.heroStatus];

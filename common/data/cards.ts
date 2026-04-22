@@ -2730,7 +2730,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/9df7f8bf2b97688d9a8fae220b4ff799_2381296963104605530.png'),
 
     211081: () => card(68).name('起死回骸').since('v4.0.0').offline('v3').talent(2)
-        .costCryo(4).costCryo(5, 'v4.7.0').energy(3).perCnt(2).notResetPerCnt()
+        .costCryo(4).costCryo(5, 'v4.7.0').energy(3)
         .description('{action}；装备有此牌的【hro】使用【ski】时，复苏我方所有倒下角色，并治疗其2点。（整场牌局限制2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/08/12/258999284/d5ef496771a846af08ec05fff036bf17_8628795343837772161.png'),
 
