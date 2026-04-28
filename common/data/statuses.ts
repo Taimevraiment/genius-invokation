@@ -2569,8 +2569,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     126043: () => readySkillStatus('大师之击', 26047),
 
-    126051: () => status('低重力背景').combatStatus().roundCnt(2).type(STATUS_TYPE.Usage).icon('#')
-        .description('【双方角色使用技能后：】自身附属【sts126053】并切换至下一名角色。；[roundCnt]')
+    126051: () => status('低重力背景').combatStatus().roundCnt(2).type(STATUS_TYPE.Usage).icon(STATUS_ICON.Special)
+        .description('【双方角色使用技能后：】该角色附属【sts126053】并切换至下一名角色。；[roundCnt]')
         .handle((_, event) => {
             const { cmds, trigger, skill } = event;
             if (skill?.id == 26053) return;

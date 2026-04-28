@@ -257,7 +257,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/07/14/183046623/f396d3f86aecfc992feb76ed44485171_1252924063800768441.png')
         .handle((_, { cmds }) => (cmds.getCard(2), { addDmg: 1 })),
 
-    311106: () => card(299).name('四风原典').since('v4.3.0').offline('v2').weapon().costSame(3).useCnt(0)
+    311106: () => card(299).name('四风原典').since('v4.3.0').offline('v2').weapon().costSame(2).costSame(3, 'v6.6.0', 'v2').useCnt(0)
         .description('【此牌每有1点「伤害加成」，角色造成的伤害+1】。；【结束阶段：】此牌累积1点「伤害加成」。（最多累积到2点）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/c2774faa0cd618dddb0b7a641eede205_6906642161037931045.png')
         .handle(card => ({
@@ -537,9 +537,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         })),
 
     311408: () => card(355).name('公义的酬报').since('v4.6.0').weapon().costSame(2).useCnt(0)
-        .description('角色使用「元素爆发」造成的伤害+2。；【我方出战角色受到伤害或治疗后：】累积1点「公义之理」。如果此牌已累积3点「公义之理」，则消耗3点「公义之理」，使角色获得1点[充能]。')
+        .description('角色使用「元素爆发」造成的伤害+2。；【我方出战角色受到伤害或治疗后：】累积1点「公义之理」。如果此牌已累积4点「公义之理」，则消耗4点「公义之理」，使角色获得1点[充能]。')
+        .description('角色使用「元素爆发」造成的伤害+2。；【我方出战角色受到伤害或治疗后：】累积1点「公义之理」。如果此牌已累积3点「公义之理」，则消耗3点「公义之理」，使角色获得1点[充能]。', 'v6.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/000bcdedf14ef6af2cfa36a003841098_4382151758785122038.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { heros, hero, getdmg, heal, execmds } = event;
             const fhidx = heros.getFront().hidx ?? -1;
             const trigger: Trigger[] = [];
@@ -550,9 +551,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                 addDmgType3: 2,
                 isAddTask: true,
                 exec: () => {
-                    if (card.addUseCnt() < 3) return;
+                    const cnt = ver.lt('v6.6.0') ? 3 : 4;
+                    if (card.addUseCnt() < cnt) return;
                     execmds.getEnergy(1, { hidxs: hero.hidx });
-                    card.minusUseCnt(3);
+                    card.minusUseCnt(cnt);
                 }
             }
         }),
@@ -1269,17 +1271,17 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     312045: () => card(590).name('角斗士的终幕礼').since('v6.6.0').relic().costAny(2).perCnt(2)
-        .description('附属角色造成的[物理伤害]+1。；【我方仅附属角色未被击倒时：】附属角色的「普通攻击」少花费1个[无色元素骰]。（每回合2次）')
+        .description('附属角色造成的[物理伤害]+1。；【我方仅附属角色未被击倒时：】附属角色的「普通攻击」少花费1个[无色元素骰]，并且造成伤害+1。（每回合2次）')
         .src('#')
         .handle((card, event) => {
             const { skill, heros, isMinusDiceSkill, trigger } = event;
             const isMinus = card.perCnt > 0 && heros.allHidxs().length == 1;
-            const triggers: Trigger[] = [];
+            const triggers: Trigger[] = ['dmg'];
             if (skill?.isHeroSkill) triggers.push('Physical-dmg');
             if (isMinus && isMinusDiceSkill) triggers.push('skilltype1');
             return {
                 triggers,
-                addDmgCdt: +(trigger == 'Physical-dmg'),
+                addDmgCdt: +(trigger == 'Physical-dmg') + +(isMinus && trigger == 'dmg'),
                 minusDiceSkill: isCdt(isMinus, { skilltype1: [0, 1, 0] }),
                 exec: () => trigger == 'skilltype1' && card.minusPerCnt(),
             }
@@ -1469,7 +1471,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/17/258999284/d34719921cedd17675f38dccc24ebf43_8000545229587575448.png'),
 
     321018: () => card(344).name('梅洛彼得堡').since('v4.5.0').place().costSame(1)
-        .description('【我方出战角色受到伤害或治疗后：】此牌累积1点「禁令」（可叠加，最多叠加到5）。；如果此牌已有5点「禁令」，则消耗5点，赋予对方1张随机手牌【sts208】。')
+        .description('【我方出战角色受到伤害或治疗后：】此牌累积1点「禁令」（可叠加，最多叠加到6）。；如果此牌已有6点「禁令」，则消耗6点，赋予对方1张随机手牌【sts208】。')
+        .description('【我方出战角色受到伤害或治疗后：】此牌累积1点「禁令」（可叠加，最多叠加到5）。；如果此牌已有5点「禁令」，则消耗5点，赋予对方1张随机手牌【sts208】。', 'v6.6.0')
         .description('【我方出战角色受到伤害或治疗后：】此牌累积1点「禁令」。（最多累积到4点）；【行动阶段开始时：】如果此牌已有4点「禁令」，则消耗4点，在敌方场上生成【sts301018】。', 'v6.4.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/41b42ed41f27f21f01858c0cdacd6286_8391561387795885599.png'),
 
@@ -1693,7 +1696,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【入场时：】[挑选]1个[投资计划]。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
-    322034: () => card(591).name('涅朵奇卡').since('v6.6.0').ally().costSame(0)
+    322034: () => card(591).name('涅朵奇卡').since('v6.6.0').ally().costSame(1)
         .description('【我方触发月感电或月绽放反应时：】我方出战角色附属【sts172】。（每回合1次）')
         .src('#'),
 
@@ -3866,7 +3869,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     226051: () => card(589).name('重力场域').since('v6.6.0').talent().costGeo(1).perCnt(2)
-        .description('{quick}；【任意阵营宣布结束后：】切换至下一名角色。；我方角色[下落攻击]造成的伤害+1。（每回合2次）')
+        .description('{quick}；【任意阵营宣布结束后：】该阵营切换至下一名角色。；我方角色[下落攻击]造成的伤害+1。（每回合2次）')
         .src('#')
         .handle((card, event) => {
             const { execmds, trigger, phase, ephase, isFirst } = event;
@@ -3941,13 +3944,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/3533a71348b9aebfd3610469994d540c_2300129169062275237.png'),
 
     111161: () => card().name('诸武相授').event().costSame(0).canSelectHero(1).userType()
-        .description('我方【hro】附属【sts111162】，并且下次造成的伤害+1。；【回合开始或我方执行切换后：】[舍弃]此牌，获得1点*[蛇之狡谋]。')
+        .description('我方【hro】附属【sts111162】。；【回合开始或我方执行切换后：】[舍弃]此牌，获得1点*[蛇之狡谋]。')
+        .description('我方【hro】附属【sts111162】，并且下次造成的伤害+1。；【回合开始或我方执行切换后：】[舍弃]此牌，获得1点*[蛇之狡谋]。', 'v6.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/fcacf7404126d41f650f07291464c42f_7342403777055892176.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { cmds, execmds, heros } = event;
             const hero = heros.get(card.id);
             if (!hero) return;
-            cmds.getStatus([111162, 111164], { hidxs: hero.hidx });
+            const status = [111162];
+            if (ver.lt('v6.6.0')) status.push(111164);
+            cmds.getStatus(status, { hidxs: hero.hidx });
             execmds.discard({ card }).getEnergy(1, { hidxs: hero.hidx, isSp: true });
             return { triggers: ['phase-start', 'active-switch'] }
         }),
@@ -4415,7 +4421,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【投掷阶段：】总是投出2个[火元素骰]和2个[岩元素骰]。；【我方造成[火元素伤害]或[岩元素伤害]后：】生成2层【sts203】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/b979576ce63b9a960d8700769d1c6906_906928291198687109.png'),
 
-    303081: () => card().name('冰草祝佑·棘霜').support().costCryo(1).from(331008)
+    303081: () => card().name('冰草祝佑·棘霜').support().costSame(0).from(331008)
         .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[草元素骰]。；【结束阶段：】对敌方附着有‹1冰元素›的角色造成2点[穿透伤害]，然后移除其‹1冰元素›附着。')
         .src('#'),
 
@@ -4423,11 +4429,11 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[草元素骰]。；【我方使用技能后，如果敌方出战角色附着‹7草元素›：】抓1张牌，治疗我方受伤最多的角色1点，然后移除敌方出战角色‹7草元素›附着。（每回合2次）')
         .src('#'),
 
-    303091: () => card().name('雷风祝佑·疾霆').support().costElectro(2).from(331009)
+    303091: () => card().name('雷风祝佑·疾霆').support().costElectro(1).from(331009)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【结束阶段：】敌方每有一个角色附着‹4雷元素›，我方一名角色获得1点[充能]（出战角色优先）。')
         .src('#'),
 
-    303092: () => card().name('雷风祝佑·罡风').support().costAnemo(1).from(331009)
+    303092: () => card().name('雷风祝佑·罡风').support().costAnemo(2).from(331009)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【我方触发扩散反应后：】对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
         .src('#'),
 
@@ -4443,7 +4449,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     321032: () => card().name('沉玉谷').since('v6.1.0').adventure().costSame(0)
-        .description('【冒险经历达到2时：】生成2张手牌【crd333029】。；【冒险经历达到4时：】我方获得3层【sts169】和【sts170】。；【冒险经历达到8时：】我方全体角色[附着水元素]，治疗我方受伤最多的角色至最大生命值，并使其获得2点最大生命值，然后弃置此牌。')
+        .description('【冒险经历达到2时：】生成2张手牌【crd333029】。；【冒险经历达到4时：】我方获得3层【sts169】和【sts170】。；【冒险经历达到8时：】我方全体角色[附着水元素]，治疗我方受伤最多的角色10点，并使其获得2点最大生命值，然后弃置此牌。')
+        .description('【冒险经历达到2时：】生成2张手牌【crd333029】。；【冒险经历达到4时：】我方获得3层【sts169】和【sts170】。；【冒险经历达到8时：】我方全体角色[附着水元素]，治疗我方受伤最多的角色至最大生命值，并使其获得2点最大生命值，然后弃置此牌。', 'v6.6.0')
         .description('【冒险经历达到2时：】生成2张手牌【crd333029】。；【冒险经历达到4时：】我方获得3层【sts169】和【sts170】。；【冒险经历达到7时：】我方全体角色[附着水元素]，治疗我方受伤最多的角色至最大生命值，并使其获得2点最大生命值，然后弃置此牌。', 'v6.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/679857616a563d304118fcd478c4cc2a_8197286737146985507.png'),
 

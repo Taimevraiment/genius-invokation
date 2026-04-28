@@ -565,9 +565,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                     return cmds.getStatus(301018, { isOppo: true }).res;
                 }
                 if (ver.lt('v6.4.0')) support.addUseCntMax(4);
-                else if (support.addUseCntMax(5) == 5 && ehcardsCnt > 0) {
-                    support.minusUseCnt(5);
-                    cmds.getStatus(208, { isOppo: true });
+                else {
+                    const cnt = ver.lt('v6.6.0') ? 5 : 6;
+                    if (support.addUseCntMax(cnt) == cnt && ehcardsCnt > 0) {
+                        support.minusUseCnt(cnt);
+                        cmds.getStatus(208, { isOppo: true });
+                    }
                 }
             }
         }
@@ -738,7 +741,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                 const { heros } = event;
                 const hidxs = heros.getMaxHurtHidxs();
                 cmds.attach({ element: ELEMENT_TYPE.Hydro, hidxs: heros.allHidxs() })
-                    .heal(999, { hidxs })
+                    .heal(ver.lt('v6.6.0') ? 999 : 10, { hidxs })
                     .addMaxHp(2, hidxs);
                 return { isDestroy: true }
             }

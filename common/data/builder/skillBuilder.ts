@@ -148,6 +148,7 @@ export class GISkill extends Entity {
             }
             if (trigger == 'killed') {
                 skill.variables = { ...vars };
+                skill.setPerCnt(pct);
                 return { triggers: ['killed'], cmds, notLog: true, isNotAddTask: true }
             }
             let { dmgElement, atkOffset, atkTo } = builderRes;
