@@ -4434,7 +4434,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('#'),
 
     303092: () => card().name('雷风祝佑·罡风').support().costAnemo(2).from(331009)
-        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【我方触发扩散反应后：】对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【我方触发扩散反应后：】优先对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
         .src('#'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)

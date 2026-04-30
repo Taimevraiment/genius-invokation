@@ -322,7 +322,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             const { trigger } = event;
             if (trigger == 'phase-dice') return;
             if (support.perCnt <= 0) return { isCancel: true }
-            cmds.attack(2, DAMAGE_TYPE.Anemo);
+            cmds.attack(2, DAMAGE_TYPE.Anemo, { isPriority: true });
             support.minusPerCnt();
         }
     })),
