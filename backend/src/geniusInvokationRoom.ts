@@ -4477,8 +4477,11 @@ export default class GeniusInvokationRoom {
                         callback?.(ncmds);
                         this._doCmds(cpidx, ncmds);
                         const sptidx = supports.findIndex(s => s.entityId == eid);
-                        const nspt = this._getSupportById(cid)[0].setEntityId(eid);
-                        supports[sptidx] = nspt;
+                        if (cid == -1) supports.splice(sptidx, 1);
+                        else {
+                            const nspt = this._getSupportById(cid)[0].setEntityId(eid);
+                            supports[sptidx] = nspt;
+                        }
                     }, { isImmediate, isPriority, isUnshift });
                     break;
                 }

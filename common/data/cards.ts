@@ -1272,7 +1272,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     312045: () => card(590).name('角斗士的终幕礼').since('v6.6.0').relic().costAny(2).perCnt(2)
         .description('附属角色造成的[物理伤害]+1。；【我方仅附属角色未被击倒时：】附属角色的「普通攻击」少花费1个[无色元素骰]，并且造成伤害+1。（每回合2次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/8e74faf57122378341bcb22cf37ed7eb_7741646099990271010.png')
         .handle((card, event) => {
             const { skill, heros, isMinusDiceSkill, trigger } = event;
             const isMinus = card.perCnt > 0 && heros.allHidxs().length == 1;
@@ -1698,7 +1698,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     322034: () => card(591).name('涅朵奇卡').since('v6.6.0').ally().costSame(1)
         .description('【我方触发月感电或月绽放反应时：】我方出战角色附属【sts172】。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/d0c44ee71c2abe3e2d6795279958d032_4093699726964281394.png'),
 
     323001: () => card(214).name('参量质变仪').offline('v1').item().costAny(2)
         .description('【双方角色使用技能后：】如果造成了元素伤害，此牌积累1个「质变进度」。；此牌已累积3个「质变进度」时，弃置此牌并生成3个不同的基础元素骰。')
@@ -1829,7 +1829,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     330013: () => card(594).name('另一侧的霜月').since('v6.6.0').legend().costSame(0)
         .description('【打出及每个行动阶段开始时：】赋予我方随机1张手牌【sts202】。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/210d3243cbca423bc2c7a6e34f901570_7184968947154521709.png')
         .handle(() => ({ status: [202, 300010] })),
 
     331004: () => elTransfiguration(566, ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Electro, '超导', 4).since('v6.4.0')
@@ -1845,10 +1845,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/5d480884a12c541a1b29844f5ffa67c3_5625649056324702367.png'),
 
     331008: () => elTransfiguration(592, ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Dendro, ['冰草'], 8).since('v6.6.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/18/258999284/045ed8ea0d64fb53d38532ac51a151f4_5272737309960706190.png'),
 
     331009: () => elTransfiguration(593, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Anemo, ['雷风', '扩散（雷）'], 9).since('v6.6.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/6f7396e1935d6961de8485127de467f7_6902424310604650469.png'),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -2197,7 +2197,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/a3aa3a8c13499a0c999fc765c4a0623d_2838069371786460200.png')
         .handle((_, event) => {
             const { heros, selectHeros: [hidx], cmds } = event;
-            cmds.switchTo(hidx).useSkill({ skillType: SKILL_TYPE.Normal, hidx });
+            cmds.switchTo(hidx).useSkill({ skillType: SKILL_TYPE.Normal });
             const canSelectHero = heros.map(h => !h.isFront && h.hp > 0 && !h.heroStatus.has(STATUS_TYPE.NonAction));
             return { canSelectHero, notPreview: true }
         }),
@@ -2670,7 +2670,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     333030: () => card(595).name('转盘特调').since('v6.6.0').food().costSame(4).canSelectHero(1)
         .description('目标角色获得4次随机增益效果，其中效果如下：；治疗目标角色2点。；目标角色获得1点额外最大生命值。；目标角色下次使用技能少花费1个元素骰。；目标角色下次造成的伤害+1。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/3e6087cb18f320183ff1326cbdf99464_6546693287640771043.png')
         .handle((_, event) => {
             const { cmds, selectHeros: [hidx], randomInt } = event;
             for (let i = 0; i < 4; ++i) {
@@ -3277,7 +3277,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     214181: () => card(587).name('拨开雪翳之幕').since('v6.6.0').talent().costElectro(1).perCnt(1)
         .description('{quick。}；〔*[card]【hro】获得1点[充能]。〕；【我方触发月感电反应后：】【hro】获得1点[充能]。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/a7ada109634db57f21e37b69e80ce793_8499686901183692327.png')
         .handle((card, event) => {
             const { cmds, execmds, hero: { hidx } } = event;
             cmds.getEnergy(1, { hidxs: hidx });
@@ -3615,7 +3615,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     217111: () => card(588).name('「唇啊，为我纺出歌与吟哦」').since('v6.6.0').talent(1).costDendro(3).perCnt(1)
         .description('{action}；【我方触发绽放和月绽放后：】治疗我方受伤最多的角色2点。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/dae5442cb7c3d404c2706842ca6894e3_8136325975256729805.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             event.execmds.heal(2, { target: CMD_MODE.MaxHurt });
@@ -3870,7 +3870,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     226051: () => card(589).name('重力场域').since('v6.6.0').talent().costGeo(1).perCnt(2)
         .description('{quick}；【任意阵营宣布结束后：】该阵营切换至下一名角色。；我方角色[下落攻击]造成的伤害+1。（每回合2次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/18/258999284/4d571dba6c3993cdf97cd6930185c028_3454251260316609625.png')
         .handle((card, event) => {
             const { execmds, trigger, phase, ephase, isFirst } = event;
             if (trigger == 'any-end-phase') {
@@ -4369,7 +4369,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('[舍弃]1张随机手牌，执行1个「抓牌」效果相关的计划。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => {
-            const { cmds, supports, randomInArr } = event;
+            const { hcardsCnt, cmds, supports, randomInArr } = event;
+            if (hcardsCnt == 0) return cmds.clear().convertSupport(supports.get(322033)!.entityId, -1);
             const [sptId] = randomInArr([302223, 302224, 302225]);
             cmds.clear().discard({ mode: CMD_MODE.Random })
                 .convertSupport(supports.get(322033)!.entityId, sptId);
@@ -4380,7 +4381,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => ({
             exec: () => {
-                const { cmds, supports, dices, randomInArr, randomInt } = event;
+                const { dicesCnt, cmds, supports, dices, randomInArr, randomInt } = event;
+                if (dicesCnt == 0) return cmds.clear().convertSupport(supports.get(322033)!.entityId, -1);
                 const [sptId] = randomInArr([302226, 302227, 302228]);
                 const diceIdx = randomInt(dices.length - 1);
                 cmds.clear().consumeDice(dices.map((_, i) => i == diceIdx))
@@ -4423,19 +4425,19 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     303081: () => card().name('冰草祝佑·棘霜').support().costSame(0).from(331008)
         .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[草元素骰]。；【结束阶段：】对敌方附着有‹1冰元素›的角色造成2点[穿透伤害]，然后移除其‹1冰元素›附着。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/18/258999284/ec7596201c2afdd0f247ca27affe74a3_9203418862356885387.png'),
 
     303082: () => card().name('冰草祝佑·寒蔓').support().costDendro(1).from(331008)
         .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[草元素骰]。；【我方使用技能后，如果敌方出战角色附着‹7草元素›：】抓1张牌，治疗我方受伤最多的角色1点，然后移除敌方出战角色‹7草元素›附着。（每回合2次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/18/258999284/cb88da3a6c17e45c451addea61bedf00_1013946575322152366.png'),
 
     303091: () => card().name('雷风祝佑·疾霆').support().costElectro(1).from(331009)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【结束阶段：】敌方每有一个角色附着‹4雷元素›，我方一名角色获得1点[充能]（出战角色优先）。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/6a3bb416801c6aaa5d3ca5bd5c7b9ea1_8774806522209675227.png'),
 
     303092: () => card().name('雷风祝佑·罡风').support().costAnemo(2).from(331009)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【我方触发扩散反应后：】优先对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/9f6023aaee177a02cee9e13facf33172_7440847213145962427.png'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。（每个角色每回合最多受到1次来自本效果的治疗。）')
