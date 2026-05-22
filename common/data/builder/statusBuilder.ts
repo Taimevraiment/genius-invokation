@@ -152,7 +152,7 @@ export class GIStatus extends Entity {
             this.UI.iconBg = STATUS_BG_COLOR.Transparent;
         }
         this.UI.icon = this.UI.icon.replace('tmpski', 'ski');
-        if (this.UI.icon == '#') this.UI.icon = `${GUYU_PREIFIX}${id}`;
+        if (this.UI.icon.startsWith('#')) this.UI.icon = `${GUYU_PREIFIX}${this.UI.icon.slice(1) || id}`;
         // else if (this.UI.iconBg == STATUS_BG_COLOR.Transparent) {
         //     if (icon == STATUS_ICON.Enchant || icon == STATUS_ICON.ElementAtkUp || icon.startsWith('ski')) {
         //         this.UI.iconBg = STATUS_BG_COLOR[getElByHid(hid)];

@@ -2111,6 +2111,38 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
+    1712: () => hero(596).name('奈芙尔').since('v6.7.0').sumeru().nodkrai().dendro().catalyst()
+        .src('#')
+        .avatar('#AvatarIcon_Nefer')
+        .normalSkill('游虵吐信')
+        .skills(
+            skill('弈术·千夜一舞').description('{dealDmg}，赋予手牌中至多3张[当前元素骰费用]最高的【crd117121】【sts202】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(({ cmds }) => {
+                    cmds.getStatus(202, { cnt: 3, cardFilter: c => c.id == 117121, mode: CMD_MODE.HighHandCard });
+                }),
+            skill('圣约·真眸幻戏').description('{dealDmg}，手牌中每有1张【crd117121】，伤害+1。（至多+2）')
+                .src('#',
+                    '')
+                .burst(2).damage(4).cost(3).handle(event => ({
+                    addDmgCdt: Math.min(2, event.hcards.filter(c => c.id == 117121).length)
+                })),
+            skill('月兆祝赐·廊下暮影').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方手牌中〖crd117121〗不多于3张，敌方受到[月绽放]反应时：】生成手牌【crd117121】。（每回合2次）')
+                .src('#',
+                    '')
+                .passive().perCnt(2).handle(event => {
+                    const { trigger, playerInfo, cmds, hcards, skill } = event;
+                    if (trigger == 'game-start') {
+                        playerInfo.isLunarBloom = true;
+                        return { triggers: trigger, isNotAddTask: true }
+                    }
+                    if (hcards.filter(c => c.id == 117121).length > 3 || skill.perCnt <= 0) return;
+                    cmds.getCard(1, { card: 117121 });
+                    return { triggers: 'LunarBloom-oppo', exec: () => skill.minusPerCnt() }
+                })
+        ),
+
     2101: () => hero(52).name('愚人众·冰萤术士').since('v3.7.0').offline('v3').fatui().cryo()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/549d1869ad1f7d1d27fb5c733a239373_8053361497142459397.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/22a03af7f319a9d1583bc8d33781c241.png')
@@ -2193,6 +2225,28 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     }
                     return { triggers: 'after-dmg', statusOppo: [[122, fdmg]] }
                 })
+        ),
+
+    2105: () => hero(597).name('灵觉隐修的迷者').since('v6.7.0').monster().cryo()
+        .src('#')
+        .avatar('#MonsterIcon_Udugan')
+        .normalSkill(skill => skill('灵觉·寒星').catalyst())
+        .skills(
+            skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并[挑选]1个【crd121051】的强化效果。')
+                .src('#',
+                    '')
+                .explain(...Array.from({ length: 6 }, (_, i) => `botcrd${121054 + i}`))
+                .elemental().damage(1).cost(3).handle(({ cmds }) => {
+                    cmds.addCard(1, 121051, { addTo: 3 }).pickCard(3, CMD_MODE.UseCard, { card: [121054, 121055, 121056, 121057, 121058, 121059] });
+                }),
+            skill('沍寒的图绘').description('{dealDmg}，将1张【crd121051】加入手牌。')
+                .src('#',
+                    '')
+                .burst(2).damage(4).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 121051 }).res),
+            skill('斑斓的绚影').description('战斗开始时，在牌库中等均匀放置3张【crd121051】。')
+                .src('#',
+                    '')
+                .passive().handle(({ cmds }) => (cmds.addCard(3, 121051, { isRandom: false }), { triggers: 'game-start' })),
         ),
 
     2201: () => hero(53).name('纯水精灵·洛蒂娅').offline('v1').maxHp(11).maxHp(10, 'v6.0.0', 'v1').monster().hydro()
@@ -2777,6 +2831,32 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/b20cdf60cef51f689592487d6587d353.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/3f113b01a3fbab406f2ddb81d9a2a019_675662049327994953.png')
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 124051, { isRandom: false }), { triggers: 'game-start' }))
+        ),
+
+    2504: () => hero(598).name('黑蛇骑士·斩风之剑').since('v6.7.0').monster().anemo()
+        .src('#')
+        .avatar('#MonsterIcon_DarkwraithWind')
+        .normalSkill('半剑技术')
+        .skills(
+            skill('低位撩斩').description('{dealDmg}，抓1张牌。')
+                .src('#',
+                    '')
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getCard(1).res),
+            skill('近卫姿态').description('[准备技能]：【rsk25045】，然后[准备技能]：【rsk25046】。')
+                .src('#',
+                    '')
+                .burst(2).cost(3).handle(() => ({ status: 125041 })),
+            skill('前驱气势').description('我方触发扩散反应，或敌方失去【伤害抵消】、[护盾]状态以及出战状态时，抓1张牌。（每回合2次）')
+                .src('#',
+                    '')
+                .passive().perCnt(2).handle(event => {
+                    const { skill, sourceStatus, cmds } = event;
+                    if (skill.perCnt <= 0) return;
+                    const triggers: Trigger[] = ['Swirl', 'other-Swirl'];
+                    if (sourceStatus?.hasType(STATUS_TYPE.Shield, STATUS_TYPE.Barrier)) triggers.push('status-destroy-oppo');
+                    cmds.getCard(1);
+                    return { triggers, exec: () => skill.minusPerCnt() }
+                })
         ),
 
     2601: () => hero(59).name('丘丘岩盔王').offline('v2').maxHp(8, 'v6.4.0', 'v2').hilichurl().geo()

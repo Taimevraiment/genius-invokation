@@ -730,6 +730,9 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
             }
         })),
 
+    121052: (dmg: number = 1) => summon('浮彩分身').useCnt(1).damage(dmg).description('{defaultAtk。}')
+        .src('#'),
+
     122011: () => summon('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png')
         .handle(() => ({ willSummon: 122011, triggers: 'phase-end' })),

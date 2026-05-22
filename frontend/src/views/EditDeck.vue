@@ -230,7 +230,7 @@
 import InfoModal from '@/components/InfoModal.vue';
 import {
     CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CardSubtype, CardType, DICE_TYPE, DiceType, EFFECT_TYPE, EffectType, ELEMENT_TYPE, ElementType, HERO_LOCAL,
-    HERO_LOCAL_CODE, HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE,
+    HeroLocal, HeroTag, INFO_TYPE, OFFLINE_VERSION, OfflineVersion, PURE_ELEMENT_CODE, PURE_ELEMENT_TYPE,
     TypeConst, Version, VERSION, WEAPON_TYPE, WeaponType,
 } from '@@@/constant/enum';
 import { DECK_CARD_COUNT, MAX_DECK_COUNT, MIN_DECK_COUNT } from '@@@/constant/gameOption';
@@ -524,9 +524,7 @@ const updateInfo = (init = false) => {
                 return [331001 + elCode, 331002 + elCode].includes(c.id);
             }
             if (c.hasTag(CARD_TAG.LocalResonance)) { // 地区共鸣(包括魔物、愚人众)
-                const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
-                if (local == undefined) return false;
-                return c.id == 331800 + HERO_LOCAL_CODE[local];
+                return objToArr(lcMap).filter(([, lc]) => lc > 1).some(([local]) => c.hasTag(local));
             }
             return true;
         });
@@ -543,10 +541,15 @@ const updateInfo = (init = false) => {
                 ) {
                     c.UI.cnt = -1;
                 } else if (c.UI.cnt == -1) c.UI.cnt = 2;
-            } else if (c.hasTag(CARD_TAG.LocalResonance)) { // 所属地区(包括魔物、愚人众)
-                const [local] = objToArr(lcMap).find(([, lc]) => lc > 1) ?? [];
-                if (local == undefined || c.id != 331800 + HERO_LOCAL_CODE[local]) c.UI.cnt = -1;
-                else if (c.UI.cnt == -1) c.UI.cnt = 2;
+            } else if (c.hasTag(CARD_TAG.LocalResonance)) { // 地区共鸣(包括魔物、愚人众)
+                const locals = objToArr(lcMap).filter(([, lc]) => lc > 1);
+                if (locals.length == 0) c.UI.cnt = -1;
+                else {
+                    locals.forEach(([local]) => {
+                        if (!c.hasTag(local)) c.UI.cnt = -1;
+                        else if (c.UI.cnt == -1) c.UI.cnt = 2;
+                    });
+                }
             }
         });
     } else {

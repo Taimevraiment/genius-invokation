@@ -350,6 +350,9 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('所附属角色下次造成的伤害+1。；[useCnt]')
         .handle(status => ({ triggers: 'skill-dmg', addDmg: 1, exec: () => status.minusUseCnt() })),
 
+    210: (cnt: number = 1) => status('抗性').heroStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
+        .description('【所附属角色受到伤害时：】抵消1点伤害。（可叠加，没有上限）'),
+
     111012: () => status('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
@@ -2470,6 +2473,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             }
         })),
 
+    125041: () => readySkillStatus('舍身架势', 25045),
+
+    125042: () => readySkillStatus('怒风循击', 25046),
+
     126011: () => status('岩盔').heroStatus().useCnt(3).type(STATUS_TYPE.Barrier)
         .description('【所附属角色受到伤害时：】抵消1点伤害。；抵消[岩元素伤害]时，需额外消耗1次[可用次数]。；[useCnt]')
         .handle((status, event) => {
@@ -2725,6 +2732,63 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     216116: () => hero1611sts2(ELEMENT_TYPE.Cryo),
 
     216117: () => hero1611sts2(ELEMENT_TYPE.Electro),
+
+    221052: () => status('浮彩·冰凌').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Attack)
+        .description('【打出〖crd121051〗时：】额外造成1点[冰元素伤害]。（每层使造成的伤害+1）')
+        .handle((status, event) => ({
+            triggers: isCdt(event.hcard?.id == 121051, 'card'),
+            damage: status.useCnt,
+            element: DAMAGE_TYPE.Cryo,
+            exec: () => status.dispose(),
+        })),
+
+    221053: () => status('浮彩·多重').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        .description('【打出〖crd121051〗时：】召唤【smn121052】。（每层使召唤的浮彩分身造成的伤害+1）')
+        .handle((status, event) => ({
+            triggers: isCdt(event.hcard?.id == 121051, 'card'),
+            summon: [[121052, status.useCnt]],
+            exec: () => status.dispose(),
+        })),
+
+    221054: () => status('浮彩·实像').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        .description('【打出〖crd121051〗时：】抓1张牌。（每层额外抓1张牌）')
+        .handle((status, event) => ({
+            triggers: isCdt(event.hcard?.id == 121051, 'card'),
+            exec: () => {
+                event.cmds.getCard(status.useCnt);
+                status.dispose();
+            }
+        })),
+
+    221055: () => status('浮彩·支柱').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        .description('【打出〖crd121051〗时：】生成1层【sts203】。（每层额外生成1层【sts203】）')
+        .handle((status, event) => ({
+            triggers: isCdt(event.hcard?.id == 121051, 'card'),
+            status: [[203, status.useCnt]],
+            exec: () => status.dispose(),
+        })),
+
+    221056: () => status('浮彩·坚冰').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        .description('【打出〖crd121051〗时：】使我方出战角色附属1层【sts172】。（每层额外附属1层【sts172】）')
+        .handle((status, event) => ({
+            triggers: isCdt(event.hcard?.id == 121051, 'card'),
+            status: [[172, status.useCnt]],
+            exec: () => status.dispose(),
+        })),
+
+    221057: () => status('浮彩·迅影').combatStatus().icon(STATUS_ICON.Buff)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+        .description('打出【crd121051】少花费1个元素骰。（每层额外少花费1个元素骰）')
+        .handle((status, event) => {
+            const { hcard, isMinusDiceCard, minusDiceCard: mdc } = event;
+            if (!isMinusDiceCard || hcard?.id != 121051) return;
+            return { triggers: 'card', minusDiceCard: status.useCnt, exec: () => status.minusUseCnt(hcard.rawDiceCost - mdc) }
+        }),
 
     222062: () => status('元素生命·水').heroStatus().icon(STATUS_ICON.Special)
         .roundCnt(2).type(STATUS_TYPE.ImmuneDamage, STATUS_TYPE.Usage)
@@ -3521,6 +3585,20 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             }
         })),
 
+    303248: () => status('科研的动力（生效中）').combatStatus().from(332064)
+        .useCnt(3).type(STATUS_TYPE.Usage).icon(STATUS_ICON.Special)
+        .description('我方打出[当前元素骰费用]大于等于3的卡牌后，生成1个随机基础元素骰。；[useCnt]')
+        .handle((status, event) => {
+            const { hcard, cmds } = event;
+            if (!hcard || hcard.currDiceCost < 3) return;
+            cmds.getDice(1, { mode: CMD_MODE.Random });
+            return { triggers: 'card', exec: () => status.minusUseCnt() }
+        }),
+
+    303249: () => status('小小灵蕈大幻戏（生效中）').heroStatus().icon(STATUS_ICON.AtkUp).from(332063)
+        .description('所附属角色造成的伤害+1。').type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .handle(() => ({ addDmg: 1 })),
+
     303300: () => status('饱腹').heroStatus().roundCnt(1)
         .icon(STATUS_ICON.Food).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)
         .description('本回合无法食用更多的「料理」。'),
@@ -3694,6 +3772,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 cmds.heal(1, { hidxs: hidx });
                 status.minusUseCnt();
             }
+        })),
+
+    303324: () => status('白灵果派（生效中）').heroStatus().useCnt(2).roundCnt(1)
+        .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Round).from(333031)
+        .description('本回合所附属角色使用技能少花费2个元素骰。；[useCnt]')
+        .handle((status, event) => ({
+            triggers: isCdt(event.isMinusDiceSkill, 'skill'),
+            minusDiceSkill: { skill: [0, 0, 2] },
+            exec: () => status.minusUseCnt(),
         })),
 
 };

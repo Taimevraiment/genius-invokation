@@ -19,7 +19,7 @@ export const checkDices = (dices: DiceCostType[], options: { card?: Card, skill?
         if (diceLen != cost + anydice - costChange) return false;
         if (costType == DICE_TYPE.Any) return true;
         if (costType != DICE_TYPE.Same) {
-            const elDiceValid = diceCnt[costType] + diceCnt[DICE_COST_TYPE.Omni] >= cost - costChanges[0];
+            const elDiceValid = diceCnt[costType] + diceCnt[DICE_COST_TYPE.Omni] >= cost - costChanges[0] - costChanges[2];
             const anyDiceValid = diceCntArr.reduce((a, [, b]) => a + b, 0) - cost + costChange == anydice;
             return elDiceValid && anyDiceValid;
         }

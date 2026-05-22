@@ -188,8 +188,9 @@ const elTransfiguration = (shareId: number, el1: PureElementType, el2: PureEleme
     const condition = elReaction.length == 2 ?
         `我方触发‹${elCode1}›‹${elCode2}›${elReaction[1]}反应后` :
         `我方选择行动前，如果存在敌方角色同时附着‹${elCode1}${elName1}›与‹${elCode2}${elName2}›`;
+    const codeStr = code.toString().padStart(2, '0');
     return card(shareId).name(`元素幻变：${elReaction[0]}祝佑`).blessing().costSame(2)
-        .description(`〔*[card][元素幻变]：‹${elCode1}${elName1}›‹${elCode2}${elName2}›〕；【投掷阶段：】总是骰出两个[${elName1}骰]和两个[${elName2}骰]。；【${condition}：】弃置此牌并从【crd3030${code}1】和【crd3030${code}2】中[挑选]一项加入手牌。`)
+        .description(`〔*[card][元素幻变]：‹${elCode1}${elName1}›‹${elCode2}${elName2}›〕；【投掷阶段：】总是骰出两个[${elName1}骰]和两个[${elName2}骰]。；【${condition}：】弃置此牌并从【crd303${codeStr}1】和【crd303${codeStr}2】中[挑选]一项加入手牌。`)
         .handle((card, event) => {
             const { heros, execmds, trigger } = event;
             if (!heros.hasOnlyElements(el1, el2)) return;
@@ -1008,7 +1009,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                     if (isPhaseEnd) {
                         card.addUseCnt();
                     } else if (trigger == 'card' && hcard) {
-                        card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
+                        card.minusUseCnt(hcard.rawDiceCost - mdc);
                     } else if (trigger == 'skilltype2' && skill) {
                         card.minusUseCnt(skill.rawDiceCost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1]);
                     }
@@ -1034,7 +1035,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                     if (isPhaseEnd) {
                         card.addUseCntMax(4, 2);
                     } else if (trigger == 'card' && hcard) {
-                        card.minusUseCnt(hcard.cost + hcard.anydice - mdc);
+                        card.minusUseCnt(hcard.rawDiceCost - mdc);
                     } else if (trigger == 'skilltype2' && skill) {
                         card.minusUseCnt(skill.rawDiceCost - minusDiceSkill.find(([eid]) => eid == card.entityId)![1])
                     }
@@ -1553,6 +1554,14 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【入场时：】在我方牌组中随机生成5张事件牌。；【冒险经历达到偶数次时：】生成1个随机基础元素骰并抓1张牌。；【冒险经历达到10次，我方单回合内打出2张名称不存在于本局最初牌组的牌时：】生成3个[万能元素骰]，然后弃置此卡牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/03/29/80663279/f28c26f99db147b058626925522e6e66_846506133598698955.png'),
 
+    321041: () => card(602).name('噩梦的预兆').since('v6.7.0').place().costSame(0)
+        .description('【打出及回合结束时：】赋予敌方手牌中1张[当前元素骰费用]最高的手牌【sts201】，并赋予我方牌组顶的牌【sts201】。')
+        .src('#')
+        .handle((_, { cmds }) =>
+            cmds.getStatus(201, { cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })
+                .getStatus(201, { mode: CMD_MODE.TopPileCard })
+        ),
+
     322001: () => card(194).name('派蒙').offline('v1').ally().costSame(3)
         .description('【行动阶段开始时：】生成2点[万能元素骰]。；[可用次数]：2。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/158741257/8b291b7aa846d8e987a9c7d60af3cffb_7229054083686130166.png'),
@@ -1850,6 +1859,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     331009: () => elTransfiguration(593, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Anemo, ['雷风', '扩散（雷）'], 9).since('v6.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/6f7396e1935d6961de8485127de467f7_6902424310604650469.png'),
 
+    331010: () => elTransfiguration(603, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Anemo, ['水风', '扩散（水）'], 10).since('v6.7.0')
+        .src('#'),
+
+    331011: () => elTransfiguration(604, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro, ['雷草', '激化'], 11).since('v6.7.0')
+        .src('#'),
+
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
 
@@ -1955,29 +1970,34 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/a51f7808cabe0721c2a6e2e0e4836d52_6900755572655899243.png')
         .handle((_, { cmds }) => cmds.getStatus(202).getStatus(202, { mode: CMD_MODE.TopPileCard })),
 
-    331801: () => card(237).name('风与自由').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costSame(0).costSame(1, 'v4.3.0')
+    331801: () => card(237).name('风与自由').since('v3.7.0').offline('v2').costSame(0).costSame(1, 'v4.3.0')
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Mondstadt)
         .description('【本回合中，我方角色使用技能后：】将下一个我方后台角色切换到场上。')
         .description('【本回合中，轮到我方行动期间有对方角色被击倒时：】本次行动结束后，我方可以再连续行动一次。；【[可用次数]：1】', 'v4.1.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/5a34fd4bfa32edfe062f0f6eb76106f4_4397297165227014906.png')
         .handle((_, { heros }, ver) => ({ isValid: (ver.lt('v4.1.0') && !ver.isOffline) || heros.allHidxs().length > 1, status: 303181 })),
 
-    331802: () => card(238).name('岩与契约').since('v3.7.0').offline('v2').tag(CARD_TAG.LocalResonance).costAny(3)
+    331802: () => card(238).name('岩与契约').since('v3.7.0').offline('v2').costAny(3)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Liyue)
         .description('【下回合行动阶段开始时：】生成3点[万能元素骰]，并抓1张牌。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/7ffbf85a7089e25fc48f6a48826e1fa4_183114830191275147.png')
         .handle(() => ({ status: 303182 })),
 
-    331803: () => card(239).name('雷与永恒').since('v3.7.0').offline('v3').tag(CARD_TAG.LocalResonance).costSame(0)
+    331803: () => card(239).name('雷与永恒').since('v3.7.0').offline('v3').costSame(0)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Inazuma)
         .description('将我方所有元素骰转换为[万能元素骰]。')
         .description('将我方所有元素骰转换为当前出战角色的元素。', 'v4.0.0')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/760c101ed6ef3b500a830ae430458d89_4230653799114143139.png')
         .handle((_, { cmds }, ver) => cmds.changeDice({ isFront: ver.lt('v4.0.0') })),
 
-    331804: () => card(240).name('草与智慧').since('v3.7.0').tag(CARD_TAG.LocalResonance).costSame(1)
+    331804: () => card(240).name('草与智慧').since('v3.7.0').costSame(1)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Sumeru)
         .description('抓1张牌。然后，选择任意手牌替换。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/23/1694811/1c656067801c6beb53803faefedd0a47_7333316108362576471.png')
         .handle((_, { cmds }) => cmds.getCard(1).changeCard()),
 
-    331805: () => card(393).name('水与正义').since('v4.7.0').tag(CARD_TAG.LocalResonance).costAny(2)
+    331805: () => card(393).name('水与正义').since('v4.7.0').costAny(2)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Fontaine)
         .description('平均分配我方未被击倒的角色的生命值，然后治疗所有我方角色1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/e4ef932872a23852c3c2a7912e5f7d77_449791480408929176.png')
         .handle((_, event) => {
@@ -2007,12 +2027,14 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             cmds.heal(1, { hidxs, isOrder: true });
         }),
 
-    331806: () => card(489).name('火与战争').since('v5.7.0').tag(CARD_TAG.LocalResonance).costSame(1).canSelectHero(1)
+    331806: () => card(489).name('火与战争').since('v5.7.0').costSame(1).canSelectHero(1)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Natlan)
         .description('选一个我方角色，使其附属「重燃」为1的【sts303240】。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/16/258999284/884a6c5256fdf570dafe5adc5c0eb9b1_6127011854622496025.png')
         .handle(() => ({ status: 303240 })),
 
-    331807: () => card(582).name('月与故乡').since('v6.5.0').tag(CARD_TAG.LocalResonance).costSame(0)
+    331807: () => card(582).name('月与故乡').since('v6.5.0').costSame(0)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Nodkrai)
         .description('【本回合内我方打出下张卡牌后：】在下个回合开始时，创建1张所打出的卡牌加入手牌。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/160c35eee3bc9cf971670675a36f56a4_4178694185384672747.png')
         .handle(() => ({ status: 303183 })),
@@ -2170,7 +2192,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             }
         })),
 
-    332015: () => card(255).name('深渊的呼唤').offline('v3').tag(CARD_TAG.LocalResonance).costSame(2)
+    332015: () => card(255).name('深渊的呼唤').offline('v3').costSame(2)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Monster)
         .description('召唤一个随机「丘丘人」召唤物！').explain('smn303211', 'smn303212', 'smn303213', 'smn303214')
         .description('召唤一个随机「丘丘人」召唤物！；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「丘丘人」的元素类型。', 'v3')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/011610bb3aedb5dddfa1db1322c0fd60_7383120485374723900.png')
@@ -2181,7 +2204,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { exec: () => cmds.getSummon(randomInArr(smnIds)), notPreview: true }
         }),
 
-    332016: () => card(256).name('愚人众的阴谋').since('v3.7.0').offline('v3').tag(CARD_TAG.LocalResonance).costSame(2)
+    332016: () => card(256).name('愚人众的阴谋').since('v3.7.0').offline('v3').costSame(2)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Fatui)
         .description('在对方场上，生成1个随机类型的「愚人众伏兵」。').explain('sts303216', 'sts303217', 'sts303218', 'sts303219')
         .description('在对方场上，生成1个随机类型的「愚人众伏兵」。；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「愚人众伏兵」的元素类型。', 'v3')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png')
@@ -2409,7 +2433,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             if (trigger == 'discard') {
                 if (isFromPile == 1) return;
                 cmds.getCard(1);
-                return { triggers: 'discard', notPreview: ver.gte('v6.1.0') }
+                return { triggers: trigger, notPreview: ver.gte('v6.1.0') }
             }
             cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(4, { until: true });
             return { notPreview: ver.gte('v6.1.0') }
@@ -2544,6 +2568,24 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             const cnt = new Set(hcards.flatMap(c => c.attachments.map(a => a.id))).size;
             cmds.getDice(Math.min(2, cnt), { mode: CMD_MODE.Random });
         }),
+
+    332063: () => card(605).name('小小灵蕈大幻戏').since('v6.7.0').costSame(6)
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Monster)
+        .description('我方随机魔物造成的伤害+1。；【此卡牌在手中，我方魔物每次造成伤害时：】赋予此卡牌【sts202】。；【此卡牌被[舍弃]时：】我方随机魔物获得1点额外最大生命值。')
+        .src('#')
+        .handle((card, event) => {
+            const { heros, randomInArr, hero, cmds, execmds, trigger } = event;
+            const hidxs = randomInArr(heros.allHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) }));
+            cmds.getStatus(303249, { hidxs });
+            if (trigger == 'dmg' && hero.tags.includes(HERO_LOCAL.Monster)) execmds.getStatus(202, { cardFilter: c => c.entityId == card.entityId });
+            else if (trigger == 'discard') execmds.addMaxHp(1, hidxs);
+            return { triggers: ['dmg', 'discard'] }
+        }),
+
+    332064: () => card(606).name('科研的动力').since('v6.7.0').event().costSame(1)
+        .description('打出后，我方下3次打出[当前元素骰费用]大于等于3的卡牌后，生成1个随机基础元素骰。')
+        .src('#')
+        .handle(() => ({ status: 303248 })),
 
     333001: () => card(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次「普通攻击」造成的伤害+1。')
@@ -2682,6 +2724,11 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                 }
             }
         }),
+
+    333031: () => card(607).name('白灵果派').since('v6.7.0').food().costSame(4).canSelectHero(1)
+        .description('本回合目标角色下2次使用技能少花费2个元素骰。')
+        .src('#')
+        .handle(() => ({ status: 303324 })),
 
     211011: () => card(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
         .description('{action}；装备有此牌的【hro】使用【ski】时：如果此技能在本场对局中曾经被使用过，则其对敌方后台角色造成的[穿透伤害]改为3点。')
@@ -3543,7 +3590,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；装备有此牌的【hro】使用了【ski】的回合中，我方角色的技能引发[草元素相关反应]后：造成1点[草元素伤害]。（每回合1次）')
         .src('https://patchwiki.biligame.com/images/ys/0/01/6f79lc4y34av8nsfwxiwtbir2g9b93e.png'),
 
-    217021: () => card(108).name('眼识殊明').since('v3.6.0').offline('v3').talent(1).costDendro(4)
+    217021: () => card(108).name('眼识殊明').since('v3.6.0').offline('v3').talent(1).costDendro(3).costDendro(4, 'v6.7.0')
         .description('{action}；装备有此牌的【hro】在附属【sts117021】期间，进行[重击]时少花费1个[无色元素骰]。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/04/11/12109492/e949b69145f320ae71ce466813339573_5047924760236436750.png')
         .handle((_, event) => {
@@ -3622,6 +3669,17 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: ['Bloom', 'LunarBloom'], exec: () => card.minusPerCnt() }
         }),
 
+    217121: () => card(599).name('决胜于逆转之时').since('v6.7.0').talent().costDendro(2).perCnt(1)
+        .description('{quick}；〔*[card]生成【crd117121】，将其置于我方牌组第3张的位置。〕；【我方〖hro〗使用〖rsk17126〗造成伤害后：】生成【crd117121】，将其置于我方牌组第3张的位置，并赋予牌组中所有【crd117121】【sts202】。（每回合1次）')
+        .src('#')
+        .handle((card, event) => {
+            const { cmds, skill, execmds } = event;
+            cmds.addCard(1, 117121, { addTo: 3 });
+            if (skill?.id != 17126 || card.perCnt <= 0) return;
+            execmds.addCard(1, 117121, { addTo: 3 }).getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllPileCard });
+            return { triggers: 'dmg', exec: () => card.minusPerCnt() }
+        }),
+
     221011: () => card(112).name('冰萤寒光').since('v3.7.0').offline('v3').talent(1).costCryo(3)
         .description('{action}；装备有此牌的【hro】使用技能后：如果【smn121011】的[可用次数]被叠加到超过上限，则造成2点[冰元素伤害]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/a6d2ef9ea6bacdc1b48a5253345986cd_7285265484367498835.png')
@@ -3655,6 +3713,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     221041: () => card(400).name('冰雅刺剑').since('v4.8.0').talent(1).costCryo(3)
         .description('{action}；【装备有此牌的〖hro〗触发〖ski,3〗后：】使敌方出战角色的【sts122】层数翻倍。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a0597437167a2f8b5637ae66b393bd84_1668427359164092344.png'),
+
+    221051: () => card(600).name('流变的绘形').since('v6.7.0').talent().costCryo(2).perCnt(1)
+        .description('{quick}；〔*[card]生成1张【crd121051】加入手牌。〕；我方打出【crd121051】后，生成2层【sts203】。（每回合1次）')
+        .src('#')
+        .handle((card, event) => {
+            const { hcard, cmds } = event;
+            cmds.getCard(1, { card: 121051 });
+            if (card.perCnt <= 0 || hcard?.id != 121051) return;
+            return { triggers: 'card', status: [[203, 2]], exec: () => card.minusPerCnt() }
+        }),
 
     222011: () => card(113).name('百川奔流').offline('v1').talent(3).costHydro(4).energy(3)
         .description('{action}；装备有此牌的【hro】施放【ski】时：使我方所有召唤物[可用次数]+1。')
@@ -3828,6 +3896,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             cmds.getCard(1, { card: 124051 });
             if (hcard?.id == 124051) execmds.getStatus(125032);
             return { triggers: 'card' }
+        }),
+
+    225041: () => card(601).name('「曾如孤风阻隔黑灾蔓延…」').since('v6.7.0').talent(1).costAnemo(3)
+        .description('{action}；【行动阶段开始时：】如果敌方手牌数量大于等于7，则敌方出战角色获得1层【sts210】\\；如果我方手牌数量大于等于7，则我方出战角色获得2层【sts210】\。')
+        .src('#')
+        .handle((_, event) => {
+            const { hcardsCnt, ehcardsCnt, execmds } = event;
+            if (ehcardsCnt >= 7) execmds.getStatus(210, { isOppo: true });
+            if (hcardsCnt >= 7) execmds.getStatus([[210, 2]]);
+            return { triggers: 'phase-start' }
         }),
 
     226011: () => card(119).name('重铸：岩盔').offline('v2').talent(2).costGeo(4).energy(2)
@@ -4118,6 +4196,50 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')
         .handle(() => ({ attachEl: ELEMENT_TYPE.Geo })),
 
+    117121: () => card().name('诳言之核').event(true).costDendro(5).userType()
+        .description('[战斗行动]：【hro】为出战角色时可以使用。；【hro】使用技能：【rsk17126】。')
+        .src('#')
+        .handle((card, event) => {
+            const { cmds, hero } = event;
+            cmds.useSkill({ skillId: 17126 });
+            return { isValid: hero.id == card.userType }
+        }),
+
+    121051: () => card().name('浮彩').event(true).costCryo(2)
+        .description('[战斗行动]：生成2层【sts203】。')
+        .src('#')
+        .handle(() => ({ status: [[203, 2]] })),
+
+    121054: () => card().name('浮彩·冰凌').event().costSame(0)
+        .description('【打出〖crd121051〗时：】额外造成1点[冰元素伤害]。（重复选择将使造成的伤害+1）')
+        .src('#')
+        .handle(() => ({ status: 221052 })),
+
+    121055: () => card().name('浮彩·多重').event().costSame(0)
+        .description('【打出〖crd121051〗时：】召唤【smn121052】。（重复选择时将使召唤的【smn121052】造成的伤害+1）')
+        .src('#')
+        .handle(() => ({ status: 221053 })),
+
+    121056: () => card().name('浮彩·实像').event().costSame(0)
+        .description('【打出〖crd121051〗时：】抓1张牌。（重复选择将额外抓1张牌）')
+        .src('#')
+        .handle(() => ({ status: 221054 })),
+
+    121057: () => card().name('浮彩·支柱').event().costSame(0)
+        .description('【打出〖crd121051〗时：】生成1层【sts203】。（重复选择时将额外生成1层【sts203】）')
+        .src('#')
+        .handle(() => ({ status: 221055 })),
+
+    121058: () => card().name('浮彩·坚冰').event().costSame(0)
+        .description('【打出〖crd121051〗时：】使我方出战角色附属1层【sts172】。（重复选择时将额外附属1层【sts172】）')
+        .src('#')
+        .handle(() => ({ status: 221056 })),
+
+    121059: () => card().name('浮彩·迅影').event().costSame(0)
+        .description('打出【crd121051】少花费1个元素骰。（重复选择时将额外少花费1个元素骰）')
+        .src('#')
+        .handle(() => ({ status: 221057 })),
+
     122051: () => card().name('水泡史莱姆').vehicle().useReadySkill(122053).costSame(0).useCnt(2)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/4135146ec3ade2b16373478d9cc6f4f5_3656451016033618979.png'),
 
@@ -4395,8 +4517,9 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[雷元素骰]。；【我方造成[物理伤害]或[冰元素伤害]后：】赋予敌方随机1张手牌【sts207】和【sts201】。（每回合2次）', 'v6.6.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/220844acacd702c8f92aad82e7d96623_5315388284063760184.png'),
 
-    303042: () => card().name('超导祝佑·电冲').support().costElectro(3).from(331004)
-        .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[雷元素骰]。；【我方触发‹1›‹4›超导反应后：】敌方生命值最高的一名角色受到2点[穿透伤害]。（每回合3次）')
+    303042: () => card().name('超导祝佑·电冲').support().costElectro(1).costElectro(3, 'v6.7.0').from(331004)
+        .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[雷元素骰]。；【我方触发‹1›‹4›超导反应后：】敌方生命值最高的一名角色受到1点[穿透伤害]。（每回合3次）')
+        .description('【投掷阶段：】总是投出2个[冰元素骰]和2个[雷元素骰]。；【我方触发‹1›‹4›超导反应后：】敌方生命值最高的一名角色受到2点[穿透伤害]。（每回合3次）', 'v6.7.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/25/288180982/e8287dd024da7371e0b63e46a30d2a6c_2412669000349703896.png'),
 
     303051: () => card().name('蒸发祝佑·狂浪').support().costHydro(2).from(331005)
@@ -4438,6 +4561,22 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     303092: () => card().name('雷风祝佑·罡风').support().costAnemo(2).from(331009)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[风元素骰]。；【我方触发扩散反应后：】优先对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/9f6023aaee177a02cee9e13facf33172_7440847213145962427.png'),
+
+    303101: () => card().name('水风祝佑·水爆').support().costHydro(2).from(331010)
+        .description('【投掷阶段：】总是投出2个[水元素骰]和2个[风元素骰]。；【我方获得治疗时：】对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
+        .src('#'),
+
+    303102: () => card().name('水风祝佑·漩风').support().costAnemo(2).from(331010)
+        .description('【投掷阶段：】总是投出2个[水元素骰]和2个[风元素骰]。；【我方触发扩散反应时：】对敌方出战角色的伤害+1，治疗我方受伤最多的角色1点。（每回合2次）')
+        .src('#'),
+
+    303111: () => card().name('雷草祝佑·碎霆').support().costElectro(1).from(331011)
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[草元素骰]。；【我方存在激化领域时：】我方释放「元素爆发」少花费2个元素骰。（每回合1次）')
+        .src('#'),
+
+    303112: () => card().name('雷草祝佑·锐核').support().costDendro(2).from(331011)
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[草元素骰]。；【我方存在激化领域时：】我方释放「元素战技」少花费1个元素骰。（每回合2次）')
+        .src('#3003112'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。（每个角色每回合最多受到1次来自本效果的治疗。）')

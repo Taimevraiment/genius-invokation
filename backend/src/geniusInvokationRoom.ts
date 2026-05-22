@@ -347,6 +347,7 @@ export default class GeniusInvokationRoom {
             const isDelay = (statusSelect + '' + summonSelect) ? 0 : -1;
             this.players.forEach(p => {
                 p.handCards.sort((a, b) => a.id - b.id || b.entityId - a.entityId).forEach((c, ci) => c.cidx = ci);
+                p.pile.forEach((c, ci) => c.cidx = ci);
                 if (this.preview.isExec) p.heros.forEach(h => h.UI.energyIcons = h.updateEnergyIcon(h, 0));
                 if (this.isStart && p.hidx != -1) {
                     p.heros.forEach(h => {
@@ -1991,6 +1992,8 @@ export default class GeniusInvokationRoom {
         const supportres = this._detectSupport(atkPidx, atriggers[atkHidx], { skill, getdmg: getdmg(), dmgElement, source: source });
         res.willDamages[getDmgIdx][0] += supportres.addDmg;
 
+        this._detectHandcards(atkPidx, atriggers[atkHidx]);
+
         for (let i = 0; i < ehlen; ++i) {
             const chi = (dmgedHidx + i) % ehlen;
             const trgs = etriggers[chi];
@@ -2217,7 +2220,7 @@ export default class GeniusInvokationRoom {
                 dice.filter(d => d == DICE_COST_TYPE.Omni).length + Math.max(0, ...Object.values(dice.reduce((a, c) => {
                     if (c != DICE_COST_TYPE.Omni) a[c] = (a[c] ?? 0) + 1;
                     return a;
-                }, {} as Record<DiceCostType, number>)))) >= cost - costChanges[0];
+                }, {} as Record<DiceCostType, number>)))) >= cost - costChanges[0] - costChanges[2];
             res.isValid = isLen && isElDice;
             if (res.isValid) {
                 res.diceSelect = this._selectDice(
@@ -2411,8 +2414,10 @@ export default class GeniusInvokationRoom {
         }
         const tip = isCdt(!this.preview.isQuickAction && !isDie && this.taskQueue.isTaskEmpty(), isChange() ? '{p}开始行动' : '{p}继续行动');
         this._startTimer();
-        await this.emit(`changeTurn-${type}-isChange:${isChange()}`, pidx, { tip, isChange: isChange() });
+        const canAction = this.players.map(p => p.canAction);
+        await this.emit(`changeTurn-${type}-isChange:${isChange()}`, pidx, { tip, isChange: isChange(), canAction: false });
         await this.delay(1e3);
+        this.players.forEach(p => p.canAction = canAction[p.pidx]);
         const currPlayer = this.players[this.currentPlayerIdx];
         if (!currPlayer) return;
         const hasReadyskill = !currPlayer.heros[currPlayer.hidx].heroStatus.has(STATUS_TYPE.NonAction) &&
@@ -2660,7 +2665,8 @@ export default class GeniusInvokationRoom {
         // 被移除的状态触发
         this._detectHero(pidx, 'destroy', { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage], cStatus, hidxs: hidx });
         // 其他因被移除状态触发
-        this._detectHero(pidx, 'status-destroy', { types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack], source: cStatus.id, sourceHidx: hidx });
+        this._detectHero(pidx, 'status-destroy', { types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack], source: cStatus.id, sourceStatus: cStatus, sourceHidx: hidx });
+        this._detectHero(pidx ^ 1, 'status-destroy-oppo', { types: [STATUS_TYPE.Usage, STATUS_TYPE.Attack], source: cStatus.id, sourceStatus: cStatus, sourceHidx: hidx });
     }
     /**
      * 召唤物消失时发动
@@ -4086,33 +4092,37 @@ export default class GeniusInvokationRoom {
                                     cst.push(sts);
                                     break;
                                 case STATUS_GROUP.attachment:
-                                    const isHandcard = mode != CMD_MODE.RandomPileCard && mode != CMD_MODE.TopPileCard;
+                                    const isHandcard = mode != CMD_MODE.RandomPileCard && mode != CMD_MODE.TopPileCard && mode != CMD_MODE.AllPileCard;
                                     let cdidxs = pile.map((_, i) => i);
+                                    let selectCnt = cnt;
                                     const preFilter = (c: Card) => {
                                         if (sts.id == 202) return c.currDiceCost > 0;
                                         return sts.useCnt > 0 || sts.id == 207 || !c.hasAttachment(sts.id);
                                     }
                                     if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
                                         cdidxs = [];
-                                        let restCnt = cnt;
+                                        let restCnt = selectCnt;
                                         let hcardsSorted = clone(handCards)
-                                            .filter(preFilter)
+                                            .filter(c => (cardFilter?.(c) ?? true) && preFilter(c))
                                             .sort((a, b) => (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
                                         while (hcardsSorted.length > 0) {
                                             const cost = hcardsSorted[0].currDiceCost;
                                             const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
                                             cdidxs.push(...this._randomInArr(costCards, restCnt).map(c => c.cidx));
-                                            if (cdidxs.length == cnt) break;
+                                            if (cdidxs.length == selectCnt) break;
                                             restCnt -= cdidxs.length;
                                             hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
                                         }
                                     } else if (mode == CMD_MODE.TopPileCard) {
                                         const cdidx = pile.findIndex(c => (cardFilter?.(c) ?? true) && preFilter(c));
                                         if (cdidx != -1) cdidxs = [cdidx];
+                                    } else if (mode == CMD_MODE.AllPileCard) {
+                                        cdidxs = pile.filter(c => (cardFilter?.(c) ?? true) && preFilter(c)).map(c => c.cidx);
+                                        selectCnt = handCards.length;
                                     } else if (isHandcard) {
                                         cdidxs = handCards.filter(c => (cardFilter?.(c) ?? true) && preFilter(c)).map(c => c.cidx);
                                     }
-                                    if (chidxs.length == 0) chidxs.push(...this._randomInArr(cdidxs, cnt || 1));
+                                    if (chidxs.length == 0) chidxs.push(...this._randomInArr(cdidxs, selectCnt || 1));
                                     ((isOppo ? ohidxs : hidxs) ?? chidxs).forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));
                                     break;
                                 default:

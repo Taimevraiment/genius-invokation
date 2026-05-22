@@ -122,7 +122,7 @@ export class GISummon extends Entity {
         this.pdmg = pdmg;
         this.isDestroy = isDestroy;
         this.statusId = stsId;
-        if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
+        if (this.UI.src.startsWith('#')) this.UI.src = `${GUYU_PREIFIX}${this.UI.src.slice(1) || id}`;
         this.handle = (summon, event) => {
             const { trigger } = event;
             const cmds = new CmdsGenerator();

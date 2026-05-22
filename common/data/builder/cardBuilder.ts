@@ -4,7 +4,8 @@ import {
     DICE_COST_TYPE, DICE_TYPE,
     DICE_TYPE_CODE,
     DiceCostType,
-    DiceType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL_CODE_KEY, HeroLocalCode, OfflineVersion,
+    DiceType, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL_CODE_KEY,
+    OfflineVersion,
     OnlineVersion, PURE_ELEMENT_CODE_KEY, PureElementCode, STATUS_TYPE, VERSION, Version, WEAPON_TYPE_CODE_KEY,
     WeaponType, WeaponTypeCode
 } from "../../constant/enum.js";
@@ -105,7 +106,7 @@ export class GICard extends Entity {
                 ...expl,
             ],
         }
-        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个「${HERO_LOCAL_NAME[HERO_LOCAL_CODE_KEY[(id - 331800) as HeroLocalCode]]}」角色，才能加入牌组）`;
+        if (tag.includes(CARD_TAG.LocalResonance)) this.UI.description += `；（牌组包含至少2个「${HERO_LOCAL_NAME[tag[1] as keyof typeof HERO_LOCAL_NAME]}」角色，才能加入牌组）`;
         else if (subType.includes(CARD_SUBTYPE.Weapon)) this.UI.description += `；（「${WEAPON_TYPE_NAME[userType as WeaponType]}」【角色】才能装备。角色最多装备1件「武器」）`;
         else if (subType.includes(CARD_SUBTYPE.Relic)) this.UI.description += `；（角色最多装备1件「圣遗物」）`;
         else if (subType.includes(CARD_SUBTYPE.Vehicle)) {
@@ -255,7 +256,7 @@ export class GICard extends Entity {
             if (isResetPct) card.setPerCnt(pct);
             if (isResetUct) card.setUseCnt(uct);
         }
-        if (this.UI.src == '#') this.UI.src = `${GUYU_PREIFIX}${id}`;
+        if (this.UI.src.startsWith('#')) this.UI.src = `${GUYU_PREIFIX}${this.UI.src.slice(1) || id}`;
         this.handle = (card, event) => {
             const cmds = CmdsGenerator.ins;
             const execmds = CmdsGenerator.ins;

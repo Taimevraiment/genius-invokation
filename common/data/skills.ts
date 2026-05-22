@@ -85,6 +85,8 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
         }),
 
+    17126: () => skill('幻戏').description('{dealDmg}。').normal().damage(4),
+
     22035: () => skill('涟锋旋刃').description('{dealDmg}。').elemental().readySkill().damage(1),
 
     23046: () => skill('炽烈轰破').description('{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
@@ -104,6 +106,12 @@ export const allSkills: Record<number, () => SkillBuilder> = {
 
     25026: () => skill('终幕涤流').description('对上一个敌方后台角色{dealDmg}。（敌方没有后台角色时，改为对出战角色造成伤害）')
         .elemental().readySkill().damage(2).handle(() => ({ atkOffset: -1 })),
+
+    25045: () => skill('舍身架势').description('{dealDmg}，[舍弃]1张[当前元素骰费用]最高的手牌，[准备技能]：【rsk25046】。')
+        .burst().readySkill().damage(3).handle(({ cmds }) => (cmds.discard({ cnt: 1, mode: CMD_MODE.HighHandCard }), { status: 125042 })),
+
+    25046: () => skill('怒风循击').description('{dealDmg}，[舍弃]1张[当前元素骰费用]最高的手牌。')
+        .burst().readySkill().damage(3).handle(({ cmds }) => cmds.discard({ cnt: 1, mode: CMD_MODE.HighHandCard }).res),
 
     26045: () => skill('巨钺强袭').description('{dealDmg}，[准备技能]：【rsk26047】。')
         .burst().readySkill().damage(3).handle(() => ({ status: 126043 })),

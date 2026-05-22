@@ -156,17 +156,6 @@ export const CARD_SUBTYPE = {
 
 export type CardSubtype = TypeConst<typeof CARD_SUBTYPE>;
 
-export const CARD_TAG = {
-    Barrier: 'Barrier', // 减伤 0
-    Revive: 'Revive', // 复苏料理 1
-    LocalResonance: 'LocalResonance', // 所属共鸣 2
-    NonDefeat: 'NonDefeat', // 免击倒 3
-    NonReconcile: 'NonReconcile', // 不能调和 4
-    Enchant: 'Enchant', // 附魔 5
-} as const;
-
-export type CardTag = TypeConst<typeof CARD_TAG>;
-
 export const WEAPON_TYPE = {
     Other: 'Other', // 其他武器 0
     Catalyst: 'Catalyst', // 法器 1
@@ -283,6 +272,18 @@ export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
 
 export const HERO_LOCAL_CODE_KEY = swapKeysAndValues(HERO_LOCAL_CODE);
 
+export const CARD_TAG = {
+    Barrier: 'Barrier', // 减伤 0
+    Revive: 'Revive', // 复苏料理 1
+    LocalResonance: 'LocalResonance', // 所属共鸣 2
+    NonDefeat: 'NonDefeat', // 免击倒 3
+    NonReconcile: 'NonReconcile', // 不能调和 4
+    Enchant: 'Enchant', // 附魔 5
+    ...HERO_LOCAL,
+} as const;
+
+export type CardTag = TypeConst<typeof CARD_TAG>;
+
 export const HERO_TAG = {
     ...HERO_LOCAL,
     Ousia: 'Ousia', // 荒 11
@@ -363,6 +364,7 @@ export const CMD_MODE = {
     MaxHp: 70015, // 生命值最高的角色
     MaxHurt: 70016, // 受伤最多的角色
     HighLowCard: 70017, // 费用最高或最低的牌
+    AllPileCard: 70018, // 牌库中所有牌
 } as const;
 
 export const INFO_TYPE = {
@@ -418,7 +420,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
-    'v6.6.0', 'v6.5.0', 'v6.4.0', 'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
+    'v6.7.0', 'v6.6.0', 'v6.5.0', 'v6.4.0', 'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',
     'v3.8.0', 'v3.7.0', 'v3.6.0', 'v3.5.0', 'v3.4.0', 'v3.3.0',

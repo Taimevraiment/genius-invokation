@@ -16,7 +16,8 @@ const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Tr
                 trigger == 'action-start' && eheros.every(h => !h.hasAttach(el1 as PureElementType) || !h.hasAttach(el2 as PureElementType))) {
                 return { isCancel: true }
             }
-            cmds.pickCard(2, CMD_MODE.GetCard, { card: [+`3030${code}1`, +`3030${code}2`] });
+            const codeStr = code.toString().padStart(2, '0');
+            cmds.pickCard(2, CMD_MODE.GetCard, { card: [+`303${codeStr}1`, +`303${codeStr}2`] });
             return { isDestroy: true }
         }
     }));
@@ -148,7 +149,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 超导祝佑·电冲
-    303042: () => support().collection(3).handle((support, event) => {
+    303042: () => support().collection(3).handle((support, event, ver) => {
         const triggers: Trigger[] = ['phase-dice', 'phase-start'];
         if (support.useCnt > 0) triggers.push('Superconduct');
         return {
@@ -158,7 +159,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             exec: cmds => {
                 if (event.trigger == 'phase-start') return support.setUseCnt(3);
                 if (event.trigger == 'Superconduct') {
-                    cmds.attack(2, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHp });
+                    cmds.attack(ver.lt('v6.7.0') ? 2 : 1, DAMAGE_TYPE.Pierce, { target: CMD_MODE.MaxHp });
                     support.minusUseCnt();
                 }
             }
@@ -326,6 +327,68 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             support.minusPerCnt();
         }
     })),
+    // 水风祝佑·水爆
+    303101: () => support().permanent().perCnt(1).handle((support, event) => ({
+        triggers: ['phase-dice', 'heal'],
+        element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Anemo],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger } = event;
+            if (trigger == 'phase-dice') return;
+            if (support.perCnt <= 0) return { isCancel: true }
+            cmds.attack(2, DAMAGE_TYPE.Anemo);
+            support.minusPerCnt();
+        }
+    })),
+    // 水风祝佑·漩风
+    303102: () => support().collection(2).handle((support, event) => ({
+        triggers: ['phase-dice', 'phase-start', 'Swirl'],
+        element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Anemo],
+        cnt: [2, 2],
+        addDmgCdt: isCdt(support.useCnt > 0, 1),
+        exec: cmds => {
+            const { trigger } = event;
+            if (trigger == 'phase-start') return support.setUseCnt(2);
+            if (trigger == 'phase-dice') return;
+            if (support.useCnt <= 0) return { isCancel: true }
+            cmds.heal(1, { target: CMD_MODE.MaxHurt });
+            support.minusUseCnt();
+        }
+    })),
+    // 雷草祝佑·碎霆
+    303111: () => support().permanent().perCnt(1).handle((support, event) => {
+        const { trigger, combatStatus, isMinusDiceSkill } = event;
+        const triggers: Trigger[] = ['phase-dice'];
+        const isMinus = support.perCnt > 0 && combatStatus.has(117);
+        if (isMinus && isMinusDiceSkill) triggers.push('skilltype3');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Dendro],
+            cnt: [2, 2],
+            minusDiceSkill: isCdt(isMinus, { skilltype3: [0, 0, 2] }),
+            exec: () => {
+                if (trigger == 'phase-dice') return;
+                support.minusPerCnt();
+            }
+        }
+    }),
+    // 雷草祝佑·锐核
+    303112: () => support().collection(2).handle((support, event) => {
+        const { combatStatus, trigger, isMinusDiceSkill } = event;
+        const triggers: Trigger[] = ['phase-dice', 'phase-start'];
+        const isMinus = support.useCnt > 0 && combatStatus.has(117);
+        if (isMinus && isMinusDiceSkill) triggers.push('skilltype2');
+        return {
+            triggers,
+            element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Dendro],
+            cnt: [2, 2],
+            minusDiceSkill: isCdt(isMinus, { skilltype2: [0, 0, 1] }),
+            exec: () => {
+                if (trigger == 'phase-start') return support.setUseCnt(2);
+                if (trigger == 'skilltype2') support.minusUseCnt();
+            }
+        }
+    }),
     // 璃月港口
     321001: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
@@ -850,6 +913,14 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             }
         }
     }),
+    // 噩梦的预兆
+    321041: () => support().permanent().handle(() => ({
+        triggers: 'phase-end',
+        exec: cmds => {
+            cmds.getStatus(201, { cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })
+                .getStatus(201, { mode: CMD_MODE.TopPileCard });
+        }
+    })),
     // 派蒙
     322001: () => support().round(2).handle(support => ({
         triggers: 'phase-start',
@@ -1436,6 +1507,10 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     331008: () => elTransfiguration(ELEMENT_TYPE.Cryo, ELEMENT_TYPE.Dendro, 'action-start', 8),
     // 元素幻变：雷风祝佑
     331009: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Anemo, 'elReaction-Anemo:Electro', 9),
+    // 元素幻变：水风祝佑
+    331010: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Anemo, 'elReaction-Anemo:Hydro', 10),
+    // 元素幻变：雷草祝佑
+    331011: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro, 'Quicken', 11),
 
 }
 

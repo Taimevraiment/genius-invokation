@@ -516,7 +516,7 @@ onUnmounted(() => {
 let prodEnv = 0;
 const maskOpacity = ref<number>(0.7);
 const isOpenMask = ref<boolean>(false);
-// isOpenMask.value = true;
+isOpenMask.value = true;
 const devOps = (cidx = 0) => {
   if ((client.value.phase < PHASE.DICE && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');
