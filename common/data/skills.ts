@@ -85,7 +85,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             return { addDmgCdt: isCdt(discardCnt + reconcileCnt > 0, 1) }
         }),
 
-    17126: () => skill('幻戏').description('{dealDmg}。').normal().damage(4),
+    17126: () => skill('幻戏').description('{dealDmg}。；使用此技能不会获得[充能]。').normal().energy(-1).damage(4),
 
     22035: () => skill('涟锋旋刃').description('{dealDmg}。').elemental().readySkill().damage(1),
 

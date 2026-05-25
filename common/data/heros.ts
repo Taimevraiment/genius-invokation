@@ -2128,7 +2128,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(4).cost(3).handle(event => ({
                     addDmgCdt: Math.min(2, event.hcards.filter(c => c.id == 117121).length)
                 })),
-            skill('月兆祝赐·廊下暮影').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方手牌中〖crd117121〗不多于3张，敌方受到[月绽放]反应时：】生成手牌【crd117121】。（每回合2次）')
+            skill('月兆祝赐·廊下暮影').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方手牌中〖crd117121〗少于3张，敌方受到[月绽放]反应时：】生成手牌【crd117121】。（每回合2次）')
                 .src('#',
                     '')
                 .passive().perCnt(2).handle(event => {
@@ -2137,7 +2137,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                         playerInfo.isLunarBloom = true;
                         return { triggers: trigger, isNotAddTask: true }
                     }
-                    if (hcards.filter(c => c.id == 117121).length > 3 || skill.perCnt <= 0) return;
+                    if (hcards.filter(c => c.id == 117121).length >= 3 || skill.perCnt <= 0) return;
                     cmds.getCard(1, { card: 117121 });
                     return { triggers: 'LunarBloom-oppo', exec: () => skill.minusPerCnt() }
                 })
@@ -2232,7 +2232,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#MonsterIcon_Udugan')
         .normalSkill(skill => skill('灵觉·寒星').catalyst())
         .skills(
-            skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并[挑选]1个【crd121051】的强化效果。')
+            skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并从3个随机的【crd121051】强化效果中[挑选]1个。')
                 .src('#',
                     '')
                 .explain(...Array.from({ length: 6 }, (_, i) => `botcrd${121054 + i}`))
@@ -2846,7 +2846,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(2).cost(3).handle(() => ({ status: 125041 })),
-            skill('前驱气势').description('我方触发扩散反应，或敌方失去【伤害抵消】、[护盾]状态以及出战状态时，抓1张牌。（每回合2次）')
+            skill('前驱气势').description('我方触发扩散反应，或敌方失去[护盾]、【伤害抵消】状态以及出战状态时，抓1张牌。（每回合2次）')
                 .src('#',
                     '')
                 .passive().perCnt(2).handle(event => {

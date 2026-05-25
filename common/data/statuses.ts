@@ -3596,7 +3596,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     303249: () => status('小小灵蕈大幻戏（生效中）').heroStatus().icon(STATUS_ICON.AtkUp).from(332063)
-        .description('所附属角色造成的伤害+1。').type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
+        .description('所附属角色造成的伤害+1。（不可叠加）').type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .handle(() => ({ addDmg: 1 })),
 
     303300: () => status('饱腹').heroStatus().roundCnt(1)

@@ -252,9 +252,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 火岩祝佑·重熔
-    303072: () => support().permanent().perCnt(1).handle((support, event) => {
+    303072: () => support().permanent().perCnt(1).handle((support, event, ver) => {
         const triggers: Trigger[] = ['phase-dice'];
-        if (support.perCnt > 0) triggers.push('Pyro-dmg', 'Geo-dmg');
+        if (support.perCnt > 0) {
+            if (ver.lt('v6.7.0')) triggers.push('Pyro-dmg', 'Geo-dmg');
+            else triggers.push('Pyro-getdmg-oppo', 'Geo-getdmg-oppo');
+        }
         return {
             triggers,
             element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Geo],
@@ -915,7 +918,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     }),
     // 噩梦的预兆
     321041: () => support().permanent().handle(() => ({
-        triggers: 'phase-end',
+        triggers: 'phase-start',
         exec: cmds => {
             cmds.getStatus(201, { cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })
                 .getStatus(201, { mode: CMD_MODE.TopPileCard });

@@ -1555,7 +1555,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/03/29/80663279/f28c26f99db147b058626925522e6e66_846506133598698955.png'),
 
     321041: () => card(602).name('噩梦的预兆').since('v6.7.0').place().costSame(0)
-        .description('【打出及回合结束时：】赋予敌方手牌中1张[当前元素骰费用]最高的手牌【sts201】，并赋予我方牌组顶的牌【sts201】。')
+        .description('【打出及行动阶段开始时：】赋予敌方手牌中1张[当前元素骰费用]最高的手牌【sts201】，并赋予我方牌组顶的牌【sts201】。')
         .src('#')
         .handle((_, { cmds }) =>
             cmds.getStatus(201, { cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })
@@ -2571,19 +2571,19 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     332063: () => card(605).name('小小灵蕈大幻戏').since('v6.7.0').costSame(6)
         .tag(CARD_TAG.LocalResonance, CARD_TAG.Monster)
-        .description('我方随机魔物造成的伤害+1。；【此卡牌在手中，我方魔物每次造成伤害时：】赋予此卡牌【sts202】。；【此卡牌被[舍弃]时：】我方随机魔物获得1点额外最大生命值。')
+        .description('我方随机魔物造成的伤害+1。（不可叠加）；【此卡牌在手中，我方魔物每次使用技能后：】赋予此卡牌【sts202】。；【此卡牌被[舍弃]时：】我方随机魔物获得1点额外最大生命值。')
         .src('#')
         .handle((card, event) => {
             const { heros, randomInArr, hero, cmds, execmds, trigger } = event;
             const hidxs = randomInArr(heros.allHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) }));
             cmds.getStatus(303249, { hidxs });
-            if (trigger == 'dmg' && hero.tags.includes(HERO_LOCAL.Monster)) execmds.getStatus(202, { cardFilter: c => c.entityId == card.entityId });
+            if (trigger == 'skill' && hero.tags.includes(HERO_LOCAL.Monster)) execmds.getStatus(202, { cardFilter: c => c.entityId == card.entityId });
             else if (trigger == 'discard') execmds.addMaxHp(1, hidxs);
-            return { triggers: ['dmg', 'discard'] }
+            return { triggers: ['skill', 'discard'] }
         }),
 
     332064: () => card(606).name('科研的动力').since('v6.7.0').event().costSame(1)
-        .description('打出后，我方下3次打出[当前元素骰费用]大于等于3的卡牌后，生成1个随机基础元素骰。')
+        .description('我方下3次打出[当前元素骰费用]大于等于3的卡牌后，生成1个随机基础元素骰。')
         .src('#')
         .handle(() => ({ status: 303248 })),
 
@@ -4543,7 +4543,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f85c37d1496ce4df0a802bd4232e6142_5557095500474527073.png'),
 
     303072: () => card().name('火岩祝佑·重熔').support().costGeo(3).from(331007)
-        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[岩元素骰]。；【我方造成[火元素伤害]或[岩元素伤害]后：】生成2层【sts203】。（每回合1次）')
+        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[岩元素骰]。；【敌方受到[火元素伤害]或[岩元素伤害]后：】我方生成2层【sts203】。（每回合1次）')
+        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[岩元素骰]。；【我方造成[火元素伤害]或[岩元素伤害]后：】生成2层【sts203】。（每回合1次）', 'v6.7.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/b979576ce63b9a960d8700769d1c6906_906928291198687109.png'),
 
     303081: () => card().name('冰草祝佑·棘霜').support().costSame(0).from(331008)
