@@ -527,7 +527,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     // 镇守之森
     321012: () => support().collection(4).collection(3, 'v6.0.0').handle((support, event, ver) => {
         const { isFirst, isMinusDiceSkill, isChargedAtk } = event;
-        if (ver.lt('v6.0.0')) {
+        if (ver.lt('v6.0.0') && !ver.isOffline) {
             return {
                 triggers: isCdt(!isFirst, 'phase-start'),
                 exec: cmds => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: support.minusUseCnt() == 0 })
@@ -1231,12 +1231,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             support.setUseCnt(Math.min(6, destroyedSupport));
             return;
         }
-        const threshold = ver.lt('v4.6.0') ? 5 : 6;
+        const threshold = ver.lt('v4.6.0') && !ver.isOffline ? 5 : 6;
         return {
             triggers: support.useCnt >= threshold ? 'skilltype3' : 'support-destroy',
             exec: cmds => {
                 if (trigger == 'skilltype3') {
-                    if (ver.lt('v4.6.0')) cmds.getDice(support.useCnt - 2, { element: DICE_COST_TYPE.Omni });
+                    if (ver.lt('v4.6.0') && !ver.isOffline) cmds.getDice(support.useCnt - 2, { element: DICE_COST_TYPE.Omni });
                     else cmds.getStatus(302205);
                     return { isDestroy: true }
                 }

@@ -793,7 +793,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【结束阶段：】对所附属角色造成2点[水元素伤害]。；[useCnt]')
         .description('【结束阶段：】对所附属角色造成3点[水元素伤害]。；[useCnt]', 'v5.6.0')
         .handle((status, _, ver) => ({
-            damage: isCdt(ver.lt('v5.6.0'), 3, 2),
+            damage: isCdt(ver.lt('v5.6.0') && !ver.isOffline, 3, 2),
             element: DAMAGE_TYPE.Hydro,
             isSelf: true,
             triggers: 'phase-end',
@@ -823,7 +823,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【我方角色「普通攻击」后：】造成1点[水元素伤害]。；[roundCnt]')
         .description('【我方角色「普通攻击」后：】造成2点[水元素伤害]。；[roundCnt]', 'v4.6.1')
         .handle((_s, _e, ver) => ({
-            damage: ver.lt('v4.6.1') ? 2 : 1,
+            damage: (ver.lt('v4.6.1') && !ver.isOffline) ? 2 : 1,
             element: DAMAGE_TYPE.Hydro,
             triggers: 'after-skilltype1',
         })),
@@ -1228,7 +1228,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             const { trigger } = event;
             const isAttachEl = status.useCnt >= 2;
             const triggers: Trigger[] = ['phase-end', 'skilltype3'];
-            if (ver.gte('v4.8.0')) triggers.push('skilltype2');
+            if (ver.gte('v4.8.0') || ver.isOffline) triggers.push('skilltype2');
             return {
                 triggers,
                 addDmg: isCdt(status.useCnt >= 4, 2),
@@ -1237,7 +1237,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 exec: () => {
                     if (trigger == 'phase-end' || trigger == 'skilltype2') status.addUseCnt();
                     else if (trigger == 'skilltype3') status.addUseCnt(2);
-                    if (ver.lt('v4.8.0')) {
+                    if (ver.lt('v4.8.0') && !ver.isOffline) {
                         if (status.useCnt >= 6) status.minusUseCnt(4);
                     } else if (trigger == 'phase-end' && status.useCnt >= 8) {
                         status.minusUseCnt(6);
@@ -1790,11 +1790,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('我方角色进行「普通攻击」时：造成的伤害+1。；如果我方手牌数量不多于1，则此技能少花费1个元素骰。；[useCnt]', 'v4.8.0')
         .handle((status, event, ver) => {
             const { hcardsCnt, talent, isMinusDiceSkill } = event;
-            const isTriggered = ver.lt('v4.8.0') || isMinusDiceSkill;
+            const isTriggered = (ver.lt('v4.8.0') && !ver.isOffline) || isMinusDiceSkill;
             return {
                 triggers: isCdt(isTriggered, 'skilltype1'),
                 minusDiceSkill: isCdt(hcardsCnt <= 1, { skilltype1: [0, 0, 1] }),
-                addDmgType1: isCdt(ver.lt('v4.8.0'), 1),
+                addDmgType1: isCdt((ver.lt('v4.8.0') && !ver.isOffline), 1),
                 addDmgCdt: isCdt(hcardsCnt == 0 && talent && isTriggered, 2),
                 exec: () => status.minusUseCnt(),
             }
