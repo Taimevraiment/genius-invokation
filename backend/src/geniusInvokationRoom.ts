@@ -4082,7 +4082,7 @@ export default class GeniusInvokationRoom {
                         const pst: ArrayStatus[] = new Array(pile.length).fill(0).map(() => new ArrayStatus());
                         const hst: ArrayStatus[] = new Array(heros.length).fill(0).map(() => new ArrayStatus());
                         const cst: ArrayStatus = new ArrayStatus();
-                        const chidxs: number[] = [];
+                        const rhidxs: number[] = [];
                         getsts.forEach(sts => {
                             switch (sts.group) {
                                 case STATUS_GROUP.heroStatus:
@@ -4118,12 +4118,13 @@ export default class GeniusInvokationRoom {
                                         if (cdidx != -1) cdidxs = [cdidx];
                                     } else if (mode == CMD_MODE.AllPileCard) {
                                         cdidxs = pile.filter(c => (cardFilter?.(c) ?? true) && preFilter(c)).map(c => c.cidx);
-                                        selectCnt = handCards.length;
+                                        selectCnt = cdidxs.length;
                                     } else if (isHandcard) {
                                         cdidxs = handCards.filter(c => (cardFilter?.(c) ?? true) && preFilter(c)).map(c => c.cidx);
+                                        if (mode == CMD_MODE.AllHandCards) selectCnt = cdidxs.length;
                                     }
-                                    if (chidxs.length == 0) chidxs.push(...this._randomInArr(cdidxs, selectCnt || 1));
-                                    ((isOppo ? ohidxs : hidxs) ?? chidxs).forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));
+                                    if (rhidxs.length == 0) rhidxs.push(...this._randomInArr(cdidxs, selectCnt || 1));
+                                    rhidxs.forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));
                                     break;
                                 default:
                                     const e: never = sts.group;

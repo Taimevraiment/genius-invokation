@@ -2083,6 +2083,16 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('我方触发[月绽放]造成的伤害+1。；[useCnt]')
         .handle(status => ({ triggers: 'LunarBloom', addDmgCdt: 1, exec: () => status.minusUseCnt() })),
 
+    117122: () => status('弈术·千夜一舞（生效中）').combatStatus().icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage, STATUS_TYPE.Sign)
+        .description('【我方下次行动前：】赋予手牌中至多3张[当前元素骰费用]最高的【crd117121】【sts202】。')
+        .handle((status, event) => ({
+            triggers: 'action-start',
+            exec: () => {
+                event.cmds.getStatus(202, { cnt: 3, cardFilter: c => c.id == 117121, mode: CMD_MODE.HighHandCard });
+                status.dispose();
+            }
+        })),
+
     121012: (useCnt: number = 0) => status('流萤护罩').combatStatus().useCnt(1 + Math.min(3, useCnt)).type(STATUS_TYPE.Shield)
         .description('为我方出战角色提供1点[护盾]。；【创建时：】如果我方场上存在【smn121011】，则额外提供其[可用次数]的[护盾]。（最多额外提供3点[护盾]）'),
 

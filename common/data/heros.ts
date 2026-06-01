@@ -366,7 +366,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    1201: () => hero(9).name('芭芭拉').offline('v1').maxHp(12).maxHp(10, 'v6.5.0').mondstadt().hydro().catalyst()
+    1201: () => hero(9).name('芭芭拉').offline('v1').maxHp(12).maxHp(10, 'v6.5.0', 'v1').mondstadt().hydro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/f3e20082ab5ec42e599bac75159e5219_4717661811158065369.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e92854385a3584dbbbd087ee5c49c69d.png')
         .normalSkill('水之浅唱')
@@ -2116,12 +2116,10 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Nefer')
         .normalSkill('游虵吐信')
         .skills(
-            skill('弈术·千夜一舞').description('{dealDmg}，赋予手牌中至多3张[当前元素骰费用]最高的【crd117121】【sts202】。')
+            skill('弈术·千夜一舞').description('{dealDmg}，自身附属1层【sts210】，我方下次行动前，赋予手牌中至多3张[当前元素骰费用]最高的【crd117121】【sts202】。')
                 .src('#',
                     '')
-                .elemental().damage(2).cost(3).handle(({ cmds }) => {
-                    cmds.getStatus(202, { cnt: 3, cardFilter: c => c.id == 117121, mode: CMD_MODE.HighHandCard });
-                }),
+                .elemental().damage(1).cost(3).handle(() => ({ status: [210, 117122] })),
             skill('圣约·真眸幻戏').description('{dealDmg}，手牌中每有1张【crd117121】，伤害+1。（至多+2）')
                 .src('#',
                     '')
@@ -2227,7 +2225,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    2105: () => hero(597).name('灵觉隐修的迷者').since('v6.7.0').monster().cryo()
+    2105: () => hero(597).name('灵觉隐修的迷者').since('v6.7.0').maxHp(11).monster().cryo()
         .src('#')
         .avatar('#MonsterIcon_Udugan')
         .normalSkill(skill => skill('灵觉·寒星').catalyst())
@@ -2243,7 +2241,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(2).damage(4).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 121051 }).res),
-            skill('斑斓的绚影').description('战斗开始时，在牌库中等均匀放置3张【crd121051】。')
+            skill('斑斓的绚影').description('战斗开始时，生成3张【crd121051】，均匀放入牌库。')
                 .src('#',
                     '')
                 .passive().handle(({ cmds }) => (cmds.addCard(3, 121051, { isRandom: false }), { triggers: 'game-start' })),

@@ -2569,17 +2569,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             cmds.getDice(Math.min(2, cnt), { mode: CMD_MODE.Random });
         }),
 
-    332063: () => card(605).name('小小灵蕈大幻戏').since('v6.7.0').costSame(6)
+    332063: () => card(605).name('小小灵蕈大幻戏').since('v6.7.0').costSame(5).canSelectHero(1)
         .tag(CARD_TAG.LocalResonance, CARD_TAG.Monster)
-        .description('我方随机魔物造成的伤害+1。（不可叠加）；【此卡牌在手中，我方魔物每次使用技能后：】赋予此卡牌【sts202】。；【此卡牌被[舍弃]时：】我方随机魔物获得1点额外最大生命值。')
+        .description('目标我方「魔物」角色造成的伤害+1。（不可叠加）；【此卡牌在手中，我方「魔物」角色使用技能后：】赋予此牌【sts202】。；【此牌被[舍弃]时：】我方随机「魔物」角色获得1点额外最大生命值。')
         .src('#')
         .handle((card, event) => {
-            const { heros, randomInArr, hero, cmds, execmds, trigger } = event;
-            const hidxs = randomInArr(heros.allHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) }));
-            cmds.getStatus(303249, { hidxs });
+            const { heros, selectHeros, randomInArr, hero, cmds, execmds, trigger } = event;
+            cmds.getStatus(303249, { hidxs: selectHeros });
             if (trigger == 'skill' && hero.tags.includes(HERO_LOCAL.Monster)) execmds.getStatus(202, { cardFilter: c => c.entityId == card.entityId });
-            else if (trigger == 'discard') execmds.addMaxHp(1, hidxs);
-            return { triggers: ['skill', 'discard'] }
+            else if (trigger == 'discard') execmds.addMaxHp(1, randomInArr(heros.allHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) })));
+            return { triggers: ['skill', 'discard'], canSelectHero: heros.map(h => h.tags.includes(HERO_TAG.Monster)) }
         }),
 
     332064: () => card(606).name('科研的动力').since('v6.7.0').event().costSame(1)
@@ -3669,14 +3668,18 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: ['Bloom', 'LunarBloom'], exec: () => card.minusPerCnt() }
         }),
 
-    217121: () => card(599).name('决胜于逆转之时').since('v6.7.0').talent().costDendro(2).perCnt(1)
-        .description('{quick}；〔*[card]生成【crd117121】，将其置于我方牌组第3张的位置。〕；【我方〖hro〗使用〖rsk17126〗造成伤害后：】生成【crd117121】，将其置于我方牌组第3张的位置，并赋予牌组中所有【crd117121】【sts202】。（每回合1次）')
+    217121: () => card(599).name('决胜于逆转之时').since('v6.7.0').talent().costDendro(3).perCnt(2)
+        .description('{quick}；〔*[card]生成3张【crd117121】，均匀地置入我方牌组中，并赋予我方手牌和牌组中所有【crd117121】【sts202】。〕；【我方〖hro〗使用〖rsk17126〗造成伤害后：】抓1张牌，并赋予我方手牌和牌组中所有【crd117121】【sts202】。（每回合2次）')
         .src('#')
         .handle((card, event) => {
             const { cmds, skill, execmds } = event;
-            cmds.addCard(1, 117121, { addTo: 3 });
+            cmds.addCard(3, 117121, { isRandom: false })
+                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllPileCard })
+                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllHandCards });
             if (skill?.id != 17126 || card.perCnt <= 0) return;
-            execmds.addCard(1, 117121, { addTo: 3 }).getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllPileCard });
+            execmds.getCard(1)
+                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllPileCard })
+                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllHandCards });
             return { triggers: 'dmg', exec: () => card.minusPerCnt() }
         }),
 
@@ -3714,7 +3717,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；【装备有此牌的〖hro〗触发〖ski,3〗后：】使敌方出战角色的【sts122】层数翻倍。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/a0597437167a2f8b5637ae66b393bd84_1668427359164092344.png'),
 
-    221051: () => card(600).name('流变的绘形').since('v6.7.0').talent().costCryo(2).perCnt(1)
+    221051: () => card(600).name('流变的绘形').since('v6.7.0').talent().costCryo(1).perCnt(1)
         .description('{quick}；〔*[card]生成1张【crd121051】加入手牌。〕；我方打出【crd121051】后，生成2层【sts203】。（每回合1次）')
         .src('#')
         .handle((card, event) => {
@@ -3899,7 +3902,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     225041: () => card(601).name('「曾如孤风阻隔黑灾蔓延…」').since('v6.7.0').talent(1).costAnemo(3)
-        .description('{action}；【行动阶段开始时：】如果敌方手牌数量大于等于7，则敌方出战角色获得1层【sts210】\\；如果我方手牌数量大于等于7，则我方出战角色获得2层【sts210】\。')
+        .description('{action}；【行动阶段开始时：】如果敌方手牌数量大于等于7，则敌方出战角色附属1层【sts210】\\；如果我方手牌数量大于等于7，则我方出战角色附属2层【sts210】\。')
         .src('#')
         .handle((_, event) => {
             const { hcardsCnt, ehcardsCnt, execmds } = event;
@@ -4190,10 +4193,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     116102: () => card().name('冲天转转').vehicle().useNightSoul().costSame(0)
         .description('【附属角色切换至后台时：】消耗1点「夜魂值」，召唤【smn116103】。')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/17/258999284/cc08c2c835426ea190041ff7be7ff0c9_5886364876079144437.png')
         .handle(() => ({ triggers: 'switch-from', summon: 116103 })),
 
     116112: () => card().name('刃轮装束').vehicle().useNightSoul().costSame(0).tag(CARD_TAG.Enchant)
         .description('所附属角色造成的[物理伤害]变为[岩元素伤害]。')
+        .src('#')
         .handle(() => ({ attachEl: ELEMENT_TYPE.Geo })),
 
     117121: () => card().name('诳言之核').event(true).costDendro(5).userType()
