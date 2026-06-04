@@ -2253,7 +2253,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill(skill => skill('翻涌').catalyst())
         .skills(
             skill('纯水幻造').description('随机召唤1种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0', 'vlatest')
-                .description('随机召唤1种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
+                .description('随机召唤1种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0', 'v1')
                 .src('https://patchwiki.biligame.com/images/ys/9/94/fh1ril80gsejz0l84u6siiq6lz6tlkr.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
                 .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
@@ -2261,15 +2261,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                         const { summons, cmds, randomInArr } = event;
                         const opools = [122011, 122012, 122013];
                         const pools = opools.filter(smnid => !summons.has(smnid));
-                        if (ver.range('v4.3.0', 'v6.0.0') && pools.length == 1) {
+                        if ((ver.range('v4.3.0', 'v6.0.0') || ver.isOffline) && pools.length == 1) {
                             pools.length = 0;
                             pools.push(...opools.filter(smnid => summons.has(smnid)));
                         }
-                        cmds.getSummon(randomInArr(!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0 ? opools : pools));
+                        cmds.getSummon(randomInArr(!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline && pools.length == 0 ? opools : pools));
                     }
                 })),
             skill('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0', 'vlatest')
-                .description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0')
+                .description('随机召唤2种【纯水幻形】。（优先生成不同的类型，召唤区最多同时存在两种【纯水幻形】）', 'v6.0.0', 'v1')
                 .src('https://patchwiki.biligame.com/images/ys/c/c6/bci7cin5911l7uqva01dft0ak44a1jo.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
                 .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
@@ -2280,14 +2280,14 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                         if (pools.length == 0) return;
                         let summonId1 = -1;
                         if (pools.length == 1) {
-                            if (ver.range('v4.3.0', 'v6.0.0')) return cmds.getSummon(opools.filter(smnid => summons.has(smnid)));
+                            if (ver.range('v4.3.0', 'v6.0.0') || ver.isOffline) return cmds.getSummon(opools.filter(smnid => summons.has(smnid)));
                             summonId1 = pools[0];
                         }
                         if (pools.length == 2) {
-                            if (!ver.range('v4.3.0', 'v6.0.0')) return cmds.getSummon(pools);
+                            if (!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline) return cmds.getSummon(pools);
                             summonId1 = opools.find(smnid => !pools.includes(smnid))!;
                         }
-                        if (pools.length == 3 || (!ver.range('v4.3.0', 'v6.0.0') && pools.length == 0)) {
+                        if (pools.length == 3 || (!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline && pools.length == 0)) {
                             [summonId1] = randomInArr(pools, 2);
                             pools.splice(pools.indexOf(summonId1), 1);
                         }

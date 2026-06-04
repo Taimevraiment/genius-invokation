@@ -331,18 +331,20 @@ export default class GeniusInvokationRoom {
      * @param options.isChange 是否为转回合
      * @param options.ohidx 切换前角色序号
      * @param options.trigger 触发时机
+     * @param options.isCalcDiceChange 是否需要重新计算费用
      */
     async emit(flag: string, pidx: number, options: {
         socket?: Socket, tip?: string | string[], damageVO?: DamageVO, notPreview?: boolean, notUpdate?: boolean, actionInfo?: ActionInfo,
         isQuickAction?: boolean, canAction?: boolean, isChange?: boolean, isActionInfo?: boolean, slotSelect?: number[], ohidx?: number,
-        heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], trigger?: Trigger, handcardSelect?: number[],
+        heroSelect?: number[], statusSelect?: number[], summonSelect?: number[], supportSelect?: number[], trigger?: Trigger,
+        handcardSelect?: number[], isCalcDiceChange?: boolean
     } = {}, callback?: () => void) {
         if (pidx < 0) return;
         flag += `-p${pidx}`;
         try {
             const { socket, tip = '', actionInfo, damageVO = null, notPreview, isActionInfo, canAction = true,
                 slotSelect = [], heroSelect = [], statusSelect = [], summonSelect = [], supportSelect = [], notUpdate,
-                isQuickAction = this.preview.isQuickAction, isChange, ohidx, trigger, handcardSelect = [],
+                isQuickAction = this.preview.isQuickAction, isChange, ohidx, trigger, handcardSelect = [], isCalcDiceChange = true,
             } = options;
             const isDelay = (statusSelect + '' + summonSelect) ? 0 : -1;
             this.players.forEach(p => {
@@ -357,7 +359,7 @@ export default class GeniusInvokationRoom {
                                     { hidx: h.hidx, isAddAtkStsTask: true });
                             });
                         }
-                        this._calcSkillChange(p.pidx, { hidx: h.hidx });
+                        if (isCalcDiceChange) this._calcSkillChange(p.pidx, { hidx: h.hidx });
                     });
                     if (!notUpdate) {
                         this.delay(isDelay, () => {
@@ -374,7 +376,7 @@ export default class GeniusInvokationRoom {
                     this.isStart && p.phase == PHASE.ACTION && p.status == PLAYER_STATUS.PLAYING &&
                     (p.heros[p.hidx].heroStatus.has(STATUS_TYPE.NonAction) ||
                         !p.heros[p.hidx].heroStatus.has(STATUS_TYPE.ReadySkill));
-                this._calcCardChange(p.pidx);
+                if (isCalcDiceChange) this._calcCardChange(p.pidx);
             });
             if (this.env == 'test' || !this.preview.isExec) return;
             // 计算预测行动的所有情况
@@ -1425,6 +1427,7 @@ export default class GeniusInvokationRoom {
         await this.emit(`useSkill-${skill.name}`, pidx, {
             socket,
             canAction: false,
+            isCalcDiceChange: false,
             slotSelect: isCdt(isVehicle, [pidx, heros.frontHidx, SLOT_CODE.Vehicle]),
             heroSelect: isCdt(!isVehicle && (!skillcmds.hasDamage || skillcmds.filterCmds('attack').every(c => c.isOppo == false)), [pidx, heros.frontHidx]),
             actionInfo: {
@@ -2315,11 +2318,10 @@ export default class GeniusInvokationRoom {
             if (!getCard) await this.emit(`${pickCard ? 'pickCard' : 'useCard'}-${currCard.name}`, pidx, { actionInfo: { card: currCard } });
             if (!getCard && !pickCard) {
                 assign(destroyedSupports, destroyedSupports.filter(s => player.supports.every(ps => ps.entityId != s.entityId)));
-                if (cardres.support) {
+                if (cardcmds?.hasCmds('getSupport')) {
                     if (player.supports.isFull) {
                         if (selectSupport > -1) {
-                            const [destroyedSupport] = player.supports.splice(selectSupport, 1);
-                            destroyedSupports.push(destroyedSupport);
+                            destroyedSupports.push(...player.supports.splice(selectSupport, 1));
                         } else if (currCard.type == CARD_TYPE.Support) {
                             throw new Error('ERROR@_useCard: selectSupport is invalid');
                         }
@@ -3090,12 +3092,12 @@ export default class GeniusInvokationRoom {
                     if (trigger == 'reduce-dmg' && isStatus && hfield.hasType(STATUS_TYPE.Barrier) && hfield.variables[STATUS_TYPE.Barrier] == 0) continue;
                     if (trigger == 'status-destroy' && isStatus && hfield.id == source) continue;
                     if (trigger == 'will-killed' || trigger == 'other-will-killed') {
-                        if (heros[sourceHidx]?.hp > 0) {
-                            if (isStatus && hfield.hasType(STATUS_TYPE.NonDefeat)) continue;
-                            if (!isStatus && hfield.hasTag(CARD_TAG.NonDefeat)) continue;
-                        } else {
+                        if (heros[sourceHidx]?.isDie) {
                             if (hfield.variables[STATUS_TYPE.NonDefeat] == 0) continue;
                             if (hfield.variables[CARD_TAG.NonDefeat] == 0) continue;
+                        } else {
+                            if (isStatus && hfield.hasType(STATUS_TYPE.NonDefeat)) continue;
+                            if (!isStatus && hfield.hasTag(CARD_TAG.NonDefeat)) continue;
                         }
                     }
                     if (trigger == 'card' && hcard?.entityId == hfield.entityId) continue;
@@ -3165,6 +3167,7 @@ export default class GeniusInvokationRoom {
                     const hfieldType = isStatus ? 'Status' : 'Slot';
                     const execute = () => {
                         if (hfield.useCnt == 0 && isStatus && !hfield.hasType(STATUS_TYPE.Shield, STATUS_TYPE.Accumulate)) return true;
+                        if (trigger != 'will-killed' && trigger != 'other-will-killed' && heros[hidx].isDie) return true;
                         const oCnt = hfield.useCnt;
                         const oPct = hfield.perCnt;
                         const isCancel = hfieldres.exec?.();

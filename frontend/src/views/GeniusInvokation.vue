@@ -676,7 +676,7 @@ const devOps = (cidx = 0) => {
       flag.add('equip');
     } else { // 摸牌
       const cards: (number | Card)[] = [];
-      const isAttach = op.endsWith('~');
+      const isAttach = op.endsWith('~'); // 是否摸牌库中的牌
       const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
       if (cid != -1) {
         const talent = isCdt(cid < heros.length, getTalentIdByHid(heros[(client.value.players[cpidx].hidx + cid) % heros.length].id))

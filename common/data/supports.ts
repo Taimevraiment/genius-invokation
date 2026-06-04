@@ -1202,7 +1202,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         const { heros, isMinusDiceRelic } = event;
         if (!isMinusDiceRelic) return;
         const relicLen = heros.filter(h => h.relicSlot != null).length;
-        const minusCnt = 1 + +(ver.lt('v4.6.0') ? relicLen : (relicLen >= 2));
+        const minusCnt = 1 + +(ver.lt('v4.6.0') && !ver.isOffline ? relicLen : (relicLen >= 2));
         return {
             triggers: 'card',
             isNotAddTask: true,

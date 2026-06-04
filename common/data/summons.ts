@@ -943,9 +943,9 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
                 const { trigger, heros, eheros } = event;
                 if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
                 const maxHp = Math.max(...[...heros, ...eheros].map(h => h.hp));
-                const hidxs = heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 });
-                if (hidxs.length > 0) cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs, isOppo: false });
-                else cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs: eheros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }) });
+                const hidxs = eheros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 });
+                if (hidxs.length > 0) cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs });
+                else cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }), isOppo: false });
             }
         })),
 
