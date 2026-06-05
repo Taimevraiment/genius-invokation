@@ -2302,7 +2302,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(3).damage(4).damage(2, 'v4.2.0').cost(3).handle((event, ver) => {
                     const { talent, summons } = event;
                     return {
-                        addDmgCdt: summons.length * (ver.lt('v4.2.0') ? 2 : 1),
+                        addDmgCdt: summons.length * (ver.lt('v4.2.0') && !ver.isOffline ? 2 : 1),
                         exec: () => talent && summons.forEach(smn => smn.addUseCnt(true)),
                     }
                 })

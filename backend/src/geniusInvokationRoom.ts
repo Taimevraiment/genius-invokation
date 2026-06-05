@@ -371,8 +371,10 @@ export default class GeniusInvokationRoom {
                         this.delay(isDelay, () => this._updateSummon(p.pidx, [], { destroy: summonSelect?.[3] ?? 1, trigger }));
                     }
                 }
+                const isUpdateFlag = /room/i.test(flag);
+                if (p.pidx == this.currentPlayerIdx && isUpdateFlag && p.phase == PHASE.ACTION) p.status = PLAYER_STATUS.PLAYING;
                 p.canAction = canAction && (p.pidx == this.currentPlayerIdx || !isChange) &&
-                    (isQuickAction || p.canAction || flag.includes('Update')) && this.taskQueue.isTaskEmpty() &&
+                    (isQuickAction || p.canAction || isUpdateFlag) && this.taskQueue.isTaskEmpty() &&
                     this.isStart && p.phase == PHASE.ACTION && p.status == PLAYER_STATUS.PLAYING &&
                     (p.heros[p.hidx].heroStatus.has(STATUS_TYPE.NonAction) ||
                         !p.heros[p.hidx].heroStatus.has(STATUS_TYPE.ReadySkill));

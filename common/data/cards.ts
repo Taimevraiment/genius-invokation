@@ -2176,7 +2176,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             exec: () => {
                 const { esummons, selectSummon } = event;
                 const selectSmn = esummons[selectSummon];
-                if (ver.lt('v3.7.0')) selectSmn?.dispose();
+                if (ver.lt('v3.7.0') && !ver.isOffline) selectSmn?.dispose();
                 else selectSmn?.minusUseCnt(2);
             }
         })),
