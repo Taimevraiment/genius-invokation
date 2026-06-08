@@ -587,7 +587,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         return {
             triggers,
             isNotAddTask: true,
-            minusDiceCard: 1,
+            minusDiceCard: isCdt(isMinusDiceTalent, 1),
             minusDiceSkill: { skills },
             exec: () => {
                 support.minusPerCnt();

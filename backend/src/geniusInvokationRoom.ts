@@ -4911,7 +4911,8 @@ export default class GeniusInvokationRoom {
         newStatus.forEach(sts => {
             let cstIdx = getObjIdxById(oStatus, sts.id);
             const oriSts = oStatus[cstIdx];
-            if (cstIdx > -1 && (oriSts.isTalent != sts.isTalent || (oriSts.useCnt == 0 && !oriSts.hasType(STATUS_TYPE.Accumulate)))) { // 如果状态带有天赋不同或状态已耗尽，则重新附属
+            // 如果状态带有天赋不同或状态已耗尽，则重新附属
+            if (cstIdx > -1 && (oriSts.isTalent != sts.isTalent || (oriSts.useCnt == 0 && !oriSts.hasType(STATUS_TYPE.Accumulate)))) {
                 oStatus.splice(cstIdx, 1);
                 cstIdx = -1;
             }
@@ -4921,7 +4922,7 @@ export default class GeniusInvokationRoom {
                 if (sts.maxCnt == 0) { // 不可叠加
                     oStatus[cstIdx].variables = cStatus.variables;
                     oStatus[cstIdx] = clone(sts).setEntityId(oStatus[cstIdx].entityId);
-                    oStatus[cstIdx].setUseCnt(Math.max(oCnt, cStatus.useCnt));
+                    oStatus[cstIdx].setUseCnt(Math.max(oCnt, oStatus[cstIdx].useCnt));
                 } else { // 可叠加
                     cStatus.maxCnt = sts.maxCnt;
                     cStatus.setPerCnt(sts.perCnt);
@@ -5394,7 +5395,6 @@ export default class GeniusInvokationRoom {
                     hidx,
                     hcard: c,
                     minusDiceCard: currCostChange(),
-                    isMinusDiceTalent: c.userType == heros[hidx].id,
                 });
                 return { minusDiceCard, minusDiceCardEl }
             }
