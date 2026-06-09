@@ -2544,8 +2544,8 @@ export default class GeniusInvokationRoom {
                 this._detectSummon(cpidx, 'phase-end');
                 this._detectSupport(cpidx, 'phase-end');
                 this._detectHandcards(cpidx, 'phase-end');
+                await this._execTask();
             }
-            await this._execTask();
             await this.wait(() => this.needWait, { maxtime: 6e6 });
             if (this.winner != -1) return;
             // 回合结束摸牌

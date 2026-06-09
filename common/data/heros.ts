@@ -2261,6 +2261,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                         const { summons, cmds, randomInArr } = event;
                         const opools = [122011, 122012, 122013];
                         const pools = opools.filter(smnid => !summons.has(smnid));
+                        // 场上已有两个纯水幻形
                         if ((ver.range('v4.3.0', 'v6.0.0') || ver.isOffline) && pools.length == 1) {
                             pools.length = 0;
                             pools.push(...opools.filter(smnid => summons.has(smnid)));
@@ -2276,14 +2277,14 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     exec: () => {
                         const { summons, cmds, randomInArr } = event;
                         const opools = [122011, 122012, 122013];
-                        const pools = opools.filter(smnid => !summons.has(smnid));
-                        if (pools.length == 0) return;
+                        const pools = opools.filter(smnid => !summons.has(smnid)); // 不存在场上的纯水幻形id池
+                        if (pools.length == 0) return; // 场上已有三个纯水幻形
                         let summonId1 = -1;
-                        if (pools.length == 1) {
+                        if (pools.length == 1) { // 场上已有两个纯水幻形
                             if (ver.range('v4.3.0', 'v6.0.0') || ver.isOffline) return cmds.getSummon(opools.filter(smnid => summons.has(smnid)));
-                            summonId1 = pools[0];
+                            [summonId1] = pools;
                         }
-                        if (pools.length == 2) {
+                        if (pools.length == 2) { // 场上只有一个纯水幻形
                             if (!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline) return cmds.getSummon(pools);
                             summonId1 = opools.find(smnid => !pools.includes(smnid))!;
                         }
