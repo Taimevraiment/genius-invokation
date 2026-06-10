@@ -363,12 +363,17 @@ export default class GeniusInvokationRoom {
                     });
                     if (!notUpdate) {
                         this.delay(isDelay, () => {
-                            this._updateStatus(p.pidx, [], p.combatStatus,
-                                { ohidx: isCdt(p.pidx == pidx, ohidx), isAddAtkStsTask: true });
+                            this._updateStatus(p.pidx, [], p.combatStatus, {
+                                ohidx: isCdt(p.pidx == pidx, ohidx),
+                                isAddAtkStsTask: true,
+                            });
                         });
                     }
                     if (!notUpdate) {
-                        this.delay(isDelay, () => this._updateSummon(p.pidx, [], { destroy: summonSelect?.[3] ?? 1, trigger }));
+                        this.delay(isDelay, () => this._updateSummon(p.pidx, [], {
+                            destroy: summonSelect?.[3] ?? 1,
+                            trigger: isCdt(damageVO?.dmgSource == 'summon', trigger),
+                        }));
                     }
                 }
                 const isUpdateFlag = /room/i.test(flag);
@@ -2598,6 +2603,9 @@ export default class GeniusInvokationRoom {
         if (this.players[pidx ^ 1].phase != PHASE.ACTION_END) {
             this.startIdx = pidx;
         }
+        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
+        await this.emit(flag, pidx, { tip: `{p}结束了回合` });
+        await this.delay(1500);
         this._detectHero(pidx, ['end-phase', 'any-end-phase'], { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage] });
         await this._execTask();
         this._detectSummon(pidx, 'end-phase');
@@ -2610,9 +2618,6 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         await this.wait(() => this.needWait);
         const isActionEnd = this.players.every(p => p.phase == PHASE.ACTION_END);
-        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
-        await this.emit(flag, pidx, { tip: `{p}结束了回合` });
-        await this.delay(1500);
         if (!isActionEnd) await this._changeTurn(pidx, 'endPhase');
         else await this.emit(flag, pidx, { tip: '回合结束阶段' });
         this.players.forEach(p => {
@@ -3199,7 +3204,7 @@ export default class GeniusInvokationRoom {
                             if (!isCancel) {
                                 this._doCmds(pidx, rescmds, {
                                     atkname: hfield.name,
-                                    dmgSource: !isStatus ? 'card' : 'status',
+                                    dmgSource: isStatus ? 'status' : 'card',
                                     source: hfield.id,
                                     slotSelect,
                                     statusSelect,
@@ -3218,7 +3223,11 @@ export default class GeniusInvokationRoom {
                     } else {
                         const isCancel = execute();
                         if (isCancel) break;
-                        this._doCmds(pidx, rescmds, { source: hfield.id, trigger });
+                        this._doCmds(pidx, rescmds, {
+                            source: hfield.id,
+                            atkname: hfield.name,
+                            dmgSource: isStatus ? 'status' : 'card',
+                        });
                     }
                     if (hfieldres.isOrTrigger) break;
                 }
@@ -5395,6 +5404,7 @@ export default class GeniusInvokationRoom {
                     hidx,
                     hcard: c,
                     minusDiceCard: currCostChange(),
+                    isMinusDiceTalent: c.userType == heros[hidx].id,
                 });
                 return { minusDiceCard, minusDiceCardEl }
             }

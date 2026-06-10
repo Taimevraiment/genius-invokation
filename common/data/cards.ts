@@ -2233,6 +2233,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     332019: () => card(259).name('温妮莎传奇').since('v3.7.0').offline('v3').event().costSame(3)
         .description('生成4个不同类型的基础元素骰。')
+        .description('生成4个元素骰。', 'v3')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/20/1694811/e8473742fd9e3966ccba393f52a1915a_7280949762836305617.png')
         .handle((_, { cmds }) => cmds.getDice(4, { mode: CMD_MODE.Random })),
 
