@@ -195,6 +195,9 @@ export class ArrayHero extends Array<Hero> {
     get hasSubHurt() {
         return this.some(h => h.hasSubHurt);
     }
+    get validElements() {
+        return [...new Set(this.filter(h => h.hp > 0).flatMap(h => h.validElements))];
+    }
     get(id: number) {
         return getObjById(this, id) ?? getObjById(this, id, 'entityId') ?? getObjById(this, getHidById(id));
     }

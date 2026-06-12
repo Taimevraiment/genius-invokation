@@ -1,5 +1,5 @@
 import { Card, EnergyIcons, Skill, Status } from "../../../typing";
-import { CARD_TAG, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
+import { CARD_TAG, ELEMENT_CODE_KEY, ELEMENT_TYPE, ElementCode, ElementType, HERO_LOCAL, HeroTag, OfflineVersion, OnlineVersion, PureElementType, SKILL_COST_TYPE, SKILL_TYPE, Version, WEAPON_TYPE, WeaponType } from "../../constant/enum.js";
 import { GUYU_PREIFIX } from "../../constant/UIconst.js";
 import { versionWrap } from "../../utils/gameUtil.js";
 import { clone, convertToArray } from "../../utils/utils.js";
@@ -115,6 +115,9 @@ export class GIHero extends Entity {
     get spEnergy() {
         if (this.energy >= 0) return 0;
         return -this.energy;
+    }
+    get validElements() {
+        return [...new Set(this.skills.map(s => s.cost[0].type).filter(d => d != SKILL_COST_TYPE.Same))];
     }
     hasAttach(element: PureElementType) {
         return this.attachElement.includes(element);

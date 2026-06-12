@@ -6,20 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { Server, Socket } from 'socket.io';
 import { dict } from '../../common/constant/dependancyDict.js';
 import {
-    ACTION_TYPE, ActionType, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE,
-    CostType, DAMAGE_TYPE,
-    DICE_COST_TYPE, DICE_TYPE,
-    DICE_TYPE_CODE_KEY,
-    DamageType, DiceCostType, ELEMENT_REACTION, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType, HERO_LOCAL, HERO_LOCAL_CODE,
-    PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY, Phase,
-    PureElementType, SKILL_COST_TYPE, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SWIRL_ELEMENT_TYPE, SkillType, StatusGroup, StatusType, SwirlElementType, Version
+    ACTION_TYPE, ActionType, CARD_SUBTYPE, CARD_TAG, CARD_TYPE, CMD_MODE, COST_TYPE, CostType, DAMAGE_TYPE, DICE_COST_TYPE, DICE_TYPE,
+    DICE_TYPE_CODE_KEY, DamageType, DiceCostType, ELEMENT_REACTION, ELEMENT_TYPE, ELEMENT_TYPE_KEY, ElementCode, ElementType,
+    HERO_LOCAL, HERO_LOCAL_CODE, PHASE, PLAYER_STATUS, PURE_ELEMENT_CODE, PURE_ELEMENT_CODE_KEY, PURE_ELEMENT_TYPE, PURE_ELEMENT_TYPE_KEY,
+    Phase, PureElementType, SKILL_TYPE, STATUS_GROUP, STATUS_TYPE, SUMMON_DESTROY_TYPE, SWIRL_ELEMENT_TYPE, SkillType, StatusGroup,
+    StatusType, SwirlElementType, Version
 } from '../../common/constant/enum.js';
 import {
-    AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT,
-    INIT_PILE_COUNT,
-    INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
-    MAX_GAME_ROUND, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT,
-    STATUS_DESTROY_ID
+    AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
+    MAX_GAME_ROUND, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT, STATUS_DESTROY_ID
 } from '../../common/constant/gameOption.js';
 import { INIT_DAMAGEVO, INIT_PLAYER, NULL_CARD } from '../../common/constant/init.js';
 import { DICE_WEIGHT, ELEMENT_NAME, SKILL_TYPE_NAME, SLOT_CODE } from '../../common/constant/UIconst.js';
@@ -35,16 +30,12 @@ import { newSummon } from '../../common/data/summons.js';
 import { newSupport } from '../../common/data/supports.js';
 import CmdsGenerator from '../../common/utils/cmdsGenerator.js';
 import {
-    checkDices,
-    getElByHid,
-    getHidById,
-    getObjIdxById, getSortedDices, getVehicleIdByCid,
-    heroToString, playerToString, versionWrap
+    checkDices, getElByHid, getHidById, getObjIdxById, getSortedDices, getVehicleIdByCid, heroToString, playerToString, versionWrap
 } from '../../common/utils/gameUtil.js';
 import { arrToObj, assign, clone, convertToArray, delay, getSecretData, isCdt, objToArr, parseShareCode, wait } from '../../common/utils/utils.js';
 import {
-    ActionData, ActionInfo, Card, Cmds, Countdown, CustomVersionConfig, DamageVO, DmgSource, EnergyIcons, Env, Hero, LogType, MinusDiceSkill, PickCard,
-    Player, Preview, RecordData, ServerData, Skill, Status, Summon, Support, Trigger, VersionWrapper
+    ActionData, ActionInfo, Card, Cmds, Countdown, CustomVersionConfig, DamageVO, DmgSource, EnergyIcons, Env, Hero, LogType,
+    MinusDiceSkill, PickCard, Player, Preview, RecordData, ServerData, Skill, Status, Summon, Support, Trigger, VersionWrapper
 } from '../../typing';
 import TaskQueue from './taskQueue.js';
 
@@ -310,11 +301,9 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      */
     private async _getPreview(pidx: number) {
-        // const preview = clone(this.preview);
         const skillPreviews = await this._previewSkill(pidx);
         const cardPreviews = await this._previewCard(pidx);
         const switchPreviews = await this._previewSwitch(pidx);
-        // this.preview = clone(preview);
         return [...skillPreviews, ...cardPreviews, ...switchPreviews];
     }
     /**
@@ -1207,7 +1196,7 @@ export default class GeniusInvokationRoom {
             else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
         }
         const ndices: DiceCostType[] = [];
-        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +player.heros.map(h => h.element).includes(d);
+        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +player.heros.validElements.includes(d);
         const restDice = objToArr(tmpDice).filter(([, v]) => v > 0).sort((a, b) => {
             return effDice(b[0]) - effDice(a[0]) || b[1] - a[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0])
         });
@@ -1287,14 +1276,14 @@ export default class GeniusInvokationRoom {
         await this._changeTurn(pidx, 'reconcile');
     }
     /**
-     * 选择骰子
+     * 智能选择默认骰子
      * @param player 选骰玩家
      * @param costType 骰子类型
      * @param elDiceCnt 有色骰数量
      * @param anyDiceCnt 任意骰数量
      * @returns 选择骰子的数组
      */
-    private _selectDice(player: Player, costType: CostType, elDiceCnt: number, anyDiceCnt: number) {
+    private _selectDefaultDice(player: Player, costType: CostType, elDiceCnt: number, anyDiceCnt: number) {
         const diceLen = player.dice.length;
         const diceSelect: boolean[] = new Array(diceLen).fill(false);
         const diceCnt = arrToObj<DiceCostType, number>(Object.values(DICE_COST_TYPE), 0);
@@ -1303,15 +1292,13 @@ export default class GeniusInvokationRoom {
             anyDiceCnt = elDiceCnt;
             elDiceCnt = 0;
         }
-        const heroEle = new Set<DiceCostType>(player.heros.filter(h => h.hp > 0)
-            .flatMap(h => h.skills.map(s => s.cost[0].type))
-            .filter(d => d != SKILL_COST_TYPE.Same));
-        const frontEle = player.heros.getFront().element;
+        const heroEle = new Set<DiceCostType>(player.heros.validElements);
+        const frontEle = new Set<DiceCostType>(player.heros.getFront().validElements);
         if (costType == COST_TYPE.Same && elDiceCnt > 0) {
             let maxDice: DiceCostType | null = null;
             const weight = (el: DiceCostType, cnt = 0) => {
                 return +(el == DICE_COST_TYPE.Omni) * 1000
-                    + +(el == frontEle) * 500
+                    + +frontEle.has(el) * 500
                     + +heroEle.has(el) * 400
                     - +(cnt == elDiceCnt) * 300
                     - cnt * 10
@@ -1335,7 +1322,7 @@ export default class GeniusInvokationRoom {
         } else {
             const weight = (el: DiceCostType) => {
                 return +(el == DICE_COST_TYPE.Omni) * 900
-                    + +(el == costType || el == frontEle) * 400
+                    + +(el == costType || frontEle.has(el)) * 400
                     + +heroEle.has(el) * 300
                     + diceCnt[el] * 10
                     - DICE_WEIGHT.indexOf(el);
@@ -1366,7 +1353,7 @@ export default class GeniusInvokationRoom {
         let anyDiceCnt = skill.cost[1].cnt - skill.costChange[1];
         let { cnt: elementDiceCnt, type: costType } = skill.cost[0];
         elementDiceCnt -= skill.costChange[0];
-        return this._selectDice(player, costType, elementDiceCnt, anyDiceCnt);
+        return this._selectDefaultDice(player, costType, elementDiceCnt, anyDiceCnt);
     }
     /**
     * 使用技能
@@ -2233,7 +2220,7 @@ export default class GeniusInvokationRoom {
                 }, {} as Record<DiceCostType, number>)))) >= cost - costChanges[0] - costChanges[2];
             res.isValid = isLen && isElDice;
             if (res.isValid) {
-                res.diceSelect = this._selectDice(
+                res.diceSelect = this._selectDefaultDice(
                     player,
                     costType,
                     Math.max(0, cost - costChanges[0] - costChanges[2]),
@@ -2603,9 +2590,6 @@ export default class GeniusInvokationRoom {
         if (this.players[pidx ^ 1].phase != PHASE.ACTION_END) {
             this.startIdx = pidx;
         }
-        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
-        await this.emit(flag, pidx, { tip: `{p}结束了回合` });
-        await this.delay(1500);
         this._detectHero(pidx, ['end-phase', 'any-end-phase'], { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage] });
         await this._execTask();
         this._detectSummon(pidx, 'end-phase');
@@ -2618,6 +2602,9 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         await this.wait(() => this.needWait);
         const isActionEnd = this.players.every(p => p.phase == PHASE.ACTION_END);
+        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
+        await this.emit(flag, pidx, { tip: `{p}结束了回合` });
+        await this.delay(1500);
         if (!isActionEnd) await this._changeTurn(pidx, 'endPhase');
         else await this.emit(flag, pidx, { tip: '回合结束阶段' });
         this.players.forEach(p => {
@@ -4060,7 +4047,7 @@ export default class GeniusInvokationRoom {
                         let ndice = dice.slice();
                         const diceCnt = arrToObj(DICE_WEIGHT, 0);
                         ndice.forEach(d => ++diceCnt[d]);
-                        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +heros.map(h => h.element).includes(d);
+                        const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni || d == nel ? 2 : +heros.validElements.includes(d);
                         ndice = objToArr(diceCnt)
                             .sort((a, b) => effDice(a[0]) - effDice(b[0]) || a[1] - b[1] || DICE_WEIGHT.indexOf(a[0]) - DICE_WEIGHT.indexOf(b[0]))
                             .flatMap(([d, cnt]) => new Array<DiceCostType>(cnt).fill(d));
