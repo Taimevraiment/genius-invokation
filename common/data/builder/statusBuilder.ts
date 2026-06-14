@@ -192,7 +192,7 @@ export class GIStatus extends Entity {
                 ...builderRes,
                 cmds,
                 triggers: isCdt(builderRes.triggers, convertToArray(builderRes.triggers) as Trigger[]),
-                hidxs: isCdt(builderRes.hidxs, convertToArray(builderRes.hidxs) as number[]),
+                hidxs: isCdt(builderRes.hidxs != undefined, convertToArray(builderRes.hidxs) as number[]),
                 exec: () => builderRes.exec?.() === true,
             }
             return res;

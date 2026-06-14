@@ -297,7 +297,7 @@ export class GICard extends Entity {
                 execmds,
                 triggers: isCdt(triggers, convertToArray(triggers) as Trigger[]),
                 element: isCdt(element == DICE_COST_TYPE.Omni, ELEMENT_TYPE.Physical, element as ElementType),
-                hidxs: isCdt(builderRes.hidxs, convertToArray(builderRes.hidxs) as number[]),
+                hidxs: isCdt(builderRes.hidxs != undefined, convertToArray(builderRes.hidxs) as number[]),
                 exec: () => builderRes.exec?.() === true,
             }
             return res;

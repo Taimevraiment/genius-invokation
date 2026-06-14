@@ -1281,19 +1281,20 @@ export default class GeniusInvokationRoom {
      * @param costType 骰子类型
      * @param elDiceCnt 有色骰数量
      * @param anyDiceCnt 任意骰数量
+     * @param frontIdx 出战角色索引(切换角色时指定)
      * @returns 选择骰子的数组
      */
-    private _selectDefaultDice(player: Player, costType: CostType, elDiceCnt: number, anyDiceCnt: number) {
+    private _selectDefaultDice(player: Player, costType: CostType, elDiceCnt: number, anyDiceCnt: number, fhidx?: number) {
         const diceLen = player.dice.length;
         const diceSelect: boolean[] = new Array(diceLen).fill(false);
         const diceCnt = arrToObj<DiceCostType, number>(Object.values(DICE_COST_TYPE), 0);
         player.dice.forEach(d => ++diceCnt[d]);
         if (costType == COST_TYPE.Any) {
-            anyDiceCnt = elDiceCnt;
+            anyDiceCnt = Math.min(diceLen, Math.max(elDiceCnt, anyDiceCnt));
             elDiceCnt = 0;
         }
         const heroEle = new Set<DiceCostType>(player.heros.validElements);
-        const frontEle = new Set<DiceCostType>(player.heros.getFront().validElements);
+        const frontEle = new Set<DiceCostType>(fhidx != undefined ? player.heros[fhidx].validElements : player.heros.getFront().validElements);
         if (costType == COST_TYPE.Same && elDiceCnt > 0) {
             let maxDice: DiceCostType | null = null;
             const weight = (el: DiceCostType, cnt = 0) => {
@@ -1302,7 +1303,7 @@ export default class GeniusInvokationRoom {
                     + +heroEle.has(el) * 400
                     - +(cnt == elDiceCnt) * 300
                     - cnt * 10
-                    - DICE_WEIGHT.indexOf(el);
+                    + DICE_WEIGHT.indexOf(el);
             };
             const omniCnt = player.dice.filter(d => d == DICE_COST_TYPE.Omni).length;
             const diceCnts = objToArr(diceCnt).filter(([el, cnt]) => cnt > 0 && el != DICE_COST_TYPE.Omni).sort((a, b) => weight(...a) - weight(...b));
@@ -1325,7 +1326,7 @@ export default class GeniusInvokationRoom {
                     + +(el == costType || frontEle.has(el)) * 400
                     + +heroEle.has(el) * 300
                     + diceCnt[el] * 10
-                    - DICE_WEIGHT.indexOf(el);
+                    + DICE_WEIGHT.indexOf(el);
             };
             const dices = player.dice.map((d, di) => [d, di] as const).sort(([a], [b]) => weight(a) - weight(b));
             for (const [dice, didx] of dices) {
@@ -4839,13 +4840,10 @@ export default class GeniusInvokationRoom {
             this.preview.isExec = false;
             const { hidx, dice, heros } = this.players[pidx];
             const { switchHeroDiceCnt } = this._calcHeroSwitch(pidx, toHidx, hidx);
-            const diceSelect = dice.map(() => false);
             const isValid = dice.length >= switchHeroDiceCnt;
-            if (isValid) {
-                for (let i = dice.length - 1, cnt = switchHeroDiceCnt; i >= 0 && cnt > 0; --i, --cnt) {
-                    diceSelect[i] = true;
-                }
-            }
+            const diceSelect = isValid ?
+                this._selectDefaultDice(this.players[pidx], COST_TYPE.Any, 0, switchHeroDiceCnt, toHidx) :
+                dice.map(() => false);
             await this._switchHero(pidx, toHidx, 'switch-preview', { diceSelect });
             await this._execTask();
             const { willHp, energyIcons, supportCnt, willSummons } = this._calcPreview(curPlayers);
