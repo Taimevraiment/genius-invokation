@@ -2225,7 +2225,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    2105: () => hero(597).name('灵觉隐修的迷者').since('v6.7.0').maxHp(11).monster().cryo()
+    2105: () => hero(597).name('灵觉隐修的迷者').since('v6.7.0').monster().cryo()
         .src('#')
         .avatar('#MonsterIcon_Udugan')
         .normalSkill(skill => skill('灵觉·寒星').catalyst())
