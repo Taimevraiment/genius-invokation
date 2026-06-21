@@ -533,8 +533,9 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                 exec: cmds => (cmds.getDice(1, { mode: CMD_MODE.FrontHero }), { isDestroy: support.minusUseCnt() == 0 })
             }
         }
+        if (!isChargedAtk) return;
         return {
-            triggers: isCdt(isMinusDiceSkill && isChargedAtk, 'skilltype1'),
+            triggers: isCdt(isMinusDiceSkill, 'skilltype1'),
             minusDiceSkill: { skilltype1: [0, 1, 0] },
             isNotAddTask: true,
             exec: () => ({ isDestroy: support.minusUseCnt() == 0 }),

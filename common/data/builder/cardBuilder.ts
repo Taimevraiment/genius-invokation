@@ -269,8 +269,9 @@ export class GICard extends Entity {
                 cmds,
                 execmds,
             };
-            let builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
+            const builderRes = handle?.(card, cevent, versionWrap(ver)) ?? {};
             const { status, statusOppo, summon, summonOppo, support, supportOppo, hidxs, triggers, element } = builderRes;
+            let { isValid = true } = builderRes;
             (cevent.trigger ? execmds : cmds).getStatus(status, { hidxs })
                 .getStatus(statusOppo, { hidxs, isOppo: true })
                 .getSummon(summon)
@@ -291,10 +292,14 @@ export class GICard extends Entity {
                 if (cardDiceType == undefined) return;
                 card.variables.cardDiceType = DICE_TYPE_CODE[cardDiceType];
             });
+            if (cmds.isUseSkill) {
+                isValid &&= !cevent.heros.getFront().heroStatus.has(STATUS_TYPE.NonAction);
+            }
             const res: CardHandleRes = {
                 ...builderRes,
                 cmds,
                 execmds,
+                isValid,
                 triggers: isCdt(triggers, convertToArray(triggers) as Trigger[]),
                 element: isCdt(element == DICE_COST_TYPE.Omni, ELEMENT_TYPE.Physical, element as ElementType),
                 hidxs: isCdt(builderRes.hidxs != undefined, convertToArray(builderRes.hidxs) as number[]),

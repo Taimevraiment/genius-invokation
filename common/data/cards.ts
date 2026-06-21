@@ -3819,7 +3819,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     223041: () => card(354).name('熔火铁甲').since('v4.6.0').talent().costPyro(1).perCnt(1)
         .description('【入场时：】对装备有此牌的【hro】[附着火元素]。；我方除【sts123041】以外的[护盾]状态或[护盾]出战状态被移除后：装备有此牌的【hro】附属2层【sts123041】。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/c6d40de0f6da94fb8a8ddeccc458e5f0_8856536643600313687.png')
-        .handle((_, { hidx, cmds }) => cmds.attach({ hidxs: hidx }).res),
+        .handle((_, { selectHeros: [hidxs], cmds }) => cmds.attach({ element: ELEMENT_TYPE.Pyro, hidxs }).res),
 
     223051: () => card(511).name('罔极盛怒').since('v6.0.0').talent().costPyro(1).perCnt(1)
         .description('{quick。}；【敌方打出名称不存在于本局最初牌组的牌时：】所附属角色获得1点[充能]，下次造成的伤害+1。（每回合1次）')

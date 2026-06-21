@@ -154,7 +154,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         .handle((summon, event) => ({
             triggers: 'phase-end',
             exec: cmds => {
-                summon.phaseEndAtk(cmds, { healHidxs: event.heros.allHidxs() }).attach();
+                summon.phaseEndAtk(cmds, { healHidxs: event.heros.allHidxs() }).attach({ element: ELEMENT_TYPE.Hydro });
             },
         })),
 

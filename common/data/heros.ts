@@ -1790,7 +1790,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('破嶂见旌仪').description('{dealDmg}，生成3层【sts116073】。')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/4fbd00e2cf6f2931fdf7c1d3c3f3d196.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/289c56363620f16b7372fc097b9a9883_846777564977909040.png')
-                .burst(2).damage(2).cost(3).handle(() => ({ status: [[116073, 3]] }))
+                .burst(2).damage(3).damage(2, 'v4.8.0').cost(3).handle(() => ({ status: [[116073, 3]] }))
         ),
 
     1608: () => hero(396).name('娜维娅').since('v4.8.0').fontaine(HERO_TAG.ArkheOusia).geo().claymore()
