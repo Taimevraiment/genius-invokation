@@ -1571,7 +1571,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('朝起鹤云').description('{dealDmg}，生成【sts115101】，本角色附属【sts115104】。')
                 .src('https://patchwiki.biligame.com/images/ys/6/6d/ri0edrmy086b2ia85dya1xh5x7thc22.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/1914d2cb4199cd49e28604f105b1e57d_5159935908470746953.png')
-                .elemental().damage(1).damage(2, 'v5.4.0').cost(3).handle(() => ({ status: [115101, 115104] })),
+                .elemental().damage(1).damage(2, 'v5.4.0', 'v4').cost(3).handle(() => ({ status: [115101, 115104] })),
             skill('暮集竹星').description('{dealDmg}，治疗所有我方角色1点，生成手牌【crd115102】。')
                 .src('https://patchwiki.biligame.com/images/ys/1/1c/qartvv52tlakx38vhaucxgm3zb9xlnn.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/9defe82ef629b59ef3c373d3ba64e492_2031181392714657327.png')

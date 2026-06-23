@@ -98,8 +98,12 @@ export default class GeniusInvokationRoom {
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
     private _random: number = 0; // 随机数
     private delay: (time?: number, fn?: () => any) => Promise<void> | void;
-    private wait = async (cdt: () => any, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void } = {}) => {
+    private wait = async (cdt: () => any, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, errCallback?: () => void } = {}) => {
         if (this.env == 'test' || !this.preview.isExec && this.id > 0) return;
+        options.errCallback ??= () => {
+            this.emitError(`发生错误`);
+            this.errorLog.push(`等待超时: ${cdt.toString()}`);
+        };
         await wait(cdt, options);
     }
     testDmgFn: (() => void)[] = []; // 伤害测试用
@@ -336,6 +340,7 @@ export default class GeniusInvokationRoom {
                 isQuickAction = this.preview.isQuickAction, isChange, ohidx, trigger, handcardSelect = [], isCalcDiceChange = true,
             } = options;
             const isDelay = (statusSelect + '' + summonSelect) ? 0 : -1;
+            const isUpdateFlag = /room/i.test(flag);
             this.players.forEach(p => {
                 p.handCards.sort((a, b) => a.id - b.id || b.entityId - a.entityId).forEach((c, ci) => c.cidx = ci);
                 p.pile.forEach((c, ci) => c.cidx = ci);
@@ -356,16 +361,13 @@ export default class GeniusInvokationRoom {
                                 ohidx: isCdt(p.pidx == pidx, ohidx),
                                 isAddAtkStsTask: true,
                             });
+                            this._updateSummon(p.pidx, [], {
+                                destroy: summonSelect?.[3] ?? 1,
+                                trigger: isCdt(damageVO?.dmgSource == 'summon', trigger),
+                            });
                         });
                     }
-                    if (!notUpdate) {
-                        this.delay(isDelay, () => this._updateSummon(p.pidx, [], {
-                            destroy: summonSelect?.[3] ?? 1,
-                            trigger: isCdt(damageVO?.dmgSource == 'summon', trigger),
-                        }));
-                    }
                 }
-                const isUpdateFlag = /room/i.test(flag);
                 if (p.pidx == this.currentPlayerIdx && isUpdateFlag && p.phase == PHASE.ACTION) p.status = PLAYER_STATUS.PLAYING;
                 p.canAction = canAction && (p.pidx == this.currentPlayerIdx || !isChange) &&
                     (isQuickAction || p.canAction || isUpdateFlag) && this.taskQueue.isTaskEmpty() &&
@@ -902,7 +904,7 @@ export default class GeniusInvokationRoom {
         }
         if (this.env == 'prod' && !this.seed.endsWith(`-s${seed}`)) return;
         if (flag.includes('log')) return this.exportLog({ isShowRoomInfo: false });
-        await this.wait(() => this.taskQueue.isTaskEmpty(), { callback: () => this.taskQueue.init() });
+        await this.wait(() => this.taskQueue.isTaskEmpty(), { errCallback: () => this.taskQueue.init() });
         const player = this.players[cpidx];
         const heros = player.heros;
         for (const { hidx, el, isAdd } of attachs) {
@@ -2591,6 +2593,9 @@ export default class GeniusInvokationRoom {
         if (this.players[pidx ^ 1].phase != PHASE.ACTION_END) {
             this.startIdx = pidx;
         }
+        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
+        await this.emit(flag, pidx, { tip: `{p}结束了回合`, notPreview: true, notUpdate: true });
+        await this.delay(1500);
         this._detectHero(pidx, ['end-phase', 'any-end-phase'], { types: [STATUS_TYPE.Attack, STATUS_TYPE.Usage] });
         await this._execTask();
         this._detectSummon(pidx, 'end-phase');
@@ -2603,9 +2608,6 @@ export default class GeniusInvokationRoom {
         await this._execTask();
         await this.wait(() => this.needWait);
         const isActionEnd = this.players.every(p => p.phase == PHASE.ACTION_END);
-        this._writeLog(`[${player.name}](${player.pidx})结束了回合`);
-        await this.emit(flag, pidx, { tip: `{p}结束了回合` });
-        await this.delay(1500);
         if (!isActionEnd) await this._changeTurn(pidx, 'endPhase');
         else await this.emit(flag, pidx, { tip: '回合结束阶段' });
         this.players.forEach(p => {

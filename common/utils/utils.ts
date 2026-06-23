@@ -66,7 +66,8 @@ export const genShareCode = (ids: number[], salt = 0): string => {
     }
     farr.push(salt);
     const fstr = String.fromCharCode(...farr);
-    const res = typeof window == 'undefined' ? Buffer.from(fstr, 'latin1').toString('base64') : btoa(fstr);
+    const res = (typeof window == 'undefined' ? Buffer.from(fstr, 'latin1').toString('base64') : btoa(fstr))
+        .replace(/\+|\//g, '');
     if (BLOCK_WORDS.some(v => v.test(res))) return genShareCode(ids, salt + 1);
     return res;
 }
@@ -123,9 +124,9 @@ export const delay = (time: number = -1, fn: () => any = () => { }) => {
  * @returns 
  */
 export const wait = async (cdt: () => any, options: {
-    delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, callback?: () => void,
+    delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, errCallback?: () => void,
 } = {}) => {
-    const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true, callback } = options;
+    const { delay: dl = 0, freq = 500, maxtime = 8000, isImmediate = true, errCallback } = options;
     let loop = 0;
     if (cdt() && isImmediate) return;
     let warn = false;
@@ -142,7 +143,7 @@ export const wait = async (cdt: () => any, options: {
             warn = true;
         }
         if (loop > maxtime / freq && !error) {
-            if (callback) callback();
+            if (errCallback) errCallback();
             else console.trace(`too many loops-${maxtime}ms: ${cdt.toString()}`);
             error = true;
         }

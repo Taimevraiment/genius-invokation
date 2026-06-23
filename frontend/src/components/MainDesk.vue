@@ -1319,6 +1319,7 @@ const mouseup = () => {
 .summon-area,
 .support-area {
   height: 42%;
+  max-height: 200px;
   width: 70%;
   display: flex;
   flex-direction: row;

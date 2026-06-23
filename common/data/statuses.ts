@@ -207,7 +207,7 @@ const continuousActionHandle = (status: Status, event: StatusBuilderHandleEvent)
         exec: () => {
             if (trigger == 'kill') status.setUseCnt(1);
             else if (trigger == 'change-turn') status.dispose();
-        },
+        }
     }
 }
 
@@ -3298,7 +3298,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .handle((status, event, ver) => {
             if (ver.lt('v4.1.0') && !ver.isOffline) return continuousActionHandle(status, event);
             event.cmds.switchAfter();
-            return { triggers: 'after-skill', exec: () => status.dispose() }
+            return { triggers: 'after-skill' }
         }),
 
     303182: () => status('岩与契约（生效中）').combatStatus().useCnt(1)
