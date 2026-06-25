@@ -4428,10 +4428,14 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => ({
             exec: () => {
-                const { supports, esupports, cmds, randomInArr, getCardIds } = event;
+                const { supports, esupports, cmds, randomInArr } = event;
                 const supportLen = MAX_SUPPORT_COUNT - supports.length;
                 const esupportLen = MAX_SUPPORT_COUNT - esupports.length;
-                const allyPool = getCardIds(c => c.hasSubtype(CARD_SUBTYPE.Ally));
+                const allyPool = [
+                    322001, 322002, 322005, 322006, 322008, 322009, 322010,
+                    322011, 322012, 322013, 322014, 322015, 322017, 322018,
+                    322019, 322020, 322021, 322023, 322025, 322026,
+                ];
                 cmds.getSupport(randomInArr(allyPool, supportLen))
                     .getSupport(randomInArr(allyPool, esupportLen), { isOppo: true })
             }

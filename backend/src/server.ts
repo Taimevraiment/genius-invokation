@@ -2,7 +2,10 @@ import cors from "cors";
 import express from "express";
 import { createServer } from "http";
 import cron from "node-cron";
+import * as fs from 'node:fs';
 import https from "node:https";
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Server } from "socket.io";
 import { versionChanges } from "../../common/constant/dependancyDict.js";
 import { PHASE, PLAYER_STATUS, PlayerStatus } from "../../common/constant/enum.js";
@@ -42,7 +45,7 @@ process.on('uncaughtException', err => console.error('uncaughtErr:', err));
 process.on('exit', code => console.error('exit:', code));
 
 const serverSecretKey = await getSecretData('secretKey');
-const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus, ip?: string } | Player)[] = []; // 在线玩家列表
+const playerList: ({ id: number, name: string, rid: number, status: PlayerStatus, ip?: string, location?: string } | Player)[] = []; // 在线玩家列表
 const roomList: GeniusInvokationRoom[] = []; // 创建房间列表
 const removePlayerList = new Map<number, { time: NodeJS.Timeout, status: PlayerStatus, cancel: () => void }>(); // 玩家即将离线销毁列表
 const todayPlayersHistory = new Map<number, {
@@ -55,9 +58,11 @@ const todayPlayersHistory = new Map<number, {
     location: string,
 }>(); // 当日玩家登录信息
 let todayGames = 0; // 今日开局数
+const __dirname = dirname(fileURLToPath(import.meta.url));
 cron.schedule('0 0 5 * * *', () => {
     todayPlayersHistory.clear();
     todayGames = 0;
+    fs.rmSync(`${__dirname}/../../../logs/today`, { recursive: true, force: true });
 });
 
 // 生成id
@@ -421,6 +426,7 @@ app.get('/detail', (req, res) => {
             name: p.name,
             rid: p.rid,
             status: p.status,
+            location: p.location,
         })),
         todayGames,
     });

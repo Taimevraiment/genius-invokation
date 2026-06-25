@@ -193,6 +193,10 @@
       <span v-if="client.isWin == -2">——无人获胜——</span>
       <span v-else> {{ client.players[client.isWin % PLAYER_COUNT]?.name }}获胜！！！</span>
     </h1>
+    <h1 v-if="client.roomId < 0 && client.recordData.actionLog.length == 0" class="win-banner"
+      :class="{ 'mobile-win-banner': isMobile }" style="top: 40%;">
+      ——录像结束——
+    </h1>
 
     <h1 class="error" v-if="client.error != ''">{{ isDev ? client.error : '发生了错误' }}</h1>
 
@@ -377,7 +381,7 @@ const sendLog = () => {
 // 导出录像数据
 const exportRecord = () => {
   if (client.value.recordData.actionLog.length == 0) return;
-  exportFile(`game${version.value.replace(/\./g, '_')}-r${roomId}.gi`, LZString.compressToBase64(JSON.stringify(client.value.recordData)));
+  exportFile(`game${version.value.replace(/\./g, '_')}-t${new Date().toISOString().split('T')[0]}-r${roomId}.gi`, LZString.compressToBase64(JSON.stringify(client.value.recordData)));
   client.value.recordData.actionLog = [];
 }
 // 投降

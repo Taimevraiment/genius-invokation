@@ -264,20 +264,25 @@ export default class GeniusInvokationRoom {
     /**
      * 导出日志
      */
-    exportLog(options: { isShowRoomInfo?: boolean, isError?: boolean, info?: string } = {}) {
+    exportLog(options: { isShowRoomInfo?: boolean, isError?: boolean, info?: string, folderName?: string, isSendMsg?: boolean } = {}) {
         if (this.env == 'test' || this.id < -1) return;
-        const { isShowRoomInfo = true, isError, info = '' } = options;
+        const { isShowRoomInfo = true, isError, info = '', folderName, isSendMsg = true } = options;
         let log = this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1') + '\n' +
             this.errorLog.join('\n') + '\n' +
             this.reporterLog.map(l => `[${l.name}]: ${l.message}\n`).join('');
         if (isShowRoomInfo) log += this.roomInfoLog;
-        const path = `${__dirname}/../../../logs/${this.seed || `${new Date().toISOString().split('T')[0]}-${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
+        let path = `${__dirname}/../../../logs/`;
+        if (folderName) {
+            path += `${folderName}/`;
+            fs.mkdirSync(`${path}`, { recursive: true });
+        }
+        path += `${this.seed || `${new Date().toISOString().split('T')[0]}-${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
         if (!this.isDev) {
             const recordData: RecordData = { ...this.recordData, username: this.players.map(v => v.name), pidx: 0 };
             fs.writeFile(`${path}.gi`, LZString.compressToBase64(JSON.stringify(recordData)), err => err && console.error('err:', err));
         }
-        if (!this.isDev) http.get(`${koishiUrl}?message=${isError ? `7szh报错了[${this.players.map(p => p.name).join('vs')}]` : `7szh有日志被发送了:${info}`}`, { headers: { flag: secretKey } });
+        if (!this.isDev && isSendMsg) http.get(`${koishiUrl}?message=${isError ? `7szh报错了[${this.players.map(p => p.name).join('vs')}]` : `7szh有日志被发送了:${info}`}`, { headers: { flag: secretKey } });
     }
     /**
      * 记录报告者问题
@@ -749,6 +754,7 @@ export default class GeniusInvokationRoom {
     stop() {
         this.recordData.actionLog = [];
         this.taskQueue.init();
+        if (!this.isDev) this.exportLog({ folderName: 'today', isSendMsg: false });
     }
     /**
      * 获取行动
@@ -5152,10 +5158,10 @@ export default class GeniusInvokationRoom {
         clearInterval(this.countdown.timer);
         this.countdown.timer = undefined;
         this.countdown.curr = 0;
-        this.seed = '';
         this.shareCodes = ['', ''];
         this.taskQueue.stopPreview();
-        this.emit('game-end', winnerIdx);
+        this.emit('game-end', 0);
+        this.stop();
     }
     /**
      * 执行任务

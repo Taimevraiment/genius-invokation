@@ -34,6 +34,7 @@ type Player = {
     id: number, // id
     name: string, // 名字
     ip?: string, // 客户端ip地址
+    location?: string, // 客户端ip地址对应的地理位置
     rid: number, // 所在房间id
     handCards: Card[], // 手牌
     heros: ArrayHero, // 登场英雄
