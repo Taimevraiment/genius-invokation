@@ -841,14 +841,15 @@ export default class GeniusInvokationRoom {
                 }
                 this.delay(0, async () => {
                     try {
-                        await this.wait(() => !this.recordData.isExecuting);
+                        await this.wait(() => !this.recordData.isExecuting, { maxtime: 1e8 });
                         this.recordData.isPlaying = true;
                         while (this.recordData.isPlaying && this.recordData.actionLog.length > 0) {
                             await this.delay(1e3 + Math.random() * 1e3);
                             const [{ pidx: willPidx }] = this.recordData.actionLog;
                             const player = this.players[willPidx];
                             await this.wait(() => this.needWait && this.preview.isExec && player.canAction ||
-                                player.phase == PHASE.PICK_CARD || player.phase == PHASE.DICE || player.status == PLAYER_STATUS.DIESWITCH ||
+                                player.phase == PHASE.PICK_CARD || player.phase == PHASE.DICE || player.phase == PHASE.CHANGE_CARD ||
+                                player.status == PLAYER_STATUS.DIESWITCH ||
                                 ([PHASE.CHANGE_CARD, PHASE.CHOOSE_HERO, PHASE.DICE] as Phase[]).includes(this.phase), { maxtime: 3e6 });
                             await this.delay((this.phase == PHASE.ACTION ? 4e3 : 5e2) + Math.random() * 1e3);
                             this.recordData.isExecuting = true;

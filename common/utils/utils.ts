@@ -66,9 +66,9 @@ export const genShareCode = (ids: number[], salt = 0): string => {
     }
     farr.push(salt);
     const fstr = String.fromCharCode(...farr);
-    const res = (typeof window == 'undefined' ? Buffer.from(fstr, 'latin1').toString('base64') : btoa(fstr))
-        .replace(/\+|\//g, '');
-    if (BLOCK_WORDS.some(v => v.test(res))) return genShareCode(ids, salt + 1);
+    const res = typeof window == 'undefined' ? Buffer.from(fstr, 'latin1').toString('base64') : btoa(fstr);
+    const txt = res.replace(/\+|\//g, '');
+    if (BLOCK_WORDS.some(v => v.test(txt))) return genShareCode(ids, salt + 1);
     return res;
 }
 

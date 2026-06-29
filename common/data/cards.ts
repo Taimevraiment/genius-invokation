@@ -749,12 +749,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/6b1e8983b34f821da73f7a93076a501e_3915605735095366427.png')
         .handle((card, event) => {
             const { hero, trigger, execmds } = event;
-            const isGetDmg = trigger == 'getdmg' && card.perCnt > 0 && hero.isFront;
             if (trigger == 'phase-start') execmds.getStatus(301201, { hidxs: hero.hidx });
-            if (isGetDmg) execmds.getDice(1, { mode: CMD_MODE.FrontHero });
             return {
                 triggers: ['phase-start', 'getdmg'],
-                exec: () => { isGetDmg && card.minusPerCnt() }
+                isAddTask: true,
+                exec: () => {
+                    if (trigger == 'phase-start') return;
+                    if (card.perCnt <= 0 || !hero.isFront) return true;
+                    execmds.getDice(1, { mode: CMD_MODE.FrontHero });
+                    card.minusPerCnt()
+                }
             }
         }),
 
@@ -940,24 +944,32 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     312021: () => card(307).name('灵光明烁之心').offline('v1').since('v4.3.0').relic().costSame(0).perCnt(1)
         .description('【角色受到伤害后：】如果所附属角色为「出战角色」，则抓1张牌。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/3a2b86994907366639498965934b1d99_16804113149239958.png')
-        .handle((card, event) => {
-            const { hero, execmds } = event;
-            if (card.perCnt <= 0 || !hero.isFront) return;
-            execmds.getCard(1);
-            return { triggers: 'getdmg', exec: () => card.minusPerCnt() }
-        }),
+        .handle((card, event) => ({
+            triggers: isCdt(card.perCnt > 0, 'getdmg'),
+            isAddTask: true,
+            exec: () => {
+                const { hero, execmds } = event;
+                if (!hero.isFront) return true;
+                execmds.getCard(1);
+                card.minusPerCnt()
+            }
+        })),
 
     312022: () => card(308).name('花海甘露之光').since('v4.3.0').offline('v3').relic().costSame(1).perCnt(1)
         .description('【角色受到伤害后：】如果所附属角色为「出战角色」，则抓1张牌，并且在本回合结束阶段中治疗所附属角色1点。（每回合1次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/18/258999284/aaaf307c3c9725d0c8f0be7d264e04bd_9827908420304255.png')
         .handle((card, event) => {
             const { hero, execmds, trigger } = event;
-            const isGetCard = trigger == 'getdmg' && card.perCnt > 0 && hero.isFront;
             if (trigger == 'phase-end' && card.perCnt <= 0) execmds.heal(1, { hidxs: hero.hidx });
-            if (isGetCard) execmds.getCard(1);
             return {
                 triggers: ['getdmg', 'phase-end'],
-                exec: () => { isGetCard && card.minusPerCnt() }
+                isAddTask: true,
+                exec: () => {
+                    if (trigger == 'phase-end') return card.perCnt > 0;
+                    if (card.perCnt <= 0 || !hero.isFront) return true;
+                    execmds.getCard(1);
+                    card.minusPerCnt();
+                }
             }
         }),
 
