@@ -1568,7 +1568,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     321041: () => card(602).name('噩梦的预兆').since('v6.7.0').place().costSame(0)
         .description('【打出及行动阶段开始时：】赋予敌方手牌中1张[当前元素骰费用]最高的手牌【sts201】，并赋予我方牌组顶的牌【sts201】。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/27/258999284/32fab34b56223cd6acfde0c68231071c_6567708345911802501.png')
         .handle((_, { cmds }) =>
             cmds.getStatus(201, { cnt: 1, mode: CMD_MODE.HighHandCard, isOppo: true })
                 .getStatus(201, { mode: CMD_MODE.TopPileCard })
@@ -1872,10 +1872,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/6f7396e1935d6961de8485127de467f7_6902424310604650469.png'),
 
     331010: () => elTransfiguration(603, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Anemo, ['水风', '扩散（水）'], 10).since('v6.7.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/29/258999284/dab85d2865be9e6c4ddd0a2d33891e44_4322609779391106549.png'),
 
     331011: () => elTransfiguration(604, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro, ['雷草', '激化'], 11).since('v6.7.0')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/27/258999284/a8a41a1bd3afb46853c6c9731760b69e_8698128922575970142.png'),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -2585,7 +2585,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
     332063: () => card(605).name('小小灵蕈大幻戏').since('v6.7.0').costSame(5).canSelectHero(1)
         .tag(CARD_TAG.LocalResonance, CARD_TAG.Monster)
         .description('目标我方「魔物」角色造成的伤害+1。（不可叠加）；【此卡牌在手中，我方「魔物」角色使用技能后：】赋予此牌【sts202】。；【此牌被[舍弃]时：】我方随机「魔物」角色获得1点额外最大生命值。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/25/258999284/c535fdf2cdc2075e7c616a4e52780919_7128909373092390962.png')
         .handle((card, event) => {
             const { heros, selectHeros, randomInArr, hero, cmds, execmds, trigger } = event;
             cmds.getStatus(303249, { hidxs: selectHeros });
@@ -2596,7 +2596,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     332064: () => card(606).name('科研的动力').since('v6.7.0').event().costSame(1)
         .description('我方下3次打出[当前元素骰费用]大于等于3的卡牌后，生成1个随机基础元素骰。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/25/258999284/fd6bce9b154bf953ff3ec5d73cb546b2_6604622473035053291.png')
         .handle(() => ({ status: 303248 })),
 
     333001: () => card(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
@@ -2739,7 +2739,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     333031: () => card(607).name('白灵果派').since('v6.7.0').food().costSame(4).canSelectHero(1)
         .description('本回合目标角色下2次使用技能少花费2个元素骰。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/25/258999284/daf245c69dc1d46e683fc8a760eb7127_1195439098728177919.png')
         .handle(() => ({ status: 303324 })),
 
     211011: () => card(61).name('唯此一心').offline('v1').talent(2).costCryo(5)
@@ -3683,7 +3683,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     217121: () => card(599).name('决胜于逆转之时').since('v6.7.0').talent().costDendro(3).perCnt(2)
         .description('{quick}；〔*[card]生成3张【crd117121】，均匀地置入我方牌组中，并赋予我方手牌和牌组中所有【crd117121】【sts202】。〕；【我方〖hro〗使用〖rsk17126〗造成伤害后：】抓1张牌，并赋予我方手牌和牌组中所有【crd117121】【sts202】。（每回合2次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/42cf05746d216a38e81d886eff64918a_6038344607282951759.png')
         .handle((card, event) => {
             const { cmds, skill, execmds } = event;
             cmds.addCard(3, 117121, { isRandom: false })
@@ -3732,7 +3732,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     221051: () => card(600).name('流变的绘形').since('v6.7.0').talent().costCryo(1).perCnt(1)
         .description('{quick}；〔*[card]生成1张【crd121051】加入手牌。〕；我方打出【crd121051】后，生成2层【sts203】。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/c9561f13b3e6c83f276b10dcf4a2f891_5682917410545754438.png')
         .handle((card, event) => {
             const { hcard, cmds } = event;
             cmds.getCard(1, { card: 121051 });
@@ -3916,7 +3916,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     225041: () => card(601).name('「曾如孤风阻隔黑灾蔓延…」').since('v6.7.0').talent(1).costAnemo(3)
         .description('{action}；【行动阶段开始时：】如果敌方手牌数量大于等于7，则敌方出战角色附属1层【sts210】\\；如果我方手牌数量大于等于7，则我方出战角色附属2层【sts210】\。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/ae270943b50d43d4ed463cb9e4e68901_4462977798772855044.png')
         .handle((_, event) => {
             const { hcardsCnt, ehcardsCnt, execmds } = event;
             if (ehcardsCnt >= 7) execmds.getStatus(210, { isOppo: true });
@@ -4216,7 +4216,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     117121: () => card().name('诳言之核').event(true).costDendro(5).userType()
         .description('[战斗行动]：【hro】为出战角色时可以使用。；【hro】使用技能：【rsk17126】。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/030f9d9c43e40c7190ed7d2293da7b03_8316136998653624836.png')
         .handle((card, event) => {
             const { cmds, hero } = event;
             cmds.useSkill({ skillId: 17126 });
@@ -4225,37 +4225,37 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     121051: () => card().name('浮彩').event(true).costCryo(2)
         .description('[战斗行动]：生成2层【sts203】。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: [[203, 2]] })),
 
     121054: () => card().name('浮彩·冰凌').event().costSame(0)
         .description('【打出〖crd121051〗时：】额外造成1点[冰元素伤害]。（重复选择将使造成的伤害+1）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221052 })),
 
     121055: () => card().name('浮彩·多重').event().costSame(0)
         .description('【打出〖crd121051〗时：】召唤【smn121052】。（重复选择时将使召唤的【smn121052】造成的伤害+1）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221053 })),
 
     121056: () => card().name('浮彩·实像').event().costSame(0)
         .description('【打出〖crd121051〗时：】抓1张牌。（重复选择将额外抓1张牌）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221054 })),
 
     121057: () => card().name('浮彩·支柱').event().costSame(0)
         .description('【打出〖crd121051〗时：】生成1层【sts203】。（重复选择时将额外生成1层【sts203】）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221055 })),
 
     121058: () => card().name('浮彩·坚冰').event().costSame(0)
         .description('【打出〖crd121051〗时：】使我方出战角色附属1层【sts172】。（重复选择时将额外附属1层【sts172】）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221056 })),
 
     121059: () => card().name('浮彩·迅影').event().costSame(0)
         .description('打出【crd121051】少花费1个元素骰。（重复选择时将额外少花费1个元素骰）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221057 })),
 
     122051: () => card().name('水泡史莱姆').vehicle().useReadySkill(122053).costSame(0).useCnt(2)
@@ -4587,19 +4587,19 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     303101: () => card().name('水风祝佑·水爆').support().costHydro(2).from(331010)
         .description('【投掷阶段：】总是投出2个[水元素骰]和2个[风元素骰]。；【我方获得治疗时：】对敌方出战角色造成2点[风元素伤害]。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/29/258999284/0f3fe652a35eee4759ffdef0e76e069c_2634408519148599471.png'),
 
     303102: () => card().name('水风祝佑·漩风').support().costAnemo(2).from(331010)
         .description('【投掷阶段：】总是投出2个[水元素骰]和2个[风元素骰]。；【我方触发扩散反应时：】对敌方出战角色的伤害+1，治疗我方受伤最多的角色1点。（每回合2次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/29/258999284/fdf8efe7908e845fa7636b6cb00b9b9d_7307940214502987526.png'),
 
     303111: () => card().name('雷草祝佑·碎霆').support().costElectro(1).from(331011)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[草元素骰]。；【我方存在激化领域时：】我方释放「元素爆发」少花费2个元素骰。（每回合1次）')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/29/258999284/30d75130620c530dda586addb2bfddb3_5182791141214786646.png'),
 
     303112: () => card().name('雷草祝佑·锐核').support().costDendro(2).from(331011)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[草元素骰]。；【我方存在激化领域时：】我方释放「元素战技」少花费1个元素骰。（每回合2次）')
-        .src('#3003112'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/29/258999284/81a8a0cb8d3f41f59a722d85d77c375c_1473849979278768367.png'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。（每个角色每回合最多受到1次来自本效果的治疗。）')
@@ -4673,7 +4673,7 @@ export const cardsTotal = (version: Version = VERSION[0], options: { force?: boo
     for (const id in allCards) {
         const cardBuilder = allCards[id]().version(version);
         if (((cardBuilder.notExist && !ignoreVersion) || (cardBuilder.notInCardPool && !ignoreInPool)) && !force) continue;
-        cards.push(cardBuilder.id(+id).done()!);
+        cards.push(cardBuilder.id(+id).done());
     }
     return cards;
 }

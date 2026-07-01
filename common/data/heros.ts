@@ -1385,7 +1385,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('扈圣魔枪')
         .skills(
             skill('古律·孤灯遗秘').description('每回合首次使用此技能时，造成{dmg+1}点[elDmg]，自身附属【sts114181】。再次使用此技能，消耗2点[充能]，自身[准备技能]：【rsk14185】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/b/b6/73ed09vxcs494wldbxx2o7bh5oex0yh.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/861feeddaee80052ddbf04f1a74302e2_1141190598548066098.png')
                 .elemental().cost(2).handle(event => {
                     const { skill: { useCntPerRound }, hero: { energy } } = event;
@@ -1393,11 +1393,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     return { status: 114182, isInvalid: energy < 1, energy: -2 }
                 }),
             skill('旧仪·夜客致访').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/6/68/mrynk6yz4a3wse7gft1tdmzwxoq02yf.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/6ab1f1009f2c60fc0eb347fb255ca14a_367740960771308734.png')
                 .burst(4).damage(6).cost(4).handle(() => ({ pdmg: 2 })),
             skill('月兆祝赐·旧世潜藏').description('本局游戏中，敌方受到‹2›‹4›【感电反应】时，改为[月感电]反应。；【自身在场，敌方行动牌被赋予〖sts204〗时：】对敌方场上生命值最高的角色造成1点[穿透伤害]。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/1/1d/erfgu50905guur9xa0j1yqv6iieeqzg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/a3de955a421411c43486a391fd543fd5_9141248537553146255.png')
                 .passive().handle(event => {
                     const { source, playerInfo, cmds } = event;
@@ -2082,7 +2082,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('林麓旅踏')
         .skills(
             skill('圣言述咏·终宵永眠').description('{dealDmg}，生成【sts117111】。如果我方手牌中存在附着有【sts202】的卡牌，则移除随机1张牌的1层【sts202】效果并改为生成可造成2点伤害的【sts117111】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/1/12/n635il0omsf56upu1i60ofcudsn53ad.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/1eccfe943094c183b4e724854ceaeae5_6816940859587505487.png')
                 .elemental().damage(1).cost(3).handle(event => {
                     const { cmds, hcards } = event;
@@ -2091,14 +2091,14 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     return { status: [[117111, +isTriggered]] }
                 }),
             skill('圣言述咏·众心为月').description('赋予我方随机3张[当前元素骰费用]不为0的手牌【sts202】。生成3层【sts117112】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/c/c5/fdo3e18nk7bh91psh6u20emgq1fmyl0.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/c53fe15bb127aa0cb00236229084859e_3161454958607412753.png')
                 .burst(2).cost(3).handle(event => {
                     event.cmds.getStatus(202, { cnt: 3 });
                     return { status: [[117112, 3]] }
                 }),
             skill('月兆祝赐·千籁恩宠').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【敌方受到[月绽放]反应时：】使我方牌组中随机1张卡牌附着【sts202】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/96/kzsn28wppvosjsn0eux1bbxo624htmr.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/00a2c7331294e148221eca1951ed7d74_5666618999732431465.png')
                 .passive().handle(event => {
                     const { trigger, playerInfo, cmds } = event;
@@ -2112,23 +2112,23 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1712: () => hero(596).name('奈芙尔').since('v6.7.0').sumeru().nodkrai().dendro().catalyst()
-        .src('#')
-        .avatar('#AvatarIcon_Nefer')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/29/258999284/8295f862fe3ff8ffb4a4a4f7a4d462fe_3641846394689552230.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a4458de/0d55076caed50cc3de8a6d473bbdd178.png')
         .normalSkill('游虵吐信')
         .skills(
             skill('弈术·千夜一舞').description('{dealDmg}，自身附属1层【sts210】，我方下次行动前，赋予手牌中至多3张[当前元素骰费用]最高的【crd117121】【sts202】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/5c0145aa8b5b99d0d9347d6b08ab8715_6687598567417880295.png')
                 .elemental().damage(1).cost(3).handle(() => ({ status: [210, 117122] })),
             skill('圣约·真眸幻戏').description('{dealDmg}，手牌中每有1张【crd117121】，伤害+1。（至多+2）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/75575aa88e06c91a78964eafccce7926_6013378171012659380.png')
                 .burst(2).damage(4).cost(3).handle(event => ({
                     addDmgCdt: Math.min(2, event.hcards.filter(c => c.id == 117121).length)
                 })),
             skill('月兆祝赐·廊下暮影').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方手牌中〖crd117121〗少于3张，敌方受到[月绽放]反应时：】生成手牌【crd117121】。（每回合2次）')
                 .src('#',
-                    '')
+                    'src="https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/d08d78adb184ff1d7255ae7e4add4008_457691755983761341.png"')
                 .passive().perCnt(2).handle(event => {
                     const { trigger, playerInfo, cmds, hcards, skill } = event;
                     if (trigger == 'game-start') {
@@ -2226,24 +2226,24 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     2105: () => hero(597).name('灵觉隐修的迷者').since('v6.7.0').monster().cryo()
-        .src('#')
-        .avatar('#MonsterIcon_Udugan')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/168bc405794b4a3cf12fae396eb304c2_964255648827242957.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a4458de/8d17b3e81294df183d38a13f2a39cd04.png')
         .normalSkill(skill => skill('灵觉·寒星').catalyst())
         .skills(
             skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并从3个随机的【crd121051】强化效果中[挑选]1个。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/b3eb536691e073bbc3b8560ca73a8bae_5246266185115704290.png')
                 .explain(...Array.from({ length: 6 }, (_, i) => `botcrd${121054 + i}`))
                 .elemental().damage(1).cost(3).handle(({ cmds }) => {
                     cmds.addCard(1, 121051, { addTo: 3 }).pickCard(3, CMD_MODE.UseCard, { card: [121054, 121055, 121056, 121057, 121058, 121059] });
                 }),
             skill('沍寒的图绘').description('{dealDmg}，将1张【crd121051】加入手牌。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/8382ebc71905cd9d25f3a4b662d15554_1146169771526707496.png')
                 .burst(2).damage(4).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 121051 }).res),
             skill('斑斓的绚影').description('战斗开始时，生成3张【crd121051】，均匀放入牌库。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ad74001658357adae861a81fd9e1dd9f_7492149391443402081.png')
                 .passive().handle(({ cmds }) => (cmds.addCard(3, 121051, { isRandom: false }), { triggers: 'game-start' })),
         ),
 
@@ -2833,21 +2833,21 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     2504: () => hero(598).name('黑蛇骑士·斩风之剑').since('v6.7.0').monster().anemo()
-        .src('#')
-        .avatar('#MonsterIcon_DarkwraithWind')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/97f548650afc632c91eeb6fb7376c3aa_6679263965386641545.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a4458de/933f2176018047fdcb59d39488f15ff5.png')
         .normalSkill('半剑技术')
         .skills(
             skill('低位撩斩').description('{dealDmg}，抓1张牌。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/1f570ffaa861ea7d7fdf8b8223c9608b_2037594231057504996.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getCard(1).res),
             skill('近卫姿态').description('[准备技能]：【rsk25045】，然后[准备技能]：【rsk25046】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/77029d440c392be935c03d81d7252c53_2980178131583758856.png')
                 .burst(2).cost(3).handle(() => ({ status: 125041 })),
             skill('前驱气势').description('我方触发扩散反应，或敌方失去[护盾]、【伤害抵消】状态以及出战状态时，抓1张牌。（每回合2次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/22d66b8ad186407ee74151299597a50d_4776296587384746894.png')
                 .passive().perCnt(2).handle(event => {
                     const { skill, sourceStatus, cmds } = event;
                     if (skill.perCnt <= 0) return;
@@ -2958,11 +2958,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('重力应用程式·砸击')
         .skills(
             skill('重力应用程式·点状抵消').description('{dealDmg}，生成2层【sts169】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/3/3d/9ey3xozz1ho95mjplt7r9exqqh1iqbc.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/18/258999284/8e8230b0bc926393a0840964860ee208_406387170849819748.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: [[169, 2]] })),
             skill('重力应用程式·削减场域').description('{dealDmg}，生成【sts126051】和【sts126052】，本回合中我方所有后台角色下次「普通攻击」少花费1个[无色元素骰]。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/a/a8/g371ogeissjfiqzkt81s7wwlz50zc2s.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/05/18/258999284/e6b79b386c530f81e575a7b26c7825de_4609469044337373983.png')
                 .burst(2).damage(3).cost(3).handle(event => {
                     const { cmds, heros } = event;
