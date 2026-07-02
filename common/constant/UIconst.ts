@@ -105,6 +105,7 @@ export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Legend]: '秘传',
     [CARD_SUBTYPE.ElementResonance]: '元素共鸣',
     [CARD_SUBTYPE.Simulanka]: '希穆兰卡',
+    [CARD_SUBTYPE.Hexenzirkel]: '魔导',
     [CARD_SUBTYPE.Adventure]: '冒险地点',
 } as const;
 
@@ -129,6 +130,7 @@ export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.ElementResonance]: 'https://gi.yatta.moe/assets/UI/UI_Gcg_Tag_Card_Sync.png',
     [CARD_SUBTYPE.Adventure]: '/image/Adventure.png',
     [CARD_SUBTYPE.Blessing]: '/image/Blessing.png',
+    [CARD_SUBTYPE.Hexenzirkel]: '/image/Hexenzirkel.png',
 } as const;
 
 export const SUMMON_TAG_NAME = {
@@ -140,6 +142,7 @@ export const SLOT_CODE = {
     [CARD_SUBTYPE.Relic]: 1,
     [CARD_SUBTYPE.Talent]: 2,
     [CARD_SUBTYPE.Vehicle]: 3,
+    [CARD_SUBTYPE.Hexenzirkel]: 4,
 } as const;
 
 export const SLOT_CODE_KEY = swapKeysAndValues(SLOT_CODE);
@@ -365,15 +368,15 @@ const elReactionExplain: Record<string, (...args: any) => string> = {
     蒸发: (isAttach = false) => `【融化】：${!isAttach ? '本伤害+2' : '没有效果'}`,
     感电: (isAttach = false) => `【感电】：${!isAttach ? '本伤害+1，对目标以外的所有敌方角色造成1点穿透伤害' : '没有效果'}`,
     超导: (isAttach = false) => `【超导】：${!isAttach ? '本伤害+1，对目标以外的所有敌方角色造成1点穿透伤害' : '没有效果'}`,
-    超载: (isAttach = false) => `【超载】：${!isAttach ? '本伤害+1，' : ''}目标强制切换到下一个角色`,
+    超载: (isAttach = false) => `【超载】：${!isAttach ? '本伤害+2，' : ''}目标强制切换到下一个角色`,
     冻结: (isAttach = false) => `【冻结】：${!isAttach ? '本伤害+1，' : ''}使目标本回合无法行动（受到物理伤害或火元素伤害后提前解除，但是伤害+2）`,
     燃烧: (isAttach = false) => `【燃烧】：${!isAttach ? '本伤害+1，' : ''}生成回合结束时造成1点火元素伤害的\\[燃烧烈焰]（可用次数1，最多叠加到2）`,
     绽放: (isAttach = false) => `【绽放】：${!isAttach ? '本伤害+1，' : ''}生成使下次火元素或雷元素伤害+2的\\[草原核]`,
     原激化: (isAttach = false) => `【原激化】：${!isAttach ? '本伤害+1，' : ''}生成使下2次草元素或雷元素伤害+1的\\[激化领域]`,
     扩散: (el: string) => `【扩散（${el}）】：对目标以外的所有敌方角色造成1点${el}元素伤害`,
     结晶: (el: string, isAttach = false) => `【结晶（${el}）】：${!isAttach ? '本伤害+1，我' : '敌'}方出战角色获得1点护盾（可叠加，最多2点）`,
-    月感电: () => `生成回合结束时造成2点雷元素伤害的\\[雷暴云]。（可用次数1，可叠加，没有上限，入场或可用次数增加时，赋予敌方随机1张手牌\\[电击]）`,
-    月绽放: () => `本伤害+1，并赋予我方随机1张手牌\\[费用降低]`,
+    月感电: () => `【月感电】：生成回合结束时造成2点雷元素伤害的\\[雷暴云]。（可用次数1，可叠加，没有上限，入场或可用次数增加时，赋予敌方随机1张手牌\\[电击]）`,
+    月绽放: () => `【月绽放】：本伤害+1，并赋予我方随机1张手牌\\[费用降低]`,
 }
 const elr = (elrname: string, elOrIsAttach?: string | boolean, isAttach?: boolean) => elReactionExplain[elrname](elOrIsAttach, isAttach);
 

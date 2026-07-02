@@ -195,15 +195,16 @@ export class GICard extends Entity {
         } else if (subType.includes(CARD_SUBTYPE.Talent)) {
             const hro = `hro${hid}`;
             const ski = `ski${hid},${userType}`;
-            if (this.UI.description.startsWith('{action}')) {
+            if (subType.includes(CARD_SUBTYPE.Action)) {
                 if (!this.UI.explains.includes(ski)) this.UI.explains.unshift(ski);
                 const ohandle = handle;
-                const cnt = hid * 10 + (userType as number) + 1;
+                // const skillId = hid * 10 + (userType as number) + 1;
+                const skillId = (userType as number) + 1;
                 handle = (card, event, ver) => {
                     const { slotUse, cmds } = event;
                     const ohandleres = ohandle?.(card, event, ver);
                     if (slotUse && !cmds.isUseSkill) {
-                        cmds.useSkill({ skillId: cnt });
+                        cmds.useSkill({ skillId });
                         return { triggers: 'skill', ...ohandleres }
                     }
                     return ohandleres;
@@ -400,6 +401,10 @@ class CardBuilder extends BaseCostBuilder {
     vehicle() {
         this.subtype(CARD_SUBTYPE.Vehicle);
         return this.equipment();
+    }
+    hexenzirkel(skillIdx?: number, version?: Version) {
+        this.subtype(CARD_SUBTYPE.Hexenzirkel);
+        return this.talent(skillIdx, version);
     }
     useNightSoul() {
         this._isUseNightSoul = true;

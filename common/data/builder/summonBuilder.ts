@@ -157,7 +157,7 @@ export class GISummon extends Entity {
                 triggers: isCdt(res.triggers, convertToArray(res.triggers) as Trigger[]),
                 exec: () => {
                     res.exec ??= cmds => (!isOnlyPhaseEnd || event.trigger == 'phase-end') && summon.phaseEndAtk(cmds);
-                    res.exec?.(cmds);
+                    res.exec(cmds);
                     cmds.value.forEach(c => {
                         if (c.cmd == 'attack') {
                             c.cnt ??= this.damage;

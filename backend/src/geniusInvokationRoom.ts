@@ -235,7 +235,7 @@ export default class GeniusInvokationRoom {
      */
     private _randomInArr<T>(arr: T[], cnt: number = 1) {
         const selected: number[] = [];
-        if (arr.length <= cnt) return arr;
+        if (arr.length <= cnt || cnt <= 0) return arr;
         while (cnt > 0) {
             const idx = this._randomInt(arr.length - 1);
             if (selected.includes(idx)) continue;
@@ -1128,6 +1128,7 @@ export default class GeniusInvokationRoom {
                 this._detectHero(pidx, triggers, { hidxs: chi, types, sourceHidx, skill, includeCombatStatus: true });
             }
             this._detectSupport(pidx, 'switch', { hidx, skill });
+            this._detectHandcards(pidx, 'switch', { hidx });
             player.isFallAtk = true;
             player.hidx = hidx;
             player.heros.forEach((h, idx) => h.isFront = idx == hidx);
@@ -1573,6 +1574,7 @@ export default class GeniusInvokationRoom {
                 }
             } else if (dmgElement != DAMAGE_TYPE.Physical) {
                 let isElDmg = true;
+                let isLunar = false;
                 isAttachElement = 'consume';
                 const [attachElement] = dmgedfhero.attachElement;
                 const elTipIdx = dmgedPidx * ehlen + dmgedHidx;
@@ -1659,6 +1661,7 @@ export default class GeniusInvokationRoom {
                         });
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro)) { // 水雷 感电
                         if (this.players[atkPidx].playerInfo.isLunarElectroCharged) { // 转化为月感电
+                            isLunar = true;
                             res.elTips[elTipIdx] = ['月感电', attachElement, dmgElement];
                             atriggers.forEach((trg, tri) => {
                                 if (!isAtkSelf) {
@@ -1672,7 +1675,7 @@ export default class GeniusInvokationRoom {
                                     if (tri == dmgedHidx) trg.add('LunarElectroCharged');
                                     else trg.add('other-LunarElectroCharged');
                                 }
-                                if (tri == dmgedHidx) trg.add('get-LunarElectroCharged')
+                                if (tri == dmgedHidx) trg.add('get-LunarElectroCharged');
                             });
                             const cpidx = dmgedPidx ^ 1;
                             this._updateSummon(cpidx, this._getSummonById(205), { isSummon, destroy: +(isSummon == -1) });
@@ -1746,6 +1749,7 @@ export default class GeniusInvokationRoom {
                     } else if (hasEls(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Dendro)) { // 水草 绽放
                         ++res.willDamages[getDmgIdx][0];
                         if (this.players[atkPidx].playerInfo.isLunarBloom) { // 转化为月绽放
+                            isLunar = true;
                             res.elTips[elTipIdx] = ['月绽放', attachElement, dmgElement];
                             atriggers.forEach((trg, tri) => {
                                 if (!isAtkSelf) {
@@ -1759,7 +1763,7 @@ export default class GeniusInvokationRoom {
                                     if (tri == dmgedHidx) trg.add('LunarBloom');
                                     else trg.add('other-LunarBloom');
                                 }
-                                if (tri == dmgedHidx) trg.add('get-LunarBloom')
+                                if (tri == dmgedHidx) trg.add('get-LunarBloom');
                             });
                             this._doCmds(atkPidx, CmdsGenerator.ins.getStatus(202), {
                                 source: ELEMENT_REACTION.LunarBloom,
@@ -1858,6 +1862,10 @@ export default class GeniusInvokationRoom {
                         `other-elReaction-${trgEl}${SwirlOrCrystallize}` as Trigger,
                         `other-elReaction-${PURE_ELEMENT_TYPE_KEY[attachElement]}`,
                     ];
+                    if (isLunar) {
+                        elReactionTriggers.push('elReaction-Lunar');
+                        otherElReactionTriggers.push('other-elReaction-Lunar');
+                    }
                     atriggers.forEach((trgs, tri) => {
                         if (!isAtkSelf) {
                             if (tri == atkHidx) elReactionTriggers.forEach(t => trgs.add(t));
@@ -2955,6 +2963,8 @@ export default class GeniusInvokationRoom {
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Relic)) { // 圣遗物
                 if (hero.relicSlot?.id == equipment.id) equipment.setEntityId(hero.relicSlot.entityId);
                 hero.relicSlot = equipment.setEntityId(this._genEntityId());
+            } else if (equipment.hasSubtype(CARD_SUBTYPE.Hexenzirkel)) { // 魔导
+                hero.hexenzirkelSlot = equipment.setEntityId(hero.hexenzirkelSlot?.entityId ?? this._genEntityId());
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Talent)) { // 天赋
                 hero.talentSlot = equipment.setEntityId(hero.talentSlot?.entityId ?? this._genEntityId());
             } else if (equipment.hasSubtype(CARD_SUBTYPE.Vehicle)) { // 特技
@@ -3425,8 +3435,8 @@ export default class GeniusInvokationRoom {
      * @param pidx 玩家序号
      * @param otrigger 触发时机
      */
-    private _detectHandcards(pidx: number, otrigger: Trigger | Trigger[] | Set<Trigger>, options: { cCard?: Card } = {}) {
-        const { cCard } = options;
+    private _detectHandcards(pidx: number, otrigger: Trigger | Trigger[] | Set<Trigger>, options: { cCard?: Card, hidx?: number } = {}) {
+        const { cCard, hidx } = options;
         const triggers = convertToArray(otrigger);
         const handcards = cCard ? [cCard] : this.players[pidx].handCards.slice().sort((a, b) => b.entityId - a.entityId);
         let isInvalid = false;
@@ -3434,7 +3444,7 @@ export default class GeniusInvokationRoom {
         for (const card of handcards) {
             if (card.type != CARD_TYPE.Equipment) {
                 for (const trigger of triggers) {
-                    const handcardres = card.handle(card, { pidx, ...this.handleEvent, trigger, });
+                    const handcardres = card.handle(card, { pidx, ...this.handleEvent, trigger, hidx });
                     if (this._hasNotTriggered(handcardres.triggers, trigger)) continue;
                     this.taskQueue.addTask(`doHandcards-${card.name}(${card.id}):${trigger}`, () => {
                         handcardres.exec?.();
@@ -3693,10 +3703,7 @@ export default class GeniusInvokationRoom {
                         if (typeof stsargs == 'number' && !cplayer.heros[stsargs].isFront) {
                             return this.emit('useSkill-cancel', cpidx);
                         }
-                        await this._useSkill(cpidx, cnt || -2, {
-                            selectSummon: ohidxs?.[0],
-                            withCard,
-                        });
+                        await this._useSkill(cpidx, cnt || -2, { selectSummon: ohidxs?.[0], withCard });
                     }, { isImmediate, isPriority, isUnshift });
                     break;
                 case 'switch-after':
@@ -4120,7 +4127,10 @@ export default class GeniusInvokationRoom {
                                             const cost = hcardsSorted[0].currDiceCost;
                                             const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
                                             cdidxs.push(...this._randomInArr(costCards, restCnt).map(c => c.cidx));
-                                            if (cdidxs.length == selectCnt) break;
+                                            if (cdidxs.length >= selectCnt) {
+                                                selectCnt = cdidxs.length;
+                                                break;
+                                            }
                                             restCnt -= cdidxs.length;
                                             hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
                                         }

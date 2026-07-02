@@ -246,10 +246,10 @@ export class ArrayHero extends Array<Hero> {
         return Math.min(...hidxs);
     }
     // 获取受伤最多的角色的hidxs(最多一个number的数组)
-    getMaxHurtHidxs(options: { isBack?: boolean } = {}) {
-        const { isBack = false } = options;
+    getMaxHurtHidxs(options: { isBack?: boolean, cdt?: (h: Hero) => boolean } = {}) {
+        const { isBack = false, cdt = () => true } = options;
         if (this.frontHidx == -1) return [];
-        const maxHurt = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront)).map(h => h.hurtHp));
+        const maxHurt = Math.max(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront) && cdt(h)).map(h => h.hurtHp));
         if (maxHurt == 0) return isBack ? [] : [this.frontHidx];
         const hidxs: number[] = [];
         for (let i = +isBack; i < this.length; ++i) {

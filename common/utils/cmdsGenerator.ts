@@ -128,10 +128,11 @@ export default class CmdsGenerator {
     }
     getStatus(status: number | (number | Status | [number, ...any[]])[] | undefined, options: {
         hidxs?: number | number[], isOppo?: boolean, isPriority?: boolean, mode?: number, cnt?: number,
-        cardFilter?: (card: Card) => boolean,
+        card?: number | number[], cardFilter?: (card: Card) => boolean,
     } = {}) {
-        let { hidxs, isOppo, isPriority, mode = isCdt(isPriority, CMD_MODE.IsPriority), cnt, cardFilter } = options;
+        let { hidxs, isOppo, isPriority, mode = isCdt(isPriority, CMD_MODE.IsPriority), cnt, card, cardFilter } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
+        if (card) cardFilter ??= c => convertToArray(card).includes(c.id);
         if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo, mode, cnt, cardFilter });
         return this;
     }
@@ -230,6 +231,9 @@ export default class CmdsGenerator {
     loseSkill(hidx: number, skidx: number) {
         this._add({ cmd: 'loseSkill', hidxs: [hidx], mode: skidx });
         return this;
+    }
+    changeSkill(hidx: number, skillId: number, skidx: number) {
+        return this.loseSkill(hidx, skidx).getSkill(hidx, skillId, skidx);
     }
     addCard(cnt: number, card: Card | (Card | number)[] | number,
         options: {

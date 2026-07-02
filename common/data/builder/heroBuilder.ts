@@ -23,6 +23,7 @@ export class GIHero extends Entity {
     relicSlot: Card | null = null; // 圣遗物栏
     talentSlot: Card | null = null; // 天赋栏
     vehicleSlot: [Card, Skill] | null = null; // 特技栏
+    hexenzirkelSlot: Card | null = null; // 魔导栏
     heroStatus: ArrayStatus = new ArrayStatus(); // 角色状态
     isFront: boolean = false; // 是否为前台角色
     attachElement: PureElementType[] = []; // 附着元素
@@ -90,7 +91,7 @@ export class GIHero extends Entity {
         this.UI.energyIcons = this.updateEnergyIcon(this, 0);
     }
     get equipments(): Card[] {
-        return [this.weaponSlot, this.relicSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null]
+        return [this.weaponSlot, this.relicSlot, this.talentSlot, this.vehicleSlot?.[0] ?? null, this.hexenzirkelSlot]
             .filter((s): s is Card => s != null)
             .sort((a, b) => b.entityId - a.entityId);
     }
@@ -159,58 +160,72 @@ class HeroBuilder extends BaseCostBuilder {
         this._maxEnergy = -maxEnergy;
         return this;
     }
+    /** 魔物 */
     monster() {
         this._tags.push(HERO_LOCAL.Monster);
         return this;
     }
+    /** 蒙德 */
     mondstadt() {
         this._tags.push(HERO_LOCAL.Mondstadt);
         return this;
     }
+    /** 璃月 */
     liyue() {
         this._tags.push(HERO_LOCAL.Liyue);
         return this;
     }
+    /** 稻妻 */
     inazuma() {
         this._tags.push(HERO_LOCAL.Inazuma);
         return this;
     }
+    /** 须弥 */
     sumeru() {
         this._tags.push(HERO_LOCAL.Sumeru);
         return this;
     }
+    /** 枫丹 */
     fontaine(Arkhe: typeof HERO_LOCAL.ArkheOusia | typeof HERO_LOCAL.ArkhePneuma) {
         this._tags.push(HERO_LOCAL.Fontaine, Arkhe);
         return this;
     }
+    /** 纳塔 */
     natlan() {
         this._tags.push(HERO_LOCAL.Natlan);
         return this;
     }
+    /** 至冬 */
     snezhnaya() {
         this._tags.push(HERO_LOCAL.Snezhnaya);
         return this;
     }
+    /** 愚人众 */
     fatui() {
         this._tags.push(HERO_LOCAL.Fatui);
         return this;
     }
+    /** 镀金旅团 */
     eremite() {
         this._tags.push(HERO_LOCAL.Eremite);
         return this;
     }
+    /** 丘丘人 */
     hilichurl() {
         this._tags.push(HERO_LOCAL.Monster, HERO_LOCAL.Hilichurl);
         return this;
     }
+    /** 圣骸兽 */
     consecratedBeast() {
         this._tags.push(HERO_LOCAL.Monster, HERO_LOCAL.ConsecratedBeast);
         return this;
     }
+    /** 寰宇劫灭 */
     cosmicCalamity() {
         this._tags.push(HERO_LOCAL.CosmicCalamity);
         return this;
     }
+    /** 挪德卡莱 */
     nodkrai() {
         this._tags.push(HERO_LOCAL.Nodkrai);
         return this;

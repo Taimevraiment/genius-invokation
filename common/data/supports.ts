@@ -52,28 +52,28 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 医疗器材投资·大计划
-    302220: () => support().collection().handle((support, event) => ({
+    302220: () => support().collection().handle(support => ({
         triggers: 'phase-start',
         exec: cmds => {
-            cmds.heal(2, { hidxs: event.heros.getMaxHurtHidxs() });
+            cmds.heal(2, { target: CMD_MODE.MaxHurt });
             return { isDestroy: support.addUseCnt() == 1 }
         }
     })),
     // 医疗器材投资·特大计划
-    302221: () => support().collection().handle((support, event) => ({
+    302221: () => support().collection().handle(support => ({
         triggers: 'phase-start',
         exec: cmds => {
             if (support.addUseCnt() != 2) return;
-            cmds.heal(4, { hidxs: event.heros.getMaxHurtHidxs() });
+            cmds.heal(4, { target: CMD_MODE.MaxHurt });
             return { isDestroy: true }
         }
     })),
     // 医疗器材投资·超级大计划
-    302222: () => support().collection().handle((support, event) => ({
+    302222: () => support().collection().handle(support => ({
         triggers: 'phase-start',
         exec: cmds => {
             if (support.addUseCnt() != 3) return;
-            cmds.heal(6, { hidxs: event.heros.getMaxHurtHidxs() });
+            cmds.heal(6, { target: CMD_MODE.MaxHurt });
             return { isDestroy: true }
         }
     })),
@@ -872,8 +872,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     321037: () => support().round(2).handle((support, event) => ({
         triggers: ['enter', 'phase-end'],
         exec: cmds => {
-            const { trigger, heros } = event;
-            if (trigger == 'enter') return cmds.getCard(2).heal(2, { hidxs: heros.getMaxHurtHidxs() }).res;
+            if (event.trigger == 'enter') return cmds.getCard(2).heal(2, { target: CMD_MODE.MaxHurt }).res;
             cmds.getStatus(202, { cnt: 2 });
             return { isDestroy: support.minusUseCnt() == 0 }
         }

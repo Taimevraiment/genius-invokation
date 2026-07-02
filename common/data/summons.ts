@@ -1,6 +1,6 @@
 
 import { Summon, Trigger } from "../../typing";
-import { DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
+import { CMD_MODE, DAMAGE_TYPE, ELEMENT_TYPE, ElementType, SKILL_TYPE, SUMMON_TAG, VERSION, Version } from "../constant/enum.js";
 import { MAX_USE_COUNT } from "../constant/gameOption.js";
 import { STATUS_ICON } from "../constant/UIconst.js";
 import { getDerivantParentId, getHidById } from "../utils/gameUtil.js";
@@ -216,7 +216,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
                     if (!hasTround) summon.phaseEndAtk(cmds).clear();
                     cmds.heal(summon.shieldOrHeal, { hidxs: heros.allHidxs() });
                     if (tround == 0) return;
-                    cmds.clear().heal(1, { hidxs: heros.getMaxHurtHidxs() });
+                    cmds.clear().heal(1, { target: CMD_MODE.MaxHurt });
                 },
             }
         }),
@@ -765,6 +765,17 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
 
     122064: () => hero2206summon(),
 
+    122082: () => summon('水滴').useCnt(2).damage(2)
+        .description('{如果【hro】未附属【sts122081】，则使其附属【sts122081】\\；否则，defaultAtk。}')
+        .src('#')
+        .handle((summon, event) => ({
+            triggers: 'phase-end',
+            exec: event.heros.get(summon.id)?.heroStatus.has(122081) ? undefined : cmds => {
+                cmds.getStatus(122081);
+                summon.minusUseCnt();
+            }
+        })),
+
     123021: () => summon('黯火炉心').useCnt(2).damage(1).pdmg(1)
         .description('{defaultAtk，对所有敌方后台角色造成1点[穿透伤害]。}')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/17/183046623/68087eeb0ffed52029a7ad3220eb04db_2391994745432576824.png'),
@@ -928,9 +939,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
             const hidxs = event.heros.getMaxHurtHidxs();
             return {
                 triggers: isCdt(hidxs.length > 0, 'phase-end'),
-                exec: cmds => {
-                    cmds.heal(summon.shieldOrHeal, { hidxs });
-                }
+                exec: cmds => cmds.heal(summon.shieldOrHeal, { hidxs }).res,
             }
         }),
 

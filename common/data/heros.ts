@@ -877,9 +877,9 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://patchwiki.biligame.com/images/ys/7/71/lh98vjaiu8gy537a5k4a3ypm6rde11w.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/550f45fcecc3b2ed7c472f0b5854350e_764894768056545994.png')
                 .elemental().damage(2).cost(3).handle(event => {
-                    const { hcards, heros, cmds } = event;
+                    const { hcards, cmds } = event;
                     if (hcards.every(c => c.id != 113131)) return;
-                    cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() }).discard({ card: 113131 });
+                    cmds.heal(1, { target: CMD_MODE.MaxHurt }).discard({ card: 113131 });
                 }),
             skill('圆阵掷弹爆轰术').description('{dealDmg}，在敌方场上生成【sts113132】。')
                 .src('https://patchwiki.biligame.com/images/ys/2/2c/b0tlvwd776zbom2sewxulwqzyq2fsa6.png',
@@ -1001,6 +1001,27 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://patchwiki.biligame.com/images/ys/b/b6/5b3mcpwua7s0c4z73d3114fire4cpry.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/12/02/258999284/24fc35907cdf894b68b8b19f9ce18020_6441721330980571018.png')
                 .burst(3).damage(2).cost(3).handle(() => ({ status: 113162 }))
+        ),
+
+    1317: () => hero(608).name('杜林').since('v7.0.0').mondstadt().pyro().sword()
+        .src('#')
+        .avatar('#AvatarIcon_Durin')
+        .normalSkill('芒焰之翼斩')
+        .skills(
+            skill('二元式·聚分熔炼').description('{dealDmg}。')
+                .src('#',
+                    '')
+                .elemental().damage(3).cost(3),
+            allSkills[13173](),
+            skill('光灵遵神数显现').id(13175).description('【自身使用「普通攻击」后：】将自身「元素爆发」切换为【rsk13174】。；【自身使用「元素战技」后：】将自身「元素爆发」切换为【rsk13173】。')
+                .src('#',
+                    '')
+                .passive().handle(event => {
+                    const { cmds, trigger, hidx } = event;
+                    if (trigger == 'after-skilltype1') cmds.changeSkill(hidx, 13174, 2);
+                    else if (trigger == 'after-skilltype2') cmds.changeSkill(hidx, 13173, 2);
+                    return { triggers: ['after-skilltype1', 'after-skilltype2'] }
+                })
         ),
 
     1401: () => hero(26).name('菲谢尔').offline('v4').mondstadt().electro().bow()
@@ -1678,9 +1699,41 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/0179cb3d8dc090c33ea8dcb1f2f23367_6900272809255141821.png')
                 .explain(...Array.from({ length: 4 }, (_, i) => `botsts${115153 + i}`))
                 .burst(2).damage(2).cost(3).handle(event => {
-                    const { heros, cmds, swirlEl } = event;
-                    cmds.heal(2, { hidxs: heros.getMaxHurtHidxs() });
+                    const { cmds, swirlEl } = event;
+                    cmds.heal(2, { target: CMD_MODE.MaxHurt });
                     return { statusOppo: isCdt(swirlEl, 115152 + ELEMENT_CODE[swirlEl!]) }
+                })
+        ),
+
+    1516: () => hero(609).name('雅珂达').since('v7.0.0').nodkrai().anemo().bow()
+        .src('#')
+        .avatar('#AvatarIcon_Jahoda')
+        .normalSkill('见机行矢')
+        .skills(
+            skill('奇策·财富分配方案').description('{dealDmg}，生成1层【sts170】，我方切换到下一个角色。如果手牌中没有任意元素的【crd115161】，则生成手牌【crd115161】\\；否则，赋予手牌中所有的【crd115161】【sts202】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(event => {
+                    const { hcards, cmds } = event;
+                    cmds.getStatus(170).switchAfter();
+                    const cids = [115161, 115162, 115163, 115164, 115165];
+                    const hcids = new Set(hcards.map(c => c.id));
+                    if (cids.some(c => hcids.has(c))) cmds.getStatus(202, { card: cids });
+                    else cmds.getCard(1, { card: 115161 });
+                }),
+            skill('秘器·猎人的七道具').description('{dealDmg}，生成【sts115166】。')
+                .src('#',
+                    '')
+                .burst(2).damage(3).cost(3).handle(() => ({ status: 115166 })),
+            skill('月兆祝赐·檐上趱行').description('战斗开始时，生成手牌【crd115161】。；我方触发月反应或扩散反应后，使我方手牌中所有【crd115161】附着【sts202】。（每回合2次）')
+                .src('#',
+                    '')
+                .passive().perCnt(2).handle(event => {
+                    const { trigger, cmds, skill } = event;
+                    if (trigger == 'game-start') return { triggers: trigger, exec: () => cmds.getCard(1, { card: 115161 }) }
+                    if (skill.perCnt <= 0) return;
+                    cmds.getStatus(202, { card: [115161, 115162, 115163, 115164, 115165] });
+                    return { triggers: ['elReaction-Lunar', 'Swirl', 'other-elReaction-Lunar', 'other-Swirl'], exec: () => skill.minusPerCnt() }
                 })
         ),
 
@@ -1873,10 +1926,10 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://patchwiki.biligame.com/images/ys/9/99/7t1wr991s8zzctfskenrhjagtj5l6bg.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/05/06/258999284/22421a5b3ae18db603f872689c0e11bc_752137491273388613.png')
                 .burst(2).damage(2).cost(3).handle(event => {
-                    const { cmds, hero: { heroStatus }, heros } = event;
+                    const { cmds, hero: { heroStatus } } = event;
                     cmds.getCard(1 + (getObjById(heroStatus, 116113)?.useCnt ?? 0));
                     const heal = 1 + heroStatus.filter(s => [116114, 116115, 116116, 116117].includes(s.id)).reduce((a, c) => a + c.useCnt, 0);
-                    cmds.heal(heal, { hidxs: heros.getMaxHurtHidxs() });
+                    cmds.heal(heal, { target: CMD_MODE.MaxHurt });
                 }),
             skill('「源音采样」').description('战斗开始时，初始生成3层【sts116113】，若我方存在火、水、冰、雷的角色，则将1层【sts116113】转化为对应元素的「源音采样」。')
                 .src('https://patchwiki.biligame.com/images/ys/e/ee/h84gvy0q7f90zsthhibu7hl8w9qxhyu.png',
@@ -2456,6 +2509,25 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     if (hcard?.id != 124051) return;
                     return { triggers: ['card', 'discard'], exec: () => cmds.heal(1, { target: CMD_MODE.MaxHurt }) }
                 })
+        ),
+
+    2208: () => hero(610).name('无相之水').since('v7.0.0').maxHp(8).monster().hydro()
+        .src('#')
+        .avatar('#MonsterIcon_EffigyWater')
+        .normalSkill('水珠漫射').catalyst()
+        .skills(
+            skill('涌动洪流').description('{dealDmg}，然后[准备技能]：【rsk22085】。')
+                .src('#',
+                    '')
+                .elemental().damage(2).cost(3).handle(() => ({ status: 122083 })),
+            skill('危祸之潮').description('{dealDmg}，召唤【smn122082】。')
+                .src('#',
+                    '')
+                .burst(2).damage(3).cost(3).handle(() => ({ summon: 122082 })),
+            skill('水晶核心').description('战斗开始时，初始附属【sts122081】。如果场上存在【smn122082】，消耗【sts122081】时重新附属【sts122081】，并使【smn122082】可用次数-1。')
+                .src('#',
+                    '')
+                .passive().handle(() => ({ triggers: 'game-start', status: 122081 }))
         ),
 
     2301: () => hero(55).name('愚人众·火之债务处理人').offline('v2').maxHp(11).maxHp(9, 'v6.4.0', 'v2').maxHp(10, 'v4.3.0').fatui().pyro()

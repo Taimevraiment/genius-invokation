@@ -184,7 +184,7 @@ type DamageVO = {
 
 type TrgElRe = keyof typeof SWIRL_ELEMENT_TYPE;
 type TrgSkType = Exclude<SkillType, 4 | 5>;
-type TrgEl = keyof typeof PURE_ELEMENT_TYPE;
+type TrgEl = keyof typeof PURE_ELEMENT_TYPE | 'Lunar';
 type TrgDmg = 'el' | keyof typeof DAMAGE_TYPE;
 type TrgOppo = '-oppo' | '';
 type TrgGet = 'get-' | '';

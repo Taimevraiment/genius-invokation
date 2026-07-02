@@ -397,6 +397,7 @@ app.get('/login', (req, res) => {
                         if (data.ret == 200) {
                             data = data.data;
                             tplayer.location = [data.country, data.prov, data.city, data.area].filter(v => v).join('-');
+                            player.location = tplayer.location;
                         } else {
                             console.info('获取ip失败');
                         }

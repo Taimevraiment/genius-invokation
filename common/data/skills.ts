@@ -20,9 +20,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         }),
 
     11165: () => skill('极恶技·尽').description('将2个非万能元素骰转化为[冰元素骰]，[舍弃]至多2张[当前元素骰费用]为0骰的卡牌，每[舍弃]1张，【hro】获得1点*[蛇之狡谋]。')
-        .src('#',
-            '')
-        .burst().cost(1).handle(event => {
+        .src('#').burst().cost(1).handle(event => {
             const { hcards, cmds } = event;
             const cnt = Math.min(2, hcards.filter(c => c.currDiceCost == 0).length);
             cmds.changeDice({ cnt: 2, element: COST_TYPE.Cryo }).discard({ cnt, card: 0 }).getEnergy(cnt, { isSp: true });
@@ -50,6 +48,16 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         .elemental().readySkill().handle(() => ({ status: 113158 })),
 
     13164: () => skill('踏云献瑞').description('{dealDmg}。').normal().damage(2),
+
+    13173: () => skill('白化法·如光流变').description('{dealDmg}，生成【sts113171】。')
+        .src('#',
+            '')
+        .burst(2).damage(1).cost(3).handle(() => ({ status: 113171 })),
+
+    13174: () => skill('黑度法·如星阴燃').description('{dealDmg}，生成【sts113172】。')
+        .src('#',
+            '')
+        .burst(2).damage(3).cost(3).handle(() => ({ status: 113172 })),
 
     14054: () => skill('踏潮').description('{dealDmg}。')
         .elemental().readySkill().damage(3).damage(2, 'v3.8.0').handle((event, ver) => {
@@ -88,6 +96,8 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     17126: () => skill('幻戏').description('{dealDmg}。；使用此技能不会获得[充能]。').normal().energy(-1).damage(4),
 
     22035: () => skill('涟锋旋刃').description('{dealDmg}。').elemental().readySkill().damage(1),
+
+    22085: () => skill('溢流').description('{dealDmg}。').elemental().readySkill().damage(1),
 
     23046: () => skill('炽烈轰破').description('{dealDmg}，对敌方所有后台角色造成2点[穿透伤害]。本角色每附属有2层【sts123041】，就使此技能造成的[火元素伤害]+1。')
         .burst().readySkill().damage(1).handle(event => {

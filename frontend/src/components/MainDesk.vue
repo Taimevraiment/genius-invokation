@@ -168,6 +168,11 @@
               <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Talent]" />
               <div :class="{ 'slot-can-use': hero.talentSlot.perCnt > 0 }"></div>
             </div>
+            <div class="hero-talent" v-if="hero.hexenzirkelSlot != null"
+              :class="{ 'slot-select': slotSelect[hgi][hidx]?.[SLOT_CODE[CARD_SUBTYPE.Hexenzirkel]] }">
+              <img :src="CARD_SUBTYPE_URL[CARD_SUBTYPE.Hexenzirkel]" />
+              <div :class="{ 'slot-can-use': hero.hexenzirkelSlot.perCnt > 0 }"></div>
+            </div>
           </div>
           <div class="attach-element">
             <template v-if="elTips[hgi][hidx] != undefined && elTips[hgi][hidx][0] != ''">

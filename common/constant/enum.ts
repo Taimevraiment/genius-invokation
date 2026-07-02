@@ -151,6 +151,7 @@ export const CARD_SUBTYPE = {
     /** 秘传 */ Legend: 'Legend',
     /** 元素共鸣 */ ElementResonance: 'ElementResonance',
     /** 希穆兰卡 */ Simulanka: 'Simulanka',
+    /** 魔导 */ Hexenzirkel: 'Hexenzirkel',
     /** 冒险地点 */ Adventure: 'Adventure',
 } as const;
 
@@ -273,12 +274,12 @@ export type HeroLocalCode = TypeConst<typeof HERO_LOCAL_CODE>;
 export const HERO_LOCAL_CODE_KEY = swapKeysAndValues(HERO_LOCAL_CODE);
 
 export const CARD_TAG = {
-    /** 减伤 0 */ Barrier: 'Barrier', 
-    /** 复苏料理 1 */ Revive: 'Revive', 
-    /** 所属共鸣 2 */ LocalResonance: 'LocalResonance', 
-    /** 免击倒 3 */ NonDefeat: 'NonDefeat', 
-    /** 不能调和 4 */ NonReconcile: 'NonReconcile', 
-    /** 附魔 5 */ Enchant: 'Enchant', 
+    /** 减伤 0 */ Barrier: 'Barrier',
+    /** 复苏料理 1 */ Revive: 'Revive',
+    /** 所属共鸣 2 */ LocalResonance: 'LocalResonance',
+    /** 免击倒 3 */ NonDefeat: 'NonDefeat',
+    /** 不能调和 4 */ NonReconcile: 'NonReconcile',
+    /** 附魔 5 */ Enchant: 'Enchant',
     ...HERO_LOCAL,
 } as const;
 
@@ -286,8 +287,8 @@ export type CardTag = TypeConst<typeof CARD_TAG>;
 
 export const HERO_TAG = {
     ...HERO_LOCAL,
-    /** 荒 11 */ Ousia: 'Ousia', 
-    /** 芒 12 */ Pneuma: 'Pneuma', 
+    /** 荒 11 */ Ousia: 'Ousia',
+    /** 芒 12 */ Pneuma: 'Pneuma',
 } as const;
 
 export type HeroTag = TypeConst<typeof HERO_TAG>;
@@ -311,12 +312,12 @@ export const ELEMENT_REACTION = {
 export type ElementReaction = TypeConst<typeof ELEMENT_REACTION>;
 
 export const SKILL_TYPE = {
-    /** 隐藏被动 */ PassiveHidden: 0, 
-    /** 普通攻击 */ Normal: 1, 
-    /** 元素战技 */ Elemental: 2, 
-    /** 元素爆发 */ Burst: 3, 
-    /** 被动技能 */ Passive: 4, 
-    /** 特技 */ Vehicle: 5, 
+    /** 隐藏被动 */ PassiveHidden: 0,
+    /** 普通攻击 */ Normal: 1,
+    /** 元素战技 */ Elemental: 2,
+    /** 元素爆发 */ Burst: 3,
+    /** 被动技能 */ Passive: 4,
+    /** 特技 */ Vehicle: 5,
 } as const;
 
 export type SkillType = TypeConst<typeof SKILL_TYPE>;
@@ -368,11 +369,11 @@ export const CMD_MODE = {
 } as const;
 
 export const INFO_TYPE = {
-    /** 技能 */ Skill: 'skill', 
-    /** 角色 */ Hero: 'hero', 
-    /** 卡牌/支援物 */ Card: 'card', 
-    /** 召唤物 */ Summon: 'summon', 
-    /** 支援物 */ Support: 'support', 
+    /** 技能 */ Skill: 'skill',
+    /** 角色 */ Hero: 'hero',
+    /** 卡牌/支援物 */ Card: 'card',
+    /** 召唤物 */ Summon: 'summon',
+    /** 支援物 */ Support: 'support',
 } as const;
 
 export type InfoType = TypeConst<typeof INFO_TYPE>;
@@ -420,6 +421,7 @@ export const ACTION_TYPE = {
 export type ActionType = TypeConst<typeof ACTION_TYPE>;
 
 export const VERSION = [
+    'v7.0.0',
     'v6.7.0', 'v6.6.0', 'v6.5.0', 'v6.4.0', 'v6.3.0', 'v6.2.0', 'v6.1.0', 'v6.0.0',
     'v5.8.0', 'v5.7.0', 'v5.6.0', 'v5.5.0', 'v5.4.0', 'v5.3.0', 'v5.2.0', 'v5.1.0', 'v5.0.0',
     'v4.8.0', 'v4.7.0', 'v4.6.1', 'v4.6.0', 'v4.5.0', 'v4.4.0', 'v4.3.0', 'v4.2.0', 'v4.1.0', 'v4.0.0',

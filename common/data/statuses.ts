@@ -597,7 +597,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 exec: () => {
                     if (['enter', 'destroy'].includes(trigger)) {
                         const isEnter = +(trigger == 'enter');
-                        cmds.loseSkill(hidx, 2).getSkill(hidx, 11163 + isEnter * 2, 2);
+                        cmds.changeSkill(hidx, 11163 + isEnter * 2, 2);
                         UI.src = UI.srcs[isEnter];
                         return;
                     }
@@ -1210,6 +1210,36 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     113163: () => readySkillStatus('踏云献瑞', 13164),
 
+    113171: () => status('白化之是').combatStatus().useCnt(3).icon('ski,2').type(STATUS_TYPE.Attack)
+        .description('【我方角色行动后：】造成1点[火元素伤害]。；[useCnt]')
+        .handle((status, event) => ({
+            damage: 1,
+            element: DAMAGE_TYPE.Pyro,
+            triggers: isCdt(event.skill?.id != 13173, 'after-skill'),
+            exec: () => status.minusUseCnt(),
+        })),
+
+    113172: () => status('黑度之否').combatStatus().useCnt(1).icon('#').type(STATUS_TYPE.Attack)
+        .description('【我方宣布结束时：】造成3点[火元素伤害]。；[useCnt]')
+        .handle(status => ({
+            damage: 3,
+            element: DAMAGE_TYPE.Pyro,
+            triggers: 'end-phase',
+            exec: () => status.minusUseCnt(),
+        })),
+
+    113173: () => status('白焰之龙（生效中）').combatStatus().useCnt(3).type(STATUS_TYPE.AddDamage)
+        .description('我方造成的伤害+1。；[useCnt]').icon('ski,2')
+        .handle(status => ({ triggers: 'dmg', addDmgCdt: 1, exec: () => status.minusUseCnt() })),
+
+    113174: () => status('黑蚀之龙（生效中）').combatStatus().type(STATUS_TYPE.AddDamage).icon('#')
+        .description('我方【hro】与【sts113172】造成的伤害+1。')
+        .handle((status, event) => {
+            const { source } = event;
+            if (source != getHidById(status.id) && source != 113172) return;
+            return { triggers: 'dmg', addDmgCdt: 1 }
+        }),
+
     114021: () => status('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
         .description('【所附属角色使用「普通攻击」或「元素战技」后：】造成2点[雷元素伤害]。；[roundCnt]')
         .handle(() => ({
@@ -1331,7 +1361,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【我方切换角色后：】造成1点[雷元素伤害]，治疗我方受伤最多的角色1点。（每回合1次）；[useCnt]')
         .handle((status, event) => {
             if (status.perCnt <= 0) return;
-            event.cmds.heal(1, { hidxs: event.heros.getMaxHurtHidxs() });
+            event.cmds.heal(1, { target: CMD_MODE.MaxHurt });
             return {
                 damage: 1,
                 element: DAMAGE_TYPE.Electro,
@@ -1706,6 +1736,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     115155: () => hero1515sts(ELEMENT_TYPE.Pyro),
 
     115156: () => hero1515sts(ELEMENT_TYPE.Electro),
+
+    115166: () => status('猫型家用互助协调器').combatStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('ski,2')
+        .description('【结束阶段：】造成1点等于我方出战角色元素属性的的元素伤害（如果是草、岩元素角色，则造成[风元素伤害]），治疗我方受伤最多的角色2点。；[useCnt]')
+        .handle((status, event) => {
+            let { hero: { element }, cmds } = event;
+            if (element == ELEMENT_TYPE.Dendro || element == ELEMENT_TYPE.Geo) element = ELEMENT_TYPE.Anemo;
+            cmds.attack(1, element).heal(2, { target: CMD_MODE.MaxHurt });
+            return { triggers: 'phase-end', exec: () => status.minusUseCnt() }
+        }),
 
     116011: () => status('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
         .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；[useCnt]')
@@ -2088,7 +2127,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .handle((status, event) => ({
             triggers: 'action-start',
             exec: () => {
-                event.cmds.getStatus(202, { cnt: 3, cardFilter: c => c.id == 117121, mode: CMD_MODE.HighHandCard });
+                event.cmds.getStatus(202, { cnt: 3, card: 117121, mode: CMD_MODE.HighHandCard });
                 status.dispose();
             }
         })),
@@ -2258,6 +2297,18 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【角色无法使用技能。】（持续到回合结束）'),
 
     122053: () => readySkillStatus('水泡封锁（准备中）', 1220512, -122051),
+
+    122081: () => status('水晶核心').heroStatus().icon(STATUS_ICON.Revive).useCnt(1).type(STATUS_TYPE.Sign, STATUS_TYPE.NonDefeat)
+        .description('【所附属角色被击倒时：】移除此效果，使角色[免于被击倒]，并治疗该角色到1点生命值。')
+        .handle((status, event) => {
+            const { hidx, cmds, summons } = event;
+            cmds.revive(1, hidx);
+            const summon = summons.get(122082)?.id;
+            if (summon) cmds.consumeUseCnt({ summon, cnt: 1 }).getStatus(status.id, { hidxs: hidx });
+            return { triggers: 'will-killed', exec: () => status.minusUseCnt() }
+        }),
+
+    122083: () => readySkillStatus('蓄洪', 22085),
 
     123011: (isTalent: boolean = false) => status('潜行').heroStatus().useCnt(2).useCnt(3, isTalent)
         .type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage).type(isTalent, STATUS_TYPE.Enchant).talent(isTalent)
@@ -2724,6 +2775,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('我方下次造成的[水元素伤害]和[火元素伤害]+1。；[useCnt]')
         .handle(status => ({ triggers: ['Hydro-dmg', 'Pyro-dmg'], addDmgCdt: 1, exec: () => status.minusUseCnt() })),
 
+    212033: () => status('天步真原（生效中）').combatStatus().icon(STATUS_ICON.Buff).from(212032)
+        .description('我方下次蒸发反应造成的伤害+2。').type(STATUS_TYPE.Sign, STATUS_TYPE.AddDamage)
+        .handle(status => ({ triggers: 'Vaporize', addDmgCdt: 2, exec: () => status.dispose() })),
+
     212062: () => status('镜华风姿（生效中）').heroStatus().icon(STATUS_ICON.Special).roundCnt(1)
         .type(STATUS_TYPE.Round, STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('本回合中，所附属角色下次「普通攻击」少花费2个[无色元素骰]。')
@@ -2731,6 +2786,16 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             triggers: isCdt(event.isMinusDiceSkill, 'skilltype1'),
             minusDiceSkill: { skilltype1: [0, 2, 0] },
             exec: () => status.dispose(),
+        })),
+
+    215033: () => status('颂时风若（生效中）').heroStatus().from(215032).icon(STATUS_ICON.Buff).useCnt(2).roundCnt(1)
+        .type(STATUS_TYPE.Enchant, STATUS_TYPE.Usage).icon(STATUS_ICON.Enchant)
+        .description('本回合中所附属角色角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
+        .handle(status => ({
+            triggers: 'skilltype1',
+            attachEl: ELEMENT_TYPE.Anemo,
+            minusDiceSkill: { skilltype1: [0, 2, 0] },
+            exec: () => status.minusUseCnt(),
         })),
 
     216113: () => hero1611sts2(ELEMENT_TYPE.Geo),
@@ -2900,8 +2965,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage).from(321026)
         .description('下次切换至前台时，回复1个对应元素的骰子。（可叠加，每次触发一层）')
         .handle((status, event) => {
-            const { heros, hidx = -1, cmds } = event;
-            cmds.getDice(1, { element: heros[hidx]?.element });
+            const { heros, hidx, cmds } = event;
+            cmds.getDice(1, { element: heros[hidx].element });
             return {
                 triggers: 'switch-to',
                 isAddTask: true,
@@ -3608,6 +3673,13 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     303249: () => status('小小灵蕈大幻戏（生效中）').heroStatus().icon(STATUS_ICON.AtkUp).from(332063)
         .description('所附属角色造成的伤害+1。（不可叠加）').type(STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
         .handle(() => ({ addDmg: 1 })),
+
+    303250: () => status('齐聚共饮（生效中）').combatStatus().icon(STATUS_ICON.Buff).from(332066)
+        .description('【下个回合开始时：】抓2张牌，随机生成2个随机元素骰。').type(STATUS_TYPE.Sign, STATUS_TYPE.Usage)
+        .handle((status, event) => {
+            event.cmds.getCard(2).getDice(2, { mode: CMD_MODE.Random });
+            return { triggers: 'phase-start', exec: () => status.dispose() }
+        }),
 
     303300: () => status('饱腹').heroStatus().roundCnt(1)
         .icon(STATUS_ICON.Food).type(STATUS_TYPE.Round, STATUS_TYPE.Sign)

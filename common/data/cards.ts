@@ -2,6 +2,7 @@ import { Card, Trigger } from '../../typing';
 import {
     CARD_SUBTYPE, CARD_TAG, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, ELEMENT_CODE, ELEMENT_TYPE, ElementType, HERO_LOCAL, HERO_TAG,
     HeroTag, PHASE, PURE_ELEMENT_TYPE, PureElementType, SKILL_TYPE, STATUS_TYPE,
+    SWIRL_ELEMENT_TYPE,
     SwirlElementType, VERSION, Version
 } from '../constant/enum.js';
 import { MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT } from '../constant/gameOption.js';
@@ -177,6 +178,12 @@ const hero1511card = (el: SwirlElementType) => {
             if (ver.lt('v6.1.0') || isFromPile == 0) triggers.push('discard');
             return { triggers, notPreview: true }
         });
+}
+
+const hero1516card = (el: SwirlElementType) => {
+    return card().name(`呼噜噜秘藏瓶·${ELEMENT_NAME[el][0]}`).event(true).costSame(4)
+        .description(`[战斗行动]：对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，重复1次。`)
+        .handle((_, { cmds }) => cmds.attack(1, el, { isOrder: true }).attack(1, el));
 }
 
 const elTransfiguration = (shareId: number, el1: PureElementType, el2: PureElementType, elReaction: string | [string, string?], code: number) => {
@@ -1147,7 +1154,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle((card, event) => {
             const { source, heros, execmds } = event;
             if (card.perCnt <= 0 || source.toString().startsWith('312') || !heros.hasHurt) return;
-            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            execmds.heal(1, { target: CMD_MODE.MaxHurt });
             return { triggers: 'heal', exec: () => card.minusPerCnt() }
         }),
 
@@ -2537,7 +2544,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             const hasSameElement = new Set(heros.map(h => h.element)).size < heros.length;
             const hasSameWeapon = new Set(heros.map(h => h.weaponType)).size < heros.length;
             const hasSameLocal = objToArr(heros.reduce((a, h) => (h.tags.forEach(t => a[t] = (a[t] ?? 0) + 1), a), {} as Record<HeroTag, number>)).some(([, n]) => n > 1);
-            if (hasSameElement) cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            if (hasSameElement) cmds.heal(1, { target: CMD_MODE.MaxHurt });
             if (hasSameWeapon) cmds.getCard(1);
             if (hasSameLocal) cmds.adventure();
             return { isValid: cmds.notEmpty }
@@ -2598,6 +2605,20 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('我方下3次打出[当前元素骰费用]大于等于3的卡牌后，生成1个随机基础元素骰。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/25/258999284/fd6bce9b154bf953ff3ec5d73cb546b2_6604622473035053291.png')
         .handle(() => ({ status: 303248 })),
+
+    332065: () => card(618).name('「魔女的课业」').since('v7.0.0').event().costSame(1)
+        .description('抓1张「天赋」牌。如果我方牌组中初始包含至少3张「天赋」牌，则赋予手牌中[当前元素骰费用]最高的「天赋」牌【sts202】。')
+        .src('#')
+        .handle((_, event) => {
+            const { cmds, playerInfo: { talentCnt } } = event;
+            cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true });
+            if (talentCnt >= 3) cmds.getStatus(202, { mode: CMD_MODE.HighHandCard, cardFilter: c => c.hasSubtype(CARD_SUBTYPE.Talent) });
+        }),
+
+    332066: () => card(619).name('齐聚共饮').since('v7.0.0').event().costSame(0)
+        .description('【下个回合开始时：】双方各抓2张牌，随机生成2个随机元素骰。')
+        .src('#')
+        .handle(() => ({ status: 303250, statusOppo: 303250 })),
 
     333001: () => card(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
         .description('本回合中，目标角色下一次「普通攻击」造成的伤害+1。')
@@ -2913,6 +2934,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://patchwiki.biligame.com/images/ys/d/de/1o1lt07ey988flsh538t7ywvnpzvzjk.png')
         .handle((_, event) => ({ triggers: 'elReaction-Hydro', addDmgCdt: isCdt(event.hero.isFront, 2) })),
 
+    212032: () => card(614).name('天步真原').since('v7.0.0').hexenzirkel(0).costHydro(1).anydice(2)
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，生成【sts212033】并立刻使用一次‹#f4dca2【ski】›。；【hro】「普通攻击」少花费1个[无色元素骰]，并且「普通攻击」后生成【sts212033】。')
+        .src('#')
+        .handle((_, event) => {
+            const { cmds, execmds } = event;
+            cmds.getStatus(212033);
+            execmds.getStatus(212033);
+            return { triggers: 'after-skilltype1', minusDiceSkill: { skilltype1: [0, 1, 0] } }
+        }),
+
     212041: () => card(72).name('深渊之灾·凝水盛放').since('v3.7.0').offline('v3').talent(1).costHydro(3).costHydro(4, 'v4.1.0')
         .description('{action}；结束阶段：装备有此牌的【hro】在场时，敌方出战角色附属有【sts112043】，则对其造成1点[穿透伤害]。')
         .description('{action}；结束阶段：装备有此牌的【hro】在场时，对敌方所有附属有【sts112043】的角色造成1点[穿透伤害]。', 'v4.1.0')
@@ -3068,6 +3099,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；装备有此牌的【hro】生成的【sts113061】的[可用次数]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/0cca153cadfef3f9ccfd37fd2b306b61_8853740768385239334.png'),
 
+    213062: () => card(615).name('火花魔法').since('v7.0.0').hexenzirkel().costSame(0)
+        .description('{quick。}；〔*[card]可莉附属【sts113061】。〕；【所附属角色进行[重击]后：】附属1层【sts210】。')
+        .src('#')
+        .handle((_, event) => {
+            const { cmds, execmds, isChargedAtk } = event;
+            cmds.getStatus(113061);
+            execmds.getStatus(210);
+            return { triggers: isCdt(isChargedAtk, 'skilltype1') }
+        }),
+
     213071: () => card(83).name('血之灶火').since('v3.7.0').offline('v2').talent(1).costPyro(2)
         .description('{action}；装备有此牌的【hro】在生命值不多于6时，造成的[火元素伤害]+1。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/950a1fe6fcb977429942fcf0db1a6cc6_4713651560561730973.png')
@@ -3165,9 +3206,29 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: 'after-skilltype2', exec: () => card.minusPerCnt() }
         }),
 
+    213171: () => card(611).name('红土之逆').since('v7.0.0').talent(2).costPyro(3).energy(2)
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下三次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】自身与我方【sts113172】造成的伤害+1。')
+        .src('#')
+        .handle((_, event) => {
+            const { skill, execmds } = event;
+            if (skill?.id == 13173) execmds.getStatus(113173);
+            else if (skill?.id == 13174) execmds.getStatus(113174);
+            return { triggers: isCdt(execmds.notEmpty, 'after-skill') }
+        }),
+
     214011: () => card(86).name('噬星魔鸦').offline('v4').talent(1).costElectro(3)
         .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】「普通攻击」后造成2点[雷元素伤害]。（需消耗[可用次数]）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png'),
+
+    214012: () => card(616).name('宵世幻奏').since('v7.0.0').hexenzirkel().costElectro(2)
+        .description('{quick。}；〔*[card]召唤【smn114011】。〕；【smn114011】在场时，我方[雷元素相关反应]造成的伤害+1。')
+        .src('#')
+        .handle((_, event) => {
+            const { cmds, summons } = event;
+            cmds.getSummon(114011);
+            if (!summons.has(114011)) return;
+            return { triggers: ['elReaction-Electro', 'other-elReaction-Electro'], addDmgCdt: 1 }
+        }),
 
     214021: () => card(87).name('觉醒').offline('v3').talent(1).costElectro(3).costElectro(4, 'v4.2.0').perCnt(1).perCnt(0, 'v4.2.0')
         .description('{action}；装备有此牌的【hro】使用【ski】后：使我方一个‹4雷元素›角色获得1点[充能]。（出战角色优先，每回合1次）')
@@ -3357,6 +3418,17 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；装备有此牌的【hro】生成的【sts115031】触发后，会使本回合中我方角色下次「普通攻击」少花费1个[无色元素骰]。')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f46cfa06d1b3ebe29fe8ed2c986b4586_6729812664471389603.png'),
 
+    215032: () => card(617).name('颂时风若').since('v7.0.0').hexenzirkel().costAnemo(3)
+        .description('{quick。}；〔*[card]召唤【smn115034】。〕；我方召唤【smn115034】后，本回合中所附属角色角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
+        .src('#')
+        .handle((_, event) => {
+            const { cmds, sourceSummon, execmds, hidx } = event;
+            cmds.getSummon(115034);
+            if (sourceSummon?.id != 115034) return;
+            execmds.getStatus(215033, { hidxs: hidx });
+            return { triggers: 'summon-generate' }
+        }),
+
     215041: () => card(99).name('降魔·护法夜叉').since('v3.7.0').offline('v2').talent(2).costAnemo(3).energy(2)
         .description('{action}；装备有此牌的【hro】附属【sts115041】期间，使用【ski,1】时少花费1个[风元素骰]。（每附属1次【sts115041】，可触发2次）')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/fae27eb5db055cf623a80c11e08bb07c_2875856165408881126.png'),
@@ -3473,6 +3545,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                 ],
                 exec: () => card.minusPerCnt(),
             }
+        }),
+
+    215161: () => card(612).name('暗巷的黠慧').since('v7.0.0').talent(1).costAnemo(3)
+        .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制两张敌方手牌。')
+        .src('#')
+        .handle((_, event) => {
+            const { ehcards, ehcardsCnt, hcardsCnt, execmds, randomInArr } = event;
+            if (ehcardsCnt < hcardsCnt) return;
+            execmds.getCard(2, { card: randomInArr(ehcards, 2) });
+            return { triggers: 'switch-to' }
         }),
 
     216011: () => card(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(3).costGeo(4, 'v6.0.0')
@@ -3687,12 +3769,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle((card, event) => {
             const { cmds, skill, execmds } = event;
             cmds.addCard(3, 117121, { isRandom: false })
-                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllPileCard })
-                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllHandCards });
+                .getStatus(202, { card: 117121, mode: CMD_MODE.AllPileCard })
+                .getStatus(202, { card: 117121, mode: CMD_MODE.AllHandCards });
             if (skill?.id != 17126 || card.perCnt <= 0) return;
             execmds.getCard(1)
-                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllPileCard })
-                .getStatus(202, { cardFilter: c => c.id == 117121, mode: CMD_MODE.AllHandCards });
+                .getStatus(202, { card: 117121, mode: CMD_MODE.AllPileCard })
+                .getStatus(202, { card: 117121, mode: CMD_MODE.AllHandCards });
             return { triggers: 'dmg', exec: () => card.minusPerCnt() }
         }),
 
@@ -3793,11 +3875,21 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{quick。}；【入场时：】生成手牌【crd124051】。；装备有此牌的【hro】在场时，我方使用【crd124051】后，治疗我方受伤最多的角色1点。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/d379b7969a4837e36670611756e23e38_7494165190112208048.png')
         .handle((_, event) => {
-            const { cmds, execmds, heros, hcard } = event;
+            const { cmds, execmds, hcard } = event;
             cmds.getCard(1, { card: 124051 });
             if (hcard?.id != 124051) return;
-            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            execmds.heal(1, { target: CMD_MODE.MaxHurt });
             return { triggers: 'card' }
+        }),
+
+    222081: () => card(613).name('诡谲恶浪').since('v7.0.0').talent().costHydro(1).perCnt(3)
+        .description('{quick。}；【hro】或【smn122082】造成伤害后，治疗我方受伤最多的魔物1点。（每回合3次）')
+        .src('#')
+        .handle((card, event) => {
+            const { source, execmds, heros } = event;
+            if (card.perCnt <= 0 || source != getHidById(card.id) && source != 122082) return;
+            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) }) });
+            return { triggers: 'dmg', exec: () => card.minusPerCnt() }
         }),
 
     223011: () => card(115).name('悉数讨回').offline('v2').talent(1).costPyro(3)
@@ -4073,8 +4165,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             if (!hero) return;
             const clocal = hero.tags.at(-1);
             const nsummonId = +(clocal == HERO_TAG.ArkheOusia);
-            cmds.loseSkill(hero.hidx, 1)
-                .getSkill(hero.hidx, 12112 + nsummonId * 10, 1)
+            cmds.changeSkill(hero.hidx, 12112 + nsummonId * 10, 1)
                 .changeSummon(112111 + (nsummonId ^ 1), 112111 + nsummonId);
             return {
                 exec: () => {
@@ -4198,6 +4289,33 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     115152: () => card().name('咔库库').vehicle().useNightSoul().costSame(0)
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/5fab729d51a8343c95a532156451dd47_4245641290755684283.png'),
+
+    115161: () => card().name('呼噜噜秘藏瓶').event(true).costSame(4)
+        .description('【〖hro〗切换为出战角色时：】如果敌方出战角色附着有火/水/雷/冰元素，则将此牌转化为对应元素。；[战斗行动]：对敌方出战角色造成2点[风元素伤害]，重复1次。')
+        .src('#')
+        .explain(...Array.from({ length: 4 }, (_, i) => `botcrd11516${i + 2}`))
+        .handle((card, event) => {
+            const { heros, hidx, eDmgedHero, cmds, execmds } = event;
+            cmds.attack(2, DAMAGE_TYPE.Anemo, { isOrder: true }).attack(2, DAMAGE_TYPE.Anemo);
+            if (heros[hidx].id != getHidById(card.id)) return;
+            const el = eDmgedHero.attachElement[0] as SwirlElementType;
+            if (!Object.values(SWIRL_ELEMENT_TYPE).includes(el)) return;
+            execmds.convertCard(card.entityId, {
+                [PURE_ELEMENT_TYPE.Pyro]: 115162,
+                [PURE_ELEMENT_TYPE.Hydro]: 115163,
+                [PURE_ELEMENT_TYPE.Electro]: 115164,
+                [PURE_ELEMENT_TYPE.Cryo]: 115165,
+            }[el]);
+            return { triggers: 'switch' }
+        }),
+
+    115162: () => hero1516card(ELEMENT_TYPE.Pyro).src('#'),
+
+    115163: () => hero1516card(ELEMENT_TYPE.Hydro).src('#'),
+
+    115164: () => hero1516card(ELEMENT_TYPE.Electro).src('#'),
+
+    115165: () => hero1516card(ELEMENT_TYPE.Cryo).src('#'),
 
     116081: () => card().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')
