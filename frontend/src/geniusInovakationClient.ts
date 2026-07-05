@@ -329,6 +329,10 @@ export default class GeniusInvokationClient {
                     if (hasGetCard) p.UI.willGetCard = { cards: [], isFromPile: true, isNotPublic: true };
                     if (hasAddCard) p.UI.willAddCard = { cards: [], isNotPublic: false };
                     if (hasDiscard) p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
+                    p.handCards.forEach(c => {
+                        const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.cardIdxs?.[0] == c.cidx);
+                        if (preview?.isValid) c.UI.class = 'valid';
+                    });
                 });
             }, 1500);
         });

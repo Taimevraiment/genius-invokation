@@ -741,6 +741,10 @@ body {
   transform: translateY(-15px);
 }
 
+.card.valid {
+  box-shadow: 0 0 3px 2px #b7ffa1bf;
+}
+
 .skills {
   position: absolute;
   height: 20%;

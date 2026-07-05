@@ -59,10 +59,15 @@ const todayPlayersHistory = new Map<number, {
 }>(); // 当日玩家登录信息
 let todayGames = 0; // 今日开局数
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const todayLogsPath = `${__dirname}/../../../logs/today`;
+const yestodayLogsPath = `${__dirname}/../../../logs/yestoday`;
 cron.schedule('0 0 5 * * *', () => {
     todayPlayersHistory.clear();
     todayGames = 0;
-    fs.rmSync(`${__dirname}/../../../logs/today`, { recursive: true, force: true });
+    try {
+        fs.rmSync(yestodayLogsPath, { recursive: true, force: true });
+        fs.renameSync(todayLogsPath, yestodayLogsPath);
+    } catch { }
 });
 
 // 生成id
@@ -160,7 +165,7 @@ io.on('connection', socket => {
             if (room.onlinePlayersCnt <= 0 || room.players.every(p => p.isOffline) || me.rid < -1) {
                 [...room.players, ...room.watchers].forEach(p => p.rid = -1);
                 if (room.countdown.timer != null) clearInterval(room.countdown.timer);
-                room.stop();
+                if (room.isStart) room.stop();
                 removeById(room.id, roomList);
             } else {
                 room.emit('leaveRoom', me.pidx > -1 ? me.pidx : PLAYER_COUNT);
@@ -399,7 +404,7 @@ app.get('/login', (req, res) => {
                             tplayer.location = [data.country, data.prov, data.city, data.area].filter(v => v).join('-');
                             player.location = tplayer.location;
                         } else {
-                            console.info('获取ip失败');
+                            console.info('获取ip失败:', data);
                         }
                     } catch (e) {
                         console.info('获取ip失败:', e);
@@ -411,8 +416,19 @@ app.get('/login', (req, res) => {
     return res.json({ ok: true });
 });
 
-app.get('/detail', (req, res) => {
+app.get('/detail', async (req, res) => {
     if (!validateSK(req, res)) return;
+    const todayLogs: Record<string, string> = {};
+    try {
+        const todayFileNames = await fs.promises.readdir(todayLogsPath);
+        const yestodayFileNames = await fs.promises.readdir(yestodayLogsPath);
+        for (const [path, fileNames] of [[yestodayLogsPath, yestodayFileNames], [todayLogsPath, todayFileNames]]) {
+            for (const name of fileNames) {
+                const log = await fs.promises.readFile(`${path}/${name}/${name}.log`, 'utf-8');
+                todayLogs[name] = log;
+            }
+        }
+    } catch { }
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,
@@ -430,6 +446,7 @@ app.get('/detail', (req, res) => {
             location: p.location,
         })),
         todayGames,
+        todayLogs,
     });
 });
 

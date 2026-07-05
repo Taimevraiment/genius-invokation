@@ -192,7 +192,7 @@ export default class GeniusInvokationRoom {
             + `  taskQueue: ${this.taskQueue.queueList}\n`
             + `  isDieBackChange: ${this.isDieBackChange}\n`
             + `  players: [\n`
-            + `${this.players.map(p => playerToString(p, 2)).join('')}\n`
+            + `${this.players.map(p => playerToString(p, 2)).join('') || '    \n'}`
             + `  ]\n`
             + `}`;
     }
@@ -276,7 +276,12 @@ export default class GeniusInvokationRoom {
             path += `${folderName}/`;
             fs.mkdirSync(`${path}`, { recursive: true });
         }
-        path += `${this.seed || `${new Date().toISOString().split('T')[0]}-${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
+        const fileName = `${this.seed || `${new Date().toISOString().split('T')[0]}-${this.version.value.replace(/\./g, '_')}-r${this.id}`}`;
+        path += fileName;
+        if (!this.isDev) {
+            fs.mkdirSync(`${path}`, { recursive: true });
+            path += `/${fileName}`;
+        }
         fs.writeFile(`${path}.log`, log, err => err && console.error('err:', err));
         if (!this.isDev) {
             const recordData: RecordData = { ...this.recordData, username: this.players.map(v => v.name), pidx: 0 };

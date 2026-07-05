@@ -1925,7 +1925,7 @@ const mouseup = () => {
   font-size: medium;
   left: 6%;
   top: 43%;
-  color: #ffb36d;
+  color: #e49041;
 }
 
 .end-phase::after {
@@ -1934,7 +1934,7 @@ const mouseup = () => {
   position: absolute;
   left: 7%;
   top: 42%;
-  background: linear-gradient(to right, #ffb36d, #ca6732);
+  background: linear-gradient(to right, #e49041, #d16932);
   padding: .8%;
   border-radius: 5px;
   font-family: HYWH;
