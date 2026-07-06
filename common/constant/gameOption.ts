@@ -237,8 +237,6 @@ export const BLOCK_WORDS = [
 
 export const IS_USE_OFFICIAL_SRC = true; // 是否使用官方图标
 
-export const IS_DEVELOPING = true; // 是否上了开发版
-
 // -------- 特殊标记常量 -------------
 
 export const AI_ID = 2; // ai的id

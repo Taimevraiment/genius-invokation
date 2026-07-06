@@ -3207,7 +3207,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     213171: () => card(611).name('红土之逆').since('v7.0.0').talent(2).costPyro(3).energy(2)
-        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下三次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】自身与我方【sts113172】造成的伤害+1。')
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下3次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】我方【hro】与【sts113172】造成的伤害+1。')
         .src('#')
         .handle((_, event) => {
             const { skill, execmds } = event;
@@ -3419,7 +3419,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/f46cfa06d1b3ebe29fe8ed2c986b4586_6729812664471389603.png'),
 
     215032: () => card(617).name('颂时风若').since('v7.0.0').hexenzirkel().costAnemo(3)
-        .description('{quick。}；〔*[card]召唤【smn115034】。〕；我方召唤【smn115034】后，本回合中所附属角色角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
+        .description('{quick。}；〔*[card]召唤【smn115034】。〕；我方召唤【smn115034】后，本回合中所附属角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
         .src('#')
         .handle((_, event) => {
             const { cmds, sourceSummon, execmds, hidx } = event;
@@ -3547,14 +3547,14 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             }
         }),
 
-    215161: () => card(612).name('暗巷的黠慧').since('v7.0.0').talent(1).costAnemo(3)
-        .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制两张敌方手牌。')
+    215161: () => card(612).name('暗巷的黠慧').since('v7.0.0').talent(1).costAnemo(3).perCnt(1)
+        .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制两张敌方手牌。（每回合1次）')
         .src('#')
-        .handle((_, event) => {
+        .handle((card, event) => {
             const { ehcards, ehcardsCnt, hcardsCnt, execmds, randomInArr } = event;
-            if (ehcardsCnt < hcardsCnt) return;
+            if (ehcardsCnt < hcardsCnt || card.perCnt <= 0) return;
             execmds.getCard(2, { card: randomInArr(ehcards, 2) });
-            return { triggers: 'switch-to' }
+            return { triggers: 'switch-to', exec: () => card.minusPerCnt() }
         }),
 
     216011: () => card(102).name('储之千日，用之一刻').offline('v1').talent(1).costGeo(3).costGeo(4, 'v6.0.0')
@@ -4291,12 +4291,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/5fab729d51a8343c95a532156451dd47_4245641290755684283.png'),
 
     115161: () => card().name('呼噜噜秘藏瓶').event(true).costSame(4)
-        .description('【〖hro〗切换为出战角色时：】如果敌方出战角色附着有火/水/雷/冰元素，则将此牌转化为对应元素。；[战斗行动]：对敌方出战角色造成2点[风元素伤害]，重复1次。')
+        .description('【〖hro〗切换为出战角色时：】如果敌方出战角色附着有火/水/雷/冰元素，则将此牌转化为对应元素。；[战斗行动]：对敌方出战角色造成1点[风元素伤害]，重复1次。')
         .src('#')
         .explain(...Array.from({ length: 4 }, (_, i) => `botcrd11516${i + 2}`))
         .handle((card, event) => {
             const { heros, hidx, eDmgedHero, cmds, execmds } = event;
-            cmds.attack(2, DAMAGE_TYPE.Anemo, { isOrder: true }).attack(2, DAMAGE_TYPE.Anemo);
+            cmds.attack(1, DAMAGE_TYPE.Anemo, { isOrder: true }).attack(1, DAMAGE_TYPE.Anemo);
             if (heros[hidx].id != getHidById(card.id)) return;
             const el = eDmgedHero.attachElement[0] as SwirlElementType;
             if (!Object.values(SWIRL_ELEMENT_TYPE).includes(el)) return;

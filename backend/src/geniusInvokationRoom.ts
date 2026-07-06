@@ -134,7 +134,7 @@ export default class GeniusInvokationRoom {
             return newSupport(version, { diff, dict })(id, ...args);
         }
         this.newSkill = newSkill(version, { diff });
-        this.taskQueue = new TaskQueue(this._writeLog.bind(this), this.env);
+        this.taskQueue = new TaskQueue(this._writeLog.bind(this), env);
         this._resetPreview();
         this.delay = async (time: number = -1, fn?: () => any) => {
             if (this.env == 'test' || !this.preview.isExec || time < 0) return fn?.();
@@ -254,7 +254,7 @@ export default class GeniusInvokationRoom {
     /**
      * 写入日志
      * @param log 日志内容
-     * @param isOnlySystem 是否只记录为系统日志
+     * @param type 日志类型
      */
     private _writeLog(log: string, type: LogType = 'log') {
         if (this.env == 'test' || !this.preview.isExec) return;
