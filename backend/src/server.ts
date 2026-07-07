@@ -420,9 +420,8 @@ app.get('/detail', async (req, res) => {
     if (!validateSK(req, res)) return;
     const todayLogs: Record<string, string> = {};
     try {
-        const todayFileNames = await fs.promises.readdir(todayLogsPath);
-        const yestodayFileNames = await fs.promises.readdir(yestodayLogsPath);
-        for (const [path, fileNames] of [[yestodayLogsPath, yestodayFileNames], [todayLogsPath, todayFileNames]]) {
+        for (const path of [yestodayLogsPath, todayLogsPath]) {
+            const fileNames = await fs.promises.readdir(path);
             for (const name of fileNames) {
                 const log = await fs.promises.readFile(`${path}/${name}/${name}.log`, 'utf-8');
                 todayLogs[name] = log;

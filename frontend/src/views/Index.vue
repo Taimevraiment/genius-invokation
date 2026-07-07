@@ -59,7 +59,7 @@
         <button @click="openCreateRoom">创建房间</button>
       </div>
     </div>
-    <div class="version">v1.6.2</div>
+    <div class="version">{{ version }}</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -108,6 +108,8 @@ const playerStatus = ref([
 ]); // 玩家状态
 const info = ref<InfoVO>({ version: 'v3.3.0', isShow: true, type: null, info: null }); // 为pupeteer截图时使用
 const infoContent = ref<string>('');
+const version = ref<string>('v1.6.3');
+const noticeContent = `·修复八重宣布结束击倒卡住`;
 const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, { force: true }), ...summonsTotal(version)];
 let followIdx: number = -1; // 跟随的玩家id
 
@@ -297,6 +299,11 @@ onMounted(async () => {
   });
   // 继续游戏
   socket.on('continueGame', data => socket.emit('enterRoom', data));
+  // 弹窗消息
+  if (localStorage.getItem('7szh_simi_version') != version.value) {
+    localStorage.setItem('7szh_simi_version', version.value);
+    alert(noticeContent);
+  }
 });
 
 const loadedFonts = new Set<string>();

@@ -176,7 +176,6 @@ export default class GeniusInvokationRoom {
             + `  taskQueue: ${this.taskQueue.queueList}\n`
             + `  entityIdIdx: ${this.entityIdIdx}\n`
             + `  isDieBackChange: ${this.isDieBackChange}\n`
-            + `  _currentPlayerIdx: ${this._currentPlayerIdx}\n`
             + `  _random: ${this._random}\n`
             + `  systemLog:\n`
             + `${this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
@@ -2415,10 +2414,8 @@ export default class GeniusInvokationRoom {
         const isDie = this.hasDieSwitch;
         if (!isDie) await this.wait(() => this.needWait, { maxtime: 2e5 });
         const { isDieSwitch = false } = options;
-        const isOppoActionEnd = this.players[pidx ^ 1]?.phase >= PHASE.ACTION_END;
         this.players[pidx].canAction = false;
-        const isChange = () => !this.preview.isQuickAction && !isDie &&
-            (isDieSwitch ? this.players[pidx].phase < PHASE.ACTION_END : !isOppoActionEnd);
+        const isChange = () => !this.preview.isQuickAction && !isDie && this.players[pidx ^ 1]?.phase < PHASE.ACTION_END;
         if (isChange()) this._detectHero(pidx ^ +isDieSwitch, 'change-turn', { types: STATUS_TYPE.Usage });
         if (isChange()) {
             this.players[this.currentPlayerIdx].canAction = false;
