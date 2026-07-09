@@ -108,8 +108,8 @@ const playerStatus = ref([
 ]); // 玩家状态
 const info = ref<InfoVO>({ version: 'v3.3.0', isShow: true, type: null, info: null }); // 为pupeteer截图时使用
 const infoContent = ref<string>('');
-const version = ref<string>('v1.6.3');
-const noticeContent = `·修复八重宣布结束击倒卡住`;
+const version = ref<string>('v1.6.4');
+const noticeContent = ``;
 const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, { force: true }), ...summonsTotal(version)];
 let followIdx: number = -1; // 跟随的玩家id
 
@@ -302,7 +302,7 @@ onMounted(async () => {
   // 弹窗消息
   if (localStorage.getItem('7szh_simi_version') != version.value) {
     localStorage.setItem('7szh_simi_version', version.value);
-    alert(noticeContent);
+    if (noticeContent) alert(noticeContent);
   }
 });
 

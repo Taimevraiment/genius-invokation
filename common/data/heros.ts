@@ -2311,7 +2311,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/3e2457b116526a30a834120f8c438ca6_2477510128488129478.png')
                 .elemental().cost(3).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
                     exec: () => {
-                        const { summons, cmds, randomInArr } = event;
+                        const { summons, cmds, random } = event;
                         const opools = [122011, 122012, 122013];
                         const pools = opools.filter(smnid => !summons.has(smnid));
                         // 场上已有两个纯水幻形
@@ -2319,7 +2319,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                             pools.length = 0;
                             pools.push(...opools.filter(smnid => summons.has(smnid)));
                         }
-                        cmds.getSummon(randomInArr(!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline && pools.length == 0 ? opools : pools));
+                        cmds.getSummon(random(!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline && pools.length == 0 ? opools : pools));
                     }
                 })),
             skill('林野百态').description('随机召唤2种【纯水幻形】。（优先生成不同的类型）', 'v4.3.0', 'vlatest')
@@ -2328,7 +2328,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6924bae6c836d2b494b5a172da6cfd70_4019717338422727435.png')
                 .elemental().cost(5).explain('smn122011', 'smn122012', 'smn122013').handle((event, ver) => ({
                     exec: () => {
-                        const { summons, cmds, randomInArr } = event;
+                        const { summons, cmds, random } = event;
                         const opools = [122011, 122012, 122013];
                         const pools = opools.filter(smnid => !summons.has(smnid)); // 不存在场上的纯水幻形id池
                         if (pools.length == 0) return; // 场上已有三个纯水幻形
@@ -2342,10 +2342,10 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                             summonId1 = opools.find(smnid => !pools.includes(smnid))!;
                         }
                         if (pools.length == 3 || (!ver.range('v4.3.0', 'v6.0.0') && !ver.isOffline && pools.length == 0)) {
-                            [summonId1] = randomInArr(pools, 2);
+                            [summonId1] = random(pools, 2);
                             pools.splice(pools.indexOf(summonId1), 1);
                         }
-                        const [summonId2] = randomInArr(pools);
+                        const [summonId2] = random(pools);
                         cmds.getSummon([summonId1, summonId2]);
                     }
                 })),
@@ -3125,7 +3125,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://patchwiki.biligame.com/images/ys/4/48/slrbp0n48fnb89ih9jh5nhxtyncs0uh.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/07/28/258999284/6257ab91c38de8fbfa765b5d685cebb3_6732283299558524014.png')
                 .passive().perCnt(2).handle(event => {
-                    const { skill, hidx, trigger, source, sourceHidx, talent, hcard, cmds, randomInt } = event;
+                    const { skill, hidx, trigger, source, sourceHidx, talent, hcard, cmds, random } = event;
                     if (trigger == 'pre-get-status') {
                         return { triggers: isCdt(source == 303300, 'pre-get-status'), isNotAddTask: true, isInvalid: hidx == sourceHidx }
                     }
@@ -3135,7 +3135,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                         return {
                             triggers: ['card', 'trigger'],
                             exec: () => {
-                                const ran = randomInt(2);
+                                const ran = random(2);
                                 if (ran == 0) cmds.getStatus(127041, { hidxs: hidx });
                                 else if (ran == 1) cmds.getStatus(127042, { hidxs: hidx });
                                 else cmds.addMaxHp(1, hidx);

@@ -454,8 +454,10 @@ export interface EntityHandleEvent {
     atkHidx: number,
     isFirst: boolean,
     adventureCnt: number,
-    randomInArr: <T>(arr: T[], cnt?: number) => T[],
-    randomInt: (max?: number) => number,
+    random: {
+        (max?: number): number;
+        <T>(arr: T[], cnt?: number): T[];
+    },
     getCardIds: (filter?: (card: Card) => boolean) => number[],
     skill?: Skill,
     sourceStatus?: Status,
@@ -520,7 +522,9 @@ export interface EntityHandleRes {
 export type InputHandle<T extends {}> = Partial<T> & {
     pidx: number,
     players: Player[],
-    randomInArr: <T>(arr: T[], cnt?: number) => T[],
-    randomInt: (max?: number) => number,
+    random: {
+        (max?: number): number;
+        <T>(arr: T[], cnt?: number): T[];
+    },
     getCardIds: (filter?: (card: Card) => boolean) => number[],
 };

@@ -320,7 +320,7 @@ export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
 
 export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleEvent>>, U extends Entity>
     (pidx: number, players: Player[], event: T, entity: U):
-    Omit<EntityBuilderHandleEvent, 'cmds' | 'randomInArr' | 'randomInt' | 'getCardIds'> => {
+    Omit<EntityBuilderHandleEvent, 'cmds' | 'random' | 'getCardIds'> => {
     const player = players[pidx];
     const opponent = players[pidx ^ 1];
     const { hidx = player.hidx ?? 0, minusDiceCard = 0, hcard = null, skill, dmgedHidx = opponent.hidx ?? 0,

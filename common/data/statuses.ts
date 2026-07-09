@@ -530,8 +530,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     111131: (cnt: number = 2) => status('洞察破绽').combatStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT).icon('#').type(STATUS_TYPE.Usage)
         .description('【我方角色使用技能后：】此效果每有1层，就有10%的概率生成【sts111133】。如果生成了【sts111133】，就使此效果层数减半。（向下取整）')
         .handle((status, event) => {
-            const { randomInt, trigger, cmds } = event;
-            if (trigger != 'skill' || randomInt(9) >= status.useCnt) return;
+            const { random, trigger, cmds } = event;
+            if (trigger != 'skill' || random(9) >= status.useCnt) return;
             cmds.getStatus(111133);
             return { triggers: 'skill', exec: () => status.setUseCnt(Math.floor(status.useCnt / 2)) }
         }),
@@ -2385,10 +2385,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Attack)
         .description('【结束阶段：】如果所附属角色为出战角色，则造成1点[火元素伤害]，对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]')
         .handle((status, event) => {
-            const { hero, talent, hcards, randomInArr, cmds } = event;
+            const { hero, talent, hcards, random, cmds } = event;
             let addDmg = 0;
             if (talent && hcards.length) {
-                const [card] = randomInArr(hcards);
+                const [card] = random(hcards);
                 addDmg = card.currDiceCost;
                 cmds.discard({ card });
             }
@@ -3215,7 +3215,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Sign).icon('#').from(302214)
         .description('本回合打出手牌后，随机[舍弃]1张牌或抓1张牌。')
         .handle((_, event) => {
-            const { isSelfRound, cmds, randomInt } = event;
+            const { isSelfRound, cmds, random } = event;
             const triggers: Trigger[] = ['card'];
             if (isSelfRound) triggers.push('enter');
             return {
@@ -3223,7 +3223,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 isAddTask: true,
                 notPreview: true,
                 exec: () => {
-                    if (randomInt()) cmds.getCard(1);
+                    if (random()) cmds.getCard(1);
                     else cmds.discard({ mode: CMD_MODE.Random });
                 }
             }
@@ -3237,8 +3237,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             notPreview: true,
             isAddTask: true,
             exec: () => {
-                const { cmds, randomInt } = event;
-                if (randomInt()) cmds.heal(2);
+                const { cmds, random } = event;
+                if (random()) cmds.heal(2);
                 else cmds.attack(2, DAMAGE_TYPE.Pierce, { isOppo: false });
                 status.minusUseCnt();
             }

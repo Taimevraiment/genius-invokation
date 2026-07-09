@@ -2217,10 +2217,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('召唤一个随机「丘丘人」召唤物！；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「丘丘人」的元素类型。', 'v3')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/06/75833613/011610bb3aedb5dddfa1db1322c0fd60_7383120485374723900.png')
         .handle((_, event) => {
-            const { summons, randomInArr, cmds } = event;
+            const { summons, random, cmds } = event;
             if (summons.length == MAX_SUMMON_COUNT) return { isValid: false }
             const smnIds = [303211, 303212, 303213, 303214].filter(sid => !summons.has(sid));
-            return { exec: () => cmds.getSummon(randomInArr(smnIds)), notPreview: true }
+            return { exec: () => cmds.getSummon(random(smnIds)), notPreview: true }
         }),
 
     332016: () => card(256).name('愚人众的阴谋').since('v3.7.0').offline('v3').costSame(2)
@@ -2229,10 +2229,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('在对方场上，生成1个随机类型的「愚人众伏兵」。；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「愚人众伏兵」的元素类型。', 'v3')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png')
         .handle((_, event) => {
-            const { eCombatStatus, randomInArr, cmds } = event;
+            const { eCombatStatus, random, cmds } = event;
             const stsIds = [303216, 303217, 303218, 303219].filter(sid => !eCombatStatus.has(sid));
             if (stsIds.length == 0) return { isValid: false }
-            return { exec: () => cmds.getStatus(randomInArr(stsIds), { isOppo: true }) }
+            return { exec: () => cmds.getStatus(random(stsIds), { isOppo: true }) }
         }),
 
     332017: () => card(257).name('下落斩').since('v3.7.0').offline('v3').event(true).costSame(3).canSelectHero(1)
@@ -2594,10 +2594,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('目标我方「魔物」角色造成的伤害+1。（不可叠加）；【此卡牌在手中，我方「魔物」角色使用技能后：】赋予此牌【sts202】。；【此牌被[舍弃]时：】我方随机「魔物」角色获得1点额外最大生命值。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/25/258999284/c535fdf2cdc2075e7c616a4e52780919_7128909373092390962.png')
         .handle((card, event) => {
-            const { heros, selectHeros, randomInArr, hero, cmds, execmds, trigger } = event;
+            const { heros, selectHeros, random, hero, cmds, execmds, trigger } = event;
             cmds.getStatus(303249, { hidxs: selectHeros });
             if (trigger == 'skill' && hero.tags.includes(HERO_LOCAL.Monster)) execmds.getStatus(202, { cardFilter: c => c.entityId == card.entityId });
-            else if (trigger == 'discard') execmds.addMaxHp(1, randomInArr(heros.allHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) })));
+            else if (trigger == 'discard') execmds.addMaxHp(1, random(heros.allHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) })));
             return { triggers: ['skill', 'discard'], canSelectHero: heros.map(h => h.tags.includes(HERO_TAG.Monster)) }
         }),
 
@@ -2747,9 +2747,9 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('目标角色获得4次随机增益效果，其中效果如下：；治疗目标角色2点。；目标角色获得1点额外最大生命值。；目标角色下次使用技能少花费1个元素骰。；目标角色下次造成的伤害+1。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/3e6087cb18f320183ff1326cbdf99464_6546693287640771043.png')
         .handle((_, event) => {
-            const { cmds, selectHeros: [hidx], randomInt } = event;
+            const { cmds, selectHeros: [hidx], random } = event;
             for (let i = 0; i < 4; ++i) {
-                switch (randomInt(3)) {
+                switch (random(3)) {
                     case 0: cmds.heal(2, { isOrder: true }); break;
                     case 1: cmds.addMaxHp(1, hidx, true); break;
                     case 2: cmds.getStatus(172); break;
@@ -3551,9 +3551,9 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制两张敌方手牌。（每回合1次）')
         .src('#')
         .handle((card, event) => {
-            const { ehcards, ehcardsCnt, hcardsCnt, execmds, randomInArr } = event;
+            const { ehcards, ehcardsCnt, hcardsCnt, execmds, random } = event;
             if (ehcardsCnt < hcardsCnt || card.perCnt <= 0) return;
-            execmds.getCard(2, { card: randomInArr(ehcards, 2) });
+            execmds.getCard(2, { card: random(ehcards, 2) });
             return { triggers: 'switch-to', exec: () => card.minusPerCnt() }
         }),
 
@@ -4558,7 +4558,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/b8cc5a1a4f585ab31d7af7621fe7cc9a_7205746796255007122.png')
         .handle((_, event) => ({
             exec: () => {
-                const { supports, esupports, cmds, randomInArr } = event;
+                const { supports, esupports, cmds, random } = event;
                 const supportLen = MAX_SUPPORT_COUNT - supports.length;
                 const esupportLen = MAX_SUPPORT_COUNT - esupports.length;
                 const allyPool = [
@@ -4566,8 +4566,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                     322011, 322012, 322013, 322014, 322015, 322017, 322018,
                     322019, 322020, 322021, 322023, 322025, 322026,
                 ];
-                cmds.getSupport(randomInArr(allyPool, supportLen))
-                    .getSupport(randomInArr(allyPool, esupportLen), { isOppo: true })
+                cmds.getSupport(random(allyPool, supportLen))
+                    .getSupport(random(allyPool, esupportLen), { isOppo: true })
             }
         })),
 
@@ -4621,8 +4621,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('对我方出战角色造成1点[穿透伤害]，执行1个「治疗」效果相关的计划。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => {
-            const { cmds, supports, randomInArr } = event;
-            const [sptId] = randomInArr([302220, 302221, 302222]);
+            const { cmds, supports, random } = event;
+            const [sptId] = random([302220, 302221, 302222]);
             cmds.clear().attack(1, DAMAGE_TYPE.Pierce, { isOppo: false })
                 .convertSupport(supports.get(322033)!.entityId, sptId);
         }),
@@ -4631,9 +4631,9 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('[舍弃]1张随机手牌，执行1个「抓牌」效果相关的计划。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => {
-            const { hcardsCnt, cmds, supports, randomInArr } = event;
+            const { hcardsCnt, cmds, supports, random } = event;
             if (hcardsCnt == 0) return cmds.clear().convertSupport(supports.get(322033)!.entityId, -1);
-            const [sptId] = randomInArr([302223, 302224, 302225]);
+            const [sptId] = random([302223, 302224, 302225]);
             cmds.clear().discard({ mode: CMD_MODE.Random })
                 .convertSupport(supports.get(322033)!.entityId, sptId);
         }),
@@ -4643,10 +4643,10 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png')
         .handle((_, event) => ({
             exec: () => {
-                const { dicesCnt, cmds, supports, dices, randomInArr, randomInt } = event;
+                const { dicesCnt, cmds, supports, dices, random } = event;
                 if (dicesCnt == 0) return cmds.clear().convertSupport(supports.get(322033)!.entityId, -1);
-                const [sptId] = randomInArr([302226, 302227, 302228]);
-                const diceIdx = randomInt(dices.length - 1);
+                const [sptId] = random([302226, 302227, 302228]);
+                const diceIdx = random(dices.length - 1);
                 cmds.clear().consumeDice(dices.map((_, i) => i == diceIdx))
                     .convertSupport(supports.get(322033)!.entityId, sptId);
             }

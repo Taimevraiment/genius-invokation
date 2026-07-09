@@ -96,7 +96,7 @@ export default class GeniusInvokationRoom {
     private newSkill: (id: number) => Skill;
     private newSupport: (id: number | Card, ...args: any) => Support;
     private _currentPlayerIdx: number = 0; // 当前回合玩家 currentPlayerIdx
-    private _random: number = 0; // 随机数
+    private _randomNumber: number = 0; // 随机数
     private delay: (time?: number, fn?: () => any) => Promise<void> | void;
     private wait = async (cdt: () => any, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, errCallback?: () => void } = {}) => {
         if (this.env == 'test' || !this.preview.isExec && this.id > 0) return;
@@ -176,7 +176,7 @@ export default class GeniusInvokationRoom {
             + `  taskQueue: ${this.taskQueue.queueList}\n`
             + `  entityIdIdx: ${this.entityIdIdx}\n`
             + `  isDieBackChange: ${this.isDieBackChange}\n`
-            + `  _random: ${this._random}\n`
+            + `  _random: ${this._randomNumber}\n`
             + `  systemLog:\n`
             + `${this.systemLog.replace(/【p?\d*:?(.+?)】/g, '$1').split('\n').map(l => '    ' + l).join('\n')}\n`
             + `}`;
@@ -199,8 +199,7 @@ export default class GeniusInvokationRoom {
         return {
             round: this.round,
             players: this.players,
-            randomInt: this._randomInt.bind(this),
-            randomInArr: this._randomInArr.bind(this),
+            random: this._random.bind(this),
             getCardIds: (filter?: (card: Card) => boolean) => this._getCardIds.bind(this)(filter, true),
         }
     }
@@ -214,29 +213,26 @@ export default class GeniusInvokationRoom {
      */
     private _setSeed(rt: string | number) {
         this.seed = rt.toString();
-        this._random = +rt;
+        this._randomNumber = +rt;
         return this;
     }
     /**
-     * 获取随机数
-     * @param max 随机数最大值
-     * @returns 随机整数 max > 0: [0, max]; max < 0: [max, 0]
+     * 获取数组中随机n项 / 随机数
+     * @param arr 数组 / max 随机数最大值 max > 0: [0, max]; max < 0: [max, 0]
+     * @returns 数组中随机n项 / 随机整数 
      */
-    private _randomInt(max: number = 1) {
-        this._random = (this._random * 13 + 29) % 1e10;
-        const randomInt = parseInt(`${this._random % 1e6 / 1e6 * (max + Math.sign(max))}`);
-        return randomInt;
-    }
-    /**
-     * 获取数组中随机n项
-     * @param arr 数组
-     * @returns 数组中随机n项
-     */
-    private _randomInArr<T>(arr: T[], cnt: number = 1) {
+    private _random(max?: number): number;
+    private _random<T>(arr: T[], cnt?: number): T[];
+    private _random<T>(arr: number | T[] = 1, cnt: number = 1) {
+        if (typeof arr == 'number') {
+            this._randomNumber = (this._randomNumber * 13 + 29) % 1e10;
+            const randomInt = parseInt(`${this._randomNumber % 1e6 / 1e6 * (arr + Math.sign(arr))}`);
+            return randomInt;
+        }
         const selected: number[] = [];
         if (arr.length <= cnt || cnt <= 0) return arr;
         while (cnt > 0) {
-            const idx = this._randomInt(arr.length - 1);
+            const idx = this._random(arr.length - 1);
             if (selected.includes(idx)) continue;
             selected.push(idx);
             --cnt;
@@ -416,10 +412,10 @@ export default class GeniusInvokationRoom {
                             return;
                         }
                         while (true) {
-                            const [action] = this._randomInArr(actionType);
+                            const [action] = this._random(actionType);
                             const pres = this.previews.filter(p => p.type == action && p.isValid);
                             if (pres.length > 0) {
-                                const [preview] = this._randomInArr(pres);
+                                const [preview] = this._random(pres);
                                 switch (preview.type) {
                                     case ACTION_TYPE.UseCard:
                                         this._useCard(cpidx, preview.cardIdxs![0], preview.diceSelect!, {
@@ -454,7 +450,7 @@ export default class GeniusInvokationRoom {
             }
             if (cplayer?.id == AI_ID && cplayer?.phase == PHASE.PICK_CARD && flag.startsWith('pickCard')) {
                 // AI挑选卡牌
-                this.delay(1e3, () => this._pickCard(cplayer.pidx, this._randomInt(this.pickModal.cards.length - 1)));
+                this.delay(1e3, () => this._pickCard(cplayer.pidx, this._random(this.pickModal.cards.length - 1)));
             }
             const serverData: ServerData = {
                 players: [],
@@ -635,7 +631,7 @@ export default class GeniusInvokationRoom {
         const elMap = arrToObj(Object.values(ELEMENT_TYPE), 0);
         const lcMap = arrToObj(Object.values(HERO_LOCAL), 0);
         while (heroIds.size < 3) {
-            const [hid] = this._randomInArr(heroIdsPool);
+            const [hid] = this._random(heroIdsPool);
             if (heroIds.has(hid)) continue;
             heroIds.add(hid);
             aiPlayer.heros.push(this.newHero(hid));
@@ -648,7 +644,7 @@ export default class GeniusInvokationRoom {
         const cardIdsPool = this._getCardIds(c => c.UI.cnt > 0);
         let hasLegend = false;
         while (aiPlayer.pile.length < DECK_CARD_COUNT) {
-            const card = this.newCard(this._randomInArr(cardIdsPool)[0]);
+            const card = this.newCard(this._random(cardIdsPool)[0]);
             const cid = card.id;
             const cnt = cardIdsMap.get(cid) || 0;
             if (cnt < 2) {
@@ -680,7 +676,7 @@ export default class GeniusInvokationRoom {
      */
     start(pidx: number, flag: string, seed?: string) {
         this.seed = seed || Math.floor(Math.random() * 1e10).toString();
-        this._random = +this.seed;
+        this._randomNumber = +this.seed;
         this.recordData.seed = this.seed;
         this.recordData.shareCode = this.shareCodes;
         this.recordData.isExecuting = false;
@@ -691,7 +687,7 @@ export default class GeniusInvokationRoom {
         this.seed = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}-${format(d.getHours())}-${format(d.getMinutes())}-${format(d.getSeconds())}-${this.version.value.replace(/\./g, '_')}-r${this.id}-s${this.seed}`;
         this.entityIdIdx = -700000;
         this.isStart = true;
-        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.env != 'prod' && this.id > 0 ? 1 : this._randomInt(PLAYER_COUNT);
+        this.currentPlayerIdx = this.players[1].id == AI_ID ? 0 : this.env != 'prod' && this.id > 0 ? 1 : this._random(PLAYER_COUNT);
         this.startIdx = this.currentPlayerIdx;
         this.phase = PHASE.CHANGE_CARD;
         this.winner = -1;
@@ -726,7 +722,7 @@ export default class GeniusInvokationRoom {
             const piles = [...p.pile];
             p.pile = [];
             while (pileIdxPool.length > 0) {
-                const cidx = this._randomInt(pileIdxPool.length - 1);
+                const cidx = this._random(pileIdxPool.length - 1);
                 const [cardIdx] = pileIdxPool.splice(cidx, 1);
                 p.pile.push(piles[cardIdx]);
             }
@@ -745,7 +741,7 @@ export default class GeniusInvokationRoom {
         });
         if (this.players[1].id == AI_ID) {
             const aiPlayer = this.players[1];
-            aiPlayer.hidx = this._randomInt(aiPlayer.heros.length - 1);
+            aiPlayer.hidx = this._random(aiPlayer.heros.length - 1);
             aiPlayer.heros[aiPlayer.hidx].isFront = true;
             aiPlayer.heros.fhidx = aiPlayer.hidx;
             aiPlayer.phase == PHASE.DICE;
@@ -1001,7 +997,7 @@ export default class GeniusInvokationRoom {
         cardIdxs.forEach(cidx => blackIds.add(player.handCards[cidx].id));
         const oldCards = player.handCards.filter((_, idx) => cardIdxs.includes(idx));
         for (let i = 0; i < oldCards.length; ++i) {
-            player.pile.splice(this._randomInt(player.pile.length - 1), 0, oldCards[i]);
+            player.pile.splice(this._random(player.pile.length - 1), 0, oldCards[i]);
             oldCards[i].UI.class = 'changed-card';
         }
         let newIdx = 0;
@@ -1207,7 +1203,7 @@ export default class GeniusInvokationRoom {
         }
         for (let i = 0; i < diceLen - scnt; ++i) {
             if (this.isDev) ++tmpDice[DICE_COST_TYPE.Omni];
-            else ++tmpDice[this._randomInArr(Object.values(DICE_COST_TYPE))[0]];
+            else ++tmpDice[this._random(Object.values(DICE_COST_TYPE))[0]];
         }
         const ndices: DiceCostType[] = [];
         const effDice = (d: DiceCostType) => d == DICE_COST_TYPE.Omni ? 2 : +player.heros.validElements.includes(d);
@@ -3730,7 +3726,7 @@ export default class GeniusInvokationRoom {
                     const cards: Card[] = [];
                     const count = Math.abs(cnt);
                     if (card) {
-                        cards.push(...(Array.isArray(card) ? this._randomInArr(card, count) : Array.from({ length: count }, () => clone(card)))
+                        cards.push(...(Array.isArray(card) ? this._random(card, count) : Array.from({ length: count }, () => clone(card)))
                             .map(c => typeof c == 'number' ? this.newCard(c) : c));
                     }
                     if (cmd == 'putCard') {
@@ -3742,7 +3738,7 @@ export default class GeniusInvokationRoom {
                             while (hcardsSorted.length > 0) {
                                 const cost = hcardsSorted[0].currDiceCost;
                                 const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
-                                cards.push(...this._randomInArr(costCards, restCnt));
+                                cards.push(...this._random(costCards, restCnt));
                                 if (cards.length == cnt) break;
                                 restCnt -= cards.length;
                                 hcardsSorted = hcardsSorted.filter(c => c.currDiceCost != cost);
@@ -3786,18 +3782,18 @@ export default class GeniusInvokationRoom {
                                         }
                                     } else {
                                         const cardsIdPool = this._getCardIds(c => cardFilter(c) && !exclude.includes(c.id));
-                                        wcard = this.newCard(this._randomInArr(cardsIdPool)[0]);
+                                        wcard = this.newCard(this._random(cardsIdPool)[0]);
                                     }
                                 } else if (mode == CMD_MODE.HighLowCard) { // 摸牌库中费用最高或最低的牌
                                     isFromPile = true;
                                     const maxCost = Math.max(...pile.map(c => c.currDiceCost));
                                     const minCost = Math.min(...pile.map(c => c.currDiceCost));
                                     const costCards = pile.filter(c => c.currDiceCost == maxCost || c.currDiceCost == minCost);
-                                    [wcard] = this._randomInArr(costCards);
+                                    [wcard] = this._random(costCards);
                                     pile.splice(wcard.cidx, 1);
                                 } else {
                                     if (exclude.length > 0) { // 在指定的某几张牌中随机模
-                                        wcard = this.newCard(this._randomInArr(exclude)[0]);
+                                        wcard = this.newCard(this._random(exclude)[0]);
                                     } else { // 从牌库直接摸牌
                                         isFromPile = true;
                                         wcard = pile.shift() ?? null;
@@ -3881,7 +3877,7 @@ export default class GeniusInvokationRoom {
                             } else if (isRandom) {
                                 const ranIdxs: number[] = [];
                                 for (let i = 1; i <= count; ++i) {
-                                    let pos = this._randomInt(cscope - i * Math.sign(cscope));
+                                    let pos = this._random(cscope - i * Math.sign(cscope));
                                     if (cscope < 0 && pos == 0) pos = pile.length;
                                     ranIdxs.push(pos);
                                 }
@@ -3936,13 +3932,13 @@ export default class GeniusInvokationRoom {
                                         if (mode == CMD_MODE.Random || mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) {
                                             if (unselectedCards.length == 0) break;
                                             if (mode == CMD_MODE.Random) { // 弃置随机手牌
-                                                const didx = this._randomInt(unselectedCards.length - 1);
+                                                const didx = this._random(unselectedCards.length - 1);
                                                 const [discard] = unselectedCards.splice(didx, 1);
                                                 discards.push(clone(discard));
                                             } else if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) { // 弃置花费最高/低的手牌
                                                 const cost = hcardsSorted.at(mode == CMD_MODE.HighHandCard ? 0 : -1)!.currDiceCost;
                                                 const costCards = unselectedCards.filter(c => c.currDiceCost == cost);
-                                                const [{ entityId: ceid }] = isDiscard ? this._randomInArr(costCards) : costCards;
+                                                const [{ entityId: ceid }] = isDiscard ? this._random(costCards) : costCards;
                                                 const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
                                                 discards.push(clone(discard));
                                                 hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);
@@ -3954,7 +3950,7 @@ export default class GeniusInvokationRoom {
                                                 discards.push(clone(pile[discardIdx]));
                                                 discardIdxs.push(discardIdx);
                                             } else if (mode == CMD_MODE.RandomPileCard) { // 弃置牌库中随机一张牌
-                                                const disIdx = this._randomInt(pile.length - 1);
+                                                const disIdx = this._random(pile.length - 1);
                                                 discards.push(clone(pile[disIdx]));
                                                 discardIdxs.push(disIdx);
                                             }
@@ -4008,9 +4004,9 @@ export default class GeniusInvokationRoom {
                         let elements: DiceCostType[] = [];
                         if (mode == CMD_MODE.Random) { // 随机骰子
                             if (this.version.isOffline) { // 随机可重复骰子
-                                for (let i = 0; i < cnt; ++i) elements.push(this._randomInArr(Object.values(DICE_COST_TYPE))[0]);
+                                for (let i = 0; i < cnt; ++i) elements.push(this._random(Object.values(DICE_COST_TYPE))[0]);
                             } else { // 随机不重复基础骰子
-                                elements.push(...this._randomInArr(Object.values(PURE_ELEMENT_TYPE), cnt));
+                                elements.push(...this._random(Object.values(PURE_ELEMENT_TYPE), cnt));
                             }
                         } else if (mode == CMD_MODE.FrontHero) { // 当前出战角色(或者前后,用hidxs[0]控制)
                             const element = heros.getFront({ offset: ohidxs?.[0] }).element as PureElementType;
@@ -4128,7 +4124,7 @@ export default class GeniusInvokationRoom {
                                         while (hcardsSorted.length > 0) {
                                             const cost = hcardsSorted[0].currDiceCost;
                                             const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
-                                            cdidxs.push(...this._randomInArr(costCards, restCnt).map(c => c.cidx));
+                                            cdidxs.push(...this._random(costCards, restCnt).map(c => c.cidx));
                                             if (cdidxs.length >= selectCnt) {
                                                 selectCnt = cdidxs.length;
                                                 break;
@@ -4146,7 +4142,7 @@ export default class GeniusInvokationRoom {
                                         cdidxs = handCards.filter(c => (cardFilter?.(c) ?? true) && preFilter(c)).map(c => c.cidx);
                                         if (mode == CMD_MODE.AllHandCards) selectCnt = cdidxs.length;
                                     }
-                                    if (rhidxs.length == 0) rhidxs.push(...this._randomInArr(cdidxs, selectCnt || 1));
+                                    if (rhidxs.length == 0) rhidxs.push(...this._random(cdidxs, selectCnt || 1));
                                     rhidxs.forEach(cdidx => (isHandcard ? ast : pst)[cdidx].push(sts));
                                     break;
                                 default:
@@ -4204,10 +4200,10 @@ export default class GeniusInvokationRoom {
                         if (!this.preview.isExec) return this.taskQueue.stopPreview();
                         if (smnargs) {
                             const smnIds = convertToArray(smnargs);
-                            this._randomInArr(summons.filter((smn, suidx) => smnIds.includes(smn.id) || smnIds.includes(suidx) || smnIds.includes(smn.entityId)), cnt)
+                            this._random(summons.filter((smn, suidx) => smnIds.includes(smn.id) || smnIds.includes(suidx) || smnIds.includes(smn.entityId)), cnt)
                                 .forEach(smn => smn.dispose());
                         } else {
-                            this._randomInArr(summons, cnt).forEach(smn => smn.dispose());
+                            this._random(summons, cnt).forEach(smn => smn.dispose());
                         }
                         this._updateSummon(cpidx, [], { destroy: mode })
                     }, { isImmediate, isPriority, isUnshift });
@@ -4312,11 +4308,11 @@ export default class GeniusInvokationRoom {
                         if (isAttach) {
                             for (let i = 0; i < cnt; ++i) {
                                 const cardsIdPool = this._getCardIds(c => cardFilter?.(c, i) ?? true);
-                                cardIds.push(this._randomInArr(cardsIdPool)[0]);
+                                cardIds.push(this._random(cardsIdPool)[0]);
                             }
                         } else {
                             const cardsIdPool = this._getCardIds(c => cardFilter?.(c) ?? true);
-                            cardIds = this._randomInArr((card ? card as number[] : cardsIdPool), cnt);
+                            cardIds = this._random((card ? card as number[] : cardsIdPool), cnt);
                         }
                         this.pickModal.phase = this.players[pidx].phase;
                         this.pickModal.hidxs = hidxs;
@@ -4452,7 +4448,7 @@ export default class GeniusInvokationRoom {
                 } case 'summonTrigger': {
                     if (ohidxs == undefined) break;
                     const cSummon = mode == CMD_MODE.ByOrder ? cplayer.summons :
-                        mode == CMD_MODE.Random ? this._randomInArr(cplayer.summons, ohidxs?.[0]) :
+                        mode == CMD_MODE.Random ? this._random(cplayer.summons, ohidxs?.[0]) :
                             ohidxs.map(sid => cplayer.summons[sid] ?? cplayer.summons.find(s => s.id == sid || s.entityId == sid)).filter(v => !!v);
                     if (mode == CMD_MODE.Random && !this.preview.isExec) return this.taskQueue.stopPreview();
                     this.taskQueue.addTask(`doCmd--summonTrigger-p${cpidx}:${trigger}(${cmdtrg})`, () => {
@@ -4481,7 +4477,7 @@ export default class GeniusInvokationRoom {
                     const isAttachment = cnt < 0 && isAttach;
                     for (const eid of convertToArray(eids as number | number[])) {
                         const entities = smnargs != undefined ? summons : ohidxs ? heros[ohidxs![0]].heroStatus : isAttachment ? handCards : combatStatus;
-                        const entity = isAttachment ? this._randomInArr((entities as Card[]).filter(c => c.hasAttachment(eid)))[0].attachments.get(eid) :
+                        const entity = isAttachment ? this._random((entities as Card[]).filter(c => c.hasAttachment(eid)))[0].attachments.get(eid) :
                             entities.find(e => e.id == eid || e.entityId == eid) ?? entities[eid as number];
                         if (entity == undefined) continue;
                         const ocnt = entity.useCnt;
@@ -4608,7 +4604,7 @@ export default class GeniusInvokationRoom {
      * @returns 预览结果
      */
     private async _previewSkill(pidx: number) {
-        const curRandom = this._random;
+        const curRandom = this._randomNumber;
         const curPlayers = clone(this.players);
         const curEntityIdIdx = this.entityIdIdx;
         const previews: Preview[] = [];
@@ -4650,7 +4646,7 @@ export default class GeniusInvokationRoom {
             const selects = [...summonSelects.map(s => ['smn', s]), ...heroSelects.map(h => ['hero', h])] as [string, number][];
             if (selects.length == 0) selects.push(['default', -1]);
             const cplayers = clone(this.players);
-            const crandom = this._random;
+            const crandom = this._randomNumber;
             const cEntityIdIdx = this.entityIdIdx;
             for (const [tag, selectItem] of selects) {
                 this.preview.isExec = false;
@@ -4680,12 +4676,12 @@ export default class GeniusInvokationRoom {
                 }
                 previews.push(preview);
                 assign(this.players, clone(cplayers));
-                this._random = crandom;
+                this._randomNumber = crandom;
                 this.entityIdIdx = cEntityIdIdx;
                 this._resetPreview();
             }
             assign(this.players, clone(curPlayers));
-            this._random = curRandom;
+            this._randomNumber = curRandom;
             this.entityIdIdx = curEntityIdIdx;
             this._resetPreview();
         }
@@ -4697,7 +4693,7 @@ export default class GeniusInvokationRoom {
      * @returns 预览结果
      */
     private async _previewCard(pidx: number) {
-        const curRandom = this._random;
+        const curRandom = this._randomNumber;
         const curPlayers = clone(this.players);
         const curEntityIdIdx = this.entityIdIdx;
         const previews: Preview[] = [];
@@ -4786,7 +4782,7 @@ export default class GeniusInvokationRoom {
                     }
                 } else if (canSelectSummon != -1 && this.players[+(canSelectSummon == pidx)].summons.length) {
                     assign(this.players, clone(curPlayers));
-                    this._random = curRandom;
+                    this._randomNumber = curRandom;
                     this.entityIdIdx = curEntityIdIdx;
                     this._resetPreview();
                     for (let i = 0; i < this.players[+(canSelectSummon == pidx)].summons.length; ++i) {
@@ -4816,7 +4812,7 @@ export default class GeniusInvokationRoom {
                             summonIdx: i,
                         });
                         assign(this.players, clone(curPlayers));
-                        this._random = curRandom;
+                        this._randomNumber = curRandom;
                         this.entityIdIdx = curEntityIdIdx;
                         this._resetPreview();
                     }
@@ -4824,7 +4820,7 @@ export default class GeniusInvokationRoom {
                     previews.push(preview);
                 }
                 assign(this.players, clone(curPlayers));
-                this._random = curRandom;
+                this._randomNumber = curRandom;
                 this.entityIdIdx = curEntityIdIdx;
                 this._resetPreview();
             }
@@ -4839,7 +4835,7 @@ export default class GeniusInvokationRoom {
             }
             previews.push(preview);
             assign(this.players, clone(curPlayers));
-            this._random = curRandom;
+            this._randomNumber = curRandom;
             this.entityIdIdx = curEntityIdIdx;
             this._resetPreview();
         }
@@ -4851,7 +4847,7 @@ export default class GeniusInvokationRoom {
      * @returns 预览结果
      */
     private async _previewSwitch(pidx: number) {
-        const curRandom = this._random;
+        const curRandom = this._randomNumber;
         const curPlayers = clone(this.players);
         const curEntityIdIdx = this.entityIdIdx;
         const previews: Preview[] = [];
@@ -4885,7 +4881,7 @@ export default class GeniusInvokationRoom {
             }
             previews.push(preview);
             assign(this.players, clone(curPlayers));
-            this._random = curRandom;
+            this._randomNumber = curRandom;
             this.entityIdIdx = curEntityIdIdx;
             this._resetPreview();
         }
