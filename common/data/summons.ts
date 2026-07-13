@@ -770,7 +770,9 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         .src('#')
         .handle((summon, event) => ({
             triggers: 'phase-end',
-            exec: event.heros.get(summon.id)?.heroStatus.has(122081) ? undefined : cmds => {
+            exec: cmds => {
+                const hero = event.heros.get(summon.id);
+                if (hero?.isDie || hero?.heroStatus.has(122081)) return summon.phaseEndAtk(cmds);
                 cmds.getStatus(122081);
                 summon.minusUseCnt();
             }
@@ -944,17 +946,19 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         }),
 
     301041: () => summon('回天的圣主').from(321034).useCnt(3).damage(2).pierce()
-        .description('{defaultAtk。；此卡牌被弃置时，对场上生命值最高的一名角色造成5点[穿透伤害]。}')
+        .description('{defaultAtk。；此卡牌被弃置时，对场上生命值最高的一名角色造成3点[穿透伤害]。}')
+        .description('{defaultAtk。；此卡牌被弃置时，对场上生命值最高的一名角色造成5点[穿透伤害]。}', 'v7.0.0')
         .src('https://patchwiki.biligame.com/images/ys/7/7d/f40k9q77njtzc0xwvggtce8cj4h7drn.png')
-        .handle((summon, event) => ({
+        .handle((summon, event, ver) => ({
             triggers: ['phase-end', 'destroy'],
             exec: cmds => {
                 const { trigger, heros, eheros } = event;
                 if (trigger == 'phase-end') return summon.phaseEndAtk(cmds);
                 const maxHp = Math.max(...[...heros, ...eheros].map(h => h.hp));
                 const hidxs = eheros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 });
-                if (hidxs.length > 0) cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs });
-                else cmds.attack(5, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }), isOppo: false });
+                const cnt = ver.lt('v7.0.0') ? 5 : 3;
+                if (hidxs.length > 0) cmds.attack(cnt, DAMAGE_TYPE.Pierce, { hidxs });
+                else cmds.attack(cnt, DAMAGE_TYPE.Pierce, { hidxs: heros.allHidxs({ cdt: h => h.hp == maxHp, limit: 1 }), isOppo: false });
             }
         })),
 

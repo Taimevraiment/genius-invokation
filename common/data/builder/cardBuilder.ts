@@ -218,7 +218,7 @@ export class GICard extends Entity {
                 }
             }
             this.UI.description = this.UI.description
-                .replace(/{action}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，立刻使用一次‹#f4dca2【ski】›。`)
+                .replace(/{action([^\}]*)}/, `[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，$1立刻使用一次‹#f4dca2【ski】›。`)
                 .replace(/{quick([^\}]*)}/, '〔*[card][快速行动]：装备给我方的【hro】$1〕')
                 .replace(/(?<=〖)ski(?=〗)/g, ski)
                 .replace(/(?<=【)ski(?=】)/g, ski)

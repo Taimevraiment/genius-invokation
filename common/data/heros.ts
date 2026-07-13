@@ -1008,10 +1008,10 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Durin')
         .normalSkill('芒焰之翼斩')
         .skills(
-            skill('二元式·聚分熔炼').description('{dealDmg}。')
+            skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。')
                 .src('#',
                     '')
-                .elemental().damage(3).cost(3),
+                .elemental().damage(3).cost(3).handle(() => ({ status: 113175 })),
             allSkills[13173](),
             skill('光灵遵神数显现').id(13175).description('【自身使用「普通攻击」后：】将自身「元素爆发」切换为【rsk13174】。；【自身使用「元素战技」后：】将自身「元素爆发」切换为【rsk13173】。')
                 .src('#',
@@ -1689,7 +1689,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('空天疾护').description('{dealDmg}，自身进入【sts115151】，获得2点「夜魂值」，并附属【crd115152】。（角色进入【sts115151】后不可使用此技能）')
                 .src('https://patchwiki.biligame.com/images/ys/3/33/oa27ioa4arhh43owp0rn37fi5yyw27i.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/b2d1b7b516530565e722ded4abf10751_7101356055499665736.png')
-                .elemental().damage(1).cost(2).handle(({ cmds, hero: { heroStatus } }) => (
+                .elemental().damage(2).damage(1, 'v7.0.0').cost(3).cost(2, 'v7.0.0').handle(({ cmds, hero: { heroStatus } }) => (
                     cmds.getStatus(115151).getNightSoul(2), {
                         equip: 115152,
                         isForbidden: heroStatus.has(STATUS_TYPE.NightSoul),

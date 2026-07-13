@@ -1792,7 +1792,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle(() => ({ status: 300002 })),
 
     330005: () => card(222).name('万家灶火').since('v4.2.0').offline('v4').legend().costSame(0)
-        .description('【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的「天赋」牌，则抓1张「天赋」牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。（最多抓4张〔，当前为回合{round}〕）')
+        .description('【第1回合打出此牌时：】如果我方牌组中初始包含至少4/2张不同的「天赋」牌，则抓2/1张「天赋」牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。（最多抓4张〔，当前为回合{round}〕）')
+        .description('【第1回合打出此牌时：】如果我方牌组中初始包含至少2张不同的「天赋」牌，则抓1张「天赋」牌。；【第2回合及以后打出此牌时：】我方抓【当前回合数-1】数量的牌。（最多抓4张〔，当前为回合{round}〕）', 'v7.0.0')
         .description('我方抓【当前回合数-1】数量的牌。（最多抓4张）', 'v4.7.0')
         .description('我方抓【当前回合数】数量的牌。（最多抓4张）', 'v4.4.0', 'v4')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/07/258999284/4c214784418f974b6b3fa294b415cdb4_8205569284186975732.png')
@@ -1801,7 +1802,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             if (ver.lt('v4.4.0')) return cmds.getCard(Math.min(4, round));
             if (ver.lt('v4.7.0')) { cmds.getCard(Math.min(4, round - 1)); return { isValid: round > 1 } }
             if (round > 1) return cmds.getCard(Math.min(4, round - 1)).res;
-            cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true });
+            const cnt = ver.gte('v7.0.0') && talentTypeCnt >= 4 ? 2 : 1;
+            cmds.getCard(cnt, { subtype: CARD_SUBTYPE.Talent, isFromPile: true });
             return { isValid: talentTypeCnt >= 2 }
         }),
 
@@ -2607,12 +2609,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle(() => ({ status: 303248 })),
 
     332065: () => card(618).name('「魔女的课业」').since('v7.0.0').event().costSame(1)
-        .description('抓1张「天赋」牌。如果我方牌组中初始包含至少3张「天赋」牌，则赋予手牌中[当前元素骰费用]最高的「天赋」牌【sts202】。')
+        .description('抓1张「天赋」牌。如果我方牌组中初始包含至少3张「天赋」牌，则赋予手牌中[当前元素骰费用]最高的随机1张「天赋」牌【sts202】。')
         .src('#')
         .handle((_, event) => {
             const { cmds, playerInfo: { talentCnt } } = event;
             cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true });
-            if (talentCnt >= 3) cmds.getStatus(202, { mode: CMD_MODE.HighHandCard, cardFilter: c => c.hasSubtype(CARD_SUBTYPE.Talent) });
+            if (talentCnt >= 3) cmds.getStatus(202, { cnt: 1, mode: CMD_MODE.HighHandCard, cardFilter: c => c.hasSubtype(CARD_SUBTYPE.Talent) });
         }),
 
     332066: () => card(619).name('齐聚共饮').since('v7.0.0').event().costSame(0)
@@ -2934,13 +2936,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://patchwiki.biligame.com/images/ys/d/de/1o1lt07ey988flsh538t7ywvnpzvzjk.png')
         .handle((_, event) => ({ triggers: 'elReaction-Hydro', addDmgCdt: isCdt(event.hero.isFront, 2) })),
 
-    212032: () => card(614).name('天步真原').since('v7.0.0').hexenzirkel(0).costHydro(1).anydice(2)
-        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，生成【sts212033】并立刻使用一次‹#f4dca2【ski】›。；【hro】「普通攻击」少花费1个[无色元素骰]，并且「普通攻击」后生成【sts212033】。')
+    212032: () => card(614).name('天步真原').since('v7.0.0').hexenzirkel(0).costHydro(1).anydice(1)
+        .description('{action我方下次蒸发反应造成的伤害+2并}；【hro】「普通攻击」少花费1个[无色元素骰]，并且「普通攻击」后使我方下次蒸发反应造成的伤害+2。')
         .src('#')
         .handle((_, event) => {
             const { cmds, execmds } = event;
-            cmds.getStatus(212033);
-            execmds.getStatus(212033);
+            execmds.addCmds(cmds.getStatus(212033));
             return { triggers: 'after-skilltype1', minusDiceSkill: { skilltype1: [0, 1, 0] } }
         }),
 
@@ -3099,14 +3100,15 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；装备有此牌的【hro】生成的【sts113061】的[可用次数]+1。')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/0cca153cadfef3f9ccfd37fd2b306b61_8853740768385239334.png'),
 
-    213062: () => card(615).name('火花魔法').since('v7.0.0').hexenzirkel().costSame(0)
-        .description('{quick。}；〔*[card]可莉附属【sts113061】。〕；【所附属角色进行[重击]后：】附属1层【sts210】。')
+    213062: () => card(615).name('火花魔法').since('v7.0.0').hexenzirkel().costPyro(1).perCnt(2)
+        .description('{quick。}；〔*[card]可莉附属【sts113061】。〕；【所附属角色进行[重击]后：】造成2点[火元素伤害]。（每回合2次）。')
         .src('#')
-        .handle((_, event) => {
+        .handle((card, event) => {
             const { cmds, execmds, isChargedAtk } = event;
             cmds.getStatus(113061);
-            execmds.getStatus(210);
-            return { triggers: isCdt(isChargedAtk, 'skilltype1') }
+            if (card.perCnt <= 0 || !isChargedAtk) return;
+            execmds.attack(2, DAMAGE_TYPE.Pyro);
+            return { triggers: 'skilltype1', exec: () => card.minusPerCnt() }
         }),
 
     213071: () => card(83).name('血之灶火').since('v3.7.0').offline('v2').talent(1).costPyro(2)
@@ -3207,7 +3209,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     213171: () => card(611).name('红土之逆').since('v7.0.0').talent(2).costPyro(3).energy(2)
-        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下3次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】我方【hro】与【sts113172】造成的伤害+1。')
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下4次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】我方【hro】与【sts113172】造成的伤害+2。')
         .src('#')
         .handle((_, event) => {
             const { skill, execmds } = event;
@@ -3220,14 +3222,18 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('{action}；装备有此牌的【hro】生成的【smn114011】，会在【hro】「普通攻击」后造成2点[雷元素伤害]。（需消耗[可用次数]）')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/07/183046623/95879bb5f97234a4af1210b522e2c948_1206699082030452030.png'),
 
-    214012: () => card(616).name('宵世幻奏').since('v7.0.0').hexenzirkel().costElectro(2)
-        .description('{quick。}；〔*[card]召唤【smn114011】。〕；【smn114011】在场时，我方[雷元素相关反应]造成的伤害+1。')
+    214012: () => card(616).name('宵世幻奏').since('v7.0.0').hexenzirkel().costElectro(2).perCnt(3)
+        .description('{quick。}；〔*[card]召唤【smn114011】。〕；【smn114011】在场时，我方[雷元素相关反应]造成的伤害+1。（每回合3次）')
         .src('#')
-        .handle((_, event) => {
+        .handle((card, event) => {
             const { cmds, summons } = event;
             cmds.getSummon(114011);
-            if (!summons.has(114011)) return;
-            return { triggers: ['elReaction-Electro', 'other-elReaction-Electro'], addDmgCdt: 1 }
+            if (!summons.has(114011) || card.perCnt <= 0) return;
+            return {
+                triggers: ['elReaction-Electro', 'other-elReaction-Electro'],
+                addDmgCdt: 1,
+                exec: () => card.minusPerCnt(),
+            }
         }),
 
     214021: () => card(87).name('觉醒').offline('v3').talent(1).costElectro(3).costElectro(4, 'v4.2.0').perCnt(1).perCnt(0, 'v4.2.0')
@@ -4372,7 +4378,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .handle(() => ({ status: 221056 })),
 
     121059: () => card().name('浮彩·迅影').event().costSame(0)
-        .description('打出【crd121051】少花费1个元素骰。（重复选择时将额外少花费1个元素骰）')
+        .description('【打出〖crd121051〗时：】赋予我方[当前元素骰费用]最高的1张随机手牌【sts202】。（重复选择时将额外赋予1层）')
+        .description('打出【crd121051】少花费1个元素骰。（重复选择时将额外少花费1个元素骰）', 'v7.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png')
         .handle(() => ({ status: 221057 })),
 
@@ -4741,8 +4748,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/12/01/258999284/37df64f2ae5e690623f72429c7b04cb9_4494110869556525340.png'),
 
     321034: () => card().name('天蛇船').since('v6.3.0').adventure().costSame(0)
-        .description('【冒险经历增加时：】将1个元素骰转换为[万能元素骰]。；【冒险经历达到2时：】抓2张牌。；【冒险经历达到4时：】我方出战角色附属2层【sts172】。；【冒险经历达到6时：】弃置敌方场上1个随机召唤物，召唤【smn301041】，然后弃置此牌。')
-        .description('【冒险经历增加时：】将1个元素骰转换为[万能元素骰]。；【冒险经历达到2时：】抓1张牌。；【冒险经历达到4时：】我方出战角色附属2层【sts172】。；【冒险经历达到6时：】弃置敌方场上1个随机召唤物，召唤【smn301041】，然后弃置此牌。', 'v6.5.0')
+        .description('【冒险经历增加时：】将1个元素骰转换为[万能元素骰]。；【冒险经历达到2时：】抓1张牌。；【冒险经历达到4时：】我方出战角色附属2层【sts172】。；【冒险经历达到6时：】弃置敌方场上1个随机召唤物，召唤【smn301041】，然后弃置此牌。', 'v6.5.0', 'vlatest')
+        .description('【冒险经历增加时：】将1个元素骰转换为[万能元素骰]。；【冒险经历达到2时：】抓2张牌。；【冒险经历达到4时：】我方出战角色附属2层【sts172】。；【冒险经历达到6时：】弃置敌方场上1个随机召唤物，召唤【smn301041】，然后弃置此牌。', 'v7.0.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/01/12/258999284/fe103e0d884968a8748b0fc93fba9ed4_2144437725451546476.png'),
 
     332033: () => magicCount(2).from(332032).src('https://patchwiki.biligame.com/images/ys/c/ca/dk2k14jsq9qj0grtette44bpdqh4dpp.png'),

@@ -5543,12 +5543,13 @@ export default class GeniusInvokationRoom {
     /**
      * 按条件获取卡牌id数组
      * @param filter 筛选条件
+     * @param isDiscover 是否为可发现牌
      * @returns 卡牌id数组
      */
-    private _getCardIds(filter: (cards: Card) => any = () => true, isDisCover?: boolean): number[] {
+    private _getCardIds(filter: (cards: Card) => any = () => true, isDiscover?: boolean): number[] {
         const filterDiscover = (c: Card) => !c.hasSubtype(CARD_SUBTYPE.Legend, CARD_SUBTYPE.Talent, CARD_SUBTYPE.Blessing) && c.id != 322025;
-        return cardsTotal(this.version.value, { ignoreInPool: !isDisCover })
-            .filter(c => filter(c) && (!isDisCover || filterDiscover(c)))
+        return cardsTotal(this.version.value, { ignoreInPool: !isDiscover })
+            .filter(c => filter(c) && (!isDiscover || filterDiscover(c)))
             .map(card => card.id);
     }
 }

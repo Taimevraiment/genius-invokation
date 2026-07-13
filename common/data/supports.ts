@@ -835,7 +835,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         exec: cmds => {
             support.addUseCnt();
             cmds.changeDice({ cnt: 1 });
-            if (support.useCnt == 2) return cmds.getCard(ver.lt('v6.5.0') ? 1 : 2).res;
+            if (support.useCnt == 2) return cmds.getCard(ver.range('v6.5.0', 'v7.0.0') ? 2 : 1).res;
             if (support.useCnt == 4) return cmds.getStatus([[172, 2]]).res;
             if (support.useCnt == 6) {
                 cmds.destroySummon({ isOppo: true }).getSummon(301041);

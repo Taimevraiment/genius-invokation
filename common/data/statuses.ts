@@ -1210,8 +1210,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     113163: () => readySkillStatus('踏云献瑞', 13164),
 
-    113171: () => status('白化之是').combatStatus().useCnt(3).icon('ski,2').type(STATUS_TYPE.Attack)
-        .description('【我方角色行动后：】造成1点[火元素伤害]。；[useCnt]')
+    113171: () => status('白化之是').combatStatus().useCnt(4).icon('ski,2').type(STATUS_TYPE.Attack)
+        .description('【我方角色使用技能后：】造成1点[火元素伤害]。；[useCnt]')
         .handle((status, event) => ({
             damage: 1,
             element: DAMAGE_TYPE.Pyro,
@@ -1228,16 +1228,26 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             exec: () => status.minusUseCnt(),
         })),
 
-    113173: () => status('白焰之龙（生效中）').combatStatus().useCnt(3).type(STATUS_TYPE.AddDamage)
+    113173: () => status('白焰之龙（生效中）').combatStatus().useCnt(4).type(STATUS_TYPE.AddDamage)
         .description('我方造成的伤害+1。；[useCnt]').icon('ski,2')
         .handle(status => ({ triggers: 'dmg', addDmgCdt: 1, exec: () => status.minusUseCnt() })),
 
     113174: () => status('黑蚀之龙（生效中）').combatStatus().type(STATUS_TYPE.AddDamage).icon('#')
-        .description('我方【hro】与【sts113172】造成的伤害+1。')
+        .description('我方【hro】与【sts113172】造成的伤害+2。')
         .handle((status, event) => {
             const { source } = event;
             if (source != getHidById(status.id) && source != 113172) return;
-            return { triggers: 'dmg', addDmgCdt: 1 }
+            return { triggers: 'dmg', addDmgCdt: 2 }
+        }),
+
+    113175: () => status('精质转变').heroStatus().useCnt(3).maxCnt(MAX_USE_COUNT)
+        .icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
+        .description('【所附属角色下次使用「普通攻击」后：】造成2点[火元素伤害]。；【所附属角色下次使用「元素战技」后：】生成1层【sts169】。；[useCnt]')
+        .handle((status, event) => {
+            const { cmds, trigger } = event;
+            if (trigger == 'after-skilltype1') cmds.attack(2, DAMAGE_TYPE.Pyro);
+            else if (trigger == 'skilltype2') cmds.getStatus(169);
+            return { triggers: ['after-skilltype1', 'skilltype2'], exec: () => status.minusUseCnt() }
         }),
 
     114021: () => status('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
@@ -2810,7 +2820,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     221052: () => status('浮彩·冰凌').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Attack)
-        .description('【打出〖crd121051〗时：】额外造成1点[冰元素伤害]。（每层使造成的伤害+1）')
+        .description('【打出〖crd121051〗时：】造成等于此状态层数点[冰元素伤害]。')
         .handle((status, event) => ({
             triggers: isCdt(event.hcard?.id == 121051, 'card'),
             damage: status.useCnt,
@@ -2820,7 +2830,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     221053: () => status('浮彩·多重').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('【打出〖crd121051〗时：】召唤【smn121052】。（每层使召唤的浮彩分身造成的伤害+1）')
+        .description('【打出〖crd121051〗时：】召唤【smn121052】。（【smn121052】造成的伤害等于此状态层数）')
         .handle((status, event) => ({
             triggers: isCdt(event.hcard?.id == 121051, 'card'),
             summon: [[121052, status.useCnt]],
@@ -2829,7 +2839,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     221054: () => status('浮彩·实像').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('【打出〖crd121051〗时：】抓1张牌。（每层额外抓1张牌）')
+        .description('【打出〖crd121051〗时：】抓等于此状态层数张牌。')
         .handle((status, event) => ({
             triggers: isCdt(event.hcard?.id == 121051, 'card'),
             exec: () => {
@@ -2840,7 +2850,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     221055: () => status('浮彩·支柱').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('【打出〖crd121051〗时：】生成1层【sts203】。（每层额外生成1层【sts203】）')
+        .description('【打出〖crd121051〗时：】生成等于此状态层数层【sts203】。')
         .handle((status, event) => ({
             triggers: isCdt(event.hcard?.id == 121051, 'card'),
             status: [[203, status.useCnt]],
@@ -2849,7 +2859,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     221056: () => status('浮彩·坚冰').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('【打出〖crd121051〗时：】使我方出战角色附属1层【sts172】。（每层额外附属1层【sts172】）')
+        .description('【打出〖crd121051〗时：】使我方出战角色附属等于此状态层数层【sts172】。')
         .handle((status, event) => ({
             triggers: isCdt(event.hcard?.id == 121051, 'card'),
             status: [[172, status.useCnt]],
@@ -2858,11 +2868,17 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     221057: () => status('浮彩·迅影').combatStatus().icon(STATUS_ICON.Buff)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
-        .description('打出【crd121051】少花费1个元素骰。（每层额外少花费1个元素骰）')
-        .handle((status, event) => {
-            const { hcard, isMinusDiceCard, minusDiceCard: mdc } = event;
-            if (!isMinusDiceCard || hcard?.id != 121051) return;
-            return { triggers: 'card', minusDiceCard: status.useCnt, exec: () => status.minusUseCnt(hcard.rawDiceCost - mdc) }
+        .description('【打出〖crd121051〗时：】赋予我方[当前元素骰费用]最高的1张随机手牌等于此状态层数层【sts202】。')
+        .description('打出【crd121051】少花费等于此状态层数个元素骰。', 'v7.0.0')
+        .handle((status, event, ver) => {
+            const { hcard, isMinusDiceCard, minusDiceCard: mdc, cmds } = event;
+            if (hcard?.id != 121051) return;
+            if (ver.lt('v7.0.0')) {
+                if (!isMinusDiceCard) return;
+                return { triggers: 'card', minusDiceCard: status.useCnt, exec: () => status.minusUseCnt(hcard.rawDiceCost - mdc) }
+            }
+            cmds.getStatus([[202, status.useCnt]], { cnt: 1, mode: CMD_MODE.HighHandCard });
+            return { triggers: 'card', exec: () => status.dispose() }
         }),
 
     222062: () => status('元素生命·水').heroStatus().icon(STATUS_ICON.Special)

@@ -520,7 +520,7 @@ onUnmounted(() => {
 let prodEnv = 0;
 const maskOpacity = ref<number>(0.7);
 const isOpenMask = ref<boolean>(false);
-isOpenMask.value = true;
+// isOpenMask.value = isDev;
 const devOps = (cidx = 0) => {
   if ((client.value.phase < PHASE.DICE && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');
@@ -622,7 +622,7 @@ const devOps = (cidx = 0) => {
       }
       flag.add('disCard');
     } else if (op.startsWith('=')) { // 状态
-      if (op[1] == '0') {
+      if (op[1] == '0') { // 重置秘传
         flag.add('resetLegend')
         continue;
       }

@@ -331,7 +331,7 @@ export default class GeniusInvokationClient {
                     if (hasDiscard) p.UI.willDiscard = { hcards: [], pile: [], isNotPublic: false };
                     p.handCards.forEach(c => {
                         const preview = this.previews.find(pre => pre.type == ACTION_TYPE.UseCard && pre.cardIdxs?.[0] == c.cidx);
-                        if (preview?.isValid) c.UI.class = 'valid';
+                        if (preview?.isValid && this.canAction) c.UI.class = 'valid';
                     });
                 });
             }, 1500);
