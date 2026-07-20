@@ -1240,15 +1240,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             return { triggers: 'dmg', addDmgCdt: 2 }
         }),
 
-    113175: () => status('精质转变').heroStatus().useCnt(3).maxCnt(MAX_USE_COUNT)
-        .icon(STATUS_ICON.Special).type(STATUS_TYPE.Usage, STATUS_TYPE.Attack)
-        .description('【所附属角色下次使用「普通攻击」后：】造成2点[火元素伤害]。；【所附属角色下次使用「元素战技」后：】生成1层【sts169】。；[useCnt]')
-        .handle((status, event) => {
-            const { cmds, trigger } = event;
-            if (trigger == 'after-skilltype1') cmds.attack(2, DAMAGE_TYPE.Pyro);
-            else if (trigger == 'skilltype2') cmds.getStatus(169);
-            return { triggers: ['after-skilltype1', 'skilltype2'], exec: () => status.minusUseCnt() }
-        }),
+    113175: () => status('精质转变').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
+        .icon(STATUS_ICON.Special).type(STATUS_TYPE.Attack)
+        .description('【所附属角色下次使用「普通攻击」后：】造成2点[火元素伤害]。；[useCnt]')
+        .handle(status => ({
+            triggers: 'after-skilltype1',
+            damage: 2,
+            element: DAMAGE_TYPE.Pyro,
+            exec: () => status.minusUseCnt()
+        })),
 
     114021: () => status('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
         .description('【所附属角色使用「普通攻击」或「元素战技」后：】造成2点[雷元素伤害]。；[roundCnt]')
@@ -2800,7 +2800,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     215033: () => status('颂时风若（生效中）').heroStatus().from(215032).icon(STATUS_ICON.Buff).useCnt(2).roundCnt(1)
         .type(STATUS_TYPE.Enchant, STATUS_TYPE.Usage).icon(STATUS_ICON.Enchant)
-        .description('本回合中所附属角色角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
+        .description('本回合中所附属角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
         .handle(status => ({
             triggers: 'skilltype1',
             attachEl: ELEMENT_TYPE.Anemo,

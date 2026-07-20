@@ -1008,10 +1008,14 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Durin')
         .normalSkill('芒焰之翼斩')
         .skills(
-            skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。')
+            skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。若自身已附属【sts113175】，则额外生成1层【sts169】。')
                 .src('#',
                     '')
-                .elemental().damage(3).cost(3).handle(() => ({ status: 113175 })),
+                .elemental().damage(3).cost(3).handle(event => {
+                    const { hero: { heroStatus }, cmds } = event;
+                    cmds.getStatus(113175);
+                    if (heroStatus.has(113175)) cmds.getStatus(169);
+                }),
             allSkills[13173](),
             skill('光灵遵神数显现').id(13175).description('【自身使用「普通攻击」后：】将自身「元素爆发」切换为【rsk13174】。；【自身使用「元素战技」后：】将自身「元素爆发」切换为【rsk13173】。')
                 .src('#',

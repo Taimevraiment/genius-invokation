@@ -3554,7 +3554,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     215161: () => card(612).name('暗巷的黠慧').since('v7.0.0').talent(1).costAnemo(3).perCnt(1)
-        .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制两张敌方手牌。（每回合1次）')
+        .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制2张敌方手牌。（每回合1次）')
         .src('#')
         .handle((card, event) => {
             const { ehcards, ehcardsCnt, hcardsCnt, execmds, random } = event;

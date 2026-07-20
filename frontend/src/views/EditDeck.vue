@@ -703,7 +703,7 @@ const showHeroInfo = (hid: number) => {
         version: customVersion.value.diff[hid] ?? version.value,
         isShow: true,
         type: INFO_TYPE.Hero,
-        info: allHeros.value.find(h => h.id == hid)!,
+        info: herosPool.value.find(h => h.id == hid)!,
     }
 }
 
@@ -714,7 +714,7 @@ const showCardInfo = (cid: number) => {
         version: customVersion.value.diff[cid] ?? customVersion.value.diff[getHidById(cid)] ?? version.value,
         isShow: true,
         type: INFO_TYPE.Card,
-        info: allCards.value.find(c => c.id == cid)!,
+        info: cardsPool.value.find(c => c.id == cid)!,
     }
 }
 

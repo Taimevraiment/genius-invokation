@@ -674,7 +674,7 @@ export default class GeniusInvokationRoom {
      * @param flag 标志
      * @param seed 指定种子
      */
-    start(pidx: number, flag: string, seed?: string) {
+    private _start(pidx: number, flag: string, seed?: string) {
         this.seed = seed || Math.floor(Math.random() * 1e10).toString();
         this._randomNumber = +this.seed;
         this.recordData.seed = this.seed;
@@ -789,7 +789,7 @@ export default class GeniusInvokationRoom {
                 if (player.phase == PHASE.NOT_BEGIN) this.shareCodes[pidx] = shareCode;
                 if (this.winner > -1 && this.winner < PLAYER_COUNT) this.winner += PLAYER_COUNT;
                 if (this.players.every(p => p.phase == PHASE.NOT_BEGIN)) { // 双方都准备开始
-                    this.start(pidx, flag, isCdt(isRecord, this.recordData.seed));
+                    this._start(pidx, flag, isCdt(isRecord, this.recordData.seed));
                     return 1;
                 } else {
                     await this.emit(flag, pidx);

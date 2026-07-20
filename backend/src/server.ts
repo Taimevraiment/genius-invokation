@@ -1,8 +1,8 @@
 import cors from "cors";
 import express from "express";
-import { createServer } from "http";
 import cron from "node-cron";
 import * as fs from 'node:fs';
+import { createServer } from "node:http";
 import https from "node:https";
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -419,14 +419,21 @@ app.get('/login', (req, res) => {
 app.get('/detail', async (req, res) => {
     if (!validateSK(req, res)) return;
     const todayLogs: Record<string, string> = {};
-    for (const path of [yestodayLogsPath, todayLogsPath]) {
-        try {
-            const fileNames = await fs.promises.readdir(path);
-            for (const name of fileNames) {
-                const log = await fs.promises.readFile(`${path}/${name}/${name}.log`, 'utf-8');
-                todayLogs[name] = log;
+    const logsPath = await fs.promises.readdir(`${__dirname}/../../../logs`);
+    const pathReg = /today$|\d{4}-\d{2}-\d{2}$/;
+    for (const logPath of logsPath) {
+        if (pathReg.test(logPath)) {
+            const paths = await fs.promises.readdir(logPath);
+            for (const path of paths) {
+                try {
+                    const fileNames = await fs.promises.readdir(path);
+                    for (const name of fileNames) {
+                        const log = await fs.promises.readFile(`${path}/${name}/${name}.log`, 'utf-8');
+                        todayLogs[name] = log;
+                    }
+                } catch { }
             }
-        } catch { }
+        }
     }
     res.json({
         roomList: roomList.map(r => ({
