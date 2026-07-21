@@ -224,7 +224,6 @@ class SummonBuilder extends BaseBuilder {
     private _tag: SummonTag[] = [];
     private _perCnt: VersionMap<number> = this._createVersionMap();
     private _isTalent: boolean = false;
-    private _variables: Record<string, number> = {};
     private _isDestroy: SummonDestroyType = SUMMON_DESTROY_TYPE.Used;
     private _statusId: number = -1;
     private _topIcon: string = 'TimeState';
@@ -323,10 +322,6 @@ class SummonBuilder extends BaseBuilder {
     }
     tag(...tag: SummonTag[]) {
         this._tag.push(...tag);
-        return this;
-    }
-    variables(key: string, value: number) {
-        this._variables[key] = value;;
         return this;
     }
     statusId(stsId?: number) {

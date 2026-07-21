@@ -13,7 +13,8 @@ import {
     StatusType, SwirlElementType, Version
 } from '../../common/constant/enum.js';
 import {
-    AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT, INIT_PILE_COUNT, INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
+    AI_ID, DECK_CARD_COUNT, INIT_DICE_COUNT, INIT_HANDCARDS_COUNT,
+    INIT_ROLL_COUNT, INIT_SWITCH_HERO_DICE, MAX_DICE_COUNT,
     MAX_GAME_ROUND, MAX_HANDCARDS_COUNT, MAX_STATUS_COUNT, MAX_SUMMON_COUNT, MAX_SUPPORT_COUNT, PLAYER_COUNT, STATUS_DESTROY_ID
 } from '../../common/constant/gameOption.js';
 import { INIT_DAMAGEVO, INIT_PLAYER, NULL_CARD } from '../../common/constant/init.js';
@@ -718,7 +719,7 @@ export default class GeniusInvokationRoom {
             p.playerInfo.talentTypeCnt = new Set(p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Talent)).map(c => c.id)).size;
             p.playerInfo.talentCnt = p.pile.filter(c => c.hasSubtype(CARD_SUBTYPE.Talent)).length;
             p.playerInfo.initCardIds = [...new Set(p.pile.map(c => c.id))];
-            const pileIdxPool = Array.from({ length: INIT_PILE_COUNT }, (_, i) => i);
+            const pileIdxPool = Array.from({ length: p.pile.length }, (_, i) => i);
             const piles = [...p.pile];
             p.pile = [];
             while (pileIdxPool.length > 0) {

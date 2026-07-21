@@ -256,7 +256,6 @@ class StatusBuilder extends BaseBuilder {
     private _iconBg: StatusBgColor = STATUS_BG_COLOR.Transparent;
     private _isTalent: boolean = false;
     private _summonId: number = -1;
-    private _variables: Record<string, number> = {};
     private _isResetPerCnt: boolean = true;
     private _isResetUseCnt: boolean = false;
     private _handle: ((status: Status, event: StatusBuilderHandleEvent, ver: VersionWrapper) => StatusBuilderHandleRes | undefined | void) | undefined;
@@ -372,10 +371,6 @@ class StatusBuilder extends BaseBuilder {
     }
     summonId(smnId?: number) {
         this._summonId = smnId ?? -2;
-        return this;
-    }
-    variables(key: string, value?: number) {
-        this._variables[key] = value ?? 0;
         return this;
     }
     notResetPerCnt() {

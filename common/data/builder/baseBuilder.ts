@@ -87,6 +87,7 @@ export class BaseBuilder {
     protected _versionMaps: VersionMap<any>[] = [];
     protected _curVersion: Version = VERSION[0];
     protected _description: VersionMap<string> = this._createVersionMap();
+    protected _variables: Record<string, number> = {};
     protected _createVersionMap<T>() {
         const map = new VersionMap<T>();
         this._versionMaps.push(map);
@@ -100,6 +101,10 @@ export class BaseBuilder {
     description(description: string, ...versions: Version[]) {
         if (versions.length == 0) versions = ['vlatest'];
         versions.forEach(v => this._description.set([v, description]));
+        return this;
+    }
+    variables(key: string, value?: number) {
+        this._variables[key] = value ?? 0;
         return this;
     }
     get versionChanges() {

@@ -359,7 +359,6 @@ class CardBuilder extends BaseCostBuilder {
     private _cnt: number = 2;
     private _isUseNightSoul: boolean = false;
     private _readySkillStatus: number = 0;
-    private _variables: Record<string, number> = {};
     private _subtypeCdt: [(ver: VersionWrapper) => boolean, CardSubtype[]][] = [];
     constructor(shareId?: number) {
         super(shareId ?? -1);
@@ -526,10 +525,6 @@ class CardBuilder extends BaseCostBuilder {
     }
     notResetPerCnt() {
         this._isResetPerCnt = false;
-        return this;
-    }
-    variables(key: string, value: number) {
-        this._variables[key] = value;
         return this;
     }
     from(id: number) {

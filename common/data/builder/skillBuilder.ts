@@ -258,7 +258,6 @@ export class SkillBuilder extends BaseBuilder {
     private _readySkillRound: number = 0;
     private _canSelectSummon: -1 | 0 | 1 = -1;
     private _canSelectHero: -1 | 0 | 1 = -1;
-    private _variables: Record<string, number> = {};
     constructor(name: string = '') {
         super();
         this._name = name;
@@ -376,10 +375,6 @@ export class SkillBuilder extends BaseBuilder {
     }
     canSelectHero(canSelectHero: 0 | 1) {
         this._canSelectHero = canSelectHero;
-        return this;
-    }
-    variables(key: string, value?: number) {
-        this._variables[key] = value ?? 0;
         return this;
     }
     done() {

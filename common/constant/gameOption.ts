@@ -9,8 +9,6 @@ export const MAX_HANDCARDS_COUNT = 10; // 最大手牌数
 
 export const INIT_HANDCARDS_COUNT = 5; // 初始手牌数
 
-export const INIT_PILE_COUNT = 30; // 初始牌库数
-
 export const MAX_SUMMON_COUNT = 4; // 召唤物区最大数量
 
 export const MAX_SUPPORT_COUNT = 4; // 支援物区最大数量

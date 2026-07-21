@@ -419,21 +419,20 @@ app.get('/login', (req, res) => {
 app.get('/detail', async (req, res) => {
     if (!validateSK(req, res)) return;
     const todayLogs: Record<string, string> = {};
-    const logsPath = await fs.promises.readdir(`${__dirname}/../../../logs`);
-    const pathReg = /today$|\d{4}-\d{2}-\d{2}$/;
-    for (const logPath of logsPath) {
-        if (pathReg.test(logPath)) {
-            const paths = await fs.promises.readdir(logPath);
-            for (const path of paths) {
-                try {
-                    const fileNames = await fs.promises.readdir(path);
-                    for (const name of fileNames) {
-                        const log = await fs.promises.readFile(`${path}/${name}/${name}.log`, 'utf-8');
-                        todayLogs[name] = log;
-                    }
-                } catch { }
+    const pathPrefix = `${__dirname}/../../../logs/`;
+    try {
+        const logsPath = await fs.promises.readdir(pathPrefix);
+        const pathReg = /today$|\d{4}-\d{2}-\d{2}$/;
+        for (const logPath of logsPath.map(p => pathPrefix + p)) {
+            if (!pathReg.test(logPath)) continue;
+            const names = await fs.promises.readdir(logPath);
+            for (const name of names) {
+                const log = await fs.promises.readFile(`${logPath}/${name}/${name}.log`, 'utf-8');
+                todayLogs[name] = log;
             }
         }
+    } catch (e) {
+        console.error(e);
     }
     res.json({
         roomList: roomList.map(r => ({
