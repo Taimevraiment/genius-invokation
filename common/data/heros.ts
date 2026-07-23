@@ -1008,14 +1008,10 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Durin')
         .normalSkill('芒焰之翼斩')
         .skills(
-            skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。若自身已附属【sts113175】，则额外生成1层【sts169】。')
+            skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。')
                 .src('#',
                     '')
-                .elemental().damage(3).cost(3).handle(event => {
-                    const { hero: { heroStatus }, cmds } = event;
-                    cmds.getStatus(113175);
-                    if (heroStatus.has(113175)) cmds.getStatus(169);
-                }),
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getStatus(113175).res),
             allSkills[13173](),
             skill('光灵遵神数显现').id(13175).description('【自身使用「普通攻击」后：】将自身「元素爆发」切换为【rsk13174】。；【自身使用「元素战技」后：】将自身「元素爆发」切换为【rsk13173】。')
                 .src('#',
@@ -2287,12 +2283,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a4458de/8d17b3e81294df183d38a13f2a39cd04.png')
         .normalSkill(skill => skill('灵觉·寒星').catalyst())
         .skills(
-            skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并从3个随机的【crd121051】强化效果中[挑选]1个。')
+            skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置。如果是本局游戏前4次使用此技能，则从3个随机的【crd121051】强化效果中[挑选]1个。')
+                .description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并从3个随机的【crd121051】强化效果中[挑选]1个。', 'v7.0.0')
                 .src('#',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/b3eb536691e073bbc3b8560ca73a8bae_5246266185115704290.png')
                 .explain(...Array.from({ length: 6 }, (_, i) => `botcrd${121054 + i}`))
-                .elemental().damage(1).cost(3).handle(({ cmds }) => {
-                    cmds.addCard(1, 121051, { addTo: 3 }).pickCard(3, CMD_MODE.UseCard, { card: [121054, 121055, 121056, 121057, 121058, 121059] });
+                .elemental().damage(1).cost(3).handle((event, ver) => {
+                    const { cmds, skill: { useCnt } } = event;
+                    cmds.addCard(1, 121051, { addTo: 3 });
+                    if (ver.lt('v7.0.0') || useCnt < 4) cmds.pickCard(3, CMD_MODE.UseCard, { card: [121054, 121055, 121056, 121057, 121058, 121059] });
                 }),
             skill('沍寒的图绘').description('{dealDmg}，将1张【crd121051】加入手牌。')
                 .src('#',

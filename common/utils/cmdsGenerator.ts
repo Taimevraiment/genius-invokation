@@ -347,6 +347,10 @@ export default class CmdsGenerator {
         if (!attr) return cmd;
         return cmd?.[attr];
     }
+    reverse() {
+        this.value.reverse();
+        return this;
+    }
     clear() {
         this.value = [];
         this._addType = 'push';

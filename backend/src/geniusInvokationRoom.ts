@@ -3565,6 +3565,7 @@ export default class GeniusInvokationRoom {
         const doDamage = () => {
             if (damageCmds.isEmpty) return;
             const cDamageCmds = new CmdsGenerator(clone(damageCmds.value));
+            if (isUnshift) cDamageCmds.reverse();
             damageCmds.clear();
             this.taskQueue.addTask(`doCmd--damage-${atkname}:${trigger}`, async () => {
                 const allHeroLen = this.players.flatMap(p => p.heros).length;

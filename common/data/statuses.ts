@@ -1242,13 +1242,13 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     113175: () => status('精质转变').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
         .icon(STATUS_ICON.Special).type(STATUS_TYPE.Attack)
-        .description('【所附属角色下次使用「普通攻击」后：】造成2点[火元素伤害]。；[useCnt]')
-        .handle(status => ({
-            triggers: 'after-skilltype1',
-            damage: 2,
-            element: DAMAGE_TYPE.Pyro,
-            exec: () => status.minusUseCnt()
-        })),
+        .description('【所附属角色下次使用「普通攻击」后：】造成1点[火元素伤害]。；所附属角色下次使用「元素战技」后：生成1层【sts169】。；[useCnt]')
+        .handle((status, event) => {
+            const { cmds, trigger } = event;
+            if (trigger == 'after-skilltype1') cmds.attack(1, DAMAGE_TYPE.Pyro);
+            else if (trigger == 'skilltype2') cmds.getStatus(169);
+            return { triggers: ['after-skilltype1', 'skilltype2'], exec: () => status.minusUseCnt() }
+        }),
 
     114021: () => status('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
         .description('【所附属角色使用「普通攻击」或「元素战技」后：】造成2点[雷元素伤害]。；[roundCnt]')
@@ -1748,7 +1748,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     115156: () => hero1515sts(ELEMENT_TYPE.Electro),
 
     115166: () => status('猫型家用互助协调器').combatStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('ski,2')
-        .description('【结束阶段：】造成1点等于我方出战角色元素属性的的元素伤害（如果是草、岩元素角色，则造成[风元素伤害]），治疗我方受伤最多的角色2点。；[useCnt]')
+        .description('【结束阶段：】造成1点等于我方出战角色元素属性的元素伤害（如果是草、岩元素角色，则造成[风元素伤害]），治疗我方受伤最多的角色2点。；[useCnt]')
         .handle((status, event) => {
             let { hero: { element }, cmds } = event;
             if (element == ELEMENT_TYPE.Dendro || element == ELEMENT_TYPE.Geo) element = ELEMENT_TYPE.Anemo;

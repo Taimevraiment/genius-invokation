@@ -109,9 +109,9 @@ export const CARD_SUBTYPE_NAME = {
     [CARD_SUBTYPE.Adventure]: '冒险地点',
 } as const;
 
-// old1: https://gi-tcg-assets.guyutongxue.site/assets/{name}.webp
-// old2: https://static-data.7shengzhaohuan.online/api/v4/image/
-export const GUYU_PREIFIX = 'https://static-data.piovium.org/api/v4/image/';
+// old: https://gi-tcg-assets.guyutongxue.site/assets/{name}.webp
+export const GUYU_PREIFIX = 'https://static-data.7shengzhaohuan.online/api/v4/image/';
+// export const GUYU_PREIFIX = 'https://static-data.piovium.org/api/v4/image/';
 
 export const CARD_SUBTYPE_URL = {
     [CARD_SUBTYPE.Weapon]: 'https://patchwiki.biligame.com/images/ys/thumb/c/ce/l98mlw9whvdgy6w95qlteb9wwc2dc5i.png/30px-%E5%8D%A1%E7%89%8CUI-%E5%9B%BE%E6%A0%87-%E6%AD%A6%E5%99%A8.png',

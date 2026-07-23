@@ -182,8 +182,8 @@ const hero1511card = (el: SwirlElementType) => {
 
 const hero1516card = (el: SwirlElementType) => {
     return card().name(`呼噜噜秘藏瓶·${ELEMENT_NAME[el][0]}`).event(true).costSame(4)
-        .description(`[战斗行动]：对敌方出战角色造成1点[${ELEMENT_NAME[el]}伤害]，重复1次。`)
-        .handle((_, { cmds }) => cmds.attack(1, el, { isOrder: true }).attack(1, el));
+        .description(`[战斗行动]：对敌方出战角色造成2点[${ELEMENT_NAME[el]}伤害]，然后再造成1点[${ELEMENT_NAME[el]}伤害]。`)
+        .handle((_, { cmds }) => cmds.attack(2, el).attack(1, el, { isOrder: true }));
 }
 
 const elTransfiguration = (shareId: number, el1: PureElementType, el2: PureElementType, elReaction: string | [string, string?], code: number) => {
@@ -3208,7 +3208,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: 'after-skilltype2', exec: () => card.minusPerCnt() }
         }),
 
-    213171: () => card(611).name('红土之逆').since('v7.0.0').talent(2).costPyro(3).energy(2)
+    213171: () => card(611).name('红土之逆').since('v7.0.0').talent(2).costPyro(4).energy(2)
         .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下4次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】我方【hro】与【sts113172】造成的伤害+2。')
         .src('#')
         .handle((_, event) => {
@@ -4297,12 +4297,12 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/10/21/258999284/5fab729d51a8343c95a532156451dd47_4245641290755684283.png'),
 
     115161: () => card().name('呼噜噜秘藏瓶').event(true).costSame(4)
-        .description('【〖hro〗切换为出战角色时：】如果敌方出战角色附着有火/水/雷/冰元素，则将此牌转化为对应元素。；[战斗行动]：对敌方出战角色造成1点[风元素伤害]，重复1次。')
+        .description('【〖hro〗切换为出战角色时：】如果敌方出战角色附着有火/水/雷/冰元素，则将此牌转化为对应元素。；[战斗行动]：对敌方出战角色造成2点[风元素伤害]，然后再造成1点[风元素伤害]。')
         .src('#')
         .explain(...Array.from({ length: 4 }, (_, i) => `botcrd11516${i + 2}`))
         .handle((card, event) => {
             const { heros, hidx, eDmgedHero, cmds, execmds } = event;
-            cmds.attack(1, DAMAGE_TYPE.Anemo, { isOrder: true }).attack(1, DAMAGE_TYPE.Anemo);
+            cmds.attack(2, DAMAGE_TYPE.Anemo).attack(1, DAMAGE_TYPE.Anemo, { isOrder: true });
             if (heros[hidx].id != getHidById(card.id)) return;
             const el = eDmgedHero.attachElement[0] as SwirlElementType;
             if (!Object.values(SWIRL_ELEMENT_TYPE).includes(el)) return;
