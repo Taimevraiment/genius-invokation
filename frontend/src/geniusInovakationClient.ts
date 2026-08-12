@@ -28,7 +28,7 @@ type DeckValid = {
 export default class GeniusInvokationClient {
     socket: Socket;
     roomId: number; // 房间id
-    userid: number; // 用户id
+    userId: number; // 用户id
     version: Version; // 版本
     players: Player[]; // 所有玩家信息数组
     previews: Preview[] = []; // 预览效果
@@ -108,13 +108,13 @@ export default class GeniusInvokationClient {
     emit: (actionData: ActionData) => void; // 发送事件
 
     constructor(
-        socket: Socket, roomId: number, userid: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
+        socket: Socket, roomId: number, userId: number, version: Version, players: Player[], isMobile: boolean, timelimit: number, isDev: boolean,
         decks: { name: string, shareCode: string, version: Version }[], deckIdx: number, isLookon: number, customVersion?: CustomVersionConfig,
     ) {
         this.socket = socket;
         this.emit = data => roomId > 0 && socket.emit('sendToServer', data);
         this.roomId = roomId;
-        this.userid = userid;
+        this.userId = userId;
         this.version = version;
         this.players = players;
         this.isLookon = isLookon;
@@ -147,7 +147,7 @@ export default class GeniusInvokationClient {
         };
     }
     get playerIdx() { // 该玩家序号
-        return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userid);
+        return this.isLookon > -1 ? this.isLookon : this.players.findIndex(p => p.id == this.userId);
     }
     get player() { // 本玩家
         return this.players[this.playerIdx] ?? INIT_PLAYER();
@@ -249,7 +249,7 @@ export default class GeniusInvokationClient {
             if (onlySupportAndSummon) return;
         }
         if (this.currCard.canSelectSupport != -1 && this.modalInfo.type != null) {
-            this.modalInfo = NULL_MODAL()
+            this.modalInfo = NULL_MODAL();
             return;
         }
         if (this.isMobile && this.handcardsSelect > -1) {

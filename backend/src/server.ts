@@ -360,8 +360,6 @@ io.on('connection', socket => {
         room.emit('removeAI', 0);
         emitPlayerAndRoomList();
     });
-
-
 });
 
 
@@ -459,7 +457,7 @@ app.get('/info', (req, res) => {
     if (!validateSK(req, res)) return;
     res.json({
         roomsInfo: roomList.map(r => `${r.id}: ${r.players[0]?.name ?? '[空位]'} vs ${r.players[1]?.name ?? '[空位]'}`),
-        playersInfo: playerList.map(p => `${p.name}(${p.ip})[${p.status == 3 ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
+        playersInfo: playerList.map(p => `${p.name}(${p.ip})[${p.status == PLAYER_STATUS.OFFLINE ? '下线' : p.rid < 0 ? '空闲' : roomList.find(r => r.id == p.rid)?.isStart ? '游戏中' : '房间中'}]`),
         todayPlayersHistory: Array.from(todayPlayersHistory.entries())
             .map(([id, { ip, name, duration, loginTime, logoutTime, location }]) => ({
                 id,

@@ -6,7 +6,7 @@
                 :class="{ 'curr-deck': deckIdx == did }" @click="toEditDeck(did)">
                 <div class="deck-info">
                     <div class="forbidden" style="border-radius: 5px 5px 0 0;"
-                        v-if="deckIdx == did && (deck.heroIds.some(h => h.id == 0) || deck.cardIds.length < 30)">
+                        v-if="deckIdx == did && (deck.heroIds.some(h => h.id == 0) || deck.cardIds.length < DECK_CARD_COUNT)">
                         卡组不完整
                     </div>
                     <div>{{ deck.name }}</div>
@@ -84,7 +84,7 @@
                 <input type="text" v-model="pShareCode" class="share-code-input" placeholder="粘贴分享码" maxlength="68" />
                 <button id="paste-share-code" class="edit-btn share" v-if="pShareCode.length > 0"
                     @click.stop="pasteShareCode">
-                    粘贴分享码
+                    导入分享码
                 </button>
                 <div class="share-code" v-if="isShowShareCode" @click.stop="">{{ shareCode }}</div>
             </template>
@@ -141,7 +141,8 @@
                 </div>
             </div>
             <div v-else>
-                <div :style="{ position: 'absolute', right: '10%', top: '5%' }" v-if="isEditDeck">{{ cardsDeckLen }}/30
+                <div :style="{ position: 'absolute', right: '10%', top: '5%' }" v-if="isEditDeck">
+                    {{ cardsDeckLen }}/{{ DECK_CARD_COUNT }}
                 </div>
                 <div class="cards-deck" :class="{ 'mobile-cards-deck': isMobile }" v-if="isEditDeck">
                     <div class="card-deck" :class="{ 'mobile-card-deck': isMobile }" v-for="(dcard, dcidx) in cardsDeck"
@@ -1208,8 +1209,7 @@ input#isOfflineInput:checked {
     overflow: hidden;
 }
 
-.hero-img,
-.card-img {
+.hero-img {
     position: absolute;
     top: 0;
     width: 100%;

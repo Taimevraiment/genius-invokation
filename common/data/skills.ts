@@ -51,7 +51,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
 
     13173: () => skill('白化法·如光流变').description('{dealDmg}，生成【sts113171】。')
         .src('#',
-            '')
+            'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/cddebe8658870ac69c2f93527fae1b3f_123609587375303701.png')
         .burst(2).damage(1).cost(3).handle(() => ({ status: 113171 })),
 
     13174: () => skill('黑度法·如星阴燃').description('{dealDmg}，生成【sts113172】。')
@@ -181,9 +181,10 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     1151121: () => skill('多重瞄准').description('消耗1点「夜魂值」，{dealDmg}，然后随机[舍弃]3张[当前元素骰费用]最高的手牌。')
         .src('#')
         .vehicle().damage(1).cost(2).handle(event => {
-            const { cmds, hidx } = event;
+            const { cmds, hidx, hcardsCnt } = event;
             cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
             cmds.consumeNightSoul(hidx);
+            return { isForbidden: hcardsCnt < 3 }
         }),
 
     1151521: () => skill('援护射击').description('消耗1点「夜魂值」，对上一个敌方角色{dealDmg}，并治疗我方受伤最多的角色2点。')
@@ -264,7 +265,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             const { cmds, hcardsCnt } = event;
             if (ver.gte('v6.6.0')) cmds.discard({ cnt: 1, mode: CMD_MODE.HighHandCard });
             cmds.switchAfter();
-            return { isInvalid: ver.gte("v6.6.0") && hcardsCnt == 0, statusOppo: 301302 }
+            return { isForbidden: ver.gte('v6.6.0') && hcardsCnt == 0, statusOppo: 301302 }
         }),
 
     3130071: () => skill('浪船·迅击炮').description('{dealDmg}。')

@@ -105,7 +105,7 @@ export default class GeniusInvokationRoom {
             this.emitError(`发生错误`);
             this.errorLog.push(`等待超时: ${cdt.toString()}`);
         };
-        await wait(cdt, options);
+        await wait(() => this.isStart && cdt(), options);
     }
     testDmgFn: (() => void)[] = []; // 伤害测试用
     testTaskFn: (() => void)[] = []; // 任务测试用
@@ -2505,15 +2505,17 @@ export default class GeniusInvokationRoom {
         await this.emit(flag + '-init', pidx, { tip: `第${this.round}回合开始` });
         this._writeLog(`第${this.round}回合开始`);
         await this.delay(1250);
-        for (const cpidx of [this.startIdx, this.startIdx ^ 1]) {
-            if (this.round == 1) { // 检测游戏开始 game-start
-                this._detectHero(cpidx, 'game-start');
+        if (this.round == 1) { // 检测游戏开始 game-start
+            for (const p of this.players) {
+                p.isFallAtk = true;
+                p.heros.forEach(h => this._detectHero(p.pidx, 'game-start', { hidxs: h.hidx }));
                 await this._execTask();
-                this._detectHero(cpidx, 'switch-to', { hidxs: this.players[cpidx].hidx });
+                this._detectHero(p.pidx, 'switch-to', { hidxs: p.hidx });
                 await this._execTask();
             }
-            this.players[cpidx].isFallAtk = this.round == 1;
-            // 检测回合开始阶段 phase-start
+        }
+        // 检测回合开始阶段 phase-start
+        for (const cpidx of [this.startIdx, this.startIdx ^ 1]) {
             this.preview.isQuickAction = true;
             this._detectHero(cpidx, 'phase-start', {
                 hidxs: this.players[cpidx].heros.allHidxs({ startHidx: 0 }),
@@ -3610,7 +3612,7 @@ export default class GeniusInvokationRoom {
                             if (dmgSource == 'skill' && this.preview.tarHidx == -1) this.preview.tarHidx = cAtkedIdxs[0];
                             if (damageVO.tarHidx == -1) damageVO.tarHidx = cAtkedIdxs[0];
                         }
-                        if (mode == CMD_MODE.IsPriority) {
+                        if (mode == CMD_MODE.IsPriority || isAttach) {
                             for (let i = 0; i < cAtkedIdxs.length; ++i) {
                                 const chidx = cAtkedIdxs[i];
                                 if (cplayer.heros[chidx].hp <= 0) {

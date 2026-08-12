@@ -182,8 +182,9 @@ export default class CmdsGenerator {
         let { hidxs, isOppo, isPriority, isOrder, target: status } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
         if (hidxs?.length == 0) return this;
-        const mode = isPriority ? CMD_MODE.IsPriority : isOrder ? CMD_MODE.ByOrder : 0;
-        this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode, status });
+        const mode = isOrder ? CMD_MODE.ByOrder : isPriority ? CMD_MODE.IsPriority : 0;
+        // isAttach 为 order 和 priority 同时生效时的标记
+        this._add({ cmd: 'attack', cnt: damage, element, hidxs, isOppo, mode, status, isAttach: isPriority && isOrder });
         return this;
     }
     changeDice(options: { cnt?: number, element?: DiceCostType, isFront?: boolean } = {}) {

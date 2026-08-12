@@ -731,7 +731,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
         })),
 
     121052: (dmg: number = 1) => summon('浮彩分身').useCnt(1).damage(dmg).description('{defaultAtk。}')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ff0866241b7bf190e7873c35f53006c5_4940030540452704020.png'),
 
     122011: () => summon('纯水幻形·花鼠').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/9c9ed1587353d9e563a2dee53ffb0e2a_5326741860473626981.png')
@@ -767,7 +767,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
 
     122082: () => summon('水滴').useCnt(2).damage(2)
         .description('{如果【hro】未附属【sts122081】，则使其附属【sts122081】\\；否则，defaultAtk。}')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/bac98adbd5b05fd885a81fb310a0da8d_5582465478693376705.png')
         .handle((summon, event) => ({
             triggers: 'phase-end',
             exec: cmds => {

@@ -183,7 +183,7 @@ const hero1511card = (el: SwirlElementType) => {
 const hero1516card = (el: SwirlElementType) => {
     return card().name(`呼噜噜秘藏瓶·${ELEMENT_NAME[el][0]}`).event(true).costSame(4)
         .description(`[战斗行动]：对敌方出战角色造成2点[${ELEMENT_NAME[el]}伤害]，然后再造成1点[${ELEMENT_NAME[el]}伤害]。`)
-        .handle((_, { cmds }) => cmds.attack(2, el).attack(1, el, { isOrder: true }));
+        .handle((_, { cmds }) => cmds.attack(2, el).attack(1, el, { isOrder: true, isPriority: true }));
 }
 
 const elTransfiguration = (shareId: number, el1: PureElementType, el2: PureElementType, elReaction: string | [string, string?], code: number) => {
@@ -2226,14 +2226,14 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     332016: () => card(256).name('愚人众的阴谋').since('v3.7.0').offline('v3').costSame(2)
-        .tag(CARD_TAG.LocalResonance, CARD_TAG.Fatui)
-        .description('在对方场上，生成1个随机类型的「愚人众伏兵」。').explain('sts303216', 'sts303217', 'sts303218', 'sts303219')
+        .tag(CARD_TAG.LocalResonance, CARD_TAG.Fatui).explain('sts303216', 'sts303217', 'sts303218', 'sts303219')
+        .description('在对方场上，生成1个随机类型的「愚人众伏兵」。')
         .description('在对方场上，生成1个随机类型的「愚人众伏兵」。；从‹1冰›/‹2水›/‹3火›/‹4雷›中声明两种元素，由对方选择其中一种作为「愚人众伏兵」的元素类型。', 'v3')
         .src('https://act-upload.mihoyo.com/ys-obc/2023/05/16/183046623/388f7b09c6abb51bf35cdf5799b20371_5031929258147413659.png')
         .handle((_, event) => {
             const { eCombatStatus, random, cmds } = event;
             const stsIds = [303216, 303217, 303218, 303219].filter(sid => !eCombatStatus.has(sid));
-            if (stsIds.length == 0) return { isValid: false }
+            if (stsIds.length == 0) stsIds.push(303216, 303217, 303218, 303219);
             return { exec: () => cmds.getStatus(random(stsIds), { isOppo: true }) }
         }),
 
@@ -2610,7 +2610,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     332065: () => card(618).name('「魔女的课业」').since('v7.0.0').event().costSame(1)
         .description('抓1张「天赋」牌。如果我方牌组中初始包含至少3张「天赋」牌，则赋予手牌中[当前元素骰费用]最高的随机1张「天赋」牌【sts202】。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/c5188971d359f46b50047d76907c826f_1038508131556582599.png')
         .handle((_, event) => {
             const { cmds, playerInfo: { talentCnt } } = event;
             cmds.getCard(1, { subtype: CARD_SUBTYPE.Talent, isFromPile: true });
@@ -2619,7 +2619,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     332066: () => card(619).name('齐聚共饮').since('v7.0.0').event().costSame(0)
         .description('【下个回合开始时：】双方各抓2张牌，随机生成2个随机元素骰。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/725ba534c639f5630ffe407c19abf242_6711367029104554432.png')
         .handle(() => ({ status: 303250, statusOppo: 303250 })),
 
     333001: () => card(265).name('绝云锅巴').offline('v2').food().costSame(0).canSelectHero(1)
@@ -2938,7 +2938,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     212032: () => card(614).name('天步真原').since('v7.0.0').hexenzirkel(0).costHydro(1).anydice(1)
         .description('{action我方下次蒸发反应造成的伤害+2并}；【hro】「普通攻击」少花费1个[无色元素骰]，并且「普通攻击」后使我方下次蒸发反应造成的伤害+2。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/10a5f7cc29ff8e05a936dd8965ddc17a_1968827553868839637.png')
         .handle((_, event) => {
             const { cmds, execmds } = event;
             execmds.addCmds(cmds.getStatus(212033));
@@ -3102,7 +3102,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     213062: () => card(615).name('火花魔法').since('v7.0.0').hexenzirkel().costPyro(1).perCnt(2)
         .description('{quick。}；〔*[card]可莉附属【sts113061】。〕；【所附属角色进行[重击]后：】造成2点[火元素伤害]。（每回合2次）。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/7409a52a139435cece3a7d58238bfdd4_2541029163231702981.png')
         .handle((card, event) => {
             const { cmds, execmds, isChargedAtk } = event;
             cmds.getStatus(113061);
@@ -3210,7 +3210,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     213171: () => card(611).name('红土之逆').since('v7.0.0').talent(2).costPyro(4).energy(2)
         .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；【hro】装备此牌后，根据自身当前「元素爆发」立刻使用一次‹#f4dca2【rsk13173】›或‹#f4dca2【rsk13174】›。；【所附属角色使用〖rsk13173〗后：】我方下4次造成的伤害+1。；【所附属角色使用〖rsk13174〗后：】我方【hro】与【sts113172】造成的伤害+2。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/5a434f7f3d62ad38e6b4201a92663384_4447113462646707731.png')
         .handle((_, event) => {
             const { skill, execmds } = event;
             if (skill?.id == 13173) execmds.getStatus(113173);
@@ -3224,7 +3224,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     214012: () => card(616).name('宵世幻奏').since('v7.0.0').hexenzirkel().costElectro(2).perCnt(3)
         .description('{quick。}；〔*[card]召唤【smn114011】。〕；【smn114011】在场时，我方[雷元素相关反应]造成的伤害+1。（每回合3次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/597c14715883aae2532c0e1131015d7e_4667715454188777212.png')
         .handle((card, event) => {
             const { cmds, summons } = event;
             cmds.getSummon(114011);
@@ -3426,7 +3426,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     215032: () => card(617).name('颂时风若').since('v7.0.0').hexenzirkel().costAnemo(3)
         .description('{quick。}；〔*[card]召唤【smn115034】。〕；我方召唤【smn115034】后，本回合中所附属角色下2次「普通攻击」造成的[物理伤害]变为[风元素伤害]，并且少花费2个[无色元素骰]。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/599d532be7fd3e51a11d870a1f275764_3380813916607352839.png')
         .handle((_, event) => {
             const { cmds, sourceSummon, execmds, hidx } = event;
             cmds.getSummon(115034);
@@ -3555,7 +3555,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     215161: () => card(612).name('暗巷的黠慧').since('v7.0.0').talent(1).costAnemo(3).perCnt(1)
         .description('{action}；【hro】切换成出战角色时，如果敌方手牌数量大于或等于我方手牌数量，则随机复制2张敌方手牌。（每回合1次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/48b649dbe25dcb16972c0ea6885dd856_73858066934118652.png')
         .handle((card, event) => {
             const { ehcards, ehcardsCnt, hcardsCnt, execmds, random } = event;
             if (ehcardsCnt < hcardsCnt || card.perCnt <= 0) return;
@@ -3890,7 +3890,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     222081: () => card(613).name('诡谲恶浪').since('v7.0.0').talent().costHydro(1).perCnt(3)
         .description('{quick。}；【hro】或【smn122082】造成伤害后，治疗我方受伤最多的魔物1点。（每回合3次）')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/06e9bc1e55b9a7d38dd03bd457723e1b_6340162322450330111.png')
         .handle((card, event) => {
             const { source, execmds, heros } = event;
             if (card.perCnt <= 0 || source != getHidById(card.id) && source != 122082) return;
@@ -4298,11 +4298,11 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     115161: () => card().name('呼噜噜秘藏瓶').event(true).costSame(4)
         .description('【〖hro〗切换为出战角色时：】如果敌方出战角色附着有火/水/雷/冰元素，则将此牌转化为对应元素。；[战斗行动]：对敌方出战角色造成2点[风元素伤害]，然后再造成1点[风元素伤害]。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/339e6668cbed39cafbfa0d0b96b79cda_13305207017533481.png')
         .explain(...Array.from({ length: 4 }, (_, i) => `botcrd11516${i + 2}`))
         .handle((card, event) => {
             const { heros, hidx, eDmgedHero, cmds, execmds } = event;
-            cmds.attack(2, DAMAGE_TYPE.Anemo).attack(1, DAMAGE_TYPE.Anemo, { isOrder: true });
+            cmds.attack(2, DAMAGE_TYPE.Anemo).attack(1, DAMAGE_TYPE.Anemo, { isOrder: true, isPriority: true });
             if (heros[hidx].id != getHidById(card.id)) return;
             const el = eDmgedHero.attachElement[0] as SwirlElementType;
             if (!Object.values(SWIRL_ELEMENT_TYPE).includes(el)) return;
@@ -4315,13 +4315,17 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: 'switch' }
         }),
 
-    115162: () => hero1516card(ELEMENT_TYPE.Pyro).src('#'),
+    115162: () => hero1516card(ELEMENT_TYPE.Pyro)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/cffe3819c8c771f6ffceee5def8ca932_6319301579849036329.png'),
 
-    115163: () => hero1516card(ELEMENT_TYPE.Hydro).src('#'),
+    115163: () => hero1516card(ELEMENT_TYPE.Hydro)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/66d8f120d4242c88c308cdf0ab2e3cda_5940582083846420313.png'),
 
-    115164: () => hero1516card(ELEMENT_TYPE.Electro).src('#'),
+    115164: () => hero1516card(ELEMENT_TYPE.Electro)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/98c166acebccea88cd77b047c3c8e954_3497354142532326312.png'),
 
-    115165: () => hero1516card(ELEMENT_TYPE.Cryo).src('#'),
+    115165: () => hero1516card(ELEMENT_TYPE.Cryo)
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/88e1a7e855964f69025fceb68d97e8aa_2481796959680265379.png'),
 
     116081: () => card().name('裂晶弹片').event().costSame(1)
         .description('对敌方「出战角色」造成1点物理伤害，抓1张牌。')

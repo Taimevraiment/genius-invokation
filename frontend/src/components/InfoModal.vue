@@ -100,9 +100,9 @@
         </div>
       </div>
     </DefineTemplate>
-    <GIHero class="info-img" v-if="type == 'hero' && !isBot" :hero="info as Hero" :is-mobile="isMobile" />
+    <GIHero class="info-img" v-if="type == 'hero' && !isBot" :hero="(info as Hero)" :is-mobile="isMobile" />
     <GICard class="info-img" v-if="(type == 'card' || type == 'support' || type == 'summon') && !isBot"
-      :card="info as Card" :is-mobile="isMobile" is-hide-cost />
+      :card="(info as Card)" :is-mobile="isMobile" is-hide-cost />
     <div class="info-container" :class="{ 'mobile-font': isMobile, 'bot': isBot }"
       :style="{ pointerEvents: isNonPointerEvent ? 'none' : 'all' }" v-if="isShow" @click.stop="">
       <div v-if="type == INFO_TYPE.Card || type == INFO_TYPE.Support"

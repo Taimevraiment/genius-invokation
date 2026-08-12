@@ -1240,9 +1240,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             return { triggers: 'dmg', addDmgCdt: 2 }
         }),
 
-    113175: () => status('精质转变').heroStatus().useCnt(1).maxCnt(MAX_USE_COUNT)
-        .icon(STATUS_ICON.Special).type(STATUS_TYPE.Attack)
-        .description('【所附属角色下次使用「普通攻击」后：】造成1点[火元素伤害]。；所附属角色下次使用「元素战技」后：生成1层【sts169】。；[useCnt]')
+    113175: () => status('精质转变').heroStatus().useCnt(1).icon(STATUS_ICON.Special).type(STATUS_TYPE.Attack, STATUS_TYPE.Sign)
+        .description('【所附属角色下次使用「普通攻击」后：】造成1点[火元素伤害]。；所附属角色下次使用「元素战技」后：生成1层【sts169】。')
         .handle((status, event) => {
             const { cmds, trigger } = event;
             if (trigger == 'after-skilltype1') cmds.attack(1, DAMAGE_TYPE.Pyro);

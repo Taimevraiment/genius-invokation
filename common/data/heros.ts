@@ -1004,18 +1004,18 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1317: () => hero(608).name('杜林').since('v7.0.0').mondstadt().pyro().sword()
-        .src('#')
-        .avatar('#AvatarIcon_Durin')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba97d/57e30bb834d47675a2fdced1bb668c56.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba981/ea02d8378172f946c3f7e33ee6ad2775.png')
         .normalSkill('芒焰之翼斩')
         .skills(
             skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/96ff0960e6d0b1b4a96d244c7338217a_7342066132693646928.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getStatus(113175).res),
             allSkills[13173](),
             skill('光灵遵神数显现').id(13175).description('【自身使用「普通攻击」后：】将自身「元素爆发」切换为【rsk13174】。；【自身使用「元素战技」后：】将自身「元素爆发」切换为【rsk13173】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/de8ef2f07b208ada001ec36d0b0919c3_7411580236368861670.png')
                 .passive().handle(event => {
                     const { cmds, trigger, hidx } = event;
                     if (trigger == 'after-skilltype1') cmds.changeSkill(hidx, 13174, 2);
@@ -1411,7 +1411,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .elemental().cost(2).handle(event => {
                     const { skill: { useCntPerRound }, hero: { energy } } = event;
                     if (useCntPerRound == 0) return { addDmgCdt: 1, status: 114181 }
-                    return { status: 114182, isInvalid: energy < 1, energy: -2 }
+                    return { status: 114182, isForbidden: energy < 1, energy: -2 }
                 }),
             skill('旧仪·夜客致访').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]。')
                 .src('https://patchwiki.biligame.com/images/ys/6/68/mrynk6yz4a3wse7gft1tdmzwxoq02yf.png',
@@ -1706,13 +1706,13 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1516: () => hero(609).name('雅珂达').since('v7.0.0').nodkrai().anemo().bow()
-        .src('#')
-        .avatar('#AvatarIcon_Jahoda')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba97d/52fc36122f134be0cd5a866931d2c653.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba981/9635bbc19193933b7a27d0357c902480.png')
         .normalSkill('见机行矢')
         .skills(
             skill('奇策·财富分配方案').description('{dealDmg}，生成1层【sts170】，我方切换到下一个角色。如果手牌中没有任意元素的【crd115161】，则生成手牌【crd115161】\\；否则，赋予手牌中所有的【crd115161】【sts202】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/473b9d6e9cce0e96a6568a73b2e0d7e1_2316932406957393253.png')
                 .elemental().damage(2).cost(3).handle(event => {
                     const { hcards, cmds } = event;
                     cmds.getStatus(170).switchAfter();
@@ -1723,11 +1723,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 }),
             skill('秘器·猎人的七道具').description('{dealDmg}，生成【sts115166】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/aa59cd0248b7a3153875b439fcf9b1d8_261920758538524973.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 115166 })),
             skill('月兆祝赐·檐上趱行').description('战斗开始时，生成手牌【crd115161】。；我方触发月反应或扩散反应后，使我方手牌中所有【crd115161】附着【sts202】。（每回合2次）')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/cbf6e3936d764b028ec0dacc30779bca_7291016373047764987.png')
                 .passive().perCnt(2).handle(event => {
                     const { trigger, cmds, skill } = event;
                     if (trigger == 'game-start') return { triggers: trigger, exec: () => cmds.getCard(1, { card: 115161 }) }
@@ -2170,17 +2170,17 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('游虵吐信')
         .skills(
             skill('弈术·千夜一舞').description('{dealDmg}，自身附属1层【sts210】，我方下次行动前，赋予手牌中至多3张[当前元素骰费用]最高的【crd117121】【sts202】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/a/a1/754xles21dd4gre3415i2qjulcwexj8.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/5c0145aa8b5b99d0d9347d6b08ab8715_6687598567417880295.png')
                 .elemental().damage(1).cost(3).handle(() => ({ status: [210, 117122] })),
             skill('圣约·真眸幻戏').description('{dealDmg}，手牌中每有1张【crd117121】，伤害+1。（至多+2）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/b/bb/6wy0sdsst4pxyhp7i3cd29m2cns7njp.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/75575aa88e06c91a78964eafccce7926_6013378171012659380.png')
                 .burst(2).damage(4).cost(3).handle(event => ({
                     addDmgCdt: Math.min(2, event.hcards.filter(c => c.id == 117121).length)
                 })),
             skill('月兆祝赐·廊下暮影').description('本局游戏中，敌方受到‹2›‹7›【绽放反应】时，改为[月绽放]反应。；【我方手牌中〖crd117121〗少于3张，敌方受到[月绽放]反应时：】生成手牌【crd117121】。（每回合2次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/8/84/kzsn28wppvosjsn0eux1bbxo624htmr.png',
                     'src="https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/d08d78adb184ff1d7255ae7e4add4008_457691755983761341.png"')
                 .passive().perCnt(2).handle(event => {
                     const { trigger, playerInfo, cmds, hcards, skill } = event;
@@ -2285,7 +2285,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .skills(
             skill('千变的浮彩').description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置。如果是本局游戏前4次使用此技能，则从3个随机的【crd121051】强化效果中[挑选]1个。')
                 .description('{dealDmg}，将1张【crd121051】加入牌库中第3张的位置，并从3个随机的【crd121051】强化效果中[挑选]1个。', 'v7.0.0')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/f/f7/i1xf375s18l963gfxec3ed1smcxp4gm.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/b3eb536691e073bbc3b8560ca73a8bae_5246266185115704290.png')
                 .explain(...Array.from({ length: 6 }, (_, i) => `botcrd${121054 + i}`))
                 .elemental().damage(1).cost(3).handle((event, ver) => {
@@ -2294,11 +2294,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     if (ver.lt('v7.0.0') || useCnt < 4) cmds.pickCard(3, CMD_MODE.UseCard, { card: [121054, 121055, 121056, 121057, 121058, 121059] });
                 }),
             skill('沍寒的图绘').description('{dealDmg}，将1张【crd121051】加入手牌。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/1/12/0az2hhxsih3rexwj9zq3sv0gzamu00o.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/8382ebc71905cd9d25f3a4b662d15554_1146169771526707496.png')
                 .burst(2).damage(4).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 121051 }).res),
             skill('斑斓的绚影').description('战斗开始时，生成3张【crd121051】，均匀放入牌库。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/6/69/dnnm9n32vc3h8n7y7hp3tonqclqt4gi.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/07/01/258999284/ad74001658357adae861a81fd9e1dd9f_7492149391443402081.png')
                 .passive().handle(({ cmds }) => (cmds.addCard(3, 121051, { isRandom: false }), { triggers: 'game-start' })),
         ),
@@ -2515,21 +2515,21 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     2208: () => hero(610).name('无相之水').since('v7.0.0').maxHp(8).monster().hydro()
-        .src('#')
-        .avatar('#MonsterIcon_EffigyWater')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba97d/76590248706396ae8a8bf50d1c5f5b9b.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba981/55561420e1c18c08f59e637bfa30366b.png')
         .normalSkill('水珠漫射').catalyst()
         .skills(
             skill('涌动洪流').description('{dealDmg}，然后[准备技能]：【rsk22085】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/1837a123d911b18b45a097b8763faf12_985798468721912737.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 122083 })),
             skill('危祸之潮').description('{dealDmg}，召唤【smn122082】。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/2085faec47485bb58f8966d999e85555_3306062230008048081.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ summon: 122082 })),
             skill('水晶核心').description('战斗开始时，初始附属【sts122081】。如果场上存在【smn122082】，消耗【sts122081】时重新附属【sts122081】，并使【smn122082】可用次数-1。')
                 .src('#',
-                    '')
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/330bc47b6fcc1029ddad4b5d00d49de9_6040933332232178010.png')
                 .passive().handle(() => ({ triggers: 'game-start', status: 122081 }))
         ),
 
@@ -2913,15 +2913,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('半剑技术')
         .skills(
             skill('低位撩斩').description('{dealDmg}，抓1张牌。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/f/f6/9uvzhq9wi0m6zmfabjdi1u32oj69wfh.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/1f570ffaa861ea7d7fdf8b8223c9608b_2037594231057504996.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getCard(1).res),
             skill('近卫姿态').description('[准备技能]：【rsk25045】，然后[准备技能]：【rsk25046】。')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/9/9f/970qljt6zk10vqw9osuid9b3xf3kst2.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/77029d440c392be935c03d81d7252c53_2980178131583758856.png')
                 .burst(2).cost(3).handle(() => ({ status: 125041 })),
             skill('前驱气势').description('我方触发扩散反应，或敌方失去[护盾]、【伤害抵消】状态以及出战状态时，抓1张牌。（每回合2次）')
-                .src('#',
+                .src('https://patchwiki.biligame.com/images/ys/7/76/nh2m4dta3lud00vlua0wlprba01enbb.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/22d66b8ad186407ee74151299597a50d_4776296587384746894.png')
                 .passive().perCnt(2).handle(event => {
                     const { skill, sourceStatus, cmds } = event;
