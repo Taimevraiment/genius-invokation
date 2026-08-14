@@ -17,6 +17,7 @@ import { ArrayStatus, BaseCostBuilder, Entity, EntityBuilderHandleEvent, EntityH
 
 export interface CardHandleEvent extends EntityHandleEvent {
     slotUse: boolean,
+    autoUse: boolean,
 }
 
 export interface CardHandleRes extends EntityHandleRes {
@@ -53,7 +54,7 @@ export class GICard extends Entity {
     attachments: ArrayStatus = new ArrayStatus(); // 附着效果状态
     handle: (card: Card, event: InputHandle<CardHandleEvent>) => CardHandleRes; // 卡牌发动的效果函数
     reset: (card: Card) => void; // 重置每回合次数
-    canSelectHero: number; // 能选择角色的数量
+    canSelectHero: number; // 能选择角色的数量 若为负数则为选择对方角色
     canSelectSummon: -1 | 0 | 1; // 能选择的召唤物 -1不能选择 0能选择敌方 1能选择我方
     canSelectSupport: -1 | 0 | 1; // 能选择的支援 -1不能选择 0能选择敌方 1能选择我方
     cidx: number = -1; // 在手牌中的序号
@@ -199,15 +200,15 @@ export class GICard extends Entity {
                 if (!this.UI.explains.includes(ski)) this.UI.explains.unshift(ski);
                 const ohandle = handle;
                 // const skillId = hid * 10 + (userType as number) + 1;
-                const skillId = (userType as number) + 1;
+                const skillId = userType == -2 ? -1 : (userType as number) + 1;
                 handle = (card, event, ver) => {
-                    const { slotUse, cmds } = event;
+                    const { slotUse, autoUse, cmds } = event;
                     const ohandleres = ohandle?.(card, event, ver);
-                    if (slotUse && !cmds.isUseSkill) {
-                        cmds.useSkill({ skillId });
+                    if (slotUse && !cmds.isUseSkill && skillId != -1) {
+                        cmds.useSkill({ skillId, autoUse });
                         return { triggers: 'skill', ...ohandleres }
                     }
-                    return ohandleres;
+                    return { ...ohandleres, isValid: (ohandleres?.isValid ?? true) && !!event.heros.get(hid)?.isFront };
                 }
             }
             if (userType == -3) {
@@ -265,6 +266,7 @@ export class GICard extends Entity {
             const pevent = getEntityHandleEvent(pidx, players, event, card);
             const cevent: CardBuilderHandleEvent = {
                 slotUse: false,
+                autoUse: false,
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
                 cmds,
@@ -413,12 +415,12 @@ class CardBuilder extends BaseCostBuilder {
         this._readySkillStatus = readySkillStatusId;
         return this;
     }
-    // >=0为技能序号(从0开始) -1为不使用技能仅装备 -2为不使用技能但为战斗行动地装备 -3为必须角色出战才能装备
+    // >=0为技能序号(从0开始) -1为不使用技能仅装备 -2为不使用技能但为战斗行动地装备(必须为出战角色) -3为必须角色出战才能装备
     talent(skillIdx: number = -1, version: Version = 'vlatest') {
         if (version == 'vlatest') this.subtype(CARD_SUBTYPE.Talent);
         if (skillIdx != -1) {
             if ((version == 'vlatest' || skillIdx == -2) && skillIdx != -3) this.subtype(CARD_SUBTYPE.Action);
-            if (skillIdx > -1 || skillIdx == -3) this._userType.set([version, skillIdx]);
+            this._userType.set([version, skillIdx]);
         }
         return this.equipment();
     }
@@ -505,6 +507,11 @@ class CardBuilder extends BaseCostBuilder {
     canSelectHero(canSelectHero: number, ...versions: Version[]) {
         if (versions.length == 0) versions = ['vlatest'];
         versions.forEach(v => this._canSelectHero.set([v, canSelectHero]));
+        return this;
+    }
+    canSelectHeroOppo(canSelectHero: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(v => this._canSelectHero.set([v, -canSelectHero]));
         return this;
     }
     canSelectSummon(canSelectSummon: 0 | 1) {

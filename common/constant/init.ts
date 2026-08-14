@@ -48,6 +48,7 @@ export const INIT_PLAYER: () => Player = () => ({
         usedVehcileCnt: 0,
         isLunarElectroCharged: false,
         isLunarBloom: false,
+        isLunarCrystallize: false,
     },
     UI: {
         info: '',

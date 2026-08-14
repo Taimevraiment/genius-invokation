@@ -560,8 +560,8 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/fa0204761d8dae8b0dbaac46a494752f.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e330408cba4b278428656f4e5c7a8915.png',
             '#AvatarIcon_FurinaOusia')
-        .normalSkill(skill => skill('独舞之邀').perCnt(1).description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
-            .handle(event => {
+        .normalSkill(skill => skill('独舞之邀').description('；【每回合1次：】如果手牌中没有【crd112113】，则生成手牌【crd112113】。')
+            .perCnt(1).handle(event => {
                 const { skill, hcards, cmds } = event;
                 if (skill.perCnt <= 0 || hasObjById(hcards, 112113)) return;
                 cmds.getCard(1, { card: 112113 });
@@ -671,6 +671,52 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     if (summons.has(112161)) cmds.addUseCnt({ summon: 112161, ignoreMax: true });
                     else cmds.getEnergy(1, { hidxs: hidx });
                     return { triggers: 'get-status', exec: () => skill.minusPerCnt() }
+                })
+        ),
+
+    1217: () => hero(620).name('哥伦比娅').since('v7.1.0').nodkrai().hydro().catalyst()
+        .src('#')
+        .avatar('#AvatarIcon_Columbina')
+        .normalSkill(skill => skill('月露泼降').description('；如果我方手牌中存在附着有【sts202】的卡牌，则将随机1张牌置于牌组顶，然后再造成1点[草元素伤害]。（每回合1次）')
+            .perCnt(1).handle(event => {
+                const { skill, hcards, cmds, random } = event;
+                cmds.attack();
+                if (skill.perCnt <= 0 || hcards.every(c => !c.hasAttachment(202))) return;
+                cmds.putCard({ card: random(hcards), isOnPileTop: true }).attack(1, DAMAGE_TYPE.Dendro);
+                return { exec: () => skill.minusPerCnt() }
+            }))
+        .skills(
+            skill('万古潮汐').description('{dealDmg}，生成【sts112172】。')
+                .src('#',
+                    '')
+                .elemental().damage(1).cost(3).handle(() => ({ status: 112172 })),
+            skill('她的乡愁').description('{dealDmg}，生成【sts112171】。')
+                .src('#',
+                    '')
+                .burst(3).damage(3).cost(3).handle(() => ({ status: 112171 })),
+            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【水元素结晶反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；我方引发[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）')
+                .src('#',
+                    '')
+                .passive().perCnt(1).handle(event => {
+                    const { skill, trigger, playerInfo, cmds } = event;
+                    if (trigger == 'game-start') {
+                        playerInfo.isLunarElectroCharged = true;
+                        playerInfo.isLunarBloom = true;
+                        playerInfo.isLunarCrystallize = true;
+                        return { triggers: trigger, isNotAddTask: true }
+                    }
+                    if (skill.perCnt <= 0) return;
+                    if (['LunarElectroCharged', 'other-LunarElectroCharged'].includes(trigger)) cmds.attack(1, DAMAGE_TYPE.Electro);
+                    else if (['LunarBloom', 'other-LunarBloom'].includes(trigger)) cmds.attack(1, DAMAGE_TYPE.Dendro);
+                    else if (['LunarCrystallize', 'other-LunarCrystallize'].includes(trigger)) cmds.attack(1, DAMAGE_TYPE.Geo);
+                    return {
+                        triggers: [
+                            'LunarElectroCharged', 'other-LunarElectroCharged',
+                            'LunarBloom', 'other-LunarBloom',
+                            'LunarCrystallize', 'other-LunarCrystallize',
+                        ],
+                        exec: () => skill.minusPerCnt(),
+                    }
                 })
         ),
 
@@ -1009,12 +1055,12 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('芒焰之翼斩')
         .skills(
             skill('二元式·聚分熔炼').description('{dealDmg}，自身附属【sts113175】。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/692f7dca/da5dc3d51a7f6b4c22cd1610d7db9498.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/96ff0960e6d0b1b4a96d244c7338217a_7342066132693646928.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getStatus(113175).res),
             allSkills[13173](),
             skill('光灵遵神数显现').id(13175).description('【自身使用「普通攻击」后：】将自身「元素爆发」切换为【rsk13174】。；【自身使用「元素战技」后：】将自身「元素爆发」切换为【rsk13173】。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/4e058ed810ec6cf0ab189eded19d63fe.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/de8ef2f07b208ada001ec36d0b0919c3_7411580236368861670.png')
                 .passive().handle(event => {
                     const { cmds, trigger, hidx } = event;
@@ -1711,7 +1757,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('见机行矢')
         .skills(
             skill('奇策·财富分配方案').description('{dealDmg}，生成1层【sts170】，我方切换到下一个角色。如果手牌中没有任意元素的【crd115161】，则生成手牌【crd115161】\\；否则，赋予手牌中所有的【crd115161】【sts202】。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/692f7dca/2d038a9823acb6c19b9b64a1113d40dd.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/473b9d6e9cce0e96a6568a73b2e0d7e1_2316932406957393253.png')
                 .elemental().damage(2).cost(3).handle(event => {
                     const { hcards, cmds } = event;
@@ -1722,11 +1768,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     else cmds.getCard(1, { card: 115161 });
                 }),
             skill('秘器·猎人的七道具').description('{dealDmg}，生成【sts115166】。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/f99470c649ad33a4815785212069a858.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/aa59cd0248b7a3153875b439fcf9b1d8_261920758538524973.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 115166 })),
             skill('月兆祝赐·檐上趱行').description('战斗开始时，生成手牌【crd115161】。；我方触发月反应或扩散反应后，使我方手牌中所有【crd115161】附着【sts202】。（每回合2次）')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/53af108201d227e415549056dfbdbb1a.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/cbf6e3936d764b028ec0dacc30779bca_7291016373047764987.png')
                 .passive().perCnt(2).handle(event => {
                     const { trigger, cmds, skill } = event;
@@ -1938,6 +1984,36 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     const stsId = [, 116116, 116114, 116115, 116117, , 116113];
                     const otherHeroElement = event.heros.filter(h => h.id != 1611).map(h => stsId[ELEMENT_CODE[h.element]] ?? 116113);
                     return { triggers: 'game-start', status: [116113, ...otherHeroElement] }
+                })
+        ),
+
+    1612: () => hero(621).name('叶洛亚').since('v7.1.0').nodkrai().geo().polearm()
+        .src('#')
+        .avatar('#AvatarIcon_Illuga')
+        .normalSkill('守誓枪术')
+        .skills(
+            skill('衔莺破晓').description('{dealDmg}，生成一张【crd116121】加入手牌。')
+                .src('#',
+                    '')
+                .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 116121 }).res),
+            skill('鉴照无影').description('{dealDmg}，生成3层【sts116122】。')
+                .src('#',
+                    '')
+                .burst(2).damage(3).cost(3).handle(() => ({ status: [[116122, 3]] })),
+            skill('月兆祝赐·凌冬不凋').description('不属于我方初始卡牌进入手牌时，获得1层【sts202】（每回合1次）')
+                .src('#',
+                    '')
+                .passive().perCnt(1).handle(event => {
+                    const { skill, hcard, cmds, playerInfo: { initCardIds } } = event;
+                    if (skill.perCnt <= 0 || !hcard || initCardIds.includes(hcard.id) || hcard.currDiceCost == 0) return;
+                    return {
+                        triggers: 'getcard',
+                        exec: () => {
+                            if (skill.perCnt <= 0) return true;
+                            skill.minusPerCnt();
+                            cmds.getStatus(202, { card: hcard.entityId });
+                        }
+                    }
                 })
         ),
 
@@ -2520,15 +2596,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('水珠漫射').catalyst()
         .skills(
             skill('涌动洪流').description('{dealDmg}，然后[准备技能]：【rsk22085】。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/5f5dfb69c657eb20c1e63671c2049db2.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/1837a123d911b18b45a097b8763faf12_985798468721912737.png')
                 .elemental().damage(2).cost(3).handle(() => ({ status: 122083 })),
             skill('危祸之潮').description('{dealDmg}，召唤【smn122082】。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/790204089e0715ab315a95bf3b4b72ce.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/2085faec47485bb58f8966d999e85555_3306062230008048081.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ summon: 122082 })),
             skill('水晶核心').description('战斗开始时，初始附属【sts122081】。如果场上存在【smn122082】，消耗【sts122081】时重新附属【sts122081】，并使【smn122082】可用次数-1。')
-                .src('#',
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/23cb4afc553bd958c2ebe591937bcafd.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/330bc47b6fcc1029ddad4b5d00d49de9_6040933332232178010.png')
                 .passive().handle(() => ({ triggers: 'game-start', status: 122081 }))
         ),
@@ -3210,8 +3286,12 @@ export const herosTotal = (version: Version = VERSION[0], force: boolean = false
 
 export const newHero = (version?: Version, options: { diff?: Record<number, Version> } = {}) => {
     return (id: number) => {
-        const dversion = options.diff?.[id] ?? version;
-        return allHeros[id]?.().id(id).version(dversion).done() ?? NULL_HERO();
+        try {
+            const dversion = options.diff?.[id] ?? version;
+            return allHeros[id]?.().id(id).version(dversion).done() ?? NULL_HERO();
+        } catch (e) {
+            throw new Error(`not found hero id: ${id}, ${e}`);
+        }
     }
 }
 

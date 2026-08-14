@@ -315,8 +315,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('每层使打出此卡牌多花费1个元素骰。（可叠加，没有上限）')
         .handle(status => ({ addDiceCard: status.useCnt })),
 
-    202: () => status('费用降低').attachment().icon(STATUS_ICON.DebuffCountered02)
-        .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
+    202: (cnt: number = 1) => status('费用降低').attachment().icon(STATUS_ICON.DebuffCountered02)
+        .useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
         .description('每层使打出此卡牌少花费1个元素骰。（可叠加，没有上限）')
         .handle(status => ({ minusDiceCard: status.useCnt })),
 
@@ -928,6 +928,39 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             return { triggers: ['switch', 'switch-oppo'], exec: () => status.minusUseCnt() }
         }),
 
+    112171: () => status('月之领域').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Usage)
+        .description('【我方触发月感电时：】额外赋予敌方3张手牌【sts204】，我方【smn205】造成的伤害改为3。；【我方触发月绽放时：】赋予【sts202】的手牌数改为3。；【我方触发月结晶反应时：】生成的【crd211】数量改为3。')
+        .handle((status, event) => {
+            const { cmds, summons, trigger } = event;
+            if (trigger == 'LunarElectroCharged') {
+                cmds.getStatus(204, { cnt: 3, isOppo: true });
+            } else if (trigger == 'LunarBloom') cmds.getStatus(202, { cnt: 3 });
+            else if (trigger == 'LunarCrystallize') cmds.getCard(2, { card: 211 });
+            return {
+                triggers: ['LunarElectroCharged', 'LunarBloom', 'LunarCrystallize'],
+                exec: () => {
+                    if (trigger == 'LunarElectroCharged') {
+                        const smn = summons.get(205);
+                        if (smn) smn.damage = 3;
+                    }
+                    status.minusUseCnt();
+                }
+            }
+        }),
+
+    112172: () => status('引力涟漪').combatStatus().icon('ski,1').useCnt(2).type(STATUS_TYPE.Attack)
+        .description(`【结束阶段：】造成1点[水元素伤害]。；[useCnt]`)
+        .handle(status => ({
+            triggers: 'phase-end',
+            damage: 1,
+            element: DAMAGE_TYPE.Hydro,
+            exec: () => status.minusUseCnt(),
+        })),
+
+    112173: () => status('遍照花海，隐入群山（生效中）').combatStatus().useCnt(1).roundCnt(1)
+        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
+        .description('本回合中，所附属角色下次受到伤害-2。').barrierCnt(2),
+
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
     113022: () => status('旋火轮').combatStatus().icon('ski,2').useCnt(2).type(STATUS_TYPE.Attack)
@@ -1249,7 +1282,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             return { triggers: ['after-skilltype1', 'skilltype2'], exec: () => status.minusUseCnt() }
         }),
 
-    114021: () => status('雷狼').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Attack)
+    114021: (cnt: number = 2) => status('雷狼').heroStatus().icon('ski,2').roundCnt(cnt).type(STATUS_TYPE.Attack)
         .description('【所附属角色使用「普通攻击」或「元素战技」后：】造成2点[雷元素伤害]。；[roundCnt]')
         .handle(() => ({
             damage: 2,
@@ -1791,6 +1824,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .type(STATUS_TYPE.Round, STATUS_TYPE.Sign, STATUS_TYPE.NonAction)
         .description('【角色无法使用技能。】（持续到回合结束）'),
 
+    116042: () => status('瑰银').combatStatus().icon('ski,1').useCnt(2).type(STATUS_TYPE.Attack)
+        .description('【我方角色进行[下落攻击]后：】对后台角色造成1点[穿透伤害]。；[useCnt]')
+        .handle(status => ({ triggers: 'fallatk', pdmg: 1, exec: () => status.minusUseCnt() })),
+
     116051: () => status('阿丑').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 
@@ -1875,6 +1912,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     116116: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Cryo).useCnt(useCnt),
 
     116117: (useCnt: number = 1) => hero1611sts(ELEMENT_TYPE.Electro).useCnt(useCnt),
+
+    116122: (cnt: number = 1) => status('夜莺之歌').combatStatus().icon('ski,1')
+        .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).useCnt(cnt).maxCnt(MAX_USE_COUNT)
+        .description('敌方受到的[岩元素伤害]+1。；[useCnt]；我方召唤召唤物后，此牌[可用次数]+1。')
+        .handle((status, event) => {
+            const { trigger } = event;
+            if (trigger == 'summon-generate') return { triggers: trigger, isAddTask: true, exec: () => status.addUseCnt() }
+            return { triggers: 'Geo-getdmg-oppo', addDmgCdt: 1, isTrigger: true, exec: () => status.minusUseCnt() }
+        }),
 
     117012: () => status('新叶').combatStatus().icon(STATUS_ICON.AtkSelf).useCnt(1).roundCnt(1).type(STATUS_TYPE.Attack)
         .description('【我方角色的技能引发[草元素相关反应]后：】造成1点[草元素伤害]。（每回合1次）；[roundCnt]')
@@ -2125,7 +2171,12 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     117111: (addDmg: number = 0) => status('霜林圣域').combatStatus().useCnt(2).type(STATUS_TYPE.Attack).icon('ski,1')
         .description(`【结束阶段：】造成${1 + addDmg}点[草元素伤害]。；[useCnt]`)
-        .handle(status => ({ triggers: 'phase-end', damage: 1 + addDmg, element: DAMAGE_TYPE.Dendro, exec: () => status.minusUseCnt() })),
+        .handle(status => ({
+            triggers: 'phase-end',
+            damage: 1 + addDmg,
+            element: DAMAGE_TYPE.Dendro,
+            exec: () => status.minusUseCnt(),
+        })),
 
     117112: () => status('「苍色祷歌」').combatStatus().useCnt(3).type(STATUS_TYPE.AddDamage).icon('ski,2')
         .description('我方触发[月绽放]造成的伤害+1。；[useCnt]')
@@ -2945,6 +2996,25 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【行动阶段开始时：】赋予我方随机1张手牌【sts202】。')
         .handle(() => ({ triggers: 'phase-start', status: 202 })),
 
+    300011: () => status('月华').combatStatus().icon('#').type(STATUS_TYPE.Attack, STATUS_TYPE.Sign).from(330014)
+        .description('【行动阶段开始时：】治疗我方场上所有角色3点。 ')
+        .handle((status, event) => {
+            const { cmds, heros } = event;
+            cmds.heal(3, { hidxs: heros.allHidxs() });
+            return { triggers: 'phase-start', exec: () => status.dispose() }
+        }),
+
+    300012: (c1: number, c2: number, c3: number) => status('重临').combatStatus().icon('#').from(330014)
+        .type(STATUS_TYPE.Usage).useCnt(2).variables('c1', c1).variables('c2', c2).variables('c3', c3)
+        .description('【行动阶段开始时：】若此牌倒计时为0，则将所[舍弃]的3张牌加入手牌，并赋予这些牌3层【sts202】。')
+        .handle((status, event) => {
+            if (status.useCnt == 1) {
+                event.cmds.getCard(3, { card: [c1, c2, c3] })
+                    .callback((cmds, cards) => cmds.getStatus([[202, 3]], { cnt: 3, card: cards?.map(c => c.entityId) }));
+            }
+            return { triggers: 'phase-start', exec: () => status.minusUseCnt() }
+        }),
+
     301018: () => status('严格禁令').combatStatus()
         .useCnt(1).roundCnt(1).type(STATUS_TYPE.NonEvent).from(321018)
         .description('本回合中，所在阵营打出的事件牌无效。；[useCnt]'),
@@ -3012,8 +3082,13 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .handle((status, event) => {
             const { sourceSummon } = event;
             if (!sourceSummon || sourceSummon.id != 301028) return;
-            ++sourceSummon.damage;
-            return { triggers: 'summon-generate', exec: () => status.dispose() }
+            return {
+                triggers: 'summon-generate',
+                exec: () => {
+                    ++sourceSummon.damage;
+                    status.dispose();
+                }
+            }
         }),
 
     301040: () => status('水仙十字圣剑（生效中）').heroStatus()
@@ -3895,8 +3970,12 @@ export const statusesTotal = (version: Version = VERSION[0]) => {
 
 export const newStatus = (version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
     return (id: number, ...args: any) => {
-        const { diff = {}, dict = {} } = options;
-        const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
-        return allStatuses[id]?.(...args).id(id).version(dversion).done() ?? NULL_STATUS();
+        try {
+            const { diff = {}, dict = {} } = options;
+            const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
+            return allStatuses[id]?.(...args).id(id).version(dversion).done() ?? NULL_STATUS();
+        } catch (e) {
+            throw new Error(`not found status id: ${id}, ${e}`);
+        }
     }
 }

@@ -132,7 +132,7 @@ export default class CmdsGenerator {
     } = {}) {
         let { hidxs, isOppo, isPriority, mode = isCdt(isPriority, CMD_MODE.IsPriority), cnt, card, cardFilter } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        if (card) cardFilter ??= c => convertToArray(card).includes(c.id);
+        if (card) cardFilter ??= c => convertToArray(card).some(tc => tc == c.id || tc == c.entityId);
         if (status != undefined) this._add({ cmd: 'getStatus', status, hidxs, isOppo, mode, cnt, cardFilter });
         return this;
     }
@@ -206,9 +206,9 @@ export default class CmdsGenerator {
     }
     useSkill(options: {
         skillId?: number, skillType?: SkillType, isOppo?: boolean, selectSummon?: number,
-        summonTrigger?: Trigger | Trigger[], hidx?: number,
+        summonTrigger?: Trigger | Trigger[], hidx?: number, autoUse?: boolean,
     }) {
-        const { skillId, skillType, isOppo, selectSummon = -1, summonTrigger, hidx } = options;
+        const { skillId, skillType, isOppo, selectSummon = -1, summonTrigger, hidx, autoUse } = options;
         this._add({
             cmd: 'useSkill',
             cnt: skillType ?? skillId ?? -1,
@@ -216,6 +216,7 @@ export default class CmdsGenerator {
             hidxs: isCdt(selectSummon > -1, [selectSummon]),
             status: hidx,
             isOppo,
+            isAttach: autoUse,
         });
         return this;
     }
@@ -267,9 +268,9 @@ export default class CmdsGenerator {
         this._add({ cmd: 'stealCard', cnt, mode });
         return this;
     }
-    putCard(options: { card?: Card | (Card | number)[] | number, cnt?: number, mode?: number, isOppo?: boolean } = {}) {
-        const { card, cnt = 0, mode, isOppo } = options;
-        this._add({ cmd: 'putCard', card, cnt, mode, isOppo });
+    putCard(options: { card?: Card | (Card | number)[] | number, cnt?: number, mode?: number, isOppo?: boolean, isOnPileTop?: boolean } = {}) {
+        const { card, cnt = 0, mode, isOppo, isOnPileTop } = options;
+        this._add({ cmd: 'putCard', card, cnt, mode, isOppo, isAttach: isOnPileTop });
         return this;
     }
     pickCard(cnt: number, mode: number, options: {
@@ -315,6 +316,14 @@ export default class CmdsGenerator {
     }
     adventure() {
         this._add({ cmd: 'adventure' });
+        return this;
+    }
+    useCard(options: {
+        card?: Card | number, mode?: number, subtype?: CardSubtype | CardSubtype[], cardTag?: CardTag | CardTag[],
+        cardAttachment?: number | number[], cardFilter?: (card: Card) => boolean,
+    } = {}) {
+        const { card, mode, subtype, cardTag, cardAttachment, cardFilter = getCardFilter(subtype, cardTag, cardAttachment) } = options;
+        this._add({ cmd: 'useCard', card, mode, cardFilter });
         return this;
     }
     addUseCnt(options: { summon?: number | number[], status?: number | number[], cnt?: number, ignoreMax?: boolean } = {}) {

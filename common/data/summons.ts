@@ -44,6 +44,22 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
             }
         })),
 
+    212: () => summon('月笼').useCnt(2).damage(1).geo()
+        .description('{defaultAtk。}；【此牌效果量累计到3时：】立刻造成3点[岩元素伤害]，然后将此牌的效果量改为1。')
+        .src('#')
+        .handle((summon, event) => {
+            const { trigger, hcard } = event;
+            if (trigger == 'phase-end') return { triggers: trigger, exec: cmds => summon.phaseEndAtk(cmds) }
+            if (hcard?.id != 211 || summon.damage < 2) return;
+            return {
+                triggers: 'card',
+                exec: cmds => {
+                    cmds.attack(3);
+                    summon.damage = 1;
+                }
+            }
+        }),
+
     111011: () => summon('冰灵珠').useCnt(2).damage(1).pdmg(1)
         .description('{defaultAtk，对所有后台敌人造成1点[穿透伤害]。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/07c346ef7197c24c76a25d3b47ed5e66_3626039813983519562.png'),
@@ -999,8 +1015,12 @@ export const summonsTotal = (version: Version = VERSION[0]) => {
 
 export const newSummon = (version?: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
     return (id: number, ...args: any) => {
-        const { diff = {}, dict = {} } = options;
-        const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
-        return allSummons[id](...args).id(id).version(dversion).done();
+        try {
+            const { diff = {}, dict = {} } = options;
+            const dversion = diff[getDerivantParentId(id, dict)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
+            return allSummons[id](...args).id(id).version(dversion).done();
+        } catch (e) {
+            throw new Error(`not found summon id: ${id}, ${e}`);
+        }
     }
 }

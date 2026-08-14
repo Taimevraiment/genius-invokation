@@ -522,6 +522,7 @@ let prodEnv = 0;
 const maskOpacity = ref<number>(0.7);
 const isOpenMask = ref<boolean>(false);
 // isOpenMask.value = isDev;
+
 const devOps = (cidx = 0) => {
   if ((client.value.phase < PHASE.DICE && client.value.phase != 0) || (!isDev && ++prodEnv < 3)) return;
   let opses = prompt(isDev ? '摸牌id/#骰子/@充能/%血量/&附着/=状态/-弃牌/+加牌:' : '');
@@ -546,7 +547,7 @@ const devOps = (cidx = 0) => {
     prodEnv = 0;
   }
   if (!opses) return;
-  const ops = opses.trim().split(/[,，\.\/、]+/).filter(v => v != '');
+  const ops = opses.trim().split(/[,，\/、]+/).filter(v => v != '');
   const cpidx = client.value.playerIdx ^ cidx;
   const heros = client.value.players[cpidx].heros;
   let dices: DiceCostType[] | undefined;
@@ -646,9 +647,9 @@ const devOps = (cidx = 0) => {
     } else if (op.startsWith('+')) { // 在牌库中加牌
       const rest = op.slice(1);
       const cid = parseInt(rest);
-      const cidx = rest.indexOf('c');
-      const aidx = rest.indexOf('a');
-      const hidx = rest.indexOf('h');
+      const cidx = rest.indexOf('c'); // 添加的张数
+      const aidx = rest.indexOf('a'); // 是否均匀
+      const hidx = rest.indexOf('h'); // 加入第几张 >0牌库顶 <0牌库底
       const isAttach = !!(aidx == -1 ? 0 : (parseInt(rest.slice(aidx + 1)) || 0));
       const cnt = cidx == -1 ? 1 : (parseInt(rest.slice(cidx + 1)) || 1);
       const hidxs = hidx == -1 ? undefined : (parseInt(rest.slice(hidx + 1)) || undefined)?.toString().split('```').map(Number) || undefined;
@@ -684,7 +685,8 @@ const devOps = (cidx = 0) => {
       const isAttach = op.endsWith('~'); // 是否摸牌库中的牌
       const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
       if (cid != -1) {
-        const talent = isCdt(cid < heros.length, getTalentIdByHid(heros[(client.value.players[cpidx].hidx + cid) % heros.length].id))
+        const hid = heros[(client.value.players[cpidx].hidx + Math.floor(cid)) % heros.length].id;
+        const talent = isCdt(cid < heros.length, getTalentIdByHid(hid, cid % 1 * 10 + 1))
         cards.push(...new Array(cnt).fill(talent || cid));
       }
       cmds.push({ cmd: 'getCard', cnt, card: cards, isAttach });

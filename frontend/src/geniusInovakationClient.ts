@@ -430,7 +430,7 @@ export default class GeniusInvokationClient {
                 this.supportCanSelect = clone(preview.supportCanSelect) ?? this._resetSupportCanSelect();
                 if (this.isValid) {
                     const { canSelectHero, canSelectSummon, canSelectSupport } = this.currCard;
-                    if (canSelectHero == 1 && preview.heroIdxs) this.heroSelect[1][preview.heroIdxs[0]] = 1;
+                    if (Math.abs(canSelectHero) == 1 && preview.heroIdxs) this.heroSelect[+(canSelectHero > 0)][preview.heroIdxs[0]] = 1;
                     if (preview.summonIdx != undefined) this.summonSelect[canSelectSummon][preview.summonIdx] = true;
                     if (preview.supportIdx != undefined) this.supportSelect[Math.abs(canSelectSupport)][preview.supportIdx] = true;
                     this.summonCnt = clone(preview.willSummonChange) ?? this._resetSummonCnt();
@@ -457,7 +457,7 @@ export default class GeniusInvokationClient {
             type: ACTION_TYPE.UseCard,
             cardIdxs: [this.handcardsSelect],
             diceSelect: this.diceSelect,
-            heroIdxs: this.heroSelect[1].map((v, i) => ({ v, i })).filter(v => v.v).sort((a, b) => a.v - b.v).map(v => v.i),
+            heroIdxs: this.heroSelect[+(this.currCard.canSelectHero > 0)].map((v, i) => ({ v, i })).filter(v => v.v).sort((a, b) => a.v - b.v).map(v => v.i),
             supportIdx: this.supportSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             summonIdx: this.summonSelect.reduce((a, c) => Math.max(a, c.indexOf(true)), -1),
             flag: 'useCard',
@@ -832,28 +832,31 @@ export default class GeniusInvokationClient {
     selectCardHero(pidx: number, hidx: number) {
         if (this.phase != PHASE.ACTION || this.isShowSwitchHero > 1 || this.currSkill.canSelectHero != -1) return true;
         const { id, canSelectHero } = this.currCard;
-        if (pidx == 0 || id <= 0 || !this.heroCanSelect[hidx]) {
+        const cpidx = canSelectHero < 0 ? 0 : 1;
+        if (pidx != cpidx || id <= 0 || !this.heroCanSelect[hidx]) {
             this.cancel({ notTarget: true, notSummonSelect: true });
             return true;
         }
-        if (this.heroSelect[pidx][hidx] > 0) {
+        this.modalInfo = NULL_MODAL();
+        if (this.heroSelect[cpidx][hidx] > 0) {
             this.useCard();
         } else {
-            const selected = this.heroSelect[pidx].filter(v => v > 0).length;
-            if (selected >= canSelectHero) {
-                this.heroSelect[pidx].forEach((v, i, a) => {
-                    if (canSelectHero == 1) a[i] = +(i == hidx);
+            const selectCnt = Math.abs(canSelectHero);
+            const selected = this.heroSelect[cpidx].filter(v => v > 0).length;
+            if (selected >= selectCnt) {
+                this.heroSelect[cpidx].forEach((v, i, a) => {
+                    if (selectCnt == 1) a[i] = +(i == hidx);
                     else if (v != 1) a[i] = +(i == hidx) * 2;
                 });
             } else {
-                this.heroSelect[pidx][hidx] = selected + 1;
+                this.heroSelect[cpidx][hidx] = selected + 1;
             }
         }
         const preview = this.previews.find(pre =>
             pre.type == ACTION_TYPE.UseCard &&
             pre.cardIdxs?.[0] == this.currCard.cidx &&
-            (pre.heroIdxs?.length ?? 0) == this.heroSelect[pidx].filter(v => v > 0).length &&
-            pre.heroIdxs?.every(hi => this.heroSelect[pidx][hi] > 0)
+            (pre.heroIdxs?.length ?? 0) == this.heroSelect[cpidx].filter(v => v > 0).length &&
+            pre.heroIdxs?.every(hi => this.heroSelect[cpidx][hi] > 0)
         );
         this.isValid = !!preview?.isValid;
         if (!preview) return false;

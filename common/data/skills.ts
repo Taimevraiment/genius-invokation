@@ -50,7 +50,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
     13164: () => skill('踏云献瑞').description('{dealDmg}。').normal().damage(2),
 
     13173: () => skill('白化法·如光流变').description('{dealDmg}，生成【sts113171】。')
-        .src('#',
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/66d1324231edab8f45aaeaad7d4ef09a.png',
             'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/cddebe8658870ac69c2f93527fae1b3f_123609587375303701.png')
         .burst(2).damage(1).cost(3).handle(() => ({ status: 113171 })),
 
@@ -298,9 +298,13 @@ export const skillsTotal = (version: Version = VERSION[0]) => {
 
 export const newSkill = (version: Version, options: { diff?: Record<number, Version> } = {}) => {
     return (id: number) => {
-        const { diff = {} } = options;
-        const dversion = diff[Math.floor(id / 10)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
-        return allSkills[id]().version(dversion).id(id).done();
+        try {
+            const { diff = {} } = options;
+            const dversion = diff[Math.floor(id / 10)] ?? diff[getHidById(id)] ?? diff[id] ?? version;
+            return allSkills[id]().version(dversion).id(id).done();
+        } catch (e) {
+            throw new Error(`not found skill id: ${id}, ${e}`);
+        }
     }
 }
 

@@ -69,9 +69,9 @@ export const getHidById = (id?: number): number => {
 export const getElByHid = (hid: number): ElementType => ELEMENT_CODE_KEY[Math.floor(hid / 100) % 10 as ElementCode];
 
 // 根据角色id获取天赋id
-export const getTalentIdByHid = (hid: number): number => {
+export const getTalentIdByHid = (hid: number, idx: number = 1): number => {
     if (hid == 2602) return 226022;
-    return +`2${hid}1`;
+    return +`2${hid}${idx}`;
 }
 // 根据特技卡id获取特技技能id
 export const getVehicleIdByCid = (cid: number): number => {

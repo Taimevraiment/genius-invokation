@@ -11,6 +11,7 @@ import { BaseBuilder, Entity, EntityBuilderHandleEvent, EntityHandleEvent, Input
 
 export interface SkillHandleEvent extends EntityHandleEvent {
     skill: Skill,
+    autoUse: boolean,
     swirlEl?: PureElementType,
 }
 
@@ -128,11 +129,12 @@ export class GISkill extends Entity {
             const { players, pidx, ...oevent } = event;
             const pevent = getEntityHandleEvent(pidx, players, event, event.skill);
             const cevent: SkillBuilderHandleEvent = {
+                autoUse: false,
                 ...pevent,
                 ...deleteUndefinedProperties(oevent),
                 cmds,
             };
-            const { trigger, hero, skill, combatStatus, eheros } = cevent;
+            const { trigger, hero, skill, combatStatus, eheros, autoUse } = cevent;
             const builderRes = handle?.(cevent, versionWrap(ver)) ?? { cmds };
             const res: SkillHandleRes = {
                 ...builderRes,
@@ -181,9 +183,8 @@ export class GISkill extends Entity {
             if (!cmds.hasCmds('attack')) {
                 if (pdmgSelf) cmds.unshift.attack(pdmgSelf, DAMAGE_TYPE.Pierce, { hidxs: hidxs ?? hero.hidx, isOppo: false });
                 if (pdmg) cmds.unshift.attack(pdmg, DAMAGE_TYPE.Pierce, { hidxs });
-                if (skill.damage || addDmgCdt) cmds.unshift.attack();
+                if (skill.damage || addDmgCdt || !skill.isPassive) cmds.unshift.attack();
             }
-            if (!cmds.hasCmds('attack') && !skill.isPassive) cmds.unshift.attack();
             if (cmds.hasCmds('attack') && skill.isPassive) {
                 const cmd = cmds.getCmd('attack')!;
                 if (cmd.element != DAMAGE_TYPE.Pierce && cmd.cnt) {
@@ -202,7 +203,7 @@ export class GISkill extends Entity {
                 .getSummon(summon);
             if (skill.cost[2].cnt >= 0) {
                 if (skill.cost[2].cnt == 0) cmds.unshift.getEnergy(1, { hidxs: hero.hidx });
-                else cmds.unshift.getEnergy(-skill.cost[2].cnt, { hidxs: hero.hidx }).res;
+                else if (!autoUse) cmds.unshift.getEnergy(-skill.cost[2].cnt, { hidxs: hero.hidx }).res;
             }
             if (skill.damage || addDmgCdt) {
                 cmds.value.forEach(c => {
@@ -507,4 +508,5 @@ export class NormalSkillBuilder extends BaseBuilder {
 }
 
 export const skill = (name?: string) => new SkillBuilder(name);
+
 export const normalSkill = (name: string) => new NormalSkillBuilder(name);

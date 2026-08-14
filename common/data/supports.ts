@@ -392,6 +392,31 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             }
         }
     }),
+    // 超载祝佑·追燃
+    303121: () => support().collection().handle((support, event) => ({
+        triggers: ['phase-dice', 'switch-oppo', 'action-start'],
+        element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Pyro],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger } = event;
+            if (trigger == 'phase-dice') return;
+            if (trigger == 'switch-oppo') return support.addUseCnt();
+            if (support.useCnt < 3) return { isCancel: true }
+            cmds.getCard(1).useCard({ mode: CMD_MODE.HighHandCard });
+            support.minusUseCnt(3);
+        }
+    })),
+    // 超载祝佑·霆击
+    303122: () => support().permanent().handle((_, event) => ({
+        triggers: ['phase-dice', 'switch-oppo'],
+        element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Pyro],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger, ehidx } = event;
+            if (trigger == 'phase-dice') return;
+            cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
+        }
+    })),
     // 璃月港口
     321001: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
@@ -1514,13 +1539,19 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     331010: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Anemo, 'elReaction-Anemo:Hydro', 10),
     // 元素幻变：雷草祝佑
     331011: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro, 'Quicken', 11),
+    // 元素幻变：超载祝佑
+    331012: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Pyro, 'Overload', 12),
 
 }
 
 export const newSupport = (version: Version, options: { diff?: Record<number, Version>, dict?: Record<number, number> } = {}) => {
     return (card: Card, ...args: any[]) => {
-        const { diff = {}, dict = {} } = options;
-        const dversion = diff[getDerivantParentId(card.id, dict)] ?? diff[card.id] ?? version;
-        return supportTotal[card.id](...args).card(card).version(dversion).done();
+        try {
+            const { diff = {}, dict = {} } = options;
+            const dversion = diff[getDerivantParentId(card.id, dict)] ?? diff[card.id] ?? version;
+            return supportTotal[card.id](...args).card(card).version(dversion).done();
+        } catch (e) {
+            throw new Error(`not found support id: ${card.id}, ${e}`);
+        }
     }
 }

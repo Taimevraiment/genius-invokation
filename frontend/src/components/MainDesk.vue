@@ -132,7 +132,7 @@
             'is-front-my': hero?.isFront && hgi == 1,
             'hero-select': heroSelect[hgi][hidx],
             'hero-effect': true,
-            'hero-can-select': hgi == 1 && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
+            'hero-can-select': !!hgi == (currCard.id == 0 || currCard.canSelectHero > 0) && heroCanSelect[hidx] && player.status == PLAYER_STATUS.PLAYING,
             'active-willhp': canAction && (
               willHp[hgi][hidx] != undefined || willAttachs[hgi][hidx]?.length || energyIcons[hgi][hidx][2].some(v => v) ||
               (heroSelect[hgi][hidx] || client.isShowSwitchHero >= 2) && hgi == 1 ||
@@ -182,7 +182,7 @@
                 :class="{ 'el-tip-anime-right-icon': elTips[hgi][hidx][0] != '' }">
               <div class="el-tip" :class="{ 'el-tip-anime': elTips[hgi][hidx][0] != '' }"
                 :style="{ color: REACTION_COLOR[elTips[hgi][hidx][0]] }">
-                {{ elTips[hgi][hidx][0] }}
+                <StrokedText strokeColor="white">{{ elTips[hgi][hidx][0] }}</StrokedText>
               </div>
             </template>
             <template v-if="hero.hp > 0 && willAttachs[hgi][hidx]?.length == 0">

@@ -1232,9 +1232,8 @@ input#isOfflineInput:checked {
 }
 
 .card-cnt {
-    background-color: #583a01;
-    color: white;
-    border: 2px solid black;
+    background: linear-gradient(to bottom right, #d1bc9f, #c2aa8d);
+    border: 1px solid #83725f;
     border-radius: 10px;
     position: absolute;
     top: -2px;

@@ -133,7 +133,7 @@ type Cmd = 'getDice' | 'getCard' | 'getEnergy' | 'heal' | 'getStatus' | 'reroll'
     'switch-after' | 'attach' | 'attack' | 'changeDice' | 'changeCard' | 'changeSummon' | 'useSkill' | 'changePattern' |
     'getSkill' | 'loseSkill' | 'addCard' | 'discard' | 'pickCard' | 'addMaxHp' | 'equip' | 'exchangePos' | 'stealCard' |
     'putCard' | 'exchangeHandCards' | 'consumeNightSoul' | 'getNightSoul' | 'consumeDice' | 'convertCard' | 'getSummon' |
-    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'modifyUseCnt' | 'convertSupport';
+    'summonTrigger' | 'getSupport' | 'adventure' | 'destroySummon' | 'modifyUseCnt' | 'convertSupport' | 'useCard';
 
 type PlayerInfo = {
     isUsedLegend: boolean, // 是否使用秘传卡
@@ -155,6 +155,7 @@ type PlayerInfo = {
     usedVehcileCnt: number, // 本局打出过的特技牌数量
     isLunarElectroCharged: boolean, // 是否转化为月感电
     isLunarBloom: boolean, // 是否转化为月绽放
+    isLunarCrystallize: boolean, // 是否转化为月结晶
 }
 
 type InfoVO = {
@@ -198,7 +199,7 @@ type TrgAll = 'all-' | '';
 type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `action-start${TrgOppo}` | `action-after${TrgOppo}` |
     'end-phase' | 'any-end-phase' | `${TrgAfter}${TrgOther}skill${TrgOppo}` | `${TrgAfter}${TrgOther}skilltype${SkillType}` |
     `${TrgActive | TrgDice}switch` | `${TrgActive | TrgDice}switch-to` | `${TrgActive | TrgDice}switch-from` | 'card' |
-    `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` | 'skill-dmg' |
+    `${TrgGet | TrgOther}elReaction` | `getdice${TrgOppo}` | `${keyof typeof ELEMENT_REACTION}${TrgOppo}` | `${TrgOther}skill-dmg` |
     `${TrgGet | TrgOther}elReaction-${TrgEl}${TrgOppo}` | `${TrgOther}elReaction-Anemo:${TrgElRe}` | `${TrgOther}elReaction-Geo:${TrgElRe}` | 'ecard' |
     'get-elReaction-oppo' | 'kill' | 'killed' | `${TrgOther}will-killed` | `${TrgOther | TrgAfter}dmg` | `${TrgOther}${TrgDmg}-dmg` | 'other-get-elReaction' |
     'dmg-Swirl' | `${TrgElRe}-dmg-Swirl` | `${TrgOther | TrgAfter | TrgAll}getdmg` | `${TrgDmg}-getdmg${TrgOppo}` | 'getdmg-oppo' | 'revive' |
