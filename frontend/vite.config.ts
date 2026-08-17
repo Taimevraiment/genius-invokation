@@ -28,6 +28,9 @@ export default defineConfig({
       '@@@': fileURLToPath(new URL('../common', import.meta.url)),
     }
   },
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toLocaleString('zh-CN')),
+  },
   build: {
     minify: 'terser',
     terserOptions: {

@@ -694,27 +694,23 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(3).damage(3).cost(3).handle(() => ({ status: 112171 })),
-            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【水元素结晶反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；我方引发[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）')
+            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶(水)反应】伤害时，改为[月感电]/[月绽放]/[月结晶]反应。；敌方受到[月感电]/[月绽放]/[月结晶]反应伤害后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）')
                 .src('#',
                     '')
                 .passive().perCnt(1).handle(event => {
-                    const { skill, trigger, playerInfo, cmds } = event;
+                    const { skill, trigger, playerInfo, cmds, hasDmg } = event;
                     if (trigger == 'game-start') {
                         playerInfo.isLunarElectroCharged = true;
                         playerInfo.isLunarBloom = true;
                         playerInfo.isLunarCrystallize = true;
                         return { triggers: trigger, isNotAddTask: true }
                     }
-                    if (skill.perCnt <= 0) return;
-                    if (['LunarElectroCharged', 'other-LunarElectroCharged'].includes(trigger)) cmds.attack(1, DAMAGE_TYPE.Electro);
-                    else if (['LunarBloom', 'other-LunarBloom'].includes(trigger)) cmds.attack(1, DAMAGE_TYPE.Dendro);
-                    else if (['LunarCrystallize', 'other-LunarCrystallize'].includes(trigger)) cmds.attack(1, DAMAGE_TYPE.Geo);
+                    if (skill.perCnt <= 0 || !hasDmg) return;
+                    if (trigger == 'LunarElectroCharged-oppo') cmds.attack(1, DAMAGE_TYPE.Electro);
+                    else if (trigger == 'LunarBloom-oppo') cmds.attack(1, DAMAGE_TYPE.Dendro);
+                    else if (trigger == 'LunarCrystallize-oppo') cmds.attack(1, DAMAGE_TYPE.Geo);
                     return {
-                        triggers: [
-                            'LunarElectroCharged', 'other-LunarElectroCharged',
-                            'LunarBloom', 'other-LunarBloom',
-                            'LunarCrystallize', 'other-LunarCrystallize',
-                        ],
+                        triggers: ['LunarElectroCharged-oppo', 'LunarBloom-oppo', 'LunarCrystallize-oppo'],
                         exec: () => skill.minusPerCnt(),
                     }
                 })
@@ -1992,15 +1988,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .avatar('#AvatarIcon_Illuga')
         .normalSkill('守誓枪术')
         .skills(
-            skill('衔莺破晓').description('{dealDmg}，生成一张【crd116121】加入手牌。')
+            skill('衔莺破晓').description('{dealDmg}，生成手牌【crd116121】。')
                 .src('#',
                     '')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 116121 }).res),
-            skill('鉴照无影').description('{dealDmg}，生成3层【sts116122】。')
+            skill('鉴照无影').description('{dealDmg}，生成可用次数为3的【sts116122】。')
                 .src('#',
                     '')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[116122, 3]] })),
-            skill('月兆祝赐·凌冬不凋').description('不属于我方初始卡牌进入手牌时，获得1层【sts202】（每回合1次）')
+            skill('月兆祝赐·凌冬不凋').description('名称不存在于本局最初牌组的牌加入手牌时，获得1层【sts202】（每回合1次）')
                 .src('#',
                     '')
                 .passive().perCnt(1).handle(event => {

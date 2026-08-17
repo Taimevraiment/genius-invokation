@@ -929,7 +929,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     112171: () => status('月之领域').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Usage)
-        .description('【我方触发月感电时：】额外赋予敌方3张手牌【sts204】，我方【smn205】造成的伤害改为3。；【我方触发月绽放时：】赋予【sts202】的手牌数改为3。；【我方触发月结晶反应时：】生成的【crd211】数量改为3。')
+        .description('【我方触发[月感电]时：】额外赋予敌方3张手牌【sts204】，我方【smn205】造成的伤害改为3。；【我方触发[月绽放]时：】赋予【sts202】的手牌数改为3。；【我方触发[月结晶]反应时：】生成的【crd211】数量改为3。')
         .handle((status, event) => {
             const { cmds, summons, trigger } = event;
             if (trigger == 'LunarElectroCharged') {
@@ -957,9 +957,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             exec: () => status.minusUseCnt(),
         })),
 
-    112173: () => status('遍照花海，隐入群山（生效中）').combatStatus().useCnt(1).roundCnt(1)
-        .type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
-        .description('本回合中，所附属角色下次受到伤害-2。').barrierCnt(2),
+    112173: () => status('抗性').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
+        .description('【我方出战角色受到伤害时：】抵消2点伤害。').barrierCnt(2),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -1825,7 +1824,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【角色无法使用技能。】（持续到回合结束）'),
 
     116042: () => status('瑰银').combatStatus().icon('ski,1').useCnt(2).type(STATUS_TYPE.Attack)
-        .description('【我方角色进行[下落攻击]后：】对后台角色造成1点[穿透伤害]。；[useCnt]')
+        .description('【我方角色进行[下落攻击]后：】对所有后台角色造成1点[穿透伤害]。；[useCnt]')
         .handle(status => ({ triggers: 'fallatk', pdmg: 1, exec: () => status.minusUseCnt() })),
 
     116051: () => status('阿丑').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()
@@ -1915,7 +1914,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     116122: (cnt: number = 1) => status('夜莺之歌').combatStatus().icon('ski,1')
         .type(STATUS_TYPE.AddDamage, STATUS_TYPE.Usage).useCnt(cnt).maxCnt(MAX_USE_COUNT)
-        .description('敌方受到的[岩元素伤害]+1。；[useCnt]；我方召唤召唤物后，此牌[可用次数]+1。')
+        .description('敌方受到的[岩元素伤害]+1。；[useCnt]；我方「召唤物」入场时，此牌[可用次数]+1。')
         .handle((status, event) => {
             const { trigger } = event;
             if (trigger == 'summon-generate') return { triggers: trigger, isAddTask: true, exec: () => status.addUseCnt() }

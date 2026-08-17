@@ -1308,7 +1308,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     312046: () => card(627).name('昔时浮想之思').since('v7.1.0').relic().costSame(1).useCnt(0)
-        .description('我方角色获得圣遗物以外的治疗后：此牌累计1点渴盼（最多累积到2）。回合开始时，每有1点，治疗自身1点。')
+        .description('【我方角色获得圣遗物以外的治疗后：】此牌累计1点「渴盼」（最多累积到2）。回合开始时，每有1层「渴盼」，治疗所附属角色1点。')
         .src('#')
         .handle((card, event) => {
             const { execmds, hidx, hero, source, trigger } = event;
@@ -3095,7 +3095,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     212171: () => card(622).name('遍照花海，隐入群山').since('v7.1.0').talent(1).costHydro(3).perCnt(2)
-        .description('{action}；【装备有此牌的〖hro〗在场时，我方引发[月感电]后：】我方一名角色获得1点[充能]。；【我方引发[月绽放]后：】我方下次受到的伤害-2。；【我方引发[月结晶]后：】自动免费打出手牌中1张【crd211】。（每回合2次）')
+        .description('{action}；【装备有此牌的〖hro〗在场时，我方触发[月感电]后：】我方一名充能未满的角色获得1点[充能]。；【我方触发[月绽放]后：】我方出战角色下次受到的伤害-2。；【我方触发[月结晶]后：】自动免费打出手牌中[当前元素骰费用]最高的1张【crd211】。（每回合2次）')
         .src('#')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
@@ -3105,7 +3105,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             } else if (['LunarBloom', 'other-LunarBloom'].includes(trigger)) {
                 execmds.getStatus(112173);
             } else if (['LunarCrystallize', 'other-LunarCrystallize'].includes(trigger)) {
-                execmds.useCard({ card: 211 });
+                execmds.useCard({ cardFilter: c => c.id == 211, mode: CMD_MODE.HighHandCard });
             }
             return {
                 triggers: [
@@ -3300,7 +3300,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     214022: () => card(623).name('苍雷奔涌').since('v7.1.0').hexenzirkel(-2).costElectro(2)
-        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；我方【hro】如果未附属【sts114021】，则附属持续回合为1的【sts114021】。；装备有此牌的【hro】附属【sts114021】期间，我方【sts114021】造成的伤害+1。')
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；我方【hro】如果未附属【sts114021】，则自身附属持续回合为1的【sts114021】。；装备有此牌的【hro】附属【sts114021】期间，我方【sts114021】造成的伤害+1。')
         .src('#')
         .handle((_, event) => {
             const { cmds, hero: { heroStatus }, source } = event;
@@ -3680,7 +3680,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     216042: () => card(625).name('白芒之书').since('v7.1.0').hexenzirkel().costGeo(3)
-        .description('{quick}；〔*[card]召唤【smn116041】。〕；我方召唤【smn116041】时，生成2层【sts116042】，并生成1个随机元素骰。')
+        .description('{quick}；〔*[card]召唤【smn116041】。〕；我方召唤【smn116041】时，生成2层【sts116042】，并生成1个随机基础元素骰。')
         .src('#')
         .handle((_, event) => {
             const { cmds, execmds, sourceSummon } = event;
@@ -3767,7 +3767,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     216121: () => card(626).name('噬枝之麋').since('v7.1.0').talent(-2).costGeo(1).notResetPerCnt()
-        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；〔*[card]生成1层【sts116122】。〕；【装备有此牌的〖hro〗在场时：】每消耗2层【sts116122】，将1张【crd116121】加入手牌。〔[slot]（当前已消耗{pct}层）〕')
+        .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；〔*[card]生成1层【sts116122】。〕；【装备有此牌的〖hro〗在场时：】每消耗2层【sts116122】，生成1张手牌【crd116121】。〔[slot]（当前已消耗{pct}层）〕')
         .src('#')
         .handle((card, event) => {
             const { cmds, execmds, source } = event;

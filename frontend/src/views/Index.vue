@@ -2,7 +2,7 @@
   <span v-if="route.redirectedFrom?.query.bot" style="position: absolute;font-family: HYWH;">7</span>
   <div class="container">
     <div :class="{ title: true, 'title-mobile': isMobile }">七圣召唤模拟器</div>
-    <div style="position: absolute;right: 10px;top: 10px;">（更新至7.1v1）</div>
+    <div style="position: absolute;right: 10px;top: 10px;">（更新至7.1v2）</div>
     <div v-if="isShowEditName" class="edit-name">
       <input type="text" placeholder="请输入昵称(不超过10字)" maxlength="10" v-model="inputName" @keyup.enter="register" />
       <button style="display: block; margin: 10px auto;" @click="register">
@@ -60,6 +60,7 @@
       </div>
     </div>
     <div class="version">{{ version }}</div>
+    <div class="build-time" v-if="buildTime">更新时间：{{ buildTime }}</div>
   </div>
   <CreateRoomModal v-if="isShowCreateRoom" @create-room-cancel="cancelCreateRoom" @create-room="createRoom"
     @create-config="createConfig" @edit-config="editConfig" />
@@ -85,7 +86,9 @@ import LZString from 'lz-string';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Card, CustomVersionConfig, Hero, InfoVO, Player, PlayerList, RecordData, RoomList, Summon } from '../../../typing';
+declare const __BUILD_TIME__: string;
 
+const buildTime = __BUILD_TIME__;
 const isDev = process.env.NODE_ENV == 'development';
 const isMobile = ref(/Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 const socket = getSocket(isDev);
@@ -108,7 +111,7 @@ const playerStatus = ref([
 ]); // 玩家状态
 const info = ref<InfoVO>({ version: 'v3.3.0', isShow: true, type: null, info: null }); // 为pupeteer截图时使用
 const infoContent = ref<string>('');
-const version = ref<string>('v1.7.0');
+const version = ref<string>('v1.7.1');
 const noticeContent = ``;
 const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, { force: true }), ...summonsTotal(version)];
 let followIdx: number = -1; // 跟随的玩家id
@@ -490,6 +493,14 @@ button:active {
   position: absolute;
   bottom: 0;
   right: 3px;
+  color: gray;
+  font-size: 10px;
+}
+
+.build-time {
+  position: absolute;
+  bottom: 0;
+  left: 3px;
   color: gray;
   font-size: 10px;
 }
