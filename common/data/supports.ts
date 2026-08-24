@@ -407,14 +407,16 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 超载祝佑·霆击
-    303122: () => support().permanent().handle((_, event) => ({
-        triggers: ['phase-dice', 'switch-oppo'],
+    303122: () => support().collection(1).handle((support, event) => ({
+        triggers: ['phase-dice', 'switch-oppo', 'phase-start'],
         element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Pyro],
         cnt: [2, 2],
         exec: cmds => {
             const { trigger, ehidx } = event;
             if (trigger == 'phase-dice') return;
-            cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
+            if (trigger == 'phase-start') return support.setUseCnt(1);
+            cmds.attack(support.useCnt, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
+            support.addUseCntMax(3);
         }
     })),
     // 璃月港口
@@ -1405,7 +1407,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     })),
     // 涅朵奇卡
     322034: () => support().permanent().perCnt(1).handle(support => ({
-        triggers: ['LunarElectroCharged', 'LunarBloom'],
+        triggers: ['LunarElectroCharged', 'LunarBloom', 'LunarCrystallize'],
         exec: cmds => {
             if (support.perCnt <= 0) return { isCancel: true }
             cmds.getStatus(172);

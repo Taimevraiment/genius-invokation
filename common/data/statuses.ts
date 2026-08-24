@@ -929,17 +929,18 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     112171: () => status('月之领域').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Usage)
-        .description('【我方触发[月感电]时：】额外赋予敌方3张手牌【sts204】，我方【smn205】造成的伤害改为3。；【我方触发[月绽放]时：】赋予【sts202】的手牌数改为3。；【我方触发[月结晶]反应时：】生成的【crd211】数量改为3。')
+        .description('【敌方受到[月感电]时：】额外赋予敌方3张手牌【sts204】，我方【smn205】和[月感电]造成的伤害改为3。；【敌方受到[月绽放]时：】赋予【sts202】的手牌数改为3。；【敌方受到[月结晶]反应时：】生成的【crd211】数量改为3。')
         .handle((status, event) => {
             const { cmds, summons, trigger } = event;
-            if (trigger == 'LunarElectroCharged') {
+            if (trigger == 'LunarElectroCharged-oppo') {
                 cmds.getStatus(204, { cnt: 3, isOppo: true });
             } else if (trigger == 'LunarBloom') cmds.getStatus(202, { cnt: 3 });
             else if (trigger == 'LunarCrystallize') cmds.getCard(2, { card: 211 });
             return {
-                triggers: ['LunarElectroCharged', 'LunarBloom', 'LunarCrystallize'],
+                triggers: ['LunarElectroCharged-oppo', 'LunarBloom-oppo', 'LunarCrystallize-oppo'],
+                addDmgCdt: isCdt(trigger == 'LunarElectroCharged-oppo', 3),
                 exec: () => {
-                    if (trigger == 'LunarElectroCharged') {
+                    if (trigger == 'LunarElectroCharged-oppo') {
                         const smn = summons.get(205);
                         if (smn) smn.damage = 3;
                     }
@@ -958,7 +959,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         })),
 
     112173: () => status('抗性').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
-        .description('【我方出战角色受到伤害时：】抵消2点伤害。').barrierCnt(2),
+        .description('【我方出战角色受到伤害时：】抵消1点伤害。'),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -1824,7 +1825,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【角色无法使用技能。】（持续到回合结束）'),
 
     116042: () => status('瑰银').combatStatus().icon('ski,1').useCnt(2).type(STATUS_TYPE.Attack)
-        .description('【我方角色进行[下落攻击]后：】对所有后台角色造成1点[穿透伤害]。；[useCnt]')
+        .description('【我方角色进行[下落攻击]后：】对所有敌方后台角色造成1点[穿透伤害]。；[useCnt]')
         .handle(status => ({ triggers: 'fallatk', pdmg: 1, exec: () => status.minusUseCnt() })),
 
     116051: () => status('阿丑').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier).summonId()

@@ -142,7 +142,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 111073 }))
         ),
 
-    1108: () => hero(8).name('七七').since('v4.0.0').offline('v3').liyue().cryo().sword()
+    1108: () => hero(8).name('七七').since('v4.0.0').offline('v3').maxHp(12).maxHp(10, 'v7.1.0', 'v3').liyue().cryo().sword()
         .src('https://act-upload.mihoyo.com/ys-obc/2023/08/12/258999284/e94e3710ff2819e5f5fd6ddf51a90910_7928049319389729133.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u060fg/c0bd5fd46a539c9d90b4f0470e26c154.png')
         .normalSkill('云来古剑法')
@@ -677,12 +677,13 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
     1217: () => hero(620).name('哥伦比娅').since('v7.1.0').nodkrai().hydro().catalyst()
         .src('#')
         .avatar('#AvatarIcon_Columbina')
-        .normalSkill(skill => skill('月露泼降').description('；如果我方手牌中存在附着有【sts202】的卡牌，则将随机1张牌置于牌组顶，然后再造成1点[草元素伤害]。（每回合1次）')
+        .normalSkill(skill => skill('月露泼降').description('；如果我方手牌中存在附着有【sts202】的卡牌，则将随机1张附着有【sts202】的手牌置于牌组顶，然后再造成1点[草元素伤害]。（每回合1次）')
             .perCnt(1).handle(event => {
                 const { skill, hcards, cmds, random } = event;
                 cmds.attack();
-                if (skill.perCnt <= 0 || hcards.every(c => !c.hasAttachment(202))) return;
-                cmds.putCard({ card: random(hcards), isOnPileTop: true }).attack(1, DAMAGE_TYPE.Dendro);
+                const cards = hcards.filter(c => c.hasAttachment(202));
+                if (skill.perCnt <= 0 || cards.length == 0) return;
+                cmds.putCard({ card: random(cards), isOnPileTop: true }).attack(1, DAMAGE_TYPE.Dendro);
                 return { exec: () => skill.minusPerCnt() }
             }))
         .skills(
@@ -694,18 +695,18 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(3).damage(3).cost(3).handle(() => ({ status: 112171 })),
-            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶(水)反应】伤害时，改为[月感电]/[月绽放]/[月结晶]反应。；敌方受到[月感电]/[月绽放]/[月结晶]反应伤害后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）')
+            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶（水）反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；敌方受到[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）')
                 .src('#',
                     '')
                 .passive().perCnt(1).handle(event => {
-                    const { skill, trigger, playerInfo, cmds, hasDmg } = event;
+                    const { skill, trigger, playerInfo, cmds } = event;
                     if (trigger == 'game-start') {
                         playerInfo.isLunarElectroCharged = true;
                         playerInfo.isLunarBloom = true;
                         playerInfo.isLunarCrystallize = true;
                         return { triggers: trigger, isNotAddTask: true }
                     }
-                    if (skill.perCnt <= 0 || !hasDmg) return;
+                    if (skill.perCnt <= 0) return;
                     if (trigger == 'LunarElectroCharged-oppo') cmds.attack(1, DAMAGE_TYPE.Electro);
                     else if (trigger == 'LunarBloom-oppo') cmds.attack(1, DAMAGE_TYPE.Dendro);
                     else if (trigger == 'LunarCrystallize-oppo') cmds.attack(1, DAMAGE_TYPE.Geo);
@@ -1996,7 +1997,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('#',
                     '')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[116122, 3]] })),
-            skill('月兆祝赐·凌冬不凋').description('名称不存在于本局最初牌组的牌加入手牌时，获得1层【sts202】（每回合1次）')
+            skill('月兆祝赐·凌冬不凋').description('名称不存在于本局最初牌组的牌加入我方手牌时，获得1层【sts202】（每回合1次）')
                 .src('#',
                     '')
                 .passive().perCnt(1).handle(event => {
@@ -2917,7 +2918,8 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('霜驰影突').description('召唤【smn125012】。').description('{dealDmg},召唤【smn125012】。', 'v3.4.0')
                 .src('https://patchwiki.biligame.com/images/ys/1/17/a8qboxl35nar8vuaho1cewppy0fp43t.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/6df8766388e62c6a97f9898605fb45e2_6047730151662669218.png')
-                .elemental().damage(1, 'v3.4.0').costCryo(3).handle(({ talent, cmds }) => (talent && cmds.switchBefore(), { summon: 125012 })),
+                .elemental().damage(1, 'v3.4.0').cost(3).costCryo(3, 'v7.1.0', 'v3')
+                .handle(({ talent, cmds }) => (talent && cmds.switchBefore(), { summon: 125012 })),
             skill('机巧伪天狗抄').description('{dealDmg}，触发我方所有【剑影】召唤物效果。（不消耗其[可用次数]）')
                 .src('https://patchwiki.biligame.com/images/ys/f/fd/ren7lbexbnyvrdvn0aqhbrxx6atdoov.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2022/11/27/12109492/75142675f9625abbe1d9686f1a7f59b7_6144574132276306286.png')

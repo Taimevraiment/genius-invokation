@@ -81,7 +81,7 @@ export class GISkill extends Entity {
         explains: string[], // 要解释的文本
     };
     constructor(
-        name: string, description: string, type: SkillType, damage: number, cost: number, costElement?: SkillCostType,
+        name: string, description: string, type: SkillType, damage: number, cost: number, costElement: SkillCostType,
         options: {
             id?: number, ac?: number, ec?: number, de?: ElementType, pct?: number, expl?: string[], ver?: Version,
             canSelectSummon?: -1 | 0 | 1, canSelectHero?: -1 | 0 | 1, vars?: Record<string, number>, spe?: boolean,
@@ -95,7 +95,6 @@ export class GISkill extends Entity {
         super(id, name, { uct: 0, pct, vars });
         this.type = type;
         this.damage = damage;
-        costElement ??= DICE_TYPE.Same;
         this.dmgElement = de ?? (costElement == DICE_TYPE.Same ? DAMAGE_TYPE.Physical : costElement);
         const hid = getHidById(id);
         description = description
@@ -248,7 +247,7 @@ export class SkillBuilder extends BaseBuilder {
     private _damage: VersionMap<number> = this._createVersionMap();
     private _dmgElement: ElementType | undefined;
     private _cost: VersionMap<number> = this._createVersionMap();
-    private _costElement: SkillCostType | undefined;
+    private _costElement: VersionMap<SkillCostType> = this._createVersionMap();
     private _anyCost: VersionMap<number> = this._createVersionMap();
     private _energyCost: VersionMap<number> = this._createVersionMap();
     private _isSpEnergy: boolean = false;
@@ -315,43 +314,47 @@ export class SkillBuilder extends BaseBuilder {
         if (this._dmgElement == undefined) this._dmgElement = element;
         return this;
     }
-    cost(cost: number, version: Version = 'vlatest') {
-        this._cost.set([version, cost]);
+    cost(cost: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => this._cost.set([version, cost]));
         return this;
     }
-    costElement(element: ElementType) {
-        if (this._costElement == undefined) {
-            if (element == ELEMENT_TYPE.Physical) this._costElement = DICE_TYPE.Same;
-            else this._costElement = element;
-        }
+    costElement(element: ElementType, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => {
+            if (this._costElement.get(version, COST_TYPE.Same) != COST_TYPE.Same) return;
+            if (element == ELEMENT_TYPE.Physical) this._costElement.set([version, COST_TYPE.Same]);
+            else this._costElement.set([version, element]);
+        });
         return this;
     }
-    costCryo(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Cryo);
+    costCryo(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Cryo, ...versions);
     }
-    costHydro(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Hydro);
+    costHydro(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Hydro, ...versions);
     }
-    costPyro(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Pyro);
+    costPyro(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Pyro, ...versions);
     }
-    costElectro(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Electro);
+    costElectro(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Electro, ...versions);
     }
-    costAnemo(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Anemo);
+    costAnemo(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Anemo, ...versions);
     }
-    costGeo(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Geo);
+    costGeo(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Geo, ...versions);
     }
-    costDendro(cost: number) {
-        return this.cost(cost).costElement(DICE_TYPE.Dendro);
+    costDendro(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(DICE_TYPE.Dendro, ...versions);
     }
-    costSame(cost: number) {
-        return this.cost(cost).costElement(ELEMENT_TYPE.Physical);
+    costSame(cost: number, ...versions: Version[]) {
+        return this.cost(cost).costElement(ELEMENT_TYPE.Physical, ...versions);
     }
-    costAny(cost: number, version: Version = 'vlatest') {
-        this._anyCost.set([version, cost]);
+    costAny(cost: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => this._anyCost.set([version, cost]));
         return this;
     }
     handle(handle: ((event: SkillBuilderHandleEvent, ver: VersionWrapper) => SkillBuilderHandleRes | undefined | void) | undefined) {
@@ -383,7 +386,8 @@ export class SkillBuilder extends BaseBuilder {
             Math.floor(this._id / 1000 / (this._type == SKILL_TYPE.Vehicle ? 10 : 1)) % 10 as ElementCode;
         const element: ElementType = ELEMENT_CODE_KEY[elCode];
         this.costElement(element);
-        if (this._costElement == undefined || this._costElement == COST_TYPE.Same) this.dmgElement(element);
+        const costElement = this._costElement.get(this._curVersion, COST_TYPE.Same);
+        if (costElement == COST_TYPE.Same) this.dmgElement(element);
         const readySkillDesc = this._readySkillRound > 0 ? `（需准备${this._readySkillRound}个行动轮）；` : '';
         const description = readySkillDesc + this._description.get(this._curVersion, '')
             .replace(/(?<=〖)hro(?=〗)/g, `hro${Math.floor(this._id / 10)}`)
@@ -392,7 +396,7 @@ export class SkillBuilder extends BaseBuilder {
         const damage = this._damage.get(this._curVersion, 0);
         const cost = this._cost.get(this._curVersion, 0);
         const anyCost = this._anyCost.get(this._curVersion, 0);
-        return new GISkill(this._name, description, this._type, damage, cost, this._costElement,
+        return new GISkill(this._name, description, this._type, damage, cost, costElement,
             {
                 id: this._id,
                 ac: anyCost,

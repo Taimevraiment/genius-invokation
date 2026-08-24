@@ -1308,15 +1308,15 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     312046: () => card(627).name('昔时浮想之思').since('v7.1.0').relic().costSame(1).useCnt(0)
-        .description('【我方角色获得圣遗物以外的治疗后：】此牌累计1点「渴盼」（最多累积到2）。回合开始时，每有1层「渴盼」，治疗所附属角色1点。')
+        .description('【我方角色获得圣遗物以外的治疗后：】此牌累计1点「渴盼」（最多累积到4）。回合开始时，每有2层「渴盼」，治疗所附属角色1点。')
         .src('#')
         .handle((card, event) => {
             const { execmds, hidx, hero, source, trigger } = event;
-            if (trigger == 'phase-start' && card.useCnt > 0 && hero.isHurt) {
-                execmds.heal(card.useCnt, { hidxs: hidx });
+            if (trigger == 'phase-start' && card.useCnt > 1 && hero.isHurt) {
+                execmds.heal(Math.floor(card.useCnt / 2), { hidxs: hidx });
                 return { triggers: trigger }
             }
-            if (card.useCnt >= 2 || source.toString().startsWith('312')) return;
+            if (card.useCnt >= 4 || source.toString().startsWith('312')) return;
             return { triggers: 'all-heal', isAddTask: true, exec: () => card.addUseCnt() }
         }),
 
@@ -1738,7 +1738,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/08/80663279/f255373e88c78033d76084c036cf03b4_8225790107404417194.png'),
 
     322034: () => card(591).name('涅朵奇卡').since('v6.6.0').ally().costSame(1)
-        .description('【我方触发月感电或月绽放反应时：】我方出战角色附属【sts172】。（每回合1次）')
+        .description('【我方触发月感电、月绽放或月结晶反应时：】我方出战角色附属【sts172】。（每回合1次）')
+        .description('【我方触发月感电或月绽放反应时：】我方出战角色附属【sts172】。（每回合1次）', 'v7.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/d0c44ee71c2abe3e2d6795279958d032_4093699726964281394.png'),
 
     323001: () => card(214).name('参量质变仪').offline('v1').item().costAny(2)
@@ -3077,42 +3078,42 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     212161: () => card(574).name('天才之为构造之责任').since('v6.5.0').talent(2).costPyro(3).energy(2).perCnt(1)
-        .description('{action}；【装备有此牌的〖hro〗在场时，我方触发感电、月感电、绽放及月绽放反应时：】该次伤害+2，并且赋予我方[当前元素骰费用]最高的1张手牌【sts206】。（每回合1次）。')
+        .description('{action}；【装备有此牌的〖hro〗在场时，我方触发感电、月感电、绽放、月绽放、结晶（水）或月结晶反应时：】该次伤害+2，并且赋予我方[当前元素骰费用]最高的1张手牌【sts206】。（每回合1次）。')
+        .description('{action}；【装备有此牌的〖hro〗在场时，我方触发感电、月感电、绽放及月绽放反应时：】该次伤害+2，并且赋予我方[当前元素骰费用]最高的1张手牌【sts206】。（每回合1次）。', 'v7.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/04/09/80663279/be2e26f9fedcd9f7641d94b885688034_4719055711681842693.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             if (card.perCnt <= 0) return;
-            event.execmds.getStatus(206, { cnt: 1, mode: CMD_MODE.HighHandCard });
-            return {
-                triggers: [
-                    'ElectroCharged', 'other-ElectroCharged',
-                    'LunarElectroCharged', 'other-LunarElectroCharged',
-                    'Bloom', 'other-Bloom',
-                    'LunarBloom', 'other-LunarBloom',
-                ],
-                addDmgCdt: 2,
-                exec: () => card.minusPerCnt(),
+            const triggers: Trigger[] = [
+                'ElectroCharged', 'other-ElectroCharged',
+                'LunarElectroCharged', 'other-LunarElectroCharged',
+                'Bloom', 'other-Bloom',
+                'LunarBloom', 'other-LunarBloom',
+            ];
+            if (ver.gte('v7.1.0')) {
+                triggers.push(
+                    'elReaction-Geo:Hydro', 'other-elReaction-Geo:Hydro',
+                    'LunarCrystallize', 'other-LunarCrystallize',
+                );
             }
+            event.execmds.getStatus(206, { cnt: 1, mode: CMD_MODE.HighHandCard });
+            return { triggers, addDmgCdt: 2, exec: () => card.minusPerCnt() }
         }),
 
     212171: () => card(622).name('遍照花海，隐入群山').since('v7.1.0').talent(1).costHydro(3).perCnt(2)
-        .description('{action}；【装备有此牌的〖hro〗在场时，我方触发[月感电]后：】我方一名充能未满的角色获得1点[充能]。；【我方触发[月绽放]后：】我方出战角色下次受到的伤害-2。；【我方触发[月结晶]后：】自动免费打出手牌中[当前元素骰费用]最高的1张【crd211】。（每回合2次）')
+        .description('{action}；【装备有此牌的〖hro〗在场时，敌方受到[月感电]后：】我方一名充能未满的角色获得1点[充能]。；【敌方受到[月绽放]后：】我方出战角色下次受到的伤害-1。；【敌方受到[月结晶]后：】自动免费打出手牌中[当前元素骰费用]最高的1张【crd211】。（每回合2次）')
         .src('#')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const { trigger, execmds, heros } = event;
-            if (['LunarElectroCharged', 'other-LunarElectroCharged'].includes(trigger)) {
+            if (trigger == 'LunarElectroCharged-oppo') {
                 execmds.getEnergy(1, { hidxs: heros.allHidxs({ cdt: h => !h.isFullEnergy, limit: 1 }) });
-            } else if (['LunarBloom', 'other-LunarBloom'].includes(trigger)) {
+            } else if (trigger == 'LunarBloom-oppo') {
                 execmds.getStatus(112173);
-            } else if (['LunarCrystallize', 'other-LunarCrystallize'].includes(trigger)) {
+            } else if (trigger == 'LunarCrystallize-oppo') {
                 execmds.useCard({ cardFilter: c => c.id == 211, mode: CMD_MODE.HighHandCard });
             }
             return {
-                triggers: [
-                    'LunarElectroCharged', 'other-LunarElectroCharged',
-                    'LunarBloom', 'other-LunarBloom',
-                    'LunarCrystallize', 'other-LunarCrystallize',
-                ],
+                triggers: ['LunarElectroCharged-oppo', 'LunarBloom-oppo', 'LunarCrystallize-oppo'],
                 exec: () => card.minusPerCnt(),
             }
         }),
@@ -3679,7 +3680,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             }
         }),
 
-    216042: () => card(625).name('白芒之书').since('v7.1.0').hexenzirkel().costGeo(3)
+    216042: () => card(625).name('白芒之书').since('v7.1.0').hexenzirkel().costGeo(2)
         .description('{quick}；〔*[card]召唤【smn116041】。〕；我方召唤【smn116041】时，生成2层【sts116042】，并生成1个随机基础元素骰。')
         .src('#')
         .handle((_, event) => {
@@ -4134,7 +4135,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { status: 126022 }
         }),
 
-    226031: () => card(437).name('异兽侵蚀').since('v5.2.0').talent(1).costGeo(3)
+    226031: () => card(437).name('异兽侵蚀').since('v5.2.0').talent(1).costGeo(4).costGeo(3, 'v7.1.0')
         .description('{action}；装备有此牌的【hro】在场时，对方的【sts126031】最多可叠加到5次，并且所附属角色不在后台时也会生效。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/11/18/258999284/e61044db77d2bee655c1d045df887554_5793154205438411376.png')
         .handle((_, event) => {
@@ -4203,7 +4204,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: ['card', 'discard'], exec: () => card.minusPerCnt() }
         }),
 
-    211: () => card(211).name('月笼协奏').event().costGeo(2)
+    211: () => card().name('月笼协奏').event().costGeo(2)
         .description('召唤【smn212】。若我方场上已有【smn212】，则使其效果量+1。')
         .src('#')
         .handle((_, event) => {
@@ -4843,7 +4844,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('#'),
 
     303122: () => card().name('超载祝佑·霆击').support().costElectro(2).from(331012)
-        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方切换角色后：】对敌方出战角色造成1点[穿透伤害]。')
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方每切换一次角色后：】对敌方出战角色造成1点[穿透伤害]，然后本回合此牌造成的[穿透伤害]+1（最多3）。')
         .src('#'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)
