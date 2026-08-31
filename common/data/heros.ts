@@ -899,7 +899,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png')
                 .elemental().damage(2).cost(3).handle((event, ver) => {
-                    event.cmds.discard({ mode: CMD_MODE.HighHandCard });
+                    event.cmds.discard({ mode: CMD_MODE.HighHandCard, isRandom: true });
                     return { status: 113121, notPreview: ver.gte('v6.1.0') }
                 }),
             skill('叛逆刮弦').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]\\；[舍弃]我方所有手牌，生成【sts113123】。')
@@ -1768,7 +1768,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/f99470c649ad33a4815785212069a858.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/aa59cd0248b7a3153875b439fcf9b1d8_261920758538524973.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: 115166 })),
-            skill('月兆祝赐·檐上趱行').description('战斗开始时，生成手牌【crd115161】。；我方触发月反应或扩散反应后，使我方手牌中所有【crd115161】附着【sts202】。（每回合2次）')
+            skill('月兆祝赐·檐上趱行').description('战斗开始时，生成手牌【crd115161】。；我方触发月曜反应或扩散反应后，使我方手牌中所有【crd115161】附着【sts202】。（每回合2次）')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a7ba982/53af108201d227e415549056dfbdbb1a.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/08/11/258999284/cbf6e3936d764b028ec0dacc30779bca_7291016373047764987.png')
                 .passive().perCnt(2).handle(event => {

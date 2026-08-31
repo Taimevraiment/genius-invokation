@@ -2396,7 +2396,10 @@ export default class GeniusInvokationRoom {
                 trigger: 'card',
                 isUnshift: true,
             });
-            if (isAction) player.canAction = false;
+            if (isAction) {
+                player.canAction = false;
+                if (!cardcmds?.hasCmds('useSkill')) player.isFallAtk = false;
+            }
             await this._execTask(isCdt(pickCard, 'pickCard'));
             if (isActiveUse) {
                 this.preview.isQuickAction = !isAction;
@@ -3983,7 +3986,7 @@ export default class GeniusInvokationRoom {
                                             } else if (mode == CMD_MODE.HighHandCard || mode == CMD_MODE.LowHandCard) { // 弃置花费最高/低的手牌
                                                 const cost = hcardsSorted.at(mode == CMD_MODE.HighHandCard ? 0 : -1)!.currDiceCost;
                                                 const costCards = unselectedCards.filter(c => c.currDiceCost == cost);
-                                                const [{ entityId: ceid }] = isDiscard ? this._random(costCards) : costCards;
+                                                const [{ entityId: ceid }] = isDiscard && stsargs == 1 ? this._random(costCards) : costCards;
                                                 const [discard] = unselectedCards.splice(unselectedCards.findIndex(c => c.entityId == ceid), 1);
                                                 discards.push(clone(discard));
                                                 hcardsSorted.splice(hcardsSorted.findIndex(c => c.entityId == ceid), 1);

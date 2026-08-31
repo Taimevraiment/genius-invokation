@@ -686,7 +686,7 @@ const devOps = (cidx = 0) => {
       const [cid = -1, cnt = 1] = op.slice(0, isAttach ? -1 : undefined).split('*').map(h);
       if (cid != -1) {
         const hid = heros[(client.value.players[cpidx].hidx + Math.floor(cid)) % heros.length].id;
-        const talent = isCdt(cid < heros.length, getTalentIdByHid(hid, cid % 1 * 10 + 1))
+        const talent = isCdt(cid < heros.length, getTalentIdByHid(hid, cid % 1 * 10 + 1));
         cards.push(...new Array(cnt).fill(talent || cid));
       }
       cmds.push({ cmd: 'getCard', cnt, card: cards, isAttach });

@@ -1308,7 +1308,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     312046: () => card(627).name('昔时浮想之思').since('v7.1.0').relic().costSame(1).useCnt(0)
-        .description('【我方角色获得圣遗物以外的治疗后：】此牌累计1点「渴盼」（最多累积到4）。回合开始时，每有2层「渴盼」，治疗所附属角色1点。')
+        .description('【我方角色获得圣遗物以外的治疗后：】此牌累积1点「渴盼」（最多累积到4层）。回合开始时，每有2层「渴盼」，治疗所附属角色1点。')
         .src('#')
         .handle((card, event) => {
             const { execmds, hidx, hero, source, trigger } = event;
@@ -2485,7 +2485,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
                 cmds.getCard(1);
                 return { triggers: trigger, notPreview: ver.gte('v6.1.0') }
             }
-            cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(4, { until: true });
+            cmds.discard({ cnt: 2, mode: CMD_MODE.HighHandCard, isRandom: true }).getCard(4, { until: true });
             return { notPreview: ver.gte('v6.1.0') }
         }),
 
@@ -4517,7 +4517,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/7cb3ab81a7226897afdff50f4d567c13_7393439119842323642.png')
         .handle((_, event, ver) => {
             const { hero, combatStatus, cmds } = event;
-            cmds.discard({ mode: CMD_MODE.HighHandCard }).getDice(1, { mode: CMD_MODE.FrontHero });
+            cmds.discard({ mode: CMD_MODE.HighHandCard, isRandom: true }).getDice(1, { mode: CMD_MODE.FrontHero });
             if (ver.lt('v4.8.0') && hero.tags.includes(HERO_TAG.ConsecratedBeast)) cmds.getEnergy(1);
             return { isValid: !combatStatus.has(124053), cmds, status: 124053, notPreview: true }
         }),

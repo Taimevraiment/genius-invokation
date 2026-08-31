@@ -258,10 +258,10 @@ export default class CmdsGenerator {
     }
     discard(options: {
         cnt?: number, card?: Card | (Card | number)[] | number, isOppo?: boolean,
-        notTrigger?: boolean, cidxs?: number[], mode?: number,
+        notTrigger?: boolean, cidxs?: number[], mode?: number, isRandom?: boolean,
     }) {
-        const { cnt, card, isOppo, notTrigger: isAttach, cidxs: hidxs, mode } = options;
-        if (cnt != 0) this._add({ cmd: 'discard', cnt, card, isOppo, isAttach, hidxs, mode });
+        const { cnt, card, isOppo, notTrigger: isAttach, cidxs: hidxs, mode, isRandom } = options;
+        if (cnt != 0) this._add({ cmd: 'discard', cnt, card, isOppo, isAttach, hidxs, mode, status: isCdt(isRandom, 1) });
         return this;
     }
     stealCard(cnt: number, mode: number) {
@@ -356,6 +356,13 @@ export default class CmdsGenerator {
         const cmd = this.value.find(({ cmd }) => cmd == cmd1);
         if (!attr) return cmd;
         return cmd?.[attr];
+    }
+    repeat(cnt: number = 1) {
+        if (this.value.length > 0) {
+            const cmds = this.value[this.value.length - 1];
+            for (let i = 0; i < cnt; ++i) this._add({ ...cmds });
+        }
+        return this;
     }
     reverse() {
         this.value.reverse();

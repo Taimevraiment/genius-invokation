@@ -929,16 +929,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     112171: () => status('月之领域').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Usage)
-        .description('【敌方受到[月感电]时：】额外赋予敌方3张手牌【sts204】，我方【smn205】和[月感电]造成的伤害改为3。；【敌方受到[月绽放]时：】赋予【sts202】的手牌数改为3。；【敌方受到[月结晶]反应时：】生成的【crd211】数量改为3。')
+        .description('【敌方受到[月感电]时：】额外赋予敌方随机手牌【sts204】3次，我方[月感电]造成的伤害+2，我方【smn205】造成的伤害改为3。；【敌方受到[月绽放]时：】赋予我方随机手牌【sts202】次数改为3。；【敌方受到[月结晶]时：】生成的【crd211】数量改为3。')
         .handle((status, event) => {
             const { cmds, summons, trigger } = event;
-            if (trigger == 'LunarElectroCharged-oppo') {
-                cmds.getStatus(204, { cnt: 3, isOppo: true });
-            } else if (trigger == 'LunarBloom') cmds.getStatus(202, { cnt: 3 });
+            if (trigger == 'LunarElectroCharged-oppo') cmds.getStatus(204, { isOppo: true }).repeat(2);
+            else if (trigger == 'LunarBloom') cmds.getStatus(202, { cnt: 3 });
             else if (trigger == 'LunarCrystallize') cmds.getCard(2, { card: 211 });
             return {
                 triggers: ['LunarElectroCharged-oppo', 'LunarBloom-oppo', 'LunarCrystallize-oppo'],
-                addDmgCdt: isCdt(trigger == 'LunarElectroCharged-oppo', 3),
+                addDmgCdt: isCdt(trigger == 'LunarElectroCharged-oppo', 2),
                 exec: () => {
                     if (trigger == 'LunarElectroCharged-oppo') {
                         const smn = summons.get(205);

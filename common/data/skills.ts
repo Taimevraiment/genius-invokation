@@ -182,7 +182,7 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         .src('#')
         .vehicle().damage(1).cost(2).handle(event => {
             const { cmds, hidx, hcardsCnt } = event;
-            cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard });
+            cmds.discard({ cnt: 3, mode: CMD_MODE.HighHandCard, isRandom: true });
             cmds.consumeNightSoul(hidx);
             return { isForbidden: hcardsCnt < 3 }
         }),
