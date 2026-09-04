@@ -267,9 +267,10 @@ export class ArrayHero extends Array<Hero> {
         return hidxs;
     }
     // 获取受伤最少的角色的hidx(最多一个number的数组)
-    getMinHurtHidxs() {
+    getMinHurtHidxs(options: { isBack?: boolean, cdt?: (h: Hero) => boolean } = {}) {
         if (this.frontHidx == -1) return [];
-        const minHurt = Math.min(...this.filter(h => h.hp > 0).map(h => h.hurtHp));
+        const { isBack = false, cdt = () => true } = options;
+        const minHurt = Math.min(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront) && cdt(h)).map(h => h.hurtHp));
         const hidxs: number[] = [];
         for (let i = 0; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;
@@ -281,9 +282,10 @@ export class ArrayHero extends Array<Hero> {
         return hidxs;
     }
     // 获取生命值最低角色的hidx(只有一个number的数组)
-    getMinHpHidxs() {
+    getMinHpHidxs(options: { isBack?: boolean, cdt?: (h: Hero) => boolean } = {}) {
         if (this.frontHidx == -1) return [];
-        const minHp = Math.min(...this.filter(h => h.hp > 0).map(h => h.hp));
+        const { isBack = false, cdt = () => true } = options;
+        const minHp = Math.min(...this.filter(h => h.hp > 0 && (!isBack || !h.isFront) && cdt(h)).map(h => h.hp));
         const hidxs: number[] = [];
         for (let i = 0; i < this.length; ++i) {
             const hidx = (i + this.frontHidx) % this.length;

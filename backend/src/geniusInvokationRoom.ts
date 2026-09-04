@@ -3073,7 +3073,7 @@ export default class GeniusInvokationRoom {
                         this._updateStatus(pidx, [], heros[hidx].heroStatus, { hidx });
                         if (trigger != 'reset') this._writeLog(`[${name}](${pidx})[${hname}][${skill.name}]发动`, isPassiveHidden || skillres.notLog ? 'system' : 'info');
                     }
-                    if (skillres.isNotAddTask) {
+                    if (skillres.isNotAddTask || isPassiveHidden) {
                         const isCancel = execute();
                         if (isCancel) break;
                         this._doCmds(pidx, skillres.cmds, { source: skill.id, trigger, skill });

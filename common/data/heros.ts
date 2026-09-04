@@ -677,10 +677,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
     1217: () => hero(620).name('哥伦比娅').since('v7.1.0').nodkrai().hydro().catalyst()
         .src('#')
         .avatar('#AvatarIcon_Columbina')
-        .normalSkill(skill => skill('月露泼降').description('；如果我方手牌中存在附着有【sts202】的卡牌，则将随机1张附着有【sts202】的手牌置于牌组顶，然后再造成1点[草元素伤害]。（每回合1次）')
+        .normalSkill(skill => skill('月露泼降').description('；本局游戏中，敌方累计受到3次月曜反应后，如果我方手牌中存在附着有【sts202】的卡牌，则将随机1张附着有【sts202】的手牌置于牌组顶，然后再造成1点[草元素伤害]。（每回合1次）')
             .perCnt(1).handle(event => {
-                const { skill, hcards, cmds, random } = event;
+                const { skill, hero: { skills: [, , , , { variables: { useCnt } }] }, hcards, cmds, random } = event;
                 cmds.attack();
+                if (useCnt < 3) return;
                 const cards = hcards.filter(c => c.hasAttachment(202));
                 if (skill.perCnt <= 0 || cards.length == 0) return;
                 cmds.putCard({ card: random(cards), isOnPileTop: true }).attack(1, DAMAGE_TYPE.Dendro);
@@ -714,7 +715,8 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                         triggers: ['LunarElectroCharged-oppo', 'LunarBloom-oppo', 'LunarCrystallize-oppo'],
                         exec: () => skill.minusPerCnt(),
                     }
-                })
+                }),
+            skill().passive(true).handle(() => ({ triggers: 'get-elReaction-Lunar-oppo' }))
         ),
 
     1301: () => hero(17).name('迪卢克').offline('v1').mondstadt().pyro().claymore()
@@ -976,7 +978,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 const { restDmg, hero, talent } = event;
                 const sts122 = hero.heroStatus.get(122);
                 if (restDmg <= 0 || !sts122 || !talent) return;
-                return { triggers: 'reduce-dmg', isNotAddTask: true, restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
+                return { triggers: 'reduce-dmg', restDmg: restDmg - 1, exec: () => sts122.minusUseCnt() }
             })
         ),
 

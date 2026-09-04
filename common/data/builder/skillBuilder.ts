@@ -495,6 +495,9 @@ export class NormalSkillBuilder extends BaseBuilder {
         const isCatalyst = this._weaponType == WEAPON_TYPE.Catalyst;
         const dmgElement = isCatalyst ? this._costElement : ELEMENT_TYPE.Physical;
         const description = this._description.get(this._curVersion, '');
+        for (const [key, value] of Object.entries(this._variables)) {
+            this._builder.variables(key, value);
+        }
         return this._builder
             .description(`造成{dmg}点[${ELEMENT_NAME[dmgElement]}伤害]${description.startsWith('，') ? '' : '。'}${description}`)
             .src(this._src[WEAPON_TYPE_CODE[this._weaponType]], this._src2[WEAPON_TYPE_CODE[this._weaponType]])

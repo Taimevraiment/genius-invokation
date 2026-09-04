@@ -80,13 +80,15 @@ const barrierWeapon = (shareId: number, mark: string) => {
 }
 
 const maxHpWeapon = (shareId: number) => {
-    return card(shareId).weapon().costSame(2)
-        .description('【所附属角色生命值至少为11时：】造成的伤害+2。；【入场时：】所附属角色获得1点最大生命值。')
-        .handle((_, event) => {
+    return card(shareId).weapon().costSame(2).perCnt(1).perCnt(0, 'v7.1.0')
+        .description('【所附属角色生命值至少为11时：】造成的伤害+2。（每回合一次）；【入场时：】所附属角色获得1点最大生命值。')
+        .description('【所附属角色生命值至少为11时：】造成的伤害+2。；【入场时：】所附属角色获得1点最大生命值。', 'v7.1.0')
+        .handle((card, event, ver) => {
             const { hero, skill, cmds } = event;
             cmds.addMaxHp(1, hero.hidx);
             if (!skill?.isHeroSkill || hero.hp < 11) return;
-            return { triggers: 'dmg', addDmgCdt: 2 }
+            if (ver.gte('v7.1.0') && card.perCnt <= 0) return;
+            return { triggers: 'dmg', addDmgCdt: 2, exec: () => ver.gte('v7.1.0') && card.minusPerCnt() }
         });
 }
 
@@ -3982,12 +3984,17 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     222081: () => card(613).name('诡谲恶浪').since('v7.0.0').talent().costHydro(1).perCnt(3)
-        .description('{quick。}；【hro】或【smn122082】造成伤害后，治疗我方受伤最多的魔物1点。（每回合3次）')
+        .description('{quick。}；【hro】或【smn122082】造成伤害后，治疗我方生命值最低的魔物1点。（每回合3次）')
+        .description('{quick。}；【hro】或【smn122082】造成伤害后，治疗我方受伤最多的魔物1点。（每回合3次）', 'v7.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/06e9bc1e55b9a7d38dd03bd457723e1b_6340162322450330111.png')
-        .handle((card, event) => {
+        .handle((card, event, ver) => {
             const { source, execmds, heros } = event;
             if (card.perCnt <= 0 || source != getHidById(card.id) && source != 122082) return;
-            execmds.heal(1, { hidxs: heros.getMaxHurtHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) }) });
+            execmds.heal(1, {
+                hidxs: ver.lt('v7.1.0') ?
+                    heros.getMaxHurtHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) }) :
+                    heros.getMinHpHidxs({ cdt: h => h.tags.includes(HERO_TAG.Monster) })
+            });
             return { triggers: 'dmg', exec: () => card.minusPerCnt() }
         }),
 
