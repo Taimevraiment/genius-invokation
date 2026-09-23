@@ -675,8 +675,8 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1217: () => hero(620).name('哥伦比娅').since('v7.1.0').nodkrai().hydro().catalyst()
-        .src('#')
-        .avatar('#AvatarIcon_Columbina')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/4efc04e0d956ce3dc94ea9d1b5cd2a1f.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31694/5b79a7f688ef8cba6e67d099886a6e61.png')
         .normalSkill(skill => skill('月露泼降').description('；本局游戏中，敌方累计受到3次月曜反应后，如果我方手牌中存在附着有【sts202】的卡牌，则将随机1张附着有【sts202】的手牌置于牌组顶，然后再造成1点[草元素伤害]。（每回合1次）')
             .perCnt(1).handle(event => {
                 const { skill, hero: { skills: [, , , , { variables: { useCnt } }] }, hcards, cmds, random } = event;
@@ -689,16 +689,16 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             }))
         .skills(
             skill('万古潮汐').description('{dealDmg}，生成【sts112172】。')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dce5/771809f16437a2c4960f564f0f199057.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/ffa65905d494703101bcd1c741f5f74b_4792537100864195414.png')
                 .elemental().damage(1).cost(3).handle(() => ({ status: 112172 })),
             skill('她的乡愁').description('{dealDmg}，生成【sts112171】。')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31695/a02527df30931a59aeca6786d5359025.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/b4fac3acc97d574a2f7e7fbd29bbcb0a_34821408158787436.png')
                 .burst(3).damage(3).cost(3).handle(() => ({ status: 112171 })),
             skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶（水）反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；敌方受到[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31695/10343c2bc7dbdf8e6e13e93161133bea.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/94df63297b80db475d5943461f3a9dd5_4188762436618572044.png')
                 .passive().perCnt(1).handle(event => {
                     const { skill, trigger, playerInfo, cmds } = event;
                     if (trigger == 'game-start') {
@@ -1987,21 +1987,21 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1612: () => hero(621).name('叶洛亚').since('v7.1.0').nodkrai().geo().polearm()
-        .src('#')
-        .avatar('#AvatarIcon_Illuga')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/972f565dbba9de910e00adf6baa9096a.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31694/bfc7b6b56e4623431a1da7ea77546cd6.png')
         .normalSkill('守誓枪术')
         .skills(
             skill('衔莺破晓').description('{dealDmg}，生成手牌【crd116121】。')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6966dce5/3972d09a057110aad73f0cbc620043f1.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/91135acdc5d8a24121211fc434225ab1_8258851416406466058.png')
                 .elemental().damage(3).cost(3).handle(({ cmds }) => cmds.getCard(1, { card: 116121 }).res),
             skill('鉴照无影').description('{dealDmg}，生成可用次数为3的【sts116122】。')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31695/5ff94e3e0cabccb0f57ef2da9edced9d.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/b695558c72b1a96b047816a15127e8f8_2521393319278714752.png')
                 .burst(2).damage(3).cost(3).handle(() => ({ status: [[116122, 3]] })),
             skill('月兆祝赐·凌冬不凋').description('名称不存在于本局最初牌组的牌加入我方手牌时，获得1层【sts202】（每回合1次）')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31695/b0e856fd9a34c6204f92f980463d1796.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/2b39ece80bce66725930455a3642f6a3_2135239171105743379.png')
                 .passive().perCnt(1).handle(event => {
                     const { skill, hcard, cmds, playerInfo: { initCardIds } } = event;
                     if (skill.perCnt <= 0 || !hcard || initCardIds.includes(hcard.id) || hcard.currDiceCost == 0) return;

@@ -1311,7 +1311,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     312046: () => card(627).name('昔时浮想之思').since('v7.1.0').relic().costSame(1).useCnt(0)
         .description('【我方角色获得圣遗物以外的治疗后：】此牌累积1点「渴盼」（最多累积到4层）。回合开始时，每有2层「渴盼」，治疗所附属角色1点。')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/6bc5da5edafa106a62eef8f76f8a35a8.png')
         .handle((card, event) => {
             const { execmds, hidx, hero, source, trigger } = event;
             if (trigger == 'phase-start' && card.useCnt > 1 && hero.isHurt) {
@@ -1880,7 +1880,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     330014: () => card(629).name('三月重临').since('v7.1.0').legend().costSame(3)
         .description('[舍弃]3张[当前元素骰费用]最高的手牌。；下个回合开始时，治疗我方场上所有角色3点。；下下个回合开始时，将所[舍弃]的3张牌加入手牌，并赋予这些牌3层【sts202】。')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/a752159b5296d9eb6332ddcc99cbf451.png')
         .handle((_, event) => {
             const { cmds, hcards } = event;
             cmds.getStatus(300011)
@@ -1914,7 +1914,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/27/258999284/a8a41a1bd3afb46853c6c9731760b69e_8698128922575970142.png'),
 
     331012: () => elTransfiguration(628, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Pyro, '超载', 12).since('v7.1.0')
-        .src('#'),
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/1c5aa6e3c96e88299a45f9fbff127b76.png'),
 
     331101: () => elCard(223, ELEMENT_TYPE.Cryo)
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/3c2290805dd2554703ca4c5be3ae6d8a_7656625119620764962.png'),
@@ -3103,7 +3103,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     212171: () => card(622).name('遍照花海，隐入群山').since('v7.1.0').talent(1).costHydro(3).perCnt(2)
         .description('{action}；【装备有此牌的〖hro〗在场时，敌方受到[月感电]后：】我方一名充能未满的角色获得1点[充能]。；【敌方受到[月绽放]后：】我方出战角色下次受到的伤害-1。；【敌方受到[月结晶]后：】自动免费打出手牌中[当前元素骰费用]最高的1张【crd211】。（每回合2次）')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/c001b6210c2fa2eb336617d2dffbce3b.png')
         .handle((card, event) => {
             if (card.perCnt <= 0) return;
             const { trigger, execmds, heros } = event;
@@ -3304,7 +3304,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     214022: () => card(623).name('苍雷奔涌').since('v7.1.0').hexenzirkel(-2).costElectro(2)
         .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；我方【hro】如果未附属【sts114021】，则自身附属持续回合为1的【sts114021】。；装备有此牌的【hro】附属【sts114021】期间，我方【sts114021】造成的伤害+1。')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/6029acd1ccf60874ed5cf08a441b4ba2.png')
         .handle((_, event) => {
             const { cmds, hero: { heroStatus }, source } = event;
             if (!heroStatus.has(114021)) cmds.getStatus([[114021, 1]]);
@@ -3481,7 +3481,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     215012: () => card(624).name('七循之理').since('v7.1.0').hexenzirkel().costAnemo(3)
         .description('{quick}；〔*[card]召唤【smn115011】。〕；【smn115011】在场时，我方附属了「天赋」的角色造成的伤害+1。')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/2c474ea01ab0807be4c567164a62a64f.png')
         .handle((_, event) => {
             const { cmds, summons, source, heros } = event;
             cmds.getSummon(115011);
@@ -3684,7 +3684,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     216042: () => card(625).name('白芒之书').since('v7.1.0').hexenzirkel().costGeo(2)
         .description('{quick}；〔*[card]召唤【smn116041】。〕；我方召唤【smn116041】时，生成2层【sts116042】，并生成1个随机基础元素骰。')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/c7bcdb7e18586f767f7d3d454ba581c8.png')
         .handle((_, event) => {
             const { cmds, execmds, sourceSummon } = event;
             cmds.getSummon(116041);
@@ -3771,7 +3771,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     216121: () => card(626).name('噬枝之麋').since('v7.1.0').talent(-2).costGeo(1).notResetPerCnt()
         .description('[战斗行动]：我方出战角色为【hro】时，装备此牌。；〔*[card]生成1层【sts116122】。〕；【装备有此牌的〖hro〗在场时：】每消耗2层【sts116122】，生成1张手牌【crd116121】。〔[slot]（当前已消耗{pct}层）〕')
-        .src('#')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab3168d/8c0ec8c0d16f2e0a842de6c7765a9fe1.png')
         .handle((card, event) => {
             const { cmds, execmds, source } = event;
             cmds.getStatus(116122);
@@ -4213,7 +4213,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     211: () => card().name('月笼协奏').event().costGeo(2)
         .description('召唤【smn212】。若我方场上已有【smn212】，则使其效果量+1。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/608c8d156b641a5e7de9bdd82659af05_4109359333932692198.png')
         .handle((_, event) => {
             const smn = event.summons.get(212);
             return { summon: 212, exec: () => smn && ++smn.damage }
@@ -4450,9 +4450,9 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('#')
         .handle(() => ({ attachEl: ELEMENT_TYPE.Geo })),
 
-    116121: () => card().name('阿咚').event(true).costSame(2).canSelectHeroOppo(1)
+    116121: () => card().name('阿咚').event(true).costSame(2).canSelectHeroOppo(1).from(216121)
         .description('[战斗行动]：选一个敌方角色，对其造成1点[岩元素伤害]。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/bd0a2b9ad6811f2a1ee38fc63f432225_7561639088179514780.png')
         .handle((_, event) => {
             const { selectHeros, cmds } = event;
             cmds.attack(1, DAMAGE_TYPE.Geo, { hidxs: selectHeros })
@@ -4848,11 +4848,11 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
 
     303121: () => card().name('超载祝佑·追燃').support().costPyro(1).from(331012)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方累计切换角色3次后：】下次我方行动前，我方抓1张牌，然后自动免费打出费用最高的1张手牌。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/22/258999284/92f3dd69833b003c9ab22dd1283a24da_5268394314124498645.png'),
 
     303122: () => card().name('超载祝佑·霆击').support().costElectro(2).from(331012)
         .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方每切换一次角色后：】对敌方出战角色造成1点[穿透伤害]，然后本回合此牌造成的[穿透伤害]+1（最多3）。')
-        .src('#'),
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/22/258999284/93291c4bf7feca99a9fa704d510a0e6f_24521591456454082.png'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)
         .description('治疗我方出战角色1点，生成1个随机基础元素骰。（每个角色每回合最多受到1次来自本效果的治疗。）')

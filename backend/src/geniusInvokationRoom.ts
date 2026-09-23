@@ -102,10 +102,10 @@ export default class GeniusInvokationRoom {
     private wait = async (cdt: () => any, options: { delay?: number, freq?: number, maxtime?: number, isImmediate?: boolean, errCallback?: () => void } = {}) => {
         if (this.env == 'test' || !this.preview.isExec && this.id > 0) return;
         options.errCallback ??= () => {
-            this.emitError(`发生错误`);
-            this.errorLog.push(`等待超时: ${cdt.toString()}`);
+            this.emitError(`系统超时`);
+            this.errorLog.push(`系统超时: ${cdt.toString()}`);
         };
-        await wait(() => this.isStart && cdt(), options);
+        await wait(() => !this.isStart || this.winner != -1 || cdt(), options);
     }
     testDmgFn: (() => void)[] = []; // 伤害测试用
     testTaskFn: (() => void)[] = []; // 任务测试用
@@ -212,8 +212,8 @@ export default class GeniusInvokationRoom {
      * @param rt 种子
      * @returns this
      */
-    private _setSeed(rt: string | number) {
-        this.seed = rt.toString();
+    _setSeed(rt: string | number) {
+        this.seed = 'f' + rt.toString();
         this._randomNumber = +rt;
         return this;
     }
@@ -676,7 +676,8 @@ export default class GeniusInvokationRoom {
      * @param seed 指定种子
      */
     private _start(pidx: number, flag: string, seed?: string) {
-        this.seed = seed || Math.floor(Math.random() * 1e10).toString();
+        if (this.seed[0] != 'f') this.seed = seed || Math.floor(Math.random() * 1e10).toString();
+        else this.seed = this.seed.slice(1);
         this._randomNumber = +this.seed;
         this.recordData.seed = this.seed;
         this.recordData.shareCode = this.shareCodes;
@@ -755,7 +756,12 @@ export default class GeniusInvokationRoom {
     stop() {
         this.recordData.actionLog = [];
         this.taskQueue.init();
-        if (!this.isDev) this.exportLog({ folderName: 'today', isSendMsg: false });
+        if (!this.isDev) {
+            const d = new Date();
+            const format = (n: number) => n.toString().padStart(2, '0');
+            const folderName = `${d.getFullYear()}-${format(d.getMonth() + 1)}-${format(d.getDate())}`;
+            this.exportLog({ folderName, isSendMsg: false });
+        }
     }
     /**
      * 获取行动
@@ -2478,8 +2484,8 @@ export default class GeniusInvokationRoom {
         this.players.forEach(p => p.canAction = canAction[p.pidx]);
         const currPlayer = this.players[this.currentPlayerIdx];
         if (!currPlayer) return;
-        const hasReadyskill = !currPlayer.heros[currPlayer.hidx].heroStatus.has(STATUS_TYPE.NonAction) &&
-            currPlayer.heros[currPlayer.hidx].heroStatus.has(STATUS_TYPE.ReadySkill);
+        const hasReadyskill = !currPlayer.heros[currPlayer.hidx]?.heroStatus.has(STATUS_TYPE.NonAction) &&
+            currPlayer.heros[currPlayer.hidx]?.heroStatus.has(STATUS_TYPE.ReadySkill);
         if (!isDie) await this._doActionStart(this.currentPlayerIdx);
         if (!hasReadyskill) {
             currPlayer.canAction = !isDie;
@@ -2603,7 +2609,7 @@ export default class GeniusInvokationRoom {
                 await this._execTask();
             }
             await this.wait(() => this.needWait, { maxtime: 6e6 });
-            if (this.winner != -1) return;
+            if (this.winner != -1) return this.stop();
             // 回合结束摸牌
             const getCardCmds: Cmds[] = [{ cmd: 'getCard', cnt: 2 }];
             this._doCmds(this.startIdx, getCardCmds);
@@ -2668,6 +2674,7 @@ export default class GeniusInvokationRoom {
         this._doActionAfter(pidx);
         await this._execTask();
         await this.wait(() => this.needWait);
+        if (this.winner != -1) return this.stop();
         const isActionEnd = this.players.every(p => p.phase == PHASE.ACTION_END);
         if (!isActionEnd) await this._changeTurn(pidx, 'endPhase');
         else await this.emit(flag, pidx, { tip: '回合结束阶段' });
@@ -4572,9 +4579,9 @@ export default class GeniusInvokationRoom {
                             let hcardsSorted = clone(handCards)
                                 .filter(c => (cardFilter?.(c) ?? true))
                                 .sort((a, b) => (b.currDiceCost - a.currDiceCost) * (mode == CMD_MODE.HighHandCard ? 1 : -1) || (b.entityId - a.entityId));
-                            const cost = hcardsSorted[0].currDiceCost;
+                            const cost = hcardsSorted[0]?.currDiceCost;
                             const costCards = hcardsSorted.filter(c => c.currDiceCost == cost);
-                            cardIdx = this._random(costCards)[0].cidx ?? -1;
+                            cardIdx = this._random(costCards)[0]?.cidx ?? -1;
                         }
                         const cancelLog = () => this._writeLog(`[${cplayer.name}](${cpidx})[${handCards[cardIdx]?.name}](#${cardIdx})未打出成功`, 'system')
                         if (cardIdx == -1) return cancelLog();

@@ -182,7 +182,10 @@
                 :class="{ 'el-tip-anime-right-icon': elTips[hgi][hidx][0] != '' }">
               <div class="el-tip" :class="{ 'el-tip-anime': elTips[hgi][hidx][0] != '' }"
                 :style="{ color: REACTION_COLOR[elTips[hgi][hidx][0]] }">
-                <StrokedText strokeColor="white">{{ elTips[hgi][hidx][0] }}</StrokedText>
+                <StrokedText strokeColor="white"
+                  :color="`${ELEMENT_COLOR[elTips[hgi][hidx][1]]},${ELEMENT_COLOR[elTips[hgi][hidx][2]]}`">
+                  {{ elTips[hgi][hidx][0] }}
+                </StrokedText>
               </div>
             </template>
             <template v-if="hero.hp > 0 && willAttachs[hgi][hidx]?.length == 0">

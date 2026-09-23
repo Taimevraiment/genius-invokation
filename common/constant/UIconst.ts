@@ -75,13 +75,13 @@ export const ELEMENT_URL = {
 
 export const DICE_COLOR = {
     [DICE_TYPE.Any]: '#aaaaaa',
-    [DICE_TYPE.Hydro]: '#0097e1',
-    [DICE_TYPE.Pyro]: '#ea4a4a',
-    [DICE_TYPE.Electro]: '#b780fa',
-    [DICE_TYPE.Cryo]: '#87f5f5',
-    [DICE_TYPE.Anemo]: '#36cfc9',
-    [DICE_TYPE.Geo]: '#ebc400',
-    [DICE_TYPE.Dendro]: '#72c269',
+    [DICE_TYPE.Hydro]: ELEMENT_COLOR[ELEMENT_TYPE.Hydro],
+    [DICE_TYPE.Pyro]: ELEMENT_COLOR[ELEMENT_TYPE.Pyro],
+    [DICE_TYPE.Electro]: ELEMENT_COLOR[ELEMENT_TYPE.Electro],
+    [DICE_TYPE.Cryo]: ELEMENT_COLOR[ELEMENT_TYPE.Cryo],
+    [DICE_TYPE.Anemo]: ELEMENT_COLOR[ELEMENT_TYPE.Anemo],
+    [DICE_TYPE.Geo]: ELEMENT_COLOR[ELEMENT_TYPE.Geo],
+    [DICE_TYPE.Dendro]: ELEMENT_COLOR[ELEMENT_TYPE.Dendro],
     [DICE_TYPE.Same]: '#fcffeb',
 } as const;
 
@@ -110,7 +110,8 @@ export const CARD_SUBTYPE_NAME = {
 } as const;
 
 // old: https://gi-tcg-assets.guyutongxue.site/assets/{name}.webp
-export const GUYU_PREIFIX = 'https://static-data.7shengzhaohuan.online/api/v4/image/';
+export const GUYU_PREIFIX = 'https://static-data.ame.piovium.org/api/v4/image/';
+// export const GUYU_PREIFIX = 'https://static-data.7shengzhaohuan.online/api/v4/image/';
 // export const GUYU_PREIFIX = 'https://static-data.piovium.org/api/v4/image/';
 
 export const CARD_SUBTYPE_URL = {

@@ -3,7 +3,7 @@
         <div class="stroked-text" :style="strokeTextStyle">
             <slot></slot>
         </div>
-        <div class="raw-text">
+        <div class="raw-text" :style="textStyle">
             <slot></slot>
         </div>
     </div>
@@ -14,11 +14,20 @@ import { computed } from 'vue';
 
 const props = defineProps<{
     width?: number | string,
+    color?: string,
     strokeColor?: string,
 }>();
 const width = computed(() => isNaN(Number(props.width)) ? 2 : Number(props.width));
-const strokeColor = computed(() => props.strokeColor ?? 'black');
-const strokeTextStyle = computed(() => ({ '-webkit-text-stroke': `${width.value}px ${strokeColor.value}` }));
+const textStyle = computed(() => {
+    const color = props.color || 'inherit';
+    if (!color.includes(',')) return { color: color }
+    return {
+        backgroundImage: `linear-gradient(${color})`,
+        backgroundClip: 'text',
+        color: 'transparent',
+    }
+});
+const strokeTextStyle = computed(() => ({ '-webkit-text-stroke': `${width.value}px ${props.strokeColor || 'black'}` }));
 </script>
 
 <style scoped>

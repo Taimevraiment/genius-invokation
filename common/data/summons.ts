@@ -46,7 +46,7 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
 
     212: () => summon('月笼').useCnt(2).damage(1).geo()
         .description('{defaultAtk。}；【此牌效果量累计到3时：】立刻造成3点[岩元素伤害]，然后将此牌的效果量改为1。')
-        .src('#')
+        .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/608c8d156b641a5e7de9bdd82659af05_4109359333932692198.png')
         .handle((summon, event) => {
             const { trigger, hcard } = event;
             if (trigger == 'phase-end') return { triggers: trigger, exec: cmds => summon.phaseEndAtk(cmds) }

@@ -571,7 +571,7 @@ const devOps = (cidx = 0) => {
       op = op.slice(0, index).trim();
     }
     if (op.startsWith('seed')) { // 设置种子
-      seed = op.slice(4).trim();
+      seed = 'f' + op.slice(4).trim();
       flag.add('seed');
     } else if (op.startsWith('log')) { // 导出日志
       flag.add('log');

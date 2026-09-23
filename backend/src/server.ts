@@ -40,7 +40,10 @@ const io = new Server(httpServer, {
     cors: { origin, methods: ['GET', 'POST'] }
 });
 
-process.on('uncaughtException', err => console.error('uncaughtErr:', err));
+process.on('uncaughtException', err => {
+    if (err.message == 'read ECONNRESET') return;
+    console.error('uncaughtErr:', err);
+});
 
 process.on('exit', code => console.error('exit:', code));
 
@@ -59,15 +62,9 @@ const todayPlayersHistory = new Map<number, {
 }>(); // 当日玩家登录信息
 let todayGames = 0; // 今日开局数
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const todayLogsPath = `${__dirname}/../../../logs/today`;
-const yestodayLogsPath = `${__dirname}/../../../logs/yestoday`;
 cron.schedule('0 0 5 * * *', () => {
     todayPlayersHistory.clear();
     todayGames = 0;
-    try {
-        fs.rmSync(yestodayLogsPath, { recursive: true, force: true });
-        fs.renameSync(todayLogsPath, yestodayLogsPath);
-    } catch { }
 });
 
 // 生成id
@@ -420,7 +417,7 @@ app.get('/detail', async (req, res) => {
     const pathPrefix = `${__dirname}/../../../logs/`;
     try {
         const logsPath = await fs.promises.readdir(pathPrefix);
-        const pathReg = /today$|\d{4}-\d{2}-\d{2}$/;
+        const pathReg = /\d{4}-\d{2}-\d{2}$/;
         for (const logPath of logsPath.map(p => pathPrefix + p)) {
             if (!pathReg.test(logPath)) continue;
             const names = await fs.promises.readdir(logPath);
