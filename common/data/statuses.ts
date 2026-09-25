@@ -222,6 +222,17 @@ const nightSoul = (options: { isAccumate?: boolean, roundCnt?: number } = {}) =>
         });
 }
 
+const elementAtkUp = (el: PureElementType) => {
+    return status(`${ELEMENT_NAME[el]}伤害增加`).combatStatus().type(STATUS_TYPE.AddDamage)
+        .icon(STATUS_ICON.ElementAtkUp).useCnt(1).maxCnt(MAX_USE_COUNT)
+        .description(`我方下一次造成的[${ELEMENT_NAME[el]}伤害]增加。（扩散伤害除外）（可叠加，无上限）`)
+        .handle(status => ({
+            triggers: `${ELEMENT_TYPE_KEY[el]}-dmg`,
+            addDmgCdt: status.useCnt,
+            exec: () => status.dispose(),
+        }));
+}
+
 const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> = {
 
     106: () => status('冻结').heroStatus().roundCnt(1).icon('#')
@@ -310,6 +321,14 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             exec: () => status.minusUseCnt(),
         })),
 
+    173: () => enchantStatus(ELEMENT_TYPE.Cryo).name('元素附魔：冰').icon('#').roundCnt(2),
+
+    174: () => enchantStatus(ELEMENT_TYPE.Hydro).name('元素附魔：水').icon('#').roundCnt(2),
+
+    175: () => enchantStatus(ELEMENT_TYPE.Pyro).name('元素附魔：火').icon('#').roundCnt(2),
+
+    176: () => enchantStatus(ELEMENT_TYPE.Electro).name('元素附魔：雷').icon('#').roundCnt(2),
+
     201: () => status('费用增加').attachment().icon(STATUS_ICON.DebuffCountered03)
         .useCnt(1).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Usage)
         .description('每层使打出此卡牌多花费1个元素骰。（可叠加，没有上限）')
@@ -352,6 +371,16 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     210: (cnt: number = 1) => status('抗性').heroStatus().useCnt(cnt).maxCnt(MAX_USE_COUNT).type(STATUS_TYPE.Barrier)
         .description('【所附属角色受到伤害时：】抵消1点伤害。（可叠加，没有上限）'),
+
+    213: () => elementAtkUp(ELEMENT_TYPE.Cryo).icon('#'),
+
+    214: () => elementAtkUp(ELEMENT_TYPE.Hydro).icon('#'),
+
+    215: () => elementAtkUp(ELEMENT_TYPE.Pyro).icon('#'),
+
+    216: () => elementAtkUp(ELEMENT_TYPE.Electro).icon('#'),
+
+    217: () => elementAtkUp(ELEMENT_TYPE.Anemo).icon('#'),
 
     111012: () => status('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
@@ -929,10 +958,10 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     112171: () => status('月之领域').combatStatus().icon('ski,2').useCnt(3).type(STATUS_TYPE.Usage)
-        .description('【敌方受到[月感电]时：】额外赋予敌方随机手牌【sts204】3次，我方[月感电]造成的伤害+2，我方【smn205】造成的伤害改为3。；【敌方受到[月绽放]时：】赋予我方随机手牌【sts202】次数改为3。；【敌方受到[月结晶]时：】生成的【crd211】数量改为3。')
+        .description('【敌方受到[月感电]时：】额外赋予敌方随机3张手牌【sts204】，我方[月感电]造成的伤害+2，我方【smn205】造成的伤害改为3。；【敌方受到[月绽放]时：】赋予我方随机手牌【sts202】次数改为3。；【敌方受到[月结晶]时：】生成的【crd211】数量改为3。')
         .handle((status, event) => {
             const { cmds, summons, trigger } = event;
-            if (trigger == 'LunarElectroCharged-oppo') cmds.getStatus(204, { isOppo: true }).repeat(2);
+            if (trigger == 'LunarElectroCharged-oppo') cmds.getStatus(204, { cnt: 3, isOppo: true });
             else if (trigger == 'LunarBloom') cmds.getStatus(202, { cnt: 3 });
             else if (trigger == 'LunarCrystallize') cmds.getCard(2, { card: 211 });
             return {
@@ -1279,6 +1308,21 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             if (trigger == 'after-skilltype1') cmds.attack(1, DAMAGE_TYPE.Pyro);
             else if (trigger == 'skilltype2') cmds.getStatus(169);
             return { triggers: ['after-skilltype1', 'skilltype2'], exec: () => status.minusUseCnt() }
+        }),
+
+    113176: () => status('升华赞歌（生效中）').combatStatus().useCnt(3).roundCnt(1).type(STATUS_TYPE.AddDamage).icon(STATUS_ICON.Special)
+        .description('本回合敌方受到的[火元素伤害]+1。；[useCnt]')
+        .handle(status => ({
+            triggers: 'Pyro-getdmg-oppo',
+            addDmgCdt: 1,
+            exec: () => status.minusUseCnt(),
+        })),
+
+    113177: () => status('升华赞歌（生效中）').combatStatus().useCnt(1).type(STATUS_TYPE.AddDamage).icon(STATUS_ICON.Special)
+        .description('我方【hro】为出战角色时，我方下次造成的蒸发与融化伤害+3。；[useCnt]')
+        .handle((status, event) => {
+            if (!event.heros.get(status.id)?.isFront) return;
+            return { triggers: ['Melt', 'Vaporize'], addDmgCdt: 3, exec: () => status.minusUseCnt() }
         }),
 
     114021: (cnt: number = 2) => status('雷狼').heroStatus().icon('ski,2').roundCnt(cnt).type(STATUS_TYPE.Attack)
@@ -1786,6 +1830,62 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             cmds.attack(1, element).heal(2, { target: CMD_MODE.MaxHurt });
             return { triggers: 'phase-end', exec: () => status.minusUseCnt() }
         }),
+
+    115171: () => status('狂飙突进').heroStatus().roundCnt(2).type(STATUS_TYPE.Attack).icon('#')
+        .description('【所附属角色使用「普通攻击」后：】造成1点[风元素伤害]。；[roundCnt]；【所附属角色累计使用「普通攻击」2次后：】生成【crd115172】。')
+        .handle((status, event) => ({
+            triggers: 'after-skilltype1',
+            damage: 1,
+            element: DAMAGE_TYPE.Anemo,
+            exec: () => {
+                if ((status.minusUseCnt(1, true) + 1) % 2 == 0) {
+                    event.cmds.getCard(1, { card: 115172 });
+                }
+            }
+        })),
+
+    115175: () => status('四风将起（生效中）').heroStatus().type(STATUS_TYPE.Usage).icon('#')
+        .description('回合开始时，移除我方2个骰子，切换至【hro】，并[准备技能]【rsk15174】。')
+        .handle((status, event) => {
+            const { cmds, hero } = event;
+            cmds.consumeDice(2).switchTo(hero.hidx).getStatus(115177);
+            return { triggers: 'phase-start', exec: () => status.dispose() }
+        }),
+
+    115176: () => status('苍噬（生效中）').heroStatus().type(STATUS_TYPE.Usage).icon('#')
+        .description('回合开始时，移除我方2个骰子，切换至【hro】，根据我方角色附属对应的元素附魔，并[准备技能]2次【rsk15175】。')
+        .handle((status, event) => {
+            const { cmds, hero, heros } = event;
+            const statuses = [115178];
+            const elements = [ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Cryo];
+            const elIdx = elements.findIndex(el => heros.some(h => h.element == el));
+            if (elIdx > -1) statuses.unshift([175, 174, 176, 173][elIdx]);
+            cmds.consumeDice(2).switchTo(hero.hidx).getStatus(statuses);
+            return { triggers: 'phase-start', exec: () => status.dispose() }
+        }),
+
+
+    115177: () => readySkillStatus('四风将起·准备中', 15174).icon('ski,1'),
+
+    115178: () => readySkillStatus('苍噬·准备中', 15175).icon('#').useCnt(2)
+        .description('本角色将在下次行动时，直接使用技能：【rsk15175】，触发2次。')
+        .handle((status, event) => {
+            const { cmds, trigger } = event;
+            if (trigger == 'useReadySkill') cmds.useSkill({ skillId: 15175 });
+            return {
+                triggers: ['switch-from', 'useReadySkill'],
+                exec: () => status.minusUseCnt(),
+            }
+        }),
+
+    115179: () => status('我即朔风（生效中）').combatStatus().icon('ski,2').type(STATUS_TYPE.Attack)
+        .description('【我方角色使用技能后：】造成2点[风元素伤害]。')
+        .handle(status => ({
+            triggers: 'after-skill',
+            damage: 2,
+            element: DAMAGE_TYPE.Anemo,
+            exec: () => status.dispose(),
+        })),
 
     116011: () => status('璇玑屏').combatStatus().useCnt(2).type(STATUS_TYPE.Barrier, STATUS_TYPE.AddDamage)
         .description('【我方出战角色受到至少为2的伤害时：】抵消1点伤害。；[useCnt]')
@@ -3953,6 +4053,19 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             minusDiceSkill: { skill: [0, 0, 2] },
             exec: () => status.minusUseCnt(),
         })),
+
+    330016: () => status('统一盟誓').combatStatus().type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).icon('#').from(330015)
+        .description('【投掷阶段：】总是投出3个[万能元素骰]。；【我方引发元素反应时：】造成的伤害+1。；【我方引发元素反应后：】治疗我方受伤最多角色1点。')
+        .handle((_, event) => {
+            const { trigger, cmds, heros } = event;
+            if (trigger == 'elReaction' && heros.hasHurt) cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+            return {
+                triggers: ['phase-dice', 'elReaction'],
+                diceEl: DICE_COST_TYPE.Omni,
+                cnt: 3,
+                addDmgCdt: 1,
+            }
+        }),
 
 };
 

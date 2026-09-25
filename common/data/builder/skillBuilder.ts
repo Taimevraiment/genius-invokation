@@ -166,7 +166,7 @@ export class GISkill extends Entity {
             }
             for (const ist of statuses) {
                 const stsres = ist.handle(ist, sevent);
-                if (ist.hasType(STATUS_TYPE.ConditionalEnchant) && stsres.attachEl && !dmgElement) {
+                if ((ist.hasType(STATUS_TYPE.ConditionalEnchant) || skill.isReadySkill) && stsres.attachEl && !dmgElement) {
                     dmgElement = stsres.attachEl;
                 }
                 if (stsres.atkOffset) atkOffset = stsres.atkOffset;
@@ -322,9 +322,8 @@ export class SkillBuilder extends BaseBuilder {
     costElement(element: ElementType, ...versions: Version[]) {
         if (versions.length == 0) versions = ['vlatest'];
         versions.forEach(version => {
-            if (this._costElement.get(version, COST_TYPE.Same) != COST_TYPE.Same) return;
-            if (element == ELEMENT_TYPE.Physical) this._costElement.set([version, COST_TYPE.Same]);
-            else this._costElement.set([version, element]);
+            if (element == ELEMENT_TYPE.Physical) this._costElement.set([version, COST_TYPE.Same], false);
+            else this._costElement.set([version, element], false);
         });
         return this;
     }

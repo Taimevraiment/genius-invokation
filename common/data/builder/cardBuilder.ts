@@ -22,7 +22,6 @@ export interface CardHandleEvent extends EntityHandleEvent {
 
 export interface CardHandleRes extends EntityHandleRes {
     canSelectHero?: boolean[],
-    cnt?: number,
     isDestroy?: boolean,
     exec?: () => boolean,
 }

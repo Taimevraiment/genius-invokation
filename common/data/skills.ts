@@ -87,6 +87,10 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             return { addDmgCdt: 1 + +!!talent, exec: () => skill.variables.addDmg = 0 }
         }),
 
+    15174: () => skill('四风将起').description('{dealDmg}。').elemental().readySkill().damage(6),
+
+    15175: () => skill('苍噬').description('{dealDmg}。').normal().readySkill().damage(2).dmgElement(DAMAGE_TYPE.Physical),
+
     16074: () => skill('长枪开相').description('{dealDmg}\\；如果本回合中我方[舍弃]或[调和]过至少1张牌，则此伤害+1。')
         .elemental().readySkill().damage(2).handle(event => {
             const { playerInfo: { discardCnt, reconcileCnt } } = event;

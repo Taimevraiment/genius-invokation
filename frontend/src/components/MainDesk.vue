@@ -109,9 +109,10 @@
               {{ Math.floor(Math.abs(supportCnt[getGroup(saidx)][siidx])) }}
             </StrokedText>
           </div>
-          <img class="support-bottom-icon" v-if="support.heal > 0" :src="getPngIcon('Element_Heal')" />
-          <StrokedText class="support-bottom-num" v-if="support.heal > 0">
-            {{ support.heal }}
+          <img class="support-bottom-icon" v-if="support.healOrDmg != 0"
+            :src="support.healOrDmg > 0 ? getPngIcon('Element_Heal') : ELEMENT_URL[support.element!]" />
+          <StrokedText class="support-bottom-num" v-if="support.healOrDmg != 0">
+            {{ Math.abs(support.healOrDmg) }}
           </StrokedText>
         </div>
       </div>

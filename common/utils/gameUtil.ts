@@ -240,7 +240,7 @@ export const supportToString = (spt: Support, prefixSpace: number = 1) => {
         + `${prefix1}useCnt: ${spt.useCnt}\n`
         + `${prefix1}perCnt: ${spt.perCnt}\n`
         + `${prefix1}type: ${spt.type}\n`
-        + `${prefix1}heal: ${spt.heal}\n`
+        + `${prefix1}heal: ${spt.healOrDmg}\n`
         + `${prefix1}variables: [${JSON.stringify(spt.variables)}]\n`
         + `${prefix}}\n`;
 }
@@ -265,7 +265,9 @@ export const heroToString = (hero: Hero, prefixSpace: number = 1) => {
         + `${prefix1}weaponSlot: ${cardToString(hero.weaponSlot, prefixSpace + 1, false)}`
         + `${prefix1}relicSlot: ${cardToString(hero.relicSlot, prefixSpace + 1, false)}`
         + `${prefix1}talentSlot: ${cardToString(hero.talentSlot, prefixSpace + 1, false)}`
+        + `${prefix1}hexenzirkelSlot: ${cardToString(hero.hexenzirkelSlot, prefixSpace + 1, false)}`
         + `${prefix1}vehicleSlot: ${cardToString(hero.vehicleSlot?.[0], prefixSpace + 1, false)}`
+        + `${prefix1}vehicleSkill: ${skillToString(hero.vehicleSlot?.[1], prefixSpace + 1)}`
         + `${prefix1}heroStatus: [\n`
         + `${hero.heroStatus.map(s => statusToString(s, prefixSpace + 2)).join('') || prefix1 + '  \n'}`
         + `${prefix1}]\n`
@@ -297,16 +299,17 @@ export const cardToString = (card: Card | null | undefined, prefixSpace: number 
         + `${prefix}}\n`;
 }
 
-export const skillToString = (skill: Skill, prefixSpace: number = 1) => {
+export const skillToString = (skill?: Skill, prefixSpace: number = 1) => {
     const prefix = '  '.repeat(prefixSpace);
     const prefix1 = '  '.repeat(prefixSpace + 1);
+    if (!skill) return `${prefix}null\n`;
     return `${prefix}{\n`
         + `${prefix1}name: ${skill.name}\n`
         + `${prefix1}id: ${skill.id}\n`
         + `${prefix1}type: ${SKILL_TYPE_NAME[skill.type]}\n`
         + `${prefix1}damage: ${skill.damage}\n`
         + `${prefix1}dmgElement: ${skill.dmgElement}\n`
-        + `${prefix1}cost: [${skill.cost.map(c => c.cnt)}]\n`
+        + `${prefix1}cost: [${skill.cost.map(c => `${c.type}:${c.cnt}`)}]\n`
         + `${prefix1}attachElement: ${skill.attachElement}\n`
         + `${prefix1}isForbidden: ${skill.isForbidden}\n`
         + `${prefix1}dmgChange: ${skill.dmgChange}\n`

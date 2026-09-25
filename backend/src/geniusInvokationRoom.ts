@@ -875,7 +875,7 @@ export default class GeniusInvokationRoom {
                             }
                             if (recordData?.actionLog[0]?.actionData.type == ACTION_TYPE.PickCard) {
                                 const { actionData, pidx } = this.recordData.actionLog.shift()!;
-                                this.delay(4e3 + Math.random() * 1e3, async () => {
+                                this.delay(1e3 + Math.random() * 1e3, async () => {
                                     await this.wait(() => this.recordData.isPlaying, { freq: 1e3 });
                                     this.getAction(actionData, pidx, socket, true);
                                 });
@@ -885,7 +885,7 @@ export default class GeniusInvokationRoom {
                         this.recordData.isPlaying = false;
                         this.recordData.isExecuting = false;
                     } catch (e) {
-                        this.emitError('录像文件损坏');
+                        this.emitError('录像文件异常');
                     }
                 });
                 break;
@@ -1179,13 +1179,26 @@ export default class GeniusInvokationRoom {
             const handleEvent = { pidx, ...this.handleEvent };
             player.heros.forEach(h => {
                 for (const slot of h.equipments) {
-                    if (diceLen == 0) continue;
+                    if (diceLen == 0) break;
                     const slotres = slot.handle(slot, { ...handleEvent, trigger: 'phase-dice' });
-                    const { element, cnt = 0 } = slotres;
+                    const { triggers, element, cnt = 0 } = slotres;
+                    if (this._hasNotTriggered(triggers, 'phase-dice')) continue;
                     const cel = !element || element == ELEMENT_TYPE.Physical ? DICE_COST_TYPE.Omni : element;
                     const dcnt = Math.min(diceLen, cnt);
                     tmpDice[cel] += dcnt;
                     diceLen -= dcnt;
+                }
+                if (h.isFront) {
+                    for (const sts of player.combatStatus) {
+                        if (diceLen == 0) break;
+                        const stsres = sts.handle(sts, { ...handleEvent, trigger: 'phase-dice' });
+                        if (this._hasNotTriggered(stsres.triggers, 'phase-dice')) continue;
+                        const { diceEl, cnt = 0 } = stsres;
+                        const cel = diceEl ?? DICE_COST_TYPE.Omni;
+                        const dcnt = Math.min(diceLen, cnt);
+                        tmpDice[cel] += dcnt;
+                        diceLen -= dcnt;
+                    }
                 }
             });
             for (const support of player.supports) {
@@ -3773,6 +3786,7 @@ export default class GeniusInvokationRoom {
                         if (isInvalid) return;
                         const toHidx = sdir == 0 ? heros.getNearestHidx(hidxs?.[0]) : heros.getFront({ offset: sdir })?.hidx ?? -1;
                         if (toHidx == -1) throw new Error(`ERROR@doCmd--${cmd}: toHidx is not found, hidxs:${hidxs}, sdir:${sdir}`);
+                        if (heros[toHidx].isFront) return;
                         if (!this.preview.isExec) this.preview.willSwitch[cpidx][toHidx] = true;
                         await this._switchHero(cpidx, toHidx, `doCmd--switch:${source}`, { socket, skill });
                     }, { isImmediate, isPriority, isUnshift });
@@ -4388,7 +4402,7 @@ export default class GeniusInvokationRoom {
                             throw new Error('ERROR@_doCmds-pickCard: mode is undefined');
                         }
                         this.players[pidx].phase = PHASE.PICK_CARD;
-                        this._writeLog(`[${cplayer.name}]在(${cpidx})${this.pickModal.cards.map(c => `[${c.name}]`).join('')}中进行挑选`, 'system');
+                        this._writeLog(`[${cplayer.name}](${cpidx})在${this.pickModal.cards.map(c => `[${c.name}]`).join('')}中进行挑选`, 'system');
                         await this.emit(`pickCard-cmdidx${i}`, cpidx);
                     }, { isImmediate, isPriority, isUnshift });
                     break;

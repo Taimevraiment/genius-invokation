@@ -1,5 +1,5 @@
 import { Card, MinusDiceSkill, Support, Trigger, VersionWrapper } from "../../../typing";
-import { CARD_SUBTYPE, DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
+import { CARD_SUBTYPE, DAMAGE_TYPE, DamageType, DiceCostType, SUPPORT_TYPE, SupportType, VERSION, Version } from "../../constant/enum.js";
 import CmdsGenerator from "../../utils/cmdsGenerator.js";
 import { getEntityHandleEvent, versionWrap } from "../../utils/gameUtil.js";
 import { convertToArray, deleteUndefinedProperties, isCdt } from "../../utils/utils.js";
@@ -42,19 +42,21 @@ type SupportBuilderHandleRes = Omit<SupportHandleRes, 'triggers' | 'exec'> & {
 
 export class GISupport extends Entity {
     card: Card; // 场地卡
-    heal: number; // 回血数
+    healOrDmg: number; // 回血数
+    element: DamageType; // 伤害类型
     type: SupportType; // 类型 1轮次 2收集物 3常驻
     handle: (support: Support, event: InputHandle<SupportHandleEvent>) => SupportHandleRes; // 处理效果函数
 
     constructor(
         card: Card, uct: number, pct: number, type: SupportType,
         handle: ((support: Support, event: SupportBuilderHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined,
-        heal = 0, ver: Version = VERSION[0],
+        heal = 0, ver: Version = VERSION[0], element: DamageType = DAMAGE_TYPE.Physical, vars?: Record<string, number>,
     ) {
-        super(card.id, card.name, { uct, pct });
+        super(card.id, card.name, { uct, pct, vars });
         this.card = card;
         this.type = type;
-        this.heal = heal;
+        this.healOrDmg = heal;
+        this.element = element;
         this.handle = (support, event) => {
             if (event.trigger == 'reset' && pct > 0) {
                 support.setPerCnt(pct);
@@ -89,7 +91,8 @@ class SupportBuilder extends BaseBuilder {
     private _useCnt: VersionMap<number> = new VersionMap();
     private _perCnt: VersionMap<number> = new VersionMap();
     private _type: VersionMap<SupportType> = new VersionMap();
-    private _heal: number = 0;
+    private _healOrDmg: number = 0;
+    private _element: DamageType = DAMAGE_TYPE.Physical;
     private _handle: ((support: Support, event: SupportBuilderHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) | undefined = () => ({});
     constructor() {
         super();
@@ -121,7 +124,12 @@ class SupportBuilder extends BaseBuilder {
         return this;
     }
     heal(heal: number) {
-        this._heal = heal;
+        this._healOrDmg = heal;
+        return this;
+    }
+    damage(damage: number, element?: DamageType) {
+        this._healOrDmg = -damage;
+        if (element) this._element = element;
         return this;
     }
     handle(handle: (support: Support, event: SupportBuilderHandleEvent, ver: VersionWrapper) => SupportBuilderHandleRes | undefined | void) {
@@ -133,7 +141,7 @@ class SupportBuilder extends BaseBuilder {
         const perCnt = this._perCnt.get(this._curVersion, 0);
         const useCnt = this._useCnt.get(this._curVersion, 0);
         const type = this._type.get(this._curVersion, SUPPORT_TYPE.Permanent);
-        return new GISupport(this._card, useCnt, perCnt, type, this._handle, this._heal, this._curVersion);
+        return new GISupport(this._card, useCnt, perCnt, type, this._handle, this._healOrDmg, this._curVersion, this._element, this._variables);
     }
 }
 

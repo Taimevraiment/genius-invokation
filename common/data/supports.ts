@@ -1,9 +1,9 @@
-import { Card, Trigger } from '../../typing';
+import { Card, Support, Trigger } from '../../typing';
 import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, DAMAGE_TYPE, DICE_COST_TYPE, DiceCostType, ELEMENT_CODE_KEY, ELEMENT_TYPE, ELEMENT_TYPE_KEY, PURE_ELEMENT_CODE, PureElementType, STATUS_TYPE, SUMMON_TAG, Version } from '../constant/enum.js';
 import { DICE_WEIGHT } from '../constant/UIconst.js';
 import { getDerivantParentId, getSortedDices } from '../utils/gameUtil.js';
 import { convertToArray, isCdt } from '../utils/utils.js';
-import { support } from './builder/supportBuilder.js';
+import { support, SupportBuilderHandleEvent } from './builder/supportBuilder.js';
 
 const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Trigger | Trigger[], code: number) => {
     return support().permanent().handle((_, event) => ({
@@ -21,6 +21,23 @@ const elTransfiguration = (el1: DiceCostType, el2: DiceCostType, reactionTrg: Tr
             return { isDestroy: true }
         }
     }));
+}
+
+const collectDices = (support: Support, event: SupportBuilderHandleEvent, maxCnt: number, varName: string = 'useCnt') => {
+    const { dices } = event;
+    const pdices = getSortedDices(dices);
+    dices.length = 0;
+    while (pdices.length > 0) {
+        if (support.variables[varName] >= maxCnt) {
+            dices.push(...pdices);
+            break;
+        }
+        const pdice = pdices.shift()!;
+        ++support.variables[varName];
+        while (pdices[0] == pdice && pdice != DICE_COST_TYPE.Omni) {
+            dices.push(pdices.shift()!);
+        }
+    }
 }
 
 const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>> = {
@@ -270,10 +287,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 冰草祝佑·棘霜
-    303081: () => support().permanent().handle((_, event) => {
+    303081: () => support().permanent().handle((_, event, ver) => {
         const { trigger, eheros } = event;
         const triggers: Trigger[] = ['phase-dice'];
-        if (eheros.hasAttach(ELEMENT_TYPE.Cryo)) triggers.push('phase-end');
+        if (eheros.hasAttach(ELEMENT_TYPE.Cryo) || (ver.gte('v7.2.0') && eheros.hasAttach(ELEMENT_TYPE.Dendro))) {
+            triggers.push('phase-end');
+        }
         return {
             triggers: ['phase-dice', 'phase-end'],
             cnt: [2, 2],
@@ -286,7 +305,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 冰草祝佑·寒蔓
-    303082: () => support().collection(2).handle((support, event) => ({
+    303082: () => support().collection(2).handle((support, event, ver) => ({
         triggers: ['phase-dice', 'phase-start', 'after-skill'],
         element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Dendro],
         cnt: [2, 2],
@@ -294,7 +313,13 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             const { trigger, eDmgedHero } = event;
             if (trigger == 'phase-start') return support.setUseCnt(2);
             if (trigger == 'phase-dice') return;
-            if (!eDmgedHero.hasAttach(ELEMENT_TYPE.Dendro) || support.useCnt <= 0) return { isCancel: true }
+            if (
+                support.useCnt <= 0 || !eDmgedHero.hasAttach(ELEMENT_TYPE.Dendro) ||
+                ver.gte('v7.2.0') && !eDmgedHero.hasAttach(ELEMENT_TYPE.Cryo)
+            ) {
+                return { isCancel: true }
+            }
+            if (ver.gte('v7.2.0')) cmds.attack(2, DAMAGE_TYPE.Dendro);
             cmds.getCard(1).heal(1, { target: CMD_MODE.MaxHurt }).removeAttach(ELEMENT_TYPE.Dendro, { isOppo: true });
             support.minusUseCnt();
         }
@@ -407,18 +432,43 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 超载祝佑·霆击
-    303122: () => support().collection(1).handle((support, event) => ({
+    303122: () => support().damage(1).handle((support, event) => ({
         triggers: ['phase-dice', 'switch-oppo', 'phase-start'],
         element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Pyro],
         cnt: [2, 2],
         exec: cmds => {
             const { trigger, ehidx } = event;
             if (trigger == 'phase-dice') return;
-            if (trigger == 'phase-start') return support.setUseCnt(1);
-            cmds.attack(support.useCnt, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
-            support.addUseCntMax(3);
+            if (trigger == 'phase-start') return support.healOrDmg = -1;
+            cmds.attack(-support.healOrDmg, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
+            if (support.healOrDmg > -2) --support.healOrDmg;
         }
     })),
+    // 燃烧祝佑·极限火势
+    303131: () => support().permanent().handle((_, event) => ({
+        triggers: ['phase-dice', 'Burning', 'card'],
+        element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Dendro],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger, summons, hcard } = event;
+            if (trigger == 'phase-dice') return;
+            if (trigger == 'Burning') return summons.get(115)?.addUseCnt(true);
+            if (trigger == 'card') {
+                if (hcard?.currDiceCost != 0) return { isCancel: true }
+                cmds.summonTrigger({ selectSummon: 115 });
+            }
+        }
+    })),
+    // 燃烧祝佑·极限协奏
+    303132: () => support().collection().handle((support, event) => {
+        const { trigger, source, hcard } = event;
+        if (trigger == 'phase-dice') {
+            return { triggers: trigger, element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Dendro], cnt: [2, 2] }
+        }
+        if (trigger == 'dmg' && source == 115) return { triggers: trigger, addDmgCdt: support.useCnt }
+        if (!hcard || hcard.currDiceCost < 2) return;
+        return { triggers: 'card', exec: () => support.addUseCntMax(4) }
+    }),
     // 璃月港口
     321001: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
@@ -951,6 +1001,24 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                 .getStatus(201, { mode: CMD_MODE.TopPileCard });
         }
     })),
+    // 千柱之殿
+    321042: () => support().collection().variables('dices').handle((support, event) => {
+        const triggers: Trigger[] = ['enter', 'adventure', 'phase-end'];
+        if (support.variables.dices > 0) triggers.push('phase-start');
+        return {
+            triggers,
+            exec: cmds => {
+                const { trigger } = event;
+                if (trigger == 'enter') return cmds.getCard(1, { card: [301043, 301044, 301045] }).res;
+                if (trigger == 'adventure') return support.addUseCnt();
+                if (trigger == 'phase-end') return collectDices(support, event, 2, 'dices');
+                if (trigger == 'phase-start') {
+                    cmds.getCard(support.variables.dices, { card: [301043, 301044, 301045] });
+                    support.variables.dices = 0;
+                }
+            }
+        }
+    }),
     // 派蒙
     322001: () => support().round(2).handle(support => ({
         triggers: 'phase-start',
@@ -1063,27 +1131,14 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     })),
     // 立本
     322008: () => support().collection().handle((support, event) => {
-        const { dices, trigger } = event;
         const triggers: Trigger[] = ['phase-end'];
         if (support.useCnt >= 3) triggers.push('phase-start');
         return {
             triggers,
             exec: cmds => {
-                if (trigger == 'phase-end') {
-                    const pdices = getSortedDices(dices);
-                    dices.length = 0;
-                    while (pdices.length > 0) {
-                        if (support.useCnt >= 3) {
-                            dices.push(...pdices);
-                            break;
-                        }
-                        const pdice = pdices.shift()!;
-                        support.addUseCnt();
-                        while (pdices[0] == pdice && pdice != DICE_COST_TYPE.Omni) {
-                            dices.push(pdices.shift()!);
-                        }
-                    }
-                } else if (trigger == 'phase-start') {
+                const { trigger } = event;
+                if (trigger == 'phase-end') return collectDices(support, event, 3);
+                if (trigger == 'phase-start') {
                     cmds.getCard(2).getDice(2, { element: DICE_COST_TYPE.Omni });
                     return { isDestroy: true }
                 }
@@ -1414,6 +1469,18 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             support.minusPerCnt();
         }
     })),
+    // 彩特琳德
+    322035: () => support().perCnt(2).handle((support, event) => {
+        const { eplayerInfo: { initCardIds }, hcard, heros } = event;
+        if (support.perCnt <= 0 || !heros.hasHurt || hcard && initCardIds.includes(hcard.id)) return;
+        return {
+            triggers: 'ecard',
+            exec: cmds => {
+                cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+                support.minusPerCnt();
+            }
+        }
+    }),
     // 参量质变仪
     323001: () => support().collection().handle(support => ({
         triggers: ['el-dmg', 'el-getdmg', 'el-getdmg-oppo'],
@@ -1543,6 +1610,8 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     331011: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Dendro, 'Quicken', 11),
     // 元素幻变：超载祝佑
     331012: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Pyro, 'Overload', 12),
+    // 元素幻变：燃烧祝佑
+    331013: () => elTransfiguration(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Dendro, 'Burning', 13),
 
 }
 

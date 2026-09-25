@@ -8,13 +8,16 @@ import { arrToObj } from "../../utils/utils.js";
 export class VersionMap<T> {
     private _map: [VersionWrapper, T][] = [];
     constructor() { }
-    set(map: [Version, T]) {
+    set(map: [Version, T], override: boolean = true) {
         const [version, val] = map;
         const value = this._map.find(([ver]) => ver.eq(version));
-        if (value) value[1] = val;
-        else this._map.push([versionWrap(version), val]);
+        if (value) {
+            if (override) value[1] = val;
+        } else this._map.push([versionWrap(version), val]);
     }
-    get(version: Version, defaultValue: T): T {
+    get(version: Version): T | undefined;
+    get(version: Version, defaultValue: T): T;
+    get(version: Version, defaultValue?: T): T | undefined {
         if (OFFLINE_VERSION.includes(version as OfflineVersion)) {
             const value = this._map.find(([ver]) => OFFLINE_VERSION.includes(ver.value as OfflineVersion));
             if (value) return value[1];
@@ -63,8 +66,9 @@ export class Entity {
         this.variables.useCnt = Math.min(max, this.useCnt);
         return this.useCnt;
     }
-    minusUseCnt(n: number = 1): number {
-        this.variables.useCnt = Math.max(0, this.useCnt - n);
+    minusUseCnt(n: number = 1, force: boolean = false): number {
+        if (force) --this.variables.useCnt;
+        else this.variables.useCnt = Math.max(0, this.useCnt - n);
         return this.useCnt;
     }
     setUseCnt(n: number = 0): void {
@@ -511,6 +515,7 @@ export interface EntityHandleRes {
     hidxs?: number[],
     isValid?: boolean,
     element?: DamageType,
+    cnt?: number,
     restDmg?: number,
     isAddTask?: boolean,
     notPreview?: boolean,

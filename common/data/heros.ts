@@ -1782,6 +1782,33 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
+    1517: () => hero(630).name('法尔伽').since('v7.2.0').maxHp(12).mondstadt().anemo().claymore()
+        .src('#')
+        .avatar('#AvatarIcon_Varka')
+        .normalSkill('西风剑术·流光之舞')
+        .skills(
+            skill('烈风终坠').description('{dealDmg}，自身附属【sts115171】，若我方场上存在火/水/雷/冰元素角色时，自身按照此优先级附属对应元素附魔。')
+                .src('#',
+                    '')
+                .elemental().damage(1).cost(3).handle(event => {
+                    const status = [115171];
+                    const elements = [ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Cryo];
+                    const elIdx = elements.findIndex(el => event.heros.some(h => h.element == el));
+                    if (elIdx > -1) status.push([175, 174, 176, 173][elIdx]);
+                    return { status }
+                }),
+            skill('我即朔风').description('{dealDmg}，若我方场上存在火/水/雷/冰元素角色时，按照此优先级改为造成对应的元素伤害。此技能结束后，再造成2点[风元素伤害]。')
+                .src('#',
+                    '')
+                .burst(3).damage(3).cost(3).handle(event => {
+                    const { cmds, heros, skill: { damage } } = event;
+                    const elements = [ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Cryo];
+                    const dmgElement = elements.find(el => heros.some(h => h.element == el));
+                    if (dmgElement) cmds.attack(damage, dmgElement);
+                    return { status: 115179 }
+                })
+        ),
+
     1601: () => hero(42).name('凝光').offline('v1').liyue().geo().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/6105ce8dd57dfd2efbea4d4e9bc99a7f_3316973407293091241.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/69b48f96666e12872c81087955a4abcb.png')
