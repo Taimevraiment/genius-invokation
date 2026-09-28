@@ -4346,15 +4346,19 @@ export default class GeniusInvokationRoom {
                         callback?.(ncmds);
                         this._doCmds(cpidx, ncmds);
                         if (isAttach) { // 移除附着
-                            (ohidxs ?? [heros.frontHidx]).forEach((hidx, hi) => {
-                                const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront().element) as ElementType;
-                                const elIdx = heros[hidx].attachElement.indexOf(attachEl as PureElementType);
-                                if (elIdx > -1) heros[hidx].attachElement.splice(elIdx, 1);
-                                this._writeLog(`[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]移除${ELEMENT_NAME[attachEl]}附着`);
+                            (ohidxs ?? [heros.frontHidx]).forEach(hidx => {
+                                const attachEls = (Array.isArray(element) ? element : convertToArray(element ?? this.players[pidx].heros.getFront().element)) as ElementType[];
+                                attachEls.forEach(attachEl => {
+                                    const elIdx = heros[hidx].attachElement.indexOf(attachEl as PureElementType);
+                                    if (elIdx > -1) {
+                                        heros[hidx].attachElement.splice(elIdx, 1);
+                                        this._writeLog(`[${this.players[pidx ^ +!!isOppo].name}](${pidx ^ +!!isOppo})[${this.players[pidx ^ +!!isOppo].heros[hidx].name}]移除${ELEMENT_NAME[attachEl]}附着`);
+                                    }
+                                });
                             });
                         } else { // 附着元素
                             const damageVO = INIT_DAMAGEVO(this.players.flatMap(p => p.heros).length);
-                            (ohidxs ?? [heros.frontHidx]).forEach((hidx, hi) => {
+                            (ohidxs ?? [heros.frontHidx]).sort((a, b) => +heros[a].isFront - +heros[b].isFront).forEach((hidx, hi) => {
                                 const attachEl = (Array.isArray(element) ? element[hi] : element ?? this.players[pidx].heros.getFront().element) as ElementType;
                                 const { elTips, atriggers, etriggers } = this._calcDamage(pidx, attachEl, [], hidx, { isAttach: true, isAtkSelf: +!isOppo, skill, atkId: source });
                                 elTips.forEach((et, eti) => et[0] != '' && (damageVO.elTips[eti] = [...et]));
@@ -4535,7 +4539,7 @@ export default class GeniusInvokationRoom {
                         const adventure = cplayer.supports.has(CARD_SUBTYPE.Adventure);
                         const canAdventure = adventure || !cplayer.supports.isFull;
                         if (!adventure) {
-                            this._doCmds(cpidx, CmdsGenerator.ins.pickCard(3, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
+                            this._doCmds(cpidx, CmdsGenerator.ins.pickCard(4, CMD_MODE.UseCard, { subtype: CARD_SUBTYPE.Adventure, }), { isImmediate: true });
                         }
                         if (canAdventure) this._emitEvent(cpidx, 'adventure', { types: STATUS_TYPE.Usage });
                     }, { isImmediate, isPriority, isUnshift });

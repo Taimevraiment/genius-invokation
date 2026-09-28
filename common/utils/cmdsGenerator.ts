@@ -168,9 +168,9 @@ export default class CmdsGenerator {
         return this;
     }
     attach(options: { element?: ElementType | ElementType[], hidxs?: number | number[], isOppo?: boolean, remove?: boolean } = {}) {
-        let { element, hidxs, isOppo, remove: isAttach } = options;
+        let { element, hidxs, isOppo, remove } = options;
         hidxs = hidxs != undefined ? convertToArray(hidxs) : hidxs;
-        this._add({ cmd: 'attach', element, hidxs, isOppo, isAttach });
+        this._add({ cmd: 'attach', element, hidxs, isOppo, isAttach: remove });
         return this;
     }
     removeAttach(element?: ElementType | ElementType[], options: { hidxs?: number | number[], isOppo?: boolean } = {}) {

@@ -1311,7 +1311,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     113176: () => status('升华赞歌（生效中）').combatStatus().useCnt(3).roundCnt(1).type(STATUS_TYPE.AddDamage).icon(STATUS_ICON.Special)
-        .description('本回合敌方受到的[火元素伤害]+1。；[useCnt]')
+        .description('本回合敌方受到的[火元素伤害]+1。（扩散伤害除外）；[useCnt]')
         .handle(status => ({
             triggers: 'Pyro-getdmg-oppo',
             addDmgCdt: 1,
@@ -1845,7 +1845,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         })),
 
     115175: () => status('四风将起（生效中）').heroStatus().type(STATUS_TYPE.Usage).icon('#')
-        .description('回合开始时，移除我方2个骰子，切换至【hro】，并[准备技能]【rsk15174】。')
+        .description('回合开始时，移除我方2个骰子，切换至【hro】，并[准备技能]：【rsk15174】。')
         .handle((status, event) => {
             const { cmds, hero } = event;
             cmds.consumeDice(2).switchTo(hero.hidx).getStatus(115177);
@@ -1853,7 +1853,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     115176: () => status('苍噬（生效中）').heroStatus().type(STATUS_TYPE.Usage).icon('#')
-        .description('回合开始时，移除我方2个骰子，切换至【hro】，根据我方角色附属对应的元素附魔，并[准备技能]2次【rsk15175】。')
+        .description('回合开始时，移除我方2个骰子，切换至【hro】，根据我方角色附属对应的元素附魔，并[准备技能]：2次【rsk15175】。')
         .handle((status, event) => {
             const { cmds, hero, heros } = event;
             const statuses = [115178];

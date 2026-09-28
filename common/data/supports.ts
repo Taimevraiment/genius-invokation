@@ -299,8 +299,10 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Dendro],
             exec: cmds => {
                 if (trigger == 'phase-dice') return;
-                const hidxs = eheros.allHidxs({ cdt: h => h.hasAttach(ELEMENT_TYPE.Cryo) });
-                cmds.attack(2, DAMAGE_TYPE.Pierce, { hidxs }).removeAttach(ELEMENT_TYPE.Cryo, { hidxs, isOppo: true });
+                const hidxs = eheros.allHidxs({ cdt: h => h.hasAttach(ELEMENT_TYPE.Cryo) || (ver.gte('v7.2.0') && h.hasAttach(ELEMENT_TYPE.Dendro)) });
+                const removeEls: PureElementType[] = [ELEMENT_TYPE.Cryo];
+                if (ver.gte('v7.2.0')) removeEls.push(ELEMENT_TYPE.Dendro);
+                cmds.attack(2, DAMAGE_TYPE.Pierce, { hidxs }).removeAttach(removeEls, { hidxs, isOppo: true });
             }
         }
     }),
@@ -319,8 +321,9 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             ) {
                 return { isCancel: true }
             }
-            if (ver.gte('v7.2.0')) cmds.attack(2, DAMAGE_TYPE.Dendro);
-            cmds.getCard(1).heal(1, { target: CMD_MODE.MaxHurt }).removeAttach(ELEMENT_TYPE.Dendro, { isOppo: true });
+            if (ver.gte('v7.2.0')) cmds.removeAttach(ELEMENT_TYPE.Dendro, { isOppo: true }).attack(2, DAMAGE_TYPE.Dendro);
+            cmds.getCard(1).heal(1, { target: CMD_MODE.MaxHurt })
+            if (ver.lt('v7.2.0')) cmds.removeAttach(ELEMENT_TYPE.Dendro, { isOppo: true });
             support.minusUseCnt();
         }
     })),
@@ -445,7 +448,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 燃烧祝佑·极限火势
-    303131: () => support().permanent().handle((_, event) => ({
+    303131: () => support().permanent().perCnt(1).handle((support, event) => ({
         triggers: ['phase-dice', 'Burning', 'card'],
         element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Dendro],
         cnt: [2, 2],
@@ -454,8 +457,9 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             if (trigger == 'phase-dice') return;
             if (trigger == 'Burning') return summons.get(115)?.addUseCnt(true);
             if (trigger == 'card') {
-                if (hcard?.currDiceCost != 0) return { isCancel: true }
+                if (hcard?.currDiceCost != 0 || support.perCnt <= 0) return { isCancel: true }
                 cmds.summonTrigger({ selectSummon: 115 });
+                support.minusPerCnt();
             }
         }
     })),
