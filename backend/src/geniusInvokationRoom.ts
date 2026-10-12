@@ -1263,7 +1263,6 @@ export default class GeniusInvokationRoom {
                         await this._execTask();
                         await this.delay(1e3);
                         await this._doPhaseStart(flag, pidx);
-                        await this.emit(`${flag}-finish`, pidx);
                     } else if (player.id != AI_ID) {
                         await this.emit(`${flag}-finish`, pidx, { socket });
                     }

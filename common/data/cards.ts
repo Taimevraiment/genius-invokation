@@ -1323,13 +1323,14 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     312047: () => card(634).name('昔时之歌').since('v7.2.0').relic().costAny(2).useCnt(0)
-        .description('【我方角色获得圣遗物以外的治疗后：】此牌累积1点「渴盼」（最多累积到4层）。回合开始时，每有1层「渴盼」，治疗所附属角色1点。如果有4层「渴盼」，则装备角色的伤害+1。')
+        .description('【我方角色获得圣遗物以外的治疗后：】此牌累积1点「渴盼」（最多累积到4层）。回合开始时，每有2层「渴盼」，治疗所附属角色1点。如果有4层「渴盼」，则额外治疗1点，并且装备角色的伤害+1。')
         .src('#')
         .handle((card, event) => {
             const { execmds, hidx, hero, source, trigger } = event;
-            if (trigger == 'skill-dmg') return { triggers: trigger, addDmgCdt: +(card.useCnt == 4) }
+            const isFull = +(card.useCnt == 4);
+            if (trigger == 'skill-dmg') return { triggers: trigger, addDmgCdt: isFull }
             if (trigger == 'phase-start' && card.useCnt > 1 && hero.isHurt) {
-                execmds.heal(card.useCnt, { hidxs: hidx });
+                execmds.heal(Math.floor(card.useCnt / 2) + isFull, { hidxs: hidx });
                 return { triggers: trigger }
             }
             if (card.useCnt >= 4 || source.toString().startsWith('312')) return;
@@ -1611,7 +1612,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         ),
 
     321042: () => card().name('千柱之殿').since('v7.2.0').adventure().costSame(0)
-        .description('【入场时：】生成1张随机【藏品】。；【结束阶段：】收集至多2个我方未使用的元素骰，每收集1个，行动阶段开始时生成1张随机【藏品】。')
+        .description('【入场时：】生成1张随机【藏品】。；【结束阶段：】收集至多2个我方未使用的元素骰，每收集1个，生成1张随机【藏品】。')
         .src('#')
         .explain('crd301043', 'crd301044', 'crd301045'),
 
@@ -1913,11 +1914,11 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     330015: () => card(637).name('浮槃之歌').since('v7.2.0').legend().costSame(2)
-        .description('我方队伍中存在3种不同元素类型的角色时才可打出，本局游戏中我方【投掷阶段：】总是投出3个[万能元素骰]。【我方引发元素反应时：】造成的伤害+1。【我方引发元素反应后：】治疗我方受伤最多角色1点。')
+        .description('我方队伍中存在3种不同元素类型的角色时才可打出，将我方3个元素骰转换为[万能元素骰]，本局游戏中我方【投掷阶段：】总是投出3个[万能元素骰]。【我方引发元素反应时：】造成的伤害+1。【我方引发元素反应后：】治疗我方受伤最多角色1点。')
         .src('#')
         .handle((_, event) => {
             const { cmds, heros } = event;
-            cmds.getStatus(330016);
+            cmds.changeDice({ cnt: 3 }).getStatus(330016);
             return { isValid: new Set(heros.map(h => h.element)).size == 3 }
         }),
 
@@ -4506,7 +4507,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/88e1a7e855964f69025fceb68d97e8aa_2481796959680265379.png'),
 
     115172: () => card().name('烈风终坠').event().costSame(2)
-        .description('为【hro】[挑选]一项技能，在下个回合开始移除我方2个骰子，切换至【hro】，并准备对应技能：；造成6点[风元素伤害]。；或；根据我方角色附属对应的元素附魔。然后进行2次「普通攻击」。')
+        .description('为【hro】[挑选]一项技能，在下个回合开始移除我方1个骰子，切换至【hro】，并准备对应技能：；造成6点[风元素伤害]。；或；根据我方角色附属对应的元素附魔。然后进行2次「普通攻击」。')
         .src('#')
         .handle((_, { cmds }) => cmds.pickCard(2, CMD_MODE.UseCard, { card: [115173, 115174] })),
 
@@ -4971,15 +4972,16 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/22/258999284/92f3dd69833b003c9ab22dd1283a24da_5268394314124498645.png'),
 
     303122: () => card().name('超载祝佑·霆击').support().costElectro(2).from(331012)
-        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方每切换一次角色后：】对敌方出战角色造成1点[穿透伤害]，然后本回合此牌造成的[穿透伤害]+1（最多3）。')
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方每切换一次角色后：】对敌方出战角色造成1点[穿透伤害]，然后本回合此牌造成的[穿透伤害]+1（最多2）。')
+        .description('【投掷阶段：】总是投出2个[雷元素骰]和2个[火元素骰]。；【敌方每切换一次角色后：】对敌方出战角色造成1点[穿透伤害]，然后本回合此牌造成的[穿透伤害]+1（最多3）。', 'v7.2.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/09/22/258999284/93291c4bf7feca99a9fa704d510a0e6f_24521591456454082.png'),
 
     303131: () => card().name('燃烧祝佑·极限火势').support().costPyro(1).from(331013)
-        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[草元素骰]。；【我方触发燃烧反应后：】我方【smn115】的[可用次数]+1。；【我方打出[当前元素骰费用]为0的卡牌后：】立刻触发我方【smn115】的「结束阶段」效果。（每回合1次）')
+        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[草元素骰]。；【我方触发燃烧反应后：】我方【smn115】的[可用次数]+1。；【我方打出[当前元素骰费用]为0的卡牌后：】立刻触发我方【smn115】的「结束阶段」效果。（每回合2次）')
         .src('#'),
 
     303132: () => card().name('燃烧祝佑·极限协奏').support().costDendro(1).from(331013)
-        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[草元素骰]。；【我方打出[当前元素骰费用]不低于2的牌后：】此牌累积1点计数（最多累计4点）。；此牌每有1点计数，我方【smn115】造成的伤害+1。')
+        .description('【投掷阶段：】总是投出2个[火元素骰]和2个[草元素骰]。；【我方打出[当前元素骰费用]不低于2的牌后：】此牌累积1点计数（最多累计3点）。；此牌每有1点计数，我方【smn115】造成的伤害+1。')
         .src('#3003132'),
 
     303230: () => card().name('海底宝藏').event().costSame(0).from(322027)

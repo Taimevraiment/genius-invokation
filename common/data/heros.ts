@@ -3010,7 +3010,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .passive().handle(({ cmds }) => (cmds.addCard(6, 124051, { isRandom: false }), { triggers: 'game-start' }))
         ),
 
-    2504: () => hero(598).name('黑蛇骑士·斩风之剑').since('v6.7.0').monster().anemo()
+    2504: () => hero(598).name('黑蛇骑士·斩风之剑').since('v6.7.0').maxHp(12).maxHp(10, 'v7.2.0').monster().anemo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/97f548650afc632c91eeb6fb7376c3aa_6679263965386641545.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6a4458de/933f2176018047fdcb59d39488f15ff5.png')
         .normalSkill('半剑技术')
@@ -3023,10 +3023,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://patchwiki.biligame.com/images/ys/9/9f/970qljt6zk10vqw9osuid9b3xf3kst2.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/77029d440c392be935c03d81d7252c53_2980178131583758856.png')
                 .burst(2).cost(3).handle(() => ({ status: 125041 })),
-            skill('前驱气势').description('我方触发扩散反应，或敌方失去[护盾]、【伤害抵消】状态以及出战状态时，抓1张牌。（每回合2次）')
+            skill('前驱气势').description('我方触发扩散反应，或敌方失去[护盾]、【伤害抵消】状态以及出战状态时，抓1张牌。（每回合1次）')
+                .description('我方触发扩散反应，或敌方失去[护盾]、【伤害抵消】状态以及出战状态时，抓1张牌。（每回合2次）', 'v7.2.0')
                 .src('https://patchwiki.biligame.com/images/ys/7/76/nh2m4dta3lud00vlua0wlprba01enbb.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/06/30/258999284/22d66b8ad186407ee74151299597a50d_4776296587384746894.png')
-                .passive().perCnt(2).handle(event => {
+                .passive().perCnt(1).perCnt(2, 'v7.2.0').handle(event => {
                     const { skill, sourceStatus, cmds } = event;
                     if (skill.perCnt <= 0) return;
                     const triggers: Trigger[] = ['Swirl', 'other-Swirl'];

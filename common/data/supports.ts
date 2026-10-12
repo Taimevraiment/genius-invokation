@@ -27,17 +27,20 @@ const collectDices = (support: Support, event: SupportBuilderHandleEvent, maxCnt
     const { dices } = event;
     const pdices = getSortedDices(dices);
     dices.length = 0;
+    const isImmediate = varName == 'immediate';
+    let immediate = 0;
     while (pdices.length > 0) {
-        if (support.variables[varName] >= maxCnt) {
+        if ((isImmediate ? immediate : support.variables[varName]) >= maxCnt) {
             dices.push(...pdices);
             break;
         }
         const pdice = pdices.shift()!;
-        ++support.variables[varName];
+        isImmediate ? ++immediate : ++support.variables[varName];
         while (pdices[0] == pdice && pdice != DICE_COST_TYPE.Omni) {
             dices.push(pdices.shift()!);
         }
     }
+    return immediate;
 }
 
 const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>> = {
@@ -435,7 +438,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 超载祝佑·霆击
-    303122: () => support().damage(1).handle((support, event) => ({
+    303122: () => support().damage(1).handle((support, event, ver) => ({
         triggers: ['phase-dice', 'switch-oppo', 'phase-start'],
         element: [DICE_COST_TYPE.Electro, DICE_COST_TYPE.Pyro],
         cnt: [2, 2],
@@ -443,12 +446,14 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             const { trigger, ehidx } = event;
             if (trigger == 'phase-dice') return;
             if (trigger == 'phase-start') return support.healOrDmg = -1;
-            cmds.attack(-support.healOrDmg, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
-            if (support.healOrDmg > -2) --support.healOrDmg;
+            if (trigger == 'switch-oppo') {
+                cmds.attack(-support.healOrDmg, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
+                if (support.healOrDmg > (ver.lt('v7.2.0') ? -3 : -2)) --support.healOrDmg;
+            }
         }
     })),
     // 燃烧祝佑·极限火势
-    303131: () => support().permanent().perCnt(1).handle((support, event) => ({
+    303131: () => support().permanent().perCnt(2).handle((support, event) => ({
         triggers: ['phase-dice', 'Burning', 'card'],
         element: [DICE_COST_TYPE.Pyro, DICE_COST_TYPE.Dendro],
         cnt: [2, 2],
@@ -471,7 +476,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
         if (trigger == 'dmg' && source == 115) return { triggers: trigger, addDmgCdt: support.useCnt }
         if (!hcard || hcard.currDiceCost < 2) return;
-        return { triggers: 'card', exec: () => support.addUseCntMax(4) }
+        return { triggers: 'card', exec: () => support.addUseCntMax(3) }
     }),
     // 璃月港口
     321001: () => support().round(2).handle(support => ({
@@ -1006,23 +1011,18 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 千柱之殿
-    321042: () => support().collection().variables('dices').handle((support, event) => {
-        const triggers: Trigger[] = ['enter', 'adventure', 'phase-end'];
-        if (support.variables.dices > 0) triggers.push('phase-start');
-        return {
-            triggers,
-            exec: cmds => {
-                const { trigger } = event;
-                if (trigger == 'enter') return cmds.getCard(1, { card: [301043, 301044, 301045] }).res;
-                if (trigger == 'adventure') return support.addUseCnt();
-                if (trigger == 'phase-end') return collectDices(support, event, 2, 'dices');
-                if (trigger == 'phase-start') {
-                    cmds.getCard(support.variables.dices, { card: [301043, 301044, 301045] });
-                    support.variables.dices = 0;
-                }
+    321042: () => support().permanent().handle((support, event) => ({
+        triggers: ['enter', 'adventure', 'phase-end'],
+        exec: cmds => {
+            const { trigger } = event;
+            if (trigger == 'enter') return cmds.getCard(1, { card: [301043, 301044, 301045] }).res;
+            if (trigger == 'adventure') return support.addUseCnt();
+            if (trigger == 'phase-end') {
+                const cnt = collectDices(support, event, 2, 'immediate');
+                cmds.getCard(cnt, { card: [301043, 301044, 301045] });
             }
         }
-    }),
+    })),
     // 派蒙
     322001: () => support().round(2).handle(support => ({
         triggers: 'phase-start',

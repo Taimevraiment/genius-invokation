@@ -252,7 +252,7 @@ export class SkillBuilder extends BaseBuilder {
     private _energyCost: VersionMap<number> = this._createVersionMap();
     private _isSpEnergy: boolean = false;
     private _handle: ((event: SkillBuilderHandleEvent, ver: VersionWrapper) => SkillBuilderHandleRes | undefined | void) | undefined;
-    private _perCnt: number = 0;
+    private _perCnt: VersionMap<number> = this._createVersionMap();
     private _src: string[] = [];
     private _explains: string[] = [];
     private _readySkillRound: number = 0;
@@ -360,8 +360,9 @@ export class SkillBuilder extends BaseBuilder {
         this._handle = handle;
         return this;
     }
-    perCnt(pct: number) {
-        this._perCnt = pct;
+    perCnt(pct: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => this._perCnt.set([version, pct]));
         return this;
     }
     src(...srcs: string[]) {
@@ -402,7 +403,7 @@ export class SkillBuilder extends BaseBuilder {
                 ec,
                 de: this._dmgElement,
                 expl: this._explains,
-                pct: this._perCnt,
+                pct: this._perCnt.get(this._curVersion, 0),
                 ver: this._curVersion,
                 canSelectSummon: this._canSelectSummon,
                 canSelectHero: this._canSelectHero,

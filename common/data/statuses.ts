@@ -225,7 +225,7 @@ const nightSoul = (options: { isAccumate?: boolean, roundCnt?: number } = {}) =>
 const elementAtkUp = (el: PureElementType) => {
     return status(`${ELEMENT_NAME[el]}伤害增加`).combatStatus().type(STATUS_TYPE.AddDamage)
         .icon(STATUS_ICON.ElementAtkUp).useCnt(1).maxCnt(MAX_USE_COUNT)
-        .description(`我方下一次造成的[${ELEMENT_NAME[el]}伤害]增加。（扩散伤害除外）（可叠加，无上限）`)
+        .description(`我方下一次造成的[${ELEMENT_NAME[el]}伤害]增加。${el != ELEMENT_TYPE.Anemo ? '（扩散伤害除外）' : ''}（可叠加，无上限）`)
         .handle(status => ({
             triggers: `${ELEMENT_TYPE_KEY[el]}-dmg`,
             addDmgCdt: status.useCnt,
@@ -1845,22 +1845,22 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         })),
 
     115175: () => status('四风将起（生效中）').heroStatus().type(STATUS_TYPE.Usage).icon('#')
-        .description('回合开始时，移除我方2个骰子，切换至【hro】，并[准备技能]：【rsk15174】。')
+        .description('回合开始时，移除我方1个骰子，切换至【hro】，并[准备技能]：【rsk15174】。')
         .handle((status, event) => {
             const { cmds, hero } = event;
-            cmds.consumeDice(2).switchTo(hero.hidx).getStatus(115177);
+            cmds.consumeDice(1).switchTo(hero.hidx).getStatus(115177);
             return { triggers: 'phase-start', exec: () => status.dispose() }
         }),
 
     115176: () => status('苍噬（生效中）').heroStatus().type(STATUS_TYPE.Usage).icon('#')
-        .description('回合开始时，移除我方2个骰子，切换至【hro】，根据我方角色附属对应的元素附魔，并[准备技能]：2次【rsk15175】。')
+        .description('回合开始时，移除我方1个骰子，切换至【hro】，根据我方角色附属对应的元素附魔，并[准备技能]：2次【rsk15175】。')
         .handle((status, event) => {
             const { cmds, hero, heros } = event;
             const statuses = [115178];
             const elements = [ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Cryo];
             const elIdx = elements.findIndex(el => heros.some(h => h.element == el));
             if (elIdx > -1) statuses.unshift([175, 174, 176, 173][elIdx]);
-            cmds.consumeDice(2).switchTo(hero.hidx).getStatus(statuses);
+            cmds.consumeDice(1).switchTo(hero.hidx).getStatus(statuses);
             return { triggers: 'phase-start', exec: () => status.dispose() }
         }),
 
