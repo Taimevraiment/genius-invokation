@@ -302,10 +302,19 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             element: [DICE_COST_TYPE.Cryo, DICE_COST_TYPE.Dendro],
             exec: cmds => {
                 if (trigger == 'phase-dice') return;
+                const els: PureElementType[] = [ELEMENT_TYPE.Cryo];
+                if (ver.gte('v7.2.0')) els.push(ELEMENT_TYPE.Dendro);
+                for (const hidx of eheros.allHidxs()) {
+                    const hasCryo = +eheros[hidx].hasAttach(ELEMENT_TYPE.Cryo);
+                    const hasDendro = +eheros[hidx].hasAttach(ELEMENT_TYPE.Dendro);
+                    const multi = hasCryo + (ver.gte('v7.2.0') ? hasDendro : 0);
+                    if (multi == 0) continue;
+                    cmds.attack(2 * multi, DAMAGE_TYPE.Pierce, { hidxs: hidx });
+                }
                 const hidxs = eheros.allHidxs({ cdt: h => h.hasAttach(ELEMENT_TYPE.Cryo) || (ver.gte('v7.2.0') && h.hasAttach(ELEMENT_TYPE.Dendro)) });
-                const removeEls: PureElementType[] = [ELEMENT_TYPE.Cryo];
-                if (ver.gte('v7.2.0')) removeEls.push(ELEMENT_TYPE.Dendro);
-                cmds.attack(2, DAMAGE_TYPE.Pierce, { hidxs }).removeAttach(removeEls, { hidxs, isOppo: true });
+                for (const el of els) {
+                    cmds.removeAttach(el, { hidxs, isOppo: true });
+                }
             }
         }
     }),

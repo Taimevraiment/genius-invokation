@@ -1783,13 +1783,13 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         ),
 
     1517: () => hero(630).name('法尔伽').since('v7.2.0').maxHp(12).mondstadt().anemo().claymore()
-        .src('#')
-        .avatar('#AvatarIcon_Varka')
+        .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6aea677c/67d80f54c9f2ea86ec009ceb73b3f24d.png')
+        .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6aea6780/743e951d71a96e5aa3a56a192880ffc5.png')
         .normalSkill('西风剑术·流光之舞')
         .skills(
             skill('烈风终坠').description('{dealDmg}，自身附属【sts115171】，若我方场上存在火/水/雷/冰元素角色时，自身按照此优先级附属对应元素附魔。')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/699e3486/ee6b5523d3153ecbf7696152bbf8cb54.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/11/03/258999284/0b494f4ee192e365a706250c2571d23b_7255811472178972704.png')
                 .elemental().damage(1).cost(3).handle(event => {
                     const status = [115171];
                     const elements = [ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Cryo];
@@ -1798,8 +1798,8 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     return { status }
                 }),
             skill('我即朔风').description('{dealDmg}，若我方场上存在火/水/雷/冰元素角色时，按照此优先级改为造成对应的元素伤害。此技能结束后，再造成2点[风元素伤害]。')
-                .src('#',
-                    '')
+                .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6aea6781/b3c0764a27860e34eb89d923e8fb5fb2.png',
+                    'https://act-upload.mihoyo.com/wiki-user-upload/2026/11/03/258999284/118e12cbd96a8aed46a14f7c010f4710_8902276364557338472.png')
                 .burst(3).damage(3).cost(3).handle(event => {
                     const { cmds, heros, skill: { damage } } = event;
                     const elements = [ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Electro, ELEMENT_TYPE.Cryo];

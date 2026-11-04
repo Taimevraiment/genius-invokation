@@ -3633,6 +3633,7 @@ export default class GeniusInvokationRoom {
             if (damageCmds.isEmpty) return;
             const cDamageCmds = new CmdsGenerator(clone(damageCmds.value));
             if (isUnshift) cDamageCmds.reverse();
+            const addAfterNonDmg = cDamageCmds.hasCmds('attack');
             damageCmds.clear();
             this.taskQueue.addTask(`doCmd--damage-${atkname}:${trigger}`, async () => {
                 const allHeroLen = this.players.flatMap(p => p.heros).length;
@@ -3749,7 +3750,7 @@ export default class GeniusInvokationRoom {
                     }
                 }
                 if (notPreview && !this.preview.isExec) this.taskQueue.stopPreview();
-            }, { isImmediate, isPriority, isUnshift, isDmg: !cDamageCmds.isPriority });
+            }, { isImmediate, isPriority, isUnshift, isDmg: !cDamageCmds.isPriority, addAfterNonDmg });
         }
         for (let i = 0; i < cmds.length; ++i) {
             const { cmd, cnt = 0, hidxs: ohidxs, element, card, status: stsargs, summon: smnargs,

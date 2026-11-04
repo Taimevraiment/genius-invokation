@@ -374,6 +374,12 @@ const validateSK = (req, res) => {
     return true;
 };
 
+const toPositiveInt = (value: any, defaultValue: number) => {
+    if (typeof value !== 'string') return defaultValue;
+    const n = parseInt(value, 10);
+    return Number.isFinite(n) && n > 0 ? n : defaultValue;
+}
+
 app.get('/test', (_, res) => res.json({ ok: true }));
 
 app.get('/login', (req, res) => {
@@ -413,22 +419,38 @@ app.get('/login', (req, res) => {
 
 app.get('/detail', async (req, res) => {
     if (!validateSK(req, res)) return;
-    const todayLogs: Record<string, string> = {};
+    const page = toPositiveInt(req.query.page, 1);
+    const pageSize = Math.min(toPositiveInt(req.query.pageSize, 5), 20);
     const pathPrefix = `${__dirname}/../../../logs/`;
+    const pathReg = /\d{4}-\d{2}-\d{2}$/;
+    const nameToPath = new Map<string, string>();
     try {
         const logsPath = await fs.promises.readdir(pathPrefix);
-        const pathReg = /\d{4}-\d{2}-\d{2}$/;
         for (const logPath of logsPath.map(p => pathPrefix + p)) {
             if (!pathReg.test(logPath)) continue;
             const names = await fs.promises.readdir(logPath);
             for (const name of names) {
-                const log = await fs.promises.readFile(`${logPath}/${name}/${name}.log`, 'utf-8');
-                todayLogs[name] = log;
+                nameToPath.set(name, `${logPath}/${name}/${name}.log`);
             }
         }
     } catch (e) {
         console.error(e);
     }
+    const allNames = Array.from(nameToPath.keys());
+    const total = allNames.length;
+    const totalPages = Math.ceil(total / pageSize);
+    const start = (page - 1) * pageSize;
+    const pageNames = allNames.slice(start, start + pageSize);
+    let todayLogs: Record<string, string> = {};
+    await Promise.all(pageNames.map(async name => {
+        const filePath = nameToPath.get(name);
+        try {
+            todayLogs[name] = await fs.promises.readFile(filePath!, 'utf-8');
+        } catch (e) {
+            console.error(`读取 ${filePath} 失败:`, e);
+        }
+    }));
+    todayLogs = Object.fromEntries(Object.entries(todayLogs).sort(([a], [b]) => pageNames.indexOf(a) - pageNames.indexOf(b)));
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,
@@ -447,6 +469,12 @@ app.get('/detail', async (req, res) => {
         })),
         todayGames,
         todayLogs,
+        pagination: {
+            page,
+            pageSize,
+            total,
+            totalPages,
+        }
     });
 });
 
