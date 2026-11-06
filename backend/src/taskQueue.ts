@@ -1,5 +1,5 @@
 import { delay, isCdt } from "../../common/utils/utils.js";
-import { Env, LogType, TaskItem } from "../../typing";
+import { Env, LogType, TaskItem, Trigger } from "../../typing";
 
 const findLastIndex = <T>(arr: T[], predicate: (value: T, index: number, obj: T[]) => boolean) => {
     for (let i = arr.length - 1; i >= 0; i--) {
@@ -38,12 +38,13 @@ export default class TaskQueue {
         this.canExecTask = false;
     }
     addTask(taskType: string, args: any[] | (() => Promise<void>) | (() => void), options: {
-        isUnshift?: boolean, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
+        isUnshift?: boolean, trigger?: Trigger, isDmg?: boolean, addAfterNonDmg?: boolean, isPriority?: boolean, source?: number,
         orderAfter?: string, isFinal?: boolean, isImmediate?: boolean, delayAfter?: number, delayBefore?: number,
     } = {}) {
         if (!this.canPreview) return;
-        const { isUnshift, isDmg = false, addAfterNonDmg, isPriority, isFinal, source = -1, orderAfter = '', isImmediate,
-            delayAfter, delayBefore } = options;
+        const { isUnshift, trigger, isPriority, isFinal, source = -1, orderAfter = '', isImmediate, delayAfter, delayBefore } = options;
+        const isDmg = options.isDmg || !!trigger?.includes('dmg');
+        const addAfterNonDmg = options.addAfterNonDmg || (!!trigger?.includes('dmg') && !isImmediate);
         if (isPriority && this.priorityQueue == undefined) this.priorityQueue = [];
         const curQueue = isCdt(isImmediate, this.immediateQueue, isCdt(isFinal, this.finalQueue, isCdt(this.isExecuting || isPriority, this.priorityQueue))) ?? this.queue;
         // if (curQueue.some(([tpn]) => tpn == taskType && !tpn.includes('getdice-oppo'))) {

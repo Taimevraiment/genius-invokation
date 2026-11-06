@@ -247,10 +247,9 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
             element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Dendro],
             cnt: [2, 2],
             exec: cmds => {
-                if (event.trigger == 'elReaction') {
-                    cmds.attack(1, DAMAGE_TYPE.Hydro, { isPriority: true });
-                    support.minusPerCnt();
-                }
+                if (event.trigger != 'elReaction') return;
+                cmds.attack(1, DAMAGE_TYPE.Hydro, { isPriority: true });
+                support.minusPerCnt();
             }
         }
     }),
@@ -453,7 +452,6 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         cnt: [2, 2],
         exec: cmds => {
             const { trigger, ehidx } = event;
-            if (trigger == 'phase-dice') return;
             if (trigger == 'phase-start') return support.healOrDmg = -1;
             if (trigger == 'switch-oppo') {
                 cmds.attack(-support.healOrDmg, DAMAGE_TYPE.Pierce, { hidxs: ehidx });
@@ -487,6 +485,33 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         if (!hcard || hcard.currDiceCost < 2) return;
         return { triggers: 'card', exec: () => support.addUseCntMax(3) }
     }),
+    // 冻结祝佑·寒水
+    303141: () => support().permanent().handle((_, event) => ({
+        triggers: ['phase-dice', 'Frozen', 'phase-end'],
+        element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Cryo],
+        cnt: [2, 2],
+        exec: cmds => {
+            const { trigger, heros, eplayerInfo: { usedCardCnt } } = event;
+            if (trigger == 'Frozen') return cmds.getStatus([201, 207], { cnt: 2, mode: CMD_MODE.LowHandCard, isOppo: true }).res;
+            if (trigger == 'phase-end') {
+                cmds.attach({ element: ELEMENT_TYPE.Cryo, isOppo: true });
+                if (usedCardCnt < 2) cmds.heal(2, { hidxs: heros.getMaxHurtHidxs() });
+            }
+        }
+    })),
+    // 冻结祝佑·冰裂
+    303142: () => support().permanent().handle((_, event) => ({
+        triggers: ['phase-dice', 'Physical-dmg', 'phase-end'],
+        element: [DICE_COST_TYPE.Hydro, DICE_COST_TYPE.Cryo],
+        cnt: [2, 2],
+        addDmgCdt: isCdt(event.trigger == 'Physical-dmg', 1),
+        isNotAddTask: event.trigger != 'phase-end',
+        exec: cmds => {
+            const { trigger, eheros } = event;
+            if (trigger != 'phase-end') return;
+            cmds.attack(0, DAMAGE_TYPE.Physical, { hidxs: eheros.allHidxs({ cdt: h => h.heroStatus.has(106) }) });
+        }
+    })),
     // 璃月港口
     321001: () => support().round(2).handle(support => ({
         triggers: 'phase-end',
@@ -973,14 +998,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     })),
     // 那夏镇
-    321038: () => support().round(2).handle(support => ({
-        triggers: 'phase-end',
+    321038: () => support().round(2).handle((support, event) => ({
+        triggers: ['phase-end', 'destroy'],
         exec: cmds => {
+            if (event.trigger == 'destroy') return cmds.attack(2, DAMAGE_TYPE.Physical).res;
             cmds.getStatus(206, { cnt: 2, cardFilter: c => c.currDiceCost >= 2 });
-            if (support.minusUseCnt() == 0) {
-                cmds.attack(2, DAMAGE_TYPE.Physical);
-                return { isDestroy: true }
-            }
+            return { isDestroy: support.minusUseCnt() == 0 }
         }
     })),
     // 月矩力试验设计局
@@ -1031,6 +1054,11 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                 cmds.getCard(cnt, { card: [301043, 301044, 301045] });
             }
         }
+    })),
+    // 伊比尼伯龙之眼
+    321043: () => support().permanent().handle(() => ({
+        triggers: ['enter', 'phase-end'],
+        exec: cmds => cmds.getStatus(202, { cnt: 4 }).res,
     })),
     // 派蒙
     322001: () => support().round(2).handle(support => ({

@@ -151,7 +151,7 @@ type PlayerInfo = {
     reconcileCnt: number, // 每回合调和次数
     discardIds: number[], // 舍弃卡牌的id
     initCardIds: number[], // 初始牌组id
-    isUsedCardPerRound: boolean, // 我方本回合是否使用过行动卡
+    usedCardCnt: number, // 我方本回合使用过行动卡的数量
     usedVehcileCnt: number, // 本局打出过的特技牌数量
     isLunarElectroCharged: boolean, // 是否转化为月感电
     isLunarBloom: boolean, // 是否转化为月绽放
@@ -206,7 +206,7 @@ type Trigger = 'phase-start' | 'phase-end' | 'phase-dice' | 'game-start' | `acti
     `heal${TrgOppo}` | `${TrgOther | TrgPre | TrgAll}heal` | `useReadySkill` | `status-destroy${TrgOppo}` | `summon-destroy` | 'destroy' |
     'calc' | 'reconcile' | 'discard' | `getcard${TrgOppo}` | `${TrgOther | TrgGet}${keyof typeof ELEMENT_REACTION}` | 'enter' | 'support-destroy' |
     `${TrgOther}vehicle${TrgOppo}` | 'change-turn' | 'turn-end' | `${TrgActive | TrgDice | TrgPre}switch${TrgOppo}` | 'hcard-calc' |
-    `${TrgPre}get-status${TrgOppo}` | 'summon-generate' | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'slot-destroy' |
+    `${TrgPre}get-status${TrgOppo}` | `summon-generate${TrgOppo}` | `drawcard${TrgOppo}` | 'reduce-dmg' | 'pick' | 'trigger' | 'slot-destroy' |
     `${TrgPre}consumeNightSoul` | 'getNightSoul' | 'ready-skill' | 'reset' | 'adventure' | `${TrgOther}fallatk` | 'usecnt-add' | '';
 
 type Countdown = {

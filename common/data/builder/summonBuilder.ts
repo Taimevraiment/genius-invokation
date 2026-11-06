@@ -33,6 +33,7 @@ export interface SummonHandleRes {
     isTrigger?: boolean,
     notLog?: boolean,
     isAfterSkill?: boolean,
+    isImmediate?: boolean,
     exec?: () => SummonExecRes,
 }
 
@@ -160,8 +161,8 @@ export class GISummon extends Entity {
                     res.exec(cmds);
                     cmds.value.forEach(c => {
                         if (c.cmd == 'attack') {
-                            c.cnt ??= this.damage;
-                            c.element ??= this.element;
+                            c.cnt ??= summon.damage;
+                            c.element ??= summon.element;
                             if (c.element == DAMAGE_TYPE.Pierce) c.hidxs ??= [cevent.eheros.frontHidx];
                         } else if (c.cmd == 'heal') {
                             c.cnt ??= shieldOrHeal;

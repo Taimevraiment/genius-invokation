@@ -2043,6 +2043,44 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
+    1614: () => hero(638).name('莉奈娅').since('v7.3.0').maxHp(11).nodkrai().geo().bow()
+        .src('#')
+        .avatar('#AvatarIcon_Linnea')
+        .normalSkill('捕获方案')
+        .skills(
+            skill('对策·露米呀吼吼').description('生成手牌【crd116143】。如果手牌中已有【crd116143】，则改为将随机1张【crd116143】转化为【crd116144】。')
+                .src('#',
+                    '')
+                .elemental().cost(2).handle(event => {
+                    const { cmds, hcards, random } = event;
+                    if (hcards.every(c => c.id != 116143)) cmds.getCard(1, { card: 116143 });
+                    else {
+                        const [card] = random(hcards.filter(c => c.id == 116143));
+                        cmds.convertCard(card.entityId, 116144);
+                    }
+                }),
+            skill('备忘·绝境生存指南').description('{dealDmg}，治疗我方全体角色1点，生成手牌【crd116143】。')
+                .src('#',
+                    '')
+                .burst(2).damage(2).cost(3).handle(event => {
+                    const { cmds, heros } = event;
+                    cmds.heal(1, { hidxs: heros.allHidxs() }).getCard(1, { card: 116143 });
+                }),
+            skill('月兆祝福·栖地考察').description('本局游戏中，敌方受到‹2›‹6›【结晶（水）反应】时，改为[月结晶]反应。；【双方「召唤物」入场后：】我方获得【sts218】。（每回合1次）')
+                .src('#',
+                    '')
+                .passive().perCnt(1).handle(event => {
+                    const { skill, trigger, playerInfo, cmds } = event;
+                    if (trigger == 'game-start') {
+                        playerInfo.isLunarCrystallize = true;
+                        return { triggers: trigger, isNotAddTask: true }
+                    }
+                    if (skill.perCnt <= 0) return;
+                    cmds.getStatus(218);
+                    return { triggers: ['summon-generate', 'summon-generate-oppo'], exec: () => skill.minusPerCnt() }
+                })
+        ),
+
     1701: () => hero(47).name('柯莱').offline('v1').maxHp(11).maxHp(10, 'v6.3.0', 'v1').sumeru().dendro().bow()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/cca275e9c7e6fa6cf61c5e1d6768db9d_4064677380613373250.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a0f79ba2105b03a5b72e01c14c1ee79c.png')

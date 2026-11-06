@@ -382,6 +382,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     217: () => elementAtkUp(ELEMENT_TYPE.Anemo).icon('#'),
 
+    218: () => status('召唤物伤害增加').combatStatus().type(STATUS_TYPE.AddDamage)
+        .useCnt(1).maxCnt(MAX_USE_COUNT).icon(STATUS_ICON.Buff)
+        .description('我方召唤物下一次造成的伤害+1。（可叠加，无上限）')
+        .handle((status, event) => ({
+            triggers: isCdt(event.isSummon != -1, 'dmg'),
+            addDmgCdt: 1,
+            exec: () => status.minusUseCnt(),
+        })),
+
     111012: () => status('冰莲').combatStatus().type(STATUS_TYPE.Barrier).useCnt(2)
         .description('【我方出战角色受到伤害时：】抵消1点伤害。；[useCnt]'),
 

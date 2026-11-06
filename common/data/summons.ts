@@ -655,6 +655,47 @@ const allSummons: Record<number, (...args: any) => ReturnType<typeof summon>> = 
             }
         })),
 
+    116140: () => summon('银色豚兽').useCnt(2).damage(0).physical().variables('effect')
+        .description('【结束阶段：】治疗受伤最多的我方角色1点。；【我方其他召唤物造成伤害时：】自身凶猛值+1。；【此卡牌被弃置时：】如果[可用次数]为0，造成等同于凶猛值的[物理伤害]。；[useCnt]')
+        .src('#')
+        .handle((summon, event) => {
+            const { heros, trigger, isSummon } = event;
+            const triggers: Trigger[] = ['phase-end', 'destroy'];
+            if (isSummon != -1 && isSummon != summon.id) triggers.push('dmg');
+            return {
+                triggers,
+                isImmediate: trigger != 'phase-end',
+                exec: cmds => {
+                    if (trigger == 'phase-end') {
+                        cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
+                        return summon.minusUseCnt();
+                    }
+                    if (trigger == 'dmg') return ++summon.damage;
+                    if (trigger == 'destroy' && summon.useCnt == 0) return cmds.attack();
+                }
+            }
+        }),
+
+    116141: () => summon('露米·普通厉害形态').useCnt(1).damage(1).description('{defaultAtk。}')
+        .src('#'),
+
+    116142: () => summon('露米·超厉害形态').useCnt(1).damage(2).description('{defaultAtk。}')
+        .src('#'),
+
+    116145: () => summon('颜色罕见的豚兽').useCnt(2).description('【结束阶段：】不进行任何行动。；[useCnt]')
+        .src('#'),
+
+    116148: () => summon('凶猛伙伴').useCnt(1).damage(2).physical().description('{defaultAtk，然后触发【此卡牌】以外我方全体召唤物的【结束阶段】效果。}')
+        .src('#')
+        .handle((summon, event) => ({
+            triggers: 'phase-end',
+            exec: cmds => {
+                const { summons } = event;
+                summon.phaseEndAtk(cmds)
+                    .summonTrigger({ selectSummon: summons.filter(s => s.entityId != summon.entityId).map(s => s.entityId) });
+            }
+        })),
+
     117011: () => summon('柯里安巴').useCnt(2).damage(2).description('{defaultAtk。}')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/05/12109492/4562f5108720b7a6048440a1b86c963d_9140007412773415051.png'),
 

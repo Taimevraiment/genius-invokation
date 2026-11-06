@@ -187,7 +187,7 @@ export const playerInfoToString = (playerInfo: PlayerInfo, prefixSpace: number =
         + `${prefix1}reconcileCnt: ${playerInfo.reconcileCnt}\n`
         + `${prefix1}discardIds: ${playerInfo.discardIds}\n`
         + `${prefix1}initCardIds: ${playerInfo.initCardIds}\n`
-        + `${prefix1}isUsedCardPerRound: ${playerInfo.isUsedCardPerRound}\n`
+        + `${prefix1}usedCardCnt: ${playerInfo.usedCardCnt}\n`
         + `${prefix}}`;
 }
 
