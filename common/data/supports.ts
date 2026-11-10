@@ -751,25 +751,32 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                     support.minusUseCnt(4);
                     return cmds.getStatus(301018, { isOppo: true }).res;
                 }
-                if (ver.lt('v6.4.0')) support.addUseCntMax(4);
+                if (ver.lt('v6.4.0') && !ver.isOffline) support.addUseCntMax(4);
                 else {
-                    const cnt = ver.lt('v6.6.0') ? 5 : 6;
+                    const cnt = ver.lt('v6.6.0') && !ver.isOffline ? 5 : 6;
                     if (support.addUseCntMax(cnt) == cnt && ehcardsCnt > 0) {
                         support.minusUseCnt(cnt);
-                        cmds.getStatus(208, { isOppo: true });
+                        if (ver.isOffline) cmds.discard({ mode: CMD_MODE.Random, isOppo: true });
+                        else cmds.getStatus(208, { isOppo: true });
                     }
                 }
             }
         }
     }),
     // 清籁岛
-    321019: () => support().round(2).handle((support, event) => {
+    321019: () => support().round(2).handle((support, event, ver) => {
         const { heal, trigger } = event;
         const hidxs = heal.map((hl, hli) => ({ hl, hli })).filter(v => v.hl >= 0).map(v => v.hli);
+        const triggers: Trigger[] = ['heal', 'heal-oppo'];
+        if (!ver.isOffline) triggers.push('phase-end');
         return {
-            triggers: ['heal', 'heal-oppo', 'phase-end'],
+            triggers,
             exec: cmds => {
                 if (trigger == 'phase-end') return { isDestroy: support.minusUseCnt() == 0 }
+                if (ver.isOffline) {
+                    cmds.attack(1, DAMAGE_TYPE.Pierce, { hidxs });
+                    return { isDestroy: support.minusUseCnt() == 0 }
+                }
                 cmds.getStatus(301019, { hidxs, isOppo: trigger == 'heal-oppo' });
             }
         }
@@ -1334,13 +1341,20 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 玛梅赫
-    322021: () => support().collection(3).perCnt(1).handle((support, event) => {
-        const { hcard } = event;
+    322021: () => support().collection(3).collection(0, 'v5').perCnt(1).perCnt(0, 'v5').handle((support, event, ver) => {
+        const { hcard, trigger } = event;
         const subtype = [CARD_SUBTYPE.Food, CARD_SUBTYPE.Ally, CARD_SUBTYPE.Place, CARD_SUBTYPE.Item];
-        if (support.perCnt <= 0 || hcard?.id == support.id || !hcard?.hasSubtype(...subtype)) return;
+        if ((support.perCnt <= 0 && !ver.isOffline) || hcard?.id == support.id || !hcard?.hasSubtype(...subtype)) return;
+        const triggers: Trigger[] = ['card'];
+        if (ver.isOffline && support.useCnt >= 3) triggers.push('phase-start');
         return {
-            triggers: 'card',
+            triggers,
             exec: cmds => {
+                if (ver.isOffline) {
+                    if (trigger == 'card') return support.addUseCnt();
+                    cmds.getCard(1, { subtype, isFromPile: true });
+                    return support.minusUseCnt(3);
+                }
                 support.minusPerCnt();
                 cmds.getCard(1, { subtype, exclude: support.id });
                 return { isDestroy: support.minusUseCnt() == 0 }
@@ -1393,10 +1407,26 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 太郎丸
-    322024: () => support().collection().handle((support, event) => {
+    322024: () => support().collection().handle((support, event, ver) => {
         const { trigger, hcard } = event;
-        if (trigger == 'enter') {
+        if (trigger == 'enter' && !ver.isOffline) {
             return { triggers: trigger, exec: cmds => cmds.addCard(4, 302202, { isRandom: false }).res }
+        }
+        if (ver.isOffline) {
+            const triggers: Trigger[] = [];
+            if (support.useCnt < 2) triggers.push('reconcile');
+            else if (support.useCnt == 2) triggers.push('phase-start');
+            return {
+                triggers,
+                exec: cmds => {
+                    if (trigger == 'phase-start') {
+                        cmds.getSummon(302201);
+                        return { isDestroy: true }
+                    }
+                    support.addUseCnt();
+                    cmds.getDice(1, { element: DICE_COST_TYPE.Omni });
+                }
+            }
         }
         if (hcard?.id != 302202) return;
         return {
@@ -1406,14 +1436,25 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 白手套和渔夫
-    322025: () => support().round(2).handle(support => ({
-        triggers: 'phase-end',
-        exec: cmds => {
-            cmds.addCard(1, 302203, { scope: 5 });
-            if (support.useCnt == 1) cmds.getCard(1);
-            return { isDestroy: support.minusUseCnt() == 0 }
+    322025: () => support().round(2).handle((support, _, ver) => {
+        if (ver.isOffline) {
+            return {
+                triggers: 'phase-start',
+                exec: cmds => {
+                    cmds.getStatus(302204);
+                    return { isDestroy: support.minusUseCnt() == 0 }
+                }
+            }
         }
-    })),
+        return {
+            triggers: 'phase-end',
+            exec: cmds => {
+                cmds.addCard(1, 302203, { scope: 5 });
+                if (support.useCnt == 1) cmds.getCard(1);
+                return { isDestroy: support.minusUseCnt() == 0 }
+            }
+        }
+    }),
     // 亚瑟先生
     322026: () => support().collection().handle((support, event) => {
         const { trigger, epile } = event;
@@ -1612,7 +1653,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 苦舍桓
-    323008: () => support().collection().perCnt(1).handle((support, event) => {
+    323008: () => support().collection().perCnt(1).handle((support, event, ver) => {
         const { hcardsCnt, trigger, isMinusDiceSkill } = event;
         if (trigger == 'phase-start' && (support.useCnt >= 2 || hcardsCnt == 0)) return;
         if (support.perCnt == 0 && (trigger == 'card' || (trigger == 'skill' && support.useCnt == 0))) return;
@@ -1626,7 +1667,7 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
                 if (trigger == 'phase-start') {
                     const cnt = Math.min(hcardsCnt, 2 - support.useCnt);
                     support.addUseCnt(cnt);
-                    return cmds.discard({ cnt, mode: CMD_MODE.HighHandCard }).res;
+                    return cmds.discard({ cnt, mode: ver.isOffline ? CMD_MODE.Random : CMD_MODE.HighHandCard }).res;
                 }
                 if (trigger == 'card') support.minusPerCnt();
                 else if (trigger == 'skill') support.minusUseCnt();

@@ -530,7 +530,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             return {
                 triggers: ['drawcard', 'after-skilltype2'],
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
-                damage: isCdt(status.useCnt >= 4 && trigger == 'after-skilltype2', ver.lt('v6.5.0') ? 2 : 3),
+                damage: isCdt(status.useCnt >= 4 && trigger == 'after-skilltype2', ver.lt('v6.5.0') && !ver.isOffline ? 2 : 3),
                 element: DAMAGE_TYPE.Physical,
                 exec: () => {
                     if (trigger == 'after-skilltype2' && status.useCnt >= 2) {
@@ -544,7 +544,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     111122: () => status('潜猎模式').heroStatus().icon('ski,2').roundCnt(2).type(STATUS_TYPE.Usage).notResetPerCnt()
         .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用「普通攻击」或「元素战技」后：】将[当前元素骰费用]最高的至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]')
-        .handle((status, event) => {
+        .description('【我方抓3张牌后：】提供1点[护盾]，保护所附属角色。（可叠加，最多叠加至2点〔\\；当前已抓{pct}张牌 〕）。；【所附属角色使用「普通攻击」或「元素战技」后：】将至多2张手牌置于牌库底，然后抓等量的牌。；[roundCnt]', 'v5')
+        .handle((status, event, ver) => {
             const { hero, hidx, hcardsCnt, trigger, cmds } = event;
             const triggers: Trigger[] = ['skilltype1', 'skilltype2'];
             const shield = hero.heroStatus.get(111123);
@@ -554,7 +555,8 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 isAddTask: true,
                 exec: () => {
                     if (trigger.includes('skilltype')) {
-                        cmds.putCard({ cnt: 2, mode: CMD_MODE.HighHandCard }).getCard(Math.min(hcardsCnt, 2));
+                        cmds.putCard({ cnt: 2, mode: ver.isOffline ? CMD_MODE.Random : CMD_MODE.HighHandCard })
+                            .getCard(Math.min(hcardsCnt, 2));
                     } else if (trigger == 'drawcard' && status.minusPerCnt() == -3) {
                         status.setPerCnt();
                         cmds.getStatus(111123, { hidxs: hidx });
@@ -2201,7 +2203,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
                 exec: () => {
                     cmds.discard({ mode: CMD_MODE.TopPileCard });
                     if (status.variables.dmg == -1) {
-                        status.variables.dmg = pile[0].currDiceCost + +(ver.lt('v4.8.0'));
+                        status.variables.dmg = pile[0].currDiceCost + +(ver.lt('v4.8.0') && !ver.isOffline);
                         status.variables.cid = pile[0].id;
                     }
                     cmds.attack(status.variables.dmg, DAMAGE_TYPE.Dendro)
@@ -3063,11 +3065,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .handle(continuousActionHandle),
 
     300003: () => status('裁定之时（生效中）').combatStatus()
-        .useCnt(3, 'v6.4.0').roundCnt(1).from(330006)
+        .useCnt(3, 'v6.4.0').useCnt(3, 'v5').roundCnt(1).from(330006)
         .type(ver => ver.lt('v6.4.0'), STATUS_TYPE.NonEvent)
         .type(ver => ver.gte('v6.4.0'), STATUS_TYPE.Usage, STATUS_TYPE.Sign)
         .description('【本回合中，我方下次打出事件牌后：】赋予敌方手牌中所有事件牌【sts208】。；【本回合中，我方[舍弃]手牌后：】将我方手牌中2张[当前元素骰费用]最高的卡牌置入牌组底。')
-        .description('本回合中，我方打出的事件牌无效。；[useCnt]', 'v6.4.0')
+        .description('本回合中，我方打出的事件牌无效。；[useCnt]', 'v6.4.0', 'v5')
         .handle((_, event, ver) => {
             if (ver.lt('v6.4.0')) return;
             const { hcard, trigger, cmds, source: isFromPile } = event;
@@ -3992,11 +3994,13 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     303315: () => status('咚咚嘭嘭（生效中）').heroStatus().useCnt(3)
         .icon(STATUS_ICON.Buff).type(STATUS_TYPE.Usage).from(333018)
         .description('名称不存在于初始牌组中牌加入我方手牌时，所附属角色治疗自身1点。；[useCnt]')
-        .handle((status, event) => {
+        .description('我方打出支援牌时，所附属角色治疗自身1点。；[useCnt]', 'v5')
+        .handle((status, event, ver) => {
             const { hero, playerInfo: { initCardIds }, hidx, hcard, cmds } = event;
-            if (!hcard || initCardIds.includes(hcard?.id) || !hero.isHurt) return;
+            const notCard = !hcard || (ver.isOffline ? hcard.type != CARD_TYPE.Support : initCardIds.includes(hcard?.id))
+            if (notCard || !hero.isHurt) return;
             cmds.heal(1, { hidxs: hidx });
-            return { triggers: 'getcard', exec: () => status.minusUseCnt() }
+            return { triggers: ver.isOffline ? 'card' : 'getcard', exec: () => status.minusUseCnt() }
         }),
 
     303317: () => status('奇瑰之汤·助佑（生效中）').heroStatus().roundCnt(1)

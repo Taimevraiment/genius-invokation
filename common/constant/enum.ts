@@ -431,7 +431,7 @@ export const VERSION = [
 
 export type OnlineVersion = typeof VERSION[number] | 'vlatest';
 
-export const OFFLINE_VERSION = ['v4', 'v3', 'v2', 'v1'] as const;
+export const OFFLINE_VERSION = ['v5', 'v4', 'v3', 'v2', 'v1'] as const;
 
 export type OfflineVersion = typeof OFFLINE_VERSION[number];
 

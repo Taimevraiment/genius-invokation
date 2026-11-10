@@ -194,7 +194,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(1).cost(3).handle(event => ({ heal: 1, hidxs: event.heros.allHidxs(), summon: 111102 }))
         ),
 
-    1111: () => hero(363).name('莱欧斯利').since('v4.7.0').maxHp(11).maxHp(10, 'v6.6.0').fontaine(HERO_TAG.ArkheOusia).cryo().catalyst()
+    1111: () => hero(363).name('莱欧斯利').since('v4.7.0').offline('v5').maxHp(11).maxHp(10, 'v6.6.0', 'v5').fontaine(HERO_TAG.ArkheOusia).cryo().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/064e881b99d30a1ce455d16a11768a24_8173906534678189661.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a9641995fd67126ff2b1e0d0294db57.png')
         .normalSkill('迅烈倾霜拳')
@@ -217,7 +217,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             })
         ),
 
-    1112: () => hero(407).name('菲米尼').since('v5.0.0').fontaine(HERO_TAG.ArkhePneuma).fatui().cryo().claymore()
+    1112: () => hero(407).name('菲米尼').since('v5.0.0').offline('v5').fontaine(HERO_TAG.ArkhePneuma).fatui().cryo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/edc282bd8955faa88895b23c4061a2f5_7931855952099336084.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u9b0pg/4c9e507d20691ab1f31c20ba0003b9a9.png')
         .normalSkill('洑流剑')
@@ -540,7 +540,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .passive().handle(() => ({ triggers: ['game-start', 'revive'], status: 112091 }))
         ),
 
-    1210: () => hero(335).name('那维莱特').since('v4.5.0').maxHp(11).maxHp(10, 'v5.7.0').fontaine(HERO_TAG.ArkhePneuma).hydro().catalyst()
+    1210: () => hero(335).name('那维莱特').since('v4.5.0').offline('v5').maxHp(11).maxHp(10, 'v5.7.0', 'v5').fontaine(HERO_TAG.ArkhePneuma).hydro().catalyst()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/03/06/258999284/86e0474f40841fbc5faff7870fe9cd0c_8511334021456599978.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/eac3491b067897444fbedb6a9a3e58ad.png')
         .normalSkill('如水从平')
@@ -555,7 +555,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(2).cost(3).handle(() => ({ pdmg: 1, status: [[112101, 2]] }))
         ),
 
-    1211: () => hero(364).name('芙宁娜').since('v4.7.0').maxHp(12).maxHp(10, 'v6.2.0').fontaine(HERO_TAG.ArkheOusia).hydro().sword()
+    1211: () => hero(364).name('芙宁娜').since('v4.7.0').offline('v5').maxHp(12).maxHp(10, 'v6.2.0', 'v5').fontaine(HERO_TAG.ArkheOusia).hydro().sword()
         .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/e958e09d88022d4a18633be9bf51b399.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/fa0204761d8dae8b0dbaac46a494752f.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e330408cba4b278428656f4e5c7a8915.png',
@@ -795,7 +795,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .handle(() => ({ status: 113052 }))
         ),
 
-    1306: () => hero(22).name('可莉').since('v3.4.0').mondstadt().pyro().catalyst()
+    1306: () => hero(22).name('可莉').since('v3.4.0').offline('v5').mondstadt().pyro().catalyst()
         .src('https://uploadstatic.mihoyo.com/ys-obc/2023/01/16/12109492/69fb352f7c86836d42648a2bd9c61773_8899766719245799680.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/e5f16924297448c8ac7d582da6f4fe34.png')
         .normalSkill('砰砰')
@@ -858,7 +858,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(3).cost(4).handle(() => ({ status: 113092 }))
         ),
 
-    1310: () => hero(281).name('林尼').since('v4.3.0').fontaine(HERO_TAG.ArkhePneuma).fatui().pyro().bow()
+    1310: () => hero(281).name('林尼').since('v4.3.0').offline('v5').fontaine(HERO_TAG.ArkhePneuma).fatui().pyro().bow()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/e0cc3a4602a418aaebb0855ad147f91e_261319803814200678.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/45a1a4f44d1f5af987980c5079085392.png')
         .normalSkill('迫牌易位式')
@@ -892,7 +892,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(2).cost(3).handle(event => ({ status: [113111, [113112, !!event.talent]] }))
         ),
 
-    1312: () => hero(365).name('辛焱').since('v4.7.0').liyue().pyro().claymore()
+    1312: () => hero(365).name('辛焱').since('v4.7.0').offline('v5').liyue().pyro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/2538459953fb12e38da66416bd1db19a_2302423233068754101.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/78f87dda37f211ee6e090ee66503335d.png')
         .normalSkill('炎舞')
@@ -1237,7 +1237,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(2).cost(3).handle((_, ver) => ({ summon: 114092, statusOppo: isCdt(ver.gte('v4.8.0'), 114091) }))
         ),
 
-    1410: () => hero(35).name('多莉').since('v4.2.0').sumeru().electro().claymore()
+    1410: () => hero(35).name('多莉').since('v4.2.0').offline('v5').sumeru().electro().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/11/04/258999284/20b47c429b784fac1ef2c80d560c93cc_6932125694251188191.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/871b0b3d06bc11d69f9cb1df72309371.png')
         .normalSkill('妙显剑舞·改')
@@ -1252,7 +1252,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(1).cost(3).handle(event => ({ summon: [[114102, !!event.talent]] }))
         ),
 
-    1411: () => hero(348).name('久岐忍').since('v4.6.0').inazuma().electro().sword()
+    1411: () => hero(348).name('久岐忍').since('v4.6.0').offline('v5').inazuma().electro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/97e8a503ac00ee72817a33b15bc6e971_1406073271702365176.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/4a44a309f2d797406a2389655b03234d.png')
         .normalSkill('忍流飞刃斩')
@@ -1574,7 +1574,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 })
         ),
 
-    1507: () => hero(320).name('早柚').since('v4.4.0').inazuma().anemo().claymore()
+    1507: () => hero(320).name('早柚').since('v4.4.0').offline('v5').inazuma().anemo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/01/25/258999284/7ba293dd475e123f98a89e2c6448c22d_2852763407290233167.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/9f7f3f7d1794d4d58b3bce4ba311c170.png')
         .normalSkill('忍刀·终末番')
@@ -1589,7 +1589,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(1).cost(3).handle(() => ({ summon: 115072 }))
         ),
 
-    1508: () => hero(282).name('琳妮特').since('v4.3.0').fontaine(HERO_TAG.ArkheOusia).fatui().anemo().sword()
+    1508: () => hero(282).name('琳妮特').since('v4.3.0').offline('v5').fontaine(HERO_TAG.ArkheOusia).fatui().anemo().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/138a3a7a50a96267097824590e869fe1_5113881666208140363.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/a9748bebc335c1ae1931f633742f818e.png')
         .normalSkill('迅捷礼刺剑')
@@ -1918,7 +1918,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(3).damage(2, 'v4.8.0').cost(3).handle(() => ({ status: [[116073, 3]] }))
         ),
 
-    1608: () => hero(396).name('娜维娅').since('v4.8.0').fontaine(HERO_TAG.ArkheOusia).geo().claymore()
+    1608: () => hero(396).name('娜维娅').since('v4.8.0').offline('v5').fontaine(HERO_TAG.ArkheOusia).geo().claymore()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/4c23484ade8f496c7bbf790a1dd43d30_170105147546023510.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/684bdd3ce161df1f5acb5ddc4aa59505.png')
         .normalSkill('直率的辞绝')
@@ -1937,9 +1937,15 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/7ae275333bb0c81948bea2c0d00a23aa_778675072682900471.png')
                 .burst(2).damage(1).cost(3).handle(({ cmds }) => (cmds.getCard(1, { card: 116081 }), { pdmg: 1, summon: 116082 })),
             skill('互助关系网').description('【敌方角色受到结晶反应伤害后：】生成3张【crd116081】，随机置入我方牌库中。')
+                .description('【敌方角色受到结晶反应伤害后：】生成1张【crd116081】，加入手牌。', 'v5')
                 .src('https://patchwiki.biligame.com/images/ys/6/6c/l8wc2drm8xfqy6r6xx67wdz4v9juh71.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/07/07/258999284/9a263a986264889c557bf0d205e8c7a8_1252019379378683321.png')
-                .passive().handle(({ cmds }) => (cmds.addCard(3, 116081), { triggers: 'Crystallize-oppo' }))
+                .passive().handle((event, ver) => {
+                    const { cmds } = event;
+                    if (ver.isOffline) cmds.getCard(1, { card: 116081 });
+                    else cmds.addCard(3, 116081);
+                    return { triggers: 'Crystallize-oppo' }
+                })
         ),
 
     1609: () => hero(420).name('千织').since('v5.1.0').inazuma().geo().sword()
@@ -2172,7 +2178,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).cost(4).handle(() => ({ status: [117052, 117053] }))
         ),
 
-    1706: () => hero(284).name('艾尔海森').since('v4.3.0').sumeru().dendro().sword()
+    1706: () => hero(284).name('艾尔海森').since('v4.3.0').offline('v5').sumeru().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/05/258999284/2b1b835110bfe23777d9e9a19a010c4b_6565453178979267276.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/987050c315dd16f26cfd23acc48c9114.png')
         .normalSkill('溯因反绎法')
@@ -2212,7 +2218,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(4).cost(3).handle(() => ({ statusOppo: 117073 }))
         ),
 
-    1708: () => hero(367).name('卡维').since('v4.7.0').maxHp(12).maxHp(10, 'v6.0.0').sumeru().dendro().sword()
+    1708: () => hero(367).name('卡维').since('v4.7.0').offline('v5').maxHp(12).maxHp(10, 'v6.0.0', 'v5').sumeru().dendro().sword()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/04/258999284/2879f08ce85d5ab6c5b69e8e729923e5_5879182844975848941.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/b7673cdfbbc24627cabf32bb1a3efe0c.png')
         .normalSkill('旋规设矩')
@@ -2351,7 +2357,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(3).damage(5).cost(3).handle(event => ({ isAttach: true, status: [[121012, event.summons.getUseCnt(121011)]] }))
         ),
 
-    2102: () => hero(277).name('「女士」').since('v4.3.0').fatui().cryo()
+    2102: () => hero(277).name('「女士」').since('v4.3.0').offline('v5').fatui().cryo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/20/258999284/f5904898779c5de0fd9cf2f207f5d2f8_1917054016449064269.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/b433655430a3f8d58e2e9f73b83567a3.png')
         .normalSkill(skill => skill('霜锋霰舞').catalyst())
@@ -2521,7 +2527,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .burst(2).damage(5).cost(3)
         ),
 
-    2203: () => hero(350).name('深渊使徒·激流').since('v4.6.0').maxHp(6).monster().hydro()
+    2203: () => hero(350).name('深渊使徒·激流').since('v4.6.0').offline('v5').maxHp(6).monster().hydro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/8e4f28eaf527a26d7b014eed8ee0f966_202629246380655977.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_ud1cjg/2fe9a301115a32a2006fa0b075760551.png')
         .normalSkill('波刃锋斩')
@@ -2946,7 +2952,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .passive().handle(({ cmds }) => (cmds.addCard(2, 124051, { scope: 10 }), { triggers: 'turn-end' }))
         ),
 
-    2406: () => hero(421).name('深渊咏者·紫电').since('v5.1.0').maxHp(6).monster().electro()
+    2406: () => hero(421).name('深渊咏者·紫电').since('v5.1.0').offline('v5').maxHp(6).monster().electro()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/10/08/258999284/a4da9c3a6be238f2edb2f7a59187c3ae_1949002269283702790.png')
         .avatar('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_char_icon_u539vg/91a752a687a07ebac5cd8e8241806cc6.png')
         .normalSkill(skill => skill('渊薮落雷').catalyst())
@@ -3094,7 +3100,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .passive().handle(() => ({ triggers: 'game-start', status: [126011, 126012] }))
         ),
 
-    2602: () => hero(278).name('若陀龙王').since('v4.3.0').monster().geo()
+    2602: () => hero(278).name('若陀龙王').since('v4.3.0').offline('v5').monster().geo()
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2023/12/19/258999284/521fdaa2d51e93166ccbf2a91a1047aa_2809827424052136166.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/1dde94ee671e2a61b42ff051b816f490.png',
             'https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_card_face_u084qf/e1688d349ca1ff0f5f78bb6bdae07b6f.png',

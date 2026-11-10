@@ -1,5 +1,5 @@
 import { Skill } from "../../typing.js"
-import { CARD_SUBTYPE, CMD_MODE, COST_TYPE, DAMAGE_TYPE, ELEMENT_TYPE, PureElementType, VERSION, Version } from "../constant/enum.js"
+import { CARD_SUBTYPE, CARD_TYPE, CMD_MODE, COST_TYPE, DAMAGE_TYPE, ELEMENT_TYPE, PureElementType, VERSION, Version } from "../constant/enum.js"
 import { getHidById } from "../utils/gameUtil.js"
 import { isCdt } from "../utils/utils.js"
 import { skill, SkillBuilder } from "./builder/skillBuilder.js"
@@ -229,12 +229,14 @@ export const allSkills: Record<number, () => SkillBuilder> = {
         .vehicle().damage(2).costAny(2),
 
     3130021: () => skill('钩物巧技').description('{dealDmg}，窃取1张[当前元素骰费用]最高的对方手牌，然后对手抓1张牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。')
+        .description('{dealDmg}，随机[舍弃]1张对方手牌，然后对手抓1张牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。', 'v5')
         .description('{dealDmg}，窃取1张原本元素骰费用最高的对方手牌。；如果我方手牌数不多于2，此特技少花费1个元素骰。', 'v5.4.0')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/08/27/258999284/47028d693a802faabc73d11039645385_3536480308383070177.png')
         .vehicle().damage(1).costSame(2).handle((event, ver) => {
             const { hcards, cmds } = event;
-            cmds.stealCard(1, CMD_MODE.HighHandCard);
-            if (ver.gte('v5.4.0')) cmds.getCard(1, { isOppo: true });
+            if (ver.isOffline) cmds.discard({ mode: CMD_MODE.Random, isOppo: true });
+            else cmds.stealCard(1, CMD_MODE.HighHandCard);
+            if (ver.gte('v5.4.0') || ver.isOffline) cmds.getCard(1, { isOppo: true });
             return { minusDiceSkill: isCdt(hcards.length <= 2, { skilltype5: [0, 0, 1] }) }
         }),
 
@@ -247,29 +249,36 @@ export const allSkills: Record<number, () => SkillBuilder> = {
             })),
 
     3130041: () => skill('掘进突击').description('抓2张牌。然后，如果手牌中存在名称不存在于本局最初牌组中的牌，则提供2点[护盾]保护所附属角色。')
+        .description('抓2张牌，治疗附属角色1点。', 'v5')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/10/04/258999284/e9339d30ff4a5642b32bc1208063a08c_2715679545278748017.png')
-        .vehicle().costAny(2).handle(event => {
+        .vehicle().costAny(2).handle((event, ver) => {
             const { hcards, playerInfo: { initCardIds }, pile, cmds } = event;
             cmds.getCard(2);
-            if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {
+            if (ver.isOffline) cmds.heal(1);
+            else if ([...hcards, ...pile.slice(0, 2)].some(c => !initCardIds.includes(c.id))) {
                 cmds.getStatus(301301);
             }
         }),
 
     3130051: () => skill('灵性援护').description('从「场地」「道具」「料理」中[挑选]1张加入手牌，并且治疗附属角色1点。')
+        .description('从我方牌库底展示卡牌，直到出现1张支援牌为止，将这张支援牌加入手牌，然后将你的牌库洗牌。治疗附属角色1点。', 'v5')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/11/17/258999284/80e0cad80855e14a1efebb4b6ba2cd67_801740963269596598.png')
-        .vehicle().costSame(1).handle(({ cmds }) => {
-            cmds.heal(1).pickCard(3, CMD_MODE.GetCard, { subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food], isSpecify: true });
+        .vehicle().costSame(1).handle((event, ver) => {
+            const { cmds } = event;
+            cmds.heal(1);
+            if (ver.isOffline) cmds.getCard(1, { cardFilter: c => c.type == CARD_TYPE.Support, isFromPile: true });
+            else cmds.pickCard(3, CMD_MODE.GetCard, { subtype: [CARD_SUBTYPE.Place, CARD_SUBTYPE.Item, CARD_SUBTYPE.Food], isSpecify: true });
         }),
 
     3130063: () => skill('迅疾滑翔').description('[舍弃]1张[当前元素骰费用]最高的手牌，切换到下一名角色，敌方出战角色附属【sts301302】。')
+        .description('切换到下一名角色。', 'v5')
         .description('切换到下一名角色，敌方出战角色附属【sts301302】。', 'v6.6.0')
         .src('#', 'https://act-upload.mihoyo.com/wiki-user-upload/2024/12/31/258999284/796ae18833e4f5507dfb6b187bd47f50_8652305763536855055.png')
-        .vehicle().costSame(1).handle((event, ver) => {
+        .vehicle().costSame(1).costSame(0, 'v5').handle((event, ver) => {
             const { cmds, hcardsCnt } = event;
             if (ver.gte('v6.6.0')) cmds.discard({ cnt: 1, mode: CMD_MODE.HighHandCard });
             cmds.switchAfter();
-            return { isForbidden: ver.gte('v6.6.0') && hcardsCnt == 0, statusOppo: 301302 }
+            return { isForbidden: ver.gte('v6.6.0') && hcardsCnt == 0, statusOppo: isCdt(!ver.isOffline, 301302) }
         }),
 
     3130071: () => skill('浪船·迅击炮').description('{dealDmg}。')
