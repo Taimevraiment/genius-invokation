@@ -844,14 +844,14 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .type(STATUS_TYPE.Usage, STATUS_TYPE.Accumulate, STATUS_TYPE.ConditionalEnchant).icon(STATUS_ICON.Enchant)
         .description('此状态初始具有1层「破局」\\；重复附属时，叠加1层「破局」。「破局」最多可以叠加到3层。；【结束阶段：】叠加1层「破局」。；【所附属角色「普通攻击」时：】如果「破局」已有2层，则消耗2层「破局」，使造成的[物理伤害]转换为[水元素伤害]，并抓1张牌。')
         .handle((status, event) => {
-            const { trigger, cmds } = event;
+            const { trigger, cmds, skill } = event;
             const triggers: Trigger[] = [];
             if (status.useCnt < status.maxCnt) triggers.push('phase-end');
             if (status.useCnt >= 2) triggers.push('skilltype1');
             if (trigger == 'skilltype1') cmds.getCard(1);
             return {
                 triggers,
-                attachEl: isCdt(status.useCnt >= 2 && trigger == 'skilltype1', ELEMENT_TYPE.Hydro),
+                attachEl: isCdt(status.useCnt >= 2 && skill?.type == SKILL_TYPE.Normal, ELEMENT_TYPE.Hydro),
                 exec: () => {
                     if (trigger == 'skilltype1') status.minusUseCnt(2);
                     else if (trigger == 'phase-end') status.addUseCnt();

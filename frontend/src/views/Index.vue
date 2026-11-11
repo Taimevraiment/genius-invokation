@@ -111,7 +111,7 @@ const playerStatus = ref([
 ]); // 玩家状态
 const info = ref<InfoVO>({ version: 'v3.3.0', isShow: true, type: null, info: null }); // 为pupeteer截图时使用
 const infoContent = ref<string>('');
-const version = ref<string>('v1.7.12');
+const version = ref<string>('v1.7.13');
 const noticeContent = ``;
 const allEntities = (version: Version) => [...herosTotal(version, true), ...cardsTotal(version, { force: true }), ...summonsTotal(version)];
 let followIdx: number = -1; // 跟随的玩家id
