@@ -182,7 +182,7 @@ export const playerInfoToString = (playerInfo: PlayerInfo, prefixSpace: number =
         + `${prefix1}usedCardIds: ${playerInfo.usedCardIds}\n`
         + `${prefix1}destroyedSupport: ${playerInfo.destroyedSupport}\n`
         + `${prefix1}destroyedSummon: ${playerInfo.destroyedSummon}\n`
-        + `${prefix1}oppoGetElDmgType: ${playerInfo.oppoGetElDmgType}\n`
+        + `${prefix1}oppoGetElDmgType: ${playerInfo.oppoGetElDmgType.toString(2).padStart(7, '0')}\n`
         + `${prefix1}discardCnt: ${playerInfo.discardCnt}\n`
         + `${prefix1}reconcileCnt: ${playerInfo.reconcileCnt}\n`
         + `${prefix1}discardIds: ${playerInfo.discardIds}\n`

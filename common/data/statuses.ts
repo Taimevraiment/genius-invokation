@@ -428,11 +428,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     111061: () => status('冷酷之心').heroStatus().icon(STATUS_ICON.ElementAtkUp).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
-        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。')
-        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+2。', 'v3.8.0')
+        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。', 'v7.3.0')
+        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+2。', 'v3.8.0', 'vlatest')
         .handle((status, _, ver) => ({
             triggers: 'skilltype2',
-            addDmgCdt: ver.lt('v3.8.0') ? 2 : 3,
+            addDmgCdt: ver.lt('v3.8.0') || ver.gte('v7.3.0') ? 2 : 3,
             exec: () => status.minusUseCnt(),
         })),
 
@@ -523,14 +523,15 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     111121: () => status('佩伊刻计').heroStatus().icon(STATUS_ICON.Buff).useCnt(0)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
-        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成3点[物理伤害]。')
+        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有3层，则再额外造成3点[物理伤害]。')
+        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成3点[物理伤害]。', 'v7.3.0')
         .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成2点[物理伤害]。', 'v6.5.0')
         .handle((status, event, ver) => {
             const { trigger } = event;
             return {
                 triggers: ['drawcard', 'after-skilltype2'],
                 minusDiceSkill: isCdt(status.useCnt >= 2, { skilltype2: [0, 0, 1] }),
-                damage: isCdt(status.useCnt >= 4 && trigger == 'after-skilltype2', ver.lt('v6.5.0') && !ver.isOffline ? 2 : 3),
+                damage: isCdt(status.useCnt >= (ver.lt('v7.3.0') ? 4 : 3) && trigger == 'after-skilltype2', ver.lt('v6.5.0') && !ver.isOffline ? 2 : 3),
                 element: DAMAGE_TYPE.Physical,
                 exec: () => {
                     if (trigger == 'after-skilltype2' && status.useCnt >= 2) {
@@ -999,6 +1000,19 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     112173: () => status('抗性').combatStatus().useCnt(1).type(STATUS_TYPE.Barrier, STATUS_TYPE.Sign)
         .description('【我方出战角色受到伤害时：】抵消1点伤害。'),
+
+    112174: () => status('引力干涉').combatStatus().roundCnt(1).useCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Attack)
+        .description('敌方受到[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。；[useCnt]')
+        .handle((status, event) => {
+            const { trigger, cmds } = event;
+            if (trigger == 'LunarElectroCharged-oppo') cmds.attack(1, DAMAGE_TYPE.Electro);
+            else if (trigger == 'LunarBloom-oppo') cmds.attack(1, DAMAGE_TYPE.Dendro);
+            else if (trigger == 'LunarCrystallize-oppo') cmds.attack(1, DAMAGE_TYPE.Geo);
+            return {
+                triggers: ['LunarElectroCharged-oppo', 'LunarBloom-oppo', 'LunarCrystallize-oppo'],
+                exec: () => status.minusUseCnt(),
+            }
+        }),
 
     113011: () => enchantStatus(ELEMENT_TYPE.Pyro).roundCnt(2),
 
@@ -4067,16 +4081,20 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
             exec: () => status.minusUseCnt(),
         })),
 
-    330016: () => status('统一盟誓').combatStatus().type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign).icon('#').from(330015)
-        .description('【投掷阶段：】总是投出3个[万能元素骰]。；【我方引发元素反应时：】造成的伤害+1。；【我方引发元素反应后：】治疗我方受伤最多角色1点。')
-        .handle((_, event) => {
+    330016: () => status('统一盟誓').combatStatus().icon('#').from(330015)
+        .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage).type(ver => ver.lt('v7.3.0'), STATUS_TYPE.Sign)
+        .description('【投掷阶段：】总是投出3个[万能元素骰]。；【我方引发元素反应时：】造成的伤害+1。（每回合3次）；【我方引发元素反应后：】治疗我方受伤最多角色1点。（每回合3次）')
+        .description('【投掷阶段：】总是投出3个[万能元素骰]。；【我方引发元素反应时：】造成的伤害+1。；【我方引发元素反应后：】治疗我方受伤最多角色1点。', 'v7.3.0')
+        .useCnt(3).useCnt(0, 'v7.3.0').resetUseCnt().handle((status, event, ver) => {
             const { trigger, cmds, heros } = event;
+            if (ver.gte('v7.3.0') && status.useCnt <= 0) return;
             if (trigger == 'elReaction' && heros.hasHurt) cmds.heal(1, { hidxs: heros.getMaxHurtHidxs() });
             return {
                 triggers: ['phase-dice', 'elReaction'],
                 diceEl: DICE_COST_TYPE.Omni,
                 cnt: 3,
                 addDmgCdt: 1,
+                exec: () => ver.gte('v7.3.0') && status.minusUseCnt(),
             }
         }),
 

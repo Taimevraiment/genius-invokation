@@ -1541,7 +1541,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/04/15/258999284/2bfc84b730feaf6a350373080d97c255_2788497572764739451.png'),
 
     321020: () => card(388).name('赤王陵').since('v4.7.0').place().costSame(1)
-        .description('【对方累积抓4张牌后：】弃置此牌，在对方牌库顶生成2张【crd301020】。然后直到本回合结束前，对方每抓1张牌，就立刻生成1张【crd301020】随机地置入对方牌库中。')
+        .description('【对方累积抓3张牌后：】弃置此牌，在对方牌库顶生成1张【crd301020】。然后直到本回合结束前，对方每抓1张牌，就立刻生成1张【crd301020】随机地置入对方牌库中。')
+        .description('【对方累积抓4张牌后：】弃置此牌，在对方牌库顶生成2张【crd301020】。然后直到本回合结束前，对方每抓1张牌，就立刻生成1张【crd301020】随机地置入对方牌库中。', 'v7.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2024/06/02/258999284/ad50dbbd94e8a1e52add8ad5efa5d61f_7946928210268600604.png'),
 
     321021: () => card(389).name('中央实验室遗址').since('v4.7.0').offline('v5').place().costSame(1)
@@ -1594,7 +1595,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/24/288180982/9cba92d0f29a1547c9c68f3953efefc9_2717868289367730036.png'),
 
     321036: () => card(562).name('汐印石').since('v6.4.0').place().costSame(0)
-        .description('【行动阶段开始时：】赋予敌方随机1张手牌【sts201】和【sts207】。；[可用次数]：2')
+        .description('【敌方每次使用1张行动牌后：】赋予敌方[当前元素骰费用]最低的1张手牌【sts201】和【sts207】。；[可用次数]：2')
+        .description('【行动阶段开始时：】赋予敌方随机1张手牌【sts201】和【sts207】。；[可用次数]：2', 'v7.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/24/288180982/0cb05c1020cc4d0eb0c6d89f8b65c968_8019206931954092523.png'),
 
     321037: () => card(563).name('霜月之坊').since('v6.4.0').place().costSame(4)
@@ -1787,7 +1789,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .description('【我方触发月感电或月绽放反应时：】我方出战角色附属【sts172】。（每回合1次）', 'v7.1.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/05/16/258999284/d0c44ee71c2abe3e2d6795279958d032_4093699726964281394.png'),
 
-    322035: () => card(635).name('彩特琳德').since('v7.2.0').ally().costSame(0)
+    322035: () => card(635).name('彩特琳德').since('v7.2.0').ally().costSame(1).costSame(0, 'v7.3.0')
         .description('【敌方打出名称不存在于我方本局最初牌组的牌时：】治疗我方受伤最多的角色1点。（每回合2次）')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/11/02/258999284/5a7147e0e64316f0737e063f4ee45931_5711321190415668559.png'),
 
@@ -1938,7 +1940,8 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         }),
 
     330015: () => card(637).name('浮槃之歌').since('v7.2.0').legend().costSame(2)
-        .description('我方队伍中存在3种不同元素类型的角色时才可打出，将我方3个元素骰转换为[万能元素骰]，本局游戏中我方【投掷阶段：】总是投出3个[万能元素骰]。【我方引发元素反应时：】造成的伤害+1。【我方引发元素反应后：】治疗我方受伤最多角色1点。')
+        .description('我方队伍中存在3种不同元素类型的角色时才可打出，将我方3个元素骰转换为[万能元素骰]，本局游戏中我方【投掷阶段：】总是投出3个[万能元素骰]。；【我方引发元素反应时：】造成的伤害+1。（每回合3次）；【我方引发元素反应后：】治疗我方受伤最多角色1点。（每回合3次）')
+        .description('我方队伍中存在3种不同元素类型的角色时才可打出，将我方3个元素骰转换为[万能元素骰]，本局游戏中我方【投掷阶段：】总是投出3个[万能元素骰]。【我方引发元素反应时：】造成的伤害+1。【我方引发元素反应后：】治疗我方受伤最多角色1点。', 'v7.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/11/02/258999284/6c1634ce076857a5f44c85c09e9ae96f_1221781969215032981.png')
         .handle((_, event) => {
             const { cmds, heros } = event;
@@ -3896,7 +3899,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
             return { triggers: 'trigger', exec: () => card.minusPerCnt() }
         }),
 
-    216141: () => card(639).name('大师级的冒险者').since('v7.3.0').talent(0).costGeo(1).anydice(2).perCnt(1)
+    216141: () => card(639).name('大师级的冒险者').since('v7.3.0').talent(0).costGeo(1).anydice(1).perCnt(1)
         .description('{action在敌方场上召唤【smn116145】，并}；装备有此牌的【hro】在场时，我方【hro】使用【ski】时，少花费2个[无色元素骰]（每回合1次），并且我方【hro】使用【ski】后，使敌方场上随机召唤物[可用次数]-1，基于目标召唤物生成一张手牌。；选中目标为【smn116145】时，生成手牌【crd116149】。；选中目标为其他召唤物且其[可用次数]至少为2时，生成手牌【crd116146】。；选中目标为其他召唤物且其[可用次数]少于2时，生成手牌【crd116147】。')
         .src('#')
         .handle((card, event) => {
@@ -4576,7 +4579,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/08/12/258999284/88e1a7e855964f69025fceb68d97e8aa_2481796959680265379.png'),
 
     115172: () => card().name('烈风终坠').event().costSame(2)
-        .description('为【hro】[挑选]一项技能，在下个回合开始移除我方1个骰子，切换至【hro】，并准备对应技能：；造成6点[风元素伤害]。；或；根据我方角色附属对应的元素附魔。然后进行2次「普通攻击」。')
+        .description('为【hro】[挑选]一项技能，在下个回合开始移除我方1个骰子，切换至【hro】，并[准备技能]：；造成6点[风元素伤害]。；或；根据我方角色附属对应的元素附魔。然后[准备技能]：2次「普通攻击」。')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/11/03/258999284/e13bd683738a5697118ebe958ee4b079_7571749495080224903.png')
         .handle((_, { cmds }) => cmds.pickCard(2, CMD_MODE.UseCard, { card: [115173, 115174] })),
 

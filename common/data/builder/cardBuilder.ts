@@ -198,8 +198,8 @@ export class GICard extends Entity {
             if (subType.includes(CARD_SUBTYPE.Action)) {
                 if (!this.UI.explains.includes(ski)) this.UI.explains.unshift(ski);
                 const ohandle = handle;
-                // const skillId = hid * 10 + (userType as number) + 1;
-                const skillId = userType == -2 ? -1 : (userType as number) + 1;
+                const skillId = userType == -2 ? -1 : hid * 10 + (userType as number) + 1;
+                // const skillId = userType == -2 ? -1 : (userType as number) + 1;
                 handle = (card, event, ver) => {
                     const { slotUse, autoUse, cmds } = event;
                     const ohandleres = ohandle?.(card, event, ver);

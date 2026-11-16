@@ -782,11 +782,12 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 赤王陵
-    321020: () => support().collection().handle(support => ({
+    321020: () => support().collection().handle((support, _, ver) => ({
         triggers: 'drawcard-oppo',
         exec: cmds => {
-            if (support.addUseCnt() < 4) return;
-            cmds.addCard(2, 301020, { scope: 2, isOppo: true }).getStatus(301022, { isOppo: true });
+            if (support.addUseCnt() < (ver.lt('v7.3.0') ? 4 : 3)) return;
+            const cnt = ver.lt('v7.3.0') ? 2 : 1;
+            cmds.addCard(cnt, 301020, { scope: cnt, isOppo: true }).getStatus(301022, { isOppo: true });
             return { isDestroy: true }
         },
     })),
@@ -988,10 +989,10 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
         }
     }),
     // 汐印石
-    321036: () => support().round(2).handle(support => ({
-        triggers: 'phase-start',
+    321036: () => support().round(2).handle((support, _, ver) => ({
+        triggers: ver.lt('v7.3.0') ? 'phase-start' : 'ecard',
         exec: cmds => {
-            cmds.getStatus([201, 207], { isOppo: true });
+            cmds.getStatus([201, 207], { isOppo: true, mode: isCdt(ver.gte('v7.3.0'), CMD_MODE.LowHandCard) });
             return { isDestroy: support.minusUseCnt() == 0 }
         }
     })),

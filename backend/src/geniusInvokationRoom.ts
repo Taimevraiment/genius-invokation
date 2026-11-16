@@ -578,7 +578,7 @@ export default class GeniusInvokationRoom {
                     }
                 });
             }
-            if (this.id < 0 && flag == 'roomInfoUpdate') this.recordData.pidx = pidx;
+            if (this.id < 0 && flag.startsWith('roomInfoUpdate')) this.recordData.pidx = pidx;
             callback?.();
         } catch (e) {
             const error: Error = e as Error;
@@ -1932,7 +1932,7 @@ export default class GeniusInvokationRoom {
         }
         const assignDmgTrigger = (triggers: Set<Trigger>[], isA: boolean) => {
             const admgIdxOffset = isA ? aGetDmgIdxOffset : getDmgIdxOffset;
-            if (!isSwirl && !swirlDmg || isSwirl && isSwirlExec) {
+            if (!isSwirl || isSwirlExec) {
                 triggers.forEach((trg, tidx) => {
                     const [elDmg, pierceDmg] = res.willDamages[tidx + admgIdxOffset];
                     const isOtherGetDmg = res.willDamages.slice(admgIdxOffset, admgIdxOffset + ehlen)
@@ -4316,6 +4316,7 @@ export default class GeniusInvokationRoom {
                         heros[hidxs[0]].id = id;
                         heros[hidxs[0]].entityId = entityId;
                         assign(heros[hidxs[0]].heroStatus, chsts);
+                        this._updateStatus(cpidx, [], heros[hidxs[0]].heroStatus, { hidx: hidxs[0] });
                         heros[hidxs[0]].hp = hp;
                         heros[hidxs[0]].isFront = isFront;
                         heros[hidxs[0]].hidx = hidx;
@@ -5404,7 +5405,7 @@ export default class GeniusInvokationRoom {
                 }
             });
         }
-        skills.forEach(curSkill => {
+        curHero.skills.forEach(curSkill => {
             const skillres = curSkill.handle({
                 ...handleEvent,
                 skill: curSkill,
