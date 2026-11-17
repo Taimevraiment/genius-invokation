@@ -368,7 +368,7 @@ export const getEntityHandleEvent = <T extends InputHandle<Partial<EntityHandleE
         isMinusDiceCard,
         minusDiceCard,
         isMinusDiceSkill: !!skill?.costChange[2].includes(entity.entityId ?? entity.id ?? -1),
-        isMinusDiceTalent: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && isMinusDiceTalent,
+        isMinusDiceTalent: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Talent) && hcard.userType == heros[hidx].id && isMinusDiceTalent,
         isMinusDiceWeapon: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Weapon),
         isMinusDiceRelic: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Relic),
         isMinusDiceVehicle: isMinusDiceCard && !!hcard && hcard.hasSubtype(CARD_SUBTYPE.Vehicle),

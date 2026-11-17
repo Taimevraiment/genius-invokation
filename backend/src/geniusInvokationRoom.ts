@@ -3140,7 +3140,7 @@ export default class GeniusInvokationRoom {
     } = {}) {
         const player = this.players[pidx];
         const { name, heros, hidx: ahidx, combatStatus } = player;
-        const { types, hcard, heal, getdmg, dmg, hasDmg, isSummon, source, sourceHidx = -1, dmgElement, isAfterSkill, sourceStatus,
+        const { types, hcard, heal, getdmg, dmg, hasDmg, isSummon, source, sourceHidx, dmgElement, isAfterSkill, sourceStatus,
             isSwirlExec, dmgedHidx, sourceSummon, cStatus, cSlot, isOnlyHero, skill, includeCombatStatus, isImmediate,
         } = options;
         let { hidxs = heros.allHidxs(), restDmg = -1, minusDiceCard = 0, switchHeroDiceCnt = 0 } = options;
@@ -3176,7 +3176,7 @@ export default class GeniusInvokationRoom {
                     if (trigger == 'reduce-dmg' && isStatus && hfield.hasType(STATUS_TYPE.Barrier) && hfield.variables[STATUS_TYPE.Barrier] == 0) continue;
                     if (trigger == 'status-destroy' && isStatus && hfield.id == source) continue;
                     if (trigger == 'will-killed' || trigger == 'other-will-killed') {
-                        if (heros[sourceHidx]?.isDie) {
+                        if (heros[sourceHidx ?? hidx]?.isDie) {
                             if (hfield.variables[STATUS_TYPE.NonDefeat] == 0) continue;
                             if (hfield.variables[CARD_TAG.NonDefeat] == 0) continue;
                         } else {
@@ -3251,7 +3251,7 @@ export default class GeniusInvokationRoom {
                     const hfieldType = isStatus ? 'Status' : 'Slot';
                     const execute = () => {
                         if (hfield.useCnt == 0 && isStatus && !hfield.hasType(STATUS_TYPE.Shield, STATUS_TYPE.Accumulate)) return true;
-                        if (trigger != 'will-killed' && trigger != 'other-will-killed' && heros[hidx].isDie) return true;
+                        if (trigger != 'will-killed' && trigger != 'other-will-killed' && heros[sourceHidx ?? hidx]?.isDie) return true;
                         const oCnt = hfield.useCnt;
                         const oPct = hfield.perCnt;
                         const isCancel = hfieldres.exec?.();

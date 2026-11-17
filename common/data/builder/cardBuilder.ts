@@ -200,6 +200,7 @@ export class GICard extends Entity {
                 const ohandle = handle;
                 const skillId = userType == -2 ? -1 : hid * 10 + (userType as number) + 1;
                 // const skillId = userType == -2 ? -1 : (userType as number) + 1;
+                const needFront = userType != -1;
                 handle = (card, event, ver) => {
                     const { slotUse, autoUse, cmds } = event;
                     const ohandleres = ohandle?.(card, event, ver);
@@ -207,7 +208,7 @@ export class GICard extends Entity {
                         cmds.useSkill({ skillId, autoUse });
                         return { triggers: 'skill', ...ohandleres }
                     }
-                    return { ...ohandleres, isValid: (ohandleres?.isValid ?? true) && !!event.heros.get(hid)?.isFront };
+                    return { ...ohandleres, isValid: (ohandleres?.isValid ?? true) && (!needFront || !!event.heros.get(hid)?.isFront) };
                 }
             }
             if (userType == -3) {

@@ -120,7 +120,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
             skill('冰潮的涡旋').description('{dealDmg}，如果角色未附属【sts111061】，则使其附属【sts111061】。')
                 .src('https://patchwiki.biligame.com/images/ys/8/8a/q921jjp73rov2uov6hzuhh1ncxzluew.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/7cd81d9357655d9c620f961bb8d80b59_6750120717511006729.png')
-                .elemental().damage(3).damage(2, 'v7.3.0').cost(3).handle(event => ({ status: isCdt(!event.hero.heroStatus.has(111061), 111061) })),
+                .elemental().damage(3).damage(2, 'v7.3.0', 'v2').cost(3).handle(event => ({ status: isCdt(!event.hero.heroStatus.has(111061), 111061) })),
             skill('凝浪之光剑').description('{dealDmg}，召唤【smn111062】。')
                 .src('https://patchwiki.biligame.com/images/ys/a/aa/1qme7ho5ktg0yglv8mv7a2xf0i7w6fu.png',
                     'https://uploadstatic.mihoyo.com/ys-obc/2023/02/04/12109492/c17312b62a4b4cf7a5d3cfe0cccceb9c_3754080379232773644.png')
@@ -902,10 +902,11 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
         .normalSkill('炎舞')
         .skills(
             skill('热情拂扫').description('{dealDmg}，随机[舍弃]1张[当前元素骰费用]最高的手牌，生成【sts113121】。')
+                .description('{dealDmg}，[舍弃]1张手牌，生成【sts113121】。', 'v5')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20230518cardlanding/picture/dbd50c015ba92d80ee8c5feab9b1f16d.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2024/06/03/258999284/32dd71b5685b54f23af58c4afa8cffc7_1218700248488941422.png')
                 .elemental().damage(2).cost(3).handle((event, ver) => {
-                    event.cmds.discard({ mode: CMD_MODE.HighHandCard, isRandom: true });
+                    event.cmds.discard({ mode: ver.isOffline ? CMD_MODE.Random : CMD_MODE.HighHandCard, isRandom: true });
                     return { status: 113121, notPreview: ver.gte('v6.1.0') }
                 }),
             skill('叛逆刮弦').description('{dealDmg}，对所有敌方后台角色造成2点[穿透伤害]\\；[舍弃]我方所有手牌，生成【sts113123】。')

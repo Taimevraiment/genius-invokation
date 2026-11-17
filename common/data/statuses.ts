@@ -428,11 +428,11 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     111061: () => status('冷酷之心').heroStatus().icon(STATUS_ICON.ElementAtkUp).useCnt(1)
         .type(STATUS_TYPE.Usage, STATUS_TYPE.AddDamage, STATUS_TYPE.Sign)
-        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。', 'v7.3.0')
+        .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+3。', 'v7.3.0', 'v2')
         .description('【所附属角色使用〖ski,1〗时：】移除此状态，使本次伤害+2。', 'v3.8.0', 'vlatest')
         .handle((status, _, ver) => ({
             triggers: 'skilltype2',
-            addDmgCdt: ver.lt('v3.8.0') || ver.gte('v7.3.0') ? 2 : 3,
+            addDmgCdt: (ver.lt('v3.8.0') || ver.gte('v7.3.0')) && !ver.isOffline ? 2 : 3,
             exec: () => status.minusUseCnt(),
         })),
 
@@ -524,7 +524,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
     111121: () => status('佩伊刻计').heroStatus().icon(STATUS_ICON.Buff).useCnt(0)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage, STATUS_TYPE.Accumulate)
         .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有3层，则再额外造成3点[物理伤害]。')
-        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成3点[物理伤害]。', 'v7.3.0')
+        .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成3点[物理伤害]。', 'v7.3.0', 'v5')
         .description('【我方每抓1张牌后：】此牌累积1层「压力阶级」。；【所附属角色使用〖ski,1〗时：】如果「压力阶级」至少有2层，则移除此效果，使技能少花费1元素骰，且如果此技能结算后「压力阶级」至少有4层，则再额外造成2点[物理伤害]。', 'v6.5.0')
         .handle((status, event, ver) => {
             const { trigger } = event;
@@ -2156,7 +2156,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
 
     117071: () => status('猫箱急件').combatStatus().icon('ski,1').useCnt(1).maxCnt(2).type(STATUS_TYPE.Attack)
         .description('【〖hro〗为出战角色时，我方切换角色后：】造成2点[草元素伤害]，抓1张牌。；[useCnt]')
-        .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]', 'v6.6.0')
+        .description('【〖hro〗为出战角色时，我方切换角色后：】造成1点[草元素伤害]，抓1张牌。；[useCnt]', 'v6.6.0', 'v3')
         .handle((status, event, ver) => {
             const { heros, cmds } = event;
             if (!heros.get(status.id)?.isFront) return;

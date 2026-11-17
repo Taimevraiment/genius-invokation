@@ -4490,7 +4490,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2025/06/18/258999284/31d5b53225a1014c8622d7dc2c9a0493_8192798041035888377.png')
         .handle((card, event) => { card.useCnt == 1 && event.execmds.getCard(4) }),
 
-    114031: () => card().name('雷楔').talent().event(true).costElectro(3)
+    114031: () => card().name('雷楔').talent().event(true).userType().costElectro(3)
         .description('[战斗行动]：将【hro】切换到场上，立刻使用【ski,1】。本次【ski,1】会为【hro】附属【sts114032】，但是不会再生成【雷楔】。(【hro】使用【ski,1】时，如果此牌在手中：不会再生成【雷楔】，而是改为[舍弃]此牌，并为【hro】附属【sts114032】)')
         .src('https://uploadstatic.mihoyo.com/ys-obc/2022/12/12/12109492/3d370650e825a27046596aaf4a53bb8d_7172676693296305743.png')
         .handle((card, event) => {
