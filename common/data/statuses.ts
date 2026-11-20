@@ -2172,9 +2172,9 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         }),
 
     117072: (cnt: number = 1) => shieldCombatStatus('安全运输护盾', cnt, MAX_USE_COUNT)
-        .useCnt(2, 'v6.6.0').maxCnt(0, 'v6.6.0')
+        .useCnt(2, ['v6.6.0', 'v5']).maxCnt(0, 'v6.6.0', 'v5')
         .description(`为我方出战角色提供1点[护盾]。（可叠加，没有上限）`)
-        .description(`为我方出战角色提供2点[护盾]。`, 'v6.6.0'),
+        .description(`为我方出战角色提供2点[护盾]。`, 'v6.6.0', 'v5'),
 
     117073: () => status('猫草豆蔻').combatStatus().icon('ski,2').useCnt(2)
         .type(STATUS_TYPE.Attack, STATUS_TYPE.Usage).iconBg(DEBUFF_BG_COLOR)

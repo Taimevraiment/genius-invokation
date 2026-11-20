@@ -315,17 +315,18 @@ class StatusBuilder extends BaseBuilder {
         return this;
     }
     useCnt(useCnt: number, cdt: boolean): StatusBuilder;
-    useCnt(useCnt: number, version?: Version, cdt?: boolean): StatusBuilder;
-    useCnt(useCnt: number, version: Version | boolean = 'vlatest', cdt: boolean = true) {
+    useCnt(useCnt: number, version?: Version | Version[], cdt?: boolean): StatusBuilder;
+    useCnt(useCnt: number, version: Version | Version[] | boolean = 'vlatest', cdt: boolean = true) {
         if (typeof version == 'boolean') {
             if (version) this._useCnt.set(['vlatest', useCnt]);
         } else if (cdt) {
-            this._useCnt.set([version, useCnt]);
+            convertToArray(version).forEach(ver => this._useCnt.set([ver, useCnt]));
         }
         return this;
     }
-    maxCnt(maxCnt: number, version: Version = 'vlatest') {
-        this._maxCnt.set([version, maxCnt]);
+    maxCnt(maxCnt: number, ...versions: Version[]) {
+        if (versions.length == 0) versions = ['vlatest'];
+        versions.forEach(version => this._maxCnt.set([version, maxCnt]));
         return this;
     }
     addCnt(addCnt?: number) {
