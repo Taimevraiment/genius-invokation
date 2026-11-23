@@ -698,7 +698,7 @@ const allHeros: Record<number, () => ReturnType<typeof hero>> = {
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31695/a02527df30931a59aeca6786d5359025.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/b4fac3acc97d574a2f7e7fbd29bbcb0a_34821408158787436.png')
                 .burst(3).damage(3).cost(3).handle(() => ({ status: 112171 })),
-            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶（水）反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；【回合开始时：】我方获得一层【sts112174】。（回合结束后消失）')
+            skill('月兆祝赐·借汝月光').description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶（水）反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；【行动阶段开始时：】我方获得一层【sts112174】。')
                 .description('本局游戏中，敌方受到‹2›‹4›【感电反应】/‹2›‹7›【绽放反应】/‹2›‹6›【结晶（水）反应】时，改为[月感电]/[月绽放]/[月结晶]反应。；敌方受到[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次）', 'v7.3.0')
                 .src('https://act-webstatic.mihoyo.com/hk4e/e20200928calculate/item_icon/6ab31695/10343c2bc7dbdf8e6e13e93161133bea.png',
                     'https://act-upload.mihoyo.com/wiki-user-upload/2026/09/23/258999284/94df63297b80db475d5943461f3a9dd5_4188762436618572044.png')

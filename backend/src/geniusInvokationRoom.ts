@@ -875,9 +875,9 @@ export default class GeniusInvokationRoom {
                             }
                             if (recordData?.actionLog[0]?.actionData.type == ACTION_TYPE.PickCard) {
                                 const { actionData, pidx } = this.recordData.actionLog.shift()!;
-                                this.delay(1e3 + Math.random() * 1e3, async () => {
+                                this.delay(2e3 + Math.random() * 1e3, async () => {
                                     await this.wait(() => this.recordData.isPlaying, { freq: 1e3 });
-                                    this.getAction(actionData, pidx, socket, true);
+                                    await this.getAction(actionData, pidx, socket, true);
                                 });
                             }
                             await this.getAction(actionData, pidx, socket, true);
@@ -1283,6 +1283,7 @@ export default class GeniusInvokationRoom {
         if (diceSelect.indexOf(true) == -1) return this.emit('reconcileDiceError', pidx, { socket, tip: '骰子不符合要求' });
         const player = this.players[pidx];
         const currCard = player.handCards[cardIdx];
+        if (!currCard) return;
         const reconcileDice = player.heros.getFront().element as DiceCostType | undefined;
         if (!reconcileDice) return this.emit('reconcileDiceError', pidx, { socket, tip: '未找到出战角色' });
         if (player.dice.every(d => d == DICE_COST_TYPE.Omni || d == reconcileDice)) return this.emit('reconcileDiceError', pidx, { socket, tip: '没有可以调和的骰子' });
@@ -5329,7 +5330,7 @@ export default class GeniusInvokationRoom {
                 return this.taskQueue.stopPreview();
             }
             if (stopWithTaskType != 'pickCard') {
-                await this.wait(() => this.players.every(p => p.phase != PHASE.PICK_CARD) && this.pickModal.cards.length == 0, { maxtime: 6e6 });
+                await this.wait(() => (this.players.every(p => p.phase != PHASE.PICK_CARD) && this.pickModal.cards.length == 0) || this.recordData.isPlaying, { maxtime: 6e6 });
             }
             if (canExec()) await this._execTask();
         } catch (e) {

@@ -436,7 +436,7 @@ app.get('/detail', async (req, res) => {
     } catch (e) {
         console.error(e);
     }
-    const allNames = Array.from(nameToPath.keys());
+    const allNames = Array.from(nameToPath.keys()).sort((a, b) => b.localeCompare(a));
     const total = allNames.length;
     const totalPages = Math.ceil(total / pageSize);
     const start = (page - 1) * pageSize;
@@ -450,7 +450,7 @@ app.get('/detail', async (req, res) => {
             console.error(`读取 ${filePath} 失败:`, e);
         }
     }));
-    todayLogs = Object.fromEntries(Object.entries(todayLogs).sort(([a], [b]) => pageNames.indexOf(a) - pageNames.indexOf(b)));
+    todayLogs = Object.fromEntries(Object.entries(todayLogs).sort(([a], [b]) => pageNames.indexOf(b) - pageNames.indexOf(a)));
     res.json({
         roomList: roomList.map(r => ({
             id: r.id,

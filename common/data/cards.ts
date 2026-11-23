@@ -1595,7 +1595,7 @@ const allCards: Record<number, () => ReturnType<typeof card>> = {
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/24/288180982/9cba92d0f29a1547c9c68f3953efefc9_2717868289367730036.png'),
 
     321036: () => card(562).name('汐印石').since('v6.4.0').place().costSame(0)
-        .description('【敌方每次使用1张行动牌后：】赋予敌方[当前元素骰费用]最低的1张手牌【sts201】和【sts207】。；[可用次数]：2')
+        .description('【敌方每打出1张行动牌后：】赋予敌方[当前元素骰费用]最低的1张手牌【sts201】和【sts207】。；[可用次数]：2')
         .description('【行动阶段开始时：】赋予敌方随机1张手牌【sts201】和【sts207】。；[可用次数]：2', 'v7.3.0')
         .src('https://act-upload.mihoyo.com/wiki-user-upload/2026/02/24/288180982/0cb05c1020cc4d0eb0c6d89f8b65c968_8019206931954092523.png'),
 

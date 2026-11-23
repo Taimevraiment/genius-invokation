@@ -1002,7 +1002,7 @@ const allStatuses: Record<number, (...args: any) => ReturnType<typeof status>> =
         .description('【我方出战角色受到伤害时：】抵消1点伤害。'),
 
     112174: () => status('引力干涉').combatStatus().roundCnt(1).useCnt(1).type(STATUS_TYPE.Round, STATUS_TYPE.Attack)
-        .description('敌方受到[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。；[useCnt]')
+        .description('敌方受到[月感电]/[月绽放]/[月结晶]反应后：造成1点[雷元素伤害]/[草元素伤害]/[岩元素伤害]。（每回合1次，不可叠加）')
         .handle((status, event) => {
             const { trigger, cmds } = event;
             if (trigger == 'LunarElectroCharged-oppo') cmds.attack(1, DAMAGE_TYPE.Electro);

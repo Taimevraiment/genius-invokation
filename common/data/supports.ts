@@ -1695,6 +1695,8 @@ const supportTotal: Record<number, (...args: any) => ReturnType<typeof support>>
     331012: () => elTransfiguration(ELEMENT_TYPE.Electro, ELEMENT_TYPE.Pyro, 'Overload', 12),
     // 元素幻变：燃烧祝佑
     331013: () => elTransfiguration(ELEMENT_TYPE.Pyro, ELEMENT_TYPE.Dendro, 'Burning', 13),
+    // 元素幻变：冻结祝佑
+    331014: () => elTransfiguration(ELEMENT_TYPE.Hydro, ELEMENT_TYPE.Cryo, 'Frozen', 14),
 
 }
 
