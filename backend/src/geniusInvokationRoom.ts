@@ -2442,21 +2442,25 @@ export default class GeniusInvokationRoom {
         this._writeLog(`【p:${pidx}:[${this.players[pidx].name}](${pidx})挑选了[${this.pickModal.cards[selectIdx]?.name}]】`);
         const { cardType, phase = PHASE.ACTION, hidxs } = this.pickModal;
         this.players[pidx].phase = phase;
-        const selectId = this.pickModal.cards[selectIdx].id;
         const cmds = new CmdsGenerator();
-        switch (cardType) {
-            case 'getCard':
-                cmds.getCard(1, { card: selectId });
-                break;
-            case 'getSummon':
-                cmds.getSummon(selectId);
-                break;
-            case 'useCard':
-                await this._useCard(pidx, -1, [], { pickCard: this.newCard(selectId), selectHeros: hidxs });
-                break;
-            default:
-                const e: never = cardType;
-                throw new Error(`ERROR@_pickCard: unknown cardType: ${e}`);
+        const selectId = this.pickModal.cards[selectIdx]?.id;
+        if (selectId) {
+            switch (cardType) {
+                case 'getCard':
+                    cmds.getCard(1, { card: selectId });
+                    break;
+                case 'getSummon':
+                    cmds.getSummon(selectId);
+                    break;
+                case 'useCard':
+                    await this._useCard(pidx, -1, [], { pickCard: this.newCard(selectId), selectHeros: hidxs });
+                    break;
+                default:
+                    const e: never = cardType;
+                    throw new Error(`ERROR@_pickCard: unknown cardType: ${e}`);
+            }
+        } else {
+            this._writeLog('ERROR@_pickCard: selectId is invalid');
         }
         this._doCmds(pidx, cmds, { isPriority: true, isUnshift: true });
         await this._execTask('pickCard');
